@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
+import ContentPagination from '@/app/admin/_components/ContentPagination';
 
 type Item = {
   id: string;
@@ -38,6 +39,8 @@ export default function FastEmailRealtorsClient() {
     direction: 'desc',
   });
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const load = useCallback(async () => {
     try {
@@ -77,8 +80,11 @@ export default function FastEmailRealtorsClient() {
           }) * (sort.direction === 'asc' ? 1 : -1),
       );
   }, [data.rows, query, sort]);
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = rows.slice((safePage - 1) * pageSize, safePage * pageSize);
 
-  const allSelected = rows.length > 0 && rows.every((row) => selected.has(row.id));
+  const allSelected = pageRows.length > 0 && pageRows.every((row) => selected.has(row.id));
   const toggleSort = (key: SortKey) =>
     setSort((current) => ({
       key,
@@ -100,8 +106,8 @@ export default function FastEmailRealtorsClient() {
   const toggleAll = () =>
     setSelected((current) =>
       allSelected
-        ? new Set([...current].filter((id) => !rows.some((row) => row.id === id)))
-        : new Set([...current, ...rows.map((row) => row.id)]),
+        ? new Set([...current].filter((id) => !pageRows.some((row) => row.id === id)))
+        : new Set([...current, ...pageRows.map((row) => row.id)]),
     );
 
   async function scan() {
@@ -211,7 +217,7 @@ export default function FastEmailRealtorsClient() {
     );
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+    <main className="content-admin-shell">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">Content</p>
@@ -229,6 +235,15 @@ export default function FastEmailRealtorsClient() {
           {busy === 'scan' ? 'Scanning…' : 'Scan FastEmail Flyers'}
         </button>
       </div>
+
+      <section className="content-admin-summary" aria-label="Review queue summary">
+        {['pending', 'realtyline', 'san_antonio', 'rejected'].map((key) => (
+          <div key={key}>
+            <strong>{(data.counts[key] || 0).toLocaleString()}</strong>
+            <span>{labels[key]}</span>
+          </div>
+        ))}
+      </section>
 
       {notice && (
         <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
@@ -292,7 +307,7 @@ export default function FastEmailRealtorsClient() {
         {rows.length === 0 ? (
           <li className="px-3 py-8 text-center text-sm text-gray-500">No matching contacts.</li>
         ) : (
-          rows.map((row) => (
+          pageRows.map((row) => (
             <li key={`m-${row.id}`} className="p-3">
               <div className="flex items-start gap-3">
                 <input
@@ -388,7 +403,7 @@ export default function FastEmailRealtorsClient() {
                 </td>
               </tr>
             ) : (
-              rows.map((row) => (
+              pageRows.map((row) => (
                 <tr key={row.id}>
                   <td className="px-3 py-3">
                     <input
@@ -440,6 +455,13 @@ export default function FastEmailRealtorsClient() {
             )}
           </tbody>
         </table>
+        <ContentPagination
+          count={rows.length}
+          page={safePage}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+        />
       </div>
     </main>
   );

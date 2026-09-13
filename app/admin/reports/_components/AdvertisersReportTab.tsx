@@ -19,6 +19,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import InsightsPagination from '@/components/admin/InsightsPagination';
 import {
   PUBLICATION_LABELS_WITH_BOTH,
   type PublicationScope,
@@ -86,6 +87,8 @@ export default function AdvertisersReportTab() {
   const [sending, setSending] = useState(false);
   const [results, setResults] = useState<SendResult[] | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     let cancelled = false;
@@ -178,6 +181,9 @@ export default function AdvertisersReportTab() {
   };
 
   const selectedCount = selected.size;
+  const totalPages = Math.max(1, Math.ceil(advertisers.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageAdvertisers = advertisers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="space-y-6">
@@ -203,16 +209,16 @@ export default function AdvertisersReportTab() {
               <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1">
                 Reporting window
               </label>
-              <div className="inline-flex rounded-md border border-gray-300 overflow-hidden">
+              <div className="inline-flex h-9 overflow-hidden rounded border border-gray-300">
                 {DAYS_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => setDays(opt.value)}
                     className={[
-                      'px-3 py-1.5 text-sm border-r border-gray-300 last:border-r-0 transition-colors',
+                      'px-3 text-sm border-r border-gray-300 last:border-r-0 transition-colors',
                       days === opt.value
-                        ? 'bg-brand-700 text-white'
+                        ? 'bg-orange-600 text-white'
                         : 'bg-white text-gray-700 hover:bg-gray-50',
                     ].join(' ')}
                   >
@@ -226,7 +232,7 @@ export default function AdvertisersReportTab() {
                 type="button"
                 onClick={selectAllSendable}
                 disabled={loading || sendable.length === 0}
-                className="text-xs text-brand-700 hover:underline disabled:text-gray-400 disabled:no-underline"
+                className="text-xs text-orange-700 hover:underline disabled:text-gray-400 disabled:no-underline"
               >
                 Select all sendable
               </button>
@@ -253,7 +259,7 @@ export default function AdvertisersReportTab() {
               <p className="p-4 text-sm text-gray-400">No partners yet.</p>
             ) : (
               <ul className="divide-y divide-gray-100">
-                {advertisers.map((a) => {
+                {pageAdvertisers.map((a) => {
                   const email = (a.contact_email || '').trim();
                   const canSend = email.length > 0;
                   const isChecked = selected.has(a.id);
@@ -264,7 +270,7 @@ export default function AdvertisersReportTab() {
                       onClick={() => handleRowClick(a)}
                       className={[
                         'flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors',
-                        isActive ? 'bg-brand-700/5' : 'hover:bg-gray-50',
+                        isActive ? 'bg-orange-50' : 'hover:bg-orange-50/40',
                       ].join(' ')}
                     >
                       <input
@@ -287,7 +293,7 @@ export default function AdvertisersReportTab() {
                         </p>
                       </div>
                       {isActive ? (
-                        <span className="text-[10px] uppercase tracking-wider font-medium text-brand-700 shrink-0">
+                        <span className="text-[10px] uppercase tracking-wider font-medium text-orange-700 shrink-0">
                           Viewing
                         </span>
                       ) : null}
@@ -296,6 +302,7 @@ export default function AdvertisersReportTab() {
                 })}
               </ul>
             )}
+            {advertisers.length > 25 && <InsightsPagination page={currentPage} pageSize={pageSize} total={advertisers.length} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />}
           </div>
 
           <div>
@@ -316,7 +323,7 @@ export default function AdvertisersReportTab() {
               type="button"
               onClick={handleSend}
               disabled={sending || selectedCount === 0}
-              className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-40 whitespace-nowrap"
+              className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 disabled:opacity-40"
             >
               {sending ? 'Sending…' : `Send ${selectedCount || ''} report${selectedCount === 1 ? '' : 's'}`}
             </button>

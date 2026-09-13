@@ -254,7 +254,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             onChange={(e) =>
               patch({ takeover: e.target.checked }, 'Takeover updated')
             }
-            className="mt-0.5 h-4 w-4 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="mt-0.5 h-4 w-4 rounded-md border-gray-300 text-orange-600 focus:ring-orange-500"
           />
           <span className="text-sm">
             <span className="font-medium text-gray-900">Take over manually</span>
@@ -280,7 +280,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             value={assignee}
             onChange={(e) => setAssignee(e.target.value)}
             placeholder="e.g. tawanna@realtynewsnow.app"
-            className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
           <button
             type="button"
@@ -309,7 +309,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
           placeholder="Context for the team — left blank by default."
-          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         />
         <div className="flex justify-end mt-2">
           <button
@@ -336,7 +336,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
       <div className="flex flex-wrap items-center gap-2 pt-3 mt-4 border-t border-gray-100">
         <a
           href={replyHref}
-          className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
+          className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-orange-600 text-white hover:bg-orange-700"
         >
           Reply by email
         </a>

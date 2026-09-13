@@ -9,8 +9,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useUrlNumber, useUrlState, useUrlString } from '@/lib/use-url-state';
+import { Download, Pause, Play, Radio, Search } from 'lucide-react';
 
 import PageTitle from '@/components/ui/PageTitle';
+import InsightsPagination from '@/components/admin/InsightsPagination';
 type Event = {
   timestamp: string;
   event: string;
@@ -175,6 +177,8 @@ export default function ActivityClient() {
   const [paused, setPaused] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const pathDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cityDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -272,17 +276,32 @@ export default function ActivityClient() {
     a.click();
     URL.revokeObjectURL(url);
   };
+  const totalPages = Math.max(1, Math.ceil(events.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageEvents = events.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin</div>
-        <PageTitle size="md">Live activity</PageTitle>
-        <p className="text-sm text-gray-600 mb-6">Public app events in real time. Polls every 10 seconds. Admin paths excluded.</p>
+    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Insights</div>
+            <PageTitle size="md">Live activity</PageTitle>
+            <p className="mt-1 text-sm text-gray-600">Public app events, refreshed every 10 seconds. Admin paths are excluded.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex h-9 items-center gap-2 rounded border px-3 text-sm ${paused ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
+              <Radio className="h-4 w-4" aria-hidden="true" />
+              {paused ? 'Paused' : 'Live'}
+            </span>
+            <button onClick={downloadCsv} className="inline-flex h-9 items-center gap-2 rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700">
+              <Download className="h-4 w-4" aria-hidden="true" /> Export CSV
+            </button>
+          </div>
+        </header>
 
         {/* Rollup tiles */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-          <Tile label="Visitors" value={rollup.visitors} accent="bg-gray-900 text-white" />
+        <section aria-label="Activity summary" className="grid grid-cols-2 gap-y-3 bg-white sm:grid-cols-3 lg:grid-cols-6">
+          <Tile label="Visitors" value={rollup.visitors} />
           <Tile label="Page views" value={rollup.pageviews} />
           <Tile label="Clicks" value={rollup.clicks} />
           {rollup.rageclicks > 0 && (
@@ -290,17 +309,17 @@ export default function ActivityClient() {
           )}
           <Tile label="Form submits" value={rollup.forms} accent="bg-emerald-50" />
           <Tile label="Errors" value={rollup.errors} accent={rollup.errors > 0 ? 'bg-rose-50 text-rose-900' : ''} />
-        </div>
+        </section>
 
         {/* Controls row */}
-        <div className="bg-white border border-gray-200 rounded-md p-4 mb-4 flex flex-wrap items-center gap-3">
+        <section aria-label="Activity filters" className="flex flex-wrap items-end gap-2">
           <div className="flex gap-1 flex-wrap">
             {BUCKETS.map((b) => (
               <button
                 key={b.id}
                 onClick={() => setBucket(b.id)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-                  bucket === b.id ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                className={`h-9 rounded border px-3 text-sm font-medium ${
+                  bucket === b.id ? 'border-orange-700 bg-orange-600 text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 {b.label}
@@ -310,49 +329,43 @@ export default function ActivityClient() {
           <select
             value={minutes}
             onChange={(e) => setMinutes(Number(e.target.value))}
-            className="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           >
             {WINDOWS.map((w) => (
               <option key={w.minutes} value={w.minutes}>{w.label}</option>
             ))}
           </select>
-          <input
-            value={pathFilter}
-            onChange={(e) => setPathFilter(e.target.value)}
-            placeholder="Filter by path (e.g. /advertisers)"
-            className="flex-1 min-w-[180px] border border-gray-300 rounded-md px-3 py-1.5 text-sm"
-          />
+          <label className="relative min-w-[210px] flex-1">
+            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
+            <span className="sr-only">Filter by path</span>
+            <input value={pathFilter} onChange={(e) => { setPathFilter(e.target.value); setPage(1); }} placeholder="Filter by path" className="h-9 w-full rounded border border-gray-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500" />
+          </label>
           <input
             value={cityFilter}
             onChange={(e) => setCityFilter(e.target.value)}
             placeholder="City (e.g. Grayton Beach)"
-            className="w-40 border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+            className="h-9 w-40 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           />
           <input
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             placeholder="Search errors / text"
-            className="w-48 border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+            className="h-9 w-48 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           />
           <button
             onClick={() => setPaused((p) => !p)}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium border ${
+            className={`inline-flex h-9 items-center gap-2 rounded border px-3 text-sm font-medium ${
               paused ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
             title={paused ? 'Live updates paused' : 'Live updates running'}
           >
-            {paused ? '▶ Resume' : '⏸ Pause'}
+            {paused ? <Play className="h-4 w-4" aria-hidden="true" /> : <Pause className="h-4 w-4" aria-hidden="true" />}
+            {paused ? 'Resume' : 'Pause'}
           </button>
-          <button
-            onClick={downloadCsv}
-            className="px-4 py-2 rounded-md text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 whitespace-nowrap"
-          >
-            Export CSV
-          </button>
-        </div>
+        </section>
 
         {/* Status line */}
-        <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
+        <div className="flex items-center justify-between text-xs text-gray-500">
           <div>
             {loading ? 'Loading…' : `${events.length} event${events.length === 1 ? '' : 's'}`}
             {lastFetchedAt && !loading && ` · updated ${formatTime(lastFetchedAt.toISOString())}`}
@@ -361,15 +374,20 @@ export default function ActivityClient() {
         </div>
 
         {/* Feed */}
-        <div className="bg-white border border-gray-200 rounded-md divide-y divide-gray-100">
+        <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+        <div className="divide-y divide-gray-100">
           {events.length === 0 && !loading && (
-            <div className="p-8 text-center text-gray-500 text-sm">No events match the current filter.</div>
+            <div className="p-12 text-center">
+              <Radio className="mx-auto h-8 w-8 text-gray-300" aria-hidden="true" />
+              <div className="mt-3 text-sm font-medium text-gray-800">No matching activity</div>
+              <p className="mt-1 text-sm text-gray-500">Adjust the event, time, or search filters.</p>
+            </div>
           )}
-          {events.map((e, i) => {
+          {pageEvents.map((e, i) => {
             const badge = eventBadge(e.event);
             const isOpen = expanded === i;
             return (
-              <div key={i} className="hover:bg-gray-50">
+              <div key={`${e.timestamp}-${i}`} className="hover:bg-orange-50/40">
                 <button
                   type="button"
                   onClick={() => setExpanded(isOpen ? null : i)}
@@ -419,16 +437,17 @@ export default function ActivityClient() {
             );
           })}
         </div>
-      </div>
+        {events.length > 25 && <InsightsPagination page={currentPage} pageSize={pageSize} total={events.length} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />}
+        </section>
     </div>
   );
 }
 
 function Tile({ label, value, accent }: { label: string; value: number; accent?: string }) {
   return (
-    <div className={`border border-gray-200 rounded-md px-4 py-3 ${accent ?? 'bg-white'}`}>
-      <div className="text-xs uppercase tracking-wider opacity-70">{label}</div>
-      <div className="text-2xl font-semibold mt-1">{value.toLocaleString()}</div>
+    <div className={`min-w-0 border-r border-gray-200 px-4 py-2 last:border-r-0 ${accent ?? 'bg-white'}`}>
+      <div className="text-xs text-gray-500">{label}</div>
+      <div className="mt-0.5 text-xl font-semibold tabular-nums text-gray-900">{value.toLocaleString()}</div>
     </div>
   );
 }

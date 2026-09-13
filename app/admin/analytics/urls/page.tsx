@@ -14,6 +14,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
+import InsightsPagination from '@/components/admin/InsightsPagination';
 import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
 interface UrlRollupRow {
@@ -61,14 +62,13 @@ function formatDateTime(iso: string | null): string {
   });
 }
 
-const PAGE_SIZE = 50;
-
 export default function UrlAnalyticsPage() {
   const [from, setFrom] = useState<string>(daysAgoIso(30));
   const [to, setTo] = useState<string>(todayIso());
   const [publication, setPublication] = useState<PublicationFilter>('all');
   const [magazineId, setMagazineId] = useState<string>('');
   const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(50);
 
   const [data, setData] = useState<UrlRollupResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -83,9 +83,9 @@ export default function UrlAnalyticsPage() {
     if (publication !== 'all') p.set('publication', publication);
     if (magazineId.trim()) p.set('magazineId', magazineId.trim());
     p.set('page', String(page));
-    p.set('pageSize', String(PAGE_SIZE));
+    p.set('pageSize', String(pageSize));
     return p.toString();
-  }, [from, to, publication, magazineId, page]);
+  }, [from, to, publication, magazineId, page, pageSize]);
 
   // Fetch on filter change or manual refresh. All setState happens inside
   // async callbacks (never synchronously in the effect body) to satisfy the
@@ -126,16 +126,19 @@ export default function UrlAnalyticsPage() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
+    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+      <header>
+      <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Insights</div>
       <PageTitle size="md">URL analytics</PageTitle>
-      <p className="mt-1 mb-6 text-sm text-gray-600">
+      <p className="mt-1 max-w-3xl text-sm text-gray-600">
         Click totals grouped by outbound URL. Includes every clickable hotspot
         regardless of partner link status — useful for publisher, partner,
         and non-CRM destinations.
       </p>
+      </header>
 
       {/* Filters */}
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white p-3">
+      <section aria-label="URL analytics filters" className="flex flex-wrap items-end gap-2">
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-700">From</label>
           <input
@@ -143,7 +146,7 @@ export default function UrlAnalyticsPage() {
             value={from}
             max={to}
             onChange={(e) => { setFrom(e.target.value); setPage(1); }}
-            className="rounded border border-gray-300 px-2 py-1.5 text-sm"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           />
         </div>
         <div>
@@ -154,7 +157,7 @@ export default function UrlAnalyticsPage() {
             min={from}
             max={todayIso()}
             onChange={(e) => { setTo(e.target.value); setPage(1); }}
-            className="rounded border border-gray-300 px-2 py-1.5 text-sm"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           />
         </div>
         <div>
@@ -162,7 +165,7 @@ export default function UrlAnalyticsPage() {
           <select
             value={publication}
             onChange={(e) => { setPublication(e.target.value as PublicationFilter); setPage(1); }}
-            className="rounded border border-gray-300 px-2 py-1.5 text-sm"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           >
             <option value="all">All</option>
             {PUBLICATIONS.map((publicationOption) => (
@@ -179,35 +182,43 @@ export default function UrlAnalyticsPage() {
             value={magazineId}
             placeholder="optional"
             onChange={(e) => { setMagazineId(e.target.value); setPage(1); }}
-            className="w-28 rounded border border-gray-300 px-2 py-1.5 text-sm"
+            className="h-9 w-32 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           />
         </div>
         <div className="ml-auto flex gap-2">
           <button
             onClick={() => { setFrom(daysAgoIso(30)); setTo(todayIso()); setPublication('all'); setMagazineId(''); setPage(1); }}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Reset
           </button>
           <button
             onClick={refresh}
-            className="rounded bg-[#7c3aed] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#6d28d9]"
+            className="h-9 rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
           >
             Refresh
           </button>
         </div>
-      </div>
+      </section>
 
       {/* Summary */}
       {data && !loading && !error && (
-        <div className="mb-3 text-sm text-gray-600">
-          {data.total.toLocaleString()} unique URLs · {totalClicks.toLocaleString()} clicks on this page
-        </div>
+        <section aria-label="URL analytics summary" className="grid grid-cols-2 bg-white sm:w-fit">
+          <div className="border-r border-gray-200 px-4 py-2">
+            <div className="text-xs text-gray-500">Unique URLs</div>
+            <div className="mt-0.5 text-xl font-semibold tabular-nums text-gray-900">{data.total.toLocaleString()}</div>
+          </div>
+          <div className="px-4 py-2">
+            <div className="text-xs text-gray-500">Clicks on this page</div>
+            <div className="mt-0.5 text-xl font-semibold tabular-nums text-gray-900">{totalClicks.toLocaleString()}</div>
+          </div>
+        </section>
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
+      <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="min-w-[900px] table-fixed text-xs">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>
               <th className="px-3 py-2 text-left">URL</th>
@@ -243,7 +254,8 @@ export default function UrlAnalyticsPage() {
                     href={r.display_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="break-all text-[#7c3aed] hover:underline"
+                    className="block truncate font-medium text-orange-700 hover:underline"
+                    title={r.url_key}
                   >
                     {r.url_key || '(empty)'}
                   </a>
@@ -260,29 +272,8 @@ export default function UrlAnalyticsPage() {
       </div>
 
       {/* Pagination */}
-      {data && data.total > data.pageSize && (
-        <div className="mt-3 flex items-center justify-between text-sm">
-          <span className="text-gray-600">
-            Page {data.page} of {totalPages}
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="rounded border border-gray-300 px-3 py-1.5 disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="rounded border border-gray-300 px-3 py-1.5 disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+      {data && <InsightsPagination page={Math.min(page, totalPages)} pageSize={pageSize} total={data.total} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />}
+      </section>
     </div>
   );
 }

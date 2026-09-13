@@ -199,7 +199,7 @@ export default function AdminFeatureArticlesPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
+    <div className="content-admin-shell">
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">Admin</p>
@@ -210,10 +210,17 @@ export default function AdminFeatureArticlesPage() {
           </p>
         </div>
         <button onClick={openCreate}
-          className="shrink-0 inline-flex items-center gap-2 bg-brand-700 text-white px-5 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors whitespace-nowrap self-start">
+          className="shrink-0 inline-flex items-center gap-2 bg-orange-600 text-white px-5 py-2 text-sm font-medium hover:bg-orange-700 rounded-md transition-colors whitespace-nowrap self-start">
           <Plus size={16} /> Add Article
         </button>
       </div>
+
+      <section className="content-admin-summary" aria-label="Feature article summary">
+        <div><strong>{(articles?.length ?? 0).toLocaleString()}</strong><span>Total articles</span></div>
+        <div><strong>{(articles?.filter((article) => article.status === 'published').length ?? 0).toLocaleString()}</strong><span>Published</span></div>
+        <div><strong>{(articles?.filter((article) => article.status === 'draft').length ?? 0).toLocaleString()}</strong><span>Drafts</span></div>
+        <div><strong>{advertisers.length.toLocaleString()}</strong><span>Partners</span></div>
+      </section>
 
       {error && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center justify-between">
@@ -241,8 +248,9 @@ export default function AdminFeatureArticlesPage() {
       {articles === null ? (
         <p className="text-sm text-gray-500">Loading…</p>
       ) : articles.length === 0 ? (
-        <div className="border border-dashed border-gray-300 rounded-lg px-6 py-12 text-center">
-          <p className="text-sm text-gray-500">No feature articles yet.</p>
+        <div className="content-admin-empty">
+          <p className="font-semibold text-gray-900">No feature articles yet</p>
+          <p className="mt-1 text-sm text-gray-500">Add an editorial story to a partner page.</p>
           <button onClick={openCreate} className="mt-3 text-sm font-medium text-brand-700 hover:text-brand-800 underline">
             Add the first one
           </button>

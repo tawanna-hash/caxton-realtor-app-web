@@ -156,7 +156,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
   ) : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="mailing-admin-page">
       <MailingBreadcrumb
         trail={[
           { label: 'Mailing', href: '/admin/mailing' },
@@ -179,14 +179,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
         <div className="flex items-center gap-2">
           <a
             href={`/api/admin/mailing/publication-list?list=${pub}&format=csv`}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-semibold transition hover:text-white"
-            style={{ borderColor: accent, color: accent, ['--hover-bg' as string]: accent }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = accent;
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = '';
-            }}
+            className="mailing-primary-action"
           >
             <span aria-hidden>⤓</span>
             Download CSV
@@ -195,7 +188,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="mailing-summary-strip grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
         <Kpi label="Total" value={initialCounts.total} accent={accent} />
         <Kpi label="Valid" value={initialCounts.valid} accent="#059669" />
         <Kpi label="Invalid" value={initialCounts.invalid} accent="#e11d48" />

@@ -11,6 +11,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import NewNotificationModal, { type EditableNotification } from '@/components/admin/NewNotificationModal';
 import SubscribersSection from './SubscribersSection';
+import ContentPagination from '@/app/admin/_components/ContentPagination';
 
 interface Notification {
   id: string;
@@ -82,6 +83,11 @@ export default function NotificationsClient({ initialNotifications, initialStats
   const [editing, setEditing] = useState<EditableNotification | null>(null);
   const [notifications] = useState(initialNotifications);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const totalPages = Math.max(1, Math.ceil(notifications.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageNotifications = notifications.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const openEdit = useCallback((n: Notification) => {
     setEditing({
@@ -139,15 +145,22 @@ export default function NotificationsClient({ initialNotifications, initialStats
 
   return (
     <>
-      <section className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <section className="mb-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div className="text-sm text-gray-600">{subscriberSummary}</div>
         <button
           type="button"
           onClick={() => { setEditing(null); setOpen(true); }}
-          className="inline-flex items-center justify-center px-4 py-2 rounded-md text-white font-medium text-sm bg-brand-700 hover:bg-brand-800 transition-colors"
+          className="inline-flex h-9 items-center justify-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700"
         >
           New notification
         </button>
+      </section>
+
+      <section className="content-admin-summary" aria-label="Notification summary">
+        <div><strong>{notifications.length.toLocaleString()}</strong><span>Recent notifications</span></div>
+        <div><strong>{notifications.filter((item) => item.status === 'sent').length.toLocaleString()}</strong><span>Sent</span></div>
+        <div><strong>{notifications.reduce((sum, item) => sum + item.delivered_count, 0).toLocaleString()}</strong><span>Delivered</span></div>
+        <div><strong>{notifications.reduce((sum, item) => sum + item.clicked_count, 0).toLocaleString()}</strong><span>Clicks</span></div>
       </section>
 
       <section className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -172,7 +185,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {notifications.map((n) => (
+                {pageNotifications.map((n) => (
                   <tr key={n.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900 line-clamp-1">{n.title}</div>
@@ -227,7 +240,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
           </div>
           {/* Mobile card list. */}
           <ul className="sm:hidden divide-y divide-gray-100">
-            {notifications.map((n) => {
+            {pageNotifications.map((n) => {
               const market = n.target_audience?.market;
               const marketLabel =
                 market === 'all' ? 'All' :
@@ -282,6 +295,13 @@ export default function NotificationsClient({ initialNotifications, initialStats
               );
             })}
           </ul>
+          <ContentPagination
+            count={notifications.length}
+            page={safePage}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+          />
           </>
         )}
       </section>

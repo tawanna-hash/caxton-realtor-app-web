@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
+import ContentPagination from '@/app/admin/_components/ContentPagination';
 
 type BuilderVisibility = {
   builder_name: string;
@@ -23,6 +24,8 @@ export default function AdminBuilderPagesPage() {
   const [pending, setPending] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +120,11 @@ export default function AdminBuilderPagesPage() {
     allBuilders.filter((b) => !b.is_developer && b.developer_name === devName);
   const partnerCount = allBuilders.filter((b) => b.is_advertising_partner).length;
   const inventoryCount = allBuilders.filter((b) => b.total_count > 0).length;
+  const topLevelBuilders = [...developers, ...standaloneBuilders];
+  const safePage = Math.min(page, Math.max(1, Math.ceil(topLevelBuilders.length / pageSize)));
+  const pageTopLevel = topLevelBuilders.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const pageDevelopers = pageTopLevel.filter((builder) => builder.is_developer);
+  const pageStandaloneBuilders = pageTopLevel.filter((builder) => !builder.is_developer);
 
   const renderToggle = (b: BuilderVisibility) => {
     const busy = pending === b.builder_name;
@@ -158,7 +166,7 @@ export default function AdminBuilderPagesPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
+    <div className="content-admin-shell">
       <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
@@ -183,6 +191,13 @@ export default function AdminBuilderPagesPage() {
         </Link>
       </div>
 
+      <section className="content-admin-summary" aria-label="Partner page summary">
+        <div><strong>{partnerCount.toLocaleString()}</strong><span>Advertising partners</span></div>
+        <div><strong>{inventoryCount.toLocaleString()}</strong><span>Inventory brands</span></div>
+        <div><strong>{(builders?.filter((builder) => builder.public_enabled).length ?? 0).toLocaleString()}</strong><span>Pages on</span></div>
+        <div><strong>{(builders?.filter((builder) => !builder.public_enabled).length ?? 0).toLocaleString()}</strong><span>Pages off</span></div>
+      </section>
+
       {error && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -197,7 +212,7 @@ export default function AdminBuilderPagesPage() {
           <div className="px-4 py-10 text-center text-gray-500">No partners or builders found.</div>
         ) : (
           <ul className="divide-y divide-gray-100">
-            {developers.map((dev) => {
+            {pageDevelopers.map((dev) => {
               const kids = childrenOf(dev.builder_name);
               const isCollapsed = collapsed[dev.builder_name] ?? false;
               return (
@@ -252,7 +267,7 @@ export default function AdminBuilderPagesPage() {
                 </li>
               );
             })}
-            {standaloneBuilders.map((b) => (
+            {pageStandaloneBuilders.map((b) => (
               <li key={`m-solo-${b.builder_name}`} className="p-3">
                 <div className="font-medium text-gray-900 truncate">
                   {b.builder_name}
@@ -302,7 +317,7 @@ export default function AdminBuilderPagesPage() {
             ) : (
               <>
                 {/* Developers with collapsible child builders */}
-                {developers.map((dev) => {
+                {pageDevelopers.map((dev) => {
                   const kids = childrenOf(dev.builder_name);
                   const isCollapsed = collapsed[dev.builder_name] ?? false;
                   return (
@@ -356,7 +371,7 @@ export default function AdminBuilderPagesPage() {
                 })}
 
                 {/* Standalone builders */}
-                {standaloneBuilders.map((b) => (
+                {pageStandaloneBuilders.map((b) => (
                   <RowsForKey key={b.builder_name}>
                     <tr className="border-t border-gray-100">
                       <td className="px-4 py-3 font-medium text-gray-900">
@@ -383,6 +398,18 @@ export default function AdminBuilderPagesPage() {
           </tbody>
         </table>
       </div>
+      {builders && builders.length > 0 && (
+        <ContentPagination
+          count={topLevelBuilders.length}
+          page={safePage}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+        />
+      )}
     </div>
   );
 }

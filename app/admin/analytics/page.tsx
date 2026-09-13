@@ -411,7 +411,41 @@ export default function AdminAnalyticsPage() {
   const isLongWindow = LONG_WINDOW_VALUES.includes(timeframe);
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-6 p-4 sm:p-6">
+    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Insights</div>
+          <PageTitle size="md">Site analytics</PageTitle>
+          <p className="mt-1 text-sm text-gray-600">Traffic, behavior, acquisition, and tracked conversions from PostHog.</p>
+        </div>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="space-y-1">
+            <span className="block text-xs text-gray-500">Publication</span>
+            <select
+              id="pub-select"
+              value={publication}
+              onChange={onPublicationChange}
+              aria-busy={loading}
+              className={`h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 ${loading ? 'opacity-60' : ''}`}
+            >
+              {PUBLICATION_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </label>
+          <label className="space-y-1">
+            <span className="block text-xs text-gray-500">Range</span>
+            <select
+              id="timeframe-select"
+              value={timeframe}
+              onChange={onTimeframeChange}
+              aria-busy={loading}
+              className={`h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 ${loading ? 'opacity-60' : ''}`}
+            >
+              {TIMEFRAME_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+          </label>
+        </div>
+      </header>
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
 
       <main className="space-y-5 min-w-0">
 
@@ -466,50 +500,6 @@ export default function AdminAnalyticsPage() {
           </div>
         ) : null}
 
-        {/* Page heading + filters */}
-        <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-3">
-          <div>
-            <PageTitle size="md">PostHog Analytics</PageTitle>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Engagement report &mdash; <span className="font-mono text-gray-700">{publication}</span>
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <div className="flex items-center gap-2">
-              <label htmlFor="pub-select" className="text-xs text-gray-500">Publication:</label>
-              {/* BUG-40: do NOT use `disabled` for the loading state — it
-                  hides the control from keyboards and screen readers entirely.
-                  Use aria-busy + a faded visual cue instead so the filter
-                  stays focusable while the report refreshes. */}
-              <select
-                id="pub-select"
-                value={publication}
-                onChange={onPublicationChange}
-                aria-busy={loading}
-                className={`bg-white border border-gray-300 text-sm text-gray-700 rounded-md px-3 py-1.5 outline-none focus:border-blue-500 cursor-pointer ${loading ? 'opacity-60' : ''}`}
-              >
-                {PUBLICATION_OPTIONS.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <label htmlFor="timeframe-select" className="text-xs text-gray-500">Range:</label>
-              <select
-                id="timeframe-select"
-                value={timeframe}
-                onChange={onTimeframeChange}
-                aria-busy={loading}
-                className={`bg-white border border-gray-300 text-sm text-gray-700 rounded-md px-3 py-1.5 outline-none focus:border-blue-500 cursor-pointer ${loading ? 'opacity-60' : ''}`}
-              >
-                {TIMEFRAME_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
         {loading && isLongWindow ? (
           <p className="text-xs text-gray-500 italic">
             Loading a long window from PostHog &mdash; 20 to 30 seconds is normal for 6+ month ranges.
@@ -517,7 +507,7 @@ export default function AdminAnalyticsPage() {
         ) : null}
 
         {/* KPI grid */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <section className="grid grid-cols-2 gap-y-3 bg-white lg:grid-cols-4">
           {KPI_ORDER.map((key) => {
             const item = report?.kpis[key];
             const isActive = activeKpi === key;
@@ -535,10 +525,10 @@ export default function AdminAnalyticsPage() {
                 type="button"
                 onClick={() => setActiveKpi(key)}
                 disabled={!item}
-                className={`text-left rounded-md border p-4 transition cursor-pointer bg-white disabled:cursor-default disabled:opacity-60 ${
+                className={`min-w-0 border-r border-gray-200 bg-white px-4 py-2 text-left transition last:border-r-0 disabled:cursor-default disabled:opacity-60 ${
                   isActive
-                    ? 'border-blue-500 ring-1 ring-blue-500 shadow-sm'
-                    : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                    ? 'bg-orange-50 ring-1 ring-inset ring-orange-500'
+                    : 'hover:bg-orange-50/40'
                 }`}
               >
                 {loading || !item ? (
@@ -546,13 +536,13 @@ export default function AdminAnalyticsPage() {
                 ) : (
                   <>
                     <p className="text-[11px] font-medium text-gray-500 truncate">{item.label}</p>
-                    <p className="text-2xl font-semibold mt-1 tracking-tight text-gray-900">{item.value}</p>
+                    <p className="mt-0.5 text-xl font-semibold tracking-tight text-gray-900">{item.value}</p>
                     <div className="flex items-center justify-between mt-1">
                       <span className={`text-[10px] font-mono ${changeColor}`}>{item.change}</span>
                       <span className="text-[9px] text-gray-400 uppercase">{item.sub}</span>
                     </div>
-                    <svg viewBox="0 0 100 20" className="w-full h-7 mt-2" preserveAspectRatio="none">
-                      <path d={`${path} L100,20 L0,20 Z`} fill="rgba(37, 99, 235, 0.1)" />
+                    <svg viewBox="0 0 100 20" className="mt-1 h-5 w-full" preserveAspectRatio="none">
+                      <path d={`${path} L100,20 L0,20 Z`} fill="rgba(234, 88, 12, 0.08)" />
                       <path d={path} stroke="#ea580c" strokeWidth="1.75" fill="none" />
                     </svg>
                   </>
@@ -584,7 +574,7 @@ export default function AdminAnalyticsPage() {
                         <tr
                           key={row.url}
                           onClick={() => togglePage(row.url)}
-                          className={`cursor-pointer transition ${isActive ? 'bg-blue-50 text-blue-900' : 'hover:bg-gray-50'}`}
+                          className={`cursor-pointer transition ${isActive ? 'bg-orange-50 text-orange-900' : 'hover:bg-orange-50/40'}`}
                         >
                           <td className="py-2.5 pl-2 font-mono text-xs truncate max-w-[200px]" title={row.url}>{row.url}</td>
                           <td className="py-2.5 text-right font-mono">{row.views}</td>
@@ -621,7 +611,7 @@ export default function AdminAnalyticsPage() {
                         <tr
                           key={row.name}
                           onClick={() => toggleEvent(row.name)}
-                          className={`cursor-pointer transition ${isActive ? 'bg-blue-50 text-blue-900' : 'hover:bg-gray-50'}`}
+                          className={`cursor-pointer transition ${isActive ? 'bg-orange-50 text-orange-900' : 'hover:bg-orange-50/40'}`}
                         >
                           <td className="py-2.5 pl-2 font-mono text-xs">{row.name}</td>
                           <td className="py-2.5 text-right font-mono">{row.count}</td>
@@ -666,7 +656,7 @@ export default function AdminAnalyticsPage() {
                       <tr
                         key={row.source}
                         onClick={() => toggleSource(row.source)}
-                        className={`cursor-pointer transition ${isActive ? 'bg-blue-50 text-blue-900' : 'hover:bg-gray-50'}`}
+                        className={`cursor-pointer transition ${isActive ? 'bg-orange-50 text-orange-900' : 'hover:bg-orange-50/40'}`}
                       >
                         <td className="py-2.5 pl-2 font-mono text-xs">{row.source}</td>
                         <td className="py-2.5 text-right font-mono">{row.visits}</td>
@@ -696,7 +686,7 @@ export default function AdminAnalyticsPage() {
             <button
               type="button"
               onClick={resetFilters}
-              className="text-[11px] text-gray-500 hover:text-blue-600 underline"
+              className="text-xs text-gray-500 hover:text-orange-700 underline"
             >
               Reset filters
             </button>
@@ -712,7 +702,7 @@ export default function AdminAnalyticsPage() {
                   onClick={() => toggleConversion(evt)}
                   className={`rounded-full border px-3 py-1.5 text-xs font-mono transition ${
                     isOn
-                      ? 'bg-blue-50 text-blue-900 border-blue-300'
+                      ? 'border-orange-300 bg-orange-50 text-orange-900'
                       : 'bg-white text-gray-500 border-gray-200'
                   }`}
                 >
@@ -737,7 +727,7 @@ export default function AdminAnalyticsPage() {
               type="button"
               onClick={handleCopy}
               className={`font-medium px-3 py-1.5 rounded-md text-xs transition active:scale-95 text-white ${
-                copied ? 'bg-emerald-600' : 'bg-blue-600 hover:bg-blue-700'
+                copied ? 'bg-emerald-600' : 'bg-orange-600 hover:bg-orange-700'
               }`}
             >
               {copied ? '✓ Copied' : 'Copy'}
@@ -746,13 +736,14 @@ export default function AdminAnalyticsPage() {
           <textarea
             readOnly
             value={promptText}
-            className="w-full bg-gray-50 text-gray-700 border border-gray-200 rounded-md p-3 text-[11px] font-mono resize-none outline-none focus:border-blue-400 h-[560px] leading-relaxed select-all"
+            className="h-[560px] w-full resize-none rounded border border-gray-200 bg-gray-50 p-3 font-mono text-xs leading-relaxed text-gray-700 outline-none focus:border-orange-500 select-all"
           />
           <p className="text-[10px] text-gray-400 mt-3">
             Every clickable element + filter on this page updates this prompt with real PostHog data.
           </p>
         </div>
       </aside>
+    </div>
     </div>
   );
 }
@@ -772,7 +763,7 @@ interface CardProps {
 
 function Card({ title, subtitle, hint, titleBadge, headerRight, children }: CardProps) {
   return (
-    <section className="rounded-md border border-gray-200 bg-white p-5 shadow-sm">
+    <section className="overflow-hidden rounded border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-3">
         <div>
           <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 flex-wrap">
@@ -788,7 +779,7 @@ function Card({ title, subtitle, hint, titleBadge, headerRight, children }: Card
         {headerRight ? (
           <div className="self-start sm:self-auto">{headerRight}</div>
         ) : hint ? (
-          <span className="text-[10px] text-blue-600 uppercase tracking-wider self-start sm:self-auto">
+          <span className="self-start text-xs font-medium text-orange-700 sm:self-auto">
             {hint}
           </span>
         ) : null}

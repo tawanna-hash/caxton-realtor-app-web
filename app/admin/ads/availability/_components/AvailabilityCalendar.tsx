@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ChevronLeft, ChevronRight, RefreshCw, Search } from 'lucide-react';
 import {
   AD_CHANNELS,
   AD_CHANNEL_LABEL,
@@ -11,6 +12,7 @@ import {
 } from '@/lib/ad-channels';
 import type { BookedWindow } from '@/lib/server/availability-store';
 import { PRINT_DEADLINES } from '@/lib/media-kit';
+import { AD_OPS_CONTROL, AD_OPS_SECONDARY, AdOpsMetrics } from '../../_components/AdOpsUi';
 
 type ChannelTab = 'all' | AdChannel;
 
@@ -126,6 +128,7 @@ export default function AvailabilityCalendar() {
   const [rows, setRows] = useState<BookedWindow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
 
   const setUrl = useCallback(
     (next: Record<string, string | null>) => {
@@ -188,12 +191,24 @@ export default function AvailabilityCalendar() {
   const daysInMonth = endOfMonth(year, month0).getDate();
   const firstWeekday = startOfMonth(year, month0).getDay(); // 0 = Sun
 
+  const filteredRows = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return rows;
+    return rows.filter((row) => [
+      row.advertiser_name,
+      row.slot_or_size,
+      row.publication,
+      row.status,
+      AD_CHANNEL_LABEL[row.channel],
+    ].filter(Boolean).join(' ').toLowerCase().includes(needle));
+  }, [query, rows]);
+
   // For each day in the month, list bookings that overlap that day.
   const bookingsByDay = useMemo(() => {
     const map = new Map<string, BookedWindow[]>();
     const mStart = new Date(mStartIso);
     const mEnd = new Date(mEndIso);
-    for (const r of rows) {
+    for (const r of filteredRows) {
       const days = daysInRangeForMonth(r, mStart, mEnd);
       for (const d of days) {
         const arr = map.get(d) ?? [];
@@ -202,14 +217,20 @@ export default function AvailabilityCalendar() {
       }
     }
     return map;
-  }, [rows, mStartIso, mEndIso]);
+  }, [filteredRows, mStartIso, mEndIso]);
 
   // Bookings that overlap the current month at all — for the list below.
   const monthBookings = useMemo(() => {
-    return rows
+    return filteredRows
       .filter((r) => r.end_date >= mStartIso && r.start_date <= mEndIso)
       .sort((a, b) => (a.start_date < b.start_date ? -1 : 1));
-  }, [rows, mStartIso, mEndIso]);
+  }, [filteredRows, mStartIso, mEndIso]);
+
+  const monthChannelCounts = useMemo(() => {
+    const counts: Record<AdChannel, number> = { print: 0, digital: 0, email: 0, app: 0 };
+    monthBookings.forEach((booking) => { counts[booking.channel] += 1; });
+    return counts;
+  }, [monthBookings]);
 
   // Print deadline for the current month (if any) — only relevant when
   // viewing print or all.
@@ -238,10 +259,35 @@ export default function AvailabilityCalendar() {
   };
 
   return (
-    <div>
-      {/* Channel tabs */}
-      <div className="border-b border-gray-200 mb-4">
-        <nav className="-mb-px flex gap-6 flex-wrap" aria-label="Channel tabs">
+    <div className="space-y-5">
+      <AdOpsMetrics
+        label={`${monthLabel(year, month0)} booking summary`}
+        items={[
+          { label: 'Bookings', value: monthBookings.length },
+          { label: 'Digital / app', value: monthChannelCounts.digital + monthChannelCounts.app },
+          { label: 'Print', value: monthChannelCounts.print },
+          { label: 'Email', value: monthChannelCounts.email },
+        ]}
+      />
+
+      <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+      <div className="flex flex-wrap items-end gap-3 border-b border-gray-300 px-4 py-3">
+        <label className="min-w-56 flex-1 space-y-1">
+          <span className="block text-xs text-gray-500">Search bookings</span>
+          <span className="relative block">
+            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className={`${AD_OPS_CONTROL} w-full pl-9`}
+              placeholder="Partner, placement, publication, or status"
+            />
+          </span>
+        </label>
+        <div className="min-w-0 flex-1">
+          <span className="mb-1 block text-xs text-gray-500">Channel</span>
+          <nav className="flex h-9 min-w-max items-center gap-1" aria-label="Channel tabs">
           {CHANNEL_TABS.map((c) => {
             const active = activeChannel === c;
             const label = c === 'all' ? 'All channels' : AD_CHANNEL_LABEL[c];
@@ -250,10 +296,10 @@ export default function AvailabilityCalendar() {
                 key={c}
                 type="button"
                 onClick={() => setUrl({ channel: c === 'all' ? null : c })}
-                className={`py-3 border-b-2 text-sm font-medium transition ${
+                className={`h-9 rounded px-3 text-sm font-medium transition ${
                   active
-                    ? 'border-blue-600 text-blue-700'
-                    : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300'
+                    ? 'bg-orange-50 text-orange-800 ring-1 ring-orange-200'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }`}
                 aria-current={active ? 'page' : undefined}
               >
@@ -261,19 +307,24 @@ export default function AvailabilityCalendar() {
               </button>
             );
           })}
-        </nav>
+          </nav>
+        </div>
+        <button type="button" onClick={refetch} disabled={loading} className={AD_OPS_SECONDARY}>
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
+          Refresh
+        </button>
       </div>
 
       {/* Month nav */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={goPrev}
-            className="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 whitespace-nowrap"
+            className="inline-flex h-9 w-9 items-center justify-center rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
             aria-label="Previous month"
           >
-            ←
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </button>
           <h2 className="text-lg font-semibold text-gray-900 min-w-[10rem] text-center">
             {monthLabel(year, month0)}
@@ -281,22 +332,22 @@ export default function AvailabilityCalendar() {
           <button
             type="button"
             onClick={goNext}
-            className="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 whitespace-nowrap"
+            className="inline-flex h-9 w-9 items-center justify-center rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
             aria-label="Next month"
           >
-            →
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={goToday}
-            className="ml-2 px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 whitespace-nowrap"
+            className={`${AD_OPS_SECONDARY} ml-1`}
           >
             Today
           </button>
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-3 text-xs text-gray-600">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
           {AD_CHANNELS.map((c) => (
             <span key={c} className="flex items-center gap-1.5">
               <span className={`inline-block w-2.5 h-2.5 rounded-full ${CHANNEL_DOT_CLASS[c]}`} />
@@ -308,20 +359,22 @@ export default function AvailabilityCalendar() {
 
       {/* Print deadline banner */}
       {printDeadline && (
-        <div className="mb-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">
+        <div className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-900">
           <strong>Print deadline:</strong> {printDeadline.deadline} ·{' '}
           <strong>Mail date:</strong> {printDeadline.mail}
         </div>
       )}
 
       {error && (
-        <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-          {error}
+        <div role="alert" className="flex items-center gap-3 border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
+          <span>{error}</span>
+          <button type="button" onClick={refetch} className="font-semibold hover:underline">Try again</button>
         </div>
       )}
 
       {/* Month grid */}
-      <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
+      <div className="overflow-x-auto">
+        <div className="min-w-[760px]">
         <div className="grid grid-cols-7 bg-gray-50 text-xs font-medium text-gray-600 uppercase">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
             <div key={d} className="px-2 py-1.5 text-center border-b border-gray-200">
@@ -344,10 +397,10 @@ export default function AvailabilityCalendar() {
               <div
                 key={iso}
                 className={`min-h-[5.5rem] border-b border-r border-gray-100 px-1.5 py-1 ${
-                  isToday ? 'bg-blue-50/60' : 'bg-white'
+                  isToday ? 'bg-orange-50/60' : 'bg-white'
                 }`}
               >
-                <div className={`text-xs font-medium ${isToday ? 'text-blue-700' : 'text-gray-700'}`}>
+                <div className={`text-xs font-medium ${isToday ? 'text-orange-700' : 'text-gray-700'}`}>
                   {day}
                 </div>
                 <div className="mt-1 flex flex-col gap-0.5">
@@ -379,39 +432,44 @@ export default function AvailabilityCalendar() {
             ));
           })()}
         </div>
+        </div>
       </div>
+      </section>
 
       {/* List view */}
-      <div className="mt-6">
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">
-          Bookings this month{' '}
-          <span className="text-gray-500 font-normal">({monthBookings.length})</span>
-        </h3>
+      <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+        <div className="border-b border-gray-300 px-4 py-3">
+          <h2 className="text-sm font-semibold text-gray-900">
+            Bookings this month{' '}
+            <span className="font-normal text-gray-500">({monthBookings.length})</span>
+          </h2>
+          <p className="mt-0.5 text-xs text-gray-500">Open a row to review its source record.</p>
+        </div>
         {loading ? (
-          <div className="text-sm text-gray-600">Loading…</div>
+          <div className="px-4 py-8 text-center text-sm text-gray-600">Loading bookings…</div>
         ) : monthBookings.length === 0 ? (
-          <div className="rounded-md border border-dashed border-gray-300 px-4 py-6 text-center text-sm text-gray-600">
-            No bookings overlap this month.
+          <div className="px-4 py-10 text-center text-sm text-gray-600">
+            {query ? 'No bookings match this search.' : 'No bookings overlap this month.'}
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+          <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-left text-xs font-medium uppercase text-gray-600">
+              <thead className="border-b border-gray-300 bg-white text-left text-xs text-gray-700">
                 <tr>
-                  <th className="px-3 py-2">Channel</th>
-                  <th className="px-3 py-2">Partner</th>
-                  <th className="px-3 py-2">Slot / size</th>
-                  <th className="px-3 py-2">Window</th>
-                  <th className="px-3 py-2">Status</th>
+                  <th className="px-4 py-3 font-semibold">Channel</th>
+                  <th className="px-3 py-3 font-semibold">Partner</th>
+                  <th className="px-3 py-3 font-semibold">Slot / size</th>
+                  <th className="px-3 py-3 font-semibold">Window</th>
+                  <th className="px-3 py-3 font-semibold">Status</th>
                   <th className="px-3 py-2"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {monthBookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-gray-50">
-                    <td className="px-3 py-2">
+                  <tr key={b.id} className="hover:bg-orange-50/40">
+                    <td className="px-4 py-2.5">
                       <span
-                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${CHANNEL_BADGE_CLASS[b.channel]}`}
+                        className={`inline-flex items-center rounded border px-2 py-0.5 text-xs ${CHANNEL_BADGE_CLASS[b.channel]}`}
                       >
                         {AD_CHANNEL_LABEL[b.channel]}
                       </span>
@@ -429,7 +487,7 @@ export default function AvailabilityCalendar() {
                     <td className="px-3 py-2 text-right">
                       <Link
                         href={detailHref(b)}
-                        className="text-blue-700 hover:text-blue-900 text-xs"
+                        className="text-xs font-medium text-orange-700 hover:underline"
                       >
                         Open →
                       </Link>
@@ -440,7 +498,7 @@ export default function AvailabilityCalendar() {
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

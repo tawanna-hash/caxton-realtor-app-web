@@ -20,6 +20,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import PageTitle from '@/components/ui/PageTitle';
+import ContentPagination from '@/app/admin/_components/ContentPagination';
 import { PUBLICATION_FILTER_LABELS, PUBLICATION_IDS, type PublicationId } from '@/lib/publications';
 
 type GmailEvent = {
@@ -150,6 +151,8 @@ function GmailEventsQueue() {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [drawerFor, setDrawerFor] = useState<GmailEvent | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [source, setSource] = useState<SourceEmail | null>(null);
   const [sourceError, setSourceError] = useState<string | null>(null);
 
@@ -286,6 +289,9 @@ function GmailEventsQueue() {
         return 0;
     }
   });
+  const totalPages = Math.max(1, Math.ceil(sortedItems.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = sortedItems.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const handleDownloadPdf = () => {
     setShareMenuOpen(false);
@@ -376,7 +382,7 @@ function GmailEventsQueue() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="content-admin-shell">
       <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
         <div>
           <PageTitle size="md">Gmail Event Review</PageTitle>
@@ -452,6 +458,13 @@ function GmailEventsQueue() {
           </a>
         </div>
       </div>
+
+      <section className="content-admin-summary" aria-label="Gmail event review summary">
+        <div><strong>{items.length.toLocaleString()}</strong><span>Awaiting review</span></div>
+        <div><strong>{items.filter((item) => item.confidence !== null && item.confidence >= 0.8).length.toLocaleString()}</strong><span>High confidence</span></div>
+        <div><strong>{items.filter((item) => !item.startDate).length.toLocaleString()}</strong><span>Date needed</span></div>
+        <div><strong>{selectedIds.size.toLocaleString()}</strong><span>Selected</span></div>
+      </section>
 
       <div className="mb-4 text-sm">
         {mailbox ? (
@@ -547,7 +560,7 @@ function GmailEventsQueue() {
             />
             <label htmlFor="gmail-select-all-mobile" className="text-xs font-medium text-gray-700">Select all</label>
           </li>
-          {sortedItems.map((ev) => (
+          {pageItems.map((ev) => (
             <li key={`m-${ev.id}`} className="p-3">
               <div className="flex items-start gap-3">
                 <input
@@ -639,7 +652,7 @@ function GmailEventsQueue() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {sortedItems.map((ev) => (
+              {pageItems.map((ev) => (
                 <tr key={ev.id}>
                   <td className="px-3 py-3 w-10">
                     <label className="sr-only" htmlFor={`gmail-select-${ev.id}`}>Select row</label>
@@ -727,6 +740,13 @@ function GmailEventsQueue() {
             </tbody>
           </table>
         </div>
+        <ContentPagination
+          count={sortedItems.length}
+          page={safePage}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+        />
         </>
       )}
 

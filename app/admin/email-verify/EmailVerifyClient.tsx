@@ -16,6 +16,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useUrlString } from '@/lib/use-url-state';
 import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
+import { Pager, PAGE_SIZE_OPTIONS } from '@/app/admin/_components/Pager';
 
 // ─────────────────────────────────────────────────────────────────
 // Types — mirror the API response shapes
@@ -227,7 +228,7 @@ export default function EmailVerifyClient() {
   const [tab, setTab] = useUrlString<Tab>('tab', 'single');
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mailing-admin-page">
       <MailingBreadcrumb
         trail={[
           { label: 'Mailing', href: '/admin/mailing' },
@@ -235,27 +236,27 @@ export default function EmailVerifyClient() {
         ]}
       />
 
-      <div>
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-          Tools
+      <header>
+        <p className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
+          Admin · Mailing
         </p>
         <PageTitle size="md">Verify Emails</PageTitle>
-        <p className="mt-2 text-sm text-gray-600 max-w-2xl">
+        <p className="mt-1 max-w-2xl text-sm text-gray-600">
           Ad-hoc check for any address — syntax, disposable detection, MX
           resolution, and an SMTP probe. Same verifier the mailing list uses,
           but results are not written anywhere. Use the verify button inside a
           mailing segment when you want a verdict persisted on the contact.
         </p>
-      </div>
+      </header>
 
       {/* Tabs */}
-      <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+      <div className="inline-flex rounded border border-gray-200 bg-gray-50 p-1">
         <button
           type="button"
           onClick={() => setTab('single')}
-          className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
+          className={`h-9 rounded px-4 text-xs font-medium transition ${
             tab === 'single'
-              ? 'bg-white text-gray-900 shadow-sm'
+              ? 'bg-orange-600 text-white shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -264,9 +265,9 @@ export default function EmailVerifyClient() {
         <button
           type="button"
           onClick={() => setTab('bulk')}
-          className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
+          className={`h-9 rounded px-4 text-xs font-medium transition ${
             tab === 'bulk'
-              ? 'bg-white text-gray-900 shadow-sm'
+              ? 'bg-orange-600 text-white shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -326,7 +327,7 @@ function SinglePanel() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="someone@example.com"
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+          className="h-9 flex-1 rounded border border-gray-300 px-3 text-sm focus:border-orange-600 focus:outline-none focus:ring-1 focus:ring-orange-600"
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}
@@ -334,7 +335,7 @@ function SinglePanel() {
         <button
           type="submit"
           disabled={loading || !email.trim()}
-          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap"
+          className="mailing-primary-action"
         >
           {loading ? 'Checking…' : 'Check email'}
         </button>
@@ -353,7 +354,7 @@ function SinglePanel() {
 
 function SingleResultCard({ result }: { result: SingleResponse }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5 space-y-4 shadow-sm">
+    <div className="space-y-4 rounded border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-center gap-3">
         <span
           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${verdictClasses(result.verdict)}`}
@@ -442,6 +443,8 @@ function BulkPanel() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<BulkResponse | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const parsedEmails = useMemo(() => extractEmails(text), [text]);
@@ -471,6 +474,7 @@ function BulkPanel() {
         setError(body?.error || `Request failed (${res.status})`);
       } else {
         setResponse(body as BulkResponse);
+        setPage(1);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error');
@@ -484,6 +488,10 @@ function BulkPanel() {
     const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
     downloadCsv(`email-verify-${stamp}.csv`, rowsToCsv(response.results));
   }
+
+  const pageRows = response
+    ? response.results.slice((page - 1) * pageSize, page * pageSize)
+    : [];
 
   return (
     <div className="space-y-6">
@@ -531,7 +539,7 @@ function BulkPanel() {
             type="button"
             onClick={onVerify}
             disabled={loading || parsedEmails.length === 0 || overLimit}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap"
+            className="mailing-primary-action"
           >
             {loading ? 'Verifying…' : `Verify ${parsedEmails.length || ''}`.trim()}
           </button>
@@ -546,7 +554,7 @@ function BulkPanel() {
 
       {response && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="mailing-summary-strip grid grid-cols-3">
             <BulkKpi label="Valid" value={response.summary.valid} tone="emerald" />
             <BulkKpi label="Pending" value={response.summary.pending} tone="amber" />
             <BulkKpi label="Invalid" value={response.summary.invalid} tone="red" />
@@ -567,7 +575,7 @@ function BulkPanel() {
 
           {/* mobile card list */}
           <ul className="sm:hidden divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white overflow-hidden">
-            {response.results.map((r, i) => (
+              {pageRows.map((r, i) => (
               <li key={`m-${r.input}-${i}`} className="p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
@@ -592,7 +600,7 @@ function BulkPanel() {
             ))}
           </ul>
           <div className="hidden sm:block overflow-x-auto rounded-lg border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <table className="min-w-[900px] divide-y divide-gray-200 text-xs">
               <thead className="bg-gray-50">
                 <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
                   <th className="px-3 py-2 font-medium">Email</th>
@@ -603,7 +611,7 @@ function BulkPanel() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
-                {response.results.map((r, i) => (
+                {pageRows.map((r, i) => (
                   <tr key={`${r.input}-${i}`} className="align-top">
                     <td className="px-3 py-2 font-mono text-xs text-gray-900 break-all">
                       {r.input}
@@ -632,6 +640,15 @@ function BulkPanel() {
               </tbody>
             </table>
           </div>
+          <Pager
+            currentPage={page}
+            totalItems={response.total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+            summary={`Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, response.total)} of ${response.total}`}
+          />
         </div>
       )}
     </div>

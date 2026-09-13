@@ -71,6 +71,8 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
 
 export default function CrmClient({ initialRows, renderedAt }: Props) {
   const [rows, setRows] = useState(initialRows);
+  const [pageSize, setPageSize] = useState(25);
+  const [page, setPage] = useState(1);
   // Filters / view / sort are URL-backed so refresh restores them.
   // Defaults are stripped from the URL to keep it clean.
   const [query, setQuery] = useUrlState<string>('q', '', {
@@ -284,12 +286,16 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
     }
   }, [flash, lockingIds]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-5">
+    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
       {/* Header ─────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
+          <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
             Admin · Partners
           </div>
           <PageTitle size="md">
@@ -305,14 +311,14 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
           <button
             type="button"
             onClick={() => setComposerOpen(true)}
-            className="px-4 py-2 rounded-md bg-purple-700 text-white text-sm hover:bg-purple-800"
+            className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700"
           >
             Compose email
           </button>
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
+            className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700"
           >
             New partner
           </button>
@@ -339,7 +345,7 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
           aria-selected={activeMarket === 'all'}
           onClick={() => handleMarketTab('all')}
           className={
-            'px-4 py-2 rounded-md text-sm font-medium border transition-colors ' +
+            'h-9 px-3 rounded text-sm font-medium border transition-colors ' +
             (activeMarket === 'all'
               ? 'bg-gray-900 text-white border-gray-900'
               : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50')
@@ -366,7 +372,7 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
               onClick={() => handleMarketTab(market)}
               data-testid={`market-filter-${market}`}
               className={
-                'px-4 py-2 rounded-md text-sm font-medium border transition-colors ' +
+                'h-9 px-3 rounded text-sm font-medium border transition-colors ' +
                 (isActive
                   ? 'bg-gray-900 text-white border-gray-900'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50') +
@@ -395,11 +401,11 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
       <div className="mt-4 flex gap-2 border-b border-gray-200" role="tablist" aria-label="CRM view">
         <button type="button" role="tab" aria-selected={view === 'audience'}
           onClick={() => setView('audience')}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'audience' ? 'border-purple-700 text-purple-800' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'audience' ? 'border-orange-600 text-orange-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >Audience</button>
         <button type="button" role="tab" aria-selected={view === 'sent'}
           onClick={() => setView('sent')}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'sent' ? 'border-purple-700 text-purple-800' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'sent' ? 'border-orange-600 text-orange-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >Sent</button>
       </div>
 
@@ -414,14 +420,14 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search partners"
             data-testid="input-partner-search"
-            className="min-h-11 flex-1 px-3 py-2 rounded-md border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="h-9 flex-1 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
           />
           <label htmlFor="partner-sort" className="sr-only">Sort partners</label>
           <select
             id="partner-sort"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="min-h-11 px-3 py-2 rounded-md border border-gray-300 bg-white text-sm sm:w-auto"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 sm:w-auto"
             aria-label="Sort partners"
             data-testid="select-partner-sort"
           >
@@ -461,7 +467,8 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
       </div>
 
       {/* List */}
-      <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
+      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <div className="min-w-[900px]">
         <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
           <div className="col-span-4">Contact</div>
           <div className="col-span-1">Status</div>
@@ -477,7 +484,7 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {filtered.map((r) => (
+            {pageRows.map((r) => (
               <CrmRow
                 key={r.id}
                 row={r}
@@ -499,7 +506,32 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
             ))}
           </div>
         )}
+        </div>
       </div>
+      {filtered.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-600">
+          <div>
+            Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)} of {filtered.length}
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2">
+              Rows
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                className="h-9 rounded border border-gray-300 bg-white px-2 text-xs"
+              >
+                {[25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+              </select>
+            </label>
+            <button type="button" disabled={currentPage === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="h-9 rounded border border-gray-300 bg-white px-3 disabled:opacity-40">Previous</button>
+            <span className="tabular-nums">Page {currentPage} of {totalPages}</span>
+            <button type="button" disabled={currentPage === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="h-9 rounded border border-gray-300 bg-white px-3 disabled:opacity-40">Next</button>
+          </div>
+        </div>
+      )}
 
       {/* Edit drawer */}
       {editing && (
@@ -652,7 +684,7 @@ function CrmRow({
       <button
         type="button"
         onClick={onOpen}
-        className="px-2 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
+        className="rounded bg-orange-600 px-2 py-1 text-xs font-medium text-white hover:bg-orange-700"
       >
         Edit
       </button>
@@ -662,7 +694,7 @@ function CrmRow({
   return (
     <>
       {/* Desktop grid ≥ sm — unchanged layout */}
-      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-blue-50/40 transition">
+      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2.5 text-xs items-center hover:bg-orange-50/40 transition">
         <div className="col-span-4">{contactCell}</div>
         <div className="col-span-1">
           <StatusBadge status={row.status ?? 'prospect'} />
@@ -742,7 +774,7 @@ function StatusChip({
   label: string; active: boolean; count: number; tone?: string; onClick: () => void;
 }) {
   const base = active
-    ? 'bg-blue-600 text-white border-blue-600'
+    ? 'bg-orange-600 text-white border-orange-600'
     : tone || 'bg-white text-gray-700 border-gray-300';
   return (
     <button
@@ -1261,7 +1293,7 @@ function EditDrawer({
                         type="button"
                         onClick={addIndustry}
                         disabled={industryBusy || !newIndustryLabel.trim()}
-                        className="shrink-0 rounded-md bg-purple-700 px-3 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-40"
+                        className="shrink-0 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-40"
                       >
                         Add
                       </button>
@@ -1297,7 +1329,7 @@ function EditDrawer({
                         type="checkbox"
                         checked={publications.includes(p.id)}
                         onChange={() => togglePublication(p.id)}
-                        className="h-4 w-4 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 rounded-md border-gray-300 text-orange-600 focus:ring-orange-500"
                       />
                       <span>{p.label}</span>
                     </label>
@@ -1346,7 +1378,7 @@ function EditDrawer({
               </div>
               <Link
                 href={`/admin/reports?tab=advertisers&advertiserId=${row.id}`}
-                className="inline-block text-xs text-blue-600 hover:underline"
+                className="inline-block text-xs text-orange-600 hover:underline"
               >
                 Open analytics dashboard
               </Link>
@@ -1518,7 +1550,7 @@ function EditDrawer({
                     href={submissionUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs text-blue-600 underline"
+                    className="text-xs text-orange-600 underline"
                   >
                     Open form in new tab ↗
                   </a>
@@ -1593,7 +1625,7 @@ function EditDrawer({
                 className={`px-4 py-2 rounded-md text-white text-sm disabled:opacity-50 whitespace-nowrap ${
                   deleteRequested
                     ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-orange-600 hover:bg-orange-700'
                 }`}
               >
                 {deleting ? 'Deleting...' : saving ? 'Saving...' : deleteRequested ? 'Save & delete' : 'Save changes'}
@@ -1606,7 +1638,7 @@ function EditDrawer({
   );
 }
 
-const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -1686,7 +1718,7 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
       {!hasAgreement && !hasAnyBilling ? (
         <p className="text-xs text-gray-500 italic">
           No agreement linked yet. Create or sign one from{' '}
-          <a href="/admin/agreements" className="text-blue-600 hover:underline">/admin/agreements</a>{' '}
+          <a href="/admin/agreements" className="text-orange-600 hover:underline">/admin/agreements</a>{' '}
           and it will appear here automatically.
         </p>
       ) : (
@@ -1695,9 +1727,9 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
             Read-only mirror of the partner&rsquo;s most recent active-ish agreement.
             To edit, open{' '}
             {row.current_agreement_id ? (
-              <a href={`/admin/agreements?id=${row.current_agreement_id}`} className="text-blue-600 hover:underline">/admin/agreements</a>
+              <a href={`/admin/agreements?id=${row.current_agreement_id}`} className="text-orange-600 hover:underline">/admin/agreements</a>
             ) : (
-              <a href="/admin/agreements" className="text-blue-600 hover:underline">/admin/agreements</a>
+              <a href="/admin/agreements" className="text-orange-600 hover:underline">/admin/agreements</a>
             )}
             {' '}&mdash; saves there flow back here.
           </p>
@@ -1839,7 +1871,7 @@ function CreateAdvertiserModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="e.g. La Cima"
               disabled={saving}
               autoFocus
@@ -1855,7 +1887,7 @@ function CreateAdvertiserModal({
                     checked={publications.includes(opt.id)}
                     onChange={() => togglePublication(opt.id)}
                     disabled={saving}
-                    className="h-4 w-4 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded-md border-gray-300 text-orange-600 focus:ring-orange-500"
                   />
                   <span>{opt.label}</span>
                 </label>
@@ -1869,7 +1901,7 @@ function CreateAdvertiserModal({
               value={status}
               onChange={(e) => setStatus(e.target.value as AdvertiserStatus)}
               disabled={saving}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
               <option value="prospect">Prospect</option>
               <option value="advertiser">Partner</option>
@@ -1882,7 +1914,7 @@ function CreateAdvertiserModal({
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="contact@example.com"
               disabled={saving}
             />
@@ -1898,7 +1930,7 @@ function CreateAdvertiserModal({
           </button>
           <button
             onClick={save}
-            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 text-sm whitespace-nowrap"
+            className="px-4 py-2 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 text-sm whitespace-nowrap"
             disabled={saving || !name.trim()}
           >
             {saving ? 'Creating...' : 'Create'}

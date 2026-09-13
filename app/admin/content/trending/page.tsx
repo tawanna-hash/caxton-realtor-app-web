@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 
 export default function AdminTrendingPage() {
   return (
-    <div className="p-6">
+    <div className="content-admin-shell">
       <div className="mb-6">
         <PageTitle size="md">Trending</PageTitle>
         <p className="text-sm text-gray-700 mt-1">

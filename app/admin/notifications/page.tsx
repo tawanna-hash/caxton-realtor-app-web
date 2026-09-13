@@ -79,7 +79,7 @@ export default async function AdminNotificationsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
+    <main className="content-admin-shell">
       <header className="mb-8 sm:mb-10">
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Admin · Content

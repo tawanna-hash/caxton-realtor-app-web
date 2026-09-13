@@ -221,16 +221,16 @@ export default function AdvertiserReportDrawer({
               <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">
                 Reporting window
               </label>
-              <div className="inline-flex rounded-md border border-gray-300 overflow-hidden">
+              <div className="inline-flex h-9 overflow-hidden rounded border border-gray-300">
                 {DAYS_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => setDays(opt.value)}
                     className={[
-                      'px-3 py-1.5 text-sm border-r border-gray-300 last:border-r-0 transition-colors',
+                      'px-3 text-sm border-r border-gray-300 last:border-r-0 transition-colors',
                       days === opt.value
-                        ? 'bg-brand-700 text-white'
+                        ? 'bg-orange-600 text-white'
                         : 'bg-white text-gray-700 hover:bg-gray-50',
                     ].join(' ')}
                   >
@@ -323,7 +323,7 @@ export default function AdvertiserReportDrawer({
                   type="button"
                   onClick={handleSend}
                   disabled={sending || !canSend || loadingPreview}
-                  className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-40 whitespace-nowrap"
+                className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 disabled:opacity-40"
                 >
                   {sending ? 'Sending…' : 'Send to this partner'}
                 </button>

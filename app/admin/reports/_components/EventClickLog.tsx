@@ -11,6 +11,7 @@
 // clicked and when," not "which person clicked."
 
 import { useEffect, useState } from 'react';
+import InsightsPagination from '@/components/admin/InsightsPagination';
 
 type ClickRow = {
   occurred_at: string;
@@ -45,6 +46,8 @@ export default function EventClickLog({ eventId, days }: { eventId: string; days
   const [data, setData] = useState<ClicksResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     if (!eventId) return;
@@ -76,9 +79,14 @@ export default function EventClickLog({ eventId, days }: { eventId: string; days
 
   if (!eventId) return null;
 
+  const clicks = data?.clicks ?? [];
+  const totalPages = Math.max(1, Math.ceil(clicks.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = clicks.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
-    <div className="bg-white border border-gray-200 rounded-md p-6">
-      <div className="flex items-start justify-between gap-4 mb-1 flex-wrap">
+    <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 px-4 py-3">
         <div>
           <h2 className="text-base font-semibold text-gray-900">Who clicked (internal only)</h2>
           <p className="text-xs text-gray-500 mt-1">
@@ -105,8 +113,8 @@ export default function EventClickLog({ eventId, days }: { eventId: string; days
       )}
 
       {!loading && !error && data?.clicks && data.clicks.length > 0 && (
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] text-xs">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200">
                 <th className="pb-2 pr-4 font-medium">Time</th>
@@ -116,8 +124,8 @@ export default function EventClickLog({ eventId, days }: { eventId: string; days
               </tr>
             </thead>
             <tbody>
-              {data.clicks.map((c, i) => (
-                <tr key={`${c.visitor_id}-${c.occurred_at}-${i}`} className="border-b border-gray-100 last:border-0">
+              {pageRows.map((c, i) => (
+                <tr key={`${c.visitor_id}-${c.occurred_at}-${i}`} className="border-b border-gray-100 last:border-0 hover:bg-orange-50/40">
                   <td className="py-2 pr-4 text-gray-900 whitespace-nowrap">
                     {new Date(c.occurred_at).toLocaleString()}
                   </td>
@@ -132,6 +140,7 @@ export default function EventClickLog({ eventId, days }: { eventId: string; days
           </table>
         </div>
       )}
-    </div>
+      {clicks.length > 25 && <InsightsPagination page={currentPage} pageSize={pageSize} total={clicks.length} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />}
+    </section>
   );
 }

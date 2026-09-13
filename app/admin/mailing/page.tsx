@@ -130,11 +130,11 @@ export default async function MailingHubPage() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mailing-admin-page">
       <MailingBreadcrumb trail={[{ label: 'Mailing' }]} />
       {/* Header */}
       <div>
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
+        <p className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
           Audience
         </p>
         <PageTitle size="md">Mailing List HUB</PageTitle>
@@ -212,7 +212,7 @@ export default async function MailingHubPage() {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
+      <div className="mailing-summary-strip grid grid-cols-2 lg:grid-cols-6">
         <KpiCard label="Segments total"      value={counts.total}                       sub="all mailing segments" />
         <KpiCard label="RealtyLine ATX Print" value={counts['realtyline-atx-print']}    sub="partners + REALTORS" accent="#301D5D" />
         <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="partners + non-partners + manual" accent="#c2410c" />
@@ -236,11 +236,11 @@ export default async function MailingHubPage() {
             <Link
               key={s.slug}
               href={`/admin/mailing/${s.slug}`}
-              className="group block rounded-md border border-gray-200 bg-white p-5 hover:shadow-sm transition"
+              className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-orange-300 hover:bg-orange-50/30"
             >
               <div className="flex items-start justify-between mb-3">
                 <div
-                  className="h-10 w-10 rounded-md flex items-center justify-center text-sm font-semibold"
+                  className="flex h-8 w-8 items-center justify-center rounded text-xs font-semibold"
                   style={{ backgroundColor: `${s.accent}15`, color: s.accent }}
                 >
                   {s.label.charAt(0)}
@@ -252,9 +252,9 @@ export default async function MailingHubPage() {
                   {c.toLocaleString()}
                 </span>
               </div>
-              <div className="font-serif text-lg text-gray-900">{s.label}</div>
-              <p className="mt-1 text-sm text-gray-600">{s.caption}</p>
-              <div className="mt-3 text-xs font-medium text-gray-700 group-hover:text-gray-900">
+              <div className="text-sm font-semibold text-gray-900">{s.label}</div>
+              <p className="mt-1 text-xs leading-5 text-gray-600">{s.caption}</p>
+              <div className="mt-2 text-xs font-medium text-orange-700">
                 Open list
               </div>
             </Link>
@@ -262,22 +262,22 @@ export default async function MailingHubPage() {
         };
 
         return (
-          <div className="space-y-8">
+          <div className="space-y-5">
             <div>
-              <div className="flex items-baseline gap-3 mb-3">
-                <h2 className="font-serif text-xl text-gray-900">RealtyLine Austin</h2>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Austin</h2>
                 <span className="text-xs uppercase tracking-[0.15em] text-gray-500">ABoR-anchored segments</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {austinSegments.map(renderTile)}
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-3 mb-3">
-                <h2 className="font-serif text-xl text-gray-900">Newsline San Antonio</h2>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">Newsline San Antonio</h2>
                 <span className="text-xs uppercase tracking-[0.15em] text-gray-500">SABOR-anchored segments</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {sanAntonioSegments.map(renderTile)}
               </div>
             </div>
@@ -292,54 +292,54 @@ export default async function MailingHubPage() {
           <Link
             key={t.href}
             href={t.href}
-            className="group block rounded-md border border-gray-200 bg-white p-5 hover:shadow-sm transition"
+            className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-orange-300 hover:bg-orange-50/30"
           >
             <div className="flex items-start justify-between mb-3">
               <div
-                className="h-10 w-10 rounded-md flex items-center justify-center text-sm font-semibold"
+                className="flex h-8 w-8 items-center justify-center rounded text-xs font-semibold"
                 style={{ backgroundColor: `${t.accent}15`, color: t.accent }}
               >
                 {t.initial}
               </div>
             </div>
-            <div className="font-serif text-lg text-gray-900">{t.label}</div>
-            <p className="mt-1 text-sm text-gray-600">{t.caption}</p>
-            <div className="mt-3 text-xs font-medium text-gray-700 group-hover:text-gray-900">
+            <div className="text-sm font-semibold text-gray-900">{t.label}</div>
+            <p className="mt-1 text-xs leading-5 text-gray-600">{t.caption}</p>
+            <div className="mt-2 text-xs font-medium text-orange-700">
               Open page
             </div>
           </Link>
         );
         return (
-          <div className="space-y-8">
+          <div className="space-y-5">
             <div>
-              <div className="flex items-baseline gap-3 mb-3">
-                <h2 className="font-serif text-xl text-gray-900">RealtyLine Austin audience pages</h2>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Austin audience pages</h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {austinAudienceTiles.map(renderAudienceTile)}
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-3 mb-3">
-                <h2 className="font-serif text-xl text-gray-900">Newsline San Antonio audience pages</h2>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">Newsline San Antonio audience pages</h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {sanAntonioAudienceTiles.map(renderAudienceTile)}
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-3 mb-3">
-                <h2 className="font-serif text-xl text-gray-900">RealtyLine Houston audience pages</h2>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Houston audience pages</h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {houstonAudienceTiles.map(renderAudienceTile)}
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-3 mb-3">
-                <h2 className="font-serif text-xl text-gray-900">RealtyLine Dallas/Ft. Worth audience pages</h2>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Dallas/Ft. Worth audience pages</h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {dallasAudienceTiles.map(renderAudienceTile)}
               </div>
             </div>

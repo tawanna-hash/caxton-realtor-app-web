@@ -29,7 +29,7 @@ function MiniBars({ series }: { series: Array<{ date: string; count: number }> }
         return (
           <div
             key={s.date}
-            className="flex-1 bg-brand-700/80 rounded-md"
+            className="flex-1 rounded-sm bg-orange-600/80"
             style={{ height: `${Math.max(2, pct)}%` }}
             title={`${s.date}: ${s.count}`}
           />
@@ -82,7 +82,7 @@ export function NewsletterMetrics({ days }: { days: number }) {
         </h2>
         <a
           href="/admin/newsletter"
-          className="text-xs uppercase tracking-wider text-brand-700 underline"
+          className="text-xs font-medium text-orange-700 hover:underline"
         >
           View list &rarr;
         </a>
@@ -100,7 +100,7 @@ export function NewsletterMetrics({ days }: { days: number }) {
 
       {stats && (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-y-3 bg-white md:grid-cols-4">
             <KPITile label="Total subscribers" value={stats.totals.total} />
             <KPITile label="Active" value={stats.totals.active} />
             <KPITile
@@ -115,7 +115,7 @@ export function NewsletterMetrics({ days }: { days: number }) {
             />
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-md p-4">
+          <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
             <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
               Daily signups &middot; last {stats.days} days
             </p>
@@ -127,8 +127,8 @@ export function NewsletterMetrics({ days }: { days: number }) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white border border-gray-200 rounded-md p-4">
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
+            <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+              <p className="border-b border-gray-200 px-4 py-3 text-xs font-semibold text-gray-700">
                 By source
               </p>
               <MetricList
@@ -142,8 +142,8 @@ export function NewsletterMetrics({ days }: { days: number }) {
               />
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-md p-4">
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
+            <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+              <p className="border-b border-gray-200 px-4 py-3 text-xs font-semibold text-gray-700">
                 By publication
               </p>
               <MetricList

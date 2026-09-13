@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
+import { Pager, PAGE_SIZE_OPTIONS } from '@/app/admin/_components/Pager';
 
 const ACCENT = '#301D5D';
 
@@ -66,6 +67,8 @@ export default function TagsClient() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [creating, setCreating] = useState<string>('');
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -94,6 +97,7 @@ export default function TagsClient() {
     () => rows.filter((r) => r.tag.startsWith(PROVENANCE_PREFIX)),
     [rows],
   );
+  const pageRows = visibleRows.slice((page - 1) * pageSize, page * pageSize);
 
   async function doRename(from: string, to: string) {
     const trimmedTo = to.trim();
@@ -153,12 +157,15 @@ export default function TagsClient() {
   }
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
+    <div className="mailing-admin-page">
       <MailingBreadcrumb trail={[{ label: 'Mailing List', href: '/admin/mailing' }, { label: 'Manage Tags' }]} />
-      <PageTitle size="md">Tag Library</PageTitle>
-      <p className="-mt-2 text-sm text-gray-600">
-        Rename, merge, or delete tags across the entire mailing system.
-      </p>
+      <header>
+        <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Mailing</div>
+        <PageTitle size="md">Tag Library</PageTitle>
+        <p className="mt-1 text-sm text-gray-600">
+          Rename, merge, or delete tags across the entire mailing system.
+        </p>
+      </header>
 
       <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-600">
         <p>
@@ -203,7 +210,7 @@ export default function TagsClient() {
           {visibleRows.length === 0 && !loading && (
             <div className="px-4 py-6 text-center text-sm text-gray-500">No tags yet.</div>
           )}
-          {visibleRows.map((r) => {
+          {pageRows.map((r) => {
             const isRenaming = renaming?.from === r.tag;
             const isBusy = busyTag === r.tag;
             return (
@@ -224,7 +231,7 @@ export default function TagsClient() {
                     <button
                       onClick={() => void doRename(r.tag, renaming.to)}
                       disabled={isBusy}
-                      className="rounded bg-brand-700 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                      className="rounded bg-orange-600 px-2 py-1 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
                     >
                       {isBusy ? 'Saving…' : 'Save'}
                     </button>
@@ -290,7 +297,7 @@ export default function TagsClient() {
               {visibleRows.length === 0 && !loading && (
                 <tr><td className="px-4 py-6 text-center text-gray-500" colSpan={6}>No tags yet.</td></tr>
               )}
-              {visibleRows.map((r) => {
+              {pageRows.map((r) => {
                 const isRenaming = renaming?.from === r.tag;
                 const isBusy = busyTag === r.tag;
                 return (
@@ -312,7 +319,7 @@ export default function TagsClient() {
                           <button
                             onClick={() => void doRename(r.tag, renaming.to)}
                             disabled={isBusy}
-                            className="rounded bg-brand-700 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                            className="rounded bg-orange-600 px-2 py-1 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
                           >
                             {isBusy ? 'Saving…' : 'Save'}
                           </button>
@@ -359,6 +366,17 @@ export default function TagsClient() {
               })}
             </tbody>
           </table>
+        </div>
+        <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
+          <Pager
+            currentPage={page}
+            totalItems={visibleRows.length}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+            summary={`${visibleRows.length.toLocaleString()} tags`}
+          />
         </div>
       </div>
 

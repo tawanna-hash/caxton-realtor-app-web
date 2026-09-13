@@ -63,42 +63,43 @@ export default function AdminMetricsPage() {
     : 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="mb-8">
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
-          Admin
+    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+        <p className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
+          Admin · Insights
         </p>
         <PageTitle size="md">
           Click Metrics
         </PageTitle>
-        <p className="text-sm text-gray-600 font-light mt-2 max-w-2xl">
+        <p className="mt-1 max-w-2xl text-sm text-gray-600">
           Engagement on builder/developer surfaces. Filter pills,
           builder chips, inventory cards, and per-builder tabs.
         </p>
-      </div>
-
-      <div className="mb-6 flex items-center gap-4">
+        </div>
+      <div className="flex items-center gap-3">
         <DateRangePicker value={days} onChange={setDays} disabled={loading} />
         {loading && (
           <span className="text-xs text-gray-500">Loading…</span>
         )}
       </div>
+      </header>
 
       {error && (
-        <div className="border border-red-300 bg-red-50 px-4 py-3 rounded-md mb-6">
+        <div role="alert" className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
           <p className="text-sm text-red-900">{error}</p>
         </div>
       )}
 
       {!metrics && !error && (
-        <div className="text-sm text-gray-500">Loading metrics…</div>
+        <div className="rounded border border-gray-200 bg-white p-8 text-sm text-gray-500">Loading metrics…</div>
       )}
 
       {metrics && (
-        <div className="space-y-10">
+        <div className="space-y-6">
           {metrics.kpi_summary && (
             <section>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-y-3 bg-white md:grid-cols-4">
                 <KPITile
                   label="Today"
                   value={metrics.kpi_summary.today}
@@ -134,7 +135,7 @@ export default function AdminMetricsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Last 7 days · {grandTotalLast7.toLocaleString()} total clicks
             </h2>
-            <div className="bg-white border border-gray-200 rounded-md divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
               {metrics.event_totals.length === 0 ? (
                 <div className="px-4 py-6 text-sm text-gray-500 text-center">
                   No events yet. PostHog may take a few minutes to ingest.
@@ -153,7 +154,7 @@ export default function AdminMetricsPage() {
                         </span>
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-md overflow-hidden">
-                        <div className="h-full bg-brand-700" style={{ width: `${pct}%` }} />
+                      <div className="h-full bg-orange-600" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   );
@@ -166,7 +167,7 @@ export default function AdminMetricsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Show filter usage · last 7 days
             </h2>
-            <div className="bg-white border border-gray-200 rounded-md p-4">
+            <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
               <MetricList
                 rows={metrics.filter_usage}
                 keyFn={(f) => f.filter}
@@ -183,7 +184,7 @@ export default function AdminMetricsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Top builders · last 30 days
             </h2>
-            <div className="bg-white border border-gray-200 rounded-md p-4">
+            <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
               <MetricList
                 rows={metrics.top_builders}
                 keyFn={(b, i) => `${b.builder_name}-${b.source_page}-${i}`}
@@ -201,7 +202,7 @@ export default function AdminMetricsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Top inventory cards · last 30 days
             </h2>
-            <div className="bg-white border border-gray-200 rounded-md p-4">
+            <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
               <MetricList
                 rows={metrics.top_inventory}
                 keyFn={(row, i) => `${row.row_id}-${row.destination}-${i}`}
@@ -221,7 +222,7 @@ export default function AdminMetricsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Pill engagement · last {days} days
             </h2>
-            <div className="bg-white border border-gray-200 rounded-md p-4">
+            <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
               <MetricList
                 rows={metrics.pill_engagement ?? []}
                 keyFn={(row, i) => `${row.surface}-${row.action}-${i}`}
@@ -239,7 +240,7 @@ export default function AdminMetricsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Share channel breakdown · last {days} days
             </h2>
-            <div className="bg-white border border-gray-200 rounded-md p-4">
+            <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
               <MetricList
                 rows={metrics.share_breakdown ?? []}
                 keyFn={(row, i) => `${row.surface}-${row.channel}-${i}`}
@@ -257,7 +258,7 @@ export default function AdminMetricsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Listing inquiries · last {days} days
             </h2>
-            <div className="bg-white border border-gray-200 rounded-md p-4">
+            <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
               <MetricList
                 rows={metrics.listing_inquiries ?? []}
                 keyFn={(row, i) => `${row.builder_name}-${i}`}

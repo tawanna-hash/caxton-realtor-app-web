@@ -102,7 +102,7 @@ function AgreementRowLayout({ row: r, onOpen, onEmail }: {
   return (
     <>
       {/* Desktop */}
-      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-blue-50/40">
+      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2.5 text-xs items-center hover:bg-orange-50/40">
         <div className="col-span-3">{advertiserCell}</div>
         <button onClick={onOpen} className="col-span-2 text-left text-sm text-gray-700">
           <div>{typeLabel}</div>
@@ -147,11 +147,12 @@ export function AgreementList({
   onEmail?: (r: AgreementWithAdvertiser) => void;
 }) {
   if (rows.length === 0) {
-    return <div className="rounded-md border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">No agreements yet.</div>;
+    return <div className="rounded border border-gray-200 bg-white px-6 py-12 text-center"><div className="text-sm font-medium text-gray-900">No agreements yet</div><p className="mt-1 text-xs text-gray-500">Create an agreement or adjust the current filters.</p></div>;
   }
   const buckets = groupRows(rows);
   return (
-    <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
+    <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="min-w-[900px]">
       {/* Column header bar — shown once at the top, not per bucket */}
       <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
         <div className="col-span-3">Partner</div>
@@ -184,6 +185,7 @@ export function AgreementList({
           </div>
         </div>
       ))}
+      </div>
     </div>
   );
 }

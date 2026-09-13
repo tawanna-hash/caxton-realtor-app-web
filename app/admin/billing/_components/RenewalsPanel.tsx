@@ -29,12 +29,25 @@ export function RenewalsPanel({
 }) {
   const [noteId, setNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
+  const [pageSize, setPageSize] = useState(25);
+  const [page, setPage] = useState(1);
 
   const subTabs: { key: 'expiring' | 'all_renewals' | 'reminders'; label: string; count: number }[] = [
     { key: 'expiring',      label: 'Expiring Soon',    count: expiringSoon.length },
     { key: 'all_renewals',  label: 'All Renewals',     count: allRenewals.length },
     { key: 'reminders',     label: 'Renewal Reminders',count: reminders.length },
   ];
+  const activeCount = activeTab === 'expiring'
+    ? expiringSoon.length
+    : activeTab === 'all_renewals'
+      ? allRenewals.length
+      : reminders.length;
+  const totalPages = Math.max(1, Math.ceil(activeCount / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const start = (currentPage - 1) * pageSize;
+  const expiringPage = expiringSoon.slice(start, start + pageSize);
+  const renewalsPage = allRenewals.slice(start, start + pageSize);
+  const remindersPage = reminders.slice(start, start + pageSize);
 
   return (
     <div className="space-y-3">
@@ -42,9 +55,9 @@ export function RenewalsPanel({
         {subTabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => onTabChange(t.key)}
+            onClick={() => { onTabChange(t.key); setPage(1); }}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
-              activeTab === t.key ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+              activeTab === t.key ? 'border-orange-600 text-orange-700' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             {t.label} <span className="ml-1 text-xs text-gray-400">({t.count})</span>
@@ -53,7 +66,8 @@ export function RenewalsPanel({
       </div>
 
       {activeTab === 'expiring' && (
-        <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
+        <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="min-w-[1000px]">
           <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
             <div className="col-span-2">Client</div>
             <div className="col-span-2">Email</div>
@@ -68,12 +82,12 @@ export function RenewalsPanel({
           {expiringSoon.length === 0
             ? <div className="p-8 text-center text-sm text-gray-500">No agreements expiring soon.</div>
             : <div className="divide-y divide-gray-100">
-              {expiringSoon.map((r) => {
+              {expiringPage.map((r) => {
                 const days = getDaysUntil(r.exp_date ?? r.end_date);
                 return (
-                  <div key={r.id} className="hover:bg-blue-50/30">
+                  <div key={r.id} className="hover:bg-orange-50/30">
                     {/* Desktop */}
-                    <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-3 items-center">
+                    <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2.5 items-center">
                       <button onClick={() => onOpen(r)} className="col-span-2 text-left text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</button>
                       <div className="col-span-2 text-xs text-gray-600 truncate">{r.advertiser_email ?? '—'}</div>
                       <div className="col-span-2 text-xs text-gray-600 truncate">{r.company_name ?? '—'}</div>
@@ -89,7 +103,7 @@ export function RenewalsPanel({
                           onClick={() => onSendRenewal?.(r)}
                         >Email</button>
                         <button
-                          className="px-2 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                          className="rounded bg-orange-600 px-2 py-1 text-xs text-white hover:bg-orange-700"
                           onClick={() => onRenew(r)}
                         >Renew</button>
                       </div>
@@ -118,7 +132,7 @@ export function RenewalsPanel({
                           onClick={() => onSendRenewal?.(r)}
                         >Email</button>
                         <button
-                          className="px-2 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                          className="rounded bg-orange-600 px-2 py-1 text-xs text-white hover:bg-orange-700"
                           onClick={() => onRenew(r)}
                         >Renew</button>
                       </div>
@@ -128,11 +142,13 @@ export function RenewalsPanel({
               })}
             </div>
           }
+          </div>
         </div>
       )}
 
       {activeTab === 'all_renewals' && (
-        <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
+        <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="min-w-[900px]">
           <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
             <div className="col-span-2">Client</div>
             <div className="col-span-2">Email</div>
@@ -145,10 +161,10 @@ export function RenewalsPanel({
           {allRenewals.length === 0
             ? <div className="p-8 text-center text-sm text-gray-500">No renewals yet.</div>
             : <div className="divide-y divide-gray-100">
-              {allRenewals.map((r) => (
-                <button key={r.id} onClick={() => onOpen(r)} className="w-full text-left hover:bg-blue-50/30 block">
+              {renewalsPage.map((r) => (
+                <button key={r.id} onClick={() => onOpen(r)} className="block w-full text-left hover:bg-orange-50/30">
                   {/* Desktop */}
-                  <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-3 items-center">
+                  <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2.5 items-center">
                     <div className="col-span-2 text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</div>
                     <div className="col-span-2 text-xs text-gray-600 truncate">{r.advertiser_email ?? '—'}</div>
                     <div className="col-span-2 text-xs text-gray-600 truncate">{r.company_name ?? '—'}</div>
@@ -178,11 +194,13 @@ export function RenewalsPanel({
               ))}
             </div>
           }
+          </div>
         </div>
       )}
 
       {activeTab === 'reminders' && (
-        <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
+        <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="min-w-[950px]">
           <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
             <div className="col-span-2">Client</div>
             <div className="col-span-2">Company</div>
@@ -196,7 +214,7 @@ export function RenewalsPanel({
           {reminders.length === 0
             ? <div className="p-8 text-center text-sm text-gray-500">No renewal reminders yet.</div>
             : <div className="divide-y divide-gray-100">
-              {reminders.map((r) => {
+              {remindersPage.map((r) => {
                 const daysLeft = getDaysUntil(r.exp_date);
                 const remindDays = getDaysUntil(r.remind_date);
                 const remindUrgency = remindDays !== null && remindDays <= 0
@@ -205,7 +223,7 @@ export function RenewalsPanel({
                     ? 'text-amber-600'
                     : 'text-gray-600';
                 return (
-                  <div key={r.id} className="flex flex-col space-y-2 sm:space-y-0 sm:grid sm:grid-cols-12 sm:gap-2 px-4 py-3 sm:items-start hover:bg-gray-50/40">
+                  <div key={r.id} className="flex flex-col space-y-2 px-4 py-2.5 hover:bg-gray-50/40 sm:grid sm:grid-cols-12 sm:items-start sm:gap-2 sm:space-y-0">
                     <div className="sm:col-span-2 text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}{r.company_name && <span className="sm:hidden text-xs text-gray-500 font-normal"> · {r.company_name}</span>}</div>
                     <div className="hidden sm:block sm:col-span-2 text-xs text-gray-600 truncate">{r.company_name ?? '—'}</div>
                     <div className="sm:hidden">
@@ -239,7 +257,7 @@ export function RenewalsPanel({
                           />
                           <div className="flex gap-1 justify-end">
                             <button className="text-xs px-2 py-0.5 rounded-md border border-gray-300 text-gray-600" onClick={() => setNoteId(null)}>Cancel</button>
-                            <button className="text-xs px-2 py-0.5 rounded-md bg-blue-600 text-white" onClick={async () => {
+                            <button className="rounded bg-orange-600 px-2 py-0.5 text-xs text-white" onClick={async () => {
                               await onReminderAction(r.id, { note: noteText });
                               setNoteId(null); setNoteText('');
                             }}>Save</button>
@@ -268,6 +286,26 @@ export function RenewalsPanel({
               })}
             </div>
           }
+          </div>
+        </div>
+      )}
+      {activeCount > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-600">
+          <span>Showing {start + 1}–{Math.min(start + pageSize, activeCount)} of {activeCount}</span>
+          <span className="flex items-center gap-2">
+            <label className="flex items-center gap-1">
+              Rows
+              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                className="h-9 rounded border border-gray-300 bg-white px-2 text-xs">
+                {[25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+              </select>
+            </label>
+            <button type="button" disabled={currentPage === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="h-9 rounded border border-gray-300 bg-white px-3 disabled:opacity-40">Previous</button>
+            <span>Page {currentPage} of {totalPages}</span>
+            <button type="button" disabled={currentPage === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="h-9 rounded border border-gray-300 bg-white px-3 disabled:opacity-40">Next</button>
+          </span>
         </div>
       )}
     </div>

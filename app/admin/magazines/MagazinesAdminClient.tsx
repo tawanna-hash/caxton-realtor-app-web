@@ -200,8 +200,8 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-white p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="content-admin-shell">
+      <div className="w-full">
         <div className="flex items-center justify-between mb-6">
           <PageTitle size="md">Magazines</PageTitle>
           <div className="flex items-center gap-3">
@@ -221,12 +221,23 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
             </Link>
             <Link
               href="/admin/magazines/new"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm"
+              className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md font-medium text-sm"
             >
               + New Issue
             </Link>
           </div>
         </div>
+
+        <section className="content-admin-summary" aria-label="Magazine summary">
+          <div><strong>{magazines.length.toLocaleString()}</strong><span>Total issues</span></div>
+          {PUBLICATIONS.map((publication) => (
+            <div key={publication.id}>
+              <strong>{magazines.filter((magazine) => magazine.publication === publication.id).length.toLocaleString()}</strong>
+              <span>{PUBLICATION_LABELS[publication.id]}</span>
+            </div>
+          ))}
+          <div><strong>{magazines.reduce((sum, magazine) => sum + magazine.page_count, 0).toLocaleString()}</strong><span>Total pages</span></div>
+        </section>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md mb-4">
@@ -289,7 +300,10 @@ function Column({
     <div>
       <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">{label}</h2>
       {magazines.length === 0 ? (
-        <p className="text-gray-400 text-sm italic">No issues yet.</p>
+        <div className="content-admin-empty">
+          <p className="font-semibold text-gray-900">No issues yet</p>
+          <p className="mt-1 text-sm text-gray-500">Upload a new issue to start this publication archive.</p>
+        </div>
       ) : (
         <ul className="space-y-3">
           {magazines.map((m) => (

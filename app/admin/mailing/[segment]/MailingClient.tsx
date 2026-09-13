@@ -647,7 +647,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+    <div className="mailing-admin-page">
       <MailingBreadcrumb trail={[{ label: 'Mailing', href: '/admin/mailing' }, { label }]} />
       {/* Header */}
       <div className="flex flex-col gap-2">
@@ -676,8 +676,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               type="button"
               onClick={handleVerifyAddresses}
               disabled={busy !== null}
-              className="px-4 py-2 rounded-md text-white text-sm font-medium disabled:opacity-50"
-              style={{ backgroundColor: '#301D5D' }}
+              className="mailing-primary-action"
               title="Run USPS Address API on selected rows (or this page if none selected)"
             >
               Verify USPS{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
@@ -761,7 +760,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       )}
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="mailing-summary-strip grid grid-cols-2 md:grid-cols-5">
         <KpiCard label="In segment"    value={stats?.total    ?? 0} sub="all contacts"             accent={accent} />
         <KpiCard label="Verified"      value={stats?.verified ?? 0} sub="address or email valid"   accent="#f97316" />
         <KpiCard label="Pending"       value={stats?.pending  ?? 0} sub="needs verification"       accent="#f97316" />
@@ -1852,7 +1851,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-2.5 py-1 rounded-md bg-brand-700 text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify with USPS'}
               </button>
@@ -1880,7 +1879,7 @@ function EditDrawer({
                 type="button"
                 disabled={emailBusy || !form.email}
                 onClick={onVerifyEmail}
-                className="text-xs px-2.5 py-1 rounded-md bg-brand-700 text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
               >
                 {emailBusy ? 'Verifying…' : 'Verify Email'}
               </button>

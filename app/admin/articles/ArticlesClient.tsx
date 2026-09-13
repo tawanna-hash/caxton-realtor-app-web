@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { NewsArticle } from '@/lib/server/wp-news';
 
 import PageTitle from '@/components/ui/PageTitle';
+import ContentPagination from '@/app/admin/_components/ContentPagination';
 export type AdminArticle = NewsArticle & {
   hidden: boolean;
   editedFields: string[];
@@ -48,6 +49,8 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     stringify: (v) => (v ? v : null),
   });
   const [editing, setEditing] = useState<AdminArticle | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -67,6 +70,14 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     for (const a of initialArticles) c[a.publication] += 1;
     return c;
   }, [initialArticles]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageArticles = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const changePageSize = (size: number) => {
+    setPageSize(size);
+    setPage(1);
+  };
 
   async function handleSync() {
     setSyncing(true);
@@ -97,7 +108,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
   const busy = syncing || pending;
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+    <div className="content-admin-shell">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
@@ -114,7 +125,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             type="button"
             onClick={handleSync}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700/90 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
+            className="inline-flex items-center gap-2 rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
           >
             {busy ? (
               <>
@@ -149,6 +160,13 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           {syncError && <span className="text-xs text-red-600">{syncError}</span>}
         </div>
       </div>
+
+      <section className="content-admin-summary" aria-label="Article summary">
+        <div><strong>{counts.all.toLocaleString()}</strong><span>Total articles</span></div>
+        <div><strong>{counts.austin.toLocaleString()}</strong><span>Austin</span></div>
+        <div><strong>{counts.san_antonio.toLocaleString()}</strong><span>San Antonio</span></div>
+        <div><strong>{initialArticles.filter((article) => article.hidden).length.toLocaleString()}</strong><span>Hidden</span></div>
+      </section>
 
       {/* Feed errors */}
       {initialErrors.length > 0 && (
@@ -203,7 +221,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
         <>
         {/* mobile card list */}
         <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
-          {filtered.map((a) => (
+          {pageArticles.map((a) => (
             <li key={`m-${a.id}`} className={`p-3 ${a.hidden ? 'opacity-50' : ''}`}>
               <div className="flex items-start gap-3">
                 {a.imageThumb || a.imageUrl ? (
@@ -267,7 +285,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.map((a) => (
+                {pageArticles.map((a) => (
                   <tr
                     key={a.id}
                     className={`hover:bg-gray-50 ${a.hidden ? 'opacity-50' : ''}`}
@@ -345,9 +363,13 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
               </tbody>
             </table>
           </div>
-          <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 text-xs text-gray-500">
-            Showing {filtered.length} of {initialArticles.length} articles
-          </div>
+          <ContentPagination
+            count={filtered.length}
+            page={safePage}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={changePageSize}
+          />
         </div>
         </>
       )}

@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { adminApi } from '@/lib/admin-api';
 import { CreativeUpload } from './CreativeUpload';
 import type { AdCreative, AdCampaign } from './types';
+import { AD_OPS_CONTROL, AD_OPS_PRIMARY, AD_OPS_SECONDARY } from './AdOpsUi';
 
 interface Props {
   creatives: AdCreative[];
@@ -139,12 +140,12 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
   return (
     <div className="space-y-3">
       {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 ring-1 ring-red-200">
+        <div role="alert" className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
           {error}
         </div>
       )}
 
-      <div className="rounded-md border border-gray-200 bg-white p-4">
+      <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
         {!showUpload ? (
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-700">
@@ -153,7 +154,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
             <button
               type="button"
               onClick={() => setShowUpload(true)}
-              className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+              className={AD_OPS_PRIMARY}
             >
               + Upload creative
             </button>
@@ -178,7 +179,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                   value={uploadAdvertiser}
                   onChange={(e) => setUploadAdvertiser(e.target.value)}
                   placeholder="RealtyLine House"
-                  className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
+                  className={`${AD_OPS_CONTROL} mt-1 w-full`}
                 />
               </label>
               <label className="block">
@@ -188,7 +189,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                   value={uploadClickUrl}
                   onChange={(e) => setUploadClickUrl(e.target.value)}
                   placeholder="https://advertiser.com or mailto:info@myrealtyline.com"
-                  className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm font-mono"
+                  className={`${AD_OPS_CONTROL} mt-1 w-full font-mono`}
                 />
               </label>
               <label className="block sm:col-span-2">
@@ -198,7 +199,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                   value={uploadAlt}
                   onChange={(e) => setUploadAlt(e.target.value)}
                   placeholder="Describe the image for accessibility"
-                  className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
+                  className={`${AD_OPS_CONTROL} mt-1 w-full`}
                 />
               </label>
             </div>
@@ -217,18 +218,18 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
       </div>
 
       {creatives.length === 0 && (
-        <div className="text-center py-6 bg-white rounded-md border border-gray-200">
+        <div className="rounded border border-gray-200 bg-white py-8 text-center">
           <p className="text-sm text-gray-600">No creatives uploaded yet — use the form above.</p>
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
         {creatives.map((c) => {
           const used = usageCount(c.id);
           const busy = busyId === c.id;
           const isEditing = editingId === c.id;
           return (
-            <div key={c.id} className="rounded-md border border-gray-200 bg-white overflow-hidden">
+            <div key={c.id} className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
               <div className="aspect-[4/3] bg-gray-100 flex items-center justify-center">
                 {/* Admin-only creatives gallery from arbitrary blob URLs; next/image
                     would need per-image intrinsic dimensions we don't track. Raw <img>
@@ -248,7 +249,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                       type="text"
                       value={draft.advertiser_name}
                       onChange={(e) => setDraft({ ...draft, advertiser_name: e.target.value })}
-                      className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
+                      className={`${AD_OPS_CONTROL} mt-1 w-full`}
                     />
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -258,7 +259,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                         type="number"
                         value={draft.width}
                         onChange={(e) => setDraft({ ...draft, width: e.target.value })}
-                        className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
+                        className={`${AD_OPS_CONTROL} mt-1 w-full`}
                       />
                     </label>
                     <label className="block">
@@ -267,7 +268,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                         type="number"
                         value={draft.height}
                         onChange={(e) => setDraft({ ...draft, height: e.target.value })}
-                        className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
+                        className={`${AD_OPS_CONTROL} mt-1 w-full`}
                       />
                     </label>
                   </div>
@@ -277,7 +278,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                       type="text"
                       value={draft.click_url}
                       onChange={(e) => setDraft({ ...draft, click_url: e.target.value })}
-                      className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm font-mono"
+                      className={`${AD_OPS_CONTROL} mt-1 w-full font-mono`}
                     />
                   </label>
                   <label className="block">
@@ -286,7 +287,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                       type="text"
                       value={draft.alt_text}
                       onChange={(e) => setDraft({ ...draft, alt_text: e.target.value })}
-                      className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
+                      className={`${AD_OPS_CONTROL} mt-1 w-full`}
                     />
                   </label>
                   <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
@@ -294,7 +295,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                       type="button"
                       onClick={cancelEdit}
                       disabled={busy}
-                      className="text-xs text-gray-700 hover:text-gray-900 disabled:opacity-50"
+                      className={`${AD_OPS_SECONDARY} px-3 text-xs`}
                     >
                       Cancel
                     </button>
@@ -302,7 +303,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                       type="button"
                       onClick={() => handleSave(c)}
                       disabled={busy}
-                      className="rounded-md bg-indigo-600 px-2 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                      className={`${AD_OPS_PRIMARY} px-3 text-xs`}
                     >
                       {busy ? 'Saving…' : 'Save'}
                     </button>
@@ -327,7 +328,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                       <button
                         onClick={() => startEdit(c)}
                         disabled={busy}
-                        className="text-indigo-700 hover:text-indigo-900 text-xs disabled:opacity-50"
+                        className="text-xs font-medium text-orange-700 hover:underline disabled:opacity-50"
                       >
                         Edit
                       </button>

@@ -19,6 +19,7 @@ import {
 } from 'recharts';
 import AdvertiserReportDrawer from './AdvertiserReportDrawer';
 import type { PublicationScope } from '@/lib/publications';
+import InsightsPagination from '@/components/admin/InsightsPagination';
 
 type RangePreset = '7d' | '30d' | '90d' | 'all';
 
@@ -86,9 +87,9 @@ function rangeLabel(preset: RangePreset): string {
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-md p-4">
-      <div className="text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</div>
-      <div className="text-2xl font-semibold text-gray-900">{value}</div>
+    <div className="min-w-0 border-r border-gray-200 bg-white px-4 py-2 last:border-r-0">
+      <div className="text-xs text-gray-500">{label}</div>
+      <div className="mt-0.5 text-xl font-semibold tabular-nums text-gray-900">{value}</div>
       {sub && <div className="text-xs text-gray-500 mt-1">{sub}</div>}
     </div>
   );
@@ -104,6 +105,8 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   // Fetch analytics whenever the advertiser or the range preset changes.
   // The cancelled guard avoids setting state on a stale request when the
@@ -140,6 +143,10 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
   // Unique gradient ID per advertiser so multiple panes don't collide on the
   // same Recharts <defs>.
   const gradientId = `clicksGradient-pane-${advertiser.id}`;
+  const hotspots = data?.hotspot_breakdown ?? [];
+  const totalPages = Math.max(1, Math.ceil(hotspots.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageHotspots = hotspots.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
@@ -164,7 +171,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                 className={
                   'px-3 py-1.5 text-xs font-medium rounded-md ' +
                   (preset === p
-                    ? 'bg-brand-700 text-white'
+                    ? 'bg-orange-600 text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')
                 }
               >
@@ -192,7 +199,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
             title={advertiser.contact_email
               ? 'Preview and send the performance report email'
               : 'Add a contact email on the Partners page to send a report'}
-            className="px-3 py-1.5 text-xs font-medium rounded-md bg-brand-700 text-white hover:bg-brand-800 disabled:opacity-40"
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-40"
           >
             Send report email
           </button>
@@ -212,7 +219,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
 
         {data && (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+            <div className="mb-5 grid grid-cols-2 gap-y-3 bg-white lg:grid-cols-4">
               <StatCard label="Total clicks" value={data.summary.total_clicks.toLocaleString()} />
               <StatCard label="Unique sessions" value={data.summary.unique_sessions.toLocaleString()} />
               <StatCard label="Hotspots" value={data.summary.hotspot_count.toLocaleString()} />
@@ -235,8 +242,8 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                   >
                     <defs>
                       <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#301D5D" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#301D5D" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#ea580c" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#ea580c" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -262,7 +269,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                     <Area
                       type="monotone"
                       dataKey="clicks"
-                      stroke="#301D5D"
+                      stroke="#ea580c"
                       strokeWidth={2}
                       fill={`url(#${gradientId})`}
                     />
@@ -280,7 +287,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                 {data.hotspot_breakdown.length === 0 ? (
                   <li className="px-4 py-8 text-center text-sm text-gray-500">No hotspots linked to this partner yet.</li>
                 ) : (
-                  data.hotspot_breakdown.map((h) => (
+                  pageHotspots.map((h) => (
                     <li key={`m-${h.hotspot_id}`} className="p-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
@@ -330,8 +337,8 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                         </td>
                       </tr>
                     )}
-                    {data.hotspot_breakdown.map((h) => (
-                      <tr key={h.hotspot_id} className="border-b border-gray-100 hover:bg-gray-50">
+                    {pageHotspots.map((h) => (
+                      <tr key={h.hotspot_id} className="border-b border-gray-100 hover:bg-orange-50/40">
                         <td className="px-4 py-2">
                           <div className="text-gray-900">{h.magazine_label}</div>
                           <div className="text-xs text-gray-500">Page {h.page_idx + 1}</div>
@@ -363,6 +370,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                   </tbody>
                 </table>
               </div>
+              {hotspots.length > 25 && <InsightsPagination page={currentPage} pageSize={pageSize} total={hotspots.length} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />}
             </div>
           </>
         )}

@@ -195,7 +195,7 @@ export default function SuppressionsClient() {
   ) : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="mailing-admin-page">
       <MailingBreadcrumb
         trail={[
           { label: 'Mailing', href: '/admin/mailing' },

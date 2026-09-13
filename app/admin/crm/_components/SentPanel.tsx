@@ -113,7 +113,7 @@ function FailedRecipientDropdown({ row }: { row: SentRow }) {
   );
 }
 
-export default function SentPanel({ limit = 50, showFilters = true, onEditResend }: Props) {
+export default function SentPanel({ limit: initialLimit = 50, showFilters = true, onEditResend }: Props) {
   const [rows, setRows] = useState<SentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -122,6 +122,7 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
   const [recurring, setRecurring] = useState<'any' | 'series' | 'oneoff'>('any');
   const [group, setGroup] = useState<'flat' | 'series'>('flat');
   const [offset, setOffset] = useState(0);
+  const [pageSize, setPageSize] = useState(initialLimit);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const query = useMemo(() => {
@@ -130,10 +131,10 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
     if (status) p.set('status', status);
     if (recurring !== 'any') p.set('recurring', recurring);
     p.set('group', group);
-    p.set('limit', String(limit));
+    p.set('limit', String(pageSize));
     p.set('offset', String(offset));
     return p.toString();
-  }, [q, status, recurring, group, limit, offset]);
+  }, [q, status, recurring, group, pageSize, offset]);
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
@@ -183,12 +184,12 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
             <label className="block text-xs uppercase tracking-wide text-gray-500">Search subject</label>
             <input type="text" value={q} onChange={(e) => { setQ(e.target.value); setOffset(0); }}
               placeholder="Subject contains…"
-              className="mt-1 w-64 rounded-md border border-gray-300 px-2 py-1 text-sm" />
+              className="mt-1 h-9 w-64 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wide text-gray-500">Status</label>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setOffset(0); }}
-                    className="mt-1 rounded-md border border-gray-300 px-2 py-1 text-sm">
+                    className="mt-1 h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100">
               <option value="">Any</option>
               <option value="sent">Sent</option>
               <option value="scheduled">Scheduled</option>
@@ -200,7 +201,7 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
           <div>
             <label className="block text-xs uppercase tracking-wide text-gray-500">Type</label>
             <select value={recurring} onChange={(e) => { setRecurring(e.target.value as 'any' | 'series' | 'oneoff'); setOffset(0); }}
-                    className="mt-1 rounded-md border border-gray-300 px-2 py-1 text-sm">
+                    className="mt-1 h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100">
               <option value="any">Any</option>
               <option value="oneoff">One-off</option>
               <option value="series">Recurring</option>
@@ -212,7 +213,7 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
             Group recurring
           </label>
           <button type="button" onClick={() => void load()}
-                  className="ml-auto rounded-md border border-gray-300 bg-white px-3 py-1 text-sm hover:bg-gray-50">
+                  className="ml-auto h-9 rounded border border-gray-300 bg-white px-3 text-sm hover:bg-gray-50">
             Refresh
           </button>
         </div>
@@ -276,7 +277,7 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
                   type="button"
                   disabled={busyId === row.id || !onEditResend}
                   onClick={() => onEditResend?.(row)}
-                  className="rounded-md border border-purple-300 bg-purple-50 px-2 py-1 text-xs text-purple-800 hover:bg-purple-100 disabled:opacity-50"
+                  className="rounded border border-orange-300 bg-orange-50 px-2 py-1 text-xs text-orange-800 hover:bg-orange-100 disabled:opacity-50"
                 >
                   Edit &amp; Resend
                 </button>
@@ -295,8 +296,8 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
           );
         })}
       </ul>
-      <div className="hidden sm:block overflow-x-auto rounded-lg border border-gray-200">
-        <table className="w-full text-sm">
+      <div className="hidden overflow-x-auto rounded border border-gray-200 sm:block">
+        <table className="min-w-[1050px] w-full text-xs">
           <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
             <tr>
               <th className="px-3 py-2">Subject</th>
@@ -362,7 +363,7 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
                         title="Resend as-is to the original audience">Resend</button>
                       <button type="button" disabled={busyId === row.id || !onEditResend}
                         onClick={() => onEditResend?.(row)}
-                        className="rounded-md border border-purple-300 bg-purple-50 px-2 py-1 text-xs text-purple-800 hover:bg-purple-100 disabled:opacity-50"
+                        className="rounded border border-orange-300 bg-orange-50 px-2 py-1 text-xs text-orange-800 hover:bg-orange-100 disabled:opacity-50"
                         title="Open composer prefilled with this email">Edit &amp; Resend</button>
                       {isSeries && (
                         <button type="button" disabled={busyId === row.id}
@@ -380,15 +381,22 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
       </div>
 
       {showFilters && (
-        <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-600">
           <div>Showing {rows.length} row{rows.length === 1 ? '' : 's'} (offset {offset})</div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2">
+              Rows
+              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setOffset(0); }}
+                className="h-9 rounded border border-gray-300 bg-white px-2 text-xs">
+                {[25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+              </select>
+            </label>
             <button type="button" disabled={offset === 0}
-                    onClick={() => setOffset(Math.max(0, offset - limit))}
-                    className="rounded-md border border-gray-300 bg-white px-3 py-1 hover:bg-gray-50 disabled:opacity-40">Prev</button>
-            <button type="button" disabled={rows.length < limit}
-                    onClick={() => setOffset(offset + limit)}
-                    className="rounded-md border border-gray-300 bg-white px-3 py-1 hover:bg-gray-50 disabled:opacity-40">Next</button>
+                    onClick={() => setOffset(Math.max(0, offset - pageSize))}
+                    className="h-9 rounded border border-gray-300 bg-white px-3 hover:bg-gray-50 disabled:opacity-40">Previous</button>
+            <button type="button" disabled={rows.length < pageSize}
+                    onClick={() => setOffset(offset + pageSize)}
+                    className="h-9 rounded border border-gray-300 bg-white px-3 hover:bg-gray-50 disabled:opacity-40">Next</button>
           </div>
         </div>
       )}

@@ -351,7 +351,7 @@ export default function SaborMlsAdminPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="content-admin-shell">
       <div className="mb-6">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin</p>
         <PageTitle size="md">SABOR Report</PageTitle>
@@ -361,6 +361,13 @@ export default function SaborMlsAdminPage() {
           toggle between languages. The most recent row by release date powers the card.
         </p>
       </div>
+
+      <section className="content-admin-summary" aria-label="SABOR report summary">
+        <div><strong>{reports.length}</strong><span>Saved reports</span></div>
+        <div><strong>{reports[0]?.month_label || '—'}</strong><span>Latest month</span></div>
+        <div><strong>{form.indicator_stats.length}</strong><span>Indicators</span></div>
+        <div><strong>{editingId ? 'Editing' : 'New'}</strong><span>Workspace mode</span></div>
+      </section>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">{error}</div>
@@ -632,7 +639,10 @@ export default function SaborMlsAdminPage() {
           {loading ? (
             <p className="text-gray-500">{'Loading\u2026'}</p>
           ) : reports.length === 0 ? (
-            <p className="text-gray-500 italic">No reports yet. Create one to populate the Newsline San Antonio card.</p>
+            <div className="content-admin-empty">
+              <strong>No SABOR reports yet</strong>
+              <span>Create the first monthly report to populate the Newsline San Antonio card.</span>
+            </div>
           ) : (
             <ul className="space-y-2">
               {reports.map((r, i) => (

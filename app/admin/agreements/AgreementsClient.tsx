@@ -12,7 +12,6 @@ import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { RenewalReminder } from '@/lib/types/renewal-reminder';
 import { formatCents } from '@/lib/invoices';
 
-import { Kpi } from '@/app/admin/billing/_components/Badges';
 import { AG_STATUS } from '@/app/admin/billing/_components/constants';
 import { getDaysUntil } from '@/app/admin/billing/_components/helpers';
 import { AgreementList } from '@/app/admin/billing/_components/AgreementList';
@@ -46,6 +45,30 @@ type Props = {
   initialRenewalReminders: RenewalReminder[];
 };
 
+function SummaryMetric({
+  label,
+  value,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  onClick?: () => void;
+}) {
+  const content = (
+    <>
+      <div className="text-lg font-semibold leading-tight text-gray-900">{value}</div>
+      <div className="mt-0.5 text-xs text-gray-600">{label}</div>
+    </>
+  );
+  return onClick ? (
+    <button type="button" onClick={onClick} className="min-w-0 px-3 py-1 text-left hover:bg-orange-50">
+      {content}
+    </button>
+  ) : (
+    <div className="min-w-0 px-3 py-1">{content}</div>
+  );
+}
+
 export default function AgreementsClient({
   initialAgreements,
   initialInvoicesLite,
@@ -59,6 +82,8 @@ export default function AgreementsClient({
   const [adCampaigns, setAdCampaigns] = useState(initialAdCampaigns);
   const [reminders, setReminders] = useState<RenewalReminder[]>(initialRenewalReminders);
   const [query, setQuery] = useState('');
+  const [pageSize, setPageSize] = useState(25);
+  const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createAg, setCreateAg] = useState(false);
   const [newQuoteOpen, setNewQuoteOpen] = useState(false);
@@ -256,25 +281,29 @@ export default function AgreementsClient({
     }
   }, [reloadAgreements]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredAg.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = filteredAg.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-5">
+    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin · Agreements</div>
+          <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Agreements</div>
           <PageTitle size="md">Agreements</PageTitle>
           <p className="text-sm text-gray-600 mt-1">Contracts and renewals for every partner. Stripe charges land via the public Sign Wizard &mdash; see each agreement for payment status.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <a href="/admin/ads/orders" className="whitespace-nowrap px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">Ad pipeline &rarr;</a>
+          <a href="/admin/ads/orders" className="inline-flex h-9 items-center whitespace-nowrap rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 hover:bg-gray-50">Ad pipeline &rarr;</a>
           {tab === 'renewals'
-            ? <button onClick={() => setTab('agreements')} className="whitespace-nowrap px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">All agreements &rarr;</button>
+            ? <button onClick={() => setTab('agreements')} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 hover:bg-gray-50">All agreements &rarr;</button>
             : <>
                 <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.jpg,.jpeg"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) { void handleUploadFile(f); } e.target.value = ''; }}
                 />
-                <button onClick={handleUploadClick} title="Upload manually signed agreement (pdf, jpeg)" className="whitespace-nowrap px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">Upload signed</button>
-                <button onClick={() => setNewQuoteOpen(true)} className="whitespace-nowrap px-4 py-2 rounded-md bg-purple-700 text-white text-sm hover:bg-purple-800">New proposal</button>
-                <button onClick={() => setCreateAg(true)} className="whitespace-nowrap px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">New agreement</button>
+                <button onClick={handleUploadClick} title="Upload manually signed agreement (pdf, jpeg)" className="inline-flex h-9 items-center whitespace-nowrap rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 hover:bg-gray-50">Upload signed</button>
+                <button onClick={() => setNewQuoteOpen(true)} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700">New proposal</button>
+                <button onClick={() => setCreateAg(true)} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700">New agreement</button>
               </>
           }
         </div>
@@ -322,37 +351,36 @@ export default function AgreementsClient({
       )}
 
       {/* Money summary strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Revenue MTD" value={formatCents(moneySummary.mtd)} accent="emerald" />
-        <Kpi label="AR outstanding" value={formatCents(moneySummary.ar)} accent="blue" />
-        <Kpi label="Overdue" value={formatCents(moneySummary.overdue)} accent="rose" />
-        <Kpi
+      <section aria-label="Agreement financial summary" className="grid grid-cols-2 divide-x divide-gray-200 border-y border-gray-200 py-2 md:grid-cols-4">
+        <SummaryMetric label="Revenue MTD" value={formatCents(moneySummary.mtd)} />
+        <SummaryMetric label="AR outstanding" value={formatCents(moneySummary.ar)} />
+        <SummaryMetric label="Overdue" value={formatCents(moneySummary.overdue)} />
+        <SummaryMetric
           label="Expiring 30d"
           value={String(moneySummary.expiringCount)}
-          accent="amber"
           onClick={() => setTab('renewals')}
         />
-      </div>
+      </section>
 
       {/* Tab-scoped KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <section aria-label={`${tab} status summary`} className="grid grid-cols-2 divide-x divide-gray-200 md:grid-cols-4">
         {tab === 'renewals' ? (
           <>
-            <Kpi label="Overdue" value={String(renewalKpis.overdue)} accent="rose" />
-            <Kpi label="Expiring 30d" value={String(renewalKpis.expiring30)} accent="amber" />
-            <Kpi label="Renewed this month" value={String(renewalKpis.renewedThisMonth)} accent="emerald" />
-            <Kpi label="Pending reminders" value={String(renewalKpis.pendingReminders)} accent="blue"
+            <SummaryMetric label="Overdue" value={String(renewalKpis.overdue)} />
+            <SummaryMetric label="Expiring 30d" value={String(renewalKpis.expiring30)} />
+            <SummaryMetric label="Renewed this month" value={String(renewalKpis.renewedThisMonth)} />
+            <SummaryMetric label="Pending reminders" value={String(renewalKpis.pendingReminders)}
               onClick={() => setRenewalTab('reminders')} />
           </>
         ) : (
           <>
-            <Kpi label="Active + sent" value={String(kpis.activeAg)} />
-            <Kpi label="Drafts" value={String(kpis.draftAg)} />
-            <Kpi label="Signed" value={String(kpis.signedAg)} />
-            <Kpi label="Expired" value={String(kpis.expiredAg)} />
+            <SummaryMetric label="Active + sent" value={String(kpis.activeAg)} />
+            <SummaryMetric label="Drafts" value={String(kpis.draftAg)} />
+            <SummaryMetric label="Signed" value={String(kpis.signedAg)} />
+            <SummaryMetric label="Expired" value={String(kpis.expiredAg)} />
           </>
         )}
-      </div>
+      </section>
 
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
@@ -373,11 +401,11 @@ export default function AgreementsClient({
               key={t}
               onClick={() => { setTab(t); setStatusFilter('all'); }}
               className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
-                tab === t ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+                tab === t ? 'border-orange-600 text-orange-700' : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               {label}
-              <span className={`ml-2 text-xs ${tab === t ? 'text-blue-600' : 'text-gray-400'}`}>
+              <span className={`ml-2 text-xs ${tab === t ? 'text-orange-600' : 'text-gray-400'}`}>
                 ({count})
               </span>
             </button>
@@ -387,14 +415,14 @@ export default function AgreementsClient({
 
       {/* Filters */}
       {tab === 'agreements' && (
-        <div className="rounded-md border border-gray-200 bg-white p-4 flex flex-wrap gap-2 items-center">
+        <div className="flex flex-wrap items-end gap-2">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search partner, ad size&hellip;"
-            className="flex-1 min-w-[240px] px-3 py-2 rounded-md border border-gray-300 text-sm"
+            className="h-9 min-w-[240px] flex-1 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
           />
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-md border border-gray-300 text-sm">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100">
             <option value="all">All statuses</option>
             {AG_STATUS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
@@ -405,8 +433,9 @@ export default function AgreementsClient({
 
       {/* Lists */}
       {tab === 'agreements' ? (
+        <>
         <AgreementList
-          rows={filteredAg}
+          rows={pageRows}
           onOpen={(r) => setEditAg(r)}
           onEmail={async (r) => {
             try {
@@ -418,6 +447,28 @@ export default function AgreementsClient({
             } catch (e) { setError(e instanceof Error ? e.message : 'send failed'); }
           }}
         />
+        {filteredAg.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-600">
+            <div>
+              Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredAg.length)} of {filteredAg.length}
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2">
+                Rows
+                <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                  className="h-9 rounded border border-gray-300 bg-white px-2 text-xs">
+                  {[25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+                </select>
+              </label>
+              <button type="button" disabled={currentPage === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="h-9 rounded border border-gray-300 bg-white px-3 disabled:opacity-40">Previous</button>
+              <span className="tabular-nums">Page {currentPage} of {totalPages}</span>
+              <button type="button" disabled={currentPage === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="h-9 rounded border border-gray-300 bg-white px-3 disabled:opacity-40">Next</button>
+            </div>
+          </div>
+        )}
+        </>
       ) : (
         <RenewalsPanel
           expiringSoon={expiringSoon}

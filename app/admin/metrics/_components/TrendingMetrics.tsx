@@ -79,7 +79,7 @@ export function TrendingMetrics({ days }: { days: number }) {
         </h2>
         <a
           href="/admin/content/trending"
-          className="text-xs uppercase tracking-wider text-brand-700 underline"
+          className="text-xs font-medium text-orange-700 hover:underline"
         >
           Manage &rarr;
         </a>
@@ -97,7 +97,7 @@ export function TrendingMetrics({ days }: { days: number }) {
 
       {metrics && (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-y-3 bg-white md:grid-cols-4">
             <KPITile
               label="Impressions"
               value={metrics.totals.impressions}
@@ -120,12 +120,12 @@ export function TrendingMetrics({ days }: { days: number }) {
             />
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-md p-4">
-            <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
+          <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+            <p className="border-b border-gray-200 px-4 py-3 text-xs font-semibold text-gray-700">
               Top items &middot; last {metrics.days} days
             </p>
             {metrics.top_items.length === 0 ? (
-              <p className="text-sm text-gray-500">
+              <p className="px-4 py-8 text-center text-sm text-gray-500">
                 No trending activity yet. Publish items and wait for events to ingest.
               </p>
             ) : (
@@ -143,12 +143,12 @@ export function TrendingMetrics({ days }: { days: number }) {
             )}
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-md p-4">
-            <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
+          <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+            <p className="border-b border-gray-200 px-4 py-3 text-xs font-semibold text-gray-700">
               By market
             </p>
             {metrics.by_market.length === 0 ? (
-              <p className="text-sm text-gray-500">No data yet.</p>
+              <p className="px-4 py-8 text-center text-sm text-gray-500">No market activity yet.</p>
             ) : (
               <MetricList
                 rows={metrics.by_market}

@@ -127,7 +127,7 @@ export default function EditReportDrawer({
               value={overrides.title}
               onChange={(e) => onTitleChange(e.target.value)}
               placeholder={titlePlaceholder || `Untitled ${noun}`}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30"
+              className="h-9 w-full rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
             />
             <p className="text-xs text-gray-500 mt-1">
               Leave blank to use the {noun}&apos;s tracked title
@@ -142,7 +142,7 @@ export default function EditReportDrawer({
             <select
               value={overrides.pub_display}
               onChange={(e) => onPubDisplayChange(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-700/30"
+              className="h-9 w-full rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
             >
               <option value="">— Use tracked publication —</option>
               <option value="RealtyLine Austin">RealtyLine Austin</option>
@@ -160,7 +160,7 @@ export default function EditReportDrawer({
               onChange={(e) => onEditorialNoteChange(e.target.value)}
               placeholder={examplePlaceholder}
               rows={4}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
             />
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function EditReportDrawer({
           <button
             type="button"
             onClick={onCopyHtml}
-            className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"
+            className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"
           >
             Copy HTML
           </button>

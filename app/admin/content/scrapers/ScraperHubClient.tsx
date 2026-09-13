@@ -150,7 +150,7 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
+    <div className="content-admin-shell">
       <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
@@ -168,6 +168,15 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
           ← Back to Inventory
         </Link>
       </div>
+
+      {tab === 'scrapers' && (
+        <section className="content-admin-summary" aria-label="Scraper summary">
+          <div><strong>{GROUPS.reduce((total, group) => total + group.scrapers.length, 0)}</strong><span>Scrapers</span></div>
+          <div><strong>{GROUPS.reduce((total, group) => total + group.scrapers.filter((scraper) => !scraper.external).length, 0)}</strong><span>Automated</span></div>
+          <div><strong>{initialRuns.filter((run) => run.status === 'ok').length}</strong><span>Last run OK</span></div>
+          <div><strong>{initialRuns.filter((run) => run.status === 'error').length}</strong><span>Needs attention</span></div>
+        </section>
+      )}
 
       {/* Tab bar */}
       <div className="flex flex-wrap gap-1 border-b border-gray-200 mb-6">

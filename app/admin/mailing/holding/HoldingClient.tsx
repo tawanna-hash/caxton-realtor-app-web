@@ -484,7 +484,7 @@ export default function HoldingClient() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+    <div className="mailing-admin-page">
       <MailingBreadcrumb trail={[{ label: 'Mailing', href: '/admin/mailing' }, { label: 'ABOR Members' }]} />
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -514,7 +514,7 @@ export default function HoldingClient() {
             type="button"
             disabled={busy !== null}
             onClick={syncFromUnlockMLS}
-            className="px-4 py-2 rounded-md bg-brand-700 text-white text-sm font-medium hover:bg-[#5a0e5f] disabled:opacity-50 whitespace-nowrap"
+            className="mailing-primary-action"
           >
             {busy === 'sync' ? 'Syncing…' : 'Sync from UnlockMLS'}
           </button>
@@ -602,7 +602,7 @@ export default function HoldingClient() {
       )}
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="mailing-summary-strip grid grid-cols-2 md:grid-cols-5">
         <KpiCard label="Total members"  value={counts?.total    ?? 0} sub="awaiting review" />
         <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#f97316" />
         <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#f97316" />
@@ -1335,7 +1335,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-2.5 py-1 rounded-md bg-brand-700 text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify with USPS'}
               </button>
@@ -1363,7 +1363,7 @@ function EditDrawer({
                 type="button"
                 disabled={emailBusy || !form.email}
                 onClick={onVerifyEmail}
-                className="text-xs px-2.5 py-1 rounded-md bg-brand-700 text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
               >
                 {emailBusy ? 'Verifying…' : 'Verify Email'}
               </button>

@@ -5,7 +5,7 @@ import { useAdmin } from '@/hooks/use-admin';
 import { useUrlNumber, useUrlState, useUrlString } from '@/lib/use-url-state';
 
 import PageTitle from '@/components/ui/PageTitle';
-import { Pager } from '@/app/admin/_components/Pager';
+import { Pager, PAGE_SIZE_OPTIONS } from '@/app/admin/_components/Pager';
 import EmailBadge, { type EmailBadgeStatus } from '@/app/admin/_components/EmailBadge';
 import type { PubId } from '@/lib/publications';
 
@@ -64,7 +64,7 @@ export default function NewsletterClient() {
   const [error, setError] = useState<string | null>(null);
   // Pagination / filters / sort are URL-backed so refresh keeps the same view.
   const [page, setPage] = useUrlNumber('page', 1);
-  const [pageSize] = useState(50);
+  const [pageSize, setPageSize] = useState(50);
   const [publication, setPublication] = useUrlString<'' | PubId>('publication', '');
   const [status, setStatus] = useUrlString<'' | 'active' | 'unsubscribed'>('status', '');
   const [verified, setVerified] = useUrlString<'' | 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending' | 'unverified'>('verified', '');
@@ -180,31 +180,40 @@ export default function NewsletterClient() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+    <div className="mailing-admin-page">
+      <header className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
+          <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
+            Admin · Mailing
+          </div>
           <PageTitle size="md">Newsletter</PageTitle>
           <p className="text-sm text-gray-500 mt-1">
-            {data ? `${data.total.toLocaleString()} weekly-digest signups` : 'Loading...'}
+            Weekly-digest subscribers across all publications.
           </p>
         </div>
         <button
           onClick={handleExport}
           disabled={exporting}
-          className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors disabled:opacity-50 whitespace-nowrap"
+          className="mailing-primary-action"
         >
           {exporting ? 'Exporting...' : 'Export CSV'}
         </button>
-      </div>
+      </header>
 
-      <div className="bg-white border border-gray-200 rounded-md p-4 mb-4 flex items-center gap-3 flex-wrap">
+      <section aria-label="Newsletter summary" className="mailing-summary-strip grid grid-cols-3">
+        <SummaryMetric label="Subscribers" value={data?.total ?? 0} />
+        <SummaryMetric label="Showing" value={data?.subscribers.length ?? 0} />
+        <SummaryMetric label="Selected" value={mounted ? selectedIds.size : 0} />
+      </section>
+
+      <div className="flex flex-wrap items-center gap-2 border-y border-gray-200 bg-gray-50/60 px-3 py-2">
         <div className="flex items-center gap-2 flex-1 min-w-[240px]">
           <input
             type="text"
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search email..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700"
+            className="h-9 flex-1 rounded border border-gray-300 px-3 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-orange-600"
           />
           {q && (
             <button
@@ -226,7 +235,7 @@ export default function NewsletterClient() {
             setPublication(e.target.value as '' | PubId);
             setPage(1);
           }}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+          className="h-9 rounded border border-gray-300 px-3 text-xs text-gray-900"
         >
           <option value="">All publications</option>
           <option value="realtyline">RealtyLine Austin</option>
@@ -240,7 +249,7 @@ export default function NewsletterClient() {
             setStatus(e.target.value as '' | 'active' | 'unsubscribed');
             setPage(1);
           }}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+          className="h-9 rounded border border-gray-300 px-3 text-xs text-gray-900"
         >
           <option value="">All statuses</option>
           <option value="active">Active</option>
@@ -252,7 +261,7 @@ export default function NewsletterClient() {
             setVerified(e.target.value as '' | 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending' | 'unverified');
             setPage(1);
           }}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+          className="h-9 rounded border border-gray-300 px-3 text-xs text-gray-900"
           title="Filter by email verification status"
         >
           <option value="">All verification statuses</option>
@@ -356,8 +365,8 @@ export default function NewsletterClient() {
               ))
             )}
           </ul>
-          <div className="hidden sm:block bg-white border border-gray-200 rounded-md overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="hidden sm:block overflow-x-auto rounded border border-gray-200 bg-white">
+            <table className="w-full min-w-[820px] text-xs">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-3 py-3 w-8">
@@ -379,7 +388,8 @@ export default function NewsletterClient() {
                 {data.subscribers.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
-                      No newsletter subscribers found.
+                      <div className="font-medium text-gray-700">No subscribers found</div>
+                      <div className="mt-1 text-xs text-gray-500">Try clearing search or changing the publication, status, or verification filter.</div>
                     </td>
                   </tr>
                 )}
@@ -430,11 +440,22 @@ export default function NewsletterClient() {
               pageSize={data.pageSize}
               disabled={loading}
               onPageChange={(p) => setPage(p)}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
               summary={`Page ${data.page} of ${data.totalPages} — showing ${data.subscribers.length} of ${data.total.toLocaleString()}`}
             />
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function SummaryMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <div className="text-lg font-semibold leading-tight tabular-nums text-gray-900">{value.toLocaleString()}</div>
+      <div className="mt-0.5 text-xs text-gray-500">{label}</div>
     </div>
   );
 }

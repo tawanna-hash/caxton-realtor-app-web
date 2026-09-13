@@ -56,7 +56,7 @@ export default function GiveawaysPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="content-admin-shell">
       <div className="flex items-center justify-between mb-8">
         <div>
           <PageTitle size="md">Giveaways</PageTitle>
@@ -66,11 +66,18 @@ export default function GiveawaysPage() {
         </div>
         <Link
           href="/admin/giveaways/new"
-          className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors"
+          className="bg-orange-600 text-white px-4 py-2 text-sm font-medium hover:bg-orange-700 rounded-md transition-colors"
         >
           + Create Giveaway
         </Link>
       </div>
+
+      <section className="content-admin-summary" aria-label="Giveaway summary">
+        <div><strong>{items.length.toLocaleString()}</strong><span>Total giveaways</span></div>
+        <div><strong>{items.filter((item) => item.status === 'active').length.toLocaleString()}</strong><span>Active</span></div>
+        <div><strong>{items.reduce((sum, item) => sum + (item.participant_count ?? 0), 0).toLocaleString()}</strong><span>Entries</span></div>
+        <div><strong>{items.filter((item) => Boolean(item.winner_name)).length.toLocaleString()}</strong><span>Winners announced</span></div>
+      </section>
 
       {loading && <div className="text-sm text-gray-500">Loading giveaways...</div>}
       {error && (
@@ -78,45 +85,50 @@ export default function GiveawaysPage() {
       )}
 
       {!loading && items.length === 0 && (
-        <div className="bg-white border border-gray-200 p-12 text-center rounded-md">
-          <p className="text-gray-500 mb-4">No giveaways yet.</p>
+        <div className="content-admin-empty">
+          <p className="font-semibold text-gray-900">No giveaways yet</p>
+          <p className="mb-4 mt-1 text-sm text-gray-500">Create a promotion and begin collecting entries.</p>
           <Link href="/admin/giveaways/new" className="text-sm font-medium text-brand-700 underline">
             Create your first giveaway
           </Link>
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {items.map((g) => (
-          <Link
-            key={g.id}
-            href={`/admin/giveaways/${g.id}`}
-            className="bg-white border border-gray-200 p-5 hover:border-brand-700 transition-colors block rounded-md"
-          >
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <h2 className="font-semibold text-brand-700 leading-tight">{g.title}</h2>
-              <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 border whitespace-nowrap ${STATUS_STYLES[g.status] || ''}`}>
-                {g.status}
-              </span>
-            </div>
-            <div className="text-sm text-gray-700 mb-1">{g.prize}</div>
-            <div className="text-xs text-gray-500 mb-3">{PUBLICATION_LABELS_WITH_BOTH[g.publication] || g.publication}</div>
-            <div className="text-xs text-gray-500 mb-3">
-              {formatDate(g.starts_at)} - {formatDate(g.ends_at)}
-            </div>
-            <div className="flex items-center gap-4 text-xs text-gray-600 pt-3 border-t border-gray-100">
-              <span><strong className="text-brand-700">{g.participant_count ?? 0}</strong> entries</span>
-              <span><strong className="text-brand-700">{g.ticket_count ?? 0}</strong> tickets</span>
-            </div>
-            {g.winner_name && (
-              <div className="mt-3 pt-3 border-t border-gray-100 text-xs">
-                <span className="text-gray-500">Winner: </span>
-                <span className="font-medium text-brand-700">{g.winner_name}</span>
-              </div>
-            )}
-          </Link>
-        ))}
-      </div>
+      {items.length > 0 && (
+        <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <table>
+            <thead>
+              <tr>
+                <th className="text-left">Giveaway</th>
+                <th className="text-left">Publication</th>
+                <th className="text-left">Dates</th>
+                <th className="text-left">Status</th>
+                <th className="text-right">Entries</th>
+                <th className="text-right">Tickets</th>
+                <th className="text-left">Winner</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((g) => (
+                <tr key={g.id}>
+                  <td>
+                    <Link href={`/admin/giveaways/${g.id}`} className="font-semibold text-brand-700 hover:underline">
+                      {g.title}
+                    </Link>
+                    <div className="mt-0.5 text-xs text-gray-500">{g.prize}</div>
+                  </td>
+                  <td>{PUBLICATION_LABELS_WITH_BOTH[g.publication] || g.publication}</td>
+                  <td className="whitespace-nowrap">{formatDate(g.starts_at)} – {formatDate(g.ends_at)}</td>
+                  <td><span className={`inline-flex border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${STATUS_STYLES[g.status] || ''}`}>{g.status}</span></td>
+                  <td className="text-right tabular-nums">{g.participant_count ?? 0}</td>
+                  <td className="text-right tabular-nums">{g.ticket_count ?? 0}</td>
+                  <td>{g.winner_name || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

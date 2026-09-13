@@ -105,9 +105,12 @@ export default function InquiriesInbox() {
   const [error, setError] = useState<string | null>(null);
   // Local q input — debounced into the URL so users can type freely.
   const [qInput, setQInput] = useState<string>(q);
+  const [pageSize, setPageSize] = useState(25);
+  const [page, setPage] = useState(1);
 
   const setUrl = useCallback(
     (next: Record<string, string | null>) => {
+      if ('channel' in next || 'status' in next || 'q' in next) setPage(1);
       const sp = new URLSearchParams(params.toString());
       for (const [k, v] of Object.entries(next)) {
         if (v == null || v === '') sp.delete(k);
@@ -131,9 +134,10 @@ export default function InquiriesInbox() {
     if (activeChannel !== 'all') sp.set('channel', activeChannel);
     if (activeStatus !== 'all') sp.set('status', activeStatus);
     if (q) sp.set('q', q);
-    sp.set('limit', '100');
+    sp.set('limit', String(pageSize));
+    sp.set('offset', String((page - 1) * pageSize));
     return `/api/admin/ads/inquiries${sp.toString() ? `?${sp.toString()}` : ''}`;
-  }, [activeChannel, activeStatus, q]);
+  }, [activeChannel, activeStatus, page, pageSize, q]);
 
   const refetch = useCallback(async () => {
     setLoading(true);
@@ -205,8 +209,8 @@ export default function InquiriesInbox() {
   return (
     <div>
       {/* Channel tabs with unread (new) counts. */}
-      <div className="border-b border-gray-200 mb-4">
-        <nav className="-mb-px flex gap-6 flex-wrap" aria-label="Channel tabs">
+      <div className="mb-4 border-b border-gray-200">
+        <nav className="-mb-px flex flex-wrap gap-5" aria-label="Channel tabs">
           {CHANNEL_TABS.map((c) => {
             const active = activeChannel === c;
             const label = c === 'all' ? 'All channels' : AD_CHANNEL_LABEL[c];
@@ -216,16 +220,16 @@ export default function InquiriesInbox() {
                 key={c}
                 type="button"
                 onClick={() => setUrl({ channel: c === 'all' ? null : c, id: null })}
-                className={`py-3 border-b-2 text-sm font-medium transition ${
+                className={`h-9 border-b-2 text-sm font-medium transition ${
                   active
-                    ? 'border-blue-600 text-blue-700'
+                    ? 'border-orange-600 text-orange-700'
                     : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300'
                 }`}
                 aria-current={active ? 'page' : undefined}
               >
                 {label}
                 {count > 0 && (
-                  <span className="ml-2 inline-block px-2 py-0.5 rounded-full bg-blue-600 text-white text-xs font-semibold">
+                  <span className="ml-2 inline-block rounded-full bg-orange-600 px-2 py-0.5 text-xs font-semibold text-white">
                     {count}
                   </span>
                 )}
@@ -236,14 +240,14 @@ export default function InquiriesInbox() {
       </div>
 
       {/* Status pipeline + search row. */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button"
             onClick={() => setUrl({ status: null })}
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
               activeStatus === 'all'
-                ? 'bg-gray-900 text-white border-gray-900'
+                ? 'bg-orange-600 text-white border-orange-600'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
             }`}
           >
@@ -258,7 +262,7 @@ export default function InquiriesInbox() {
                 onClick={() => setUrl({ status: s })}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
                   active
-                    ? 'bg-gray-900 text-white border-gray-900'
+                    ? 'bg-orange-600 text-white border-orange-600'
                     : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                 }`}
               >
@@ -270,7 +274,7 @@ export default function InquiriesInbox() {
         <button
           type="button"
           onClick={() => setNewQuoteOpen(true)}
-          className="ml-auto whitespace-nowrap px-4 py-2 rounded-md bg-purple-700 text-white text-sm hover:bg-purple-800"
+          className="ml-auto inline-flex h-9 items-center whitespace-nowrap rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700"
         >
           Create New Proposal
         </button>
@@ -280,7 +284,7 @@ export default function InquiriesInbox() {
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search name, email, company…"
-            className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="h-9 w-72 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
           />
         </div>
       </div>
@@ -292,14 +296,15 @@ export default function InquiriesInbox() {
       )}
 
       {/* Two-column layout: list on the left, detail drawer on the right. */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         {/* List */}
         <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
           {loading && !data ? (
             <div className="p-8 text-sm text-gray-600 text-center">Loading…</div>
           ) : !data || data.rows.length === 0 ? (
-            <div className="p-8 text-sm text-gray-600 text-center">
-              No inquiries match this view.
+            <div className="px-6 py-12 text-center">
+              <div className="text-sm font-medium text-gray-900">No inquiries match this view</div>
+              <p className="mt-1 text-xs text-gray-500">Try another channel, status, or search term.</p>
             </div>
           ) : (
             <ul className="divide-y divide-gray-100">
@@ -310,8 +315,8 @@ export default function InquiriesInbox() {
                     <button
                       type="button"
                       onClick={() => setUrl({ id: row.id })}
-                      className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition ${
-                        selected ? 'bg-blue-50/50' : ''
+                      className={`w-full px-4 py-2.5 text-left transition hover:bg-gray-50 ${
+                        selected ? 'bg-orange-50/60' : ''
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-1">
@@ -359,9 +364,24 @@ export default function InquiriesInbox() {
               })}
             </ul>
           )}
-          {data && data.total > data.rows.length && (
-            <div className="px-4 py-2 text-xs text-gray-600 border-t border-gray-100">
-              Showing {data.rows.length} of {data.total}. Refine filters to see more.
+          {data && data.total > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 px-4 py-2 text-xs text-gray-600">
+              <span>
+                Showing {data.offset + 1}–{Math.min(data.offset + data.rows.length, data.total)} of {data.total}
+              </span>
+              <span className="flex items-center gap-2">
+                <label className="flex items-center gap-1">
+                  Rows
+                  <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                    className="h-9 rounded border border-gray-300 bg-white px-2 text-xs">
+                    {[25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+                  </select>
+                </label>
+                <button type="button" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="h-9 rounded border border-gray-300 bg-white px-3 disabled:opacity-40">Previous</button>
+                <button type="button" disabled={data.offset + data.rows.length >= data.total} onClick={() => setPage((p) => p + 1)}
+                  className="h-9 rounded border border-gray-300 bg-white px-3 disabled:opacity-40">Next</button>
+              </span>
             </div>
           )}
         </div>
@@ -377,8 +397,9 @@ export default function InquiriesInbox() {
               onClose={() => setUrl({ id: null })}
             />
           ) : (
-            <div className="text-sm text-gray-600 text-center py-12">
-              Select an inquiry from the list to reply, assign, or change status.
+            <div className="py-12 text-center">
+              <div className="text-sm font-medium text-gray-900">Select an inquiry</div>
+              <p className="mt-1 text-xs text-gray-500">Reply, assign, or update its status here.</p>
             </div>
           )}
         </div>

@@ -156,6 +156,13 @@ export default function TrendingAdminClient() {
 
   return (
     <div>
+      <section className="content-admin-summary" aria-label="Trending summary">
+        <div><strong>{items.length.toLocaleString()}</strong><span>Total items</span></div>
+        <div><strong>{items.filter((item) => itemStatus(item) === 'live').length.toLocaleString()}</strong><span>Live</span></div>
+        <div><strong>{items.filter((item) => itemStatus(item) === 'scheduled').length.toLocaleString()}</strong><span>Scheduled</span></div>
+        <div><strong>{items.filter((item) => itemStatus(item) === 'draft').length.toLocaleString()}</strong><span>Drafts</span></div>
+      </section>
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 mb-4 pb-4 border-b border-gray-200">
         <div className="flex items-center gap-2">
@@ -198,7 +205,7 @@ export default function TrendingAdminClient() {
           <button
             type="button"
             onClick={() => setCreatingNew(true)}
-            className="text-sm px-3 py-1.5 rounded-md bg-orange-600 text-white hover:bg-orange-700 font-medium"
+            className="inline-flex h-9 items-center px-4 rounded border border-orange-700 bg-orange-600 text-sm text-white hover:bg-orange-700 font-semibold shadow-sm"
           >
             + New trending
           </button>
@@ -209,8 +216,8 @@ export default function TrendingAdminClient() {
       {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-3">{error}</div>}
 
       {!loading && !error && filtered.length === 0 && (
-        <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg">
-          <div className="text-3xl mb-2">📰</div>
+        <div className="content-admin-empty">
+          <div className="mb-3 text-sm font-semibold uppercase tracking-widest text-orange-600">Trending</div>
           <div className="text-sm font-medium text-gray-900 mb-1">No trending items</div>
           <div className="text-xs text-gray-600 mb-4">
             {items.length === 0 ? 'Create your first item to get started.' : 'No items match your filters.'}

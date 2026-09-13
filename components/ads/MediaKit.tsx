@@ -69,8 +69,9 @@ export default function MediaKit({ mode = 'admin' }: { mode?: 'admin' | 'public'
   const isPublic = mode === 'public';
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className={isPublic ? "mx-auto max-w-6xl px-4 py-8" : "mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8 [&_section]:p-4 [&_table]:text-xs [&_th]:py-2.5 [&_td]:py-2.5"}>
       <div className="mb-4">
+        {!isPublic && <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Sales</div>}
         <PageTitle size="md">{isPublic ? 'Advertising Media Kit — 2026' : 'Media Kit — 2026'}</PageTitle>
         <p className="text-sm text-gray-700 mt-1">
           {isPublic
@@ -132,7 +133,7 @@ function PubTabs({ active, onChange }: { active: PubTab['id']; onChange: (id: Pu
             className={
               'inline-flex items-center gap-2 -mb-px px-3 py-2 text-sm border-b-2 transition-colors ' +
               (isActive
-                ? 'border-brand-700 text-brand-800 font-semibold'
+                ? 'border-orange-600 text-orange-700 font-semibold'
                 : soon
                   ? 'border-transparent text-gray-400 cursor-not-allowed'
                   : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300')

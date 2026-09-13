@@ -7,6 +7,7 @@
 // revoking a subscriber, and sending a one-off test push.
 
 import { useCallback, useEffect, useState } from 'react';
+import ContentPagination from '../_components/ContentPagination';
 
 type Market = 'austin' | 'san_antonio' | 'houston' | 'dallas';
 const MARKET_LABELS: Record<Market, string> = {
@@ -67,6 +68,8 @@ export default function SubscribersSection() {
   const [error, setError] = useState<string | null>(null);
   const [showRevoked, setShowRevoked] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const load = useCallback(async () => {
     try {
@@ -192,6 +195,8 @@ export default function SubscribersSection() {
 
   const visible = showRevoked ? subs : subs.filter((s) => s.active);
   const activeCount = subs.filter((s) => s.active).length;
+  const safePage = Math.min(page, Math.max(1, Math.ceil(visible.length / pageSize)));
+  const pageVisible = visible.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   return (
     <section className="mt-10">
@@ -206,7 +211,10 @@ export default function SubscribersSection() {
           <input
             type="checkbox"
             checked={showRevoked}
-            onChange={(e) => setShowRevoked(e.target.checked)}
+            onChange={(e) => {
+              setShowRevoked(e.target.checked);
+              setPage(1);
+            }}
             className="rounded"
           />
           Show revoked
@@ -239,7 +247,7 @@ export default function SubscribersSection() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {visible.map((sub) => (
+                {pageVisible.map((sub) => (
                   <tr
                     key={sub.id}
                     className={`hover:bg-gray-50 ${sub.active ? '' : 'opacity-60'}`}
@@ -314,7 +322,7 @@ export default function SubscribersSection() {
           </div>
           {/* Mobile card list. */}
           <ul className="sm:hidden divide-y divide-gray-100">
-            {visible.map((sub) => (
+            {pageVisible.map((sub) => (
               <li
                 key={sub.id}
                 className={`px-4 py-3 space-y-2 ${sub.active ? '' : 'opacity-60'}`}
@@ -378,6 +386,16 @@ export default function SubscribersSection() {
               </li>
             ))}
           </ul>
+          <ContentPagination
+            count={visible.length}
+            page={safePage}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+          />
           </>
         )}
       </div>

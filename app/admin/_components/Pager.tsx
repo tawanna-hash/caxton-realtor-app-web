@@ -23,7 +23,7 @@ export type PagerProps = {
   className?: string;
   /**
    * When provided, the Pager renders a "per page" dropdown next to the
-   * summary. Use PAGE_SIZE_OPTIONS for the standard 10/25/50/100/200
+   * summary. Use PAGE_SIZE_OPTIONS for the standard 25/50/100
    * list. Pass `null` (or omit) to hide the dropdown.
    */
   pageSizeOptions?: readonly number[];
@@ -34,7 +34,7 @@ export type PagerProps = {
  * Standard rows-per-page choices for the Mailing Hub child pages.
  * Shared so every page is consistent.
  */
-export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200] as const;
+export const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 
 /** Build a compact page-window like: 1 … 7 8 [9] 10 11 … 42 */
 function buildPageList(current: number, totalPages: number): (number | 'ellipsis')[] {
@@ -75,7 +75,7 @@ export function Pager({
         value={pageSize}
         disabled={disabled}
         onChange={(e) => onPageSizeChange?.(parseInt(e.target.value, 10))}
-        className="text-xs px-1.5 py-1 rounded border border-gray-300 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+        className="h-9 rounded border border-gray-300 bg-white px-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-50"
       >
         {pageSizeOptions!.map((n) => (
           <option key={n} value={n}>
@@ -102,9 +102,9 @@ export function Pager({
   }
 
   const baseBtn =
-    'px-2.5 py-1 text-sm rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed';
+    'inline-flex h-9 min-w-9 items-center justify-center rounded border border-gray-300 bg-white px-2.5 text-xs text-gray-700 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-40';
   const activeBtn =
-    'px-2.5 py-1 text-sm rounded border border-indigo-600 bg-indigo-600 text-white font-semibold';
+    'inline-flex h-9 min-w-9 items-center justify-center rounded border border-orange-600 bg-orange-600 px-2.5 text-xs font-semibold text-white';
 
   return (
     <div className={`flex items-center justify-between gap-3 flex-wrap ${className}`}>
@@ -151,4 +151,3 @@ export function Pager({
     </div>
   );
 }
-

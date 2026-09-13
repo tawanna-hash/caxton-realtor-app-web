@@ -404,7 +404,7 @@ export default function AdminEventImagesPage() {
   const clearSelection = () => setSelectedPhotos(new Set());
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
+    <div className="content-admin-shell">
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">Admin</p>
@@ -419,6 +419,13 @@ export default function AdminEventImagesPage() {
           View page <ExternalLink size={14} />
         </a>
       </div>
+
+      <section className="content-admin-summary" aria-label="Event image summary">
+        <div><strong>{photos?.length ?? 0}</strong><span>Photos</span></div>
+        <div><strong>{monthGroups.length}</strong><span>Folders</span></div>
+        <div><strong>{photos?.filter((photo) => photo.advertiserId).length ?? 0}</strong><span>Partner linked</span></div>
+        <div><strong>{selectedPhotos.size}</strong><span>Selected</span></div>
+      </section>
 
       {error && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center justify-between">
@@ -472,7 +479,7 @@ export default function AdminEventImagesPage() {
         </div>
         <div className="mt-4">
           <button type="submit"
-            className="inline-flex items-center gap-2 bg-brand-700 text-white px-5 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors">
+            className="inline-flex items-center gap-2 bg-orange-600 text-white px-5 py-2 text-sm font-medium hover:bg-orange-700 rounded-md transition-colors">
             <Plus size={16} /> Create Folder &amp; Upload
           </button>
           <p className="mt-2 text-xs text-gray-400">Creates a folder for the selected month and scrolls to the upload section.</p>
@@ -564,7 +571,10 @@ export default function AdminEventImagesPage() {
         {photos === null ? (
           <p className="text-sm text-gray-500">Loading...</p>
         ) : photos.length === 0 ? (
-          <p className="text-sm text-gray-500">No photos yet. Create a folder above to get started.</p>
+          <div className="content-admin-empty">
+            <strong>No event photos yet</strong>
+            <span>Create a folder above, then upload the first set of images.</span>
+          </div>
         ) : (
           <div className="space-y-3">
             {monthGroups.map((group) => {

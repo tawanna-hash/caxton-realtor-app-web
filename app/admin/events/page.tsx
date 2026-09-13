@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import PageTitle from '@/components/ui/PageTitle';
+import ContentPagination from '@/app/admin/_components/ContentPagination';
 import {
   PUBLICATIONS,
   PUBLICATION_FILTER_LABELS,
@@ -66,6 +67,8 @@ export default function EventsPage() {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('when');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   // "Expired" = end_date is in the past, or start_date when no end exists.
   // Mirrors the server-side criterion in POST /admin/events/delete-expired. Stored as state and
@@ -97,6 +100,9 @@ export default function EventsPage() {
       default: return 0;
     }
   });
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const reload = () => {
     setLoading(true);
@@ -190,7 +196,7 @@ export default function EventsPage() {
       onClick={() => setFilter(key)}
       className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
         filter === key
-          ? 'bg-brand-700 text-white border-brand-700'
+          ? 'bg-orange-600 text-white border-brand-700'
           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
       }`}
     >
@@ -199,7 +205,7 @@ export default function EventsPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="content-admin-shell">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
         <div>
           <PageTitle size="md">Events</PageTitle>
@@ -225,12 +231,19 @@ export default function EventsPage() {
           </button>
           <Link
             href="/admin/events/new"
-            className="px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-brand-700 transition-colors"
+            className="px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-orange-700 transition-colors"
           >
             + New Event
           </Link>
         </div>
       </div>
+
+      <section className="content-admin-summary" aria-label="Event summary">
+        <div><strong>{items.length.toLocaleString()}</strong><span>Total events</span></div>
+        <div><strong>{items.filter((event) => !event.hidden).length.toLocaleString()}</strong><span>Visible</span></div>
+        <div><strong>{items.filter((event) => event.hidden).length.toLocaleString()}</strong><span>Hidden</span></div>
+        <div><strong>{expiredVisibleCount.toLocaleString()}</strong><span>Expired</span></div>
+      </section>
 
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2">
@@ -271,7 +284,7 @@ export default function EventsPage() {
         <>
         {/* mobile card list */}
         <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
-          {sorted.map((ev) => {
+          {pageItems.map((ev) => {
             const isManual = ev.externalSource === 'manual';
             const hasEdits = ev.editedFields.length > 0;
             return (
@@ -337,7 +350,7 @@ export default function EventsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {sorted.map((ev) => {
+              {pageItems.map((ev) => {
                 const isManual = ev.externalSource === 'manual';
                 const hasEdits = ev.editedFields.length > 0;
                 return (
@@ -396,6 +409,13 @@ export default function EventsPage() {
             </tbody>
           </table>
         </div>
+        <ContentPagination
+          count={sorted.length}
+          page={safePage}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+        />
         </>
       )}
     </div>

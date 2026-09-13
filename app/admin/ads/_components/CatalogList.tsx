@@ -1,15 +1,15 @@
-// caxton-ads-v1
-// Catalog tab — 16 ad slots grouped by zone, with active-campaign
-// counts overlaid. Read-only reference data.
-
 'use client';
 
-import type { AdSpace, AdCampaign } from './types';
-import { ZONE_LABELS, TIER_COLORS, formatSizes, isCampaignActive } from './types';
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { Search } from 'lucide-react';
+import type { AdCampaign, AdSpace } from './types';
+import { formatSizes, isCampaignActive, ZONE_LABELS } from './types';
+import {
+  AD_OPS_CONTROL,
+  AdOpsPagination,
+} from './AdOpsUi';
 
-// Slugs that rotate through multiple active creatives in <AdSlot>. Keep in
-// sync with ROTATING_SLUGS in components/ads/AdSlot.tsx and the `rotates`
-// flags on entries in lib/media-kit.ts.
 const ROTATING_SLUGS = new Set([
   'feed_top_banner',
   'feed_sticky_bottom',
@@ -24,91 +24,145 @@ interface Props {
 }
 
 export function CatalogList({ spaces, campaigns }: Props) {
-  // Group spaces by zone for visual organization
-  const byZone = spaces.reduce<Record<string, AdSpace[]>>((acc, s) => {
-    (acc[s.zone] ||= []).push(s);
-    return acc;
-  }, {});
+  const [query, setQuery] = useState('');
+  const [zone, setZone] = useState('all');
+  const [tier, setTier] = useState('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
-  function activeCount(slug: string): number {
-    return campaigns.filter((c) => c.ad_space_slug === slug && isCampaignActive(c)).length;
-  }
+  const activeBySlug = useMemo(() => {
+    const counts = new Map<string, number>();
+    campaigns.forEach((campaign) => {
+      if (isCampaignActive(campaign)) {
+        counts.set(campaign.ad_space_slug, (counts.get(campaign.ad_space_slug) ?? 0) + 1);
+      }
+    });
+    return counts;
+  }, [campaigns]);
 
-  const zoneOrder: (keyof typeof ZONE_LABELS)[] = ['article', 'feed', 'calendar', 'newsletter', 'app', 'account', 'misc'];
+  const zones = useMemo(
+    () => Array.from(new Set(spaces.map((space) => space.zone))).sort(),
+    [spaces],
+  );
+  const tiers = useMemo(
+    () => Array.from(new Set(spaces.map((space) => space.tier))).sort(),
+    [spaces],
+  );
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return spaces
+      .filter((space) => zone === 'all' || space.zone === zone)
+      .filter((space) => tier === 'all' || space.tier === tier)
+      .filter((space) => (
+        !needle
+        || [space.display_name, space.slug, space.notes, formatSizes(space.sizes_json)]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+          .includes(needle)
+      ))
+      .sort((a, b) => a.zone.localeCompare(b.zone) || a.display_name.localeCompare(b.display_name));
+  }, [query, spaces, tier, zone]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const visible = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div className="space-y-8">
-      <div className="rounded-md bg-blue-50 p-4 text-sm text-blue-900 ring-1 ring-blue-200">
-        <p>
-          <strong>16 ad slots</strong> across 7 zones. Counts show campaigns currently
-          live (active + within date range). Slot definitions are read-only —
-          contact engineering to add new slots.
-        </p>
-        <p className="mt-2">
-          Slots tagged <span className="inline-flex items-center gap-1 align-middle rounded-full bg-blue-100 text-blue-800 border border-blue-300 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">Rotates</span> auto-cycle through every active campaign on that slot — up to 5 at a time, 6s dwell, 2s cross-fade. Load up multiple creatives on the same slot and they will share the surface.
-        </p>
+    <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+      <div className="flex flex-wrap items-end gap-2 border-b border-gray-300 px-4 py-3">
+        <label className="min-w-56 flex-1 space-y-1">
+          <span className="block text-xs text-gray-500">Search inventory</span>
+          <span className="relative block">
+            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
+            <input
+              type="search"
+              className={`${AD_OPS_CONTROL} w-full pl-9`}
+              placeholder="Placement, slug, size, or note"
+              value={query}
+              onChange={(event) => { setQuery(event.target.value); setPage(1); }}
+            />
+          </span>
+        </label>
+        <label className="space-y-1">
+          <span className="block text-xs text-gray-500">Zone</span>
+          <select className={`${AD_OPS_CONTROL} min-w-36`} value={zone} onChange={(event) => { setZone(event.target.value); setPage(1); }}>
+            <option value="all">All zones</option>
+            {zones.map((item) => <option key={item} value={item}>{ZONE_LABELS[item]}</option>)}
+          </select>
+        </label>
+        <label className="space-y-1">
+          <span className="block text-xs text-gray-500">Tier</span>
+          <select className={`${AD_OPS_CONTROL} min-w-36`} value={tier} onChange={(event) => { setTier(event.target.value); setPage(1); }}>
+            <option value="all">All tiers</option>
+            {tiers.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}
+          </select>
+        </label>
       </div>
-      {zoneOrder.map((zone) => {
-        const items = byZone[zone];
-        if (!items?.length) return null;
-        return (
-          <section key={zone}>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-700 mb-3">
-              {ZONE_LABELS[zone]}
-            </h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {items.map((s) => {
-                const active = activeCount(s.slug);
-                return (
-                  <div
-                    key={s.slug}
-                    className="rounded-md border border-gray-200 bg-white p-4 hover:border-gray-300"
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div>
-                        <h4 className="font-medium text-gray-900">{s.display_name}</h4>
-                        <p className="text-xs text-gray-500 font-mono mt-0.5">{s.slug}</p>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {ROTATING_SLUGS.has(s.slug) && (
-                          <span
-                            className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
-                            title="Rotates with up to 5 active campaigns. 6s dwell, 2s cross-fade."
-                          >
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                              <path d="M21 12a9 9 0 1 1-3-6.7" />
-                              <polyline points="21 3 21 9 15 9" />
-                            </svg>
-                            Rotates
-                          </span>
-                        )}
-                        <span className={`text-xs font-medium uppercase tracking-wide px-2 py-0.5 rounded-md ${TIER_COLORS[s.tier]}`}>
-                          {s.tier}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-700 mb-2">{formatSizes(s.sizes_json)}</p>
-                    {s.notes && (
-                      <p className="text-xs text-gray-600 italic mb-2">{s.notes}</p>
-                    )}
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                      <span className="text-xs text-gray-600">
-                        {active === 0 ? (
-                          <span className="text-gray-500">No active campaigns</span>
-                        ) : (
-                          <span className="font-medium text-green-700">
-                            {active} active campaign{active === 1 ? '' : 's'}
-                          </span>
-                        )}
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[900px] table-fixed text-left text-xs">
+          <thead className="border-b border-gray-300 bg-white text-gray-700">
+            <tr>
+              <th className="w-[29%] px-4 py-3 font-semibold">Placement</th>
+              <th className="w-[13%] px-3 py-3 font-semibold">Zone</th>
+              <th className="w-[13%] px-3 py-3 font-semibold">Tier</th>
+              <th className="w-[27%] px-3 py-3 font-semibold">Creative specs</th>
+              <th className="w-[18%] px-4 py-3 font-semibold">Live campaigns</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {visible.map((space) => {
+              const active = activeBySlug.get(space.slug) ?? 0;
+              return (
+                <tr key={space.slug} className="hover:bg-orange-50/40">
+                  <td className="px-4 py-2.5">
+                    <Link href={`/admin/ads/placements?q=${encodeURIComponent(space.slug)}`} className="font-medium text-gray-900 hover:text-orange-700 hover:underline">
+                      {space.display_name}
+                    </Link>
+                    <div className="mt-0.5 truncate font-mono text-[11px] text-gray-500">{space.slug}</div>
+                  </td>
+                  <td className="px-3 py-2.5 text-gray-700">{ZONE_LABELS[space.zone]}</td>
+                  <td className="px-3 py-2.5">
+                    <span className={`inline-flex rounded px-2 py-0.5 font-medium capitalize ${
+                      space.tier === 'premium' ? 'bg-amber-100 text-amber-900' : 'bg-gray-100 text-gray-700'
+                    }`}>
+                      {space.tier}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-gray-600">
+                    <div className="line-clamp-2">{formatSizes(space.sizes_json)}</div>
+                    {space.notes && <div className="mt-0.5 line-clamp-1 text-gray-500">{space.notes}</div>}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <span className={active ? 'font-medium text-emerald-700' : 'text-gray-500'}>
+                      {active ? `${active} live` : 'Available'}
+                    </span>
+                    {ROTATING_SLUGS.has(space.slug) && (
+                      <span className="ml-2 rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700">
+                        Rotates
                       </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        );
-      })}
-    </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {visible.length === 0 && (
+        <div className="px-4 py-10 text-center text-sm text-gray-500">
+          No inventory matches these filters.
+        </div>
+      )}
+      <AdOpsPagination
+        count={filtered.length}
+        page={currentPage}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+      />
+    </section>
   );
 }

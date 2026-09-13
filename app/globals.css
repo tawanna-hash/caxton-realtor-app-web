@@ -467,3 +467,206 @@ textarea::placeholder {
     color: #301D5D !important;
   }
 }
+
+/* Mailing administration — aligned with the compact Get Paid workspace. */
+@layer components {
+  .mailing-admin-page {
+    width: 100%;
+    max-width: 1500px;
+    margin-inline: auto;
+    padding: 1.75rem 1.25rem;
+  }
+
+  .mailing-admin-page > * + * {
+    margin-top: 1.25rem;
+  }
+
+  @media (min-width: 64rem) {
+    .mailing-admin-page { padding-inline: 2rem; }
+  }
+
+  .mailing-admin-page h1 {
+    font-family: var(--font-sans-app), ui-sans-serif, system-ui, sans-serif;
+    font-size: 1.5rem;
+    line-height: 1.75rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+
+  .mailing-admin-page > nav:first-child { margin-bottom: -0.25rem; }
+
+  .mailing-admin-page input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  .mailing-admin-page select,
+  .mailing-admin-page button,
+  .mailing-admin-page a[role='button'] {
+    min-height: 2.25rem;
+  }
+
+  .mailing-admin-page input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  .mailing-admin-page select {
+    background-color: white;
+    border-color: rgb(209 213 219);
+    font-size: 0.75rem;
+  }
+
+  .mailing-primary-action {
+    display: inline-flex;
+    min-height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.25rem;
+    background-color: rgb(234 88 12);
+    padding: 0.5rem 1rem;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background-color 150ms ease;
+  }
+  .mailing-primary-action:hover { background-color: rgb(194 65 12); }
+  .mailing-primary-action:disabled { opacity: 0.5; }
+
+  .mailing-summary-strip {
+    gap: 0;
+    overflow: hidden;
+    border-block: 1px solid rgb(229 231 235);
+    background: white;
+  }
+  .mailing-summary-strip > * {
+    min-width: 0;
+    border: 0;
+    border-radius: 0;
+    border-right: 1px solid rgb(229 231 235);
+    padding: 0.75rem 1rem;
+    box-shadow: none;
+  }
+  .mailing-summary-strip > *:last-child { border-right: 0; }
+  .mailing-summary-strip > * [class*='text-2xl'],
+  .mailing-summary-strip > * [class*='text-xl'] {
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+  }
+  .mailing-summary-strip > * [class*='h-7'],
+  .mailing-summary-strip > * [class*='h-2'] { display: none; }
+
+  .mailing-admin-page table { font-size: 0.75rem; line-height: 1rem; }
+  .mailing-admin-page thead { background: white; }
+  .mailing-admin-page th { white-space: nowrap; }
+  .mailing-admin-page th,
+  .mailing-admin-page td { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  .mailing-admin-page tbody tr:hover { background-color: rgb(255 247 237 / 0.55); }
+
+  .mailing-admin-page :focus-visible {
+    outline: 2px solid rgb(234 88 12);
+    outline-offset: 2px;
+  }
+}
+
+/* Content admin operational surfaces — aligned with the compact Get Paid workspace. */
+@layer components {
+  .content-admin-shell {
+    width: 100%;
+    max-width: 1500px;
+    margin-inline: auto;
+    padding: 1.75rem 1.25rem;
+    color: var(--color-gray-900);
+  }
+
+  @media (min-width: 1024px) {
+    .content-admin-shell { padding-inline: 2rem; }
+  }
+
+  .content-admin-shell > :first-child:is(header, div) {
+    margin-bottom: 1.25rem;
+  }
+
+  .content-admin-shell :is(input[type='search'], input[type='text'], input[type='date'], select) {
+    min-height: 2.25rem;
+    height: 2.25rem;
+    border-radius: .25rem;
+    border-color: var(--color-gray-300);
+    background: white;
+    font-size: .875rem;
+    box-shadow: 0 1px 2px rgb(15 23 42 / .04);
+  }
+
+  .content-admin-shell :is(input, select, textarea):focus {
+    border-color: var(--color-orange-500);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-orange-100);
+  }
+
+  .content-admin-shell :is(a, button).bg-brand-700,
+  .content-admin-shell :is(a, button).bg-blue-600,
+  .content-admin-shell :is(a, button).bg-\[\#301D5D\] {
+    background-color: var(--color-orange-600);
+    border-color: var(--color-orange-700);
+  }
+
+  .content-admin-shell :is(a, button).bg-brand-700:hover,
+  .content-admin-shell :is(a, button).bg-blue-600:hover,
+  .content-admin-shell :is(a, button).bg-\[\#301D5D\]:hover {
+    background-color: var(--color-orange-700);
+  }
+
+  .content-admin-shell table {
+    min-width: 720px;
+    border-collapse: collapse;
+    font-size: .8125rem;
+  }
+
+  .content-admin-shell :is(div, section):has(> table) {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .content-admin-shell thead {
+    border-bottom: 1px solid var(--color-gray-300);
+    background: var(--color-gray-50);
+  }
+
+  .content-admin-shell thead th {
+    padding: .625rem .75rem;
+    color: var(--color-gray-600);
+    font-size: .6875rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .content-admin-shell tbody td { padding: .5625rem .75rem; }
+  .content-admin-shell tbody tr { border-bottom: 1px solid var(--color-gray-100); }
+  .content-admin-shell tbody tr:hover { background: var(--color-gray-50); }
+
+  .content-admin-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 0;
+    margin-block: 1rem 1.25rem;
+    border-block: 1px solid var(--color-gray-200);
+    background: white;
+  }
+  .content-admin-summary > * {
+    min-width: 0;
+    padding: .75rem 1rem;
+    border-right: 1px solid var(--color-gray-200);
+  }
+  .content-admin-summary > *:last-child { border-right: 0; }
+  .content-admin-summary strong { display: block; font-size: 1.125rem; line-height: 1.25; }
+  .content-admin-summary span { display: block; margin-top: .125rem; color: var(--color-gray-500); font-size: .75rem; }
+
+  .content-admin-empty {
+    display: flex;
+    min-height: 12rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--color-gray-300);
+    border-radius: .375rem;
+    background: white;
+    padding: 2rem;
+    text-align: center;
+  }
+}

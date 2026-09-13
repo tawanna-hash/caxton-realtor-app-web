@@ -34,8 +34,6 @@ type SortDir = 'asc' | 'desc';
 // Client-side pagination — the table loads every row for the active tab +
 // kind (so sort still operates over the full set), then slices a page of
 // PAGE_SIZE rows for display.
-const PAGE_SIZE = 25;
-
 const SORT_OPTIONS: Array<{ key: SortKey; dir: SortDir; label: string }> = [
   { key: 'createdAt',    dir: 'desc', label: 'Newest first' },
   { key: 'createdAt',    dir: 'asc',  label: 'Oldest first' },
@@ -109,6 +107,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [bulkApproving, setBulkApproving] = useState(false);
 
   // Sync the tab from the ?status= query param on mount + whenever the URL
@@ -226,22 +225,22 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
   );
 
   const totalPages = sortedRows
-    ? Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE))
+    ? Math.max(1, Math.ceil(sortedRows.length / pageSize))
     : 1;
   const safePage = Math.min(Math.max(1, page), totalPages);
   const pagedRows = useMemo<BuilderInventoryRow[]>(() => {
     if (!sortedRows) return [];
-    const start = (safePage - 1) * PAGE_SIZE;
-    return sortedRows.slice(start, start + PAGE_SIZE);
-  }, [sortedRows, safePage]);
+    const start = (safePage - 1) * pageSize;
+    return sortedRows.slice(start, start + pageSize);
+  }, [sortedRows, safePage, pageSize]);
 
   const otherKind: Kind = kind === 'listing' ? 'promotion' : 'listing';
   const otherHref = otherKind === 'promotion' ? '/admin/inventory/promotions' : '/admin/inventory';
   const otherLabel = otherKind === 'promotion' ? 'Promotions' : 'Inventory';
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="content-admin-shell">
+      <div className="w-full">
         <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
@@ -275,12 +274,21 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
             </Link>
             <Link
               href={`/admin/inventory/new?kind=${kind}`}
-              className="shrink-0 bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors whitespace-nowrap"
+              className="shrink-0 bg-orange-600 text-white px-4 py-2 text-sm font-medium hover:bg-orange-700 rounded-md transition-colors whitespace-nowrap"
             >
               {copy.createLabel}
             </Link>
           </div>
         </div>
+
+        <section className="content-admin-summary" aria-label={`${copy.title} summary`}>
+          {(Object.keys(TAB_LABELS) as Tab[]).map((status) => (
+            <div key={status}>
+              <strong>{(counts?.[status] ?? 0).toLocaleString()}</strong>
+              <span>{TAB_LABELS[status]}</span>
+            </div>
+          ))}
+        </section>
 
         {/* Cross-nav between the two split pages */}
         <div className="flex gap-1 mb-6">
@@ -296,7 +304,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
                 className={
                   'px-4 py-2 text-sm font-medium rounded-md transition-colors ' +
                   (active
-                    ? 'bg-brand-700 text-white'
+                    ? 'bg-orange-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
                 }
               >
@@ -515,8 +523,9 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
             page={safePage}
             totalPages={totalPages}
             total={sortedRows.length}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             onChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
           />
           </>
         )}
@@ -539,8 +548,8 @@ function EmptyState({ tab, word, onSwitchTab }: { tab: Tab; word: string; onSwit
   };
   const action = cta[tab];
   return (
-    <div className="bg-white border border-gray-200 rounded-md p-12 text-center">
-      <p className="text-gray-500 font-light mb-4">{messages[tab]}</p>
+    <div className="content-admin-empty">
+      <p className="font-semibold text-gray-900">{messages[tab]}</p>
       {action && (
         <button
           type="button"
@@ -593,14 +602,15 @@ function Pager({
   total,
   pageSize,
   onChange,
+  onPageSizeChange,
 }: {
   page: number;
   totalPages: number;
   total: number;
   pageSize: number;
   onChange: (p: number) => void;
+  onPageSizeChange: (size: number) => void;
 }) {
-  if (totalPages <= 1) return null;
   const start = (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, total);
   // Windowed page list: first, last, and a couple of pages around the
@@ -621,9 +631,21 @@ function Pager({
     'hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
-      <p className="text-xs text-gray-500">
-        Showing {start}–{end} of {total}
-      </p>
+      <div className="flex items-center gap-3 text-xs text-gray-500">
+        <span>Showing {start}–{end} of {total}</span>
+        <label className="flex items-center gap-1.5">
+          Rows
+          <select
+            className="h-7 rounded border border-gray-300 bg-white px-1.5 text-xs"
+            value={pageSize}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+          >
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </label>
+      </div>
       <div className="flex items-center gap-1">
         <button
           type="button"

@@ -408,7 +408,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
         <button
           type="submit"
           disabled={submitting || !packageId || previewCents <= 0}
-          className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-blue-700 text-white hover:bg-blue-800 disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
+          className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-orange-600 text-white hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
         >
           {submitting ? 'Booking…' : 'Book it'}
         </button>
