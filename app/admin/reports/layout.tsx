@@ -2,11 +2,12 @@ import Link from 'next/link';
 import GetPaidNav from '@/app/admin/getpaid/_components/GetPaidNav';
 
 const REPORT_LINKS = [
+  ['Overview', '/admin/reports'],
   ['Deposits', '/admin/reports/deposits'],
   ['Detail', '/admin/reports/detail'],
 ] as const;
 
-export default function AccountingReportsLayout({ children }: { children: React.ReactNode }) {
+export default function ReportsLayout({ children }: { children: React.ReactNode }) {
   return (
     <div>
       <GetPaidNav />
