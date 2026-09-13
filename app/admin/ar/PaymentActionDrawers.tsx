@@ -8,6 +8,7 @@ import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 import { DrawerFooter, DrawerShell, Field, Section } from '@/app/admin/billing/_components/DrawerShell';
 import { INPUT } from '@/app/admin/billing/_components/constants';
 import { ProductServiceSearch } from '@/app/admin/billing/_components/ProductServiceSearch';
+import { toISODateString } from '@/app/admin/billing/_components/helpers';
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -210,7 +211,7 @@ export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved
           title="PAYMENT REQUEST"
           number={selectedInvoice?.number ?? 'Select an invoice'}
           customer={selectedInvoice?.bill_to_name ?? selectedInvoice?.advertiser_name ?? 'Customer'}
-          date={selectedInvoice?.issued_at?.slice(0, 10) ?? todayIso()}
+          date={toISODateString(selectedInvoice?.issued_at) || todayIso()}
           amount={selectedInvoice?.total_cents ?? 0}
           lineItems={selectedInvoice?.line_items ?? []}
           note="Use the secure payment link in your email to complete payment."

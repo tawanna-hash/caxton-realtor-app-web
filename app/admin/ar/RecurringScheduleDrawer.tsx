@@ -20,6 +20,7 @@ import { DrawerShell, DrawerFooter, Section, Field } from '@/app/admin/billing/_
 import { INPUT } from '@/app/admin/billing/_components/constants';
 import { ProductServiceSearch } from '@/app/admin/billing/_components/ProductServiceSearch';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
+import { toISODateString } from '@/app/admin/billing/_components/helpers';
 
 const FREQ_OPTIONS: { value: RecurringFrequency; label: string }[] = [
   { value: 'daily', label: 'Daily' },
@@ -58,8 +59,8 @@ export function RecurringScheduleDrawer({
   const [dueDays, setDueDays] = useState<number>(existing?.due_days ?? 15);
   const [createDaysInAdvance, setCreateDaysInAdvance] = useState<number>(existing?.create_days_in_advance ?? 0);
   const [autoSend, setAutoSend] = useState<boolean>(existing?.auto_send ?? true);
-  const [startDate, setStartDate] = useState<string>(existing?.start_date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
-  const [endDate, setEndDate] = useState<string>(existing?.end_date?.slice(0, 10) ?? '');
+  const [startDate, setStartDate] = useState<string>(toISODateString(existing?.start_date) || new Date().toISOString().slice(0, 10));
+  const [endDate, setEndDate] = useState<string>(toISODateString(existing?.end_date));
   const [maxOccurrences, setMaxOccurrences] = useState<string>(existing?.max_occurrences != null ? String(existing.max_occurrences) : '');
   const [endMode, setEndMode] = useState<'never' | 'after' | 'date'>(
     existing?.max_occurrences != null ? 'after' : existing?.end_date ? 'date' : 'never',
