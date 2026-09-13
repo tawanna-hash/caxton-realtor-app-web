@@ -190,6 +190,8 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   const [durationMenuOpen, setDurationMenuOpen] = useState(false);
   const [incomePeriod, setIncomePeriod] = useState<IncomePeriod>('this-month');
   const [createInvoice, setCreateInvoice] = useState(false);
+  const [editInvoice, setEditInvoice] = useState<InvoiceWithAdvertiser | null>(null);
+  const [paymentInvoiceId, setPaymentInvoiceId] = useState<string | null>(null);
   const [paymentAction, setPaymentAction] = useState<'payment-link' | 'sales-receipt' | 'record-payment' | 'create-partner' | null>(null);
   const [query, setQuery] = useState('');
   const [pageSize, setPageSize] = useState(25);
@@ -200,7 +202,16 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   const openQuickAction = (action: (typeof QUICK_ACTIONS)[number]['action']) => {
     if (action === 'invoice') setCreateInvoice(true);
     else if (action === 'recurring') setCreateSchedule(true);
-    else setPaymentAction(action);
+    else {
+      setPaymentInvoiceId(null);
+      setPaymentAction(action);
+    }
+  };
+
+  const openRecordPayment = (invoice: InvoiceWithAdvertiser) => {
+    setEditInvoice(null);
+    setPaymentInvoiceId(invoice.id);
+    setPaymentAction('record-payment');
   };
 
   const reloadAll = useCallback(async () => {
@@ -579,7 +590,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
           {bucketFilter !== 'all' && <button type="button" onClick={() => { setBucketFilter('all'); setInvoicePage(1); }} className="text-xs font-medium text-orange-700 hover:underline">Clear filter</button>}
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[940px] table-fixed text-left text-xs">
+          <table className="w-full min-w-[1120px] table-fixed text-left text-xs">
             <thead className="border-b border-gray-300 bg-white text-gray-700">
               <tr>
                 <th className="w-32 px-4 py-3 font-semibold">Invoice</th>
@@ -587,13 +598,26 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                 <th className="w-32 px-3 py-3 text-right font-semibold">Balance</th>
                 <th className="w-32 px-3 py-3 font-semibold">Due date</th>
                 <th className="w-40 px-3 py-3 font-semibold">Aging status</th>
-                <th className="px-4 py-3 text-right font-semibold"><span className="sr-only">Actions</span></th>
+                <th className="w-80 px-4 py-3 text-right font-semibold"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {invoicePagination.rows.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-orange-50/40">
-                  <td className="truncate px-4 py-2.5 font-medium text-gray-800">{invoice.number ?? 'Draft'}</td>
+                <tr
+                  key={invoice.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open ${invoice.number ?? 'draft invoice'} for ${invoice.advertiser_name ?? invoice.bill_to_name ?? 'partner'}`}
+                  onClick={() => setEditInvoice(invoice)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setEditInvoice(invoice);
+                    }
+                  }}
+                  className="cursor-pointer hover:bg-orange-50/70 focus:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-orange-400"
+                >
+                  <td className="truncate px-4 py-2.5 font-semibold text-orange-700 underline decoration-orange-200 underline-offset-2">{invoice.number ?? 'Draft'}</td>
                   <td className="truncate px-3 py-2.5 text-gray-800">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(invoice.balance_cents ?? invoice.total_cents)}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-gray-600">{invoice.due_date ? shortDate(invoice.due_date) : 'No due date'}</td>
@@ -604,9 +628,17 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-right">
-                    <button type="button" onClick={() => handleGetPaymentLink(invoice)} disabled={busyId === invoice.id} className="font-medium text-orange-700 hover:underline disabled:opacity-50">
+                    <div className="flex items-center justify-end gap-3">
+                    <button type="button" onClick={(event) => { event.stopPropagation(); setEditInvoice(invoice); }} onKeyDown={(event) => event.stopPropagation()} className="font-medium text-gray-700 hover:text-orange-700 hover:underline">
+                      Edit
+                    </button>
+                    <button type="button" onClick={(event) => { event.stopPropagation(); openRecordPayment(invoice); }} onKeyDown={(event) => event.stopPropagation()} className="font-medium text-gray-700 hover:text-orange-700 hover:underline">
+                      Record payment
+                    </button>
+                    <button type="button" onClick={(event) => { event.stopPropagation(); void handleGetPaymentLink(invoice); }} onKeyDown={(event) => event.stopPropagation()} disabled={busyId === invoice.id} className="font-medium text-orange-700 hover:underline disabled:opacity-50">
                       {busyId === invoice.id ? 'Sending…' : 'Send payment link'}
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -759,6 +791,17 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
           onError={setError}
         />
       )}
+      {editInvoice && (
+        <InvoiceDrawer
+          existing={editInvoice}
+          advertisers={advertisers}
+          agreements={agreements}
+          onClose={() => setEditInvoice(null)}
+          onSaved={async () => { setEditInvoice(null); await reloadAll(); }}
+          onRecordPayment={() => openRecordPayment(editInvoice)}
+          onError={setError}
+        />
+      )}
       {paymentAction === 'payment-link' && (
         <PaymentLinkDrawer
           invoices={invoices}
@@ -781,7 +824,8 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
         <RecordPaymentDrawer
           invoices={invoices}
           advertisers={advertisers}
-          onClose={() => setPaymentAction(null)}
+          initialInvoiceId={paymentInvoiceId ?? undefined}
+          onClose={() => { setPaymentAction(null); setPaymentInvoiceId(null); }}
           onSaved={reloadAll}
           onError={setError}
         />

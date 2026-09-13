@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
-import type { InvoiceWithAdvertiser, InvoiceStatus, InvoiceLineItem } from '@/lib/invoices';
+import type { InvoiceWithAdvertiser, InvoiceStatus, InvoiceLineItem, InvoiceAuditEntry, InvoicePayment } from '@/lib/invoices';
 import { formatCents, lineItemsTotal } from '@/lib/invoices';
 import { DrawerShell, DrawerFooter, Section, Field } from './DrawerShell';
 import { INPUT, INV_STATUS } from './constants';
@@ -55,7 +55,7 @@ function agreementLineToInvoiceItem(li: AgreementLineItemSeed): InvoiceLineItem 
 }
 
 export function InvoiceDrawer({
-  existing, advertisers, agreements, seed, onClose, onSaved, onError,
+  existing, advertisers, agreements, seed, onClose, onSaved, onRecordPayment, onError,
 }: {
   existing?: InvoiceWithAdvertiser;
   advertisers: AdvertiserOption[];
@@ -63,6 +63,7 @@ export function InvoiceDrawer({
   seed?: { advertiser_id: number | null; agreement_id: string; amount_cents: number | null };
   onClose: () => void;
   onSaved: () => Promise<void>;
+  onRecordPayment?: (invoice: InvoiceWithAdvertiser) => void;
   onError: (msg: string) => void;
 }) {
   const initialAdvertiserId = existing?.advertiser_id ?? seed?.advertiser_id ?? null;
@@ -94,6 +95,8 @@ export function InvoiceDrawer({
     line_items: initialLineItems as InvoiceLineItem[],
   });
   const [saving, setSaving] = useState(false);
+  const [detail, setDetail] = useState<InvoiceWithAdvertiser | null>(existing ?? null);
+  const [historyLoading, setHistoryLoading] = useState(Boolean(existing));
   const isCreate = !existing;
 
   useEffect(() => {
@@ -108,6 +111,27 @@ export function InvoiceDrawer({
       .catch(() => { /* Keep INV #16201 as the safe starting number. */ });
     return () => { alive = false; };
   }, [isCreate]);
+
+  useEffect(() => {
+    if (!existing) return;
+    let alive = true;
+    fetch(`/api/admin/invoices/${existing.id}`, { cache: 'no-store' })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error ?? 'Could not load invoice history');
+        return data.invoice as InvoiceWithAdvertiser;
+      })
+      .then((invoice) => {
+        if (alive) setDetail(invoice);
+      })
+      .catch((error) => {
+        if (alive) onError(error instanceof Error ? error.message : 'Could not load invoice history');
+      })
+      .finally(() => {
+        if (alive) setHistoryLoading(false);
+      });
+    return () => { alive = false; };
+  }, [existing, onError]);
 
   // Pre-populate line items from the linked agreement so a bundle (e.g. app
   // Top Banner + e-Blast) itemizes into the invoice instead of a flat amount.
@@ -170,7 +194,10 @@ export function InvoiceDrawer({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? data.detail ?? `Save failed (HTTP ${res.status})`);
+      }
       await onSaved();
     } catch (e) {
       onError(e instanceof Error ? e.message : 'save failed');
@@ -270,9 +297,150 @@ export function InvoiceDrawer({
           </p>
         </Section>
       )}
+      {existing && (
+        <InvoiceHistory
+          invoice={detail ?? existing}
+          loading={historyLoading}
+          onRecordPayment={onRecordPayment ? () => onRecordPayment(detail ?? existing) : undefined}
+        />
+      )}
       </div>
 
       <DrawerFooter saving={saving} onCancel={onClose} onSubmit={submit} submitLabel={isCreate ? 'Create' : 'Save changes'} tone="orange" />
     </DrawerShell>
+  );
+}
+
+const AUDIT_FIELD_LABELS: Record<string, string> = {
+  agreement_id: 'agreement',
+  number: 'invoice number',
+  amount_cents: 'amount',
+  tax_cents: 'tax',
+  status: 'status',
+  issued_at: 'issue date',
+  due_date: 'due date',
+  paid_at: 'paid date',
+  voided_at: 'voided date',
+  bill_to_name: 'bill-to name',
+  bill_to_email: 'bill-to email',
+  bill_to_address: 'bill-to address',
+  memo: 'memo',
+  line_items: 'line items',
+};
+
+function historyDate(value: string | null | undefined) {
+  if (!value) return 'Date unavailable';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function paymentDescription(payment: InvoicePayment) {
+  return [
+    payment.payment_method,
+    payment.reference ? `Reference ${payment.reference}` : null,
+    payment.memo,
+  ].filter(Boolean).join(' · ') || 'Payment recorded';
+}
+
+function auditDescription(entry: InvoiceAuditEntry) {
+  const fields = (entry.fields ?? []).map((field) => AUDIT_FIELD_LABELS[field] ?? field.replaceAll('_', ' '));
+  return fields.length ? `Changed ${fields.join(', ')}` : 'Invoice updated';
+}
+
+function InvoiceHistory({
+  invoice,
+  loading,
+  onRecordPayment,
+}: {
+  invoice: InvoiceWithAdvertiser;
+  loading: boolean;
+  onRecordPayment?: () => void;
+}) {
+  const payments = invoice.payments ?? [];
+  const auditLog = [...(invoice.audit_log ?? [])].reverse();
+  const amountPaid = invoice.amount_paid_cents ?? payments.reduce((sum, payment) => sum + payment.amount_cents, 0);
+  const balance = invoice.balance_cents ?? Math.max(invoice.total_cents - amountPaid, 0);
+
+  return (
+    <Section title="Payments & activity" className="xl:col-span-2">
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[
+          ['Invoice total', invoice.total_cents],
+          ['Payments recorded', amountPaid],
+          ['Open balance', balance],
+        ].map(([label, cents]) => (
+          <div key={String(label)} className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
+            <div className="text-xs text-gray-500">{label}</div>
+            <div className="mt-0.5 text-base font-semibold tabular-nums text-gray-900">{formatCents(Number(cents))}</div>
+          </div>
+        ))}
+      </div>
+
+      {onRecordPayment && balance > 0 && invoice.status !== 'void' && (
+        <button
+          type="button"
+          onClick={onRecordPayment}
+          className="inline-flex items-center rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+        >
+          Record payment
+        </button>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="overflow-hidden rounded-md border border-gray-200">
+          <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-600">Payment history</div>
+          {loading ? (
+            <div className="px-3 py-4 text-sm text-gray-500">Loading payments…</div>
+          ) : payments.length ? (
+            <div className="divide-y divide-gray-200">
+              {[...payments].reverse().map((payment) => (
+                <div key={payment.id} className="flex items-start justify-between gap-3 px-3 py-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-gray-900">{paymentDescription(payment)}</div>
+                    <div className="mt-0.5 text-xs text-gray-500">
+                      {historyDate(payment.payment_date)}{payment.created_by ? ` · ${payment.created_by}` : ''}
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-sm font-semibold tabular-nums text-emerald-700">{formatCents(payment.amount_cents)}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="px-3 py-4 text-sm text-gray-500">No payments have been recorded.</div>
+          )}
+        </div>
+
+        <div className="overflow-hidden rounded-md border border-gray-200">
+          <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-600">Change history</div>
+          {loading ? (
+            <div className="px-3 py-4 text-sm text-gray-500">Loading changes…</div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {auditLog.map((entry, index) => (
+                <div key={`${entry.timestamp}-${index}`} className="px-3 py-3">
+                  <div className="text-sm font-medium text-gray-900">{auditDescription(entry)}</div>
+                  <div className="mt-0.5 text-xs text-gray-500">
+                    {historyDate(entry.timestamp)}{entry.user_email ? ` · ${entry.user_email}` : ''}
+                  </div>
+                </div>
+              ))}
+              <div className="px-3 py-3">
+                <div className="text-sm font-medium text-gray-900">Invoice created</div>
+                <div className="mt-0.5 text-xs text-gray-500">
+                  {historyDate(invoice.created_at)}{invoice.created_by ? ` · ${invoice.created_by}` : ''}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </Section>
   );
 }

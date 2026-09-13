@@ -354,6 +354,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_customer_id      text`);
   await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS last_reminder_sent_at   timestamptz`);
   await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS reminder_count          integer NOT NULL DEFAULT 0`);
+  await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS audit_log                jsonb NOT NULL DEFAULT '[]'::jsonb`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_recurring_schedule ON invoices(recurring_schedule_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_stripe_checkout ON invoices(stripe_checkout_session_id)`);
 

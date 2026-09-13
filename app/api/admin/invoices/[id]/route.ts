@@ -11,6 +11,8 @@ import {
   INVOICE_PATCHABLE_FIELDS,
   INVOICE_STATUS_VALUES,
   lineItemsTotal,
+  type Invoice,
+  type InvoiceAuditEntry,
   type InvoiceLineItem,
   type InvoiceWithAdvertiser,
 } from '@/lib/invoices';
@@ -73,19 +75,15 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
     await ensureSchema();
     const sql = getSql();
     const existing = await sql`
-      SELECT i.status, i.advertiser_id, i.amount_cents, i.tax_cents,
-        COALESCE(sum(p.amount_cents), 0)::int AS amount_paid_cents
+      SELECT i.*,
+        COALESCE((
+          SELECT sum(p.amount_cents)
+          FROM invoice_payments p
+          WHERE p.invoice_id = i.id
+        ), 0)::int AS amount_paid_cents
       FROM invoices i
-      LEFT JOIN invoice_payments p ON p.invoice_id = i.id
       WHERE i.id = ${id}
-      GROUP BY i.id
-    ` as unknown as Array<{
-      status: string;
-      advertiser_id: number | null;
-      amount_cents: number;
-      tax_cents: number;
-      amount_paid_cents: number;
-    }>;
+    ` as unknown as Array<Invoice & { amount_paid_cents: number }>;
     if (existing.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const prevStatus = existing[0].status;
 
@@ -176,7 +174,32 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
     }
 
     if (updated.length === 0) return NextResponse.json({ error: 'no patchable fields' }, { status: 400 });
-    await sql`UPDATE invoices SET updated_at = NOW() WHERE id = ${id}`;
+    const auditFields = new Set([
+      'agreement_id', 'number', 'amount_cents', 'tax_cents', 'status',
+      'issued_at', 'due_date', 'paid_at', 'voided_at',
+      'bill_to_name', 'bill_to_email', 'bill_to_address', 'memo', 'line_items',
+    ]);
+    const auditedFields = updated.filter((field) => auditFields.has(field));
+    const changes = Object.fromEntries(auditedFields.map((field) => [
+      field,
+      {
+        from: existing[0][field as keyof Invoice] ?? null,
+        to: body[field] ?? null,
+      },
+    ]));
+    const auditEntry: InvoiceAuditEntry = {
+      event: 'invoice_updated',
+      timestamp: new Date().toISOString(),
+      user_email: admin.email ?? null,
+      fields: auditedFields,
+      changes,
+    };
+    await sql`
+      UPDATE invoices
+      SET audit_log = COALESCE(audit_log, '[]'::jsonb) || ${JSON.stringify(auditEntry)}::jsonb,
+          updated_at = NOW()
+      WHERE id = ${id}
+    `;
     const rows = await sql`SELECT * FROM invoices WHERE id = ${id}`;
     revalidateInvoiceViews(id);
     return NextResponse.json({ invoice: rows[0], updated_fields: updated });

@@ -25,6 +25,14 @@ export interface InvoicePayment {
   updated_at: string;
 }
 
+export interface InvoiceAuditEntry {
+  event: 'invoice_updated' | string;
+  timestamp: string;
+  user_email?: string | null;
+  fields?: string[];
+  changes?: Record<string, { from: unknown; to: unknown }>;
+}
+
 export interface Invoice {
   id: string;
   advertiser_id: number;
@@ -49,6 +57,7 @@ export interface Invoice {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  audit_log?: InvoiceAuditEntry[];
   payments?: InvoicePayment[];
   amount_paid_cents?: number;
   balance_cents?: number;
