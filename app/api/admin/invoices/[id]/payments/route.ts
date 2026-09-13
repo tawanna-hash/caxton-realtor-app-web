@@ -42,8 +42,7 @@ export async function GET(request: NextRequest, context: RouteCtx) {
 export async function POST(request: NextRequest, context: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const id = await invoiceId(request, context);
-  if (!UUID_RE.test(id)) return NextResponse.json({ error: 'invalid id' }, { status: 400 });
+  const routeId = await invoiceId(request, context);
 
   let body: Record<string, unknown>;
   try {
@@ -51,6 +50,9 @@ export async function POST(request: NextRequest, context: RouteCtx) {
   } catch {
     return NextResponse.json({ error: 'invalid json' }, { status: 400 });
   }
+  const bodyId = typeof body.invoice_id === 'string' ? body.invoice_id : '';
+  const id = UUID_RE.test(routeId) ? routeId : bodyId;
+  if (!UUID_RE.test(id)) return NextResponse.json({ error: 'invalid id' }, { status: 400 });
 
   const amountCents = Number(body.amount_cents);
   const paymentDate = typeof body.payment_date === 'string' ? body.payment_date : '';
