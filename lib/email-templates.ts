@@ -53,6 +53,7 @@ export interface AgreementNotificationParams {
   adRate?: number | null;
   adRateUnit?: 'issue' | 'send';
   status?: string;
+  isRenewal?: boolean;
   message?: string;
   notes?: string | null;
   signingLink?: string;
@@ -63,9 +64,11 @@ export interface AgreementNotificationParams {
 export function agreementNotificationEmail(params: AgreementNotificationParams): string {
   const brand = params.brand ?? REALTYLINE_BRAND;
   const isReviewStage = params.status === 'proposal_sent';
+  const isRenewal = params.isRenewal === true;
   // The document remains an insertion order throughout review and signing.
   // It becomes a binding advertising agreement only after it is signed.
-  const documentLabel = 'Insertion Order';
+  const documentLabel = isRenewal ? 'Renewal Insertion Order' : 'Insertion Order';
+  const shortDocumentLabel = isRenewal ? 'Renewal' : 'Insertion Order';
   const websiteUrl = brand.websiteUrl ?? 'https://realtynewsnow.app';
   const advertiserName = params.repName ?? 'Advertiser';
   const greeting = advertiserName ? `Dear ${advertiserName},` : 'Dear Advertiser,';
@@ -118,7 +121,7 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
     }).join('');
     const totalCents = params.totalCents ?? lines.reduce((a, b) => a + b.amountCents, 0);
     const totalRow = `<tr><td style="padding:12px 0 0 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#111;font-weight:bold">Grand total</td><td align="right" style="font-family:Arial,sans-serif;font-size:16px;color:#5a0e5f;font-weight:bold">${money(totalCents)}</td></tr></table></td></tr>`;
-    const heading = lines.length > 1 ? `Insertion Order Summary (${lines.length} lines)` : `${documentLabel} Summary`;
+    const heading = lines.length > 1 ? `${documentLabel} Summary (${lines.length} lines)` : `${documentLabel} Summary`;
     detailsBox = `<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;border-left:4px solid ${brand.brandColor}"><tr><td style="padding:20px 24px"><p style="margin:0 0 10px 0;font-family:Arial,sans-serif;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.8px">${heading}</p><table role="presentation" cellpadding="0" cellspacing="0" width="100%">${lineRows}${totalRow}</table></td></tr></table></td></tr>`;
   } else {
     // Legacy single-line fallback
@@ -134,8 +137,10 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
     const adRateRow = params.adRate != null
       ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>${adRateLabel}:</strong> $${Number(params.adRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/${adRateUnit}</td></tr>`
       : '';
-    const statusRow = params.status
-      ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Status:</strong> ${escapeHtml(params.status)}</td></tr>`
+    const statusRow = isRenewal
+      ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Document:</strong> Advertising renewal</td></tr>`
+      : params.status
+        ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Status:</strong> ${escapeHtml(params.status)}</td></tr>`
       : '';
     detailsBox = hasDetails
       ? `<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;border-left:4px solid ${brand.brandColor}"><tr><td style="padding:20px 24px"><p style="margin:0 0 10px 0;font-family:Arial,sans-serif;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.8px">${documentLabel} Details</p><table role="presentation" cellpadding="0" cellspacing="0" width="100%">${companyRow}${adSizeRow}${adRateRow}${statusRow}</table></td></tr></table></td></tr>`
@@ -143,7 +148,11 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
   }
 
   const ctaButton = params.signingLink
-    ? `<tr><td align="center" style="padding:24px 40px"><a href="${params.signingLink}" style="display:inline-block;background:${brand.brandColor};color:#fff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:4px;letter-spacing:.5px">${isReviewStage ? 'Review Insertion Order' : 'Review &amp; Sign Insertion Order'}</a></td></tr>`
+    ? `<tr><td align="center" style="padding:24px 40px"><a href="${params.signingLink}" style="display:inline-block;background:${brand.brandColor};color:#fff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:4px;letter-spacing:.5px">${isRenewal ? (isReviewStage ? 'Review Your Renewal' : 'Review &amp; Sign Renewal Agreement') : (isReviewStage ? 'Review Insertion Order' : 'Review &amp; Sign Insertion Order')}</a></td></tr>`
+    : '';
+
+  const renewalBanner = isRenewal
+    ? `<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:6px"><tr><td style="padding:16px 20px"><p style="margin:0 0 6px 0;font-family:Arial,sans-serif;font-size:12px;font-weight:800;color:#9a3412;text-transform:uppercase;letter-spacing:.8px">Continue Your Advertising Partnership</p><p style="margin:0;font-family:Arial,sans-serif;font-size:14px;color:#7c2d12;line-height:1.6">Completing your renewal promptly helps maintain uninterrupted market visibility and reserves your planned advertising placement. The rate, schedule, and placement shown are the terms offered for this renewal.</p></td></tr></table></td></tr>`
     : '';
 
   // Rep's typed note to the advertiser (auto-fallback + override-pricing
@@ -157,10 +166,11 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif">
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f3f4f6;padding:32px 0"><tr><td align="center">
 <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
-<tr><td style="background:${brand.brandColor};padding:28px 40px;text-align:center"><h1 style="margin:0;color:#fff;font-family:Arial,sans-serif;font-size:26px;font-weight:bold;letter-spacing:1px">${brand.brandName} ${documentLabel}</h1></td></tr>
+<tr><td style="background:${brand.brandColor};padding:28px 40px;text-align:center"><h1 style="margin:0;color:#fff;font-family:Arial,sans-serif;font-size:26px;font-weight:bold;letter-spacing:1px">${brand.brandName} ${shortDocumentLabel}</h1>${isRenewal ? '<p style="margin:7px 0 0;color:rgba(255,255,255,.88);font-family:Arial,sans-serif;font-size:13px;letter-spacing:.7px">ADVERTISING AGREEMENT RENEWAL</p>' : ''}</td></tr>
 <tr><td style="padding:36px 40px 16px 40px"><p style="margin:0;font-family:Arial,sans-serif;font-size:16px;color:#222">${greeting}</p></td></tr>
 ${detailsBox}
 <tr><td style="padding:0 40px 32px 40px"><p style="margin:0;font-family:Arial,sans-serif;font-size:15px;color:#444;line-height:1.7">${formattedMessage}</p></td></tr>
+${renewalBanner}
 ${noteBox}
 ${ctaButton}
 <tr><td style="background:#f3f4f6;border-top:1px solid #e5e7eb;padding:20px 40px;text-align:center">

@@ -19,19 +19,34 @@ export const dynamic = 'force-dynamic';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type RouteCtx = { params: Promise<{ id: string }> };
 
-function getDaysUntil(iso: string | null | undefined): number {
-  if (!iso) return 0;
+function dateOnly(value: string | Date | null | undefined): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null;
+    return new Date(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate());
+  }
+  const iso = String(value).slice(0, 10);
+  const [year, month, day] = iso.split('-').map(Number);
+  if (!year || !month || !day) return null;
+  const parsed = new Date(year, month - 1, day);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getDaysUntil(value: string | Date | null | undefined): number {
+  const e = dateOnly(value);
+  if (!e) return 0;
   const t = new Date(); t.setHours(0, 0, 0, 0);
-  const e = new Date(iso.slice(0, 10)); e.setHours(0, 0, 0, 0);
   return Math.round((e.getTime() - t.getTime()) / 86400000);
 }
 
-function humanDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  try {
-    const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  } catch { return iso; }
+function humanDate(value: string | Date | null | undefined): string {
+  const date = dateOnly(value);
+  if (!date) return value ? String(value) : '—';
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 export const POST = withAdminTracking(async function POST(req: NextRequest, ctx: RouteCtx) {

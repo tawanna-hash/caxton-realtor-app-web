@@ -70,8 +70,12 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
         ? body.customMessage.trim()
         : null;
     const defaultMessage = isProposalStage
-      ? `Your ${brand.brandName} advertising insertion order is ready for review. Confirm the company name, select your preferred send date and up to three optional dates when applicable, review the placement and markets, then approve it. Nothing is binding until the final insertion order is signed. As always, I'm happy to help should you have any questions or concerns.`
-      : `Your ${brand.brandName} advertising insertion order is ready for your review and signature. Click below to open your secure portal, confirm your preferred send date and up to three optional dates when applicable, and sign. The insertion order becomes a binding advertising agreement when signed. As always, I'm happy to help should you have any questions or concerns.`;
+      ? ag.is_renewal
+        ? `Thank you for your continued partnership with ${brand.brandName}. Your advertising renewal for ${ag.company_name ?? 'your company'} is ready for review. Please confirm the company information, advertising schedule, placement, markets, and renewal rate, then approve the insertion order so we can prepare the final agreement for signature. Completing the renewal promptly helps maintain uninterrupted visibility and reserve your planned placement. Nothing is binding until the final renewal insertion order is signed.`
+        : `Your ${brand.brandName} advertising insertion order is ready for review. Confirm the company name, select your preferred send date and up to three optional dates when applicable, review the placement and markets, then approve it. Nothing is binding until the final insertion order is signed. As always, I'm happy to help should you have any questions or concerns.`
+      : ag.is_renewal
+        ? `Thank you for your continued partnership with ${brand.brandName}. Your advertising renewal for ${ag.company_name ?? 'your company'} is ready for review and signature. Please confirm the renewal details and sign the agreement to continue your advertising schedule and maintain uninterrupted market visibility. The rate, schedule, and placement shown are the terms offered for this renewal. As always, I'm happy to help should you have any questions or concerns.`
+        : `Your ${brand.brandName} advertising insertion order is ready for your review and signature. Click below to open your secure portal, confirm your preferred send date and up to three optional dates when applicable, and sign. The insertion order becomes a binding advertising agreement when signed. As always, I'm happy to help should you have any questions or concerns.`;
 
     // Fetch line items so bundles show all lines in the email recap.
     type LineItemRow = {
@@ -116,6 +120,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       adRate: ag.ad_rate_cents != null ? ag.ad_rate_cents / 100 : null,
       adRateUnit: ag.type === 'eblast' ? 'send' : 'issue',
       status: isProposalStage ? 'proposal_sent' : 'sent',
+      isRenewal: ag.is_renewal === true,
       message: customMessage ?? defaultMessage,
       notes: repNote ?? undefined,
       signingLink,
@@ -123,11 +128,17 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       totalCents,
     });
 
-    const subject = isTest
-      ? `[TEST] ${brand.brandName} Insertion Order — ${ag.company_name ?? 'Insertion Order'}`
-      : isProposalStage
-        ? `Action Required: Review Your ${brand.brandName} Advertising Insertion Order — ${ag.company_name ?? 'Insertion Order'}`
-        : `Action Required: Sign Your ${brand.brandName} Advertising Insertion Order — ${ag.company_name ?? 'Insertion Order'}`;
+    const subject = ag.is_renewal
+      ? isTest
+        ? `[TEST] ${brand.brandName} Advertising Renewal — ${ag.company_name ?? 'Renewal Agreement'}`
+        : isProposalStage
+          ? `Action Required: Review Your ${brand.brandName} Advertising Renewal — ${ag.company_name ?? 'Renewal Agreement'}`
+          : `Action Required: Sign Your ${brand.brandName} Renewal Agreement — ${ag.company_name ?? 'Renewal Agreement'}`
+      : isTest
+        ? `[TEST] ${brand.brandName} Insertion Order — ${ag.company_name ?? 'Insertion Order'}`
+        : isProposalStage
+          ? `Action Required: Review Your ${brand.brandName} Advertising Insertion Order — ${ag.company_name ?? 'Insertion Order'}`
+          : `Action Required: Sign Your ${brand.brandName} Advertising Insertion Order — ${ag.company_name ?? 'Insertion Order'}`;
     const isNewslineSender =
       ag.publication === 'san_antonio'
       || ag.company_name?.trim().toLowerCase() === 'newsline san antonio';
