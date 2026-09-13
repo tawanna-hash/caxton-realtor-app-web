@@ -24,7 +24,11 @@ export const dynamic = 'force-dynamic';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://app.myrealtyline.com';
-const PORTAL_FROM_EMAIL = process.env.PORTAL_FROM_EMAIL ?? 'no-reply@myrealtyline.com';
+const INVOICE_SENDERS = {
+  'tawanna@myrealtyline.com': 'Tawanna Verock <tawanna@myrealtyline.com>',
+  'hello@myrealtyline.com': 'Caxton Publications Inc. <hello@myrealtyline.com>',
+} as const;
+type InvoiceSender = keyof typeof INVOICE_SENDERS;
 
 interface InvoiceRow {
   id: string;
@@ -158,8 +162,15 @@ export const POST = withAdminTracking(async function POST(
                 ? `Reminder: Invoice ${inv.number} from Caxton Publications is due`
                 : `Invoice ${inv.number} from Caxton Publications`;
             const customMessage = typeof body.email_message === 'string' ? body.email_message.trim() : '';
+            const requestedSender = typeof body.email_from === 'string' ? body.email_from.trim() : '';
+            const sender: InvoiceSender = requestedSender in INVOICE_SENDERS
+              ? requestedSender as InvoiceSender
+              : emailMode === 'reminder'
+                ? 'tawanna@myrealtyline.com'
+                : 'hello@myrealtyline.com';
             await resend.emails.send({
-              from: PORTAL_FROM_EMAIL,
+              from: INVOICE_SENDERS[sender],
+              replyTo: sender,
               to: sendTo,
               subject,
               html: invoiceEmailHtml({

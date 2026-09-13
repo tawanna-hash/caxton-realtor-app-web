@@ -41,6 +41,7 @@ type EmailDraft = {
   invoice: InvoiceWithAdvertiser;
   reminder: boolean;
 };
+type InvoiceSender = 'tawanna@myrealtyline.com' | 'hello@myrealtyline.com';
 
 const CONTROL =
   'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100';
@@ -155,10 +156,13 @@ function EmailInvoiceDialog({
   draft: EmailDraft;
   busy: boolean;
   onClose: () => void;
-  onSend: (values: { to: string; subject: string; message: string }) => void;
+  onSend: (values: { from: InvoiceSender; to: string; subject: string; message: string }) => void;
 }) {
   const { invoice, reminder } = draft;
   const client = invoice.bill_to_name ?? invoice.advertiser_name ?? 'Customer';
+  const [from, setFrom] = useState<InvoiceSender>(
+    reminder ? 'tawanna@myrealtyline.com' : 'hello@myrealtyline.com',
+  );
   const [to, setTo] = useState(invoice.bill_to_email ?? '');
   const [subject, setSubject] = useState(
     reminder
@@ -199,7 +203,14 @@ function EmailInvoiceDialog({
           )}
           <div className="space-y-3">
             <label className="block text-xs font-medium text-gray-600">From
-              <input className={`${CONTROL} mt-1 w-full bg-gray-50`} readOnly value="Caxton Publications Inc. <no-reply@myrealtyline.com>" />
+              <select
+                className={`${CONTROL} mt-1 w-full`}
+                value={from}
+                onChange={(event) => setFrom(event.target.value as InvoiceSender)}
+              >
+                <option value="tawanna@myrealtyline.com">Tawanna Verock &lt;tawanna@myrealtyline.com&gt;</option>
+                <option value="hello@myrealtyline.com">Caxton Publications Inc. &lt;hello@myrealtyline.com&gt;</option>
+              </select>
             </label>
             <label className="block text-xs font-medium text-gray-600">To
               <input className={`${CONTROL} mt-1 w-full`} type="email" value={to} onChange={(event) => setTo(event.target.value)} />
@@ -233,7 +244,7 @@ function EmailInvoiceDialog({
         </div>
         <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4">
           <button type="button" className="text-sm font-medium text-gray-600 hover:text-gray-900" onClick={onClose}>Cancel</button>
-          <button type="button" disabled={busy || !to.trim() || !subject.trim()} className={ORANGE_BUTTON} onClick={() => onSend({ to, subject, message: body })}>{busy ? 'Sending…' : reminder ? 'Send reminder' : 'Send'}</button>
+          <button type="button" disabled={busy || !to.trim() || !subject.trim()} className={ORANGE_BUTTON} onClick={() => onSend({ from, to, subject, message: body })}>{busy ? 'Sending…' : reminder ? 'Send reminder' : 'Send'}</button>
         </div>
       </div>
     </div>
@@ -474,7 +485,7 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
   const sendInvoice = async (
     invoice: InvoiceWithAdvertiser,
     reminder = false,
-    email?: { to: string; subject: string; message: string },
+    email?: { from: InvoiceSender; to: string; subject: string; message: string },
   ) => {
     setBusy(true);
     fail('');
@@ -485,6 +496,7 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
         body: JSON.stringify({
           send_email: true,
           email_mode: reminder ? 'reminder' : 'invoice',
+          email_from: email?.from,
           email_to: email?.to,
           email_subject: email?.subject,
           email_message: email?.message,
