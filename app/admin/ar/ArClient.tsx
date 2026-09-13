@@ -35,6 +35,67 @@ const QUICK_ACTIONS: Array<{ label: string; href?: string; primary?: boolean }> 
   { label: 'Record payment', href: '/admin/invoices' },
 ];
 
+const INCOME_PERIODS = [
+  ['last-year', 'Last year'],
+  ['this-month', 'This month'],
+  ['last-month', 'Last month'],
+  ['this-month-to-date', 'This month to date'],
+  ['this-quarter', 'This quarter'],
+  ['last-quarter', 'Last quarter'],
+  ['this-quarter-to-date', 'This quarter to date'],
+  ['last-12-months', 'Last 12 months'],
+  ['this-fiscal-year-to-date', 'This fiscal year to date'],
+  ['this-year-to-date', 'This year to date'],
+  ['this-fiscal-year-to-last-month', 'This fiscal year to last month'],
+  ['this-year-to-last-month', 'This year to last month'],
+  ['this-fiscal-year', 'This fiscal year'],
+  ['this-year', 'This year'],
+  ['last-fiscal-year', 'Last fiscal year'],
+] as const;
+
+type IncomePeriod = (typeof INCOME_PERIODS)[number][0];
+
+function incomePeriodBounds(period: IncomePeriod, now = new Date()): { start: Date; end: Date } {
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth();
+  const today = new Date(Date.UTC(year, month, now.getUTCDate(), 23, 59, 59, 999));
+  const startOfMonth = new Date(Date.UTC(year, month, 1));
+  const endOfMonth = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+  const quarterMonth = Math.floor(month / 3) * 3;
+  const startOfQuarter = new Date(Date.UTC(year, quarterMonth, 1));
+  const endOfQuarter = new Date(Date.UTC(year, quarterMonth + 3, 0, 23, 59, 59, 999));
+
+  switch (period) {
+    case 'last-year':
+    case 'last-fiscal-year':
+      return { start: new Date(Date.UTC(year - 1, 0, 1)), end: new Date(Date.UTC(year - 1, 11, 31, 23, 59, 59, 999)) };
+    case 'last-month':
+      return { start: new Date(Date.UTC(year, month - 1, 1)), end: new Date(Date.UTC(year, month, 0, 23, 59, 59, 999)) };
+    case 'this-month-to-date':
+      return { start: startOfMonth, end: today };
+    case 'this-quarter':
+      return { start: startOfQuarter, end: endOfQuarter };
+    case 'last-quarter':
+      return { start: new Date(Date.UTC(year, quarterMonth - 3, 1)), end: new Date(Date.UTC(year, quarterMonth, 0, 23, 59, 59, 999)) };
+    case 'this-quarter-to-date':
+      return { start: startOfQuarter, end: today };
+    case 'last-12-months':
+      return { start: new Date(Date.UTC(year, month - 11, 1)), end: today };
+    case 'this-fiscal-year-to-date':
+    case 'this-year-to-date':
+      return { start: new Date(Date.UTC(year, 0, 1)), end: today };
+    case 'this-fiscal-year-to-last-month':
+    case 'this-year-to-last-month':
+      return { start: new Date(Date.UTC(year, 0, 1)), end: new Date(Date.UTC(year, month, 0, 23, 59, 59, 999)) };
+    case 'this-fiscal-year':
+    case 'this-year':
+      return { start: new Date(Date.UTC(year, 0, 1)), end: new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999)) };
+    case 'this-month':
+    default:
+      return { start: startOfMonth, end: endOfMonth };
+  }
+}
+
 const BUCKET_ORDER: AgingBucket[] = ['current', 'd1_30', 'd31_60', 'd61_90', 'd90_plus'];
 const BUCKET_ACCENT: Record<AgingBucket, 'blue' | 'amber' | 'rose'> = {
   current: 'blue', d1_30: 'amber', d31_60: 'amber', d61_90: 'rose', d90_plus: 'rose',
@@ -59,6 +120,9 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   const [busyId, setBusyId] = useState<string | null>(null);
   const [feedDismissed, setFeedDismissed] = useState(false);
   const [compareLastYear, setCompareLastYear] = useState(false);
+  const [requestMenuOpen, setRequestMenuOpen] = useState(false);
+  const [durationMenuOpen, setDurationMenuOpen] = useState(false);
+  const [incomePeriod, setIncomePeriod] = useState<IncomePeriod>('this-month');
 
   const reloadAll = useCallback(async () => {
     const [invRes, schedRes] = await Promise.all([
@@ -137,22 +201,21 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
     return { notPaidTotal, notPaidCount, paidTotal, paidCount, depositedTotal, depositedCount };
   }, [invoices]);
 
-  const incomeChartData = useMemo(
-    () => incomeByDay.map((d) => ({
-      day: new Date(d.day + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      amount: (d.total_cents ?? 0) / 100,
-    })),
-    [incomeByDay],
-  );
-
-  const incomeThisMonth = useMemo(() => {
-    const now = new Date();
-    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    return incomeByDay.reduce((sum, d) => {
+  const selectedIncomeLabel = INCOME_PERIODS.find(([value]) => value === incomePeriod)?.[1] ?? 'This month';
+  const selectedIncome = useMemo(() => {
+    const bounds = incomePeriodBounds(incomePeriod);
+    const rows = incomeByDay.filter((d) => {
       const day = new Date(d.day + 'T00:00:00Z');
-      return day >= monthStart ? sum + (d.total_cents ?? 0) : sum;
-    }, 0);
-  }, [incomeByDay]);
+      return day >= bounds.start && day <= bounds.end;
+    });
+    return {
+      chartData: rows.map((d) => ({
+        day: new Date(d.day + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        amount: (d.total_cents ?? 0) / 100,
+      })),
+      total: rows.reduce((sum, d) => sum + (d.total_cents ?? 0), 0),
+    };
+  }, [incomeByDay, incomePeriod]);
 
   const overdueCount = useMemo(() => unpaidInvoices.filter((i) => i.days > 0).length, [unpaidInvoices]);
   const overdueTotal = useMemo(
@@ -311,14 +374,42 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
         <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">Sales &amp; Get Paid at a glance</div>
         <div className="text-[11px] uppercase tracking-wider text-gray-400 font-medium mb-2">Sales &amp; Get Paid funnel</div>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-0 sm:gap-0 rounded-lg border border-gray-200 overflow-hidden bg-white divide-y sm:divide-y-0 sm:divide-x divide-gray-200">
-          <div className="p-4 flex flex-col justify-between">
+          <div className="p-4 flex flex-col justify-between relative">
             <div className="text-sm text-gray-600 mb-3">Create a new payment request</div>
             <button
-              onClick={() => router.push('/admin/invoices')}
+              type="button"
+              onClick={() => setRequestMenuOpen((open) => !open)}
+              aria-expanded={requestMenuOpen}
+              aria-haspopup="menu"
               className="self-start px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50"
             >
-              Request payment ▾
+              Request payment <span aria-hidden="true">⌄</span>
             </button>
+            {requestMenuOpen && (
+              <div role="menu" className="absolute left-4 top-[82px] z-30 min-w-52 overflow-hidden rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                {[
+                  ['Invoice', '/admin/invoices'],
+                  ['Payment link', '/admin/invoices'],
+                  ['Recurring payment', 'recurring'],
+                  ['Charge a payment', '/admin/invoices'],
+                  ['Tap to Pay on iPhone', '/admin/invoices'],
+                ].map(([label, destination]) => (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    key={label}
+                    onClick={() => {
+                      setRequestMenuOpen(false);
+                      if (destination === 'recurring') setCreateSchedule(true);
+                      else router.push(destination);
+                    }}
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <button onClick={() => setBucketFilter('all')} className="p-4 text-left hover:bg-gray-50 border-t-2 border-t-amber-400">
             <div className="text-xs text-gray-500 mb-1">Not paid</div>
@@ -343,20 +434,54 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
         <div className="flex items-start justify-between flex-wrap gap-3 mb-1">
           <div className="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Income over time</div>
           <div className="flex items-center gap-3 text-xs text-gray-600">
-            <span>This month</span>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setDurationMenuOpen((open) => !open)}
+                aria-expanded={durationMenuOpen}
+                aria-haspopup="listbox"
+                className="inline-flex items-center gap-2 rounded px-2 py-1 hover:bg-gray-50"
+              >
+                <span className="text-gray-400">Duration:</span>
+                <span>{selectedIncomeLabel}</span>
+                <span aria-hidden="true">⌄</span>
+              </button>
+              {durationMenuOpen && (
+                <div role="listbox" className="absolute right-0 top-full z-30 mt-1 max-h-80 min-w-64 overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                  {INCOME_PERIODS.map(([value, label]) => (
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={incomePeriod === value}
+                      key={value}
+                      onClick={() => {
+                        setIncomePeriod(value);
+                        setDurationMenuOpen(false);
+                      }}
+                      className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-gray-50 focus:bg-gray-50 focus:outline-none ${
+                        incomePeriod === value ? 'font-medium text-gray-900' : 'text-gray-700'
+                      }`}
+                    >
+                      <span className="w-3" aria-hidden="true">{incomePeriod === value ? '✓' : ''}</span>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <label className="flex items-center gap-1.5">
               <input type="checkbox" checked={compareLastYear} onChange={(e) => setCompareLastYear(e.target.checked)} />
               Compare to previous year
             </label>
           </div>
         </div>
-        <div className="text-2xl font-semibold text-gray-900">{formatCents(incomeThisMonth)} <span className="text-sm font-normal text-gray-500">this month</span></div>
+        <div className="text-2xl font-semibold text-gray-900">{formatCents(selectedIncome.total)} <span className="text-sm font-normal text-gray-500">{selectedIncomeLabel.toLowerCase()}</span></div>
         <div className="h-56 mt-3">
-          {incomeChartData.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-sm text-gray-400">No paid invoices in the last 30 days.</div>
+          {selectedIncome.chartData.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-sm text-gray-400">No paid invoices for {selectedIncomeLabel.toLowerCase()}.</div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={incomeChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <AreaChart data={selectedIncome.chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />

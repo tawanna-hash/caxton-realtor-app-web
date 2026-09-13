@@ -51,7 +51,7 @@ export default async function ArDashboardPage() {
     sql`
       SELECT to_char(date_trunc('day', paid_at), 'YYYY-MM-DD') AS day, SUM(total_cents)::bigint AS total_cents
       FROM invoices
-      WHERE status = 'paid' AND paid_at IS NOT NULL AND paid_at >= CURRENT_DATE - INTERVAL '30 days'
+      WHERE status = 'paid' AND paid_at IS NOT NULL AND paid_at >= date_trunc('year', CURRENT_DATE) - INTERVAL '1 year'
       GROUP BY 1 ORDER BY 1 ASC
     `.catch(() => [] as unknown[]),
   ]);
