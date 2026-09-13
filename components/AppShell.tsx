@@ -31,6 +31,7 @@ import NativeNetworkBanner from '@/components/NativeNetworkBanner';
 import NativeAppLifecycle from '@/components/NativeAppLifecycle';
 import SwipeBackShell from '@/components/SwipeBackShell';
 import { AdSlot } from '@/components/ads/AdSlot';
+import AdminQuickLinks from '@/components/admin/AdminQuickLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import { ADMIN_NAV as ADMIN_GROUPS, isAdminGroupActive as isGroupActive } from '@/lib/admin-nav';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
@@ -656,6 +657,7 @@ export default function AppShell({
         data-admin-density={useCompactAdminDensity ? 'compact' : undefined}
         data-admin-ui={isAdmin ? 'true' : undefined}
       >
+        {isAdmin && <AdminQuickLinks />}
         <SwipeBackShell area={isAdmin ? 'admin' : 'public'}>
           {children}
         </SwipeBackShell>
