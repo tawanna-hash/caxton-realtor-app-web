@@ -44,6 +44,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
       { label: 'Invoices',     href: '/admin/invoices',      description: 'Billable charges & payment status' },
       { label: 'Accounts Receivable', href: '/admin/ar',      description: 'Aging, outstanding balances & recurring invoices' },
+      { label: 'Products & Services', href: '/admin/products-services', description: 'Ad slots, packages & billable items catalog' },
       { label: 'QuickBooks',   href: '/admin/integrations/quickbooks', description: 'Accounting connection & sandbox sync' },
       { label: 'Media Kit',    href: '/admin/ads/media-kit',   description: '2026 packages, rates & deadlines' },
     ],

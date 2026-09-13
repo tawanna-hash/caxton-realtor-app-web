@@ -417,6 +417,41 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       FOR EACH ROW EXECUTE FUNCTION trg_rec_invoice_sched_set_updated_at()
   `);
 
+  // ── Products & Services catalog (QuickBooks-style item list) ──────
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS products_services (
+      id                       uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      name                     text NOT NULL,
+      sku                      text,
+      item_type                text NOT NULL DEFAULT 'service'
+                                 CHECK (item_type IN ('service','non_inventory','inventory','bundle')),
+      category                 text,
+      market                   text,              -- 'austin' | 'san_antonio' | 'both' | null (uncategorized/system items)
+      price_cents              integer,           -- nullable: some catalog rows (Hours, Bad Debt) carry no default price
+      cost_cents               integer,
+      income_account           text,
+      expense_account          text,
+      sales_description        text,
+      purchase_description     text,
+      is_active                boolean NOT NULL DEFAULT true,
+      created_at               timestamptz NOT NULL DEFAULT now(),
+      updated_at               timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_products_services_name ON products_services(name)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_products_services_category ON products_services(category)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_products_services_market   ON products_services(market)`);
+  await step(() => sql`
+    CREATE OR REPLACE FUNCTION trg_products_services_set_updated_at()
+    RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql
+  `);
+  await step(() => sql`DROP TRIGGER IF EXISTS products_services_set_updated_at ON products_services`);
+  await step(() => sql`
+    CREATE TRIGGER products_services_set_updated_at
+      BEFORE UPDATE ON products_services
+      FOR EACH ROW EXECUTE FUNCTION trg_products_services_set_updated_at()
+  `);
+
   // ad_campaigns linkage
   await step(() => sql`
     ALTER TABLE ad_campaigns

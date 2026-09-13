@@ -25,7 +25,7 @@ export default async function ArDashboardPage() {
   await ensureSchema();
   const sql = getSql();
 
-  const [invoices, schedules, advertisers, agreements] = await Promise.all([
+  const [invoices, schedules, advertisers, agreements, monthlyIncome] = await Promise.all([
     sql`
       SELECT i.*, adv.name AS advertiser_name,
         (i.status NOT IN ('paid','void') AND i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS is_overdue
@@ -48,6 +48,12 @@ export default async function ArDashboardPage() {
       LEFT JOIN advertisers adv ON adv.id = ag.advertiser_id
       ORDER BY ag.updated_at DESC
     `.catch(() => [] as unknown[]),
+    sql`
+      SELECT to_char(date_trunc('day', paid_at), 'YYYY-MM-DD') AS day, SUM(total_cents)::bigint AS total_cents
+      FROM invoices
+      WHERE status = 'paid' AND paid_at IS NOT NULL AND paid_at >= CURRENT_DATE - INTERVAL '30 days'
+      GROUP BY 1 ORDER BY 1 ASC
+    `.catch(() => [] as unknown[]),
   ]);
 
   return (
@@ -56,6 +62,7 @@ export default async function ArDashboardPage() {
       initialSchedules={schedules as unknown as RecurringScheduleWithAdvertiser[]}
       advertisers={advertisers as unknown as Array<{ id: number; name: string; publication: string }>}
       agreements={agreements as unknown as AgreementWithAdvertiser[]}
+      incomeByDay={monthlyIncome as unknown as Array<{ day: string; total_cents: number }>}
     />
   );
 }
