@@ -31,9 +31,9 @@ type BalanceRow = { total_cents: number; issued_at: string | Date };
 const TERMS = [
   ['FREQUENCY DISCOUNT', 'An advertiser who does not complete a committed consecutive-month insertion schedule will be subject to the one-time insertion rate.'],
   ['AGENCY', 'All advertisements are published for the benefit of advertiser and advertising agency, and each of them is jointly and severally liable for all charges.'],
-  ['BILLING', 'Payment in U.S. dollars, including any applicable tax, is due at Publisher’s Postal Box in Austin, Texas, within 20 days after the invoice date. Any error in billing is binding upon advertiser and/or advertising agency unless Publisher receives written notice of the error within such 20-day period.'],
+  ['BILLING', 'Payment in U.S. dollars, including any applicable tax, due at Publisher’s Postal Box in Austin, Tx, within 20 days of the date of invoice. Any error in billing is binding upon advertiser and/or advertising agency unless Publisher receives written notice of the error within such 3-day period.'],
   ['PAST DUE', 'All accounts not paid in full within 20 days of the date of the invoice shall incur a late charge of 1.5% per month from the due date until paid in full.'],
-  ['COLLECTION', 'If advertiser and/or advertising agency defaults in payment of invoices, such invoices are turned over for collection. Advertiser and/or advertising agency shall be totally liable for all fees and sums charged by the collection agency or attorney, including attorneys’ fees and court costs incurred by Publisher.'],
+  ['COLLECTION', 'In the event advertiser and/or advertising agency defaults in payment of invoices, such invoices are turned over for collection. In this event, the advertiser and/or advertising agency shall be totally liable for all fees and sums charged by the collection agency or attorney. If any suit or other judicial proceeding is instituted or had thereon or if such fees and sums are collected through probate or bankruptcy proceeding, advertiser and/or advertising agency shall be totally liable for all attorneys’ fees and court costs incurred by Publisher in the collection of said invoices.'],
 ] as const;
 
 function money(cents: number) {
@@ -191,7 +191,7 @@ export default async function InvoicePreviewPage({
         <section className="mt-5 border-t border-neutral-300 pt-4">
           <h2 className="mb-3 font-semibold">Notes / Terms</h2>
           <div className="space-y-3 text-[9px] leading-[1.45]">
-            <p>CAXTON PUBLICATIONS INC<br />RealtyLine Austin and Newsline San Antonio are both publications under Caxton Publications, Inc. The Services line item specifies the publication name to indicate where your ad is being placed and billed. Placement in one publication does not automatically include placement in the other.</p>
+            <p>CAXTON PUBLICATIONS INC<br />RealtyLine Austin, Newsline San Antonio and Realty News Now App are dba&apos;s under Caxton Publications, Inc. The Services line item specifies the dab name to indicate where your ad is being placed and billed. Please note that placement in one company does not automatically include placement in the other. Each insertion is billed separately accordingly.</p>
             {TERMS.map(([title, body]) => (
               <div key={title}>
                 <div className="font-semibold">{title}</div>

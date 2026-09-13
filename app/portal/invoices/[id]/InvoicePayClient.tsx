@@ -66,7 +66,7 @@ const INVOICE_TERMS = [
   },
   {
     title: 'BILLING',
-    body: 'Payment in U.S. dollars, including any applicable tax, is due at Publisher’s Postal Box in Austin, Texas, within 20 days after the invoice date. Any error in billing is binding upon advertiser and/or advertising agency unless Publisher receives written notice of the error within such 20-day period.',
+    body: 'Payment in U.S. dollars, including any applicable tax, due at Publisher’s Postal Box in Austin, Tx, within 20 days of the date of invoice. Any error in billing is binding upon advertiser and/or advertising agency unless Publisher receives written notice of the error within such 3-day period.',
   },
   {
     title: 'PAST DUE',
@@ -74,7 +74,7 @@ const INVOICE_TERMS = [
   },
   {
     title: 'COLLECTION',
-    body: 'If advertiser and/or advertising agency defaults in payment of invoices, such invoices are turned over for collection. Advertiser and/or advertising agency shall be totally liable for all fees and sums charged by the collection agency or attorney. If any suit or other judicial proceeding is instituted or had thereon, or if such fees and sums are collected through probate or bankruptcy proceeding, advertiser and/or advertising agency shall be totally liable for all attorneys’ fees and court costs incurred by Publisher in the collection of said invoices.',
+    body: 'In the event advertiser and/or advertising agency defaults in payment of invoices, such invoices are turned over for collection. In this event, the advertiser and/or advertising agency shall be totally liable for all fees and sums charged by the collection agency or attorney. If any suit or other judicial proceeding is instituted or had thereon or if such fees and sums are collected through probate or bankruptcy proceeding, advertiser and/or advertising agency shall be totally liable for all attorneys’ fees and court costs incurred by Publisher in the collection of said invoices.',
   },
 ];
 
@@ -256,7 +256,7 @@ export default function InvoicePayClient({
         <section className="mt-5 border-t border-neutral-300 pt-4">
           <h2 className="mb-3 font-semibold">Notes / Terms</h2>
           <div className="space-y-3 text-[9px] leading-[1.45]">
-            <p>CAXTON PUBLICATIONS INC<br />RealtyLine Austin and Newsline San Antonio are both publications under Caxton Publications, Inc. The Services line item specifies the publication name to indicate where your ad is being placed and billed. Placement in one publication does not automatically include placement in the other.</p>
+            <p>CAXTON PUBLICATIONS INC<br />RealtyLine Austin, Newsline San Antonio and Realty News Now App are dba&apos;s under Caxton Publications, Inc. The Services line item specifies the dab name to indicate where your ad is being placed and billed. Please note that placement in one company does not automatically include placement in the other. Each insertion is billed separately accordingly.</p>
             {INVOICE_TERMS.map((term) => (
               <div key={term.title}>
                 <div className="font-semibold">{term.title}</div>
