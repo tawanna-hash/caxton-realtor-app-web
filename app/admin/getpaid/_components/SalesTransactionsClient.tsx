@@ -746,12 +746,6 @@ export function SalesTransactionsClient({
         </div>
       )}
 
-      {invoiceWorkspace && (
-        <div className="border-b border-gray-200">
-          <button type="button" className="border-b-2 border-orange-600 px-1 pb-2 text-sm font-medium text-gray-900">All invoices</button>
-        </div>
-      )}
-
       <section aria-label={invoiceWorkspace ? 'Invoice filters' : 'Transaction filters'} className="space-y-2">
         <div className="flex flex-wrap items-end gap-2">
           {!invoiceWorkspace && <label className="space-y-1">
