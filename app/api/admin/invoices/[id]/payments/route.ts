@@ -13,10 +13,16 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'unknown error';
 }
 
-export async function GET(_request: NextRequest, context: RouteCtx) {
+async function invoiceId(request: NextRequest, context: RouteCtx) {
+  const params = await context.params;
+  const routeId = params?.id || '';
+  return UUID_RE.test(routeId) ? routeId : (request.nextUrl.pathname.split('/')[4] || '');
+}
+
+export async function GET(request: NextRequest, context: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { id } = await context.params;
+  const id = await invoiceId(request, context);
   if (!UUID_RE.test(id)) return NextResponse.json({ error: 'invalid id' }, { status: 400 });
 
   try {
@@ -36,7 +42,7 @@ export async function GET(_request: NextRequest, context: RouteCtx) {
 export async function POST(request: NextRequest, context: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { id } = await context.params;
+  const id = await invoiceId(request, context);
   if (!UUID_RE.test(id)) return NextResponse.json({ error: 'invalid id' }, { status: 400 });
 
   let body: Record<string, unknown>;
