@@ -373,7 +373,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       <div>
         <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">Sales &amp; Get Paid at a glance</div>
         <div className="text-[11px] uppercase tracking-wider text-gray-400 font-medium mb-2">Sales &amp; Get Paid funnel</div>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-0 sm:gap-0 rounded-lg border border-gray-200 overflow-hidden bg-white divide-y sm:divide-y-0 sm:divide-x divide-gray-200">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-0 sm:gap-0 rounded-lg border border-gray-200 overflow-visible bg-white divide-y sm:divide-y-0 sm:divide-x divide-gray-200">
           <div className="p-4 flex flex-col justify-between relative">
             <div className="text-sm text-gray-600 mb-3">Create a new payment request</div>
             <button
