@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
 import type { ProductService } from '@/lib/products-services';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { ensureProductsServicesCatalog } from '@/lib/server/products-services-catalog';
 import ProductsServicesClient from './ProductsServicesClient';
 
 export const dynamic = 'force-dynamic';
@@ -18,6 +19,7 @@ async function isAdmin(): Promise<boolean> {
 export default async function ProductsServicesPage() {
   if (!(await isAdmin())) redirect('/admin/login');
   await ensureSchema();
+  await ensureProductsServicesCatalog();
   const sql = getSql();
 
   const products = await sql`
