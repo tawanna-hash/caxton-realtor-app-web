@@ -1,1 +1,5 @@
-export { default, dynamic } from '../../invoices/page';
+import InvoicesPage from '../../invoices/page';
+
+export const dynamic = 'force-dynamic';
+
+export default InvoicesPage;

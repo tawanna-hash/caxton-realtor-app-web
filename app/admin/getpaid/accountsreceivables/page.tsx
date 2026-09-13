@@ -1,1 +1,5 @@
-export { default, dynamic } from '../../ar/page';
+import AccountsReceivablePage from '../../ar/page';
+
+export const dynamic = 'force-dynamic';
+
+export default AccountsReceivablePage;
