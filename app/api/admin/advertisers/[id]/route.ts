@@ -258,8 +258,10 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     // facts that should flow advertiser <- agreement, not the other way.
     const IDENTITY_COLS = new Set([
       'name', 'company', 'first_name', 'last_name',
-      'contact_email', 'phone',
-      'address', 'city', 'state', 'zip',
+      'contact_email', 'portal_email', 'phone',
+      'address', 'address_2', 'city', 'state', 'zip',
+      'billing_contact_name', 'billing_contact_phone', 'billing_email',
+      'payment_mode', 'stripe_customer_id', 'card_last4',
     ]);
     if (updates.some((c) => IDENTITY_COLS.has(c))) {
       try {
