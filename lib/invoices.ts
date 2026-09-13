@@ -104,6 +104,22 @@ export function lineItemsTotal(items: InvoiceLineItem[]): number {
   return items.reduce((sum, li) => sum + (li.qty | 0) * (li.unit_cents | 0), 0);
 }
 
+// ── Payment types (tender) ─────────────────────────────────────────
+
+/**
+ * Canonical payment types offered anywhere a payment is recorded or edited.
+ * Stored as free text on invoice_payments.payment_method, so historical rows
+ * may hold values outside this list.
+ */
+export const PAYMENT_METHODS = ['Check', 'Cash', 'ACH / bank transfer', 'Credit card', 'Other'] as const;
+
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+/** True when a stored payment_method represents a check. */
+export function isCheckPayment(method: string | null | undefined): boolean {
+  return /^\s*check/i.test(method ?? '');
+}
+
 /** Pretty-print dollars from cents. */
 export function formatCents(cents: number | null | undefined): string {
   if (cents == null) return '—';

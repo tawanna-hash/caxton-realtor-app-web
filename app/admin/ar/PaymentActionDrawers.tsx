@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 import type { InvoiceLineItem, InvoiceWithAdvertiser } from '@/lib/invoices';
-import { formatCents } from '@/lib/invoices';
+import { formatCents, PAYMENT_METHODS } from '@/lib/invoices';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 import { DrawerFooter, DrawerShell, Field, Section } from '@/app/admin/billing/_components/DrawerShell';
 import { INPUT } from '@/app/admin/billing/_components/constants';
@@ -300,7 +300,7 @@ export function SalesReceiptDrawer({ advertisers, onClose, onSaved, onError }: C
           <Field label="Sales receipt date"><input type="date" className={INPUT} value={receiptDate} onChange={(event) => setReceiptDate(event.target.value)} /></Field>
           <Field label="Payment method">
             <select className={INPUT} value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>
-              {['Check', 'Cash', 'ACH / bank transfer', 'Credit card', 'Other'].map((method) => <option key={method}>{method}</option>)}
+              {PAYMENT_METHODS.map((method) => <option key={method}>{method}</option>)}
             </select>
           </Field>
         </div>
@@ -434,7 +434,7 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
           <Field label="Payment date"><input type="date" className={INPUT} value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} /></Field>
           <Field label="Payment method">
             <select className={INPUT} value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>
-              {['Check', 'Cash', 'ACH / bank transfer', 'Credit card', 'Other'].map((method) => <option key={method}>{method}</option>)}
+              {PAYMENT_METHODS.map((method) => <option key={method}>{method}</option>)}
             </select>
           </Field>
           <Field label="Reference no."><input className={INPUT} value={reference} onChange={(event) => setReference(event.target.value)} /></Field>

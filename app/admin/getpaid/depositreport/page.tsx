@@ -1,9 +1,13 @@
 // app/admin/getpaid/depositreport/page.tsx
 //
-// Payments-received deposit report. Reads the same `invoice_payments` rows the
-// AR dashboard and invoice drawer record against, joined to their invoice and
-// partner, so a deposit slip can be reconciled against recorded receipts
-// without retyping anything.
+// Check deposit report. Reads the same `invoice_payments` rows the AR dashboard
+// and invoice drawer record against, joined to their invoice and partner, so a
+// bank deposit slip can be reconciled against recorded receipts without
+// retyping anything.
+//
+// Scope is checks only: cash, ACH and card receipts never reach a deposit slip,
+// so they are excluded at the query. Correct a mistyped tender from the payment
+// history in the invoice drawer and the receipt appears here.
 
 import { redirect } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
@@ -66,6 +70,7 @@ export default async function DepositReportPage({
     LEFT JOIN advertisers adv ON adv.id = i.advertiser_id
     WHERE p.payment_date >= ${from}::date
       AND p.payment_date <= ${to}::date
+      AND p.payment_method ILIKE 'check%'
     ORDER BY p.payment_date ASC, p.created_at ASC
   `.catch(() => [] as unknown[]);
 

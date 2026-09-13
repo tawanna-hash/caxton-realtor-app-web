@@ -5,10 +5,10 @@
 // Create/edit drawer for a single invoice. Supports line items and a
 // manual override amount.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { InvoiceWithAdvertiser, InvoiceStatus, InvoiceLineItem, InvoiceAuditEntry, InvoicePayment } from '@/lib/invoices';
-import { formatCents, lineItemsTotal } from '@/lib/invoices';
+import { formatCents, lineItemsTotal, PAYMENT_METHODS, isCheckPayment } from '@/lib/invoices';
 import { DrawerShell, DrawerFooter, Section, Field } from './DrawerShell';
 import { INPUT, INV_STATUS } from './constants';
 import { formatDateISO } from './helpers';
@@ -132,6 +132,18 @@ export function InvoiceDrawer({
       });
     return () => { alive = false; };
   }, [existing, onError]);
+
+  // Merge a payment corrected in the history list back into the loaded detail
+  // so the row keeps its new tender if the drawer re-renders.
+  const handlePaymentPatched = useCallback((updated: InvoicePayment) => {
+    setDetail((current) => {
+      if (!current?.payments) return current;
+      return {
+        ...current,
+        payments: current.payments.map((payment) => (payment.id === updated.id ? { ...payment, ...updated } : payment)),
+      };
+    });
+  }, []);
 
   // Pre-populate line items from the linked agreement so a bundle (e.g. app
   // Top Banner + e-Blast) itemizes into the invoice instead of a flat amount.
@@ -302,6 +314,7 @@ export function InvoiceDrawer({
           invoice={detail ?? existing}
           loading={historyLoading}
           onRecordPayment={onRecordPayment ? () => onRecordPayment(detail ?? existing) : undefined}
+          onPaymentPatched={handlePaymentPatched}
         />
       )}
       </div>
@@ -341,12 +354,107 @@ function historyDate(value: string | null | undefined) {
   });
 }
 
-function paymentDescription(payment: InvoicePayment) {
-  return [
-    payment.payment_method,
-    payment.reference ? `Reference ${payment.reference}` : null,
-    payment.memo,
-  ].filter(Boolean).join(' · ') || 'Payment recorded';
+/**
+ * One recorded payment, with an editable payment type and reference.
+ *
+ * Saves each change straight to PATCH /api/admin/invoice-payments/[id] so a
+ * mistyped tender can be corrected without voiding and re-recording. Amount
+ * and invoice linkage stay read-only here — those move a balance.
+ */
+function PaymentHistoryRow({
+  payment,
+  onPatched,
+}: {
+  payment: InvoicePayment;
+  onPatched: (payment: InvoicePayment) => void;
+}) {
+  const [method, setMethod] = useState(payment.payment_method ?? '');
+  const [reference, setReference] = useState(payment.reference ?? '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  // Historical rows may hold a tender outside the canonical list (e.g. imported
+  // from QuickBooks). Keep that value selectable so saving never rewrites it.
+  const options = useMemo(() => {
+    const list: string[] = [...PAYMENT_METHODS];
+    if (method && !list.includes(method)) list.unshift(method);
+    return list;
+  }, [method]);
+
+  const patch = async (body: { payment_method?: string; reference?: string }) => {
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    try {
+      const response = await fetch(`/api/admin/invoice-payments/${payment.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? 'Could not update payment.');
+      onPatched(data.payment as InvoicePayment);
+      setSaved(true);
+    } catch (patchError) {
+      setMethod(payment.payment_method ?? '');
+      setReference(payment.reference ?? '');
+      setError(patchError instanceof Error ? patchError.message : 'Could not update payment.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const referenceLabel = isCheckPayment(method) ? 'Check no.' : 'Reference';
+
+  return (
+    <div className="px-3 py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="grid gap-2">
+            <label className="block">
+              <span className="text-xs text-gray-500">Payment type</span>
+              <select
+                className={`${INPUT} mt-0.5`}
+                value={method}
+                disabled={saving}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setMethod(next);
+                  void patch({ payment_method: next });
+                }}
+              >
+                {!method && <option value="">Unspecified</option>}
+                {options.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-xs text-gray-500">{referenceLabel}</span>
+              <input
+                className={`${INPUT} mt-0.5`}
+                value={reference}
+                disabled={saving}
+                placeholder="—"
+                onChange={(event) => setReference(event.target.value)}
+                onBlur={() => {
+                  if (reference.trim() === (payment.reference ?? '').trim()) return;
+                  void patch({ reference });
+                }}
+              />
+            </label>
+          </div>
+          {payment.memo && <div className="mt-1.5 text-xs text-gray-600">{payment.memo}</div>}
+          <div className="mt-1 text-xs text-gray-500">
+            {historyDate(payment.payment_date)}{payment.created_by ? ` · ${payment.created_by}` : ''}
+            {saving && <span className="ml-1 text-gray-400">· saving…</span>}
+            {saved && !saving && <span className="ml-1 text-emerald-700">· saved</span>}
+          </div>
+          {error && <div className="mt-1 text-xs text-rose-700">{error}</div>}
+        </div>
+        <div className="shrink-0 text-sm font-semibold tabular-nums text-emerald-700">{formatCents(payment.amount_cents)}</div>
+      </div>
+    </div>
+  );
 }
 
 function auditDescription(entry: InvoiceAuditEntry) {
@@ -358,10 +466,12 @@ function InvoiceHistory({
   invoice,
   loading,
   onRecordPayment,
+  onPaymentPatched,
 }: {
   invoice: InvoiceWithAdvertiser;
   loading: boolean;
   onRecordPayment?: () => void;
+  onPaymentPatched: (payment: InvoicePayment) => void;
 }) {
   const payments = invoice.payments ?? [];
   const auditLog = [...(invoice.audit_log ?? [])].reverse();
@@ -401,15 +511,7 @@ function InvoiceHistory({
           ) : payments.length ? (
             <div className="divide-y divide-gray-200">
               {[...payments].reverse().map((payment) => (
-                <div key={payment.id} className="flex items-start justify-between gap-3 px-3 py-3">
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium text-gray-900">{paymentDescription(payment)}</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
-                      {historyDate(payment.payment_date)}{payment.created_by ? ` · ${payment.created_by}` : ''}
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-sm font-semibold tabular-nums text-emerald-700">{formatCents(payment.amount_cents)}</div>
-                </div>
+                <PaymentHistoryRow key={payment.id} payment={payment} onPatched={onPaymentPatched} />
               ))}
             </div>
           ) : (
