@@ -8,7 +8,6 @@
 import { redirect } from 'next/navigation';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
-import PageTitle from '@/components/ui/PageTitle';
 import InvoicePayClient from './InvoicePayClient';
 
 export const dynamic = 'force-dynamic';
@@ -60,9 +59,7 @@ export default async function InvoicePayPage({
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
-      <PageTitle>Invoice {invoice.number}</PageTitle>
-      <p className="mt-1 mb-8 text-sm text-gray-500">RealtyLine advertising invoice</p>
+    <div className="mx-auto max-w-3xl px-4 py-10 print:max-w-none print:px-0 print:py-0">
       <InvoicePayClient
         invoice={invoice}
         justPaid={sp.paid === '1'}

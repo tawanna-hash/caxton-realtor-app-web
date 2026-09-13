@@ -31,6 +31,7 @@ interface DueScheduleRow {
   bill_to_address: string | null;
   auto_send: boolean;
   due_days: number;
+  create_days_in_advance: number;
   end_date: string | null;
   max_occurrences: number | null;
   occurrences_generated: number;
@@ -61,10 +62,11 @@ export async function findDueSchedules(sql: Sql, asOf: Date = new Date()): Promi
     SELECT id, advertiser_id, agreement_id, name, status, frequency, interval_count,
            amount_cents, tax_cents, line_items, memo,
            bill_to_name, bill_to_email, bill_to_address,
-           auto_send, due_days, end_date, max_occurrences,
+           auto_send, due_days, create_days_in_advance, end_date, max_occurrences,
            occurrences_generated, next_run_at
     FROM recurring_invoice_schedules
-    WHERE status = 'active' AND next_run_at <= ${asOf.toISOString()}
+    WHERE status = 'active'
+      AND next_run_at - (create_days_in_advance * INTERVAL '1 day') <= ${asOf.toISOString()}
     ORDER BY next_run_at ASC
   `) as unknown as DueScheduleRow[];
   return rows;
@@ -94,7 +96,7 @@ export async function generateInvoiceFromSchedule(sql: Sql, schedule: DueSchedul
   const seq = (countRows[0]?.n ?? 0) + 1;
   const number = formatInvoiceNumber(publication, year, seq);
 
-  const issuedAt = new Date();
+  const issuedAt = new Date(schedule.next_run_at);
   const dueDate = new Date(issuedAt.getTime() + schedule.due_days * 24 * 60 * 60 * 1000);
   const status = schedule.auto_send ? 'sent' : 'draft';
 

@@ -6,6 +6,7 @@
 // Checkout form inline, with a "pay on Stripe's page" fallback link.
 
 import { useState, useCallback } from 'react';
+import Image from 'next/image';
 import {
   EmbeddedCheckoutProvider,
   EmbeddedCheckout,
@@ -42,13 +43,28 @@ function fmtDate(d: string | null): string {
   });
 }
 
-const STATUS_TONE: Record<string, string> = {
-  paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  sent: 'bg-amber-50 text-amber-700 border-amber-200',
-  overdue: 'bg-rose-50 text-rose-700 border-rose-200',
-  draft: 'bg-gray-100 text-gray-700 border-gray-200',
-  void: 'bg-gray-50 text-gray-400 border-gray-200',
-};
+const INVOICE_TERMS = [
+  {
+    title: 'FREQUENCY DISCOUNT',
+    body: 'An advertiser who does not complete a committed consecutive-month insertion schedule will be subject to the one-time insertion rate.',
+  },
+  {
+    title: 'AGENCY',
+    body: 'All advertisements are published for the benefit of advertiser and advertising agency, and each of them is jointly and severally liable for all charges.',
+  },
+  {
+    title: 'BILLING',
+    body: 'Payment in U.S. dollars, including any applicable tax, is due at Publisher’s Postal Box in Austin, Texas, within 20 days after the invoice date. Any error in billing is binding upon advertiser and/or advertising agency unless Publisher receives written notice of the error within such 20-day period.',
+  },
+  {
+    title: 'PAST DUE',
+    body: 'All accounts not paid in full within 20 days of the date of the invoice shall incur a late charge of 1.5% per month from the due date until paid in full.',
+  },
+  {
+    title: 'COLLECTION',
+    body: 'If advertiser and/or advertising agency defaults in payment of invoices, such invoices are turned over for collection. Advertiser and/or advertising agency shall be totally liable for all fees and sums charged by the collection agency or attorney. If any suit or other judicial proceeding is instituted or had thereon, or if such fees and sums are collected through probate or bankruptcy proceeding, advertiser and/or advertising agency shall be totally liable for all attorneys’ fees and court costs incurred by Publisher in the collection of said invoices.',
+  },
+];
 
 let stripePromise: Promise<Stripe | null> | null = null;
 function getStripePromise(pk: string) {
@@ -132,74 +148,105 @@ export default function InvoicePayClient({
         </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-sm text-gray-500">Bill to</div>
-            <div className="font-medium text-gray-900">{invoice.bill_to_name ?? '—'}</div>
-            {invoice.bill_to_email && <div className="text-sm text-gray-500">{invoice.bill_to_email}</div>}
-          </div>
-          <span
-            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium capitalize ${
-              STATUS_TONE[alreadyPaid ? 'paid' : invoice.status] ?? STATUS_TONE.draft
-            }`}
-          >
-            {alreadyPaid ? 'Paid' : invoice.status}
-          </span>
-        </div>
-
-        <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <div className="text-gray-500">Issued</div>
-            <div className="text-gray-900">{fmtDate(invoice.issued_at)}</div>
-          </div>
-          <div>
-            <div className="text-gray-500">Due</div>
-            <div className="text-gray-900">{fmtDate(invoice.due_date)}</div>
-          </div>
-        </div>
-
-        <div className="mt-6 border-t border-gray-100 pt-4">
-          {invoice.line_items?.map((li, i) => (
-            <div key={i} className="flex justify-between py-1.5 text-sm">
-              <span className="text-gray-700">
-                {li.description} {li.qty > 1 ? `× ${li.qty}` : ''}
-              </span>
-              <span className="text-gray-900">{fmtUsd(li.unit_cents * li.qty)}</span>
-            </div>
-          ))}
-          <div className="mt-3 flex justify-between border-t border-gray-100 pt-3 text-sm text-gray-600">
-            <span>Subtotal</span>
-            <span>{fmtUsd(invoice.amount_cents)}</span>
-          </div>
-          {invoice.tax_cents > 0 && (
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Tax</span>
-              <span>{fmtUsd(invoice.tax_cents)}</span>
-            </div>
-          )}
-          <div className="flex justify-between pt-1 text-base font-semibold text-gray-900">
-            <span>Total due</span>
-            <span>{fmtUsd(invoice.total_cents)}</span>
-          </div>
-        </div>
-
-        {invoice.memo && (
-          <div className="mt-4 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600">{invoice.memo}</div>
-        )}
+      <div className="flex justify-end print:hidden">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Print / Save PDF
+        </button>
       </div>
 
+      <article className="mx-auto bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:w-full print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-10">
+        <header className="grid grid-cols-[1fr_auto] gap-8 border-b border-neutral-300 pb-5">
+          <div className="flex items-start gap-4">
+            <Image
+              src="/brand/caxton-logo.jpg"
+              alt="Caxton Publications Inc."
+              width={160}
+              height={180}
+              className="h-auto w-28 object-contain"
+              priority
+            />
+          </div>
+          <div className="text-right">
+            <h1 className="text-2xl font-normal tracking-wide text-neutral-900">INVOICE</h1>
+            <div className="mt-1 font-semibold">Caxton Publications, Inc.</div>
+            <div>PO Box 81366</div>
+            <div>Austin, Texas 78708-1366</div>
+            <div>United States</div>
+            <div className="mt-2">www.myrealtyline.com</div>
+          </div>
+        </header>
+
+        <section className="grid grid-cols-2 gap-8 py-5">
+          <div>
+            <div className="mb-1 text-[10px] uppercase tracking-wider text-neutral-500">Bill to</div>
+            <div className="font-semibold">{invoice.bill_to_name ?? 'Customer'}</div>
+            {invoice.bill_to_address && <div className="mt-1 whitespace-pre-line">{invoice.bill_to_address}</div>}
+            {invoice.bill_to_email && <div>{invoice.bill_to_email}</div>}
+          </div>
+          <dl className="ml-auto grid grid-cols-[auto_auto] gap-x-3 text-right">
+            <dt className="font-semibold">Invoice Number:</dt><dd>{invoice.number}</dd>
+            <dt className="font-semibold">Invoice Date:</dt><dd>{fmtDate(invoice.issued_at)}</dd>
+            <dt className="font-semibold">Payment Due:</dt><dd>{fmtDate(invoice.due_date)}</dd>
+            <dt className="mt-2 bg-neutral-100 px-2 py-2 font-semibold">Amount Due (USD):</dt>
+            <dd className="mt-2 bg-neutral-100 px-2 py-2 font-semibold">{alreadyPaid ? '$0.00' : fmtUsd(invoice.total_cents)}</dd>
+          </dl>
+        </section>
+
+        <section>
+          <div className="grid grid-cols-[1fr_70px_85px_90px] bg-neutral-900 px-3 py-2 font-semibold text-white">
+            <div>Services</div><div className="text-center">Quantity</div><div className="text-right">Rate</div><div className="text-right">Amount</div>
+          </div>
+          {invoice.line_items?.length ? invoice.line_items.map((li, i) => (
+            <div key={i} className="grid grid-cols-[1fr_70px_85px_90px] border-b border-neutral-200 px-3 py-3">
+              <div>{li.description}</div>
+              <div className="text-center">{li.qty}</div>
+              <div className="text-right">{fmtUsd(li.unit_cents)}</div>
+              <div className="text-right">{fmtUsd(li.unit_cents * li.qty)}</div>
+            </div>
+          )) : (
+            <div className="border-b border-neutral-200 px-3 py-4 text-center italic text-neutral-500">No itemized services.</div>
+          )}
+        </section>
+
+        <section className="ml-auto mt-3 w-64">
+          <div className="flex justify-between border-b border-neutral-200 py-1"><span>Total:</span><span>{fmtUsd(invoice.amount_cents)}</span></div>
+          {invoice.tax_cents > 0 && <div className="flex justify-between border-b border-neutral-200 py-1"><span>Tax:</span><span>{fmtUsd(invoice.tax_cents)}</span></div>}
+          <div className="flex justify-between py-2 font-semibold"><span>Amount Due (USD):</span><span>{alreadyPaid ? '$0.00' : fmtUsd(invoice.total_cents)}</span></div>
+        </section>
+
+        {invoice.memo && <section className="mt-3 border-t border-neutral-200 pt-3"><div className="font-semibold">Notes</div><div className="mt-1 whitespace-pre-line">{invoice.memo}</div></section>}
+
+        <section className="mt-5 border-t border-neutral-300 pt-4">
+          <h2 className="mb-3 font-semibold">Notes / Terms</h2>
+          <div className="space-y-3 text-[9px] leading-[1.45]">
+            <p>CAXTON PUBLICATIONS INC<br />RealtyLine Austin and Newsline San Antonio are both publications under Caxton Publications, Inc. The Services line item specifies the publication name to indicate where your ad is being placed and billed. Placement in one publication does not automatically include placement in the other.</p>
+            {INVOICE_TERMS.map((term) => (
+              <div key={term.title}>
+                <div className="font-semibold">{term.title}</div>
+                <p>{term.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <footer className="mt-8 text-center text-[9px] text-neutral-500">We appreciate your business.</footer>
+      </article>
+
       {alreadyPaid ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 text-center text-emerald-800">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 text-center text-emerald-800 print:hidden">
           <div className="text-lg font-semibold">Thank you — this invoice is paid.</div>
           {invoice.paid_at && <div className="mt-1 text-sm">Paid on {fmtDate(invoice.paid_at)}</div>}
         </div>
       ) : isVoid ? (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-4 text-center text-gray-500">
+        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-4 text-center text-gray-500 print:hidden">
           This invoice has been voided and does not require payment.
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm print:hidden">
           {error && (
             <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
               {error}

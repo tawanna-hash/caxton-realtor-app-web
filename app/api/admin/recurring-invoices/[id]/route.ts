@@ -92,6 +92,7 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
         case 'bill_to_address':      await sql`UPDATE recurring_invoice_schedules SET bill_to_address = ${raw as string | null}             WHERE id = ${id}`; break;
         case 'auto_send':            await sql`UPDATE recurring_invoice_schedules SET auto_send = ${Boolean(raw)}                           WHERE id = ${id}`; break;
         case 'due_days':             await sql`UPDATE recurring_invoice_schedules SET due_days = ${raw as number}                           WHERE id = ${id}`; break;
+        case 'create_days_in_advance': await sql`UPDATE recurring_invoice_schedules SET create_days_in_advance = ${raw as number}             WHERE id = ${id}`; break;
         case 'end_date':             await sql`UPDATE recurring_invoice_schedules SET end_date = ${raw as string | null}                    WHERE id = ${id}`; break;
         case 'max_occurrences':      await sql`UPDATE recurring_invoice_schedules SET max_occurrences = ${raw as number | null}             WHERE id = ${id}`; break;
         case 'next_run_at':          await sql`UPDATE recurring_invoice_schedules SET next_run_at = ${raw as string}                        WHERE id = ${id}`; break;

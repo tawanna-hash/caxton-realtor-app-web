@@ -7,7 +7,11 @@
 // (advertiser + agreement picked freely).
 
 import { useMemo, useState } from 'react';
-import type { RecurringScheduleWithAdvertiser, RecurringFrequency } from '@/lib/recurring-invoices';
+import {
+  frequencyLabel,
+  type RecurringScheduleWithAdvertiser,
+  type RecurringFrequency,
+} from '@/lib/recurring-invoices';
 import type { InvoiceLineItem } from '@/lib/invoices';
 import { formatCents, lineItemsTotal } from '@/lib/invoices';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
@@ -48,10 +52,14 @@ export function RecurringScheduleDrawer({
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>(existing?.line_items?.length ? existing.line_items : [{ description: '', qty: 1, unit_cents: 0 }]);
   const [taxCents, setTaxCents] = useState<number>(existing?.tax_cents ?? 0);
   const [dueDays, setDueDays] = useState<number>(existing?.due_days ?? 15);
+  const [createDaysInAdvance, setCreateDaysInAdvance] = useState<number>(existing?.create_days_in_advance ?? 0);
   const [autoSend, setAutoSend] = useState<boolean>(existing?.auto_send ?? true);
   const [startDate, setStartDate] = useState<string>(existing?.start_date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState<string>(existing?.end_date?.slice(0, 10) ?? '');
   const [maxOccurrences, setMaxOccurrences] = useState<string>(existing?.max_occurrences != null ? String(existing.max_occurrences) : '');
+  const [endMode, setEndMode] = useState<'never' | 'after' | 'date'>(
+    existing?.max_occurrences != null ? 'after' : existing?.end_date ? 'date' : 'never',
+  );
   const [memo, setMemo] = useState(existing?.memo ?? '');
   const [billToName, setBillToName] = useState(existing?.bill_to_name ?? '');
   const [billToEmail, setBillToEmail] = useState(existing?.bill_to_email ?? '');
@@ -90,10 +98,11 @@ export function RecurringScheduleDrawer({
       line_items: lineItems.filter((li) => li.description.trim() || li.unit_cents),
       tax_cents: taxCents,
       due_days: dueDays,
+      create_days_in_advance: createDaysInAdvance,
       auto_send: autoSend,
       start_date: startDate,
-      end_date: endDate || null,
-      max_occurrences: maxOccurrences ? Number(maxOccurrences) : null,
+      end_date: endMode === 'date' && endDate ? endDate : null,
+      max_occurrences: endMode === 'after' && maxOccurrences ? Number(maxOccurrences) : null,
       memo: memo || null,
       bill_to_name: billToName || null,
       bill_to_email: billToEmail || null,
@@ -127,7 +136,7 @@ export function RecurringScheduleDrawer({
       subtitle={isEdit ? existing!.advertiser_name ?? undefined : undefined}
       onClose={onClose}
     >
-      <Section title="Schedule">
+      <Section title="Recurring invoice template">
         <Field label="Name">
           <input className={INPUT} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Monthly banner ad" />
         </Field>
@@ -152,7 +161,7 @@ export function RecurringScheduleDrawer({
             </select>
           </Field>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Field label="Frequency">
             <select className={INPUT} value={frequency} onChange={(e) => setFrequency(e.target.value as RecurringFrequency)}>
               {FREQ_OPTIONS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
@@ -165,16 +174,62 @@ export function RecurringScheduleDrawer({
             <input type="number" min={0} className={INPUT} value={dueDays} onChange={(e) => setDueDays(Math.max(0, Number(e.target.value) || 0))} />
           </Field>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+      </Section>
+
+      <Section title="Recurring schedule">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Start date">
             <input type="date" className={INPUT} value={startDate} disabled={isEdit} onChange={(e) => setStartDate(e.target.value)} />
           </Field>
-          <Field label="End date (optional)">
-            <input type="date" className={INPUT} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          <Field label="Create invoice days in advance">
+            <input
+              type="number"
+              min={0}
+              className={INPUT}
+              value={createDaysInAdvance}
+              onChange={(e) => setCreateDaysInAdvance(Math.max(0, Number(e.target.value) || 0))}
+            />
           </Field>
-          <Field label="Max occurrences (optional)">
-            <input type="number" min={1} className={INPUT} value={maxOccurrences} onChange={(e) => setMaxOccurrences(e.target.value)} />
-          </Field>
+        </div>
+        <fieldset className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <legend className="px-1 text-xs font-medium uppercase tracking-wider text-gray-500">End</legend>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input type="radio" name="recurring-end" checked={endMode === 'never'} onChange={() => setEndMode('never')} />
+              Never
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input type="radio" name="recurring-end" checked={endMode === 'after'} onChange={() => setEndMode('after')} />
+              After
+              <input
+                type="number"
+                min={1}
+                className={`${INPUT} w-20`}
+                value={maxOccurrences}
+                disabled={endMode !== 'after'}
+                onChange={(e) => setMaxOccurrences(e.target.value)}
+                aria-label="Number of occurrences"
+              />
+              invoices
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input type="radio" name="recurring-end" checked={endMode === 'date'} onChange={() => setEndMode('date')} />
+              On
+              <input
+                type="date"
+                className={INPUT}
+                value={endDate}
+                disabled={endMode !== 'date'}
+                onChange={(e) => setEndDate(e.target.value)}
+                aria-label="Recurring schedule end date"
+              />
+            </label>
+          </div>
+        </fieldset>
+        <div className="rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-800">
+          Repeats {frequency === 'monthly' ? 'monthly' : frequencyLabel(frequency).toLowerCase()}
+          {intervalCount > 1 ? ` every ${intervalCount} periods` : ''}. Invoices are created {createDaysInAdvance} day{createDaysInAdvance === 1 ? '' : 's'} in advance
+          {endMode === 'after' && maxOccurrences ? ` and stop after ${maxOccurrences} invoices` : endMode === 'date' && endDate ? ` through ${endDate}` : ' with no end date'}.
         </div>
         <label className="flex items-center gap-2 text-sm text-gray-700">
           <input type="checkbox" checked={autoSend} onChange={(e) => setAutoSend(e.target.checked)} />

@@ -380,6 +380,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       bill_to_address          text,
       auto_send                boolean NOT NULL DEFAULT true,   -- auto status='sent' + email on generation
       due_days                 integer NOT NULL DEFAULT 15,     -- due_date = issued_at + due_days
+      create_days_in_advance   integer NOT NULL DEFAULT 0,      -- generate before the scheduled invoice date
       -- Schedule bounds
       start_date               date NOT NULL,
       end_date                 date,                -- null = runs indefinitely
@@ -394,6 +395,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       updated_at               timestamptz NOT NULL DEFAULT now()
     )
   `);
+  await step(() => sql`ALTER TABLE recurring_invoice_schedules ADD COLUMN IF NOT EXISTS create_days_in_advance integer NOT NULL DEFAULT 0`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_rec_invoice_sched_advertiser ON recurring_invoice_schedules(advertiser_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_rec_invoice_sched_agreement  ON recurring_invoice_schedules(agreement_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_rec_invoice_sched_next_run   ON recurring_invoice_schedules(next_run_at) WHERE status = 'active'`);

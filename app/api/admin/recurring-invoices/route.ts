@@ -81,6 +81,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const amountCents = explicitAmt ?? lineItemsTotal(lineItems);
   const taxCents = typeof body.tax_cents === 'number' ? body.tax_cents : 0;
   const dueDays = typeof body.due_days === 'number' && body.due_days >= 0 ? Math.floor(body.due_days) : 15;
+  const createDaysInAdvance =
+    typeof body.create_days_in_advance === 'number' && body.create_days_in_advance >= 0
+      ? Math.floor(body.create_days_in_advance)
+      : 0;
   const autoSend = body.auto_send !== false;
   const startDate = typeof body.start_date === 'string' && body.start_date ? body.start_date : new Date().toISOString().slice(0, 10);
   const endDate = typeof body.end_date === 'string' && body.end_date ? body.end_date : null;
@@ -121,14 +125,14 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
         advertiser_id, agreement_id, name, status, frequency, interval_count,
         amount_cents, tax_cents, line_items, memo,
         bill_to_name, bill_to_email, bill_to_address,
-        auto_send, due_days, start_date, end_date, max_occurrences,
+        auto_send, due_days, create_days_in_advance, start_date, end_date, max_occurrences,
         next_run_at, source, created_by
       ) VALUES (
         ${advertiserId}, ${agreementId}, ${name}, 'active', ${frequency}, ${intervalCount},
         ${amountCents}, ${taxCents}, ${JSON.stringify(lineItems)}::jsonb,
         ${(body.memo as string | null | undefined) ?? null},
         ${billTo.name}, ${billTo.email}, ${billTo.address},
-        ${autoSend}, ${dueDays}, ${startDate}, ${endDate}, ${maxOccurrences},
+        ${autoSend}, ${dueDays}, ${createDaysInAdvance}, ${startDate}, ${endDate}, ${maxOccurrences},
         ${nextRunAt}, ${source}, ${admin.email ?? null}
       )
       RETURNING *

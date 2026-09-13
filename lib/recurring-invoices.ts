@@ -27,6 +27,7 @@ export interface RecurringInvoiceSchedule {
   bill_to_address: string | null;
   auto_send: boolean;
   due_days: number;
+  create_days_in_advance: number;
   start_date: string;
   end_date: string | null;
   max_occurrences: number | null;
@@ -48,7 +49,7 @@ export const RECURRING_SCHEDULE_PATCHABLE_FIELDS = [
   'frequency', 'interval_count', 'day_of_month',
   'amount_cents', 'tax_cents', 'line_items', 'memo',
   'bill_to_name', 'bill_to_email', 'bill_to_address',
-  'auto_send', 'due_days',
+  'auto_send', 'due_days', 'create_days_in_advance',
   'end_date', 'max_occurrences',
   'next_run_at',
 ] as const;
