@@ -111,6 +111,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Live Activity',      href: '/admin/activity',  description: 'Real-time public app events (last 7d)' },
       { label: 'Engagement Metrics', href: '/admin/metrics',   description: 'In-app click events & surface engagement' },
       { label: 'Client Reports',     href: '/admin/reports',   description: 'Shareable article, event & advertiser recaps' },
+      { label: 'Deposit Detail',     href: '/admin/reports/detail', description: 'Printable check payment detail report' },
       { label: 'Site Analytics',     href: '/admin/analytics', description: 'PostHog traffic & user behavior' },
       { label: 'URL Analytics',      href: '/admin/analytics/urls', description: 'Clicks grouped by destination URL' },
     ],
