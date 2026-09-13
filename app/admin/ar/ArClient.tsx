@@ -15,8 +15,10 @@ import { frequencyLabel } from '@/lib/recurring-invoices';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 import { Kpi } from '@/app/admin/billing/_components/Badges';
+import { InvoiceDrawer } from '@/app/admin/billing/_components/InvoiceDrawer';
 import PageTitle from '@/components/ui/PageTitle';
 import { RecurringScheduleDrawer } from './RecurringScheduleDrawer';
+import { PaymentLinkDrawer, RecordPaymentDrawer, SalesReceiptDrawer } from './PaymentActionDrawers';
 
 type Props = {
   initialInvoices: InvoiceWithAdvertiser[];
@@ -26,14 +28,14 @@ type Props = {
   incomeByDay: Array<{ day: string; total_cents: number }>;
 };
 
-const QUICK_ACTIONS: Array<{ label: string; href?: string; primary?: boolean }> = [
-  { label: 'Get paid online', href: '/admin/invoices' },
-  { label: 'Create invoice', href: '/admin/invoices' },
-  { label: 'Create payment link', href: '/admin/invoices' },
-  { label: 'Create recurring payment' },
-  { label: 'Create sales receipt', href: '/admin/invoices' },
-  { label: 'Record payment', href: '/admin/invoices' },
-];
+const QUICK_ACTIONS = [
+  { label: 'Get paid online', action: 'invoice' },
+  { label: 'Create invoice', action: 'invoice' },
+  { label: 'Create payment link', action: 'payment-link' },
+  { label: 'Create recurring payment', action: 'recurring' },
+  { label: 'Create sales receipt', action: 'sales-receipt' },
+  { label: 'Record payment', action: 'record-payment' },
+] as const;
 
 const INCOME_PERIODS = [
   ['last-year', 'Last year'],
@@ -123,6 +125,14 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   const [requestMenuOpen, setRequestMenuOpen] = useState(false);
   const [durationMenuOpen, setDurationMenuOpen] = useState(false);
   const [incomePeriod, setIncomePeriod] = useState<IncomePeriod>('this-month');
+  const [createInvoice, setCreateInvoice] = useState(false);
+  const [paymentAction, setPaymentAction] = useState<'payment-link' | 'sales-receipt' | 'record-payment' | null>(null);
+
+  const openQuickAction = (action: (typeof QUICK_ACTIONS)[number]['action']) => {
+    if (action === 'invoice') setCreateInvoice(true);
+    else if (action === 'recurring') setCreateSchedule(true);
+    else setPaymentAction(action);
+  };
 
   const reloadAll = useCallback(async () => {
     const [invRes, schedRes] = await Promise.all([
@@ -351,21 +361,16 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       <div>
         <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Create actions</div>
         <div className="flex flex-wrap gap-2">
-          {QUICK_ACTIONS.map((action) =>
-            action.href ? (
-              <a key={action.label} href={action.href} className="px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap">
-                {action.label}
-              </a>
-            ) : (
-              <button
-                key={action.label}
-                onClick={() => setCreateSchedule(true)}
-                className="px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap"
-              >
-                {action.label}
-              </button>
-            ),
-          )}
+          {QUICK_ACTIONS.map((action) => (
+            <button
+              type="button"
+              key={action.label}
+              onClick={() => openQuickAction(action.action)}
+              className="px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap"
+            >
+              {action.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -401,6 +406,9 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                     onClick={() => {
                       setRequestMenuOpen(false);
                       if (destination === 'recurring') setCreateSchedule(true);
+                      else if (label === 'Invoice') setCreateInvoice(true);
+                      else if (label === 'Payment link') setPaymentAction('payment-link');
+                      else if (label === 'Charge a payment') setPaymentAction('record-payment');
                       else router.push(destination);
                     }}
                     className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
@@ -632,6 +640,42 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
         )}
       </div>
 
+      {createInvoice && (
+        <InvoiceDrawer
+          advertisers={advertisers}
+          agreements={agreements}
+          onClose={() => setCreateInvoice(false)}
+          onSaved={async () => { setCreateInvoice(false); await reloadAll(); }}
+          onError={setError}
+        />
+      )}
+      {paymentAction === 'payment-link' && (
+        <PaymentLinkDrawer
+          invoices={invoices}
+          advertisers={advertisers}
+          onClose={() => setPaymentAction(null)}
+          onSaved={reloadAll}
+          onError={setError}
+        />
+      )}
+      {paymentAction === 'sales-receipt' && (
+        <SalesReceiptDrawer
+          invoices={invoices}
+          advertisers={advertisers}
+          onClose={() => setPaymentAction(null)}
+          onSaved={reloadAll}
+          onError={setError}
+        />
+      )}
+      {paymentAction === 'record-payment' && (
+        <RecordPaymentDrawer
+          invoices={invoices}
+          advertisers={advertisers}
+          onClose={() => setPaymentAction(null)}
+          onSaved={reloadAll}
+          onError={setError}
+        />
+      )}
       {createSchedule && (
         <RecurringScheduleDrawer
           advertisers={advertisers}
