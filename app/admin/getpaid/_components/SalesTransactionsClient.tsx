@@ -25,10 +25,19 @@ import { RecurringScheduleDrawer } from '@/app/admin/ar/RecurringScheduleDrawer'
 import PageTitle from '@/components/ui/PageTitle';
 import { toISODateString } from '@/app/admin/billing/_components/helpers';
 
-type Props = {
+export type SalesTransactionsClientProps = {
   initialInvoices: InvoiceWithAdvertiser[];
   advertisers: AdvertiserOption[];
   agreements: AgreementWithAdvertiser[];
+  workspace?: 'sales' | 'invoices';
+  initialCreate?: boolean;
+  initialEdit?: InvoiceWithAdvertiser | null;
+  invoiceSeed?: {
+    advertiser_id: number | null;
+    agreement_id: string;
+    amount_cents: number | null;
+  } | null;
+  onConsumeUrlSeed?: () => void;
 };
 
 type DateFilter = 'all' | '30-days' | '3-months' | '12-months';
@@ -317,11 +326,21 @@ function ShareInvoiceDialog({
   );
 }
 
-export function SalesTransactionsClient({ initialInvoices, advertisers, agreements }: Props) {
+export function SalesTransactionsClient({
+  initialInvoices,
+  advertisers,
+  agreements,
+  workspace = 'sales',
+  initialCreate = false,
+  initialEdit = null,
+  invoiceSeed = null,
+  onConsumeUrlSeed,
+}: SalesTransactionsClientProps) {
+  const invoiceWorkspace = workspace === 'invoices';
   const [invoices, setInvoices] = useState(initialInvoices);
   const [query, setQuery] = useState('');
   const [type, setType] = useState<TypeFilter>('all');
-  const [dateFilter, setDateFilter] = useState<DateFilter>('3-months');
+  const [dateFilter, setDateFilter] = useState<DateFilter>(invoiceWorkspace ? 'all' : '3-months');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [delivery, setDelivery] = useState<DeliveryFilter>('all');
   const [errors, setErrors] = useState<ErrorFilter>('all');
@@ -330,8 +349,8 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
   const [pageSize, setPageSize] = useState(25);
   const [rowMenuId, setRowMenuId] = useState<string | null>(null);
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
-  const [creatingInvoice, setCreatingInvoice] = useState(false);
-  const [editingInvoice, setEditingInvoice] = useState<InvoiceWithAdvertiser | null>(null);
+  const [creatingInvoice, setCreatingInvoice] = useState(initialCreate);
+  const [editingInvoice, setEditingInvoice] = useState<InvoiceWithAdvertiser | null>(initialEdit);
   const [paymentLinkInvoice, setPaymentLinkInvoice] = useState<InvoiceWithAdvertiser | null>(null);
   const [shareInvoice, setShareInvoice] = useState<InvoiceWithAdvertiser | null>(null);
   const [emailDraft, setEmailDraft] = useState<EmailDraft | null>(null);
@@ -342,6 +361,10 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if ((initialCreate || initialEdit) && onConsumeUrlSeed) onConsumeUrlSeed();
+  }, [initialCreate, initialEdit, onConsumeUrlSeed]);
 
   const reload = async () => {
     const response = await fetch('/api/admin/invoices', { cache: 'no-store' });
@@ -374,10 +397,16 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
     return {
       overdueAmount: overdue.reduce((total, invoice) => total + invoice.total_cents, 0),
       overdueCount: overdue.length,
+      notDueAmount: open.filter((invoice) => !invoice.is_overdue).reduce((total, invoice) => total + invoice.total_cents, 0),
+      notDueCount: open.filter((invoice) => !invoice.is_overdue).length,
       openAmount: open.reduce((total, invoice) => total + invoice.total_cents, 0),
       openCount: open.length,
       paidAmount: paid.reduce((total, invoice) => total + invoice.total_cents, 0),
       paidCount: paid.length,
+      notDepositedAmount: paid.filter((invoice) => !invoice.stripe_payment_intent_id).reduce((total, invoice) => total + invoice.total_cents, 0),
+      notDepositedCount: paid.filter((invoice) => !invoice.stripe_payment_intent_id).length,
+      depositedAmount: paid.filter((invoice) => Boolean(invoice.stripe_payment_intent_id)).reduce((total, invoice) => total + invoice.total_cents, 0),
+      depositedCount: paid.filter((invoice) => Boolean(invoice.stripe_payment_intent_id)).length,
     };
   }, [invoices]);
 
@@ -655,28 +684,55 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
           <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
             Admin · Get Paid
           </div>
-          <PageTitle size="md">Sales transactions</PageTitle>
+          <PageTitle size="md">{invoiceWorkspace ? 'Invoices' : 'Sales transactions'}</PageTitle>
         </div>
         <button type="button" className="text-sm font-medium text-orange-700 hover:underline">
           Give feedback
         </button>
       </div>
 
-      <section aria-label="Sales transaction summary" className="bg-white">
-        <div className="grid grid-cols-2 gap-y-3 md:grid-cols-4">
-          <SummaryMetric amount={0} count={0} label="estimates" />
-          <SummaryMetric amount={summary.overdueAmount} count={summary.overdueCount} label="overdue invoices" />
-          <SummaryMetric amount={summary.openAmount} count={summary.openCount} label="open invoices and credits" />
-          <SummaryMetric amount={summary.paidAmount} count={summary.paidCount} label="recently paid" />
-        </div>
-        <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
-          <div className="w-[12%] bg-cyan-300" />
-          <div className="w-[28%] bg-orange-600" />
-          <div className="w-[43%] bg-gray-300" />
-          <div className="w-[16.5%] bg-orange-500" />
-          <div className="w-[0.5%] min-w-1 bg-emerald-600" />
-        </div>
-      </section>
+      {invoiceWorkspace ? (
+        <section aria-label="Invoice summary" className="grid gap-8 bg-white md:grid-cols-2">
+          <div>
+            <div className="mb-2 text-sm font-semibold text-gray-800">{formatCents(summary.openAmount)} Unpaid <span className="ml-2 text-xs font-normal text-gray-500">Last 365 days</span></div>
+            <div className="grid grid-cols-2">
+              <SummaryMetric amount={summary.overdueAmount} count={summary.overdueCount} label="overdue" />
+              <div className="border-l border-gray-200 text-right"><SummaryMetric amount={summary.notDueAmount} count={summary.notDueCount} label="not due yet" /></div>
+            </div>
+            <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
+              <div className="bg-orange-600" style={{ width: `${summary.openAmount ? (summary.overdueAmount / summary.openAmount) * 100 : 0}%` }} />
+              <div className="flex-1 bg-orange-300" />
+            </div>
+          </div>
+          <div>
+            <div className="mb-2 text-sm font-semibold text-gray-800">{formatCents(summary.paidAmount)} Paid <span className="ml-2 text-xs font-normal text-gray-500">Last 30 days</span></div>
+            <div className="grid grid-cols-2">
+              <SummaryMetric amount={summary.notDepositedAmount} count={summary.notDepositedCount} label="not deposited" />
+              <div className="border-l border-gray-200 text-right"><SummaryMetric amount={summary.depositedAmount} count={summary.depositedCount} label="deposited" /></div>
+            </div>
+            <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
+              <div className="bg-emerald-400" style={{ width: `${summary.paidAmount ? (summary.notDepositedAmount / summary.paidAmount) * 100 : 0}%` }} />
+              <div className="flex-1 bg-emerald-600" />
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section aria-label="Sales transaction summary" className="bg-white">
+          <div className="grid grid-cols-2 gap-y-3 md:grid-cols-4">
+            <SummaryMetric amount={0} count={0} label="estimates" />
+            <SummaryMetric amount={summary.overdueAmount} count={summary.overdueCount} label="overdue invoices" />
+            <SummaryMetric amount={summary.openAmount} count={summary.openCount} label="open invoices and credits" />
+            <SummaryMetric amount={summary.paidAmount} count={summary.paidCount} label="recently paid" />
+          </div>
+          <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
+            <div className="w-[12%] bg-cyan-300" />
+            <div className="w-[28%] bg-orange-600" />
+            <div className="w-[43%] bg-gray-300" />
+            <div className="w-[16.5%] bg-orange-500" />
+            <div className="w-[0.5%] min-w-1 bg-emerald-600" />
+          </div>
+        </section>
+      )}
 
       {(message || error) && (
         <div
@@ -689,9 +745,15 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
         </div>
       )}
 
-      <section aria-label="Transaction filters" className="space-y-2">
+      {invoiceWorkspace && (
+        <div className="border-b border-gray-200">
+          <button type="button" className="border-b-2 border-orange-600 px-1 pb-2 text-sm font-medium text-gray-900">All invoices</button>
+        </div>
+      )}
+
+      <section aria-label={invoiceWorkspace ? 'Invoice filters' : 'Transaction filters'} className="space-y-2">
         <div className="flex flex-wrap items-end gap-2">
-          <label className="space-y-1">
+          {!invoiceWorkspace && <label className="space-y-1">
             <span className="block text-xs text-transparent" aria-hidden="true">Actions</span>
             <select
               aria-label="Batch actions"
@@ -710,7 +772,7 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
               <option value="void">Void</option>
               <option value="delete">Delete drafts</option>
             </select>
-          </label>
+          </label>}
           <label className="space-y-1">
             <span className="block text-xs text-gray-500">Type</span>
             <select className={`${CONTROL} min-w-36`} value={type} onChange={(event) => updateFilter(() => setType(event.target.value as TypeFilter))}>
@@ -720,6 +782,19 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
               <option value="payment">Payments</option>
             </select>
           </label>
+          {invoiceWorkspace && (
+            <label className="space-y-1">
+              <span className="block text-xs text-gray-500">Status</span>
+              <select className={`${CONTROL} min-w-36`} value={status} onChange={(event) => updateFilter(() => setStatus(event.target.value as StatusFilter))}>
+                <option value="all">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="open">Open</option>
+                <option value="overdue">Overdue</option>
+                <option value="paid">Paid</option>
+                <option value="void">Void</option>
+              </select>
+            </label>
+          )}
           <label className="space-y-1">
             <span className="block text-xs text-gray-500">Date</span>
             <select className={`${CONTROL} min-w-36`} value={dateFilter} onChange={(event) => updateFilter(() => setDateFilter(event.target.value as DateFilter))}>
@@ -729,7 +804,7 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
               <option value="all">All dates</option>
             </select>
           </label>
-          <label className="min-w-60 flex-1 space-y-1">
+          {!invoiceWorkspace && <label className="min-w-60 flex-1 space-y-1">
             <span className="block text-xs text-gray-500">Client</span>
             <span className="relative block">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
@@ -740,7 +815,7 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
                 onChange={(event) => updateFilter(() => setQuery(event.target.value))}
               />
             </span>
-          </label>
+          </label>}
           <div className="relative ml-auto flex">
             <button type="button" className={`${ORANGE_BUTTON} rounded-r-none`} onClick={() => setCreatingInvoice(true)}>
               <Sparkles className="h-4 w-4" aria-hidden="true" />
@@ -757,14 +832,14 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
             {createMenuOpen && (
               <div className="absolute right-0 top-10 z-40 w-52 rounded border border-gray-200 bg-white py-1 shadow-lg">
                 <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { setCreatingInvoice(true); setCreateMenuOpen(false); }}>Create invoice</button>
-                <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { setCreatingReceipt(true); setCreateMenuOpen(false); }}>Create sales receipt</button>
+                {!invoiceWorkspace && <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { setCreatingReceipt(true); setCreateMenuOpen(false); }}>Create sales receipt</button>}
                 <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { const first = invoices.find((invoice) => !['paid', 'void'].includes(invoice.status)); if (first) setPaymentLinkInvoice(first); else fail('No unpaid invoice is available.'); setCreateMenuOpen(false); }}>Create payment link</button>
                 <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { const first = invoices[0]; if (first) setRecurringInvoice(first); else fail('Create a customer invoice first.'); setCreateMenuOpen(false); }}>Create recurring payment</button>
               </div>
             )}
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-1 text-xs">
+        {!invoiceWorkspace && <div className="flex flex-wrap items-center gap-1 text-xs">
           <select aria-label="Status filter" className="rounded border-0 bg-transparent px-1 py-1.5 text-gray-600 outline-none hover:text-gray-900" value={status} onChange={(event) => updateFilter(() => setStatus(event.target.value as StatusFilter))}>
             <option value="all">All statuses</option>
             <option value="draft">Draft</option>
@@ -785,22 +860,22 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
             <option value="missing-email">Missing email</option>
             <option value="past-due">Past due</option>
           </select>
-        </div>
+        </div>}
       </section>
 
       <section className="relative rounded border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-[1120px] w-full table-fixed text-left text-xs">
+          <table className={`${invoiceWorkspace ? 'min-w-[940px]' : 'min-w-[1120px]'} w-full table-fixed text-left text-xs`}>
             <thead className="border-b border-gray-300 bg-white text-gray-700">
               <tr>
                 <th className="w-10 px-3 py-3">
                   <input type="checkbox" aria-label="Select all visible transactions" checked={allPageSelected} onChange={togglePage} />
                 </th>
                 <th className="w-24 px-2 py-3 font-semibold">Date</th>
-                <th className="w-28 px-2 py-3 font-semibold">Type</th>
+                {!invoiceWorkspace && <th className="w-28 px-2 py-3 font-semibold">Type</th>}
                 <th className="w-32 px-2 py-3 font-semibold">No.</th>
                 <th className="w-52 px-2 py-3 font-semibold">Client</th>
-                <th className="px-2 py-3 font-semibold">Memo</th>
+                {!invoiceWorkspace && <th className="px-2 py-3 font-semibold">Memo</th>}
                 <th className="w-28 px-2 py-3 text-right font-semibold">Amount</th>
                 <th className="w-36 px-2 py-3 font-semibold">Status</th>
                 <th className="w-64 px-2 py-3 text-right font-semibold"><span className="sr-only">Actions</span></th>
@@ -826,10 +901,10 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
                       />
                     </td>
                     <td className="whitespace-nowrap px-2 py-2.5 text-gray-700">{formatTransactionDate(transactionDate(invoice))}</td>
-                    <td className="px-2 py-2.5 text-gray-700">{transactionTypeLabel(invoice)}</td>
+                    {!invoiceWorkspace && <td className="px-2 py-2.5 text-gray-700">{transactionTypeLabel(invoice)}</td>}
                     <td className="truncate px-2 py-2.5 font-medium text-gray-800" title={invoice.number ?? 'Draft'}>{invoice.number ?? 'Draft'}</td>
                     <td className="truncate px-2 py-2.5 text-gray-800" title={invoice.advertiser_name ?? invoice.bill_to_name ?? ''}>{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
-                    <td className="truncate px-2 py-2.5 text-gray-600" title={memo}>{memo}</td>
+                    {!invoiceWorkspace && <td className="truncate px-2 py-2.5 text-gray-600" title={memo}>{memo}</td>}
                     <td className="whitespace-nowrap px-2 py-2.5 text-right font-medium text-gray-800">{formatCents(invoice.total_cents)}</td>
                     <td className="px-2 py-2.5"><StatusCell invoice={invoice} /></td>
                     <td className="relative whitespace-nowrap px-2 py-2.5 text-right">
@@ -889,7 +964,7 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
             </tbody>
           </table>
         </div>
-        {pageRows.length === 0 && <div className="p-12 text-center text-sm text-gray-500">No sales transactions match these filters.</div>}
+        {pageRows.length === 0 && <div className="p-12 text-center text-sm text-gray-500">No {invoiceWorkspace ? 'invoices' : 'sales transactions'} match these filters.</div>}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-300 bg-gray-50 px-4 py-3 text-xs text-gray-700">
           <div className="pl-8 font-semibold">Total <span className="ml-10">{formatCents(totalAmount)}</span></div>
           <div className="flex items-center gap-2">
@@ -910,7 +985,7 @@ export function SalesTransactionsClient({ initialInvoices, advertisers, agreemen
         </div>
       </section>
 
-      {creatingInvoice && <InvoiceDrawer advertisers={advertisers} agreements={agreements} onClose={() => setCreatingInvoice(false)} onSaved={saved} onError={fail} />}
+      {creatingInvoice && <InvoiceDrawer advertisers={advertisers} agreements={agreements} seed={invoiceSeed ?? undefined} onClose={() => setCreatingInvoice(false)} onSaved={saved} onError={fail} />}
       {editingInvoice && <InvoiceDrawer existing={editingInvoice} advertisers={advertisers} agreements={agreements} onClose={() => setEditingInvoice(null)} onSaved={saved} onError={fail} />}
       {paymentLinkInvoice && <PaymentLinkDrawer invoices={invoices} advertisers={advertisers} initialInvoiceId={paymentLinkInvoice.id} onClose={() => setPaymentLinkInvoice(null)} onSaved={reload} onError={fail} />}
       {shareInvoice && <ShareInvoiceDialog invoice={shareInvoice} onClose={() => setShareInvoice(null)} onCreated={reload} onError={fail} />}

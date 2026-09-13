@@ -1,25 +1,12 @@
 'use client';
 
-// app/admin/invoices/InvoicesClient.tsx
-//
-// Invoices workspace. Accepts seed query params from /admin/agreements
-// (?create=1&advertiser_id=…&agreement_id=…&amount_cents=…) to open the
-// create drawer pre-populated when arriving via "Generate invoice".
-
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
-import { formatCents } from '@/lib/invoices';
-
-import { Kpi } from '@/app/admin/billing/_components/Badges';
-import { INV_STATUS } from '@/app/admin/billing/_components/constants';
-import { InvoiceList } from '@/app/admin/billing/_components/InvoiceList';
-import { InvoiceDrawer } from '@/app/admin/billing/_components/InvoiceDrawer';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
+import { SalesTransactionsClient } from '@/app/admin/getpaid/_components/SalesTransactionsClient';
 
-import PageTitle from '@/components/ui/PageTitle';
-import { GetPaidSearchBar, getPaidSearchSelectClassName } from '@/app/admin/getpaid/_components/GetPaidSearchBar';
 type Props = {
   initialInvoices: InvoiceWithAdvertiser[];
   agreements: AgreementWithAdvertiser[];
@@ -35,10 +22,6 @@ export default function InvoicesClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Derive any inbound seed from query params synchronously. The effect
-  // below only fires the URL cleanup + drawer-open side effects — it does
-  // not setState during render, which is why this derivation lives here
-  // rather than inside useEffect.
   const seedFromUrl = useMemo(() => {
     if (searchParams.get('create') !== '1') return null;
     const advId = searchParams.get('advertiser_id');
@@ -55,142 +38,24 @@ export default function InvoicesClient({
     return editId ? initialInvoices.find((invoice) => invoice.id === editId) ?? null : null;
   }, [initialInvoices, searchParams]);
 
-  const [invoices, setInvoices] = useState(initialInvoices);
-  const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [createInv, setCreateInv] = useState<boolean>(() => seedFromUrl !== null);
-  const [editInv, setEditInv] = useState<InvoiceWithAdvertiser | null>(() => editFromUrl);
-  const [error, setError] = useState<string | null>(null);
-  const [invoiceSeed, setInvoiceSeed] = useState<{
-    advertiser_id: number | null;
-    agreement_id: string;
-    amount_cents: number | null;
-  } | null>(seedFromUrl);
-
-  const reloadInvoices = useCallback(async () => {
-    const res = await fetch('/api/admin/invoices', { cache: 'no-store' });
-    if (res.status === 401) { router.push('/admin/login'); return; }
-    if (res.ok) setInvoices((await res.json()).invoices ?? []);
-  }, [router]);
-
-  // Hard-delete a draft invoice. The API rejects anything that isn't a draft,
-  // so non-draft rows never show the Delete action. Confirm before deleting
-  // since it's irreversible.
-  const handleDeleteInvoice = useCallback(async (inv: InvoiceWithAdvertiser) => {
-    if (!confirm(`Delete draft invoice ${inv.number ?? inv.id}? This can't be undone.`)) return;
-    setError(null);
-    const res = await fetch(`/api/admin/invoices/${inv.id}`, { method: 'DELETE' });
-    if (!res.ok) {
-      const j = await res.json().catch(() => ({}));
-      setError(j.error ?? 'Delete failed');
-      return;
-    }
-    await reloadInvoices();
-  }, [reloadInvoices]);
-
-  // After picking up the inbound seed, strip the query string so a browser
-  // refresh doesn't re-open the drawer. Runs once per mount.
   const cleanedRef = useRef(false);
-  useEffect(() => {
-    if (!cleanedRef.current && (seedFromUrl || editFromUrl)) {
+  const consumeUrlSeed = useCallback(() => {
+    if (!cleanedRef.current) {
       cleanedRef.current = true;
       router.replace(pathname);
     }
-  }, [editFromUrl, pathname, seedFromUrl, router]);
-
-  const filteredInv = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return invoices.filter((i) => {
-      if (statusFilter !== 'all' && i.status !== statusFilter && !(statusFilter === 'overdue' && i.is_overdue)) return false;
-      if (!q) return true;
-      return [i.number, i.advertiser_name, i.bill_to_email, i.memo].filter(Boolean).join(' ').toLowerCase().includes(q);
-    });
-  }, [invoices, query, statusFilter]);
-
-  const kpis = useMemo(() => {
-    const t = new Date();
-    const startOfMonth = new Date(t.getFullYear(), t.getMonth(), 1).getTime();
-    let mtd = 0, ar = 0, overdue = 0;
-    let paid30 = 0;
-    // eslint-disable-next-line react-hooks/purity
-    const cutoff = Date.now() - 30 * 86400000;
-    for (const i of invoices) {
-      if (i.status === 'paid' && i.paid_at) {
-        const paidTs = new Date(i.paid_at).getTime();
-        if (paidTs >= startOfMonth) mtd += i.total_cents ?? 0;
-        if (paidTs > cutoff) paid30 += i.total_cents ?? 0;
-      }
-      if (i.status !== 'paid' && i.status !== 'void') {
-        ar += i.total_cents ?? 0;
-        if (i.is_overdue) overdue += i.total_cents ?? 0;
-      }
-    }
-    return { mtd, ar, overdue, paid30 };
-  }, [invoices]);
+  }, [pathname, router]);
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-5">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin · Invoices</div>
-          <PageTitle size="md">Invoices</PageTitle>
-          <p className="text-sm text-gray-600 mt-1">Billable charges and payment status. Stripe charges land via the public Sign Wizard.</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => setCreateInv(true)} className="px-4 py-2 rounded-md bg-orange-600 text-white text-sm font-medium hover:bg-orange-700">+ New invoice</button>
-        </div>
-      </div>
-
-      {/* Money summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Revenue MTD" value={formatCents(kpis.mtd)} accent="emerald" />
-        <Kpi label="AR outstanding" value={formatCents(kpis.ar)} accent="blue" />
-        <Kpi
-          label="Overdue"
-          value={formatCents(kpis.overdue)}
-          accent="rose"
-          onClick={() => setStatusFilter('overdue')}
-        />
-        <Kpi label="Paid (30d)" value={formatCents(kpis.paid30)} accent="amber" />
-      </div>
-
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
-      )}
-
-      {/* Filters */}
-      <GetPaidSearchBar value={query} onChange={setQuery} placeholder="Search invoice #, partner…">
-        <select aria-label="Invoice status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={getPaidSearchSelectClassName}>
-          <option value="all">All statuses</option>
-          {INV_STATUS.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
-      </GetPaidSearchBar>
-
-      <InvoiceList rows={filteredInv} onOpen={(r) => setEditInv(r)} onDelete={handleDeleteInvoice} />
-
-      {/* Drawers */}
-      {createInv && (
-        <InvoiceDrawer
-          advertisers={advertisers}
-          agreements={agreements}
-          seed={invoiceSeed ?? undefined}
-          onClose={() => { setCreateInv(false); setInvoiceSeed(null); }}
-          onSaved={async () => { setCreateInv(false); setInvoiceSeed(null); await reloadInvoices(); }}
-          onError={setError}
-        />
-      )}
-      {editInv && (
-        <InvoiceDrawer
-          existing={editInv}
-          advertisers={advertisers}
-          agreements={agreements}
-          onClose={() => setEditInv(null)}
-          onSaved={async () => { setEditInv(null); await reloadInvoices(); }}
-          onError={setError}
-        />
-      )}
-    </div>
+    <SalesTransactionsClient
+      initialInvoices={initialInvoices}
+      agreements={agreements}
+      advertisers={advertisers}
+      workspace="invoices"
+      initialCreate={Boolean(seedFromUrl)}
+      initialEdit={editFromUrl}
+      invoiceSeed={seedFromUrl}
+      onConsumeUrlSeed={seedFromUrl || editFromUrl ? consumeUrlSeed : undefined}
+    />
   );
 }

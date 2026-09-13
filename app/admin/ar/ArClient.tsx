@@ -7,6 +7,16 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { formatCents, agingBucketForDaysPastDue, AGING_BUCKET_LABELS, emptyAgingTotals, type AgingBucket } from '@/lib/invoices';
@@ -14,7 +24,6 @@ import type { RecurringScheduleWithAdvertiser } from '@/lib/recurring-invoices';
 import { frequencyLabel } from '@/lib/recurring-invoices';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
-import { Kpi } from '@/app/admin/billing/_components/Badges';
 import { InvoiceDrawer } from '@/app/admin/billing/_components/InvoiceDrawer';
 import { shortDate } from '@/app/admin/billing/_components/helpers';
 import PageTitle from '@/components/ui/PageTitle';
@@ -102,9 +111,60 @@ function incomePeriodBounds(period: IncomePeriod, now = new Date()): { start: Da
 }
 
 const BUCKET_ORDER: AgingBucket[] = ['current', 'd1_30', 'd31_60', 'd61_90', 'd90_plus'];
-const BUCKET_ACCENT: Record<AgingBucket, 'blue' | 'amber' | 'rose'> = {
-  current: 'blue', d1_30: 'amber', d31_60: 'amber', d61_90: 'rose', d90_plus: 'rose',
+const BUCKET_COLOR: Record<AgingBucket, string> = {
+  current: 'bg-emerald-500',
+  d1_30: 'bg-amber-300',
+  d31_60: 'bg-orange-400',
+  d61_90: 'bg-orange-600',
+  d90_plus: 'bg-rose-700',
 };
+
+const CONTROL =
+  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100';
+const ORANGE_BUTTON =
+  'inline-flex h-9 items-center justify-center gap-2 rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:cursor-not-allowed disabled:opacity-50';
+
+function Pagination({
+  count,
+  page,
+  pageSize,
+  totalPages,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  count: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+}) {
+  const first = count ? (page - 1) * pageSize + 1 : 0;
+  const last = Math.min(page * pageSize, count);
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-300 bg-gray-50 px-4 py-2.5 text-xs text-gray-700">
+      <span>{count ? `${first}–${last} of ${count}` : '0 results'}</span>
+      <div className="flex items-center gap-2">
+        <label className="flex items-center gap-1">
+          Rows
+          <select
+            className="rounded border border-gray-300 bg-white px-1 py-1"
+            value={pageSize}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+          >
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </label>
+        <button type="button" className="rounded p-1 hover:bg-gray-200 disabled:opacity-40" disabled={page === 1} onClick={() => onPageChange(1)}>First</button>
+        <button type="button" aria-label="Previous page" className="rounded p-1 hover:bg-gray-200 disabled:opacity-40" disabled={page === 1} onClick={() => onPageChange(Math.max(1, page - 1))}><ChevronLeft className="h-4 w-4" /></button>
+        <button type="button" aria-label="Next page" className="rounded p-1 hover:bg-gray-200 disabled:opacity-40" disabled={page === totalPages} onClick={() => onPageChange(Math.min(totalPages, page + 1))}><ChevronRight className="h-4 w-4" /></button>
+        <button type="button" className="rounded p-1 hover:bg-gray-200 disabled:opacity-40" disabled={page === totalPages} onClick={() => onPageChange(totalPages)}>Last</button>
+      </div>
+    </div>
+  );
+}
 
 function daysPastDue(dueDate: string | null): number {
   if (!dueDate) return -9999; // no due date yet ⇒ treat as current
@@ -130,6 +190,11 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   const [incomePeriod, setIncomePeriod] = useState<IncomePeriod>('this-month');
   const [createInvoice, setCreateInvoice] = useState(false);
   const [paymentAction, setPaymentAction] = useState<'payment-link' | 'sales-receipt' | 'record-payment' | 'create-partner' | null>(null);
+  const [query, setQuery] = useState('');
+  const [pageSize, setPageSize] = useState(25);
+  const [invoicePage, setInvoicePage] = useState(1);
+  const [partnerPage, setPartnerPage] = useState(1);
+  const [schedulePage, setSchedulePage] = useState(1);
 
   const openQuickAction = (action: (typeof QUICK_ACTIONS)[number]['action']) => {
     if (action === 'invoice') setCreateInvoice(true);
@@ -179,10 +244,47 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
     [bucketTotals],
   );
 
-  const filteredUnpaid = useMemo(
-    () => (bucketFilter === 'all' ? unpaidInvoices : unpaidInvoices.filter((i) => i.bucket === bucketFilter)),
-    [unpaidInvoices, bucketFilter],
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredUnpaid = useMemo(() => unpaidInvoices.filter((invoice) => {
+    if (bucketFilter !== 'all' && invoice.bucket !== bucketFilter) return false;
+    if (!normalizedQuery) return true;
+    return [
+      invoice.number,
+      invoice.advertiser_name,
+      invoice.bill_to_name,
+      invoice.bill_to_email,
+      invoice.memo,
+    ].filter(Boolean).join(' ').toLowerCase().includes(normalizedQuery);
+  }), [unpaidInvoices, bucketFilter, normalizedQuery]);
+  const filteredAdvertisers = useMemo(
+    () => normalizedQuery
+      ? byAdvertiser.filter((advertiser) => advertiser.name.toLowerCase().includes(normalizedQuery))
+      : byAdvertiser,
+    [byAdvertiser, normalizedQuery],
   );
+  const filteredSchedules = useMemo(
+    () => normalizedQuery
+      ? schedules.filter((schedule) => [
+          schedule.name,
+          schedule.advertiser_name,
+          schedule.status,
+          schedule.source,
+        ].filter(Boolean).join(' ').toLowerCase().includes(normalizedQuery))
+      : schedules,
+    [normalizedQuery, schedules],
+  );
+  const paginate = <T,>(rows: T[], page: number) => {
+    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    return {
+      rows: rows.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+      currentPage,
+      totalPages,
+    };
+  };
+  const invoicePagination = paginate(filteredUnpaid, invoicePage);
+  const partnerPagination = paginate(filteredAdvertisers, partnerPage);
+  const schedulePagination = paginate(filteredSchedules, schedulePage);
 
   // Sales & Get Paid funnel (QBO-style): Not paid / Paid this month / Deposited.
   const funnel = useMemo(() => {
@@ -313,324 +415,287 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   }, [reloadAll]);
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+      <header className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin · Sales &amp; Get Paid</div>
-          <PageTitle size="md">Accounts Receivable</PageTitle>
-          <p className="text-sm text-gray-600 mt-1">Aging, outstanding balances, and recurring invoice schedules.</p>
+          <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Get Paid</div>
+          <PageTitle size="md">Accounts receivable</PageTitle>
         </div>
-        <div className="flex gap-2">
-          <a href="/admin/invoices" className="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50">All invoices</a>
-        </div>
-      </div>
+        <a href="/admin/invoices" className="text-sm font-medium text-orange-700 hover:underline">All invoices</a>
+      </header>
 
-      {error && <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-      {notice && <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 break-all">{notice}</div>}
-
-      {/* Business feed: overdue-invoices callout, dismissible */}
-      {!feedDismissed && overdueCount > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Business feed</div>
-          </div>
-          <div className="relative rounded-lg border border-blue-200 bg-blue-50/60 px-5 py-4 max-w-md">
-            <button
-              onClick={() => setFeedDismissed(true)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg leading-none"
-              aria-label="Dismiss"
-            >
-              ×
-            </button>
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-1">
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-600 text-white text-xs">!</span>
-              Overdue invoices
-            </div>
-            <p className="text-sm text-gray-700 pr-4">
-              Over {formatCents(overdueTotal)} worth of invoice reminders are ready for you to review and send.
-            </p>
-            <button
-              onClick={() => setBucketFilter('d1_30')}
-              className="text-sm text-orange-700 hover:text-orange-800 font-medium mt-2"
-            >
-              Review all
-            </button>
-          </div>
+      {(error || notice) && (
+        <div role="status" className={`rounded border px-4 py-2 text-sm ${error ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
+          {error || notice}
         </div>
       )}
 
-      {/* Quick action row */}
-      <div>
-        <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Create actions</div>
-        <div className="flex flex-wrap gap-2">
-          {QUICK_ACTIONS.map((action) => (
-            <button
-              type="button"
-              key={action.label}
-              onClick={() => openQuickAction(action.action)}
-              className="px-3 py-1.5 rounded-full border border-orange-200 text-sm text-orange-700 hover:bg-orange-50 whitespace-nowrap"
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Sales & Get Paid funnel */}
-      <div>
-        <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">Sales &amp; Get Paid at a glance</div>
-        <div className="text-[11px] uppercase tracking-wider text-gray-400 font-medium mb-2">Sales &amp; Get Paid funnel</div>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-0 sm:gap-0 rounded-lg border border-gray-200 overflow-visible bg-white divide-y sm:divide-y-0 sm:divide-x divide-gray-200">
-          <div className="p-4 flex flex-col justify-between relative">
-            <div className="text-sm text-gray-600 mb-3">Create a new payment request</div>
-            <button
-              type="button"
-              onClick={() => setRequestMenuOpen((open) => !open)}
-              aria-expanded={requestMenuOpen}
-              aria-haspopup="menu"
-              className="self-start px-3 py-1.5 rounded-md border border-orange-200 text-sm font-medium text-orange-700 hover:bg-orange-50"
-            >
-              Request payment <span aria-hidden="true">⌄</span>
-            </button>
-            {requestMenuOpen && (
-              <div role="menu" className="absolute left-4 top-[82px] z-30 min-w-52 overflow-hidden rounded-md border border-gray-200 bg-white py-1 shadow-lg">
-                {QUICK_ACTIONS.filter((action) => action.action !== 'create-partner').map((action) => (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    key={action.label}
-                    onClick={() => {
-                      setRequestMenuOpen(false);
-                      openQuickAction(action.action);
-                    }}
-                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
-                  >
-                    {action.label}
-                  </button>
-                ))}
-              </div>
-            )}
+      <section aria-label="Receivables summary" className="grid gap-8 bg-white lg:grid-cols-[1.35fr_1fr]">
+        <div>
+          <div className="mb-2 flex items-baseline justify-between gap-3">
+            <div className="text-sm font-semibold text-gray-800">{formatCents(totalOutstanding)} outstanding</div>
+            <span className="text-xs text-gray-500">{unpaidInvoices.length} unpaid invoice{unpaidInvoices.length === 1 ? '' : 's'}</span>
           </div>
-          <button onClick={() => setBucketFilter('all')} className="p-4 text-left hover:bg-gray-50 border-t-2 border-t-amber-400">
-            <div className="text-xs text-gray-500 mb-1">Not paid</div>
-            <div className="text-xl font-semibold text-gray-900">{formatCents(funnel.notPaidTotal)}</div>
-            <div className="text-xs text-amber-700 mt-1">⏱ {funnel.notPaidCount} overdue invoice{funnel.notPaidCount === 1 ? '' : 's'}</div>
-          </button>
-          <a href="/admin/invoices?status=paid" className="p-4 text-left hover:bg-gray-50 border-t-2 border-t-emerald-500">
-            <div className="text-xs text-gray-500 mb-1">Paid</div>
-            <div className="text-xl font-semibold text-gray-900">{formatCents(funnel.paidTotal)}</div>
-            <div className="text-xs text-emerald-700 mt-1">✓ {funnel.paidCount} paid</div>
-          </a>
-          <div className="p-4 text-left border-t-2 border-t-emerald-600">
-            <div className="text-xs text-gray-500 mb-1">Deposited</div>
-            <div className="text-xl font-semibold text-gray-900">{formatCents(funnel.depositedTotal)}</div>
-            <div className="text-xs text-emerald-700 mt-1">✓ {funnel.depositedCount} deposited</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Income over time */}
-      <div className="rounded-lg border border-gray-200 bg-white p-5">
-        <div className="flex items-start justify-between flex-wrap gap-3 mb-1">
-          <div className="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Income over time</div>
-          <div className="flex items-center gap-3 text-xs text-gray-600">
-            <div className="relative">
+          <div className="grid grid-cols-2 gap-y-3 sm:grid-cols-5">
+            {BUCKET_ORDER.map((bucket) => (
               <button
                 type="button"
-                onClick={() => setDurationMenuOpen((open) => !open)}
-                aria-expanded={durationMenuOpen}
-                aria-haspopup="listbox"
-                className="inline-flex items-center gap-2 rounded px-2 py-1 hover:bg-gray-50"
+                key={bucket}
+                onClick={() => { setBucketFilter(bucketFilter === bucket ? 'all' : bucket); setInvoicePage(1); }}
+                className={`min-w-0 px-3 py-1 text-left first:pl-0 hover:bg-orange-50 ${bucketFilter === bucket ? 'bg-orange-50' : ''}`}
               >
-                <span className="text-gray-400">Duration:</span>
-                <span>{selectedIncomeLabel}</span>
-                <span aria-hidden="true">⌄</span>
+                <div className="truncate text-lg font-semibold leading-tight text-gray-900">{formatCents(bucketTotals[bucket])}</div>
+                <div className="mt-0.5 truncate text-xs text-gray-600">{AGING_BUCKET_LABELS[bucket]}</div>
+              </button>
+            ))}
+          </div>
+          <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-label="Outstanding balance by aging bucket">
+            {BUCKET_ORDER.map((bucket) => bucketTotals[bucket] > 0 && (
+              <div
+                key={bucket}
+                className={BUCKET_COLOR[bucket]}
+                style={{ width: `${(bucketTotals[bucket] / totalOutstanding) * 100}%` }}
+                title={`${AGING_BUCKET_LABELS[bucket]}: ${formatCents(bucketTotals[bucket])}`}
+              />
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="mb-2 text-sm font-semibold text-gray-800">Payments this month</div>
+          <div className="grid grid-cols-3">
+            {[
+              [funnel.notPaidTotal, funnel.notPaidCount, 'not paid'],
+              [funnel.paidTotal, funnel.paidCount, 'paid'],
+              [funnel.depositedTotal, funnel.depositedCount, 'deposited'],
+            ].map(([amount, count, label], index) => (
+              <div key={label} className={`min-w-0 px-3 py-1 ${index ? 'border-l border-gray-200' : 'pl-0'}`}>
+                <div className="truncate text-lg font-semibold leading-tight text-gray-900">{formatCents(amount as number)}</div>
+                <div className="mt-0.5 truncate text-xs text-gray-600">{count} {label}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
+            <div className="bg-orange-500" style={{ width: `${funnel.notPaidTotal + funnel.paidTotal ? (funnel.notPaidTotal / (funnel.notPaidTotal + funnel.paidTotal)) * 100 : 0}%` }} />
+            <div className="flex-1 bg-emerald-600" />
+          </div>
+        </div>
+      </section>
+
+      {!feedDismissed && overdueCount > 0 && (
+        <aside className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm text-gray-800">
+          <AlertCircle className="h-4 w-4 shrink-0 text-orange-600" aria-hidden="true" />
+          <span className="font-semibold">Overdue invoices</span>
+          <span className="text-gray-600">{formatCents(overdueTotal)} in reminders is ready to review.</span>
+          <button type="button" onClick={() => { setBucketFilter('d1_30'); setInvoicePage(1); }} className="font-medium text-orange-700 hover:underline">Review all</button>
+          <button type="button" onClick={() => setFeedDismissed(true)} className="ml-auto rounded p-1 text-gray-500 hover:bg-orange-100" aria-label="Dismiss overdue reminder"><X className="h-4 w-4" /></button>
+        </aside>
+      )}
+
+      <section aria-label="Accounts receivable filters" className="flex flex-wrap items-end gap-2">
+        <label className="min-w-64 flex-1 space-y-1">
+          <span className="block text-xs text-gray-500">Search receivables</span>
+          <span className="relative block">
+            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
+            <input
+              className={`${CONTROL} w-full pl-9`}
+              placeholder="Invoice, partner, email, or schedule"
+              value={query}
+              onChange={(event) => { setQuery(event.target.value); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }}
+            />
+          </span>
+        </label>
+        <label className="space-y-1">
+          <span className="block text-xs text-gray-500">Aging</span>
+          <select className={`${CONTROL} min-w-40`} value={bucketFilter} onChange={(event) => { setBucketFilter(event.target.value as AgingBucket | 'all'); setInvoicePage(1); }}>
+            <option value="all">All aging buckets</option>
+            {BUCKET_ORDER.map((bucket) => <option key={bucket} value={bucket}>{AGING_BUCKET_LABELS[bucket]}</option>)}
+          </select>
+        </label>
+        <div className="relative ml-auto flex">
+          <button type="button" className={`${ORANGE_BUTTON} rounded-r-none`} onClick={() => setCreateInvoice(true)}>
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
+            Create invoice
+          </button>
+          <button type="button" aria-label="More create actions" aria-expanded={requestMenuOpen} className={`${ORANGE_BUTTON} -ml-px rounded-l-none px-2`} onClick={() => setRequestMenuOpen((open) => !open)}>
+            <ChevronDown className="h-4 w-4" aria-hidden="true" />
+          </button>
+          {requestMenuOpen && (
+            <div role="menu" className="absolute right-0 top-10 z-40 w-60 rounded border border-gray-200 bg-white py-1 shadow-lg">
+              {QUICK_ACTIONS.map((action) => (
+                <button type="button" role="menuitem" key={action.label} className="block w-full px-4 py-2 text-left text-sm text-gray-800 hover:bg-gray-50" onClick={() => { setRequestMenuOpen(false); openQuickAction(action.action); }}>
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-gray-300 px-4 py-3">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">Unpaid invoices</h2>
+            <p className="mt-0.5 text-xs text-gray-500">{bucketFilter === 'all' ? 'All open balances' : AGING_BUCKET_LABELS[bucketFilter]}</p>
+          </div>
+          {bucketFilter !== 'all' && <button type="button" onClick={() => { setBucketFilter('all'); setInvoicePage(1); }} className="text-xs font-medium text-orange-700 hover:underline">Clear filter</button>}
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[940px] table-fixed text-left text-xs">
+            <thead className="border-b border-gray-300 bg-white text-gray-700">
+              <tr>
+                <th className="w-32 px-4 py-3 font-semibold">Invoice</th>
+                <th className="w-64 px-3 py-3 font-semibold">Partner</th>
+                <th className="w-32 px-3 py-3 text-right font-semibold">Balance</th>
+                <th className="w-32 px-3 py-3 font-semibold">Due date</th>
+                <th className="w-40 px-3 py-3 font-semibold">Aging status</th>
+                <th className="px-4 py-3 text-right font-semibold"><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {invoicePagination.rows.map((invoice) => (
+                <tr key={invoice.id} className="hover:bg-orange-50/40">
+                  <td className="truncate px-4 py-2.5 font-medium text-gray-800">{invoice.number ?? 'Draft'}</td>
+                  <td className="truncate px-3 py-2.5 text-gray-800">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(invoice.total_cents)}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-gray-600">{invoice.due_date ? shortDate(invoice.due_date) : 'No due date'}</td>
+                  <td className="px-3 py-2.5">
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
+                      {invoice.days > 0 ? <AlertCircle className="h-4 w-4 text-orange-600" aria-hidden="true" /> : <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />}
+                      {invoice.days > 0 ? `${invoice.days} days overdue` : 'Not due yet'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <button type="button" onClick={() => handleGetPaymentLink(invoice)} disabled={busyId === invoice.id} className="font-medium text-orange-700 hover:underline disabled:opacity-50">
+                      {busyId === invoice.id ? 'Sending…' : 'Send payment link'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {invoicePagination.rows.length === 0 && <div className="p-10 text-center text-sm text-gray-500">No unpaid invoices match these filters.</div>}
+        <Pagination count={filteredUnpaid.length} page={invoicePagination.currentPage} pageSize={pageSize} totalPages={invoicePagination.totalPages} onPageChange={setInvoicePage} onPageSizeChange={(size) => { setPageSize(size); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }} />
+      </section>
+
+      <section className="grid gap-5 xl:grid-cols-2">
+        <div className="min-w-0 overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+          <div className="border-b border-gray-300 px-4 py-3">
+            <h2 className="text-sm font-semibold text-gray-900">Outstanding by partner</h2>
+            <p className="mt-0.5 text-xs text-gray-500">Open balances by aging range</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[660px] table-fixed text-left text-xs">
+              <thead className="border-b border-gray-300 text-gray-700">
+                <tr>
+                  <th className="w-48 px-4 py-3 font-semibold">Partner</th>
+                  <th className="w-28 px-2 py-3 text-right font-semibold">Total</th>
+                  <th className="w-28 px-2 py-3 text-right font-semibold">1–30</th>
+                  <th className="w-28 px-2 py-3 text-right font-semibold">31–60</th>
+                  <th className="w-28 px-4 py-3 text-right font-semibold">60+</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {partnerPagination.rows.map((advertiser) => (
+                  <tr key={advertiser.name} className="hover:bg-orange-50/40">
+                    <td className="truncate px-4 py-2.5 font-medium text-gray-800">{advertiser.name}</td>
+                    <td className="px-2 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(advertiser.total)}</td>
+                    <td className="px-2 py-2.5 text-right tabular-nums text-gray-600">{formatCents(advertiser.buckets.d1_30)}</td>
+                    <td className="px-2 py-2.5 text-right tabular-nums text-gray-600">{formatCents(advertiser.buckets.d31_60)}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums text-orange-700">{formatCents(advertiser.buckets.d61_90 + advertiser.buckets.d90_plus)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {partnerPagination.rows.length === 0 && <div className="p-10 text-center text-sm text-gray-500">No outstanding partner balances match.</div>}
+          <Pagination count={filteredAdvertisers.length} page={partnerPagination.currentPage} pageSize={pageSize} totalPages={partnerPagination.totalPages} onPageChange={setPartnerPage} onPageSizeChange={(size) => { setPageSize(size); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }} />
+        </div>
+
+        <div className="min-w-0 overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-gray-300 px-4 py-3">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">Income over time</h2>
+              <p className="mt-0.5 text-xs text-gray-500">{formatCents(selectedIncome.total)} · {selectedIncomeLabel}</p>
+            </div>
+            <div className="relative">
+              <button type="button" onClick={() => setDurationMenuOpen((open) => !open)} aria-expanded={durationMenuOpen} aria-haspopup="listbox" className="inline-flex h-8 items-center gap-2 rounded border border-gray-300 bg-white px-2 text-xs text-gray-700 hover:bg-gray-50">
+                {selectedIncomeLabel}<ChevronDown className="h-3.5 w-3.5" />
               </button>
               {durationMenuOpen && (
-                <div role="listbox" className="absolute right-0 top-full z-30 mt-1 max-h-80 min-w-64 overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                <div role="listbox" className="absolute right-0 top-9 z-30 max-h-80 min-w-64 overflow-y-auto rounded border border-gray-200 bg-white py-1 shadow-lg">
                   {INCOME_PERIODS.map(([value, label]) => (
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={incomePeriod === value}
-                      key={value}
-                      onClick={() => {
-                        setIncomePeriod(value);
-                        setDurationMenuOpen(false);
-                      }}
-                      className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-gray-50 focus:bg-gray-50 focus:outline-none ${
-                        incomePeriod === value ? 'font-medium text-gray-900' : 'text-gray-700'
-                      }`}
-                    >
-                      <span className="w-3" aria-hidden="true">{incomePeriod === value ? '✓' : ''}</span>
-                      {label}
-                    </button>
+                    <button type="button" role="option" aria-selected={incomePeriod === value} key={value} onClick={() => { setIncomePeriod(value); setDurationMenuOpen(false); }} className={`block w-full px-4 py-2 text-left text-sm hover:bg-gray-50 ${incomePeriod === value ? 'font-medium text-gray-900' : 'text-gray-700'}`}>{label}</button>
                   ))}
                 </div>
               )}
             </div>
-            <label className="flex items-center gap-1.5">
-              <input type="checkbox" checked={compareLastYear} onChange={(e) => setCompareLastYear(e.target.checked)} />
-              Compare to previous year
-            </label>
+          </div>
+          <label className="flex items-center gap-2 px-4 pt-3 text-xs text-gray-600">
+            <input type="checkbox" checked={compareLastYear} onChange={(event) => setCompareLastYear(event.target.checked)} />
+            Compare to previous year
+          </label>
+          <div className="h-48 px-2 pb-3 pt-2">
+            {selectedIncome.chartData.length === 0 ? (
+              <div className="flex h-full items-center justify-center text-sm text-gray-500">No paid invoices for this period.</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={selectedIncome.chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs><linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#059669" stopOpacity={0.2} /><stop offset="95%" stopColor="#059669" stopOpacity={0} /></linearGradient></defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(value) => `$${value}`} width={48} />
+                  <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Income']} />
+                  <Area type="monotone" dataKey="amount" stroke="#059669" strokeWidth={2} fill="url(#incomeFill)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
-        <div className="text-2xl font-semibold text-gray-900">{formatCents(selectedIncome.total)} <span className="text-sm font-normal text-gray-500">{selectedIncomeLabel.toLowerCase()}</span></div>
-        <div className="h-56 mt-3">
-          {selectedIncome.chartData.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-sm text-gray-400">No paid invoices for {selectedIncomeLabel.toLowerCase()}.</div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={selectedIncome.chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} width={48} />
-                <Tooltip formatter={(v) => [`$${Number(v).toFixed(2)}`, 'Income']} />
-                <Area type="monotone" dataKey="amount" stroke="#059669" strokeWidth={2} fill="url(#incomeFill)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          )}
+      </section>
+
+      <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-gray-300 px-4 py-3">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">Recurring invoice schedules</h2>
+            <p className="mt-0.5 text-xs text-gray-500">Automated billing and next run dates</p>
+          </div>
+          <button type="button" className={ORANGE_BUTTON} onClick={() => setCreateSchedule(true)}>Create schedule</button>
         </div>
-      </div>
-
-      {/* Aging summary */}
-      <div>
-        <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Total outstanding: <span className="text-gray-900">{formatCents(totalOutstanding)}</span></div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          {BUCKET_ORDER.map((b) => (
-            <Kpi
-              key={b}
-              label={AGING_BUCKET_LABELS[b]}
-              value={formatCents(bucketTotals[b])}
-              accent={BUCKET_ACCENT[b]}
-              onClick={() => setBucketFilter(bucketFilter === b ? 'all' : b)}
-            />
-          ))}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1120px] table-fixed text-left text-xs">
+            <thead className="border-b border-gray-300 text-gray-700">
+              <tr>
+                <th className="w-64 px-4 py-3 font-semibold">Schedule</th>
+                <th className="w-36 px-3 py-3 text-right font-semibold">Amount</th>
+                <th className="w-36 px-3 py-3 font-semibold">Frequency</th>
+                <th className="w-36 px-3 py-3 font-semibold">Next run</th>
+                <th className="w-24 px-3 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 text-right font-semibold"><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {schedulePagination.rows.map((schedule) => (
+                <tr key={schedule.id} className="hover:bg-orange-50/40">
+                  <td className="px-4 py-2.5"><div className="truncate font-medium text-gray-900">{schedule.name}</div><div className="truncate text-gray-500">{schedule.advertiser_name ?? '—'} · {schedule.source === 'agreement' ? 'linked to agreement' : 'standalone'}</div></td>
+                  <td className="px-3 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(schedule.amount_cents + schedule.tax_cents)}</td>
+                  <td className="px-3 py-2.5 text-gray-600">{frequencyLabel(schedule.frequency)}{schedule.interval_count > 1 ? ` (x${schedule.interval_count})` : ''}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-gray-600">{new Date(schedule.next_run_at).toLocaleDateString()}</td>
+                  <td className="px-3 py-2.5"><span className={`inline-flex items-center gap-1.5 whitespace-nowrap ${schedule.status === 'active' ? 'text-emerald-700' : schedule.status === 'paused' ? 'text-orange-700' : 'text-gray-600'}`}><span className={`h-2 w-2 rounded-full ${schedule.status === 'active' ? 'bg-emerald-600' : schedule.status === 'paused' ? 'bg-orange-500' : 'bg-gray-400'}`} />{schedule.status}</span></td>
+                  <td className="whitespace-nowrap px-4 py-2.5 text-right">
+                    <button type="button" onClick={() => setEditSchedule(schedule)} className="font-medium text-orange-700 hover:underline">Edit</button>
+                    <button type="button" onClick={() => handlePauseResume(schedule)} disabled={busyId === schedule.id || schedule.status === 'ended'} className="ml-3 font-medium text-orange-700 hover:underline disabled:text-gray-400 disabled:no-underline">{schedule.status === 'active' ? 'Pause' : 'Resume'}</button>
+                    <button type="button" onClick={() => handleGenerateNow(schedule)} disabled={busyId === schedule.id || schedule.status !== 'active'} className="ml-3 font-medium text-orange-700 hover:underline disabled:text-gray-400 disabled:no-underline">Generate now</button>
+                    {schedule.status !== 'active' && <button type="button" onClick={() => handleDeleteSchedule(schedule)} disabled={busyId === schedule.id} className="ml-3 font-medium text-red-600 hover:underline disabled:opacity-50">Delete</button>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
-
-      {/* Outstanding by advertiser */}
-      <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wider text-gray-500 font-medium">Outstanding by partner</div>
-        {byAdvertiser.length === 0 ? (
-          <div className="p-8 text-center text-sm text-gray-500">Nothing outstanding.</div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {byAdvertiser.map((a) => (
-              <div key={a.name} className="grid grid-cols-2 sm:grid-cols-6 gap-2 px-4 py-3 text-sm items-center">
-                <div className="col-span-2 font-medium text-gray-900 truncate">{a.name}</div>
-                <div className="text-gray-900 font-semibold">{formatCents(a.total)}</div>
-                <div className="hidden sm:block text-xs text-gray-500">{formatCents(a.buckets.d1_30)} (1-30d)</div>
-                <div className="hidden sm:block text-xs text-gray-500">{formatCents(a.buckets.d31_60)} (31-60d)</div>
-                <div className="hidden sm:block text-xs text-rose-600">{formatCents(a.buckets.d61_90 + a.buckets.d90_plus)} (60d+)</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Unpaid invoice list (filterable by bucket) */}
-      <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-          <div className="text-xs uppercase tracking-wider text-gray-500 font-medium">
-            Unpaid invoices {bucketFilter !== 'all' && `· ${AGING_BUCKET_LABELS[bucketFilter]}`}
-          </div>
-          {bucketFilter !== 'all' && (
-            <button onClick={() => setBucketFilter('all')} className="text-xs text-orange-600 hover:text-orange-700">Clear filter</button>
-          )}
-        </div>
-        {filteredUnpaid.length === 0 ? (
-          <div className="p-8 text-center text-sm text-gray-500">No unpaid invoices{bucketFilter !== 'all' ? ' in this bucket' : ''}.</div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {filteredUnpaid.map((inv) => (
-              <div key={inv.id} className="grid grid-cols-2 sm:grid-cols-12 gap-2 px-4 py-3 text-sm items-center">
-                <div className="sm:col-span-2 font-mono text-gray-700">{inv.number ?? '—'}</div>
-                <div className="sm:col-span-3 truncate text-gray-900">{inv.advertiser_name ?? '—'}</div>
-                <div className="sm:col-span-2 text-gray-900">{formatCents(inv.total_cents)}</div>
-                <div className="sm:col-span-2 text-xs text-gray-600">
-                  {inv.due_date ? shortDate(inv.due_date) : 'No due date'}
-                </div>
-                <div className="sm:col-span-2 text-xs">
-                  <span className={`px-2 py-0.5 rounded-full border ${inv.days > 0 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                    {inv.days > 0 ? `${inv.days}d overdue` : 'Not yet due'}
-                  </span>
-                </div>
-                <div className="sm:col-span-1 text-right">
-                  <button
-                    onClick={() => handleGetPaymentLink(inv)}
-                    disabled={busyId === inv.id}
-                    className="text-xs px-2 py-1 rounded-md border border-orange-200 text-orange-700 hover:bg-orange-50 disabled:opacity-50 whitespace-nowrap"
-                  >
-                    {busyId === inv.id ? '…' : 'Send link'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Recurring schedules */}
-      <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wider text-gray-500 font-medium">Recurring invoice schedules</div>
-        {schedules.length === 0 ? (
-          <div className="p-8 text-center text-sm text-gray-500">No recurring schedules yet.</div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {schedules.map((s) => (
-              <div key={s.id} className="grid grid-cols-2 sm:grid-cols-12 gap-2 px-4 py-3 text-sm items-center">
-                <div className="sm:col-span-3 min-w-0">
-                  <div className="font-medium text-gray-900 truncate">{s.name}</div>
-                  <div className="text-xs text-gray-500 truncate">{s.advertiser_name ?? '—'} {s.source === 'agreement' ? '· linked to agreement' : '· standalone'}</div>
-                </div>
-                <div className="sm:col-span-2 text-gray-900">{formatCents(s.amount_cents + s.tax_cents)}</div>
-                <div className="sm:col-span-2 text-xs text-gray-600">{frequencyLabel(s.frequency)}{s.interval_count > 1 ? ` (x${s.interval_count})` : ''}</div>
-                <div className="sm:col-span-2 text-xs text-gray-600">Next: {new Date(s.next_run_at).toLocaleDateString()}</div>
-                <div className="sm:col-span-1">
-                  <span className={`px-2 py-0.5 rounded-full text-xs border ${
-                    s.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : s.status === 'paused' ? 'bg-amber-50 text-amber-700 border-amber-200'
-                      : 'bg-gray-100 text-gray-600 border-gray-200'
-                  }`}>{s.status}</span>
-                </div>
-                <div className="sm:col-span-2 flex gap-1 justify-end flex-wrap">
-                  <button onClick={() => setEditSchedule(s)} className="text-xs px-2 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">Edit</button>
-                  <button
-                    onClick={() => handlePauseResume(s)}
-                    disabled={busyId === s.id || s.status === 'ended'}
-                    className="text-xs px-2 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    {s.status === 'active' ? 'Pause' : 'Resume'}
-                  </button>
-                  <button
-                    onClick={() => handleGenerateNow(s)}
-                    disabled={busyId === s.id || s.status !== 'active'}
-                    className="text-xs px-2 py-1 rounded-md border border-orange-200 text-orange-700 hover:bg-orange-50 disabled:opacity-50"
-                  >
-                    Generate now
-                  </button>
-                  {s.status !== 'active' && (
-                    <button
-                      onClick={() => handleDeleteSchedule(s)}
-                      disabled={busyId === s.id}
-                      className="text-xs px-2 py-1 rounded-md border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
-                    >
-                      Delete
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        {schedulePagination.rows.length === 0 && <div className="p-10 text-center text-sm text-gray-500">No recurring schedules match these filters.</div>}
+        <Pagination count={filteredSchedules.length} page={schedulePagination.currentPage} pageSize={pageSize} totalPages={schedulePagination.totalPages} onPageChange={setSchedulePage} onPageSizeChange={(size) => { setPageSize(size); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }} />
+      </section>
 
       {createInvoice && (
         <InvoiceDrawer
