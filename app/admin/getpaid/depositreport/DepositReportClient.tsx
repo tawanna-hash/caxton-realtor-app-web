@@ -245,7 +245,7 @@ export default function DepositReportClient({
                       <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-800">{payment.reference?.trim() || '—'}</td>
                       <td className="px-3 py-2 text-gray-700">{payment.memo?.trim() || '—'}</td>
                       <td className="whitespace-nowrap px-3 py-2 text-gray-700">{sourceLabel(payment.source)}</td>
-                      <td className="whitespace-nowrap px-3 py-2 text-gray-600">
+                      <td className="whitespace-nowrap px-3 py-2 text-gray-600 print:whitespace-normal">
                         <div>{timestamp(payment.created_at)}</div>
                         {/* Preparer is already named in the printed header. */}
                         {payment.created_by && <div className="text-gray-500 print:hidden">{payment.created_by}</div>}

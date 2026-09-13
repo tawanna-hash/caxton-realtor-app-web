@@ -502,6 +502,17 @@ textarea::placeholder {
   .deposit-detail-table th:nth-child(6) { width: 8%; }
   .deposit-detail-table th:nth-child(7) { width: 15%; }
   .deposit-detail-table th:nth-child(8) { width: 9%; }
+
+  .deposit-detail-table th:nth-child(7),
+  .deposit-detail-table td:nth-child(7) {
+    white-space: normal !important;
+  }
+
+  .deposit-detail-table th:nth-child(8),
+  .deposit-detail-table td:nth-child(8) {
+    white-space: nowrap !important;
+    text-align: right !important;
+  }
 }
 
 /* Mailing administration — aligned with the compact Get Paid workspace. */
