@@ -138,9 +138,45 @@ export function AgreementDrawer({
   const [customMessage, setCustomMessage] = useState<string>('');
   const [showCustomMessage, setShowCustomMessage] = useState<boolean>(false);
 
+  // Rate-lock enforcement: a renewal drafted after the prior agreement's
+  // exp_date no longer automatically carries over the old locked rate.
+  // Instead it uses the current published rate card, capped to a 15%
+  // increase over the old rate when the card price would jump by more
+  // than 15% (protects against a big card-price swing since the last
+  // sign). Only applies to renewals (renewedFrom) of PRINT agreements —
+  // the rate card has no entries for digital/eblast, so those still
+  // carry over the old rate unchanged. Editing an existing agreement
+  // (existing set) never re-prices — this is renewal-draft-time only.
+  const rateLockExpired = useMemo(() => {
+    if (!renewedFrom?.exp_date) return false;
+    const exp = new Date(`${renewedFrom.exp_date}T00:00:00`);
+    if (Number.isNaN(exp.getTime())) return false;
+    return new Date() > exp;
+  }, [renewedFrom]);
+
+  const rateLockOverride = useMemo(() => {
+    if (!rateLockExpired || !renewedFrom) return null;
+    const oldRateCents = renewedFrom.ad_rate_cents;
+    const freq = renewedFrom.frequency;
+    const size = renewedFrom.ad_size;
+    if (oldRateCents == null || !freq || !size) return null;
+    const looked = lookupRate(freq, size);
+    if (!looked) return null; // no rate-card entry (e.g. digital/eblast) — leave old behavior
+    const oldRate = oldRateCents / 100;
+    const cardRate = looked.rate;
+    const cappedRate = Math.round(oldRate * 1.15 * 100) / 100;
+    // Card price is the floor, but cap the jump to +15% over the old rate
+    // when the card price would be more than 15% above the old rate.
+    const newRate = cardRate > oldRate * 1.15 ? cappedRate : Math.max(cardRate, oldRate);
+    return { rate: newRate, oldRate, cardRate, capped: cardRate > oldRate * 1.15 };
+  }, [rateLockExpired, renewedFrom]);
+
   // Derive initial rate from seed or rate table. For fresh creates (no seed), do
   // NOT auto-fill from any default size/frequency — those fields start empty too.
   const initRateAndBase = useMemo(() => {
+    if (rateLockOverride) {
+      return { rate: String(rateLockOverride.rate), base: String(rateLockOverride.rate) };
+    }
     if (seed?.ad_rate_cents != null) {
       const payType = seed.payment_mode === 'card' ? 'Credit Card' : 'Check';
       const base = payType === 'Credit Card'
@@ -153,7 +189,7 @@ export function AgreementDrawer({
       if (looked) return { rate: String(looked.rate), base: String(looked.rate) };
     }
     return { rate: '', base: '' };
-  }, [seed]);
+  }, [seed, rateLockOverride]);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -170,7 +206,7 @@ export function AgreementDrawer({
     frequency:            seed?.frequency ?? '',
     ad_rate:              initRateAndBase.rate,
     ad_rate_base:         initRateAndBase.base,
-    rate_user_edited:     seed?.ad_rate_cents != null,
+    rate_user_edited:     rateLockOverride ? false : seed?.ad_rate_cents != null,
     discount:             seed?.discount_cents != null ? String(seed.discount_cents / 100) : '',
     ad_premium:           seed?.ad_premium_cents != null ? String(seed.ad_premium_cents / 100) : '',
     pos_premium_active:   false,
@@ -867,7 +903,11 @@ export function AgreementDrawer({
                 step="0.01"
               />
             )}
-            {!form.rate_user_edited && form.ad_rate && (
+            {rateLockOverride ? (
+              <div className="text-[10px] text-orange-600 mt-1">
+                ⏰ Rate lock expired — this renewal was drafted after the prior agreement&apos;s exp date, so the rate updated from ${rateLockOverride.oldRate.toFixed(2)} to ${rateLockOverride.rate.toFixed(2)} ({rateLockOverride.capped ? 'capped at +15% over the old rate' : 'current rate card'}). Edit if needed before sending.
+              </div>
+            ) : !form.rate_user_edited && form.ad_rate && (
               <div className="text-[10px] text-gray-400 mt-1">
                 ✨ Auto-filled from {FREQ_PKG_AG[form.frequency] ?? form.frequency}
               </div>
