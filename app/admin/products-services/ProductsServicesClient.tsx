@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import type { ProductService, ProductServiceType } from '@/lib/products-services';
 import { formatProductPrice, ITEM_TYPE_LABELS } from '@/lib/products-services';
 import PageTitle from '@/components/ui/PageTitle';
+import { GetPaidSearchBar, getPaidSearchSelectClassName } from '@/app/admin/getpaid/_components/GetPaidSearchBar';
 import { DrawerShell, DrawerFooter, Field } from '@/app/admin/billing/_components/DrawerShell';
 import { INPUT } from '@/app/admin/billing/_components/constants';
 
@@ -130,29 +131,23 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
       {error && <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       {notice && <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</div>}
 
-      <div className="flex flex-wrap gap-2 items-center">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name or category…"
-          className={`${INPUT} max-w-xs`}
-        />
-        <select value={marketFilter} onChange={(e) => setMarketFilter(e.target.value)} className={`${INPUT} w-auto`}>
+      <GetPaidSearchBar value={query} onChange={setQuery} placeholder="Search product, service, or category…">
+        <select aria-label="Market" value={marketFilter} onChange={(e) => setMarketFilter(e.target.value)} className={getPaidSearchSelectClassName}>
           <option value="all">All markets</option>
           <option value="austin">Austin</option>
           <option value="san_antonio">San Antonio</option>
           <option value="both">Austin/San Antonio</option>
           <option value="none">General</option>
         </select>
-        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className={`${INPUT} w-auto`}>
+        <select aria-label="Category" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className={getPaidSearchSelectClassName}>
           <option value="all">All categories</option>
           {categories.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <label className="flex items-center gap-2 text-sm text-gray-600 ml-2">
+        <label className="flex h-9 items-center gap-2 whitespace-nowrap px-1 text-sm text-gray-600">
           <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
           Show inactive
         </label>
-      </div>
+      </GetPaidSearchBar>
 
       <div className="space-y-6">
         {grouped.length === 0 ? (

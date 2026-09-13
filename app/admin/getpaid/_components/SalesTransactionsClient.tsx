@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { formatCents } from '@/lib/invoices';
 import PageTitle from '@/components/ui/PageTitle';
+import { GetPaidSearchBar, getPaidSearchSelectClassName } from './GetPaidSearchBar';
 
 function formatTransactionDate(value: string | Date | null | undefined) {
   if (!value) return '—';
@@ -60,32 +61,16 @@ export function SalesTransactionsClient({ invoices }: { invoices: InvoiceWithAdv
         <div className="border-b border-gray-200 p-4 md:border-b-0 md:border-r"><div className="text-xs text-gray-500">Overdue invoices</div><div className="mt-1 text-xl font-semibold">{formatCents(summary.overdue)}</div><div className="mt-3 h-2 rounded bg-amber-500" /></div>
         <div className="p-4"><div className="text-xs text-gray-500">Paid</div><div className="mt-1 text-xl font-semibold">{formatCents(summary.paid)}</div><div className="mt-3 h-2 rounded bg-emerald-500" /></div>
       </div>
-      <div className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          <select className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700" value={type} onChange={(event) => setType(event.target.value)}><option value="all">All transactions</option><option value="invoice">Invoices</option><option value="receipt">Sales receipts</option></select>
-          <select className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700" value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option><option value="draft">Draft</option><option value="sent">Sent</option><option value="overdue">Overdue</option><option value="paid">Paid</option><option value="void">Void</option></select>
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="search"
-            className="h-12 min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-4 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-700 focus:ring-1 focus:ring-violet-700"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search transactions"
-          />
-          <select
-            aria-label="Sort transactions"
-            className="h-9 shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800"
-            value={sort}
-            onChange={(event) => setSort(event.target.value)}
-          >
-            <option value="recently-updated">Recently updated</option>
-            <option value="oldest">Oldest first</option>
-            <option value="amount-high">Amount: high to low</option>
-            <option value="amount-low">Amount: low to high</option>
-          </select>
-        </div>
-      </div>
+      <GetPaidSearchBar value={query} onChange={setQuery} placeholder="Search transaction #, partner, memo…">
+        <select aria-label="Transaction type" className={getPaidSearchSelectClassName} value={type} onChange={(event) => setType(event.target.value)}><option value="all">All transactions</option><option value="invoice">Invoices</option><option value="receipt">Sales receipts</option></select>
+        <select aria-label="Transaction status" className={getPaidSearchSelectClassName} value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option><option value="draft">Draft</option><option value="sent">Sent</option><option value="overdue">Overdue</option><option value="paid">Paid</option><option value="void">Void</option></select>
+        <select aria-label="Sort transactions" className={getPaidSearchSelectClassName} value={sort} onChange={(event) => setSort(event.target.value)}>
+          <option value="recently-updated">Recently updated</option>
+          <option value="oldest">Oldest first</option>
+          <option value="amount-high">Amount: high to low</option>
+          <option value="amount-low">Amount: low to high</option>
+        </select>
+      </GetPaidSearchBar>
       <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500"><tr><th className="px-4 py-3">Date</th><th className="px-4 py-3">Type</th><th className="px-4 py-3">No.</th><th className="px-4 py-3">Client</th><th className="px-4 py-3">Memo</th><th className="px-4 py-3 text-right">Amount</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Action</th></tr></thead>

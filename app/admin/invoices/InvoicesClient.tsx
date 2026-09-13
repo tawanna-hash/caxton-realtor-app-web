@@ -19,6 +19,7 @@ import { InvoiceDrawer } from '@/app/admin/billing/_components/InvoiceDrawer';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 
 import PageTitle from '@/components/ui/PageTitle';
+import { GetPaidSearchBar, getPaidSearchSelectClassName } from '@/app/admin/getpaid/_components/GetPaidSearchBar';
 type Props = {
   initialInvoices: InvoiceWithAdvertiser[];
   agreements: AgreementWithAdvertiser[];
@@ -153,20 +154,14 @@ export default function InvoicesClient({
       )}
 
       {/* Filters */}
-      <div className="rounded-md border border-gray-200 bg-white p-4 flex flex-wrap gap-2 items-center">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search invoice #, partner&hellip;"
-          className="flex-1 min-w-[240px] px-3 py-2 rounded-md border border-gray-300 text-sm"
-        />
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-md border border-gray-300 text-sm">
+      <GetPaidSearchBar value={query} onChange={setQuery} placeholder="Search invoice #, partner…">
+        <select aria-label="Invoice status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={getPaidSearchSelectClassName}>
           <option value="all">All statuses</option>
           {INV_STATUS.map((s) => (
             <option key={s.value} value={s.value}>{s.label}</option>
           ))}
         </select>
-      </div>
+      </GetPaidSearchBar>
 
       <InvoiceList rows={filteredInv} onOpen={(r) => setEditInv(r)} onDelete={handleDeleteInvoice} />
 
