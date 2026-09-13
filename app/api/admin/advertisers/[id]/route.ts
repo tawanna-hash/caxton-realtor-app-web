@@ -89,6 +89,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
 const STATUS_VALUES = new Set(['prospect', 'advertiser', 'archived']);
 const TYPE_VALUES   = new Set(['advertiser', 'client', 'prospect', 'mailing']);
 const EMAIL_STATUS  = new Set(['valid', 'invalid', 'risk', 'unknown']);
+const PAYMENT_MODES = new Set(['card', 'link', 'invoice', 'check']);
 
 export async function PATCH(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
@@ -143,6 +144,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       if (field === 'type'         && typeof raw === 'string' && !TYPE_VALUES.has(raw)) continue;
       if (field === 'status'       && typeof raw === 'string' && !STATUS_VALUES.has(raw)) continue;
       if (field === 'email_status' && raw !== null && typeof raw === 'string' && !EMAIL_STATUS.has(raw)) continue;
+      if (field === 'payment_mode' && raw !== null && typeof raw === 'string' && !PAYMENT_MODES.has(raw)) continue;
 
       if (field === 'additional_contacts' || field === 'tags') {
         if (raw === null || Array.isArray(raw)) {
@@ -208,6 +210,12 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'additional_contacts': await sql`UPDATE advertisers SET additional_contacts = ${val}::jsonb WHERE id = ${idNum}`; break;
         case 'notes':               await sql`UPDATE advertisers SET notes = ${val}                      WHERE id = ${idNum}`; break;
         case 'tags':                await sql`UPDATE advertisers SET tags = ${val}::jsonb                WHERE id = ${idNum}`; break;
+        case 'billing_contact_name':  await sql`UPDATE advertisers SET billing_contact_name = ${val}     WHERE id = ${idNum}`; break;
+        case 'billing_contact_phone': await sql`UPDATE advertisers SET billing_contact_phone = ${val}    WHERE id = ${idNum}`; break;
+        case 'billing_email':         await sql`UPDATE advertisers SET billing_email = ${val}            WHERE id = ${idNum}`; break;
+        case 'payment_mode':          await sql`UPDATE advertisers SET payment_mode = ${val}             WHERE id = ${idNum}`; break;
+        case 'stripe_customer_id':    await sql`UPDATE advertisers SET stripe_customer_id = ${val}       WHERE id = ${idNum}`; break;
+        case 'card_last4':            await sql`UPDATE advertisers SET card_last4 = ${val}                WHERE id = ${idNum}`; break;
         // Public profile fields. These columns were added but missing here,
         // so edits saved through the admin modal silently dropped on the
         // floor. (Found 2026-06-12.)
