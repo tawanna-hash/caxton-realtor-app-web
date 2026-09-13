@@ -168,7 +168,7 @@ export function RecurringScheduleDrawer({
             key={value}
             type="button"
             onClick={() => setActiveTab(value)}
-            className={`border-b-2 px-4 py-2 text-sm ${activeTab === value ? 'border-blue-600 font-medium text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+            className={`border-b-2 px-4 py-2 text-sm ${activeTab === value ? 'border-orange-600 font-medium text-orange-700' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
           >
             {label}
           </button>
@@ -332,7 +332,7 @@ export function RecurringScheduleDrawer({
             <button type="button" onClick={() => removeLine(i)} className="col-span-1 text-gray-400 hover:text-red-600 text-lg leading-none">×</button>
           </div>
         ))}
-        <button type="button" onClick={addLine} className="text-sm text-blue-600 hover:text-blue-700">+ Add line item</button>
+        <button type="button" onClick={addLine} className="text-sm text-orange-600 hover:text-orange-700">+ Add line item</button>
         <div className="flex items-center gap-3 pt-2">
           <Field label="Tax ($)" className="w-32">
             <input
@@ -382,7 +382,7 @@ export function RecurringScheduleDrawer({
             <div className="text-2xl font-semibold text-gray-900">{formatCents(total)}</div>
           </div>
           <div className="space-y-4 px-6 py-5">
-            <button type="button" className="rounded-full bg-emerald-600 px-8 py-2.5 text-sm font-semibold text-white">View and pay</button>
+            <button type="button" className="rounded-full bg-orange-600 px-8 py-2.5 text-sm font-semibold text-white hover:bg-orange-700">View and pay</button>
             {paymentInstructions && <p className="text-sm text-gray-600">{paymentInstructions}</p>}
             <p className="border-t border-gray-200 pt-4 text-sm text-gray-600">{noteToClient || 'Your invoice is attached and ready for review.'}</p>
           </div>
@@ -453,7 +453,7 @@ export function RecurringScheduleDrawer({
         </div>
       )}
 
-      <DrawerFooter saving={saving} onCancel={onClose} onSubmit={handleSubmit} submitLabel={isEdit ? 'Save changes' : 'Create schedule'} />
+      <DrawerFooter saving={saving} onCancel={onClose} onSubmit={handleSubmit} submitLabel={isEdit ? 'Save changes' : 'Create schedule'} tone="orange" />
     </DrawerShell>
   );
 }

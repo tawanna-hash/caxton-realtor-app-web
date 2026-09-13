@@ -188,7 +188,7 @@ export function CreatePartnerDrawer({ onClose, onSaved, onError }: Props) {
 
       <Section title="Notes and attachments">
         <Field label="Notes"><textarea className={`${INPUT} resize-y`} rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} /></Field>
-        <label className="block rounded-md border border-dashed border-gray-300 px-4 py-5 text-center text-sm text-blue-700">
+        <label className="block rounded-md border border-dashed border-orange-200 px-4 py-5 text-center text-sm text-orange-700 hover:bg-orange-50">
           Add attachment
           <input type="file" className="sr-only" />
           <span className="mt-1 block text-xs text-gray-500">Max file size: 20 MB</span>
@@ -223,7 +223,7 @@ export function CreatePartnerDrawer({ onClose, onSaved, onError }: Props) {
         </div>
       </Section>
 
-      <DrawerFooter saving={saving} onCancel={onClose} onSubmit={save} submitLabel="Save partner" />
+      <DrawerFooter saving={saving} onCancel={onClose} onSubmit={save} submitLabel="Save partner" tone="orange" />
     </DrawerShell>
   );
 }

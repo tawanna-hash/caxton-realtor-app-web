@@ -35,17 +35,22 @@ export function DrawerShell({
 }
 
 export function DrawerFooter({
-  saving, onCancel, onSubmit, submitLabel,
+  saving, onCancel, onSubmit, submitLabel, tone = 'blue',
 }: {
   saving: boolean;
   onCancel: () => void;
   onSubmit: () => void;
   submitLabel: string;
+  tone?: 'blue' | 'orange';
 }) {
+  const submitColor = tone === 'orange'
+    ? 'bg-orange-600 hover:bg-orange-700'
+    : 'bg-blue-600 hover:bg-blue-700';
+
   return (
     <div className="sticky bottom-0 -mx-6 px-6 py-4 bg-white border-t border-gray-200 flex items-center justify-end gap-2">
       <button onClick={onCancel} className="px-4 py-2 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap">Cancel</button>
-      <button onClick={onSubmit} disabled={saving} className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap">
+      <button onClick={onSubmit} disabled={saving} className={`px-4 py-2 rounded-md text-white text-sm disabled:opacity-50 whitespace-nowrap ${submitColor}`}>
         {saving ? 'Saving…' : submitLabel}
       </button>
     </div>

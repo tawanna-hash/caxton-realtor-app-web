@@ -29,7 +29,7 @@ export function PaymentLinksClient({ initialInvoices, advertisers }: { initialIn
             <li className="flex gap-3"><span className="text-2xl text-emerald-700">2</span><div><strong>Share it with your client</strong><p className="text-sm text-gray-600">Send the payment link by email or copy it.</p></div></li>
             <li className="flex gap-3"><span className="text-2xl text-emerald-700">3</span><div><strong>Get paid</strong><p className="text-sm text-gray-600">Stripe records the completed payment.</p></div></li>
           </ol>
-          <button type="button" onClick={() => setCreating(true)} className="mt-7 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800">Create a link</button>
+          <button type="button" onClick={() => setCreating(true)} className="mt-7 rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700">Create a link</button>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-5">
           <h3 className="font-semibold text-gray-900">How do you want to get paid?</h3>
@@ -39,7 +39,7 @@ export function PaymentLinksClient({ initialInvoices, advertisers }: { initialIn
       </div>
       <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
         <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-medium uppercase tracking-wider text-gray-500">Created payment links</div>
-        {links.map((invoice) => <div key={invoice.id} className="grid gap-3 border-b border-gray-100 px-4 py-3 text-sm md:grid-cols-[1fr_1fr_auto_auto]"><span>{invoice.number}</span><span>{invoice.advertiser_name ?? invoice.bill_to_name}</span><span>{formatCents(invoice.total_cents)}</span><a className="text-blue-700 hover:underline" href={invoice.stripe_payment_link_url ?? '#'} target="_blank" rel="noreferrer">Open link</a></div>)}
+        {links.map((invoice) => <div key={invoice.id} className="grid gap-3 border-b border-gray-100 px-4 py-3 text-sm md:grid-cols-[1fr_1fr_auto_auto]"><span>{invoice.number}</span><span>{invoice.advertiser_name ?? invoice.bill_to_name}</span><span>{formatCents(invoice.total_cents)}</span><a className="text-orange-700 hover:underline" href={invoice.stripe_payment_link_url ?? '#'} target="_blank" rel="noreferrer">Open link</a></div>)}
         {links.length === 0 && <div className="p-8 text-center text-sm text-gray-500">No payment links have been created yet.</div>}
       </div>
       {creating && <PaymentLinkDrawer invoices={invoices} advertisers={advertisers} onClose={() => setCreating(false)} onSaved={reload} onError={setError} />}

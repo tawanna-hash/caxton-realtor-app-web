@@ -103,7 +103,7 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
           <p className="text-sm text-gray-600 mt-1">{products.length} items · ad slots, packages, and billable services used on invoices.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setEditing('new')} className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 whitespace-nowrap">
+          <button onClick={() => setEditing('new')} className="px-4 py-2 rounded-md bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 whitespace-nowrap">
             + New item
           </button>
         </div>
@@ -266,7 +266,7 @@ function ProductDrawer({
       <Field label="Sales description">
         <textarea value={salesDescription} onChange={(e) => setSalesDescription(e.target.value)} className={`${INPUT} min-h-20`} />
       </Field>
-      <DrawerFooter saving={saving} onCancel={onClose} onSubmit={handleSubmit} submitLabel={existing ? 'Save changes' : 'Create item'} />
+      <DrawerFooter saving={saving} onCancel={onClose} onSubmit={handleSubmit} submitLabel={existing ? 'Save changes' : 'Create item'} tone="orange" />
     </DrawerShell>
   );
 }

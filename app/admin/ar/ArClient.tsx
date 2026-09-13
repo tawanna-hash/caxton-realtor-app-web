@@ -350,7 +350,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
             </p>
             <button
               onClick={() => setBucketFilter('d1_30')}
-              className="text-sm text-blue-700 hover:text-blue-800 font-medium mt-2"
+              className="text-sm text-orange-700 hover:text-orange-800 font-medium mt-2"
             >
               Review all
             </button>
@@ -367,7 +367,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
               type="button"
               key={action.label}
               onClick={() => openQuickAction(action.action)}
-              className="px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap"
+              className="px-3 py-1.5 rounded-full border border-orange-200 text-sm text-orange-700 hover:bg-orange-50 whitespace-nowrap"
             >
               {action.label}
             </button>
@@ -387,7 +387,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
               onClick={() => setRequestMenuOpen((open) => !open)}
               aria-expanded={requestMenuOpen}
               aria-haspopup="menu"
-              className="self-start px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50"
+              className="self-start px-3 py-1.5 rounded-md border border-orange-200 text-sm font-medium text-orange-700 hover:bg-orange-50"
             >
               Request payment <span aria-hidden="true">⌄</span>
             </button>
@@ -541,7 +541,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
             Unpaid invoices {bucketFilter !== 'all' && `· ${AGING_BUCKET_LABELS[bucketFilter]}`}
           </div>
           {bucketFilter !== 'all' && (
-            <button onClick={() => setBucketFilter('all')} className="text-xs text-blue-600 hover:text-blue-700">Clear filter</button>
+            <button onClick={() => setBucketFilter('all')} className="text-xs text-orange-600 hover:text-orange-700">Clear filter</button>
           )}
         </div>
         {filteredUnpaid.length === 0 ? (
@@ -565,7 +565,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                   <button
                     onClick={() => handleGetPaymentLink(inv)}
                     disabled={busyId === inv.id}
-                    className="text-xs px-2 py-1 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50 disabled:opacity-50 whitespace-nowrap"
+                    className="text-xs px-2 py-1 rounded-md border border-orange-200 text-orange-700 hover:bg-orange-50 disabled:opacity-50 whitespace-nowrap"
                   >
                     {busyId === inv.id ? '…' : 'Send link'}
                   </button>
@@ -611,7 +611,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                   <button
                     onClick={() => handleGenerateNow(s)}
                     disabled={busyId === s.id || s.status !== 'active'}
-                    className="text-xs px-2 py-1 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50 disabled:opacity-50"
+                    className="text-xs px-2 py-1 rounded-md border border-orange-200 text-orange-700 hover:bg-orange-50 disabled:opacity-50"
                   >
                     Generate now
                   </button>

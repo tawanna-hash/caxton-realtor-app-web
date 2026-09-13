@@ -132,7 +132,7 @@ export default function InvoicesClient({
           <p className="text-sm text-gray-600 mt-1">Billable charges and payment status. Stripe charges land via the public Sign Wizard.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setCreateInv(true)} className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">+ New invoice</button>
+          <button onClick={() => setCreateInv(true)} className="px-4 py-2 rounded-md bg-orange-600 text-white text-sm font-medium hover:bg-orange-700">+ New invoice</button>
         </div>
       </div>
 

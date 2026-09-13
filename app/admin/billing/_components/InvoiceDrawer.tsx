@@ -205,7 +205,7 @@ export function InvoiceDrawer({
             <button type="button" onClick={() => removeLineItem(i)} className="col-span-1 text-xs text-rose-600 hover:underline">×</button>
           </div>
         ))}
-        <button type="button" onClick={addLineItem} className="text-xs text-blue-600 hover:underline">+ Add line item</button>
+        <button type="button" onClick={addLineItem} className="text-xs text-orange-600 hover:underline">+ Add line item</button>
       </Section>
 
       <Section title="Amount &amp; status">
@@ -246,7 +246,7 @@ export function InvoiceDrawer({
         </Section>
       )}
 
-      <DrawerFooter saving={saving} onCancel={onClose} onSubmit={submit} submitLabel={isCreate ? 'Create' : 'Save changes'} />
+      <DrawerFooter saving={saving} onCancel={onClose} onSubmit={submit} submitLabel={isCreate ? 'Create' : 'Save changes'} tone="orange" />
     </DrawerShell>
   );
 }
