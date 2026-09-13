@@ -480,6 +480,22 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
         </div>
       )}
 
+      <section aria-label="Quick links">
+        <div className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Quick links</div>
+        <div className="flex flex-wrap gap-2">
+          {QUICK_ACTIONS.map((action) => (
+            <button
+              type="button"
+              key={action.label}
+              onClick={() => openQuickAction(action.action)}
+              className="whitespace-nowrap rounded-full border border-orange-200 px-3 py-1.5 text-sm font-medium text-orange-700 hover:bg-orange-50"
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <section aria-label="Receivables summary" className="grid gap-8 bg-white lg:grid-cols-[1.35fr_1fr]">
         <div>
           <div className="mb-2 flex items-baseline justify-between gap-3">
