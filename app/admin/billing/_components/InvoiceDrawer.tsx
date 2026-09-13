@@ -81,6 +81,7 @@ export function InvoiceDrawer({
   const defaultDueDate = formatDateISO(dueIn20);
 
   const [form, setForm] = useState({
+    number: existing?.number ?? '16201',
     advertiser_id: initialAdvertiserId as number | null,
     agreement_id: initialAgreementId,
     status: (existing?.status ?? 'draft') as InvoiceStatus,
@@ -94,6 +95,19 @@ export function InvoiceDrawer({
   });
   const [saving, setSaving] = useState(false);
   const isCreate = !existing;
+
+  useEffect(() => {
+    if (!isCreate) return;
+    let alive = true;
+    fetch('/api/admin/invoices?next_number=1')
+      .then((response) => response.ok ? response.json() : { next_number: '16201' })
+      .then((data: { next_number?: string }) => {
+        if (!alive || !data.next_number) return;
+        setForm((current) => ({ ...current, number: data.next_number ?? current.number }));
+      })
+      .catch(() => { /* Keep 16201 as the safe starting number. */ });
+    return () => { alive = false; };
+  }, [isCreate]);
 
   // Pre-populate line items from the linked agreement so a bundle (e.g. app
   // Top Banner + e-Blast) itemizes into the invoice instead of a flat amount.
@@ -140,6 +154,7 @@ export function InvoiceDrawer({
     setSaving(true);
     try {
       const payload: Record<string, unknown> = {
+        number: form.number.trim() || null,
         advertiser_id: form.advertiser_id,
         agreement_id: form.agreement_id || null,
         status: form.status,
@@ -167,7 +182,7 @@ export function InvoiceDrawer({
   return (
     <DrawerShell
       title={isCreate ? 'New invoice' : (existing?.number ?? 'Invoice')}
-      subtitle={existing?.advertiser_name ?? 'Auto-numbered on save'}
+      subtitle={existing?.advertiser_name ?? 'Invoice number can be edited before saving'}
       onClose={onClose}
       wide
     >
@@ -217,6 +232,9 @@ export function InvoiceDrawer({
 
       <Section title="Amount &amp; status">
         <div className="grid grid-cols-2 gap-3">
+          <Field label="Invoice number">
+            <input value={form.number} onChange={(e) => update('number', e.target.value)} className={INPUT} />
+          </Field>
           <Field label={form.line_items.length > 0 ? 'Manual amount ($) — override' : 'Amount ($)'}>
             <input value={form.amount_dollars} onChange={(e) => update('amount_dollars', e.target.value)} className={INPUT} placeholder={form.line_items.length > 0 ? String(linesTotal / 100) : ''} inputMode="decimal" />
           </Field>

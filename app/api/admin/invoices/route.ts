@@ -7,7 +7,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import {
   INVOICE_STATUS_VALUES,
-  formatInvoiceNumber,
   lineItemsTotal,
   type InvoiceLineItem,
   type InvoiceWithAdvertiser,
@@ -39,6 +38,18 @@ export async function GET(req: NextRequest) {
   try {
     await ensureSchema();
     const sql = getSql();
+    if (searchParams.get('next_number') === '1') {
+      const rows = await sql`
+        SELECT (
+          GREATEST(
+            COALESCE(MAX(number::bigint) FILTER (WHERE number ~ '^[0-9]+$'), 0),
+            16200
+          ) + 1
+        )::text AS next_number
+        FROM invoices
+      ` as unknown as Array<{ next_number: string }>;
+      return NextResponse.json({ next_number: rows[0]?.next_number ?? '16201' });
+    }
     let rows: unknown[];
     if (advertiserId !== null) {
       rows = await sql`
@@ -157,7 +168,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
 
     // Keep sales receipts on their own SR sequence instead of consuming invoice numbers.
     const year = new Date().getFullYear();
-    let number = body.number as string | undefined;
+    let number = typeof body.number === 'string' ? body.number.trim() : undefined;
     if (!number && body.document_type === 'sales_receipt') {
       const receiptSeqRows = await sql`
         SELECT count(*)::int AS n
@@ -167,13 +178,16 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       number = `SR-${year}-${String((receiptSeqRows[0]?.n ?? 0) + 1).padStart(4, '0')}`;
     }
     if (!number) {
-      const seqRows = await sql`
-        SELECT count(*)::int AS n FROM invoices i
-        JOIN advertisers a ON a.id = i.advertiser_id
-        WHERE a.publication = ${adv.publication}
-          AND EXTRACT(YEAR FROM i.created_at) = ${year}
-      ` as unknown as Array<{ n: number }>;
-      number = formatInvoiceNumber(adv.publication, year, (seqRows[0]?.n ?? 0) + 1);
+      const numberRows = await sql`
+        SELECT (
+          GREATEST(
+            COALESCE(MAX(number::bigint) FILTER (WHERE number ~ '^[0-9]+$'), 0),
+            16200
+          ) + 1
+        )::text AS next_number
+        FROM invoices
+      ` as unknown as Array<{ next_number: string }>;
+      number = numberRows[0]?.next_number ?? '16201';
     }
 
     const billTo = {
