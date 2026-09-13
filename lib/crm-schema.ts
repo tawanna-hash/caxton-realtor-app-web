@@ -381,6 +381,13 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       auto_send                boolean NOT NULL DEFAULT true,   -- auto status='sent' + email on generation
       due_days                 integer NOT NULL DEFAULT 15,     -- due_date = issued_at + due_days
       create_days_in_advance   integer NOT NULL DEFAULT 0,      -- generate before the scheduled invoice date
+      template_mode            text NOT NULL DEFAULT 'scheduled',
+      include_unbilled_charges boolean NOT NULL DEFAULT false,
+      print_later              boolean NOT NULL DEFAULT false,
+      email_reminders          boolean NOT NULL DEFAULT true,
+      payment_instructions     text,
+      note_to_client           text,
+      statement_memo           text,
       -- Schedule bounds
       start_date               date NOT NULL,
       end_date                 date,                -- null = runs indefinitely
@@ -396,6 +403,15 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
     )
   `);
   await step(() => sql`ALTER TABLE recurring_invoice_schedules ADD COLUMN IF NOT EXISTS create_days_in_advance integer NOT NULL DEFAULT 0`);
+  await step(() => sql`ALTER TABLE recurring_invoice_schedules ADD COLUMN IF NOT EXISTS template_mode text NOT NULL DEFAULT 'scheduled'`);
+  await step(() => sql`ALTER TABLE recurring_invoice_schedules ADD COLUMN IF NOT EXISTS include_unbilled_charges boolean NOT NULL DEFAULT false`);
+  await step(() => sql`ALTER TABLE recurring_invoice_schedules ADD COLUMN IF NOT EXISTS print_later boolean NOT NULL DEFAULT false`);
+  await step(() => sql`ALTER TABLE recurring_invoice_schedules ADD COLUMN IF NOT EXISTS email_reminders boolean NOT NULL DEFAULT true`);
+  await step(() => sql`ALTER TABLE recurring_invoice_schedules ADD COLUMN IF NOT EXISTS payment_instructions text`);
+  await step(() => sql`ALTER TABLE recurring_invoice_schedules ADD COLUMN IF NOT EXISTS note_to_client text`);
+  await step(() => sql`ALTER TABLE recurring_invoice_schedules ADD COLUMN IF NOT EXISTS statement_memo text`);
+  await step(() => sql`ALTER TABLE recurring_invoice_schedules DROP CONSTRAINT IF EXISTS recurring_invoice_schedules_frequency_check`);
+  await step(() => sql`ALTER TABLE recurring_invoice_schedules ADD CONSTRAINT recurring_invoice_schedules_frequency_check CHECK (frequency IN ('daily','weekly','biweekly','monthly','quarterly','annually'))`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_rec_invoice_sched_advertiser ON recurring_invoice_schedules(advertiser_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_rec_invoice_sched_agreement  ON recurring_invoice_schedules(agreement_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_rec_invoice_sched_next_run   ON recurring_invoice_schedules(next_run_at) WHERE status = 'active'`);

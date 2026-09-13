@@ -76,6 +76,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       ? (body.frequency as RecurringFrequency)
       : 'monthly';
   const intervalCount = typeof body.interval_count === 'number' && body.interval_count > 0 ? Math.floor(body.interval_count) : 1;
+  const dayOfMonth =
+    typeof body.day_of_month === 'number'
+      ? Math.min(28, Math.max(1, Math.floor(body.day_of_month)))
+      : null;
   const lineItems = Array.isArray(body.line_items) ? (body.line_items as InvoiceLineItem[]) : [];
   const explicitAmt = typeof body.amount_cents === 'number' ? body.amount_cents : null;
   const amountCents = explicitAmt ?? lineItemsTotal(lineItems);
@@ -85,6 +89,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     typeof body.create_days_in_advance === 'number' && body.create_days_in_advance >= 0
       ? Math.floor(body.create_days_in_advance)
       : 0;
+  const templateMode =
+    body.template_mode === 'reminder' || body.template_mode === 'unscheduled'
+      ? body.template_mode
+      : 'scheduled';
   const autoSend = body.auto_send !== false;
   const startDate = typeof body.start_date === 'string' && body.start_date ? body.start_date : new Date().toISOString().slice(0, 10);
   const endDate = typeof body.end_date === 'string' && body.end_date ? body.end_date : null;
@@ -117,22 +125,41 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
         ([adv.address, adv.address_2, adv.city, adv.state, adv.zip].filter(Boolean).join(', ') || null),
     };
 
-    // next_run_at = start_date at 08:00 UTC (matches cron fire time)
-    const nextRunAt = new Date(`${startDate}T08:00:00.000Z`).toISOString();
+    // For month-based schedules, anchor the first invoice to the selected
+    // day on or after the start date. The cron creates it early according
+    // to create_days_in_advance while preserving the invoice date here.
+    const start = new Date(`${startDate}T08:00:00.000Z`);
+    if (dayOfMonth && (frequency === 'monthly' || frequency === 'quarterly' || frequency === 'annually')) {
+      const candidate = new Date(start);
+      candidate.setUTCDate(dayOfMonth);
+      if (candidate < start) {
+        candidate.setUTCMonth(candidate.getUTCMonth() + (frequency === 'quarterly' ? 3 : frequency === 'annually' ? 12 : 1));
+      }
+      start.setTime(candidate.getTime());
+    }
+    const nextRunAt = start.toISOString();
 
     const rows = await sql`
       INSERT INTO recurring_invoice_schedules (
-        advertiser_id, agreement_id, name, status, frequency, interval_count,
+        advertiser_id, agreement_id, name, status, frequency, interval_count, day_of_month,
         amount_cents, tax_cents, line_items, memo,
         bill_to_name, bill_to_email, bill_to_address,
-        auto_send, due_days, create_days_in_advance, start_date, end_date, max_occurrences,
+        auto_send, due_days, create_days_in_advance, template_mode,
+        include_unbilled_charges, print_later, email_reminders,
+        payment_instructions, note_to_client, statement_memo,
+        start_date, end_date, max_occurrences,
         next_run_at, source, created_by
       ) VALUES (
-        ${advertiserId}, ${agreementId}, ${name}, 'active', ${frequency}, ${intervalCount},
+        ${advertiserId}, ${agreementId}, ${name}, 'active', ${frequency}, ${intervalCount}, ${dayOfMonth},
         ${amountCents}, ${taxCents}, ${JSON.stringify(lineItems)}::jsonb,
         ${(body.memo as string | null | undefined) ?? null},
         ${billTo.name}, ${billTo.email}, ${billTo.address},
-        ${autoSend}, ${dueDays}, ${createDaysInAdvance}, ${startDate}, ${endDate}, ${maxOccurrences},
+        ${autoSend}, ${dueDays}, ${createDaysInAdvance}, ${templateMode},
+        ${body.include_unbilled_charges === true}, ${body.print_later === true}, ${body.email_reminders !== false},
+        ${(body.payment_instructions as string | null | undefined) ?? null},
+        ${(body.note_to_client as string | null | undefined) ?? null},
+        ${(body.statement_memo as string | null | undefined) ?? null},
+        ${startDate}, ${endDate}, ${maxOccurrences},
         ${nextRunAt}, ${source}, ${admin.email ?? null}
       )
       RETURNING *

@@ -26,6 +26,8 @@ interface DueScheduleRow {
   tax_cents: number;
   line_items: InvoiceLineItem[];
   memo: string | null;
+  note_to_client: string | null;
+  statement_memo: string | null;
   bill_to_name: string | null;
   bill_to_email: string | null;
   bill_to_address: string | null;
@@ -60,7 +62,7 @@ async function resolvePublicationForAdvertiser(sql: Sql, advertiserId: number): 
 export async function findDueSchedules(sql: Sql, asOf: Date = new Date()): Promise<DueScheduleRow[]> {
   const rows = (await sql`
     SELECT id, advertiser_id, agreement_id, name, status, frequency, interval_count,
-           amount_cents, tax_cents, line_items, memo,
+           amount_cents, tax_cents, line_items, memo, note_to_client, statement_memo,
            bill_to_name, bill_to_email, bill_to_address,
            auto_send, due_days, create_days_in_advance, end_date, max_occurrences,
            occurrences_generated, next_run_at
@@ -111,7 +113,8 @@ export async function generateInvoiceFromSchedule(sql: Sql, schedule: DueSchedul
       ${status === 'sent' ? issuedAt.toISOString() : null},
       ${dueDate.toISOString().slice(0, 10)},
       ${schedule.bill_to_name}, ${schedule.bill_to_email}, ${schedule.bill_to_address},
-      ${schedule.memo}, ${JSON.stringify(schedule.line_items ?? [])}::jsonb,
+      ${[schedule.memo, schedule.note_to_client, schedule.statement_memo].filter(Boolean).join('\n\n') || null},
+      ${JSON.stringify(schedule.line_items ?? [])}::jsonb,
       'recurring-schedule', ${schedule.id}
     )
     RETURNING id, number

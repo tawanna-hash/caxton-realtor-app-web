@@ -93,6 +93,13 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
         case 'auto_send':            await sql`UPDATE recurring_invoice_schedules SET auto_send = ${Boolean(raw)}                           WHERE id = ${id}`; break;
         case 'due_days':             await sql`UPDATE recurring_invoice_schedules SET due_days = ${raw as number}                           WHERE id = ${id}`; break;
         case 'create_days_in_advance': await sql`UPDATE recurring_invoice_schedules SET create_days_in_advance = ${raw as number}             WHERE id = ${id}`; break;
+        case 'template_mode':         await sql`UPDATE recurring_invoice_schedules SET template_mode = ${raw as string}                     WHERE id = ${id}`; break;
+        case 'include_unbilled_charges': await sql`UPDATE recurring_invoice_schedules SET include_unbilled_charges = ${Boolean(raw)}          WHERE id = ${id}`; break;
+        case 'print_later':           await sql`UPDATE recurring_invoice_schedules SET print_later = ${Boolean(raw)}                         WHERE id = ${id}`; break;
+        case 'email_reminders':       await sql`UPDATE recurring_invoice_schedules SET email_reminders = ${Boolean(raw)}                     WHERE id = ${id}`; break;
+        case 'payment_instructions':  await sql`UPDATE recurring_invoice_schedules SET payment_instructions = ${raw as string | null}        WHERE id = ${id}`; break;
+        case 'note_to_client':        await sql`UPDATE recurring_invoice_schedules SET note_to_client = ${raw as string | null}              WHERE id = ${id}`; break;
+        case 'statement_memo':        await sql`UPDATE recurring_invoice_schedules SET statement_memo = ${raw as string | null}              WHERE id = ${id}`; break;
         case 'end_date':             await sql`UPDATE recurring_invoice_schedules SET end_date = ${raw as string | null}                    WHERE id = ${id}`; break;
         case 'max_occurrences':      await sql`UPDATE recurring_invoice_schedules SET max_occurrences = ${raw as number | null}             WHERE id = ${id}`; break;
         case 'next_run_at':          await sql`UPDATE recurring_invoice_schedules SET next_run_at = ${raw as string}                        WHERE id = ${id}`; break;

@@ -6,7 +6,7 @@
 import type { InvoiceLineItem } from './invoices';
 
 export type RecurringScheduleStatus = 'active' | 'paused' | 'ended';
-export type RecurringFrequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'annually';
+export type RecurringFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'annually';
 export type RecurringScheduleSource = 'standalone' | 'agreement';
 
 export interface RecurringInvoiceSchedule {
@@ -28,6 +28,13 @@ export interface RecurringInvoiceSchedule {
   auto_send: boolean;
   due_days: number;
   create_days_in_advance: number;
+  template_mode: 'scheduled' | 'reminder' | 'unscheduled';
+  include_unbilled_charges: boolean;
+  print_later: boolean;
+  email_reminders: boolean;
+  payment_instructions: string | null;
+  note_to_client: string | null;
+  statement_memo: string | null;
   start_date: string;
   end_date: string | null;
   max_occurrences: number | null;
@@ -50,6 +57,8 @@ export const RECURRING_SCHEDULE_PATCHABLE_FIELDS = [
   'amount_cents', 'tax_cents', 'line_items', 'memo',
   'bill_to_name', 'bill_to_email', 'bill_to_address',
   'auto_send', 'due_days', 'create_days_in_advance',
+  'template_mode', 'include_unbilled_charges', 'print_later', 'email_reminders',
+  'payment_instructions', 'note_to_client', 'statement_memo',
   'end_date', 'max_occurrences',
   'next_run_at',
 ] as const;
@@ -58,7 +67,7 @@ export const RECURRING_SCHEDULE_STATUS_VALUES = new Set<RecurringScheduleStatus>
   'active', 'paused', 'ended',
 ]);
 export const RECURRING_FREQUENCY_VALUES = new Set<RecurringFrequency>([
-  'weekly', 'biweekly', 'monthly', 'quarterly', 'annually',
+  'daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'annually',
 ]);
 
 /**
@@ -73,6 +82,9 @@ export function computeNextRun(
   const n = Math.max(1, intervalCount | 0);
   const next = new Date(from.getTime());
   switch (frequency) {
+    case 'daily':
+      next.setUTCDate(next.getUTCDate() + n);
+      break;
     case 'weekly':
       next.setUTCDate(next.getUTCDate() + 7 * n);
       break;
@@ -109,6 +121,7 @@ export function isScheduleExhausted(
 
 export function frequencyLabel(freq: RecurringFrequency): string {
   switch (freq) {
+    case 'daily': return 'Daily';
     case 'weekly': return 'Weekly';
     case 'biweekly': return 'Every 2 weeks';
     case 'monthly': return 'Monthly';

@@ -8,17 +8,18 @@
 import type React from 'react';
 
 export function DrawerShell({
-  title, subtitle, onClose, children,
+  title, subtitle, onClose, children, wide = false,
 }: {
   title: string;
   subtitle?: string;
   onClose: () => void;
   children: React.ReactNode;
+  wide?: boolean;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-black/30" onClick={onClose} />
-      <div className="w-full max-w-xl bg-white shadow-xl overflow-y-auto">
+      <div className={`w-full ${wide ? 'max-w-5xl' : 'max-w-xl'} bg-white shadow-xl overflow-y-auto`}>
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Billing</div>
