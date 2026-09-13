@@ -61,6 +61,11 @@ export default function AdminEventImagesPage() {
   // Folder state
   const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
   const [selectedPhotos, setSelectedPhotos] = useState<Set<number>>(new Set());
+  // Only the newest folders render open/mounted by default — with hundreds of
+  // month folders, rendering every photo grid expanded at once bloats the page
+  // to thousands of DOM nodes. Older folders load on demand via "Show more".
+  const VISIBLE_MONTH_STEP = 6;
+  const [visibleMonthCount, setVisibleMonthCount] = useState(VISIBLE_MONTH_STEP);
 
   // Inline editing
   const [editingTitle, setEditingTitle] = useState<number | null>(null);
@@ -577,8 +582,11 @@ export default function AdminEventImagesPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {monthGroups.map((group) => {
-              const expanded = expandedMonths[group.key] ?? true;
+            {monthGroups.slice(0, visibleMonthCount).map((group, index) => {
+              // Default only the newest few folders open; older ones start
+              // collapsed (still listed, but their photo grid isn't mounted
+              // until the user expands them).
+              const expanded = expandedMonths[group.key] ?? index < 2;
               const folderPhotoIds = group.photos.map((p) => p.id);
               const allSelected = folderPhotoIds.every((id) => selectedPhotos.has(id));
               const someSelected = folderPhotoIds.some((id) => selectedPhotos.has(id));
@@ -734,6 +742,17 @@ export default function AdminEventImagesPage() {
                 </div>
               );
             })}
+            {monthGroups.length > visibleMonthCount && (
+              <div className="flex justify-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setVisibleMonthCount((n) => n + VISIBLE_MONTH_STEP)}
+                  className="text-sm text-brand-700 hover:text-brand-800 px-4 py-2 border border-brand-200 rounded-md hover:bg-brand-50"
+                >
+                  Show more months ({monthGroups.length - visibleMonthCount} remaining)
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

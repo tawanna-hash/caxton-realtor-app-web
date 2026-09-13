@@ -68,6 +68,12 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [variantError, setVariantError] = useState<Record<string, string>>({});
 
+  // With the full archive (500+ issues across both publications) mounting
+  // every card's GIF controls at once bloats the page. Each column starts
+  // capped and grows via "Show more", independent per publication.
+  const VISIBLE_STEP = 20;
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
+
   async function handleDelete(id: number, label: string) {
     if (!confirm(`Delete "${label}"? This removes the row from the database. Uploaded files remain in Vercel Blob.`)) {
       return;
@@ -265,6 +271,13 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
               onGenerateGif={handleGenerateGif}
               onCopy={handleCopy}
               onCopyShare={handleCopyShare}
+              visibleCount={visibleCounts[publication.id] ?? VISIBLE_STEP}
+              onShowMore={() =>
+                setVisibleCounts((prev) => ({
+                  ...prev,
+                  [publication.id]: (prev[publication.id] ?? VISIBLE_STEP) + VISIBLE_STEP,
+                }))
+              }
             />
           ))}
         </div>
@@ -284,6 +297,8 @@ function Column({
   onGenerateGif,
   onCopy,
   onCopyShare,
+  visibleCount,
+  onShowMore,
 }: {
   label: string;
   magazines: Magazine[];
@@ -295,10 +310,15 @@ function Column({
   onGenerateGif: (magazine: Magazine, variant: GifVariant, force: boolean) => void;
   onCopy: (magazineId: number, variant: GifVariant, url: string) => void;
   onCopyShare: (magazineId: number) => void;
+  visibleCount: number;
+  onShowMore: () => void;
 }) {
+  const visibleMagazines = magazines.slice(0, visibleCount);
   return (
     <div>
-      <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">{label}</h2>
+      <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">
+        {label} <span className="text-gray-400">({magazines.length.toLocaleString()})</span>
+      </h2>
       {magazines.length === 0 ? (
         <div className="content-admin-empty">
           <p className="font-semibold text-gray-900">No issues yet</p>
@@ -306,7 +326,7 @@ function Column({
         </div>
       ) : (
         <ul className="space-y-3">
-          {magazines.map((m) => (
+          {visibleMagazines.map((m) => (
             <li
               key={m.id}
               className="bg-white border border-gray-200 rounded-md p-3 flex items-start gap-3"
@@ -414,6 +434,17 @@ function Column({
             </li>
           ))}
         </ul>
+      )}
+      {magazines.length > visibleCount && (
+        <div className="flex justify-center pt-4">
+          <button
+            type="button"
+            onClick={onShowMore}
+            className="text-sm text-brand-700 hover:text-brand-800 px-4 py-2 border border-brand-200 rounded-md hover:bg-brand-50"
+          >
+            Show more issues ({magazines.length - visibleCount} remaining)
+          </button>
+        </div>
       )}
     </div>
   );
