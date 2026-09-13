@@ -1024,7 +1024,7 @@ export function SalesTransactionsClient({
                   {statusLabel(activityInvoice)}
                 </div>
                 <div className="mt-2 text-xs font-medium text-gray-600">Total due</div>
-                <div className="text-3xl font-semibold tracking-tight text-gray-900">{formatCents(activityInvoice.status === 'paid' ? 0 : activityInvoice.total_cents)}</div>
+                <div className="text-3xl font-semibold tracking-tight text-gray-900">{formatCents(activityInvoice.balance_cents ?? (activityInvoice.status === 'paid' ? 0 : activityInvoice.total_cents))}</div>
                 <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
                   <div><div className="text-gray-500">Invoice date</div><div className="mt-1 font-medium text-gray-900">{formatTransactionDate(activityInvoice.issued_at ?? activityInvoice.created_at)}</div></div>
                   <div><div className="text-gray-500">Due date</div><div className="mt-1 font-medium text-gray-900">{formatTransactionDate(activityInvoice.due_date)}</div></div>
@@ -1036,6 +1036,26 @@ export function SalesTransactionsClient({
                 {activityInvoice.bill_to_address && <div className="mt-3 whitespace-pre-line text-xs leading-5 text-gray-600">{activityInvoice.bill_to_address}</div>}
                 {activityInvoice.bill_to_email && <a href={`mailto:${activityInvoice.bill_to_email}`} className="mt-3 block break-all text-xs font-medium text-orange-700 hover:underline">{activityInvoice.bill_to_email}</a>}
               </section>
+
+              {!!activityInvoice.payments?.length && (
+                <section className="border-b border-gray-200 px-5 py-4">
+                  <h3 className="text-sm font-semibold text-gray-900">Payments</h3>
+                  <div className="mt-3 space-y-3">
+                    {activityInvoice.payments.map((payment) => (
+                      <div key={payment.id} className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-medium text-gray-900">{formatCents(payment.amount_cents)}</span>
+                          <span className="text-gray-600">{formatTransactionDate(payment.payment_date)}</span>
+                        </div>
+                        <div className="mt-1 text-gray-600">
+                          {[payment.payment_method, payment.reference && `Ref ${payment.reference}`].filter(Boolean).join(' · ') || 'Payment'}
+                        </div>
+                        {payment.memo && <div className="mt-1 whitespace-pre-line text-gray-500">{payment.memo}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               <section className="border-b border-gray-200 px-5 py-4">
                 <h3 className="text-sm font-semibold text-gray-900">Invoice activity</h3>

@@ -38,9 +38,17 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
     const sql = getSql();
     const rows = (await sql`
       SELECT i.*, adv.name AS advertiser_name,
+        COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END)::int AS amount_paid_cents,
+        GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END), 0)::int AS balance_cents,
+        COALESCE(pay.payments, '[]'::jsonb) AS payments,
         (i.status NOT IN ('paid','void') AND i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS is_overdue
       FROM invoices i
       LEFT JOIN advertisers adv ON adv.id = i.advertiser_id
+      LEFT JOIN LATERAL (
+        SELECT sum(p.amount_cents)::int AS amount_paid_cents,
+          jsonb_agg(to_jsonb(p) ORDER BY p.payment_date, p.created_at) AS payments
+        FROM invoice_payments p WHERE p.invoice_id = i.id
+      ) pay ON true
       WHERE i.id = ${id}
     `) as unknown as InvoiceWithAdvertiser[];
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });

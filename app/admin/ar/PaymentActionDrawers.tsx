@@ -353,6 +353,9 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
   const [paymentMethod, setPaymentMethod] = useState('Check');
   const [reference, setReference] = useState('');
   const [memo, setMemo] = useState('');
+  const [amount, setAmount] = useState(
+    initialInvoice ? ((initialInvoice.balance_cents ?? initialInvoice.total_cents) / 100).toFixed(2) : '',
+  );
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<WorkflowTab>('edit');
   const selectedInvoice = invoices.find((invoice) => invoice.id === invoiceId);
@@ -361,13 +364,20 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
     if (!selectedInvoice) { onError('Select an invoice to receive payment against.'); return; }
     setSaving(true);
     try {
-      const response = await fetch(`/api/admin/invoices/${selectedInvoice.id}`, {
-        method: 'PATCH',
+      const amountCents = Math.round(Number(amount) * 100);
+      if (!Number.isInteger(amountCents) || amountCents <= 0) {
+        throw new Error('Enter a valid payment amount.');
+      }
+      const response = await fetch(`/api/admin/invoices/${selectedInvoice.id}/payments`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: 'paid',
-          paid_at: new Date(`${paymentDate}T12:00:00.000Z`).toISOString(),
-          memo: [selectedInvoice.memo, `Payment received · ${paymentMethod}${reference ? ` · Ref ${reference}` : ''}`, memo].filter(Boolean).join('\n'),
+          amount_cents: amountCents,
+          payment_date: paymentDate,
+          payment_method: paymentMethod,
+          reference,
+          memo,
+          source: 'manual',
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -395,7 +405,12 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
             </select>
           </Field>
           <Field label="Find by invoice number">
-            <select className={INPUT} value={invoiceId} onChange={(event) => setInvoiceId(event.target.value)}>
+            <select className={INPUT} value={invoiceId} onChange={(event) => {
+              const nextId = event.target.value;
+              setInvoiceId(nextId);
+              const nextInvoice = invoices.find((invoice) => invoice.id === nextId);
+              setAmount(nextInvoice ? ((nextInvoice.balance_cents ?? nextInvoice.total_cents) / 100).toFixed(2) : '');
+            }}>
               <option value="">Select an unpaid invoice</option>
               {eligible.map((invoice) => <option key={invoice.id} value={invoice.id}>{invoice.number ?? 'Draft'} · {formatCents(invoice.total_cents)}</option>)}
             </select>
@@ -411,7 +426,7 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
             </select>
           </Field>
           <Field label="Reference no."><input className={INPUT} value={reference} onChange={(event) => setReference(event.target.value)} /></Field>
-          <Field label="Amount received"><input className={INPUT} readOnly value={selectedInvoice ? (selectedInvoice.total_cents / 100).toFixed(2) : '0.00'} /></Field>
+          <Field label="Amount received"><input type="number" min="0.01" step="0.01" className={INPUT} value={amount} onChange={(event) => setAmount(event.target.value)} /></Field>
         </div>
       </Section>
       <Section title="Memo">
@@ -423,7 +438,7 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
         <EmailPreview
           heading="Payment received"
           customer={selectedInvoice?.bill_to_name ?? selectedInvoice?.advertiser_name ?? 'Select a customer'}
-          amount={selectedInvoice?.total_cents ?? 0}
+          amount={Math.round(Number(amount || 0) * 100)}
           message={selectedInvoice ? `Payment for ${selectedInvoice.number ?? 'your invoice'} was recorded on ${paymentDate}.` : 'Select an invoice to preview the receipt email.'}
           actionLabel="View payment"
         />
@@ -434,8 +449,8 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
           number={reference || selectedInvoice?.number || 'Select an invoice'}
           customer={selectedInvoice?.bill_to_name ?? selectedInvoice?.advertiser_name ?? 'Customer'}
           date={paymentDate}
-          amount={selectedInvoice?.total_cents ?? 0}
-          lineItems={selectedInvoice ? [{ description: `Payment for ${selectedInvoice.number ?? 'invoice'}`, qty: 1, unit_cents: selectedInvoice.total_cents }] : []}
+          amount={Math.round(Number(amount || 0) * 100)}
+          lineItems={selectedInvoice ? [{ description: `Payment for ${selectedInvoice.number ?? 'invoice'}`, qty: 1, unit_cents: Math.round(Number(amount || 0) * 100) }] : []}
           note={memo || `Payment method: ${paymentMethod}`}
         />
       )}

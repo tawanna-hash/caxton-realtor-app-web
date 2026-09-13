@@ -357,6 +357,32 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_recurring_schedule ON invoices(recurring_schedule_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_stripe_checkout ON invoices(stripe_checkout_session_id)`);
 
+  // Individual payments must remain separate from the invoice so partial
+  // payments, payment methods, references, and imported bookkeeping history
+  // can be reconciled without rewriting the invoice memo.
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS invoice_payments (
+      id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      invoice_id      uuid NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+      amount_cents    integer NOT NULL CHECK (amount_cents > 0),
+      payment_date    date NOT NULL,
+      payment_method  text,
+      reference       text,
+      memo            text,
+      source          text NOT NULL DEFAULT 'manual',
+      external_id     text,
+      created_by      text,
+      created_at      timestamptz NOT NULL DEFAULT now(),
+      updated_at      timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoice_payments_invoice ON invoice_payments(invoice_id, payment_date)`);
+  await step(() => sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_invoice_payments_external
+      ON invoice_payments(source, external_id)
+      WHERE external_id IS NOT NULL
+  `);
+
   await step(() => sql`
     CREATE TABLE IF NOT EXISTS recurring_invoice_schedules (
       id                       uuid PRIMARY KEY DEFAULT gen_random_uuid(),

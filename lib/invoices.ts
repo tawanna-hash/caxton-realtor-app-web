@@ -10,6 +10,21 @@ export type InvoiceLineItem = {
   unit_cents: number;       // pre-tax unit price
 };
 
+export interface InvoicePayment {
+  id: string;
+  invoice_id: string;
+  amount_cents: number;
+  payment_date: string;
+  payment_method: string | null;
+  reference: string | null;
+  memo: string | null;
+  source: string;
+  external_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Invoice {
   id: string;
   advertiser_id: number;
@@ -34,6 +49,9 @@ export interface Invoice {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  payments?: InvoicePayment[];
+  amount_paid_cents?: number;
+  balance_cents?: number;
 }
 
 export interface InvoiceWithAdvertiser extends Invoice {
