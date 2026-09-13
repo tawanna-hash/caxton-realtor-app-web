@@ -393,6 +393,29 @@ textarea::placeholder {
   color: #9ca3af; /* gray-400 — visible but clearly a placeholder */
 }
 
+/* Admin form fields use stronger contrast than public-facing forms. Keep
+   entered values and selections near-black, and placeholders dark enough to
+   remain readable without looking like completed input. The admin wrapper's
+   attribute gives these rules enough specificity to override page utilities. */
+[data-admin-ui='true'] input:not([type='checkbox']):not([type='radio']):not([type='range']),
+[data-admin-ui='true'] textarea,
+[data-admin-ui='true'] select,
+[data-admin-ui='true'] select option {
+  color: #111827;
+}
+
+[data-admin-ui='true'] input::placeholder,
+[data-admin-ui='true'] textarea::placeholder {
+  color: #4b5563;
+  opacity: 1;
+}
+
+[data-admin-ui='true'] input:disabled,
+[data-admin-ui='true'] textarea:disabled,
+[data-admin-ui='true'] select:disabled {
+  color: #374151;
+}
+
 /* Operational admin pages share a compact desktop density so filters, table
    rows, pagination, and drawer actions remain visible within common laptop
    viewports. Tailwind v4 utilities derive spacing from this inherited token,

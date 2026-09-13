@@ -654,6 +654,7 @@ export default function AppShell({
       <main
         className={`flex-1 ${isAdmin ? 'pb-0' : 'pb-20'}`}
         data-admin-density={useCompactAdminDensity ? 'compact' : undefined}
+        data-admin-ui={isAdmin ? 'true' : undefined}
       >
         <SwipeBackShell area={isAdmin ? 'admin' : 'public'}>
           {children}
