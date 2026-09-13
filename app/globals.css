@@ -416,6 +416,108 @@ textarea::placeholder {
   color: #374151;
 }
 
+/* ==========================================================================
+   Admin control language
+   --------------------------------------------------------------------------
+   This is intentionally scoped to the AppShell admin boundary. It changes
+   visual treatment only: compact controls use a medium corner radius, purple
+   communicates primary/selected state, and orange remains the accent for
+   existing attention and creation actions. It does not affect records, data,
+   status badges, public pages, print layouts, or underlying control behavior.
+   ========================================================================== */
+[data-admin-ui='true'] button,
+[data-admin-ui='true'] a[role='button'],
+[data-admin-ui='true'] a.inline-flex[class*='h-'] {
+  border-radius: 0.5rem;
+}
+
+/* Purple is the consistent primary treatment for solid admin actions and
+   selected filter/navigation controls. Existing semantic danger actions keep
+   their red treatment because their class names are deliberately not included. */
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-']):is(
+  [class~='bg-brand'],
+  [class~='bg-brand-600'],
+  [class~='bg-brand-700'],
+  [class~='bg-blue-600'],
+  [class~='bg-gray-900'],
+  [class~='bg-purple-600'],
+  [class~='bg-purple-700']
+),
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-'])[aria-current='page'],
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-'])[aria-pressed='true'],
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-'])[aria-selected='true'] {
+  border-color: var(--rnn-purple-700);
+  background-color: var(--rnn-purple-700);
+  color: #ffffff;
+}
+
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-']):is(
+  [class~='bg-brand'],
+  [class~='bg-brand-600'],
+  [class~='bg-brand-700'],
+  [class~='bg-blue-600'],
+  [class~='bg-gray-900'],
+  [class~='bg-purple-600'],
+  [class~='bg-purple-700']
+):hover,
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-'])[aria-current='page']:hover,
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-'])[aria-pressed='true']:hover,
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-'])[aria-selected='true']:hover {
+  border-color: var(--rnn-purple-800);
+  background-color: var(--rnn-purple-800);
+}
+
+/* Outlined actions and inactive pills use the same purple family rather than
+   a mixture of gray borders and unrelated hover states. */
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-'])[class~='bg-white'][class*='border-']:not(
+  [class*='text-red-'],
+  [class*='text-orange-'],
+  [class*='text-amber-'],
+  [class*='text-emerald-'],
+  [class*='text-green-'],
+  [class*='text-blue-']
+) {
+  border-color: var(--rnn-purple-200);
+  color: var(--rnn-purple-700);
+}
+
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-'])[class~='bg-white'][class*='border-']:not(
+  [class*='text-red-'],
+  [class*='text-orange-'],
+  [class*='text-amber-'],
+  [class*='text-emerald-'],
+  [class*='text-green-'],
+  [class*='text-blue-']
+):hover {
+  border-color: var(--rnn-purple-500);
+  background-color: var(--rnn-purple-50);
+  color: var(--rnn-purple-700);
+}
+
+/* Orange is the common accent for existing orange calls to action and for
+   visible keyboard focus throughout the admin workspace. */
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-']):is(
+  [class~='bg-orange-600'],
+  [class~='bg-orange-700']
+) {
+  border-color: var(--rnn-orange-700);
+  background-color: var(--rnn-orange-600);
+  color: #ffffff;
+}
+
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-']):is(
+  [class~='bg-orange-600'],
+  [class~='bg-orange-700']
+):hover {
+  border-color: var(--rnn-orange-800);
+  background-color: var(--rnn-orange-700);
+}
+
+[data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-']):focus-visible {
+  outline: 2px solid var(--rnn-orange-600);
+  outline-offset: 2px;
+}
+
 /* Operational admin pages share a compact desktop density so filters, table
    rows, pagination, and drawer actions remain visible within common laptop
    viewports. Tailwind v4 utilities derive spacing from this inherited token,
@@ -698,19 +800,6 @@ textarea::placeholder {
     border-color: var(--color-orange-500);
     outline: none;
     box-shadow: 0 0 0 2px var(--color-orange-100);
-  }
-
-  .content-admin-shell :is(a, button).bg-brand-700,
-  .content-admin-shell :is(a, button).bg-blue-600,
-  .content-admin-shell :is(a, button).bg-\[\#301D5D\] {
-    background-color: var(--color-orange-600);
-    border-color: var(--color-orange-700);
-  }
-
-  .content-admin-shell :is(a, button).bg-brand-700:hover,
-  .content-admin-shell :is(a, button).bg-blue-600:hover,
-  .content-admin-shell :is(a, button).bg-\[\#301D5D\]:hover {
-    background-color: var(--color-orange-700);
   }
 
   .content-admin-shell table {

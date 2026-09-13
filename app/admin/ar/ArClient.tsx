@@ -485,7 +485,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
               type="button"
               key={action.label}
               onClick={() => openQuickAction(action.action)}
-              className="whitespace-nowrap rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
               {action.label}
             </button>

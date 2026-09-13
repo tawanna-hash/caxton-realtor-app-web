@@ -60,7 +60,7 @@ export default function AdminQuickLinks() {
                   href={link.href}
                   aria-current={isActive ? 'page' : undefined}
                   className={
-                    'whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ' +
+                    'inline-flex min-h-9 items-center whitespace-nowrap rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ' +
                     (isActive
                       ? 'border-brand-700 bg-brand-700 text-white'
                       : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50')
