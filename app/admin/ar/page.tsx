@@ -57,10 +57,26 @@ export default async function ArDashboardPage() {
       ORDER BY ag.updated_at DESC
     `.catch(() => [] as unknown[]),
     sql`
-      SELECT to_char(date_trunc('day', paid_at), 'YYYY-MM-DD') AS day, SUM(total_cents)::bigint AS total_cents
-      FROM invoices
-      WHERE status = 'paid' AND paid_at IS NOT NULL AND paid_at >= date_trunc('year', CURRENT_DATE) - INTERVAL '1 year'
-      GROUP BY 1 ORDER BY 1 ASC
+      WITH income_events AS (
+        SELECT p.payment_date::date AS day, p.amount_cents
+        FROM invoice_payments p
+        WHERE p.payment_date >= date_trunc('year', CURRENT_DATE) - INTERVAL '2 years'
+
+        UNION ALL
+
+        SELECT i.paid_at::date AS day, i.total_cents AS amount_cents
+        FROM invoices i
+        WHERE i.status = 'paid'
+          AND i.paid_at IS NOT NULL
+          AND i.paid_at >= date_trunc('year', CURRENT_DATE) - INTERVAL '2 years'
+          AND NOT EXISTS (
+            SELECT 1 FROM invoice_payments p WHERE p.invoice_id = i.id
+          )
+      )
+      SELECT to_char(day, 'YYYY-MM-DD') AS day, SUM(amount_cents)::int AS total_cents
+      FROM income_events
+      GROUP BY day
+      ORDER BY day ASC
     `.catch(() => [] as unknown[]),
   ]);
 

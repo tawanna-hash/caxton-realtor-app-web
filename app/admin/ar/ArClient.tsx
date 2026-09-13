@@ -321,16 +321,53 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   const selectedIncomeLabel = INCOME_PERIODS.find(([value]) => value === incomePeriod)?.[1] ?? 'This month';
   const selectedIncome = useMemo(() => {
     const bounds = incomePeriodBounds(incomePeriod);
-    const rows = incomeByDay.filter((d) => {
-      const day = new Date(d.day + 'T00:00:00Z');
+    const previousBounds = {
+      start: new Date(bounds.start),
+      end: new Date(bounds.end),
+    };
+    previousBounds.start.setUTCFullYear(previousBounds.start.getUTCFullYear() - 1);
+    previousBounds.end.setUTCFullYear(previousBounds.end.getUTCFullYear() - 1);
+
+    const normalized = incomeByDay.map((row) => ({
+      day: row.day,
+      total_cents: Number(row.total_cents) || 0,
+      date: new Date(`${row.day}T00:00:00Z`),
+    }));
+    const rows = normalized.filter((d) => {
+      const day = d.date;
       return day >= bounds.start && day <= bounds.end;
     });
+    const previousRows = normalized.filter((d) => {
+      const day = new Date(d.day + 'T00:00:00Z');
+      return day >= previousBounds.start && day <= previousBounds.end;
+    });
+
+    const points = new Map<string, { amount: number; previousAmount: number }>();
+    for (const row of rows) {
+      points.set(row.day, {
+        amount: row.total_cents / 100,
+        previousAmount: points.get(row.day)?.previousAmount ?? 0,
+      });
+    }
+    for (const row of previousRows) {
+      const projected = new Date(row.date);
+      projected.setUTCFullYear(projected.getUTCFullYear() + 1);
+      const key = projected.toISOString().slice(0, 10);
+      points.set(key, {
+        amount: points.get(key)?.amount ?? 0,
+        previousAmount: row.total_cents / 100,
+      });
+    }
+
     return {
-      chartData: rows.map((d) => ({
-        day: new Date(d.day + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        amount: (d.total_cents ?? 0) / 100,
-      })),
-      total: rows.reduce((sum, d) => sum + (d.total_cents ?? 0), 0),
+      chartData: [...points.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([day, values]) => ({
+          day: new Date(`${day}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          ...values,
+        })),
+      total: rows.reduce((sum, d) => sum + d.total_cents, 0),
+      previousTotal: previousRows.reduce((sum, d) => sum + d.total_cents, 0),
     };
   }, [incomeByDay, incomePeriod]);
 
@@ -618,7 +655,10 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
           <div className="flex items-center justify-between border-b border-gray-300 px-4 py-3">
             <div>
               <h2 className="text-sm font-semibold text-gray-900">Income over time</h2>
-              <p className="mt-0.5 text-xs text-gray-500">{formatCents(selectedIncome.total)} · {selectedIncomeLabel}</p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                {formatCents(selectedIncome.total)} · {selectedIncomeLabel}
+                {compareLastYear ? ` · ${formatCents(selectedIncome.previousTotal)} previous year` : ''}
+              </p>
             </div>
             <div className="relative">
               <button type="button" onClick={() => setDurationMenuOpen((open) => !open)} aria-expanded={durationMenuOpen} aria-haspopup="listbox" className="inline-flex h-8 items-center gap-2 rounded border border-gray-300 bg-white px-2 text-xs text-gray-700 hover:bg-gray-50">
@@ -649,6 +689,17 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                   <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(value) => `$${value}`} width={48} />
                   <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Income']} />
                   <Area type="monotone" dataKey="amount" stroke="#059669" strokeWidth={2} fill="url(#incomeFill)" />
+                  {compareLastYear && (
+                    <Area
+                      type="monotone"
+                      dataKey="previousAmount"
+                      name="Previous year"
+                      stroke="#9ca3af"
+                      strokeDasharray="5 4"
+                      strokeWidth={2}
+                      fill="none"
+                    />
+                  )}
                 </AreaChart>
               </ResponsiveContainer>
             )}
