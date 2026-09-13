@@ -107,6 +107,13 @@ export default function AppShell({
   const [marketSheetOpen, setMarketSheetOpen] = useState(false);
   const [user, setUser] = useState<User>(null);
   const isAdmin = variant === 'admin';
+  const compactAdminExcluded =
+    pathname === '/admin/api-docs' ||
+    pathname.startsWith('/admin/r/') ||
+    pathname.startsWith('/admin/billing/sign/') ||
+    pathname.startsWith('/admin/events/gmail/shared/') ||
+    /^\/admin\/invoices\/[^/]+\/preview$/.test(pathname);
+  const useCompactAdminDensity = isAdmin && !compactAdminExcluded;
   // Server + first client render default to 'realtyline'. Real value is read from cookie/localStorage in useEffect below.
   // Actual pub is read from localStorage post-mount in the useEffect below.
   const [pub, setPub] = useState<string>('realtyline');
@@ -644,7 +651,10 @@ export default function AppShell({
           (header, drawer, BottomNav) intentionally stays put while only
           the page contents track the finger. The shell maps the AppShell
           variant to the area the swipe-back rules expect. */}
-      <main className="flex-1 pb-20">
+      <main
+        className={`flex-1 ${isAdmin ? 'pb-0' : 'pb-20'}`}
+        data-admin-density={useCompactAdminDensity ? 'compact' : undefined}
+      >
         <SwipeBackShell area={isAdmin ? 'admin' : 'public'}>
           {children}
         </SwipeBackShell>

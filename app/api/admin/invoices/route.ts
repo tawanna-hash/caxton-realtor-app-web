@@ -20,6 +20,8 @@ import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
 }
@@ -110,6 +112,9 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
   }
 
   const agreementId = typeof body.agreement_id === 'string' ? body.agreement_id : null;
+  if (agreementId && !UUID_RE.test(agreementId)) {
+    return NextResponse.json({ error: 'invalid agreement_id' }, { status: 400 });
+  }
   const lineItems   = Array.isArray(body.line_items) ? (body.line_items as InvoiceLineItem[]) : [];
   const explicitAmt = typeof body.amount_cents === 'number' ? body.amount_cents : null;
   const amountCents = explicitAmt ?? lineItemsTotal(lineItems);
@@ -135,6 +140,20 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'partner not found' }, { status: 400 });
     }
     const adv = advRows[0];
+
+    if (agreementId) {
+      const agreementRows = await sql`
+        SELECT id
+        FROM agreements
+        WHERE id = ${agreementId} AND advertiser_id = ${advertiserId}
+      `;
+      if (agreementRows.length === 0) {
+        return NextResponse.json(
+          { error: 'agreement not found for advertiser' },
+          { status: 400 },
+        );
+      }
+    }
 
     // Keep sales receipts on their own SR sequence instead of consuming invoice numbers.
     const year = new Date().getFullYear();

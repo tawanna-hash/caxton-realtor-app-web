@@ -72,14 +72,64 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
   try {
     await ensureSchema();
     const sql = getSql();
-    const existing = await sql`SELECT status FROM invoices WHERE id = ${id}` as unknown as Array<{ status: string }>;
+    const existing = await sql`
+      SELECT i.status, i.advertiser_id, i.amount_cents, i.tax_cents,
+        COALESCE(sum(p.amount_cents), 0)::int AS amount_paid_cents
+      FROM invoices i
+      LEFT JOIN invoice_payments p ON p.invoice_id = i.id
+      WHERE i.id = ${id}
+      GROUP BY i.id
+    ` as unknown as Array<{
+      status: string;
+      advertiser_id: number | null;
+      amount_cents: number;
+      tax_cents: number;
+      amount_paid_cents: number;
+    }>;
     if (existing.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const prevStatus = existing[0].status;
+
+    if ('agreement_id' in body && body.agreement_id !== null) {
+      if (typeof body.agreement_id !== 'string' || !UUID_RE.test(body.agreement_id)) {
+        return NextResponse.json({ error: 'invalid agreement_id' }, { status: 400 });
+      }
+      const agreements = await sql`
+        SELECT id
+        FROM agreements
+        WHERE id = ${body.agreement_id}
+          AND advertiser_id = ${existing[0].advertiser_id}
+      `;
+      if (agreements.length === 0) {
+        return NextResponse.json(
+          { error: 'agreement not found for advertiser' },
+          { status: 400 },
+        );
+      }
+    }
 
     // Keep totals synchronized for API clients that update line items without
     // also supplying a calculated amount.
     if (Array.isArray(body.line_items) && typeof body.amount_cents !== 'number') {
       body.amount_cents = lineItemsTotal(body.line_items as InvoiceLineItem[]);
+    }
+
+    if ('amount_cents' in body || 'tax_cents' in body) {
+      const amountCents = typeof body.amount_cents === 'number'
+        ? body.amount_cents
+        : Number(existing[0].amount_cents);
+      const taxCents = typeof body.tax_cents === 'number'
+        ? body.tax_cents
+        : Number(existing[0].tax_cents);
+      if (
+        Number.isFinite(amountCents) &&
+        Number.isFinite(taxCents) &&
+        amountCents + taxCents < Number(existing[0].amount_paid_cents)
+      ) {
+        return NextResponse.json(
+          { error: 'invoice total cannot be less than payments already recorded' },
+          { status: 400 },
+        );
+      }
     }
 
     // Auto-stamp status lifecycle timestamps

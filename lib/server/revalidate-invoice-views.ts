@@ -7,6 +7,9 @@ const INVOICE_VIEW_PATHS = [
   '/admin/getpaid/accountsreceivables',
   '/admin/invoices',
   '/admin/ar',
+  '/admin/agreements',
+  '/admin/crm',
+  '/admin/crm/sent',
 ] as const;
 
 export function revalidateInvoiceViews(invoiceId?: string): void {

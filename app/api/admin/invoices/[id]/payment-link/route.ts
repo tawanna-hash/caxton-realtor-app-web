@@ -18,6 +18,7 @@ import {
   PORTAL_LINK_TTL_MS,
 } from '@/lib/portal';
 import { Resend } from 'resend';
+import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -210,6 +211,7 @@ export const POST = withAdminTracking(async function POST(
       emailStatus = 'no_advertiser';
     }
 
+    revalidateInvoiceViews(inv.id);
     return NextResponse.json({
       ok: true,
       checkout_url: session.url,

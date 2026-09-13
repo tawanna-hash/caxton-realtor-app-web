@@ -33,6 +33,9 @@ type InvoiceLite = {
   paid_at: string | null;
   due_date: string | null;
   is_overdue: boolean;
+  amount_paid_cents: number;
+  balance_cents: number;
+  paid_mtd_cents: number;
 };
 
 type Props = {
@@ -51,8 +54,8 @@ export default function AgreementsClient({
   initialRenewalReminders,
 }: Props) {
   const [tab, setTab] = useState<'agreements' | 'renewals'>('agreements');
-  const [agreements, setAgreements] = useState(initialAgreements);
-  const [invoicesLite] = useState(initialInvoicesLite);
+  const agreements = initialAgreements;
+  const invoicesLite = initialInvoicesLite;
   const [adCampaigns, setAdCampaigns] = useState(initialAdCampaigns);
   const [reminders, setReminders] = useState<RenewalReminder[]>(initialRenewalReminders);
   const [query, setQuery] = useState('');
@@ -120,9 +123,7 @@ export default function AgreementsClient({
   };
 
   const reloadAgreements = useCallback(async () => {
-    const res = await fetch('/api/admin/agreements', { cache: 'no-store' });
-    if (res.status === 401) { router.push('/admin/login'); return; }
-    if (res.ok) setAgreements((await res.json()).agreements ?? []);
+    router.refresh();
   }, [router]);
 
   const reloadAdCampaigns = useCallback(async () => {
@@ -215,17 +216,12 @@ export default function AgreementsClient({
 
   // Money summary uses invoices for MTD/AR/overdue + agreements for expiring count.
   const moneySummary = useMemo(() => {
-    const t = new Date();
-    const startOfMonth = new Date(t.getFullYear(), t.getMonth(), 1).getTime();
     let mtd = 0, ar = 0, overdue = 0, expiringCount = 0;
     for (const i of invoicesLite) {
-      if (i.status === 'paid' && i.paid_at) {
-        const paidTs = new Date(i.paid_at).getTime();
-        if (paidTs >= startOfMonth) mtd += i.total_cents ?? 0;
-      }
+      mtd += i.paid_mtd_cents;
       if (i.status !== 'paid' && i.status !== 'void') {
-        ar += i.total_cents ?? 0;
-        if (i.is_overdue) overdue += i.total_cents ?? 0;
+        ar += i.balance_cents;
+        if (i.is_overdue) overdue += i.balance_cents;
       }
     }
     for (const a of agreements) {

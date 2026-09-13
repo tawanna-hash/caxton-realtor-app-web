@@ -258,13 +258,23 @@ export function SalesReceiptDrawer({ advertisers, onClose, onSaved, onError }: C
       });
       const created = await createResponse.json().catch(() => ({}));
       if (!createResponse.ok || !created.invoice?.id) throw new Error(created.error ?? 'Could not create sales receipt.');
-      const paidAt = new Date(`${receiptDate}T12:00:00.000Z`).toISOString();
-      const paidResponse = await fetch(`/api/admin/invoices/${created.invoice.id}`, {
-        method: 'PATCH',
+      const paidResponse = await fetch('/api/admin/invoice-payments', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'paid', paid_at: paidAt }),
+        body: JSON.stringify({
+          invoice_id: created.invoice.id,
+          amount_cents: amountCents,
+          payment_date: receiptDate,
+          payment_method: paymentMethod,
+          memo: `Payment recorded with sales receipt ${created.invoice.number ?? ''}`.trim(),
+          source: 'sales_receipt',
+          external_id: created.invoice.id,
+        }),
       });
-      if (!paidResponse.ok) throw new Error('Receipt was created but could not be marked paid.');
+      const paid = await paidResponse.json().catch(() => ({}));
+      if (!paidResponse.ok) {
+        throw new Error(paid.error ?? 'Receipt was created but its payment could not be recorded.');
+      }
       await onSaved();
       onClose();
     } catch (error) {

@@ -15,6 +15,13 @@ import type Stripe from 'stripe';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getStripe, isStripeConfigured, getWebhookSecret } from '@/lib/stripe';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
+import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
+import {
+  reconcileStripeRefundInGetPaid,
+  syncAgreementPaymentToGetPaid,
+  upsertStripeInvoicePayment,
+} from '@/lib/server/stripe-payment-ledger-sync';
+import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 import {
   syncStripePlatinumBySubscription,
   syncStripePlatinumSubscription,
@@ -99,6 +106,17 @@ export async function POST(req: NextRequest) {
             const subscription = await stripe.subscriptions.retrieve(subscriptionId);
             await syncStripePlatinumSubscription(session.metadata.realtor_id, subscription);
           }
+        } else if (
+          session.metadata?.source === 'invoice_payment' &&
+          session.payment_status === 'paid'
+        ) {
+          const paymentIntentId = typeof session.payment_intent === 'string'
+            ? session.payment_intent
+            : session.payment_intent?.id;
+          if (paymentIntentId) {
+            const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+            await handleInvoicePaymentSucceeded(sql, paymentIntent);
+          }
         }
         break;
       }
@@ -117,6 +135,18 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'unknown error';
     console.error('[stripe-webhook] handler error:', msg);
+    // The event row is a processing claim, not a success receipt. Releasing it
+    // on failure lets Stripe's retry perform the work instead of being falsely
+    // acknowledged as a duplicate.
+    try {
+      const sql = getSql();
+      await sql`DELETE FROM stripe_webhook_events WHERE event_id = ${event.id}`;
+    } catch (releaseError) {
+      console.error(
+        '[stripe-webhook] failed to release event claim:',
+        releaseError instanceof Error ? releaseError.message : 'unknown',
+      );
+    }
     // Return 500 so Stripe retries
     return NextResponse.json({ error: 'handler failed', detail: msg }, { status: 500 });
   }
@@ -198,22 +228,34 @@ async function handlePaymentSucceeded(
     }
   }
 
-  // Idempotent: only mark paid if not already
-  if (!ag.paid_at) {
+  // Always converge the Stripe/card snapshot. Only paid_at and the audit entry
+  // are first-delivery facts; later issue charges may use a newer saved card.
+  await sql`
+    UPDATE agreements SET
+      paid_at = COALESCE(paid_at, NOW()),
+      stripe_charged_cents = ${pi.amount_received},
+      stripe_charged_at = NOW(),
+      stripe_payment_method_id = ${paymentMethodId},
+      stripe_customer_id = ${typeof pi.customer === 'string' ? pi.customer : (pi.customer?.id ?? ag.stripe_customer_id)},
+      payment_mode = COALESCE(payment_mode, 'card'),
+      card_type = COALESCE(${cardBrand}, card_type),
+      card_number_last4 = COALESCE(${cardLast4}, card_number_last4),
+      card_expiration = COALESCE(${cardExp}, card_expiration),
+      cardholder_name = COALESCE(${cardholderName}, cardholder_name),
+      cardholder_address = COALESCE(${cardholderAddress}, cardholder_address),
+      updated_at = NOW()
+    WHERE id = ${ag.id}
+  `;
+  if (pi.metadata?.issue_charge_id) {
     await sql`
-      UPDATE agreements SET
-        paid_at = NOW(),
-        stripe_charged_cents = ${pi.amount_received},
-        stripe_charged_at = NOW(),
-        stripe_payment_method_id = ${paymentMethodId},
-        stripe_customer_id = ${typeof pi.customer === 'string' ? pi.customer : (pi.customer?.id ?? ag.stripe_customer_id)},
-        card_type = COALESCE(${cardBrand}, card_type),
-        card_number_last4 = COALESCE(${cardLast4}, card_number_last4),
-        card_expiration = COALESCE(${cardExp}, card_expiration),
-        cardholder_name = COALESCE(${cardholderName}, cardholder_name),
-        cardholder_address = COALESCE(${cardholderAddress}, cardholder_address),
+      UPDATE issue_charges SET
+        status = 'succeeded',
+        stripe_payment_intent_id = ${pi.id},
+        stripe_charge_id = ${typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge?.id ?? null},
+        failure_reason = NULL,
+        charged_at = NOW(),
         updated_at = NOW()
-      WHERE id = ${ag.id}
+      WHERE id = ${pi.metadata.issue_charge_id}
     `;
   }
 
@@ -232,6 +274,20 @@ async function handlePaymentSucceeded(
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${ag.id}`;
   }
 
+  const updatedRows = (await sql`
+    SELECT * FROM agreements WHERE id = ${ag.id}
+  `) as unknown as Agreement[];
+  const updatedAgreement = updatedRows[0];
+  if (updatedAgreement) {
+    await syncAgreementToAdvertiser(updatedAgreement);
+    const invoiceId = await syncAgreementPaymentToGetPaid(sql, updatedAgreement, pi);
+    if (!invoiceId) {
+      console.warn(
+        '[stripe-webhook] skipped Get Paid representation; agreement lacks Partner or base amount:',
+        ag.id,
+      );
+    }
+  }
 }
 
 async function handleSelfServePaymentSucceeded(
@@ -252,10 +308,7 @@ async function handleSelfServePaymentSucceeded(
   }
 
   const ag = rows[0];
-  if (ag.paid_at) {
-    console.log('[stripe-webhook] self-serve agreement already paid, skipping. id:', ag.id);
-    return;
-  }
+  const firstSuccessfulDelivery = !ag.paid_at;
 
   const paymentMethodId =
     typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id ?? null;
@@ -294,14 +347,15 @@ async function handleSelfServePaymentSucceeded(
   //    orders pipeline render this as "paid".
   await sql`
     UPDATE agreements SET
-      status = 'signed',
+      status = CASE WHEN paid_at IS NULL THEN 'signed' ELSE status END,
       signed_at = COALESCE(signed_at, NOW()),
       sign_date = COALESCE(sign_date, NOW()::date::text),
-      paid_at = NOW(),
+      paid_at = COALESCE(paid_at, NOW()),
       stripe_charged_cents = ${pi.amount_received},
       stripe_charged_at = NOW(),
       stripe_payment_method_id = ${paymentMethodId},
-      stripe_customer_id = ${customerId},
+      stripe_customer_id = COALESCE(${customerId}, stripe_customer_id),
+      payment_mode = COALESCE(payment_mode, 'card'),
       card_type = COALESCE(${cardBrand}, card_type),
       card_number_last4 = COALESCE(${cardLast4}, card_number_last4),
       card_expiration = COALESCE(${cardExp}, card_expiration),
@@ -310,15 +364,17 @@ async function handleSelfServePaymentSucceeded(
   `;
 
   // 2) Append audit
-  const auditRows = (await sql`SELECT audit_log FROM agreements WHERE id = ${ag.id}`) as unknown as Array<{
-    audit_log: AgreementAuditEntry[] | null;
-  }>;
-  const newLog = appendAudit(auditRows[0]?.audit_log, {
-    event: 'self_serve_payment_succeeded',
-    timestamp: new Date().toISOString(),
-    details: `Stripe charged ${(pi.amount_received / 100).toFixed(2)} ${pi.currency.toUpperCase()} \u2014 pi: ${pi.id}; awaiting admin approval before go-live.`,
-  });
-  await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${ag.id}`;
+  if (firstSuccessfulDelivery) {
+    const auditRows = (await sql`SELECT audit_log FROM agreements WHERE id = ${ag.id}`) as unknown as Array<{
+      audit_log: AgreementAuditEntry[] | null;
+    }>;
+    const newLog = appendAudit(auditRows[0]?.audit_log, {
+      event: 'self_serve_payment_succeeded',
+      timestamp: new Date().toISOString(),
+      details: `Stripe charged ${(pi.amount_received / 100).toFixed(2)} ${pi.currency.toUpperCase()} \u2014 pi: ${pi.id}; awaiting admin approval before go-live.`,
+    });
+    await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${ag.id}`;
+  }
 
   // 3) Move the campaign (matched by notes containing the pi.id, written by
   //    /api/checkout/submit) from 'draft' -> 'pending'. It stays active=false
@@ -333,6 +389,20 @@ async function handleSelfServePaymentSucceeded(
        AND approval_status = 'draft'
   `;
 
+  const updatedRows = (await sql`
+    SELECT * FROM agreements WHERE id = ${ag.id}
+  `) as unknown as Agreement[];
+  if (updatedRows[0]) {
+    await syncAgreementToAdvertiser(updatedRows[0]);
+    const invoiceId = await syncAgreementPaymentToGetPaid(sql, updatedRows[0], pi);
+    if (!invoiceId) {
+      console.warn(
+        '[stripe-webhook] skipped self-serve Get Paid representation; agreement lacks Partner or base amount:',
+        ag.id,
+      );
+    }
+  }
+
   console.log('[stripe-webhook] self-serve paid, pending approval \u2014 agreement', ag.id, 'pi:', pi.id);
 }
 
@@ -346,32 +416,8 @@ async function handleInvoicePaymentSucceeded(
     return;
   }
 
-  const rows = (await sql`
-    SELECT id, status, paid_at FROM invoices WHERE id = ${invoiceId}
-  `) as unknown as Array<{ id: string; status: string; paid_at: string | null }>;
-  if (rows.length === 0) {
-    console.warn('[stripe-webhook] invoice not found for pi:', pi.id, 'invoice_id:', invoiceId);
-    return;
-  }
-  const inv = rows[0];
-  if (inv.paid_at) {
-    console.log('[stripe-webhook] invoice already paid, skipping. id:', inv.id);
-    return;
-  }
-
-  const customerId = typeof pi.customer === 'string' ? pi.customer : pi.customer?.id ?? null;
-
-  await sql`
-    UPDATE invoices SET
-      status = 'paid',
-      paid_at = NOW(),
-      stripe_payment_intent_id = ${pi.id},
-      stripe_customer_id = COALESCE(${customerId}, stripe_customer_id),
-      updated_at = NOW()
-    WHERE id = ${inv.id}
-  `;
-
-  console.log('[stripe-webhook] invoice paid \u2014 invoice', inv.id, 'pi:', pi.id);
+  await upsertStripeInvoicePayment(sql, invoiceId, pi);
+  console.log('[stripe-webhook] invoice payment ledger synchronized \u2014 invoice', invoiceId, 'pi:', pi.id);
 }
 
 async function handlePaymentFailed(
@@ -389,6 +435,16 @@ async function handlePaymentFailed(
   if (!agreementId) return;
 
   const reason = pi.last_payment_error?.message ?? 'unknown';
+  if (pi.metadata?.issue_charge_id) {
+    await sql`
+      UPDATE issue_charges SET
+        status = 'failed',
+        stripe_payment_intent_id = ${pi.id},
+        failure_reason = ${reason},
+        updated_at = NOW()
+      WHERE id = ${pi.metadata.issue_charge_id}
+    `;
+  }
   const auditRows = (await sql`SELECT audit_log FROM agreements WHERE id = ${agreementId}`) as unknown as Array<{
     audit_log: AgreementAuditEntry[] | null;
   }>;
@@ -410,6 +466,11 @@ async function handleRefund(sql: ReturnType<typeof getSql>, charge: Stripe.Charg
     typeof charge.payment_intent === 'string'
       ? charge.payment_intent
       : charge.payment_intent?.id ?? null;
+  if (!piId) return;
+  const pi = typeof charge.payment_intent === 'string'
+    ? await getStripe().paymentIntents.retrieve(charge.payment_intent)
+    : charge.payment_intent;
+  if (!pi) return;
   if (piId) {
     await sql`
       UPDATE ad_campaigns
@@ -418,38 +479,69 @@ async function handleRefund(sql: ReturnType<typeof getSql>, charge: Stripe.Charg
     `;
   }
 
-  const chargeSource =
-    typeof charge.payment_intent === 'string' ? null : charge.payment_intent?.metadata?.source;
+  const chargeSource = pi.metadata?.source;
   const invoiceId =
-    (typeof charge.payment_intent === 'string' ? null : charge.payment_intent?.metadata?.invoice_id) ??
+    pi.metadata?.invoice_id ??
     (chargeSource === 'invoice_payment' ? charge.metadata?.invoice_id : null);
-  if (invoiceId) {
+  const reconciledInvoiceIds = await reconcileStripeRefundInGetPaid(sql, pi, charge);
+  if (invoiceId && !reconciledInvoiceIds.includes(invoiceId)) {
+    // Repair older payments that predate the ledger: the invoice must not stay
+    // paid merely because there was no invoice_payments row to reverse.
     await sql`
       UPDATE invoices SET
-        status = 'sent',
+        status = CASE WHEN due_date < CURRENT_DATE THEN 'overdue' ELSE 'sent' END,
         paid_at = NULL,
         updated_at = NOW()
-      WHERE id = ${invoiceId} AND status = 'paid'
+      WHERE id = ${invoiceId} AND status <> 'void'
     `;
-    console.log('[stripe-webhook] invoice refunded, reopened \u2014 invoice', invoiceId, 'charge:', charge.id);
-    return;
+    revalidateInvoiceViews(invoiceId);
   }
 
   const agreementId =
-    (typeof charge.payment_intent === 'string'
-      ? null
-      : charge.payment_intent?.metadata?.agreement_id) ?? charge.metadata?.agreement_id;
-  if (!agreementId) return;
+    pi.metadata?.agreement_id ?? charge.metadata?.agreement_id;
+  if (!agreementId) {
+    if (invoiceId) {
+      console.log('[stripe-webhook] invoice refund reconciled \u2014 invoice', invoiceId, 'charge:', charge.id);
+    }
+    return;
+  }
 
-  const auditRows = (await sql`SELECT audit_log FROM agreements WHERE id = ${agreementId}`) as unknown as Array<{
-    audit_log: AgreementAuditEntry[] | null;
-  }>;
+  const auditRows = (await sql`SELECT * FROM agreements WHERE id = ${agreementId}`) as unknown as Agreement[];
   if (auditRows.length === 0) return;
 
-  const newLog = appendAudit(auditRows[0]?.audit_log, {
-    event: 'stripe_refunded',
-    timestamp: new Date().toISOString(),
-    details: `charge: ${charge.id} \u2014 refunded ${(charge.amount_refunded / 100).toFixed(2)} ${charge.currency.toUpperCase()}`,
-  });
-  await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb, updated_at = NOW() WHERE id = ${agreementId}`;
+  const refundDetails = `charge: ${charge.id} \u2014 refunded ${(charge.amount_refunded / 100).toFixed(2)} ${charge.currency.toUpperCase()}`;
+  const alreadyAudited = auditRows[0].audit_log?.some(
+    (entry) => entry.event === 'stripe_refunded' && entry.details === refundDetails,
+  );
+  const newLog = alreadyAudited
+    ? auditRows[0].audit_log
+    : appendAudit(auditRows[0].audit_log, {
+        event: 'stripe_refunded',
+        timestamp: new Date().toISOString(),
+        details: refundDetails,
+      });
+  const remainingChargedCents = Math.max(charge.amount - charge.amount_refunded, 0);
+  if (pi.metadata?.issue_charge_id && charge.refunded) {
+    await sql`
+      UPDATE issue_charges SET
+        status = 'refunded',
+        stripe_payment_intent_id = ${pi.id},
+        stripe_charge_id = ${charge.id},
+        updated_at = NOW()
+      WHERE id = ${pi.metadata.issue_charge_id}
+    `;
+  }
+  await sql`
+    UPDATE agreements SET
+      paid_at = NULL,
+      stripe_charged_cents = ${remainingChargedCents},
+      stripe_charged_at = CASE WHEN ${remainingChargedCents === 0} THEN NULL ELSE stripe_charged_at END,
+      audit_log = ${JSON.stringify(newLog)}::jsonb,
+      updated_at = NOW()
+    WHERE id = ${agreementId}
+  `;
+  const updatedRows = (await sql`
+    SELECT * FROM agreements WHERE id = ${agreementId}
+  `) as unknown as Agreement[];
+  if (updatedRows[0]) await syncAgreementToAdvertiser(updatedRows[0]);
 }

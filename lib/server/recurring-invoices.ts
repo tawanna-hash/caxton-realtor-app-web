@@ -11,6 +11,7 @@ import {
   isScheduleExhausted,
   type RecurringFrequency,
 } from '@/lib/recurring-invoices';
+import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 
 type Sql = ReturnType<typeof getSql>;
 
@@ -141,6 +142,7 @@ export async function generateInvoiceFromSchedule(sql: Sql, schedule: DueSchedul
     WHERE id = ${schedule.id}
   `;
 
+  revalidateInvoiceViews(invoice.id);
   return { schedule_id: schedule.id, invoice_id: invoice.id, invoice_number: invoice.number };
 }
 

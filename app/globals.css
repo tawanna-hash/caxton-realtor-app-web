@@ -393,6 +393,18 @@ textarea::placeholder {
   color: #9ca3af; /* gray-400 — visible but clearly a placeholder */
 }
 
+/* Operational admin pages share a compact desktop density so filters, table
+   rows, pagination, and drawer actions remain visible within common laptop
+   viewports. Tailwind v4 utilities derive spacing from this inherited token,
+   which keeps the change consistent without scaling text or image geometry.
+   Public-token, signing, print-preview, auth, and API documentation routes are
+   intentionally excluded by AppShell. Mobile keeps the default touch spacing. */
+@media (min-width: 1024px) {
+  [data-admin-density='compact'] {
+    --spacing: 0.21875rem;
+  }
+}
+
 /* ==========================================================================
    Print styles — clean, paper-friendly layout when printing or ?print=1
    ==========================================================================
