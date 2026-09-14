@@ -176,7 +176,7 @@ function EmailInvoiceDialog({
   const [subject, setSubject] = useState(
     reminder
       ? `Reminder: Your payment to Caxton Publications Inc. is due`
-      : `New payment request from Caxton Publications Inc.`,
+      : `Invoice ${invoice.number ?? ''} from Caxton Publications, Inc.`,
   );
   const [body, setBody] = useState(
     reminder

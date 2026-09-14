@@ -242,12 +242,24 @@ function invoiceEmailText({
   customMessage: string;
   reminder: boolean;
 }): string {
+  if (customMessage) {
+    return [
+      customMessage,
+      '',
+      `Balance due: ${formatEmailCents(amountCents)}`,
+      '',
+      consumeUrl,
+      '',
+      'This link is valid for 24 hours and may only be used once.',
+    ].join('\n');
+  }
+
   return [
     `Dear ${name},`,
     '',
-    customMessage || (reminder
+    reminder
       ? `This is a reminder that invoice ${number} has not been paid. If you have any questions, please reach out to our office.`
-      : `We appreciate your business. Your invoice ${number} is ready to review and pay.`),
+      : `We appreciate your business. Your invoice ${number} is ready to review and pay.`,
     '',
     `Balance due: ${formatEmailCents(amountCents)}`,
     '',
@@ -278,6 +290,12 @@ function invoiceEmailHtml({
   const message = customMessage || (reminder
     ? `This is a reminder that invoice ${number} has not been paid. If you have any questions, please reach out to our office.`
     : `We appreciate your business. Your invoice ${number} is ready to review and pay.`);
+  const greeting = customMessage
+    ? ''
+    : `<p style="font-size:15px;line-height:1.6">Dear ${escapeEmailHtml(name)},</p>`;
+  const closing = customMessage
+    ? ''
+    : '<p style="font-size:14px;line-height:1.6">Sincerely,<br><strong>Caxton Publications Inc.</strong></p>';
   return `
   <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#202124;background:#fff">
     <div style="text-align:center;padding:12px 0 24px">
@@ -289,7 +307,7 @@ function invoiceEmailHtml({
       <div style="font-size:38px;font-weight:600;margin-top:4px">${formatEmailCents(amountCents)}</div>
     </div>
     <div style="padding:28px 12px">
-      <p style="font-size:15px;line-height:1.6">Dear ${escapeEmailHtml(name)},</p>
+      ${greeting}
       <p style="font-size:15px;line-height:1.6;white-space:pre-line">${escapeEmailHtml(message)}</p>
       <p style="margin:26px 0;text-align:center">
       <a href="${consumeUrl}" style="display:inline-block;background:#ea580c;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:600">
@@ -297,7 +315,7 @@ function invoiceEmailHtml({
       </a>
       </p>
       <p style="font-size:13px;color:#667085">This secure link is valid for 24 hours and may only be used once.</p>
-      <p style="font-size:14px;line-height:1.6">Sincerely,<br><strong>Caxton Publications Inc.</strong></p>
+      ${closing}
     </div>
   </div>`;
 }
