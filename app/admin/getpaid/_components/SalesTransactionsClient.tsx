@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   CheckCircle2,
   ChevronDown,
   ChevronLeft,
@@ -46,6 +49,8 @@ type StatusFilter = 'all' | 'draft' | 'open' | 'overdue' | 'paid' | 'void';
 type DeliveryFilter = 'all' | 'email' | 'not-sent';
 type ErrorFilter = 'all' | 'missing-email' | 'past-due';
 type BatchAction = 'send' | 'remind' | 'print' | 'void' | 'delete';
+type SortKey = 'date' | 'billing_date' | 'payment_received' | 'type' | 'number' | 'client' | 'amount' | 'status';
+type SortDir = 'asc' | 'desc';
 type EmailDraft = {
   invoice: InvoiceWithAdvertiser;
   reminder: boolean;
@@ -70,6 +75,23 @@ function formatTransactionDate(value: string | Date | null | undefined) {
 
 function transactionDate(invoice: InvoiceWithAdvertiser) {
   return invoice.paid_at ?? invoice.issued_at ?? invoice.created_at;
+}
+
+/** The actual date payment was received, from the payment record(s) — not
+ * the invoice's `paid_at` stamp, which is only set once and can go stale
+ * if a payment's date is edited afterward. Falls back to `paid_at` for
+ * invoices without a loaded payments array. */
+function paymentReceivedDate(invoice: InvoiceWithAdvertiser) {
+  const payments = invoice.payments;
+  if (payments && payments.length) {
+    const latest = payments.reduce<string | null>((latestDate, payment) => {
+      if (!payment.payment_date) return latestDate;
+      if (!latestDate || payment.payment_date > latestDate) return payment.payment_date;
+      return latestDate;
+    }, null);
+    if (latest) return latest;
+  }
+  return invoice.paid_at;
 }
 
 function transactionType(invoice: InvoiceWithAdvertiser): Exclude<TypeFilter, 'all'> {
@@ -109,6 +131,35 @@ function memoSummary(invoice: InvoiceWithAdvertiser) {
   );
 }
 
+function sortValue(invoice: InvoiceWithAdvertiser, key: SortKey): string | number {
+  switch (key) {
+    case 'date': {
+      const value = transactionDate(invoice);
+      return value ? new Date(value).getTime() : 0;
+    }
+    case 'billing_date': {
+      const value = invoice.issued_at;
+      return value ? new Date(value).getTime() : 0;
+    }
+    case 'payment_received': {
+      const value = paymentReceivedDate(invoice);
+      return value ? new Date(value).getTime() : 0;
+    }
+    case 'type':
+      return transactionTypeLabel(invoice);
+    case 'number':
+      return invoice.number ?? '';
+    case 'client':
+      return (invoice.advertiser_name ?? invoice.bill_to_name ?? '').toLowerCase();
+    case 'amount':
+      return invoice.total_cents;
+    case 'status':
+      return statusLabel(invoice);
+    default:
+      return '';
+  }
+}
+
 function inDateRange(invoice: InvoiceWithAdvertiser, filter: DateFilter) {
   if (filter === 'all') return true;
   const months = filter === '30-days' ? 1 : filter === '3-months' ? 3 : 12;
@@ -133,6 +184,39 @@ function SummaryMetric({
         {count.toLocaleString()} {label}
       </div>
     </div>
+  );
+}
+
+function SortableTh({
+  label,
+  sortKey,
+  activeKey,
+  dir,
+  onSort,
+  className = '',
+  align = 'left',
+}: {
+  label: string;
+  sortKey: SortKey;
+  activeKey: SortKey;
+  dir: SortDir;
+  onSort: (key: SortKey) => void;
+  className?: string;
+  align?: 'left' | 'right';
+}) {
+  const isActive = activeKey === sortKey;
+  const Icon = isActive ? (dir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+  return (
+    <th className={`${className} px-2 py-3 font-semibold`}>
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`flex w-full items-center gap-1 text-left font-semibold hover:text-gray-900 ${align === 'right' ? 'justify-end' : ''} ${isActive ? 'text-gray-900' : 'text-gray-700'}`}
+      >
+        <span>{label}</span>
+        <Icon className={`h-3 w-3 ${isActive ? 'opacity-100' : 'opacity-40'}`} />
+      </button>
+    </th>
   );
 }
 
@@ -347,6 +431,8 @@ export function SalesTransactionsClient({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [sortKey, setSortKey] = useState<SortKey>('date');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [rowMenuId, setRowMenuId] = useState<string | null>(null);
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const [creatingInvoice, setCreatingInvoice] = useState(initialCreate);
@@ -440,11 +526,13 @@ export function SalesTransactionsClient({
           .toLowerCase()
           .includes(normalized);
       })
-      .sort(
-        (a, b) =>
-          new Date(transactionDate(b)).getTime() - new Date(transactionDate(a)).getTime(),
-      );
-  }, [dateFilter, delivery, errors, invoices, query, status, type]);
+      .sort((a, b) => {
+        const av = sortValue(a, sortKey);
+        const bv = sortValue(b, sortKey);
+        const cmp = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv));
+        return sortDir === 'asc' ? cmp : -cmp;
+      });
+  }, [dateFilter, delivery, errors, invoices, query, status, type, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -464,6 +552,16 @@ export function SalesTransactionsClient({
       else pageRows.forEach((invoice) => next.add(invoice.id));
       return next;
     });
+  };
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((currentDir) => (currentDir === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('desc');
+    }
+    setPage(1);
   };
 
   const patchInvoice = async (invoice: InvoiceWithAdvertiser, payload: Record<string, unknown>) => {
@@ -866,15 +964,15 @@ export function SalesTransactionsClient({
                 <th className="w-10 px-3 py-3">
                   <input type="checkbox" aria-label="Select all visible transactions" checked={allPageSelected} onChange={togglePage} />
                 </th>
-                <th className="w-24 px-2 py-3 font-semibold">Date</th>
-                <th className="w-24 px-2 py-3 font-semibold">Billing date</th>
-                <th className="w-24 px-2 py-3 font-semibold">Payment received</th>
-                {!invoiceWorkspace && <th className="w-28 px-2 py-3 font-semibold">Type</th>}
-                <th className="w-32 px-2 py-3 font-semibold">No.</th>
-                <th className="w-52 px-2 py-3 font-semibold">Client</th>
+                <SortableTh label="Date" sortKey="date" activeKey={sortKey} dir={sortDir} onSort={handleSort} className="w-24" />
+                <SortableTh label="Billing date" sortKey="billing_date" activeKey={sortKey} dir={sortDir} onSort={handleSort} className="w-24" />
+                <SortableTh label="Payment received" sortKey="payment_received" activeKey={sortKey} dir={sortDir} onSort={handleSort} className="w-24" />
+                {!invoiceWorkspace && <SortableTh label="Type" sortKey="type" activeKey={sortKey} dir={sortDir} onSort={handleSort} className="w-28" />}
+                <SortableTh label="No." sortKey="number" activeKey={sortKey} dir={sortDir} onSort={handleSort} className="w-32" />
+                <SortableTh label="Client" sortKey="client" activeKey={sortKey} dir={sortDir} onSort={handleSort} className="w-52" />
                 {!invoiceWorkspace && <th className="px-2 py-3 font-semibold">Memo</th>}
-                <th className="w-28 px-2 py-3 text-right font-semibold">Amount</th>
-                <th className="w-36 px-2 py-3 font-semibold">Status</th>
+                <SortableTh label="Amount" sortKey="amount" activeKey={sortKey} dir={sortDir} onSort={handleSort} className="w-28" align="right" />
+                <SortableTh label="Status" sortKey="status" activeKey={sortKey} dir={sortDir} onSort={handleSort} className="w-36" />
                 <th className="w-64 px-2 py-3 text-right font-semibold"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
@@ -899,7 +997,7 @@ export function SalesTransactionsClient({
                     </td>
                     <td className="whitespace-nowrap px-2 py-2.5 text-gray-700">{formatTransactionDate(transactionDate(invoice))}</td>
                     <td className="whitespace-nowrap px-2 py-2.5 text-gray-700">{formatTransactionDate(invoice.issued_at)}</td>
-                    <td className="whitespace-nowrap px-2 py-2.5 text-gray-700">{formatTransactionDate(invoice.paid_at)}</td>
+                    <td className="whitespace-nowrap px-2 py-2.5 text-gray-700">{formatTransactionDate(paymentReceivedDate(invoice))}</td>
                     {!invoiceWorkspace && <td className="px-2 py-2.5 text-gray-700">{transactionTypeLabel(invoice)}</td>}
                     <td className="truncate px-2 py-2.5 font-medium text-gray-800" title={invoice.number ?? 'Draft'}>{invoice.number ?? 'Draft'}</td>
                     <td className="truncate px-2 py-2.5 text-gray-800" title={invoice.advertiser_name ?? invoice.bill_to_name ?? ''}>{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>

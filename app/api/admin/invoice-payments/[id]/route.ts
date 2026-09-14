@@ -91,6 +91,20 @@ export async function PATCH(request: NextRequest, ctx: RouteCtx) {
                  reference, memo, source, created_by, created_at, updated_at
     `) as Record<string, unknown>[];
 
+    // Keep invoices.paid_at in sync with the most recent payment's date so
+    // list/summary views reflect an edited payment_date immediately.
+    if (paymentDate !== undefined) {
+      await sql`
+        UPDATE invoices
+           SET paid_at = (
+             SELECT (MAX(payment_date)::date + time '12:00') AT TIME ZONE 'UTC'
+               FROM invoice_payments
+              WHERE invoice_id = ${current.invoice_id}
+           )
+         WHERE id = ${current.invoice_id} AND paid_at IS NOT NULL
+      `;
+    }
+
     revalidateInvoiceViews(current.invoice_id);
     return NextResponse.json({ payment: rows[0] });
   } catch (error) {
