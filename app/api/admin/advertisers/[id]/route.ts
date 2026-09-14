@@ -122,12 +122,26 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     const updates: string[] = [];
     const setClauses: { col: string; val: unknown }[] = [];
 
+    // Company Name is the canonical partner identity throughout admin. Some
+    // clients historically sent only `company`, while others sent both
+    // `name` and `company`; accepting the form field first prevents a saved
+    // company edit from leaving the list/header name stale.
+    const requestedName =
+      typeof body.company === 'string' && body.company.trim()
+        ? body.company.trim()
+        : typeof body.name === 'string' && body.name.trim()
+          ? body.name.trim()
+          : null;
+
     // Legacy fields
-    if (typeof body.name === 'string' && body.name.trim()) {
-      const name = body.name.trim();
+    if (requestedName) {
+      const name = requestedName;
       const baseSlug = slugify(name) || `advertiser-${idNum}`;
       setClauses.push({ col: 'name', val: name });
       setClauses.push({ col: 'slug', val: baseSlug });
+      // Keep the newer CRM company column identical even when an older admin
+      // surface submits only `name`.
+      body.company = name;
     }
     if ('contact_email' in body) {
       const v = body.contact_email;
