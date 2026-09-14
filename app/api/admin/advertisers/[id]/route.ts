@@ -268,9 +268,52 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
 
     const nextName = setClauses.find(({ col }) => col === 'name')?.val;
     if (typeof nextName === 'string' && nextName !== previousName) {
-      // These are live display-name caches, not billing snapshots. Keep linked
-      // ad inventory under the renamed partner while preserving historical
-      // invoices, statement sends, and prior agreements exactly as issued.
+      // A partner rename must be atomic from the admin user's perspective.
+      // Several workflows intentionally keep a local company-name copy so they
+      // remain readable after a relationship is removed. Refresh every linked
+      // live/admin copy here; immutable delivery artifacts such as statement
+      // send snapshots and already-rendered signed PDFs remain as-issued.
+      await sql`
+        UPDATE agreements
+           SET company_name = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+      await sql`
+        UPDATE invoices
+           SET bill_to_name = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+      await sql`
+        UPDATE recurring_invoice_schedules
+           SET bill_to_name = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+      await sql`
+        UPDATE renewal_reminders rr
+           SET company_name = ${nextName}
+         WHERE EXISTS (
+           SELECT 1
+             FROM agreements ag
+            WHERE ag.id = rr.agreement_id
+              AND ag.advertiser_id = ${idNum}
+         )
+      `;
+      await sql`
+        UPDATE ad_inquiries
+           SET company = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+      await sql`
+        UPDATE mailing_contacts
+           SET company = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+      await sql`
+        UPDATE marketing_campaign_outreach_recipients
+           SET company = ${nextName}
+         WHERE recipient_type = 'advertiser'
+           AND recipient_id = ${idNum}
+      `;
       await sql`
         UPDATE ad_creatives
            SET advertiser_name = ${nextName}
