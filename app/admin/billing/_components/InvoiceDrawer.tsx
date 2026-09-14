@@ -399,6 +399,7 @@ function PaymentHistoryRow({
 }) {
   const [method, setMethod] = useState(payment.payment_method ?? '');
   const [reference, setReference] = useState(payment.reference ?? '');
+  const [paymentDate, setPaymentDate] = useState(formatDateISO(payment.payment_date));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -411,7 +412,7 @@ function PaymentHistoryRow({
     return list;
   }, [method]);
 
-  const patch = async (body: { payment_method?: string; reference?: string }) => {
+  const patch = async (body: { payment_method?: string; reference?: string; payment_date?: string }) => {
     setSaving(true);
     setError(null);
     setSaved(false);
@@ -428,6 +429,7 @@ function PaymentHistoryRow({
     } catch (patchError) {
       setMethod(payment.payment_method ?? '');
       setReference(payment.reference ?? '');
+      setPaymentDate(formatDateISO(payment.payment_date));
       setError(patchError instanceof Error ? patchError.message : 'Could not update payment.');
     } finally {
       setSaving(false);
@@ -468,6 +470,20 @@ function PaymentHistoryRow({
                 onBlur={() => {
                   if (reference.trim() === (payment.reference ?? '').trim()) return;
                   void patch({ reference });
+                }}
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs text-gray-500">Payment received</span>
+              <input
+                type="date"
+                className={`${INPUT} mt-0.5`}
+                value={paymentDate}
+                disabled={saving}
+                onChange={(event) => setPaymentDate(event.target.value)}
+                onBlur={() => {
+                  if (paymentDate === formatDateISO(payment.payment_date)) return;
+                  void patch({ payment_date: paymentDate });
                 }}
               />
             </label>

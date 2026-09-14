@@ -45,12 +45,16 @@ export async function PATCH(request: NextRequest, ctx: RouteCtx) {
   const paymentMethod = text(body.payment_method);
   const reference = text(body.reference);
   const memo = text(body.memo);
+  const paymentDate = text(body.payment_date);
 
-  if (paymentMethod === undefined && reference === undefined && memo === undefined) {
+  if (paymentMethod === undefined && reference === undefined && memo === undefined && paymentDate === undefined) {
     return NextResponse.json({ error: 'nothing to update' }, { status: 400 });
   }
   if (paymentMethod !== undefined && paymentMethod !== null && paymentMethod.length > 80) {
     return NextResponse.json({ error: 'payment_method is too long' }, { status: 400 });
+  }
+  if (paymentDate !== undefined && (paymentDate === null || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate))) {
+    return NextResponse.json({ error: 'payment_date must be YYYY-MM-DD' }, { status: 400 });
   }
 
   try {
@@ -58,11 +62,11 @@ export async function PATCH(request: NextRequest, ctx: RouteCtx) {
     const sql = getSql();
 
     const existing = (await sql`
-      SELECT id, invoice_id, payment_method, reference, memo
+      SELECT id, invoice_id, payment_method, reference, memo, payment_date
         FROM invoice_payments
        WHERE id = ${id}
        LIMIT 1
-    `) as { id: string; invoice_id: string; payment_method: string | null; reference: string | null; memo: string | null }[];
+    `) as { id: string; invoice_id: string; payment_method: string | null; reference: string | null; memo: string | null; payment_date: string }[];
     if (!existing.length) {
       return NextResponse.json({ error: 'payment not found' }, { status: 404 });
     }
@@ -73,12 +77,14 @@ export async function PATCH(request: NextRequest, ctx: RouteCtx) {
     const nextMethod = paymentMethod === undefined ? current.payment_method : paymentMethod;
     const nextReference = reference === undefined ? current.reference : reference;
     const nextMemo = memo === undefined ? current.memo : memo;
+    const nextPaymentDate = paymentDate === undefined ? current.payment_date : paymentDate;
 
     const rows = (await sql`
       UPDATE invoice_payments
          SET payment_method = ${nextMethod},
              reference      = ${nextReference},
              memo           = ${nextMemo},
+             payment_date   = ${nextPaymentDate},
              updated_at     = NOW()
        WHERE id = ${id}
        RETURNING id, invoice_id, amount_cents, payment_date, payment_method,
