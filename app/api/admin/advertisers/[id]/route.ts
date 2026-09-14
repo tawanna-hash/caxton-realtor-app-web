@@ -117,8 +117,6 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     if (existingRows.length === 0) {
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
-    const previousName = existingRows[0].name;
-
     const updates: string[] = [];
     const setClauses: { col: string; val: unknown }[] = [];
 
@@ -267,7 +265,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     }
 
     const nextName = setClauses.find(({ col }) => col === 'name')?.val;
-    if (typeof nextName === 'string' && nextName !== previousName) {
+    if (typeof nextName === 'string') {
       // A partner rename must be atomic from the admin user's perspective.
       // Several workflows intentionally keep a local company-name copy so they
       // remain readable after a relationship is removed. Refresh every linked
