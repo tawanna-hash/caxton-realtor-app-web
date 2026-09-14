@@ -23,6 +23,7 @@ export function CreatePartnerDrawer({ onClose, onSaved, onError }: Props) {
   const [company, setCompany] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
+  const [billingEmail, setBillingEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [mobile, setMobile] = useState('');
   const [fax, setFax] = useState('');
@@ -69,6 +70,7 @@ export function CreatePartnerDrawer({ onClose, onSaved, onError }: Props) {
         body: JSON.stringify({
           name,
           contact_email: email.trim() || null,
+          billing_email: billingEmail.trim() || null,
           publication: 'both',
           status: 'advertiser',
         }),
@@ -148,7 +150,8 @@ export function CreatePartnerDrawer({ onClose, onSaved, onError }: Props) {
           <Field label="Suffix" className="col-span-4"><input className={INPUT} value={suffix} onChange={(event) => setSuffix(event.target.value)} /></Field>
           <Field label="Company name" className="col-span-12"><input className={INPUT} value={company} onChange={(event) => setCompany(event.target.value)} /></Field>
           <Field label="Partner display name" className="col-span-12"><input className={INPUT} value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Required if company and contact name are blank" /></Field>
-          <Field label="Email" className="col-span-6"><input type="email" className={INPUT} value={email} onChange={(event) => setEmail(event.target.value)} /></Field>
+          <Field label="Contact email" className="col-span-6"><input type="email" className={INPUT} value={email} onChange={(event) => setEmail(event.target.value)} /></Field>
+          <Field label="Billing email" className="col-span-6"><input type="email" className={INPUT} value={billingEmail} onChange={(event) => setBillingEmail(event.target.value)} placeholder="Uses contact email if blank" /></Field>
           <Field label="Phone number" className="col-span-6"><input className={INPUT} value={phone} onChange={(event) => setPhone(event.target.value)} /></Field>
           <Field label="Cc" className="col-span-6"><input type="email" className={INPUT} value={cc} onChange={(event) => setCc(event.target.value)} /></Field>
           <Field label="Bcc" className="col-span-6"><input type="email" className={INPUT} value={bcc} onChange={(event) => setBcc(event.target.value)} /></Field>

@@ -1719,9 +1719,22 @@ export function AgreementDrawer({
           <Field label="Linked partner">
             <select
               value={form.advertiser_id ?? ""}
-              onChange={(e) =>
-                upd("advertiser_id", e.target.value ? +e.target.value : null)
-              }
+              onChange={(e) => {
+                const advertiserId = e.target.value ? +e.target.value : null;
+                const advertiser = advertisers.find((item) => item.id === advertiserId);
+                setForm((current) => ({
+                  ...current,
+                  advertiser_id: advertiserId,
+                  ...(isCreate && advertiser
+                    ? {
+                        company_name: advertiser.name,
+                        email: advertiser.contact_email ?? "",
+                        billing_email: advertiser.billing_email ?? advertiser.contact_email ?? "",
+                        publication: advertiser.publication as PublicationScope,
+                      }
+                    : {}),
+                }));
+              }}
               className={INPUT}
             >
               <option value="">— none —</option>

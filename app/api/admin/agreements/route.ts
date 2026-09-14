@@ -94,20 +94,25 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       advertiser_phone:    (body.advertiser_phone    as string | undefined) ?? null,
       advertiser_address:  (body.advertiser_address  as string | undefined) ?? null,
     };
+    let advertiserBillingEmail: string | null = null;
     let publication: string | null = publicationInput;
-    if (advertiserId && (!snapshot.company_name || publication == null)) {
+    if (
+      advertiserId &&
+      (!snapshot.company_name || publication == null || body.billing_email == null)
+    ) {
       const adv = await sql`
-        SELECT name, company, contact_email, phone, address, address_2, city, state, zip, publication
+        SELECT name, company, contact_email, billing_email, phone, address, address_2, city, state, zip, publication
         FROM advertisers WHERE id = ${advertiserId}
       ` as unknown as Array<{
         name: string; company: string | null;
-        contact_email: string | null; phone: string | null;
+        contact_email: string | null; billing_email: string | null; phone: string | null;
         address: string | null; address_2: string | null;
         city: string | null; state: string | null; zip: string | null;
         publication: string | null;
       }>;
       if (adv[0]) {
         const a = adv[0];
+        advertiserBillingEmail = a.billing_email;
         snapshot = {
           company_name:       snapshot.company_name       ?? (a.company || a.name),
           rep_name:           snapshot.rep_name           ?? null,
@@ -187,7 +192,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
         ${attachments}::jsonb,
         ${isRenewal},
         ${renewedFromId},
-        ${(body.billing_email          as string | null | undefined) ?? null}
+        ${(body.billing_email          as string | null | undefined) ?? advertiserBillingEmail ?? snapshot.advertiser_email}
       )
       RETURNING *
     `;

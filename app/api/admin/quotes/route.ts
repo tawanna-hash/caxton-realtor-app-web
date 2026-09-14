@@ -15,6 +15,7 @@
  *     advertiser:
  *       | { id: number }                                     // existing
  *       | { name: string; contact_email: string;             // new
+ *           billing_email?: string;
  *           publication: 'austin' | 'san_antonio' | 'both';
  *           phone?: string; }
  *   }
@@ -48,6 +49,7 @@ const advertiserExistingSchema = z.object({
 const advertiserNewSchema = z.object({
   name: z.string().trim().min(1).max(200),
   contact_email: z.string().trim().email().max(320),
+  billing_email: z.string().trim().email().max(320).optional(),
   publication: z.enum(['austin', 'san_antonio', 'both']),
   phone: z.string().trim().max(40).optional(),
 });
@@ -153,7 +155,7 @@ export const POST = withAdminTracking(async (req: Request) => {
 
   if ('id' in body.advertiser) {
     const rows = (await sql`
-      SELECT id, name, contact_email, publication, address, address_2,
+      SELECT id, name, contact_email, billing_email, publication, address, address_2,
              city, state, zip
         FROM advertisers
        WHERE id = ${body.advertiser.id}
@@ -164,7 +166,7 @@ export const POST = withAdminTracking(async (req: Request) => {
   } else {
     // Look up by email first (idempotent — matches public form behavior).
     const existing = (await sql`
-      SELECT id, name, contact_email, publication, address, address_2,
+      SELECT id, name, contact_email, billing_email, publication, address, address_2,
              city, state, zip
         FROM advertisers
        WHERE lower(contact_email) = lower(${body.advertiser.contact_email})
@@ -190,13 +192,13 @@ export const POST = withAdminTracking(async (req: Request) => {
       const shareToken = generateShareToken();
       const inserted = (await sql`
         INSERT INTO advertisers (
-          name, slug, share_token, contact_email,
+          name, slug, share_token, contact_email, billing_email,
           requires_email_gate, publication, status, created_at, updated_at
         ) VALUES (
-          ${name}, ${slug}, ${shareToken}, ${body.advertiser.contact_email},
+          ${name}, ${slug}, ${shareToken}, ${body.advertiser.contact_email}, ${body.advertiser.billing_email ?? null},
           ${false}, ${body.advertiser.publication}, ${'prospect'}, NOW(), NOW()
         )
-        RETURNING id, name, contact_email, publication, address, address_2,
+        RETURNING id, name, contact_email, billing_email, publication, address, address_2,
                   city, state, zip
       `) as unknown as DrafterAdvertiser[];
       advertiser = inserted[0] ?? null;

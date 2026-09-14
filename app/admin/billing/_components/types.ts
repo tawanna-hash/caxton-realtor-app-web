@@ -7,6 +7,8 @@ export type AdvertiserOption = {
   id: number;
   name: string;
   publication: string;
+  contact_email: string | null;
+  billing_email: string | null;
 };
 
 export type AdCampaignOption = {

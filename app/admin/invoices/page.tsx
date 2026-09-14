@@ -36,7 +36,7 @@ export default async function InvoicesPage() {
       LEFT JOIN advertisers adv ON adv.id = ag.advertiser_id
       ORDER BY ag.updated_at DESC
     `.catch(() => [] as unknown[]),
-    sql`SELECT id, name, publication FROM advertisers ORDER BY name ASC`
+    sql`SELECT id, name, publication, contact_email, billing_email FROM advertisers ORDER BY name ASC`
       .catch(() => [] as unknown[]),
   ]);
 
@@ -44,7 +44,7 @@ export default async function InvoicesPage() {
     <InvoicesClient
       initialInvoices={invoices as unknown as InvoiceWithAdvertiser[]}
       agreements={agreements as unknown as AgreementWithAdvertiser[]}
-      advertisers={advertisers as unknown as Array<{ id: number; name: string; publication: string }>}
+      advertisers={advertisers as unknown as Array<{ id: number; name: string; publication: string; contact_email: string | null; billing_email: string | null }>}
     />
   );
 }

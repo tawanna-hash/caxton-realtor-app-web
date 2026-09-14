@@ -28,7 +28,7 @@ export default async function SalesTransactionsPage() {
       ) pay ON true
       ORDER BY i.created_at DESC
     `.catch(() => [] as unknown[]),
-    sql`SELECT id, name, publication FROM advertisers ORDER BY name ASC`
+    sql`SELECT id, name, publication, contact_email, billing_email FROM advertisers ORDER BY name ASC`
       .catch(() => [] as unknown[]),
     sql`
       SELECT ag.*, adv.name AS advertiser_name

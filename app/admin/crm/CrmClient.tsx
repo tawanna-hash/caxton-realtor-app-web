@@ -169,7 +169,7 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
       if (!q) return true;
       const hay = [
         r.name, r.company, r.first_name, r.last_name,
-        r.contact_email, r.portal_email, r.phone, r.office_phone,
+        r.contact_email, r.billing_email, r.portal_email, r.phone, r.office_phone,
         r.city, r.state, r.notes,
         ...(r.tags ?? []),
       ].filter(Boolean).join(' ').toLowerCase();
@@ -623,6 +623,11 @@ function CrmRow({
       <div className="text-xs text-gray-500 truncate">
         {[row.contact_email, formatPhone(row.phone)].filter(Boolean).join(' - ') || row.slug}
       </div>
+      {row.billing_email && row.billing_email !== row.contact_email ? (
+        <div className="text-[11px] text-gray-400 truncate">
+          Billing: {row.billing_email}
+        </div>
+      ) : null}
     </button>
   );
 
@@ -837,6 +842,7 @@ function EditDrawer({
     });
   };
   const [contactEmail, setContactEmail] = useState(row.contact_email ?? '');
+  const [billingEmail, setBillingEmail] = useState(row.billing_email ?? '');
   const [shareToken, setShareToken] = useState<string>(row.share_token);
   const [shareBusy, setShareBusy] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -1117,6 +1123,7 @@ function EditDrawer({
         // Multi-pub: send as canonical CSV. API accepts either array or CSV.
         publication: serializePublications(publications),
         contact_email: contactEmail.trim() || null,
+        billing_email: billingEmail.trim() || null,
       };
       const res = await fetch(`/api/admin/advertisers/${row.id}`, {
         method: 'PATCH',
@@ -1244,6 +1251,19 @@ function EditDrawer({
                   <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={INPUT} placeholder="name@company.com" inputMode="email" />
                 </Field>
               )}
+              <Field label="Billing Email" className="col-span-2">
+                <input
+                  type="email"
+                  value={billingEmail}
+                  onChange={(e) => setBillingEmail(e.target.value)}
+                  className={INPUT}
+                  placeholder="billing@company.com"
+                  inputMode="email"
+                />
+                <small className="mt-1 block text-xs text-gray-500">
+                  Used for invoices, recurring invoices, agreements, and statements.
+                </small>
+              </Field>
               <Field label="Address" className="col-span-2">
                 <input value={form.rep_address} onChange={(e) => update('rep_address', e.target.value)} className={INPUT} placeholder="Street address" />
               </Field>
@@ -1824,6 +1844,7 @@ function CreateAdvertiserModal({
     });
   };
   const [contactEmail, setContactEmail] = useState('');
+  const [billingEmail, setBillingEmail] = useState('');
   const [status, setStatus] = useState<AdvertiserStatus>('prospect');
   const [saving, setSaving] = useState(false);
 
@@ -1837,6 +1858,7 @@ function CreateAdvertiserModal({
         body: JSON.stringify({
           name: name.trim(),
           contact_email: contactEmail.trim() || null,
+          billing_email: billingEmail.trim() || null,
           publication: serializePublications(publications),
           status,
         }),
@@ -1851,7 +1873,7 @@ function CreateAdvertiserModal({
     } finally {
       setSaving(false);
     }
-  }, [name, publications, contactEmail, status, onCreated, onError]);
+  }, [name, publications, contactEmail, billingEmail, status, onCreated, onError]);
 
   return (
     <div
@@ -1918,6 +1940,20 @@ function CreateAdvertiserModal({
               placeholder="contact@example.com"
               disabled={saving}
             />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-gray-700">Billing email</span>
+            <input
+              type="email"
+              value={billingEmail}
+              onChange={(e) => setBillingEmail(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="billing@example.com"
+              disabled={saving}
+            />
+            <p className="text-[11px] text-gray-500">
+              Leave blank to use the contact email for billing.
+            </p>
           </label>
         </div>
         <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">

@@ -107,10 +107,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     const sql = getSql();
 
     const advRows = (await sql`
-      SELECT name, contact_email, address, address_2, city, state, zip
+      SELECT name, contact_email, billing_email, address, address_2, city, state, zip
       FROM advertisers WHERE id = ${advertiserId}
     `) as unknown as Array<{
-      name: string; contact_email: string | null;
+      name: string; contact_email: string | null; billing_email: string | null;
       address: string | null; address_2: string | null; city: string | null; state: string | null; zip: string | null;
     }>;
     if (advRows.length === 0) {
@@ -120,7 +120,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
 
     const billTo = {
       name: (body.bill_to_name as string | undefined) ?? adv.name,
-      email: (body.bill_to_email as string | undefined) ?? adv.contact_email,
+      email: (body.bill_to_email as string | undefined) ?? adv.billing_email ?? adv.contact_email,
       address: (body.bill_to_address as string | undefined) ??
         ([adv.address, adv.address_2, adv.city, adv.state, adv.zip].filter(Boolean).join(', ') || null),
     };

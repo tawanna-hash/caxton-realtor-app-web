@@ -14,7 +14,7 @@ export default async function RecurringPaymentsPage() {
   const sql = getSql();
   const [schedules, advertisers, agreements] = await Promise.all([
     sql`SELECT s.*, adv.name AS advertiser_name FROM recurring_invoice_schedules s LEFT JOIN advertisers adv ON adv.id = s.advertiser_id ORDER BY s.next_run_at ASC`.catch(() => [] as unknown[]),
-    sql`SELECT id, name, publication FROM advertisers ORDER BY name ASC`.catch(() => [] as unknown[]),
+    sql`SELECT id, name, publication, contact_email, billing_email FROM advertisers ORDER BY name ASC`.catch(() => [] as unknown[]),
     sql`SELECT ag.*, adv.name AS advertiser_name FROM agreements ag LEFT JOIN advertisers adv ON adv.id = ag.advertiser_id ORDER BY ag.updated_at DESC`.catch(() => [] as unknown[]),
   ]);
   return <RecurringPaymentsClient initialSchedules={schedules as unknown as RecurringScheduleWithAdvertiser[]} advertisers={advertisers as unknown as AdvertiserOption[]} agreements={agreements as unknown as AgreementWithAdvertiser[]} />;

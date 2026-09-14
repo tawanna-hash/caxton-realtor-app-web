@@ -119,6 +119,7 @@ export interface DrafterAdvertiser {
   id: number;
   name: string;
   contact_email: string | null;
+  billing_email: string | null;
   publication: string;
   address: string | null;
   address_2: string | null;
@@ -444,7 +445,7 @@ export async function draftQuote(
       ${advertiser.city ?? null},
       ${advertiser.state ?? null},
       ${advertiser.zip ?? null},
-      ${advertiser.contact_email},
+      ${advertiser.billing_email ?? advertiser.contact_email},
       ${input.linked_inquiry_id ?? null},
       ${input.preferred_send_dates && input.preferred_send_dates.length > 0
         ? JSON.stringify(input.preferred_send_dates.slice(0, 4))
@@ -534,7 +535,7 @@ export async function draftQuote(
       ${null},
       ${dueDateForChannel},
       ${advertiser.name},
-      ${advertiser.contact_email},
+      ${advertiser.billing_email ?? advertiser.contact_email},
       ${billToAddress},
       ${memo},
       ${JSON.stringify(lineItems)}::jsonb,
@@ -805,7 +806,7 @@ async function draftBundledQuote(
       ${advertiser.city ?? null},
       ${advertiser.state ?? null},
       ${advertiser.zip ?? null},
-      ${advertiser.contact_email},
+      ${advertiser.billing_email ?? advertiser.contact_email},
       ${input.linked_inquiry_id ?? null}
     )
     RETURNING *
@@ -951,7 +952,7 @@ async function draftBundledQuote(
       ${null},
       ${input.due_date ?? null},
       ${advertiser.name},
-      ${advertiser.contact_email},
+      ${advertiser.billing_email ?? advertiser.contact_email},
       ${billToAddress},
       ${memo},
       ${JSON.stringify(invoiceLines)}::jsonb,

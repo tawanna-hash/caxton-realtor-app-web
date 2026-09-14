@@ -48,7 +48,7 @@ export default async function ArDashboardPage() {
       LEFT JOIN advertisers adv ON adv.id = s.advertiser_id
       ORDER BY s.next_run_at ASC
     `.catch(() => [] as unknown[]),
-    sql`SELECT id, name, publication FROM advertisers ORDER BY name ASC`
+    sql`SELECT id, name, publication, contact_email, billing_email FROM advertisers ORDER BY name ASC`
       .catch(() => [] as unknown[]),
     sql`
       SELECT ag.*, adv.name AS advertiser_name
@@ -84,7 +84,7 @@ export default async function ArDashboardPage() {
     <ArClient
       initialInvoices={invoices as unknown as InvoiceWithAdvertiser[]}
       initialSchedules={schedules as unknown as RecurringScheduleWithAdvertiser[]}
-      advertisers={advertisers as unknown as Array<{ id: number; name: string; publication: string }>}
+      advertisers={advertisers as unknown as Array<{ id: number; name: string; publication: string; contact_email: string | null; billing_email: string | null }>}
       agreements={agreements as unknown as AgreementWithAdvertiser[]}
       incomeByDay={monthlyIncome as unknown as Array<{ day: string; total_cents: number }>}
     />

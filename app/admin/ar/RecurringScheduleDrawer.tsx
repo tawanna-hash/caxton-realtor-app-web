@@ -111,7 +111,15 @@ export function RecurringScheduleDrawer({
   );
   const [memo, setMemo] = useState(existing?.memo ?? "");
   const [billToName, setBillToName] = useState(existing?.bill_to_name ?? "");
-  const [billToEmail, setBillToEmail] = useState(existing?.bill_to_email ?? "");
+  const initialAdvertiser = advertisers.find(
+    (advertiser) => advertiser.id === (existing?.advertiser_id ?? seed?.advertiser_id ?? null),
+  );
+  const [billToEmail, setBillToEmail] = useState(
+    existing?.bill_to_email ??
+      initialAdvertiser?.billing_email ??
+      initialAdvertiser?.contact_email ??
+      "",
+  );
   const [emailFrom, setEmailFrom] = useState<
     "tawanna@myrealtyline.com" | "hello@myrealtyline.com"
   >("tawanna@myrealtyline.com");
@@ -375,9 +383,11 @@ export function RecurringScheduleDrawer({
                   value={advertiserId ?? ""}
                   disabled={isEdit}
                   onChange={(e) => {
-                    setAdvertiserId(
-                      e.target.value ? Number(e.target.value) : null,
-                    );
+                    const nextAdvertiserId = e.target.value ? Number(e.target.value) : null;
+                    const advertiser = advertisers.find((item) => item.id === nextAdvertiserId);
+                    setAdvertiserId(nextAdvertiserId);
+                    setBillToName(advertiser?.name ?? "");
+                    setBillToEmail(advertiser?.billing_email ?? advertiser?.contact_email ?? "");
                     setAgreementId("");
                   }}
                 >
@@ -675,7 +685,7 @@ export function RecurringScheduleDrawer({
                   className={INPUT}
                   value={billToEmail}
                   onChange={(e) => setBillToEmail(e.target.value)}
-                  placeholder="Defaults to partner contact email"
+                  placeholder="Defaults to partner billing email"
                 />
               </Field>
             </div>

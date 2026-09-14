@@ -69,6 +69,7 @@ export function InvoiceDrawer({
 }) {
   const initialAdvertiserId = existing?.advertiser_id ?? seed?.advertiser_id ?? null;
   const initialAgreementId = (existing?.agreement_id ?? seed?.agreement_id ?? '') as string;
+  const initialAdvertiser = advertisers.find((advertiser) => advertiser.id === initialAdvertiserId);
   const initialLineItems = existing?.line_items ?? [];
   const initialAmountDollars =
     initialLineItems.length > 0 ? ''
@@ -97,6 +98,7 @@ export function InvoiceDrawer({
       ? formatDateISO(existing.due_date as string | Date)
       : (existing ? '' : defaultDueDate),
     memo: existing?.memo ?? (seed ? 'Generated from agreement' : ''),
+    bill_to_email: existing?.bill_to_email ?? initialAdvertiser?.billing_email ?? initialAdvertiser?.contact_email ?? '',
     line_items: initialLineItems as InvoiceLineItem[],
   });
   const [saving, setSaving] = useState(false);
@@ -209,6 +211,7 @@ export function InvoiceDrawer({
         issued_at: form.billing_date ? `${form.billing_date}T00:00:00.000Z` : null,
         due_date: form.due_date || null,
         memo: form.memo || null,
+        bill_to_email: form.bill_to_email || null,
         line_items: form.line_items,
       };
       const initialPayload: Record<string, unknown> | null = existing ? {
@@ -221,6 +224,7 @@ export function InvoiceDrawer({
         issued_at: existing.issued_at ? `${formatDateISO(existing.issued_at as string | Date)}T00:00:00.000Z` : null,
         due_date: existing.due_date ? formatDateISO(existing.due_date as string | Date) : null,
         memo: existing.memo ?? null,
+        bill_to_email: existing.bill_to_email ?? null,
         line_items: existing.line_items ?? [],
       } : null;
       const requestBody = initialPayload ? sparsePatch(payload, initialPayload) : payload;
@@ -257,7 +261,20 @@ export function InvoiceDrawer({
       <Section title="Linkage">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Partner">
-            <select value={form.advertiser_id ?? ''} onChange={(e) => update('advertiser_id', e.target.value ? +e.target.value : null)} className={INPUT} disabled={!isCreate}>
+            <select
+              value={form.advertiser_id ?? ''}
+              onChange={(e) => {
+                const advertiserId = e.target.value ? +e.target.value : null;
+                const advertiser = advertisers.find((item) => item.id === advertiserId);
+                setForm((current) => ({
+                  ...current,
+                  advertiser_id: advertiserId,
+                  bill_to_email: advertiser?.billing_email ?? advertiser?.contact_email ?? '',
+                }));
+              }}
+              className={INPUT}
+              disabled={!isCreate}
+            >
               <option value="">— select —</option>
               {advertisers.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
@@ -320,7 +337,18 @@ export function InvoiceDrawer({
       </Section>
 
       <Section title="Memo">
-        <textarea value={form.memo} onChange={(e) => update('memo', e.target.value)} rows={2} className={INPUT + ' resize-y'} />
+        <div className="grid gap-3">
+          <Field label="Bill-to email">
+            <input
+              type="email"
+              value={form.bill_to_email}
+              onChange={(e) => update('bill_to_email', e.target.value)}
+              className={INPUT}
+              placeholder="Defaults to the partner billing email"
+            />
+          </Field>
+          <textarea value={form.memo} onChange={(e) => update('memo', e.target.value)} rows={2} className={INPUT + ' resize-y'} />
+        </div>
       </Section>
 
       {existing && (

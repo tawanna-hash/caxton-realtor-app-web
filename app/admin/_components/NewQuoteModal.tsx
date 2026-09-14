@@ -60,6 +60,7 @@ interface AdvertiserRow {
   id: number;
   name: string;
   contact_email: string | null;
+  billing_email: string | null;
   publication: string;
 }
 
@@ -126,6 +127,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   const [createNew, setCreateNew] = useState(false);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [newBillingEmail, setNewBillingEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newPublication, setNewPublication] = useState<Publication>('austin');
 
@@ -287,6 +289,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     setCreateNew(false);
     setNewName('');
     setNewEmail('');
+    setNewBillingEmail('');
     setNewPhone('');
     setNewPublication('austin');
     setChannel('print');
@@ -330,7 +333,8 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       .filter(
         (a) =>
           a.name.toLowerCase().includes(q) ||
-          (a.contact_email ?? '').toLowerCase().includes(q),
+          (a.contact_email ?? '').toLowerCase().includes(q) ||
+          (a.billing_email ?? '').toLowerCase().includes(q),
       )
       .slice(0, 20);
   }, [advertisers, advertiserSearch]);
@@ -703,6 +707,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       ? {
           name: newName.trim(),
           contact_email: newEmail.trim(),
+          ...(newBillingEmail.trim() ? { billing_email: newBillingEmail.trim() } : {}),
           publication: newPublication,
           ...(newPhone.trim() ? { phone: newPhone.trim() } : {}),
         }
@@ -788,6 +793,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         ? {
             name: newName.trim(),
             contact_email: newEmail.trim(),
+            ...(newBillingEmail.trim() ? { billing_email: newBillingEmail.trim() } : {}),
             publication: newPublication,
             ...(newPhone.trim() ? { phone: newPhone.trim() } : {}),
           }
@@ -836,6 +842,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
           ? {
               name: newName.trim(),
               contact_email: newEmail.trim(),
+              ...(newBillingEmail.trim() ? { billing_email: newBillingEmail.trim() } : {}),
               publication: newPublication,
               ...(newPhone.trim() ? { phone: newPhone.trim() } : {}),
             }
@@ -1205,6 +1212,12 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     <span className="text-purple-800 ml-2">
                       {selectedAdvertiser.contact_email ?? 'no email'}
                     </span>
+                    {selectedAdvertiser.billing_email &&
+                    selectedAdvertiser.billing_email !== selectedAdvertiser.contact_email ? (
+                      <span className="block text-purple-700">
+                        Billing: {selectedAdvertiser.billing_email}
+                      </span>
+                    ) : null}
                   </div>
                   <button
                     type="button"
@@ -1232,6 +1245,11 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                           <span className="ml-2 text-xs text-gray-500">
                             {a.contact_email ?? 'no email'}
                           </span>
+                          {a.billing_email && a.billing_email !== a.contact_email ? (
+                            <span className="block text-xs text-gray-500">
+                              Billing: {a.billing_email}
+                            </span>
+                          ) : null}
                         </button>
                       </li>
                     ))
@@ -1258,6 +1276,16 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
+                  className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                />
+              </label>
+              <label className="text-xs text-gray-700">
+                Billing email (optional)
+                <input
+                  type="email"
+                  value={newBillingEmail}
+                  onChange={(e) => setNewBillingEmail(e.target.value)}
+                  placeholder="Uses contact email if blank"
                   className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                 />
               </label>
