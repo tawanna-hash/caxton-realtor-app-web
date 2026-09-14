@@ -113,3 +113,36 @@ export async function PATCH(request: NextRequest, ctx: RouteCtx) {
     return NextResponse.json({ error: 'could not update payment' }, { status: 500 });
   }
 }
+
+/**
+ * DELETE /api/admin/invoice-payments/[id]
+ * Payment amounts are financial history, so deletion is deliberately not the
+ * default correction path. Clients must send a typed payment id acknowledgement.
+ */
+export async function DELETE(request: NextRequest, ctx: RouteCtx) {
+  const admin = await getCurrentAdmin();
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { id } = await ctx.params;
+  if (!UUID_RE.test(id)) return NextResponse.json({ error: 'invalid payment id' }, { status: 400 });
+  let body: { permanent?: unknown; confirmation_id?: unknown } = {};
+  try { body = await request.json(); } catch { /* Return the confirmation error below. */ }
+  if (body.permanent !== true || body.confirmation_id !== id) {
+    return NextResponse.json({
+      error: 'payment history is permanent by default. Send permanent: true and confirmation_id equal to the payment id to delete it.',
+      action: 'confirm_permanent_delete',
+    }, { status: 409 });
+  }
+  try {
+    await ensureSchema();
+    const sql = getSql();
+    const rows = await sql`DELETE FROM invoice_payments WHERE id = ${id} RETURNING invoice_id`;
+    if (!rows.length) return NextResponse.json({ error: 'payment not found' }, { status: 404 });
+    const invoiceId = (rows[0] as { invoice_id: string }).invoice_id;
+    revalidateInvoiceViews(invoiceId);
+    return NextResponse.json({ ok: true, invoice_id: invoiceId });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'unknown error';
+    console.error('[invoice-payments:DELETE]', message);
+    return NextResponse.json({ error: 'could not permanently delete payment' }, { status: 500 });
+  }
+}

@@ -118,3 +118,20 @@ export const GET = withAdminTracking(async (req: Request) => {
     subscribers: rows,
   });
 });
+
+// Newsletter signups are independent, email-only records. A targeted delete
+// intentionally does not touch a realtor account or any analytics data.
+export const DELETE = withAdminTracking(async (req: Request) => {
+  await requireAdmin();
+  const id = Number(new URL(req.url).searchParams.get('id'));
+  if (!Number.isSafeInteger(id) || id <= 0) throw new ApiError(400, 'invalid id');
+
+  const sql = getSql();
+  const deleted = await sql`
+    DELETE FROM newsletter_subscribers
+    WHERE id = ${id}
+    RETURNING id
+  `;
+  if (deleted.length === 0) throw new ApiError(404, 'subscriber not found');
+  return NextResponse.json({ ok: true, id });
+});

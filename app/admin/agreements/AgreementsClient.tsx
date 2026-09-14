@@ -496,6 +496,18 @@ export default function AgreementsClient({
               await reloadReminders();
             } catch (e) { setError(e instanceof Error ? e.message : 'send reminder failed'); }
           }}
+          onDeleteReminder={async (r) => {
+            const confirmation = window.prompt(
+              `Permanently delete the renewal reminder for ${r.rep_name ?? r.company_name ?? 'this client'}?\n\nThis cannot be undone. Type DELETE to confirm.`,
+            );
+            if (confirmation !== 'DELETE') return;
+            try {
+              const res = await fetch(`/api/admin/renewal-reminders/${r.id}`, { method: 'DELETE' });
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              await reloadReminders();
+              showToast('Renewal reminder deleted.');
+            } catch (e) { setError(e instanceof Error ? e.message : 'delete reminder failed'); }
+          }}
         />
       )}
 

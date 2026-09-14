@@ -3,7 +3,8 @@
 // GET    — single invoice
 // PATCH  — update allow-listed fields. Status transitions auto-set
 //          issued_at / paid_at / voided_at.
-// DELETE — hard delete (only when status='draft')
+// DELETE — drafts delete normally; issued records require an explicit,
+//          typed-ID permanent-delete acknowledgement.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
@@ -247,7 +248,7 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
   }
 });
 
-export const DELETE = withAdminTracking(async function DELETE(_req: NextRequest, ctx: RouteCtx) {
+export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await ctx.params;
@@ -256,12 +257,17 @@ export const DELETE = withAdminTracking(async function DELETE(_req: NextRequest,
   try {
     await ensureSchema();
     const sql = getSql();
-    // Only allow deleting drafts; sent/paid/void invoices stay as
-    // records (use status=void instead).
+    let body: { permanent?: unknown; confirmation_id?: unknown } = {};
+    try { body = await req.json(); } catch { /* Draft deletes need no body. */ }
     const rows = await sql`SELECT status FROM invoices WHERE id = ${id}` as unknown as Array<{ status: string }>;
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     if (rows[0].status !== 'draft') {
-      return NextResponse.json({ error: 'only draft invoices may be deleted; use status=void instead' }, { status: 400 });
+      if (body.permanent !== true || body.confirmation_id !== id) {
+        return NextResponse.json({
+          error: 'issued invoices must be voided by default. To permanently delete, send permanent: true and confirmation_id equal to the invoice id.',
+          action: 'void_or_confirm_permanent_delete',
+        }, { status: 409 });
+      }
     }
     await sql`DELETE FROM invoices WHERE id = ${id}`;
     revalidateInvoiceViews(id);

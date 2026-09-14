@@ -691,15 +691,18 @@ export function SalesTransactionsClient({
   };
 
   const deleteDraft = async (invoice: InvoiceWithAdvertiser) => {
-    if (invoice.status !== 'draft') {
-      fail('Only draft invoices can be deleted. Use Void for issued invoices.');
+    const confirmation = window.prompt(`Permanent deletion cannot be undone. Type this invoice ID to delete it:\n${invoice.id}`);
+    if (confirmation !== invoice.id) {
+      fail('Transaction was not deleted: the typed ID did not match.');
       return;
     }
-    if (!window.confirm(`Permanently delete draft ${invoice.number ?? ''}?`)) return;
     setBusy(true);
     fail('');
     try {
-      const response = await fetch(`/api/admin/invoices/${invoice.id}`, { method: 'DELETE' });
+      const response = await fetch(`/api/admin/invoices/${invoice.id}`, {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permanent: true, confirmation_id: confirmation }),
+      });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error ?? 'Could not delete draft.');
       await reload();
@@ -708,7 +711,7 @@ export function SalesTransactionsClient({
         next.delete(invoice.id);
         return next;
       });
-      setMessage('Draft deleted.');
+      setMessage('Transaction permanently deleted.');
     } catch (value) {
       fail(value instanceof Error ? value.message : 'Could not delete draft.');
     } finally {

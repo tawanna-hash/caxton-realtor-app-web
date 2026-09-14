@@ -275,6 +275,40 @@ export function InvoiceDrawer({
     }
   };
 
+  const voidInvoice = async () => {
+    if (!existing || existing.status === 'void') return;
+    if (!window.confirm(`Void ${existing.number ?? 'this invoice'}? This preserves the financial record.`)) return;
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/admin/invoices/${existing.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'void' }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? 'Could not void invoice.');
+      await onSaved();
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Could not void invoice.');
+    } finally { setSaving(false); }
+  };
+
+  const permanentlyDelete = async () => {
+    if (!existing) return;
+    const confirmation = window.prompt(`Permanent deletion cannot be undone. Type this invoice ID to delete it:\n${existing.id}`);
+    if (confirmation !== existing.id) { onError('Invoice was not deleted: the typed ID did not match.'); return; }
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/admin/invoices/${existing.id}`, {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permanent: true, confirmation_id: confirmation }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? 'Could not permanently delete invoice.');
+      await onSaved();
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Could not permanently delete invoice.');
+    } finally { setSaving(false); }
+  };
+
   return (
     <DrawerShell
       title={isCreate ? 'New invoice' : (existing?.number ?? 'Invoice')}
@@ -397,10 +431,20 @@ export function InvoiceDrawer({
           loading={historyLoading}
           onRecordPayment={onRecordPayment ? () => onRecordPayment(detail ?? existing) : undefined}
           onPaymentPatched={handlePaymentPatched}
+          onPaymentDeleted={(paymentId) => setDetail((current) => current ? { ...current, payments: (current.payments ?? []).filter((payment) => payment.id !== paymentId) } : current)}
         />
       )}
       </div>
 
+      {existing && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4">
+          <p className="text-xs text-gray-500">Void preserves the record. Permanent delete requires the invoice ID.</p>
+          <div className="flex gap-2">
+            {existing.status !== 'void' && <button type="button" disabled={saving} onClick={() => void voidInvoice()} className="rounded border border-orange-300 px-3 py-2 text-sm font-medium text-orange-800 hover:bg-orange-50 disabled:opacity-50">Void invoice</button>}
+            <button type="button" disabled={saving} onClick={() => void permanentlyDelete()} className="rounded border border-rose-300 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50">Permanent delete</button>
+          </div>
+        </div>
+      )}
       <DrawerFooter saving={saving} onCancel={onClose} onSubmit={submit} submitLabel={isCreate ? 'Create' : 'Save changes'} tone="orange" />
     </DrawerShell>
   );
@@ -446,9 +490,11 @@ function historyDate(value: string | null | undefined) {
 function PaymentHistoryRow({
   payment,
   onPatched,
+  onDeleted,
 }: {
   payment: InvoicePayment;
   onPatched: (payment: InvoicePayment) => void;
+  onDeleted: (paymentId: string) => void;
 }) {
   const [method, setMethod] = useState(payment.payment_method ?? '');
   const [reference, setReference] = useState(payment.reference ?? '');
@@ -490,6 +536,18 @@ function PaymentHistoryRow({
   };
 
   const referenceLabel = isCheckPayment(method) ? 'Check no.' : 'Reference';
+  const deletePayment = async () => {
+    const confirmation = window.prompt(`Permanent deletion cannot be undone. Type this payment ID to delete it:\n${payment.id}`);
+    if (confirmation !== payment.id) { setError('Payment was not deleted: the typed ID did not match.'); return; }
+    setSaving(true); setError(null);
+    try {
+      const response = await fetch(`/api/admin/invoice-payments/${payment.id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ permanent: true, confirmation_id: confirmation }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? 'Could not permanently delete payment.');
+      onDeleted(payment.id);
+    } catch (deleteError) { setError(deleteError instanceof Error ? deleteError.message : 'Could not permanently delete payment.'); }
+    finally { setSaving(false); }
+  };
 
   return (
     <div className="px-3 py-3">
@@ -551,6 +609,7 @@ function PaymentHistoryRow({
         </div>
         <div className="shrink-0 text-sm font-semibold tabular-nums text-emerald-700">{formatCents(payment.amount_cents)}</div>
       </div>
+      <button type="button" disabled={saving} onClick={() => void deletePayment()} className="mt-2 text-xs font-medium text-rose-700 hover:underline disabled:opacity-50">Permanent delete payment</button>
     </div>
   );
 }
@@ -565,11 +624,13 @@ function InvoiceHistory({
   loading,
   onRecordPayment,
   onPaymentPatched,
+  onPaymentDeleted,
 }: {
   invoice: InvoiceWithAdvertiser;
   loading: boolean;
   onRecordPayment?: () => void;
   onPaymentPatched: (payment: InvoicePayment) => void;
+  onPaymentDeleted: (paymentId: string) => void;
 }) {
   const payments = invoice.payments ?? [];
   const auditLog = [...(invoice.audit_log ?? [])].reverse();
@@ -609,7 +670,7 @@ function InvoiceHistory({
           ) : payments.length ? (
             <div className="divide-y divide-gray-200">
               {[...payments].reverse().map((payment) => (
-                <PaymentHistoryRow key={payment.id} payment={payment} onPatched={onPaymentPatched} />
+              <PaymentHistoryRow key={payment.id} payment={payment} onPatched={onPaymentPatched} onDeleted={onPaymentDeleted} />
               ))}
             </div>
           ) : (

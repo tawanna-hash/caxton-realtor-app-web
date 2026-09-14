@@ -22,6 +22,7 @@ const CONTROL =
   'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500';
 type SortKey = 'partner' | 'email' | 'invoices' | 'overdue' | 'outstanding';
 type SortDir = 'asc' | 'desc';
+type StatementHistory = { id: string; recipient_email: string; subject: string; sent_at: string; outstanding_cents: number };
 
 function SortableTh({
   label,
@@ -81,6 +82,28 @@ export default function StatementsClient({ partners }: { partners: StatementPart
   const [balance, setBalance] = useState<'all' | 'overdue' | 'current'>('all');
   const [sortKey, setSortKey] = useState<SortKey>('outstanding');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [historyPartner, setHistoryPartner] = useState<StatementPartnerRow | null>(null);
+  const [history, setHistory] = useState<StatementHistory[]>([]);
+  const [historyError, setHistoryError] = useState('');
+
+  const openHistory = async (partner: StatementPartnerRow) => {
+    setHistoryPartner(partner); setHistory([]); setHistoryError('');
+    try {
+      const response = await fetch(`/api/admin/advertisers/${partner.advertiser_id}/statement-history`, { cache: 'no-store' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? 'Could not load statement history.');
+      setHistory(data.history ?? []);
+    } catch (error) { setHistoryError(error instanceof Error ? error.message : 'Could not load statement history.'); }
+  };
+  const deleteHistory = async (entry: StatementHistory) => {
+    if (!historyPartner) return;
+    const confirmation = window.prompt(`Permanent deletion cannot be undone. Type this statement history ID to delete it:\n${entry.id}`);
+    if (confirmation !== entry.id) { setHistoryError('History record was not deleted: the typed ID did not match.'); return; }
+    const response = await fetch(`/api/admin/advertisers/${historyPartner.advertiser_id}/statement-history`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ history_id: entry.id, permanent: true, confirmation_id: confirmation }) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) { setHistoryError(data.error ?? 'Could not permanently delete statement history.'); return; }
+    setHistory((current) => current.filter((item) => item.id !== entry.id));
+  };
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -244,6 +267,7 @@ export default function StatementsClient({ partners }: { partners: StatementPart
                         }}
                       />
                     </span>
+                    <button type="button" className="ml-4 font-medium text-gray-700 hover:underline" onClick={() => void openHistory(partner)}>History</button>
                   </td>
                 </tr>
               ))}
@@ -267,6 +291,14 @@ export default function StatementsClient({ partners }: { partners: StatementPart
           <div className="font-semibold">Total <span className="ml-8">{formatCents(filteredTotal)}</span></div>
         </div>
       </section>
+      {historyPartner && (
+        <section className="rounded border border-gray-200 bg-white p-4 shadow-sm" aria-label="Statement send history">
+          <div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold text-gray-900">Send history · {historyPartner.advertiser_name}</h2><p className="text-xs text-gray-500">Sent records are retained by default. Permanent deletion requires the history ID.</p></div><button type="button" onClick={() => setHistoryPartner(null)} className="text-sm text-gray-600 hover:underline">Close</button></div>
+          {historyError && <p className="mt-3 text-sm text-rose-700">{historyError}</p>}
+          <div className="mt-3 divide-y divide-gray-200">{history.map((entry) => <div key={entry.id} className="flex items-center justify-between gap-3 py-3 text-sm"><div><div className="font-medium text-gray-800">{entry.recipient_email}</div><div className="text-xs text-gray-500">{new Date(entry.sent_at).toLocaleString('en-US')} · {entry.subject}</div></div><button type="button" className="text-xs font-medium text-rose-700 hover:underline" onClick={() => void deleteHistory(entry)}>Permanent delete</button></div>)}</div>
+          {!historyError && history.length === 0 && <p className="mt-3 text-sm text-gray-500">No sent statements recorded.</p>}
+        </section>
+      )}
     </div>
   );
 }

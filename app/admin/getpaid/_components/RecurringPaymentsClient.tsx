@@ -173,6 +173,32 @@ export function RecurringPaymentsClient({
     await reload();
   };
 
+  const pauseSchedule = async (schedule: RecurringScheduleWithAdvertiser) => {
+    try {
+      const response = await fetch(`/api/admin/recurring-invoices/${schedule.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'paused' }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? 'Could not pause schedule.');
+      await reload();
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not pause schedule.'); }
+  };
+
+  const permanentlyDelete = async (schedule: RecurringScheduleWithAdvertiser) => {
+    if (schedule.status === 'active') { setError('Pause the active schedule before permanent deletion.'); return; }
+    const confirmation = window.prompt(`Permanent deletion cannot be undone. Type this schedule ID to delete it:\n${schedule.id}`);
+    if (confirmation !== schedule.id) { setError('Schedule was not deleted: the typed ID did not match.'); return; }
+    try {
+      const response = await fetch(`/api/admin/recurring-invoices/${schedule.id}`, {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permanent: true, confirmation_id: confirmation }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? 'Could not permanently delete schedule.');
+      await reload();
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not permanently delete schedule.'); }
+  };
+
   return (
     <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
       <header className="flex items-start justify-between gap-4">
@@ -322,6 +348,11 @@ export function RecurringPaymentsClient({
                     >
                       View/Edit
                     </button>
+                    {schedule.status === 'active' ? (
+                      <button type="button" className="font-medium text-orange-700 hover:underline" onClick={() => void pauseSchedule(schedule)}>Pause</button>
+                    ) : (
+                      <button type="button" className="font-medium text-rose-700 hover:underline" onClick={() => void permanentlyDelete(schedule)}>Permanent delete</button>
+                    )}
                   </td>
                 </tr>
               ))}

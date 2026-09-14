@@ -146,6 +146,25 @@ export default function IosTable() {
     }
   }
 
+  async function deleteIo(io: InsertionOrderWithAdvertiser) {
+    const confirmation = window.prompt(
+      `Permanently delete insertion order ${io.io_number} for ${io.advertiser_name ?? 'this partner'}?\n\nThis cannot be undone. Type the IO number to confirm.`,
+    );
+    if (confirmation !== io.io_number) return;
+
+    setBusyId(io.id);
+    try {
+      const r = await fetch(`/api/admin/insertion-orders/${io.id}`, { method: 'DELETE' });
+      const data = (await r.json().catch(() => null)) as { error?: string; ok?: boolean } | null;
+      if (!r.ok || !data?.ok) throw new Error(data?.error || `HTTP ${r.status}`);
+      setRows((prev) => prev.filter((row) => row.id !== io.id));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Delete failed');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <div>
       {/* Channel tab strip */}
@@ -262,6 +281,7 @@ export default function IosTable() {
                   {io.status === 'active' && (
                     <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'fulfilled')} className="text-xs px-2 py-1 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">Fulfill</button>
                   )}
+                  <button type="button" disabled={busyId === io.id} onClick={() => void deleteIo(io)} className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50">Delete</button>
                 </div>
               </li>
             ))
@@ -361,6 +381,14 @@ export default function IosTable() {
                             Fulfill
                           </button>
                         )}
+                        <button
+                          type="button"
+                          disabled={busyId === io.id}
+                          onClick={() => void deleteIo(io)}
+                          className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </td>
                   </tr>

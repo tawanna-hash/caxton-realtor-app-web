@@ -2,7 +2,8 @@
 //
 // GET    — single schedule
 // PATCH  — update allow-listed fields (pause/resume via status, edit template/cadence)
-// DELETE — hard delete (only when status != 'active'; pause first)
+// DELETE — paused/ended schedules require an explicit typed-ID permanent
+//          delete acknowledgement; active schedules must be paused first.
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSql, ensureSchema } from "@/lib/db";
@@ -248,7 +249,7 @@ export const PATCH = withAdminTracking(async function PATCH(
 });
 
 export const DELETE = withAdminTracking(async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   ctx: RouteCtx,
 ) {
   const admin = await getCurrentAdmin();
@@ -269,8 +270,19 @@ export const DELETE = withAdminTracking(async function DELETE(
       return NextResponse.json({ error: "not found" }, { status: 404 });
     if (rows[0].status === "active") {
       return NextResponse.json(
-        { error: "pause the schedule before deleting it" },
-        { status: 400 },
+        { error: "pause the schedule before deleting it; active schedules cannot be permanently deleted" },
+        { status: 409 },
+      );
+    }
+    let body: { permanent?: unknown; confirmation_id?: unknown } = {};
+    try { body = await req.json(); } catch { /* Explicit confirmation below rejects an empty body. */ }
+    if (body.permanent !== true || body.confirmation_id !== id) {
+      return NextResponse.json(
+        {
+          error: "permanent deletion requires permanent: true and confirmation_id equal to the schedule id",
+          action: "confirm_permanent_delete",
+        },
+        { status: 409 },
       );
     }
     await sql`DELETE FROM recurring_invoice_schedules WHERE id = ${id}`;

@@ -14,7 +14,7 @@ import { getDaysUntil, humanDate } from './helpers';
 
 export function RenewalsPanel({
   expiringSoon, allRenewals, reminders, activeTab, onTabChange, onOpen, onRenew, onReminderAction,
-  onSendRenewal, onSendReminder,
+  onSendRenewal, onSendReminder, onDeleteReminder,
 }: {
   expiringSoon: AgreementWithAdvertiser[];
   allRenewals: AgreementWithAdvertiser[];
@@ -26,6 +26,7 @@ export function RenewalsPanel({
   onReminderAction: (id: string, patch: Record<string, unknown>) => Promise<void>;
   onSendRenewal?: (r: AgreementWithAdvertiser) => Promise<void>;
   onSendReminder?: (r: RenewalReminder) => Promise<void>;
+  onDeleteReminder?: (r: RenewalReminder) => Promise<void>;
 }) {
   const [noteId, setNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
@@ -275,6 +276,13 @@ export function RenewalsPanel({
                             <button className="px-2 py-0.5 text-xs rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50"
                               onClick={() => onReminderAction(r.id, { status: 'Dismissed' })}>Dismiss</button>
                           </>}
+                          <button
+                            type="button"
+                            className="px-2 py-0.5 text-xs rounded-md border border-red-300 text-red-700 hover:bg-red-50"
+                            onClick={() => void onDeleteReminder?.(r)}
+                          >
+                            Delete
+                          </button>
                         </div>
                       )}
                       {r.note && noteId !== r.id && (

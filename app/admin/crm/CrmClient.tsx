@@ -954,6 +954,48 @@ function EditDrawer({
   // returned by /api/admin/portal-links.
   const [sendingLink, setSendingLink] = useState(false);
   const [linkResult, setLinkResult] = useState<{ url?: string; status?: string; error?: string } | null>(null);
+  const [portalLinks, setPortalLinks] = useState<Array<{
+    id: string; purpose: string; sent_to_email: string | null; sent_at: string | null;
+    link_expires_at: string; consumed_at: string | null; revoked_at: string | null;
+  }>>([]);
+  const [portalLinksLoading, setPortalLinksLoading] = useState(true);
+  const [revokingPortalLink, setRevokingPortalLink] = useState<string | null>(null);
+
+  const loadPortalLinks = useCallback(async () => {
+    setPortalLinksLoading(true);
+    try {
+      const res = await fetch(`/api/admin/portal-links?advertiser_id=${row.id}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+      setPortalLinks(data.links ?? []);
+    } catch (err) {
+      setLinkResult({ error: err instanceof Error ? err.message : 'Could not load portal links' });
+    } finally {
+      setPortalLinksLoading(false);
+    }
+  }, [row.id]);
+
+  useEffect(() => {
+    queueMicrotask(() => { void loadPortalLinks(); });
+  }, [loadPortalLinks]);
+
+  const revokePortalLink = async (link: { id: string; sent_to_email: string | null; purpose: string }) => {
+    const confirmation = window.prompt(
+      `Revoke this ${link.purpose.replace('_', ' ')} portal link${link.sent_to_email ? ` sent to ${link.sent_to_email}` : ''}?\n\nIt will stop working immediately. Type REVOKE to confirm.`,
+    );
+    if (confirmation !== 'REVOKE') return;
+    setRevokingPortalLink(link.id);
+    try {
+      const res = await fetch(`/api/admin/portal-links/${link.id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+      await loadPortalLinks();
+    } catch (err) {
+      setLinkResult({ error: err instanceof Error ? err.message : 'Could not revoke portal link' });
+    } finally {
+      setRevokingPortalLink(null);
+    }
+  };
 
   // Submission-token state. We mirror row.submission_token in local state
   // so the drawer reflects the new token immediately after Generate without
@@ -1026,6 +1068,7 @@ function EditDrawer({
         return;
       }
       setLinkResult({ url: data.consume_url, status: data.email_status });
+      await loadPortalLinks();
     } catch (err) {
       setLinkResult({ error: err instanceof Error ? err.message : 'send failed' });
     } finally {
@@ -1539,6 +1582,39 @@ function EditDrawer({
                   />
                 </div>
               )}
+              <div className="border-t border-gray-200 pt-3">
+                <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">Recent portal links</div>
+                {portalLinksLoading ? (
+                  <div className="text-xs text-gray-500">Loading links…</div>
+                ) : portalLinks.length === 0 ? (
+                  <div className="text-xs text-gray-500">No portal links have been created for this partner.</div>
+                ) : (
+                  <div className="space-y-2">
+                    {portalLinks.map((link) => {
+                      const active = !link.consumed_at && !link.revoked_at && new Date(link.link_expires_at) > new Date();
+                      return (
+                        <div key={link.id} className="flex items-center justify-between gap-3 text-xs">
+                          <div className="min-w-0 text-gray-600">
+                            <span className="font-medium text-gray-800 capitalize">{link.purpose.replace('_', ' ')}</span>
+                            {link.sent_to_email ? <span className="truncate"> · {link.sent_to_email}</span> : null}
+                            <span className="text-gray-400"> · {link.revoked_at ? 'revoked' : link.consumed_at ? 'used' : active ? 'active' : 'expired'}</span>
+                          </div>
+                          {active && (
+                            <button
+                              type="button"
+                              onClick={() => void revokePortalLink(link)}
+                              disabled={revokingPortalLink === link.id}
+                              className="shrink-0 rounded border border-red-300 bg-red-50 px-2 py-1 font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                            >
+                              {revokingPortalLink === link.id ? 'Revoking…' : 'Revoke'}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </Section>
 

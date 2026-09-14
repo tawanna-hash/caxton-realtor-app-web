@@ -76,6 +76,7 @@ export default function NewsletterClient() {
   // search field populated. useState lazy-init reads q at mount only.
   const [qInput, setQInput] = useState<string>(() => q);
   const [exporting, setExporting] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [sort, setSort] = useUrlString<'created_at' | 'email' | 'publication' | 'source' | 'status'>('sort', 'created_at');
   const [dir, setDir] = useUrlString<'asc' | 'desc'>('dir', 'desc');
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -172,6 +173,39 @@ export default function NewsletterClient() {
       alert('Export failed: ' + msg);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const deleteSubscriber = async (subscriber: Subscriber) => {
+    const confirmation = window.prompt(
+      `Permanently delete newsletter subscriber ${subscriber.email}?\n\nThis only removes this newsletter signup. Type the email address to confirm.`,
+    );
+    if (confirmation?.trim().toLowerCase() !== subscriber.email.toLowerCase()) return;
+
+    setDeletingId(subscriber.id);
+    try {
+      const res = await fetch(`/api/admin/newsletter-subscribers?id=${subscriber.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const body = (await res.json().catch(() => null)) as { error?: string; message?: string } | null;
+      if (!res.ok) throw new Error(body?.error || body?.message || `Delete failed (HTTP ${res.status})`);
+      setData((previous) => previous
+        ? {
+            ...previous,
+            total: Math.max(0, previous.total - 1),
+            subscribers: previous.subscribers.filter((row) => row.id !== subscriber.id),
+          }
+        : previous);
+      setSelectedIds((previous) => {
+        const next = new Set(previous);
+        next.delete(subscriber.id);
+        return next;
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Delete failed');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -359,6 +393,16 @@ export default function NewsletterClient() {
                         <dt className="text-gray-500">Joined</dt>
                         <dd className="text-gray-600">{formatDate(s.created_at)}</dd>
                       </dl>
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => void deleteSubscriber(s)}
+                          disabled={deletingId === s.id}
+                          className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                        >
+                          {deletingId === s.id ? 'Deleting…' : 'Delete'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </li>
@@ -382,12 +426,13 @@ export default function NewsletterClient() {
                   <SortableTh label="Source"      col="source"      sort={sort} dir={dir} onSort={toggleSort} />
                   <SortableTh label="Status"      col="status"      sort={sort} dir={dir} onSort={toggleSort} />
                   <SortableTh label="Joined"      col="created_at"  sort={sort} dir={dir} onSort={toggleSort} />
+                  <th className="px-4 py-3 text-right font-medium text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {data.subscribers.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
                       <div className="font-medium text-gray-700">No subscribers found</div>
                       <div className="mt-1 text-xs text-gray-500">Try clearing search or changing the publication, status, or verification filter.</div>
                     </td>
@@ -427,6 +472,16 @@ export default function NewsletterClient() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(s.created_at)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => void deleteSubscriber(s)}
+                        disabled={deletingId === s.id}
+                        className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                      >
+                        {deletingId === s.id ? 'Deleting…' : 'Delete'}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
