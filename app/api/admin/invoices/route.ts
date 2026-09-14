@@ -223,7 +223,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
         ${amountCents},
         ${taxCents},
         ${status},
-        ${status === 'sent' ? new Date().toISOString() : null},
+        ${(body.issued_at as string | null | undefined) ?? (status === 'sent' ? new Date().toISOString() : null)},
         ${(body.due_date as string | null | undefined) ?? null},
         ${billTo.name},
         ${billTo.email},

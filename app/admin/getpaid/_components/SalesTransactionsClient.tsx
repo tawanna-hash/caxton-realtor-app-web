@@ -860,13 +860,14 @@ export function SalesTransactionsClient({
 
       <section className="relative rounded border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className={`${invoiceWorkspace ? 'min-w-[940px]' : 'min-w-[1120px]'} w-full table-fixed text-left text-xs`}>
+          <table className={`${invoiceWorkspace ? 'min-w-[1040px]' : 'min-w-[1220px]'} w-full table-fixed text-left text-xs`}>
             <thead className="border-b border-gray-300 bg-white text-gray-700">
               <tr>
                 <th className="w-10 px-3 py-3">
                   <input type="checkbox" aria-label="Select all visible transactions" checked={allPageSelected} onChange={togglePage} />
                 </th>
                 <th className="w-24 px-2 py-3 font-semibold">Date</th>
+                <th className="w-24 px-2 py-3 font-semibold">Billing date</th>
                 {!invoiceWorkspace && <th className="w-28 px-2 py-3 font-semibold">Type</th>}
                 <th className="w-32 px-2 py-3 font-semibold">No.</th>
                 <th className="w-52 px-2 py-3 font-semibold">Client</th>
@@ -896,6 +897,7 @@ export function SalesTransactionsClient({
                       />
                     </td>
                     <td className="whitespace-nowrap px-2 py-2.5 text-gray-700">{formatTransactionDate(transactionDate(invoice))}</td>
+                    <td className="whitespace-nowrap px-2 py-2.5 text-gray-700">{formatTransactionDate(invoice.issued_at)}</td>
                     {!invoiceWorkspace && <td className="px-2 py-2.5 text-gray-700">{transactionTypeLabel(invoice)}</td>}
                     <td className="truncate px-2 py-2.5 font-medium text-gray-800" title={invoice.number ?? 'Draft'}>{invoice.number ?? 'Draft'}</td>
                     <td className="truncate px-2 py-2.5 text-gray-800" title={invoice.advertiser_name ?? invoice.bill_to_name ?? ''}>{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>

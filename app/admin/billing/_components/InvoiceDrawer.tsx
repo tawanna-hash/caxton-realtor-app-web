@@ -81,6 +81,7 @@ export function InvoiceDrawer({
   const dueIn20 = new Date();
   dueIn20.setDate(dueIn20.getDate() + 20);
   const defaultDueDate = formatDateISO(dueIn20);
+  const defaultBillingDate = formatDateISO(new Date());
 
   const [form, setForm] = useState({
     number: existing ? (existing.number ?? '') : 'INV #16201',
@@ -89,6 +90,9 @@ export function InvoiceDrawer({
     status: (existing?.status ?? 'draft') as InvoiceStatus,
     amount_dollars: initialAmountDollars,
     tax_dollars: existing?.tax_cents != null ? (existing.tax_cents / 100).toString() : (existing ? '' : '0'),
+    billing_date: existing?.issued_at
+      ? formatDateISO(existing.issued_at as string | Date)
+      : (existing ? '' : defaultBillingDate),
     due_date: existing?.due_date
       ? formatDateISO(existing.due_date as string | Date)
       : (existing ? '' : defaultDueDate),
@@ -202,6 +206,7 @@ export function InvoiceDrawer({
           ? Math.round(parseFloat(form.amount_dollars) * 100)
           : (existing && !lineItemsChanged ? existing.amount_cents : (form.line_items.length > 0 ? linesTotal : null)),
         tax_cents: form.tax_dollars ? Math.round(parseFloat(form.tax_dollars) * 100) : 0,
+        issued_at: form.billing_date ? `${form.billing_date}T00:00:00.000Z` : null,
         due_date: form.due_date || null,
         memo: form.memo || null,
         line_items: form.line_items,
@@ -213,6 +218,7 @@ export function InvoiceDrawer({
         status: existing.status,
         amount_cents: existing.amount_cents ?? null,
         tax_cents: existing.tax_cents ?? null,
+        issued_at: existing.issued_at ? `${formatDateISO(existing.issued_at as string | Date)}T00:00:00.000Z` : null,
         due_date: existing.due_date ? formatDateISO(existing.due_date as string | Date) : null,
         memo: existing.memo ?? null,
         line_items: existing.line_items ?? [],
@@ -300,6 +306,7 @@ export function InvoiceDrawer({
             <input value={form.amount_dollars} onChange={(e) => update('amount_dollars', e.target.value)} className={INPUT} placeholder={form.line_items.length > 0 ? String(linesTotal / 100) : ''} inputMode="decimal" />
           </Field>
           <Field label="Tax ($)"><input value={form.tax_dollars} onChange={(e) => update('tax_dollars', e.target.value)} className={INPUT} inputMode="decimal" /></Field>
+          <Field label="Billing date"><input type="date" value={form.billing_date} onChange={(e) => update('billing_date', e.target.value)} className={INPUT} /></Field>
           <Field label="Due date"><input type="date" value={form.due_date} onChange={(e) => update('due_date', e.target.value)} className={INPUT} /></Field>
           <Field label="Status">
             <select value={form.status} onChange={(e) => update('status', e.target.value as InvoiceStatus)} className={INPUT}>
