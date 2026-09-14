@@ -5,6 +5,7 @@ const GET_PAID_LINKS = [
   ['Sales transactions', '/admin/getpaid/salestransactions'],
   ['Invoices', '/admin/getpaid/invoices'],
   ['Payment links', '/admin/getpaid/paymentlinks'],
+  ['Statements', '/admin/getpaid/statements'],
   ['Recurring payments', '/admin/getpaid/reoccuringpayments'],
   ['Stripe payouts', '/admin/getpaid/stripepayouts'],
   ['Deposit Slip', '/admin/reports/deposits'],

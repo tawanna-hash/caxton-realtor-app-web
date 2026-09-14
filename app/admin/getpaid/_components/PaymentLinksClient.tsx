@@ -9,6 +9,7 @@ import {
   ExternalLink,
   Link2,
   Search,
+  Trash2,
 } from 'lucide-react';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { formatCents } from '@/lib/invoices';
@@ -172,6 +173,26 @@ export function PaymentLinksClient({
     setSelectedInvoice(null);
   };
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const deleteLink = async (invoice: InvoiceWithAdvertiser) => {
+    if (!window.confirm(`Remove the payment link for invoice ${invoice.number ?? 'this invoice'}? This does not delete the invoice.`)) {
+      return;
+    }
+    setDeletingId(invoice.id);
+    try {
+      const response = await fetch(`/api/admin/invoices/${invoice.id}/payment-link`, { method: 'DELETE' });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error ?? 'Could not delete the payment link.');
+        return;
+      }
+      await reload();
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
       <header className="flex items-start justify-between gap-4">
@@ -318,6 +339,15 @@ export function PaymentLinksClient({
                       Open link
                       <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                     </a>
+                    <button
+                      type="button"
+                      className="ml-4 inline-flex items-center gap-1 font-medium text-red-600 hover:underline disabled:opacity-50"
+                      onClick={() => deleteLink(invoice)}
+                      disabled={deletingId === invoice.id}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      {deletingId === invoice.id ? 'Deleting…' : 'Delete'}
+                    </button>
                   </td>
                 </tr>
               ))}

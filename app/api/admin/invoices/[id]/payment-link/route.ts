@@ -227,6 +227,50 @@ export const POST = withAdminTracking(async function POST(
   }
 });
 
+export const DELETE = withAdminTracking(async function DELETE(
+  _req: NextRequest,
+  ctx: { params: Promise<{ id: string }> },
+) {
+  const admin = await getCurrentAdmin();
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { id } = await ctx.params;
+  if (!UUID_RE.test(id)) return NextResponse.json({ error: 'invalid id' }, { status: 400 });
+
+  try {
+    await ensureSchema();
+    const sql = getSql();
+    const rows = (await sql`
+      SELECT id, stripe_checkout_session_id FROM invoices WHERE id = ${id}
+    `) as unknown as { id: string; stripe_checkout_session_id: string | null }[];
+    if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
+    const inv = rows[0];
+
+    if (inv.stripe_checkout_session_id && isStripeConfigured()) {
+      try {
+        const stripe = getStripe();
+        await stripe.checkout.sessions.expire(inv.stripe_checkout_session_id);
+      } catch {
+        // Session may already be expired/completed - clearing our stored
+        // link is what matters, not the Stripe-side session state.
+      }
+    }
+
+    await sql`
+      UPDATE invoices
+      SET stripe_payment_link_url = NULL, stripe_checkout_session_id = NULL, updated_at = NOW()
+      WHERE id = ${inv.id}
+    `;
+    revalidateInvoiceViews(inv.id);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('[admin/invoices payment-link DELETE]', err);
+    return NextResponse.json(
+      { error: 'delete failed', detail: err instanceof Error ? err.message : 'error' },
+      { status: 500 },
+    );
+  }
+});
+
 function invoiceEmailText({
   name,
   number,
