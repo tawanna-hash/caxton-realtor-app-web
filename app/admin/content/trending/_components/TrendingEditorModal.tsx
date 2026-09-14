@@ -15,6 +15,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { PUB_ACTIVE } from '@/lib/publications';
+import { sparsePatch } from '@/lib/sparse-patch';
 
 export type TrendingMarket = 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
 
@@ -68,7 +69,8 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
   const [subheadline, setSubheadline] = useState(item?.subheadline ?? '');
   const [articleUrl, setArticleUrl] = useState(item?.article_url ?? '');
   const [thumbnailUrl, setThumbnailUrl] = useState(item?.thumbnail_url ?? '');
-  const [iconPrefix, setIconPrefix] = useState(item?.icon_prefix ?? '🔥');
+  // The flame is a create-only default; preserve an existing blank icon.
+  const [iconPrefix, setIconPrefix] = useState(item ? (item.icon_prefix ?? '') : '🔥');
   const [markets, setMarkets] = useState<TrendingMarket[]>(item?.markets ?? ['realtyline']);
   const [sortOrder, setSortOrder] = useState<number>(item?.sort_order ?? 0);
   const [publishNow, setPublishNow] = useState<boolean>(
@@ -128,18 +130,42 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
     if (markets.length === 0) { setError('Pick at least one market'); return; }
 
     const now = new Date().toISOString();
-    const payload = {
+    const common = {
       headline: headline.trim(),
       subheadline: subheadline.trim() || null,
       thumbnail_url: thumbnailUrl.trim() || null,
       article_url: articleUrl.trim(),
-      icon_prefix: iconPrefix || '🔥',
+      icon_prefix: iconPrefix || null,
       markets,
       sort_order: sortOrder,
-      is_published: publishNow || !!publishedAt,
-      published_at: publishNow ? now : localInputToIso(publishedAt),
       expires_at: localInputToIso(expiresAt),
     };
+    const payload: Record<string, unknown> = isEdit
+      ? sparsePatch(common, {
+          headline: item!.headline,
+          subheadline: item!.subheadline,
+          thumbnail_url: item!.thumbnail_url,
+          article_url: item!.article_url,
+          icon_prefix: item!.icon_prefix,
+          markets: item!.markets,
+          sort_order: item!.sort_order,
+          expires_at: item!.expires_at ? localInputToIso(isoToLocalInput(item!.expires_at)) : null,
+        })
+      : {
+          ...common,
+          // Default icon only belongs to a newly-created record.
+          icon_prefix: iconPrefix || '🔥',
+          is_published: publishNow || !!publishedAt,
+          published_at: publishNow ? now : localInputToIso(publishedAt),
+        };
+    if (isEdit) {
+      const initialPublishNow = !!(item!.is_published && (!item!.published_at || new Date(item!.published_at).getTime() <= Date.now()));
+      const initialPublishedAt = isoToLocalInput(item!.published_at);
+      if (publishNow !== initialPublishNow || (!publishNow && publishedAt !== initialPublishedAt)) {
+        payload.is_published = publishNow || !!publishedAt;
+        payload.published_at = publishNow ? now : localInputToIso(publishedAt);
+      }
+    }
 
     setSaving(true);
     try {

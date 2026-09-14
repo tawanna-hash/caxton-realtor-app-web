@@ -13,6 +13,7 @@ import { formatProductPrice, ITEM_TYPE_LABELS } from '@/lib/products-services';
 import PageTitle from '@/components/ui/PageTitle';
 import { DrawerShell, DrawerFooter, Field } from '@/app/admin/billing/_components/DrawerShell';
 import { INPUT } from '@/app/admin/billing/_components/constants';
+import { sparsePatch } from '@/lib/sparse-patch';
 
 type Props = { initialProducts: ProductService[] };
 
@@ -349,7 +350,9 @@ function ProductDrawer({
   const [category, setCategory] = useState(existing?.category ?? '');
   const [market, setMarket] = useState(existing?.market ?? '');
   const [price, setPrice] = useState(existing?.price_cents != null ? (existing.price_cents / 100).toString() : '');
-  const [incomeAccount, setIncomeAccount] = useState(existing?.income_account ?? 'Advertising revenue');
+  const [incomeAccount, setIncomeAccount] = useState(
+    existing ? (existing.income_account ?? '') : 'Advertising revenue',
+  );
   const [salesDescription, setSalesDescription] = useState(existing?.sales_description ?? '');
   const [saving, setSaving] = useState(false);
 
@@ -367,9 +370,23 @@ function ProductDrawer({
         income_account: incomeAccount.trim() || null,
         sales_description: salesDescription.trim() || null,
       };
+      const requestBody = existing ? sparsePatch(payload, {
+        name: existing.name.trim(),
+        sku: existing.sku?.trim() || null,
+        item_type: existing.item_type,
+        category: existing.category?.trim() || null,
+        market: existing.market?.trim() || null,
+        price_cents: existing.price_cents,
+        income_account: existing.income_account?.trim() || null,
+        sales_description: existing.sales_description?.trim() || null,
+      }) : payload;
+      if (existing && Object.keys(requestBody).length === 0) {
+        onSaved();
+        return;
+      }
       const res = existing
         ? await fetch(`/api/admin/products-services/${existing.id}`, {
-            method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody),
           })
         : await fetch('/api/admin/products-services', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),

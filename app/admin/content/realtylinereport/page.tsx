@@ -54,6 +54,7 @@ export default function RealtyLineMlsAdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<RealtyLineReport>(blankForm());
+  const initialFormRef = useRef<RealtyLineReport | null>(null);
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string>('');
@@ -183,30 +184,33 @@ export default function RealtyLineMlsAdminPage() {
 
   function startNew() {
     setEditingId(null);
+    initialFormRef.current = null;
     setForm(blankForm());
   }
 
   function startEdit(r: ReportRow) {
     setEditingId(r.id);
     const base = makeBlankReport(r.month_label, r.released_at);
-    setForm({
+    const editForm: RealtyLineReport = {
       ...base,
       month_label: r.month_label,
-      month_label_es: r.month_label_es || translateMonthLabel(r.month_label),
+      month_label_es: r.month_label_es ?? '',
       released_at: r.released_at,
-      subtitle_en: r.subtitle_en || DEFAULT_SUBTITLE_EN,
-      subtitle_es: r.subtitle_es || DEFAULT_SUBTITLE_ES,
+      subtitle_en: r.subtitle_en ?? '',
+      subtitle_es: r.subtitle_es ?? '',
       headline_value: r.headline_value,
       headline_delta: r.headline_delta,
       headline_delta_direction: r.headline_delta_direction,
-      headline_label_en: r.headline_label_en || DEFAULT_HEADLINE_LABEL_EN,
-      headline_label_es: r.headline_label_es || DEFAULT_HEADLINE_LABEL_ES,
-      indicator_stats: r.indicator_stats && r.indicator_stats.length > 0 ? r.indicator_stats : base.indicator_stats,
+      headline_label_en: r.headline_label_en ?? '',
+      headline_label_es: r.headline_label_es ?? '',
+      indicator_stats: Array.isArray(r.indicator_stats) ? r.indicator_stats : [],
       listing_counts: Array.isArray(r.listing_counts) ? r.listing_counts : [],
       price_bands: Array.isArray(r.price_bands) ? r.price_bands : [],
       page_count: r.page_count,
       pdf_storage_key: r.pdf_storage_key,
-    });
+    };
+    initialFormRef.current = editForm;
+    setForm(editForm);
   }
 
   async function save() {
@@ -219,7 +223,11 @@ export default function RealtyLineMlsAdminPage() {
         method,
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(editingId
+          ? Object.fromEntries(Object.entries(form).filter(([key, value]) =>
+              JSON.stringify(value) !== JSON.stringify(initialFormRef.current?.[key as keyof RealtyLineReport]),
+            ))
+          : form),
       });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || 'Save failed');

@@ -34,6 +34,7 @@ import {
   type VerifyStatus,
 } from '@/lib/mailing';
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
+import { sparsePatch } from '@/lib/sparse-patch';
 import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 
 import PageTitle from '@/components/ui/PageTitle';
@@ -1772,7 +1773,19 @@ function EditDrawer({
       const res = await fetch(`/api/admin/mailing/${row.id}`, {
         method: 'PATCH', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, tags }),
+        body: JSON.stringify(sparsePatch(
+          { ...form, tags },
+          {
+            first_name: row.first_name ?? '', last_name: row.last_name ?? '', title: row.title ?? '',
+            email: row.email ?? '', company: row.company ?? '', address: row.address ?? '',
+            address_2: row.address_2 ?? '', city: row.city ?? '', state: row.state ?? '',
+            zip: row.zip ?? '', license_number: row.license_number ?? '',
+            // Compare the displayed format so opening an editor never normalizes a
+            // stored phone number unless that control was intentionally edited.
+            phone: formatPhone(row.phone), mobile_phone: formatPhone(row.mobile_phone),
+            email_notes: row.email_notes ?? '', tags: Array.isArray(row.tags) ? row.tags : [],
+          },
+        )),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);

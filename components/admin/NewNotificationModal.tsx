@@ -16,6 +16,7 @@
 // refreshes the list via router.refresh().
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { sparsePatch } from '@/lib/sparse-patch';
 
 type Category =
   | 'issue_release'
@@ -75,7 +76,9 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
   const [title, setTitle] = useState(existing?.title || '');
   const [body, setBody] = useState(existing?.body || '');
   const [category, setCategory] = useState<Category>((existing?.category as Category) || 'breaking_news');
-  const [deepLinkUrl, setDeepLinkUrl] = useState(existing?.deep_link_url || '/dashboard');
+  // A create gets the helpful default; an existing blank link remains blank until
+  // an operator explicitly changes it.
+  const [deepLinkUrl, setDeepLinkUrl] = useState(existing ? (existing.deep_link_url ?? '') : '/dashboard');
   const [market, setMarket] = useState<Market>(initialMarket);
   const [schedule, setSchedule] = useState<'now' | 'later'>(
     existing?.scheduled_for ? 'later' : 'now',
@@ -132,7 +135,32 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify(isEdit ? (() => {
+          // PATCH must not turn the editor's initial state into instructions for
+          // unrelated columns (notably target channels or a scheduled send).
+          const initial = {
+            title: existing!.title,
+            body: existing!.body,
+            category: existing!.category,
+            deepLinkUrl: existing!.deep_link_url,
+            market: (existing!.target_audience?.market as Market | undefined) ?? 'all',
+          };
+          const current = {
+            title: title.trim(),
+            body: body.trim(),
+            category,
+            deepLinkUrl: deepLinkUrl.trim() || null,
+            market,
+          };
+          const patch = sparsePatch(current, initial) as Record<string, unknown>;
+          const initialSchedule = existing!.scheduled_for ? 'later' : 'now';
+          const initialScheduledFor = toLocalInputValue(existing!.scheduled_for);
+          if (schedule !== initialSchedule || (schedule === 'later' && scheduledFor !== initialScheduledFor)) {
+            patch.sendNow = schedule === 'now';
+            patch.scheduledFor = schedule === 'later' ? new Date(scheduledFor).toISOString() : null;
+          }
+          return patch;
+        })() : {
           title: title.trim(),
           body: body.trim(),
           category,

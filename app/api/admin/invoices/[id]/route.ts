@@ -86,6 +86,9 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
     ` as unknown as Array<Invoice & { amount_paid_cents: number }>;
     if (existing.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const prevStatus = existing[0].status;
+    if ('line_items' in body && !Array.isArray(body.line_items)) {
+      return NextResponse.json({ error: 'line_items must be an array' }, { status: 400 });
+    }
 
     if ('agreement_id' in body && body.agreement_id !== null) {
       if (typeof body.agreement_id !== 'string' || !UUID_RE.test(body.agreement_id)) {
@@ -168,7 +171,7 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
         case 'bill_to_email':            await sql`UPDATE invoices SET bill_to_email = ${raw}                           WHERE id = ${id}`; break;
         case 'bill_to_address':          await sql`UPDATE invoices SET bill_to_address = ${raw}                         WHERE id = ${id}`; break;
         case 'memo':                     await sql`UPDATE invoices SET memo = ${raw}                                    WHERE id = ${id}`; break;
-        case 'line_items':               await sql`UPDATE invoices SET line_items = ${JSON.stringify(Array.isArray(raw) ? raw : [])}::jsonb WHERE id = ${id}`; break;
+        case 'line_items':               await sql`UPDATE invoices SET line_items = ${JSON.stringify(raw)}::jsonb WHERE id = ${id}`; break;
       }
       updated.push(field);
     }

@@ -116,6 +116,7 @@ export function EventForm({
 }) {
   const router = useRouter();
   const [data, setData] = useState<EventFormData>(initial);
+  const initialPayloadRef = useRef<Record<string, unknown>>(fieldsToPayload(initial));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -185,7 +186,16 @@ export function EventForm({
       return;
     }
 
-    const payload = fieldsToPayload(data);
+    const fullPayload = fieldsToPayload(data);
+    const payload = mode === 'edit'
+      ? Object.fromEntries(Object.entries(fullPayload).filter(([key, value]) =>
+          JSON.stringify(value) !== JSON.stringify(initialPayloadRef.current[key]),
+        ))
+      : fullPayload;
+    if (mode === 'edit' && Object.keys(payload).length === 0) {
+      router.push('/admin/events');
+      return;
+    }
 
     setSubmitting(true);
     try {

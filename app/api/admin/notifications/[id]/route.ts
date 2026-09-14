@@ -84,53 +84,55 @@ export const PATCH = withAdminTracking(
     }
 
     const update = (await req.json()) as UpdateBody;
+    const has = (key: keyof UpdateBody) => key in update;
 
-    const newTitle = (update.title ?? existing.title).trim();
-    const newBody = (update.body ?? existing.body).trim();
-    const newCategory = (update.category ?? existing.category) as Category;
-    const newDeepLink =
-      update.deepLinkUrl === undefined ? existing.deep_link_url : update.deepLinkUrl || null;
+    // Preserve omitted columns exactly. A PATCH can independently change a
+    // notification field without rewriting a stale editor snapshot.
+    const newTitle = has('title') ? (update.title ?? '').trim() : existing.title;
+    const newBody = has('body') ? (update.body ?? '').trim() : existing.body;
+    const newCategory = has('category') ? update.category : existing.category;
+    const newDeepLink = has('deepLinkUrl')
+      ? (update.deepLinkUrl?.trim() || null)
+      : existing.deep_link_url;
+    if (!newTitle) return NextResponse.json({ error: 'title required' }, { status: 400 });
+    if (!newBody) return NextResponse.json({ error: 'body required' }, { status: 400 });
 
     const previousMarket = (existing.target_audience?.market as Market | 'all' | undefined) ?? 'all';
-    const newMarketRaw =
-      update.market === undefined ? previousMarket : update.market ?? 'all';
+    const newMarketRaw = has('market') ? (update.market ?? 'all') : previousMarket;
     const newMarket: Market | 'all' = newMarketRaw === 'all' ? 'all' : (newMarketRaw as Market);
-
     const previousChannels = (existing.target_audience?.channels as Array<'web_push' | 'email'>) || ['web_push'];
-    const newChannels =
-      update.channels && update.channels.length > 0 ? update.channels : previousChannels;
+    const newChannels = has('channels') && Array.isArray(update.channels) && update.channels.length > 0
+      ? update.channels
+      : previousChannels;
 
-    if (!newTitle) {
-      return NextResponse.json({ error: 'title required' }, { status: 400 });
+    const scheduleChanged = has('scheduledFor') || update.sendNow === true;
+    let scheduledFor = existing.scheduled_for ? new Date(existing.scheduled_for) : null;
+    if (has('scheduledFor')) {
+      if (update.scheduledFor !== null && typeof update.scheduledFor !== 'string') {
+        return NextResponse.json({ error: 'scheduledFor must be an ISO date or null' }, { status: 400 });
+      }
+      scheduledFor = update.scheduledFor ? new Date(update.scheduledFor) : null;
+      if (scheduledFor && Number.isNaN(scheduledFor.getTime())) {
+        return NextResponse.json({ error: 'scheduledFor must be a valid date' }, { status: 400 });
+      }
     }
-    if (!newBody) {
-      return NextResponse.json({ error: 'body required' }, { status: 400 });
-    }
-
-    const scheduledForRaw =
-      update.scheduledFor === undefined
-        ? existing.scheduled_for
-        : update.scheduledFor;
-    const scheduledFor = scheduledForRaw ? new Date(scheduledForRaw) : null;
-    const sendNow = !!update.sendNow && !scheduledFor;
+    const sendNow = update.sendNow === true && !scheduledFor;
     const newStatus: Status = sendNow ? 'sending' : scheduledFor ? 'scheduled' : 'draft';
 
-    const targetAudience = {
-      market: newMarket,
-      channels: newChannels,
-    };
-
-    await sql`
-      UPDATE notifications
-         SET title = ${newTitle},
-             body = ${newBody},
-             category = ${newCategory}::notification_category_enum,
-             deep_link_url = ${newDeepLink},
-             target_audience = ${JSON.stringify(targetAudience)}::jsonb,
-             scheduled_for = ${scheduledFor},
-             status = ${newStatus}::notification_status_enum
-       WHERE id = ${id}::uuid
-    `;
+    if (has('title')) await sql`UPDATE notifications SET title = ${newTitle} WHERE id = ${id}::uuid`;
+    if (has('body')) await sql`UPDATE notifications SET body = ${newBody} WHERE id = ${id}::uuid`;
+    if (has('category')) await sql`UPDATE notifications SET category = ${newCategory}::notification_category_enum WHERE id = ${id}::uuid`;
+    if (has('deepLinkUrl')) await sql`UPDATE notifications SET deep_link_url = ${newDeepLink} WHERE id = ${id}::uuid`;
+    if (has('market') || has('channels')) {
+      await sql`UPDATE notifications
+        SET target_audience = ${JSON.stringify({ market: newMarket, channels: newChannels })}::jsonb
+        WHERE id = ${id}::uuid`;
+    }
+    if (scheduleChanged) {
+      await sql`UPDATE notifications
+        SET scheduled_for = ${scheduledFor}, status = ${newStatus}::notification_status_enum
+        WHERE id = ${id}::uuid`;
+    }
 
     let sendResult: { sent: number; failed: number; revoked: number } | null = null;
 

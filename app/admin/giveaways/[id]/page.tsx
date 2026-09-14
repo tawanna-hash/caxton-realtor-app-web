@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
@@ -44,6 +44,7 @@ export default function GiveawayDetailPage() {
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
   const [drawAt, setDrawAt] = useState('');
+  const initialDetailsRef = useRef<Record<string, unknown> | null>(null);
 
   const loadGiveaway = async () => {
     const data = await adminApi.getGiveaway(id);
@@ -64,6 +65,16 @@ export default function GiveawayDetailPage() {
     setStartsAt(toDateTimeLocal(g.starts_at as string));
     setEndsAt(toDateTimeLocal(g.ends_at as string));
     setDrawAt(toDateTimeLocal(g.draw_at as string));
+    initialDetailsRef.current = {
+      title: (g.title as string) || '',
+      description: (g.description as string | null) ?? null,
+      prize: (g.prize as string) || '',
+      publication: (g.publication as string) || 'both',
+      status: (g.status as string) || 'draft',
+      startsAt: g.starts_at ? new Date(g.starts_at as string).toISOString() : null,
+      endsAt: g.ends_at ? new Date(g.ends_at as string).toISOString() : null,
+      drawAt: g.draw_at ? new Date(g.draw_at as string).toISOString() : null,
+    };
     setLoading(false);
   };
 
@@ -82,18 +93,20 @@ export default function GiveawayDetailPage() {
     setError(null);
     setSaving(true);
     try {
-      // Schema (lib/server/schemas/giveaways.ts) expects camelCase keys
-      // and rejects null description / drawAt. Omit those keys when empty.
-      const payload: Record<string, unknown> = {
+      const fullPayload: Record<string, unknown> = {
         title,
+        description: description || null,
         prize,
         publication,
         status,
-        startsAt: new Date(startsAt).toISOString(),
-        endsAt: new Date(endsAt).toISOString(),
+        startsAt: startsAt ? new Date(startsAt).toISOString() : null,
+        endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+        drawAt: drawAt ? new Date(drawAt).toISOString() : null,
       };
-      if (description) payload.description = description;
-      if (drawAt) payload.drawAt = new Date(drawAt).toISOString();
+      const payload = Object.fromEntries(Object.entries(fullPayload).filter(([key, value]) =>
+        JSON.stringify(value) !== JSON.stringify(initialDetailsRef.current?.[key]),
+      ));
+      if (Object.keys(payload).length === 0) return;
       await adminApi.updateGiveaway(id, payload);
       await loadGiveaway();
     } catch (err) {

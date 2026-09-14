@@ -14,6 +14,7 @@ import { INPUT, INV_STATUS } from './constants';
 import { formatDateISO } from './helpers';
 import type { AdvertiserOption } from './types';
 import { ProductServiceSearch } from './ProductServiceSearch';
+import { sparsePatch } from '@/lib/sparse-patch';
 
 // Minimal shape of an agreement_line_items row, as returned by
 // GET /api/admin/agreements/[id]/line-items.
@@ -82,15 +83,15 @@ export function InvoiceDrawer({
   const defaultDueDate = formatDateISO(dueIn20);
 
   const [form, setForm] = useState({
-    number: existing?.number ?? 'INV #16201',
+    number: existing ? (existing.number ?? '') : 'INV #16201',
     advertiser_id: initialAdvertiserId as number | null,
     agreement_id: initialAgreementId,
     status: (existing?.status ?? 'draft') as InvoiceStatus,
     amount_dollars: initialAmountDollars,
-    tax_dollars: existing?.tax_cents != null ? (existing.tax_cents / 100).toString() : '0',
+    tax_dollars: existing?.tax_cents != null ? (existing.tax_cents / 100).toString() : (existing ? '' : '0'),
     due_date: existing?.due_date
       ? formatDateISO(existing.due_date as string | Date)
-      : defaultDueDate,
+      : (existing ? '' : defaultDueDate),
     memo: existing?.memo ?? (seed ? 'Generated from agreement' : ''),
     line_items: initialLineItems as InvoiceLineItem[],
   });
@@ -189,22 +190,43 @@ export function InvoiceDrawer({
     if (isCreate && !form.advertiser_id) { onError('partner required'); return; }
     setSaving(true);
     try {
+      const lineItemsChanged = Boolean(
+        existing && JSON.stringify(form.line_items) !== JSON.stringify(existing.line_items ?? []),
+      );
       const payload: Record<string, unknown> = {
         number: form.number.trim() || null,
         advertiser_id: form.advertiser_id,
         agreement_id: form.agreement_id || null,
         status: form.status,
-        amount_cents: form.amount_dollars ? Math.round(parseFloat(form.amount_dollars) * 100) : (form.line_items.length > 0 ? linesTotal : null),
+        amount_cents: form.amount_dollars
+          ? Math.round(parseFloat(form.amount_dollars) * 100)
+          : (existing && !lineItemsChanged ? existing.amount_cents : (form.line_items.length > 0 ? linesTotal : null)),
         tax_cents: form.tax_dollars ? Math.round(parseFloat(form.tax_dollars) * 100) : 0,
         due_date: form.due_date || null,
         memo: form.memo || null,
         line_items: form.line_items,
       };
+      const initialPayload: Record<string, unknown> | null = existing ? {
+        number: existing.number ?? null,
+        advertiser_id: existing.advertiser_id,
+        agreement_id: existing.agreement_id ?? null,
+        status: existing.status,
+        amount_cents: existing.amount_cents ?? null,
+        tax_cents: existing.tax_cents ?? null,
+        due_date: existing.due_date ? formatDateISO(existing.due_date as string | Date) : null,
+        memo: existing.memo ?? null,
+        line_items: existing.line_items ?? [],
+      } : null;
+      const requestBody = initialPayload ? sparsePatch(payload, initialPayload) : payload;
+      if (existing && Object.keys(requestBody).length === 0) {
+        await onSaved();
+        return;
+      }
       const url = isCreate ? '/api/admin/invoices' : `/api/admin/invoices/${existing.id}`;
       const res = await fetch(url, {
         method: isCreate ? 'POST' : 'PATCH',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(requestBody),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

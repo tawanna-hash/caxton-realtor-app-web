@@ -16,6 +16,9 @@ export const createGiveawaySchema = z.object({
 });
 
 export const updateGiveawaySchema = createGiveawaySchema.partial().extend({
+  // Unlike creation, an edit may deliberately clear either optional field.
+  description: z.string().max(5000).nullable().optional(),
+  drawAt: z.string().datetime().nullable().optional(),
   status: z.enum(['draft', 'active', 'closed', 'announced']).optional(),
 });
 
