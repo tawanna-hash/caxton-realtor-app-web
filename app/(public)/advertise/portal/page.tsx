@@ -1,7 +1,7 @@
 // app/(public)/advertise/portal/page.tsx
 //
-// Self-Service Portal landing — public-facing hub.
-//   Single path: Self-Service (Browse Products) → /advertise/placements
+// Self-Service Portal landing — public-facing hub for digital placements
+// and e-Blast ordering.
 //
 // Below the hub we surface the bundle-savings ladder (1.7× / 2.4× / 3×) so
 // advertisers see the multi-market savings story before clicking through,
@@ -16,7 +16,7 @@
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 import TrackPageView from '@/components/analytics/TrackPageView';
-import { APP_AD_SLOTS, MARKET_MULTIPLIERS, weeklyRateForMarkets } from '@/lib/media-kit';
+import { APP_AD_SLOTS, EBLASTS, MARKET_MULTIPLIERS, weeklyRateForMarkets } from '@/lib/media-kit';
 
 export const metadata = {
   title: 'Self-Service Portal \u2014 Realty News Now',
@@ -60,6 +60,12 @@ export default function SelfServicePortalPage() {
   const maxPrice = highestWeekly();
   const sample = representativeSlot();
   const baseRate = sample.weeklySingle;
+  const eblastStartingPrice = Math.min(
+    ...EBLASTS.flatMap((pkg) => [
+      pkg.priceByPub?.realtyline ?? pkg.price,
+      pkg.priceByPub?.newsline ?? pkg.price,
+    ]),
+  );
 
   // Bundle ladder rows derived from MARKET_MULTIPLIERS so what we show is
   // exactly what checkout charges. Savings = (markets * 1.0) \u2212 multiplier,
@@ -88,7 +94,7 @@ export default function SelfServicePortalPage() {
           </p>
         </header>
 
-        {/* Two-path hub */}
+        {/* Product paths */}
         <section className="grid gap-5 md:grid-cols-2 mb-12">
           {/* Self-service card */}
           <article className="relative rounded-md overflow-hidden bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#5a0e5f] text-white p-7 md:p-8 shadow-lg">
@@ -151,6 +157,56 @@ export default function SelfServicePortalPage() {
             >
               Browse Products
               <svg viewBox="0 0 20 20" className="w-4 h-4" aria-hidden="true">
+                <path fill="currentColor" d="M10.293 4.293a1 1 0 0 1 1.414 0l5 5a1 1 0 0 1 0 1.414l-5 5a1 1 0 1 1-1.414-1.414L13.586 11H4a1 1 0 1 1 0-2h9.586l-3.293-3.293a1 1 0 0 1 0-1.414Z" />
+              </svg>
+            </Link>
+          </article>
+
+          <article className="relative overflow-hidden rounded-md border border-brand-700 bg-white p-7 shadow-sm md:p-8">
+            <span className="absolute right-5 top-5 inline-flex items-center rounded-md bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-900">
+              From ${eblastStartingPrice.toLocaleString()}
+            </span>
+            <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-md bg-violet-100 text-brand-700">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <path d="m3 7 9 6 9-6" />
+              </svg>
+            </div>
+            <h2 className="mb-3 text-2xl font-bold tracking-tight text-brand-700 md:text-3xl">
+              e-Blast Ordering
+            </h2>
+            <p className="mb-6 text-sm font-light leading-relaxed text-gray-700 md:text-base">
+              Reach RealtyLine Austin, Newsline San Antonio, or both audiences
+              with a dedicated email campaign.
+            </p>
+            <ul className="mb-7 space-y-2.5 text-sm text-gray-800 md:text-[15px]">
+              {[
+                'Choose your audience and package',
+                'Request preferred send dates',
+                'Upload creative now or provide it later',
+                'Pay securely by card or eligible bank account',
+              ].map((line) => (
+                <li key={line} className="flex items-start gap-2.5">
+                  <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-orange-500" />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/advertise/eblast"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-800 md:text-base"
+            >
+              Order an e-Blast
+              <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">
                 <path fill="currentColor" d="M10.293 4.293a1 1 0 0 1 1.414 0l5 5a1 1 0 0 1 0 1.414l-5 5a1 1 0 1 1-1.414-1.414L13.586 11H4a1 1 0 1 1 0-2h9.586l-3.293-3.293a1 1 0 0 1 0-1.414Z" />
               </svg>
             </Link>

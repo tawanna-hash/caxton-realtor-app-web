@@ -1,10 +1,9 @@
 // e-Blast (email) rate card landing page.
 //
 // Lists the e-Blast packages with their per-send pricing and features,
-// then routes the buyer into the unified inquiry form with
-// channel=email and the chosen package_id pre-selected. No self-serve
-// checkout — email is quote-then-invoice via admin (see PR C quote
-// builder, which also handles email).
+// then routes the buyer into the self-service e-Blast checkout with the
+// package and publication pre-selected. Custom campaigns can still use the
+// inquiry flow at the bottom of the page.
 
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
@@ -14,7 +13,7 @@ import { EBLASTS } from '@/lib/media-kit';
 export const metadata = {
   title: 'e-Blast Advertising — RealtyLine & Newsline San Antonio',
   description:
-    'Exclusive e-Blasts to 64,000+ RealtyLine and Newsline San Antonio email subscribers. Pick a package and we will follow up with a quote and invoice.',
+    'Exclusive e-Blasts to 64,000+ RealtyLine and Newsline San Antonio email subscribers. Choose a package, reserve preferred dates, and pay securely online.',
 };
 
 // Stable id for an e-Blast package — same convention as the public
@@ -43,8 +42,8 @@ export default function AdvertiseEmailPage() {
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           Your message, your design, sent as a dedicated email to RealtyLine
           and Newsline San Antonio subscribers — agents, brokers, builders, and lenders
-          across Central and South Texas. Pick a package below and we&apos;ll
-          send a quote with the exact send date and invoice.
+          across Central and South Texas. Pick a package below, reserve your
+          preferred dates, and check out securely online.
         </p>
       </header>
 
@@ -113,10 +112,10 @@ export default function AdvertiseEmailPage() {
                         {features.map((f) => (<li key={f}>{f}</li>))}
                       </ul>
                       <Link
-                        href={`/advertise/inquire?channel=email&package=${encodeURIComponent(id)}${row.pub === 'newsline' ? '&pub=newsline' : ''}`}
+                        href={`/advertise/eblast?package=${encodeURIComponent(id)}&pub=${row.pub}`}
                         className="mt-4 inline-flex items-center justify-center px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-brand-800 transition"
                       >
-                        Request quote
+                        Order now
                       </Link>
                     </article>
                   );
@@ -138,10 +137,10 @@ export default function AdvertiseEmailPage() {
                 <span>Package No. 1: <span className="text-brand-300 font-semibold">{fmtUsd(pkg1.priceByPub?.both ?? 0)}/send</span></span>
                 <span>Package No. 2: <span className="text-brand-300 font-semibold">{fmtUsd(pkg2.priceByPub?.both ?? 0)}/send</span></span>
                 <Link
-                  href="/advertise/inquire?channel=email"
+                  href="/advertise/eblast?pub=both"
                   className="underline hover:no-underline"
                 >
-                  Request bundle quote →
+                  Order bundle →
                 </Link>
               </div>
             </div>

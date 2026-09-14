@@ -45,6 +45,7 @@ const ADVERTISE: Entry[] = [
   { path: '/advertise/placements',changeFrequency: 'weekly',  priority: 0.8 },
   { path: '/advertise/print',     changeFrequency: 'monthly', priority: 0.7 },
   { path: '/advertise/email',     changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/advertise/eblast',    changeFrequency: 'monthly', priority: 0.8 },
   { path: '/advertise/inquire',   changeFrequency: 'monthly', priority: 0.6 },
 ];
 
