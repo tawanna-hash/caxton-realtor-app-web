@@ -8,7 +8,9 @@ import {
 } from '@/lib/stripe';
 import {
   EBLASTS,
+  EBLAST_ORDER_MARKET_IDS,
   eblastPriceForPub,
+  isEblastCheckoutEnabled,
   isEblastAvailableForPub,
   type EBlast,
   type MediaKitPub,
@@ -17,7 +19,7 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const publicationSchema = z.enum(['realtyline', 'newsline', 'both']);
+const publicationSchema = z.enum(EBLAST_ORDER_MARKET_IDS);
 const isoDate = /^\d{4}-\d{2}-\d{2}$/;
 
 const schema = z.object({
@@ -69,6 +71,9 @@ export async function POST(request: NextRequest) {
     );
   }
   const data = parsed.data;
+  if (!isEblastCheckoutEnabled(data.publication)) {
+    return NextResponse.json({ error: 'market_coming_soon' }, { status: 409 });
+  }
   const pkg = EBLASTS.find((candidate) => packageId(candidate) === data.package_id);
   if (!pkg) {
     return NextResponse.json({ error: 'unknown_eblast_package' }, { status: 400 });

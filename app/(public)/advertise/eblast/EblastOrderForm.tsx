@@ -9,9 +9,13 @@ import {
   useElements,
   useStripe,
 } from '@stripe/react-stripe-js';
-import type { EBlast } from '@/lib/media-kit';
+import {
+  EBLAST_ORDER_MARKETS,
+  type EBlast,
+  type EblastOrderMarketId,
+} from '@/lib/media-kit';
 
-type Publication = 'realtyline' | 'newsline' | 'both';
+type Publication = EblastOrderMarketId;
 
 type Props = {
   packages: EBlast[];
@@ -27,16 +31,6 @@ type IntentResponse = {
   baseCents: number;
   surchargeCents: number;
 };
-
-const PUBLICATIONS: Array<{
-  id: Publication;
-  label: string;
-  audience: string;
-}> = [
-  { id: 'realtyline', label: 'RealtyLine Austin', audience: '44K+ subscribers' },
-  { id: 'newsline', label: 'Newsline San Antonio', audience: '20K+ subscribers' },
-  { id: 'both', label: 'Both markets', audience: '64K+ subscribers · bundle pricing' },
-];
 
 function packageId(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '');
@@ -122,6 +116,8 @@ export default function EblastOrderForm({
     !uploading;
 
   function changePublication(next: Publication) {
+    const market = EBLAST_ORDER_MARKETS.find((candidate) => candidate.id === next);
+    if (!market?.checkoutEnabled) return;
     setPublication(next);
     setIntent(null);
     const selectedIsAvailable = packages
@@ -223,8 +219,8 @@ export default function EblastOrderForm({
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start">
       <div className="space-y-6">
         <Section number="1" title="Choose your audience">
-          <div className="grid gap-2 sm:grid-cols-3">
-            {PUBLICATIONS.map((pub) => {
+          <div className="grid gap-2 sm:grid-cols-2">
+            {EBLAST_ORDER_MARKETS.map((pub) => {
               const active = publication === pub.id;
               return (
                 <button
@@ -232,13 +228,23 @@ export default function EblastOrderForm({
                   type="button"
                   onClick={() => changePublication(pub.id)}
                   aria-pressed={active}
+                  disabled={!pub.checkoutEnabled}
                   className={`min-h-20 rounded-md border px-3 py-3 text-left transition ${
                     active
                       ? 'border-brand-700 bg-brand-700 text-white'
+                      : !pub.checkoutEnabled
+                        ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
                       : 'border-gray-300 bg-white text-gray-800 hover:border-brand-700'
                   }`}
                 >
-                  <span className="block text-sm font-semibold">{pub.label}</span>
+                  <span className="flex items-start justify-between gap-2 text-sm font-semibold">
+                    <span>{pub.label}</span>
+                    {!pub.checkoutEnabled && (
+                      <span className="shrink-0 rounded-md bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-800">
+                        Coming soon
+                      </span>
+                    )}
+                  </span>
                   <span
                     className={`mt-1 block text-xs ${
                       active ? 'text-violet-100' : 'text-gray-500'
@@ -514,7 +520,7 @@ export default function EblastOrderForm({
         </p>
         <h2 className="mt-2 text-xl font-bold">{selectedPackage?.name}</h2>
         <p className="mt-1 text-sm text-violet-100">
-          {PUBLICATIONS.find((pub) => pub.id === publication)?.label}
+          {EBLAST_ORDER_MARKETS.find((pub) => pub.id === publication)?.label}
         </p>
         <ul className="mt-5 space-y-2 text-sm text-violet-50">
           {features.map((feature) => (

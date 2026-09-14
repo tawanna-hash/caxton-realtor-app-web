@@ -215,6 +215,59 @@ export type MediaKitPub =
   | 'realtyline-dallas'
   | 'both';
 
+export const EBLAST_ORDER_MARKETS = [
+  {
+    id: 'realtyline',
+    label: 'RealtyLine Austin',
+    audience: '44K+ subscribers',
+    checkoutEnabled: true,
+  },
+  {
+    id: 'newsline',
+    label: 'Newsline San Antonio',
+    audience: '20K+ subscribers',
+    checkoutEnabled: true,
+  },
+  {
+    id: 'both',
+    label: 'Austin + San Antonio',
+    audience: '64K+ subscribers · bundle pricing',
+    checkoutEnabled: true,
+  },
+  {
+    id: 'realtyline-houston',
+    label: 'RealtyLine Houston',
+    audience: '50K subscribers',
+    checkoutEnabled: false,
+  },
+  {
+    id: 'realtyline-dallas',
+    label: 'RealtyLine Dallas/Fort Worth',
+    audience: '27K subscribers',
+    checkoutEnabled: false,
+  },
+] as const satisfies ReadonlyArray<{
+  id: MediaKitPub;
+  label: string;
+  audience: string;
+  checkoutEnabled: boolean;
+}>;
+
+export const EBLAST_ORDER_MARKET_IDS = [
+  'realtyline',
+  'newsline',
+  'both',
+  'realtyline-houston',
+  'realtyline-dallas',
+] as const;
+
+export type EblastOrderMarketId = (typeof EBLAST_ORDER_MARKET_IDS)[number];
+
+/** Flip checkoutEnabled above to launch a wired e-Blast market. */
+export function isEblastCheckoutEnabled(pub: EblastOrderMarketId): boolean {
+  return EBLAST_ORDER_MARKETS.find((market) => market.id === pub)?.checkoutEnabled ?? false;
+}
+
 /**
  * Resolve the set of publication scopes a slot can be booked on. Centralized
  * so checkout UI, server-side payment-intent validation, and admin reference

@@ -1,7 +1,12 @@
 import type { Metadata } from 'next';
 import PageTitle from '@/components/ui/PageTitle';
 import TrackPageView from '@/components/analytics/TrackPageView';
-import { EBLASTS } from '@/lib/media-kit';
+import {
+  EBLASTS,
+  EBLAST_ORDER_MARKET_IDS,
+  isEblastCheckoutEnabled,
+  type EblastOrderMarketId,
+} from '@/lib/media-kit';
 import EblastOrderForm from './EblastOrderForm';
 
 export const metadata: Metadata = {
@@ -22,8 +27,14 @@ export default async function EblastOrderPage({ searchParams }: PageProps) {
   )
     ? sp.package
     : undefined;
-  const initialPublication =
-    sp.pub === 'newsline' || sp.pub === 'both' ? sp.pub : 'realtyline';
+  const requestedPublication = EBLAST_ORDER_MARKET_IDS.includes(
+    sp.pub as EblastOrderMarketId,
+  )
+    ? (sp.pub as EblastOrderMarketId)
+    : 'realtyline';
+  const initialPublication = isEblastCheckoutEnabled(requestedPublication)
+    ? requestedPublication
+    : 'realtyline';
 
   return (
     <>

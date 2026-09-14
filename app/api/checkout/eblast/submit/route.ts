@@ -21,6 +21,9 @@ function packageId(name: string): string {
 function dbPublication(publication: string): string {
   if (publication === 'realtyline') return 'austin';
   if (publication === 'newsline') return 'san_antonio';
+  if (publication === 'realtyline-houston' || publication === 'realtyline-dallas') {
+    return publication;
+  }
   return 'both';
 }
 

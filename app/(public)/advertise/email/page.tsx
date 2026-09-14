@@ -8,7 +8,7 @@
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 import TrackPageView from '@/components/analytics/TrackPageView';
-import { EBLASTS } from '@/lib/media-kit';
+import { EBLASTS, EBLAST_ORDER_MARKETS } from '@/lib/media-kit';
 
 export const metadata = {
   title: 'e-Blast Advertising — RealtyLine & Newsline San Antonio',
@@ -86,20 +86,24 @@ export default function AdvertiseEmailPage() {
       {/* Packages grid — PDF-match: grouped by pub, bundle strip */}
       <section className="mb-14 space-y-6">
         {(
-          [
-            { pub: 'realtyline' as const, label: 'RealtyLine Austin',    subs: '44K+ subscribers' },
-            { pub: 'newsline' as const,   label: 'Newsline San Antonio', subs: '20K+ subscribers' },
-          ]
+          EBLAST_ORDER_MARKETS.filter((market) => market.id !== 'both')
         ).map((row) => {
-          const available = EBLASTS.filter((b) => !b.availablePubs || b.availablePubs.includes(row.pub));
+          const available = EBLASTS.filter((b) => !b.availablePubs || b.availablePubs.includes(row.id));
           return (
-            <div key={row.pub} className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-5">
-              <div className="text-base font-semibold text-gray-900 mb-3">{row.label}</div>
+            <div key={row.id} className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-5">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="text-base font-semibold text-gray-900">{row.label}</div>
+                {!row.checkoutEnabled && (
+                  <span className="rounded-md bg-orange-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-orange-800">
+                    Coming soon
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {available.map((eb) => {
                   const id = eblastId(eb.name);
-                  const price = eb.priceByPub?.[row.pub] ?? eb.price;
-                  const features = eb.featuresByPub?.[row.pub] ?? eb.features;
+                  const price = eb.priceByPub?.[row.id] ?? eb.price;
+                  const features = eb.featuresByPub?.[row.id] ?? eb.features;
                   return (
                     <article key={id} className="flex flex-col rounded-md border border-gray-200 bg-white p-5">
                       <p className="text-sm text-gray-700">{eb.name}</p>
@@ -107,16 +111,22 @@ export default function AdvertiseEmailPage() {
                         {fmtUsd(price)}
                         <span className="text-sm font-semibold ml-0.5">/send</span>
                       </p>
-                      <p className="text-xs text-gray-600 mt-0.5">Based on {row.subs}</p>
+                      <p className="text-xs text-gray-600 mt-0.5">Based on {row.audience}</p>
                       <ul className="text-sm text-gray-900 list-disc pl-5 mt-3 space-y-1 flex-1">
                         {features.map((f) => (<li key={f}>{f}</li>))}
                       </ul>
-                      <Link
-                        href={`/advertise/eblast?package=${encodeURIComponent(id)}&pub=${row.pub}`}
-                        className="mt-4 inline-flex items-center justify-center px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-brand-800 transition"
-                      >
-                        Order now
-                      </Link>
+                      {row.checkoutEnabled ? (
+                        <Link
+                          href={`/advertise/eblast?package=${encodeURIComponent(id)}&pub=${row.id}`}
+                          className="mt-4 inline-flex items-center justify-center rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-800"
+                        >
+                          Order now
+                        </Link>
+                      ) : (
+                        <span className="mt-4 inline-flex items-center justify-center rounded-md border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-800">
+                          Ordering coming soon
+                        </span>
+                      )}
                     </article>
                   );
                 })}
