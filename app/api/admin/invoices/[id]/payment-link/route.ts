@@ -148,6 +148,8 @@ export const POST = withAdminTracking(async function POST(
     `;
 
     let emailStatus: 'sent' | 'skipped' | 'failed' | 'no_advertiser' | 'no_email' = 'skipped';
+    let emailError: string | null = null;
+    let emailMessageId: string | null = null;
     let consumeUrl: string | null = null;
     if (sendEmail && inv.advertiser_id) {
       const sendTo = typeof body.email_to === 'string' && body.email_to.trim()
@@ -180,7 +182,7 @@ export const POST = withAdminTracking(async function POST(
               : emailMode === 'reminder'
                 ? 'tawanna@myrealtyline.com'
                 : 'hello@myrealtyline.com';
-            await resend.emails.send({
+            const { data: resendData, error: resendError } = await resend.emails.send({
               from: INVOICE_SENDERS[sender],
               replyTo: sender,
               to: sendTo,
@@ -202,6 +204,13 @@ export const POST = withAdminTracking(async function POST(
                 reminder: emailMode === 'reminder',
               }),
             });
+            if (resendError) {
+              throw new Error(resendError.message || 'Resend rejected the email.');
+            }
+            if (!resendData?.id) {
+              throw new Error('Resend accepted the request without returning a message ID.');
+            }
+            emailMessageId = resendData.id;
             emailStatus = 'sent';
             if (emailMode === 'reminder') {
               await sql`
@@ -214,6 +223,7 @@ export const POST = withAdminTracking(async function POST(
             }
           } catch (err) {
             emailStatus = 'failed';
+            emailError = err instanceof Error ? err.message : 'Unknown email provider error.';
             console.error('invoice payment-link email failed', err);
           }
         }
@@ -228,6 +238,8 @@ export const POST = withAdminTracking(async function POST(
       checkout_url: session.url,
       portal_pay_url: consumeUrl,
       email_status: emailStatus,
+      email_error: emailError,
+      email_message_id: emailMessageId,
     });
   } catch (err) {
     console.error('[admin/invoices payment-link]', err);

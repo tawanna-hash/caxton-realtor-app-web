@@ -638,7 +638,9 @@ export function SalesTransactionsClient({
       if (!response.ok) throw new Error(data.error ?? 'Could not send invoice.');
       if (data.email_status !== 'sent') {
         const reason =
-          data.email_status === 'no_email'
+          typeof data.email_error === 'string' && data.email_error.trim()
+            ? data.email_error.trim()
+            : data.email_status === 'no_email'
             ? 'This customer does not have an email address.'
             : data.email_status === 'failed'
               ? 'The email provider could not deliver this message.'
