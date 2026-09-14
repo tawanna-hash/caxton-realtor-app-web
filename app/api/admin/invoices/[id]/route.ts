@@ -86,6 +86,35 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
     ` as unknown as Array<Invoice & { amount_paid_cents: number }>;
     if (existing.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const prevStatus = existing[0].status;
+
+    // A full drawer save can include the current invoice number even when the
+    // operator only changed dates. Normalize and drop an unchanged value so
+    // incidental whitespace cannot trip the unique-number constraint.
+    if ('number' in body) {
+      const incomingNumber = typeof body.number === 'string' ? body.number.trim() : body.number;
+      const currentNumber = existing[0].number?.trim() ?? null;
+      if (incomingNumber === currentNumber) {
+        delete body.number;
+      } else {
+        body.number = incomingNumber || null;
+        if (incomingNumber) {
+          const duplicate = await sql`
+            SELECT id
+              FROM invoices
+             WHERE number = ${incomingNumber}
+               AND id <> ${id}
+             LIMIT 1
+          `;
+          if (duplicate.length > 0) {
+            return NextResponse.json(
+              { error: `Invoice number ${incomingNumber} is already in use.` },
+              { status: 409 },
+            );
+          }
+        }
+      }
+    }
+
     if ('line_items' in body && !Array.isArray(body.line_items)) {
       return NextResponse.json({ error: 'line_items must be an array' }, { status: 400 });
     }
@@ -208,6 +237,12 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
     return NextResponse.json({ invoice: rows[0], updated_fields: updated });
   } catch (err) {
     console.error('[admin/invoices PATCH]', errMessage(err));
+    if (errMessage(err).includes('invoices_number_key')) {
+      return NextResponse.json(
+        { error: 'That invoice number is already in use. Choose a different number.' },
+        { status: 409 },
+      );
+    }
     return NextResponse.json({ error: 'patch failed', detail: errMessage(err) }, { status: 500 });
   }
 });
