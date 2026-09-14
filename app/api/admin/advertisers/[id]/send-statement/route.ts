@@ -9,6 +9,7 @@ import {
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
+import { getSql } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -84,12 +85,31 @@ export const POST = withAdminTracking(async function POST(
       return NextResponse.json({ error: 'send failed', detail: result.error }, { status: 502 });
     }
 
+    const sql = getSql();
+    const historyRows = (await sql`
+      INSERT INTO statement_send_history (
+        advertiser_id, advertiser_name, recipient_email, sender_email,
+        subject, sent_by, message_id, statement_as_of, invoice_count,
+        outstanding_cents, payment_links_refreshed, invoice_ids
+      ) VALUES (
+        ${refreshed.advertiserId}, ${refreshed.advertiserName}, ${recipient},
+        ${fromKey}, ${subject}, ${admin.email}, ${result.messageId ?? null},
+        ${refreshed.asOf}, ${refreshed.invoices.length},
+        ${refreshed.outstandingCents}, ${refreshed.invoices.length},
+        ${JSON.stringify(refreshed.invoices.map((invoice) => invoice.id))}::jsonb
+      )
+      RETURNING id, sent_at
+    `) as unknown as Array<{ id: string; sent_at: string | Date }>;
+    const history = historyRows[0];
+
     for (const invoice of refreshed.invoices) revalidateInvoiceViews(invoice.id);
     return NextResponse.json({
       sent: true,
       recipient,
       invoice_count: refreshed.invoices.length,
       message_id: result.messageId ?? null,
+      history_id: history?.id ?? null,
+      sent_at: history?.sent_at ?? new Date().toISOString(),
     });
   } catch (error) {
     console.error('[admin/advertisers/:id/send-statement]', error);

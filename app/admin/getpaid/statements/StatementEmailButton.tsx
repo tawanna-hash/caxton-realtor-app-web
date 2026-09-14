@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Mail, X } from 'lucide-react';
 
 type Props = {
@@ -8,6 +9,7 @@ type Props = {
   advertiserName: string;
   recipient: string;
   compact?: boolean;
+  onSent?: (event: { sentAt: string; recipient: string }) => void;
 };
 
 type InvoiceSender =
@@ -23,7 +25,9 @@ export default function StatementEmailButton({
   advertiserName,
   recipient,
   compact = false,
+  onSent,
 }: Props) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [from, setFrom] = useState<InvoiceSender>('hello@myrealtyline.com');
@@ -48,6 +52,11 @@ export default function StatementEmailButton({
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.detail ?? data.error ?? 'Could not send statement.');
       setResult(`Statement sent to ${data.recipient}. ${data.invoice_count} payment links refreshed.`);
+      onSent?.({
+        sentAt: String(data.sent_at ?? new Date().toISOString()),
+        recipient: String(data.recipient ?? to),
+      });
+      if (!onSent) router.refresh();
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not send statement.');
     } finally {

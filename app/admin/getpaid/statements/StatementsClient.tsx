@@ -14,6 +14,8 @@ export type StatementPartnerRow = {
   outstanding_cents: number;
   overdue_cents: number;
   open_invoice_count: number;
+  last_sent_at: string | Date | null;
+  send_count: number;
 };
 
 const CONTROL =
@@ -74,6 +76,7 @@ function SummaryMetric({
 }
 
 export default function StatementsClient({ partners }: { partners: StatementPartnerRow[] }) {
+  const [rows, setRows] = useState(partners);
   const [query, setQuery] = useState('');
   const [balance, setBalance] = useState<'all' | 'overdue' | 'current'>('all');
   const [sortKey, setSortKey] = useState<SortKey>('outstanding');
@@ -81,13 +84,13 @@ export default function StatementsClient({ partners }: { partners: StatementPart
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    const rows = partners.filter((partner) => {
+    const matchingRows = rows.filter((partner) => {
       if (balance === 'overdue' && partner.overdue_cents <= 0) return false;
       if (balance === 'current' && partner.overdue_cents > 0) return false;
       return !needle || partner.advertiser_name.toLowerCase().includes(needle) ||
         (partner.recipient_email ?? '').toLowerCase().includes(needle);
     });
-    return rows.sort((a, b) => {
+    return matchingRows.sort((a, b) => {
       const left =
         sortKey === 'partner' ? a.advertiser_name.toLowerCase() :
         sortKey === 'email' ? (a.recipient_email ?? '').toLowerCase() :
@@ -103,7 +106,7 @@ export default function StatementsClient({ partners }: { partners: StatementPart
         : Number(left) - Number(right);
       return sortDir === 'asc' ? comparison : -comparison;
     });
-  }, [balance, partners, query, sortDir, sortKey]);
+  }, [balance, query, rows, sortDir, sortKey]);
 
   const sort = (key: SortKey) => {
     if (key === sortKey) setSortDir((current) => current === 'asc' ? 'desc' : 'asc');
@@ -113,9 +116,9 @@ export default function StatementsClient({ partners }: { partners: StatementPart
     }
   };
 
-  const totalOutstanding = partners.reduce((sum, partner) => sum + partner.outstanding_cents, 0);
-  const totalOverdue = partners.reduce((sum, partner) => sum + partner.overdue_cents, 0);
-  const invoiceCount = partners.reduce((sum, partner) => sum + Number(partner.open_invoice_count), 0);
+  const totalOutstanding = rows.reduce((sum, partner) => sum + partner.outstanding_cents, 0);
+  const totalOverdue = rows.reduce((sum, partner) => sum + partner.overdue_cents, 0);
+  const invoiceCount = rows.reduce((sum, partner) => sum + Number(partner.open_invoice_count), 0);
   const filteredTotal = filtered.reduce((sum, partner) => sum + partner.outstanding_cents, 0);
 
   return (
@@ -129,7 +132,7 @@ export default function StatementsClient({ partners }: { partners: StatementPart
 
       <section aria-label="Statement summary" className="bg-white">
         <div className="grid grid-cols-2 gap-y-3 md:grid-cols-4">
-          <SummaryMetric count={partners.length} label="partners with a balance" />
+          <SummaryMetric count={rows.length} label="partners with a balance" />
           <SummaryMetric count={invoiceCount} label="outstanding invoices" />
           <SummaryMetric amount={totalOverdue} count={0} label="overdue" />
           <SummaryMetric amount={totalOutstanding} count={0} label="total outstanding" />
@@ -184,7 +187,8 @@ export default function StatementsClient({ partners }: { partners: StatementPart
                 <SortableTh className="w-28" label="Invoices" sortKey="invoices" activeKey={sortKey} dir={sortDir} onSort={sort} align="right" />
                 <SortableTh className="w-36" label="Overdue" sortKey="overdue" activeKey={sortKey} dir={sortDir} onSort={sort} align="right" />
                 <SortableTh className="w-36" label="Outstanding" sortKey="outstanding" activeKey={sortKey} dir={sortDir} onSort={sort} align="right" />
-                <th className="w-60 px-3 py-3 text-right font-semibold">
+                <th className="w-36 px-2 py-3 text-left font-semibold">Last sent</th>
+                <th className="w-52 px-3 py-3 text-right font-semibold">
                   <span className="sr-only">Actions</span>
                 </th>
               </tr>
@@ -210,6 +214,14 @@ export default function StatementsClient({ partners }: { partners: StatementPart
                   <td className="px-2 py-2.5 text-right font-medium text-gray-900">
                     {formatCents(partner.outstanding_cents)}
                   </td>
+                  <td className="px-2 py-2.5 text-gray-600">
+                    {partner.last_sent_at ? (
+                      <>
+                        <div>{new Date(partner.last_sent_at).toLocaleDateString('en-US')}</div>
+                        <div className="text-[11px] text-gray-400">{Number(partner.send_count)} sent</div>
+                      </>
+                    ) : '—'}
+                  </td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right">
                     <Link
                       href={`/admin/getpaid/statements/${partner.advertiser_id}`}
@@ -223,6 +235,13 @@ export default function StatementsClient({ partners }: { partners: StatementPart
                         advertiserName={partner.advertiser_name}
                         recipient={partner.recipient_email ?? ''}
                         compact
+                        onSent={({ sentAt }) => {
+                          setRows((current) => current.map((row) =>
+                            row.advertiser_id === partner.advertiser_id
+                              ? { ...row, last_sent_at: sentAt, send_count: Number(row.send_count) + 1 }
+                              : row,
+                          ));
+                        }}
                       />
                     </span>
                   </td>
@@ -235,7 +254,7 @@ export default function StatementsClient({ partners }: { partners: StatementPart
           <div className="p-12 text-center">
             <div className="text-sm font-medium text-gray-800">No statements found</div>
             <p className="mt-1 text-sm text-gray-500">
-              {partners.length
+              {rows.length
                 ? 'Adjust your search or balance filter.'
                 : 'There are no partners with an outstanding balance.'}
             </p>
@@ -243,7 +262,7 @@ export default function StatementsClient({ partners }: { partners: StatementPart
         )}
         <div className="flex items-center justify-between border-t border-gray-300 bg-gray-50 px-4 py-3 text-xs text-gray-700">
           <div>
-            Showing {filtered.length.toLocaleString()} of {partners.length.toLocaleString()} partners
+            Showing {filtered.length.toLocaleString()} of {rows.length.toLocaleString()} partners
           </div>
           <div className="font-semibold">Total <span className="ml-8">{formatCents(filteredTotal)}</span></div>
         </div>

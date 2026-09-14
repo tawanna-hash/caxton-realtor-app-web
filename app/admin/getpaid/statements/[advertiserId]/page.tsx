@@ -34,6 +34,17 @@ type StatementInvoiceRow = {
   is_overdue: boolean;
 };
 
+type StatementHistoryRow = {
+  id: string;
+  recipient_email: string;
+  sender_email: string;
+  subject: string;
+  sent_by: string | null;
+  sent_at: string | Date;
+  invoice_count: number;
+  outstanding_cents: number;
+};
+
 function money(cents: number) {
   return `$${(cents / 100).toLocaleString('en-US', {
     minimumFractionDigits: 2,
@@ -100,6 +111,14 @@ export default async function StatementPage({
 
   if (invoices.length === 0) notFound();
 
+  const sendHistory = (await sql`
+    SELECT id, recipient_email, sender_email, subject, sent_by, sent_at,
+      invoice_count, outstanding_cents
+    FROM statement_send_history
+    WHERE advertiser_id = ${advertiserIdNum}
+    ORDER BY sent_at DESC
+  `) as unknown as StatementHistoryRow[];
+
   const billTo = invoices[invoices.length - 1];
   const recipient =
     advertiser.billing_email?.trim() ||
@@ -133,6 +152,71 @@ export default async function StatementPage({
           <PrintInvoiceButton />
         </div>
       </div>
+
+      <section className="mb-5 overflow-hidden rounded border border-gray-200 bg-white print:hidden">
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">Statement send history</h2>
+            <p className="text-xs text-gray-500">
+              {sendHistory.length
+                ? `${sendHistory.length.toLocaleString()} successful ${sendHistory.length === 1 ? 'delivery' : 'deliveries'}`
+                : 'No statements have been sent yet.'}
+            </p>
+          </div>
+          {sendHistory[0] && (
+            <div className="text-right text-xs text-gray-500">
+              Last sent
+              <div className="font-medium text-gray-900">
+                {new Date(sendHistory[0].sent_at).toLocaleString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  timeZone: 'America/Chicago',
+                  timeZoneName: 'short',
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+        {sendHistory.length > 0 && (
+          <div className="max-h-72 overflow-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="sticky top-0 bg-gray-50 text-gray-600">
+                <tr>
+                  <th className="px-4 py-2 font-semibold">Date</th>
+                  <th className="px-3 py-2 font-semibold">Recipient</th>
+                  <th className="px-3 py-2 font-semibold">From</th>
+                  <th className="px-3 py-2 text-right font-semibold">Invoices</th>
+                  <th className="px-4 py-2 text-right font-semibold">Balance sent</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {sendHistory.map((event) => (
+                  <tr key={event.id}>
+                    <td className="whitespace-nowrap px-4 py-2.5 text-gray-700">
+                      {new Date(event.sent_at).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        timeZone: 'America/Chicago',
+                      })}
+                      {event.sent_by && <div className="text-[11px] text-gray-400">by {event.sent_by}</div>}
+                    </td>
+                    <td className="px-3 py-2.5 text-gray-700" title={event.subject}>{event.recipient_email}</td>
+                    <td className="px-3 py-2.5 text-gray-600">{event.sender_email}</td>
+                    <td className="px-3 py-2.5 text-right text-gray-700">{event.invoice_count}</td>
+                    <td className="px-4 py-2.5 text-right font-medium text-gray-900">{money(event.outstanding_cents)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <article className="bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-10">
         <header className="grid grid-cols-[1fr_auto] gap-8 border-b border-neutral-300 pb-5">

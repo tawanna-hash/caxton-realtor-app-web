@@ -35,7 +35,9 @@ export default async function StatementsIndexPage() {
       )::int AS overdue_cents,
       COUNT(*) FILTER (
         WHERE GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END), 0) > 0
-      )::int AS open_invoice_count
+      )::int AS open_invoice_count,
+      history.last_sent_at,
+      COALESCE(history.send_count, 0)::int AS send_count
     FROM invoices i
     JOIN advertisers adv ON adv.id = i.advertiser_id
     LEFT JOIN LATERAL (
@@ -50,8 +52,13 @@ export default async function StatementsIndexPage() {
       ORDER BY recent.created_at DESC
       LIMIT 1
     ) latest_bill ON true
+    LEFT JOIN LATERAL (
+      SELECT MAX(sent_at) AS last_sent_at, COUNT(*)::int AS send_count
+      FROM statement_send_history
+      WHERE advertiser_id = adv.id
+    ) history ON true
     WHERE i.status NOT IN ('void', 'draft')
-    GROUP BY adv.id, adv.name, latest_bill.bill_to_email
+    GROUP BY adv.id, adv.name, latest_bill.bill_to_email, history.last_sent_at, history.send_count
     HAVING SUM(GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END), 0)) > 0
     ORDER BY overdue_cents DESC, outstanding_cents DESC
   `.catch(() => [] as unknown[])) as unknown as StatementPartnerRow[];
