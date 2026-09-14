@@ -843,6 +843,7 @@ function EditDrawer({
   };
   const [contactEmail, setContactEmail] = useState(row.contact_email ?? '');
   const [billingEmail, setBillingEmail] = useState(row.billing_email ?? '');
+  const [displayName, setDisplayName] = useState(row.name);
   const [shareToken, setShareToken] = useState<string>(row.share_token);
   const [shareBusy, setShareBusy] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -1072,6 +1073,14 @@ function EditDrawer({
   const update = <K extends keyof typeof form>(k: K, v: typeof form[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
+  // The CRM title and Company Name field represent the same live partner
+  // identity. Keep them synchronized once either is edited so one save updates
+  // the canonical advertiser name used throughout admin.
+  const updateCompanyName = (value: string) => {
+    setDisplayName(value);
+    update('company', value);
+  };
+
   // ---- Duplicate-of-staff detection ------------------------------------
   //
   // Tawanna's rule (June 2026): if the company-level Person fields (name,
@@ -1114,10 +1123,16 @@ function EditDrawer({
       await deleteAdvertiser();
       return;
     }
+    const canonicalName = displayName.trim();
+    if (!canonicalName) {
+      onError('Company name is required.');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
         ...form,
+        name: canonicalName,
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
         // Ad-management fields merged from the legacy /admin/advertisers page.
         // Multi-pub: send as canonical CSV. API accepts either array or CSV.
@@ -1148,9 +1163,17 @@ function EditDrawer({
       {/* drawer */}
       <div className="w-full max-w-xl bg-white shadow-xl overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <div>
+          <div className="min-w-0 flex-1 pr-4">
             <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">CRM contact</div>
-            <h2 className="text-xl text-gray-900">{row.name}</h2>
+            <label htmlFor={`crm-display-name-${row.id}`} className="sr-only">Partner company name</label>
+            <input
+              id={`crm-display-name-${row.id}`}
+              value={displayName}
+              onChange={(e) => updateCompanyName(e.target.value)}
+              className="mt-0.5 w-full rounded border border-transparent bg-transparent px-0 text-xl text-gray-900 outline-none transition hover:border-gray-300 hover:px-2 focus:border-blue-500 focus:px-2 focus:ring-2 focus:ring-blue-100"
+              placeholder="Partner company name"
+              autoComplete="organization"
+            />
             <div className="text-xs text-gray-500 mt-0.5">{row.slug}</div>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
@@ -1173,7 +1196,7 @@ function EditDrawer({
           <Section title="Company Details">
             <div className="grid grid-cols-2 gap-3">
               <Field label="Company Name" className="col-span-2">
-                <input value={form.company} onChange={(e) => update('company', e.target.value)} className={INPUT} placeholder="Company or brand name" />
+                <input value={form.company} onChange={(e) => updateCompanyName(e.target.value)} className={INPUT} placeholder="Company or brand name" />
               </Field>
               <Field label="Address" className="col-span-2">
                 <input value={form.address} onChange={(e) => update('address', e.target.value)} className={INPUT} placeholder="Street address" />

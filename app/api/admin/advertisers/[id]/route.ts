@@ -111,6 +111,14 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     await ensurePublicationColumn();
     const sql = getSql();
 
+    const existingRows = (await sql`
+      SELECT name FROM advertisers WHERE id = ${idNum} LIMIT 1
+    `) as unknown as Array<{ name: string }>;
+    if (existingRows.length === 0) {
+      return NextResponse.json({ error: 'not found' }, { status: 404 });
+    }
+    const previousName = existingRows[0].name;
+
     const updates: string[] = [];
     const setClauses: { col: string; val: unknown }[] = [];
 
@@ -242,6 +250,32 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'youtube_url':         await sql`UPDATE advertisers SET youtube_url = ${val}                WHERE id = ${idNum}`; break;
       }
       updates.push(col);
+    }
+
+    const nextName = setClauses.find(({ col }) => col === 'name')?.val;
+    if (typeof nextName === 'string' && nextName !== previousName) {
+      // These are live display-name caches, not billing snapshots. Keep linked
+      // ad inventory under the renamed partner while preserving historical
+      // invoices, statement sends, and prior agreements exactly as issued.
+      await sql`
+        UPDATE ad_creatives
+           SET advertiser_name = ${nextName}
+         WHERE id IN (
+           SELECT creative_id
+             FROM ad_campaigns
+            WHERE advertiser_id = ${idNum}
+         )
+      `;
+      await sql`
+        UPDATE ad_campaigns
+           SET advertiser_name = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+      await sql`
+        UPDATE magazine_hotspots
+           SET advertiser_name = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
     }
 
     await sql`UPDATE advertisers SET updated_at = NOW() WHERE id = ${idNum}`;

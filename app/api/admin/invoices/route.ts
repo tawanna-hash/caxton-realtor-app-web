@@ -25,6 +25,15 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
 }
 
+function addCalendarDays(isoDate: string, days: number): string | null {
+  const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return null;
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+  if (Number.isNaN(date.getTime())) return null;
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 export async function GET(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -209,6 +218,13 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
         ([adv.address, adv.address_2, adv.city, adv.state, adv.zip].filter(Boolean).join(', ') || null),
     };
 
+    const issuedAt =
+      (body.issued_at as string | null | undefined) ??
+      (status === 'sent' ? new Date().toISOString() : null);
+    const dueDate =
+      (body.due_date as string | null | undefined) ??
+      (issuedAt ? addCalendarDays(issuedAt, 20) : null);
+
     const rows = await sql`
       INSERT INTO invoices (
         advertiser_id, agreement_id, number,
@@ -223,8 +239,8 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
         ${amountCents},
         ${taxCents},
         ${status},
-        ${(body.issued_at as string | null | undefined) ?? (status === 'sent' ? new Date().toISOString() : null)},
-        ${(body.due_date as string | null | undefined) ?? null},
+        ${issuedAt},
+        ${dueDate},
         ${billTo.name},
         ${billTo.email},
         ${billTo.address},

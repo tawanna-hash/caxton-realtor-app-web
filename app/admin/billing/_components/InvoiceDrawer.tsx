@@ -37,6 +37,21 @@ function channelLabel(ch: string | null | undefined): string {
   return ch ? ch.charAt(0).toUpperCase() + ch.slice(1) : '';
 }
 
+function addCalendarDays(isoDate: string, days: number): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  if (!year || !month || !day) return '';
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function calendarDayDifference(from: string, to: string): number | null {
+  const start = Date.parse(`${from}T00:00:00.000Z`);
+  const end = Date.parse(`${to}T00:00:00.000Z`);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
+  return Math.round((end - start) / 86_400_000);
+}
+
 // Map an agreement bundle line to an invoice line item: description mirrors
 // the CRM contract panel (e.g. "Feed Top Banner, 4 weeks x 1 market"), qty is
 // the frequency in weeks, and the unit price is the line total / weeks
@@ -77,12 +92,10 @@ export function InvoiceDrawer({
     : seed?.amount_cents != null ? (seed.amount_cents / 100).toString()
     : '';
 
-  // Net 20: default a new invoice's due date to creation date + 20 days.
-  // new Date() in render is permitted (cf. AgreementDrawer); Date.now() is not.
-  const dueIn20 = new Date();
-  dueIn20.setDate(dueIn20.getDate() + 20);
-  const defaultDueDate = formatDateISO(dueIn20);
+  // Net 20 is based on the invoice's billing date, not the date this drawer
+  // happens to be opened.
   const defaultBillingDate = formatDateISO(new Date());
+  const defaultDueDate = addCalendarDays(defaultBillingDate, 20);
 
   const [form, setForm] = useState({
     number: existing ? (existing.number ?? '') : 'INV #16201',
@@ -175,6 +188,18 @@ export function InvoiceDrawer({
 
 
   const update = <K extends keyof typeof form>(k: K, v: typeof form[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  const updateBillingDate = (billingDate: string) => {
+    setForm((current) => {
+      const existingTermDays = calendarDayDifference(current.billing_date, current.due_date);
+      const termDays = existingTermDays !== null && existingTermDays >= 0 ? existingTermDays : 20;
+      return {
+        ...current,
+        billing_date: billingDate,
+        due_date: billingDate ? addCalendarDays(billingDate, termDays) : '',
+      };
+    });
+  };
 
   const updateLineItems = (lineItems: InvoiceLineItem[]) =>
     setForm((f) => ({ ...f, line_items: lineItems, amount_dollars: '' }));
@@ -323,7 +348,7 @@ export function InvoiceDrawer({
             <input value={form.amount_dollars} onChange={(e) => update('amount_dollars', e.target.value)} className={INPUT} placeholder={form.line_items.length > 0 ? String(linesTotal / 100) : ''} inputMode="decimal" />
           </Field>
           <Field label="Tax ($)"><input value={form.tax_dollars} onChange={(e) => update('tax_dollars', e.target.value)} className={INPUT} inputMode="decimal" /></Field>
-          <Field label="Billing date"><input type="date" value={form.billing_date} onChange={(e) => update('billing_date', e.target.value)} className={INPUT} /></Field>
+          <Field label="Billing date"><input type="date" value={form.billing_date} onChange={(e) => updateBillingDate(e.target.value)} className={INPUT} /></Field>
           <Field label="Due date"><input type="date" value={form.due_date} onChange={(e) => update('due_date', e.target.value)} className={INPUT} /></Field>
           <Field label="Status">
             <select value={form.status} onChange={(e) => update('status', e.target.value as InvoiceStatus)} className={INPUT}>
