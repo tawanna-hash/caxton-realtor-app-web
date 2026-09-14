@@ -99,7 +99,7 @@ export default function SelfServicePortalPage() {
           {/* Self-service card */}
           <article className="relative rounded-md overflow-hidden bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#5a0e5f] text-white p-7 md:p-8 shadow-lg">
             {/* From-$X chip */}
-            <span className="absolute top-5 right-5 inline-flex items-center px-3 py-1 rounded-full bg-violet-200/90 text-violet-900 text-xs font-semibold">
+            <span className="absolute top-5 right-5 inline-flex items-center rounded-md bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-900">
               From ${minPrice}
             </span>
 
@@ -152,7 +152,7 @@ export default function SelfServicePortalPage() {
 
             <Link
               href="/advertise/placements"
-              className="inline-flex items-center gap-2 bg-violet-200 hover:bg-violet-100 active:scale-[0.98] transition text-brand-700 font-semibold px-5 py-3 rounded-full text-sm md:text-base"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-orange-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-700 active:scale-[0.98] md:text-base"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               Browse Products
@@ -333,7 +333,7 @@ export default function SelfServicePortalPage() {
           </div>
           <Link
             href="/portal"
-            className="shrink-0 inline-flex items-center gap-2 border border-brand-700 text-brand-700 hover:bg-brand-700 hover:text-white transition font-semibold px-5 py-2.5 rounded-full text-sm"
+            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border border-brand-700 px-5 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-700 hover:text-white"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             Open partner portal
