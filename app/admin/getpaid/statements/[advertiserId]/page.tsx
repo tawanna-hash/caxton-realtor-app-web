@@ -13,6 +13,7 @@ import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import PrintInvoiceButton from '../../../invoices/[id]/preview/PrintInvoiceButton';
 import GenerateLinkButton from './GenerateLinkButton';
+import StatementEmailButton from '../StatementEmailButton';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -68,16 +69,23 @@ export default async function StatementPage({
   const sql = getSql();
 
   const advertiserRows = (await sql`
-    SELECT id, name FROM advertisers WHERE id = ${advertiserIdNum}
-  `) as unknown as { id: number; name: string }[];
+    SELECT id, name, billing_email, contact_email, portal_email
+    FROM advertisers WHERE id = ${advertiserIdNum}
+  `) as unknown as Array<{
+    id: number;
+    name: string;
+    billing_email: string | null;
+    contact_email: string | null;
+    portal_email: string | null;
+  }>;
   const advertiser = advertiserRows[0];
   if (!advertiser) notFound();
 
   const invoices = (await sql`
     SELECT i.id, i.number, i.status, i.total_cents, i.issued_at, i.due_date,
       i.bill_to_name, i.bill_to_email, i.bill_to_address, i.stripe_payment_link_url,
-      COALESCE(pay.amount_paid_cents, 0)::int AS amount_paid_cents,
-      GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, 0), 0)::int AS balance_cents,
+      COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END)::int AS amount_paid_cents,
+      GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END), 0)::int AS balance_cents,
       (i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS is_overdue
     FROM invoices i
     LEFT JOIN LATERAL (
@@ -85,7 +93,7 @@ export default async function StatementPage({
       FROM invoice_payments p WHERE p.invoice_id = i.id
     ) pay ON true
     WHERE i.advertiser_id = ${advertiserIdNum}
-      AND i.status NOT IN ('void', 'draft')
+      AND i.status NOT IN ('paid', 'void', 'draft')
       AND GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, 0), 0) > 0
     ORDER BY i.issued_at ASC NULLS LAST
   `) as unknown as StatementInvoiceRow[];
@@ -93,6 +101,12 @@ export default async function StatementPage({
   if (invoices.length === 0) notFound();
 
   const billTo = invoices[invoices.length - 1];
+  const recipient =
+    advertiser.billing_email?.trim() ||
+    billTo.bill_to_email?.trim() ||
+    advertiser.contact_email?.trim() ||
+    advertiser.portal_email?.trim() ||
+    '';
   const overdueCents = invoices.filter((i) => i.is_overdue).reduce((sum, i) => sum + i.balance_cents, 0);
   const notYetDueCents = invoices.filter((i) => !i.is_overdue).reduce((sum, i) => sum + i.balance_cents, 0);
   const outstandingCents = overdueCents + notYetDueCents;
@@ -110,7 +124,14 @@ export default async function StatementPage({
           <h1 className="text-lg font-semibold text-gray-900">Statement of account</h1>
           <p className="text-sm text-gray-500">{advertiser.name}</p>
         </div>
-        <PrintInvoiceButton />
+        <div className="flex items-center gap-2">
+          <StatementEmailButton
+            advertiserId={advertiser.id}
+            advertiserName={advertiser.name}
+            recipient={recipient}
+          />
+          <PrintInvoiceButton />
+        </div>
       </div>
 
       <article className="bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-10">

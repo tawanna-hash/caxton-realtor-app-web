@@ -41,6 +41,8 @@ interface InvoiceRow {
   bill_to_email: string | null;
   memo: string | null;
   due_date: string | null;
+  amount_paid_cents: number;
+  balance_cents: number;
 }
 
 export const POST = withAdminTracking(async function POST(
@@ -64,20 +66,28 @@ export const POST = withAdminTracking(async function POST(
     await ensureSchema();
     const sql = getSql();
     const rows = (await sql`
-      SELECT id, number, status, total_cents, advertiser_id, bill_to_name, bill_to_email, memo, due_date
-      FROM invoices WHERE id = ${id}
+      SELECT i.id, i.number, i.status, i.total_cents, i.advertiser_id,
+        i.bill_to_name, i.bill_to_email, i.memo, i.due_date,
+        COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END)::int AS amount_paid_cents,
+        GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END), 0)::int AS balance_cents
+      FROM invoices i
+      LEFT JOIN LATERAL (
+        SELECT SUM(p.amount_cents)::int AS amount_paid_cents
+        FROM invoice_payments p WHERE p.invoice_id = i.id
+      ) pay ON true
+      WHERE i.id = ${id}
     `) as unknown as InvoiceRow[];
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const inv = rows[0];
     if (inv.status === 'paid') return NextResponse.json({ error: 'invoice already paid' }, { status: 400 });
     if (inv.status === 'void') return NextResponse.json({ error: 'invoice is void' }, { status: 400 });
-    if (!inv.total_cents || inv.total_cents <= 0) {
+    if (!inv.balance_cents || inv.balance_cents <= 0) {
       return NextResponse.json({ error: 'invoice has no amount due' }, { status: 400 });
     }
 
     const stripe = getStripe();
-    const feeCents = processingFeeCents(inv.total_cents, 'card');
-    const chargeCents = inv.total_cents + feeCents;
+    const feeCents = processingFeeCents(inv.balance_cents, 'card');
+    const chargeCents = inv.balance_cents + feeCents;
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
@@ -86,7 +96,7 @@ export const POST = withAdminTracking(async function POST(
         {
           price_data: {
             currency: 'usd',
-            unit_amount: inv.total_cents,
+            unit_amount: inv.balance_cents,
             product_data: {
               name: `Invoice ${inv.number}`,
               description: inv.memo ?? 'RealtyLine advertising invoice',
@@ -113,7 +123,7 @@ export const POST = withAdminTracking(async function POST(
         invoice_id: inv.id,
         invoice_number: inv.number,
         payment_method_selection: 'card',
-        base_amount_cents: String(inv.total_cents),
+        base_amount_cents: String(inv.balance_cents),
         processing_fee_cents: String(feeCents),
         charge_total_cents: String(chargeCents),
       },
@@ -123,7 +133,7 @@ export const POST = withAdminTracking(async function POST(
           invoice_id: inv.id,
           invoice_number: inv.number,
           payment_method_selection: 'card',
-          base_amount_cents: String(inv.total_cents),
+          base_amount_cents: String(inv.balance_cents),
           processing_fee_cents: String(feeCents),
           charge_total_cents: String(chargeCents),
         },
@@ -178,7 +188,7 @@ export const POST = withAdminTracking(async function POST(
                 name: inv.bill_to_name ?? 'there',
                 number: inv.number,
                 consumeUrl,
-                amountCents: inv.total_cents,
+                amountCents: inv.balance_cents,
                 customMessage,
                 reminder: emailMode === 'reminder',
               }),
@@ -186,7 +196,7 @@ export const POST = withAdminTracking(async function POST(
                 name: inv.bill_to_name ?? 'there',
                 number: inv.number,
                 consumeUrl,
-                amountCents: inv.total_cents,
+                amountCents: inv.balance_cents,
                 customMessage,
                 reminder: emailMode === 'reminder',
               }),
