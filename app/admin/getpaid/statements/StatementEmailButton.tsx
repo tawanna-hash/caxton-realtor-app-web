@@ -10,7 +10,10 @@ type Props = {
   compact?: boolean;
 };
 
-type InvoiceSender = 'tawanna@myrealtyline.com' | 'hello@myrealtyline.com';
+type InvoiceSender =
+  | 'tawanna@myrealtyline.com'
+  | 'tawanna@newslinesa.com'
+  | 'hello@myrealtyline.com';
 
 const CONTROL =
   'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500';
@@ -110,6 +113,9 @@ export default function StatementEmailButton({
                     </option>
                     <option value="tawanna@myrealtyline.com">
                       Tawanna Verock &lt;tawanna@myrealtyline.com&gt;
+                    </option>
+                    <option value="tawanna@newslinesa.com">
+                      Tawanna Verock &lt;tawanna@newslinesa.com&gt;
                     </option>
                   </select>
                 </label>

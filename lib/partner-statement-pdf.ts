@@ -168,6 +168,15 @@ export async function generatePartnerStatementPdf(statement: PartnerStatement): 
       size: 7,
       color: MUTED,
     });
+    addLink(
+      doc,
+      item,
+      'www.realtynewsnow.app',
+      'https://www.realtynewsnow.app',
+      MARGIN,
+      26,
+      regular,
+    );
   }
   return doc.save();
 }

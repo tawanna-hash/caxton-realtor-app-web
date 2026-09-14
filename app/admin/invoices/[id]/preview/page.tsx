@@ -121,7 +121,7 @@ export default async function InvoicePreviewPage({
             <div>PO Box 81366</div>
             <div>Austin, Texas 78708-1366</div>
             <div>United States</div>
-            <div className="mt-2">www.myrealtyline.com</div>
+            <div className="mt-2">www.realtynewsnow.app</div>
           </div>
         </header>
 

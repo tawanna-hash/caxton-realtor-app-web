@@ -15,6 +15,7 @@ export const dynamic = 'force-dynamic';
 
 const SENDERS = {
   'tawanna@myrealtyline.com': 'Tawanna Verock <tawanna@myrealtyline.com>',
+  'tawanna@newslinesa.com': 'Tawanna Verock <tawanna@newslinesa.com>',
   'hello@myrealtyline.com': 'Caxton Publications Inc. <hello@myrealtyline.com>',
 } as const;
 

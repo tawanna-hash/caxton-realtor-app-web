@@ -55,7 +55,10 @@ type EmailDraft = {
   invoice: InvoiceWithAdvertiser;
   reminder: boolean;
 };
-type InvoiceSender = 'tawanna@myrealtyline.com' | 'hello@myrealtyline.com';
+type InvoiceSender =
+  | 'tawanna@myrealtyline.com'
+  | 'tawanna@newslinesa.com'
+  | 'hello@myrealtyline.com';
 
 const CONTROL =
   'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100';
@@ -302,6 +305,7 @@ function EmailInvoiceDialog({
                 onChange={(event) => setFrom(event.target.value as InvoiceSender)}
               >
                 <option value="tawanna@myrealtyline.com">Tawanna Verock &lt;tawanna@myrealtyline.com&gt;</option>
+                <option value="tawanna@newslinesa.com">Tawanna Verock &lt;tawanna@newslinesa.com&gt;</option>
                 <option value="hello@myrealtyline.com">Caxton Publications Inc. &lt;hello@myrealtyline.com&gt;</option>
               </select>
             </label>

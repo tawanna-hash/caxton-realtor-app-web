@@ -27,6 +27,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://app.myrealtyline.com';
 const INVOICE_SENDERS = {
   'tawanna@myrealtyline.com': 'Tawanna Verock <tawanna@myrealtyline.com>',
+  'tawanna@newslinesa.com': 'Tawanna Verock <tawanna@newslinesa.com>',
   'hello@myrealtyline.com': 'Caxton Publications Inc. <hello@myrealtyline.com>',
 } as const;
 type InvoiceSender = keyof typeof INVOICE_SENDERS;
