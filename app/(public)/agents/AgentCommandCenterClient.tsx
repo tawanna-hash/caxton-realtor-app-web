@@ -8,7 +8,6 @@ import {
   CalendarDays,
   Calculator,
   ChevronRight,
-  ClipboardCheck,
   FileText,
   Handshake,
   Home,
@@ -115,17 +114,20 @@ function deadlineTone(deadline: TrecDeadline): string {
 export default function AgentCommandCenterClient({
   providers,
   workspaceKey,
+  realtorId,
   initialWorkspace,
   initialWorkspaceVersion,
 }: {
   providers: ReferralProvider[];
   workspaceKey: string;
+  realtorId: string;
   initialWorkspace: AgentCommandCenterWorkspace | null;
   initialWorkspaceVersion: number | null;
 }) {
   const [effectiveDate, setEffectiveDate] = useState('');
   const [optionPeriodDays, setOptionPeriodDays] = useState('');
   const [additionalEarnestMoneyDays, setAdditionalEarnestMoneyDays] = useState('');
+  const [quickCheckOpen, setQuickCheckOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const selectedCategoryRecord = REFERRAL_CATEGORIES.find((category) => category.id === selectedCategory)
@@ -207,127 +209,72 @@ export default function AgentCommandCenterClient({
 
       <AgentDealDesk
         workspaceKey={workspaceKey}
+        realtorId={realtorId}
         initialWorkspace={initialWorkspace}
         initialWorkspaceVersion={initialWorkspaceVersion}
       />
 
       <section id="deadline-planner" className="scroll-mt-20">
-        <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
-          <div className="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Fast calculation</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Quick TREC 1–4 date check</h2>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                Need a fast answer without creating a transaction workspace? Enter the terms in hand for a clean first pass on essential timing.
-              </p>
+        <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:py-10">
+          <div className="border border-slate-200 bg-white p-5 shadow-[0_10px_28px_rgba(40,25,77,0.05)] sm:flex sm:items-center sm:justify-between sm:gap-6">
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F2EEE7] text-[#301D5D]">
+                <CalendarDays className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Quick date check</p>
+                <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Need a date without opening a deal desk?</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">Use the compact, unsaved TREC timing check only when you need a fast answer.</p>
+              </div>
             </div>
-            {effectiveDate && (
-              <button
-                type="button"
-                onClick={resetPlanner}
-                className="inline-flex min-h-[44px] items-center justify-center gap-2 self-start rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950 lg:self-auto"
-              >
-                <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                Clear planner
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setQuickCheckOpen((open) => !open)}
+              className="mt-4 inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] sm:mt-0"
+            >
+              <Calculator className="h-4 w-4" aria-hidden="true" />
+              {quickCheckOpen ? 'Hide quick check' : 'Open quick date check'}
+            </button>
           </div>
 
-          <div className="grid overflow-hidden border border-slate-200 bg-white shadow-[0_14px_35px_rgba(40,25,77,0.06)] lg:grid-cols-[0.72fr_1.28fr]">
-            <div className="bg-[#ECE6DA] p-6 sm:p-8">
-              <div className="flex h-full flex-col">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#301D5D] text-white">
-                    <ClipboardCheck className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-950">Start with the executed date</h3>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">Only add the terms you need for this conversation.</p>
-                  </div>
-                </div>
-                <div className="mt-7 space-y-5">
+          {quickCheckOpen && (
+            <div className="mt-3 grid border border-slate-200 bg-white lg:grid-cols-[0.72fr_1.28fr]">
+              <div className="bg-[#ECE6DA] p-5 sm:p-6">
+                <div className="space-y-4">
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Effective date</span>
-                    <input
-                      type="date"
-                      value={effectiveDate}
-                      onChange={(event) => setEffectiveDate(event.target.value)}
-                      onBlur={() => effectiveDate && trackEvent('agent_deadline_planner_updated', { field: 'effective_date' })}
-                      className="min-h-[48px] w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15"
-                    />
+                    <input type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} onBlur={() => effectiveDate && trackEvent('agent_deadline_planner_updated', { field: 'effective_date' })} className="min-h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" />
                   </label>
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Option period days <span className="font-normal text-slate-500">(optional)</span></span>
-                    <input
-                      type="number"
-                      min="1"
-                      inputMode="numeric"
-                      value={optionPeriodDays}
-                      onChange={(event) => setOptionPeriodDays(event.target.value)}
-                      className="min-h-[48px] w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15"
-                      placeholder="Example: 10"
-                    />
+                    <input type="number" min="1" inputMode="numeric" value={optionPeriodDays} onChange={(event) => setOptionPeriodDays(event.target.value)} className="min-h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" placeholder="Example: 10" />
                   </label>
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Additional earnest days <span className="font-normal text-slate-500">(optional)</span></span>
-                    <input
-                      type="number"
-                      min="1"
-                      inputMode="numeric"
-                      value={additionalEarnestMoneyDays}
-                      onChange={(event) => setAdditionalEarnestMoneyDays(event.target.value)}
-                      className="min-h-[48px] w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15"
-                      placeholder="Example: 7"
-                    />
+                    <input type="number" min="1" inputMode="numeric" value={additionalEarnestMoneyDays} onChange={(event) => setAdditionalEarnestMoneyDays(event.target.value)} className="min-h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" placeholder="Example: 7" />
                   </label>
+                  {effectiveDate && <button type="button" onClick={resetPlanner} className="inline-flex min-h-[38px] items-center gap-2 rounded-full border border-slate-400 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-slate-950"><RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />Clear</button>}
                 </div>
-                <p className="mt-7 border-t border-slate-300 pt-5 text-xs leading-5 text-slate-600">
-                  Educational planning aid only. Verify the signed contract, delivery method, local legal holidays, and all deadlines with your broker, title company, and legal counsel. Nothing entered here is saved.
-                </p>
+                <p className="mt-5 border-t border-slate-300 pt-4 text-xs leading-5 text-slate-600">Educational planning aid only. Verify the signed contract, delivery method, local legal holidays, and all deadlines with your broker, title company, and legal counsel. Nothing entered here is saved.</p>
               </div>
-            </div>
-
-            <div className="p-6 sm:p-8">
-              {!effectiveDate ? (
-                <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F2EEE7] text-[#301D5D]">
-                    <CalendarDays className="h-6 w-6" aria-hidden="true" />
-                  </div>
-                  <h3 className="mt-5 text-xl font-semibold text-slate-950">Your planning dates will appear here</h3>
-                  <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">Start with the contract&apos;s effective date to see earnest money and option fee delivery timing.</p>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Calculated dates</p>
-                      <h3 className="mt-2 text-xl font-semibold text-slate-950">Your date snapshot</h3>
-                    </div>
-                    <span className="rounded-full bg-[#EEF4EA] px-3 py-1.5 text-xs font-semibold text-[#46633D]">Not saved</span>
-                  </div>
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="p-5 sm:p-6">
+                {!effectiveDate ? (
+                  <p className="text-sm leading-6 text-slate-600">Enter the effective date to see earnest money and option fee delivery timing.</p>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {deadlines.map((deadline) => (
                       <article key={deadline.id} className={`border p-4 ${deadlineTone(deadline)}`}>
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{deadline.category === 'money' ? 'Delivery' : deadline.category === 'option' ? 'Option' : 'Contract term'}</p>
-                        <p className="mt-3 text-lg font-semibold tracking-[-0.02em] text-slate-950">{formatDate(deadline.date)}</p>
+                        <p className="text-lg font-semibold tracking-[-0.02em] text-slate-950">{formatDate(deadline.date)}</p>
                         <p className="mt-1 text-sm font-medium text-slate-800">{deadline.label}</p>
                         {deadline.timeLabel && <p className="mt-2 text-xs font-semibold text-[#5B438C]">{deadline.timeLabel}</p>}
                         {deadline.rolloverApplied && <p className="mt-2 text-xs leading-5 text-slate-600">Extended past a weekend or legal holiday.</p>}
                       </article>
                     ))}
                   </div>
-                  <div className="mt-6 border-t border-slate-200 pt-5">
-                    <p className="text-sm font-semibold text-slate-900">How to use this with confidence</p>
-                    <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-                      <li>Confirm the final effective date against the executed contract.</li>
-                      <li>Use the signed form and addenda as the source of truth for each period.</li>
-                      <li>Document delivery and calendar any broker- or title-required reminders separately.</li>
-                    </ul>
-                  </div>
-                </>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 

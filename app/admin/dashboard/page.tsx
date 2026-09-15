@@ -6,14 +6,14 @@ import { fetchDashboardData } from './data';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Agent Command Center — Admin',
+  title: 'Admin Dashboard | Realty News Now',
 };
 
 export default async function AdminDashboardPage() {
   const data = await fetchDashboardData();
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <PageTitle size="md">Agent Command Center</PageTitle>
+      <PageTitle size="md">Admin Dashboard</PageTitle>
       <DashboardClient data={data} />
     </div>
   );

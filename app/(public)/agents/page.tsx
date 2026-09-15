@@ -58,6 +58,7 @@ export default async function AgentCommandCenterPage() {
     <AgentCommandCenterClient
       providers={providers}
       workspaceKey={`rnn_agent_command_center_v1:${user.realtorId}`}
+      realtorId={user.realtorId}
       initialWorkspace={workspaceRecord?.workspace ?? null}
       initialWorkspaceVersion={workspaceRecord?.version ?? null}
     />
