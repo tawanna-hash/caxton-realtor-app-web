@@ -67,7 +67,7 @@ const ADDENDA = [
 
 const SYSTEM_PROMPT = `You are a high-precision information-extraction service for an executed Texas TREC 1-4 One to Four Family Residential Contract (Resale) and its attached addenda.
 
-Read the uploaded PDF or image and return ONLY valid JSON, with no markdown or commentary. This is a suggestion layer for an admin to review, never a legal determination.
+Read the provided PDF, image, or pasted contract text and return ONLY valid JSON, with no markdown or commentary. This is a suggestion layer for an admin to review, never a legal determination.
 
 Schema:
 {
@@ -122,7 +122,7 @@ Schema:
 }
 
 Rules:
-- Extract only information visibly present in the uploaded contract and addenda. Do not infer, calculate, complete blanks, or guess.
+- Extract only information visibly present in the provided contract material and addenda. Do not infer, calculate, complete blanks, or guess.
 - Preserve names, dollar amounts, legal descriptions, addresses, and contract language as shown. Do not add legal wording.
 - Use YYYY-MM-DD only when the exact date is visible or unambiguous. For effectiveDate, use the final executed effective date only when it is clearly shown; otherwise null.
 - Return days only where the signed contract or an attached addendum clearly specifies that period. Do not derive deadline days from a calendar date.
@@ -198,13 +198,11 @@ function normalize(raw: unknown): TrecContractExtract {
   return { ...(title ? { title } : {}), worksheet, addenda, warnings };
 }
 
-export async function extractTrecContract({
-  base64,
-  mimeType,
-}: {
-  base64: string;
-  mimeType: string;
-}): Promise<TrecContractExtractResult> {
+type TrecContractSource =
+  | { base64: string; mimeType: string }
+  | { text: string };
+
+export async function extractTrecContract(source: TrecContractSource): Promise<TrecContractExtractResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return { ok: false, reason: 'no-key', detail: 'GEMINI_API_KEY not set' };
 
@@ -219,10 +217,14 @@ export async function extractTrecContract({
         system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents: [{
           role: 'user',
-          parts: [
-            { inline_data: { mime_type: mimeType, data: base64 } },
-            { text: 'Extract the contract facts into the requested JSON schema.' },
-          ],
+          parts: 'text' in source
+            ? [
+              { text: `Extract the contract facts from this pasted contract text into the requested JSON schema.\n\n${source.text}` },
+            ]
+            : [
+              { inline_data: { mime_type: source.mimeType, data: source.base64 } },
+              { text: 'Extract the contract facts into the requested JSON schema.' },
+            ],
         }],
         generation_config: {
           temperature: 0,
