@@ -116,6 +116,7 @@ const DRAWER_SECTIONS: NavSection[] = [
   {
     title: 'Platinum Tools',
     items: [
+      { label: 'Agent Command Center', href: '/agents' },
       { label: 'Testimonials HUB', href: '/testimonial-hub' },
       { label: 'Custom Designer', href: '/custom-designer' },
       { label: 'REALTOR® Calculators & Quick References', href: '/resources' },
@@ -319,6 +320,33 @@ export default function NavDrawer({
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {!isAdmin && (
+          <div className="px-5 pt-4">
+            <Link
+              href="/agents"
+              onClick={onClose}
+              className="group block border border-white/20 bg-white p-4 text-[#301D5D] shadow-xl shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[#FFF8E6]"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7059A8]">Agent Command Center</p>
+                  <p className="mt-2 text-lg font-semibold leading-5">Your Texas real estate workday, in one place.</p>
+                </div>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#301D5D] text-[#F4D06F] transition group-hover:translate-x-0.5">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-[0.11em] text-[#5B438C]">
+                <span className="rounded-full bg-[#F0EBF8] px-2.5 py-1">Plan dates</span>
+                <span className="rounded-full bg-[#F0EBF8] px-2.5 py-1">Run numbers</span>
+                <span className="rounded-full bg-[#F0EBF8] px-2.5 py-1">Find partners</span>
+              </div>
+            </Link>
           </div>
         )}
 
