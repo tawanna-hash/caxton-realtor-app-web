@@ -179,7 +179,7 @@ function emailHtml(deal: AgentDeal, deadline: DealDeadline, offset: number): str
       <p style="margin:0 0 8px"><strong>Transaction:</strong> ${label}</p>
       <p style="margin:0 0 20px"><strong>Deadline date:</strong> ${escapeHtml(deadline.date)}</p>
       <p style="margin:0 0 24px">Review the signed contract, delivery requirements, and your broker&apos;s process before acting.</p>
-      <a href="${siteUrl}/agents#agent-desk" style="display:inline-block;background:#301D5D;color:#ffffff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700">Open your deal desk</a>
+      <a href="${siteUrl}/agents#agent-desk" style="display:inline-block;background:#301D5D;color:#ffffff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700">Open your Deal Desktop</a>
     </div>
   `;
 }

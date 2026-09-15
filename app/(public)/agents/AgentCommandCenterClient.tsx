@@ -163,7 +163,7 @@ export default function AgentCommandCenterClient({
                 onClick={() => trackEvent('agent_command_center_deal_desk_opened')}
                 className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-[#F4D06F] px-5 py-3 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
               >
-                Open my deal desk
+                Open my Deal Desktop
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
               <a
@@ -206,7 +206,7 @@ export default function AgentCommandCenterClient({
               </span>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Quick date check</p>
-                <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Need a date without opening a deal desk?</h2>
+                <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Need a date without opening your Deal Desktop?</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">Use the compact, unsaved TREC timing check only when you need a fast answer.</p>
               </div>
             </div>

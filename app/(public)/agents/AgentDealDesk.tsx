@@ -885,7 +885,7 @@ export default function AgentDealDesk({
         <div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Private agent workspace</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Your Deal Dashboard</h2>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Your Deal Desktop</h2>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
               Turn contract terms into a working desk with live timing, task and document checks, and an in-app Date Radar across your active transactions.
             </p>
@@ -900,7 +900,7 @@ export default function AgentDealDesk({
           </p>
         </div>
 
-        <nav aria-label="Deal desk pages" className="mt-5 border border-slate-200 bg-white p-4">
+        <nav aria-label="Deal Desktop pages" className="mt-5 border border-slate-200 bg-white p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">
@@ -917,7 +917,7 @@ export default function AgentDealDesk({
           <div className="flex flex-wrap gap-2">
             {workspacePage === 1 ? (
               <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Deal Dashboard
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Deal Desktop
               </Link>
             ) : activeDeal && activeDeal.worksheetStep > 0 ? (
               <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep - 1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
@@ -941,7 +941,7 @@ export default function AgentDealDesk({
               </button>
             ) : (
               <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
-                Deal Dashboard <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                Deal Desktop <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             )}
           </div>
@@ -1163,7 +1163,7 @@ export default function AgentDealDesk({
             {!activeDeal ? (
               <div className="mt-7 flex min-h-[260px] flex-col items-center justify-center border border-dashed border-slate-300 bg-[#FCFBF9] px-6 text-center">
                 <ClipboardCheck className="h-8 w-8 text-[#7059A8]" aria-hidden="true" />
-                <h4 className="mt-4 text-lg font-semibold text-slate-950">Build your first deal desk</h4>
+                <h4 className="mt-4 text-lg font-semibold text-slate-950">Build your first Deal Desktop</h4>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">Create a private workspace to turn the contract terms in front of you into a workable list of actions.</p>
                 <button type="button" onClick={createDeal} className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">
                   Create transaction

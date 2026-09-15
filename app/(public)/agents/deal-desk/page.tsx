@@ -7,7 +7,7 @@ import AgentDealDesk from '../AgentDealDesk';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Private Agent Deal Desk | Realty News Now',
+  title: 'Your Deal Desktop | Realty News Now',
   description: 'Securely prepare transaction dates, tasks, documents, and TREC contract details.',
 };
 
