@@ -370,14 +370,23 @@ export default function AgentCommandCenterClient({
               <div className="mt-8 border-t border-white/15 pt-6">
                 <p className="text-sm font-semibold text-white">Want your company in front of agents?</p>
                 <p className="mt-2 text-sm leading-6 text-white/65">Build featured visibility through Realty News Now&apos;s partner placements.</p>
-                <Link
-                  href="/advertise/placements"
-                  onClick={() => trackEvent('agent_referral_network_partner_cta_opened')}
-                  className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#F4D06F] px-4 py-2 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
-                >
-                  Explore partner placements
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    href="/agents/partner-application"
+                    onClick={() => trackEvent('agent_referral_network_application_opened')}
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#F4D06F] px-4 py-2 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
+                  >
+                    Apply to join
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                  <Link
+                    href="/advertise/placements"
+                    onClick={() => trackEvent('agent_referral_network_partner_cta_opened')}
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/25 px-4 py-2 text-sm font-bold text-white transition hover:bg-white/10"
+                  >
+                    Explore placements
+                  </Link>
+                </div>
               </div>
             </div>
 
