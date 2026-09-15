@@ -433,7 +433,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     monthlySingle: null,
     monthlyBoth: null,
     pricingUnit: 'per send',
-    sizes: '600×200 email · 600×100 email slim',
+    sizes: '600×300 Email Banner',
     notes: 'Top of every send. Ships with the Friday Email.',
   },
   {

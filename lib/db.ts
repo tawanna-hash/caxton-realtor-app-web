@@ -418,7 +418,7 @@ async function _runEnsureSchema(): Promise<void> {
       display_name: 'e-Blast Top Banner',
       zone: 'newsletter',
       tier: 'premium',
-      sizes: [{w:600,h:200,context:'email'},{w:600,h:100,context:'email-slim'}],
+      sizes: [{w:600,h:300,context:'email-banner'}],
       notes: 'Top of every send. Ships with the Friday Email (FOLLOW_UPS.md #10).',
     },
     {
@@ -491,6 +491,15 @@ async function _runEnsureSchema(): Promise<void> {
     `;
   }
 
+  // Keep the Email Banner catalog in sync for existing deployments. The
+  // general catalog seed intentionally preserves custom specifications.
+  await sql`
+    UPDATE ad_spaces
+       SET sizes_json = ${JSON.stringify([{ w: 600, h: 300, context: 'email-banner' }])}::jsonb,
+           notes = 'Top of every send. Ships with the Friday Email (FOLLOW_UPS.md #10).'
+     WHERE slug = 'newsletter_banner'
+  `;
+
   // ============================================================
   // House-ad placeholder seed (June 2026)
   // Fills the 5 starter ad slots with "Feature your brand here"
@@ -549,7 +558,7 @@ async function _runEnsureSchema(): Promise<void> {
       slug: 'newsletter_banner',
       blob_url: '/ads/house-newsletter-banner.svg',
       width: 600,
-      height: 200,
+      height: 300,
       alt: 'Top-of-email sponsorship',
       subject: 'Email Sponsor inquiry',
     },
@@ -679,6 +688,15 @@ async function _runEnsureSchema(): Promise<void> {
        )
     `;
   }
+
+  // Update the bundled Email Banner placeholder dimensions for deployments
+  // that already have the house creative seeded.
+  await sql`
+    UPDATE ad_creatives
+       SET width = 600, height = 300, alt_text = 'Top-of-email sponsorship'
+     WHERE uploaded_by = 'system:house-ad-seed'
+       AND blob_url = '/ads/house-newsletter-banner.svg'
+  `;
 
   // ============================================================
   // Magazine hotspots (Phase 1 — May 27, 2026)
