@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
 import { trackEvent } from '@/app/posthog-provider';
+import type { AgentCommandCenterWorkspace } from '@/lib/agent-command-center-workspace';
 import AgentDealDesk from './AgentDealDesk';
 
 export type ReferralProvider = {
@@ -114,9 +115,13 @@ function deadlineTone(deadline: TrecDeadline): string {
 export default function AgentCommandCenterClient({
   providers,
   workspaceKey,
+  initialWorkspace,
+  initialWorkspaceVersion,
 }: {
   providers: ReferralProvider[];
   workspaceKey: string;
+  initialWorkspace: AgentCommandCenterWorkspace | null;
+  initialWorkspaceVersion: number | null;
 }) {
   const [effectiveDate, setEffectiveDate] = useState('');
   const [optionPeriodDays, setOptionPeriodDays] = useState('');
@@ -200,7 +205,11 @@ export default function AgentCommandCenterClient({
         </div>
       </section>
 
-      <AgentDealDesk workspaceKey={workspaceKey} />
+      <AgentDealDesk
+        workspaceKey={workspaceKey}
+        initialWorkspace={initialWorkspace}
+        initialWorkspaceVersion={initialWorkspaceVersion}
+      />
 
       <section id="deadline-planner" className="scroll-mt-20">
         <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">

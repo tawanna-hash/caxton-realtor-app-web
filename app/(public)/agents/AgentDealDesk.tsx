@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Bell,
@@ -16,55 +16,18 @@ import {
   Trash2,
 } from 'lucide-react';
 import { trackEvent } from '@/app/posthog-provider';
+import {
+  agentCommandCenterWorkspaceSchema,
+  agentDealSchema,
+  type AgentCommandCenterWorkspace,
+  type AgentDeal,
+  type AgentDealStatus,
+  type AgentReminder,
+  type AgentTask,
+} from '@/lib/agent-command-center-workspace';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
 
 const RADAR_WINDOW_DAYS = 14;
-
-type DealStatus = 'prep' | 'active' | 'closing' | 'completed';
-
-type AgentReminder = {
-  id: string;
-  deadlineId: string;
-  label: string;
-  deadlineDate: string;
-  reminderDate: string;
-  complete: boolean;
-};
-
-type AgentTask = {
-  id: string;
-  title: string;
-  dueDate: string;
-  complete: boolean;
-};
-
-type AgentDocument = {
-  id: string;
-  label: string;
-  complete: boolean;
-};
-
-type AgentDeal = {
-  id: string;
-  title: string;
-  propertyAddress: string;
-  buyerNames: string;
-  sellerNames: string;
-  effectiveDate: string;
-  optionPeriodDays: string;
-  additionalEarnestMoneyDays: string;
-  financingDeadlineDays: string;
-  appraisalDeadlineDays: string;
-  titleCommitmentDays: string;
-  surveyDays: string;
-  closingDate: string;
-  status: DealStatus;
-  reminders: AgentReminder[];
-  tasks: AgentTask[];
-  documents: AgentDocument[];
-  createdAt: string;
-  updatedAt: string;
-};
 
 type RadarItem = {
   id: string;
@@ -76,7 +39,7 @@ type RadarItem = {
   overdue: boolean;
 };
 
-const STATUS_LABELS: Record<DealStatus, string> = {
+const STATUS_LABELS: Record<AgentDealStatus, string> = {
   prep: 'Deal prep',
   active: 'Under contract',
   closing: 'Closing',
@@ -147,13 +110,7 @@ function newDeal(): AgentDeal {
 }
 
 function isStoredDeal(value: unknown): value is AgentDeal {
-  if (!value || typeof value !== 'object') return false;
-  const deal = value as Partial<AgentDeal>;
-  return typeof deal.id === 'string'
-    && typeof deal.title === 'string'
-    && Array.isArray(deal.tasks)
-    && Array.isArray(deal.reminders)
-    && Array.isArray(deal.documents);
+  return agentDealSchema.safeParse(value).success;
 }
 
 function dealDeadlines(deal: AgentDeal): TrecDeadline[] {
@@ -174,44 +131,151 @@ function deadlineColor(deadline: TrecDeadline): string {
   return 'border-slate-200 bg-white';
 }
 
-export default function AgentDealDesk({ workspaceKey }: { workspaceKey: string }) {
+type SyncState = 'loading' | 'ready' | 'saving' | 'conflict' | 'error';
+
+export default function AgentDealDesk({
+  workspaceKey,
+  initialWorkspace,
+  initialWorkspaceVersion,
+}: {
+  workspaceKey: string;
+  initialWorkspace: AgentCommandCenterWorkspace | null;
+  initialWorkspaceVersion: number | null;
+}) {
   const [deals, setDeals] = useState<AgentDeal[]>([]);
   const [activeDealId, setActiveDealId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [syncState, setSyncState] = useState<SyncState>('loading');
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDueDate, setTaskDueDate] = useState('');
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
+  const versionRef = useRef<number | null>(initialWorkspaceVersion);
+  const syncTimerRef = useRef<number | null>(null);
+  const saveInFlightRef = useRef(false);
+  const queuedWorkspaceRef = useRef<AgentCommandCenterWorkspace | null>(null);
+
+  const saveToCloud = useCallback(async function saveToCloud(workspace: AgentCommandCenterWorkspace) {
+    if (saveInFlightRef.current) {
+      queuedWorkspaceRef.current = workspace;
+      return;
+    }
+
+    saveInFlightRef.current = true;
+    let saved = false;
+    setSyncState('saving');
+    try {
+      const response = await fetch('/api/agent-command-center/workspace', {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ workspace, expectedVersion: versionRef.current }),
+      });
+      const payload: unknown = await response.json().catch(() => null);
+
+      if (response.status === 401) {
+        window.location.assign('/login?next=%2Fagents');
+        return;
+      }
+
+      if (response.status === 409) {
+        setSyncState('conflict');
+        return;
+      }
+
+      if (!response.ok || !payload || typeof payload !== 'object') {
+        setSyncState('error');
+        return;
+      }
+
+      const record = payload as { workspace?: unknown; version?: unknown };
+      if (!agentCommandCenterWorkspaceSchema.safeParse(record.workspace).success || typeof record.version !== 'number') {
+        setSyncState('error');
+        return;
+      }
+
+      versionRef.current = record.version;
+      window.localStorage.removeItem(workspaceKey);
+      setSyncState('ready');
+      saved = true;
+    } catch {
+      setSyncState('error');
+    } finally {
+      saveInFlightRef.current = false;
+      const queuedWorkspace = queuedWorkspaceRef.current;
+      queuedWorkspaceRef.current = null;
+      if (saved && queuedWorkspace) {
+        window.setTimeout(() => {
+          void saveToCloud(queuedWorkspace);
+        }, 0);
+      }
+    }
+  }, [workspaceKey]);
+
+  const queueCloudSave = useCallback((nextDeals: AgentDeal[]) => {
+    if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
+    const workspace = { deals: nextDeals };
+    syncTimerRef.current = window.setTimeout(() => {
+      void saveToCloud(workspace);
+    }, 650);
+  }, [saveToCloud]);
 
   useEffect(() => {
     let cancelled = false;
-    let storedDeals: AgentDeal[] = [];
+    let legacyDeals: AgentDeal[] = [];
 
     try {
       const stored = window.localStorage.getItem(workspaceKey);
       const parsed: unknown = stored ? JSON.parse(stored) : [];
-      storedDeals = Array.isArray(parsed) ? parsed.filter(isStoredDeal) : [];
+      legacyDeals = Array.isArray(parsed) ? parsed.filter(isStoredDeal) : [];
     } catch {
-      storedDeals = [];
+      legacyDeals = [];
     }
+    const cloudDeals = initialWorkspace?.deals ?? null;
+    const startingDeals = cloudDeals ?? legacyDeals;
 
     queueMicrotask(() => {
       if (cancelled) return;
-      setDeals(storedDeals);
-      setActiveDealId(storedDeals[0]?.id ?? null);
+      versionRef.current = initialWorkspaceVersion;
+      setDeals(startingDeals);
+      setActiveDealId(startingDeals[0]?.id ?? null);
       setReady(true);
+      setSyncState(cloudDeals ? 'ready' : 'loading');
     });
+
+    if (cloudDeals) {
+      window.localStorage.removeItem(workspaceKey);
+    } else if (legacyDeals.length) {
+      window.setTimeout(() => {
+        if (!cancelled) void saveToCloud({ deals: legacyDeals });
+      }, 0);
+    } else {
+      queueMicrotask(() => {
+        if (!cancelled) setSyncState('ready');
+      });
+    }
 
     return () => {
       cancelled = true;
     };
-  }, [workspaceKey]);
+  }, [initialWorkspace, initialWorkspaceVersion, saveToCloud, workspaceKey]);
+
+  useEffect(() => () => {
+    if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
+  }, []);
 
   const persistDeals = (nextDeals: AgentDeal[]) => {
     setDeals(nextDeals);
-    window.localStorage.setItem(workspaceKey, JSON.stringify(nextDeals));
+    if (ready) queueCloudSave(nextDeals);
   };
 
   const activeDeal = deals.find((deal) => deal.id === activeDealId) ?? null;
+  const syncMessage = {
+    loading: 'Connecting your secure cloud workspace.',
+    ready: 'Secure cloud sync is active for your signed-in account.',
+    saving: 'Saving your latest changes securely.',
+    conflict: 'A newer cloud copy exists on another device. Refresh this page before making more changes.',
+    error: 'Cloud sync needs attention. Keep this page open and refresh before leaving.',
+  }[syncState];
   const activeDeadlines = useMemo(
     () => (activeDeal ? dealDeadlines(activeDeal) : []),
     [activeDeal],
@@ -392,8 +456,8 @@ export default function AgentDealDesk({ workspaceKey }: { workspaceKey: string }
         <div className="mt-5 flex items-start gap-3 border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-3 text-sm leading-6 text-slate-600">
           <Save className="mt-0.5 h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
           <p>
-            <span className="font-semibold text-slate-900">{ready ? 'Saved on this browser.' : 'Loading your browser workspace.'}</span>{' '}
-            Your agent desk is not connected to the admin CRM or its financial records. Verify all dates against the signed contract and your broker&apos;s process.
+            <span className="font-semibold text-slate-900">{ready ? syncMessage : 'Loading your secure workspace.'}</span>{' '}
+            Your agent desk is protected by your Realty News Now sign-in and is not connected to the admin CRM or its financial records. Legacy browser-only data is cleared after it is securely migrated. Verify all dates against the signed contract and your broker&apos;s process.
           </p>
         </div>
 
@@ -515,8 +579,8 @@ export default function AgentDealDesk({ workspaceKey }: { workspaceKey: string }
                   </label>
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Status</span>
-                    <select value={activeDeal.status} onChange={(event) => updateActiveDeal('status', event.target.value as DealStatus)} className="min-h-[46px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]">
-                      {(Object.keys(STATUS_LABELS) as DealStatus[]).map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
+                    <select value={activeDeal.status} onChange={(event) => updateActiveDeal('status', event.target.value as AgentDealStatus)} className="min-h-[46px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]">
+                      {(Object.keys(STATUS_LABELS) as AgentDealStatus[]).map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
                     </select>
                   </label>
                   <label className="block md:col-span-2">
