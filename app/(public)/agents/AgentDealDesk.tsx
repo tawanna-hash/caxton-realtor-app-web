@@ -917,7 +917,7 @@ export default function AgentDealDesk({
           <div className="flex flex-wrap gap-2">
             {workspacePage === 1 ? (
               <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Agent Center
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Deal Dashboard
               </Link>
             ) : activeDeal && activeDeal.worksheetStep > 0 ? (
               <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep - 1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
@@ -941,7 +941,7 @@ export default function AgentDealDesk({
               </button>
             ) : (
               <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
-                Done <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                Deal Dashboard <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             )}
           </div>
@@ -979,7 +979,7 @@ export default function AgentDealDesk({
           })}
         </div>
 
-        <div className="mt-6 grid gap-5 border border-[#D9D0BF] bg-[#FFFDF8] p-5 lg:grid-cols-[1.05fr_0.95fr] lg:p-6">
+        <div className="mt-6 grid gap-5 border border-[#D9D0BF] bg-[#FFFDF8] p-5 lg:grid-cols-3 lg:p-6">
           <div>
             <div className="flex items-center gap-2">
               <CalendarDays className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
@@ -1073,16 +1073,6 @@ export default function AgentDealDesk({
               Alerts are opt-in and send only for active transactions. Browser push requires permission on each device. Check the signed contract and your broker&apos;s process before acting.
             </p>
           </div>
-        </div>
-
-        <section className="mt-6 border-2 border-violet-300 bg-gradient-to-r from-violet-50 to-white p-5 sm:p-6" aria-label="Contract upload">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <div className="flex items-start gap-3"><FileUp className="mt-0.5 h-6 w-6 shrink-0 text-violet-700" aria-hidden="true" /><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">Start with your contract</p><h3 className="mt-1 text-xl font-semibold text-slate-950">Upload a signed TREC 1–4 contract</h3><p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Read visible facts in memory, review the suggested values, and apply only what you confirm to this private transaction.</p></div></div>
-            <button type="button" onClick={() => { if (!activeDeal) createDeal(); setWorkspacePage(2); }} className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-md bg-violet-700 px-5 text-sm font-bold text-white hover:bg-violet-800"><FileUp className="h-4 w-4" aria-hidden="true" />{activeDeal ? 'Upload contract' : 'Create & upload'}</button>
-          </div>
-        </section>
-
-        <div className="mt-8">
           <div className="border border-slate-200 bg-[#F7F5F1] p-5 sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
