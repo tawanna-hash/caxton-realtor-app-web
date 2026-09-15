@@ -914,37 +914,51 @@ export default function AgentDealDesk({
                   : 'Transaction details, upload, tasks and documents'}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {workspacePage === 1 ? (
+          {workspacePage === 2 ? (
+            <div
+              onDragOver={(event) => {
+                event.preventDefault();
+                if (extractionState !== 'extracting') setIsContractDropActive(true);
+              }}
+              onDragLeave={() => setIsContractDropActive(false)}
+              onDrop={(event) => {
+                event.preventDefault();
+                setIsContractDropActive(false);
+                void extractContract(event.dataTransfer.files?.[0]);
+              }}
+              className={extractionState === 'extracting' ? 'pointer-events-none opacity-70' : ''}
+            >
+              <label htmlFor="agentContractUpload" className={`inline-flex min-h-[42px] cursor-pointer items-center gap-2 rounded-md border px-4 text-sm font-bold transition ${
+                isContractDropActive ? 'border-violet-600 bg-violet-100 text-violet-950' : 'border-[#7059A8] bg-white text-[#301D5D] hover:bg-violet-50'
+              }`}>
+                {extractionState === 'extracting' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileUp className="h-4 w-4" aria-hidden="true" />}
+                {extractionState === 'extracting' ? 'Reading contract…' : isContractDropActive ? 'Drop contract to upload' : 'Upload contract'}
+                <input
+                  id="agentContractUpload"
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg,image/webp"
+                  disabled={extractionState === 'extracting'}
+                  onChange={(event) => {
+                    void extractContract(event.target.files?.[0]);
+                    event.currentTarget.value = '';
+                  }}
+                  className="sr-only"
+                />
+              </label>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
               <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Deal Desktop
               </Link>
-            ) : activeDeal && activeDeal.worksheetStep > 0 ? (
-              <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep - 1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
+              <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
+                <Save className="h-4 w-4" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for later'}
               </button>
-            ) : (
-              <button type="button" onClick={() => setWorkspacePage(1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
-              </button>
-            )}
-            <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
-              <Save className="h-4 w-4" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for later'}
-            </button>
-            {workspacePage === 1 ? (
               <button type="button" onClick={() => setWorkspacePage(2)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
                 Open worksheet <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
-            ) : activeDeal && activeDeal.worksheetStep < WORKSHEET_STEPS.length - 1 ? (
-              <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep + 1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
-                Next step <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </button>
-            ) : (
-              <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
-                Deal Desktop <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            )}
-          </div>
+            </div>
+          )}
           </div>
           <div
             className="mt-4 h-2 overflow-hidden rounded-md bg-slate-100"
@@ -1176,52 +1190,7 @@ export default function AgentDealDesk({
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Six-step worksheet</p><h4 className="mt-1 text-lg font-semibold text-slate-950">Step {activeDeal.worksheetStep + 1} of {WORKSHEET_STEPS.length}: {WORKSHEET_STEPS[activeDeal.worksheetStep].label}</h4></div><span className="text-xs font-semibold text-slate-500">Progress is saved in your private cloud workspace.</span></div>
                   <ol aria-label="Worksheet progress" className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">{WORKSHEET_STEPS.map((step, index) => <li key={step.id} className={`min-h-[40px] border px-2 py-2 text-left text-xs font-bold ${activeDeal.worksheetStep === index ? 'border-[#301D5D] bg-[#301D5D] text-white' : index < activeDeal.worksheetStep ? 'border-violet-200 bg-violet-50 text-[#5B438C]' : 'border-slate-200 bg-white text-slate-500'}`}><span className="mr-1 opacity-70">{index + 1}.</span>{step.label}</li>)}</ol>
                 </section>
-                <div
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    if (extractionState !== 'extracting') setIsContractDropActive(true);
-                  }}
-                  onDragLeave={() => setIsContractDropActive(false)}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    setIsContractDropActive(false);
-                    void extractContract(event.dataTransfer.files?.[0]);
-                  }}
-                  className={`mt-5 border border-dashed p-3 transition sm:p-4 ${
-                        isContractDropActive
-                          ? 'border-violet-600 bg-violet-100'
-                          : 'border-violet-200 bg-violet-50/50 hover:border-violet-400 hover:bg-violet-50/70'
-                      } ${extractionState === 'extracting' ? 'pointer-events-none opacity-70' : ''}`}
-                >
-                  <label htmlFor="agentContractUpload" className="flex min-h-[58px] cursor-pointer flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="flex min-w-0 items-center gap-3">
-                      {extractionState === 'extracting' ? (
-                        <LoaderCircle className="h-5 w-5 shrink-0 animate-spin text-violet-700" aria-hidden="true" />
-                      ) : (
-                        <FileUp className="h-5 w-5 shrink-0 text-violet-700" aria-hidden="true" />
-                      )}
-                      <span className="min-w-0">
-                        <span className="block text-sm font-bold text-violet-950">
-                          {extractionState === 'extracting' ? 'Reading contract…' : isContractDropActive ? 'Drop contract to upload' : 'Upload TREC 1–4 to auto-fill'}
-                        </span>
-                        <span className="mt-0.5 block text-xs text-slate-600">PDF or clear image · reviewed suggestions only · 15 MB maximum</span>
-                      </span>
-                    </span>
-                    <span className="inline-flex min-h-[40px] shrink-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c]">
-                      <FileUp className="h-4 w-4" aria-hidden="true" /> Upload contract
-                    </span>
-                    <input
-                      id="agentContractUpload"
-                      type="file"
-                      accept="application/pdf,image/png,image/jpeg,image/webp"
-                      disabled={extractionState === 'extracting'}
-                      onChange={(event) => {
-                        void extractContract(event.target.files?.[0]);
-                        event.currentTarget.value = '';
-                      }}
-                      className="sr-only"
-                    />
-                  </label>
+                <div className="mt-5">
                   {extractionState === 'ready' && extractionDraft && (
                     <section role="status" className="mt-4 border border-emerald-200 bg-emerald-50 p-4">
                       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
@@ -1448,6 +1417,29 @@ export default function AgentDealDesk({
             <div className="mt-5 grid gap-3 md:grid-cols-3"><select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm"><option value="">Closeout outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select><input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm" /><input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm" placeholder="Closeout note" /></div>
             <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#E7C769] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
           </section>
+          <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-5" aria-label="Worksheet navigation">
+            {activeDeal.worksheetStep > 0 ? (
+              <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep - 1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
+              </button>
+            ) : (
+              <button type="button" onClick={() => setWorkspacePage(1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
+              </button>
+            )}
+            <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
+              <Save className="h-4 w-4" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for later'}
+            </button>
+            {activeDeal.worksheetStep < WORKSHEET_STEPS.length - 1 ? (
+              <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep + 1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
+                Next step <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ) : (
+              <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
+                Deal Desktop <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            )}
+          </div>
           </>
         )}
       </div>
