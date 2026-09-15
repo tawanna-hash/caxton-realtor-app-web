@@ -882,22 +882,14 @@ export default function AgentDealDesk({
   return (
     <main id="agent-desk" className="min-h-screen bg-[#F7F5F1]">
       <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
-        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+        <div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Private agent workspace</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Your deal desk</h2>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Your Deal Desk</h2>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
               Turn contract terms into a working desk with live timing, task and document checks, and an in-app Date Radar across your active transactions.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={createDeal}
-            className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-[#301D5D] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#42277c]"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            New transaction
-          </button>
         </div>
 
         <div className="mt-5 flex items-start gap-3 border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-3 text-sm leading-6 text-slate-600">
@@ -924,42 +916,42 @@ export default function AgentDealDesk({
           </div>
           <div className="flex flex-wrap gap-2">
             {workspacePage === 1 ? (
-              <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
+              <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Agent Center
               </Link>
             ) : activeDeal && activeDeal.worksheetStep > 0 ? (
-              <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep - 1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
+              <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep - 1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
               </button>
             ) : (
-              <button type="button" onClick={() => setWorkspacePage(1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
+              <button type="button" onClick={() => setWorkspacePage(1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
               </button>
             )}
-            <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] items-center gap-2 rounded-full border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
+            <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
               <Save className="h-4 w-4" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for later'}
             </button>
             {workspacePage === 1 ? (
-              <button type="button" onClick={() => setWorkspacePage(2)} className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
+              <button type="button" onClick={() => setWorkspacePage(2)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
                 Open worksheet <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
             ) : activeDeal && activeDeal.worksheetStep < WORKSHEET_STEPS.length - 1 ? (
-              <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep + 1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
+              <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep + 1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
                 Next step <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
             ) : (
-              <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
+              <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
                 Done <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             )}
           </div>
           </div>
           <div
-            className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100"
+            className="mt-4 h-2 overflow-hidden rounded-md bg-slate-100"
             aria-label={workspacePage === 1 ? 'Workspace overview' : `Worksheet progress: step ${activeDeal ? activeDeal.worksheetStep + 1 : 1} of ${WORKSHEET_STEPS.length}`}
           >
             <div
-              className="h-full rounded-full bg-[#7059A8] transition-[width]"
+              className="h-full rounded-md bg-[#7059A8] transition-[width]"
               style={{ width: workspacePage === 1 ? '12%' : `${Math.max(20, (((activeDeal?.worksheetStep ?? 0) + 1) / WORKSHEET_STEPS.length) * 100)}%` }}
             />
           </div>
@@ -977,7 +969,7 @@ export default function AgentDealDesk({
             const MetricIcon = Icon as typeof CalendarDays;
             return (
               <div key={label as string} className="border border-slate-200 bg-white p-4">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-full ${tone as string}`}>
+                <div className={`flex h-9 w-9 items-center justify-center rounded-md ${tone as string}`}>
                   <MetricIcon className="h-4 w-4" aria-hidden="true" />
                 </div>
                 <p className="mt-4 text-2xl font-semibold tracking-[-0.04em] text-slate-950">{value as number}</p>
@@ -1004,7 +996,7 @@ export default function AgentDealDesk({
                 type="button"
                 onClick={exportActiveDealCalendar}
                 disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length}
-                className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <Download className="h-4 w-4" aria-hidden="true" />
                 Export this deal
@@ -1013,7 +1005,7 @@ export default function AgentDealDesk({
                 type="button"
                 onClick={exportAllDealsCalendar}
                 disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)}
-                className="inline-flex min-h-[42px] items-center gap-2 rounded-full border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <CalendarDays className="h-4 w-4" aria-hidden="true" />
                 Export active deals
@@ -1054,7 +1046,7 @@ export default function AgentDealDesk({
                 <PushOptInButton
                   realtorId={realtorId}
                   label="Connect this device"
-                  className="inline-flex min-h-[36px] items-center rounded-full border border-[#7059A8] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]"
+                  className="inline-flex min-h-[36px] items-center rounded-md border border-[#7059A8] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]"
                 />
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-100 pt-3">
@@ -1086,7 +1078,7 @@ export default function AgentDealDesk({
         <section className="mt-6 border-2 border-violet-300 bg-gradient-to-r from-violet-50 to-white p-5 sm:p-6" aria-label="Contract upload">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div className="flex items-start gap-3"><FileUp className="mt-0.5 h-6 w-6 shrink-0 text-violet-700" aria-hidden="true" /><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">Start with your contract</p><h3 className="mt-1 text-xl font-semibold text-slate-950">Upload a signed TREC 1–4 contract</h3><p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Read visible facts in memory, review the suggested values, and apply only what you confirm to this private transaction.</p></div></div>
-            <button type="button" onClick={() => { if (!activeDeal) createDeal(); setWorkspacePage(2); }} className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-full bg-violet-700 px-5 text-sm font-bold text-white hover:bg-violet-800"><FileUp className="h-4 w-4" aria-hidden="true" />{activeDeal ? 'Upload contract' : 'Create & upload'}</button>
+            <button type="button" onClick={() => { if (!activeDeal) createDeal(); setWorkspacePage(2); }} className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-md bg-violet-700 px-5 text-sm font-bold text-white hover:bg-violet-800"><FileUp className="h-4 w-4" aria-hidden="true" />{activeDeal ? 'Upload contract' : 'Create & upload'}</button>
           </div>
         </section>
 
@@ -1111,7 +1103,7 @@ export default function AgentDealDesk({
                   onClick={() => focusDeal(item.dealId)}
                   className="flex w-full items-center gap-3 border border-slate-200 bg-white p-3 text-left transition hover:border-[#7059A8]"
                 >
-                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${item.overdue ? 'bg-[#B6402C]' : item.kind === 'deadline' ? 'bg-[#7059A8]' : 'bg-[#C88A14]'}`} />
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-md ${item.overdue ? 'bg-[#B6402C]' : item.kind === 'deadline' ? 'bg-[#7059A8]' : 'bg-[#C88A14]'}`} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold text-slate-900">{item.label}</span>
                     <span className="mt-0.5 block truncate text-xs text-slate-500">{item.dealTitle}</span>
@@ -1142,19 +1134,24 @@ export default function AgentDealDesk({
                     aria-label="Select transaction"
                     value={activeDealId ?? ''}
                     onChange={(event) => {
+                      if (event.target.value === '__new__') {
+                        createDeal();
+                        return;
+                      }
                       setActiveDealId(event.target.value);
                       setPendingRemoval(null);
                     }}
                     className="min-h-[42px] max-w-[210px] border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#301D5D]"
                   >
                     {deals.map((deal) => <option key={deal.id} value={deal.id}>{deal.propertyAddress || deal.title}</option>)}
+                    <option value="__new__">+ Start another transaction</option>
                   </select>
                   {activeDeal && (
                     pendingRemoval === activeDeal.id ? (
                       <button
                         type="button"
                         onClick={() => removeDeal(activeDeal.id)}
-                        className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#9A3D2B] px-4 text-sm font-bold text-white"
+                        className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#9A3D2B] px-4 text-sm font-bold text-white"
                       >
                         Confirm remove
                       </button>
@@ -1162,7 +1159,7 @@ export default function AgentDealDesk({
                       <button
                         type="button"
                         onClick={() => setPendingRemoval(activeDeal.id)}
-                        className="inline-flex min-h-[42px] items-center gap-2 rounded-full border border-[#D8A79D] px-4 text-sm font-semibold text-[#9A3D2B] transition hover:bg-[#FFF0EC]"
+                        className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#D8A79D] px-4 text-sm font-semibold text-[#9A3D2B] transition hover:bg-[#FFF0EC]"
                       >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                         Remove
@@ -1178,7 +1175,7 @@ export default function AgentDealDesk({
                 <ClipboardCheck className="h-8 w-8 text-[#7059A8]" aria-hidden="true" />
                 <h4 className="mt-4 text-lg font-semibold text-slate-950">Build your first deal desk</h4>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">Create a private workspace to turn the contract terms in front of you into a workable list of actions.</p>
-                <button type="button" onClick={createDeal} className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-bold text-white">
+                <button type="button" onClick={createDeal} className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">
                   Create transaction
                   <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -1253,8 +1250,8 @@ export default function AgentDealDesk({
                           </p>
                         </div>
                         <div className="flex shrink-0 flex-wrap gap-2">
-                          <button type="button" onClick={applyExtraction} className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-emerald-700 px-4 text-sm font-bold text-white hover:bg-emerald-800">Apply to this deal</button>
-                          <button type="button" onClick={() => { setExtractionDraft(null); setExtractionState('idle'); }} className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-emerald-300 bg-white px-4 text-sm font-bold text-emerald-800 hover:bg-emerald-100">Discard</button>
+                          <button type="button" onClick={applyExtraction} className="inline-flex min-h-[40px] items-center justify-center rounded-md bg-emerald-700 px-4 text-sm font-bold text-white hover:bg-emerald-800">Apply to this deal</button>
+                          <button type="button" onClick={() => { setExtractionDraft(null); setExtractionState('idle'); }} className="inline-flex min-h-[40px] items-center justify-center rounded-md border border-emerald-300 bg-white px-4 text-sm font-bold text-emerald-800 hover:bg-emerald-100">Discard</button>
                         </div>
                       </div>
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -1286,14 +1283,14 @@ export default function AgentDealDesk({
                     <input value={activeDeal.title} onChange={(event) => updateActiveDeal('title', event.target.value)} className="min-h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Example: Bluebonnet Lane" />
                   </label>
                   <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Status</span>
+                    <span className="mb-2 block text-sm font-semibold text-slate-800">Transaction stage</span>
                     <select value={activeDeal.status} onChange={(event) => updateActiveDeal('status', event.target.value as AgentDealStatus)} className="min-h-[46px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]">
                       {(Object.keys(STATUS_LABELS) as AgentDealStatus[]).map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
                     </select>
                   </label>
                   <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Transaction owner</span>
-                    <input value={activeDeal.owner} onChange={(event) => updateActiveDeal('owner', event.target.value)} className="min-h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Responsible agent or coordinator" />
+                    <span className="mb-2 block text-sm font-semibold text-slate-800">Coordinator / owner</span>
+                    <input value={activeDeal.owner} onChange={(event) => updateActiveDeal('owner', event.target.value)} className="min-h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Name or role responsible for next steps" />
                   </label>
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Detailed workflow stage</span>
@@ -1321,7 +1318,7 @@ export default function AgentDealDesk({
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {TIMING_FIELDS.filter((field) => field.step === activeDeal.worksheetStep).map(({ key, label, type }) => (
                       <label key={key} className="block">
-                        <span className="mb-2 block text-sm font-semibold text-slate-800">{label}</span>
+                        <span className="mb-2 block text-sm font-semibold text-slate-800">{key === 'effectiveDate' ? 'Contract effective date' : label}</span>
                         <input
                           type={type}
                           min={type === 'number' ? '1' : undefined}
@@ -1330,6 +1327,11 @@ export default function AgentDealDesk({
                           onChange={(event) => updateActiveDeal(key as keyof AgentDeal, event.target.value as never)}
                           className="min-h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]"
                         />
+                        {key === 'effectiveDate' && (
+                          <span className="mt-2 block text-xs leading-5 text-slate-500">
+                            This is day zero. Day one begins the next calendar day.
+                          </span>
+                        )}
                       </label>
                     ))}
                   </div>
@@ -1392,7 +1394,7 @@ export default function AgentDealDesk({
                           <p className="mt-1 text-lg font-semibold tracking-[-0.02em] text-slate-900">{formatDate(deadline.date)}</p>
                           {deadline.timeLabel && <p className="mt-1 text-xs font-medium text-[#7059A8]">{deadline.timeLabel}</p>}
                           <div className="mt-3 flex flex-wrap gap-2">
-                            {TREC_REMINDER_PRESET_OFFSETS.map((preset) => <button type="button" key={preset.id} disabled={reminderAdded} onClick={() => addReminder(deadline, preset.id)} className="inline-flex min-h-[34px] items-center gap-1 rounded-full border border-[#7059A8] bg-white px-2.5 text-xs font-bold text-[#301D5D] disabled:cursor-default disabled:border-slate-200 disabled:text-slate-400"><Bell className="h-3.5 w-3.5" aria-hidden="true" />{reminderAdded ? 'On Radar' : preset.id}</button>)}
+                            {TREC_REMINDER_PRESET_OFFSETS.map((preset) => <button type="button" key={preset.id} disabled={reminderAdded} onClick={() => addReminder(deadline, preset.id)} className="inline-flex min-h-[34px] items-center gap-1 rounded-md border border-[#7059A8] bg-white px-2.5 text-xs font-bold text-[#301D5D] disabled:cursor-default disabled:border-slate-200 disabled:text-slate-400"><Bell className="h-3.5 w-3.5" aria-hidden="true" />{reminderAdded ? 'On Radar' : preset.id}</button>)}
                           </div>
                         </div>
                       );
@@ -1415,22 +1417,22 @@ export default function AgentDealDesk({
                   <h3 className="mt-1 text-xl font-semibold text-slate-950">Tasks and reminders</h3>
                 </div>
               </div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_140px_110px_auto]">
-                <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="min-h-[44px] border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a transaction task" />
-                <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="min-h-[44px] border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
-                <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-[44px] border border-slate-300 bg-white px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select>
-                <button type="button" onClick={addTask} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-bold text-white"><Plus className="h-4 w-4" aria-hidden="true" />Add</button>
+              <div className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2">
+                <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a transaction task" />
+                <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
+                <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-[44px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select>
+                <button type="button" onClick={addTask} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Plus className="h-4 w-4" aria-hidden="true" />Add</button>
               </div>
-              <div className="mt-4 grid gap-2 border-y border-slate-100 py-4 sm:grid-cols-[1fr_150px_1fr_auto]">
-                <select value={reminderDeadlineId} onChange={(event) => setReminderDeadlineId(event.target.value)} aria-label="Reminder deadline" className="min-h-[42px] border border-slate-300 bg-white px-2 text-sm"><option value="">Custom reminder deadline</option>{activeDeadlines.map((deadline) => <option key={deadline.id} value={deadline.id}>{deadline.label}</option>)}</select>
-                <input type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} aria-label="Custom reminder date" className="min-h-[42px] border border-slate-300 px-2 text-sm" />
-                <input value={reminderNote} onChange={(event) => setReminderNote(event.target.value)} aria-label="Custom reminder note" className="min-h-[42px] border border-slate-300 px-3 text-sm" placeholder="Reminder note (optional)" />
-                <button type="button" onClick={addCustomReminder} disabled={!reminderDeadlineId || !reminderDate} className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-40">Add reminder</button>
+              <div className="mt-4 grid min-w-0 gap-2 border-y border-slate-100 py-4 sm:grid-cols-2">
+                <select value={reminderDeadlineId} onChange={(event) => setReminderDeadlineId(event.target.value)} aria-label="Reminder deadline" className="min-h-[42px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm"><option value="">Custom reminder deadline</option>{activeDeadlines.map((deadline) => <option key={deadline.id} value={deadline.id}>{deadline.label}</option>)}</select>
+                <input type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} aria-label="Custom reminder date" className="min-h-[42px] min-w-0 w-full border border-slate-300 px-2 text-sm" />
+                <input value={reminderNote} onChange={(event) => setReminderNote(event.target.value)} aria-label="Custom reminder note" className="min-h-[42px] min-w-0 w-full border border-slate-300 px-3 text-sm" placeholder="Reminder note (optional)" />
+                <button type="button" onClick={addCustomReminder} disabled={!reminderDeadlineId || !reminderDate} className="inline-flex min-h-[42px] items-center justify-center rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-40">Add reminder</button>
               </div>
               <div className="mt-5 space-y-2">
                 {!activeDeal.tasks.length && !activeDeal.reminders.length ? <p className="border border-dashed border-slate-300 bg-[#FCFBF9] p-4 text-sm text-slate-600">Use deadline presets (7d, 3d, 1d, due) in the review step or add a custom action here.</p> : <>
-                  {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border border-[#E7C769] bg-[#FFF9E7] p-3"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#A97A1A] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#855D10]">{formatDate(reminder.reminderDate)}</span></div>)}
-                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-full px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-red-100 text-red-800' : task.priority === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ')}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#B6402C]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}<button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#9A3D2B]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button></div>)}
+                  {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border border-[#E7C769] bg-[#FFF9E7] p-3"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#A97A1A] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#855D10]">{formatDate(reminder.reminderDate)}</span></div>)}
+                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-red-100 text-red-800' : task.priority === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ')}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#B6402C]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}<button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#9A3D2B]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button></div>)}
                 </>}
               </div>
             </div>
@@ -1443,9 +1445,9 @@ export default function AgentDealDesk({
                   <h3 className="mt-1 text-xl font-semibold text-slate-950">Document checklist</h3>
                 </div>
               </div>
-              <div className="mt-5 flex gap-2"><input value={documentName} onChange={(event) => setDocumentName(event.target.value)} className="min-h-[42px] min-w-0 flex-1 border border-slate-300 px-3 text-sm" placeholder="Custom document request" /><button type="button" onClick={addDocument} disabled={!documentName.trim()} className="inline-flex min-h-[42px] items-center rounded-full border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-40">Request</button></div>
+              <div className="mt-5 flex gap-2"><input value={documentName} onChange={(event) => setDocumentName(event.target.value)} className="min-h-[42px] min-w-0 flex-1 border border-slate-300 px-3 text-sm" placeholder="Custom document request" /><button type="button" onClick={addDocument} disabled={!documentName.trim()} className="inline-flex min-h-[42px] items-center rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-40">Request</button></div>
               <div className="mt-4 space-y-2">
-                {activeDeal.documents.map((document) => <div key={document.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${document.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></span><span className={`min-w-0 flex-1 text-sm font-semibold ${document.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{document.label}</span><select value={document.status} onChange={(event) => updateDocument(document.id, event.target.value as AgentDocument['status'])} aria-label={`Status for ${document.label}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold"><option value="requested">Requested</option><option value="received">Received</option><option value="reviewed">Reviewed</option><option value="not_needed">Not needed</option></select></div>)}
+                {activeDeal.documents.map((document) => <div key={document.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${document.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></span><span className={`min-w-0 flex-1 text-sm font-semibold ${document.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{document.label}</span><select value={document.status} onChange={(event) => updateDocument(document.id, event.target.value as AgentDocument['status'])} aria-label={`Status for ${document.label}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold"><option value="requested">Requested</option><option value="received">Received</option><option value="reviewed">Reviewed</option><option value="not_needed">Not needed</option></select></div>)}
               </div>
               <div className="mt-5 border-t border-slate-200 pt-5">
                 <p className="text-sm font-semibold text-slate-800">Operational review alerts</p>
@@ -1460,7 +1462,7 @@ export default function AgentDealDesk({
             </div>
           </div>
           <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><History className="h-5 w-5 text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h3 className="mt-1 text-xl font-semibold text-slate-950">Outcome, record, and export</h3></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
+            <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><History className="h-5 w-5 text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h3 className="mt-1 text-xl font-semibold text-slate-950">Outcome, record, and export</h3></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
             <div className="mt-5 grid gap-3 md:grid-cols-3"><select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm"><option value="">Closeout outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select><input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm" /><input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm" placeholder="Closeout note" /></div>
             <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#E7C769] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
           </section>

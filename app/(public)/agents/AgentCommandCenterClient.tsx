@@ -261,24 +261,6 @@ export default function AgentCommandCenterClient({
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-[#F7F5F1]">
-        <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:py-10">
-          <Link
-            href="/agents/deal-desk"
-            onClick={() => trackEvent('agent_command_center_private_workspace_opened')}
-            className="group grid gap-5 border-2 border-[#7059A8] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-xl sm:p-6 lg:grid-cols-[auto_1fr_auto] lg:items-center"
-          >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#301D5D] text-[#F4D06F]"><FileText className="h-6 w-6" aria-hidden="true" /></span>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#7059A8]">Private Agent Workspace</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">Keep the full transaction desk private, organized, and moving.</h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Upload and review contract facts, calculate key dates, manage task and document requests, and keep operational alerts in one signed-in cloud workspace.</p>
-            </div>
-            <span className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#301D5D] px-5 text-sm font-bold text-white group-hover:bg-[#42277c]">Open workspace <ArrowRight className="h-4 w-4" aria-hidden="true" /></span>
-          </Link>
-        </div>
-      </section>
-
       <section className="border-y border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
