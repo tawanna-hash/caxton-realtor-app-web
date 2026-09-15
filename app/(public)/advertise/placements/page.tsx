@@ -142,6 +142,7 @@ function BundleSavingsSection() {
 
 function PlacementCard({ slot }: { slot: AppAdSlot }) {
   const hostPage = HOST_PAGE_BY_SLUG[slot.slug] ?? ZONE_LABEL[slot.zone];
+  const showRotationNotice = slot.rotates && slot.slug !== 'newsletter_banner';
 
   return (
     <article className="rounded-md border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
@@ -167,7 +168,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
               {slot.name}
             </h3>
           </div>
-          {slot.rotates && (
+          {showRotationNotice && (
             <span
               className="shrink-0 inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
               title="Rotates with up to 5 active campaigns. 6s dwell, 2s cross-fade."
@@ -180,7 +181,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
             </span>
           )}
         </div>
-        {slot.rotates && (
+        {showRotationNotice && (
           <div className="text-[11px] text-blue-700">
             Shared placement · up to 5 partners cycle · 6-second view + 2-second fade
           </div>
