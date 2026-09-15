@@ -885,7 +885,7 @@ export default function AgentDealDesk({
         <div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Private agent workspace</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Your Deal Desk</h2>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Your Deal Dashboard</h2>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
               Turn contract terms into a working desk with live timing, task and document checks, and an in-app Date Radar across your active transactions.
             </p>
