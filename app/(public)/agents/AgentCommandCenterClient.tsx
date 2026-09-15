@@ -19,7 +19,9 @@ import {
   Wrench,
 } from 'lucide-react';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
+import type { AgentCommandCenterWorkspace } from '@/lib/agent-command-center-workspace';
 import { trackEvent } from '@/app/posthog-provider';
+import AgentDealDesk from './AgentDealDesk';
 
 export type ReferralProvider = {
   id: number;
@@ -111,8 +113,16 @@ function deadlineTone(deadline: TrecDeadline): string {
 
 export default function AgentCommandCenterClient({
   providers,
+  workspaceKey,
+  realtorId,
+  initialWorkspace,
+  initialWorkspaceVersion,
 }: {
   providers: ReferralProvider[];
+  workspaceKey: string;
+  realtorId: string;
+  initialWorkspace: AgentCommandCenterWorkspace | null;
+  initialWorkspaceVersion: number | null;
 }) {
   const [effectiveDate, setEffectiveDate] = useState('');
   const [optionPeriodDays, setOptionPeriodDays] = useState('');
@@ -260,6 +270,14 @@ export default function AgentCommandCenterClient({
           )}
         </div>
       </section>
+
+      <AgentDealDesk
+        embedded
+        workspaceKey={workspaceKey}
+        realtorId={realtorId}
+        initialWorkspace={initialWorkspace}
+        initialWorkspaceVersion={initialWorkspaceVersion}
+      />
 
       <section className="border-y border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">

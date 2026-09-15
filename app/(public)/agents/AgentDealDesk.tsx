@@ -400,11 +400,13 @@ export default function AgentDealDesk({
   realtorId,
   initialWorkspace,
   initialWorkspaceVersion,
+  embedded = false,
 }: {
   workspaceKey: string;
   realtorId: string;
   initialWorkspace: AgentCommandCenterWorkspace | null;
   initialWorkspaceVersion: number | null;
+  embedded?: boolean;
 }) {
   const [deals, setDeals] = useState<AgentDeal[]>([]);
   const [notificationPreferences, setNotificationPreferences] = useState<AgentNotificationPreferences>(
@@ -426,7 +428,7 @@ export default function AgentDealDesk({
   const [extractionWarnings, setExtractionWarnings] = useState<string[]>([]);
   const [extractionError, setExtractionError] = useState('');
   const [isContractDropActive, setIsContractDropActive] = useState(false);
-  const [workspacePage, setWorkspacePage] = useState<1 | 2>(1);
+  const [workspacePage, setWorkspacePage] = useState<1 | 2>(embedded ? 2 : 1);
   const versionRef = useRef<number | null>(initialWorkspaceVersion);
   const syncTimerRef = useRef<number | null>(null);
   const saveInFlightRef = useRef(false);
@@ -880,9 +882,9 @@ export default function AgentDealDesk({
   };
 
   return (
-    <main id="agent-desk" className="min-h-screen bg-[#F7F5F1]">
-      <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
-        <div>
+    <section id="agent-desk" className={embedded ? 'bg-[#F7F5F1]' : 'min-h-screen bg-[#F7F5F1]'}>
+      <div className={embedded ? 'mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:py-10' : 'mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16'}>
+        {!embedded && <div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Private agent workspace</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Your Deal Desktop</h2>
@@ -890,15 +892,15 @@ export default function AgentDealDesk({
               Turn contract terms into a working desk with live timing, task and document checks, and an in-app Date Radar across your active transactions.
             </p>
           </div>
-        </div>
+        </div>}
 
-        <div className="mt-5 flex items-start gap-3 border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-3 text-sm leading-6 text-slate-600">
+        {!embedded && <div className="mt-5 flex items-start gap-3 border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-3 text-sm leading-6 text-slate-600">
           <Save className="mt-0.5 h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
           <p>
             <span className="font-semibold text-slate-900">{ready ? syncMessage : 'Loading your secure workspace.'}</span>{' '}
             Verify all dates against the signed contract and your broker&apos;s process.
           </p>
-        </div>
+        </div>}
 
         <nav aria-label="Deal Desktop pages" className="mt-5 border border-slate-200 bg-white p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1443,6 +1445,6 @@ export default function AgentDealDesk({
           </>
         )}
       </div>
-    </main>
+    </section>
   );
 }

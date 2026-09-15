@@ -4,6 +4,7 @@ import { ensureSchema, getSql } from '@/lib/db';
 import { ensureBuilderInventorySchema } from '@/lib/builder-inventory';
 import { ensurePublicationColumn } from '@/lib/publication-theme';
 import { getCurrentUser } from '@/lib/server/auth/user';
+import { getAgentCommandCenterWorkspace } from '@/lib/server/agent-command-center-workspaces';
 import AgentCommandCenterClient, {
   type ReferralProvider,
 } from './AgentCommandCenterClient';
@@ -25,6 +26,7 @@ export default async function AgentCommandCenterPage() {
   if (!user) redirect('/login?next=%2Fagents');
 
   let providers: ReferralProvider[] = [];
+  const workspaceRecord = await getAgentCommandCenterWorkspace(user.realtorId);
 
   // The command center remains useful even if the directory database is
   // temporarily unavailable. The only affected area is the live provider list;
@@ -53,6 +55,12 @@ export default async function AgentCommandCenterPage() {
   }
 
   return (
-    <AgentCommandCenterClient providers={providers} />
+    <AgentCommandCenterClient
+      providers={providers}
+      workspaceKey={`rnn_agent_command_center_v1:${user.realtorId}`}
+      realtorId={user.realtorId}
+      initialWorkspace={workspaceRecord?.workspace ?? null}
+      initialWorkspaceVersion={workspaceRecord?.version ?? null}
+    />
   );
 }
