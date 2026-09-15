@@ -885,6 +885,57 @@ export default function AgentDealDesk({
     return (
       <section id="agent-deal-tools" className="bg-[#F7F5F1]">
         <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:py-10">
+          <div className="grid items-stretch gap-5 border border-[#D9D0BF] bg-[#FFFDF8] p-5 lg:grid-cols-3 lg:p-6">
+            <div className="order-1 h-full border border-slate-200 bg-white p-5 sm:p-6">
+              <div className="flex items-start gap-3">
+                <Bell className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
+                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Date Radar</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Next {radarWindowDays} days</h2></div>
+              </div>
+              <div className="mt-5 space-y-2">
+                {!radarItems.length ? <div className="border border-dashed border-slate-300 bg-white p-5 text-sm leading-6 text-slate-600">Add a transaction, effective date, and closing date to set this Date Radar window.</div> : radarItems.map((item) => (
+                  <button type="button" key={item.id} onClick={() => focusDeal(item.dealId)} className="flex w-full items-center gap-3 border border-slate-200 bg-white p-3 text-left transition hover:border-[#7059A8]">
+                    <span className={`h-2.5 w-2.5 shrink-0 rounded-md ${item.overdue ? 'bg-[#B6402C]' : item.kind === 'deadline' ? 'bg-[#7059A8]' : 'bg-[#C88A14]'}`} />
+                    <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-slate-900">{item.label}</span><span className="mt-0.5 block truncate text-xs text-slate-500">{item.dealTitle}</span></span>
+                    <span className={`text-right text-xs font-bold ${item.overdue ? 'text-[#B6402C]' : 'text-slate-700'}`}>{item.overdue ? 'Overdue' : formatDate(item.date)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="order-2 h-full border border-slate-200 bg-white p-5 sm:p-6">
+              <div className="flex items-start gap-3">
+                <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
+                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar</p><h2 className="mt-1 text-xl font-semibold text-slate-950">Take your deadlines with you</h2></div>
+              </div>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Download calendar files for the active deal or every active transaction. Each export includes calculated contract dates, closing dates, open reminders, and open tasks.</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"><Download className="h-4 w-4" aria-hidden="true" />Export this deal</button>
+                <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="h-4 w-4" aria-hidden="true" />Export active deals</button>
+              </div>
+            </div>
+            <div className="order-3 h-full border border-slate-200 bg-white p-5 sm:p-6">
+              <div className="flex items-start gap-3">
+                <Bell className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
+                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline alerts</p><h2 className="mt-1 text-xl font-semibold text-slate-950">Choose how you are notified</h2></div>
+              </div>
+              <div className="mt-4 space-y-3">
+                <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Mail className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Send deadline alerts by email</label>
+                <div className="flex flex-wrap items-center gap-3"><label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.pushEnabled} onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Smartphone className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Send browser push alerts</label><PushOptInButton realtorId={realtorId} label="Connect this device" className="inline-flex min-h-[36px] items-center rounded-md border border-[#7059A8] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]" /></div>
+                <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-100 pt-3">
+                  {([[7, '7 days before'], [3, '3 days before'], [1, '1 day before'], [0, 'Due today']] as const).map(([offset, label]) => <label key={offset} className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600"><input type="checkbox" checked={notificationPreferences.reminderOffsets.includes(offset)} disabled={notificationPreferences.reminderOffsets.length === 1 && notificationPreferences.reminderOffsets[0] === offset} onChange={() => toggleReminderOffset(offset)} className="h-3.5 w-3.5 accent-[#301D5D]" />{label}</label>)}
+                </div>
+              </div>
+              <p className="mt-4 text-xs leading-5 text-slate-500">Alerts are opt-in and send only for active transactions. Browser push requires permission on each device. Check the signed contract and your broker&apos;s process before acting.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (panelsOnly && window.location.hash === '#legacy-action-panels') {
+    return (
+      <section id="agent-deal-tools" className="bg-[#F7F5F1]">
+        <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:py-10">
           {!activeDeal ? (
             <div className="border border-dashed border-slate-300 bg-white p-6 text-center">
               <h2 className="text-xl font-semibold text-slate-950">Set up your first transaction</h2>
@@ -1093,7 +1144,7 @@ export default function AgentDealDesk({
           })}
         </div>
 
-        <div className="mt-6 grid items-stretch gap-5 border border-[#D9D0BF] bg-[#FFFDF8] p-5 lg:grid-cols-3 lg:p-6">
+        <div className="mt-6 hidden grid items-stretch gap-5 border border-[#D9D0BF] bg-[#FFFDF8] p-5 lg:grid-cols-3 lg:p-6">
           <div className="order-2 h-full border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex items-start gap-3">
               <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
