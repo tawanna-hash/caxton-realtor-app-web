@@ -979,10 +979,10 @@ export default function AgentDealDesk({
           })}
         </div>
 
-        <div className="mt-6 grid gap-5 border border-[#D9D0BF] bg-[#FFFDF8] p-5 lg:grid-cols-3 lg:p-6">
-          <div>
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
+        <div className="mt-6 grid items-stretch gap-5 border border-[#D9D0BF] bg-[#FFFDF8] p-5 lg:grid-cols-3 lg:p-6">
+          <div className="order-2 h-full border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex items-start gap-3">
+              <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar</p>
                 <h3 className="mt-1 text-xl font-semibold text-slate-950">Take your deadlines with you</h3>
@@ -1013,7 +1013,7 @@ export default function AgentDealDesk({
             </div>
           </div>
 
-          <div className="border border-slate-200 bg-white p-4 sm:p-5">
+          <div className="order-3 h-full border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex items-start gap-3">
               <Bell className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
               <div>
@@ -1073,13 +1073,13 @@ export default function AgentDealDesk({
               Alerts are opt-in and send only for active transactions. Browser push requires permission on each device. Check the signed contract and your broker&apos;s process before acting.
             </p>
           </div>
-          <div className="border border-slate-200 bg-[#F7F5F1] p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-4">
+          <div className="order-1 h-full border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex items-start gap-3">
+              <Bell className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Date Radar</p>
                 <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Next {radarWindowDays} days</h3>
               </div>
-              <Bell className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
             </div>
             <div className="mt-5 space-y-2">
               {!radarItems.length ? (
