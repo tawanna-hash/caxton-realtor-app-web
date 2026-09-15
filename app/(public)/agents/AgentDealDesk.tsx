@@ -961,7 +961,7 @@ export default function AgentDealDesk({
           <>
         <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            ['Active workspaces', activeDealCount, ClipboardCheck, 'bg-[#F8F5FF] text-[#301D5D]'],
+            ['Agent transactions', activeDealCount, ClipboardCheck, 'bg-[#F8F5FF] text-[#301D5D]'],
             ['Closing in 30 days', closingSoonCount, CalendarDays, 'bg-[#FFF9E7] text-[#855D10]'],
             ['Review alerts', reviewAlerts.length, AlertTriangle, 'bg-[#FFF0EC] text-[#9A3D2B]'],
             ['Overdue tasks', overdueTaskCount, ListTodo, 'bg-[#F2EEE7] text-[#4C3B67]'],
