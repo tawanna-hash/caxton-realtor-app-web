@@ -172,7 +172,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
           <PageTitle size="md">{PUB_LABEL[pub]}</PageTitle>
           <p className="mt-2 text-sm text-gray-600 max-w-2xl">
             Merged + deduped email list across segments, board mirror, app
-            subscribers, and newsletter signups. Drop rules match the CSV
+            subscribers, and email signups. Drop rules match the CSV
             download exactly.
           </p>
         </div>
@@ -228,7 +228,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
           <option value="all">All sources</option>
           <option value="mailing_contacts">Mailing / Holding</option>
           <option value="realtors">App subscribers</option>
-          <option value="newsletter_subscribers">Newsletter</option>
+          <option value="newsletter_subscribers">Email</option>
         </select>
         <span className="ml-auto text-xs text-gray-500">
           {loading ? 'Loading…' : `${filtered.length.toLocaleString()} of ${(rows?.length ?? 0).toLocaleString()} shown`}
@@ -335,7 +335,7 @@ function prettySource(s: string): string {
   switch (s) {
     case 'mailing_contacts': return 'Mailing / Holding';
     case 'realtors': return 'App subscribers';
-    case 'newsletter_subscribers': return 'Newsletter';
+    case 'newsletter_subscribers': return 'Email';
     default: return s;
   }
 }

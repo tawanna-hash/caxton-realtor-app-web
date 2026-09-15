@@ -58,7 +58,7 @@ export const ZONE_LABELS: Record<AdZone, string> = {
   article: 'Article',
   feed: 'Feed',
   calendar: 'Calendar',
-  newsletter: 'Newsletter',
+  newsletter: 'Email',
   app: 'App-level',
   account: 'Account',
   misc: 'Misc',

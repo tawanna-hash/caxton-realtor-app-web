@@ -116,7 +116,7 @@ export default function PrivacyPage() {
               </strong>{' '}
               we use to operate the app — including our email delivery
               provider, our cloud hosting providers, our push notification
-              service, and our newsletter platform. These providers are bound
+              service, and our email platform. These providers are bound
               to use your information only to provide their service to us.
             </li>
             <li>

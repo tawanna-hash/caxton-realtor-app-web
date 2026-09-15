@@ -28,7 +28,7 @@ export function Footer() {
               <li><Link href="/builders" className="hover:text-gray-900 transition-colors">Builders</Link></li>
               <li><Link href="/inventory" className="hover:text-gray-900 transition-colors">Inventory &amp; Promotions</Link></li>
               <li><Link href="/giveaways" className="hover:text-gray-900 transition-colors">Giveaways</Link></li>
-              <li><Link href="/newsletter" className="hover:text-gray-900 transition-colors">Newsletter</Link></li>
+              <li><Link href="/newsletter" className="hover:text-gray-900 transition-colors">Email</Link></li>
               <li><Link href="/subscribe" className="hover:text-gray-900 transition-colors">Subscribe</Link></li>
             </ul>
           </div>

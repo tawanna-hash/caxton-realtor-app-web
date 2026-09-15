@@ -75,8 +75,8 @@ export default function EditReportDrawer({
 
   const noun = kind === 'article' ? 'article' : 'event';
   const examplePlaceholder = kind === 'article'
-    ? 'e.g. This article was featured in your June newsletter and on the RealtyLine homepage May 10–12.'
-    : 'e.g. This event was promoted in the May newsletter and on the homepage May 1–7.';
+    ? 'e.g. This article was featured in your June email and on the RealtyLine homepage May 10–12.'
+    : 'e.g. This event was promoted in the May email and on the homepage May 1–7.';
 
   return (
     <div

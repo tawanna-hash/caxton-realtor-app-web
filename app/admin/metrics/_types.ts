@@ -102,7 +102,7 @@ export const EVENT_LABELS: Record<string, string> = {
   login_attempted: 'Login — Attempted',
   subscribe_page_viewed: 'Subscribe page — Viewed',
   subscribe_attempted: 'Subscribe — Attempted',
-  newsletter_page_viewed: 'Newsletter landing — Viewed',
+  newsletter_page_viewed: 'Weekly Email landing — Viewed',
   giveaway_page_viewed: 'Giveaways page — Viewed',
   advertise_page_viewed: 'Advertise main — Viewed',
   advertise_digital_page_viewed: 'Advertise digital — Viewed',
@@ -112,7 +112,7 @@ export const EVENT_LABELS: Record<string, string> = {
   advertise_placements_page_viewed: 'Advertise placements — Viewed',
   advertise_portal_page_viewed: 'Advertise portal — Viewed',
   advertise_checkout_page_viewed: 'Advertise checkout — Viewed',
-  newsletter_signup_attempted: 'Newsletter — Signup attempted',
+  newsletter_signup_attempted: 'Email — Signup attempted',
 };
 
 export const SURFACE_LABELS: Record<string, string> = {

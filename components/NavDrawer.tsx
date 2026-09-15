@@ -108,7 +108,7 @@ const DRAWER_SECTIONS: NavSection[] = [
   {
     title: 'Subscribe',
     items: [
-      { label: 'Digital Newsletters', href: '/newsletter' },
+      { label: 'Digital Emails', href: '/newsletter' },
       { label: 'Subscribe to Print', href: '/subscribe' },
       { label: 'FAQs', href: '/faq' },
     ],

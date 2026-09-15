@@ -194,7 +194,7 @@ export default function SelfServicePortalPage() {
               {
                 step: '1',
                 title: 'Browse products',
-                body: 'See every ad slot with a wireframe of exactly where it appears in the app or newsletter.',
+                body: 'See every ad slot with a wireframe of exactly where it appears in the app or email.',
               },
               {
                 step: '2',

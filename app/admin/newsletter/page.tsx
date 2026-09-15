@@ -10,7 +10,7 @@ import { Suspense } from 'react';
 import NewsletterClient from './NewsletterClient';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Admin · Newsletter Subscribers' };
+export const metadata = { title: 'Admin · Email Subscribers' };
 
 export default function AdminNewsletterPage() {
   return (

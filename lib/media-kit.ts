@@ -434,7 +434,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     monthlyBoth: null,
     pricingUnit: 'per send',
     sizes: '600×200 email · 600×100 email slim',
-    notes: 'Top of every send. Ships when newsletter ships.',
+    notes: 'Top of every send. Ships with the Friday Email.',
   },
   {
     slug: 'splash_welcome',

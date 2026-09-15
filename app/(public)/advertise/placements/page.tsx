@@ -26,7 +26,7 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Where ads appear — Realty News Now',
   description:
-    'See every digital ad placement in the Realty News Now app — feed, article, calendar, account, newsletter and push — with a visual preview of exactly where your creative renders.',
+    'See every digital ad placement in the Realty News Now app — feed, article, calendar, account, email and push — with a visual preview of exactly where your creative renders.',
 };
 
 const ZONE_LABEL: Record<AppAdSlot['zone'], string> = {

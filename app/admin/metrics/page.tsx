@@ -276,7 +276,7 @@ export default function AdminMetricsPage() {
           <NewsletterMetrics days={days} />
 
           <p className="text-xs text-gray-400 pt-4">
-            Source: PostHog (click metrics) + Neon (newsletter) · refreshes on page load
+            Source: PostHog (click metrics) + Neon (email subscribers) · refreshes on page load
           </p>
         </div>
       )}

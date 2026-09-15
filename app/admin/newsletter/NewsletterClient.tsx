@@ -159,7 +159,7 @@ export default function NewsletterClient() {
       const match = cd.match(/filename="([^"]+)"/);
       const filename = match
         ? match[1]
-        : `newsletter_subscribers_${new Date().toISOString().slice(0, 10)}.csv`;
+        : `email_subscribers_${new Date().toISOString().slice(0, 10)}.csv`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -178,7 +178,7 @@ export default function NewsletterClient() {
 
   const deleteSubscriber = async (subscriber: Subscriber) => {
     const confirmation = window.prompt(
-      `Permanently delete newsletter subscriber ${subscriber.email}?\n\nThis only removes this newsletter signup. Type the email address to confirm.`,
+      `Permanently delete email subscriber ${subscriber.email}?\n\nThis only removes this email signup. Type the email address to confirm.`,
     );
     if (confirmation?.trim().toLowerCase() !== subscriber.email.toLowerCase()) return;
 
@@ -220,9 +220,9 @@ export default function NewsletterClient() {
           <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
             Admin · Mailing
           </div>
-          <PageTitle size="md">Newsletter</PageTitle>
+          <PageTitle size="md">Email Subscribers</PageTitle>
           <p className="text-sm text-gray-500 mt-1">
-            Weekly-digest subscribers across all publications.
+            Weekly email subscribers across all publications.
           </p>
         </div>
         <button
@@ -234,7 +234,7 @@ export default function NewsletterClient() {
         </button>
       </header>
 
-      <section aria-label="Newsletter summary" className="mailing-summary-strip grid grid-cols-3">
+      <section aria-label="Email subscriber summary" className="mailing-summary-strip grid grid-cols-3">
         <SummaryMetric label="Subscribers" value={data?.total ?? 0} />
         <SummaryMetric label="Showing" value={data?.subscribers.length ?? 0} />
         <SummaryMetric label="Selected" value={mounted ? selectedIds.size : 0} />
@@ -353,7 +353,7 @@ export default function NewsletterClient() {
               <label htmlFor="newsletter-select-all-mobile" className="text-xs font-medium text-gray-700">Select all on this page</label>
             </li>
             {data.subscribers.length === 0 ? (
-              <li className="px-3 py-8 text-center text-sm text-gray-400">No newsletter subscribers found.</li>
+              <li className="px-3 py-8 text-center text-sm text-gray-400">No email subscribers found.</li>
             ) : (
               data.subscribers.map((s) => (
                 <li key={`m-${s.id}`} className="p-3">

@@ -560,7 +560,7 @@ return (
                 name="subscriptions"
                 value={f.subscriptions}
                 onChange={updateField}
-                placeholder="newsletter, events"
+                placeholder="email, events"
               />
             ) : (
               <Field label="Active subscriptions" value={sub.subscriptions} />

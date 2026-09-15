@@ -78,7 +78,7 @@ export function NewsletterMetrics({ days }: { days: number }) {
     <section>
       <div className="flex items-baseline justify-between mb-3">
         <h2 className="text-lg font-semibold text-gray-900">
-          Newsletter signups
+          Email signups
         </h2>
         <a
           href="/admin/newsletter"
@@ -89,7 +89,7 @@ export function NewsletterMetrics({ days }: { days: number }) {
       </div>
 
       {loading && !stats && (
-        <p className="text-sm text-gray-500">Loading newsletter stats&hellip;</p>
+        <p className="text-sm text-gray-500">Loading email stats&hellip;</p>
       )}
 
       {error && (

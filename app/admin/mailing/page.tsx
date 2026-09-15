@@ -87,7 +87,7 @@ export default async function MailingHubPage() {
     {
       label: 'App Subscribers — RealtyLine Austin',
       href: '/admin/subscribers?market=austin',
-      caption: 'RealtyLine Austin newsletter signups from realtynewsnow.app.',
+      caption: 'RealtyLine Austin email signups from realtynewsnow.app.',
       accent: '#ea580c',
       initial: 'A',
     },
@@ -111,7 +111,7 @@ export default async function MailingHubPage() {
     {
       label: 'App Subscribers — Newsline San Antonio',
       href: '/admin/subscribers?market=san_antonio',
-      caption: 'Newsline San Antonio newsletter signups from realtynewsnow.app.',
+      caption: 'Newsline San Antonio email signups from realtynewsnow.app.',
       accent: '#ea580c',
       initial: 'N',
     },
@@ -128,7 +128,7 @@ export default async function MailingHubPage() {
     {
       label: 'App Subscribers — RealtyLine Houston',
       href: '/admin/subscribers?market=houston',
-      caption: 'Houston app and newsletter subscribers.',
+      caption: 'Houston app and email subscribers.',
       accent: '#301D5D',
       initial: 'H',
     },
@@ -138,7 +138,7 @@ export default async function MailingHubPage() {
     {
       label: 'App Subscribers — RealtyLine Dallas/Ft. Worth',
       href: '/admin/subscribers?market=dallas',
-      caption: 'Dallas/Ft. Worth app and newsletter subscribers.',
+      caption: 'Dallas/Ft. Worth app and email subscribers.',
       accent: '#301D5D',
       initial: 'D',
     },
@@ -211,7 +211,7 @@ export default async function MailingHubPage() {
             </span>
           </Link>
           <span className="text-xs text-gray-500">
-            Merges segments + board mirrors + app subscribers + newsletter signups, deduped by email. CSV download lives inside.
+            Merges segments + board mirrors + app subscribers + email signups, deduped by email. CSV download lives inside.
           </span>
         </div>
         <div className="mt-3 text-xs text-gray-500">
@@ -233,7 +233,7 @@ export default async function MailingHubPage() {
         <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="partners + non-partners + manual" accent="#c2410c" />
         <KpiCard label="ABOR Members"        value={sources.aborMembers}                sub="UnlockMLS holding"   accent="#6b7280" />
         <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#ea580c" />
-        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="newsletter signups"  accent="#ea580c" />
+        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="email signups"  accent="#ea580c" />
       </div>
 
       {/* Segment tiles — split by publication */}

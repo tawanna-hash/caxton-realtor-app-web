@@ -75,7 +75,7 @@ export const GET = withAdminTracking(async (req: Request) => {
     status: 200,
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="newsletter_subscribers_${today}.csv"`,
+      'Content-Disposition': `attachment; filename="email_subscribers_${today}.csv"`,
       'Cache-Control': 'no-store',
     },
   });

@@ -419,7 +419,7 @@ async function _runEnsureSchema(): Promise<void> {
       zone: 'newsletter',
       tier: 'premium',
       sizes: [{w:600,h:200,context:'email'},{w:600,h:100,context:'email-slim'}],
-      notes: 'Top of every send. Ships when newsletter ships (FOLLOW_UPS.md #10).',
+      notes: 'Top of every send. Ships with the Friday Email (FOLLOW_UPS.md #10).',
     },
     {
       slug: 'splash_welcome',
@@ -550,8 +550,8 @@ async function _runEnsureSchema(): Promise<void> {
       blob_url: '/ads/house-newsletter-banner.svg',
       width: 600,
       height: 200,
-      alt: 'Top-of-newsletter sponsorship',
-      subject: 'Newsletter Sponsor inquiry',
+      alt: 'Top-of-email sponsorship',
+      subject: 'Email Sponsor inquiry',
     },
     // ---- Article-reader slots (June 2026 unification) ----
     // Previously rendered by inline <HouseAd> JSX in app/(dashboard)/dashboard/page.tsx.

@@ -22,7 +22,7 @@ const ZONE_LABEL: Record<AppAdSlot['zone'], string> = {
   article: 'Article',
   calendar: 'Calendar',
   account: 'Account',
-  newsletter: 'Newsletter',
+  newsletter: 'Email',
   app: 'App-wide',
 };
 

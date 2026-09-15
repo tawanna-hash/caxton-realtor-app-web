@@ -197,7 +197,7 @@ function NewsletterWireframe({ active }: { active: string }) {
   return (
     <div className="w-full h-full bg-white rounded-md overflow-hidden flex flex-col text-[8px] border border-gray-200">
       <div className="h-5 bg-gray-100 border-b border-gray-200 flex items-center px-2 font-semibold text-gray-700">
-        ✉ Newsletter
+        ✉ Email
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'newsletter_banner'}>
