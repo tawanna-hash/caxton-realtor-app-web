@@ -11,6 +11,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
 
 type Worksheet = Record<string, string>;
 
@@ -28,11 +29,18 @@ const INITIAL_WORKSHEET: Worksheet = {
   financingType: '',
   financingNotes: '',
   earnestMoney: '',
-  earnestMoneyDeadline: '',
+  earnestMoneyDeliveredDate: '',
   titleCompany: '',
   optionFee: '',
   optionDays: '',
-  optionDeadline: '',
+  optionFeeDeliveredDate: '',
+  additionalEarnestMoney: '',
+  additionalEarnestMoneyDays: '',
+  financingDeadlineDays: '',
+  appraisalDeadlineDays: '',
+  titleCommitmentDays: '',
+  surveyDays: '',
+  titleObjectionDays: '',
   titlePolicyPayer: '',
   surveyPlan: '',
   titleAndSurveyNotes: '',
@@ -135,6 +143,44 @@ function formatValue(value: string): string {
   return value;
 }
 
+function DeadlineMath({ deadlines }: { deadlines: TrecDeadline[] }) {
+  if (deadlines.length === 0) {
+    return (
+      <div className="mt-5 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm leading-6 text-gray-600">
+        Enter the contract&apos;s effective date to calculate the time-sensitive dates.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-5 rounded-lg border border-orange-200 bg-orange-50/60 p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-950">Deadline math</h3>
+          <p className="mt-1 text-xs leading-5 text-gray-600">
+            Calendar-day calculations from the effective date. Verify all results against the signed contract package.
+          </p>
+        </div>
+        <span className="text-xs font-medium text-orange-800">TREC 20–19 timing</span>
+      </div>
+      <ul className="mt-3 divide-y divide-orange-100 rounded-md border border-orange-100 bg-white">
+        {deadlines.map((deadline) => (
+          <li key={deadline.id} className="px-3 py-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <span className="text-sm font-semibold text-gray-900">{deadline.label}</span>
+              <span className="text-sm font-semibold text-orange-800">
+                {formatValue(deadline.date)}
+                {deadline.timeLabel ? ` · ${deadline.timeLabel}` : ''}
+              </span>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-gray-600">{deadline.rule}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function TrecOneFourClient() {
   const [activeStep, setActiveStep] = useState(0);
   const [worksheet, setWorksheet] = useState<Worksheet>(INITIAL_WORKSHEET);
@@ -156,6 +202,20 @@ export default function TrecOneFourClient() {
   );
 
   const selectedAddenda = ADDENDA.filter((addendum) => addenda[addendum]);
+  const deadlines = useMemo(
+    () =>
+      calculateTrecDeadlines({
+        effectiveDate: worksheet.effectiveDate,
+        optionPeriodDays: worksheet.optionDays,
+        additionalEarnestMoneyDays: worksheet.additionalEarnestMoneyDays,
+        financingDeadlineDays: worksheet.financingDeadlineDays,
+        appraisalDeadlineDays: worksheet.appraisalDeadlineDays,
+        titleCommitmentDays: worksheet.titleCommitmentDays,
+        surveyDays: worksheet.surveyDays,
+        titleObjectionDays: worksheet.titleObjectionDays,
+      }),
+    [worksheet],
+  );
 
   const exportSummary = () => {
     const lines = [
@@ -180,11 +240,13 @@ export default function TrecOneFourClient() {
       '',
       'DEPOSITS & OPTION',
       `Earnest money: ${worksheet.earnestMoney || 'Not entered'}`,
-      `Earnest money deadline: ${formatValue(worksheet.earnestMoneyDeadline)}`,
+      `Earnest money delivered: ${formatValue(worksheet.earnestMoneyDeliveredDate)}`,
       `Title company: ${worksheet.titleCompany || 'Not entered'}`,
       `Option fee: ${worksheet.optionFee || 'Not entered'}`,
       `Option period: ${worksheet.optionDays || 'Not entered'} days`,
-      `Option money delivery deadline: ${formatValue(worksheet.optionDeadline)}`,
+      `Option fee delivered: ${formatValue(worksheet.optionFeeDeliveredDate)}`,
+      `Additional earnest money: ${worksheet.additionalEarnestMoney || 'Not entered'}`,
+      `Additional earnest-money period: ${worksheet.additionalEarnestMoneyDays || 'Not entered'} days`,
       '',
       'TITLE, CONDITION & CLOSING',
       `Title policy payer: ${worksheet.titlePolicyPayer || 'Not entered'}`,
@@ -200,6 +262,9 @@ export default function TrecOneFourClient() {
       `Notices: ${worksheet.notices || 'Not entered'}`,
       `Effective date: ${formatValue(worksheet.effectiveDate)}`,
       `Addenda: ${selectedAddenda.length ? selectedAddenda.join('; ') : 'None selected'}`,
+      '',
+      'CALCULATED DEADLINES',
+      ...deadlines.map((deadline) => `${deadline.label}: ${formatValue(deadline.date)}${deadline.timeLabel ? ` (${deadline.timeLabel})` : ''}`),
       '',
       'Review the current official TREC form and all addenda with a licensed Texas real-estate professional or attorney before signature.',
     ];
@@ -268,6 +333,22 @@ export default function TrecOneFourClient() {
           This first release keeps the worksheet in this browser tab only. It is not stored as an
           official contract record.
         </p>
+
+        <div className="mt-5 grid gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:grid-cols-[minmax(0,300px)_1fr] sm:items-end">
+          <Field
+            id="effectiveDate"
+            label="Contract effective date"
+            value={worksheet.effectiveDate}
+            onChange={(value) => update('effectiveDate', value)}
+            type="date"
+            hint="This is day zero. Day one begins the next calendar day."
+          />
+          <p className="text-sm leading-6 text-gray-600">
+            This calculator uses the current <a href="https://www.trec.texas.gov/forms/one-four-family-residential-contract-resale" target="_blank" rel="noreferrer" className="font-medium text-orange-700 underline underline-offset-2 hover:text-orange-800">TREC 20–19 form</a> timing:
+            money delivery is due within three calendar days and rolls only when the last day is a
+            Saturday, Sunday, or defined Legal Holiday. Other calculated periods do not roll.
+          </p>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[230px_minmax(0,1fr)]">
@@ -364,11 +445,14 @@ export default function TrecOneFourClient() {
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
                 <Field id="earnestMoney" label="Earnest money amount" value={worksheet.earnestMoney} onChange={(value) => update('earnestMoney', value)} placeholder="$0.00" />
                 <Field id="titleCompany" label="Earnest money holder / title company" value={worksheet.titleCompany} onChange={(value) => update('titleCompany', value)} />
-                <Field id="earnestMoneyDeadline" label="Earnest money delivery deadline" value={worksheet.earnestMoneyDeadline} onChange={(value) => update('earnestMoneyDeadline', value)} type="date" />
+                <Field id="earnestMoneyDeliveredDate" label="Earnest money delivered date" value={worksheet.earnestMoneyDeliveredDate} onChange={(value) => update('earnestMoneyDeliveredDate', value)} type="date" hint="Optional: record the actual delivery separately from the calculated deadline." />
                 <Field id="optionFee" label="Option fee" value={worksheet.optionFee} onChange={(value) => update('optionFee', value)} placeholder="$0.00" />
                 <Field id="optionDays" label="Option period days" value={worksheet.optionDays} onChange={(value) => update('optionDays', value)} type="number" placeholder="0" />
-                <Field id="optionDeadline" label="Option money delivery deadline" value={worksheet.optionDeadline} onChange={(value) => update('optionDeadline', value)} type="date" />
+                <Field id="optionFeeDeliveredDate" label="Option fee delivered date" value={worksheet.optionFeeDeliveredDate} onChange={(value) => update('optionFeeDeliveredDate', value)} type="date" hint="Optional: record the actual delivery separately from the calculated deadline." />
+                <Field id="additionalEarnestMoney" label="Additional earnest money amount" value={worksheet.additionalEarnestMoney} onChange={(value) => update('additionalEarnestMoney', value)} placeholder="$0.00" />
+                <Field id="additionalEarnestMoneyDays" label="Additional earnest money days after effective date" value={worksheet.additionalEarnestMoneyDays} onChange={(value) => update('additionalEarnestMoneyDays', value)} type="number" placeholder="0" />
               </div>
+              <DeadlineMath deadlines={deadlines.filter((deadline) => deadline.category === 'money' || deadline.category === 'option')} />
             </section>
           )}
 
@@ -389,6 +473,14 @@ export default function TrecOneFourClient() {
                 <Textarea id="titleAndSurveyNotes" label="Title, survey & objections notes" value={worksheet.titleAndSurveyNotes} onChange={(value) => update('titleAndSurveyNotes', value)} hint="Flag commitments, survey facts, potential objections, easements or restrictions for review." />
                 <Textarea id="conditionAndRepairNotes" label="Property condition & repair notes" value={worksheet.conditionAndRepairNotes} onChange={(value) => update('conditionAndRepairNotes', value)} hint="Capture disclosure, inspection, utilities and lender-required repair items for negotiation and review." />
               </div>
+              <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                <Field id="financingDeadlineDays" label="Financing addendum days after effective date" value={worksheet.financingDeadlineDays} onChange={(value) => update('financingDeadlineDays', value)} type="number" placeholder="Set from executed addendum" />
+                <Field id="appraisalDeadlineDays" label="Appraisal deadline days after effective date" value={worksheet.appraisalDeadlineDays} onChange={(value) => update('appraisalDeadlineDays', value)} type="number" placeholder="Set from executed addendum" />
+                <Field id="titleCommitmentDays" label="Title commitment days after effective date" value={worksheet.titleCommitmentDays} onChange={(value) => update('titleCommitmentDays', value)} type="number" placeholder="Set from executed contract" />
+                <Field id="surveyDays" label="Survey days after effective date" value={worksheet.surveyDays} onChange={(value) => update('surveyDays', value)} type="number" placeholder="Set from executed contract" />
+                <Field id="titleObjectionDays" label="Title objection days after effective date" value={worksheet.titleObjectionDays} onChange={(value) => update('titleObjectionDays', value)} type="number" placeholder="Set from executed contract" />
+              </div>
+              <DeadlineMath deadlines={deadlines.filter((deadline) => deadline.category === 'contract-period')} />
             </section>
           )}
 
@@ -405,7 +497,10 @@ export default function TrecOneFourClient() {
               </div>
               <div className="mt-5 grid gap-5 sm:grid-cols-2">
                 <Field id="notices" label="Notices & contact details" value={worksheet.notices} onChange={(value) => update('notices', value)} hint="Confirm email, addresses and phone numbers." />
-                <Field id="effectiveDate" label="Expected or confirmed effective date" value={worksheet.effectiveDate} onChange={(value) => update('effectiveDate', value)} type="date" hint="This is the contract’s day zero once executed." />
+                <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-3 text-sm leading-6 text-gray-600">
+                  <span className="font-medium text-gray-900">Effective date:</span>{' '}
+                  {worksheet.effectiveDate ? formatValue(worksheet.effectiveDate) : 'Set above to activate deadline math.'}
+                </div>
               </div>
               <fieldset className="mt-6">
                 <legend className="text-sm font-medium text-gray-900">Expected addenda</legend>
@@ -458,6 +553,7 @@ export default function TrecOneFourClient() {
                   </div>
                 ))}
               </div>
+              <DeadlineMath deadlines={deadlines} />
               <div className="mt-6 rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm leading-6 text-orange-950">
                 Before signature, confirm that names, monetary amounts, delivery deadlines, notices,
                 the effective date and every applicable addendum match the current official package.
