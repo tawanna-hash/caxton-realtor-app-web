@@ -3,20 +3,14 @@
 // App & Web Placements landing — public-facing hub for digital placements
 // and e-Blast ordering.
 //
-// Below the hub we surface the bundle-savings ladder (1.7× / 2.4× / 3×) so
-// advertisers see the multi-market savings story before clicking through,
-// per advertise_digital_audit.md Direction A. We also include a small
-// "Already booked with us?" callout pointing existing advertisers to
+// Includes an "Already booked with us?" callout pointing existing advertisers to
 // /portal (the magic-link advertiser portal where they see their files,
 // agreements, invoices, and the new order history page).
-//
-// Reuses MARKET_MULTIPLIERS from lib/media-kit.ts so the ladder shown to
-// buyers is always exactly what checkout applies. No new pricing logic.
 
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 import TrackPageView from '@/components/analytics/TrackPageView';
-import { APP_AD_SLOTS, EBLASTS, MARKET_MULTIPLIERS, weeklyRateForMarkets } from '@/lib/media-kit';
+import { APP_AD_SLOTS, EBLASTS } from '@/lib/media-kit';
 
 export const metadata = {
   title: 'App & Web Placements \u2014 Realty News Now',
@@ -36,46 +30,15 @@ function highestWeekly(): number {
   return prices.length > 0 ? Math.max(...prices) : 500;
 }
 
-// Bundle ladder market labels. The ladder math is cumulative (e.g. 1.7x = a
-// bundle of two markets), so each label represents the incremental market
-// added at that tier. Houston + DFW are coming soon - shown italic.
-const MARKET_LABELS: Record<1 | 2 | 3 | 4, { name: string; comingSoon: boolean }> = {
-  1: { name: 'RealtyLine Austin', comingSoon: false },
-  2: { name: 'Newsline San Antonio', comingSoon: false },
-  3: { name: 'RealtyLine Houston', comingSoon: true },
-  4: { name: 'RealtyLine Dallas/Ft. Worth', comingSoon: true },
-};
-
-// Pick a representative slot for the bundle-savings ladder. We use the
-// median-priced standard slot so the savings math reads as realistic.
-function representativeSlot() {
-  const sorted = [...APP_AD_SLOTS]
-    .filter((s) => s.weeklySingle > 0 && s.tier === 'standard')
-    .sort((a, b) => a.weeklySingle - b.weeklySingle);
-  return sorted[Math.floor(sorted.length / 2)] ?? APP_AD_SLOTS[0];
-}
-
 export default function SelfServicePortalPage() {
   const minPrice = lowestWeekly();
   const maxPrice = highestWeekly();
-  const sample = representativeSlot();
-  const baseRate = sample.weeklySingle;
   const eblastStartingPrice = Math.min(
     ...EBLASTS.flatMap((pkg) => [
       pkg.priceByPub?.realtyline ?? pkg.price,
       pkg.priceByPub?.newsline ?? pkg.price,
     ]),
   );
-
-  // Bundle ladder rows derived from MARKET_MULTIPLIERS so what we show is
-  // exactly what checkout charges. Savings = (markets * 1.0) \u2212 multiplier,
-  // expressed as a percent off "buying each market separately".
-  const ladder = ([1, 2, 3, 4] as const).map((markets) => {
-    const total = weeklyRateForMarkets(sample, markets);
-    const separately = baseRate * markets;
-    const savingsPct = markets === 1 ? 0 : Math.round(((separately - total) / separately) * 100);
-    return { markets, total, separately, savingsPct };
-  });
 
   return (
     <>
@@ -219,71 +182,6 @@ export default function SelfServicePortalPage() {
             </Link>
           </article>
 
-        </section>
-
-        {/* Bundle savings ladder \u2014 directly tied to MARKET_MULTIPLIERS */}
-        <section className="mb-12 rounded-md border border-emerald-200 bg-emerald-50/60 p-6 md:p-8">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-5">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-emerald-800 font-semibold mb-1.5">
-                Bundle &amp; save
-              </p>
-              <h3 className="text-xl md:text-2xl font-bold tracking-tight text-gray-900">
-                Buy more markets, pay less per market
-              </h3>
-              <p className="text-sm text-gray-700 font-light mt-1.5 max-w-2xl">
-                Every placement scales down per market the more markets you
-                buy. Below is a real example using our {sample.name}{' '}
-                slot (${baseRate}/wk single market).
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {ladder.map((row) => {
-              // No card is pre-highlighted — buyer chooses their own bundle size.
-              const isWinner = false;
-              return (
-                <div
-                  key={row.markets}
-                  className={[
-                    'rounded-md p-4 border',
-                    isWinner
-                      ? 'border-emerald-500 bg-white shadow-md'
-                      : 'border-emerald-200 bg-white',
-                  ].join(' ')}
-                >
-                  <p className="text-[11px] uppercase tracking-wider text-gray-500 font-medium leading-tight min-h-[2.2em]">
-                    {MARKET_LABELS[row.markets].name}
-                    {MARKET_LABELS[row.markets].comingSoon && (
-                      <>
-                        {' '}
-                        <em className="not-italic text-gray-400 normal-case tracking-normal">(coming soon)</em>
-                      </>
-                    )}
-                  </p>
-                  <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1 tabular-nums">
-                    ${row.total.toLocaleString()}
-                    <span className="text-sm font-normal text-gray-500">/wk</span>
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1.5">
-                    {row.savingsPct > 0 ? (
-                      <>
-                        <span className="font-semibold text-emerald-700">
-                          {row.savingsPct}% off
-                        </span>
-                        <span className="text-gray-400"> vs ${row.separately.toLocaleString()}</span>
-                      </>
-                    ) : (
-                      <span className="text-gray-400">Base rate</span>
-                    )}
-                  </p>
-                  <p className="text-[10px] uppercase tracking-wider text-gray-400 mt-1">
-                    {MARKET_MULTIPLIERS[row.markets].toFixed(1)}{'\u00d7'} base
-                  </p>
-                </div>
-              );
-            })}
-          </div>
         </section>
 
         {/* How it works \u2014 three-step compressed timeline */}
