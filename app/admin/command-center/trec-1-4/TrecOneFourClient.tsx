@@ -4,16 +4,24 @@ import Link from 'next/link';
 import {
   ArrowLeft,
   ArrowRight,
+  Bell,
+  CalendarDays,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Download,
   FileText,
   RotateCcw,
+  Save,
   ShieldAlert,
+  Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
+import type { TrecDeadlineReminder, TrecDeal } from '@/lib/server/trec-deals';
 
 type Worksheet = Record<string, string>;
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 const INITIAL_WORKSHEET: Worksheet = {
   buyerNames: '',
@@ -143,7 +151,40 @@ function formatValue(value: string): string {
   return value;
 }
 
-function DeadlineMath({ deadlines }: { deadlines: TrecDeadline[] }) {
+function isoToday(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
+}
+
+function addDays(iso: string, days: number): string {
+  const date = new Date(`${iso}T12:00:00`);
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function defaultReminderDate(deadlineDate: string): string {
+  const tomorrow = addDays(isoToday(), 1);
+  const dayBefore = addDays(deadlineDate, -1);
+  return dayBefore >= tomorrow ? dayBefore : deadlineDate;
+}
+
+function formatSavedAt(value?: string): string {
+  if (!value) return '';
+  return new Date(value).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function DeadlineMath({
+  deadlines,
+  onAddReminder,
+}: {
+  deadlines: TrecDeadline[];
+  onAddReminder?: (deadline: TrecDeadline) => void;
+}) {
   if (deadlines.length === 0) {
     return (
       <div className="mt-5 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm leading-6 text-gray-600">
@@ -168,10 +209,22 @@ function DeadlineMath({ deadlines }: { deadlines: TrecDeadline[] }) {
           <li key={deadline.id} className="px-3 py-3">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <span className="text-sm font-semibold text-gray-900">{deadline.label}</span>
-              <span className="text-sm font-semibold text-orange-800">
-                {formatValue(deadline.date)}
-                {deadline.timeLabel ? ` · ${deadline.timeLabel}` : ''}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-orange-800">
+                  {formatValue(deadline.date)}
+                  {deadline.timeLabel ? ` · ${deadline.timeLabel}` : ''}
+                </span>
+                {onAddReminder && (
+                  <button
+                    type="button"
+                    onClick={() => onAddReminder(deadline)}
+                    className="inline-flex min-h-9 items-center gap-1 rounded-full border border-orange-200 bg-white px-3 text-xs font-semibold text-orange-800 hover:bg-orange-50"
+                  >
+                    <Bell className="h-3.5 w-3.5" aria-hidden="true" />
+                    Remind me
+                  </button>
+                )}
+              </div>
             </div>
             <p className="mt-1 text-xs leading-5 text-gray-600">{deadline.rule}</p>
           </li>
@@ -181,10 +234,104 @@ function DeadlineMath({ deadlines }: { deadlines: TrecDeadline[] }) {
   );
 }
 
-export default function TrecOneFourClient() {
+function DateRadar({
+  deadlines,
+  reminders,
+  month,
+  onMonthChange,
+}: {
+  deadlines: TrecDeadline[];
+  reminders: TrecDeadlineReminder[];
+  month: Date;
+  onMonthChange: (direction: number) => void;
+}) {
+  const year = month.getFullYear();
+  const monthIndex = month.getMonth();
+  const startWeekday = new Date(year, monthIndex, 1).getDay();
+  const days = new Date(year, monthIndex + 1, 0).getDate();
+  const monthPrefix = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+  const eventsByDate = deadlines.reduce<Record<string, TrecDeadline[]>>((accumulator, deadline) => {
+    if (deadline.date.startsWith(monthPrefix)) {
+      accumulator[deadline.date] = [...(accumulator[deadline.date] ?? []), deadline];
+    }
+    return accumulator;
+  }, {});
+  const remindersByDate = reminders
+    .filter((reminder) => !reminder.isComplete && reminder.reminderDate.startsWith(monthPrefix))
+    .reduce<Record<string, TrecDeadlineReminder[]>>((accumulator, reminder) => {
+      accumulator[reminder.reminderDate] = [...(accumulator[reminder.reminderDate] ?? []), reminder];
+      return accumulator;
+    }, {});
+
+  return (
+    <section aria-label="Date Radar" className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <CalendarDays className="h-5 w-5 text-orange-700" aria-hidden="true" />
+          <div>
+            <h2 className="text-lg font-semibold text-gray-950">Date Radar</h2>
+            <p className="text-xs text-gray-500">Calculated deadlines and your in-app reminders.</p>
+          </div>
+        </div>
+        <div className="flex gap-1">
+          <button type="button" onClick={() => onMonthChange(-1)} aria-label="Previous month" className="rounded-full p-2 text-gray-600 hover:bg-gray-100">
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <button type="button" onClick={() => onMonthChange(1)} aria-label="Next month" className="rounded-full p-2 text-gray-600 hover:bg-gray-100">
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      <p className="mt-4 text-sm font-semibold text-gray-900">
+        {month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+      </p>
+      <div className="mt-3 grid grid-cols-7 border-l border-t border-gray-200">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+          <div key={day} className="border-b border-r border-gray-200 bg-gray-50 px-1 py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">{day}</div>
+        ))}
+        {Array.from({ length: startWeekday }).map((_, index) => <div key={`blank-${index}`} className="min-h-20 border-b border-r border-gray-200 bg-gray-50/40" />)}
+        {Array.from({ length: days }, (_, index) => {
+          const day = index + 1;
+          const date = `${monthPrefix}-${String(day).padStart(2, '0')}`;
+          const dateDeadlines = eventsByDate[date] ?? [];
+          const dateReminders = remindersByDate[date] ?? [];
+          return (
+            <div key={date} className="min-h-20 border-b border-r border-gray-200 p-1.5">
+              <span className={date === isoToday() ? 'inline-flex h-6 w-6 items-center justify-center rounded-full bg-orange-600 text-xs font-semibold text-white' : 'text-xs font-medium text-gray-700'}>{day}</span>
+              <div className="mt-1 space-y-1">
+                {dateDeadlines.slice(0, 2).map((deadline) => <p key={deadline.id} title={deadline.label} className="truncate rounded bg-orange-100 px-1 py-0.5 text-[10px] font-medium text-orange-900">{deadline.label}</p>)}
+                {dateReminders.slice(0, 1).map((reminder) => <p key={reminder.id} title={reminder.note ?? 'Reminder'} className="truncate rounded bg-violet-100 px-1 py-0.5 text-[10px] font-medium text-violet-900">Reminder</p>)}
+                {dateDeadlines.length + dateReminders.length > 3 && <p className="text-[10px] text-gray-500">+{dateDeadlines.length + dateReminders.length - 3} more</p>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-orange-400" />Calculated deadline</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-violet-500" />In-app reminder</span>
+      </div>
+    </section>
+  );
+}
+
+export default function TrecOneFourClient({ initialDeals }: { initialDeals: TrecDeal[] }) {
   const [activeStep, setActiveStep] = useState(0);
   const [worksheet, setWorksheet] = useState<Worksheet>(INITIAL_WORKSHEET);
   const [addenda, setAddenda] = useState<Record<string, boolean>>({});
+  const [savedDeals, setSavedDeals] = useState<TrecDeal[]>(initialDeals);
+  const [currentDealId, setCurrentDealId] = useState<string | null>(null);
+  const [dealTitle, setDealTitle] = useState('');
+  const [reminders, setReminders] = useState<TrecDeadlineReminder[]>([]);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [selectedDeadlineId, setSelectedDeadlineId] = useState('');
+  const [reminderDate, setReminderDate] = useState('');
+  const [reminderNote, setReminderNote] = useState('');
+  const [reminderState, setReminderState] = useState<SaveState>('idle');
+  const [radarMonth, setRadarMonth] = useState(() => {
+    const initial = new Date(`${INITIAL_WORKSHEET.effectiveDate || isoToday()}T12:00:00`);
+    return new Date(initial.getFullYear(), initial.getMonth(), 1);
+  });
 
   const update = (key: string, value: string) => {
     setWorksheet((current) => ({ ...current, [key]: value }));
@@ -216,6 +363,164 @@ export default function TrecOneFourClient() {
       }),
     [worksheet],
   );
+
+  const selectedDeadline = deadlines.find((deadline) => deadline.id === selectedDeadlineId);
+  const currentDeal = savedDeals.find((deal) => deal.id === currentDealId) ?? null;
+
+  const startNewDeal = () => {
+    if (!window.confirm('Start a new deal-prep worksheet? Unsaved changes in this browser tab will be cleared.')) return;
+    setWorksheet(INITIAL_WORKSHEET);
+    setAddenda({});
+    setCurrentDealId(null);
+    setDealTitle('');
+    setReminders([]);
+    setSelectedDeadlineId('');
+    setReminderDate('');
+    setReminderNote('');
+    setSaveState('idle');
+    setActiveStep(0);
+    setRadarMonth(new Date());
+  };
+
+  const selectDeal = (id: string) => {
+    if (!id) {
+      startNewDeal();
+      return;
+    }
+    const selected = savedDeals.find((deal) => deal.id === id);
+    if (!selected) return;
+    setCurrentDealId(selected.id);
+    setDealTitle(selected.title);
+    setWorksheet({ ...INITIAL_WORKSHEET, ...selected.worksheet });
+    setAddenda(selected.addenda);
+    setReminders(selected.reminders);
+    setSelectedDeadlineId('');
+    setReminderDate('');
+    setReminderNote('');
+    setSaveState('idle');
+    setActiveStep(0);
+    const effectiveDate = selected.worksheet.effectiveDate || isoToday();
+    const date = new Date(`${effectiveDate}T12:00:00`);
+    setRadarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+  };
+
+  const saveDeal = async () => {
+    setSaveState('saving');
+    const title = dealTitle.trim() || worksheet.propertyAddress || worksheet.buyerNames || 'Untitled TREC deal';
+    try {
+      const endpoint = currentDealId ? `/api/admin/trec-deals/${currentDealId}` : '/api/admin/trec-deals';
+      const response = await fetch(endpoint, {
+        method: currentDealId ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, worksheet, addenda }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not save this deal.');
+      const deal = data.deal as TrecDeal;
+      setCurrentDealId(deal.id);
+      setDealTitle(deal.title);
+      setReminders(deal.reminders);
+      setSavedDeals((current) => {
+        const otherDeals = current.filter((item) => item.id !== deal.id);
+        return [deal, ...otherDeals];
+      });
+      setSaveState('saved');
+      window.setTimeout(() => setSaveState('idle'), 3000);
+    } catch {
+      setSaveState('error');
+    }
+  };
+
+  const deleteDeal = async () => {
+    if (!currentDealId) return;
+    const typed = window.prompt(`To permanently delete this saved deal, enter this ID exactly:\n${currentDealId}`);
+    if (typed !== currentDealId) return;
+    try {
+      const response = await fetch(`/api/admin/trec-deals/${currentDealId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmationId: typed }),
+      });
+      if (!response.ok) throw new Error('Unable to delete deal');
+      setSavedDeals((current) => current.filter((deal) => deal.id !== currentDealId));
+      setWorksheet(INITIAL_WORKSHEET);
+      setAddenda({});
+      setCurrentDealId(null);
+      setDealTitle('');
+      setReminders([]);
+      setSelectedDeadlineId('');
+      setReminderDate('');
+      setReminderNote('');
+      setActiveStep(0);
+    } catch {
+      setSaveState('error');
+    }
+  };
+
+  const openReminder = (deadline: TrecDeadline) => {
+    if (!currentDealId) {
+      setSaveState('error');
+      return;
+    }
+    setSelectedDeadlineId(deadline.id);
+    setReminderDate(defaultReminderDate(deadline.date));
+    setReminderNote('');
+    setReminderState('idle');
+  };
+
+  const createReminder = async () => {
+    if (!currentDealId || !selectedDeadline || !reminderDate) return;
+    setReminderState('saving');
+    try {
+      const response = await fetch(`/api/admin/trec-deals/${currentDealId}/reminders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deadlineKey: selectedDeadline.id,
+          reminderDate,
+          note: reminderNote.trim() || undefined,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not add reminder');
+      setReminders((current) => [...current, data.reminder as TrecDeadlineReminder]);
+      setSavedDeals((current) => current.map((deal) => (
+        deal.id === currentDealId ? { ...deal, reminders: [...deal.reminders, data.reminder as TrecDeadlineReminder] } : deal
+      )));
+      setSelectedDeadlineId('');
+      setReminderDate('');
+      setReminderNote('');
+      setReminderState('saved');
+    } catch {
+      setReminderState('error');
+    }
+  };
+
+  const updateReminder = async (reminder: TrecDeadlineReminder, isComplete: boolean) => {
+    if (!currentDealId) return;
+    try {
+      const response = await fetch(`/api/admin/trec-deals/${currentDealId}/reminders/${reminder.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isComplete }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not update reminder');
+      const updated = data.reminder as TrecDeadlineReminder;
+      setReminders((current) => current.map((item) => item.id === updated.id ? updated : item));
+      setSavedDeals((current) => current.map((deal) => (
+        deal.id === currentDealId
+          ? { ...deal, reminders: deal.reminders.map((item) => item.id === updated.id ? updated : item) }
+          : deal
+      )));
+    } catch {
+      setReminderState('error');
+    }
+  };
+
+  const changeRadarMonth = (direction: number) => {
+    setRadarMonth((current) => new Date(current.getFullYear(), current.getMonth() + direction, 1));
+  };
 
   const exportSummary = () => {
     const lines = [
@@ -277,13 +582,6 @@ export default function TrecOneFourClient() {
     URL.revokeObjectURL(url);
   };
 
-  const clearWorksheet = () => {
-    if (!window.confirm('Clear this deal-prep worksheet? This only clears the information in this browser tab.')) return;
-    setWorksheet(INITIAL_WORKSHEET);
-    setAddenda({});
-    setActiveStep(0);
-  };
-
   return (
     <div className="pb-10">
       <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-gray-500">
@@ -309,14 +607,35 @@ export default function TrecOneFourClient() {
               transaction before completing or reviewing the official form.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={clearWorksheet}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-          >
-            <RotateCcw className="h-4 w-4" aria-hidden="true" />
-            Clear worksheet
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={saveDeal}
+              disabled={saveState === 'saving'}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700 disabled:cursor-wait disabled:opacity-70"
+            >
+              <Save className="h-4 w-4" aria-hidden="true" />
+              {saveState === 'saving' ? 'Saving…' : currentDealId ? 'Save changes' : 'Save deal prep'}
+            </button>
+            <button
+              type="button"
+              onClick={startNewDeal}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              <RotateCcw className="h-4 w-4" aria-hidden="true" />
+              New deal
+            </button>
+            {currentDealId && (
+              <button
+                type="button"
+                onClick={deleteDeal}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-red-200 bg-white px-4 text-sm font-semibold text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                Delete
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="mt-6 flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
@@ -329,17 +648,54 @@ export default function TrecOneFourClient() {
           </p>
         </div>
 
-        <p className="mt-4 text-xs leading-5 text-gray-500">
-          This first release keeps the worksheet in this browser tab only. It is not stored as an
-          official contract record.
-        </p>
+        <div className="mt-5 grid gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <Field
+            id="dealTitle"
+            label="Deal name"
+            value={dealTitle}
+            onChange={setDealTitle}
+            placeholder={worksheet.propertyAddress || 'For example: 123 Main Street resale'}
+            hint="Saved as structured deal-prep details only. No contract file is uploaded or stored."
+          />
+          <label htmlFor="savedDeal" className="block">
+            <span className="text-sm font-medium text-gray-900">Saved deals</span>
+            <select
+              id="savedDeal"
+              value={currentDealId ?? ''}
+              onChange={(event) => selectDeal(event.target.value)}
+              className="mt-1.5 block min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 shadow-sm outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-100"
+            >
+              <option value="">New unsaved deal</option>
+              {savedDeals.map((deal) => <option key={deal.id} value={deal.id}>{deal.title}</option>)}
+            </select>
+            <span className="mt-1 block text-xs leading-5 text-gray-500">
+              {currentDeal ? `Last saved ${formatSavedAt(currentDeal.updatedAt)}.` : 'Save this worksheet to add durable in-app reminders.'}
+            </span>
+          </label>
+        </div>
+        {saveState === 'error' && (
+          <p role="alert" className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {currentDealId ? 'This deal could not be saved. Check the details and try again.' : 'Save the deal before adding reminders, then try again.'}
+          </p>
+        )}
+        {saveState === 'saved' && (
+          <p role="status" className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            Deal prep saved. Your Date Radar and in-app reminders are now tied to this transaction.
+          </p>
+        )}
 
         <div className="mt-5 grid gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:grid-cols-[minmax(0,300px)_1fr] sm:items-end">
           <Field
             id="effectiveDate"
             label="Contract effective date"
             value={worksheet.effectiveDate}
-            onChange={(value) => update('effectiveDate', value)}
+            onChange={(value) => {
+              update('effectiveDate', value);
+              if (value) {
+                const date = new Date(`${value}T12:00:00`);
+                setRadarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+              }
+            }}
             type="date"
             hint="This is day zero. Day one begins the next calendar day."
           />
@@ -393,6 +749,77 @@ export default function TrecOneFourClient() {
         </nav>
 
         <main className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="mb-7 grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.8fr)]">
+            <DateRadar
+              deadlines={deadlines}
+              reminders={reminders}
+              month={radarMonth}
+              onMonthChange={changeRadarMonth}
+            />
+            <section aria-label="Deadline reminders" className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-violet-700" aria-hidden="true" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-950">Deadline reminders</h2>
+                  <p className="text-xs text-gray-500">Durable in-app reminders for this saved deal.</p>
+                </div>
+              </div>
+              {!currentDealId ? (
+                <p className="mt-5 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm leading-6 text-gray-600">
+                  Save this deal to create reminders. The reminder list will appear here whenever the transaction is reopened.
+                </p>
+              ) : (
+                <>
+                  {selectedDeadline && (
+                    <div className="mt-4 rounded-lg border border-violet-200 bg-violet-50 p-3">
+                      <p className="text-sm font-semibold text-violet-950">Reminder for {selectedDeadline.label}</p>
+                      <div className="mt-3 grid gap-3">
+                        <Field id="reminderDate" label="Remind me on" value={reminderDate} onChange={setReminderDate} type="date" />
+                        <Textarea id="reminderNote" label="Optional note" value={reminderNote} onChange={setReminderNote} placeholder="What needs attention?" />
+                        <div className="flex gap-2">
+                          <button type="button" onClick={createReminder} disabled={reminderState === 'saving' || !reminderDate} className="inline-flex min-h-10 items-center justify-center rounded-full bg-violet-700 px-4 text-sm font-semibold text-white hover:bg-violet-800 disabled:opacity-60">
+                            {reminderState === 'saving' ? 'Saving…' : 'Save reminder'}
+                          </button>
+                          <button type="button" onClick={() => setSelectedDeadlineId('')} className="inline-flex min-h-10 items-center justify-center rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {reminderState === 'error' && <p role="alert" className="mt-3 text-sm text-red-700">This reminder could not be saved. Try again.</p>}
+                  {reminders.length === 0 ? (
+                    <p className="mt-5 text-sm leading-6 text-gray-600">Use “Remind me” beside any calculated deadline to add the first reminder.</p>
+                  ) : (
+                    <ul className="mt-4 space-y-2">
+                      {reminders.map((reminder) => {
+                        const deadline = deadlines.find((item) => item.id === reminder.deadlineKey);
+                        const overdue = !reminder.isComplete && reminder.reminderDate < isoToday();
+                        return (
+                          <li key={reminder.id} className="flex items-start gap-3 rounded-lg border border-gray-200 p-3">
+                            <input
+                              aria-label={`Mark reminder for ${deadline?.label ?? 'deadline'} complete`}
+                              type="checkbox"
+                              checked={reminder.isComplete}
+                              onChange={(event) => updateReminder(reminder, event.target.checked)}
+                              className="mt-1 h-4 w-4 rounded border-gray-300 text-violet-700 focus:ring-violet-600"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className={reminder.isComplete ? 'text-sm font-medium text-gray-500 line-through' : 'text-sm font-semibold text-gray-900'}>
+                                {deadline?.label ?? 'Contract deadline'}
+                              </p>
+                              <p className={overdue ? 'mt-0.5 text-xs font-semibold text-red-700' : 'mt-0.5 text-xs text-gray-600'}>
+                                {overdue ? 'Overdue: ' : 'Reminder: '}{formatValue(reminder.reminderDate)}
+                              </p>
+                              {reminder.note && <p className="mt-1 text-xs leading-5 text-gray-600">{reminder.note}</p>}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </>
+              )}
+            </section>
+          </div>
           {activeStep === 0 && (
             <section aria-labelledby="parties-property-title">
               <h2 id="parties-property-title" className="text-xl font-semibold text-gray-950">
@@ -452,7 +879,7 @@ export default function TrecOneFourClient() {
                 <Field id="additionalEarnestMoney" label="Additional earnest money amount" value={worksheet.additionalEarnestMoney} onChange={(value) => update('additionalEarnestMoney', value)} placeholder="$0.00" />
                 <Field id="additionalEarnestMoneyDays" label="Additional earnest money days after effective date" value={worksheet.additionalEarnestMoneyDays} onChange={(value) => update('additionalEarnestMoneyDays', value)} type="number" placeholder="0" />
               </div>
-              <DeadlineMath deadlines={deadlines.filter((deadline) => deadline.category === 'money' || deadline.category === 'option')} />
+              <DeadlineMath deadlines={deadlines.filter((deadline) => deadline.category === 'money' || deadline.category === 'option')} onAddReminder={currentDealId ? openReminder : undefined} />
             </section>
           )}
 
@@ -480,7 +907,7 @@ export default function TrecOneFourClient() {
                 <Field id="surveyDays" label="Survey days after effective date" value={worksheet.surveyDays} onChange={(value) => update('surveyDays', value)} type="number" placeholder="Set from executed contract" />
                 <Field id="titleObjectionDays" label="Title objection days after effective date" value={worksheet.titleObjectionDays} onChange={(value) => update('titleObjectionDays', value)} type="number" placeholder="Set from executed contract" />
               </div>
-              <DeadlineMath deadlines={deadlines.filter((deadline) => deadline.category === 'contract-period')} />
+              <DeadlineMath deadlines={deadlines.filter((deadline) => deadline.category === 'contract-period')} onAddReminder={currentDealId ? openReminder : undefined} />
             </section>
           )}
 
@@ -553,7 +980,7 @@ export default function TrecOneFourClient() {
                   </div>
                 ))}
               </div>
-              <DeadlineMath deadlines={deadlines} />
+              <DeadlineMath deadlines={deadlines} onAddReminder={currentDealId ? openReminder : undefined} />
               <div className="mt-6 rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm leading-6 text-orange-950">
                 Before signature, confirm that names, monetary amounts, delivery deadlines, notices,
                 the effective date and every applicable addendum match the current official package.
