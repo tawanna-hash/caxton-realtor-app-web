@@ -30,7 +30,7 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
   if (!parsed.success) return NextResponse.json({ error: 'Enter a valid reminder update.' }, { status: 400 });
 
   try {
-    const reminder = await updateTrecReminder(ids.id, ids.reminderId, parsed.data);
+    const reminder = await updateTrecReminder(ids.id, ids.reminderId, { ...parsed.data, actor: admin.email });
     return reminder
       ? NextResponse.json({ reminder })
       : NextResponse.json({ error: 'Reminder not found.' }, { status: 404 });
@@ -47,7 +47,7 @@ export const DELETE = withAdminTracking(async function DELETE(_req: NextRequest,
   if (!ids) return NextResponse.json({ error: 'Invalid reminder id.' }, { status: 400 });
 
   try {
-    const deleted = await deleteTrecReminder(ids.id, ids.reminderId);
+    const deleted = await deleteTrecReminder(ids.id, ids.reminderId, admin.email);
     return deleted
       ? NextResponse.json({ ok: true })
       : NextResponse.json({ error: 'Reminder not found.' }, { status: 404 });

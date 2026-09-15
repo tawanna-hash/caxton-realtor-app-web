@@ -15,6 +15,11 @@ const dealSchema = z.object({
   worksheet: z.record(z.string(), z.string().max(20_000)),
   addenda: z.record(z.string(), z.boolean()),
   status: z.enum(['active', 'closed', 'archived']).optional(),
+  workflowStatus: z.enum(['intake', 'contract_review', 'active_transaction', 'closing', 'completed', 'cancelled']).optional(),
+  assignedTo: z.string().trim().max(160).nullable().optional(),
+  outcome: z.enum(['closed', 'cancelled', 'withdrawn', 'expired']).nullable().optional(),
+  outcomeDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  outcomeNote: z.string().trim().max(2_000).nullable().optional(),
 });
 
 function isReasonablePayload(value: unknown): boolean {
@@ -55,7 +60,7 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
   }
 
   try {
-    const deal = await updateTrecDeal(id, parsed.data);
+    const deal = await updateTrecDeal(id, { ...parsed.data, actor: admin.email });
     return deal
       ? NextResponse.json({ deal })
       : NextResponse.json({ error: 'Deal not found.' }, { status: 404 });

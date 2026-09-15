@@ -5,6 +5,7 @@
 import { query } from '@/lib/server/db/neon';
 import { calculateTrecDeadlines } from '@/lib/trec-deadlines';
 import { listTrecDeals } from '@/lib/server/trec-deals';
+import { TREC_DEAL_WORKFLOW_STATUS_LABELS, TREC_DEAL_WORKFLOW_STATUSES, buildTrecValidation } from '@/lib/trec-workflow';
 import { MARKETS, type Market, MARKET_META } from '@/lib/types/markets';
 
 export interface MarketSnapshot {
@@ -53,11 +54,22 @@ export interface TrecRadarItem {
   tone: 'warning' | 'neutral';
 }
 
+export interface TransactionPipelineData {
+  activeDeals: number;
+  closingNext30Days: number;
+  reviewAlerts: number;
+  overdueTasks: number;
+  stages: Array<{ status: string; label: string; count: number }>;
+  workloads: Array<{ assignee: string; count: number }>;
+  titleDistribution: Array<{ label: string; count: number }>;
+}
+
 export interface DashboardData {
   markets: MarketSnapshot[];
   attention: AttentionItem[];
   radar: RadarItem[];
   trecRadar: TrecRadarItem[];
+  transactionPipeline: TransactionPipelineData;
   generatedAt: string;
 }
 
@@ -318,12 +330,34 @@ export async function fetchDashboardData(): Promise<DashboardData> {
   // Saved TREC workspaces contain structured deal-prep facts, not uploaded
   // contracts. The calculator remains the single deadline source of truth.
   const trecRadar: TrecRadarItem[] = [];
+  const transactionPipeline: TransactionPipelineData = {
+    activeDeals: 0,
+    closingNext30Days: 0,
+    reviewAlerts: 0,
+    overdueTasks: 0,
+    stages: TREC_DEAL_WORKFLOW_STATUSES.map((status) => ({ status, label: TREC_DEAL_WORKFLOW_STATUS_LABELS[status], count: 0 })),
+    workloads: [],
+    titleDistribution: [],
+  };
   try {
     const today = chicagoDate();
     const horizon = addCalendarDays(today, 14);
+    const closingHorizon = addCalendarDays(today, 30);
     const savedDeals = await listTrecDeals();
+    const workload = new Map<string, number>();
+    const titleCompany = new Map<string, number>();
 
     for (const deal of savedDeals) {
+      const stage = transactionPipeline.stages.find((item) => item.status === deal.workflowStatus);
+      if (stage) stage.count += 1;
+      if (!['completed', 'cancelled'].includes(deal.workflowStatus)) transactionPipeline.activeDeals += 1;
+      if (deal.worksheet.closingDate >= today && deal.worksheet.closingDate <= closingHorizon) transactionPipeline.closingNext30Days += 1;
+      const owner = deal.assignedTo?.trim() || 'Unassigned';
+      workload.set(owner, (workload.get(owner) ?? 0) + 1);
+      if (deal.worksheet.titleCompany?.trim()) {
+        const name = deal.worksheet.titleCompany.trim();
+        titleCompany.set(name, (titleCompany.get(name) ?? 0) + 1);
+      }
       const deadlines = calculateTrecDeadlines({
         effectiveDate: deal.worksheet.effectiveDate,
         optionPeriodDays: deal.worksheet.optionDays,
@@ -334,6 +368,10 @@ export async function fetchDashboardData(): Promise<DashboardData> {
         surveyDays: deal.worksheet.surveyDays,
         titleObjectionDays: deal.worksheet.titleObjectionDays,
       });
+      transactionPipeline.reviewAlerts += buildTrecValidation(deal.worksheet, deadlines, deal.reminders).length;
+      transactionPipeline.overdueTasks += deal.tasks.filter((task) => (
+        task.status !== 'done' && task.status !== 'skipped' && Boolean(task.dueDate) && task.dueDate! < today
+      )).length;
       const byId = new Map(deadlines.map((deadline) => [deadline.id, deadline]));
       const href = `/admin/command-center/trec-1-4?deal=${deal.id}`;
 
@@ -364,6 +402,14 @@ export async function fetchDashboardData(): Promise<DashboardData> {
         });
       }
     }
+    transactionPipeline.workloads = [...workload.entries()]
+      .map(([assignee, count]) => ({ assignee, count }))
+      .sort((a, b) => b.count - a.count || a.assignee.localeCompare(b.assignee))
+      .slice(0, 6);
+    transactionPipeline.titleDistribution = [...titleCompany.entries()]
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+      .slice(0, 6);
   } catch (error) {
     console.error('[dashboard] transaction date radar unavailable', error);
   }
@@ -374,6 +420,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     attention,
     radar: radar.slice(0, 6),
     trecRadar: trecRadar.slice(0, 10),
+    transactionPipeline,
     generatedAt: new Date().toISOString(),
   };
 }

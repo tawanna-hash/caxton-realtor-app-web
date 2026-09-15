@@ -12,6 +12,8 @@ const dealSchema = z.object({
   title: z.string().trim().max(180).optional(),
   worksheet: z.record(z.string(), z.string().max(20_000)),
   addenda: z.record(z.string(), z.boolean()),
+  workflowStatus: z.enum(['intake', 'contract_review', 'active_transaction', 'closing', 'completed', 'cancelled']).optional(),
+  assignedTo: z.string().trim().max(160).nullable().optional(),
 });
 
 function dealTitle(input: z.infer<typeof dealSchema>): string {
@@ -49,6 +51,9 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       title: dealTitle(parsed.data),
       worksheet: parsed.data.worksheet,
       addenda: parsed.data.addenda,
+      workflowStatus: parsed.data.workflowStatus,
+      assignedTo: parsed.data.assignedTo,
+      createdBy: admin.email,
     });
     return NextResponse.json({ deal }, { status: 201 });
   } catch (error) {

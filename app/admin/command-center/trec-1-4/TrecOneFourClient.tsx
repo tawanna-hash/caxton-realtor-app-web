@@ -19,14 +19,38 @@ import {
   ShieldAlert,
   Sparkles,
   Trash2,
+  ClipboardCheck,
+  History,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
-import type { TrecDeadlineReminder, TrecDeal } from '@/lib/server/trec-deals';
+import {
+  TREC_DEAL_WORKFLOW_STATUS_LABELS,
+  TREC_DEAL_WORKFLOW_STATUSES,
+  TREC_DOCUMENT_CHECKLIST_TEMPLATES,
+  TREC_REMINDER_PRESET_OFFSETS,
+  buildTrecValidation,
+} from '@/lib/trec-workflow';
+import type {
+  TrecDeadlineReminder,
+  TrecDeal,
+  TrecDealActivity,
+  TrecDealDocument,
+  TrecDealTask,
+  TrecDocumentStatus,
+  TrecTaskPriority,
+  TrecWorkflowStatus,
+} from '@/lib/server/trec-deals';
 
 type Worksheet = Record<string, string>;
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 type ExtractionState = 'idle' | 'extracting' | 'ready' | 'error';
+type ExtractionDraft = {
+  title?: string;
+  worksheet: Partial<Worksheet>;
+  addenda: Record<string, boolean>;
+  warnings: string[];
+};
 
 const INITIAL_WORKSHEET: Worksheet = {
   buyerNames: '',
@@ -186,9 +210,11 @@ function formatSavedAt(value?: string): string {
 function DeadlineMath({
   deadlines,
   onAddReminder,
+  onAddReminderPreset,
 }: {
   deadlines: TrecDeadline[];
   onAddReminder?: (deadline: TrecDeadline) => void;
+  onAddReminderPreset?: (deadline: TrecDeadline, daysBefore: number) => void;
 }) {
   if (deadlines.length === 0) {
     return (
@@ -228,6 +254,20 @@ function DeadlineMath({
                     <Bell className="h-3.5 w-3.5" aria-hidden="true" />
                     Remind me
                   </button>
+                )}
+                {onAddReminderPreset && (
+                  <div className="flex items-center gap-1">
+                    {TREC_REMINDER_PRESET_OFFSETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => onAddReminderPreset(deadline, preset.daysBefore)}
+                        className="inline-flex min-h-8 items-center rounded-full border border-violet-200 bg-white px-2 text-[10px] font-semibold text-violet-800 hover:bg-violet-50"
+                      >
+                        {preset.id}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
@@ -340,6 +380,20 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
   const [reminderState, setReminderState] = useState<SaveState>('idle');
   const [extractionState, setExtractionState] = useState<ExtractionState>('idle');
   const [extractionWarnings, setExtractionWarnings] = useState<string[]>([]);
+  const [extractionDraft, setExtractionDraft] = useState<ExtractionDraft | null>(null);
+  const [workflowStatus, setWorkflowStatus] = useState<TrecWorkflowStatus>(linkedDeal?.workflowStatus ?? 'intake');
+  const [assignedTo, setAssignedTo] = useState(linkedDeal?.assignedTo ?? '');
+  const [outcome, setOutcome] = useState(linkedDeal?.outcome ?? '');
+  const [outcomeDate, setOutcomeDate] = useState(linkedDeal?.outcomeDate ?? '');
+  const [outcomeNote, setOutcomeNote] = useState(linkedDeal?.outcomeNote ?? '');
+  const [tasks, setTasks] = useState<TrecDealTask[]>(linkedDeal?.tasks ?? []);
+  const [documents, setDocuments] = useState<TrecDealDocument[]>(linkedDeal?.documents ?? []);
+  const [activity, setActivity] = useState<TrecDealActivity[]>(linkedDeal?.activity ?? []);
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskDueDate, setTaskDueDate] = useState('');
+  const [taskPriority, setTaskPriority] = useState<TrecTaskPriority>('normal');
+  const [documentName, setDocumentName] = useState('');
+  const [documentState, setDocumentState] = useState<SaveState>('idle');
   const [isContractDropActive, setIsContractDropActive] = useState(false);
   const [radarMonth, setRadarMonth] = useState(() => {
     const initial = new Date(`${linkedDeal?.worksheet.effectiveDate || isoToday()}T12:00:00`);
@@ -379,6 +433,10 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
 
   const selectedDeadline = deadlines.find((deadline) => deadline.id === selectedDeadlineId);
   const currentDeal = savedDeals.find((deal) => deal.id === currentDealId) ?? null;
+  const validationAlerts = useMemo(
+    () => buildTrecValidation(worksheet, deadlines, reminders),
+    [deadlines, reminders, worksheet],
+  );
 
   const startNewDeal = () => {
     if (!window.confirm('Start a new deal-prep worksheet? Unsaved changes in this browser tab will be cleared.')) return;
@@ -387,6 +445,15 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
     setCurrentDealId(null);
     setDealTitle('');
     setReminders([]);
+    setTasks([]);
+    setDocuments([]);
+    setActivity([]);
+    setWorkflowStatus('intake');
+    setAssignedTo('');
+    setOutcome('');
+    setOutcomeDate('');
+    setOutcomeNote('');
+    setExtractionDraft(null);
     setSelectedDeadlineId('');
     setReminderDate('');
     setReminderNote('');
@@ -407,6 +474,15 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
     setWorksheet({ ...INITIAL_WORKSHEET, ...selected.worksheet });
     setAddenda(selected.addenda);
     setReminders(selected.reminders);
+    setTasks(selected.tasks ?? []);
+    setDocuments(selected.documents ?? []);
+    setActivity(selected.activity ?? []);
+    setWorkflowStatus(selected.workflowStatus ?? 'intake');
+    setAssignedTo(selected.assignedTo ?? '');
+    setOutcome(selected.outcome ?? '');
+    setOutcomeDate(selected.outcomeDate ?? '');
+    setOutcomeNote(selected.outcomeNote ?? '');
+    setExtractionDraft(null);
     setSelectedDeadlineId('');
     setReminderDate('');
     setReminderNote('');
@@ -425,7 +501,16 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
       const response = await fetch(endpoint, {
         method: currentDealId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, worksheet, addenda }),
+        body: JSON.stringify({
+          title,
+          worksheet,
+          addenda,
+          workflowStatus,
+          assignedTo: assignedTo.trim() || null,
+          outcome: outcome || null,
+          outcomeDate: outcomeDate || null,
+          outcomeNote: outcomeNote.trim() || null,
+        }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not save this deal.');
@@ -433,6 +518,14 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
       setCurrentDealId(deal.id);
       setDealTitle(deal.title);
       setReminders(deal.reminders);
+      setTasks(deal.tasks ?? []);
+      setDocuments(deal.documents ?? []);
+      setActivity(deal.activity ?? []);
+      setWorkflowStatus(deal.workflowStatus);
+      setAssignedTo(deal.assignedTo ?? '');
+      setOutcome(deal.outcome ?? '');
+      setOutcomeDate(deal.outcomeDate ?? '');
+      setOutcomeNote(deal.outcomeNote ?? '');
       setSavedDeals((current) => {
         const otherDeals = current.filter((item) => item.id !== deal.id);
         return [deal, ...otherDeals];
@@ -461,6 +554,9 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
       setCurrentDealId(null);
       setDealTitle('');
       setReminders([]);
+      setTasks([]);
+      setDocuments([]);
+      setActivity([]);
       setSelectedDeadlineId('');
       setReminderDate('');
       setReminderNote('');
@@ -531,16 +627,106 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
     }
   };
 
+  const addReminderPreset = async (deadline: TrecDeadline, daysBefore: number) => {
+    if (!currentDealId) return;
+    const date = addDays(deadline.date, -daysBefore);
+    if (date < isoToday()) return;
+    setReminderState('saving');
+    try {
+      const response = await fetch(`/api/admin/trec-deals/${currentDealId}/reminders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deadlineKey: deadline.id, reminderDate: date, note: `${daysBefore ? `${daysBefore} days before` : 'Due date'}: ${deadline.label}` }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not save reminder');
+      const created = data.reminder as TrecDeadlineReminder;
+      setReminders((current) => current.some((item) => item.id === created.id) ? current : [...current, created]);
+      setReminderState('saved');
+    } catch {
+      setReminderState('error');
+    }
+  };
+
+  const addTask = async () => {
+    if (!currentDealId || !taskTitle.trim()) return;
+    setDocumentState('saving');
+    try {
+      const response = await fetch(`/api/admin/trec-deals/${currentDealId}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: taskTitle.trim(), priority: taskPriority, dueDate: taskDueDate || null, assignee: assignedTo.trim() || null }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not add task');
+      setTasks((current) => [...current, data.task as TrecDealTask]);
+      setTaskTitle('');
+      setTaskDueDate('');
+      setDocumentState('idle');
+    } catch {
+      setDocumentState('error');
+    }
+  };
+
+  const updateTaskStatus = async (task: TrecDealTask, status: TrecDealTask['status']) => {
+    if (!currentDealId) return;
+    try {
+      const response = await fetch(`/api/admin/trec-deals/${currentDealId}/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not update task');
+      const updated = data.task as TrecDealTask;
+      setTasks((current) => current.map((item) => item.id === updated.id ? updated : item));
+    } catch {
+      setDocumentState('error');
+    }
+  };
+
+  const addDocument = async (displayName = documentName) => {
+    if (!currentDealId || !displayName.trim()) return;
+    setDocumentState('saving');
+    try {
+      const response = await fetch(`/api/admin/trec-deals/${currentDealId}/documents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'transaction_document', displayName: displayName.trim() }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not add document request');
+      setDocuments((current) => [...current, data.document as TrecDealDocument]);
+      setDocumentName('');
+      setDocumentState('idle');
+    } catch {
+      setDocumentState('error');
+    }
+  };
+
+  const updateDocumentStatus = async (document: TrecDealDocument, status: TrecDocumentStatus) => {
+    if (!currentDealId) return;
+    try {
+      const response = await fetch(`/api/admin/trec-deals/${currentDealId}/documents/${document.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not update document request');
+      const updated = data.document as TrecDealDocument;
+      setDocuments((current) => current.map((item) => item.id === updated.id ? updated : item));
+    } catch {
+      setDocumentState('error');
+    }
+  };
+
   const changeRadarMonth = (direction: number) => {
     setRadarMonth((current) => new Date(current.getFullYear(), current.getMonth() + direction, 1));
   };
 
   const extractContract = async (file: File | undefined) => {
     if (!file) return;
-    const hasExistingDetails = Object.values(worksheet).some(Boolean) || Object.values(addenda).some(Boolean);
-    if (hasExistingDetails && !window.confirm('Replace the current worksheet fields with extracted contract suggestions? Review every value before saving.')) {
-      return;
-    }
     setExtractionState('extracting');
     setExtractionWarnings([]);
     try {
@@ -558,24 +744,30 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
         addenda: Record<string, boolean>;
         warnings: string[];
       };
-      setWorksheet((current) => {
-        const next = { ...current };
-        for (const [key, value] of Object.entries(extraction.worksheet)) {
-          if (typeof value === 'string') next[key] = value;
-        }
-        return next;
-      });
-      setAddenda(extraction.addenda);
-      if (extraction.title) setDealTitle(extraction.title);
-      if (extraction.worksheet.effectiveDate) {
-        const date = new Date(`${extraction.worksheet.effectiveDate}T12:00:00`);
-        setRadarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
-      }
+      setExtractionDraft(extraction);
       setExtractionWarnings(extraction.warnings ?? []);
       setExtractionState('ready');
     } catch {
       setExtractionState('error');
     }
+  };
+
+  const applyExtraction = () => {
+    if (!extractionDraft) return;
+    setWorksheet((current) => {
+      const next = { ...current };
+      for (const [key, value] of Object.entries(extractionDraft.worksheet)) {
+        if (typeof value === 'string') next[key] = value;
+      }
+      return next;
+    });
+    setAddenda((current) => ({ ...current, ...extractionDraft.addenda }));
+    if (extractionDraft.title) setDealTitle(extractionDraft.title);
+    if (extractionDraft.worksheet.effectiveDate) {
+      const date = new Date(`${extractionDraft.worksheet.effectiveDate}T12:00:00`);
+      setRadarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+    }
+    setExtractionDraft(null);
   };
 
   const exportSummary = () => {
@@ -761,10 +953,30 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               </label>
             </div>
           </div>
-          {extractionState === 'ready' && (
-            <p role="status" className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-              Contract suggestions are now in the worksheet. Review and correct every field, then save the deal prep.
-            </p>
+          {extractionState === 'ready' && extractionDraft && (
+            <section role="status" className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                <div>
+                  <p className="text-sm font-semibold text-emerald-950">Extraction review ready</p>
+                  <p className="mt-1 text-sm leading-6 text-emerald-800">
+                    {Object.values(extractionDraft.worksheet).filter(Boolean).length} worksheet values and {Object.values(extractionDraft.addenda).filter(Boolean).length} addenda selections were found. Compare the proposed values below before applying them.
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <button type="button" onClick={applyExtraction} className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800">Apply suggestions</button>
+                  <button type="button" onClick={() => setExtractionDraft(null)} className="inline-flex min-h-10 items-center justify-center rounded-full border border-emerald-300 bg-white px-4 text-sm font-semibold text-emerald-800 hover:bg-emerald-100">Discard</button>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {Object.entries(extractionDraft.worksheet).filter(([, value]) => Boolean(value)).slice(0, 12).map(([key, value]) => (
+                  <div key={key} className="rounded-md border border-emerald-100 bg-white px-3 py-2 text-xs">
+                    <span className="font-semibold text-emerald-900">{key.replace(/([A-Z])/g, ' $1').replace(/^./, (letter) => letter.toUpperCase())}:</span>{' '}
+                    <span className="text-gray-700">{value}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-xs leading-5 text-emerald-800">The source file was processed in memory and discarded. This review shows proposed worksheet values only, not a stored contract copy.</p>
+            </section>
           )}
           {extractionState === 'error' && (
             <p role="alert" className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
@@ -778,7 +990,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
           )}
         </div>
 
-        <div className="mt-5 grid gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="mt-5 grid gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 lg:grid-cols-2">
           <Field
             id="dealTitle"
             label="Deal name"
@@ -802,6 +1014,14 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               {currentDeal ? `Last saved ${formatSavedAt(currentDeal.updatedAt)}.` : 'Save this worksheet to add durable in-app reminders.'}
             </span>
           </label>
+          <label htmlFor="workflowStatus" className="block">
+            <span className="text-sm font-medium text-gray-900">Transaction stage</span>
+            <select id="workflowStatus" value={workflowStatus} onChange={(event) => setWorkflowStatus(event.target.value as TrecWorkflowStatus)} className="mt-1.5 block min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 shadow-sm outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-100">
+              {TREC_DEAL_WORKFLOW_STATUSES.map((status) => <option key={status} value={status}>{TREC_DEAL_WORKFLOW_STATUS_LABELS[status]}</option>)}
+            </select>
+            <span className="mt-1 block text-xs leading-5 text-gray-500">Operational stage only. It does not change the contract.</span>
+          </label>
+          <Field id="assignedTo" label="Coordinator / owner" value={assignedTo} onChange={setAssignedTo} placeholder="Name or role responsible for next steps" />
         </div>
         {saveState === 'error' && (
           <p role="alert" className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
@@ -950,6 +1170,103 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               )}
             </section>
           </div>
+          <section aria-label="Transaction operations" className="mb-7 grid gap-5 xl:grid-cols-2">
+            <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-amber-700" aria-hidden="true" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-950">Texas timing review</h2>
+                  <p className="text-xs text-gray-600">Operational checks based on the values in this workspace.</p>
+                </div>
+                <span className="ml-auto rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-amber-800">{validationAlerts.length} to review</span>
+              </div>
+              {validationAlerts.length ? (
+                <ul className="mt-4 space-y-2">
+                  {validationAlerts.slice(0, 5).map((alert, index) => (
+                    <li key={`${alert.code}-${alert.field ?? alert.deadlineKey ?? index}`} className="rounded-md border border-amber-200 bg-white px-3 py-2 text-xs leading-5 text-gray-700">{alert.message}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-800">The required operational fields and current deadline relationships have no review alerts.</p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-5">
+              <div className="flex items-center gap-2">
+                <ClipboardCheck className="h-5 w-5 text-violet-700" aria-hidden="true" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-950">Tasks & escalation</h2>
+                  <p className="text-xs text-gray-500">Track accountable work against this transaction.</p>
+                </div>
+              </div>
+              {!currentDealId ? (
+                <p className="mt-4 rounded-md bg-gray-50 px-3 py-3 text-sm text-gray-600">Save the deal to create durable tasks, document requests, and activity history.</p>
+              ) : (
+                <>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_140px_120px_auto]">
+                    <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Add a transaction task" className="min-h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-100" />
+                    <input value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} type="date" aria-label="Task due date" className="min-h-10 rounded-md border border-gray-300 px-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-100" />
+                    <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-10 rounded-md border border-gray-300 px-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-100">
+                      <option value="normal">Normal</option><option value="high">High</option><option value="critical">Critical</option><option value="low">Low</option>
+                    </select>
+                    <button type="button" onClick={addTask} disabled={!taskTitle.trim() || documentState === 'saving'} className="inline-flex min-h-10 items-center justify-center rounded-full bg-violet-700 px-4 text-sm font-semibold text-white hover:bg-violet-800 disabled:opacity-50">Add</button>
+                  </div>
+                  <ul className="mt-4 space-y-2">
+                    {tasks.length ? tasks.map((task) => (
+                      <li key={task.id} className="flex items-center gap-3 rounded-md border border-gray-200 px-3 py-2">
+                        <input type="checkbox" checked={task.status === 'done'} onChange={(event) => updateTaskStatus(task, event.target.checked ? 'done' : 'todo')} aria-label={`Complete ${task.title}`} className="h-4 w-4 rounded border-gray-300 text-violet-700 focus:ring-violet-600" />
+                        <span className={task.status === 'done' ? 'min-w-0 flex-1 text-sm text-gray-500 line-through' : 'min-w-0 flex-1 text-sm font-medium text-gray-900'}>{task.title}</span>
+                        {task.dueDate && <span className="text-xs text-gray-500">{formatValue(task.dueDate)}</span>}
+                        <span className={task.priority === 'critical' ? 'rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-800' : task.priority === 'high' ? 'rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-800' : 'rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-gray-600'}>{task.priority}</span>
+                      </li>
+                    )) : <li className="text-sm text-gray-600">No transaction tasks yet.</li>}
+                  </ul>
+                </>
+              )}
+            </div>
+          </section>
+
+          {currentDealId && (
+            <section aria-label="Document requests and history" className="mb-7 grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+              <div className="rounded-xl border border-gray-200 bg-white p-5">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-orange-700" aria-hidden="true" />
+                  <div><h2 className="text-lg font-semibold text-gray-950">Document request center</h2><p className="text-xs text-gray-500">Status tracking only. Do not upload executed contracts here.</p></div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {TREC_DOCUMENT_CHECKLIST_TEMPLATES.flatMap((template) => template.items).map((item) => (
+                    <button key={item.id} type="button" onClick={() => addDocument(item.label)} disabled={documents.some((document) => document.displayName === item.label)} className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-800 hover:bg-orange-100 disabled:cursor-default disabled:opacity-40">{item.label}</button>
+                  ))}
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <input value={documentName} onChange={(event) => setDocumentName(event.target.value)} placeholder="Custom document request" className="min-h-10 min-w-0 flex-1 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-100" />
+                  <button type="button" onClick={() => addDocument()} disabled={!documentName.trim() || documentState === 'saving'} className="inline-flex min-h-10 items-center justify-center rounded-full border border-orange-300 bg-white px-4 text-sm font-semibold text-orange-800 hover:bg-orange-50 disabled:opacity-50">Add</button>
+                </div>
+                <ul className="mt-4 space-y-2">
+                  {documents.length ? documents.map((document) => (
+                    <li key={document.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-gray-200 px-3 py-2">
+                      <span className="text-sm font-medium text-gray-900">{document.displayName}</span>
+                      <select value={document.status} onChange={(event) => updateDocumentStatus(document, event.target.value as TrecDocumentStatus)} className="min-h-9 rounded-md border border-gray-300 bg-white px-2 text-xs font-semibold text-gray-700">
+                        <option value="requested">Requested</option><option value="received">Received</option><option value="verified">Verified</option><option value="not_applicable">Not applicable</option>
+                      </select>
+                    </li>
+                  )) : <li className="text-sm text-gray-600">Add a checklist item or custom request to start tracking.</li>}
+                </ul>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-white p-5">
+                <div className="flex items-center gap-2"><History className="h-5 w-5 text-gray-700" aria-hidden="true" /><div><h2 className="text-lg font-semibold text-gray-950">Closeout & history</h2><p className="text-xs text-gray-500">Document the operational outcome and a dated activity trail.</p></div></div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <select value={outcome} onChange={(event) => setOutcome(event.target.value)} aria-label="Transaction outcome" className="min-h-10 rounded-md border border-gray-300 px-3 text-sm"><option value="">Outcome not set</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select>
+                  <input value={outcomeDate} onChange={(event) => setOutcomeDate(event.target.value)} type="date" aria-label="Outcome date" className="min-h-10 rounded-md border border-gray-300 px-3 text-sm" />
+                </div>
+                <textarea value={outcomeNote} onChange={(event) => setOutcomeNote(event.target.value)} placeholder="Closeout or cancellation note" className="mt-3 min-h-20 w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-700 focus:ring-2 focus:ring-gray-100" />
+                <p className="mt-2 text-xs text-gray-500">Save changes to record the stage and closeout details.</p>
+                <ul className="mt-4 max-h-52 space-y-2 overflow-auto">
+                  {activity.length ? activity.map((item) => <li key={item.id} className="rounded-md bg-gray-50 px-3 py-2 text-xs leading-5 text-gray-700"><span className="font-semibold text-gray-900">{formatSavedAt(item.createdAt)}</span> · {item.message}{item.actor ? ` — ${item.actor}` : ''}</li>) : <li className="text-sm text-gray-600">Activity will appear after this deal is saved and worked.</li>}
+                </ul>
+              </div>
+            </section>
+          )}
           {activeStep === 0 && (
             <section aria-labelledby="parties-property-title">
               <h2 id="parties-property-title" className="text-xl font-semibold text-gray-950">
@@ -1009,7 +1326,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 <Field id="additionalEarnestMoney" label="Additional earnest money amount" value={worksheet.additionalEarnestMoney} onChange={(value) => update('additionalEarnestMoney', value)} placeholder="$0.00" />
                 <Field id="additionalEarnestMoneyDays" label="Additional earnest money days after effective date" value={worksheet.additionalEarnestMoneyDays} onChange={(value) => update('additionalEarnestMoneyDays', value)} type="number" placeholder="0" />
               </div>
-              <DeadlineMath deadlines={deadlines.filter((deadline) => deadline.category === 'money' || deadline.category === 'option')} onAddReminder={currentDealId ? openReminder : undefined} />
+              <DeadlineMath deadlines={deadlines.filter((deadline) => deadline.category === 'money' || deadline.category === 'option')} onAddReminder={currentDealId ? openReminder : undefined} onAddReminderPreset={currentDealId ? addReminderPreset : undefined} />
             </section>
           )}
 
@@ -1037,7 +1354,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 <Field id="surveyDays" label="Survey days after effective date" value={worksheet.surveyDays} onChange={(value) => update('surveyDays', value)} type="number" placeholder="Set from executed contract" />
                 <Field id="titleObjectionDays" label="Title objection days after effective date" value={worksheet.titleObjectionDays} onChange={(value) => update('titleObjectionDays', value)} type="number" placeholder="Set from executed contract" />
               </div>
-              <DeadlineMath deadlines={deadlines.filter((deadline) => deadline.category === 'contract-period')} onAddReminder={currentDealId ? openReminder : undefined} />
+              <DeadlineMath deadlines={deadlines.filter((deadline) => deadline.category === 'contract-period')} onAddReminder={currentDealId ? openReminder : undefined} onAddReminderPreset={currentDealId ? addReminderPreset : undefined} />
             </section>
           )}
 
@@ -1110,7 +1427,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                   </div>
                 ))}
               </div>
-              <DeadlineMath deadlines={deadlines} onAddReminder={currentDealId ? openReminder : undefined} />
+              <DeadlineMath deadlines={deadlines} onAddReminder={currentDealId ? openReminder : undefined} onAddReminderPreset={currentDealId ? addReminderPreset : undefined} />
               <div className="mt-6 rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm leading-6 text-orange-950">
                 Before signature, confirm that names, monetary amounts, delivery deadlines, notices,
                 the effective date and every applicable addendum match the current official package.
