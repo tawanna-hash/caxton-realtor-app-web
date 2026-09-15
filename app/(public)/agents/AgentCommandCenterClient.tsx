@@ -20,8 +20,6 @@ import {
 } from 'lucide-react';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
 import { trackEvent } from '@/app/posthog-provider';
-import type { AgentCommandCenterWorkspace } from '@/lib/agent-command-center-workspace';
-import AgentDealDesk from './AgentDealDesk';
 
 export type ReferralProvider = {
   id: number;
@@ -113,16 +111,8 @@ function deadlineTone(deadline: TrecDeadline): string {
 
 export default function AgentCommandCenterClient({
   providers,
-  workspaceKey,
-  realtorId,
-  initialWorkspace,
-  initialWorkspaceVersion,
 }: {
   providers: ReferralProvider[];
-  workspaceKey: string;
-  realtorId: string;
-  initialWorkspace: AgentCommandCenterWorkspace | null;
-  initialWorkspaceVersion: number | null;
 }) {
   const [effectiveDate, setEffectiveDate] = useState('');
   const [optionPeriodDays, setOptionPeriodDays] = useState('');
@@ -168,14 +158,14 @@ export default function AgentCommandCenterClient({
               Your practical desk for Texas transaction timing, client-ready calculators, local market context, and service partners when a deal needs help.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="#agent-desk"
+              <Link
+                href="/agents/deal-desk"
                 onClick={() => trackEvent('agent_command_center_deal_desk_opened')}
                 className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-[#F4D06F] px-5 py-3 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
               >
                 Open my deal desk
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </a>
+              </Link>
               <a
                 href="#referral-network"
                 className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full border border-white/25 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
@@ -206,13 +196,6 @@ export default function AgentCommandCenterClient({
           </aside>
         </div>
       </section>
-
-      <AgentDealDesk
-        workspaceKey={workspaceKey}
-        realtorId={realtorId}
-        initialWorkspace={initialWorkspace}
-        initialWorkspaceVersion={initialWorkspaceVersion}
-      />
 
       <section id="deadline-planner" className="scroll-mt-20">
         <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:py-10">

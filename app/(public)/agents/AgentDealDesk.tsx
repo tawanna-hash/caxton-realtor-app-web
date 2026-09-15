@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -7,6 +8,7 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   ClipboardCheck,
   Download,
@@ -37,8 +39,6 @@ import {
   type AgentTask,
 } from '@/lib/agent-command-center-workspace';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
-
-const RADAR_WINDOW_DAYS = 14;
 
 type RadarItem = {
   id: string;
@@ -306,6 +306,7 @@ export default function AgentDealDesk({
   const [extractionWarnings, setExtractionWarnings] = useState<string[]>([]);
   const [extractionError, setExtractionError] = useState('');
   const [isContractDropActive, setIsContractDropActive] = useState(false);
+  const [workspacePage, setWorkspacePage] = useState<1 | 2>(1);
   const versionRef = useRef<number | null>(initialWorkspaceVersion);
   const syncTimerRef = useRef<number | null>(null);
   const saveInFlightRef = useRef(false);
@@ -447,12 +448,20 @@ export default function AgentDealDesk({
     [activeDeal],
   );
   const today = chicagoToday();
+  const radarWindowDays = useMemo(() => {
+    if (!activeDeal?.closingDate || activeDeal.closingDate < today) return 14;
+    const start = new Date(`${today}T12:00:00Z`).getTime();
+    const end = new Date(`${activeDeal.closingDate}T12:00:00Z`).getTime();
+    return Math.max(1, Math.ceil((end - start) / 86_400_000));
+  }, [activeDeal, today]);
 
   const radarItems = useMemo(() => {
-    const windowEnd = addDays(today, RADAR_WINDOW_DAYS);
+    const windowEnd = activeDeal?.closingDate && activeDeal.closingDate >= today
+      ? activeDeal.closingDate
+      : addDays(today, 14);
     const items: RadarItem[] = [];
 
-    deals.filter((deal) => deal.status !== 'completed').forEach((deal) => {
+    deals.filter((deal) => deal.status !== 'completed' && (!activeDeal || deal.id === activeDeal.id)).forEach((deal) => {
       dealDeadlines(deal).forEach((deadline) => {
         if (deadline.date <= windowEnd && deadline.date >= addDays(today, -7)) {
           items.push({
@@ -493,7 +502,7 @@ export default function AgentDealDesk({
     });
 
     return items.sort((left, right) => left.date.localeCompare(right.date)).slice(0, 10);
-  }, [deals, today]);
+  }, [activeDeal, deals, today]);
 
   const reviewAlerts = useMemo(() => deals.flatMap((deal) => {
     if (deal.status === 'completed') return [];
@@ -712,8 +721,15 @@ export default function AgentDealDesk({
     trackEvent('agent_deal_desk_calendar_exported', { scope: 'all_active_deals' });
   };
 
+  const saveProgress = () => {
+    if (!ready) return;
+    if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
+    void saveToCloud({ deals, notificationPreferences });
+    trackEvent('agent_deal_desk_progress_saved');
+  };
+
   return (
-    <section id="agent-desk" className="scroll-mt-20 border-b border-slate-200 bg-white">
+    <main id="agent-desk" className="min-h-screen bg-[#F7F5F1]">
       <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div>
@@ -737,10 +753,44 @@ export default function AgentDealDesk({
           <Save className="mt-0.5 h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
           <p>
             <span className="font-semibold text-slate-900">{ready ? syncMessage : 'Loading your secure workspace.'}</span>{' '}
-            Your agent desk is protected by your Realty News Now sign-in and is not connected to the admin CRM or its financial records. Legacy browser-only data is cleared after it is securely migrated. Verify all dates against the signed contract and your broker&apos;s process.
+            Verify all dates against the signed contract and your broker&apos;s process.
           </p>
         </div>
 
+        <nav aria-label="Deal desk pages" className="mt-5 flex flex-col gap-3 border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Page {workspacePage} of 2</p>
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              {workspacePage === 1 ? 'Overview, Date Radar, calendar and alerts' : 'Transaction details, upload, tasks and documents'}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {workspacePage === 1 ? (
+              <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Agent Center
+              </Link>
+            ) : (
+              <button type="button" onClick={() => setWorkspacePage(1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
+              </button>
+            )}
+            <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] items-center gap-2 rounded-full border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
+              <Save className="h-4 w-4" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save progress'}
+            </button>
+            {workspacePage === 1 ? (
+              <button type="button" onClick={() => setWorkspacePage(2)} className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
+                Next <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ) : (
+              <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
+                Done <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            )}
+          </div>
+        </nav>
+
+        {workspacePage === 1 && (
+          <>
         <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
             ['Active workspaces', activeDealCount, ClipboardCheck, 'bg-[#F8F5FF] text-[#301D5D]'],
@@ -857,19 +907,19 @@ export default function AgentDealDesk({
           </div>
         </div>
 
-        <div className="mt-8 grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
+        <div className="mt-8">
           <div className="border border-slate-200 bg-[#F7F5F1] p-5 sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Date Radar</p>
-                <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Next {RADAR_WINDOW_DAYS} days</h3>
+                <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Next {radarWindowDays} days</h3>
               </div>
               <Bell className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
             </div>
             <div className="mt-5 space-y-2">
               {!radarItems.length ? (
                 <div className="border border-dashed border-slate-300 bg-white p-5 text-sm leading-6 text-slate-600">
-                  Add a transaction and its effective date to surface time-sensitive contract actions here.
+                  Add a transaction, effective date, and closing date to set this Date Radar window.
                 </div>
               ) : radarItems.map((item) => (
                 <button
@@ -890,7 +940,11 @@ export default function AgentDealDesk({
               ))}
             </div>
           </div>
+        </div>
+          </>
+        )}
 
+        {workspacePage === 2 && (
           <div id="current-transaction" className="scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-7">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -1167,9 +1221,9 @@ export default function AgentDealDesk({
               </>
             )}
           </div>
-        </div>
+        )}
 
-        {activeDeal && (
+        {workspacePage === 2 && activeDeal && (
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <div className="border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center gap-2">
@@ -1250,6 +1304,6 @@ export default function AgentDealDesk({
           </div>
         )}
       </div>
-    </section>
+    </main>
   );
 }

@@ -4,7 +4,6 @@ import { ensureSchema, getSql } from '@/lib/db';
 import { ensureBuilderInventorySchema } from '@/lib/builder-inventory';
 import { ensurePublicationColumn } from '@/lib/publication-theme';
 import { getCurrentUser } from '@/lib/server/auth/user';
-import { getAgentCommandCenterWorkspace } from '@/lib/server/agent-command-center-workspaces';
 import AgentCommandCenterClient, {
   type ReferralProvider,
 } from './AgentCommandCenterClient';
@@ -24,7 +23,6 @@ type AdvertiserRow = ReferralProvider & {
 export default async function AgentCommandCenterPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login?next=%2Fagents');
-  const workspaceRecord = await getAgentCommandCenterWorkspace(user.realtorId);
 
   let providers: ReferralProvider[] = [];
 
@@ -55,12 +53,6 @@ export default async function AgentCommandCenterPage() {
   }
 
   return (
-    <AgentCommandCenterClient
-      providers={providers}
-      workspaceKey={`rnn_agent_command_center_v1:${user.realtorId}`}
-      realtorId={user.realtorId}
-      initialWorkspace={workspaceRecord?.workspace ?? null}
-      initialWorkspaceVersion={workspaceRecord?.version ?? null}
-    />
+    <AgentCommandCenterClient providers={providers} />
   );
 }
