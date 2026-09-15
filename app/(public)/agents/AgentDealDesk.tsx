@@ -1177,59 +1177,52 @@ export default function AgentDealDesk({
                   <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">{WORKSHEET_STEPS.map((step, index) => <button type="button" key={step.id} onClick={() => setWorksheetStep(index)} className={`min-h-[40px] border px-2 text-left text-xs font-bold ${activeDeal.worksheetStep === index ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[#7059A8]'}`}><span className="mr-1 opacity-70">{index + 1}.</span>{step.label}</button>)}</div>
                   <div className="mt-4 flex justify-between"><button type="button" disabled={activeDeal.worksheetStep === 0} onClick={() => setWorksheetStep(activeDeal.worksheetStep - 1)} className="inline-flex min-h-[40px] items-center gap-1 text-sm font-bold text-[#301D5D] disabled:text-slate-400"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Previous</button><button type="button" disabled={activeDeal.worksheetStep === WORKSHEET_STEPS.length - 1} onClick={() => setWorksheetStep(activeDeal.worksheetStep + 1)} className="inline-flex min-h-[40px] items-center gap-1 text-sm font-bold text-[#301D5D] disabled:text-slate-400">Next<ChevronRight className="h-4 w-4" aria-hidden="true" /></button></div>
                 </section>
-                <div className="mt-5 border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-4 sm:p-5">
-                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.72fr)] lg:items-center">
-                    <div className="max-w-2xl">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-violet-950">
-                        <FileUp className="h-4 w-4 text-violet-700" aria-hidden="true" />
-                        Upload a signed TREC 1–4 contract to prefill this deal
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
-                        Drag in a PDF or clear contract image. The app reads visible contract facts, dates, and addenda, then lets you review the suggestions before they update this secure workspace.
-                      </p>
-                    </div>
-                    <div
-                      onDragOver={(event) => {
-                        event.preventDefault();
-                        if (extractionState !== 'extracting') setIsContractDropActive(true);
-                      }}
-                      onDragLeave={() => setIsContractDropActive(false)}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        setIsContractDropActive(false);
-                        void extractContract(event.dataTransfer.files?.[0]);
-                      }}
-                      className={`border-2 border-dashed p-3 transition sm:p-4 ${
+                <div
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    if (extractionState !== 'extracting') setIsContractDropActive(true);
+                  }}
+                  onDragLeave={() => setIsContractDropActive(false)}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    setIsContractDropActive(false);
+                    void extractContract(event.dataTransfer.files?.[0]);
+                  }}
+                  className={`mt-5 border border-dashed p-3 transition sm:p-4 ${
                         isContractDropActive
                           ? 'border-violet-600 bg-violet-100'
-                          : 'border-violet-200 bg-white/80 hover:border-violet-400 hover:bg-violet-50/70'
+                          : 'border-violet-200 bg-violet-50/50 hover:border-violet-400 hover:bg-violet-50/70'
                       } ${extractionState === 'extracting' ? 'pointer-events-none opacity-70' : ''}`}
-                    >
-                      <label htmlFor="agentContractUpload" className="flex min-h-28 cursor-pointer flex-col items-center justify-center text-center">
-                        {extractionState === 'extracting' ? (
-                          <LoaderCircle className="h-6 w-6 animate-spin text-violet-700" aria-hidden="true" />
-                        ) : (
-                          <FileUp className="h-6 w-6 text-violet-700" aria-hidden="true" />
-                        )}
-                        <span className="mt-2 text-sm font-semibold text-violet-950">
-                          {extractionState === 'extracting' ? 'Reading contract…' : isContractDropActive ? 'Drop contract to upload' : 'Drag and drop your contract'}
+                >
+                  <label htmlFor="agentContractUpload" className="flex min-h-[58px] cursor-pointer flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="flex min-w-0 items-center gap-3">
+                      {extractionState === 'extracting' ? (
+                        <LoaderCircle className="h-5 w-5 shrink-0 animate-spin text-violet-700" aria-hidden="true" />
+                      ) : (
+                        <FileUp className="h-5 w-5 shrink-0 text-violet-700" aria-hidden="true" />
+                      )}
+                      <span className="min-w-0">
+                        <span className="block text-sm font-bold text-violet-950">
+                          {extractionState === 'extracting' ? 'Reading contract…' : isContractDropActive ? 'Drop contract to upload' : 'Upload TREC 1–4 to auto-fill'}
                         </span>
-                        <span className="mt-1 text-xs text-slate-600">or <span className="font-semibold text-violet-800 underline underline-offset-2">browse files</span></span>
-                        <span className="mt-2 text-xs text-slate-500">PDF, PNG, JPG, or WEBP · 15 MB maximum</span>
-                        <input
-                          id="agentContractUpload"
-                          type="file"
-                          accept="application/pdf,image/png,image/jpeg,image/webp"
-                          disabled={extractionState === 'extracting'}
-                          onChange={(event) => {
-                            void extractContract(event.target.files?.[0]);
-                            event.currentTarget.value = '';
-                          }}
-                          className="sr-only"
-                        />
-                      </label>
-                    </div>
-                  </div>
+                        <span className="mt-0.5 block text-xs text-slate-600">PDF or clear image · reviewed suggestions only · 15 MB maximum</span>
+                      </span>
+                    </span>
+                    <span className="inline-flex min-h-[40px] shrink-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c]">
+                      <FileUp className="h-4 w-4" aria-hidden="true" /> Upload contract
+                    </span>
+                    <input
+                      id="agentContractUpload"
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg,image/webp"
+                      disabled={extractionState === 'extracting'}
+                      onChange={(event) => {
+                        void extractContract(event.target.files?.[0]);
+                        event.currentTarget.value = '';
+                      }}
+                      className="sr-only"
+                    />
+                  </label>
                   {extractionState === 'ready' && extractionDraft && (
                     <section role="status" className="mt-4 border border-emerald-200 bg-emerald-50 p-4">
                       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
