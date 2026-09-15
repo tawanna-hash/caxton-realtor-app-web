@@ -34,7 +34,7 @@ const ZONE_LABEL: Record<AppAdSlot['zone'], string> = {
   article: 'Article',
   calendar: 'Calendar',
   account: 'Account',
-  newsletter: 'Newsletter',
+  newsletter: 'Email',
   app: 'App-wide',
 };
 
@@ -55,7 +55,7 @@ const HOST_PAGE_BY_SLUG: Record<string, string> = {
   calendar_event_sponsor: 'Promoted event card in the calendar',
   account_splash:         'Top of the account + profile screens',
   splash_welcome:         'First-launch welcome screen',
-  newsletter_banner:      'Friday email newsletter',
+  newsletter_banner:      'Friday Email',
   push_sponsorship:       'iOS / Android push notification',
 };
 
