@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
 import { ensureBuilderInventorySchema } from '@/lib/builder-inventory';
 import { ensurePublicationColumn } from '@/lib/publication-theme';
+import { getCurrentUser } from '@/lib/server/auth/user';
 import AgentCommandCenterClient, {
   type ReferralProvider,
 } from './AgentCommandCenterClient';
@@ -19,6 +21,9 @@ type AdvertiserRow = ReferralProvider & {
 };
 
 export default async function AgentCommandCenterPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login?next=%2Fagents');
+
   let providers: ReferralProvider[] = [];
 
   // The command center remains useful even if the directory database is
@@ -47,5 +52,10 @@ export default async function AgentCommandCenterPage() {
     console.error('[Agent Command Center] Partner directory unavailable', error);
   }
 
-  return <AgentCommandCenterClient providers={providers} />;
+  return (
+    <AgentCommandCenterClient
+      providers={providers}
+      workspaceKey={`rnn_agent_command_center_v1:${user.realtorId}`}
+    />
+  );
 }

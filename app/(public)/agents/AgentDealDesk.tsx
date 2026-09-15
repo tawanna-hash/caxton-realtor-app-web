@@ -18,7 +18,6 @@ import {
 import { trackEvent } from '@/app/posthog-provider';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
 
-const STORAGE_KEY = 'rnn_agent_command_center_v1';
 const RADAR_WINDOW_DAYS = 14;
 
 type DealStatus = 'prep' | 'active' | 'closing' | 'completed';
@@ -175,7 +174,7 @@ function deadlineColor(deadline: TrecDeadline): string {
   return 'border-slate-200 bg-white';
 }
 
-export default function AgentDealDesk() {
+export default function AgentDealDesk({ workspaceKey }: { workspaceKey: string }) {
   const [deals, setDeals] = useState<AgentDeal[]>([]);
   const [activeDealId, setActiveDealId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -188,7 +187,7 @@ export default function AgentDealDesk() {
     let storedDeals: AgentDeal[] = [];
 
     try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
+      const stored = window.localStorage.getItem(workspaceKey);
       const parsed: unknown = stored ? JSON.parse(stored) : [];
       storedDeals = Array.isArray(parsed) ? parsed.filter(isStoredDeal) : [];
     } catch {
@@ -205,11 +204,11 @@ export default function AgentDealDesk() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [workspaceKey]);
 
   const persistDeals = (nextDeals: AgentDeal[]) => {
     setDeals(nextDeals);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextDeals));
+    window.localStorage.setItem(workspaceKey, JSON.stringify(nextDeals));
   };
 
   const activeDeal = deals.find((deal) => deal.id === activeDealId) ?? null;

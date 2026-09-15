@@ -113,8 +113,10 @@ function deadlineTone(deadline: TrecDeadline): string {
 
 export default function AgentCommandCenterClient({
   providers,
+  workspaceKey,
 }: {
   providers: ReferralProvider[];
+  workspaceKey: string;
 }) {
   const [effectiveDate, setEffectiveDate] = useState('');
   const [optionPeriodDays, setOptionPeriodDays] = useState('');
@@ -198,7 +200,7 @@ export default function AgentCommandCenterClient({
         </div>
       </section>
 
-      <AgentDealDesk />
+      <AgentDealDesk workspaceKey={workspaceKey} />
 
       <section id="deadline-planner" className="scroll-mt-20">
         <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
