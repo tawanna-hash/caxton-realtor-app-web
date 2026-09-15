@@ -272,7 +272,7 @@ export default function AgentCommandCenterClient({
       </section>
 
       <AgentDealDesk
-        embedded
+        panelsOnly
         workspaceKey={workspaceKey}
         realtorId={realtorId}
         initialWorkspace={initialWorkspace}
