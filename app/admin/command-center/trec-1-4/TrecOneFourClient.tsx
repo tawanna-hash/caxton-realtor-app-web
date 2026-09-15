@@ -12,9 +12,12 @@ import {
   ChevronRight,
   Download,
   FileText,
+  FileUp,
+  LoaderCircle,
   RotateCcw,
   Save,
   ShieldAlert,
+  Sparkles,
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -23,6 +26,7 @@ import type { TrecDeadlineReminder, TrecDeal } from '@/lib/server/trec-deals';
 
 type Worksheet = Record<string, string>;
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+type ExtractionState = 'idle' | 'extracting' | 'ready' | 'error';
 
 const INITIAL_WORKSHEET: Worksheet = {
   buyerNames: '',
@@ -334,6 +338,8 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
   const [reminderDate, setReminderDate] = useState('');
   const [reminderNote, setReminderNote] = useState('');
   const [reminderState, setReminderState] = useState<SaveState>('idle');
+  const [extractionState, setExtractionState] = useState<ExtractionState>('idle');
+  const [extractionWarnings, setExtractionWarnings] = useState<string[]>([]);
   const [radarMonth, setRadarMonth] = useState(() => {
     const initial = new Date(`${linkedDeal?.worksheet.effectiveDate || isoToday()}T12:00:00`);
     return new Date(initial.getFullYear(), initial.getMonth(), 1);
@@ -528,6 +534,49 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
     setRadarMonth((current) => new Date(current.getFullYear(), current.getMonth() + direction, 1));
   };
 
+  const extractContract = async (file: File | undefined) => {
+    if (!file) return;
+    const hasExistingDetails = Object.values(worksheet).some(Boolean) || Object.values(addenda).some(Boolean);
+    if (hasExistingDetails && !window.confirm('Replace the current worksheet fields with extracted contract suggestions? Review every value before saving.')) {
+      return;
+    }
+    setExtractionState('extracting');
+    setExtractionWarnings([]);
+    try {
+      const formData = new FormData();
+      formData.append('contract', file);
+      const response = await fetch('/api/admin/trec-deals/extract-contract', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not read this contract.');
+      const extraction = data.extraction as {
+        title?: string;
+        worksheet: Partial<Worksheet>;
+        addenda: Record<string, boolean>;
+        warnings: string[];
+      };
+      setWorksheet((current) => {
+        const next = { ...current };
+        for (const [key, value] of Object.entries(extraction.worksheet)) {
+          if (typeof value === 'string') next[key] = value;
+        }
+        return next;
+      });
+      setAddenda(extraction.addenda);
+      if (extraction.title) setDealTitle(extraction.title);
+      if (extraction.worksheet.effectiveDate) {
+        const date = new Date(`${extraction.worksheet.effectiveDate}T12:00:00`);
+        setRadarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+      }
+      setExtractionWarnings(extraction.warnings ?? []);
+      setExtractionState('ready');
+    } catch {
+      setExtractionState('error');
+    }
+  };
+
   const exportSummary = () => {
     const lines = [
       'TREC 1–4 RESIDENTIAL CONTRACT — DEAL-PREP SUMMARY',
@@ -652,6 +701,55 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
             the current official form, deadlines and addenda with a licensed Texas real-estate
             professional or attorney before signature.
           </p>
+        </div>
+
+        <div className="mt-5 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-4 sm:p-5">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2 text-sm font-semibold text-violet-950">
+                <Sparkles className="h-4 w-4 text-violet-700" aria-hidden="true" />
+                Upload executed contract to prefill the worksheet
+              </div>
+              <p className="mt-1 text-sm leading-6 text-gray-600">
+                Upload a PDF, PNG, JPG, or WEBP contract and the workspace will extract visible facts,
+                dates, selected addenda, and deadlines for your review. The source file is processed
+                once in memory and is not stored in this app.
+              </p>
+            </div>
+            <label
+              htmlFor="contractUpload"
+              className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full bg-violet-700 px-4 text-sm font-semibold text-white hover:bg-violet-800"
+            >
+              {extractionState === 'extracting' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileUp className="h-4 w-4" aria-hidden="true" />}
+              {extractionState === 'extracting' ? 'Reading contract…' : 'Upload contract'}
+              <input
+                id="contractUpload"
+                type="file"
+                accept="application/pdf,image/png,image/jpeg,image/webp"
+                disabled={extractionState === 'extracting'}
+                onChange={(event) => {
+                  void extractContract(event.target.files?.[0]);
+                  event.currentTarget.value = '';
+                }}
+                className="sr-only"
+              />
+            </label>
+          </div>
+          {extractionState === 'ready' && (
+            <p role="status" className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+              Contract suggestions are now in the worksheet. Review and correct every field, then save the deal prep.
+            </p>
+          )}
+          {extractionState === 'error' && (
+            <p role="alert" className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              The contract could not be read. Use a clear PDF or image smaller than 15 MB, then try again.
+            </p>
+          )}
+          {extractionWarnings.length > 0 && (
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-5 text-amber-800">
+              {extractionWarnings.map((warning) => <li key={warning}>{warning}</li>)}
+            </ul>
+          )}
         </div>
 
         <div className="mt-5 grid gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
