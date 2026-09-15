@@ -3,6 +3,8 @@
 // any of the /admin/ads or /admin/crm routes — read-only view.
 
 import { query } from '@/lib/server/db/neon';
+import { calculateTrecDeadlines } from '@/lib/trec-deadlines';
+import { listTrecDeals } from '@/lib/server/trec-deals';
 import { MARKETS, type Market, MARKET_META } from '@/lib/types/markets';
 
 export interface MarketSnapshot {
@@ -41,10 +43,21 @@ export interface RadarItem {
   tone: 'warning' | 'neutral';
 }
 
+export interface TrecRadarItem {
+  id: string;
+  date: string;
+  dealTitle: string;
+  title: string;
+  detail: string;
+  href: string;
+  tone: 'warning' | 'neutral';
+}
+
 export interface DashboardData {
   markets: MarketSnapshot[];
   attention: AttentionItem[];
   radar: RadarItem[];
+  trecRadar: TrecRadarItem[];
   generatedAt: string;
 }
 
@@ -57,6 +70,24 @@ function marketToPubKey(m: Market): string {
 // (these tables historically use city slugs, not brand slugs)
 function marketToCitySlug(m: Market): string {
   return m; // austin | san_antonio | houston | dallas — same slug
+}
+
+function chicagoDate(): string {
+  const date = new Date();
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Chicago',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const value = (part: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === part)?.value ?? '';
+  return `${value('year')}-${value('month')}-${value('day')}`;
+}
+
+function addCalendarDays(isoDate: string, days: number): string {
+  const date = new Date(`${isoDate}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
 }
 
 export async function fetchDashboardData(): Promise<DashboardData> {
@@ -283,10 +314,66 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
   radar.sort((a, b) => a.date.localeCompare(b.date));
 
+  // ── Transaction Date Radar ────────────────────────────────────────────
+  // Saved TREC workspaces contain structured deal-prep facts, not uploaded
+  // contracts. The calculator remains the single deadline source of truth.
+  const trecRadar: TrecRadarItem[] = [];
+  try {
+    const today = chicagoDate();
+    const horizon = addCalendarDays(today, 14);
+    const savedDeals = await listTrecDeals();
+
+    for (const deal of savedDeals) {
+      const deadlines = calculateTrecDeadlines({
+        effectiveDate: deal.worksheet.effectiveDate,
+        optionPeriodDays: deal.worksheet.optionDays,
+        additionalEarnestMoneyDays: deal.worksheet.additionalEarnestMoneyDays,
+        financingDeadlineDays: deal.worksheet.financingDeadlineDays,
+        appraisalDeadlineDays: deal.worksheet.appraisalDeadlineDays,
+        titleCommitmentDays: deal.worksheet.titleCommitmentDays,
+        surveyDays: deal.worksheet.surveyDays,
+        titleObjectionDays: deal.worksheet.titleObjectionDays,
+      });
+      const byId = new Map(deadlines.map((deadline) => [deadline.id, deadline]));
+      const href = `/admin/command-center/trec-1-4?deal=${deal.id}`;
+
+      for (const reminder of deal.reminders) {
+        if (reminder.isComplete || reminder.reminderDate > horizon) continue;
+        const deadline = byId.get(reminder.deadlineKey);
+        trecRadar.push({
+          id: `trec-reminder-${reminder.id}`,
+          date: reminder.reminderDate,
+          dealTitle: deal.title,
+          title: deadline ? `Reminder: ${deadline.label}` : 'Contract reminder',
+          detail: reminder.note || 'Open deal prep to review the deadline.',
+          href,
+          tone: reminder.reminderDate < today ? 'warning' : 'neutral',
+        });
+      }
+
+      for (const deadline of deadlines) {
+        if (deadline.date < today || deadline.date > horizon) continue;
+        trecRadar.push({
+          id: `trec-deadline-${deal.id}-${deadline.id}`,
+          date: deadline.date,
+          dealTitle: deal.title,
+          title: deadline.label,
+          detail: deadline.timeLabel || 'Calculated TREC deal-prep deadline',
+          href,
+          tone: deadline.category === 'money' ? 'warning' : 'neutral',
+        });
+      }
+    }
+  } catch (error) {
+    console.error('[dashboard] transaction date radar unavailable', error);
+  }
+  trecRadar.sort((a, b) => a.date.localeCompare(b.date));
+
   return {
     markets: snapshots,
     attention,
     radar: radar.slice(0, 6),
+    trecRadar: trecRadar.slice(0, 10),
     generatedAt: new Date().toISOString(),
   };
 }

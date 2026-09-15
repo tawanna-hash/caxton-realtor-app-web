@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   ArrowRight,
@@ -316,20 +317,25 @@ function DateRadar({
 }
 
 export default function TrecOneFourClient({ initialDeals }: { initialDeals: TrecDeal[] }) {
+  const searchParams = useSearchParams();
+  const linkedDeal = initialDeals.find((deal) => deal.id === searchParams.get('deal')) ?? null;
   const [activeStep, setActiveStep] = useState(0);
-  const [worksheet, setWorksheet] = useState<Worksheet>(INITIAL_WORKSHEET);
-  const [addenda, setAddenda] = useState<Record<string, boolean>>({});
+  const [worksheet, setWorksheet] = useState<Worksheet>(() => ({
+    ...INITIAL_WORKSHEET,
+    ...linkedDeal?.worksheet,
+  }));
+  const [addenda, setAddenda] = useState<Record<string, boolean>>(() => linkedDeal?.addenda ?? {});
   const [savedDeals, setSavedDeals] = useState<TrecDeal[]>(initialDeals);
-  const [currentDealId, setCurrentDealId] = useState<string | null>(null);
-  const [dealTitle, setDealTitle] = useState('');
-  const [reminders, setReminders] = useState<TrecDeadlineReminder[]>([]);
+  const [currentDealId, setCurrentDealId] = useState<string | null>(linkedDeal?.id ?? null);
+  const [dealTitle, setDealTitle] = useState(linkedDeal?.title ?? '');
+  const [reminders, setReminders] = useState<TrecDeadlineReminder[]>(linkedDeal?.reminders ?? []);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [selectedDeadlineId, setSelectedDeadlineId] = useState('');
   const [reminderDate, setReminderDate] = useState('');
   const [reminderNote, setReminderNote] = useState('');
   const [reminderState, setReminderState] = useState<SaveState>('idle');
   const [radarMonth, setRadarMonth] = useState(() => {
-    const initial = new Date(`${INITIAL_WORKSHEET.effectiveDate || isoToday()}T12:00:00`);
+    const initial = new Date(`${linkedDeal?.worksheet.effectiveDate || isoToday()}T12:00:00`);
     return new Date(initial.getFullYear(), initial.getMonth(), 1);
   });
 
