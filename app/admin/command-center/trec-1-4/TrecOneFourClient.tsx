@@ -340,6 +340,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
   const [reminderState, setReminderState] = useState<SaveState>('idle');
   const [extractionState, setExtractionState] = useState<ExtractionState>('idle');
   const [extractionWarnings, setExtractionWarnings] = useState<string[]>([]);
+  const [isContractDropActive, setIsContractDropActive] = useState(false);
   const [radarMonth, setRadarMonth] = useState(() => {
     const initial = new Date(`${linkedDeal?.worksheet.effectiveDate || isoToday()}T12:00:00`);
     return new Date(initial.getFullYear(), initial.getMonth(), 1);
@@ -704,7 +705,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
         </div>
 
         <div className="mt-5 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-4 sm:p-5">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.72fr)] lg:items-center">
             <div className="max-w-2xl">
               <div className="flex items-center gap-2 text-sm font-semibold text-violet-950">
                 <Sparkles className="h-4 w-4 text-violet-700" aria-hidden="true" />
@@ -716,24 +717,49 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 once in memory and is not stored in this app.
               </p>
             </div>
-            <label
-              htmlFor="contractUpload"
-              className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full bg-violet-700 px-4 text-sm font-semibold text-white hover:bg-violet-800"
+            <div
+              onDragOver={(event) => {
+                event.preventDefault();
+                if (extractionState !== 'extracting') setIsContractDropActive(true);
+              }}
+              onDragLeave={() => setIsContractDropActive(false)}
+              onDrop={(event) => {
+                event.preventDefault();
+                setIsContractDropActive(false);
+                void extractContract(event.dataTransfer.files?.[0]);
+              }}
+              className={`rounded-xl border-2 border-dashed p-3 transition sm:p-4 ${
+                isContractDropActive
+                  ? 'border-violet-600 bg-violet-100'
+                  : 'border-violet-200 bg-white/80 hover:border-violet-400 hover:bg-violet-50/70'
+              } ${extractionState === 'extracting' ? 'pointer-events-none opacity-70' : ''}`}
             >
-              {extractionState === 'extracting' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileUp className="h-4 w-4" aria-hidden="true" />}
-              {extractionState === 'extracting' ? 'Reading contract…' : 'Upload contract'}
-              <input
-                id="contractUpload"
-                type="file"
-                accept="application/pdf,image/png,image/jpeg,image/webp"
-                disabled={extractionState === 'extracting'}
-                onChange={(event) => {
-                  void extractContract(event.target.files?.[0]);
-                  event.currentTarget.value = '';
-                }}
-                className="sr-only"
-              />
-            </label>
+              <label htmlFor="contractUpload" className="flex min-h-28 cursor-pointer flex-col items-center justify-center text-center">
+                {extractionState === 'extracting' ? (
+                  <LoaderCircle className="h-6 w-6 animate-spin text-violet-700" aria-hidden="true" />
+                ) : (
+                  <FileUp className="h-6 w-6 text-violet-700" aria-hidden="true" />
+                )}
+                <span className="mt-2 text-sm font-semibold text-violet-950">
+                  {extractionState === 'extracting' ? 'Reading contract…' : isContractDropActive ? 'Drop contract to upload' : 'Drag and drop your contract'}
+                </span>
+                <span className="mt-1 text-xs text-gray-600">
+                  or <span className="font-semibold text-violet-800 underline underline-offset-2">browse files</span>
+                </span>
+                <span className="mt-2 text-xs text-gray-500">PDF, PNG, JPG, or WEBP · 15 MB maximum</span>
+                <input
+                  id="contractUpload"
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg,image/webp"
+                  disabled={extractionState === 'extracting'}
+                  onChange={(event) => {
+                    void extractContract(event.target.files?.[0]);
+                    event.currentTarget.value = '';
+                  }}
+                  className="sr-only"
+                />
+              </label>
+            </div>
           </div>
           {extractionState === 'ready' && (
             <p role="status" className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
