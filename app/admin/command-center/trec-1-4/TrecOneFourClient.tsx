@@ -340,7 +340,6 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
   const [reminderState, setReminderState] = useState<SaveState>('idle');
   const [extractionState, setExtractionState] = useState<ExtractionState>('idle');
   const [extractionWarnings, setExtractionWarnings] = useState<string[]>([]);
-  const [contractText, setContractText] = useState('');
   const [radarMonth, setRadarMonth] = useState(() => {
     const initial = new Date(`${linkedDeal?.worksheet.effectiveDate || isoToday()}T12:00:00`);
     return new Date(initial.getFullYear(), initial.getMonth(), 1);
@@ -535,8 +534,8 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
     setRadarMonth((current) => new Date(current.getFullYear(), current.getMonth() + direction, 1));
   };
 
-  const extractContract = async ({ file, text }: { file?: File; text?: string }) => {
-    if (!file && !text?.trim()) return;
+  const extractContract = async (file: File | undefined) => {
+    if (!file) return;
     const hasExistingDetails = Object.values(worksheet).some(Boolean) || Object.values(addenda).some(Boolean);
     if (hasExistingDetails && !window.confirm('Replace the current worksheet fields with extracted contract suggestions? Review every value before saving.')) {
       return;
@@ -545,8 +544,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
     setExtractionWarnings([]);
     try {
       const formData = new FormData();
-      if (file) formData.append('contract', file);
-      if (text?.trim()) formData.append('contractText', text.trim());
+      formData.append('contract', file);
       const response = await fetch('/api/admin/trec-deals/extract-contract', {
         method: 'POST',
         body: formData,
@@ -568,7 +566,6 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
       });
       setAddenda(extraction.addenda);
       if (extraction.title) setDealTitle(extraction.title);
-      if (text) setContractText('');
       if (extraction.worksheet.effectiveDate) {
         const date = new Date(`${extraction.worksheet.effectiveDate}T12:00:00`);
         setRadarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
@@ -731,40 +728,12 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 accept="application/pdf,image/png,image/jpeg,image/webp"
                 disabled={extractionState === 'extracting'}
                 onChange={(event) => {
-                  void extractContract({ file: event.target.files?.[0] });
+                  void extractContract(event.target.files?.[0]);
                   event.currentTarget.value = '';
                 }}
                 className="sr-only"
               />
             </label>
-          </div>
-          <div className="mt-4 border-t border-violet-100 pt-4">
-            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-              <div>
-                <p className="text-sm font-semibold text-violet-950">Or paste contract text</p>
-                <p className="mt-1 text-xs leading-5 text-gray-600">
-                  Paste copied contract language or OCR text to create the same editable suggestions. Pasted text is not saved with the deal.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => void extractContract({ text: contractText })}
-                disabled={extractionState === 'extracting' || !contractText.trim()}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-violet-200 bg-white px-4 text-sm font-semibold text-violet-800 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {extractionState === 'extracting' && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                Read pasted text
-              </button>
-            </div>
-            <textarea
-              id="contractText"
-              value={contractText}
-              onChange={(event) => setContractText(event.target.value)}
-              disabled={extractionState === 'extracting'}
-              maxLength={80000}
-              placeholder="Paste the executed contract text here. The workspace extracts visible facts and leaves missing details blank."
-              className="mt-3 block min-h-32 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-sm leading-6 text-gray-950 shadow-sm outline-none placeholder:text-gray-400 focus:border-violet-600 focus:ring-2 focus:ring-violet-100 disabled:bg-gray-50"
-            />
           </div>
           {extractionState === 'ready' && (
             <p role="status" className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
@@ -773,7 +742,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
           )}
           {extractionState === 'error' && (
             <p role="alert" className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-              The contract could not be read. Use a clear PDF or image smaller than 15 MB, or paste clear contract text, then try again.
+              The contract could not be read. Use a clear PDF or image smaller than 15 MB, then try again.
             </p>
           )}
           {extractionWarnings.length > 0 && (
