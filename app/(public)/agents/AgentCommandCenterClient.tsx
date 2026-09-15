@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
 import { trackEvent } from '@/app/posthog-provider';
+import AgentDealDesk from './AgentDealDesk';
 
 export type ReferralProvider = {
   id: number;
@@ -159,11 +160,11 @@ export default function AgentCommandCenterClient({
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
-                href="#deadline-planner"
-                onClick={() => trackEvent('agent_command_center_planner_opened')}
+                href="#agent-desk"
+                onClick={() => trackEvent('agent_command_center_deal_desk_opened')}
                 className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-[#F4D06F] px-5 py-3 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
               >
-                Plan contract dates
+                Open my deal desk
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
               <a
@@ -197,14 +198,16 @@ export default function AgentCommandCenterClient({
         </div>
       </section>
 
+      <AgentDealDesk />
+
       <section id="deadline-planner" className="scroll-mt-20">
         <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
           <div className="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Transaction planning</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">TREC 1–4 date planner</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Fast calculation</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Quick TREC 1–4 date check</h2>
               <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                Enter the effective date and the terms you have in hand. This private, in-browser planner gives you a clean first pass for essential timing.
+                Need a fast answer without creating a transaction workspace? Enter the terms in hand for a clean first pass on essential timing.
               </p>
             </div>
             {effectiveDate && (
