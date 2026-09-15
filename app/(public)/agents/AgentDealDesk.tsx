@@ -1003,7 +1003,7 @@ export default function AgentDealDesk({
               }}
               className={extractionState === 'extracting' ? 'pointer-events-none opacity-70' : ''}
             >
-              <label htmlFor="agentContractUpload" className={`inline-flex min-h-[42px] cursor-pointer items-center gap-2 rounded-md border px-4 text-sm font-bold transition ${
+              <label htmlFor="agentContractUpload" className={`inline-flex min-h-[42px] w-full cursor-pointer items-center justify-center gap-2 rounded-md border px-4 text-sm font-bold transition sm:w-[160px] ${
                 isContractDropActive ? 'border-violet-600 bg-violet-100 text-violet-950' : 'border-[#7059A8] bg-white text-[#301D5D] hover:bg-violet-50'
               }`}>
                 {extractionState === 'extracting' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileUp className="h-4 w-4" aria-hidden="true" />}
@@ -1044,6 +1044,31 @@ export default function AgentDealDesk({
               style={{ width: workspacePage === 1 ? '12%' : `${Math.max(20, (((activeDeal?.worksheetStep ?? 0) + 1) / WORKSHEET_STEPS.length) * 100)}%` }}
             />
           </div>
+          {workspacePage === 2 && (
+            <div className="mt-3 grid gap-2 sm:ml-auto sm:max-w-[504px] sm:grid-cols-3" aria-label="Worksheet navigation">
+              {activeDeal && activeDeal.worksheetStep > 0 ? (
+                <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep - 1)} className="inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF]">
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
+                </button>
+              ) : (
+                <button type="button" onClick={() => setWorkspacePage(1)} className="inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF]">
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
+                </button>
+              )}
+              <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:opacity-50">
+                <Save className="h-4 w-4" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for later'}
+              </button>
+              {activeDeal && activeDeal.worksheetStep < WORKSHEET_STEPS.length - 1 ? (
+                <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep + 1)} className="inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c]">
+                  Next step <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ) : (
+                <Link href="/agents" className="inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c]">
+                  Deal Desktop <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              )}
+            </div>
+          )}
         </nav>
 
         {workspacePage === 1 && (
@@ -1492,29 +1517,6 @@ export default function AgentDealDesk({
             <div className="mt-5 grid gap-3 md:grid-cols-3"><select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm"><option value="">Closeout outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select><input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm" /><input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm" placeholder="Closeout note" /></div>
             <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#E7C769] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
           </section>
-          <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-5" aria-label="Worksheet navigation">
-            {activeDeal.worksheetStep > 0 ? (
-              <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep - 1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
-              </button>
-            ) : (
-              <button type="button" onClick={() => setWorkspacePage(1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
-              </button>
-            )}
-            <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
-              <Save className="h-4 w-4" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for later'}
-            </button>
-            {activeDeal.worksheetStep < WORKSHEET_STEPS.length - 1 ? (
-              <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep + 1)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
-                Next step <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </button>
-            ) : (
-              <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
-                Deal Desktop <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            )}
-          </div>
           </>
         )}
       </div>
