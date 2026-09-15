@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ArrowRight, CalendarDays, FileText, ShieldCheck } from 'lucide-react';
 import type { DashboardData, MarketSnapshot } from './data';
 
 function fmtNumber(n: number): string {
@@ -161,6 +162,84 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
 export default function DashboardClient({ data }: { data: DashboardData }) {
   return (
     <div className="space-y-6">
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,1fr)]">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
+                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                Guided action
+              </div>
+              <h2 className="mt-3 text-xl font-semibold text-gray-950">
+                TREC 1–4 Residential Contract
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Start a structured deal-prep review for the parties, property, financing,
+                deadlines and addenda before completing or reviewing the official contract.
+              </p>
+            </div>
+            <FileText className="hidden h-10 w-10 shrink-0 text-orange-200 sm:block" aria-hidden="true" />
+          </div>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Link
+              href="/admin/command-center/trec-1-4"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full bg-orange-600 px-5 text-sm font-semibold text-white transition hover:bg-orange-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
+            >
+              Start deal prep
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+            <span className="text-xs text-gray-500">
+              Guided review only. It does not create an official contract.
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-orange-700" aria-hidden="true" />
+            <h2 className="text-sm font-semibold text-gray-950">Date Radar</h2>
+            <span className="ml-auto text-xs text-gray-500">Next 14 days</span>
+          </div>
+          {data.radar.length > 0 ? (
+            <ul className="mt-4 divide-y divide-gray-100">
+              {data.radar.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    href={item.href}
+                    className="flex items-center gap-3 py-3 transition hover:text-orange-700"
+                  >
+                    <span
+                      className={
+                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-[10px] font-semibold uppercase ' +
+                        (item.tone === 'warning'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-gray-100 text-gray-700')
+                      }
+                    >
+                      {new Date(`${item.date}T12:00:00`).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium text-gray-900">
+                        {item.title}
+                      </span>
+                      <span className="block truncate text-xs text-gray-500">{item.detail}</span>
+                    </span>
+                    <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 rounded-md bg-gray-50 px-3 py-4 text-sm leading-5 text-gray-600">
+              No upcoming invoice due dates or campaign end dates need attention.
+            </p>
+          )}
+        </div>
+      </section>
+
       {/* Attention strip */}
       {data.attention.length > 0 && (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3">
@@ -180,6 +259,10 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
       )}
 
       {/* Market cards */}
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 className="text-base font-semibold text-gray-950">Market snapshot</h2>
+        <span className="text-xs text-gray-500">Live operational totals by publication</span>
+      </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {data.markets.map((snapshot) => (
           <MarketCard key={snapshot.market} snapshot={snapshot} />
