@@ -86,14 +86,24 @@ export default function MediaKit({ mode = 'admin' }: { mode?: 'admin' | 'public'
             href="/advertise/portal"
             className="inline-flex items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-800"
           >
-            Buy a digital placement
+            Self-serve Portal
           </Link>
-          <a
-            href="mailto:hello@myrealtyline.com?subject=Media%20Kit%20Request"
-            className="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-brand-800 ring-1 ring-brand-300 transition-colors hover:bg-brand-100"
-          >
-            Request a recommendation
-          </a>
+          {activePub.hasPrint && (
+            <a
+              href="#print-specs"
+              className="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-brand-800 ring-1 ring-brand-300 transition-colors hover:bg-brand-100"
+            >
+              Print Specs
+            </a>
+          )}
+          {activePub.hasPrint && (
+            <a
+              href="#print-deadlines"
+              className="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-brand-800 ring-1 ring-brand-300 transition-colors hover:bg-brand-100"
+            >
+              Print Deadlines
+            </a>
+          )}
         </div>
       )}
 
@@ -263,7 +273,7 @@ function RateMatrixSection() {
 
 function PrintSpecsSection() {
   return (
-    <section className="rounded-md bg-white p-6 ring-1 ring-gray-200">
+    <section id="print-specs" className="scroll-mt-6 rounded-md bg-white p-6 ring-1 ring-gray-200">
       <div className="mb-4">
         <div className="text-xs font-semibold uppercase tracking-wider text-brand-700">Creative requirements</div>
         <h2 className="mt-1 text-lg font-semibold text-gray-900">Print ad specifications</h2>
@@ -506,7 +516,7 @@ function EblastCard({ blast, pub }: { blast: EBlast; pub: MediaKitPub }) {
 
 function DeadlinesSection() {
   return (
-    <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
+    <section id="print-deadlines" className="scroll-mt-6 rounded-md bg-white ring-1 ring-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900">2026 print deadlines</h2>
       <p className="text-sm text-gray-700 mt-1">Camera-ready artwork due by the deadline; issues mail on the listed date.</p>
       <div className="mt-4 overflow-x-auto">

@@ -1,6 +1,6 @@
 // app/(public)/advertise/portal/page.tsx
 //
-// Self-Service Portal landing — public-facing hub for digital placements
+// App & Web Placements landing — public-facing hub for digital placements
 // and e-Blast ordering.
 //
 // Below the hub we surface the bundle-savings ladder (1.7× / 2.4× / 3×) so
@@ -19,7 +19,7 @@ import TrackPageView from '@/components/analytics/TrackPageView';
 import { APP_AD_SLOTS, EBLASTS, MARKET_MULTIPLIERS, weeklyRateForMarkets } from '@/lib/media-kit';
 
 export const metadata = {
-  title: 'Self-Service Portal \u2014 Realty News Now',
+  title: 'App & Web Placements \u2014 Realty News Now',
   description:
     'Buy ad placements directly on Realty News Now. 16 digital ad formats from $125/week, pick your market and dates, no sales call required \u2014 go live in as few as 2 business days.',
 };
@@ -96,7 +96,7 @@ export default function SelfServicePortalPage() {
 
         {/* Product paths */}
         <section className="grid gap-5 md:grid-cols-2 mb-12">
-          {/* Self-service card */}
+          {/* App and web placements card */}
           <article className="relative rounded-md overflow-hidden bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#5a0e5f] text-white p-7 md:p-8 shadow-lg">
             {/* From-$X chip */}
             <span className="absolute top-5 right-5 inline-flex items-center rounded-md bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-900">
@@ -122,7 +122,7 @@ export default function SelfServicePortalPage() {
             </div>
 
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-3">
-              Self-Service Portal
+              App &amp; Web Placements
             </h2>
             <p className="text-violet-100/90 text-sm md:text-base font-light leading-relaxed mb-6">
               Buy ad placements directly, choose your market + go live in as
@@ -162,11 +162,11 @@ export default function SelfServicePortalPage() {
             </Link>
           </article>
 
-          <article className="relative overflow-hidden rounded-md border border-brand-700 bg-white p-7 shadow-sm md:p-8">
+          <article className="relative overflow-hidden rounded-md bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#5a0e5f] p-7 text-white shadow-lg md:p-8">
             <span className="absolute right-5 top-5 inline-flex items-center rounded-md bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-900">
               From ${eblastStartingPrice.toLocaleString()}
             </span>
-            <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-md bg-violet-100 text-brand-700">
+            <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-md bg-white/10 text-white">
               <svg
                 viewBox="0 0 24 24"
                 className="h-6 w-6"
@@ -181,14 +181,14 @@ export default function SelfServicePortalPage() {
                 <path d="m3 7 9 6 9-6" />
               </svg>
             </div>
-            <h2 className="mb-3 text-2xl font-bold tracking-tight text-brand-700 md:text-3xl">
+            <h2 className="mb-3 text-2xl font-bold tracking-tight text-white md:text-3xl">
               e-Blast Ordering
             </h2>
-            <p className="mb-6 text-sm font-light leading-relaxed text-gray-700 md:text-base">
+            <p className="mb-6 text-sm font-light leading-relaxed text-violet-100/90 md:text-base">
               Reach RealtyLine Austin, Newsline San Antonio, or both audiences
               with a dedicated email campaign.
             </p>
-            <ul className="mb-7 space-y-2.5 text-sm text-gray-800 md:text-[15px]">
+            <ul className="mb-7 space-y-2.5 text-sm md:text-[15px]">
               {[
                 'Choose your audience and package',
                 'Request preferred send dates',
@@ -196,14 +196,21 @@ export default function SelfServicePortalPage() {
                 'Pay securely by card or eligible bank account',
               ].map((line) => (
                 <li key={line} className="flex items-start gap-2.5">
-                  <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-orange-500" />
-                  <span>{line}</span>
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/90">
+                    <svg viewBox="0 0 20 20" className="h-3 w-3 text-white" aria-hidden="true">
+                      <path
+                        fill="currentColor"
+                        d="m8.227 13.227-3.182-3.182 1.414-1.414 1.768 1.768 5.293-5.293 1.414 1.414-6.707 6.707Z"
+                      />
+                    </svg>
+                  </span>
+                  <span className="text-violet-50">{line}</span>
                 </li>
               ))}
             </ul>
             <Link
               href="/advertise/eblast"
-              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-800 md:text-base"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-orange-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-700 active:scale-[0.98] md:text-base"
             >
               Order an e-Blast
               <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">
@@ -331,7 +338,7 @@ export default function SelfServicePortalPage() {
               and active agreements.
             </p>
           </div>
-          <Link
+          <a
             href="/portal"
             className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border border-brand-700 px-5 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-700 hover:text-white"
             style={{ WebkitTapHighlightColor: 'transparent' }}
@@ -340,7 +347,7 @@ export default function SelfServicePortalPage() {
             <svg viewBox="0 0 20 20" className="w-4 h-4" aria-hidden="true">
               <path fill="currentColor" d="M10.293 4.293a1 1 0 0 1 1.414 0l5 5a1 1 0 0 1 0 1.414l-5 5a1 1 0 1 1-1.414-1.414L13.586 11H4a1 1 0 1 1 0-2h9.586l-3.293-3.293a1 1 0 0 1 0-1.414Z" />
             </svg>
-          </Link>
+          </a>
         </section>
       </div>
     </main>
