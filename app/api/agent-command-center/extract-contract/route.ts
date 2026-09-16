@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/server/auth/user';
 import { withErrorHandling } from '@/lib/server/error';
 import { extractTrecContract } from '@/lib/server/gemini-trec-contract-extract';
+import { getActiveTrecFormVersion, getTrecFormVersion } from '@/lib/server/trec-form-versions';
 import { rateLimit } from '@/lib/server/rate-limit';
 
 export const runtime = 'nodejs';
@@ -31,6 +32,7 @@ export const POST = withErrorHandling(async (request: NextRequest): Promise<Resp
     return privateResponse({ error: 'Invalid upload.' }, 400);
   }
   const file = formData.get('contract');
+  const requestedVersionId = String(formData.get('trecFormVersionId') ?? '').trim();
   if (!(file instanceof File)) {
     return privateResponse({ error: 'Choose a contract PDF, PNG, JPG, or WEBP file.' }, 400);
   }
@@ -45,9 +47,15 @@ export const POST = withErrorHandling(async (request: NextRequest): Promise<Resp
   // Blob, Neon, logs, or the server filesystem; only reviewed field values
   // return to the signed-in agent.
   const bytes = Buffer.from(await file.arrayBuffer());
+  const trecFormVersion = requestedVersionId
+    ? await getTrecFormVersion(requestedVersionId)
+    : await getActiveTrecFormVersion();
+  if (!trecFormVersion) return privateResponse({ error: 'This transaction’s TREC form version is no longer available.' }, 409);
   const result = await extractTrecContract({
     base64: bytes.toString('base64'),
     mimeType: file.type,
+    fields: trecFormVersion.fields,
+    formNumber: trecFormVersion.formNumber,
   });
   if (!result.ok) {
     const status = result.reason === 'no-key' ? 503 : result.reason === 'rate-limit' ? 429 : 422;

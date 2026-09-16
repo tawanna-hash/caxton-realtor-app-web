@@ -122,6 +122,7 @@ export const agentDealSchema = z.object({
   owner: optionalShortText(280),
   workflowStatus: z.enum(TREC_DEAL_WORKFLOW_STATUSES).default('intake'),
   worksheetStep: z.number().int().min(0).max(TREC_WORKFLOW_STAGES.length - 1).default(0),
+  trecFormVersionId: optionalShortText(120).default('built-in-trec-20-19'),
   closeoutOutcome: optionalShortText(120), closeoutDate: dateText.default(''), closeoutNote: optionalShortText(2_000),
   contractDetails: agentContractDetailsSchema,
   formFields: agentTrecFormFieldsSchema,

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
 import type { AgentCommandCenterWorkspace } from '@/lib/agent-command-center-workspace';
+import type { TrecFormVersion } from '@/lib/trec-form-versions';
 import { trackEvent } from '@/app/posthog-provider';
 import AgentDealDesk from './AgentDealDesk';
 
@@ -115,12 +116,16 @@ export default function AgentCommandCenterClient({
   realtorId,
   initialWorkspace,
   initialWorkspaceVersion,
+  trecFormVersion,
+  trecFormVersions,
 }: {
   providers: ReferralProvider[];
   workspaceKey: string;
   realtorId: string;
   initialWorkspace: AgentCommandCenterWorkspace | null;
   initialWorkspaceVersion: number | null;
+  trecFormVersion: TrecFormVersion;
+  trecFormVersions: TrecFormVersion[];
 }) {
   const [effectiveDate, setEffectiveDate] = useState('');
   const [optionPeriodDays, setOptionPeriodDays] = useState('');
@@ -274,6 +279,8 @@ export default function AgentCommandCenterClient({
         realtorId={realtorId}
         initialWorkspace={initialWorkspace}
         initialWorkspaceVersion={initialWorkspaceVersion}
+        trecFormVersion={trecFormVersion}
+        trecFormVersions={trecFormVersions}
       />
 
       <section className="border-y border-slate-200 bg-white">

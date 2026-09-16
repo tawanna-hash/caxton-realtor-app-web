@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/server/auth/user';
 import { getAgentCommandCenterWorkspace } from '@/lib/server/agent-command-center-workspaces';
+import { getActiveTrecFormVersion, listTrecFormVersions } from '@/lib/server/trec-form-versions';
 import AgentDealDesk from '../AgentDealDesk';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,11 @@ export default async function AgentDealDeskPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login?next=%2Fagents%2Fdeal-desk');
 
-  const workspaceRecord = await getAgentCommandCenterWorkspace(user.realtorId);
+  const [workspaceRecord, trecFormVersion, trecFormVersions] = await Promise.all([
+    getAgentCommandCenterWorkspace(user.realtorId),
+    getActiveTrecFormVersion(),
+    listTrecFormVersions(),
+  ]);
 
   return (
     <AgentDealDesk
@@ -23,6 +28,8 @@ export default async function AgentDealDeskPage() {
       realtorId={user.realtorId}
       initialWorkspace={workspaceRecord?.workspace ?? null}
       initialWorkspaceVersion={workspaceRecord?.version ?? null}
+      trecFormVersion={trecFormVersion}
+      trecFormVersions={trecFormVersions}
     />
   );
 }

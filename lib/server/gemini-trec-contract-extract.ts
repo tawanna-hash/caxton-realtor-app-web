@@ -1,5 +1,9 @@
 import { logger } from './logger';
-import { TREC_20_19_FIELDS, TREC_FORM_ID } from '../trec-20-19-fields';
+import {
+  TREC_20_19_FIELDS,
+  TREC_FORM_ID,
+  type TrecFormFieldDefinition,
+} from '../trec-20-19-fields';
 
 export type TrecExtractedWorksheet = Record<string, string>;
 
@@ -67,15 +71,15 @@ const ADDENDA = [
   'PID / MUD Notice',
 ] as const;
 
-const FORM_FIELD_CATALOG = TREC_20_19_FIELDS.map((field) => ({
-  id: field.id,
-  page: field.page,
-  type: field.type,
-  label: field.label,
-  pdfFieldName: field.pdfFieldName,
-}));
-
-const SYSTEM_PROMPT = `You are a high-precision information-extraction service for an executed Texas TREC ${TREC_FORM_ID} One to Four Family Residential Contract (Resale) and its attached addenda.
+function buildSystemPrompt(fields: readonly TrecFormFieldDefinition[], formNumber: string): string {
+  const fieldCatalog = fields.map((field) => ({
+    id: field.id,
+    page: field.page,
+    type: field.type,
+    label: field.label,
+    pdfFieldName: field.pdfFieldName,
+  }));
+  return `You are a high-precision information-extraction service for an executed Texas TREC ${formNumber} One to Four Family Residential Contract (Resale) and its attached addenda.
 
 Read the uploaded PDF or image and return ONLY valid JSON, with no markdown or commentary. This is a suggestion layer for an admin to review, never a legal determination.
 
@@ -147,8 +151,9 @@ Rules:
 - For a checkbox/addendum that is not visibly attached or selected, return false. If it is unclear, return false and put the uncertainty in warnings.
 - If a field is absent or unreadable, use null.
 
-Official TREC ${TREC_FORM_ID} field catalog:
-${JSON.stringify(FORM_FIELD_CATALOG)}`;
+Official TREC ${formNumber} field catalog:
+${JSON.stringify(fieldCatalog)}`;
+}
 
 function asTrimmedString(value: unknown, max = 20_000): string | undefined {
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
@@ -188,7 +193,7 @@ function extractText(payload: unknown): string | null {
   return null;
 }
 
-function normalize(raw: unknown): TrecContractExtract {
+function normalize(raw: unknown, fields: readonly TrecFormFieldDefinition[]): TrecContractExtract {
   const source = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
   const sourceWorksheet = source.worksheet && typeof source.worksheet === 'object'
     ? source.worksheet as Record<string, unknown>
@@ -209,7 +214,7 @@ function normalize(raw: unknown): TrecContractExtract {
   const sourceFormFields = source.formFields && typeof source.formFields === 'object'
     ? source.formFields as Record<string, unknown>
     : {};
-  const allowedFieldIds = new Set(TREC_20_19_FIELDS.map((field) => field.id));
+  const allowedFieldIds = new Set(fields.map((field) => field.id));
   const formFields: Record<string, string> = {};
   for (const [key, rawValue] of Object.entries(sourceFormFields)) {
     if (!allowedFieldIds.has(key)) continue;
@@ -236,9 +241,13 @@ function normalize(raw: unknown): TrecContractExtract {
 export async function extractTrecContract({
   base64,
   mimeType,
+  fields = TREC_20_19_FIELDS,
+  formNumber = TREC_FORM_ID,
 }: {
   base64: string;
   mimeType: string;
+  fields?: readonly TrecFormFieldDefinition[];
+  formNumber?: string;
 }): Promise<TrecContractExtractResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return { ok: false, reason: 'no-key', detail: 'GEMINI_API_KEY not set' };
@@ -251,7 +260,7 @@ export async function extractTrecContract({
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        system_instruction: { parts: [{ text: buildSystemPrompt(fields, formNumber) }] },
         contents: [{
           role: 'user',
           parts: [
@@ -275,7 +284,7 @@ export async function extractTrecContract({
     const text = extractText(await response.json());
     if (!text) return { ok: false, reason: 'parse-error', detail: 'empty extraction response' };
     try {
-      return { ok: true, data: normalize(JSON.parse(text)) };
+      return { ok: true, data: normalize(JSON.parse(text), fields) };
     } catch {
       return { ok: false, reason: 'parse-error', detail: 'extraction response was not valid JSON' };
     }

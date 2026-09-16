@@ -9,6 +9,7 @@ import {
 } from '@/lib/publication-theme';
 import { getCurrentUser } from '@/lib/server/auth/user';
 import { getAgentCommandCenterWorkspace } from '@/lib/server/agent-command-center-workspaces';
+import { getActiveTrecFormVersion, listTrecFormVersions } from '@/lib/server/trec-form-versions';
 import { getRealtorMe } from '@/lib/server/realtors-store';
 import AgentCommandCenterClient, {
   type ReferralProvider,
@@ -31,9 +32,11 @@ export default async function AgentCommandCenterPage() {
   if (!user) redirect('/login?next=%2Fagents');
 
   let providers: ReferralProvider[] = [];
-  const [workspaceRecord, realtor] = await Promise.all([
+  const [workspaceRecord, realtor, trecFormVersion, trecFormVersions] = await Promise.all([
     getAgentCommandCenterWorkspace(user.realtorId),
     getRealtorMe(user.realtorId),
+    getActiveTrecFormVersion(),
+    listTrecFormVersions(),
   ]);
 
   // The command center remains useful even if the directory database is
@@ -76,6 +79,8 @@ export default async function AgentCommandCenterPage() {
       realtorId={user.realtorId}
       initialWorkspace={workspaceRecord?.workspace ?? null}
       initialWorkspaceVersion={workspaceRecord?.version ?? null}
+      trecFormVersion={trecFormVersion}
+      trecFormVersions={trecFormVersions}
     />
   );
 }

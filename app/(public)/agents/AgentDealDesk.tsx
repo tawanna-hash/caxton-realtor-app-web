@@ -44,12 +44,7 @@ import {
   type AgentActivity,
 } from '@/lib/agent-command-center-workspace';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
-import {
-  TREC_FORM_EFFECTIVE_DATE,
-  TREC_FORM_FIELD_COUNT,
-  TREC_FORM_ID,
-  trecFormFieldsForStep,
-} from '@/lib/trec-20-19-fields';
+import type { TrecFormVersion } from '@/lib/trec-form-versions';
 import {
   buildTrecValidation,
   TREC_DEAL_WORKFLOW_STATUS_LABELS,
@@ -173,6 +168,12 @@ function addDays(value: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
+function sentenceCaseKey(value: string): string {
+  return value
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (letter) => letter.toUpperCase());
+}
+
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat('en-US', {
     weekday: 'short',
@@ -183,7 +184,7 @@ function formatDate(value: string): string {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-function newDeal(): AgentDeal {
+function newDeal(trecFormVersionId: string): AgentDeal {
   const now = new Date().toISOString();
   return {
     id: getId('deal'),
@@ -206,6 +207,7 @@ function newDeal(): AgentDeal {
     owner: '',
     workflowStatus: 'intake',
     worksheetStep: 0,
+    trecFormVersionId,
     closeoutOutcome: '',
     closeoutDate: '',
     closeoutNote: '',
@@ -413,12 +415,16 @@ export default function AgentDealDesk({
   realtorId,
   initialWorkspace,
   initialWorkspaceVersion,
+  trecFormVersion,
+  trecFormVersions,
   panelsOnly = false,
 }: {
   workspaceKey: string;
   realtorId: string;
   initialWorkspace: AgentCommandCenterWorkspace | null;
   initialWorkspaceVersion: number | null;
+  trecFormVersion: TrecFormVersion;
+  trecFormVersions: TrecFormVersion[];
   panelsOnly?: boolean;
 }) {
   const [deals, setDeals] = useState<AgentDeal[]>([]);
@@ -444,6 +450,8 @@ export default function AgentDealDesk({
   const [isUploadMenuOpen, setIsUploadMenuOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState('');
+  const [contractPreviewUrl, setContractPreviewUrl] = useState('');
+  const [activeTrecPage, setActiveTrecPage] = useState(1);
   const [workspacePage, setWorkspacePage] = useState<1 | 2>(1);
   const versionRef = useRef<number | null>(initialWorkspaceVersion);
   const syncTimerRef = useRef<number | null>(null);
@@ -453,6 +461,13 @@ export default function AgentDealDesk({
   const contractCameraInputRef = useRef<HTMLInputElement | null>(null);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
+  const contractPreviewUrlRef = useRef('');
+
+  const clearContractPreview = useCallback(() => {
+    if (contractPreviewUrlRef.current) URL.revokeObjectURL(contractPreviewUrlRef.current);
+    contractPreviewUrlRef.current = '';
+    setContractPreviewUrl('');
+  }, []);
 
   const saveToCloud = useCallback(async function saveToCloud(workspace: AgentCommandCenterWorkspace) {
     if (saveInFlightRef.current) {
@@ -564,6 +579,7 @@ export default function AgentDealDesk({
 
   useEffect(() => () => {
     if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
+    if (contractPreviewUrlRef.current) URL.revokeObjectURL(contractPreviewUrlRef.current);
   }, []);
 
   useEffect(() => {
@@ -614,6 +630,20 @@ export default function AgentDealDesk({
   };
 
   const activeDeal = deals.find((deal) => deal.id === activeDealId) ?? null;
+  const currentTrecFormVersion = trecFormVersions.find((version) => version.id === activeDeal?.trecFormVersionId)
+    ?? trecFormVersion;
+  const pagesPerWorksheetStep = Math.max(1, Math.ceil(currentTrecFormVersion.pageCount / WORKSHEET_STEPS.length));
+  const firstTrecPageForStep = activeDeal ? activeDeal.worksheetStep * pagesPerWorksheetStep + 1 : 1;
+  const trecPagesForStep = Array.from(
+    { length: pagesPerWorksheetStep },
+    (_, index) => firstTrecPageForStep + index,
+  ).filter((page) => page <= currentTrecFormVersion.pageCount);
+  const currentTrecPage = trecPagesForStep.includes(activeTrecPage)
+    ? activeTrecPage
+    : firstTrecPageForStep;
+  const trecFieldsForStep = currentTrecFormVersion.fields.filter((field) => trecPagesForStep.includes(field.page));
+  const trecFormFieldById = new Map(currentTrecFormVersion.fields.map((field) => [field.id, field]));
+
   const syncMessage = {
     loading: 'Connecting your secure cloud workspace.',
     ready: 'Secure cloud sync is active for your signed-in account.',
@@ -695,7 +725,7 @@ export default function AgentDealDesk({
   const overdueTaskCount = deals.flatMap((deal) => deal.tasks).filter((task) => !task.complete && task.dueDate < today).length;
 
   const createDeal = () => {
-    const deal = newDeal();
+    const deal = newDeal(trecFormVersion.id);
     persistDeals([deal, ...deals]);
     setActiveDealId(deal.id);
     setPendingRemoval(null);
@@ -714,12 +744,17 @@ export default function AgentDealDesk({
 
   const extractContract = async (file: File | undefined) => {
     if (!file || !activeDeal) return;
+    clearContractPreview();
+    const previewUrl = URL.createObjectURL(file);
+    contractPreviewUrlRef.current = previewUrl;
+    setContractPreviewUrl(previewUrl);
     setExtractionState('extracting');
     setExtractionError('');
     setExtractionWarnings([]);
     try {
       const formData = new FormData();
       formData.append('contract', file);
+      formData.append('trecFormVersionId', activeDeal.trecFormVersionId);
       const response = await fetch('/api/agent-command-center/extract-contract', {
         method: 'POST',
         credentials: 'same-origin',
@@ -755,6 +790,7 @@ export default function AgentDealDesk({
       setExtractionState('ready');
       trackEvent('agent_deal_desk_contract_extracted');
     } catch (error) {
+      clearContractPreview();
       setExtractionError(error instanceof Error ? error.message : 'Could not read this contract.');
       setExtractionState('error');
     }
@@ -829,6 +865,7 @@ export default function AgentDealDesk({
       activity: [...activeDeal.activity, { id: getId('activity'), message: 'Applied reviewed contract extraction suggestions', createdAt: new Date().toISOString() }].slice(-300),
     };
     persistDeals(deals.map((deal) => deal.id === activeDeal.id ? nextDeal : deal));
+    clearContractPreview();
     setExtractionDraft(null);
     setExtractionState('idle');
     trackEvent('agent_deal_desk_contract_suggestions_applied');
@@ -1549,18 +1586,66 @@ export default function AgentDealDesk({
                         </div>
                         <div className="flex shrink-0 flex-wrap gap-2">
                           <button type="button" onClick={applyExtraction} className="inline-flex min-h-[40px] items-center justify-center rounded-md bg-emerald-700 px-4 text-sm font-bold text-white hover:bg-emerald-800">Apply to this deal</button>
-                          <button type="button" onClick={() => { setExtractionDraft(null); setExtractionState('idle'); }} className="inline-flex min-h-[40px] items-center justify-center rounded-md border border-emerald-300 bg-white px-4 text-sm font-bold text-emerald-800 hover:bg-emerald-100">Discard</button>
+                          <button type="button" onClick={() => { clearContractPreview(); setExtractionDraft(null); setExtractionState('idle'); }} className="inline-flex min-h-[40px] items-center justify-center rounded-md border border-emerald-300 bg-white px-4 text-sm font-bold text-emerald-800 hover:bg-emerald-100">Discard</button>
                         </div>
                       </div>
-                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                        {[...Object.entries(extractionDraft.worksheet), ...Object.entries(extractionDraft.formFields)].filter(([, value]) => Boolean(value)).slice(0, 20).map(([key, value]) => (
-                          <div key={key} className="border border-emerald-100 bg-white px-3 py-2 text-xs">
-                            <span className="font-semibold text-emerald-900">{key.replace(/([A-Z])/g, ' $1').replace(/^./, (letter) => letter.toUpperCase())}:</span>{' '}
-                            <span className="text-slate-700">{value}</span>
+                      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                        <div className="overflow-hidden border border-emerald-200 bg-white">
+                          <div className="border-b border-emerald-100 px-3 py-2">
+                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-900">Uploaded contract</p>
                           </div>
-                        ))}
+                          {contractPreviewUrl ? (
+                            <iframe
+                              src={contractPreviewUrl}
+                              title="Uploaded contract preview"
+                              className="h-[420px] w-full bg-slate-100 sm:h-[560px]"
+                            />
+                          ) : (
+                            <div className="flex h-[280px] items-center justify-center px-5 text-center text-sm text-slate-600">
+                              The temporary contract preview is no longer available.
+                            </div>
+                          )}
+                        </div>
+                        <div className="max-h-[560px] overflow-y-auto border border-emerald-200 bg-white">
+                          <div className="sticky top-0 z-10 border-b border-emerald-100 bg-white px-3 py-2">
+                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-900">Proposed entries</p>
+                            <p className="mt-1 text-xs text-slate-600">Compare each entry with the unchanged contract before applying.</p>
+                          </div>
+                          <div className="space-y-5 p-3">
+                            {Object.entries(extractionDraft.worksheet).filter(([, value]) => Boolean(value)).length > 0 && (
+                              <div>
+                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Workspace summary and timing</p>
+                                <dl className="mt-2 space-y-2">
+                                  {Object.entries(extractionDraft.worksheet).filter(([, value]) => Boolean(value)).map(([key, value]) => (
+                                    <div key={key} className="border border-slate-200 bg-[#FCFBF9] px-3 py-2 text-xs">
+                                      <dt className="font-semibold text-slate-900">{sentenceCaseKey(key)}</dt>
+                                      <dd className="mt-1 break-words text-slate-700">{value}</dd>
+                                    </div>
+                                  ))}
+                                </dl>
+                              </div>
+                            )}
+                            {Object.entries(extractionDraft.formFields).filter(([, value]) => Boolean(value)).length > 0 && (
+                              <div>
+                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Official TREC fields</p>
+                                <dl className="mt-2 space-y-2">
+                                  {Object.entries(extractionDraft.formFields).filter(([, value]) => Boolean(value)).map(([key, value]) => {
+                                    const field = trecFormFieldById.get(key);
+                                    return (
+                                      <div key={key} className="border border-slate-200 bg-[#FCFBF9] px-3 py-2 text-xs">
+                                        <dt className="font-semibold leading-5 text-slate-900">{field?.label ?? key}</dt>
+                                        <dd className="mt-1 break-words text-slate-700">{value === 'true' ? 'Selected' : value}</dd>
+                                        {field && <dd className="mt-1 text-[11px] text-slate-500">Page {field.page}</dd>}
+                                      </div>
+                                    );
+                                  })}
+                                </dl>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <p className="mt-3 text-xs leading-5 text-emerald-800">The source file was processed in memory and discarded. This review contains only proposed values, not a stored contract copy.</p>
+                      <p className="mt-3 text-xs leading-5 text-emerald-800">The preview exists only in this browser tab while you review it. The source contract is not added to your cloud workspace; only values you approve are saved.</p>
                     </section>
                   )}
                   {extractionState === 'error' && (
@@ -1640,50 +1725,79 @@ export default function AgentDealDesk({
                   <div className="border-b border-[#D9D0BF] bg-[#F7F3EB] px-5 py-4 sm:px-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Promulgated contract fields</p>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Guided official form</p>
                         <h4 id="official-trec-fields-title" className="mt-1 text-lg font-semibold text-slate-950">
-                          TREC {TREC_FORM_ID} · Pages {activeDeal.worksheetStep * 2 + 1}–{activeDeal.worksheetStep * 2 + 2}
+                          TREC {currentTrecFormVersion.formNumber} · {trecPagesForStep.length === 1 ? `Page ${trecPagesForStep[0]}` : `Pages ${trecPagesForStep[0]}–${trecPagesForStep.at(-1)}`}
                         </h4>
                       </div>
-                      <p className="text-xs font-semibold text-slate-600">{TREC_FORM_FIELD_COUNT} total fillable controls · Effective {TREC_FORM_EFFECTIVE_DATE}</p>
+                      <p className="text-xs font-semibold text-slate-600">{currentTrecFormVersion.fields.length} total fillable controls · Effective {currentTrecFormVersion.effectiveDate}</p>
                     </div>
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Every fillable control from the official 12-page form is available across the six worksheet steps. Uploaded values remain suggestions until you apply them.</p>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">The official TREC form is displayed unchanged. Move through one page at a time and enter values beside the exact source document. Uploaded values remain suggestions until you apply them.</p>
                   </div>
-                  <div className="space-y-7 p-5 sm:p-6">
-                    {[activeDeal.worksheetStep * 2 + 1, activeDeal.worksheetStep * 2 + 2].map((page) => {
-                      const fields = trecFormFieldsForStep(activeDeal.worksheetStep).filter((field) => field.page === page);
-                      return (
-                        <div key={page}>
-                          <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-2">
-                            <h5 className="text-sm font-bold text-slate-950">Official form page {page}</h5>
-                            <span className="text-xs font-semibold text-slate-500">{fields.length} controls</span>
-                          </div>
-                          <div className="mt-4 grid gap-4 md:grid-cols-2">
-                            {fields.map((field) => field.type === 'checkbox' || field.type === 'radio' ? (
-                              <label key={field.id} className="flex min-h-[46px] cursor-pointer items-start gap-3 rounded-md border border-slate-300 bg-[#FCFBF9] px-3 py-3 text-sm text-slate-800">
-                                <input
-                                  type="checkbox"
-                                  checked={activeDeal.formFields[field.id] === 'true'}
-                                  onChange={(event) => updateTrecFormField(field.id, event.target.checked ? 'true' : '')}
-                                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#301D5D]"
-                                />
-                                <span><span className="font-semibold">{field.label}</span><span className="mt-1 block text-[11px] text-slate-500">Page {field.page} · Field {field.index}</span></span>
-                              </label>
-                            ) : (
-                              <label key={field.id} className="block">
-                                <span className="mb-2 block text-sm font-semibold leading-5 text-slate-800">{field.label}</span>
-                                <input
-                                  value={activeDeal.formFields[field.id] ?? ''}
-                                  onChange={(event) => updateTrecFormField(field.id, event.target.value)}
-                                  className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
-                                  aria-label={`${field.label}, official form page ${field.page}, field ${field.index}`}
-                                />
-                              </label>
-                            ))}
-                          </div>
+                  <div className="p-4 sm:p-6">
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {trecPagesForStep.map((page) => (
+                        <button
+                          key={page}
+                          type="button"
+                          onClick={() => setActiveTrecPage(page)}
+                          className={`min-h-[46px] rounded-md border px-4 py-2 text-left text-sm font-bold leading-5 ${
+                            currentTrecPage === page
+                              ? 'border-[#301D5D] bg-[#301D5D] text-white'
+                              : 'border-slate-300 bg-white text-slate-800 hover:bg-[#F7F3EB]'
+                          }`}
+                        >
+                          Page {page}: {currentTrecFormVersion.pageSections[page] ?? `Official TREC page ${page}`}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+                      <div className="overflow-hidden border border-slate-200 bg-slate-100">
+                        <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2">
+                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">Official TREC {currentTrecFormVersion.formNumber} · Page {currentTrecPage}</p>
+                          <a href={currentTrecFormVersion.pdfUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5B438C] underline underline-offset-2">Open full form</a>
                         </div>
-                      );
-                    })}
+                        <iframe
+                          key={currentTrecPage}
+                          src={`${currentTrecFormVersion.pdfUrl}#page=${currentTrecPage}&view=FitH`}
+                          title={`Official TREC ${currentTrecFormVersion.formNumber} page ${currentTrecPage}`}
+                          className="h-[520px] w-full bg-white sm:h-[680px]"
+                        />
+                      </div>
+                      <div className="border border-slate-200 bg-[#FCFBF9]">
+                        <div className="border-b border-slate-200 bg-white px-4 py-3">
+                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#7059A8]">Page {currentTrecPage}</p>
+                          <h5 className="mt-1 text-base font-semibold leading-6 text-slate-950">{currentTrecFormVersion.pageSections[currentTrecPage] ?? `Official TREC page ${currentTrecPage}`}</h5>
+                          <p className="mt-1 text-xs leading-5 text-slate-600">Complete the fillable controls in the same order they appear on the official page.</p>
+                        </div>
+                        <div className="max-h-[680px] space-y-4 overflow-y-auto p-4">
+                          {trecFieldsForStep.filter((field) => field.page === currentTrecPage).map((field) => field.type === 'checkbox' || field.type === 'radio' ? (
+                            <label key={field.id} className="flex min-h-[46px] cursor-pointer items-start gap-3 rounded-md border border-slate-300 bg-white px-3 py-3 text-sm text-slate-800">
+                              <input
+                                type="checkbox"
+                                checked={activeDeal.formFields[field.id] === 'true'}
+                                onChange={(event) => updateTrecFormField(field.id, event.target.checked ? 'true' : '')}
+                                className="mt-0.5 h-4 w-4 shrink-0 accent-[#301D5D]"
+                              />
+                              <span>
+                                <span className="font-semibold leading-5">{field.label}</span>
+                                <span className="mt-1 block text-[11px] text-slate-500">Official fillable control {field.index}</span>
+                              </span>
+                            </label>
+                          ) : (
+                            <label key={field.id} className="block">
+                              <span className="mb-2 block text-sm font-semibold leading-5 text-slate-800">{field.label}</span>
+                              <input
+                                value={activeDeal.formFields[field.id] ?? ''}
+                                onChange={(event) => updateTrecFormField(field.id, event.target.value)}
+                                className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
+                                aria-label={`${field.label}, official form page ${field.page}, field ${field.index}`}
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </section>
 
