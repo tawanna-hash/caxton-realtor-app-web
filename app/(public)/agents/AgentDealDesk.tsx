@@ -45,6 +45,12 @@ import {
 } from '@/lib/agent-command-center-workspace';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
 import {
+  TREC_FORM_EFFECTIVE_DATE,
+  TREC_FORM_FIELD_COUNT,
+  TREC_FORM_ID,
+  trecFormFieldsForStep,
+} from '@/lib/trec-20-19-fields';
+import {
   buildTrecValidation,
   TREC_DEAL_WORKFLOW_STATUS_LABELS,
   TREC_REMINDER_PRESET_OFFSETS,
@@ -204,6 +210,7 @@ function newDeal(): AgentDeal {
     closeoutDate: '',
     closeoutNote: '',
     contractDetails: defaultAgentContractDetails(),
+    formFields: {},
     addenda: {},
     reminders: [],
     tasks: [],
@@ -248,6 +255,7 @@ type ExtractionState = 'idle' | 'extracting' | 'ready' | 'error';
 type ExtractionDraft = {
   title?: string;
   worksheet: Record<string, string>;
+  formFields: Record<string, string>;
   addenda: Record<string, boolean>;
   warnings: string[];
 };
@@ -285,6 +293,7 @@ function worksheetValues(deal: AgentDeal): Record<string, string> {
     optionFeeDeliveredDate: deal.optionFeeDeliveredDate,
     closingDate: deal.closingDate,
     ...deal.contractDetails,
+    ...deal.formFields,
   };
 }
 
@@ -736,6 +745,9 @@ export default function AgentDealDesk({
       setExtractionDraft({
         title: typeof record.title === 'string' ? record.title : undefined,
         worksheet: Object.fromEntries(Object.entries(record.worksheet).filter(([, value]) => typeof value === 'string')) as Record<string, string>,
+        formFields: record.formFields && typeof record.formFields === 'object'
+          ? Object.fromEntries(Object.entries(record.formFields).filter(([, value]) => typeof value === 'string')) as Record<string, string>
+          : {},
         addenda: Object.fromEntries(Object.entries(record.addenda).filter(([, value]) => typeof value === 'boolean')) as Record<string, boolean>,
         warnings: Array.isArray(record.warnings) ? record.warnings.filter((warning): warning is string => typeof warning === 'string') : [],
       });
@@ -811,6 +823,7 @@ export default function AgentDealDesk({
       optionFeeDeliveredDate: worksheet.optionFeeDeliveredDate ?? activeDeal.optionFeeDeliveredDate,
       closingDate: worksheet.closingDate ?? activeDeal.closingDate,
       contractDetails: nextDetails,
+      formFields: { ...activeDeal.formFields, ...extractionDraft.formFields },
       addenda: { ...activeDeal.addenda, ...extractionDraft.addenda },
       updatedAt: new Date().toISOString(),
       activity: [...activeDeal.activity, { id: getId('activity'), message: 'Applied reviewed contract extraction suggestions', createdAt: new Date().toISOString() }].slice(-300),
@@ -824,6 +837,11 @@ export default function AgentDealDesk({
   const updateContractDetail = (key: keyof AgentContractDetails, value: string) => {
     if (!activeDeal) return;
     updateActiveDeal('contractDetails', { ...activeDeal.contractDetails, [key]: value });
+  };
+
+  const updateTrecFormField = (key: string, value: string) => {
+    if (!activeDeal) return;
+    updateActiveDeal('formFields', { ...activeDeal.formFields, [key]: value });
   };
 
   const toggleAddendum = (addendum: string) => {
@@ -1526,7 +1544,7 @@ export default function AgentDealDesk({
                         <div>
                           <p className="text-sm font-semibold text-emerald-950">Contract suggestions are ready to review</p>
                           <p className="mt-1 text-sm leading-6 text-emerald-800">
-                            {Object.values(extractionDraft.worksheet).filter(Boolean).length} facts and {Object.values(extractionDraft.addenda).filter(Boolean).length} selected addenda were found. Review the preview before applying.
+                            {Object.values(extractionDraft.worksheet).filter(Boolean).length} operational facts, {Object.values(extractionDraft.formFields).filter(Boolean).length} official TREC fields, and {Object.values(extractionDraft.addenda).filter(Boolean).length} selected addenda were found. Review the preview before applying.
                           </p>
                         </div>
                         <div className="flex shrink-0 flex-wrap gap-2">
@@ -1535,7 +1553,7 @@ export default function AgentDealDesk({
                         </div>
                       </div>
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                        {Object.entries(extractionDraft.worksheet).filter(([, value]) => Boolean(value)).slice(0, 12).map(([key, value]) => (
+                        {[...Object.entries(extractionDraft.worksheet), ...Object.entries(extractionDraft.formFields)].filter(([, value]) => Boolean(value)).slice(0, 20).map(([key, value]) => (
                           <div key={key} className="border border-emerald-100 bg-white px-3 py-2 text-xs">
                             <span className="font-semibold text-emerald-900">{key.replace(/([A-Z])/g, ' $1').replace(/^./, (letter) => letter.toUpperCase())}:</span>{' '}
                             <span className="text-slate-700">{value}</span>
@@ -1617,6 +1635,57 @@ export default function AgentDealDesk({
                   </div>
                   <p className="mt-4 text-xs leading-5 text-slate-500">Timing is calculated from the effective date. Contract-period entries are calendar-day estimates; verify signed terms, delivery requirements, and local legal holidays.</p>
                 </div>
+
+                <section className="mt-7 border border-[#D9D0BF] bg-white" aria-labelledby="official-trec-fields-title">
+                  <div className="border-b border-[#D9D0BF] bg-[#F7F3EB] px-5 py-4 sm:px-6">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Promulgated contract fields</p>
+                        <h4 id="official-trec-fields-title" className="mt-1 text-lg font-semibold text-slate-950">
+                          TREC {TREC_FORM_ID} · Pages {activeDeal.worksheetStep * 2 + 1}–{activeDeal.worksheetStep * 2 + 2}
+                        </h4>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-600">{TREC_FORM_FIELD_COUNT} total fillable controls · Effective {TREC_FORM_EFFECTIVE_DATE}</p>
+                    </div>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Every fillable control from the official 12-page form is available across the six worksheet steps. Uploaded values remain suggestions until you apply them.</p>
+                  </div>
+                  <div className="space-y-7 p-5 sm:p-6">
+                    {[activeDeal.worksheetStep * 2 + 1, activeDeal.worksheetStep * 2 + 2].map((page) => {
+                      const fields = trecFormFieldsForStep(activeDeal.worksheetStep).filter((field) => field.page === page);
+                      return (
+                        <div key={page}>
+                          <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-2">
+                            <h5 className="text-sm font-bold text-slate-950">Official form page {page}</h5>
+                            <span className="text-xs font-semibold text-slate-500">{fields.length} controls</span>
+                          </div>
+                          <div className="mt-4 grid gap-4 md:grid-cols-2">
+                            {fields.map((field) => field.type === 'checkbox' || field.type === 'radio' ? (
+                              <label key={field.id} className="flex min-h-[46px] cursor-pointer items-start gap-3 rounded-md border border-slate-300 bg-[#FCFBF9] px-3 py-3 text-sm text-slate-800">
+                                <input
+                                  type="checkbox"
+                                  checked={activeDeal.formFields[field.id] === 'true'}
+                                  onChange={(event) => updateTrecFormField(field.id, event.target.checked ? 'true' : '')}
+                                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#301D5D]"
+                                />
+                                <span><span className="font-semibold">{field.label}</span><span className="mt-1 block text-[11px] text-slate-500">Page {field.page} · Field {field.index}</span></span>
+                              </label>
+                            ) : (
+                              <label key={field.id} className="block">
+                                <span className="mb-2 block text-sm font-semibold leading-5 text-slate-800">{field.label}</span>
+                                <input
+                                  value={activeDeal.formFields[field.id] ?? ''}
+                                  onChange={(event) => updateTrecFormField(field.id, event.target.value)}
+                                  className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
+                                  aria-label={`${field.label}, official form page ${field.page}, field ${field.index}`}
+                                />
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
 
                 <details className="mt-7 border border-slate-200 bg-[#FCFBF9]">
                   <summary className="cursor-pointer list-none px-5 py-4 text-sm font-bold text-slate-900 marker:hidden sm:px-6">

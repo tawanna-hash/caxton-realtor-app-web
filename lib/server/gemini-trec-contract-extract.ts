@@ -1,10 +1,12 @@
 import { logger } from './logger';
+import { TREC_20_19_FIELDS, TREC_FORM_ID } from '../trec-20-19-fields';
 
 export type TrecExtractedWorksheet = Record<string, string>;
 
 export interface TrecContractExtract {
   title?: string;
   worksheet: TrecExtractedWorksheet;
+  formFields: Record<string, string>;
   addenda: Record<string, boolean>;
   warnings: string[];
 }
@@ -65,7 +67,15 @@ const ADDENDA = [
   'PID / MUD Notice',
 ] as const;
 
-const SYSTEM_PROMPT = `You are a high-precision information-extraction service for an executed Texas TREC 1-4 One to Four Family Residential Contract (Resale) and its attached addenda.
+const FORM_FIELD_CATALOG = TREC_20_19_FIELDS.map((field) => ({
+  id: field.id,
+  page: field.page,
+  type: field.type,
+  label: field.label,
+  pdfFieldName: field.pdfFieldName,
+}));
+
+const SYSTEM_PROMPT = `You are a high-precision information-extraction service for an executed Texas TREC ${TREC_FORM_ID} One to Four Family Residential Contract (Resale) and its attached addenda.
 
 Read the uploaded PDF or image and return ONLY valid JSON, with no markdown or commentary. This is a suggestion layer for an admin to review, never a legal determination.
 
@@ -107,6 +117,9 @@ Schema:
     "notices": "string or null",
     "effectiveDate": "YYYY-MM-DD or null"
   },
+  "formFields": {
+    "official field id from the catalog below": "visible text, or true for a selected checkbox"
+  },
   "addenda": {
     "Third-Party Financing Addendum": true or false,
     "HOA Addendum": true or false,
@@ -127,8 +140,15 @@ Rules:
 - Use YYYY-MM-DD only when the exact date is visible or unambiguous. For effectiveDate, use the final executed effective date only when it is clearly shown; otherwise null.
 - Return days only where the signed contract or an attached addendum clearly specifies that period. Do not derive deadline days from a calendar date.
 - Do not populate actual delivered-date fields because the document cannot establish actual delivery. Do not return them.
+- formFields must use only the exact field ids in the official catalog below. Include every visibly completed text, choice, radio, checkbox, initials, signature-name, date, acknowledgment, broker, attorney, notice, and escrow-receipt control.
+- For selected checkboxes or radio controls, return the string "true". Omit unselected controls. Never mark a control selected from surrounding boilerplate alone.
+- For signatures, record only visible typed/printed signer text or a concise "signed" value when a mark is visibly present. Do not identify an unreadable signature.
+- If any populated control is ambiguous or unreadable, omit it and add a warning naming its page and field id.
 - For a checkbox/addendum that is not visibly attached or selected, return false. If it is unclear, return false and put the uncertainty in warnings.
-- If a field is absent or unreadable, use null.`;
+- If a field is absent or unreadable, use null.
+
+Official TREC ${TREC_FORM_ID} field catalog:
+${JSON.stringify(FORM_FIELD_CATALOG)}`;
 
 function asTrimmedString(value: unknown, max = 20_000): string | undefined {
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
@@ -186,6 +206,21 @@ function normalize(raw: unknown): TrecContractExtract {
     if (value) worksheet[key] = value;
   }
 
+  const sourceFormFields = source.formFields && typeof source.formFields === 'object'
+    ? source.formFields as Record<string, unknown>
+    : {};
+  const allowedFieldIds = new Set(TREC_20_19_FIELDS.map((field) => field.id));
+  const formFields: Record<string, string> = {};
+  for (const [key, rawValue] of Object.entries(sourceFormFields)) {
+    if (!allowedFieldIds.has(key)) continue;
+    if (rawValue === true) {
+      formFields[key] = 'true';
+      continue;
+    }
+    const value = asTrimmedString(rawValue);
+    if (value && value !== 'false') formFields[key] = value;
+  }
+
   const addenda: Record<string, boolean> = {};
   for (const addendum of ADDENDA) {
     addenda[addendum] = sourceAddenda[addendum] === true;
@@ -195,7 +230,7 @@ function normalize(raw: unknown): TrecContractExtract {
     ? source.warnings.map((item) => asTrimmedString(item, 500)).filter((item): item is string => Boolean(item)).slice(0, 12)
     : [];
   const title = asTrimmedString(source.title, 180);
-  return { ...(title ? { title } : {}), worksheet, addenda, warnings };
+  return { ...(title ? { title } : {}), worksheet, formFields, addenda, warnings };
 }
 
 export async function extractTrecContract({
@@ -227,7 +262,7 @@ export async function extractTrecContract({
         generation_config: {
           temperature: 0,
           response_mime_type: 'application/json',
-          max_output_tokens: 8192,
+          max_output_tokens: 32768,
         },
       }),
     });

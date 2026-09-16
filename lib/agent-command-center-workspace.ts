@@ -73,6 +73,8 @@ export const agentContractDetailsSchema = z.object({
   possessionPlan: optionalShortText(1_000), specialProvisionsNotes: optionalShortText(2_000), settlementNotes: optionalShortText(2_000), notices: optionalShortText(2_000),
 }).strict().default(defaultAgentContractDetails());
 
+export const agentTrecFormFieldsSchema = z.record(z.string(), z.string().max(20_000)).default({});
+
 export const agentReminderSchema = z.object({
   id: shortText(120),
   deadlineId: shortText(120),
@@ -122,6 +124,7 @@ export const agentDealSchema = z.object({
   worksheetStep: z.number().int().min(0).max(TREC_WORKFLOW_STAGES.length - 1).default(0),
   closeoutOutcome: optionalShortText(120), closeoutDate: dateText.default(''), closeoutNote: optionalShortText(2_000),
   contractDetails: agentContractDetailsSchema,
+  formFields: agentTrecFormFieldsSchema,
   addenda: z.record(z.string(), z.boolean()).default({}),
   reminders: z.array(agentReminderSchema).max(100).default([]), tasks: z.array(agentTaskSchema).max(200).default([]), documents: z.array(agentDocumentSchema).max(100).default([]),
   activity: z.array(agentActivitySchema).max(300).default([]),
