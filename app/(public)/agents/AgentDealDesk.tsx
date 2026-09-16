@@ -431,6 +431,8 @@ export default function AgentDealDesk({
   const [extractionError, setExtractionError] = useState('');
   const [isContractDropActive, setIsContractDropActive] = useState(false);
   const [isUploadMenuOpen, setIsUploadMenuOpen] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState('');
   const [workspacePage, setWorkspacePage] = useState<1 | 2>(1);
   const versionRef = useRef<number | null>(initialWorkspaceVersion);
   const syncTimerRef = useRef<number | null>(null);
@@ -438,6 +440,8 @@ export default function AgentDealDesk({
   const queuedWorkspaceRef = useRef<AgentCommandCenterWorkspace | null>(null);
   const contractUploadInputRef = useRef<HTMLInputElement | null>(null);
   const contractCameraInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
 
   const saveToCloud = useCallback(async function saveToCloud(workspace: AgentCommandCenterWorkspace) {
     if (saveInFlightRef.current) {
@@ -550,6 +554,34 @@ export default function AgentDealDesk({
   useEffect(() => () => {
     if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
   }, []);
+
+  useEffect(() => {
+    if (!isCameraOpen) return;
+    let cancelled = false;
+
+    void navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: { ideal: 'environment' } },
+    }).then((stream) => {
+      if (cancelled) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      cameraStreamRef.current = stream;
+      if (cameraVideoRef.current) {
+        cameraVideoRef.current.srcObject = stream;
+        void cameraVideoRef.current.play();
+      }
+    }).catch(() => {
+      if (!cancelled) setCameraError('Camera access was blocked or no camera was found. Allow camera access or use the device camera option.');
+    });
+
+    return () => {
+      cancelled = true;
+      cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    };
+  }, [isCameraOpen]);
 
   const persistDeals = (nextDeals: AgentDeal[]) => {
     setDeals(nextDeals);
@@ -712,6 +744,42 @@ export default function AgentDealDesk({
       setExtractionError(error instanceof Error ? error.message : 'Could not read this contract.');
       setExtractionState('error');
     }
+  };
+
+  const captureContractPhoto = () => {
+    const video = cameraVideoRef.current;
+    if (!video || !video.videoWidth || !video.videoHeight) {
+      setCameraError('The camera is still starting. Wait a moment, then try again.');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      setCameraError('The camera image could not be captured. Use the device camera option instead.');
+      return;
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        setCameraError('The camera image could not be captured. Use the device camera option instead.');
+        return;
+      }
+      setIsCameraOpen(false);
+      void extractContract(new File([blob], `contract-photo-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+    }, 'image/jpeg', 0.92);
+  };
+
+  const openContractCamera = () => {
+    setCameraError('');
+    if (!navigator.mediaDevices?.getUserMedia) {
+      contractCameraInputRef.current?.click();
+      return;
+    }
+    setIsCameraOpen(true);
   };
 
   const applyExtraction = () => {
@@ -1120,8 +1188,8 @@ export default function AgentDealDesk({
                       type="button"
                       role="menuitem"
                       onClick={() => {
-                        contractCameraInputRef.current?.click();
                         setIsUploadMenuOpen(false);
+                        openContractCamera();
                       }}
                       className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
                     >
@@ -1673,6 +1741,77 @@ export default function AgentDealDesk({
             <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#E7C769] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
           </section>
           </>
+        )}
+
+        {isCameraOpen && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="contract-camera-title"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4"
+          >
+            <div className="w-full max-w-2xl rounded-md bg-white p-4 shadow-2xl sm:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 id="contract-camera-title" className="text-xl font-semibold text-slate-950">Take a contract photo</h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">Place the page inside the frame and keep all text in focus.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCameraOpen(false)}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-300 text-xl text-slate-700 transition hover:bg-slate-100"
+                  aria-label="Close camera"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mt-4 overflow-hidden rounded-md bg-slate-950">
+                <video
+                  ref={cameraVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="aspect-[4/3] w-full object-contain"
+                />
+              </div>
+
+              {cameraError && (
+                <p role="alert" className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-900">
+                  {cameraError}
+                </p>
+              )}
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCameraOpen(false)}
+                  className="inline-flex h-[42px] items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    contractCameraInputRef.current?.click();
+                    setIsCameraOpen(false);
+                  }}
+                  className="inline-flex h-[42px] items-center justify-center rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-violet-50"
+                >
+                  Device camera
+                </button>
+                <button
+                  type="button"
+                  onClick={captureContractPhoto}
+                  disabled={Boolean(cameraError)}
+                  className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <Camera className="h-4 w-4" aria-hidden="true" />
+                  Take picture
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </main>
