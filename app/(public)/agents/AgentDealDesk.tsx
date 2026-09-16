@@ -1573,22 +1573,16 @@ export default function AgentDealDesk({
               </div>
               {deals.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  <select
-                    aria-label="Select transaction"
-                    value={activeDealId ?? ''}
-                    onChange={(event) => {
-                      if (event.target.value === '__new__') {
-                        createDeal();
-                        return;
-                      }
-                      setActiveDealId(event.target.value);
+                  <button
+                    type="button"
+                    onClick={() => {
+                      createDeal();
                       setPendingRemoval(null);
                     }}
-                    className="min-h-[42px] max-w-[210px] border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#301D5D]"
+                    className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"
                   >
-                    {deals.map((deal) => <option key={deal.id} value={deal.id}>{deal.propertyAddress || deal.title}</option>)}
-                    <option value="__new__">+ Start a New Transaction</option>
-                  </select>
+                    Start a New Transaction
+                  </button>
                   {activeDeal && (
                     pendingRemoval === activeDeal.id ? (
                       <button
