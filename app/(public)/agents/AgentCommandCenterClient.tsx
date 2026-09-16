@@ -174,7 +174,7 @@ export default function AgentCommandCenterClient({
   return (
     <main className="min-h-screen bg-[#F7F5F1] pb-16">
       <section className="border-b border-[#251548] bg-[#301D5D] text-white">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:py-16">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:gap-10 sm:px-8 sm:py-12 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:py-16">
           <div>
             <p className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
@@ -183,8 +183,8 @@ export default function AgentCommandCenterClient({
             <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.045em] text-white sm:text-5xl lg:text-6xl">
               More Control in Every Client Transaction.
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">
-              Your practical desk for Texas transaction timing, client-ready calculators, local market context, and service partners when a deal needs help.
+            <p className="mt-5 max-w-2xl text-base leading-7 text-white/75 sm:mt-6 sm:text-lg">
+              Your Command Center for contract deadlines, client-ready calculators and service partners when a client needs help.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -205,7 +205,7 @@ export default function AgentCommandCenterClient({
             </div>
           </div>
 
-          <aside className="border border-white/15 bg-white/[0.08] p-5 shadow-2xl shadow-[#140A29]/20 sm:p-6">
+          <aside className="border border-white/15 bg-white/[0.08] p-4 shadow-2xl shadow-[#140A29]/20 sm:p-6">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">Today&apos;s agent desk</p>
             <div className="mt-5 space-y-4">
               {[
@@ -227,8 +227,8 @@ export default function AgentCommandCenterClient({
       </section>
 
       <section id="deadline-planner" className="scroll-mt-20">
-        <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:py-10">
-          <div className="border border-slate-200 bg-white p-5 shadow-[0_10px_28px_rgba(40,25,77,0.05)] sm:flex sm:items-center sm:justify-between sm:gap-6">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8 lg:py-10">
+          <div className="border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(40,25,77,0.05)] sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="flex items-start gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F2EEE7] text-[#301D5D]">
                 <CalendarDays className="h-5 w-5" aria-hidden="true" />
@@ -242,7 +242,7 @@ export default function AgentCommandCenterClient({
             <button
               type="button"
               onClick={() => setQuickCheckOpen((open) => !open)}
-              className="mt-4 inline-flex h-[44px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] sm:mt-0"
+              className="mt-4 inline-flex h-[44px] w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] sm:mt-0 sm:w-auto"
             >
               <Calculator className="h-4 w-4" aria-hidden="true" />
               {quickCheckOpen ? 'Hide quick check' : 'Open quick date check'}
@@ -251,7 +251,7 @@ export default function AgentCommandCenterClient({
 
           {quickCheckOpen && (
             <div className="mt-3 grid border border-slate-200 bg-white lg:grid-cols-[0.72fr_1.28fr]">
-              <div className="bg-[#ECE6DA] p-5 sm:p-6">
+              <div className="bg-[#ECE6DA] p-4 sm:p-6">
                 <div className="space-y-4">
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Effective date</span>
@@ -268,7 +268,7 @@ export default function AgentCommandCenterClient({
                   {effectiveDate && <button type="button" onClick={resetPlanner} className="inline-flex h-[38px] items-center gap-2 rounded-md border border-slate-400 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-slate-950"><RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />Clear</button>}
                 </div>
               </div>
-              <div className="p-5 sm:p-6">
+              <div className="p-4 sm:p-6">
                 {!effectiveDate ? (
                   <p className="text-sm leading-6 text-slate-600">Enter the effective date to see earnest money and option fee delivery timing.</p>
                 ) : (
@@ -300,18 +300,18 @@ export default function AgentCommandCenterClient({
       />
 
       <section className="border-y border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-12 lg:py-16">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Work faster</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Client-ready tools, one click away</h2>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:mt-3 sm:text-4xl">Client-ready tools, one click away</h2>
             </div>
             <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
               See every agent tool
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
-          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-4 sm:mt-8 md:grid-cols-2 lg:grid-cols-4">
             {QUICK_TOOLS.map((tool) => {
               const Icon = tool.icon;
               return (
@@ -319,12 +319,12 @@ export default function AgentCommandCenterClient({
                   key={tool.href}
                   href={tool.href}
                   onClick={() => trackEvent('agent_command_center_tool_opened', { tool: tool.title })}
-                  className={`group min-h-[230px] border p-5 transition hover:-translate-y-1 hover:shadow-xl ${tool.tone}`}
+                  className={`group border p-4 transition hover:-translate-y-1 hover:shadow-xl sm:p-5 md:min-h-[230px] ${tool.tone}`}
                 >
                   <div className={`flex h-11 w-11 items-center justify-center rounded-full ${tool.iconTone}`}>
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
-                  <p className="mt-7 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60">{tool.eyebrow}</p>
+                  <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60 sm:mt-7">{tool.eyebrow}</p>
                   <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em]">{tool.title}</h3>
                   <p className="mt-3 text-sm leading-6 opacity-75">{tool.description}</p>
                   <span className="mt-5 inline-flex items-center gap-1 text-sm font-bold">
@@ -338,24 +338,24 @@ export default function AgentCommandCenterClient({
       </section>
 
       <section id="referral-network" className="scroll-mt-20">
-        <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
-          <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr]">
-            <div className="bg-[#301D5D] p-7 text-white sm:p-9">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-12 lg:py-16">
+          <div className="grid gap-5 sm:gap-8 lg:grid-cols-[0.78fr_1.22fr]">
+            <div className="bg-[#301D5D] p-5 text-white sm:p-9">
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-[#F4D06F]">
                 <Handshake className="h-5 w-5" aria-hidden="true" />
               </div>
               <p className="mt-7 text-xs font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">Referral network</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em]">Your call list, built for the next deal.</h2>
+              <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Your call list, built for the next deal.</h2>
               <p className="mt-5 text-base leading-7 text-white/75">
                 Find local service partners across title, appraisal, remodeling, A/C and heating, roofing, inspections, and lending. Discover who is visible in your market and take the next step with confidence.
               </p>
             </div>
 
-            <div className="border border-slate-200 bg-white p-6 sm:p-8">
+            <div className="border border-slate-200 bg-white p-4 sm:p-8">
               <div className="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Find a service</p>
-                  <h3 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">{selectedCategoryRecord.description}</h3>
+                  <h3 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-2xl">{selectedCategoryRecord.description}</h3>
                 </div>
                 <Link
                   href="/partners"
