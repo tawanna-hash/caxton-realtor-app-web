@@ -11,12 +11,14 @@ type Props = {
   initialInvoices: InvoiceWithAdvertiser[];
   agreements: AgreementWithAdvertiser[];
   advertisers: AdvertiserOption[];
+  referenceDate: string;
 };
 
 export default function InvoicesClient({
   initialInvoices,
   agreements,
   advertisers,
+  referenceDate,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -51,6 +53,7 @@ export default function InvoicesClient({
       initialInvoices={initialInvoices}
       agreements={agreements}
       advertisers={advertisers}
+      referenceDate={referenceDate}
       workspace="invoices"
       initialCreate={Boolean(seedFromUrl)}
       initialEdit={editFromUrl}

@@ -45,6 +45,7 @@ export default async function InvoicesPage() {
       initialInvoices={invoices as unknown as InvoiceWithAdvertiser[]}
       agreements={agreements as unknown as AgreementWithAdvertiser[]}
       advertisers={advertisers as unknown as Array<{ id: number; name: string; publication: string; contact_email: string | null; billing_email: string | null }>}
+      referenceDate={new Date().toISOString()}
     />
   );
 }

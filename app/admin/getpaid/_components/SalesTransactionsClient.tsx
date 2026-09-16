@@ -32,6 +32,7 @@ export type SalesTransactionsClientProps = {
   initialInvoices: InvoiceWithAdvertiser[];
   advertisers: AdvertiserOption[];
   agreements: AgreementWithAdvertiser[];
+  referenceDate: string;
   workspace?: 'sales' | 'invoices';
   initialCreate?: boolean;
   initialEdit?: InvoiceWithAdvertiser | null;
@@ -110,14 +111,14 @@ function transactionTypeLabel(invoice: InvoiceWithAdvertiser) {
   return 'Invoice';
 }
 
-function daysOverdue(invoice: InvoiceWithAdvertiser) {
+function daysOverdue(invoice: InvoiceWithAdvertiser, referenceTime: number) {
   if (!invoice.due_date) return 0;
   const due = new Date(`${toISODateString(invoice.due_date)}T12:00:00`);
-  return Math.max(1, Math.floor((Date.now() - due.getTime()) / 86_400_000));
+  return Math.max(1, Math.floor((referenceTime - due.getTime()) / 86_400_000));
 }
 
-function statusLabel(invoice: InvoiceWithAdvertiser) {
-  if (invoice.is_overdue) return `Overdue ${daysOverdue(invoice)} days`;
+function statusLabel(invoice: InvoiceWithAdvertiser, referenceTime: number) {
+  if (invoice.is_overdue) return `Overdue ${daysOverdue(invoice, referenceTime)} days`;
   if (invoice.status === 'paid') return 'Paid';
   if (invoice.status === 'sent') return 'Open';
   return invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1);
@@ -134,7 +135,7 @@ function memoSummary(invoice: InvoiceWithAdvertiser) {
   );
 }
 
-function sortValue(invoice: InvoiceWithAdvertiser, key: SortKey): string | number {
+function sortValue(invoice: InvoiceWithAdvertiser, key: SortKey, referenceTime: number): string | number {
   switch (key) {
     case 'date': {
       const value = transactionDate(invoice);
@@ -157,16 +158,16 @@ function sortValue(invoice: InvoiceWithAdvertiser, key: SortKey): string | numbe
     case 'amount':
       return invoice.total_cents;
     case 'status':
-      return statusLabel(invoice);
+      return statusLabel(invoice, referenceTime);
     default:
       return '';
   }
 }
 
-function inDateRange(invoice: InvoiceWithAdvertiser, filter: DateFilter) {
+function inDateRange(invoice: InvoiceWithAdvertiser, filter: DateFilter, referenceDate: Date) {
   if (filter === 'all') return true;
   const months = filter === '30-days' ? 1 : filter === '3-months' ? 3 : 12;
-  const cutoff = new Date();
+  const cutoff = new Date(referenceDate);
   cutoff.setMonth(cutoff.getMonth() - months);
   return new Date(transactionDate(invoice)).getTime() >= cutoff.getTime();
 }
@@ -223,12 +224,12 @@ function SortableTh({
   );
 }
 
-function StatusCell({ invoice }: { invoice: InvoiceWithAdvertiser }) {
+function StatusCell({ invoice, referenceTime }: { invoice: InvoiceWithAdvertiser; referenceTime: number }) {
   if (invoice.is_overdue) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
         <AlertCircle className="h-4 w-4 text-orange-600" aria-hidden="true" />
-        {statusLabel(invoice)}
+        {statusLabel(invoice, referenceTime)}
       </span>
     );
   }
@@ -240,17 +241,19 @@ function StatusCell({ invoice }: { invoice: InvoiceWithAdvertiser }) {
       </span>
     );
   }
-  return <span className="whitespace-nowrap text-gray-700">{statusLabel(invoice)}</span>;
+  return <span className="whitespace-nowrap text-gray-700">{statusLabel(invoice, referenceTime)}</span>;
 }
 
 function EmailInvoiceDialog({
   draft,
   busy,
+  referenceTime,
   onClose,
   onSend,
 }: {
   draft: EmailDraft;
   busy: boolean;
+  referenceTime: number;
   onClose: () => void;
   onSend: (values: { from: InvoiceSender; to: string; subject: string; message: string }) => void;
 }) {
@@ -293,7 +296,7 @@ function EmailInvoiceDialog({
               <ul className="mt-2 space-y-1">
                 <li>Total amount: {formatCents(invoice.total_cents)}</li>
                 <li>Remaining balance: {formatCents(invoice.total_cents)}</li>
-                <li>{invoice.is_overdue ? `${daysOverdue(invoice)} days overdue` : 'Open invoice'}</li>
+                <li>{invoice.is_overdue ? `${daysOverdue(invoice, referenceTime)} days overdue` : 'Open invoice'}</li>
               </ul>
             </aside>
           )}
@@ -418,6 +421,7 @@ export function SalesTransactionsClient({
   initialInvoices,
   advertisers,
   agreements,
+  referenceDate,
   workspace = 'sales',
   initialCreate = false,
   initialEdit = null,
@@ -425,6 +429,8 @@ export function SalesTransactionsClient({
   onConsumeUrlSeed,
 }: SalesTransactionsClientProps) {
   const invoiceWorkspace = workspace === 'invoices';
+  const stableReferenceDate = useMemo(() => new Date(referenceDate), [referenceDate]);
+  const referenceTime = stableReferenceDate.getTime();
   const [invoices, setInvoices] = useState(initialInvoices);
   const [query, setQuery] = useState('');
   const [type, setType] = useState<TypeFilter>('all');
@@ -481,7 +487,7 @@ export function SalesTransactionsClient({
     const overdue = open.filter((invoice) => invoice.is_overdue);
     const paid = invoices.filter((invoice) => {
       if (invoice.status !== 'paid' || !invoice.paid_at) return false;
-      const cutoff = new Date();
+      const cutoff = new Date(stableReferenceDate);
       cutoff.setDate(cutoff.getDate() - 30);
       return new Date(invoice.paid_at).getTime() >= cutoff.getTime();
     });
@@ -499,14 +505,14 @@ export function SalesTransactionsClient({
       depositedAmount: paid.filter((invoice) => Boolean(invoice.stripe_payment_intent_id)).reduce((total, invoice) => total + invoice.total_cents, 0),
       depositedCount: paid.filter((invoice) => Boolean(invoice.stripe_payment_intent_id)).length,
     };
-  }, [invoices]);
+  }, [invoices, stableReferenceDate]);
 
   const filteredRows = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return invoices
       .filter((invoice) => {
         if (type !== 'all' && transactionType(invoice) !== type) return false;
-        if (!inDateRange(invoice, dateFilter)) return false;
+        if (!inDateRange(invoice, dateFilter, stableReferenceDate)) return false;
         if (status === 'draft' && invoice.status !== 'draft') return false;
         if (status === 'open' && !['sent', 'overdue'].includes(invoice.status)) return false;
         if (status === 'overdue' && !invoice.is_overdue) return false;
@@ -531,12 +537,12 @@ export function SalesTransactionsClient({
           .includes(normalized);
       })
       .sort((a, b) => {
-        const av = sortValue(a, sortKey);
-        const bv = sortValue(b, sortKey);
+        const av = sortValue(a, sortKey, referenceTime);
+        const bv = sortValue(b, sortKey, referenceTime);
         const cmp = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv));
         return sortDir === 'asc' ? cmp : -cmp;
       });
-  }, [dateFilter, delivery, errors, invoices, query, status, type, sortKey, sortDir]);
+  }, [dateFilter, delivery, errors, invoices, query, referenceTime, stableReferenceDate, status, type, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -1012,7 +1018,7 @@ export function SalesTransactionsClient({
                     <td className="truncate px-2 py-2.5 text-gray-800" title={invoice.advertiser_name ?? invoice.bill_to_name ?? ''}>{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
                     {!invoiceWorkspace && <td className="truncate px-2 py-2.5 text-gray-600" title={memo}>{memo}</td>}
                     <td className="whitespace-nowrap px-2 py-2.5 text-right font-medium text-gray-800">{formatCents(invoice.total_cents)}</td>
-                    <td className="px-2 py-2.5"><StatusCell invoice={invoice} /></td>
+                    <td className="px-2 py-2.5"><StatusCell invoice={invoice} referenceTime={referenceTime} /></td>
                     <td className="relative whitespace-nowrap px-2 py-2.5 text-right">
                       <button type="button" disabled={busy} className="font-medium text-orange-700 hover:underline disabled:opacity-50" onClick={() => setEditingInvoice(invoice)}>View/Edit</button>
                       {canReceivePayment ? (
@@ -1099,6 +1105,7 @@ export function SalesTransactionsClient({
         <EmailInvoiceDialog
           draft={emailDraft}
           busy={busy}
+          referenceTime={referenceTime}
           onClose={() => setEmailDraft(null)}
           onSend={(values) => void sendInvoice(emailDraft.invoice, emailDraft.reminder, values)}
         />
@@ -1127,7 +1134,7 @@ export function SalesTransactionsClient({
               <section className="border-b border-gray-200 px-5 py-4">
                 <div className={`inline-flex items-center gap-1.5 text-xs font-medium ${activityInvoice.is_overdue ? 'text-orange-700' : activityInvoice.status === 'paid' ? 'text-emerald-700' : 'text-gray-600'}`}>
                   <span className={`h-2 w-2 rounded-full ${activityInvoice.is_overdue ? 'bg-orange-600' : activityInvoice.status === 'paid' ? 'bg-emerald-600' : 'bg-gray-400'}`} />
-                  {statusLabel(activityInvoice)}
+                  {statusLabel(activityInvoice, referenceTime)}
                 </div>
                 <div className="mt-2 text-xs font-medium text-gray-600">Total due</div>
                 <div className="text-3xl font-semibold tracking-tight text-gray-900">{formatCents(activityInvoice.balance_cents ?? (activityInvoice.status === 'paid' ? 0 : activityInvoice.total_cents))}</div>
