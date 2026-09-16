@@ -398,50 +398,6 @@ function formatDate(value: string): string {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-function formatFieldDate(value: string): string {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'MM/DD/YYYY';
-  const [year, month, day] = value.split('-');
-  return `${month}/${day}/${year}`;
-}
-
-function DeadlineDateField({
-  value,
-  onChange,
-  ariaLabel,
-  readOnly = false,
-  disabled = false,
-}: {
-  value: string;
-  onChange?: (value: string) => void;
-  ariaLabel: string;
-  readOnly?: boolean;
-  disabled?: boolean;
-}) {
-  return (
-    <div
-      className={`relative mt-4 flex h-[46px] min-w-0 w-full max-w-full items-center rounded-md border px-3 sm:mt-auto ${
-        disabled || readOnly
-          ? 'border-slate-300 bg-slate-50 text-slate-700'
-          : 'border-slate-300 bg-white text-slate-900 focus-within:border-[#301D5D] focus-within:ring-1 focus-within:ring-[#301D5D]'
-      }`}
-    >
-      <span className={`min-w-0 flex-1 truncate text-left text-base font-medium tabular-nums sm:text-sm ${value ? '' : 'text-slate-400'}`}>
-        {formatFieldDate(value)}
-      </span>
-      <CalendarDays className="ml-3 h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
-      <input
-        type="date"
-        value={value}
-        readOnly={readOnly}
-        disabled={disabled}
-        onChange={(event) => onChange?.(event.target.value)}
-        aria-label={ariaLabel}
-        className={`absolute inset-0 h-full w-full opacity-0 ${disabled || readOnly ? 'cursor-default' : 'cursor-pointer'}`}
-      />
-    </div>
-  );
-}
-
 function newDeal(trecFormVersionId: string): AgentDeal {
   const now = new Date().toISOString();
   return {
@@ -1883,40 +1839,45 @@ export default function AgentDealDesk({
                     <label className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
                       <span className="block text-sm font-bold text-slate-900">Signed Contract / Effective Date</span>
                       <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: use the contract&apos;s effective date after final acceptance. This is day zero; deadline counting begins on the following calendar day.</span>
-                      <DeadlineDateField
+                      <input
+                        type="date"
                         value={activeDeal.effectiveDate}
-                        onChange={(value) => updateActiveDeal('effectiveDate', value)}
-                        ariaLabel="Signed contract effective date"
+                        onChange={(event) => updateActiveDeal('effectiveDate', event.target.value)}
+                        className="mt-4 sm:mt-auto"
                       />
                     </label>
                     <div className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
                       <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
                       <p className="mt-1 text-xs leading-5 text-slate-500">TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies.</p>
-                      <DeadlineDateField
+                      <input
+                        type="date"
                         readOnly
                         value={activeDeadlines.find((deadline) => deadline.id === 'earnest-money-delivery')?.date ?? ''}
-                        ariaLabel="Calculated earnest money deposit deadline"
+                        className="mt-4 bg-slate-50 text-slate-700 sm:mt-auto"
+                        aria-label="Calculated earnest money deposit deadline"
                       />
                     </div>
                     {CALCULATED_TIMELINE_FIELDS.map(({ key, deadlineId, label, rule }) => (
                       <label key={key} className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
                         <span className="block text-sm font-bold text-slate-900">{label}</span>
                         <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: {rule}</span>
-                        <DeadlineDateField
+                        <input
+                          type="date"
                           value={activeDeadlines.find((deadline) => deadline.id === deadlineId)?.date ?? ''}
                           disabled={!activeDeal.effectiveDate}
-                          onChange={(value) => updateCalculatedDeadline(key, value)}
-                          ariaLabel={`${label} deadline`}
+                          onChange={(event) => updateCalculatedDeadline(key, event.target.value)}
+                          className="mt-4 disabled:cursor-not-allowed disabled:bg-slate-50 sm:mt-auto"
                         />
                       </label>
                     ))}
                     <label className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
                       <span className="block text-sm font-bold text-slate-900">Closing Date</span>
                       <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: use the negotiated closing date stated in Paragraph 9; TREC does not supply a default number of days.</span>
-                      <DeadlineDateField
+                      <input
+                        type="date"
                         value={activeDeal.closingDate}
-                        onChange={(value) => updateActiveDeal('closingDate', value)}
-                        ariaLabel="Closing date"
+                        onChange={(event) => updateActiveDeal('closingDate', event.target.value)}
+                        className="mt-4 sm:mt-auto"
                       />
                     </label>
                   </div>
