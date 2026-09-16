@@ -1206,9 +1206,11 @@ export default function AgentDealDesk({
                   type="file"
                   accept="application/pdf,image/png,image/jpeg,image/webp"
                   disabled={extractionState === 'extracting'}
-                  onChange={(event) => {
-                    void extractContract(event.target.files?.[0]);
-                    event.currentTarget.value = '';
+                  onChange={async (event) => {
+                    const input = event.currentTarget;
+                    const file = input.files?.[0];
+                    await extractContract(file);
+                    input.value = '';
                   }}
                   className="sr-only"
                   tabIndex={-1}
@@ -1219,9 +1221,11 @@ export default function AgentDealDesk({
                   accept="image/png,image/jpeg,image/webp"
                   capture="environment"
                   disabled={extractionState === 'extracting'}
-                  onChange={(event) => {
-                    void extractContract(event.target.files?.[0]);
-                    event.currentTarget.value = '';
+                  onChange={async (event) => {
+                    const input = event.currentTarget;
+                    const file = input.files?.[0];
+                    await extractContract(file);
+                    input.value = '';
                   }}
                   className="sr-only"
                   tabIndex={-1}
