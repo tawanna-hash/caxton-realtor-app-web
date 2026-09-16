@@ -2,9 +2,14 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
 import { ensureBuilderInventorySchema } from '@/lib/builder-inventory';
-import { ensurePublicationColumn } from '@/lib/publication-theme';
+import {
+  ensurePublicationColumn,
+  parsePublications,
+  type PublicationKey,
+} from '@/lib/publication-theme';
 import { getCurrentUser } from '@/lib/server/auth/user';
 import { getAgentCommandCenterWorkspace } from '@/lib/server/agent-command-center-workspaces';
+import { getRealtorMe } from '@/lib/server/realtors-store';
 import AgentCommandCenterClient, {
   type ReferralProvider,
 } from './AgentCommandCenterClient';
@@ -18,7 +23,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 type AdvertiserRow = ReferralProvider & {
-  publication: 'austin' | 'san_antonio' | null;
+  publication: string | null;
 };
 
 export default async function AgentCommandCenterPage() {
@@ -26,7 +31,10 @@ export default async function AgentCommandCenterPage() {
   if (!user) redirect('/login?next=%2Fagents');
 
   let providers: ReferralProvider[] = [];
-  const workspaceRecord = await getAgentCommandCenterWorkspace(user.realtorId);
+  const [workspaceRecord, realtor] = await Promise.all([
+    getAgentCommandCenterWorkspace(user.realtorId),
+    getRealtorMe(user.realtorId),
+  ]);
 
   // The command center remains useful even if the directory database is
   // temporarily unavailable. The only affected area is the live provider list;
@@ -40,6 +48,7 @@ export default async function AgentCommandCenterPage() {
       SELECT id, name, slug, website, publication, industry, tagline
       FROM advertisers
       WHERE COALESCE(status, 'advertiser') IN ('advertiser', 'active')
+        AND NULLIF(TRIM(COALESCE(industry, '')), '') IS NOT NULL
         AND NOT EXISTS (
           SELECT 1
           FROM builder_page_visibility v
@@ -49,7 +58,13 @@ export default async function AgentCommandCenterPage() {
       ORDER BY name ASC
     `) as unknown as AdvertiserRow[];
 
-    providers = rows.map(({ publication: _publication, ...provider }) => provider);
+    const agentMarket = realtor?.market;
+    providers = rows
+      .filter((row) => {
+        if (agentMarket === 'both') return true;
+        return parsePublications(row.publication).includes(agentMarket as PublicationKey);
+      })
+      .map(({ publication: _publication, ...provider }) => provider);
   } catch (error) {
     console.error('[Agent Command Center] Partner directory unavailable', error);
   }

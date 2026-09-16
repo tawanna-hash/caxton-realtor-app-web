@@ -329,27 +329,6 @@ export default function AgentCommandCenterClient({
               <p className="mt-5 text-base leading-7 text-white/75">
                 Find local service partners across title, appraisal, remodeling, A/C and heating, roofing, inspections, and lending. Discover who is visible in your market and take the next step with confidence.
               </p>
-              <div className="mt-8 border-t border-white/15 pt-6">
-                <p className="text-sm font-semibold text-white">Want your company in front of agents?</p>
-                <p className="mt-2 text-sm leading-6 text-white/65">Build featured visibility through Realty News Now&apos;s partner placements.</p>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <Link
-                    href="/agents/partner-application"
-                    onClick={() => trackEvent('agent_referral_network_application_opened')}
-                    className="inline-flex h-[44px] items-center gap-2 rounded-md bg-[#F4D06F] px-4 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
-                  >
-                    Apply to join
-                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                  </Link>
-                  <Link
-                    href="/advertise/placements"
-                    onClick={() => trackEvent('agent_referral_network_partner_cta_opened')}
-                    className="inline-flex h-[44px] items-center gap-2 rounded-md border border-white/25 px-4 text-sm font-bold text-white transition hover:bg-white/10"
-                  >
-                    Explore placements
-                  </Link>
-                </div>
-              </div>
             </div>
 
             <div className="border border-slate-200 bg-white p-6 sm:p-8">
@@ -358,7 +337,10 @@ export default function AgentCommandCenterClient({
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Find a service</p>
                   <h3 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">{selectedCategoryRecord.description}</h3>
                 </div>
-                <Link href="/partners" className="inline-flex items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
+                <Link
+                  href="/partners"
+                  className="inline-flex h-[42px] shrink-0 items-center justify-center gap-1 rounded-md border border-[#301D5D] px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white"
+                >
                   All partners <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </div>
@@ -410,12 +392,8 @@ export default function AgentCommandCenterClient({
                   <Wrench className="h-5 w-5 text-[#5B438C]" aria-hidden="true" />
                   <p className="mt-4 text-lg font-semibold text-slate-950">This service category is growing</p>
                   <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
-                    No featured providers match this category yet. Browse the full partner directory or return soon as the local network expands.
+                    No market-matched partners with this service are available yet. Check back as the local network expands.
                   </p>
-                  <Link href="/partners" className="mt-4 inline-flex h-[42px] items-center gap-2 rounded-md border border-[#301D5D] px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white">
-                    Browse all partners
-                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                  </Link>
                 </div>
               )}
 
