@@ -26,6 +26,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import PushOptInButton from '@/components/PushOptInButton';
+import TrecPdfPagePreview from './TrecPdfPagePreview';
 import { trackEvent } from '@/app/posthog-provider';
 import {
   agentCommandCenterWorkspaceSchema,
@@ -452,6 +453,8 @@ export default function AgentDealDesk({
   const [cameraError, setCameraError] = useState('');
   const [contractPreviewUrl, setContractPreviewUrl] = useState('');
   const [activeTrecPage, setActiveTrecPage] = useState(1);
+  const [focusedTrecFieldName, setFocusedTrecFieldName] = useState<string | null>(null);
+  const [pdfDownloadState, setPdfDownloadState] = useState<'idle' | 'building' | 'error'>('idle');
   const [workspacePage, setWorkspacePage] = useState<1 | 2>(1);
   const versionRef = useRef<number | null>(initialWorkspaceVersion);
   const syncTimerRef = useRef<number | null>(null);
@@ -879,6 +882,56 @@ export default function AgentDealDesk({
   const updateTrecFormField = (key: string, value: string) => {
     if (!activeDeal) return;
     updateActiveDeal('formFields', { ...activeDeal.formFields, [key]: value });
+  };
+
+  const downloadPopulatedTrecForm = async () => {
+    if (!activeDeal) return;
+    setPdfDownloadState('building');
+    try {
+      const [{ PDFDocument, PDFTextField, PDFCheckBox, PDFRadioGroup, PDFDropdown, PDFOptionList }, response] = await Promise.all([
+        import('pdf-lib'),
+        fetch(currentTrecFormVersion.pdfUrl, { credentials: 'same-origin' }),
+      ]);
+      if (!response.ok) throw new Error('Could not load the official form.');
+      const pdfDocument = await PDFDocument.load(await response.arrayBuffer());
+      const pdfForm = pdfDocument.getForm();
+
+      for (const fieldDefinition of currentTrecFormVersion.fields) {
+        const value = activeDeal.formFields[fieldDefinition.id];
+        if (!value) continue;
+        const pdfField = pdfForm.getFieldMaybe(fieldDefinition.pdfFieldName);
+        if (!pdfField) continue;
+        if (pdfField instanceof PDFTextField) {
+          pdfField.setText(value);
+        } else if (pdfField instanceof PDFCheckBox) {
+          if (value === 'true') pdfField.check();
+          else pdfField.uncheck();
+        } else if (pdfField instanceof PDFRadioGroup && value !== 'true') {
+          if (pdfField.getOptions().includes(value)) pdfField.select(value);
+        } else if ((pdfField instanceof PDFDropdown || pdfField instanceof PDFOptionList) && value !== 'true') {
+          if (pdfField.getOptions().includes(value)) pdfField.select(value);
+        }
+      }
+
+      const bytes = await pdfDocument.save();
+      const pdfBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+      const url = URL.createObjectURL(new Blob([pdfBuffer], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      const filenameBase = (activeDeal.propertyAddress || activeDeal.title || 'transaction')
+        .replace(/[^a-z0-9]+/gi, '-')
+        .replace(/^-|-$/g, '')
+        .toLowerCase();
+      link.href = url;
+      link.download = `${filenameBase}-trec-${currentTrecFormVersion.formNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+      setPdfDownloadState('idle');
+      trackEvent('agent_deal_desk_populated_trec_downloaded');
+    } catch {
+      setPdfDownloadState('error');
+    }
   };
 
   const toggleAddendum = (addendum: string) => {
@@ -1732,7 +1785,21 @@ export default function AgentDealDesk({
                       </div>
                       <p className="text-xs font-semibold text-slate-600">{currentTrecFormVersion.fields.length} total fillable controls · Effective {currentTrecFormVersion.effectiveDate}</p>
                     </div>
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">The official TREC form is displayed unchanged. Move through one page at a time and enter values beside the exact source document. Uploaded values remain suggestions until you apply them.</p>
+                    <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                      <p className="max-w-3xl text-sm leading-6 text-slate-600">The official TREC form is displayed unchanged. Select a worksheet field to highlight its exact location on the form. Uploaded values remain suggestions until you apply them.</p>
+                      {Object.values(activeDeal.formFields).some(Boolean) && (
+                        <button
+                          type="button"
+                          onClick={() => void downloadPopulatedTrecForm()}
+                          disabled={pdfDownloadState === 'building'}
+                          className="inline-flex min-h-[42px] shrink-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:opacity-60"
+                        >
+                          {pdfDownloadState === 'building' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
+                          {pdfDownloadState === 'building' ? 'Building PDF…' : 'Download populated PDF'}
+                        </button>
+                      )}
+                    </div>
+                    {pdfDownloadState === 'error' && <p className="mt-2 text-sm font-semibold text-[#B6402C]">The populated PDF could not be generated. Try again.</p>}
                   </div>
                   <div className="p-4 sm:p-6">
                     <div className="grid gap-2 sm:grid-cols-2">
@@ -1757,11 +1824,11 @@ export default function AgentDealDesk({
                           <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">Official TREC {currentTrecFormVersion.formNumber} · Page {currentTrecPage}</p>
                           <a href={currentTrecFormVersion.pdfUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5B438C] underline underline-offset-2">Open full form</a>
                         </div>
-                        <iframe
-                          key={currentTrecPage}
-                          src={`${currentTrecFormVersion.pdfUrl}#page=${currentTrecPage}&view=FitH`}
-                          title={`Official TREC ${currentTrecFormVersion.formNumber} page ${currentTrecPage}`}
-                          className="h-[520px] w-full bg-white sm:h-[680px]"
+                        <TrecPdfPagePreview
+                          pdfUrl={currentTrecFormVersion.pdfUrl}
+                          pageNumber={currentTrecPage}
+                          selectedFieldName={focusedTrecFieldName}
+                          formNumber={currentTrecFormVersion.formNumber}
                         />
                       </div>
                       <div className="border border-slate-200 bg-[#FCFBF9]">
@@ -1776,6 +1843,8 @@ export default function AgentDealDesk({
                               <input
                                 type="checkbox"
                                 checked={activeDeal.formFields[field.id] === 'true'}
+                                onFocus={() => setFocusedTrecFieldName(field.pdfFieldName)}
+                                onClick={() => setFocusedTrecFieldName(field.pdfFieldName)}
                                 onChange={(event) => updateTrecFormField(field.id, event.target.checked ? 'true' : '')}
                                 className="mt-0.5 h-4 w-4 shrink-0 accent-[#301D5D]"
                               />
@@ -1789,6 +1858,8 @@ export default function AgentDealDesk({
                               <span className="mb-2 block text-sm font-semibold leading-5 text-slate-800">{field.label}</span>
                               <input
                                 value={activeDeal.formFields[field.id] ?? ''}
+                                onFocus={() => setFocusedTrecFieldName(field.pdfFieldName)}
+                                onClick={() => setFocusedTrecFieldName(field.pdfFieldName)}
                                 onChange={(event) => updateTrecFormField(field.id, event.target.value)}
                                 className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
                                 aria-label={`${field.label}, official form page ${field.page}, field ${field.index}`}
