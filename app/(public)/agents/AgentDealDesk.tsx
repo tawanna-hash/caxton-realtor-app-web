@@ -1643,48 +1643,48 @@ export default function AgentDealDesk({
                     </div>
                   </div>
                   <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="rounded-md border border-slate-200 bg-white p-4">
+                    <div className="flex h-full min-h-[210px] flex-col rounded-md border border-slate-200 bg-white p-4">
                       <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
                       <p className="mt-1 text-xs leading-5 text-slate-500">TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies.</p>
                       <input
                         type="date"
                         readOnly
                         value={activeDeadlines.find((deadline) => deadline.id === 'earnest-money-delivery')?.date ?? ''}
-                        className="mt-4 h-[46px] w-full rounded-md border border-slate-300 bg-slate-50 px-3 text-sm text-slate-700"
+                        className="mt-auto h-[46px] w-full rounded-md border border-slate-300 bg-slate-50 px-3 text-sm text-slate-700"
                         aria-label="Calculated earnest money deposit deadline"
                       />
                     </div>
-                    <label className="block rounded-md border border-slate-200 bg-white p-4">
+                    <label className="flex h-full min-h-[210px] flex-col rounded-md border border-slate-200 bg-white p-4">
                       <span className="block text-sm font-bold text-slate-900">Effective Date</span>
                       <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: this is day zero. Contract deadlines begin counting on the following calendar day.</span>
                       <input
                         type="date"
                         value={activeDeal.effectiveDate}
                         onChange={(event) => updateActiveDeal('effectiveDate', event.target.value)}
-                        className="mt-4 h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
+                        className="mt-auto h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
                       />
                     </label>
                     {CALCULATED_TIMELINE_FIELDS.map(({ key, deadlineId, label, rule }) => (
-                      <label key={key} className="block rounded-md border border-slate-200 bg-white p-4">
+                      <label key={key} className="flex h-full min-h-[210px] flex-col rounded-md border border-slate-200 bg-white p-4">
                         <span className="block text-sm font-bold text-slate-900">{label}</span>
-                        <span className="mt-1 block min-h-[40px] text-xs leading-5 text-slate-500">TREC rule: {rule}</span>
+                        <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: {rule}</span>
                         <input
                           type="date"
                           value={activeDeadlines.find((deadline) => deadline.id === deadlineId)?.date ?? ''}
                           disabled={!activeDeal.effectiveDate}
                           onChange={(event) => updateCalculatedDeadline(key, event.target.value)}
-                          className="mt-4 h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D] disabled:cursor-not-allowed disabled:bg-slate-50"
+                          className="mt-auto h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D] disabled:cursor-not-allowed disabled:bg-slate-50"
                         />
                       </label>
                     ))}
-                    <label className="block rounded-md border border-slate-200 bg-white p-4">
+                    <label className="flex h-full min-h-[210px] flex-col rounded-md border border-slate-200 bg-white p-4">
                       <span className="block text-sm font-bold text-slate-900">Closing Date</span>
-                      <span className="mt-1 block min-h-[40px] text-xs leading-5 text-slate-500">TREC rule: use the negotiated closing date stated in Paragraph 9; TREC does not supply a default number of days.</span>
+                      <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: use the negotiated closing date stated in Paragraph 9; TREC does not supply a default number of days.</span>
                       <input
                         type="date"
                         value={activeDeal.closingDate}
                         onChange={(event) => updateActiveDeal('closingDate', event.target.value)}
-                        className="mt-4 h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
+                        className="mt-auto h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
                       />
                     </label>
                   </div>
