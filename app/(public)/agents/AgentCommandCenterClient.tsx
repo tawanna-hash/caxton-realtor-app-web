@@ -8,11 +8,9 @@ import {
   CalendarDays,
   Calculator,
   ChevronRight,
-  FileText,
   Handshake,
   Home,
   Landmark,
-  MapPin,
   RotateCcw,
   ShieldCheck,
   Sparkles,
@@ -406,24 +404,6 @@ export default function AgentCommandCenterClient({
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="flex flex-col gap-6 border border-[#D8D0C2] bg-[#EDE7DC] px-6 py-8 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex gap-4">
-            <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#301D5D] text-white sm:flex">
-              <MapPin className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Built for the field</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">Keep your clients prepared and your local network close.</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Open the tools you need now, then return to the command center whenever the next question arrives.</p>
-            </div>
-          </div>
-          <Link href="/resources" className="inline-flex h-[46px] shrink-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-5 text-sm font-bold text-white transition hover:bg-[#513A85]">
-            Explore agent resources
-            <FileText className="h-4 w-4" aria-hidden="true" />
-          </Link>
-        </div>
-      </section>
     </main>
   );
 }
