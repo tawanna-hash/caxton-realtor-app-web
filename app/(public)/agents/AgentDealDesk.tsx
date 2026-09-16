@@ -1389,7 +1389,7 @@ export default function AgentDealDesk({
                 Page 2 of 2
               </p>
               <p className="mt-1 text-sm font-semibold text-slate-900">
-                Worksheet, tasks and Transaction Forms
+                Workspace, Transaction Forms, Reminders & Tasks
               </p>
             </div>
           ) : (
