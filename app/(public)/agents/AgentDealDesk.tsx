@@ -1908,16 +1908,16 @@ export default function AgentDealDesk({
                   </div>
                   <div className="p-6 sm:p-10">
                     <div className="mb-4">
-                      <span className="mb-2 block text-sm font-bold text-slate-900">Select A TREC Contract Or Form</span>
-                      <p className="mb-3 text-xs font-semibold text-slate-500">Check every form needed for this transaction, then click a form's name to fill it in.</p>
-                      <div className="divide-y divide-slate-200 rounded-md border border-slate-300 bg-white">
+                      <span className="mb-1.5 block text-sm font-bold text-slate-900">Select A TREC Contract Or Form</span>
+                      <p className="mb-2 text-xs text-slate-500">Check the forms needed; click a name to fill it in.</p>
+                      <div className="grid grid-cols-1 divide-y divide-slate-100 rounded-md border border-slate-300 bg-white sm:grid-cols-2 sm:divide-y-0">
                         {activePacketForms.map((version) => {
                           const isSelected = activeDeal.selectedFormFamilies[version.formFamily] ?? false;
                           const isViewing = version.formFamily === currentTrecFormVersion.formFamily;
                           return (
                             <div
                               key={version.id}
-                              className={`flex items-center gap-3 px-3 py-2.5 ${isViewing ? 'bg-[#F8F5FF]' : ''}`}
+                              className={`flex items-center gap-2 px-2.5 py-1.5 ${isViewing ? 'bg-[#F8F5FF]' : ''}`}
                             >
                               <input
                                 type="checkbox"
@@ -1929,7 +1929,7 @@ export default function AgentDealDesk({
                                     [version.formFamily]: event.target.checked,
                                   });
                                 }}
-                                className="h-4 w-4 shrink-0 rounded border-slate-400 text-[#301D5D] focus:ring-[#301D5D]"
+                                className="h-3.5 w-3.5 shrink-0 rounded border-slate-400 text-[#301D5D] focus:ring-[#301D5D]"
                               />
                               <button
                                 type="button"
@@ -1937,12 +1937,13 @@ export default function AgentDealDesk({
                                   setActiveTrecFormFamily(version.formFamily);
                                   setActiveTrecPage(1);
                                 }}
-                                className={`min-w-0 flex-1 truncate text-left text-sm font-semibold ${isViewing ? 'text-[#301D5D]' : 'text-slate-800 hover:text-[#301D5D]'}`}
+                                title={version.title}
+                                className={`min-w-0 flex-1 truncate text-left text-xs font-semibold ${isViewing ? 'text-[#301D5D]' : 'text-slate-800 hover:text-[#301D5D]'}`}
                               >
-                                TREC {version.formNumber} · {version.title}
+                                {version.formNumber} · {version.title}
                               </button>
                               {isViewing && (
-                                <span className="shrink-0 rounded-md bg-[#301D5D] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-white">Viewing</span>
+                                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#301D5D]" aria-label="Currently viewing" title="Currently viewing" />
                               )}
                             </div>
                           );
