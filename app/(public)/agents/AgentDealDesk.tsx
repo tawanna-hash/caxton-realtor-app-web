@@ -436,6 +436,8 @@ export default function AgentDealDesk({
   const syncTimerRef = useRef<number | null>(null);
   const saveInFlightRef = useRef(false);
   const queuedWorkspaceRef = useRef<AgentCommandCenterWorkspace | null>(null);
+  const contractUploadInputRef = useRef<HTMLInputElement | null>(null);
+  const contractCameraInputRef = useRef<HTMLInputElement | null>(null);
 
   const saveToCloud = useCallback(async function saveToCloud(workspace: AgentCommandCenterWorkspace) {
     if (saveInFlightRef.current) {
@@ -1065,9 +1067,11 @@ export default function AgentDealDesk({
                       : 'border-[#7059A8] bg-white text-[#301D5D]'
                   }`}
                 >
-                  <label
-                    htmlFor="agentContractUpload"
-                    className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 px-3 transition hover:bg-violet-50"
+                  <button
+                    type="button"
+                    onClick={() => contractUploadInputRef.current?.click()}
+                    disabled={extractionState === 'extracting'}
+                    className="flex min-w-0 flex-1 items-center justify-center gap-2 px-3 transition hover:bg-violet-50"
                   >
                     {extractionState === 'extracting' ? (
                       <LoaderCircle className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
@@ -1081,18 +1085,7 @@ export default function AgentDealDesk({
                           ? 'Drop to upload'
                           : 'Upload contract'}
                     </span>
-                    <input
-                      id="agentContractUpload"
-                      type="file"
-                      accept="application/pdf,image/png,image/jpeg,image/webp"
-                      disabled={extractionState === 'extracting'}
-                      onChange={(event) => {
-                        void extractContract(event.target.files?.[0]);
-                        event.currentTarget.value = '';
-                      }}
-                      className="sr-only"
-                    />
-                  </label>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setIsUploadMenuOpen((isOpen) => !isOpen)}
@@ -1111,50 +1104,60 @@ export default function AgentDealDesk({
                     role="menu"
                     className="absolute right-0 z-20 mt-2 w-[280px] rounded-md border border-slate-200 bg-white p-2 text-left shadow-lg"
                   >
-                    <label
-                      htmlFor="agentContractUploadMenu"
+                    <button
+                      type="button"
                       role="menuitem"
-                      onClick={() => setIsUploadMenuOpen(false)}
-                      className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-violet-50"
+                      onClick={() => {
+                        contractUploadInputRef.current?.click();
+                        setIsUploadMenuOpen(false);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
                     >
                       <FileUp className="h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
                       Choose PDF or image
-                      <input
-                        id="agentContractUploadMenu"
-                        type="file"
-                        accept="application/pdf,image/png,image/jpeg,image/webp"
-                        onChange={(event) => {
-                          void extractContract(event.target.files?.[0]);
-                          event.currentTarget.value = '';
-                        }}
-                        className="sr-only"
-                      />
-                    </label>
-                    <label
-                      htmlFor="agentContractCameraUpload"
+                    </button>
+                    <button
+                      type="button"
                       role="menuitem"
-                      onClick={() => setIsUploadMenuOpen(false)}
-                      className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-violet-50"
+                      onClick={() => {
+                        contractCameraInputRef.current?.click();
+                        setIsUploadMenuOpen(false);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
                     >
                       <Camera className="h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
                       Take a photo
-                      <input
-                        id="agentContractCameraUpload"
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        capture="environment"
-                        onChange={(event) => {
-                          void extractContract(event.target.files?.[0]);
-                          event.currentTarget.value = '';
-                        }}
-                        className="sr-only"
-                      />
-                    </label>
+                    </button>
                     <p className="border-t border-slate-100 px-3 pt-2.5 text-xs leading-5 text-slate-500">
                       PDF, PNG, JPG, or WEBP · 15 MB maximum. Your file is read securely, then discarded.
                     </p>
                   </div>
                 )}
+                <input
+                  ref={contractUploadInputRef}
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg,image/webp"
+                  disabled={extractionState === 'extracting'}
+                  onChange={(event) => {
+                    void extractContract(event.target.files?.[0]);
+                    event.currentTarget.value = '';
+                  }}
+                  className="sr-only"
+                  tabIndex={-1}
+                />
+                <input
+                  ref={contractCameraInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  capture="environment"
+                  disabled={extractionState === 'extracting'}
+                  onChange={(event) => {
+                    void extractContract(event.target.files?.[0]);
+                    event.currentTarget.value = '';
+                  }}
+                  className="sr-only"
+                  tabIndex={-1}
+                />
               </div>
             </div>
           ) : (
