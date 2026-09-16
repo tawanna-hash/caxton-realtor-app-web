@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PDFDocumentProxy, PageViewport } from 'pdfjs-dist';
+import type { TrecFormFieldDefinition } from '@/lib/trec-20-19-fields';
 
 type FieldLocation = {
   page: number;
@@ -14,13 +15,17 @@ type FieldLocation = {
 export default function TrecPdfPagePreview({
   pdfUrl,
   pageNumber,
-  selectedFieldName,
   formNumber,
+  fields,
+  values,
+  onFieldChange,
 }: {
   pdfUrl: string;
   pageNumber: number;
-  selectedFieldName: string | null;
   formNumber: string;
+  fields: TrecFormFieldDefinition[];
+  values: Record<string, string>;
+  onFieldChange: (fieldId: string, value: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -130,23 +135,26 @@ export default function TrecPdfPagePreview({
     };
   }, [containerWidth, pageNumber, status]);
 
-  const highlight = useMemo(() => {
-    if (!selectedFieldName || !viewport) return null;
-    const location = fieldLocations[selectedFieldName];
-    if (!location || location.page !== pageNumber) return null;
-    const [x1, y1, x2, y2] = viewport.convertToViewportRectangle([
-      location.x,
-      location.y,
-      location.x + location.width,
-      location.y + location.height,
-    ]);
-    return {
-      left: Math.min(x1, x2),
-      top: Math.min(y1, y2),
-      width: Math.max(8, Math.abs(x2 - x1)),
-      height: Math.max(8, Math.abs(y2 - y1)),
-    };
-  }, [fieldLocations, pageNumber, selectedFieldName, viewport]);
+  const controls = useMemo(() => {
+    if (!viewport) return [];
+    return fields.flatMap((field) => {
+      const location = fieldLocations[field.pdfFieldName];
+      if (!location || location.page !== pageNumber) return [];
+      const [x1, y1, x2, y2] = viewport.convertToViewportRectangle([
+        location.x,
+        location.y,
+        location.x + location.width,
+        location.y + location.height,
+      ]);
+      return [{
+        field,
+        left: Math.min(x1, x2),
+        top: Math.min(y1, y2),
+        width: Math.max(10, Math.abs(x2 - x1)),
+        height: Math.max(10, Math.abs(y2 - y1)),
+      }];
+    });
+  }, [fieldLocations, fields, pageNumber, viewport]);
 
   return (
     <div ref={containerRef} className="relative min-h-[420px] w-full overflow-hidden bg-white">
@@ -169,13 +177,42 @@ export default function TrecPdfPagePreview({
         aria-label={`Official TREC ${formNumber} page ${pageNumber}`}
         className={status === 'error' ? 'hidden' : 'block max-w-full'}
       />
-      {highlight && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute z-20 rounded-sm border-2 border-[#8A5A00] bg-[#FFD966]/45 shadow-[0_0_0_2px_rgba(255,255,255,0.9)]"
-          style={highlight}
-        />
-      )}
+      {status === 'ready' && controls.map(({ field, left, top, width, height }) => {
+        const isToggle = field.type === 'checkbox' || field.type === 'radio';
+        if (isToggle) {
+          return (
+            <input
+              key={field.id}
+              type="checkbox"
+              checked={values[field.id] === 'true'}
+              onChange={(event) => onFieldChange(field.id, event.target.checked ? 'true' : '')}
+              aria-label={`${field.label}, official form page ${field.page}`}
+              title={field.label}
+              className="absolute z-20 cursor-pointer appearance-none rounded-[2px] border border-[#446B9E] bg-[#FFF4B8]/70 checked:bg-[#301D5D] checked:after:absolute checked:after:left-1/2 checked:after:top-1/2 checked:after:h-[55%] checked:after:w-[30%] checked:after:-translate-x-1/2 checked:after:-translate-y-[60%] checked:after:rotate-45 checked:after:border-b-2 checked:after:border-r-2 checked:after:border-white focus:outline-none focus:ring-2 focus:ring-[#C88A14] focus:ring-offset-1"
+              style={{ left, top, width, height }}
+            />
+          );
+        }
+        return (
+          <input
+            key={field.id}
+            type="text"
+            value={values[field.id] ?? ''}
+            onChange={(event) => onFieldChange(field.id, event.target.value)}
+            aria-label={`${field.label}, official form page ${field.page}`}
+            title={field.label}
+            className="absolute z-20 border border-[#446B9E]/65 bg-[#FFF4B8]/55 px-[2px] font-sans text-slate-950 outline-none transition hover:bg-[#FFF0A0]/75 focus:border-[#8A5A00] focus:bg-[#FFF4B8]/90 focus:ring-2 focus:ring-[#C88A14]"
+            style={{
+              left,
+              top,
+              width,
+              height,
+              fontSize: Math.max(8, height * 0.72),
+              lineHeight: `${height}px`,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }

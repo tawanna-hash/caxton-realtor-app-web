@@ -453,7 +453,6 @@ export default function AgentDealDesk({
   const [cameraError, setCameraError] = useState('');
   const [contractPreviewUrl, setContractPreviewUrl] = useState('');
   const [activeTrecPage, setActiveTrecPage] = useState(1);
-  const [focusedTrecFieldName, setFocusedTrecFieldName] = useState<string | null>(null);
   const [pdfDownloadState, setPdfDownloadState] = useState<'idle' | 'building' | 'error'>('idle');
   const [workspacePage, setWorkspacePage] = useState<1 | 2>(1);
   const versionRef = useRef<number | null>(initialWorkspaceVersion);
@@ -1786,7 +1785,7 @@ export default function AgentDealDesk({
                       <p className="text-xs font-semibold text-slate-600">{currentTrecFormVersion.fields.length} total fillable controls · Effective {currentTrecFormVersion.effectiveDate}</p>
                     </div>
                     <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                      <p className="max-w-3xl text-sm leading-6 text-slate-600">The official TREC form is displayed unchanged. Select a worksheet field to highlight its exact location on the form. Uploaded values remain suggestions until you apply them.</p>
+                      <p className="max-w-3xl text-sm leading-6 text-slate-600">Fill in the highlighted controls directly on the official TREC form. Uploaded contract values appear in these same fields after you review and apply them.</p>
                       {Object.values(activeDeal.formFields).some(Boolean) && (
                         <button
                           type="button"
@@ -1818,8 +1817,8 @@ export default function AgentDealDesk({
                         </button>
                       ))}
                     </div>
-                    <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-                      <div className="overflow-hidden border border-slate-200 bg-slate-100">
+                    <div className="mt-5">
+                      <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-slate-100 shadow-sm">
                         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2">
                           <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">Official TREC {currentTrecFormVersion.formNumber} · Page {currentTrecPage}</p>
                           <a href={currentTrecFormVersion.pdfUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5B438C] underline underline-offset-2">Open full form</a>
@@ -1827,46 +1826,11 @@ export default function AgentDealDesk({
                         <TrecPdfPagePreview
                           pdfUrl={currentTrecFormVersion.pdfUrl}
                           pageNumber={currentTrecPage}
-                          selectedFieldName={focusedTrecFieldName}
                           formNumber={currentTrecFormVersion.formNumber}
+                          fields={trecFieldsForStep.filter((field) => field.page === currentTrecPage)}
+                          values={activeDeal.formFields}
+                          onFieldChange={updateTrecFormField}
                         />
-                      </div>
-                      <div className="border border-slate-200 bg-[#FCFBF9]">
-                        <div className="border-b border-slate-200 bg-white px-4 py-3">
-                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#7059A8]">Page {currentTrecPage}</p>
-                          <h5 className="mt-1 text-base font-semibold leading-6 text-slate-950">{currentTrecFormVersion.pageSections[currentTrecPage] ?? `Official TREC page ${currentTrecPage}`}</h5>
-                          <p className="mt-1 text-xs leading-5 text-slate-600">Complete the fillable controls in the same order they appear on the official page.</p>
-                        </div>
-                        <div className="max-h-[680px] space-y-4 overflow-y-auto p-4">
-                          {trecFieldsForStep.filter((field) => field.page === currentTrecPage).map((field) => field.type === 'checkbox' || field.type === 'radio' ? (
-                            <label key={field.id} className="flex min-h-[46px] cursor-pointer items-start gap-3 rounded-md border border-slate-300 bg-white px-3 py-3 text-sm text-slate-800">
-                              <input
-                                type="checkbox"
-                                checked={activeDeal.formFields[field.id] === 'true'}
-                                onFocus={() => setFocusedTrecFieldName(field.pdfFieldName)}
-                                onClick={() => setFocusedTrecFieldName(field.pdfFieldName)}
-                                onChange={(event) => updateTrecFormField(field.id, event.target.checked ? 'true' : '')}
-                                className="mt-0.5 h-4 w-4 shrink-0 accent-[#301D5D]"
-                              />
-                              <span>
-                                <span className="font-semibold leading-5">{field.label}</span>
-                                <span className="mt-1 block text-[11px] text-slate-500">Official fillable control {field.index}</span>
-                              </span>
-                            </label>
-                          ) : (
-                            <label key={field.id} className="block">
-                              <span className="mb-2 block text-sm font-semibold leading-5 text-slate-800">{field.label}</span>
-                              <input
-                                value={activeDeal.formFields[field.id] ?? ''}
-                                onFocus={() => setFocusedTrecFieldName(field.pdfFieldName)}
-                                onClick={() => setFocusedTrecFieldName(field.pdfFieldName)}
-                                onChange={(event) => updateTrecFormField(field.id, event.target.value)}
-                                className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
-                                aria-label={`${field.label}, official form page ${field.page}, field ${field.index}`}
-                              />
-                            </label>
-                          ))}
-                        </div>
                       </div>
                     </div>
                   </div>
