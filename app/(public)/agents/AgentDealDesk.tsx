@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Bell,
+  Building2,
   Camera,
   CalendarDays,
   Check,
@@ -867,6 +868,7 @@ export default function AgentDealDesk({
   };
 
   const activeDeal = deals.find((deal) => deal.id === activeDealId) ?? null;
+  const activeDeals = deals.filter((deal) => !deal.closeoutOutcome);
   const activePacketForms = trecFormVersions.filter((version) => version.isActive);
   const currentTrecFormVersion = activePacketForms.find((version) => version.formFamily === activeTrecFormFamily)
     ?? activePacketForms[0]
@@ -1585,7 +1587,7 @@ export default function AgentDealDesk({
                     className="min-h-[42px] max-w-[210px] border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#301D5D]"
                   >
                     {deals.map((deal) => <option key={deal.id} value={deal.id}>{deal.propertyAddress || deal.title}</option>)}
-                    <option value="__new__">+ Start another transaction</option>
+                    <option value="__new__">+ Start a New Transaction</option>
                   </select>
                   {activeDeal && (
                     pendingRemoval === activeDeal.id ? (
@@ -1973,6 +1975,55 @@ export default function AgentDealDesk({
               </>
             )}
           </div>
+        )}
+
+        {workspacePage === 2 && activeDeals.length > 0 && (
+          <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <Building2 className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Active Deals</p>
+                <h3 className="mt-1 text-xl font-semibold text-slate-950">{activeDeals.length} Transaction{activeDeals.length === 1 ? '' : 's'} In Progress</h3>
+              </div>
+            </div>
+            <div className="mt-5 overflow-x-auto">
+              <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
+                    <th scope="col" className="py-2 pr-4 font-bold">Transaction</th>
+                    <th scope="col" className="py-2 pr-4 font-bold">Stage</th>
+                    <th scope="col" className="py-2 pr-4 font-bold">Effective Date</th>
+                    <th scope="col" className="py-2 pr-4 font-bold">Closing Date</th>
+                    <th scope="col" className="py-2 pl-4" aria-label="Open transaction" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeDeals.map((deal) => (
+                    <tr
+                      key={deal.id}
+                      onClick={() => focusDeal(deal.id)}
+                      className={`cursor-pointer border-b border-slate-100 transition last:border-0 hover:bg-[#F8F5FF] ${deal.id === activeDealId ? 'bg-[#F8F5FF]' : ''}`}
+                    >
+                      <td className="py-3 pr-4">
+                        <span className="block font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
+                        {(deal.buyerNames || deal.sellerNames) && (
+                          <span className="mt-0.5 block text-xs text-slate-500">{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(' · ')}</span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4">
+                        <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span>
+                      </td>
+                      <td className="py-3 pr-4 text-slate-700">{deal.effectiveDate ? formatDate(deal.effectiveDate) : '—'}</td>
+                      <td className="py-3 pr-4 text-slate-700">{deal.closingDate ? formatDate(deal.closingDate) : '—'}</td>
+                      <td className="py-3 pl-4 text-right">
+                        <ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
         )}
 
         {workspacePage === 2 && activeDeal && (
