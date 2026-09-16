@@ -1843,7 +1843,7 @@ export default function AgentDealDesk({
                         type="date"
                         value={activeDeal.effectiveDate}
                         onChange={(event) => updateActiveDeal('effectiveDate', event.target.value)}
-                        className="mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-[#301D5D] sm:mt-auto sm:text-sm"
+                        className="agent-date-input mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-[#301D5D] sm:mt-auto sm:text-sm"
                       />
                     </label>
                     <div className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
@@ -1853,7 +1853,7 @@ export default function AgentDealDesk({
                         type="date"
                         readOnly
                         value={activeDeadlines.find((deadline) => deadline.id === 'earnest-money-delivery')?.date ?? ''}
-                        className="mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-slate-50 px-3 text-base text-slate-700 sm:mt-auto sm:text-sm"
+                        className="agent-date-input mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-slate-50 px-3 text-base text-slate-700 sm:mt-auto sm:text-sm"
                         aria-label="Calculated earnest money deposit deadline"
                       />
                     </div>
@@ -1866,7 +1866,7 @@ export default function AgentDealDesk({
                           value={activeDeadlines.find((deadline) => deadline.id === deadlineId)?.date ?? ''}
                           disabled={!activeDeal.effectiveDate}
                           onChange={(event) => updateCalculatedDeadline(key, event.target.value)}
-                          className="mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-[#301D5D] disabled:cursor-not-allowed disabled:bg-slate-50 sm:mt-auto sm:text-sm"
+                          className="agent-date-input mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-[#301D5D] disabled:cursor-not-allowed disabled:bg-slate-50 sm:mt-auto sm:text-sm"
                         />
                       </label>
                     ))}
@@ -1877,7 +1877,7 @@ export default function AgentDealDesk({
                         type="date"
                         value={activeDeal.closingDate}
                         onChange={(event) => updateActiveDeal('closingDate', event.target.value)}
-                        className="mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-[#301D5D] sm:mt-auto sm:text-sm"
+                        className="agent-date-input mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-[#301D5D] sm:mt-auto sm:text-sm"
                       />
                     </label>
                   </div>
