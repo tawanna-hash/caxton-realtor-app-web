@@ -1630,8 +1630,8 @@ export default function AgentDealDesk({
                   <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="rounded-md border border-slate-200 bg-white p-4">
                       <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">Initial deposit due to escrow</p>
-                      <p className="mt-4 text-lg font-semibold text-slate-900">3 days</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">Due by the end of the third calendar day after the contract&apos;s effective date</p>
+                      <p className="mt-4 text-lg font-semibold text-slate-900">Third calendar day</p>
                     </div>
                     {TIMING_FIELDS.map(({ key, label, description, type, suffix }) => (
                       <label key={key} className="block rounded-md border border-slate-200 bg-white p-4">
@@ -1651,7 +1651,7 @@ export default function AgentDealDesk({
                       </label>
                     ))}
                   </div>
-                  <p className="mt-4 text-xs leading-5 text-slate-500">The earnest money deadline is calculated using the TREC three-day delivery rule. Other timing is calculated from the effective date and the signed contract entries.</p>
+                  <p className="mt-4 text-xs leading-5 text-slate-500">The earnest money deadline is calculated as the end of the third calendar day after the effective date. If that day falls on a Saturday, Sunday, or legal holiday, the existing deadline calculation rolls it to the end of the next non-holiday weekday. Other timing is calculated from the effective date and signed contract entries.</p>
                 </div>
 
                 <section className="mt-7 border border-[#D9D0BF] bg-white" aria-labelledby="official-trec-fields-title">
