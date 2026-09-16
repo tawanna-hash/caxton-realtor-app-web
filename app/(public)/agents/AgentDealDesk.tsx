@@ -871,6 +871,9 @@ export default function AgentDealDesk({
   const activeDeal = deals.find((deal) => deal.id === activeDealId) ?? null;
   const activeDeals = deals.filter((deal) => !deal.closeoutOutcome);
   const activePacketForms = trecFormVersions.filter((version) => version.isActive);
+  const selectedFormVersions = activeDeal
+    ? activePacketForms.filter((version) => activeDeal.selectedFormFamilies[version.formFamily])
+    : [];
   const currentTrecFormVersion = activePacketForms.find((version) => version.formFamily === activeTrecFormFamily)
     ?? activePacketForms[0]
     ?? trecFormVersion;
@@ -1571,6 +1574,12 @@ export default function AgentDealDesk({
                 <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">
                   {activeDeal?.propertyAddress || activeDeal?.title || 'Start a transaction'}
                 </h3>
+                {selectedFormVersions.length > 0 && (
+                  <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                    <FileText className="h-3.5 w-3.5 text-[#7059A8]" aria-hidden="true" />
+                    {selectedFormVersions.length} form{selectedFormVersions.length === 1 ? '' : 's'} selected: {selectedFormVersions.map((version) => version.formNumber).join(', ')}
+                  </p>
+                )}
               </div>
               {deals.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -1950,6 +1959,30 @@ export default function AgentDealDesk({
                         })}
                       </div>
                     </div>
+                    {selectedFormVersions.length > 0 && (
+                      <div className="mb-4">
+                        <span className="mb-1.5 block text-xs font-bold uppercase tracking-[0.1em] text-slate-500">Selected Forms ({selectedFormVersions.length})</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedFormVersions.map((version) => {
+                            const isViewing = version.formFamily === currentTrecFormVersion.formFamily;
+                            return (
+                              <button
+                                key={version.id}
+                                type="button"
+                                title={version.title}
+                                onClick={() => {
+                                  setActiveTrecFormFamily(version.formFamily);
+                                  setActiveTrecPage(1);
+                                }}
+                                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition ${isViewing ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-[#301D5D] hover:text-[#301D5D]'}`}
+                              >
+                                {version.formNumber}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     <div className="mb-4 flex flex-col gap-3 rounded-md border border-slate-200 bg-[#FCFBF9] p-3 sm:flex-row sm:items-center sm:justify-between">
                       <button
                         type="button"
@@ -2008,13 +2041,14 @@ export default function AgentDealDesk({
               </div>
             </div>
             <div className="mt-5 overflow-x-auto">
-              <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+              <table className="w-full min-w-[820px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
                     <th scope="col" className="py-2 pr-4 font-bold">Transaction</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Stage</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Effective Date</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Closing Date</th>
+                    <th scope="col" className="py-2 pr-4 font-bold">Forms</th>
                     <th scope="col" className="py-2 pl-4" aria-label="Open transaction" />
                   </tr>
                 </thead>
@@ -2036,6 +2070,20 @@ export default function AgentDealDesk({
                       </td>
                       <td className="py-3 pr-4 text-slate-700">{deal.effectiveDate ? formatDate(deal.effectiveDate) : '—'}</td>
                       <td className="py-3 pr-4 text-slate-700">{deal.closingDate ? formatDate(deal.closingDate) : '—'}</td>
+                      <td className="py-3 pr-4">
+                        {(() => {
+                          const dealFormVersions = activePacketForms.filter((version) => deal.selectedFormFamilies[version.formFamily]);
+                          if (dealFormVersions.length === 0) return <span className="text-slate-400">—</span>;
+                          return (
+                            <span
+                              title={dealFormVersions.map((version) => version.formNumber).join(', ')}
+                              className="inline-flex rounded-md bg-[#F8F5FF] px-2 py-1 text-xs font-bold text-[#5B438C]"
+                            >
+                              {dealFormVersions.length} form{dealFormVersions.length === 1 ? '' : 's'}
+                            </span>
+                          );
+                        })()}
+                      </td>
                       <td className="py-3 pl-4 text-right">
                         <ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" />
                       </td>
