@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Circle,
   ClipboardCheck,
   Download,
   FileText,
@@ -25,6 +26,7 @@ import {
   Save,
   Smartphone,
   Trash2,
+  X,
 } from 'lucide-react';
 import PushOptInButton from '@/components/PushOptInButton';
 import TrecPdfPagePreview from './TrecPdfPagePreview';
@@ -663,6 +665,7 @@ export default function AgentDealDesk({
   const [contractPreviewUrl, setContractPreviewUrl] = useState('');
   const [activeTrecFormFamily, setActiveTrecFormFamily] = useState('20');
   const [activeTrecPage, setActiveTrecPage] = useState(1);
+  const [formsStatusDealId, setFormsStatusDealId] = useState<string | null>(null);
   const [workspacePage, setWorkspacePage] = useState<1 | 2>(2);
   const versionRef = useRef<number | null>(initialWorkspaceVersion);
   const syncTimerRef = useRef<number | null>(null);
@@ -874,6 +877,13 @@ export default function AgentDealDesk({
   const selectedFormVersions = activeDeal
     ? activePacketForms.filter((version) => activeDeal.selectedFormFamilies[version.formFamily])
     : [];
+  const dealFormStatus = (deal: AgentDeal, version: TrecFormVersion): 'completed' | 'needs_attention' | 'not_started' => {
+    if (version.fields.length === 0) return 'not_started';
+    const filledCount = version.fields.filter((field) => (deal.formFields[field.id] ?? '').trim() !== '').length;
+    if (filledCount === 0) return 'not_started';
+    if (filledCount === version.fields.length) return 'completed';
+    return 'needs_attention';
+  };
   const currentTrecFormVersion = activePacketForms.find((version) => version.formFamily === activeTrecFormFamily)
     ?? activePacketForms[0]
     ?? trecFormVersion;
@@ -2056,7 +2066,10 @@ export default function AgentDealDesk({
                   {activeDeals.map((deal) => (
                     <tr
                       key={deal.id}
-                      onClick={() => focusDeal(deal.id)}
+                      onClick={() => {
+                        focusDeal(deal.id);
+                        setFormsStatusDealId(deal.id);
+                      }}
                       className={`cursor-pointer border-b border-slate-100 transition last:border-0 hover:bg-[#F8F5FF] ${deal.id === activeDealId ? 'bg-[#F8F5FF]' : ''}`}
                     >
                       <td className="py-3 pr-4">
@@ -2094,6 +2107,80 @@ export default function AgentDealDesk({
             </div>
           </section>
         )}
+
+        {formsStatusDealId && (() => {
+          const statusDeal = deals.find((deal) => deal.id === formsStatusDealId);
+          if (!statusDeal) return null;
+          const statusFormVersions = activePacketForms.filter((version) => statusDeal.selectedFormFamilies[version.formFamily]);
+          const STATUS_META = {
+            completed: { label: 'Completed', icon: CheckCircle2, className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+            needs_attention: { label: 'Needs Attention', icon: AlertTriangle, className: 'bg-amber-50 text-amber-700 border-amber-200' },
+            not_started: { label: 'Not Started', icon: Circle, className: 'bg-slate-100 text-slate-600 border-slate-200' },
+          } as const;
+          return (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"
+              onClick={() => setFormsStatusDealId(null)}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Transaction forms status"
+                onClick={(event) => event.stopPropagation()}
+                className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-md border border-slate-200 bg-white shadow-xl"
+              >
+                <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7059A8]">Transaction Forms</p>
+                    <h4 className="mt-0.5 text-lg font-semibold text-slate-950">{statusDeal.propertyAddress || statusDeal.title}</h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormsStatusDealId(null)}
+                    aria-label="Close"
+                    className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  >
+                    <X className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                </div>
+                <div className="p-5">
+                  {statusFormVersions.length === 0 ? (
+                    <p className="text-sm text-slate-600">No forms have been selected for this transaction yet. Check off forms in Transaction Forms to add them here.</p>
+                  ) : (
+                    <ul className="divide-y divide-slate-100">
+                      {statusFormVersions.map((version) => {
+                        const status = dealFormStatus(statusDeal, version);
+                        const meta = STATUS_META[status];
+                        const StatusIcon = meta.icon;
+                        return (
+                          <li key={version.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveDealId(statusDeal.id);
+                                setActiveTrecFormFamily(version.formFamily);
+                                setActiveTrecPage(1);
+                                setFormsStatusDealId(null);
+                                window.setTimeout(() => document.getElementById('trec-form-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+                              }}
+                              className="flex w-full items-center justify-between gap-3 py-2.5 text-left hover:bg-[#F8F5FF]"
+                            >
+                              <span className="min-w-0 truncate text-sm font-semibold text-slate-800">{version.formNumber} · {version.title}</span>
+                              <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${meta.className}`}>
+                                <StatusIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                                {meta.label}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {workspacePage === 2 && activeDeal && (
           <>
