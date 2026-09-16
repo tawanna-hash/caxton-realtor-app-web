@@ -73,14 +73,251 @@ const STATUS_LABELS: Record<AgentDealStatus, string> = {
   completed: 'Completed',
 };
 
-const DOCUMENT_TEMPLATES = [
-  ['executed-contract', 'Executed TREC contract'],
-  ['financing-addendum', 'Financing addendum, if applicable'],
-  ['seller-disclosure', 'Seller disclosure'],
-  ['title-commitment', 'Title commitment'],
-  ['survey', 'Survey or survey election'],
-  ['delivery-confirmation', 'Earnest and option delivery confirmation'],
+type ReadinessDocumentTemplate = {
+  id: string;
+  label: string;
+  description: string;
+};
+
+type ReadinessDocumentGroup = {
+  id: string;
+  label: string;
+  items: readonly ReadinessDocumentTemplate[];
+};
+
+const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
+  {
+    id: 'buyer',
+    label: 'Buyer Documentation',
+    items: [
+      {
+        id: 'buyer-iabs',
+        label: 'Information About Brokerage Services (IABS)',
+        description: 'Mandatory TREC informational form outlining representation pathways.',
+      },
+      {
+        id: 'buyer-representation-agreement',
+        label: 'Buyer Representation Agreement',
+        description: 'Formal contract between the buyer and their brokerage.',
+      },
+      {
+        id: 'buyer-pre-approval-letter',
+        label: 'Pre-Approval Letter',
+        description: 'Initial verification from a lender showing purchasing power.',
+      },
+      {
+        id: 'delivery-confirmation',
+        label: 'Earnest Money & Option Fee Receipts',
+        description: 'Title and escrow validation of contract security deposits.',
+      },
+      {
+        id: 'buyer-property-inspection-report',
+        label: 'Property Inspection Report',
+        description: 'Visual inspection of structure and systems by a licensed Texas inspector.',
+      },
+    ],
+  },
+  {
+    id: 'seller',
+    label: 'Seller Documentation',
+    items: [
+      {
+        id: 'executed-contract',
+        label: 'TREC One to Four Family Residential Contract',
+        description: 'The standard promulgated purchase agreement.',
+      },
+      {
+        id: 'seller-disclosure',
+        label: "Seller's Disclosure Notice",
+        description: 'Legally required property condition disclosure.',
+      },
+      {
+        id: 'survey',
+        label: 'Property Survey & T-47 Residential Real Property Affidavit',
+        description: 'Document showing property boundaries along with a notarized declaration of any changes.',
+      },
+      {
+        id: 'seller-hoa-subdivision-information',
+        label: 'HOA Subdivision Information & Addendum',
+        description: 'Disclosure of rules, fees, and resale certificates for planned communities.',
+      },
+      {
+        id: 'seller-general-warranty-deed',
+        label: 'General Warranty Deed',
+        description: 'Legal instrument executed at closing to transfer title securely.',
+      },
+    ],
+  },
+  {
+    id: 'lender',
+    label: 'Lender Documentation',
+    items: [
+      {
+        id: 'lender-loan-estimate',
+        label: 'Loan Estimate (LE)',
+        description: 'Three-page form outlining estimated loan terms, features, and closing costs.',
+      },
+      {
+        id: 'lender-closing-disclosure',
+        label: 'Closing Disclosure (CD)',
+        description: 'Final itemized breakdown of closing fees delivered at least three days before closing.',
+      },
+      {
+        id: 'lender-deed-of-trust',
+        label: 'Deed of Trust',
+        description: 'The security instrument securing the mortgage loan against the real estate.',
+      },
+      {
+        id: 'lender-promissory-note',
+        label: 'Promissory Note',
+        description: "The borrower's binding legal promise to repay the loan.",
+      },
+    ],
+  },
 ] as const;
+
+const DOCUMENT_TEMPLATES = DOCUMENT_GROUPS.flatMap((group) => group.items);
+const DOCUMENT_TEMPLATE_IDS = new Set<string>(DOCUMENT_TEMPLATES.map((item) => item.id));
+
+function mergeReadinessDocuments(deal: AgentDeal): AgentDeal {
+  const existingDocuments = new Map(deal.documents.map((document) => [document.id, document]));
+  const requestedAt = deal.createdAt || new Date().toISOString();
+  const readinessDocuments: AgentDocument[] = DOCUMENT_TEMPLATES.map((template) => {
+    const existing = existingDocuments.get(template.id);
+    return existing
+      ? { ...existing, label: template.label }
+      : {
+          id: template.id,
+          label: template.label,
+          status: 'requested',
+          complete: false,
+          requestedAt,
+          updatedAt: requestedAt,
+        };
+  });
+  const additionalDocuments = deal.documents.filter((document) => !DOCUMENT_TEMPLATE_IDS.has(document.id));
+  return { ...deal, documents: [...readinessDocuments, ...additionalDocuments] };
+}
+
+function ReadinessChecklist({
+  headingTag = 'h3',
+  documents,
+  documentName,
+  setDocumentName,
+  addDocument,
+  updateDocument,
+  reviewAlerts,
+}: {
+  headingTag?: 'h2' | 'h3';
+  documents: AgentDocument[];
+  documentName: string;
+  setDocumentName: (value: string) => void;
+  addDocument: () => void;
+  updateDocument: (documentId: string, status: AgentDocument['status']) => void;
+  reviewAlerts: string[];
+}) {
+  const Heading = headingTag;
+  const additionalDocuments = documents.filter((document) => !DOCUMENT_TEMPLATE_IDS.has(document.id));
+
+  const renderDocument = (document: AgentDocument, description?: string) => (
+    <div key={document.id} className="grid min-w-0 gap-3 border-t border-slate-200 px-4 py-4 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_140px] sm:items-center">
+      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${document.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`}>
+        <Check className="h-3.5 w-3.5" aria-hidden="true" />
+      </span>
+      <div className="min-w-0">
+        <p className={`text-sm font-semibold leading-5 ${document.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{document.label}</p>
+        {description ? <p className="mt-1 text-xs leading-5 text-slate-600">{description}</p> : null}
+      </div>
+      <select
+        value={document.status}
+        onChange={(event) => updateDocument(document.id, event.target.value as AgentDocument['status'])}
+        aria-label={`Status for ${document.label}`}
+        className="min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15"
+      >
+        <option value="requested">Requested</option>
+        <option value="received">Received</option>
+        <option value="reviewed">Reviewed</option>
+        <option value="not_needed">Not needed</option>
+      </select>
+    </div>
+  );
+
+  return (
+    <div className="border border-slate-200 bg-white p-5 sm:p-6">
+      <div className="flex items-center gap-2">
+        <FileText className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Readiness check</p>
+          <Heading className="mt-1 text-xl font-semibold text-slate-950">Transaction readiness checklist</Heading>
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-5">
+        {DOCUMENT_GROUPS.map((group) => {
+          const groupDocuments = group.items
+            .map((item) => ({ item, document: documents.find((document) => document.id === item.id) }))
+            .filter((entry): entry is { item: (typeof group.items)[number]; document: AgentDocument } => Boolean(entry.document));
+          const completeCount = groupDocuments.filter(({ document }) => document.complete || document.status === 'not_needed').length;
+
+          return (
+            <section key={group.id} className="overflow-hidden rounded-md border border-slate-200">
+              <div className="flex items-center justify-between gap-3 bg-[#F7F5F1] px-4 py-3">
+                <h4 className="text-sm font-bold text-slate-950">{group.label}</h4>
+                <span className="shrink-0 rounded-md bg-white px-2.5 py-1 text-xs font-bold text-[#301D5D]">{completeCount} of {groupDocuments.length}</span>
+              </div>
+              <div>{groupDocuments.map(({ item, document }) => renderDocument(document, item.description))}</div>
+            </section>
+          );
+        })}
+
+        {additionalDocuments.length ? (
+          <section className="overflow-hidden rounded-md border border-slate-200">
+            <div className="bg-[#F7F5F1] px-4 py-3">
+              <h4 className="text-sm font-bold text-slate-950">Additional Documentation</h4>
+            </div>
+            <div>{additionalDocuments.map((document) => renderDocument(document))}</div>
+          </section>
+        ) : null}
+      </div>
+
+      <div className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <input
+          value={documentName}
+          onChange={(event) => setDocumentName(event.target.value)}
+          className="min-h-[44px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15"
+          placeholder="Custom document request"
+        />
+        <button
+          type="button"
+          onClick={addDocument}
+          disabled={!documentName.trim()}
+          className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-[#7059A8] bg-white px-5 text-sm font-bold text-[#301D5D] transition hover:bg-[#F3EFFA] disabled:opacity-40"
+        >
+          Request
+        </button>
+      </div>
+
+      <div className="mt-5 border-t border-slate-200 pt-5">
+        <p className="text-sm font-semibold text-slate-800">Operational review alerts</p>
+        {reviewAlerts.length ? (
+          <ul className="mt-3 space-y-2">
+            {reviewAlerts.slice(0, 4).map((alert) => (
+              <li key={alert} className="flex gap-2 text-sm leading-5 text-slate-600">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#B6402C]" aria-hidden="true" />
+                {alert}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 flex items-center gap-2 text-sm text-[#38643A]">
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+            No worksheet alerts for your active transactions.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const CONTRACT_DETAIL_FIELDS: ReadonlyArray<{
   key: keyof AgentContractDetails;
@@ -205,7 +442,7 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     addenda: {},
     reminders: [],
     tasks: [],
-    documents: DOCUMENT_TEMPLATES.map(([id, label]) => ({ id, label, status: 'requested' as const, complete: false, requestedAt: now, updatedAt: now })),
+    documents: DOCUMENT_TEMPLATES.map(({ id, label }) => ({ id, label, status: 'requested' as const, complete: false, requestedAt: now, updatedAt: now })),
     activity: [{ id: getId('activity'), message: 'Transaction workspace created', createdAt: now }],
     createdAt: now,
     updatedAt: now,
@@ -535,22 +772,30 @@ export default function AgentDealDesk({
       deals: legacyDeals,
       notificationPreferences: defaultAgentNotificationPreferences(),
     };
+    const migratedDeals = startingWorkspace.deals.map(mergeReadinessDocuments);
+    const readinessChecklistChanged = JSON.stringify(migratedDeals) !== JSON.stringify(startingWorkspace.deals);
+    const hydratedWorkspace = { ...startingWorkspace, deals: migratedDeals };
 
     queueMicrotask(() => {
       if (cancelled) return;
       versionRef.current = initialWorkspaceVersion;
-      setDeals(startingWorkspace.deals);
-      setNotificationPreferences(startingWorkspace.notificationPreferences);
-      setActiveDealId(startingWorkspace.deals[0]?.id ?? null);
+      setDeals(hydratedWorkspace.deals);
+      setNotificationPreferences(hydratedWorkspace.notificationPreferences);
+      setActiveDealId(hydratedWorkspace.deals[0]?.id ?? null);
       setReady(true);
       setSyncState(cloudWorkspace ? 'ready' : 'loading');
     });
 
     if (cloudWorkspace) {
       window.localStorage.removeItem(workspaceKey);
+      if (readinessChecklistChanged) {
+        window.setTimeout(() => {
+          if (!cancelled) void saveToCloud(hydratedWorkspace);
+        }, 0);
+      }
     } else if (legacyDeals.length) {
       window.setTimeout(() => {
-        if (!cancelled) void saveToCloud(startingWorkspace);
+        if (!cancelled) void saveToCloud(hydratedWorkspace);
       }, 0);
     } else {
       queueMicrotask(() => {
@@ -1149,23 +1394,15 @@ export default function AgentDealDesk({
                   </div>
                 </div>
 
-                <div className="border border-slate-200 bg-white p-5 sm:p-6">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Readiness check</p>
-                      <h2 className="mt-1 text-xl font-semibold text-slate-950">Document checklist</h2>
-                    </div>
-                  </div>
-                  <div className="mt-5 flex gap-2"><input value={documentName} onChange={(event) => setDocumentName(event.target.value)} className="min-h-[42px] min-w-0 flex-1 border border-slate-300 px-3 text-sm" placeholder="Custom document request" /><button type="button" onClick={addDocument} disabled={!documentName.trim()} className="inline-flex min-h-[42px] items-center rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-40">Request</button></div>
-                  <div className="mt-4 space-y-2">
-                    {activeDeal.documents.map((document) => <div key={document.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${document.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></span><span className={`min-w-0 flex-1 text-sm font-semibold ${document.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{document.label}</span><select value={document.status} onChange={(event) => updateDocument(document.id, event.target.value as AgentDocument['status'])} aria-label={`Status for ${document.label}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold"><option value="requested">Requested</option><option value="received">Received</option><option value="reviewed">Reviewed</option><option value="not_needed">Not needed</option></select></div>)}
-                  </div>
-                  <div className="mt-5 border-t border-slate-200 pt-5">
-                    <p className="text-sm font-semibold text-slate-800">Operational review alerts</p>
-                    {reviewAlerts.length ? <ul className="mt-3 space-y-2">{reviewAlerts.slice(0, 4).map((alert) => <li key={alert} className="flex gap-2 text-sm leading-5 text-slate-600"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#B6402C]" aria-hidden="true" />{alert}</li>)}</ul> : <p className="mt-2 flex items-center gap-2 text-sm text-[#38643A]"><CheckCircle2 className="h-4 w-4" aria-hidden="true" />No worksheet alerts for your active transactions.</p>}
-                  </div>
-                </div>
+                <ReadinessChecklist
+                  headingTag="h2"
+                  documents={activeDeal.documents}
+                  documentName={documentName}
+                  setDocumentName={setDocumentName}
+                  addDocument={addDocument}
+                  updateDocument={updateDocument}
+                  reviewAlerts={reviewAlerts}
+                />
               </div>
               <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><History className="h-5 w-5 text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h2 className="mt-1 text-xl font-semibold text-slate-950">Outcome, record, and export</h2></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
@@ -1875,29 +2112,14 @@ export default function AgentDealDesk({
               </div>
             </div>
 
-            <div className="border border-slate-200 bg-white p-5 sm:p-6">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Readiness check</p>
-                  <h3 className="mt-1 text-xl font-semibold text-slate-950">Document checklist</h3>
-                </div>
-              </div>
-              <div className="mt-5 flex gap-2"><input value={documentName} onChange={(event) => setDocumentName(event.target.value)} className="min-h-[42px] min-w-0 flex-1 border border-slate-300 px-3 text-sm" placeholder="Custom document request" /><button type="button" onClick={addDocument} disabled={!documentName.trim()} className="inline-flex min-h-[42px] items-center rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-40">Request</button></div>
-              <div className="mt-4 space-y-2">
-                {activeDeal.documents.map((document) => <div key={document.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${document.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></span><span className={`min-w-0 flex-1 text-sm font-semibold ${document.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{document.label}</span><select value={document.status} onChange={(event) => updateDocument(document.id, event.target.value as AgentDocument['status'])} aria-label={`Status for ${document.label}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold"><option value="requested">Requested</option><option value="received">Received</option><option value="reviewed">Reviewed</option><option value="not_needed">Not needed</option></select></div>)}
-              </div>
-              <div className="mt-5 border-t border-slate-200 pt-5">
-                <p className="text-sm font-semibold text-slate-800">Operational review alerts</p>
-                {reviewAlerts.length ? (
-                  <ul className="mt-3 space-y-2">
-                    {reviewAlerts.slice(0, 4).map((alert) => <li key={alert} className="flex gap-2 text-sm leading-5 text-slate-600"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#B6402C]" aria-hidden="true" />{alert}</li>)}
-                  </ul>
-                ) : (
-                  <p className="mt-2 flex items-center gap-2 text-sm text-[#38643A]"><CheckCircle2 className="h-4 w-4" aria-hidden="true" />No worksheet alerts for your active transactions.</p>
-                )}
-              </div>
-            </div>
+            <ReadinessChecklist
+              documents={activeDeal.documents}
+              documentName={documentName}
+              setDocumentName={setDocumentName}
+              addDocument={addDocument}
+              updateDocument={updateDocument}
+              reviewAlerts={reviewAlerts}
+            />
           </div>
           <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><History className="h-5 w-5 text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h3 className="mt-1 text-xl font-semibold text-slate-950">Outcome, record, and export</h3></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
