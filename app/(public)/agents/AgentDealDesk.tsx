@@ -1424,7 +1424,23 @@ export default function AgentDealDesk({
               <>
                 <section className="mt-7 border border-[#D9D0BF] bg-[#FFFDF8] p-4 sm:p-5" aria-label="Six-step deal worksheet">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Six-step worksheet</p><h4 className="mt-1 text-lg font-semibold text-slate-950">Step {activeDeal.worksheetStep + 1} of {WORKSHEET_STEPS.length}: {WORKSHEET_STEPS[activeDeal.worksheetStep].label}</h4></div><span className="text-xs font-semibold text-slate-500">Progress is saved in your private cloud workspace.</span></div>
-                  <ol aria-label="Worksheet progress" className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">{WORKSHEET_STEPS.map((step, index) => <li key={step.id} className={`min-h-[40px] border px-2 py-2 text-left text-xs font-bold ${activeDeal.worksheetStep === index ? 'border-[#301D5D] bg-[#301D5D] text-white' : index < activeDeal.worksheetStep ? 'border-violet-200 bg-violet-50 text-[#5B438C]' : 'border-slate-200 bg-white text-slate-500'}`}><span className="mr-1 opacity-70">{index + 1}.</span>{step.label}</li>)}</ol>
+                  <ol aria-label="Worksheet progress" className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+                    {WORKSHEET_STEPS.map((step, index) => (
+                      <li
+                        key={step.id}
+                        className={`flex min-h-[48px] items-center gap-1.5 border px-2.5 py-2 text-left text-xs font-bold leading-[1.25] tracking-normal [word-spacing:normal] ${
+                          activeDeal.worksheetStep === index
+                            ? 'border-[#301D5D] bg-[#301D5D] text-white'
+                            : index < activeDeal.worksheetStep
+                              ? 'border-violet-200 bg-violet-50 text-[#5B438C]'
+                              : 'border-slate-200 bg-white text-slate-500'
+                        }`}
+                      >
+                        <span className="shrink-0 self-start pt-px opacity-70">{index + 1}.</span>
+                        <span>{step.label}</span>
+                      </li>
+                    ))}
+                  </ol>
                 </section>
                 <div className="mt-5">
                   {extractionState === 'ready' && extractionDraft && (
