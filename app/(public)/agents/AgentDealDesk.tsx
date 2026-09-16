@@ -977,18 +977,18 @@ export default function AgentDealDesk({
             <div className="order-2 h-full border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-start gap-3">
                 <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
-                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar</p><h2 className="mt-1 text-xl font-semibold text-slate-950">Take your deadlines with you</h2></div>
+                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Take your deadlines with you</h2></div>
               </div>
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Download calendar files for the active deal or every active transaction. Each export includes calculated contract dates, closing dates, open reminders, and open tasks.</p>
               <div className="mt-4 flex flex-wrap gap-2">
-                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"><Download className="h-4 w-4" aria-hidden="true" />Export this deal</button>
-                <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="h-4 w-4" aria-hidden="true" />Export active deals</button>
+                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"><Download className="h-4 w-4" aria-hidden="true" />Export this deal</button>
+                <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="h-4 w-4" aria-hidden="true" />Export active deals</button>
               </div>
             </div>
             <div className="order-3 h-full border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-start gap-3">
                 <Bell className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
-                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline alerts</p><h2 className="mt-1 text-xl font-semibold text-slate-950">Choose how you are notified</h2></div>
+                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline alerts</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Choose how you are notified</h2></div>
               </div>
               <div className="mt-4 space-y-3">
                 <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Mail className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Send deadline alerts by email</label>

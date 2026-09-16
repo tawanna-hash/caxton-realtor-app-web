@@ -157,7 +157,7 @@ export default function AgentCommandCenterClient({
       <section className="border-b border-[#251548] bg-[#301D5D] text-white">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:py-16">
           <div>
-            <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F4D06F]">
+            <p className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               Agent Command Center
             </p>
@@ -171,14 +171,14 @@ export default function AgentCommandCenterClient({
               <Link
                 href="/agents/deal-desk"
                 onClick={() => trackEvent('agent_command_center_deal_desk_opened')}
-                className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-[#F4D06F] px-5 py-3 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
+                className="inline-flex h-[46px] items-center justify-center gap-2 rounded-md bg-[#F4D06F] px-5 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
               >
                 Open my Deal Desktop
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
               <a
                 href="#referral-network"
-                className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full border border-white/25 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                className="inline-flex h-[46px] items-center justify-center gap-2 rounded-md border border-white/25 px-5 text-sm font-semibold text-white transition hover:bg-white/10"
               >
                 Find a local partner
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -187,7 +187,7 @@ export default function AgentCommandCenterClient({
           </div>
 
           <aside className="border border-white/15 bg-white/[0.08] p-5 shadow-2xl shadow-[#140A29]/20 sm:p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F4D06F]">Today&apos;s agent desk</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">Today&apos;s agent desk</p>
             <div className="mt-5 space-y-4">
               {[
                 ['01', 'Map key TREC dates', 'Bring the effective date and period terms.'],
@@ -223,7 +223,7 @@ export default function AgentCommandCenterClient({
             <button
               type="button"
               onClick={() => setQuickCheckOpen((open) => !open)}
-              className="mt-4 inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] sm:mt-0"
+              className="mt-4 inline-flex h-[44px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] sm:mt-0"
             >
               <Calculator className="h-4 w-4" aria-hidden="true" />
               {quickCheckOpen ? 'Hide quick check' : 'Open quick date check'}
@@ -236,17 +236,17 @@ export default function AgentCommandCenterClient({
                 <div className="space-y-4">
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Effective date</span>
-                    <input type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} onBlur={() => effectiveDate && trackEvent('agent_deadline_planner_updated', { field: 'effective_date' })} className="min-h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" />
+                    <input type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} onBlur={() => effectiveDate && trackEvent('agent_deadline_planner_updated', { field: 'effective_date' })} className="h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" />
                   </label>
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Option period days <span className="font-normal text-slate-500">(optional)</span></span>
-                    <input type="number" min="1" inputMode="numeric" value={optionPeriodDays} onChange={(event) => setOptionPeriodDays(event.target.value)} className="min-h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" placeholder="Example: 10" />
+                    <input type="number" min="1" inputMode="numeric" value={optionPeriodDays} onChange={(event) => setOptionPeriodDays(event.target.value)} className="h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" placeholder="Example: 10" />
                   </label>
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Additional earnest days <span className="font-normal text-slate-500">(optional)</span></span>
-                    <input type="number" min="1" inputMode="numeric" value={additionalEarnestMoneyDays} onChange={(event) => setAdditionalEarnestMoneyDays(event.target.value)} className="min-h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" placeholder="Example: 7" />
+                    <input type="number" min="1" inputMode="numeric" value={additionalEarnestMoneyDays} onChange={(event) => setAdditionalEarnestMoneyDays(event.target.value)} className="h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" placeholder="Example: 7" />
                   </label>
-                  {effectiveDate && <button type="button" onClick={resetPlanner} className="inline-flex min-h-[38px] items-center gap-2 rounded-full border border-slate-400 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-slate-950"><RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />Clear</button>}
+                  {effectiveDate && <button type="button" onClick={resetPlanner} className="inline-flex h-[38px] items-center gap-2 rounded-md border border-slate-400 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-slate-950"><RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />Clear</button>}
                 </div>
                 <p className="mt-5 border-t border-slate-300 pt-4 text-xs leading-5 text-slate-600">Educational planning aid only. Verify the signed contract, delivery method, local legal holidays, and all deadlines with your broker, title company, and legal counsel. Nothing entered here is saved.</p>
               </div>
@@ -283,7 +283,7 @@ export default function AgentCommandCenterClient({
         <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Work faster</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Work faster</p>
               <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Client-ready tools, one click away</h2>
             </div>
             <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
@@ -304,7 +304,7 @@ export default function AgentCommandCenterClient({
                   <div className={`flex h-11 w-11 items-center justify-center rounded-full ${tool.iconTone}`}>
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
-                  <p className="mt-7 text-[11px] font-bold uppercase tracking-[0.15em] opacity-60">{tool.eyebrow}</p>
+                  <p className="mt-7 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60">{tool.eyebrow}</p>
                   <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em]">{tool.title}</h3>
                   <p className="mt-3 text-sm leading-6 opacity-75">{tool.description}</p>
                   <span className="mt-5 inline-flex items-center gap-1 text-sm font-bold">
@@ -324,7 +324,7 @@ export default function AgentCommandCenterClient({
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-[#F4D06F]">
                 <Handshake className="h-5 w-5" aria-hidden="true" />
               </div>
-              <p className="mt-7 text-xs font-semibold uppercase tracking-[0.18em] text-[#F4D06F]">Referral network</p>
+              <p className="mt-7 text-xs font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">Referral network</p>
               <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em]">Your call list, built for the next deal.</h2>
               <p className="mt-5 text-base leading-7 text-white/75">
                 Find local service partners across title, appraisal, remodeling, A/C and heating, roofing, inspections, and lending. Discover who is visible in your market and take the next step with confidence.
@@ -336,7 +336,7 @@ export default function AgentCommandCenterClient({
                   <Link
                     href="/agents/partner-application"
                     onClick={() => trackEvent('agent_referral_network_application_opened')}
-                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#F4D06F] px-4 py-2 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
+                    className="inline-flex h-[44px] items-center gap-2 rounded-md bg-[#F4D06F] px-4 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
                   >
                     Apply to join
                     <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -344,7 +344,7 @@ export default function AgentCommandCenterClient({
                   <Link
                     href="/advertise/placements"
                     onClick={() => trackEvent('agent_referral_network_partner_cta_opened')}
-                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/25 px-4 py-2 text-sm font-bold text-white transition hover:bg-white/10"
+                    className="inline-flex h-[44px] items-center gap-2 rounded-md border border-white/25 px-4 text-sm font-bold text-white transition hover:bg-white/10"
                   >
                     Explore placements
                   </Link>
@@ -355,7 +355,7 @@ export default function AgentCommandCenterClient({
             <div className="border border-slate-200 bg-white p-6 sm:p-8">
               <div className="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Find a service</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Find a service</p>
                   <h3 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">{selectedCategoryRecord.description}</h3>
                 </div>
                 <Link href="/partners" className="inline-flex items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
@@ -373,7 +373,7 @@ export default function AgentCommandCenterClient({
                         setSelectedCategory(category.id);
                         trackEvent('agent_referral_network_category_selected', { category: category.id });
                       }}
-                      className={`min-h-[42px] rounded-full border px-3.5 py-2 text-sm font-semibold transition ${
+                      className={`h-[42px] rounded-md border px-3.5 text-sm font-semibold transition ${
                         selected
                           ? 'border-[#301D5D] bg-[#301D5D] text-white'
                           : 'border-slate-200 bg-white text-slate-700 hover:border-[#301D5D] hover:text-[#301D5D]'
@@ -412,7 +412,7 @@ export default function AgentCommandCenterClient({
                   <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
                     No featured providers match this category yet. Browse the full partner directory or return soon as the local network expands.
                   </p>
-                  <Link href="/partners" className="mt-4 inline-flex min-h-[42px] items-center gap-2 rounded-full border border-[#301D5D] px-4 py-2 text-sm font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white">
+                  <Link href="/partners" className="mt-4 inline-flex h-[42px] items-center gap-2 rounded-md border border-[#301D5D] px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white">
                     Browse all partners
                     <ArrowRight className="h-4 w-4" aria-hidden="true" />
                   </Link>
@@ -435,12 +435,12 @@ export default function AgentCommandCenterClient({
               <MapPin className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Built for the field</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Built for the field</p>
               <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">Keep your clients prepared and your local network close.</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Open the tools you need now, then return to the command center whenever the next question arrives.</p>
             </div>
           </div>
-          <Link href="/resources" className="inline-flex min-h-[46px] shrink-0 items-center justify-center gap-2 rounded-full bg-[#301D5D] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#513A85]">
+          <Link href="/resources" className="inline-flex h-[46px] shrink-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-5 text-sm font-bold text-white transition hover:bg-[#513A85]">
             Explore agent resources
             <FileText className="h-4 w-4" aria-hidden="true" />
           </Link>
