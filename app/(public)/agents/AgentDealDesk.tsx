@@ -1746,7 +1746,7 @@ export default function AgentDealDesk({
                         <ChevronRight className="h-4 w-4" aria-hidden="true" />
                       </button>
                     </div>
-                    <div className="mt-7 rounded-md bg-slate-100 p-3 sm:p-6">
+                    <div className="mt-7 rounded-md border border-slate-200 bg-slate-100 p-6 sm:p-10 lg:p-14">
                       <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-white shadow-sm">
                         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2">
                           <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">Official TREC {currentTrecFormVersion.formNumber} · Page {currentTrecPage}</p>
