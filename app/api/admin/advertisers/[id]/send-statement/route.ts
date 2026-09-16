@@ -13,6 +13,7 @@ import { getSql } from '@/lib/db';
 import {
   DEFAULT_EMAIL_SENDER,
   EMAIL_SENDERS,
+  resolveEmailSenderAddress,
   type EmailSenderAddress,
 } from '@/lib/email-sender';
 
@@ -37,7 +38,8 @@ export const POST = withAdminTracking(async function POST(
   } catch {
     return NextResponse.json({ error: 'invalid json' }, { status: 400 });
   }
-  if (body.from?.trim() && !(body.from.trim() in EMAIL_SENDERS)) {
+  const resolvedSender = resolveEmailSenderAddress(body.from);
+  if (body.from?.trim() && !resolvedSender) {
     return NextResponse.json(
       { error: 'The selected From address is not verified for email delivery.' },
       { status: 400 },
@@ -60,10 +62,7 @@ export const POST = withAdminTracking(async function POST(
     const message =
       body.message?.trim() ||
       `Dear ${original.advertiserName},\n\nPlease find your current Statement of Account below and attached as a PDF.`;
-    const fromKey: EmailSenderAddress =
-      body.from && body.from.trim() in EMAIL_SENDERS
-        ? (body.from.trim() as EmailSenderAddress)
-        : DEFAULT_EMAIL_SENDER;
+    const fromKey: EmailSenderAddress = resolvedSender ?? DEFAULT_EMAIL_SENDER;
 
     const refreshed = await refreshPartnerStatementLinks({
       ...original,

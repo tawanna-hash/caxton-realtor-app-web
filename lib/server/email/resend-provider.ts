@@ -1,6 +1,6 @@
 import { logger } from '../logger';
 import type { EmailProvider, EmailSendInput, EmailSendResult } from './types';
-import { verifiedEmailFrom } from '@/lib/email-sender';
+import { getResendApiKeyForFrom, verifiedEmailFrom } from '@/lib/email-sender';
 
 /**
  * Resend transactional email. https://resend.com/docs/api-reference/emails/send-email
@@ -11,8 +11,13 @@ export class ResendEmailProvider implements EmailProvider {
   readonly name = 'resend';
 
   constructor() {
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY is required when EMAIL_PROVIDER=resend.');
+    if (
+      !process.env.RESEND_API_KEY &&
+      !process.env.RESEND_API_KEY_NEWSLINESA &&
+      !process.env.RESEND_API_KEY_MYREALTYLINE &&
+      !process.env.RESEND_API_KEY_REALTYNEWSNOW
+    ) {
+      throw new Error('At least one Resend API key is required when EMAIL_PROVIDER=resend.');
     }
   }
 
@@ -25,6 +30,10 @@ export class ResendEmailProvider implements EmailProvider {
       ? (fromName ? `${fromName} <${fromEmail}>` : fromEmail)
       : undefined;
     const from = verifiedEmailFrom(requestedFrom, fromName ?? 'Caxton Publications Inc.');
+    const apiKey = getResendApiKeyForFrom(from);
+    if (!apiKey) {
+      return { success: false, error: `Resend API key not configured for ${from}` };
+    }
 
     const tagList = input.tags ?? [input.emailType];
     const tags = tagList.map((t) => ({ name: 'category', value: sanitizeTag(t) }));
@@ -55,7 +64,7 @@ export class ResendEmailProvider implements EmailProvider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify(payload),
       });

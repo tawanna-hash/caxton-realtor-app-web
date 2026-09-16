@@ -22,6 +22,8 @@ import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 import {
   DEFAULT_EMAIL_SENDER,
   EMAIL_SENDERS,
+  getResendApiKeyForFrom,
+  resolveEmailSenderAddress,
   type EmailSenderAddress,
 } from '@/lib/email-sender';
 
@@ -62,7 +64,8 @@ export const POST = withAdminTracking(async function POST(
   const sendEmail = body.send_email !== false;
   const emailMode = body.email_mode === 'reminder' ? 'reminder' : 'invoice';
   const requestedSender = typeof body.email_from === 'string' ? body.email_from.trim() : '';
-  if (sendEmail && requestedSender && !(requestedSender in EMAIL_SENDERS)) {
+  const resolvedSender = resolveEmailSenderAddress(requestedSender);
+  if (sendEmail && requestedSender && !resolvedSender) {
     return NextResponse.json(
       { error: 'The selected From address is not verified for email delivery.' },
       { status: 400 },
@@ -173,20 +176,21 @@ export const POST = withAdminTracking(async function POST(
         `;
         consumeUrl = `${APP_BASE_URL}/portal/consume?token=${encodeURIComponent(raw)}`;
 
-        if (process.env.RESEND_API_KEY) {
+        const sender: EmailSenderAddress = resolvedSender
+          ? resolvedSender
+          : emailMode === 'reminder'
+            ? 'tawanna@newslinesa.com'
+            : DEFAULT_EMAIL_SENDER;
+        const resendApiKey = getResendApiKeyForFrom(sender);
+        if (resendApiKey) {
           try {
-            const resend = new Resend(process.env.RESEND_API_KEY);
+            const resend = new Resend(resendApiKey);
             const subject = typeof body.email_subject === 'string' && body.email_subject.trim()
               ? body.email_subject.trim()
               : emailMode === 'reminder'
                 ? `Reminder: Invoice ${inv.number} from Caxton Publications is due`
                 : `Invoice ${inv.number} from Caxton Publications`;
             const customMessage = typeof body.email_message === 'string' ? body.email_message.trim() : '';
-            const sender: EmailSenderAddress = requestedSender in EMAIL_SENDERS
-              ? requestedSender as EmailSenderAddress
-              : emailMode === 'reminder'
-                ? 'tawanna@newslinesa.com'
-                : DEFAULT_EMAIL_SENDER;
             const { data: resendData, error: resendError } = await resend.emails.send({
               from: EMAIL_SENDERS[sender],
               replyTo: sender,
