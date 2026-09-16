@@ -1384,123 +1384,13 @@ export default function AgentDealDesk({
             </p>
           </div>}
           {workspacePage === 2 ? (
-            <div
-              onDragOver={(event) => {
-                event.preventDefault();
-                if (extractionState !== 'extracting') setIsContractDropActive(true);
-              }}
-              onDragLeave={() => setIsContractDropActive(false)}
-              onDrop={(event) => {
-                event.preventDefault();
-                setIsContractDropActive(false);
-                void extractContract(event.dataTransfer.files?.[0]);
-              }}
-              className={extractionState === 'extracting' ? 'pointer-events-none opacity-70' : ''}
-            >
-              <div className="relative w-full sm:w-[290px]">
-                <div
-                  className={`flex h-[42px] overflow-hidden rounded-md border text-sm font-bold transition ${
-                    isContractDropActive
-                      ? 'border-violet-600 bg-violet-100 text-violet-950'
-                      : 'border-[#7059A8] bg-white text-[#301D5D]'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => contractUploadInputRef.current?.click()}
-                    disabled={extractionState === 'extracting'}
-                    className="flex min-w-0 flex-1 items-center justify-center gap-2 px-3 transition hover:bg-violet-50"
-                  >
-                    {extractionState === 'extracting' ? (
-                      <LoaderCircle className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
-                    ) : (
-                      <FileUp className="rnn-inline-icon" aria-hidden="true" />
-                    )}
-                    <span className="truncate">
-                      {extractionState === 'extracting'
-                        ? 'Reading contract…'
-                        : isContractDropActive
-                          ? 'Drop to upload'
-                          : 'Upload & Auto-fill Contract'}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsUploadMenuOpen((isOpen) => !isOpen)}
-                    disabled={extractionState === 'extracting'}
-                    aria-label="More contract upload options"
-                    aria-expanded={isUploadMenuOpen}
-                    aria-haspopup="menu"
-                    className="flex w-10 shrink-0 items-center justify-center border-l border-[#7059A8] transition hover:bg-violet-50"
-                  >
-                    <ChevronDown className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                </div>
-
-                {isUploadMenuOpen && extractionState !== 'extracting' && (
-                  <div
-                    role="menu"
-                    className="absolute right-0 z-20 mt-2 w-[280px] rounded-md border border-slate-200 bg-white p-2 text-left shadow-lg"
-                  >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        contractUploadInputRef.current?.click();
-                        setIsUploadMenuOpen(false);
-                      }}
-                      className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
-                    >
-                      <FileUp className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
-                      Choose PDF or image
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setIsUploadMenuOpen(false);
-                        openContractCamera();
-                      }}
-                      className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
-                    >
-                      <Camera className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
-                      Take a photo
-                    </button>
-                    <p className="border-t border-slate-100 px-3 pt-2.5 text-xs leading-5 text-slate-500">
-                      PDF, PNG, JPG, or WEBP · 15 MB maximum. Your file is read securely, then discarded.
-                    </p>
-                  </div>
-                )}
-                <input
-                  ref={contractUploadInputRef}
-                  type="file"
-                  accept="application/pdf,image/png,image/jpeg,image/webp"
-                  disabled={extractionState === 'extracting'}
-                  onChange={async (event) => {
-                    const input = event.currentTarget;
-                    const file = input.files?.[0];
-                    await extractContract(file);
-                    input.value = '';
-                  }}
-                  className="sr-only"
-                  tabIndex={-1}
-                />
-                <input
-                  ref={contractCameraInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  capture="environment"
-                  disabled={extractionState === 'extracting'}
-                  onChange={async (event) => {
-                    const input = event.currentTarget;
-                    const file = input.files?.[0];
-                    await extractContract(file);
-                    input.value = '';
-                  }}
-                  className="sr-only"
-                  tabIndex={-1}
-                />
-              </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">
+                Page 2 of 2
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                Worksheet, tasks and Transaction Forms
+              </p>
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
@@ -1894,7 +1784,125 @@ export default function AgentDealDesk({
                       <p className="text-xs font-semibold text-slate-600">{currentTrecFormVersion.fields.length} total fillable controls · Effective {currentTrecFormVersion.effectiveDate}</p>
                     </div>
                     <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                      <p className="max-w-3xl text-sm leading-6 text-slate-600">Complete the contract and attached addenda directly on their official PDFs. Values remain separated by form and are saved with this transaction. Use the Upload &amp; Auto-fill Contract action above to import values.</p>
+                      <p className="max-w-3xl text-sm leading-6 text-slate-600">Complete the contract and attached addenda directly on their official PDFs. Values remain separated by form and are saved with this transaction. Use the Upload &amp; Auto-fill Contract action below to import values.</p>
+                    </div>
+                    <div
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        if (extractionState !== 'extracting') setIsContractDropActive(true);
+                      }}
+                      onDragLeave={() => setIsContractDropActive(false)}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        setIsContractDropActive(false);
+                        void extractContract(event.dataTransfer.files?.[0]);
+                      }}
+                      className={`mt-4 ${extractionState === 'extracting' ? 'pointer-events-none opacity-70' : ''}`}
+                    >
+                      <div className="relative w-full sm:w-[290px]">
+                        <div
+                          className={`flex h-[42px] overflow-hidden rounded-md border text-sm font-bold transition ${
+                            isContractDropActive
+                              ? 'border-violet-600 bg-violet-100 text-violet-950'
+                              : 'border-[#7059A8] bg-white text-[#301D5D]'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => contractUploadInputRef.current?.click()}
+                            disabled={extractionState === 'extracting'}
+                            className="flex min-w-0 flex-1 items-center justify-center gap-2 px-3 transition hover:bg-violet-50"
+                          >
+                            {extractionState === 'extracting' ? (
+                              <LoaderCircle className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
+                            ) : (
+                              <FileUp className="rnn-inline-icon" aria-hidden="true" />
+                            )}
+                            <span className="truncate">
+                              {extractionState === 'extracting'
+                                ? 'Reading contract…'
+                                : isContractDropActive
+                                  ? 'Drop to upload'
+                                  : 'Upload & Auto-fill Contract'}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsUploadMenuOpen((isOpen) => !isOpen)}
+                            disabled={extractionState === 'extracting'}
+                            aria-label="More contract upload options"
+                            aria-expanded={isUploadMenuOpen}
+                            aria-haspopup="menu"
+                            className="flex w-10 shrink-0 items-center justify-center border-l border-[#7059A8] transition hover:bg-violet-50"
+                          >
+                            <ChevronDown className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        </div>
+
+                        {isUploadMenuOpen && extractionState !== 'extracting' && (
+                          <div
+                            role="menu"
+                            className="absolute right-0 z-20 mt-2 w-[280px] rounded-md border border-slate-200 bg-white p-2 text-left shadow-lg"
+                          >
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => {
+                                contractUploadInputRef.current?.click();
+                                setIsUploadMenuOpen(false);
+                              }}
+                              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
+                            >
+                              <FileUp className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
+                              Choose PDF or image
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => {
+                                setIsUploadMenuOpen(false);
+                                openContractCamera();
+                              }}
+                              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
+                            >
+                              <Camera className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
+                              Take a photo
+                            </button>
+                            <p className="border-t border-slate-100 px-3 pt-2.5 text-xs leading-5 text-slate-500">
+                              PDF, PNG, JPG, or WEBP · 15 MB maximum. Your file is read securely, then discarded.
+                            </p>
+                          </div>
+                        )}
+                        <input
+                          ref={contractUploadInputRef}
+                          type="file"
+                          accept="application/pdf,image/png,image/jpeg,image/webp"
+                          disabled={extractionState === 'extracting'}
+                          onChange={async (event) => {
+                            const input = event.currentTarget;
+                            const file = input.files?.[0];
+                            await extractContract(file);
+                            input.value = '';
+                          }}
+                          className="sr-only"
+                          tabIndex={-1}
+                        />
+                        <input
+                          ref={contractCameraInputRef}
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          capture="environment"
+                          disabled={extractionState === 'extracting'}
+                          onChange={async (event) => {
+                            const input = event.currentTarget;
+                            const file = input.files?.[0];
+                            await extractContract(file);
+                            input.value = '';
+                          }}
+                          className="sr-only"
+                          tabIndex={-1}
+                        />
+                      </div>
                     </div>
                     <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600">
                       <Save className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
