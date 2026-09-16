@@ -667,7 +667,6 @@ export default function AgentDealDesk({
   const saveInFlightRef = useRef(false);
   const queuedWorkspaceRef = useRef<AgentCommandCenterWorkspace | null>(null);
   const contractUploadInputRef = useRef<HTMLInputElement | null>(null);
-  const formUploadInputRef = useRef<HTMLInputElement | null>(null);
   const contractCameraInputRef = useRef<HTMLInputElement | null>(null);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
@@ -1836,48 +1835,48 @@ export default function AgentDealDesk({
                     </div>
                   </div>
                   <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <label className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
+                    <label className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
                       <span className="block text-sm font-bold text-slate-900">Signed Contract / Effective Date</span>
-                      <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: use the contract&apos;s effective date after final acceptance. This is day zero; deadline counting begins on the following calendar day.</span>
+                      <span className="mt-1 block text-xs leading-5 text-slate-500 sm:min-h-[60px]">TREC rule: use the contract&apos;s effective date after final acceptance. This is day zero; deadline counting begins on the following calendar day.</span>
                       <input
                         type="date"
                         value={activeDeal.effectiveDate}
                         onChange={(event) => updateActiveDeal('effectiveDate', event.target.value)}
-                        className="mt-4 sm:mt-auto"
+                        className="mt-4"
                       />
                     </label>
-                    <div className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
+                    <div className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
                       <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies.</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500 sm:min-h-[60px]">TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies.</p>
                       <input
                         type="date"
                         readOnly
                         value={activeDeadlines.find((deadline) => deadline.id === 'earnest-money-delivery')?.date ?? ''}
-                        className="mt-4 bg-slate-50 text-slate-700 sm:mt-auto"
+                        className="mt-4 bg-slate-50 text-slate-700"
                         aria-label="Calculated earnest money deposit deadline"
                       />
                     </div>
                     {CALCULATED_TIMELINE_FIELDS.map(({ key, deadlineId, label, rule }) => (
-                      <label key={key} className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
+                      <label key={key} className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
                         <span className="block text-sm font-bold text-slate-900">{label}</span>
-                        <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: {rule}</span>
+                        <span className="mt-1 block text-xs leading-5 text-slate-500 sm:min-h-[60px]">TREC rule: {rule}</span>
                         <input
                           type="date"
                           value={activeDeadlines.find((deadline) => deadline.id === deadlineId)?.date ?? ''}
                           disabled={!activeDeal.effectiveDate}
                           onChange={(event) => updateCalculatedDeadline(key, event.target.value)}
-                          className="mt-4 disabled:cursor-not-allowed disabled:bg-slate-50 sm:mt-auto"
+                          className="mt-4 disabled:cursor-not-allowed disabled:bg-slate-50"
                         />
                       </label>
                     ))}
-                    <label className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
+                    <label className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
                       <span className="block text-sm font-bold text-slate-900">Closing Date</span>
-                      <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: use the negotiated closing date stated in Paragraph 9; TREC does not supply a default number of days.</span>
+                      <span className="mt-1 block text-xs leading-5 text-slate-500 sm:min-h-[60px]">TREC rule: use the negotiated closing date stated in Paragraph 9; TREC does not supply a default number of days.</span>
                       <input
                         type="date"
                         value={activeDeal.closingDate}
                         onChange={(event) => updateActiveDeal('closingDate', event.target.value)}
-                        className="mt-4 sm:mt-auto"
+                        className="mt-4"
                       />
                     </label>
                   </div>
@@ -1887,7 +1886,7 @@ export default function AgentDealDesk({
                   <div className="border-b border-[#D9D0BF] bg-[#F7F3EB] px-5 py-4 sm:px-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                       <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Official transaction forms</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Transaction Forms</p>
                       <h4 id="official-trec-fields-title" className="mt-1 text-lg font-semibold text-slate-950">
                           TREC {currentTrecFormVersion.formNumber} · {currentTrecFormVersion.title}
                       </h4>
@@ -1895,31 +1894,7 @@ export default function AgentDealDesk({
                       <p className="text-xs font-semibold text-slate-600">{currentTrecFormVersion.fields.length} total fillable controls · Effective {currentTrecFormVersion.effectiveDate}</p>
                     </div>
                     <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                      <p className="max-w-3xl text-sm leading-6 text-slate-600">Complete the contract and attached addenda directly on their official PDFs. Values remain separated by form and are saved with this transaction.</p>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => formUploadInputRef.current?.click()}
-                          disabled={extractionState === 'extracting'}
-                          className="inline-flex min-h-[42px] shrink-0 items-center justify-center gap-2 rounded-md border border-[#301D5D] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:opacity-60"
-                        >
-                          {extractionState === 'extracting' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileUp className="rnn-inline-icon" aria-hidden="true" />}
-                          {extractionState === 'extracting' ? 'Reading form…' : 'Upload & Auto-fill Contract'}
-                        </button>
-                        <input
-                          ref={formUploadInputRef}
-                          type="file"
-                          accept="application/pdf,image/png,image/jpeg,image/webp"
-                          disabled={extractionState === 'extracting'}
-                          onChange={async (event) => {
-                            const input = event.currentTarget;
-                            await extractContract(input.files?.[0]);
-                            input.value = '';
-                          }}
-                          className="sr-only"
-                          tabIndex={-1}
-                        />
-                      </div>
+                      <p className="max-w-3xl text-sm leading-6 text-slate-600">Complete the contract and attached addenda directly on their official PDFs. Values remain separated by form and are saved with this transaction. Use the Upload &amp; Auto-fill Contract action above to import values.</p>
                     </div>
                     <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600">
                       <Save className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
