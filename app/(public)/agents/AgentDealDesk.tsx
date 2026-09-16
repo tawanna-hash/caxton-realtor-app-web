@@ -49,7 +49,6 @@ import type { TrecFormVersion } from '@/lib/trec-form-versions';
 import {
   buildTrecValidation,
   TREC_DEAL_WORKFLOW_STATUS_LABELS,
-  TREC_REMINDER_PRESET_OFFSETS,
   TREC_TASK_PRIORITIES,
   TREC_TASK_STATUSES,
   type TrecDealWorkflowStatus,
@@ -111,12 +110,30 @@ const CONTRACT_DETAIL_FIELDS: ReadonlyArray<{
   { key: 'notices', label: 'Notices', multiline: true },
 ];
 
-const TIMING_FIELDS: ReadonlyArray<{ key: keyof AgentDeal; label: string; description: string; type: 'date' | 'number'; suffix?: string }> = [
-  { key: 'effectiveDate', label: 'Effective Date', description: 'Starts the contract timeline', type: 'date' },
-  { key: 'optionPeriodDays', label: 'Option / Inspection Period', description: 'Buyer review and inspection window', type: 'number', suffix: 'days' },
-  { key: 'appraisalDeadlineDays', label: 'Appraisal Contingency', description: 'Property appraisal deadline', type: 'number', suffix: 'days' },
-  { key: 'financingDeadlineDays', label: 'Financing Contingency', description: 'Loan approval deadline', type: 'number', suffix: 'days' },
-  { key: 'closingDate', label: 'Closing Date', description: 'Final transaction closing', type: 'date' },
+const CALCULATED_TIMELINE_FIELDS: ReadonlyArray<{
+  key: 'optionPeriodDays' | 'appraisalDeadlineDays' | 'financingDeadlineDays';
+  deadlineId: string;
+  label: string;
+  rule: string;
+}> = [
+  {
+    key: 'optionPeriodDays',
+    deadlineId: 'option-period-ends',
+    label: 'Option / Inspection Period',
+    rule: 'Negotiated period after the effective date; notice is due by 5:00 p.m. local property time on the final day.',
+  },
+  {
+    key: 'appraisalDeadlineDays',
+    deadlineId: 'appraisal-deadline',
+    label: 'Appraisal Contingency',
+    rule: 'Use the negotiated deadline in the applicable appraisal or financing addendum; TREC does not supply a default period.',
+  },
+  {
+    key: 'financingDeadlineDays',
+    deadlineId: 'financing-deadline',
+    label: 'Financing Contingency',
+    rule: 'Use the negotiated approval deadline in the Third Party Financing Addendum; TREC does not supply a default period.',
+  },
 ];
 
 function getId(prefix: string): string {
@@ -210,12 +227,6 @@ function dealDeadlines(deal: AgentDeal): TrecDeadline[] {
     surveyDays: deal.surveyDays,
     titleObjectionDays: deal.titleObjectionDays,
   });
-}
-
-function deadlineColor(deadline: TrecDeadline): string {
-  if (deadline.category === 'money') return 'border-[#E7C769] bg-[#FFF9E7]';
-  if (deadline.category === 'option') return 'border-[#CFC4E8] bg-[#F8F5FF]';
-  return 'border-slate-200 bg-white';
 }
 
 type CalendarEvent = {
@@ -890,18 +901,6 @@ export default function AgentDealDesk({
     }
   };
 
-  const addReminder = (deadline: TrecDeadline, preset: '7d' | '3d' | '1d' | 'due' = '1d') => {
-    if (!activeDeal) return;
-    const offset = TREC_REMINDER_PRESET_OFFSETS.find((item) => item.id === preset)?.daysBefore ?? 1;
-    const proposedDate = addDays(deadline.date, -offset);
-    const reminder: AgentReminder = {
-      id: getId('reminder'), deadlineId: deadline.id, label: deadline.label, deadlineDate: deadline.date,
-      reminderDate: proposedDate < today ? today : proposedDate, note: '', preset, complete: false,
-    };
-    applyActiveAction(`Added ${preset === 'due' ? 'due-date' : `${offset}-day`} reminder for ${deadline.label}`, { reminders: [...activeDeal.reminders, reminder] });
-    trackEvent('agent_deal_desk_reminder_added', { deadline: deadline.id, preset });
-  };
-
   const addCustomReminder = () => {
     if (!activeDeal || !reminderDeadlineId || !reminderDate) return;
     const deadline = activeDeadlines.find((item) => item.id === reminderDeadlineId);
@@ -912,6 +911,22 @@ export default function AgentDealDesk({
     };
     applyActiveAction(`Added custom reminder for ${deadline.label}`, { reminders: [...activeDeal.reminders, reminder] });
     setReminderDeadlineId(''); setReminderDate(''); setReminderNote('');
+  };
+
+  const updateCalculatedDeadline = (
+    key: 'optionPeriodDays' | 'appraisalDeadlineDays' | 'financingDeadlineDays',
+    date: string,
+  ) => {
+    if (!activeDeal) return;
+    if (!date) {
+      updateActiveDeal(key, '');
+      return;
+    }
+    if (!activeDeal.effectiveDate) return;
+    const effective = new Date(`${activeDeal.effectiveDate}T12:00:00Z`).getTime();
+    const deadline = new Date(`${date}T12:00:00Z`).getTime();
+    const days = Math.round((deadline - effective) / 86_400_000);
+    if (days > 0) updateActiveDeal(key, String(days));
   };
 
   const addTask = () => {
@@ -1630,28 +1645,49 @@ export default function AgentDealDesk({
                   <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="rounded-md border border-slate-200 bg-white p-4">
                       <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">Due by the end of the third calendar day after the contract&apos;s effective date</p>
-                      <p className="mt-4 text-lg font-semibold text-slate-900">Third calendar day</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies.</p>
+                      <input
+                        type="date"
+                        readOnly
+                        value={activeDeadlines.find((deadline) => deadline.id === 'earnest-money-delivery')?.date ?? ''}
+                        className="mt-4 h-[46px] w-full rounded-md border border-slate-300 bg-slate-50 px-3 text-sm text-slate-700"
+                        aria-label="Calculated earnest money deposit deadline"
+                      />
                     </div>
-                    {TIMING_FIELDS.map(({ key, label, description, type, suffix }) => (
+                    <label className="block rounded-md border border-slate-200 bg-white p-4">
+                      <span className="block text-sm font-bold text-slate-900">Effective Date</span>
+                      <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: this is day zero. Contract deadlines begin counting on the following calendar day.</span>
+                      <input
+                        type="date"
+                        value={activeDeal.effectiveDate}
+                        onChange={(event) => updateActiveDeal('effectiveDate', event.target.value)}
+                        className="mt-4 h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
+                      />
+                    </label>
+                    {CALCULATED_TIMELINE_FIELDS.map(({ key, deadlineId, label, rule }) => (
                       <label key={key} className="block rounded-md border border-slate-200 bg-white p-4">
                         <span className="block text-sm font-bold text-slate-900">{label}</span>
-                        <span className="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
-                        <span className="mt-4 flex items-center gap-2">
-                          <input
-                            type={type}
-                            min={type === 'number' ? '1' : undefined}
-                            inputMode={type === 'number' ? 'numeric' : undefined}
-                            value={activeDeal[key as keyof AgentDeal] as string}
-                            onChange={(event) => updateActiveDeal(key as keyof AgentDeal, event.target.value as never)}
-                            className={`${type === 'number' ? 'w-24' : 'w-full'} h-[46px] rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]`}
-                          />
-                          {suffix && <span className="text-sm font-semibold text-slate-500">{suffix}</span>}
-                        </span>
+                        <span className="mt-1 block min-h-[40px] text-xs leading-5 text-slate-500">TREC rule: {rule}</span>
+                        <input
+                          type="date"
+                          value={activeDeadlines.find((deadline) => deadline.id === deadlineId)?.date ?? ''}
+                          disabled={!activeDeal.effectiveDate}
+                          onChange={(event) => updateCalculatedDeadline(key, event.target.value)}
+                          className="mt-4 h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D] disabled:cursor-not-allowed disabled:bg-slate-50"
+                        />
                       </label>
                     ))}
+                    <label className="block rounded-md border border-slate-200 bg-white p-4">
+                      <span className="block text-sm font-bold text-slate-900">Closing Date</span>
+                      <span className="mt-1 block min-h-[40px] text-xs leading-5 text-slate-500">TREC rule: use the negotiated closing date stated in Paragraph 9; TREC does not supply a default number of days.</span>
+                      <input
+                        type="date"
+                        value={activeDeal.closingDate}
+                        onChange={(event) => updateActiveDeal('closingDate', event.target.value)}
+                        className="mt-4 h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
+                      />
+                    </label>
                   </div>
-                  <p className="mt-4 text-xs leading-5 text-slate-500">The earnest money deadline is calculated as the end of the third calendar day after the effective date. If that day falls on a Saturday, Sunday, or legal holiday, the existing deadline calculation rolls it to the end of the next non-holiday weekday. Other timing is calculated from the effective date and signed contract entries.</p>
                 </div>
 
                 <section className="mt-7 border border-[#D9D0BF] bg-white" aria-labelledby="official-trec-fields-title">
@@ -1729,23 +1765,6 @@ export default function AgentDealDesk({
                   </div>
                 </section>
 
-                {activeDeadlines.length > 0 && (
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    {activeDeadlines.map((deadline) => {
-                      const reminderAdded = activeDeal.reminders.some((reminder) => reminder.deadlineId === deadline.id && !reminder.complete);
-                      return (
-                        <div key={deadline.id} className={`border p-4 ${deadlineColor(deadline)}`}>
-                          <p className="text-sm font-semibold text-slate-950">{deadline.label}</p>
-                          <p className="mt-1 text-lg font-semibold tracking-[-0.02em] text-slate-900">{formatDate(deadline.date)}</p>
-                          {deadline.timeLabel && <p className="mt-1 text-xs font-medium text-[#7059A8]">{deadline.timeLabel}</p>}
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {TREC_REMINDER_PRESET_OFFSETS.map((preset) => <button type="button" key={preset.id} disabled={reminderAdded} onClick={() => addReminder(deadline, preset.id)} className="inline-flex min-h-[34px] items-center gap-1 rounded-md border border-[#7059A8] bg-white px-2.5 text-xs font-bold text-[#301D5D] disabled:cursor-default disabled:border-slate-200 disabled:text-slate-400"><Bell className="h-3.5 w-3.5" aria-hidden="true" />{reminderAdded ? 'On Radar' : preset.id}</button>)}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </>
             )}
           </div>
