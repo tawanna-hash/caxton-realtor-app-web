@@ -69,12 +69,16 @@ export default function SwipeBackShell({ area, children }: Props) {
   }, [pathname]);
 
   const onBack = useCallback(() => {
+    if (pathname === '/agents/deal-desk' || pathname?.startsWith('/agents/deal-desk/')) {
+      router.push('/agents');
+      return;
+    }
     if (navCountRef.current >= 2) {
       router.back();
     } else {
       router.push(FALLBACK[area]);
     }
-  }, [router, area]);
+  }, [router, area, pathname]);
 
   // Light haptic the moment the swipe commits — matches iOS Mail / Messages.
   const onCommit = useCallback(() => {

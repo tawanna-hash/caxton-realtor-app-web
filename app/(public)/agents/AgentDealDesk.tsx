@@ -37,7 +37,6 @@ import {
   type AgentCommandCenterWorkspace,
   type AgentDeal,
   type AgentDeadlineNotificationOffset,
-  type AgentDealStatus,
   type AgentNotificationPreferences,
   type AgentReminder,
   type AgentTask,
@@ -51,7 +50,6 @@ import {
   TREC_DEAL_WORKFLOW_STATUS_LABELS,
   TREC_TASK_PRIORITIES,
   TREC_TASK_STATUSES,
-  type TrecDealWorkflowStatus,
   type TrecTaskPriority,
   type TrecTaskStatus,
 } from '@/lib/trec-workflow';
@@ -64,13 +62,6 @@ type RadarItem = {
   date: string;
   kind: 'deadline' | 'reminder' | 'task';
   overdue: boolean;
-};
-
-const STATUS_LABELS: Record<AgentDealStatus, string> = {
-  prep: 'Deal prep',
-  active: 'Under contract',
-  closing: 'Closing',
-  completed: 'Completed',
 };
 
 type ReadinessDocumentTemplate = {
@@ -400,6 +391,15 @@ function sentenceCaseKey(value: string): string {
     .replace(/^./, (letter) => letter.toUpperCase());
 }
 
+function buyerLastNames(value: string): string {
+  return Array.from(new Set(
+    value
+      .split(/\s+(?:and|&)\s+|[,;]/i)
+      .map((name) => name.trim().split(/\s+/).at(-1) ?? '')
+      .filter(Boolean),
+  )).join(' / ');
+}
+
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat('en-US', {
     weekday: 'short',
@@ -673,8 +673,7 @@ export default function AgentDealDesk({
   const [contractPreviewUrl, setContractPreviewUrl] = useState('');
   const [activeTrecFormFamily, setActiveTrecFormFamily] = useState('20');
   const [activeTrecPage, setActiveTrecPage] = useState(1);
-  const [pdfDownloadState, setPdfDownloadState] = useState<'idle' | 'building' | 'error'>('idle');
-  const [workspacePage, setWorkspacePage] = useState<1 | 2>(1);
+  const [workspacePage, setWorkspacePage] = useState<1 | 2>(2);
   const versionRef = useRef<number | null>(initialWorkspaceVersion);
   const syncTimerRef = useRef<number | null>(null);
   const saveInFlightRef = useRef(false);
@@ -1096,7 +1095,7 @@ export default function AgentDealDesk({
     }
     const nextDeal: AgentDeal = {
       ...activeDeal,
-      title: extractionDraft.title || worksheet.propertyAddress || activeDeal.title,
+      title: buyerLastNames(worksheet.buyerNames ?? '') || extractionDraft.title || activeDeal.title,
       propertyAddress: worksheet.propertyAddress ?? activeDeal.propertyAddress,
       buyerNames: worksheet.buyerNames ?? activeDeal.buyerNames,
       sellerNames: worksheet.sellerNames ?? activeDeal.sellerNames,
@@ -1127,56 +1126,6 @@ export default function AgentDealDesk({
   const updateTrecFormField = (key: string, value: string) => {
     if (!activeDeal) return;
     updateActiveDeal('formFields', { ...activeDeal.formFields, [key]: value });
-  };
-
-  const downloadPopulatedTrecForm = async () => {
-    if (!activeDeal) return;
-    setPdfDownloadState('building');
-    try {
-      const [{ PDFDocument, PDFTextField, PDFCheckBox, PDFRadioGroup, PDFDropdown, PDFOptionList }, response] = await Promise.all([
-        import('pdf-lib'),
-        fetch(currentTrecFormVersion.pdfUrl, { credentials: 'same-origin' }),
-      ]);
-      if (!response.ok) throw new Error('Could not load the official form.');
-      const pdfDocument = await PDFDocument.load(await response.arrayBuffer());
-      const pdfForm = pdfDocument.getForm();
-
-      for (const fieldDefinition of currentTrecFormVersion.fields) {
-        const value = currentFormValues[fieldDefinition.id];
-        if (!value) continue;
-        const pdfField = pdfForm.getFieldMaybe(fieldDefinition.pdfFieldName);
-        if (!pdfField) continue;
-        if (pdfField instanceof PDFTextField) {
-          pdfField.setText(value);
-        } else if (pdfField instanceof PDFCheckBox) {
-          if (value === 'true') pdfField.check();
-          else pdfField.uncheck();
-        } else if (pdfField instanceof PDFRadioGroup && value !== 'true') {
-          if (pdfField.getOptions().includes(value)) pdfField.select(value);
-        } else if ((pdfField instanceof PDFDropdown || pdfField instanceof PDFOptionList) && value !== 'true') {
-          if (pdfField.getOptions().includes(value)) pdfField.select(value);
-        }
-      }
-
-      const bytes = await pdfDocument.save();
-      const pdfBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
-      const url = URL.createObjectURL(new Blob([pdfBuffer], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-      const filenameBase = (activeDeal.propertyAddress || activeDeal.title || 'transaction')
-        .replace(/[^a-z0-9]+/gi, '-')
-        .replace(/^-|-$/g, '')
-        .toLowerCase();
-      link.href = url;
-      link.download = `${filenameBase}-trec-${currentTrecFormVersion.formNumber}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
-      setPdfDownloadState('idle');
-      trackEvent('agent_deal_desk_populated_trec_downloaded');
-    } catch {
-      setPdfDownloadState('error');
-    }
   };
 
   const addCustomReminder = () => {
@@ -1323,7 +1272,7 @@ export default function AgentDealDesk({
             <div className="order-2 h-full border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-start gap-3">
                 <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
-                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Take your deadlines with you</h2></div>
+                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar Exports</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Take your deadlines with you</h2></div>
               </div>
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Download calendar files for the active deal or every active transaction. Each export includes calculated contract dates, closing dates, open reminders, and open tasks.</p>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -1334,7 +1283,7 @@ export default function AgentDealDesk({
             <div className="order-3 h-full border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-start gap-3">
                 <Bell className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
-                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline alerts</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Choose how you are notified</h2></div>
+                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline Alerts</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Choose how you are notified</h2></div>
               </div>
               <div className="mt-4 space-y-3">
                 <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Mail className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Send deadline alerts by email</label>
@@ -1461,7 +1410,7 @@ export default function AgentDealDesk({
               }}
               className={extractionState === 'extracting' ? 'pointer-events-none opacity-70' : ''}
             >
-              <div className="relative w-full sm:w-[228px]">
+              <div className="relative w-full sm:w-[290px]">
                 <div
                   className={`flex h-[42px] overflow-hidden rounded-md border text-sm font-bold transition ${
                     isContractDropActive
@@ -1485,7 +1434,7 @@ export default function AgentDealDesk({
                         ? 'Reading contract…'
                         : isContractDropActive
                           ? 'Drop to upload'
-                          : 'Upload contract'}
+                          : 'Upload & Auto-fill Contract'}
                     </span>
                   </button>
                   <button
@@ -1609,7 +1558,7 @@ export default function AgentDealDesk({
             <div className="flex items-start gap-3">
               <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar Exports</p>
                 <h3 className="mt-1 text-xl font-semibold text-slate-950">Take your deadlines with you</h3>
               </div>
             </div>
@@ -1642,7 +1591,7 @@ export default function AgentDealDesk({
             <div className="flex items-start gap-3">
               <Bell className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline alerts</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline Alerts</p>
                 <h3 className="mt-1 text-xl font-semibold text-slate-950">Choose how you are notified</h3>
               </div>
             </div>
@@ -1883,24 +1832,10 @@ export default function AgentDealDesk({
                   )}
                 </div>
 
-                <div className="mt-7 grid gap-4 md:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Deal name</span>
-                    <input value={activeDeal.title} onChange={(event) => updateActiveDeal('title', event.target.value)} className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Example: Bluebonnet Lane" />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Transaction stage</span>
-                    <select value={activeDeal.status} onChange={(event) => updateActiveDeal('status', event.target.value as AgentDealStatus)} className="h-[46px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]">
-                      {(Object.keys(STATUS_LABELS) as AgentDealStatus[]).map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Coordinator / owner</span>
-                    <input value={activeDeal.owner} onChange={(event) => updateActiveDeal('owner', event.target.value)} className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Name or role responsible for next steps" />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Detailed workflow stage</span>
-                    <select value={activeDeal.workflowStatus} onChange={(event) => updateActiveDeal('workflowStatus', event.target.value as TrecDealWorkflowStatus)} className="h-[46px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]">{Object.entries(TREC_DEAL_WORKFLOW_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+                <div className="mt-7 min-w-0">
+                  <label className="block min-w-0">
+                    <span className="mb-2 block text-sm font-semibold text-slate-800">Deal Name: Buyer&apos;s Last Name</span>
+                    <input value={activeDeal.title} onChange={(event) => updateActiveDeal('title', event.target.value)} className="h-[46px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-base outline-none focus:border-[#301D5D] sm:max-w-xl sm:text-sm" placeholder="Buyer’s last name" />
                   </label>
                 </div>
 
@@ -1909,33 +1844,33 @@ export default function AgentDealDesk({
                     <CalendarDays className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
                     <div>
                       <h4 className="text-lg font-semibold text-slate-950">Timeline customization</h4>
-                      <p className="mt-1 text-sm text-slate-600">Set the contract dates and timeframes used by Date Radar, calendar exports, and deadline alerts.</p>
+                      <p className="mt-1 text-sm text-slate-600">Set the contract dates and timeframes used by Date Radar, Calendar Exports, and Deadline Alerts.</p>
                     </div>
                   </div>
                   <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="flex h-full min-h-[210px] flex-col rounded-md border border-slate-200 bg-white p-4">
+                    <div className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
                       <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
                       <p className="mt-1 text-xs leading-5 text-slate-500">TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies.</p>
                       <input
                         type="date"
                         readOnly
                         value={activeDeadlines.find((deadline) => deadline.id === 'earnest-money-delivery')?.date ?? ''}
-                        className="mt-auto h-[46px] w-full rounded-md border border-slate-300 bg-slate-50 px-3 text-sm text-slate-700"
+                        className="mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-slate-50 px-3 text-base text-slate-700 sm:mt-auto sm:text-sm"
                         aria-label="Calculated earnest money deposit deadline"
                       />
                     </div>
-                    <label className="flex h-full min-h-[210px] flex-col rounded-md border border-slate-200 bg-white p-4">
+                    <label className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
                       <span className="block text-sm font-bold text-slate-900">Effective Date</span>
                       <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: this is day zero. Contract deadlines begin counting on the following calendar day.</span>
                       <input
                         type="date"
                         value={activeDeal.effectiveDate}
                         onChange={(event) => updateActiveDeal('effectiveDate', event.target.value)}
-                        className="mt-auto h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
+                        className="mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-[#301D5D] sm:mt-auto sm:text-sm"
                       />
                     </label>
                     {CALCULATED_TIMELINE_FIELDS.map(({ key, deadlineId, label, rule }) => (
-                      <label key={key} className="flex h-full min-h-[210px] flex-col rounded-md border border-slate-200 bg-white p-4">
+                      <label key={key} className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
                         <span className="block text-sm font-bold text-slate-900">{label}</span>
                         <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: {rule}</span>
                         <input
@@ -1943,18 +1878,18 @@ export default function AgentDealDesk({
                           value={activeDeadlines.find((deadline) => deadline.id === deadlineId)?.date ?? ''}
                           disabled={!activeDeal.effectiveDate}
                           onChange={(event) => updateCalculatedDeadline(key, event.target.value)}
-                          className="mt-auto h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D] disabled:cursor-not-allowed disabled:bg-slate-50"
+                          className="mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-[#301D5D] disabled:cursor-not-allowed disabled:bg-slate-50 sm:mt-auto sm:text-sm"
                         />
                       </label>
                     ))}
-                    <label className="flex h-full min-h-[210px] flex-col rounded-md border border-slate-200 bg-white p-4">
+                    <label className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
                       <span className="block text-sm font-bold text-slate-900">Closing Date</span>
                       <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: use the negotiated closing date stated in Paragraph 9; TREC does not supply a default number of days.</span>
                       <input
                         type="date"
                         value={activeDeal.closingDate}
                         onChange={(event) => updateActiveDeal('closingDate', event.target.value)}
-                        className="mt-auto h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
+                        className="mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-[#301D5D] sm:mt-auto sm:text-sm"
                       />
                     </label>
                   </div>
@@ -1981,7 +1916,7 @@ export default function AgentDealDesk({
                           className="inline-flex min-h-[42px] shrink-0 items-center justify-center gap-2 rounded-md border border-[#301D5D] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:opacity-60"
                         >
                           {extractionState === 'extracting' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileUp className="h-4 w-4" aria-hidden="true" />}
-                          {extractionState === 'extracting' ? 'Reading form…' : 'Upload & auto-fill'}
+                          {extractionState === 'extracting' ? 'Reading form…' : 'Upload & Auto-fill Contract'}
                         </button>
                         <input
                           ref={formUploadInputRef}
@@ -1996,24 +1931,12 @@ export default function AgentDealDesk({
                           className="sr-only"
                           tabIndex={-1}
                         />
-                      {Object.values(currentFormValues).some(Boolean) && (
-                        <button
-                          type="button"
-                          onClick={() => void downloadPopulatedTrecForm()}
-                          disabled={pdfDownloadState === 'building'}
-                          className="inline-flex min-h-[42px] shrink-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:opacity-60"
-                        >
-                          {pdfDownloadState === 'building' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
-                          {pdfDownloadState === 'building' ? 'Building PDF…' : 'Download populated PDF'}
-                        </button>
-                      )}
                       </div>
                     </div>
                     <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600">
                       <Save className="h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
                       Progress is saved in your private cloud workspace.
                     </p>
-                    {pdfDownloadState === 'error' && <p className="mt-2 text-sm font-semibold text-[#B6402C]">The populated PDF could not be generated. Try again.</p>}
                   </div>
                   <div className="p-6 sm:p-10">
                     <label className="mb-4 block">
