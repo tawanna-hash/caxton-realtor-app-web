@@ -391,8 +391,10 @@ function downloadCalendar(events: CalendarEvent[], filename: string): void {
   const link = document.createElement('a');
   link.href = url;
   link.download = filename;
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
 type SyncState = 'loading' | 'ready' | 'saving' | 'conflict' | 'error';
