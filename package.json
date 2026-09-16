@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium webkit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "check:date-fields": "node scripts/check-date-field-lock.mjs"
   },
   "dependencies": {
     "@aparajita/capacitor-biometric-auth": "^10.0.0",
