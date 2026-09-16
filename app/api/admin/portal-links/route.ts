@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { verifiedEmailFrom } from '@/lib/email-sender';
 import { getSql, ensureSchema } from '@/lib/db';
 import {
   generateMagicLinkToken,
@@ -19,7 +20,10 @@ import { withAdminTracking } from '@/lib/server/admin-tracking';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const PORTAL_FROM_EMAIL = process.env.PORTAL_FROM_EMAIL ?? 'no-reply@myrealtyline.com';
+const PORTAL_FROM_EMAIL = verifiedEmailFrom(
+  process.env.PORTAL_FROM_EMAIL,
+  'Realty News Now',
+);
 const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://app.myrealtyline.com';
 
 export async function GET(req: NextRequest) {

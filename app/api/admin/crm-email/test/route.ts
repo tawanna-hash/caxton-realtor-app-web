@@ -72,7 +72,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     : undefined;
 
   const from = input.from_name
-    ? `${input.from_name} <${(process.env.EMAIL_FROM ?? 'hello@myrealtyline.com').replace(/^.*<|>$/g, '')}>`
+    ? `${input.from_name} <${(process.env.EMAIL_FROM ?? 'hello@newslinesa.com').replace(/^.*<|>$/g, '')}>`
     : undefined;
 
   try {

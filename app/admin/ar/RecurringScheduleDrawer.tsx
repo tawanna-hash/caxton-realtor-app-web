@@ -121,8 +121,8 @@ export function RecurringScheduleDrawer({
       "",
   );
   const [emailFrom, setEmailFrom] = useState<
-    "tawanna@myrealtyline.com" | "hello@myrealtyline.com"
-  >("tawanna@myrealtyline.com");
+    "tawanna@newslinesa.com" | "hello@newslinesa.com"
+  >("tawanna@newslinesa.com");
   const [emailCcBcc, setEmailCcBcc] = useState("");
   const [emailSubject, setEmailSubject] = useState(
     `Set up recurring payment by ${shortDate(existing?.start_date ?? new Date())}`,
@@ -740,11 +740,11 @@ export function RecurringScheduleDrawer({
                       setEmailFrom(event.target.value as typeof emailFrom)
                     }
                   >
-                    <option value="tawanna@myrealtyline.com">
-                      Caxton Publications Inc. &lt;tawanna@myrealtyline.com&gt;
+                    <option value="tawanna@newslinesa.com">
+                      Tawanna Verock &lt;tawanna@newslinesa.com&gt;
                     </option>
-                    <option value="hello@myrealtyline.com">
-                      Caxton Publications Inc. &lt;hello@myrealtyline.com&gt;
+                    <option value="hello@newslinesa.com">
+                      Caxton Publications Inc. &lt;hello@newslinesa.com&gt;
                     </option>
                   </select>
                 </Field>
@@ -953,7 +953,7 @@ export function RecurringScheduleDrawer({
             <div className="rounded-lg bg-white p-4 text-xs text-gray-600">
               <strong>Business details</strong>
               <br />
-              Email: tawanna@myrealtyline.com
+              Email: tawanna@newslinesa.com
             </div>
           </aside>
         </div>

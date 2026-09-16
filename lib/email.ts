@@ -33,11 +33,11 @@ export interface SendEmailResult {
 }
 
 import { captureServerEvent } from '@/lib/server/posthog';
+import { verifiedEmailFrom } from '@/lib/email-sender';
 
-// myrealtyline.com is verified in Resend. realtynewsnow.app is not (yet).
-// hello@ is the role mailbox that forwards to a monitored inbox; noreply@
-// was a dead address that silently dropped sends. Override with EMAIL_FROM.
-const FROM_DEFAULT = process.env.EMAIL_FROM ?? 'RealtyLine <hello@myrealtyline.com>';
+// The active Resend team has newslinesa.com verified. verifiedEmailFrom also
+// protects sends from stale deployment variables that still name old domains.
+const FROM_DEFAULT = verifiedEmailFrom(process.env.EMAIL_FROM);
 
 export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -47,7 +47,7 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
 
   const recipients = Array.isArray(opts.to) ? opts.to : [opts.to];
   const payload: Record<string, unknown> = {
-    from: opts.from ?? FROM_DEFAULT,
+    from: verifiedEmailFrom(opts.from ?? FROM_DEFAULT),
     to: recipients,
     subject: opts.subject,
     html: opts.html,

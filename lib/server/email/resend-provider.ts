@@ -1,5 +1,6 @@
 import { logger } from '../logger';
 import type { EmailProvider, EmailSendInput, EmailSendResult } from './types';
+import { verifiedEmailFrom } from '@/lib/email-sender';
 
 /**
  * Resend transactional email. https://resend.com/docs/api-reference/emails/send-email
@@ -20,10 +21,10 @@ export class ResendEmailProvider implements EmailProvider {
 
     const fromEmail = input.from?.email ?? process.env.EMAIL_FROM_ADDRESS;
     const fromName = input.from?.name ?? process.env.EMAIL_FROM_NAME;
-    if (!fromEmail) {
-      return { success: false, error: 'EMAIL_FROM_ADDRESS is not set' };
-    }
-    const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
+    const requestedFrom = fromEmail
+      ? (fromName ? `${fromName} <${fromEmail}>` : fromEmail)
+      : undefined;
+    const from = verifiedEmailFrom(requestedFrom, fromName ?? 'Caxton Publications Inc.');
 
     const tagList = input.tags ?? [input.emailType];
     const tags = tagList.map((t) => ({ name: 'category', value: sanitizeTag(t) }));

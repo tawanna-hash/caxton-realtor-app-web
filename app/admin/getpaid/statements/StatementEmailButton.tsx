@@ -13,9 +13,8 @@ type Props = {
 };
 
 type InvoiceSender =
-  | 'tawanna@myrealtyline.com'
   | 'tawanna@newslinesa.com'
-  | 'hello@myrealtyline.com';
+  | 'hello@newslinesa.com';
 
 const CONTROL =
   'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500';
@@ -30,7 +29,7 @@ export default function StatementEmailButton({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [from, setFrom] = useState<InvoiceSender>('hello@myrealtyline.com');
+  const [from, setFrom] = useState<InvoiceSender>('hello@newslinesa.com');
   const [to, setTo] = useState(recipient);
   const [subject, setSubject] = useState(`Statement of Account from Caxton Publications, Inc.`);
   const [message, setMessage] = useState(
@@ -117,11 +116,8 @@ export default function StatementEmailButton({
                     value={from}
                     onChange={(event) => setFrom(event.target.value as InvoiceSender)}
                   >
-                    <option value="hello@myrealtyline.com">
-                      Caxton Publications Inc. &lt;hello@myrealtyline.com&gt;
-                    </option>
-                    <option value="tawanna@myrealtyline.com">
-                      Tawanna Verock &lt;tawanna@myrealtyline.com&gt;
+                    <option value="hello@newslinesa.com">
+                      Caxton Publications Inc. &lt;hello@newslinesa.com&gt;
                     </option>
                     <option value="tawanna@newslinesa.com">
                       Tawanna Verock &lt;tawanna@newslinesa.com&gt;

@@ -19,18 +19,17 @@ import {
 } from '@/lib/portal';
 import { Resend } from 'resend';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
+import {
+  DEFAULT_EMAIL_SENDER,
+  EMAIL_SENDERS,
+  type EmailSenderAddress,
+} from '@/lib/email-sender';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://app.myrealtyline.com';
-const INVOICE_SENDERS = {
-  'tawanna@myrealtyline.com': 'Tawanna Verock <tawanna@myrealtyline.com>',
-  'tawanna@newslinesa.com': 'Tawanna Verock <tawanna@newslinesa.com>',
-  'hello@myrealtyline.com': 'Caxton Publications Inc. <hello@myrealtyline.com>',
-} as const;
-type InvoiceSender = keyof typeof INVOICE_SENDERS;
 
 interface InvoiceRow {
   id: string;
@@ -62,6 +61,13 @@ export const POST = withAdminTracking(async function POST(
   try { body = await req.json(); } catch { /* optional body */ }
   const sendEmail = body.send_email !== false;
   const emailMode = body.email_mode === 'reminder' ? 'reminder' : 'invoice';
+  const requestedSender = typeof body.email_from === 'string' ? body.email_from.trim() : '';
+  if (sendEmail && requestedSender && !(requestedSender in EMAIL_SENDERS)) {
+    return NextResponse.json(
+      { error: 'The selected From address is not verified for email delivery.' },
+      { status: 400 },
+    );
+  }
 
   try {
     await ensureSchema();
@@ -176,14 +182,13 @@ export const POST = withAdminTracking(async function POST(
                 ? `Reminder: Invoice ${inv.number} from Caxton Publications is due`
                 : `Invoice ${inv.number} from Caxton Publications`;
             const customMessage = typeof body.email_message === 'string' ? body.email_message.trim() : '';
-            const requestedSender = typeof body.email_from === 'string' ? body.email_from.trim() : '';
-            const sender: InvoiceSender = requestedSender in INVOICE_SENDERS
-              ? requestedSender as InvoiceSender
+            const sender: EmailSenderAddress = requestedSender in EMAIL_SENDERS
+              ? requestedSender as EmailSenderAddress
               : emailMode === 'reminder'
-                ? 'tawanna@myrealtyline.com'
-                : 'hello@myrealtyline.com';
+                ? 'tawanna@newslinesa.com'
+                : DEFAULT_EMAIL_SENDER;
             const { data: resendData, error: resendError } = await resend.emails.send({
-              from: INVOICE_SENDERS[sender],
+              from: EMAIL_SENDERS[sender],
               replyTo: sender,
               to: sendTo,
               subject,

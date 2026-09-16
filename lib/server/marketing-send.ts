@@ -202,7 +202,7 @@ export async function dispatchOutreach(input: DispatchInput): Promise<DispatchRe
   let failed = 0;
 
   const from = input.fromName
-    ? `${input.fromName} <${(process.env.EMAIL_FROM ?? 'hello@myrealtyline.com').replace(/^.*<|>$/g, '')}>`
+    ? `${input.fromName} <${(process.env.EMAIL_FROM ?? 'hello@newslinesa.com').replace(/^.*<|>$/g, '')}>`
     : undefined;
 
   // Serial send to stay polite with Resend rate limits (10/s default).

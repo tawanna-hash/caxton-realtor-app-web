@@ -10,15 +10,14 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 import { getSql } from '@/lib/db';
+import {
+  DEFAULT_EMAIL_SENDER,
+  EMAIL_SENDERS,
+  type EmailSenderAddress,
+} from '@/lib/email-sender';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const SENDERS = {
-  'tawanna@myrealtyline.com': 'Tawanna Verock <tawanna@myrealtyline.com>',
-  'tawanna@newslinesa.com': 'Tawanna Verock <tawanna@newslinesa.com>',
-  'hello@myrealtyline.com': 'Caxton Publications Inc. <hello@myrealtyline.com>',
-} as const;
 
 export const POST = withAdminTracking(async function POST(
   req: NextRequest,
@@ -38,6 +37,12 @@ export const POST = withAdminTracking(async function POST(
   } catch {
     return NextResponse.json({ error: 'invalid json' }, { status: 400 });
   }
+  if (body.from?.trim() && !(body.from.trim() in EMAIL_SENDERS)) {
+    return NextResponse.json(
+      { error: 'The selected From address is not verified for email delivery.' },
+      { status: 400 },
+    );
+  }
 
   try {
     const original = await loadPartnerStatement(advertiserId);
@@ -55,10 +60,10 @@ export const POST = withAdminTracking(async function POST(
     const message =
       body.message?.trim() ||
       `Dear ${original.advertiserName},\n\nPlease find your current Statement of Account below and attached as a PDF.`;
-    const fromKey =
-      body.from && body.from in SENDERS
-        ? (body.from as keyof typeof SENDERS)
-        : 'hello@myrealtyline.com';
+    const fromKey: EmailSenderAddress =
+      body.from && body.from.trim() in EMAIL_SENDERS
+        ? (body.from.trim() as EmailSenderAddress)
+        : DEFAULT_EMAIL_SENDER;
 
     const refreshed = await refreshPartnerStatementLinks({
       ...original,
@@ -69,7 +74,7 @@ export const POST = withAdminTracking(async function POST(
     const pdf = await generatePartnerStatementPdf(refreshed);
     const result = await sendEmail({
       to: recipient,
-      from: SENDERS[fromKey],
+      from: EMAIL_SENDERS[fromKey],
       replyTo: fromKey,
       subject,
       html: rendered.html,

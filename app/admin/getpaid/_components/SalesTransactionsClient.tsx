@@ -57,9 +57,8 @@ type EmailDraft = {
   reminder: boolean;
 };
 type InvoiceSender =
-  | 'tawanna@myrealtyline.com'
   | 'tawanna@newslinesa.com'
-  | 'hello@myrealtyline.com';
+  | 'hello@newslinesa.com';
 
 const CONTROL =
   'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100';
@@ -260,7 +259,7 @@ function EmailInvoiceDialog({
   const { invoice, reminder } = draft;
   const client = invoice.bill_to_name ?? invoice.advertiser_name ?? 'Customer';
   const [from, setFrom] = useState<InvoiceSender>(
-    reminder ? 'tawanna@myrealtyline.com' : 'hello@myrealtyline.com',
+    reminder ? 'tawanna@newslinesa.com' : 'hello@newslinesa.com',
   );
   const [to, setTo] = useState(invoice.bill_to_email ?? '');
   const [subject, setSubject] = useState(
@@ -307,9 +306,8 @@ function EmailInvoiceDialog({
                 value={from}
                 onChange={(event) => setFrom(event.target.value as InvoiceSender)}
               >
-                <option value="tawanna@myrealtyline.com">Tawanna Verock &lt;tawanna@myrealtyline.com&gt;</option>
                 <option value="tawanna@newslinesa.com">Tawanna Verock &lt;tawanna@newslinesa.com&gt;</option>
-                <option value="hello@myrealtyline.com">Caxton Publications Inc. &lt;hello@myrealtyline.com&gt;</option>
+                <option value="hello@newslinesa.com">Caxton Publications Inc. &lt;hello@newslinesa.com&gt;</option>
               </select>
             </label>
             <label className="block text-xs font-medium text-gray-600">To
