@@ -1190,7 +1190,7 @@ function DeleteConfirmDialog({
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6" onClick={onCancel}>
       <div className="bg-white rounded-md shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Delete this hotspot?</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Delete This Hotspot?</h2>
         <p className="text-sm text-gray-700 mb-4">
           {hotspot.label
             ? <>You&apos;ll lose &ldquo;{hotspot.label}&rdquo; (page {hotspot.page_idx + 1}). This can&apos;t be undone.</>
@@ -1234,7 +1234,7 @@ function ImportPdfLinksDialog({
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6" onClick={onCancel}>
       <div className="bg-white rounded-md shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Extract all links</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Extract All Links</h2>
         <p className="text-sm text-gray-700 mb-4">
           Auto-populate hotspots from three sources: <strong>embedded PDF links</strong>, a <strong>text-layer scan</strong> for emails / phone numbers / plain URLs, and <strong>QR-code decode</strong> on the page images. Each finding becomes a draft hotspot you can review and publish.
         </p>
@@ -1281,7 +1281,7 @@ function CopyFromPreviousDialog({
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6" onClick={onCancel}>
       <div className="bg-white rounded-md shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Copy hotspots from previous issue</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Copy Hotspots from Previous Issue</h2>
         <p className="text-sm text-gray-700 mb-4">
           Hotspots from the selected issue will be <strong>added to this magazine</strong>{' '}
           as drafts. {existingCount > 0 && <>You already have {existingCount} hotspot{existingCount === 1 ? '' : 's'} here; the copies are added on top.</>}

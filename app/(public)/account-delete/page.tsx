@@ -16,7 +16,7 @@ export default function AccountDeletePage() {
         (also known as RealtyLine and Newsline) account and the data associated with it.
       </p>
 
-      <h2>How to delete your account</h2>
+      <h2>How to Delete Your Account</h2>
       <ol>
         <li>
           Sign in at{' '}
@@ -27,7 +27,7 @@ export default function AccountDeletePage() {
         <li>Your account is deactivated immediately and permanently removed within 30 days</li>
       </ol>
 
-      <h2>Alternative: request deletion by email</h2>
+      <h2>Alternative: Request Deletion by Email</h2>
       <p>
         If you cannot sign in, email{' '}
         <a href="mailto:tawanna@realtynewsnow.app?subject=Account%20Deletion%20Request">
@@ -36,7 +36,7 @@ export default function AccountDeletePage() {
         from the address on file. We respond within 5 business days.
       </p>
 
-      <h2>What we delete</h2>
+      <h2>What We Delete</h2>
       <ul>
         <li>Your name, email address, phone number, and mailing address</li>
         <li>Your realtor license number (TREC or NMLS)</li>
@@ -47,7 +47,7 @@ export default function AccountDeletePage() {
         <li>Magic-link tokens and email verification records</li>
       </ul>
 
-      <h2>What we keep (and why)</h2>
+      <h2>What We Keep (and Why)</h2>
       <ul>
         <li>
           <strong>Anonymized analytics events</strong> — no longer tied to your identity, retained
@@ -63,7 +63,7 @@ export default function AccountDeletePage() {
         </li>
       </ul>
 
-      <h2>Retention timeline</h2>
+      <h2>Retention Timeline</h2>
       <ul>
         <li><strong>Immediately:</strong> Account is deactivated and sign-in disabled</li>
         <li><strong>Within 30 days:</strong> Personal data permanently removed</li>

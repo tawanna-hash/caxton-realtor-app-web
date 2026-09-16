@@ -183,7 +183,7 @@ export default function ReaderLinksPanel({ hotspots, brandColor }: ReaderLinksPa
               style={{ background: `${brandColor}0d` }}
             >
               <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-900">
-                Links on this page
+                Links on This Page
               </h2>
               <button
                 type="button"

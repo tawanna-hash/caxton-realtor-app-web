@@ -402,7 +402,7 @@ function ShareInvoiceDialog({
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold leading-tight text-gray-900">Send your customer a link to their invoice</h2>
+            <h2 className="text-xl font-semibold leading-tight text-gray-900">Send Your Customer a Link to Their Invoice</h2>
             <p className="mt-3 text-sm leading-5 text-gray-600">Share an invoice link instead of an email. Your customer can view and pay online.</p>
           </div>
           <button type="button" aria-label="Close invoice link" className="rounded p-1 text-gray-500 hover:bg-gray-100" onClick={onClose}>×</button>
@@ -1175,7 +1175,7 @@ export function SalesTransactionsClient({
               )}
 
               <section className="border-b border-gray-200 px-5 py-4">
-                <h3 className="text-sm font-semibold text-gray-900">Invoice activity</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Invoice Activity</h3>
                 <ol className="mt-4 space-y-0">
                   {[
                     { label: 'Opened', date: activityInvoice.created_at, complete: true },
@@ -1197,7 +1197,7 @@ export function SalesTransactionsClient({
               </section>
 
               <section className="border-b border-gray-200 px-5 py-4">
-                <h3 className="text-sm font-semibold text-gray-900">Products and services</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Products and Services</h3>
                 <div className="mt-3 space-y-3">
                   {(activityInvoice.line_items?.length ? activityInvoice.line_items : [{ description: activityInvoice.memo ?? 'Invoice', qty: 1, unit_cents: activityInvoice.amount_cents }]).map((item, index) => (
                     <div key={`${item.description}-${index}`} className="text-xs">

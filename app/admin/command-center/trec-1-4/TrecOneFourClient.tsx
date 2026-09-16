@@ -228,7 +228,7 @@ function DeadlineMath({
     <div className="mt-5 rounded-lg border border-orange-200 bg-orange-50/60 p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-gray-950">Deadline math</h3>
+          <h3 className="text-sm font-semibold text-gray-950">Deadline Math</h3>
           <p className="mt-1 text-xs leading-5 text-gray-600">
             Calendar-day calculations from the effective date. Verify all results against the signed contract package.
           </p>
@@ -1110,7 +1110,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               <div className="flex items-center gap-2">
                 <Bell className="rnn-heading-icon text-violet-700" aria-hidden="true" />
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-950">Deadline reminders</h2>
+                  <h2 className="text-lg font-semibold text-gray-950">Deadline Reminders</h2>
                   <p className="text-xs text-gray-500">Durable in-app reminders for this saved deal.</p>
                 </div>
               </div>
@@ -1175,7 +1175,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               <div className="flex items-center gap-2">
                 <ShieldAlert className="rnn-heading-icon text-amber-700" aria-hidden="true" />
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-950">Texas timing review</h2>
+                  <h2 className="text-lg font-semibold text-gray-950">Texas Timing Review</h2>
                   <p className="text-xs text-gray-600">Operational checks based on the values in this workspace.</p>
                 </div>
                 <span className="ml-auto rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-amber-800">{validationAlerts.length} to review</span>
@@ -1195,7 +1195,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               <div className="flex items-center gap-2">
                 <ClipboardCheck className="rnn-heading-icon text-violet-700" aria-hidden="true" />
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-950">Tasks & escalation</h2>
+                  <h2 className="text-lg font-semibold text-gray-950">Tasks & Escalation</h2>
                   <p className="text-xs text-gray-500">Track accountable work against this transaction.</p>
                 </div>
               </div>
@@ -1231,7 +1231,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               <div className="rounded-xl border border-gray-200 bg-white p-5">
                 <div className="flex items-center gap-2">
                   <FileText className="rnn-heading-icon text-orange-700" aria-hidden="true" />
-                  <div><h2 className="text-lg font-semibold text-gray-950">Document request center</h2><p className="text-xs text-gray-500">Status tracking only. Do not upload executed contracts here.</p></div>
+                  <div><h2 className="text-lg font-semibold text-gray-950">Document Request Center</h2><p className="text-xs text-gray-500">Status tracking only. Do not upload executed contracts here.</p></div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {TREC_DOCUMENT_CHECKLIST_TEMPLATES.flatMap((template) => template.items).map((item) => (
@@ -1254,7 +1254,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 </ul>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <div className="flex items-center gap-3"><History className="rnn-heading-icon text-gray-700" aria-hidden="true" /><div><h2 className="text-lg font-semibold text-gray-950">Closeout & history</h2><p className="text-xs text-gray-500">Document the operational outcome and a dated activity trail.</p></div></div>
+                <div className="flex items-center gap-3"><History className="rnn-heading-icon text-gray-700" aria-hidden="true" /><div><h2 className="text-lg font-semibold text-gray-950">Closeout & History</h2><p className="text-xs text-gray-500">Document the operational outcome and a dated activity trail.</p></div></div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <select value={outcome} onChange={(event) => setOutcome(event.target.value)} aria-label="Transaction outcome" className="min-h-10 rounded-md border border-gray-300 px-3 text-sm"><option value="">Outcome not set</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select>
                   <input value={outcomeDate} onChange={(event) => setOutcomeDate(event.target.value)} type="date" aria-label="Outcome date" className="min-h-10 rounded-md border border-gray-300 px-3 text-sm" />
@@ -1270,7 +1270,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
           {activeStep === 0 && (
             <section aria-labelledby="parties-property-title">
               <h2 id="parties-property-title" className="text-xl font-semibold text-gray-950">
-                Parties & property
+                Parties & Property
               </h2>
               <p className="mt-2 text-sm leading-6 text-gray-600">
                 Record names exactly as they should appear on legal identification, then gather
@@ -1292,7 +1292,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
 
           {activeStep === 1 && (
             <section aria-labelledby="price-financing-title">
-              <h2 id="price-financing-title" className="text-xl font-semibold text-gray-950">Price & financing</h2>
+              <h2 id="price-financing-title" className="text-xl font-semibold text-gray-950">Price & Financing</h2>
               <p className="mt-2 text-sm leading-6 text-gray-600">
                 Gather the agreed price components and align financing details with the lender and
                 any financing addendum before the official form is completed.
@@ -1311,7 +1311,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
 
           {activeStep === 2 && (
             <section aria-labelledby="deposits-option-title">
-              <h2 id="deposits-option-title" className="text-xl font-semibold text-gray-950">Deposits & option period</h2>
+              <h2 id="deposits-option-title" className="text-xl font-semibold text-gray-950">Deposits & Option Period</h2>
               <p className="mt-2 text-sm leading-6 text-gray-600">
                 Capture the amounts, holder and delivery dates. The effective date on the executed
                 contract drives critical deadlines, so confirm every timing item against the current official form.
@@ -1332,7 +1332,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
 
           {activeStep === 3 && (
             <section aria-labelledby="title-closing-title">
-              <h2 id="title-closing-title" className="text-xl font-semibold text-gray-950">Title, condition & closing</h2>
+              <h2 id="title-closing-title" className="text-xl font-semibold text-gray-950">Title, Condition & Closing</h2>
               <p className="mt-2 text-sm leading-6 text-gray-600">
                 Consolidate the decisions and facts that shape due diligence, repair negotiation,
                 the closing date and possession.
@@ -1360,7 +1360,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
 
           {activeStep === 4 && (
             <section aria-labelledby="terms-addenda-title">
-              <h2 id="terms-addenda-title" className="text-xl font-semibold text-gray-950">Terms, notices & addenda</h2>
+              <h2 id="terms-addenda-title" className="text-xl font-semibold text-gray-950">Terms, Notices & Addenda</h2>
               <p className="mt-2 text-sm leading-6 text-gray-600">
                 Use this page to prepare discussion points and verify attachments. Do not draft legal
                 language in special provisions; keep this workspace to factual notes for review.
@@ -1402,7 +1402,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
             <section aria-labelledby="review-title">
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                 <div>
-                  <h2 id="review-title" className="text-xl font-semibold text-gray-950">Review deal-prep brief</h2>
+                  <h2 id="review-title" className="text-xl font-semibold text-gray-950">Review Deal-Prep Brief</h2>
                   <p className="mt-2 text-sm leading-6 text-gray-600">
                     Review the information collected here with the official current form, all addenda
                     and the licensed professional or attorney handling the transaction.

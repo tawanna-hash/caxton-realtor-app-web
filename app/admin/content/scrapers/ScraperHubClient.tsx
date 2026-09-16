@@ -361,7 +361,7 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
 
       {tab === 'movein-guide' && (
         <div className="bg-white border border-gray-200 rounded-md p-6 md:p-8">
-          <h1 className="text-lg font-semibold text-gray-900 mb-1">Move-in Ready Homes Guide</h1>
+          <h1 className="text-lg font-semibold text-gray-900 mb-1">Move-In Ready Homes Guide</h1>
           <MoveInReadyGuideContent />
         </div>
       )}

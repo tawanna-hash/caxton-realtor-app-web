@@ -94,7 +94,7 @@ export default function StatementEmailButton({
           <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white shadow-2xl">
             <header className="flex items-start justify-between border-b border-gray-200 px-6 py-5">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Email statement</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Email Statement</h2>
                 <p className="mt-1 text-xs text-gray-500">
                   Fresh payment links will be created before the email and PDF are generated.
                 </p>

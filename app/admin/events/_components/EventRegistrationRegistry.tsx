@@ -114,7 +114,7 @@ export default function EventRegistrationRegistry({
     <section className="mb-8 rounded-md border border-gray-200 bg-white p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-950">Attendee registry</h2>
+          <h2 className="text-base font-semibold text-gray-950">Attendee Registry</h2>
           <p className="mt-1 text-xs leading-5 text-gray-500">
             Used when this event has no external registration link. New registrations
             notify you immediately; partner delivery remains a manual action.

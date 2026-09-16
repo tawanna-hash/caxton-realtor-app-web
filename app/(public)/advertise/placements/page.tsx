@@ -98,7 +98,7 @@ function BundleSavingsSection() {
         Bundle &amp; save
       </p>
       <h2 className="text-xl font-bold tracking-tight text-gray-900 md:text-2xl">
-        Buy more markets, pay less per market
+        Buy More Markets, Pay Less per Market
       </h2>
       <p className="mt-1.5 max-w-2xl text-sm font-light text-gray-700">
         Every placement scales down per market the more markets you buy. Below is a real example using our {sample.name}{' '}

@@ -849,7 +849,7 @@ export function RecurringScheduleDrawer({
                   </div>
                   <div className="border-t border-gray-200 pt-5">
                     <h4 className="text-center text-sm font-semibold text-gray-900">
-                      Here are the details of your recurring payment
+                      Here Are the Details of Your Recurring Payment
                     </h4>
                     <dl className="mx-auto mt-4 grid max-w-sm grid-cols-[1fr_auto] gap-x-8 gap-y-2 text-sm">
                       <dt className="font-medium text-gray-700">Repeats</dt>

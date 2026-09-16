@@ -332,7 +332,7 @@ function DetailView({
       {row.extraDetails && Object.keys(row.extraDetails).some((k) => !k.startsWith('_')) && (
         <section className="mt-10 border-t border-gray-200 pt-6">
           <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-4">
-            Property details
+            Property Details
           </h2>
           <dl className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6 text-sm">
             {Object.entries(row.extraDetails).filter(([k]) => !k.startsWith('_')).map(([label, value]) => (

@@ -60,7 +60,7 @@ export default function TermsPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            3. Your account
+            3. Your Account
           </h2>
           <p>
             You are responsible for keeping your account information accurate
@@ -79,7 +79,7 @@ export default function TermsPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            4. Acceptable use
+            4. Acceptable Use
           </h2>
           <p>You agree not to:</p>
           <ul className="space-y-2 ml-6 list-disc mt-3">
@@ -111,7 +111,7 @@ export default function TermsPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            5. Our content
+            5. Our Content
           </h2>
           <p>
             All editorial content, photography, design, video, magazine archive
@@ -125,7 +125,7 @@ export default function TermsPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            6. Your content
+            6. Your Content
           </h2>
           <p>
             If you submit content through the Service — such as event
@@ -151,7 +151,7 @@ export default function TermsPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            8. No warranty
+            8. No Warranty
           </h2>
           <p>
             The Service is provided &ldquo;as is&rdquo; and &ldquo;as
@@ -165,7 +165,7 @@ export default function TermsPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            9. Limitation of liability
+            9. Limitation of Liability
           </h2>
           <p>
             To the maximum extent permitted by law, Caxton Publications, Inc.
@@ -195,7 +195,7 @@ export default function TermsPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            11. Governing law
+            11. Governing Law
           </h2>
           <p>
             These Terms are governed by the laws of the State of Texas, without

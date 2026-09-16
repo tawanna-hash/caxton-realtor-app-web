@@ -60,7 +60,7 @@ export default function HotspotPerformance() {
     <section className="overflow-hidden rounded border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">Hotspot performance</h3>
+          <h3 className="text-sm font-semibold text-gray-900">Hotspot Performance</h3>
           <p className="text-[11px] text-gray-500 mt-0.5">
             Magazine hotspot clicks, last 30 days. Independent of PostHog.
           </p>

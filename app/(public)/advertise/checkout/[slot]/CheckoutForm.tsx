@@ -316,7 +316,7 @@ export default function CheckoutForm({
     return (
       <div className="rounded-md bg-emerald-50 border border-emerald-200 p-6 sm:p-8 text-center">
         <div className="text-emerald-700 text-4xl mb-3">✓</div>
-        <h2 className="text-2xl font-bold text-emerald-900 mb-2">Payment received — pending approval.</h2>
+        <h2 className="text-2xl font-bold text-emerald-900 mb-2">Payment Received — Pending Approval.</h2>
         <div className="text-emerald-800 mb-4">
           <p>
             Please allow up to 2 days for your ad space to go live after payment
@@ -352,7 +352,7 @@ export default function CheckoutForm({
       {/* ── Pricing card ─────────────────────────────────── */}
       <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
-          1 · Choose your run
+          1 · Choose Your Run
         </h2>
 
         <div className="space-y-4">
@@ -511,7 +511,7 @@ export default function CheckoutForm({
       {/* ── Contact ─────────────────────────────────────── */}
       <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
-          2 · Your info
+          2 · Your Info
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Your name *">
@@ -532,7 +532,7 @@ export default function CheckoutForm({
       {/* ── Dates ───────────────────────────────────────── */}
       <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
-          3 · Run dates
+          3 · Run Dates
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Start date">
@@ -616,7 +616,7 @@ export default function CheckoutForm({
       {/* ── Terms ───────────────────────────────────────── */}
       <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
-          5 · Agreement terms
+          5 · Agreement Terms
         </h2>
         <div className="rounded-md bg-gray-50 border border-gray-200 p-4 text-xs text-gray-700 leading-relaxed max-h-44 overflow-y-auto mb-4">
           <p className="mb-2"><strong>Insertion Order — Self-Serve.</strong> By checking the box below and authorizing payment, you (&quot;Partner&quot;) agree to the following:</p>

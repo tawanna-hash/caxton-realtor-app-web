@@ -328,7 +328,7 @@ export default async function MailingHubPage() {
           <div className="space-y-5">
             <div>
               <div className="mb-2 flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Austin audience pages</h2>
+                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Austin Audience Pages</h2>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {austinAudienceTiles.map(renderAudienceTile)}
@@ -336,7 +336,7 @@ export default async function MailingHubPage() {
             </div>
             <div>
               <div className="mb-2 flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-gray-900">Newsline San Antonio audience pages</h2>
+                <h2 className="text-sm font-semibold text-gray-900">Newsline San Antonio Audience Pages</h2>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {sanAntonioAudienceTiles.map(renderAudienceTile)}
@@ -344,7 +344,7 @@ export default async function MailingHubPage() {
             </div>
             <div>
               <div className="mb-2 flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Houston audience pages</h2>
+                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Houston Audience Pages</h2>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {houstonAudienceTiles.map(renderAudienceTile)}
@@ -352,7 +352,7 @@ export default async function MailingHubPage() {
             </div>
             <div>
               <div className="mb-2 flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Dallas/Ft. Worth audience pages</h2>
+                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Dallas/Ft. Worth Audience Pages</h2>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {dallasAudienceTiles.map(renderAudienceTile)}
@@ -365,7 +365,7 @@ export default async function MailingHubPage() {
       {/* Footer hint */}
       <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 px-6 py-6 text-center">
         <h3 className="font-serif text-lg text-gray-900 mb-1">
-          Import and export from every segment
+          Import and Export from Every Segment
         </h3>
         <p className="text-sm text-gray-600 max-w-xl mx-auto">
           Each segment page supports CSV / TSV / JSON import and export with

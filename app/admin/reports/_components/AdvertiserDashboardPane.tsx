@@ -233,7 +233,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
             </div>
 
             <div className="bg-white border border-gray-200 rounded-md p-4 mb-5">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Clicks per day</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Clicks per Day</h3>
               <div className="w-full h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
@@ -280,7 +280,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
 
             <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-200">
-                <h3 className="text-sm font-medium text-gray-700">Hotspot breakdown</h3>
+                <h3 className="text-sm font-medium text-gray-700">Hotspot Breakdown</h3>
               </div>
               {/* mobile card list */}
               <ul className="sm:hidden divide-y divide-gray-100">

@@ -436,7 +436,7 @@ export default function AdvertiserDetailClient({
             <h2
               className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight mb-5"
             >
-              Move-in Ready &amp; Promotions
+              Move-In Ready &amp; Promotions
             </h2>
 
             {promotions.length > 0 && (

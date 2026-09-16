@@ -45,7 +45,7 @@ export default function RnnPlatinumPaywall({
             <Crown size={24} />
           </div>
           <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Platinum Tools</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Turn client praise into proof that travels.</h1>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Turn Client Praise into Proof That Travels.</h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-white/80">
             Collect testimonials without requiring client accounts, publish a polished proof page, and embed your reviews on any website.
           </p>

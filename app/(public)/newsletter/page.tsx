@@ -33,7 +33,7 @@ export default function NewsletterLandingPage() {
       </div>
 
       <section className="mb-12">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">What you&rsquo;ll get</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">What You&rsquo;ll Get</h2>
         <ul className="space-y-3 text-base text-gray-700 font-light leading-relaxed">
           <li className="flex gap-3">
             <span className="text-gray-400">&bull;</span>
@@ -67,7 +67,7 @@ export default function NewsletterLandingPage() {
       </section>
 
       <section className="mb-12 border-t border-gray-200 pt-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Choose your edition</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Choose Your Edition</h2>
         <p className="text-base text-gray-700 font-light leading-relaxed mb-4">
           We publish two weekly emails. Pick the one for your market &mdash; or
           switch publications from the nav drawer to subscribe to both.

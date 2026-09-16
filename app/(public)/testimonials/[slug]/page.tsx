@@ -65,7 +65,7 @@ export default async function TestimonialShowcasePage({ params }: Ctx) {
       <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-950">What clients say</h2>
+            <h2 className="text-xl font-semibold text-gray-950">What Clients Say</h2>
             <p className="mt-1 text-sm text-gray-500">{testimonials.length} published testimonial{testimonials.length === 1 ? '' : 's'}</p>
           </div>
         </div>

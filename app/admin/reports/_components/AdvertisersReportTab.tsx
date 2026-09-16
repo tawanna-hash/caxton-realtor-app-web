@@ -188,7 +188,7 @@ export default function AdvertisersReportTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">Partner reports</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Partner Reports</h2>
         <p className="text-sm text-gray-500 mt-0.5">
           Pick a partner to see their live performance dashboard, or select multiple to email
           their reports in one click. Only partners with a contact email can be sent to.

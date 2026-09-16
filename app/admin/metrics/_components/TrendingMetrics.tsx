@@ -75,7 +75,7 @@ export function TrendingMetrics({ days }: { days: number }) {
     <section>
       <div className="flex items-baseline justify-between mb-3">
         <h2 className="text-lg font-semibold text-gray-900">
-          Trending ticker
+          Trending Ticker
         </h2>
         <a
           href="/admin/content/trending"

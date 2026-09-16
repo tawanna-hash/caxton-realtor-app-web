@@ -76,7 +76,7 @@ export default function ProviderApplicationForm() {
         <div className="mx-auto max-w-2xl border border-[#D8D0C2] bg-white p-8 shadow-[0_18px_45px_rgba(40,25,77,0.08)] sm:p-12">
           <CheckCircle2 className="rnn-heading-icon text-[#5B824D]" aria-hidden="true" />
           <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Application received</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">You&apos;re in the review queue.</h1>
+          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">You&apos;re in the Review Queue.</h1>
           <p className="mt-5 text-base leading-7 text-slate-600">Thank you for sharing your company details. The Realty News Now team will review your application and contact you using the information provided.</p>
           <Link href="/agents" className="mt-8 inline-flex min-h-[46px] items-center gap-2 rounded-full bg-[#301D5D] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#513A85]">
             Return to Agent Command Center <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -96,7 +96,7 @@ export default function ProviderApplicationForm() {
           <aside className="bg-[#301D5D] p-7 text-white sm:p-9">
             <ShieldCheck className="rnn-heading-icon text-[#F4D06F]" aria-hidden="true" />
             <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#F4D06F]">Referral Network</p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">Put your service in front of local agents.</h1>
+            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">Put Your Service in Front of Local Agents.</h1>
             <p className="mt-5 text-sm leading-6 text-white/75">Apply for a featured referral-network profile across the Realty News Now agent community. Your information is reviewed before anything is published.</p>
             <ul className="mt-8 space-y-3 border-t border-white/15 pt-6 text-sm leading-6 text-white/75">
               <li>Service categories and local coverage</li>
@@ -107,7 +107,7 @@ export default function ProviderApplicationForm() {
 
           <form onSubmit={submit} className="p-6 sm:p-9">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Provider application</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Tell us about your company.</h2>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Tell Us About Your Company.</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">Fields marked required are used for review. Do not submit sensitive documents or policy files through this form.</p>
 
             <div className="mt-8 grid gap-5 sm:grid-cols-2">

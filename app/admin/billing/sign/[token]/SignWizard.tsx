@@ -1079,7 +1079,7 @@ export default function SignWizard({
       <div className="min-h-screen bg-white flex flex-col items-center py-8 px-4">
         <div className="w-full max-w-2xl text-center">
           <div className="inline-block px-4 py-1 rounded-md text-white text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ background: ACCENT }}>RealtyLine</div>
-          <h1 className="text-2xl text-gray-900">Insertion order received</h1>
+          <h1 className="text-2xl text-gray-900">Insertion Order Received</h1>
           <p className="text-sm text-gray-500 mt-1">Thank you — your advertising insertion order has been approved.</p>
           <div className="bg-white rounded-md border border-gray-200 shadow-sm p-8 mt-6 text-left">
             <p className="text-sm text-gray-700 leading-relaxed">
@@ -1146,7 +1146,7 @@ export default function SignWizard({
 
             {isPrint ? (
               <>
-                <h2 className="text-lg text-gray-900">Insertion order</h2>
+                <h2 className="text-lg text-gray-900">Insertion Order</h2>
 
                 <div>
                   <Eyebrow>Ad Size</Eyebrow>
@@ -1209,7 +1209,7 @@ export default function SignWizard({
               </>
             ) : (
               <>
-                <h2 className="text-lg text-gray-900">Your quoted placement</h2>
+                <h2 className="text-lg text-gray-900">Your Quoted Placement</h2>
                 <p className="text-sm text-gray-600">The details below were prepared by your sales rep. Review and approve this insertion order before the final signature step.</p>
                 {lineItems.filter((item) => item.channel === 'email').map((item) => (
                   <div key={`email-dates-${item.line_no}`} className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
@@ -1337,7 +1337,7 @@ export default function SignWizard({
         <div className="space-y-4">
           <Eyebrow>Partner Information</Eyebrow>
           <h2 className="text-lg text-gray-900">
-            Your partner details
+            Your Partner Details
           </h2>
           <p className="text-sm text-gray-600">
             Fill in or update your information below. Fields marked <span className="text-red-500">*</span> are required.
@@ -1416,7 +1416,7 @@ export default function SignWizard({
       >
         <div className="space-y-5">
           <Eyebrow>Insertion Order</Eyebrow>
-          <h2 className="text-lg text-gray-900">Your quoted placement</h2>
+          <h2 className="text-lg text-gray-900">Your Quoted Placement</h2>
           <p className="text-sm text-gray-600">
             The details below were prepared by your sales rep from an approved quote.
             {canEditPlacementDate
@@ -1551,7 +1551,7 @@ export default function SignWizard({
         <div className="space-y-5">
           <Eyebrow>Insertion Order</Eyebrow>
           <h2 className="text-lg text-gray-900">
-            Your ad details
+            Your Ad Details
           </h2>
 
           {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
@@ -1735,7 +1735,7 @@ export default function SignWizard({
         <div className="space-y-5">
           <Eyebrow>Billing &amp; Payment</Eyebrow>
           <h2 className="text-lg text-gray-900">
-            Billing information
+            Billing Information
           </h2>
 
           {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
@@ -1879,7 +1879,7 @@ export default function SignWizard({
       <div className="space-y-5">
         <Eyebrow>Terms &amp; Digital Signature</Eyebrow>
         <h2 className="text-lg text-gray-900">
-          Review and sign the insertion order
+          Review and Sign the Insertion Order
         </h2>
 
         {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}

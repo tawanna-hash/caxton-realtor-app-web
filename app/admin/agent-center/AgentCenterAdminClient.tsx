@@ -93,7 +93,7 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
       </header>
 
       <section className="border border-[#D9D0BF] bg-[#FFFDF8] p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-slate-950">Add an official revision</h2>
+        <h2 className="text-lg font-semibold text-slate-950">Add an Official Revision</h2>
         <p className="mt-1 text-sm leading-6 text-slate-600">The upload becomes active only for its matching form family. Previous revisions remain in history and are never overwritten.</p>
         <div className="mt-5 grid gap-4 lg:grid-cols-[0.8fr_1.3fr_1fr_1.4fr_auto] lg:items-end">
           <label className="block">
@@ -123,7 +123,7 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
 
       <section className="border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-5 py-4">
-          <h2 className="text-lg font-semibold text-slate-950">Version history</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Version History</h2>
         </div>
         <div className="divide-y divide-slate-200">
           {versions.map((version) => (
@@ -151,7 +151,7 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
 
       <section className="border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-5 py-4">
-          <h2 className="text-lg font-semibold text-slate-950">Agent download library</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Agent Download Library</h2>
           <p className="mt-1 text-sm leading-6 text-slate-600">All {TREC_FORM_LIBRARY.length} current TREC contract-library forms are available to signed-in agents. Upload a newer revision above to replace the active download for that form family without deleting its history.</p>
         </div>
         <div className="grid gap-px bg-slate-200 sm:grid-cols-2 xl:grid-cols-3">

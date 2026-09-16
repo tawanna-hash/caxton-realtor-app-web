@@ -200,7 +200,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
         <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: accentColor }}>
           REALTOR® branding
         </p>
-        <h2 className="mt-1 text-lg font-semibold text-gray-900">Calculator branding designer</h2>
+        <h2 className="mt-1 text-lg font-semibold text-gray-900">Calculator Branding Designer</h2>
         <p className="mt-1 text-sm leading-relaxed text-gray-600">
           Personalize one of the four approved designs. Your saved design is added automatically when you print, download, email, or text a calculator sheet.
         </p>

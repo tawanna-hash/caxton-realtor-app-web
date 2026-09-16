@@ -301,7 +301,7 @@ function SubscribeForm({
           {publication}
         </p>
         <h2 className="text-2xl font-semibold text-gray-900 mb-3">
-          You&apos;re on the list.
+          You&apos;re on the List.
         </h2>
         <p className="text-base text-gray-700 font-light leading-relaxed mb-3">
           Thanks, {data.firstName}. We&apos;ve received your

@@ -235,7 +235,7 @@ export default function AgentCommandCenterClient({
               </span>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Quick date check</p>
-                <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Need a date without opening your Deal Desktop?</h2>
+                <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Need a Date Without Opening Your Deal Desktop?</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">Use the compact, unsaved TREC timing check only when you need a fast answer.</p>
               </div>
             </div>
@@ -304,7 +304,7 @@ export default function AgentCommandCenterClient({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Work faster</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:mt-3 sm:text-4xl">Client-ready tools, one click away</h2>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:mt-3 sm:text-4xl">Client-Ready Tools, One Click Away</h2>
             </div>
             <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
               See every agent tool
@@ -345,7 +345,7 @@ export default function AgentCommandCenterClient({
                 <Handshake className="h-5 w-5" aria-hidden="true" />
               </div>
               <p className="mt-7 text-xs font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">Referral network</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Your call list, built for the next deal.</h2>
+              <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Your Call List, Built for the Next Deal.</h2>
               <p className="mt-5 text-base leading-7 text-white/75">
                 Find local service partners across title, appraisal, remodeling, A/C and heating, roofing, inspections, and lending. Discover who is visible in your market and take the next step with confidence.
               </p>

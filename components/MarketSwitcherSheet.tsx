@@ -100,7 +100,7 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
         {/* Title */}
         <div className="px-5 pt-2 pb-3 border-b border-gray-100">
           <h2 className="text-base font-semibold text-gray-900 text-center">
-            Switch publication
+            Switch Publication
           </h2>
         </div>
 

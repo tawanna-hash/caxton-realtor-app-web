@@ -1087,7 +1087,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
             <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/60 overflow-y-auto py-8 px-4">
               <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl">
                 <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-                  <h3 className="text-base font-semibold text-gray-900">Review quote before sending</h3>
+                  <h3 className="text-base font-semibold text-gray-900">Review Quote Before Sending</h3>
                   <button
                     type="button"
                     onClick={() => setShowReview(false)}

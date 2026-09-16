@@ -1560,7 +1560,7 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, head
             <h2 data-type-role="headline" className="mt-1 leading-none" style={{ fontFamily: headlineFont, fontSize: Math.max(22, fontSize - 4), fontWeight }}>{fields.title}</h2>
             <p data-type-role="subheadline" className="mt-1 text-[9px]" style={{ color: primary }}>{fields.meta}</p>
             <p data-type-role="body" className="mt-4 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
-            <h3 className="mt-4 text-base">Why choose us?</h3>
+            <h3 className="mt-4 text-base">Why Choose Us?</h3>
             <ul className="mt-2 space-y-1.5 text-[8px] text-slate-200">
               {features.map((feature) => <li key={feature}>○ &nbsp;{feature}</li>)}
             </ul>
@@ -2041,7 +2041,7 @@ function flyerMarkup(
           <h1 style="font-size:${Math.max(22, fontSize - 4)}px;font-weight:${fontWeight};line-height:1;margin:4px 0 0">${headlineTitle}</h1>
           <div style="font-size:9px;color:${primary};margin-top:4px">${data.meta}</div>
           <p style="font-size:${bodyFontSize}px;line-height:1.5;color:#e2e8f0;margin:16px 0 0">${bodyCopy}</p>
-          <h2 style="font-size:16px;margin:16px 0 0">Why choose us?</h2>
+          <h2 style="font-size:16px;margin:16px 0 0">Why Choose Us?</h2>
           <ul style="font-size:${bodyFontSize}px;color:#e2e8f0;list-style:none;padding:0;margin:8px 0 0">${featureItems}</ul>
           <div style="font-size:8px;line-height:1.5;white-space:pre-line;border-top:1px solid rgba(255,255,255,.2);padding-top:12px;margin-top:auto">${data.contact}<div style="margin-top:4px">${phone} · ${email} · ${website}</div></div>
         </div>

@@ -613,7 +613,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-gray-500">CRM outreach</div>
-            <h2 className="mt-0.5 font-serif text-2xl text-gray-900">Compose email</h2>
+            <h2 className="mt-0.5 font-serif text-2xl text-gray-900">Compose Email</h2>
           </div>
           <div className="flex items-center gap-3">
             {restoredDraft && (
@@ -1135,7 +1135,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
 
             {/* Test send */}
             <section className="mb-5 border-t border-gray-200 pt-5">
-              <h3 className="text-sm font-semibold text-gray-900">Test send</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Test Send</h3>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <input
                   type="email"

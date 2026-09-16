@@ -52,7 +52,7 @@ export default function TrecFormsLibrary({ versions }: { versions: TrecFormVersi
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Official form library</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">TREC contracts and forms</h2>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">TREC Contracts and Forms</h2>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
               Search and download all current forms listed in the Texas Real Estate Commission contract library. Always confirm the revision and effective date before use.
             </p>

@@ -436,7 +436,7 @@ export default function RealtyLineMlsAdminPage() {
 
           {/* Headline */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
-            <h2 className="font-semibold mb-4">Headline number</h2>
+            <h2 className="font-semibold mb-4">Headline Number</h2>
 
             <div className="grid grid-cols-3 gap-4">
               <Field label="Headline value">
@@ -488,7 +488,7 @@ export default function RealtyLineMlsAdminPage() {
 
           {/* Indicator stats */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
-            <h2 className="font-semibold mb-1">Indicator stats</h2>
+            <h2 className="font-semibold mb-1">Indicator Stats</h2>
             <p className="text-xs text-gray-500 mb-4">Median Sales Price, Closed Sales, New Listings, Months of Inventory, Active Listings, Pending Sales, Sales Dollar Volume, Average Days on Market, Average Close to List Price.</p>
             <div className="space-y-3">
               {form.indicator_stats.map((s, i) => (
@@ -505,7 +505,7 @@ export default function RealtyLineMlsAdminPage() {
           {/* Listing counts (optional) */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
             <div className="flex items-center justify-between mb-1">
-              <h2 className="font-semibold">Listing counts (optional)</h2>
+              <h2 className="font-semibold">Listing Counts (Optional)</h2>
               <button
                 type="button"
                 onClick={addListingRow}
@@ -541,7 +541,7 @@ export default function RealtyLineMlsAdminPage() {
           {/* Price bands (optional) */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
             <div className="flex items-center justify-between mb-1">
-              <h2 className="font-semibold">Price bands (optional)</h2>
+              <h2 className="font-semibold">Price Bands (Optional)</h2>
               <button
                 type="button"
                 onClick={addBandRow}

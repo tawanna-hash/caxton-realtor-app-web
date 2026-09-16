@@ -237,7 +237,7 @@ function ExpansionSection() {
 function RateMatrixSection() {
   return (
     <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900">Print rate matrix</h2>
+      <h2 className="text-lg font-semibold text-gray-900">Print Rate Matrix</h2>
       <p className="text-sm text-gray-700 mt-1">Monthly print rates by size and frequency commitment. Rates locked when an agreement is signed in advance.</p>
       <div className="overflow-x-auto mt-4">
         <table className="min-w-full text-sm">
@@ -276,7 +276,7 @@ function PrintSpecsSection() {
     <section id="print-specs" className="scroll-mt-6 rounded-md bg-white p-6 ring-1 ring-gray-200">
       <div className="mb-4">
         <div className="text-xs font-semibold uppercase tracking-wider text-brand-700">Creative requirements</div>
-        <h2 className="mt-1 text-lg font-semibold text-gray-900">Print ad specifications</h2>
+        <h2 className="mt-1 text-lg font-semibold text-gray-900">Print Ad Specifications</h2>
         <p className="mt-1 text-sm text-gray-700">
           Submit finished artwork at the exact dimensions below. Measurements are listed as width across by height down.
         </p>
@@ -308,7 +308,7 @@ function PrintSpecsSection() {
 function PackagesSection() {
   return (
     <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900">Brand packages</h2>
+      <h2 className="text-lg font-semibold text-gray-900">Brand Packages</h2>
       <p className="text-sm text-gray-700 mt-1">Five tiers from one-month to 12-month + premium. Discounts deepen with the agreement length.</p>
       <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
         {PACKAGES.map((p) => (<PackageCard key={p.id} pkg={p} />))}
@@ -356,7 +356,7 @@ function DigitalSlotsSection({
     <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Digital ad slots</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Digital Ad Slots</h2>
           <p className="text-sm text-gray-700 mt-1">
             {slots.length} placement{slots.length === 1 ? '' : 's'} available on {activePub.label}. Weekly + monthly rates shown for 1 market; multi-market multipliers below.
           </p>
@@ -517,7 +517,7 @@ function EblastCard({ blast, pub }: { blast: EBlast; pub: MediaKitPub }) {
 function DeadlinesSection() {
   return (
     <section id="print-deadlines" className="scroll-mt-6 rounded-md bg-white ring-1 ring-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900">2026 print deadlines</h2>
+      <h2 className="text-lg font-semibold text-gray-900">2026 Print Deadlines</h2>
       <p className="text-sm text-gray-700 mt-1">Camera-ready artwork due by the deadline; issues mail on the listed date.</p>
       <div className="mt-4 overflow-x-auto">
         <table className="min-w-full text-sm">
@@ -562,7 +562,7 @@ function PolicySection() {
 function ContactSection() {
   return (
     <section className="rounded-md bg-gray-900 p-6 text-white">
-      <h2 className="text-lg font-semibold">Ready to build your campaign?</h2>
+      <h2 className="text-lg font-semibold">Ready to Build Your Campaign?</h2>
       <p className="mt-1 max-w-3xl text-sm text-gray-200">
         Tell us which market you want to reach and what you want to accomplish.
         We will recommend the best print, email, and digital mix.

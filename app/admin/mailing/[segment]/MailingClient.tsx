@@ -2206,7 +2206,7 @@ function AddDialog({
   return (
     <div className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center px-4">
       <div className="bg-white rounded-md max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="font-serif text-xl text-gray-900 mb-4">Add contact</h2>
+        <h2 className="font-serif text-xl text-gray-900 mb-4">Add Contact</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="First name *" value={form.first_name}     onChange={(v) => set('first_name', v)} />
           <Field label="Last name"    value={form.last_name}      onChange={(v) => set('last_name', v)} />
@@ -2394,7 +2394,7 @@ function ImportDialog({
   return (
     <div className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center px-4">
       <div className="bg-white rounded-md max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="font-serif text-xl text-gray-900 mb-1">Import contacts</h2>
+        <h2 className="font-serif text-xl text-gray-900 mb-1">Import Contacts</h2>
         <p className="text-sm text-gray-600 mb-4">CSV, TSV, or JSON. Headers will be auto-mapped — review and adjust before importing.</p>
 
         {step === 'pick' && (

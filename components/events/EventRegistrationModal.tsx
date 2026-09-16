@@ -79,7 +79,7 @@ export function EventRegistrationModal({ eventId, eventTitle, color, onClose }: 
         {complete ? (
           <div className="px-6 py-12 text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-2xl text-green-700">✓</div>
-            <h3 className="text-xl font-semibold text-gray-950">You’re registered</h3>
+            <h3 className="text-xl font-semibold text-gray-950">You’re Registered</h3>
             <p className="mt-2 text-sm leading-6 text-gray-600">
               Your attendee information has been received. If the organizer has an event
               website, it will open next.

@@ -362,7 +362,7 @@ export default function TestimonialHubClient() {
         <div>
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-gray-950">Your library</h2>
+              <h2 className="text-lg font-semibold text-gray-950">Your Library</h2>
               <p className="mt-1 text-sm text-gray-500">{items.length} saved testimonial{items.length === 1 ? '' : 's'}</p>
             </div>
           </div>
@@ -370,7 +370,7 @@ export default function TestimonialHubClient() {
           {items.length === 0 ? (
             <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
               <Quote className="mx-auto text-gray-300" size={34} />
-              <h3 className="mt-4 font-semibold text-gray-900">Your best client stories belong here</h3>
+              <h3 className="mt-4 font-semibold text-gray-900">Your Best Client Stories Belong Here</h3>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">Add one yourself, or copy your collection link and send it to a client.</p>
               <button onClick={startNew} className="mt-5 min-h-11 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white">Add your first testimonial</button>
             </div>
@@ -408,7 +408,7 @@ export default function TestimonialHubClient() {
 
         <aside className="space-y-5">
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-gray-950">Collect testimonials</h2>
+            <h2 className="text-base font-semibold text-gray-950">Collect Testimonials</h2>
             <p className="mt-2 text-sm leading-6 text-gray-500">Share this link with clients. New responses arrive as pending for review.</p>
             <div className="mt-4 break-all rounded-md bg-gray-50 p-3 text-xs leading-5 text-gray-600">{collectionUrl}</div>
             <div className="mt-3 grid grid-cols-2 gap-2">
@@ -418,7 +418,7 @@ export default function TestimonialHubClient() {
           </section>
 
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-gray-950">Profile settings</h2>
+            <h2 className="text-base font-semibold text-gray-950">Profile Settings</h2>
             <label className="mt-4 flex items-center justify-between gap-3 text-sm font-medium text-gray-800">
               Published
               <input type="checkbox" checked={profile.is_published} onChange={(event) => setProfile({ ...profile, is_published: event.target.checked })} className="h-5 w-5 accent-[#301D5D]" />
@@ -488,7 +488,7 @@ export default function TestimonialHubClient() {
             </div>
             <div className="mt-5">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-medium text-gray-700">Featured links</h3>
+                <h3 className="text-sm font-medium text-gray-700">Featured Links</h3>
                 <button
                   type="button"
                   onClick={() => setProfile({ ...profile, featured_links: [...profile.featured_links, { label: '', url: '' }] })}
@@ -519,7 +519,7 @@ export default function TestimonialHubClient() {
           </section>
 
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-gray-950">Embed anywhere</h2>
+            <h2 className="text-base font-semibold text-gray-950">Embed Anywhere</h2>
             <p className="mt-2 text-sm leading-6 text-gray-500">Paste this single line into your website. Newly published testimonials appear automatically without reloading the page.</p>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="text-sm font-medium text-gray-700">

@@ -88,7 +88,7 @@ export default function EventClickLog({ eventId, days }: { eventId: string; days
     <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 px-4 py-3">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Who clicked (internal only)</h2>
+          <h2 className="text-base font-semibold text-gray-900">Who Clicked (Internal Only)</h2>
           <p className="text-xs text-gray-500 mt-1">
             Public event pages don&apos;t require login, so clicks are tracked by
             anonymous browser/device, not name or email. Not included in client

@@ -183,7 +183,7 @@ function Dashboard({
             </div>
 
             <div className="bg-white border border-gray-200 rounded-md p-4 mb-6">
-              <h2 className="text-sm font-medium text-gray-700 mb-3">Clicks per day</h2>
+              <h2 className="text-sm font-medium text-gray-700 mb-3">Clicks per Day</h2>
               <div className="w-full h-64">
                 <DailyClicksAreaChart
                   data={data.daily_clicks}
@@ -196,7 +196,7 @@ function Dashboard({
 
             <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-200">
-                <h2 className="text-sm font-medium text-gray-700">Where your readers clicked</h2>
+                <h2 className="text-sm font-medium text-gray-700">Where Your Readers Clicked</h2>
               </div>
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-200">

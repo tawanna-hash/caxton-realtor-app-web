@@ -104,7 +104,7 @@ export default async function PortalOrders() {
           <h2
             className="font-serif text-xl text-gray-900 mb-2"
           >
-            No orders yet
+            No Orders Yet
           </h2>
           <p className="text-gray-600 text-sm mb-5 max-w-md mx-auto">
             When you book a placement or sign an agreement, it shows up here with
@@ -219,7 +219,7 @@ export default async function PortalOrders() {
         <h2
           className="font-serif text-lg text-gray-900 mb-1"
         >
-          Need to add another placement?
+          Need to Add Another Placement?
         </h2>
         <p className="text-sm text-gray-600 mb-3">
           Self-serve checkout takes about two minutes, and bundles unlock when

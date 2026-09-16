@@ -703,7 +703,7 @@ return (
       {deleteModalOpen && sub && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
           <div className="bg-white rounded-md max-w-md w-full p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-[#dc2626]">Delete this subscriber?</h3>
+            <h3 className="text-lg font-semibold text-[#dc2626]">Delete This Subscriber?</h3>
             <p className="text-sm text-gray-700 mt-2">
               This will hard-delete <span className="font-medium">{sub.email}</span> and cascade to their
               RSVPs, notification deliveries, magic links, subscriptions, and push tokens. Email log entries

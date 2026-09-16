@@ -140,7 +140,7 @@ export default async function StatementPage({
     <div className="mx-auto max-w-3xl px-4 py-8 print:max-w-none print:px-0 print:py-0">
       <div className="mb-4 flex items-center justify-between print:hidden">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900">Statement of account</h1>
+          <h1 className="text-lg font-semibold text-gray-900">Statement of Account</h1>
           <p className="text-sm text-gray-500">{advertiser.name}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -156,7 +156,7 @@ export default async function StatementPage({
       <section className="mb-5 overflow-hidden rounded border border-gray-200 bg-white print:hidden">
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">Statement send history</h2>
+            <h2 className="text-sm font-semibold text-gray-900">Statement Send History</h2>
             <p className="text-xs text-gray-500">
               {sendHistory.length
                 ? `${sendHistory.length.toLocaleString()} successful ${sendHistory.length === 1 ? 'delivery' : 'deliveries'}`

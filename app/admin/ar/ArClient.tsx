@@ -597,7 +597,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-300 px-4 py-3">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">Unpaid invoices</h2>
+            <h2 className="text-sm font-semibold text-gray-900">Unpaid Invoices</h2>
             <p className="mt-0.5 text-xs text-gray-500">{bucketFilter === 'all' ? 'All open balances' : AGING_BUCKET_LABELS[bucketFilter]}</p>
           </div>
           {bucketFilter !== 'all' && <button type="button" onClick={() => { setBucketFilter('all'); setInvoicePage(1); }} className="text-xs font-medium text-orange-700 hover:underline">Clear filter</button>}
@@ -665,7 +665,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       <section className="grid gap-5 xl:grid-cols-2">
         <div className="min-w-0 overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-300 px-4 py-3">
-            <h2 className="text-sm font-semibold text-gray-900">Outstanding by partner</h2>
+            <h2 className="text-sm font-semibold text-gray-900">Outstanding by Partner</h2>
             <p className="mt-0.5 text-xs text-gray-500">Open balances by aging range</p>
           </div>
           <div className="overflow-x-auto">
@@ -699,7 +699,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
         <div className="min-w-0 overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-gray-300 px-4 py-3">
             <div>
-              <h2 className="text-sm font-semibold text-gray-900">Income over time</h2>
+              <h2 className="text-sm font-semibold text-gray-900">Income over Time</h2>
               <p className="mt-0.5 text-xs text-gray-500">
                 {formatCents(selectedIncome.total)} · {selectedIncomeLabel}
                 {compareLastYear ? ` · ${formatCents(selectedIncome.previousTotal)} previous year` : ''}
@@ -755,7 +755,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-300 px-4 py-3">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">Recurring invoice schedules</h2>
+            <h2 className="text-sm font-semibold text-gray-900">Recurring Invoice Schedules</h2>
             <p className="mt-0.5 text-xs text-gray-500">Automated billing and next run dates</p>
           </div>
           <button type="button" className={ORANGE_BUTTON} onClick={() => setCreateSchedule(true)}>Create schedule</button>

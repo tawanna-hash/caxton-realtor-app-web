@@ -237,7 +237,7 @@ export function EventForm({
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-emerald-700">
           Submitted for review
         </p>
-        <h2 className="mt-2 text-2xl font-semibold text-gray-900">Thank you for sharing your event</h2>
+        <h2 className="mt-2 text-2xl font-semibold text-gray-900">Thank You for Sharing Your Event</h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-600">
           The Realty News Now team has been notified. Your event will appear on the
           Calendar after an administrator reviews and approves it.

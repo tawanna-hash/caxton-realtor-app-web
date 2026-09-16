@@ -99,7 +99,7 @@ export default async function InvoicePreviewPage({
     <div className="mx-auto max-w-3xl px-4 py-8 print:max-w-none print:px-0 print:py-0">
       <div className="mb-4 flex items-center justify-between print:hidden">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900">Invoice preview</h1>
+          <h1 className="text-lg font-semibold text-gray-900">Invoice Preview</h1>
           <p className="text-sm text-gray-500">{invoice.number ?? 'Draft invoice'}</p>
         </div>
         <PrintInvoiceButton />

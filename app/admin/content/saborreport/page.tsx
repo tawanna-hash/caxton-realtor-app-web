@@ -474,7 +474,7 @@ export default function SaborMlsAdminPage() {
 
           {/* Headline */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
-            <h2 className="font-semibold mb-4">Headline number</h2>
+            <h2 className="font-semibold mb-4">Headline Number</h2>
 
             <div className="grid grid-cols-3 gap-4">
               <Field label="Headline value">
@@ -526,7 +526,7 @@ export default function SaborMlsAdminPage() {
 
           {/* Indicator stats */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
-            <h2 className="font-semibold mb-1">Indicator stats</h2>
+            <h2 className="font-semibold mb-1">Indicator Stats</h2>
             <p className="text-xs text-gray-500 mb-4">Days on Market, Price/SqFt, Close to List, Months of Inventory, Avg Rental, Total Sales, Avg Price, Median Price.</p>
             <div className="space-y-3">
               {form.indicator_stats.map((s, i) => (
@@ -542,7 +542,7 @@ export default function SaborMlsAdminPage() {
 
           {/* Listing counts */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
-            <h2 className="font-semibold mb-1">Listing counts</h2>
+            <h2 className="font-semibold mb-1">Listing Counts</h2>
             <p className="text-xs text-gray-500 mb-4">New, Active, Pending, Active Residential Rental.</p>
             <div className="space-y-3">
               {form.listing_counts.map((s, i) => (
@@ -558,7 +558,7 @@ export default function SaborMlsAdminPage() {
 
           {/* Price bands */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
-            <h2 className="font-semibold mb-1">Price bands (% of sales)</h2>
+            <h2 className="font-semibold mb-1">Price Bands (% of Sales)</h2>
             <p className="text-xs text-gray-500 mb-4">Share of closed sales by price tier.</p>
             <div className="space-y-3">
               {form.price_bands.map((b, i) => (

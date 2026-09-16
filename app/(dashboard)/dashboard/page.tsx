@@ -886,7 +886,7 @@ function AuthGate({
                 Realty News Now
               </p>
               <h1 className="text-center text-3xl font-semibold tracking-tight text-gray-900">
-                Welcome back
+                Welcome Back
               </h1>
               <p className="mb-7 mt-2 text-center text-sm font-light leading-relaxed text-gray-500">
                 Sign in for your saved profile, preferences, and subscriptions.
@@ -1002,7 +1002,7 @@ function AuthGate({
       <div className="min-h-full flex flex-col items-center justify-center">
       <div className="w-full max-w-md px-8">
         <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
-        <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign In to Continue</h2>
+        <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign in to Continue</h2>
         <button
           onClick={() => {
             if (isPubKey(pub)) setMode('signup');

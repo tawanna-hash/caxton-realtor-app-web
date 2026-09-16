@@ -227,7 +227,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
 
       {/* Market cards */}
       <div className="flex items-baseline justify-between gap-4">
-        <h2 className="text-base font-semibold text-gray-950">Market snapshot</h2>
+        <h2 className="text-base font-semibold text-gray-950">Market Snapshot</h2>
         <span className="text-xs text-gray-500">Live operational totals by publication</span>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -325,7 +325,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
 
         {/* Cover */}
         <div className="bg-white border border-gray-200 rounded-md p-6 mb-6">
-          <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">Cover image</h2>
+          <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">Cover Image</h2>
           <div className="flex items-start gap-4">
             {coverUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -351,7 +351,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
 
         {/* PDF */}
         <div className="bg-white border border-gray-200 rounded-md p-6 mb-6">
-          <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">PDF (enables search)</h2>
+          <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">PDF (Enables Search)</h2>
           {readerUrl ? (
             <p className="text-sm text-gray-700 mb-2 break-all">{readerUrl}</p>
           ) : (

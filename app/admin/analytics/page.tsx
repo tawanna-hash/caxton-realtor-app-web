@@ -452,7 +452,7 @@ export default function AdminAnalyticsPage() {
         {/* Phase 6b: cross-system at-a-glance KPIs. Self-contained fetch —
             renders instantly, independent of the slow PostHog report below. */}
         <div>
-          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">At a glance</h2>
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">At a Glance</h2>
           <KpiStrip />
         </div>
 
@@ -718,7 +718,7 @@ export default function AdminAnalyticsPage() {
         <div className="rounded-md border border-gray-200 bg-white p-5 flex flex-col xl:sticky xl:top-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-orange-600">Report compiler</h2>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-orange-600">Report Compiler</h2>
               <p className="text-[10px] text-gray-500 mt-0.5">
                 Live prompt with real data &mdash; paste into Claude for the client deliverable
               </p>

@@ -1981,7 +1981,7 @@ function CreateAdvertiserModal({
     >
       <div className="w-full max-w-lg rounded-md bg-white shadow-xl border border-gray-200">
         <div className="px-5 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">New partner</h2>
+          <h2 className="text-lg font-semibold text-gray-900">New Partner</h2>
           <p className="text-xs text-gray-500 mt-0.5">Create the contact record. You can fill in everything else from the edit drawer afterwards.</p>
         </div>
         <div className="p-5 space-y-4">

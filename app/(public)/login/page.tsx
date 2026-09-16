@@ -71,7 +71,7 @@ function LoginInner() {
           Realty News Now
         </p>
         <h1 className="text-2xl font-semibold text-gray-900 text-center mb-2">
-          Sign In or Create an Account
+          Sign in or Create an Account
         </h1>
         <p className="text-sm text-gray-500 font-light text-center mb-6">
           Sign in to access your market feed.

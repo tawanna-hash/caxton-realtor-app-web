@@ -56,7 +56,7 @@ export default function DepositDetailClient({
     <div className="mx-auto max-w-7xl px-6 py-6 print:max-w-none print:px-0 print:py-0">
       <div className="no-print mb-6 flex flex-wrap items-end justify-between gap-4 print:hidden">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Deposit detail</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Deposit Detail</h1>
           <p className="mt-1 text-sm text-gray-600">
             Transaction-level check detail from recorded invoice payments.
           </p>

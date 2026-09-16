@@ -126,7 +126,7 @@ export default function AdminMetricsPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              Activity · last 7 days
+              Activity · Last 7 Days
             </h2>
             <TimeSeriesChart data={metrics.time_series ?? []} />
           </section>
@@ -165,7 +165,7 @@ export default function AdminMetricsPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              Show filter usage · last 7 days
+              Show Filter Usage · Last 7 Days
             </h2>
             <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
               <MetricList
@@ -182,7 +182,7 @@ export default function AdminMetricsPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              Top builders · last 30 days
+              Top Builders · Last 30 Days
             </h2>
             <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
               <MetricList
@@ -200,7 +200,7 @@ export default function AdminMetricsPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              Top inventory cards · last 30 days
+              Top Inventory Cards · Last 30 Days
             </h2>
             <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
               <MetricList

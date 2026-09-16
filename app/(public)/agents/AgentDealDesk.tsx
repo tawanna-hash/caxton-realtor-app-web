@@ -1259,7 +1259,7 @@ export default function AgentDealDesk({
             <div className="order-2 h-full border border-slate-200 bg-white p-4 sm:p-6">
               <div className="flex items-start gap-3">
                 <CalendarDays className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
-                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar Exports</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Take your deadlines with you</h2></div>
+                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar Exports</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Take Your Deadlines with You</h2></div>
               </div>
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Download calendar files for the active deal or every active transaction. Each export includes calculated contract dates, closing dates, open reminders, and open tasks.</p>
               <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
@@ -1270,7 +1270,7 @@ export default function AgentDealDesk({
             <div className="order-3 h-full border border-slate-200 bg-white p-4 sm:p-6">
               <div className="flex items-start gap-3">
                 <Bell className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
-                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline Alerts</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Choose how you are notified</h2></div>
+                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline Alerts</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Choose How You Are Notified</h2></div>
               </div>
               <div className="mt-4 space-y-3">
                 <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Mail className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />Send deadline alerts by email</label>
@@ -1293,7 +1293,7 @@ export default function AgentDealDesk({
         <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:py-10">
           {!activeDeal ? (
             <div className="border border-dashed border-slate-300 bg-white p-6 text-center">
-              <h2 className="text-xl font-semibold text-slate-950">Set up your first transaction</h2>
+              <h2 className="text-xl font-semibold text-slate-950">Set up Your First Transaction</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">Create a secure transaction to manage tasks, documents, and closeout history here.</p>
               <button type="button" onClick={createDeal} className="mt-5 inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">
                 Create transaction <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -1307,7 +1307,7 @@ export default function AgentDealDesk({
                     <ListTodo className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Action list</p>
-                      <h2 className="mt-1 text-xl font-semibold text-slate-950">Tasks and reminders</h2>
+                      <h2 className="mt-1 text-xl font-semibold text-slate-950">Tasks and Reminders</h2>
                     </div>
                   </div>
                   <div className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2">
@@ -1341,7 +1341,7 @@ export default function AgentDealDesk({
                 />
               </div>
               <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
-                <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h2 className="mt-1 text-xl font-semibold text-slate-950">Outcome, record, and export</h2></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
+                <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h2 className="mt-1 text-xl font-semibold text-slate-950">Outcome, Record, and Export</h2></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
                 <div className="mt-5 grid gap-3 md:grid-cols-3"><select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm"><option value="">Closeout outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select><input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm" /><input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm" placeholder="Closeout note" /></div>
                 <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#E7C769] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
               </section>
@@ -1546,7 +1546,7 @@ export default function AgentDealDesk({
               <CalendarDays className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar Exports</p>
-                <h3 className="mt-1 text-xl font-semibold text-slate-950">Take your deadlines with you</h3>
+                <h3 className="mt-1 text-xl font-semibold text-slate-950">Take Your Deadlines with You</h3>
               </div>
             </div>
             <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
@@ -1579,7 +1579,7 @@ export default function AgentDealDesk({
               <Bell className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline Alerts</p>
-                <h3 className="mt-1 text-xl font-semibold text-slate-950">Choose how you are notified</h3>
+                <h3 className="mt-1 text-xl font-semibold text-slate-950">Choose How You Are Notified</h3>
               </div>
             </div>
             <div className="mt-4 space-y-3">
@@ -1724,7 +1724,7 @@ export default function AgentDealDesk({
             {!activeDeal ? (
               <div className="mt-7 flex min-h-[260px] flex-col items-center justify-center border border-dashed border-slate-300 bg-[#FCFBF9] px-6 text-center">
                 <ClipboardCheck className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
-                <h4 className="mt-4 text-lg font-semibold text-slate-950">Build your first Deal Desktop</h4>
+                <h4 className="mt-4 text-lg font-semibold text-slate-950">Build Your First Deal Desktop</h4>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">Create a private workspace to turn the contract terms in front of you into a workable list of actions.</p>
                 <button type="button" onClick={createDeal} className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">
                   Create transaction
@@ -1975,7 +1975,7 @@ export default function AgentDealDesk({
                 <ListTodo className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Action list</p>
-                  <h3 className="mt-1 text-xl font-semibold text-slate-950">Tasks and reminders</h3>
+                  <h3 className="mt-1 text-xl font-semibold text-slate-950">Tasks and Reminders</h3>
                 </div>
               </div>
               <div className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2">
@@ -2008,7 +2008,7 @@ export default function AgentDealDesk({
             />
           </div>
           <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h3 className="mt-1 text-xl font-semibold text-slate-950">Outcome, record, and export</h3></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
+            <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h3 className="mt-1 text-xl font-semibold text-slate-950">Outcome, Record, and Export</h3></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
             <div className="mt-5 grid gap-3 md:grid-cols-3"><select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm"><option value="">Closeout outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select><input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm" /><input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm" placeholder="Closeout note" /></div>
             <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#E7C769] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
           </section>
@@ -2025,7 +2025,7 @@ export default function AgentDealDesk({
             <div className="w-full max-w-2xl rounded-md bg-white p-4 shadow-2xl sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 id="contract-camera-title" className="text-xl font-semibold text-slate-950">Take a contract photo</h2>
+                  <h2 id="contract-camera-title" className="text-xl font-semibold text-slate-950">Take a Contract Photo</h2>
                   <p className="mt-1 text-sm leading-6 text-slate-600">Place the page inside the frame and keep all text in focus.</p>
                 </div>
                 <button

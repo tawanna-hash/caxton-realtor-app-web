@@ -28,7 +28,7 @@ export default async function SignPage({ params }: PageProps) {
         <div className="bg-white rounded-md border border-gray-200 p-10 max-w-md text-center">
           <div className="text-3xl mb-3">⚠️</div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
-            Link expired or invalid
+            Link Expired or Invalid
           </h1>
           <p className="text-sm text-gray-600">
             This signing link has expired or is not valid. Please contact{' '}
@@ -118,7 +118,7 @@ export default async function SignPage({ params }: PageProps) {
             Renewal offer expired
           </div>
           <h1 className="text-2xl font-semibold text-gray-900 mb-3">
-            This renewal rate is no longer available
+            This Renewal Rate Is No Longer Available
           </h1>
           <p className="text-sm text-gray-600 leading-relaxed">
             The 72-hour rate window{deadline ? ` ended ${deadline}` : ' has ended'}.
@@ -142,7 +142,7 @@ export default async function SignPage({ params }: PageProps) {
         <div className="bg-white rounded-md border border-emerald-200 p-10 max-w-md text-center">
           <div className="text-4xl mb-3">✓</div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
-            Already signed
+            Already Signed
           </h1>
           <p className="text-sm text-gray-600">
             This agreement has already been signed

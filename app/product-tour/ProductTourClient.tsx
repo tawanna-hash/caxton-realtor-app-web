@@ -262,7 +262,7 @@ function BuildersScreen() {
   return (
     <div className="px-3 py-4" data-tour-screen="builders">
       <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Local opportunity</p>
-      <h3 className="mt-1 text-lg font-semibold text-gray-900">Builders & communities</h3>
+      <h3 className="mt-1 text-lg font-semibold text-gray-900">Builders & Communities</h3>
       <div className="mt-3 flex gap-1.5 overflow-hidden">
         {['All areas', 'Quick move-in', 'Promotions'].map((label, index) => (
           <span
@@ -313,7 +313,7 @@ function IssuesScreen() {
   return (
     <div className="px-3 py-4" data-tour-screen="issues">
       <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Digital editions</p>
-      <h3 className="mt-1 text-lg font-semibold text-gray-900">Latest issues</h3>
+      <h3 className="mt-1 text-lg font-semibold text-gray-900">Latest Issues</h3>
       <div className="mt-4 grid grid-cols-2 gap-3">
         {publications.map((publication) => (
           <div key={publication.name} className="border border-gray-200 bg-white p-2 shadow-sm">
@@ -351,7 +351,7 @@ function PartnersScreen() {
   return (
     <div className="px-3 py-4" data-tour-screen="partners">
       <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Professional directory</p>
-      <h3 className="mt-1 text-lg font-semibold text-gray-900">Local partners</h3>
+      <h3 className="mt-1 text-lg font-semibold text-gray-900">Local Partners</h3>
       <div className="mt-3 flex items-center gap-2 border border-gray-200 bg-gray-50 px-3 py-2">
         <LayoutGrid size={14} className="text-gray-400" aria-hidden />
         <span className="text-[10px] text-gray-400">Search builders, lenders, title companies...</span>
@@ -396,7 +396,7 @@ function AdvertisingScreen() {
   return (
     <div className="px-3 py-4" data-tour-screen="advertising">
       <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-orange-700">Advertising opportunities</p>
-      <h3 className="mt-1 text-lg font-semibold text-gray-900">Print, digital & app</h3>
+      <h3 className="mt-1 text-lg font-semibold text-gray-900">Print, Digital & App</h3>
       <div className="mt-4 space-y-2">
         {opportunities.map(({ Icon, label, title, detail }, index) => (
           <div key={label} className={`flex gap-3 border p-3 ${index === 1 ? 'border-brand-200 bg-brand-50' : 'border-gray-200 bg-white'}`}>
@@ -464,7 +464,7 @@ function PlatinumScreen() {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-orange-700">Platinum Tools</p>
-          <h3 className="mt-1 text-lg font-semibold text-gray-900">Build your reputation</h3>
+          <h3 className="mt-1 text-lg font-semibold text-gray-900">Build Your Reputation</h3>
         </div>
         <Star size={21} className="fill-orange-100 text-orange-600" aria-hidden />
       </div>
@@ -587,7 +587,7 @@ function AnnouncementScreen({ onStart }: { onStart: () => void }) {
             We are excited to announce
           </p>
           <h1 className="mt-4 max-w-xl font-serif text-[clamp(2.25rem,4.5vw,4.25rem)] leading-[1.01] tracking-[-0.035em] text-brand-700">
-            The Realty News Now app is here.
+            The Realty News Now App Is Here.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-gray-600">
             We are excited to announce the Realty News Now app, bringing Texas real estate news, local market

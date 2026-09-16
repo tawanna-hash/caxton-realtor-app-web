@@ -162,7 +162,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
         ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-900">New creative</h3>
+              <h3 className="text-sm font-medium text-gray-900">New Creative</h3>
               <button
                 type="button"
                 onClick={resetUploadForm}

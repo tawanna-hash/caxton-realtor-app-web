@@ -135,7 +135,7 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
           <h2
             className="font-serif text-lg text-gray-900"
           >
-            Default footer template
+            Default Footer Template
           </h2>
           {footerSaved && <span className="text-xs text-emerald-700">Saved</span>}
         </div>

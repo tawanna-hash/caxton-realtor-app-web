@@ -80,7 +80,7 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
       <main className="flex min-h-screen items-center justify-center bg-[#f7f4ee] px-5">
         <div className="max-w-md rounded-xl border border-red-100 bg-white p-8 text-center shadow-sm">
           <Quote className="mx-auto text-gray-300" size={34} />
-          <h1 className="mt-4 text-xl font-semibold text-gray-950">Link unavailable</h1>
+          <h1 className="mt-4 text-xl font-semibold text-gray-950">Link Unavailable</h1>
           <p className="mt-2 text-sm leading-6 text-gray-600">{error}</p>
         </div>
       </main>
@@ -92,7 +92,7 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
       <main className="flex min-h-screen items-center justify-center bg-[#f7f4ee] px-5">
         <div className="max-w-lg rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-10">
           <Check className="mx-auto text-emerald-600" size={38} />
-          <h1 className="mt-5 text-2xl font-semibold text-gray-950">Thank you for sharing</h1>
+          <h1 className="mt-5 text-2xl font-semibold text-gray-950">Thank You for Sharing</h1>
           <p className="mt-3 text-base leading-7 text-gray-600">Your testimonial has been sent to {profile?.display_name} for review.</p>
           {profile?.website_url && <a href={profile.website_url} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-[#301D5D] px-5 text-sm font-semibold text-white">Return to {profile.display_name}&apos;s website</a>}
         </div>

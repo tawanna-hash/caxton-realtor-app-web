@@ -208,7 +208,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
     >
       <div className="flex items-baseline justify-between">
         <h3 className="text-sm font-semibold text-gray-900">
-          Book directly (skip quote)
+          Book Directly (Skip Quote)
         </h3>
         <span className="text-xs text-gray-600">Creates agreement + invoice</span>
       </div>

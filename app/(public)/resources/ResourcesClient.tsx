@@ -86,7 +86,7 @@ export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesVi
         <h2
           className="text-2xl md:text-3xl text-gray-900 mb-6"
         >
-          Calculators & quick references
+          Calculators & Quick References
         </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <ToolCard
@@ -153,7 +153,7 @@ export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesVi
         <h2
           className="text-2xl md:text-3xl text-gray-900 mb-6"
         >
-          PDFs, checklists, and workbooks
+          PDFs, Checklists, and Workbooks
         </h2>
         <div className="grid sm:grid-cols-2 gap-4">
           {RESOURCE_GUIDES.map((g) => (
@@ -169,7 +169,7 @@ export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesVi
         <h2
           className="text-2xl md:text-3xl text-gray-900 mb-6"
         >
-          Official sources & industry reference
+          Official Sources & Industry Reference
         </h2>
         <ul className="divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden">
           {RESOURCE_LINKS.map((l) => (

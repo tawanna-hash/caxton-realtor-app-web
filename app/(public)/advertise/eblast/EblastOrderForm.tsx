@@ -201,7 +201,7 @@ export default function EblastOrderForm({
           Order received
         </p>
         <h2 className="mt-2 text-2xl font-bold text-emerald-950">
-          Your e-Blast is pending schedule confirmation.
+          Your e-Blast Is Pending Schedule Confirmation.
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-emerald-900">
           Your order and payment details were received. We sent confirmation to{' '}
