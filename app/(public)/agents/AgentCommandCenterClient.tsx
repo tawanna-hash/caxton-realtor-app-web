@@ -246,7 +246,6 @@ export default function AgentCommandCenterClient({
                   </label>
                   {effectiveDate && <button type="button" onClick={resetPlanner} className="inline-flex h-[38px] items-center gap-2 rounded-md border border-slate-400 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-slate-950"><RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />Clear</button>}
                 </div>
-                <p className="mt-5 border-t border-slate-300 pt-4 text-xs leading-5 text-slate-600">Educational planning aid only. Verify the signed contract, delivery method, local legal holidays, and all deadlines with your broker, title company, and legal counsel. Nothing entered here is saved.</p>
               </div>
               <div className="p-5 sm:p-6">
                 {!effectiveDate ? (
