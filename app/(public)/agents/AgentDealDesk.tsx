@@ -1245,10 +1245,10 @@ export default function AgentDealDesk({
             <div className="order-1 h-full border border-slate-200 bg-white p-4 sm:p-6">
               <div className="flex items-start gap-3">
                 <Bell className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
-                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Date Radar</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Next {radarWindowDays} days</h2></div>
+                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Pressing Deadlines</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Next {radarWindowDays} days</h2></div>
               </div>
               <div className="mt-5 space-y-2">
-                {!radarItems.length ? <div className="border border-dashed border-slate-300 bg-white p-5 text-sm leading-6 text-slate-600">Add a transaction, effective date, and closing date to set this Date Radar window.</div> : radarItems.map((item) => (
+                {!radarItems.length ? <div className="border border-dashed border-slate-300 bg-white p-5 text-sm leading-6 text-slate-600">Add a transaction, signed contract effective date, and closing date to see pressing deadlines.</div> : radarItems.map((item) => (
                   <button type="button" key={item.id} onClick={() => focusDeal(item.dealId)} className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 border border-slate-200 bg-white p-3 text-left transition hover:border-[#7059A8] sm:flex-nowrap">
                     <span className={`h-2.5 w-2.5 shrink-0 rounded-md ${item.overdue ? 'bg-[#B6402C]' : item.kind === 'deadline' ? 'bg-[#7059A8]' : 'bg-[#C88A14]'}`} />
                     <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-slate-900">{item.label}</span><span className="mt-0.5 block truncate text-xs text-slate-500">{item.dealTitle}</span></span>
@@ -1361,7 +1361,7 @@ export default function AgentDealDesk({
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Private agent workspace</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Your Deal Desktop</h2>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-              Turn contract terms into a working desk with live timing, task and document checks, and an in-app Date Radar across your active transactions.
+              Turn contract terms into a working desk with live timing, task and document checks, and Pressing Deadlines across your active transactions.
             </p>
           </div>
         </div>
@@ -1381,7 +1381,7 @@ export default function AgentDealDesk({
               Page 1 of 2
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-900">
-              Overview, Date Radar, calendar and alerts
+              Overview, Pressing Deadlines, calendar and alerts
             </p>
           </div>}
           {workspacePage === 2 ? (
@@ -1639,14 +1639,14 @@ export default function AgentDealDesk({
             <div className="flex items-start gap-3">
               <Bell className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Date Radar</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Pressing Deadlines</p>
                 <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Next {radarWindowDays} days</h3>
               </div>
             </div>
             <div className="mt-5 space-y-2">
               {!radarItems.length ? (
                 <div className="border border-dashed border-slate-300 bg-white p-5 text-sm leading-6 text-slate-600">
-                  Add a transaction, effective date, and closing date to set this Date Radar window.
+                  Add a transaction, signed contract effective date, and closing date to see pressing deadlines.
                 </div>
               ) : radarItems.map((item) => (
                 <button
@@ -1831,11 +1831,21 @@ export default function AgentDealDesk({
                   <div className="flex items-center gap-2">
                     <CalendarDays className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                     <div>
-                      <h4 className="text-lg font-semibold text-slate-950">Timeline customization</h4>
-                      <p className="mt-1 text-sm text-slate-600">Set the contract dates and timeframes used by Date Radar, Calendar Exports, and Deadline Alerts.</p>
+                      <h4 className="text-lg font-semibold text-slate-950">Pressing Deadlines</h4>
+                      <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates auto-populate from it using the contract terms and TREC timing rules, then sync with Calendar Exports and Deadline Alerts.</p>
                     </div>
                   </div>
                   <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <label className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
+                      <span className="block text-sm font-bold text-slate-900">Signed Contract / Effective Date</span>
+                      <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: use the contract&apos;s effective date after final acceptance. This is day zero; deadline counting begins on the following calendar day.</span>
+                      <input
+                        type="date"
+                        value={activeDeal.effectiveDate}
+                        onChange={(event) => updateActiveDeal('effectiveDate', event.target.value)}
+                        className="mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-[#301D5D] sm:mt-auto sm:text-sm"
+                      />
+                    </label>
                     <div className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
                       <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
                       <p className="mt-1 text-xs leading-5 text-slate-500">TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies.</p>
@@ -1847,16 +1857,6 @@ export default function AgentDealDesk({
                         aria-label="Calculated earnest money deposit deadline"
                       />
                     </div>
-                    <label className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
-                      <span className="block text-sm font-bold text-slate-900">Effective Date</span>
-                      <span className="mt-1 block text-xs leading-5 text-slate-500">TREC rule: this is day zero. Contract deadlines begin counting on the following calendar day.</span>
-                      <input
-                        type="date"
-                        value={activeDeal.effectiveDate}
-                        onChange={(event) => updateActiveDeal('effectiveDate', event.target.value)}
-                        className="mt-4 block h-[46px] min-w-0 w-full max-w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-[#301D5D] sm:mt-auto sm:text-sm"
-                      />
-                    </label>
                     {CALCULATED_TIMELINE_FIELDS.map(({ key, deadlineId, label, rule }) => (
                       <label key={key} className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
                         <span className="block text-sm font-bold text-slate-900">{label}</span>
