@@ -17,6 +17,8 @@
      max(env(safe-area-inset-bottom), var(--kb-inset-bottom))` on any
      sticky composer/footer that needs to lift above the keyboard. */
   --kb-inset-bottom: 0px;
+  --rnn-box-background: #ffffff;
+  --rnn-box-border: #e5dfec;
   /* The app's components are built for a light surface (bg-white, text-gray-900,
      etc). Pin the color scheme to light so the OS/browser dark mode doesn't
      recolor inherited text, form controls, or scrollbars into an unreadable
@@ -373,6 +375,25 @@ body {
    unchanged. */
 :where(h1, h2, h3, h4, h5, h6) {
   text-transform: capitalize;
+}
+
+/* App-wide visual system for decorative icon holders. The tint follows the
+   icon's current color, giving every icon the same translucent-circle
+   treatment on light, dark, and branded panels without flattening its tone.
+   Interactive circular controls are intentionally excluded. */
+:where(div, span)[class~="rounded-full"]:has(> svg:only-child) {
+  background-color: rgb(48 29 93 / 0.08);
+  background-color: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+/* Normalize neutral white content boxes to one brand-tinted border. Semantic
+   and branded borders keep their explicit colors so status meaning is never
+   lost. */
+:where(section, article, div)[class~="bg-white"][class*="border-gray-"],
+:where(section, article, div)[class~="bg-white"][class*="border-slate-"],
+:where(section, article, div)[class~="bg-white"][class*="border-neutral-"] {
+  background-color: var(--rnn-box-background);
+  border-color: var(--rnn-box-border);
 }
 
 /* Apply the magazine page's display serif to every font-serif usage
