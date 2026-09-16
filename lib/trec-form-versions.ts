@@ -5,6 +5,7 @@ import {
   type TrecFormFieldDefinition,
 } from './trec-20-19-fields';
 import { TREC_40_11_FIELDS, TREC_49_1_FIELDS } from './trec-addenda-fields';
+import { GENERATED_TREC_FORM_VERSIONS } from './trec-library-versions.generated';
 
 export type TrecFormVersion = {
   id: string;
@@ -84,4 +85,5 @@ export const BUILT_IN_TREC_FORM_VERSIONS: TrecFormVersion[] = [
   BUILT_IN_TREC_FORM_VERSION,
   BUILT_IN_TREC_40_11_VERSION,
   BUILT_IN_TREC_49_1_VERSION,
+  ...GENERATED_TREC_FORM_VERSIONS,
 ];

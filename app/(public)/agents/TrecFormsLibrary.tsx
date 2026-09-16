@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Download, FileText, Search } from 'lucide-react';
+import { Download, FileText, PencilLine, Search } from 'lucide-react';
 import {
   TREC_FORM_LIBRARY,
   TREC_FORM_LIBRARY_CATEGORIES,
@@ -104,7 +104,7 @@ export default function TrecFormsLibrary({ versions }: { versions: TrecFormVersi
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {visibleForms.map((form) => (
-            <article key={form.formFamily} className="flex min-w-0 flex-col justify-between gap-5 border border-slate-200 bg-white p-5 sm:flex-row sm:items-center">
+            <article key={form.formFamily} className="flex min-w-0 flex-col justify-between gap-5 border border-slate-200 bg-white p-5">
               <div className="flex min-w-0 items-start gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEE8F9] text-[#5B438C]">
                   <FileText className="h-5 w-5" aria-hidden="true" />
@@ -118,16 +118,25 @@ export default function TrecFormsLibrary({ versions }: { versions: TrecFormVersi
                   <p className="mt-1 text-xs text-slate-500">Effective {formatEffectiveDate(form.effectiveDate)}</p>
                 </div>
               </div>
-              <a
-                href={form.pdfUrl}
-                download={form.local ? `TREC-${form.formNumber.replace(/\s+/g, '-')}.pdf` : undefined}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex h-[42px] w-full shrink-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277C] sm:w-[126px]"
-              >
-                <Download className="h-4 w-4" aria-hidden="true" />
-                Download
-              </a>
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href={`/agents/deal-desk?form=${encodeURIComponent(form.formFamily)}#trec-form-workspace`}
+                  className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-3 text-sm font-bold text-white transition hover:bg-[#42277C]"
+                >
+                  <PencilLine className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Open &amp; fill
+                </a>
+                <a
+                  href={form.pdfUrl}
+                  download={form.local ? `TREC-${form.formNumber.replace(/\s+/g, '-')}.pdf` : undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-md border border-[#301D5D] bg-white px-3 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]"
+                >
+                  <Download className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Download
+                </a>
+              </div>
             </article>
           ))}
         </div>

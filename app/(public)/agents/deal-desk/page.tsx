@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/server/auth/user';
 import { getAgentCommandCenterWorkspace } from '@/lib/server/agent-command-center-workspaces';
 import { getActiveTrecFormVersion, listTrecFormVersions } from '@/lib/server/trec-form-versions';
 import AgentDealDesk from '../AgentDealDesk';
+import TrecFormsLibrary from '../TrecFormsLibrary';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,13 +24,16 @@ export default async function AgentDealDeskPage() {
   ]);
 
   return (
-    <AgentDealDesk
-      workspaceKey={`rnn_agent_command_center_v1:${user.realtorId}`}
-      realtorId={user.realtorId}
-      initialWorkspace={workspaceRecord?.workspace ?? null}
-      initialWorkspaceVersion={workspaceRecord?.version ?? null}
-      trecFormVersion={trecFormVersion}
-      trecFormVersions={trecFormVersions}
-    />
+    <>
+      <AgentDealDesk
+        workspaceKey={`rnn_agent_command_center_v1:${user.realtorId}`}
+        realtorId={user.realtorId}
+        initialWorkspace={workspaceRecord?.workspace ?? null}
+        initialWorkspaceVersion={workspaceRecord?.version ?? null}
+        trecFormVersion={trecFormVersion}
+        trecFormVersions={trecFormVersions}
+      />
+      <TrecFormsLibrary versions={trecFormVersions} />
+    </>
   );
 }

@@ -79,7 +79,7 @@ function buildSystemPrompt(fields: readonly TrecFormFieldDefinition[], formNumbe
     label: field.label,
     pdfFieldName: field.pdfFieldName,
   }));
-  return `You are a high-precision information-extraction service for an executed Texas TREC ${formNumber} One to Four Family Residential Contract (Resale) and its attached addenda.
+  return `You are a high-precision information-extraction service for the uploaded official Texas TREC ${formNumber} contract, addendum, notice, disclosure, report, or related form.
 
 Read the uploaded PDF or image and return ONLY valid JSON, with no markdown or commentary. This is a suggestion layer for an admin to review, never a legal determination.
 
@@ -144,7 +144,7 @@ Rules:
 - Use YYYY-MM-DD only when the exact date is visible or unambiguous. For effectiveDate, use the final executed effective date only when it is clearly shown; otherwise null.
 - Return days only where the signed contract or an attached addendum clearly specifies that period. Do not derive deadline days from a calendar date.
 - Do not populate actual delivered-date fields because the document cannot establish actual delivery. Do not return them.
-- formFields must use only the exact field ids in the official catalog below. Include every visibly completed text, choice, radio, checkbox, initials, signature-name, date, acknowledgment, broker, attorney, notice, and escrow-receipt control.
+- formFields must use only the exact field ids in the official catalog below. Include every visibly completed text, choice, radio, checkbox, initials, signature-name, date, acknowledgment, broker, attorney, notice, and receipt control that applies to this form.
 - For selected checkboxes or radio controls, return the string "true". Omit unselected controls. Never mark a control selected from surrounding boilerplate alone.
 - For signatures, record only visible typed/printed signer text or a concise "signed" value when a mark is visibly present. Do not identify an unreadable signature.
 - If any populated control is ambiguous or unreadable, omit it and add a warning naming its page and field id.
