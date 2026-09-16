@@ -52,8 +52,6 @@ import {
   TREC_REMINDER_PRESET_OFFSETS,
   TREC_TASK_PRIORITIES,
   TREC_TASK_STATUSES,
-  TREC_WORKFLOW_STAGE_LABELS,
-  TREC_WORKFLOW_STAGES,
   type TrecDealWorkflowStatus,
   type TrecTaskPriority,
   type TrecTaskStatus,
@@ -125,15 +123,6 @@ const CONTRACT_DETAIL_FIELDS: ReadonlyArray<{
   { key: 'notices', label: 'Notices', multiline: true },
 ];
 
-const WORKSHEET_STEPS = TREC_WORKFLOW_STAGES.map((id) => ({ id, label: TREC_WORKFLOW_STAGE_LABELS[id] }));
-
-const CONTRACT_FIELD_STEPS: Partial<Record<keyof AgentContractDetails, number>> = {
-  county: 0, legalDescription: 0, improvementsAndAccessories: 0, exclusions: 0,
-  cashPortion: 1, loanAmount: 1, salesPrice: 1, financingType: 1, financingNotes: 1,
-  earnestMoney: 2, titleCompany: 2, optionFee: 2, additionalEarnestMoney: 2,
-  titlePolicyPayer: 3, surveyPlan: 3, titleAndSurveyNotes: 3, conditionAndRepairNotes: 3, possessionPlan: 3,
-  specialProvisionsNotes: 4, settlementNotes: 4, notices: 4,
-};
 const TIMING_FIELDS: ReadonlyArray<{ key: keyof AgentDeal; label: string; type: 'date' | 'number'; step: number }> = [
   { key: 'effectiveDate', label: 'Effective date', type: 'date', step: 0 },
   { key: 'financingDeadlineDays', label: 'Financing days', type: 'number', step: 1 },
@@ -1031,11 +1020,6 @@ export default function AgentDealDesk({
     trackEvent('agent_deal_desk_calendar_exported', { scope: 'all_active_deals' });
   };
 
-  const setWorksheetStep = (step: number) => {
-    if (!activeDeal || step < 0 || step >= WORKSHEET_STEPS.length) return;
-    applyActiveAction(`Moved to worksheet step ${step + 1}: ${WORKSHEET_STEPS[step].label}`, { worksheetStep: step });
-  };
-
   const exportTextSummary = () => {
     if (!activeDeal) return;
     downloadTextSummary(activeDeal);
@@ -1047,7 +1031,7 @@ export default function AgentDealDesk({
     if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
     const now = new Date().toISOString();
     const nextDeals = activeDeal ? deals.map((deal) => deal.id === activeDeal.id ? {
-      ...deal, updatedAt: now, activity: [...deal.activity, { id: getId('activity'), message: `Saved worksheet progress (step ${deal.worksheetStep + 1} of 6)`, createdAt: now }].slice(-300),
+      ...deal, updatedAt: now, activity: [...deal.activity, { id: getId('activity'), message: 'Saved transaction progress', createdAt: now }].slice(-300),
     } : deal) : deals;
     setDeals(nextDeals);
     void saveToCloud({ deals: nextDeals, notificationPreferences });
@@ -1201,18 +1185,14 @@ export default function AgentDealDesk({
 
         <nav aria-label="Deal Desktop pages" className="mt-5 border border-slate-200 bg-white p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          {workspacePage === 1 && <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">
-              {workspacePage === 1 ? 'Page 1 of 2' : `Worksheet step ${activeDeal ? activeDeal.worksheetStep + 1 : 1} of ${WORKSHEET_STEPS.length}`}
+              Page 1 of 2
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-900">
-              {workspacePage === 1
-                ? 'Overview, Date Radar, calendar and alerts'
-                : activeDeal
-                  ? WORKSHEET_STEPS[activeDeal.worksheetStep].label
-                  : 'Transaction details, upload, tasks and documents'}
+              Overview, Date Radar, calendar and alerts
             </p>
-          </div>
+          </div>}
           {workspacePage === 2 ? (
             <div
               onDragOver={(event) => {
@@ -1346,40 +1326,6 @@ export default function AgentDealDesk({
             </div>
           )}
           </div>
-          <div
-            className="mt-4 h-2 overflow-hidden rounded-md bg-slate-100"
-            aria-label={workspacePage === 1 ? 'Workspace overview' : `Worksheet progress: step ${activeDeal ? activeDeal.worksheetStep + 1 : 1} of ${WORKSHEET_STEPS.length}`}
-          >
-            <div
-              className="h-full rounded-md bg-[#7059A8] transition-[width]"
-              style={{ width: workspacePage === 1 ? '12%' : `${Math.max(20, (((activeDeal?.worksheetStep ?? 0) + 1) / WORKSHEET_STEPS.length) * 100)}%` }}
-            />
-          </div>
-          {workspacePage === 2 && (
-            <div className="mt-3 grid gap-2 sm:ml-auto sm:max-w-[504px] sm:grid-cols-3" aria-label="Worksheet navigation">
-              {activeDeal && activeDeal.worksheetStep > 0 ? (
-                <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep - 1)} className="inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF]">
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
-                </button>
-              ) : (
-                <button type="button" onClick={() => setWorkspacePage(1)} className="inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF]">
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
-                </button>
-              )}
-              <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:opacity-50">
-                <Save className="h-4 w-4" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for later'}
-              </button>
-              {activeDeal && activeDeal.worksheetStep < WORKSHEET_STEPS.length - 1 ? (
-                <button type="button" onClick={() => setWorksheetStep(activeDeal.worksheetStep + 1)} className="inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c]">
-                  Next step <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </button>
-              ) : (
-                <Link href="/agents" className="inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c]">
-                  Deal Desktop <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              )}
-            </div>
-          )}
         </nav>
 
         {workspacePage === 1 && (
@@ -1597,26 +1543,6 @@ export default function AgentDealDesk({
               </div>
             ) : (
               <>
-                <section className="mt-7 border border-[#D9D0BF] bg-[#FFFDF8] p-4 sm:p-5" aria-label="Six-step deal worksheet">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Six-step worksheet</p><h4 className="mt-1 text-lg font-semibold text-slate-950">Step {activeDeal.worksheetStep + 1} of {WORKSHEET_STEPS.length}: {WORKSHEET_STEPS[activeDeal.worksheetStep].label}</h4></div><span className="text-xs font-semibold text-slate-500">Progress is saved in your private cloud workspace.</span></div>
-                  <ol aria-label="Worksheet progress" className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-                    {WORKSHEET_STEPS.map((step, index) => (
-                      <li
-                        key={step.id}
-                        className={`flex min-h-[48px] items-center gap-1.5 border px-2.5 py-2 text-left text-xs font-bold leading-[1.25] tracking-normal [word-spacing:normal] ${
-                          activeDeal.worksheetStep === index
-                            ? 'border-[#301D5D] bg-[#301D5D] text-white'
-                            : index < activeDeal.worksheetStep
-                              ? 'border-violet-200 bg-violet-50 text-[#5B438C]'
-                              : 'border-slate-200 bg-white text-slate-500'
-                        }`}
-                      >
-                        <span className="shrink-0 self-start pt-px opacity-70">{index + 1}.</span>
-                        <span>{step.label}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </section>
                 <div className="mt-5">
                   {extractionState === 'ready' && extractionDraft && (
                     <section role="status" className="mt-4 border border-emerald-200 bg-emerald-50 p-4">
@@ -1703,7 +1629,7 @@ export default function AgentDealDesk({
                   )}
                 </div>
 
-                {activeDeal.worksheetStep === 0 && <div className="mt-7 grid gap-4 md:grid-cols-2">
+                <div className="mt-7 grid gap-4 md:grid-cols-2">
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Deal name</span>
                     <input value={activeDeal.title} onChange={(event) => updateActiveDeal('title', event.target.value)} className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Example: Bluebonnet Lane" />
@@ -1734,7 +1660,7 @@ export default function AgentDealDesk({
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Seller name(s)</span>
                     <input value={activeDeal.sellerNames} onChange={(event) => updateActiveDeal('sellerNames', event.target.value)} className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
                   </label>
-                </div>}
+                </div>
 
                 <div className="mt-7 border-t border-slate-200 pt-6">
                   <div className="flex items-center gap-2">
@@ -1742,7 +1668,7 @@ export default function AgentDealDesk({
                     <h4 className="text-lg font-semibold text-slate-950">Contract timing</h4>
                   </div>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {TIMING_FIELDS.filter((field) => field.step === activeDeal.worksheetStep).map(({ key, label, type }) => (
+                    {TIMING_FIELDS.map(({ key, label, type }) => (
                       <label key={key} className="block">
                         <span className="mb-2 block text-sm font-semibold text-slate-800">{key === 'effectiveDate' ? 'Contract effective date' : label}</span>
                         <input
@@ -1789,9 +1715,13 @@ export default function AgentDealDesk({
                         </button>
                       )}
                     </div>
+                    <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600">
+                      <Save className="h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
+                      Progress is saved in your private cloud workspace.
+                    </p>
                     {pdfDownloadState === 'error' && <p className="mt-2 text-sm font-semibold text-[#B6402C]">The populated PDF could not be generated. Try again.</p>}
                   </div>
-                  <div className="p-4 sm:p-6">
+                  <div className="p-6 sm:p-10">
                     <div className="mb-4 flex flex-col gap-3 rounded-md border border-slate-200 bg-[#FCFBF9] p-3 sm:flex-row sm:items-center sm:justify-between">
                       <button
                         type="button"
@@ -1816,8 +1746,8 @@ export default function AgentDealDesk({
                         <ChevronRight className="h-4 w-4" aria-hidden="true" />
                       </button>
                     </div>
-                    <div className="mt-5">
-                      <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-slate-100 shadow-sm">
+                    <div className="mt-7 rounded-md bg-slate-100 p-3 sm:p-6">
+                      <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-white shadow-sm">
                         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2">
                           <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">Official TREC {currentTrecFormVersion.formNumber} · Page {currentTrecPage}</p>
                           <a href={currentTrecFormVersion.pdfUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5B438C] underline underline-offset-2">Open full form</a>
@@ -1847,7 +1777,7 @@ export default function AgentDealDesk({
                       Keep the deal facts that matter to your transaction in one secure workspace. These are operational notes, not an official contract record or legal advice.
                     </p>
                     <div className="mt-5 grid gap-4 md:grid-cols-2">
-                      {CONTRACT_DETAIL_FIELDS.filter(({ key }) => CONTRACT_FIELD_STEPS[key] === activeDeal.worksheetStep).map(({ key, label, multiline }) => (
+                      {CONTRACT_DETAIL_FIELDS.map(({ key, label, multiline }) => (
                         <label key={key} className={`block ${multiline ? 'md:col-span-2' : ''}`}>
                           <span className="mb-2 block text-sm font-semibold text-slate-800">{label}</span>
                           {multiline ? (
@@ -1867,7 +1797,7 @@ export default function AgentDealDesk({
                         </label>
                       ))}
                     </div>
-                    {activeDeal.worksheetStep === 4 && <div className="mt-6 border-t border-slate-200 pt-5">
+                    <div className="mt-6 border-t border-slate-200 pt-5">
                       <p className="text-sm font-semibold text-slate-900">Addenda to track</p>
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
                         {ADDENDA.map((addendum) => (
@@ -1877,11 +1807,11 @@ export default function AgentDealDesk({
                           </label>
                         ))}
                       </div>
-                    </div>}
+                    </div>
                   </div>
                 </details>
 
-                {activeDeal.worksheetStep === 5 && activeDeadlines.length > 0 && (
+                {activeDeadlines.length > 0 && (
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
                     {activeDeadlines.map((deadline) => {
                       const reminderAdded = activeDeal.reminders.some((reminder) => reminder.deadlineId === deadline.id && !reminder.complete);
