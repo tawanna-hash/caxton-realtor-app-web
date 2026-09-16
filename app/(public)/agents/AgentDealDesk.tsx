@@ -434,6 +434,7 @@ export default function AgentDealDesk({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const [contractPreviewUrl, setContractPreviewUrl] = useState('');
+  const [activeTrecFormFamily, setActiveTrecFormFamily] = useState('20');
   const [activeTrecPage, setActiveTrecPage] = useState(1);
   const [pdfDownloadState, setPdfDownloadState] = useState<'idle' | 'building' | 'error'>('idle');
   const [workspacePage, setWorkspacePage] = useState<1 | 2>(1);
@@ -614,10 +615,25 @@ export default function AgentDealDesk({
   };
 
   const activeDeal = deals.find((deal) => deal.id === activeDealId) ?? null;
-  const currentTrecFormVersion = trecFormVersions.find((version) => version.id === activeDeal?.trecFormVersionId)
+  const activePacketForms = ['20', '40', '49'].map((formFamily) => (
+    formFamily === '20'
+      ? trecFormVersions.find((version) => version.id === activeDeal?.trecFormVersionId) ?? trecFormVersion
+      : trecFormVersions.find((version) => version.formFamily === formFamily && version.isActive)
+  )).filter((version): version is TrecFormVersion => Boolean(version));
+  const currentTrecFormVersion = activePacketForms.find((version) => version.formFamily === activeTrecFormFamily)
+    ?? activePacketForms[0]
     ?? trecFormVersion;
   const currentTrecPage = Math.min(Math.max(activeTrecPage, 1), currentTrecFormVersion.pageCount);
   const trecFormFieldById = new Map(currentTrecFormVersion.fields.map((field) => [field.id, field]));
+  const currentFormValues = activeDeal
+    ? Object.fromEntries(currentTrecFormVersion.fields.map((field) => [
+        field.id,
+        activeDeal.formFields[field.id]
+          || (field.pdfFieldName === 'Street Address and City' || field.pdfFieldName === 'Address of Property'
+            ? activeDeal.propertyAddress
+            : ''),
+      ]))
+    : {};
 
   const syncMessage = {
     loading: 'Connecting your secure cloud workspace.',
@@ -864,7 +880,7 @@ export default function AgentDealDesk({
       const pdfForm = pdfDocument.getForm();
 
       for (const fieldDefinition of currentTrecFormVersion.fields) {
-        const value = activeDeal.formFields[fieldDefinition.id];
+        const value = currentFormValues[fieldDefinition.id];
         if (!value) continue;
         const pdfField = pdfForm.getFieldMaybe(fieldDefinition.pdfFieldName);
         if (!pdfField) continue;
@@ -1694,15 +1710,15 @@ export default function AgentDealDesk({
                   <div className="border-b border-[#D9D0BF] bg-[#F7F3EB] px-5 py-4 sm:px-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Guided official form</p>
-                        <h4 id="official-trec-fields-title" className="mt-1 text-lg font-semibold text-slate-950">
-                          TREC {currentTrecFormVersion.formNumber} · Page {currentTrecPage} of {currentTrecFormVersion.pageCount}
-                        </h4>
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Official transaction forms</p>
+                      <h4 id="official-trec-fields-title" className="mt-1 text-lg font-semibold text-slate-950">
+                          TREC {currentTrecFormVersion.formNumber} · {currentTrecFormVersion.title}
+                      </h4>
                       </div>
                       <p className="text-xs font-semibold text-slate-600">{currentTrecFormVersion.fields.length} total fillable controls · Effective {currentTrecFormVersion.effectiveDate}</p>
                     </div>
                     <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                      <p className="max-w-3xl text-sm leading-6 text-slate-600">Fill in the highlighted controls directly on the official TREC form. Uploaded contract values appear in these same fields after you review and apply them.</p>
+                      <p className="max-w-3xl text-sm leading-6 text-slate-600">Complete the contract and attached addenda directly on their official PDFs. Values remain separated by form and are saved with this transaction.</p>
                       {Object.values(activeDeal.formFields).some(Boolean) && (
                         <button
                           type="button"
@@ -1722,6 +1738,29 @@ export default function AgentDealDesk({
                     {pdfDownloadState === 'error' && <p className="mt-2 text-sm font-semibold text-[#B6402C]">The populated PDF could not be generated. Try again.</p>}
                   </div>
                   <div className="p-6 sm:p-10">
+                    <div className="mb-4 grid gap-2 md:grid-cols-3" aria-label="Transaction form packet">
+                      {activePacketForms.map((version) => {
+                        const selected = version.formFamily === currentTrecFormVersion.formFamily;
+                        return (
+                          <button
+                            key={version.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveTrecFormFamily(version.formFamily);
+                              setActiveTrecPage(1);
+                            }}
+                            className={`min-h-[52px] rounded-md border px-4 py-2 text-left transition ${
+                              selected
+                                ? 'border-[#301D5D] bg-[#301D5D] text-white'
+                                : 'border-slate-300 bg-white text-slate-800 hover:border-[#7059A8] hover:bg-[#F8F5FF]'
+                            }`}
+                          >
+                            <span className="block text-sm font-bold">TREC {version.formNumber}</span>
+                            <span className={`mt-0.5 block text-xs font-semibold ${selected ? 'text-white/80' : 'text-slate-500'}`}>{version.title}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                     <div className="mb-4 flex flex-col gap-3 rounded-md border border-slate-200 bg-[#FCFBF9] p-3 sm:flex-row sm:items-center sm:justify-between">
                       <button
                         type="button"
@@ -1757,7 +1796,7 @@ export default function AgentDealDesk({
                           pageNumber={currentTrecPage}
                           formNumber={currentTrecFormVersion.formNumber}
                           fields={currentTrecFormVersion.fields.filter((field) => field.page === currentTrecPage)}
-                          values={activeDeal.formFields}
+                          values={currentFormValues}
                           onFieldChange={updateTrecFormField}
                         />
                       </div>

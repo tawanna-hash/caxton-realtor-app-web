@@ -31,7 +31,14 @@ function safeSegment(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'trec-form';
 }
 
-async function extractFieldCatalog(buffer: Buffer): Promise<{
+function formFamilyFromNumber(formNumber: string): string {
+  const normalized = formNumber.trim().toUpperCase().replace(/\s+/g, '-');
+  const segments = normalized.split('-').filter(Boolean);
+  if (segments.length < 2) return normalized;
+  return segments.slice(0, -1).join('-');
+}
+
+async function extractFieldCatalog(buffer: Buffer, formFamily: string): Promise<{
   pageCount: number;
   fields: TrecFormFieldDefinition[];
 }> {
@@ -43,7 +50,7 @@ async function extractFieldCatalog(buffer: Buffer): Promise<{
     const page = pageByReference.get(widget?.P()?.toString() ?? '') ?? 1;
     const pdfFieldName = field.getName();
     return {
-      id: `p${String(page).padStart(2, '0')}_f${String(index + 1).padStart(3, '0')}`,
+      id: `trec_${safeSegment(formFamily).replace(/-/g, '_')}_p${String(page).padStart(2, '0')}_f${String(index + 1).padStart(3, '0')}`,
       page,
       index: index + 1,
       type: fieldType(field),
@@ -67,6 +74,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file');
     const formNumber = String(formData.get('formNumber') ?? '').trim();
+    const title = String(formData.get('title') ?? '').trim() || `Official TREC ${formNumber}`;
     const effectiveDate = String(formData.get('effectiveDate') ?? '').trim();
     const activate = formData.get('activate') !== 'false';
     if (!(file instanceof File)) return NextResponse.json({ error: 'Choose the official fillable PDF.' }, { status: 400 });
@@ -74,6 +82,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Only an official PDF can be uploaded.' }, { status: 400 });
     }
     if (!formNumber) return NextResponse.json({ error: 'Form number is required.' }, { status: 400 });
+    const formFamily = formFamilyFromNumber(formNumber);
+    if (!formFamily) return NextResponse.json({ error: 'Use a valid TREC form number, such as 20-20, 40-12, or 49-2.' }, { status: 400 });
     if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate)) {
       return NextResponse.json({ error: 'Effective date is required.' }, { status: 400 });
     }
@@ -83,14 +93,16 @@ export async function POST(request: NextRequest) {
     if (buffer.subarray(0, 4).toString() !== '%PDF') {
       return NextResponse.json({ error: 'The selected file is not a valid PDF.' }, { status: 400 });
     }
-    const catalog = await extractFieldCatalog(buffer);
+    const catalog = await extractFieldCatalog(buffer, formFamily);
     const blob = await put(
       `official-forms/trec/${safeSegment(formNumber)}-${effectiveDate}-${Date.now()}.pdf`,
       buffer,
       { access: 'public', contentType: 'application/pdf' },
     );
     const version = await createTrecFormVersion({
+      formFamily,
       formNumber,
+      title,
       effectiveDate,
       pdfUrl: blob.url,
       pageCount: catalog.pageCount,

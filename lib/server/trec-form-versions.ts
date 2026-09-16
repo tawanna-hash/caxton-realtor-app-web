@@ -1,5 +1,6 @@
 import { query, withNeonTransaction } from '@/lib/server/db/neon';
 import {
+  BUILT_IN_TREC_FORM_VERSIONS,
   BUILT_IN_TREC_FORM_VERSION,
   type TrecFormVersion,
 } from '@/lib/trec-form-versions';
@@ -7,7 +8,9 @@ import type { TrecFormFieldDefinition, TrecFormFieldType } from '@/lib/trec-20-1
 
 type TrecFormVersionRow = {
   id: string;
+  form_family: string;
   form_number: string;
+  title: string;
   effective_date: string | Date;
   pdf_url: string;
   page_count: number;
@@ -25,7 +28,9 @@ export function ensureTrecFormVersionsSchema(): Promise<void> {
     await query(`
       CREATE TABLE IF NOT EXISTS trec_form_versions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        form_family TEXT NOT NULL,
         form_number TEXT NOT NULL,
+        title TEXT NOT NULL,
         effective_date DATE NOT NULL,
         pdf_url TEXT NOT NULL,
         page_count INTEGER NOT NULL CHECK (page_count > 0),
@@ -38,8 +43,22 @@ export function ensureTrecFormVersionsSchema(): Promise<void> {
       )
     `);
     await query(`
-      CREATE UNIQUE INDEX IF NOT EXISTS trec_form_versions_one_active_idx
-      ON trec_form_versions (is_active)
+      ALTER TABLE trec_form_versions
+      ADD COLUMN IF NOT EXISTS form_family TEXT,
+      ADD COLUMN IF NOT EXISTS title TEXT
+    `);
+    await query(`
+      UPDATE trec_form_versions
+      SET form_family = COALESCE(NULLIF(form_family, ''), split_part(form_number, '-', 1)),
+          title = COALESCE(NULLIF(title, ''), 'Official TREC ' || form_number)
+      WHERE form_family IS NULL OR form_family = '' OR title IS NULL OR title = ''
+    `);
+    await query('ALTER TABLE trec_form_versions ALTER COLUMN form_family SET NOT NULL');
+    await query('ALTER TABLE trec_form_versions ALTER COLUMN title SET NOT NULL');
+    await query('DROP INDEX IF EXISTS trec_form_versions_one_active_idx');
+    await query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS trec_form_versions_one_active_per_family_idx
+      ON trec_form_versions (form_family)
       WHERE is_active = true
     `);
   })().catch((error) => {
@@ -90,7 +109,9 @@ function parsePageSections(value: unknown): Record<number, string> {
 function toVersion(row: TrecFormVersionRow): TrecFormVersion {
   return {
     id: row.id,
+    formFamily: row.form_family,
     formNumber: row.form_number,
+    title: row.title,
     effectiveDate: dateValue(row.effective_date),
     pdfUrl: row.pdf_url,
     pageCount: row.page_count,
@@ -104,35 +125,42 @@ function toVersion(row: TrecFormVersionRow): TrecFormVersion {
 export async function listTrecFormVersions(): Promise<TrecFormVersion[]> {
   await ensureTrecFormVersionsSchema();
   const rows = await query<TrecFormVersionRow>(`
-    SELECT id, form_number, effective_date, pdf_url, page_count, field_catalog,
+    SELECT id, form_family, form_number, title, effective_date, pdf_url, page_count, field_catalog,
            page_sections, is_active, created_at
     FROM trec_form_versions
     ORDER BY is_active DESC, effective_date DESC, created_at DESC
   `);
   const versions = rows.map(toVersion);
+  const activeFamilies = new Set(versions.filter((version) => version.isActive).map((version) => version.formFamily));
   return [
     ...versions,
-    { ...BUILT_IN_TREC_FORM_VERSION, isActive: !versions.some((version) => version.isActive) },
+    ...BUILT_IN_TREC_FORM_VERSIONS.map((version) => ({
+      ...version,
+      isActive: !activeFamilies.has(version.formFamily),
+    })),
   ];
 }
 
-export async function getActiveTrecFormVersion(): Promise<TrecFormVersion> {
+export async function getActiveTrecFormVersion(formFamily = '20'): Promise<TrecFormVersion> {
   await ensureTrecFormVersionsSchema();
   const rows = await query<TrecFormVersionRow>(`
-    SELECT id, form_number, effective_date, pdf_url, page_count, field_catalog,
+    SELECT id, form_family, form_number, title, effective_date, pdf_url, page_count, field_catalog,
            page_sections, is_active, created_at
     FROM trec_form_versions
-    WHERE is_active = true
+    WHERE is_active = true AND form_family = $1
     LIMIT 1
-  `);
-  return rows[0] ? toVersion(rows[0]) : BUILT_IN_TREC_FORM_VERSION;
+  `, [formFamily]);
+  return rows[0]
+    ? toVersion(rows[0])
+    : BUILT_IN_TREC_FORM_VERSIONS.find((version) => version.formFamily === formFamily) ?? BUILT_IN_TREC_FORM_VERSION;
 }
 
 export async function getTrecFormVersion(id: string): Promise<TrecFormVersion | null> {
-  if (id === BUILT_IN_TREC_FORM_VERSION.id) return BUILT_IN_TREC_FORM_VERSION;
+  const builtIn = BUILT_IN_TREC_FORM_VERSIONS.find((version) => version.id === id);
+  if (builtIn) return builtIn;
   await ensureTrecFormVersionsSchema();
   const rows = await query<TrecFormVersionRow>(
-    `SELECT id, form_number, effective_date, pdf_url, page_count, field_catalog,
+    `SELECT id, form_family, form_number, title, effective_date, pdf_url, page_count, field_catalog,
             page_sections, is_active, created_at
      FROM trec_form_versions
      WHERE id = $1
@@ -143,7 +171,9 @@ export async function getTrecFormVersion(id: string): Promise<TrecFormVersion | 
 }
 
 export async function createTrecFormVersion(input: {
+  formFamily: string;
   formNumber: string;
+  title: string;
   effectiveDate: string;
   pdfUrl: string;
   pageCount: number;
@@ -153,19 +183,24 @@ export async function createTrecFormVersion(input: {
   await ensureTrecFormVersionsSchema();
   return withNeonTransaction(async (client) => {
     if (input.activate) {
-      await client.query('UPDATE trec_form_versions SET is_active = false, updated_at = NOW() WHERE is_active = true');
+      await client.query(
+        'UPDATE trec_form_versions SET is_active = false, updated_at = NOW() WHERE is_active = true AND form_family = $1',
+        [input.formFamily],
+      );
     }
     const pageSections = Object.fromEntries(
       Array.from({ length: input.pageCount }, (_, index) => [index + 1, `Official TREC page ${index + 1}`]),
     );
     const result = await client.query<TrecFormVersionRow>(
       `INSERT INTO trec_form_versions
-        (form_number, effective_date, pdf_url, page_count, field_catalog, page_sections, is_active)
-       VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7)
-       RETURNING id, form_number, effective_date, pdf_url, page_count, field_catalog,
+        (form_family, form_number, title, effective_date, pdf_url, page_count, field_catalog, page_sections, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9)
+       RETURNING id, form_family, form_number, title, effective_date, pdf_url, page_count, field_catalog,
                  page_sections, is_active, created_at`,
       [
+        input.formFamily,
         input.formNumber,
+        input.title,
         input.effectiveDate,
         input.pdfUrl,
         input.pageCount,
@@ -180,17 +215,29 @@ export async function createTrecFormVersion(input: {
 
 export async function activateTrecFormVersion(id: string): Promise<TrecFormVersion | null> {
   await ensureTrecFormVersionsSchema();
-  if (id === BUILT_IN_TREC_FORM_VERSION.id) {
-    await query('UPDATE trec_form_versions SET is_active = false, updated_at = NOW() WHERE is_active = true');
-    return BUILT_IN_TREC_FORM_VERSION;
+  const builtIn = BUILT_IN_TREC_FORM_VERSIONS.find((version) => version.id === id);
+  if (builtIn) {
+    await query(
+      'UPDATE trec_form_versions SET is_active = false, updated_at = NOW() WHERE is_active = true AND form_family = $1',
+      [builtIn.formFamily],
+    );
+    return builtIn;
   }
   return withNeonTransaction(async (client) => {
-    await client.query('UPDATE trec_form_versions SET is_active = false, updated_at = NOW() WHERE is_active = true');
+    const familyResult = await client.query<{ form_family: string }>(
+      'SELECT form_family FROM trec_form_versions WHERE id = $1 LIMIT 1',
+      [id],
+    );
+    if (!familyResult.rows[0]) throw new Error('TREC form version not found');
+    await client.query(
+      'UPDATE trec_form_versions SET is_active = false, updated_at = NOW() WHERE is_active = true AND form_family = $1',
+      [familyResult.rows[0].form_family],
+    );
     const result = await client.query<TrecFormVersionRow>(
       `UPDATE trec_form_versions
        SET is_active = true, updated_at = NOW()
        WHERE id = $1
-       RETURNING id, form_number, effective_date, pdf_url, page_count, field_catalog,
+       RETURNING id, form_family, form_number, title, effective_date, pdf_url, page_count, field_catalog,
                  page_sections, is_active, created_at`,
       [id],
     );

@@ -4,10 +4,13 @@ import {
   TREC_FORM_ID,
   type TrecFormFieldDefinition,
 } from './trec-20-19-fields';
+import { TREC_40_11_FIELDS, TREC_49_1_FIELDS } from './trec-addenda-fields';
 
 export type TrecFormVersion = {
   id: string;
+  formFamily: string;
   formNumber: string;
+  title: string;
   effectiveDate: string;
   pdfUrl: string;
   pageCount: number;
@@ -19,7 +22,9 @@ export type TrecFormVersion = {
 
 export const BUILT_IN_TREC_FORM_VERSION: TrecFormVersion = {
   id: 'built-in-trec-20-19',
+  formFamily: '20',
   formNumber: TREC_FORM_ID,
+  title: 'One to Four Family Residential Contract (Resale)',
   effectiveDate: TREC_FORM_EFFECTIVE_DATE,
   pdfUrl: '/forms/trec-20-19.pdf',
   pageCount: 12,
@@ -41,3 +46,42 @@ export const BUILT_IN_TREC_FORM_VERSION: TrecFormVersion = {
   isActive: true,
   createdAt: '2026-05-04T00:00:00.000Z',
 };
+
+export const BUILT_IN_TREC_40_11_VERSION: TrecFormVersion = {
+  id: 'built-in-trec-40-11',
+  formFamily: '40',
+  formNumber: '40-11',
+  title: 'Third Party Financing Addendum',
+  effectiveDate: '2025-01-03',
+  pdfUrl: '/forms/trec-40-11.pdf',
+  pageCount: 2,
+  fields: TREC_40_11_FIELDS,
+  pageSections: {
+    1: '1. TYPE OF FINANCING AND DUTY TO APPLY AND OBTAIN APPROVAL · 2. APPROVAL OF FINANCING',
+    2: '2. APPROVAL OF FINANCING · 3. SECURITY · 4. FHA/VA REQUIRED PROVISION · 5. AUTHORIZATION TO RELEASE INFORMATION',
+  },
+  isActive: true,
+  createdAt: '2025-01-03T00:00:00.000Z',
+};
+
+export const BUILT_IN_TREC_49_1_VERSION: TrecFormVersion = {
+  id: 'built-in-trec-49-1',
+  formFamily: '49',
+  formNumber: '49-1',
+  title: 'Addendum Concerning Right to Terminate Due to Lender’s Appraisal',
+  effectiveDate: '2019-03-01',
+  pdfUrl: '/forms/trec-49-1.pdf',
+  pageCount: 1,
+  fields: TREC_49_1_FIELDS,
+  pageSections: {
+    1: 'WAIVER · PARTIAL WAIVER · ADDITIONAL RIGHT TO TERMINATE',
+  },
+  isActive: true,
+  createdAt: '2019-03-01T00:00:00.000Z',
+};
+
+export const BUILT_IN_TREC_FORM_VERSIONS: TrecFormVersion[] = [
+  BUILT_IN_TREC_FORM_VERSION,
+  BUILT_IN_TREC_40_11_VERSION,
+  BUILT_IN_TREC_49_1_VERSION,
+];

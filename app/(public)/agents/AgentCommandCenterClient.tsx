@@ -21,6 +21,7 @@ import type { AgentCommandCenterWorkspace } from '@/lib/agent-command-center-wor
 import type { TrecFormVersion } from '@/lib/trec-form-versions';
 import { trackEvent } from '@/app/posthog-provider';
 import AgentDealDesk from './AgentDealDesk';
+import TrecFormsLibrary from './TrecFormsLibrary';
 
 export type ReferralProvider = {
   id: number;
@@ -282,6 +283,8 @@ export default function AgentCommandCenterClient({
         trecFormVersion={trecFormVersion}
         trecFormVersions={trecFormVersions}
       />
+
+      <TrecFormsLibrary versions={trecFormVersions} />
 
       <section className="border-y border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
