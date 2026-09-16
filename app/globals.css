@@ -367,6 +367,14 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Keep semantic page, section, card, drawer, and modal titles in a consistent
+   app-wide Title Case treatment. This is presentation-only so dynamic record
+   names, stored copy, searchable text, and source legal-form wording remain
+   unchanged. */
+:where(h1, h2, h3, h4, h5, h6) {
+  text-transform: capitalize;
+}
+
 /* Apply the magazine page's display serif to every font-serif usage
    app-wide. Matches the look of the Magazine Archive header: Georgia at
    normal weight (400) with tight tracking — elegant, not bold. Components
