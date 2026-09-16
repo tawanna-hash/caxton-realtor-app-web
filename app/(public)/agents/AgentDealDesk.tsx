@@ -1467,33 +1467,33 @@ export default function AgentDealDesk({
                 {activeDeal.worksheetStep === 0 && <div className="mt-7 grid gap-4 md:grid-cols-2">
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Deal name</span>
-                    <input value={activeDeal.title} onChange={(event) => updateActiveDeal('title', event.target.value)} className="min-h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Example: Bluebonnet Lane" />
+                    <input value={activeDeal.title} onChange={(event) => updateActiveDeal('title', event.target.value)} className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Example: Bluebonnet Lane" />
                   </label>
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Transaction stage</span>
-                    <select value={activeDeal.status} onChange={(event) => updateActiveDeal('status', event.target.value as AgentDealStatus)} className="min-h-[46px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]">
+                    <select value={activeDeal.status} onChange={(event) => updateActiveDeal('status', event.target.value as AgentDealStatus)} className="h-[46px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]">
                       {(Object.keys(STATUS_LABELS) as AgentDealStatus[]).map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
                     </select>
                   </label>
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Coordinator / owner</span>
-                    <input value={activeDeal.owner} onChange={(event) => updateActiveDeal('owner', event.target.value)} className="min-h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Name or role responsible for next steps" />
+                    <input value={activeDeal.owner} onChange={(event) => updateActiveDeal('owner', event.target.value)} className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Name or role responsible for next steps" />
                   </label>
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Detailed workflow stage</span>
-                    <select value={activeDeal.workflowStatus} onChange={(event) => updateActiveDeal('workflowStatus', event.target.value as TrecDealWorkflowStatus)} className="min-h-[46px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]">{Object.entries(TREC_DEAL_WORKFLOW_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+                    <select value={activeDeal.workflowStatus} onChange={(event) => updateActiveDeal('workflowStatus', event.target.value as TrecDealWorkflowStatus)} className="h-[46px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]">{Object.entries(TREC_DEAL_WORKFLOW_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
                   </label>
                   <label className="block md:col-span-2">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Property address</span>
-                    <input value={activeDeal.propertyAddress} onChange={(event) => updateActiveDeal('propertyAddress', event.target.value)} className="min-h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Street address, city, state, ZIP" />
+                    <input value={activeDeal.propertyAddress} onChange={(event) => updateActiveDeal('propertyAddress', event.target.value)} className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Street address, city, state, ZIP" />
                   </label>
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Buyer name(s)</span>
-                    <input value={activeDeal.buyerNames} onChange={(event) => updateActiveDeal('buyerNames', event.target.value)} className="min-h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
+                    <input value={activeDeal.buyerNames} onChange={(event) => updateActiveDeal('buyerNames', event.target.value)} className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
                   </label>
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Seller name(s)</span>
-                    <input value={activeDeal.sellerNames} onChange={(event) => updateActiveDeal('sellerNames', event.target.value)} className="min-h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
+                    <input value={activeDeal.sellerNames} onChange={(event) => updateActiveDeal('sellerNames', event.target.value)} className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
                   </label>
                 </div>}
 
@@ -1512,7 +1512,7 @@ export default function AgentDealDesk({
                           inputMode={type === 'number' ? 'numeric' : undefined}
                           value={activeDeal[key as keyof AgentDeal] as string}
                           onChange={(event) => updateActiveDeal(key as keyof AgentDeal, event.target.value as never)}
-                          className="min-h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]"
+                          className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]"
                         />
                         {key === 'effectiveDate' && (
                           <span className="mt-2 block text-xs leading-5 text-slate-500">
@@ -1551,7 +1551,7 @@ export default function AgentDealDesk({
                             <input
                               value={activeDeal.contractDetails[key]}
                               onChange={(event) => updateContractDetail(key, event.target.value)}
-                              className="min-h-[44px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
+                              className="h-[46px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
                             />
                           )}
                         </label>
