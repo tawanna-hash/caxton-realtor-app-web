@@ -634,16 +634,7 @@ export default function AgentDealDesk({
   const activeDeal = deals.find((deal) => deal.id === activeDealId) ?? null;
   const currentTrecFormVersion = trecFormVersions.find((version) => version.id === activeDeal?.trecFormVersionId)
     ?? trecFormVersion;
-  const pagesPerWorksheetStep = Math.max(1, Math.ceil(currentTrecFormVersion.pageCount / WORKSHEET_STEPS.length));
-  const firstTrecPageForStep = activeDeal ? activeDeal.worksheetStep * pagesPerWorksheetStep + 1 : 1;
-  const trecPagesForStep = Array.from(
-    { length: pagesPerWorksheetStep },
-    (_, index) => firstTrecPageForStep + index,
-  ).filter((page) => page <= currentTrecFormVersion.pageCount);
-  const currentTrecPage = trecPagesForStep.includes(activeTrecPage)
-    ? activeTrecPage
-    : firstTrecPageForStep;
-  const trecFieldsForStep = currentTrecFormVersion.fields.filter((field) => trecPagesForStep.includes(field.page));
+  const currentTrecPage = Math.min(Math.max(activeTrecPage, 1), currentTrecFormVersion.pageCount);
   const trecFormFieldById = new Map(currentTrecFormVersion.fields.map((field) => [field.id, field]));
 
   const syncMessage = {
@@ -1779,7 +1770,7 @@ export default function AgentDealDesk({
                       <div>
                         <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Guided official form</p>
                         <h4 id="official-trec-fields-title" className="mt-1 text-lg font-semibold text-slate-950">
-                          TREC {currentTrecFormVersion.formNumber} · {trecPagesForStep.length === 1 ? `Page ${trecPagesForStep[0]}` : `Pages ${trecPagesForStep[0]}–${trecPagesForStep.at(-1)}`}
+                          TREC {currentTrecFormVersion.formNumber} · Page {currentTrecPage} of {currentTrecFormVersion.pageCount}
                         </h4>
                       </div>
                       <p className="text-xs font-semibold text-slate-600">{currentTrecFormVersion.fields.length} total fillable controls · Effective {currentTrecFormVersion.effectiveDate}</p>
@@ -1801,21 +1792,29 @@ export default function AgentDealDesk({
                     {pdfDownloadState === 'error' && <p className="mt-2 text-sm font-semibold text-[#B6402C]">The populated PDF could not be generated. Try again.</p>}
                   </div>
                   <div className="p-4 sm:p-6">
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {trecPagesForStep.map((page) => (
-                        <button
-                          key={page}
-                          type="button"
-                          onClick={() => setActiveTrecPage(page)}
-                          className={`min-h-[46px] rounded-md border px-4 py-2 text-left text-sm font-bold leading-5 ${
-                            currentTrecPage === page
-                              ? 'border-[#301D5D] bg-[#301D5D] text-white'
-                              : 'border-slate-300 bg-white text-slate-800 hover:bg-[#F7F3EB]'
-                          }`}
-                        >
-                          Page {page}: {currentTrecFormVersion.pageSections[page] ?? `Official TREC page ${page}`}
-                        </button>
-                      ))}
+                    <div className="mb-4 flex flex-col gap-3 rounded-md border border-slate-200 bg-[#FCFBF9] p-3 sm:flex-row sm:items-center sm:justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTrecPage((page) => Math.max(1, page - 1))}
+                        disabled={currentTrecPage === 1}
+                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                        Back
+                      </button>
+                      <div className="min-w-0 text-center">
+                        <p className="text-sm font-bold text-slate-950">Page {currentTrecPage} of {currentTrecFormVersion.pageCount}</p>
+                        <p className="mt-1 truncate text-xs font-semibold text-slate-600">{currentTrecFormVersion.pageSections[currentTrecPage] ?? `Official TREC page ${currentTrecPage}`}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTrecPage((page) => Math.min(currentTrecFormVersion.pageCount, page + 1))}
+                        disabled={currentTrecPage === currentTrecFormVersion.pageCount}
+                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                      </button>
                     </div>
                     <div className="mt-5">
                       <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-slate-100 shadow-sm">
@@ -1827,7 +1826,7 @@ export default function AgentDealDesk({
                           pdfUrl={currentTrecFormVersion.pdfUrl}
                           pageNumber={currentTrecPage}
                           formNumber={currentTrecFormVersion.formNumber}
-                          fields={trecFieldsForStep.filter((field) => field.page === currentTrecPage)}
+                          fields={currentTrecFormVersion.fields.filter((field) => field.page === currentTrecPage)}
                           values={activeDeal.formFields}
                           onFieldChange={updateTrecFormField}
                         />

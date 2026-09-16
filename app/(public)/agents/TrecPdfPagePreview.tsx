@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PDFDocumentProxy, PageViewport } from 'pdfjs-dist';
+import { Check } from 'lucide-react';
 import type { TrecFormFieldDefinition } from '@/lib/trec-20-19-fields';
 
 type FieldLocation = {
@@ -180,17 +181,25 @@ export default function TrecPdfPagePreview({
       {status === 'ready' && controls.map(({ field, left, top, width, height }) => {
         const isToggle = field.type === 'checkbox' || field.type === 'radio';
         if (isToggle) {
+          const isChecked = values[field.id] === 'true';
           return (
-            <input
+            <button
               key={field.id}
-              type="checkbox"
-              checked={values[field.id] === 'true'}
-              onChange={(event) => onFieldChange(field.id, event.target.checked ? 'true' : '')}
+              type="button"
+              role="checkbox"
+              aria-checked={isChecked}
+              onClick={() => onFieldChange(field.id, isChecked ? '' : 'true')}
               aria-label={`${field.label}, official form page ${field.page}`}
               title={field.label}
-              className="absolute z-20 cursor-pointer appearance-none rounded-[2px] border border-[#446B9E] bg-[#FFF4B8]/70 checked:bg-[#301D5D] checked:after:absolute checked:after:left-1/2 checked:after:top-1/2 checked:after:h-[55%] checked:after:w-[30%] checked:after:-translate-x-1/2 checked:after:-translate-y-[60%] checked:after:rotate-45 checked:after:border-b-2 checked:after:border-r-2 checked:after:border-white focus:outline-none focus:ring-2 focus:ring-[#C88A14] focus:ring-offset-1"
+              className={`absolute z-20 flex cursor-pointer items-center justify-center rounded-[2px] border focus:outline-none focus:ring-2 focus:ring-[#C88A14] focus:ring-offset-1 ${
+                isChecked
+                  ? 'border-[#301D5D] bg-[#301D5D] text-white'
+                  : 'border-[#446B9E] bg-[#FFF4B8]/70 text-transparent hover:bg-[#FFF0A0]'
+              }`}
               style={{ left, top, width, height }}
-            />
+            >
+              <Check className="h-full w-full stroke-[3]" aria-hidden="true" />
+            </button>
           );
         }
         return (
