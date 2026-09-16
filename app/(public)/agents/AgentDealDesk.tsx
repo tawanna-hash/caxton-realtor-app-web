@@ -1058,30 +1058,53 @@ export default function AgentDealDesk({
               className={extractionState === 'extracting' ? 'pointer-events-none opacity-70' : ''}
             >
               <div className="relative sm:w-[176px]">
-                <button
-                  type="button"
-                  onClick={() => setIsUploadMenuOpen((isOpen) => !isOpen)}
-                  disabled={extractionState === 'extracting'}
-                  aria-expanded={isUploadMenuOpen}
-                  aria-haspopup="menu"
-                  className={`inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-md border px-4 text-sm font-bold transition ${
+                <div
+                  className={`flex min-h-[42px] overflow-hidden rounded-md border text-sm font-bold transition ${
                     isContractDropActive
                       ? 'border-violet-600 bg-violet-100 text-violet-950'
-                      : 'border-[#7059A8] bg-white text-[#301D5D] hover:bg-violet-50'
+                      : 'border-[#7059A8] bg-white text-[#301D5D]'
                   }`}
                 >
-                  {extractionState === 'extracting' ? (
-                    <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  ) : (
-                    <FileUp className="h-4 w-4" aria-hidden="true" />
-                  )}
-                  {extractionState === 'extracting'
-                    ? 'Reading contract…'
-                    : isContractDropActive
-                      ? 'Drop contract to upload'
-                      : 'Upload contract'}
-                  {extractionState !== 'extracting' && <ChevronDown className="h-4 w-4" aria-hidden="true" />}
-                </button>
+                  <label
+                    htmlFor="agentContractUpload"
+                    className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 px-3 transition hover:bg-violet-50"
+                  >
+                    {extractionState === 'extracting' ? (
+                      <LoaderCircle className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <FileUp className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    )}
+                    <span className="truncate">
+                      {extractionState === 'extracting'
+                        ? 'Reading contract…'
+                        : isContractDropActive
+                          ? 'Drop to upload'
+                          : 'Upload contract'}
+                    </span>
+                    <input
+                      id="agentContractUpload"
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg,image/webp"
+                      disabled={extractionState === 'extracting'}
+                      onChange={(event) => {
+                        void extractContract(event.target.files?.[0]);
+                        event.currentTarget.value = '';
+                      }}
+                      className="sr-only"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsUploadMenuOpen((isOpen) => !isOpen)}
+                    disabled={extractionState === 'extracting'}
+                    aria-label="More contract upload options"
+                    aria-expanded={isUploadMenuOpen}
+                    aria-haspopup="menu"
+                    className="flex w-10 shrink-0 items-center justify-center border-l border-[#7059A8] transition hover:bg-violet-50"
+                  >
+                    <ChevronDown className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
 
                 {isUploadMenuOpen && extractionState !== 'extracting' && (
                   <div
@@ -1089,7 +1112,7 @@ export default function AgentDealDesk({
                     className="absolute right-0 z-20 mt-2 w-[280px] rounded-md border border-slate-200 bg-white p-2 text-left shadow-lg"
                   >
                     <label
-                      htmlFor="agentContractUpload"
+                      htmlFor="agentContractUploadMenu"
                       role="menuitem"
                       onClick={() => setIsUploadMenuOpen(false)}
                       className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-violet-50"
@@ -1097,7 +1120,7 @@ export default function AgentDealDesk({
                       <FileUp className="h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
                       Choose PDF or image
                       <input
-                        id="agentContractUpload"
+                        id="agentContractUploadMenu"
                         type="file"
                         accept="application/pdf,image/png,image/jpeg,image/webp"
                         onChange={(event) => {
