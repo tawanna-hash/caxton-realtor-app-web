@@ -1919,7 +1919,7 @@ export default function AgentDealDesk({
                     <div className="mb-4">
                       <span className="mb-1.5 block text-sm font-bold text-slate-900">Select A TREC Contract Or Form</span>
                       <p className="mb-2 text-xs text-slate-500">Check the forms needed; click a name to fill it in.</p>
-                      <div className="grid grid-cols-1 divide-y divide-slate-100 rounded-md border border-slate-300 bg-white sm:grid-cols-2 sm:divide-y-0">
+                      <div className="max-h-[172px] divide-y divide-slate-100 overflow-y-auto rounded-md border border-slate-300 bg-white">
                         {activePacketForms.map((version) => {
                           const isSelected = activeDeal.selectedFormFamilies[version.formFamily] ?? false;
                           const isViewing = version.formFamily === currentTrecFormVersion.formFamily;
