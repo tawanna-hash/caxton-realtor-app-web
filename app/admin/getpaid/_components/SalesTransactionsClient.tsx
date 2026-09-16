@@ -912,18 +912,20 @@ export function SalesTransactionsClient({
               <option value="all">All dates</option>
             </select>
           </label>
-          {!invoiceWorkspace && <label className="min-w-60 flex-1 space-y-1">
-            <span className="block text-xs text-gray-500">Client</span>
+          <label className="min-w-60 flex-1 space-y-1">
+            <span className="block text-xs text-gray-500">{invoiceWorkspace ? 'Search' : 'Client'}</span>
             <span className="relative block">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
               <input
                 className={`${CONTROL} w-full pl-9`}
-                placeholder="Search"
+                type="search"
+                aria-label={invoiceWorkspace ? 'Search invoices' : 'Search clients and transactions'}
+                placeholder={invoiceWorkspace ? 'Search invoice number, client, email or memo' : 'Search'}
                 value={query}
                 onChange={(event) => updateFilter(() => setQuery(event.target.value))}
               />
             </span>
-          </label>}
+          </label>
           <div className="relative ml-auto flex">
             <button type="button" className={`${ORANGE_BUTTON} rounded-r-none`} onClick={() => setCreatingInvoice(true)}>
               <Sparkles className="h-4 w-4" aria-hidden="true" />
