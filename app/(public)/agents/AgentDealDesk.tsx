@@ -429,6 +429,7 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     contractDetails: defaultAgentContractDetails(),
     formFields: {},
     addenda: {},
+    selectedFormFamilies: {},
     reminders: [],
     tasks: [],
     documents: DOCUMENT_TEMPLATES.map(({ id, label }) => ({ id, label, status: 'requested' as const, complete: false, requestedAt: now, updatedAt: now })),
@@ -1906,23 +1907,48 @@ export default function AgentDealDesk({
                     </p>
                   </div>
                   <div className="p-6 sm:p-10">
-                    <label className="mb-4 block">
-                      <span className="mb-2 block text-sm font-bold text-slate-900">Select a TREC contract or form</span>
-                      <select
-                        value={currentTrecFormVersion.formFamily}
-                        onChange={(event) => {
-                          setActiveTrecFormFamily(event.target.value);
-                          setActiveTrecPage(1);
-                        }}
-                        className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-[#301D5D]"
-                      >
-                        {activePacketForms.map((version) => (
-                          <option key={version.id} value={version.formFamily}>
-                            TREC {version.formNumber} · {version.title}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                    <div className="mb-4">
+                      <span className="mb-2 block text-sm font-bold text-slate-900">Select A TREC Contract Or Form</span>
+                      <p className="mb-3 text-xs font-semibold text-slate-500">Check every form needed for this transaction, then click a form's name to fill it in.</p>
+                      <div className="divide-y divide-slate-200 rounded-md border border-slate-300 bg-white">
+                        {activePacketForms.map((version) => {
+                          const isSelected = activeDeal.selectedFormFamilies[version.formFamily] ?? false;
+                          const isViewing = version.formFamily === currentTrecFormVersion.formFamily;
+                          return (
+                            <div
+                              key={version.id}
+                              className={`flex items-center gap-3 px-3 py-2.5 ${isViewing ? 'bg-[#F8F5FF]' : ''}`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`form-family-${version.id}`}
+                                checked={isSelected}
+                                onChange={(event) => {
+                                  updateActiveDeal('selectedFormFamilies', {
+                                    ...activeDeal.selectedFormFamilies,
+                                    [version.formFamily]: event.target.checked,
+                                  });
+                                }}
+                                className="h-4 w-4 shrink-0 rounded border-slate-400 text-[#301D5D] focus:ring-[#301D5D]"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveTrecFormFamily(version.formFamily);
+                                  setActiveTrecPage(1);
+                                }}
+                                className={`min-w-0 flex-1 truncate text-left text-sm font-semibold ${isViewing ? 'text-[#301D5D]' : 'text-slate-800 hover:text-[#301D5D]'}`}
+                              >
+                                TREC {version.formNumber} · {version.title}
+                              </button>
+                              {isViewing && (
+                                <span className="shrink-0 rounded-md bg-[#301D5D] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-white">Viewing</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                     <div className="mb-4 flex flex-col gap-3 rounded-md border border-slate-200 bg-[#FCFBF9] p-3 sm:flex-row sm:items-center sm:justify-between">
                       <button
                         type="button"

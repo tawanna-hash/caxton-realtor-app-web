@@ -127,6 +127,7 @@ export const agentDealSchema = z.object({
   contractDetails: agentContractDetailsSchema,
   formFields: agentTrecFormFieldsSchema,
   addenda: z.record(z.string(), z.boolean()).default({}),
+  selectedFormFamilies: z.record(z.string(), z.boolean()).default({}),
   reminders: z.array(agentReminderSchema).max(100).default([]), tasks: z.array(agentTaskSchema).max(200).default([]), documents: z.array(agentDocumentSchema).max(100).default([]),
   activity: z.array(agentActivitySchema).max(300).default([]),
   createdAt: z.string().datetime(), updatedAt: z.string().datetime(),
