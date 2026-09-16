@@ -235,8 +235,8 @@ function ReadinessChecklist({
 
   return (
     <div className="border border-slate-200 bg-white p-5 sm:p-6">
-      <div className="flex items-center gap-2">
-        <FileText className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
+      <div className="flex items-center gap-3">
+        <FileText className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Readiness check</p>
           <Heading className="mt-1 text-xl font-semibold text-slate-950">Transaction readiness checklist</Heading>
@@ -1256,7 +1256,7 @@ export default function AgentDealDesk({
           <div className="grid items-stretch gap-3 bg-transparent sm:gap-5 sm:border sm:border-[#D9D0BF] sm:bg-[#FFFDF8] sm:p-5 lg:grid-cols-3 lg:p-6">
             <div className="order-1 h-full border border-slate-200 bg-white p-4 sm:p-6">
               <div className="flex items-start gap-3">
-                <Bell className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
+                <Bell className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                 <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Date Radar</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Next {radarWindowDays} days</h2></div>
               </div>
               <div className="mt-5 space-y-2">
@@ -1271,7 +1271,7 @@ export default function AgentDealDesk({
             </div>
             <div className="order-2 h-full border border-slate-200 bg-white p-4 sm:p-6">
               <div className="flex items-start gap-3">
-                <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
+                <CalendarDays className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                 <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar Exports</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Take your deadlines with you</h2></div>
               </div>
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Download calendar files for the active deal or every active transaction. Each export includes calculated contract dates, closing dates, open reminders, and open tasks.</p>
@@ -1282,7 +1282,7 @@ export default function AgentDealDesk({
             </div>
             <div className="order-3 h-full border border-slate-200 bg-white p-4 sm:p-6">
               <div className="flex items-start gap-3">
-                <Bell className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
+                <Bell className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                 <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline Alerts</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Choose how you are notified</h2></div>
               </div>
               <div className="mt-4 space-y-3">
@@ -1316,8 +1316,8 @@ export default function AgentDealDesk({
             <>
               <div className="grid gap-6 lg:grid-cols-2">
                 <div className="border border-slate-200 bg-white p-5 sm:p-6">
-                  <div className="flex items-center gap-2">
-                    <ListTodo className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
+                  <div className="flex items-center gap-3">
+                    <ListTodo className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Action list</p>
                       <h2 className="mt-1 text-xl font-semibold text-slate-950">Tasks and reminders</h2>
@@ -1354,7 +1354,7 @@ export default function AgentDealDesk({
                 />
               </div>
               <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
-                <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><History className="h-5 w-5 text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h2 className="mt-1 text-xl font-semibold text-slate-950">Outcome, record, and export</h2></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
+                <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h2 className="mt-1 text-xl font-semibold text-slate-950">Outcome, record, and export</h2></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
                 <div className="mt-5 grid gap-3 md:grid-cols-3"><select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm"><option value="">Closeout outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select><input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm" /><input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm" placeholder="Closeout note" /></div>
                 <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#E7C769] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
               </section>
@@ -1543,7 +1543,7 @@ export default function AgentDealDesk({
             const MetricIcon = Icon as typeof CalendarDays;
             return (
               <div key={label as string} className="border border-slate-200 bg-white p-4">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-md ${tone as string}`}>
+                <div className={`flex h-9 w-9 items-center justify-center rounded-full ${tone as string}`}>
                   <MetricIcon className="h-4 w-4" aria-hidden="true" />
                 </div>
                 <p className="mt-4 text-2xl font-semibold tracking-[-0.04em] text-slate-950">{value as number}</p>
@@ -1556,7 +1556,7 @@ export default function AgentDealDesk({
         <div className="mt-6 hidden grid items-stretch gap-5 border border-[#D9D0BF] bg-[#FFFDF8] p-5 lg:grid-cols-3 lg:p-6">
           <div className="order-2 h-full border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex items-start gap-3">
-              <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
+              <CalendarDays className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar Exports</p>
                 <h3 className="mt-1 text-xl font-semibold text-slate-950">Take your deadlines with you</h3>
@@ -1589,7 +1589,7 @@ export default function AgentDealDesk({
 
           <div className="order-3 h-full border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex items-start gap-3">
-              <Bell className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
+              <Bell className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline Alerts</p>
                 <h3 className="mt-1 text-xl font-semibold text-slate-950">Choose how you are notified</h3>
@@ -1649,7 +1649,7 @@ export default function AgentDealDesk({
           </div>
           <div className="order-1 h-full border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex items-start gap-3">
-              <Bell className="mt-0.5 h-5 w-5 shrink-0 text-[#7059A8]" aria-hidden="true" />
+              <Bell className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Date Radar</p>
                 <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Next {radarWindowDays} days</h3>
@@ -1841,7 +1841,7 @@ export default function AgentDealDesk({
 
                 <div className="mt-7 rounded-md border border-slate-200 bg-[#FCFBF9] p-5 sm:p-7">
                   <div className="flex items-center gap-2">
-                    <CalendarDays className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
+                    <CalendarDays className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                     <div>
                       <h4 className="text-lg font-semibold text-slate-950">Timeline customization</h4>
                       <p className="mt-1 text-sm text-slate-600">Set the contract dates and timeframes used by Date Radar, Calendar Exports, and Deadline Alerts.</p>
@@ -2008,8 +2008,8 @@ export default function AgentDealDesk({
           <>
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <div className="border border-slate-200 bg-white p-5 sm:p-6">
-              <div className="flex items-center gap-2">
-                <ListTodo className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
+              <div className="flex items-center gap-3">
+                <ListTodo className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Action list</p>
                   <h3 className="mt-1 text-xl font-semibold text-slate-950">Tasks and reminders</h3>
@@ -2045,7 +2045,7 @@ export default function AgentDealDesk({
             />
           </div>
           <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><History className="h-5 w-5 text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h3 className="mt-1 text-xl font-semibold text-slate-950">Outcome, record, and export</h3></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
+            <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h3 className="mt-1 text-xl font-semibold text-slate-950">Outcome, record, and export</h3></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
             <div className="mt-5 grid gap-3 md:grid-cols-3"><select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm"><option value="">Closeout outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select><input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm" /><input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm" placeholder="Closeout note" /></div>
             <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#E7C769] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
           </section>

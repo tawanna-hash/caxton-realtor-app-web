@@ -386,6 +386,21 @@ body {
   background-color: color-mix(in srgb, currentColor 10%, transparent);
 }
 
+/* Decorative icons that sit directly beside card and section headings use the
+   same 36px translucent circle even when the source component has no wrapper.
+   This class is explicit so button, field, status, and navigation glyphs keep
+   their intended hit areas and alignment. */
+.rnn-heading-icon {
+  box-sizing: content-box;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  background-color: rgb(48 29 93 / 0.08);
+  background-color: color-mix(in srgb, currentColor 10%, transparent);
+}
+
 /* Normalize neutral white content boxes to one brand-tinted border. Semantic
    and branded borders keep their explicit colors so status meaning is never
    lost. */

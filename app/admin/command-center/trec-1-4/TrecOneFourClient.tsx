@@ -312,7 +312,7 @@ function DateRadar({
     <section aria-label="Date Radar" className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <CalendarDays className="h-5 w-5 text-orange-700" aria-hidden="true" />
+          <CalendarDays className="rnn-heading-icon text-orange-700" aria-hidden="true" />
           <div>
             <h2 className="text-lg font-semibold text-gray-950">Date Radar</h2>
             <p className="text-xs text-gray-500">Calculated deadlines and your in-app reminders.</p>
@@ -1108,7 +1108,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
             />
             <section aria-label="Deadline reminders" className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-violet-700" aria-hidden="true" />
+                <Bell className="rnn-heading-icon text-violet-700" aria-hidden="true" />
                 <div>
                   <h2 className="text-lg font-semibold text-gray-950">Deadline reminders</h2>
                   <p className="text-xs text-gray-500">Durable in-app reminders for this saved deal.</p>
@@ -1173,7 +1173,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
           <section aria-label="Transaction operations" className="mb-7 grid gap-5 xl:grid-cols-2">
             <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5">
               <div className="flex items-center gap-2">
-                <ShieldAlert className="h-5 w-5 text-amber-700" aria-hidden="true" />
+                <ShieldAlert className="rnn-heading-icon text-amber-700" aria-hidden="true" />
                 <div>
                   <h2 className="text-lg font-semibold text-gray-950">Texas timing review</h2>
                   <p className="text-xs text-gray-600">Operational checks based on the values in this workspace.</p>
@@ -1193,7 +1193,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
 
             <div className="rounded-xl border border-gray-200 bg-white p-5">
               <div className="flex items-center gap-2">
-                <ClipboardCheck className="h-5 w-5 text-violet-700" aria-hidden="true" />
+                <ClipboardCheck className="rnn-heading-icon text-violet-700" aria-hidden="true" />
                 <div>
                   <h2 className="text-lg font-semibold text-gray-950">Tasks & escalation</h2>
                   <p className="text-xs text-gray-500">Track accountable work against this transaction.</p>
@@ -1230,7 +1230,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
             <section aria-label="Document requests and history" className="mb-7 grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
               <div className="rounded-xl border border-gray-200 bg-white p-5">
                 <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-orange-700" aria-hidden="true" />
+                  <FileText className="rnn-heading-icon text-orange-700" aria-hidden="true" />
                   <div><h2 className="text-lg font-semibold text-gray-950">Document request center</h2><p className="text-xs text-gray-500">Status tracking only. Do not upload executed contracts here.</p></div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -1254,7 +1254,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 </ul>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <div className="flex items-center gap-2"><History className="h-5 w-5 text-gray-700" aria-hidden="true" /><div><h2 className="text-lg font-semibold text-gray-950">Closeout & history</h2><p className="text-xs text-gray-500">Document the operational outcome and a dated activity trail.</p></div></div>
+                <div className="flex items-center gap-3"><History className="rnn-heading-icon text-gray-700" aria-hidden="true" /><div><h2 className="text-lg font-semibold text-gray-950">Closeout & history</h2><p className="text-xs text-gray-500">Document the operational outcome and a dated activity trail.</p></div></div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <select value={outcome} onChange={(event) => setOutcome(event.target.value)} aria-label="Transaction outcome" className="min-h-10 rounded-md border border-gray-300 px-3 text-sm"><option value="">Outcome not set</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select>
                   <input value={outcomeDate} onChange={(event) => setOutcomeDate(event.target.value)} type="date" aria-label="Outcome date" className="min-h-10 rounded-md border border-gray-300 px-3 text-sm" />

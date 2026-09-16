@@ -410,7 +410,7 @@ export default function AgentCommandCenterClient({
                 </div>
               ) : (
                 <div className="mt-6 border border-dashed border-slate-300 bg-[#FCFBF9] p-6">
-                  <Wrench className="h-5 w-5 text-[#5B438C]" aria-hidden="true" />
+                  <Wrench className="rnn-heading-icon text-[#5B438C]" aria-hidden="true" />
                   <p className="mt-4 text-lg font-semibold text-slate-950">This service category is growing</p>
                   <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
                     No market-matched partners with this service are available yet. Check back as the local network expands.
