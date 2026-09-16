@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
   Building2,
@@ -132,6 +132,7 @@ export default function AgentCommandCenterClient({
   const [additionalEarnestMoneyDays, setAdditionalEarnestMoneyDays] = useState('');
   const [quickCheckOpen, setQuickCheckOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [providerRotation, setProviderRotation] = useState(0);
 
   const selectedCategoryRecord = REFERRAL_CATEGORIES.find((category) => category.id === selectedCategory)
     ?? REFERRAL_CATEGORIES[0];
@@ -144,10 +145,25 @@ export default function AgentCommandCenterClient({
       }),
     [additionalEarnestMoneyDays, effectiveDate, optionPeriodDays],
   );
-  const visibleProviders = useMemo(
-    () => providers.filter((provider) => providerMatchesCategory(provider, selectedCategoryRecord)).slice(0, 6),
+  const matchingProviders = useMemo(
+    () => providers.filter((provider) => providerMatchesCategory(provider, selectedCategoryRecord)),
     [providers, selectedCategoryRecord],
   );
+  const visibleProviders = useMemo(() => {
+    if (matchingProviders.length <= 2) return matchingProviders;
+    const start = (providerRotation * 2) % matchingProviders.length;
+    return [0, 1].map((offset) => matchingProviders[(start + offset) % matchingProviders.length]);
+  }, [matchingProviders, providerRotation]);
+
+  useEffect(() => {
+    if (matchingProviders.length <= 2) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return;
+    const rotationTimer = window.setInterval(() => {
+      setProviderRotation((rotation) => rotation + 1);
+    }, 8000);
+    return () => window.clearInterval(rotationTimer);
+  }, [matchingProviders.length, selectedCategory]);
 
   const resetPlanner = () => {
     setEffectiveDate('');
@@ -357,6 +373,7 @@ export default function AgentCommandCenterClient({
                       type="button"
                       onClick={() => {
                         setSelectedCategory(category.id);
+                        setProviderRotation(0);
                         trackEvent('agent_referral_network_category_selected', { category: category.id });
                       }}
                       className={`h-[42px] rounded-md border px-3.5 text-sm font-semibold transition ${
