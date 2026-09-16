@@ -2051,7 +2051,7 @@ export default function AgentDealDesk({
               </div>
             </div>
             <div className="mt-5 overflow-x-auto">
-              <table className="w-full min-w-[820px] border-collapse text-left text-sm">
+              <table className="w-full min-w-[980px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
                     <th scope="col" className="py-2 pr-4 font-bold">Transaction</th>
@@ -2059,6 +2059,8 @@ export default function AgentDealDesk({
                     <th scope="col" className="py-2 pr-4 font-bold">Effective Date</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Closing Date</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Forms</th>
+                    <th scope="col" className="py-2 pr-4 font-bold">Tasks</th>
+                    <th scope="col" className="py-2 pr-4 font-bold">Reminders</th>
                     <th scope="col" className="py-2 pl-4" aria-label="Open transaction" />
                   </tr>
                 </thead>
@@ -2093,6 +2095,30 @@ export default function AgentDealDesk({
                               className="inline-flex rounded-md bg-[#F8F5FF] px-2 py-1 text-xs font-bold text-[#5B438C]"
                             >
                               {dealFormVersions.length} form{dealFormVersions.length === 1 ? '' : 's'}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {(() => {
+                          if (deal.tasks.length === 0) return <span className="text-slate-400">—</span>;
+                          const openCount = deal.tasks.filter((task) => !task.complete).length;
+                          const doneCount = deal.tasks.length - openCount;
+                          return (
+                            <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">
+                              {openCount} open / {doneCount} done
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {(() => {
+                          if (deal.reminders.length === 0) return <span className="text-slate-400">—</span>;
+                          const openCount = deal.reminders.filter((reminder) => !reminder.complete).length;
+                          const doneCount = deal.reminders.length - openCount;
+                          return (
+                            <span className="inline-flex rounded-md bg-[#FFF9E7] px-2 py-1 text-xs font-bold text-[#855D10]">
+                              {openCount} open / {doneCount} done
                             </span>
                           );
                         })()}
@@ -2176,6 +2202,28 @@ export default function AgentDealDesk({
                       })}
                     </ul>
                   )}
+                  {(() => {
+                    const taskOpen = statusDeal.tasks.filter((task) => !task.complete).length;
+                    const taskDone = statusDeal.tasks.length - taskOpen;
+                    const reminderOpen = statusDeal.reminders.filter((reminder) => !reminder.complete).length;
+                    const reminderDone = statusDeal.reminders.length - reminderOpen;
+                    return (
+                      <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-2">
+                        <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Tasks</p>
+                          <p className="mt-1 text-sm font-bold text-slate-800">
+                            {statusDeal.tasks.length === 0 ? 'No tasks yet' : `${taskOpen} open / ${taskDone} done`}
+                          </p>
+                        </div>
+                        <div className="rounded-md border border-[#E7C769] bg-[#FFF9E7] p-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#855D10]">Reminders</p>
+                          <p className="mt-1 text-sm font-bold text-[#855D10]">
+                            {statusDeal.reminders.length === 0 ? 'No reminders yet' : `${reminderOpen} open / ${reminderDone} done`}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
