@@ -83,18 +83,6 @@ const DOCUMENT_TEMPLATES = [
   ['delivery-confirmation', 'Earnest and option delivery confirmation'],
 ] as const;
 
-const ADDENDA = [
-  'Third-Party Financing Addendum',
-  'HOA Addendum',
-  'Seller’s Disclosure',
-  'Lead-Based Paint Addendum',
-  'Non-Realty Items Addendum',
-  'Temporary Lease Addendum',
-  'Back-Up Contract Addendum',
-  'VA Loan Addendum',
-  'PID / MUD Notice',
-] as const;
-
 const CONTRACT_DETAIL_FIELDS: ReadonlyArray<{
   key: keyof AgentContractDetails;
   label: string;
@@ -123,18 +111,12 @@ const CONTRACT_DETAIL_FIELDS: ReadonlyArray<{
   { key: 'notices', label: 'Notices', multiline: true },
 ];
 
-const TIMING_FIELDS: ReadonlyArray<{ key: keyof AgentDeal; label: string; type: 'date' | 'number'; step: number }> = [
-  { key: 'effectiveDate', label: 'Effective date', type: 'date', step: 0 },
-  { key: 'financingDeadlineDays', label: 'Financing days', type: 'number', step: 1 },
-  { key: 'appraisalDeadlineDays', label: 'Appraisal days', type: 'number', step: 1 },
-  { key: 'optionPeriodDays', label: 'Option period days', type: 'number', step: 2 },
-  { key: 'additionalEarnestMoneyDays', label: 'Additional earnest days', type: 'number', step: 2 },
-  { key: 'earnestMoneyDeliveredDate', label: 'Earnest money actual delivery', type: 'date', step: 2 },
-  { key: 'optionFeeDeliveredDate', label: 'Option fee actual delivery', type: 'date', step: 2 },
-  { key: 'titleCommitmentDays', label: 'Title commitment days', type: 'number', step: 3 },
-  { key: 'surveyDays', label: 'Survey days', type: 'number', step: 3 },
-  { key: 'titleObjectionDays', label: 'Title objection days', type: 'number', step: 3 },
-  { key: 'closingDate', label: 'Closing date', type: 'date', step: 3 },
+const TIMING_FIELDS: ReadonlyArray<{ key: keyof AgentDeal; label: string; description: string; type: 'date' | 'number'; suffix?: string }> = [
+  { key: 'effectiveDate', label: 'Effective Date', description: 'Starts the contract timeline', type: 'date' },
+  { key: 'optionPeriodDays', label: 'Option / Inspection Period', description: 'Buyer review and inspection window', type: 'number', suffix: 'days' },
+  { key: 'appraisalDeadlineDays', label: 'Appraisal Contingency', description: 'Property appraisal deadline', type: 'number', suffix: 'days' },
+  { key: 'financingDeadlineDays', label: 'Financing Contingency', description: 'Loan approval deadline', type: 'number', suffix: 'days' },
+  { key: 'closingDate', label: 'Closing Date', description: 'Final transaction closing', type: 'date' },
 ];
 
 function getId(prefix: string): string {
@@ -853,11 +835,6 @@ export default function AgentDealDesk({
     trackEvent('agent_deal_desk_contract_suggestions_applied');
   };
 
-  const updateContractDetail = (key: keyof AgentContractDetails, value: string) => {
-    if (!activeDeal) return;
-    updateActiveDeal('contractDetails', { ...activeDeal.contractDetails, [key]: value });
-  };
-
   const updateTrecFormField = (key: string, value: string) => {
     if (!activeDeal) return;
     updateActiveDeal('formFields', { ...activeDeal.formFields, [key]: value });
@@ -911,14 +888,6 @@ export default function AgentDealDesk({
     } catch {
       setPdfDownloadState('error');
     }
-  };
-
-  const toggleAddendum = (addendum: string) => {
-    if (!activeDeal) return;
-    updateActiveDeal('addenda', {
-      ...activeDeal.addenda,
-      [addendum]: !activeDeal.addenda[addendum],
-    });
   };
 
   const addReminder = (deadline: TrecDeadline, preset: '7d' | '3d' | '1d' | 'due' = '1d') => {
@@ -1648,46 +1617,41 @@ export default function AgentDealDesk({
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Detailed workflow stage</span>
                     <select value={activeDeal.workflowStatus} onChange={(event) => updateActiveDeal('workflowStatus', event.target.value as TrecDealWorkflowStatus)} className="h-[46px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]">{Object.entries(TREC_DEAL_WORKFLOW_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
                   </label>
-                  <label className="block md:col-span-2">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Property address</span>
-                    <input value={activeDeal.propertyAddress} onChange={(event) => updateActiveDeal('propertyAddress', event.target.value)} className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Street address, city, state, ZIP" />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Buyer name(s)</span>
-                    <input value={activeDeal.buyerNames} onChange={(event) => updateActiveDeal('buyerNames', event.target.value)} className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Seller name(s)</span>
-                    <input value={activeDeal.sellerNames} onChange={(event) => updateActiveDeal('sellerNames', event.target.value)} className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
-                  </label>
                 </div>
 
-                <div className="mt-7 border-t border-slate-200 pt-6">
+                <div className="mt-7 rounded-md border border-slate-200 bg-[#FCFBF9] p-5 sm:p-7">
                   <div className="flex items-center gap-2">
                     <CalendarDays className="h-5 w-5 text-[#7059A8]" aria-hidden="true" />
-                    <h4 className="text-lg font-semibold text-slate-950">Contract timing</h4>
+                    <div>
+                      <h4 className="text-lg font-semibold text-slate-950">Timeline customization</h4>
+                      <p className="mt-1 text-sm text-slate-600">Set the contract dates and timeframes used by Date Radar, calendar exports, and deadline alerts.</p>
+                    </div>
                   </div>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {TIMING_FIELDS.map(({ key, label, type }) => (
-                      <label key={key} className="block">
-                        <span className="mb-2 block text-sm font-semibold text-slate-800">{key === 'effectiveDate' ? 'Contract effective date' : label}</span>
-                        <input
-                          type={type}
-                          min={type === 'number' ? '1' : undefined}
-                          inputMode={type === 'number' ? 'numeric' : undefined}
-                          value={activeDeal[key as keyof AgentDeal] as string}
-                          onChange={(event) => updateActiveDeal(key as keyof AgentDeal, event.target.value as never)}
-                          className="h-[46px] w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]"
-                        />
-                        {key === 'effectiveDate' && (
-                          <span className="mt-2 block text-xs leading-5 text-slate-500">
-                            This is day zero. Day one begins the next calendar day.
-                          </span>
-                        )}
+                  <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="rounded-md border border-slate-200 bg-white p-4">
+                      <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">Initial deposit due to escrow</p>
+                      <p className="mt-4 text-lg font-semibold text-slate-900">3 days</p>
+                    </div>
+                    {TIMING_FIELDS.map(({ key, label, description, type, suffix }) => (
+                      <label key={key} className="block rounded-md border border-slate-200 bg-white p-4">
+                        <span className="block text-sm font-bold text-slate-900">{label}</span>
+                        <span className="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
+                        <span className="mt-4 flex items-center gap-2">
+                          <input
+                            type={type}
+                            min={type === 'number' ? '1' : undefined}
+                            inputMode={type === 'number' ? 'numeric' : undefined}
+                            value={activeDeal[key as keyof AgentDeal] as string}
+                            onChange={(event) => updateActiveDeal(key as keyof AgentDeal, event.target.value as never)}
+                            className={`${type === 'number' ? 'w-24' : 'w-full'} h-[46px] rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]`}
+                          />
+                          {suffix && <span className="text-sm font-semibold text-slate-500">{suffix}</span>}
+                        </span>
                       </label>
                     ))}
                   </div>
-                  <p className="mt-4 text-xs leading-5 text-slate-500">Timing is calculated from the effective date. Contract-period entries are calendar-day estimates; verify signed terms, delivery requirements, and local legal holidays.</p>
+                  <p className="mt-4 text-xs leading-5 text-slate-500">The earnest money deadline is calculated using the TREC three-day delivery rule. Other timing is calculated from the effective date and the signed contract entries.</p>
                 </div>
 
                 <section className="mt-7 border border-[#D9D0BF] bg-white" aria-labelledby="official-trec-fields-title">
@@ -1764,52 +1728,6 @@ export default function AgentDealDesk({
                     </div>
                   </div>
                 </section>
-
-                <details className="mt-7 border border-slate-200 bg-[#FCFBF9]">
-                  <summary className="cursor-pointer list-none px-5 py-4 text-sm font-bold text-slate-900 marker:hidden sm:px-6">
-                    <span className="flex items-center justify-between gap-3">
-                      <span>Contract details and addenda</span>
-                      <span className="text-xs font-semibold text-[#7059A8]">View and edit all extracted terms</span>
-                    </span>
-                  </summary>
-                  <div className="border-t border-slate-200 p-5 sm:p-6">
-                    <p className="max-w-3xl text-sm leading-6 text-slate-600">
-                      Keep the deal facts that matter to your transaction in one secure workspace. These are operational notes, not an official contract record or legal advice.
-                    </p>
-                    <div className="mt-5 grid gap-4 md:grid-cols-2">
-                      {CONTRACT_DETAIL_FIELDS.map(({ key, label, multiline }) => (
-                        <label key={key} className={`block ${multiline ? 'md:col-span-2' : ''}`}>
-                          <span className="mb-2 block text-sm font-semibold text-slate-800">{label}</span>
-                          {multiline ? (
-                            <textarea
-                              value={activeDeal.contractDetails[key]}
-                              onChange={(event) => updateContractDetail(key, event.target.value)}
-                              rows={3}
-                              className="w-full border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#301D5D]"
-                            />
-                          ) : (
-                            <input
-                              value={activeDeal.contractDetails[key]}
-                              onChange={(event) => updateContractDetail(key, event.target.value)}
-                              className="h-[46px] w-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]"
-                            />
-                          )}
-                        </label>
-                      ))}
-                    </div>
-                    <div className="mt-6 border-t border-slate-200 pt-5">
-                      <p className="text-sm font-semibold text-slate-900">Addenda to track</p>
-                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                        {ADDENDA.map((addendum) => (
-                          <label key={addendum} className="flex cursor-pointer items-center gap-3 border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700">
-                            <input type="checkbox" checked={activeDeal.addenda[addendum] === true} onChange={() => toggleAddendum(addendum)} className="h-4 w-4 accent-[#301D5D]" />
-                            {addendum}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </details>
 
                 {activeDeadlines.length > 0 && (
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
