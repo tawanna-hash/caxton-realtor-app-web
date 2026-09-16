@@ -401,6 +401,19 @@ body {
   background-color: color-mix(in srgb, currentColor 10%, transparent);
 }
 
+/* Compact version for informational and action glyphs that live within text,
+   buttons, notices, and menus. Directional arrows remain unboxed. */
+.rnn-inline-icon {
+  box-sizing: content-box;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  padding: 0.3rem;
+  border-radius: 9999px;
+  background-color: rgb(48 29 93 / 0.08);
+  background-color: color-mix(in srgb, currentColor 10%, transparent);
+}
+
 /* Normalize neutral white content boxes to one brand-tinted border. Semantic
    and branded borders keep their explicit colors so status meaning is never
    lost. */

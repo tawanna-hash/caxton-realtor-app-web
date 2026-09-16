@@ -187,7 +187,12 @@ function Tab({
         WebkitTapHighlightColor: 'transparent',
       }}
     >
-      {children}
+      <span
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors"
+        style={{ backgroundColor: active ? `${accent}18` : 'rgb(48 29 93 / 0.06)' }}
+      >
+        {children}
+      </span>
       {/* Label span shrinks with the tab: min-w-0 on the button (above) lets
           flex-1 actually distribute equal width, and max-w-full + truncate
           on the span keeps a naturally-wide label from pushing the whole nav

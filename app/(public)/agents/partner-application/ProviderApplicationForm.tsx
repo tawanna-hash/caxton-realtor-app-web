@@ -74,7 +74,7 @@ export default function ProviderApplicationForm() {
     return (
       <main className="min-h-screen bg-[#F7F5F1] px-5 py-14 sm:px-8">
         <div className="mx-auto max-w-2xl border border-[#D8D0C2] bg-white p-8 shadow-[0_18px_45px_rgba(40,25,77,0.08)] sm:p-12">
-          <CheckCircle2 className="h-11 w-11 text-[#5B824D]" aria-hidden="true" />
+          <CheckCircle2 className="rnn-heading-icon text-[#5B824D]" aria-hidden="true" />
           <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Application received</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">You&apos;re in the review queue.</h1>
           <p className="mt-5 text-base leading-7 text-slate-600">Thank you for sharing your company details. The Realty News Now team will review your application and contact you using the information provided.</p>
@@ -94,7 +94,7 @@ export default function ProviderApplicationForm() {
         </Link>
         <div className="mt-7 grid overflow-hidden border border-[#D8D0C2] bg-white shadow-[0_18px_45px_rgba(40,25,77,0.08)] lg:grid-cols-[0.72fr_1.28fr]">
           <aside className="bg-[#301D5D] p-7 text-white sm:p-9">
-            <ShieldCheck className="h-10 w-10 text-[#F4D06F]" aria-hidden="true" />
+            <ShieldCheck className="rnn-heading-icon text-[#F4D06F]" aria-hidden="true" />
             <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#F4D06F]">Referral Network</p>
             <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">Put your service in front of local agents.</h1>
             <p className="mt-5 text-sm leading-6 text-white/75">Apply for a featured referral-network profile across the Realty News Now agent community. Your information is reviewed before anything is published.</p>

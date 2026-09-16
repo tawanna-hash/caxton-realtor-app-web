@@ -133,7 +133,7 @@ export default function TrecFormsLibrary({ versions }: { versions: TrecFormVersi
                   rel="noreferrer"
                   className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-md border border-[#301D5D] bg-white px-3 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]"
                 >
-                  <Download className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <Download className="rnn-inline-icon" aria-hidden="true" />
                   Download
                 </a>
               </div>

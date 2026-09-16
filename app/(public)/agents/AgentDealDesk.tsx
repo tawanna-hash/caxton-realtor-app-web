@@ -294,14 +294,14 @@ function ReadinessChecklist({
           <ul className="mt-3 space-y-2">
             {reviewAlerts.slice(0, 4).map((alert) => (
               <li key={alert} className="flex gap-2 text-sm leading-5 text-slate-600">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#B6402C]" aria-hidden="true" />
+                <AlertTriangle className="rnn-inline-icon text-[#B6402C]" aria-hidden="true" />
                 {alert}
               </li>
             ))}
           </ul>
         ) : (
           <p className="mt-2 flex items-center gap-2 text-sm text-[#38643A]">
-            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+            <CheckCircle2 className="rnn-inline-icon" aria-hidden="true" />
             No worksheet alerts for your active transactions.
           </p>
         )}
@@ -339,7 +339,7 @@ const CONTRACT_DETAIL_FIELDS: ReadonlyArray<{
 ];
 
 const CALCULATED_TIMELINE_FIELDS: ReadonlyArray<{
-  key: 'optionPeriodDays' | 'appraisalDeadlineDays' | 'financingDeadlineDays';
+  key: 'optionPeriodDays';
   deadlineId: string;
   label: string;
   rule: string;
@@ -349,18 +349,6 @@ const CALCULATED_TIMELINE_FIELDS: ReadonlyArray<{
     deadlineId: 'option-period-ends',
     label: 'Option / Inspection Period',
     rule: 'Negotiated period after the effective date; notice is due by 5:00 p.m. local property time on the final day.',
-  },
-  {
-    key: 'appraisalDeadlineDays',
-    deadlineId: 'appraisal-deadline',
-    label: 'Appraisal Contingency',
-    rule: 'Use the negotiated deadline in the applicable appraisal or financing addendum; TREC does not supply a default period.',
-  },
-  {
-    key: 'financingDeadlineDays',
-    deadlineId: 'financing-deadline',
-    label: 'Financing Contingency',
-    rule: 'Use the negotiated approval deadline in the Third Party Financing Addendum; TREC does not supply a default period.',
   },
 ];
 
@@ -1276,8 +1264,8 @@ export default function AgentDealDesk({
               </div>
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Download calendar files for the active deal or every active transaction. Each export includes calculated contract dates, closing dates, open reminders, and open tasks.</p>
               <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
-                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"><Download className="h-4 w-4" aria-hidden="true" />Export this deal</button>
-                <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="h-4 w-4" aria-hidden="true" />Export active deals</button>
+                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"><Download className="rnn-inline-icon" aria-hidden="true" />Export this deal</button>
+                <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Export active deals</button>
               </div>
             </div>
             <div className="order-3 h-full border border-slate-200 bg-white p-4 sm:p-6">
@@ -1286,8 +1274,8 @@ export default function AgentDealDesk({
                 <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline Alerts</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Choose how you are notified</h2></div>
               </div>
               <div className="mt-4 space-y-3">
-                <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Mail className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Send deadline alerts by email</label>
-                <div className="flex flex-wrap items-center gap-3"><label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.pushEnabled} onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Smartphone className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Send browser push alerts</label><PushOptInButton realtorId={realtorId} label="Connect this device" className="inline-flex min-h-[36px] items-center rounded-md border border-[#7059A8] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]" /></div>
+                <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Mail className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />Send deadline alerts by email</label>
+                <div className="flex flex-wrap items-center gap-3"><label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.pushEnabled} onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Smartphone className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />Send browser push alerts</label><PushOptInButton realtorId={realtorId} label="Connect this device" className="inline-flex min-h-[36px] items-center rounded-md border border-[#7059A8] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]" /></div>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-slate-100 pt-3 sm:flex sm:flex-wrap sm:gap-x-4">
                   {([[7, '7 days before'], [3, '3 days before'], [1, '1 day before'], [0, 'Due today']] as const).map(([offset, label]) => <label key={offset} className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600"><input type="checkbox" checked={notificationPreferences.reminderOffsets.includes(offset)} disabled={notificationPreferences.reminderOffsets.length === 1 && notificationPreferences.reminderOffsets[0] === offset} onChange={() => toggleReminderOffset(offset)} className="h-3.5 w-3.5 accent-[#301D5D]" />{label}</label>)}
                 </div>
@@ -1327,7 +1315,7 @@ export default function AgentDealDesk({
                     <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a transaction task" />
                     <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
                     <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-[44px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select>
-                    <button type="button" onClick={addTask} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Plus className="h-4 w-4" aria-hidden="true" />Add</button>
+                    <button type="button" onClick={addTask} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
                   </div>
                   <div className="mt-4 grid min-w-0 gap-2 border-y border-slate-100 py-4 sm:grid-cols-2">
                     <select value={reminderDeadlineId} onChange={(event) => setReminderDeadlineId(event.target.value)} aria-label="Reminder deadline" className="min-h-[42px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm"><option value="">Custom reminder deadline</option>{activeDeadlines.map((deadline) => <option key={deadline.id} value={deadline.id}>{deadline.label}</option>)}</select>
@@ -1379,7 +1367,7 @@ export default function AgentDealDesk({
         </div>
 
         <div className="mt-5 flex items-start gap-3 border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-3 text-sm leading-6 text-slate-600">
-          <Save className="mt-0.5 h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
+          <Save className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
           <p>
             <span className="font-semibold text-slate-900">{ready ? syncMessage : 'Loading your secure workspace.'}</span>{' '}
             Verify all dates against the signed contract and your broker&apos;s process.
@@ -1427,7 +1415,7 @@ export default function AgentDealDesk({
                     {extractionState === 'extracting' ? (
                       <LoaderCircle className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
                     ) : (
-                      <FileUp className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      <FileUp className="rnn-inline-icon" aria-hidden="true" />
                     )}
                     <span className="truncate">
                       {extractionState === 'extracting'
@@ -1464,7 +1452,7 @@ export default function AgentDealDesk({
                       }}
                       className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
                     >
-                      <FileUp className="h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
+                      <FileUp className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
                       Choose PDF or image
                     </button>
                     <button
@@ -1476,7 +1464,7 @@ export default function AgentDealDesk({
                       }}
                       className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
                     >
-                      <Camera className="h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
+                      <Camera className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
                       Take a photo
                     </button>
                     <p className="border-t border-slate-100 px-3 pt-2.5 text-xs leading-5 text-slate-500">
@@ -1521,7 +1509,7 @@ export default function AgentDealDesk({
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Deal Desktop
               </Link>
               <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
-                <Save className="h-4 w-4" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for later'}
+                <Save className="rnn-inline-icon" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for later'}
               </button>
               <button type="button" onClick={() => setWorkspacePage(2)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
                 Open worksheet <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -1572,7 +1560,7 @@ export default function AgentDealDesk({
                 disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length}
                 className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"
               >
-                <Download className="h-4 w-4" aria-hidden="true" />
+                <Download className="rnn-inline-icon" aria-hidden="true" />
                 Export this deal
               </button>
               <button
@@ -1581,7 +1569,7 @@ export default function AgentDealDesk({
                 disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)}
                 className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-45"
               >
-                <CalendarDays className="h-4 w-4" aria-hidden="true" />
+                <CalendarDays className="rnn-inline-icon" aria-hidden="true" />
                 Export active deals
               </button>
             </div>
@@ -1603,7 +1591,7 @@ export default function AgentDealDesk({
                   onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })}
                   className="h-4 w-4 accent-[#301D5D]"
                 />
-                <Mail className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />
+                <Mail className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
                 Send deadline alerts by email
               </label>
               <div className="flex flex-wrap items-center gap-3">
@@ -1614,7 +1602,7 @@ export default function AgentDealDesk({
                     onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })}
                     className="h-4 w-4 accent-[#301D5D]"
                   />
-                  <Smartphone className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />
+                  <Smartphone className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
                   Send browser push alerts
                 </label>
                 <PushOptInButton
@@ -1725,7 +1713,7 @@ export default function AgentDealDesk({
                         onClick={() => setPendingRemoval(activeDeal.id)}
                         className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#D8A79D] px-4 text-sm font-semibold text-[#9A3D2B] transition hover:bg-[#FFF0EC]"
                       >
-                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        <Trash2 className="rnn-inline-icon" aria-hidden="true" />
                         Remove
                       </button>
                     )
@@ -1736,7 +1724,7 @@ export default function AgentDealDesk({
 
             {!activeDeal ? (
               <div className="mt-7 flex min-h-[260px] flex-col items-center justify-center border border-dashed border-slate-300 bg-[#FCFBF9] px-6 text-center">
-                <ClipboardCheck className="h-8 w-8 text-[#7059A8]" aria-hidden="true" />
+                <ClipboardCheck className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                 <h4 className="mt-4 text-lg font-semibold text-slate-950">Build your first Deal Desktop</h4>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">Create a private workspace to turn the contract terms in front of you into a workable list of actions.</p>
                 <button type="button" onClick={createDeal} className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">
@@ -1847,7 +1835,7 @@ export default function AgentDealDesk({
                       <p className="mt-1 text-sm text-slate-600">Set the contract dates and timeframes used by Date Radar, Calendar Exports, and Deadline Alerts.</p>
                     </div>
                   </div>
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="flex h-full min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4 sm:min-h-[210px]">
                       <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
                       <p className="mt-1 text-xs leading-5 text-slate-500">TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies.</p>
@@ -1915,7 +1903,7 @@ export default function AgentDealDesk({
                           disabled={extractionState === 'extracting'}
                           className="inline-flex min-h-[42px] shrink-0 items-center justify-center gap-2 rounded-md border border-[#301D5D] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:opacity-60"
                         >
-                          {extractionState === 'extracting' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileUp className="h-4 w-4" aria-hidden="true" />}
+                          {extractionState === 'extracting' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileUp className="rnn-inline-icon" aria-hidden="true" />}
                           {extractionState === 'extracting' ? 'Reading form…' : 'Upload & Auto-fill Contract'}
                         </button>
                         <input
@@ -1934,7 +1922,7 @@ export default function AgentDealDesk({
                       </div>
                     </div>
                     <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600">
-                      <Save className="h-4 w-4 shrink-0 text-[#7059A8]" aria-hidden="true" />
+                      <Save className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
                       Progress is saved in your private cloud workspace.
                     </p>
                   </div>
@@ -2019,7 +2007,7 @@ export default function AgentDealDesk({
                 <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a transaction task" />
                 <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
                 <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-[44px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select>
-                <button type="button" onClick={addTask} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Plus className="h-4 w-4" aria-hidden="true" />Add</button>
+                <button type="button" onClick={addTask} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
               </div>
               <div className="mt-4 grid min-w-0 gap-2 border-y border-slate-100 py-4 sm:grid-cols-2">
                 <select value={reminderDeadlineId} onChange={(event) => setReminderDeadlineId(event.target.value)} aria-label="Reminder deadline" className="min-h-[42px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm"><option value="">Custom reminder deadline</option>{activeDeadlines.map((deadline) => <option key={deadline.id} value={deadline.id}>{deadline.label}</option>)}</select>
@@ -2115,7 +2103,7 @@ export default function AgentDealDesk({
                   disabled={Boolean(cameraError)}
                   className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"
                 >
-                  <Camera className="h-4 w-4" aria-hidden="true" />
+                  <Camera className="rnn-inline-icon" aria-hidden="true" />
                   Take picture
                 </button>
               </div>

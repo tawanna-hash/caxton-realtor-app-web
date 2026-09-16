@@ -177,7 +177,7 @@ export default function AgentCommandCenterClient({
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:gap-10 sm:px-8 sm:py-12 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:py-16">
           <div>
             <p className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              <Sparkles className="rnn-inline-icon" aria-hidden="true" />
               Agent Command Center
             </p>
             <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.045em] text-white sm:text-5xl lg:text-6xl">
@@ -244,7 +244,7 @@ export default function AgentCommandCenterClient({
               onClick={() => setQuickCheckOpen((open) => !open)}
               className="mt-4 inline-flex h-[44px] w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] sm:mt-0 sm:w-auto"
             >
-              <Calculator className="h-4 w-4" aria-hidden="true" />
+              <Calculator className="rnn-inline-icon" aria-hidden="true" />
               {quickCheckOpen ? 'Hide quick check' : 'Open quick date check'}
             </button>
           </div>
@@ -265,7 +265,7 @@ export default function AgentCommandCenterClient({
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Additional earnest days <span className="font-normal text-slate-500">(optional)</span></span>
                     <input type="number" min="1" inputMode="numeric" value={additionalEarnestMoneyDays} onChange={(event) => setAdditionalEarnestMoneyDays(event.target.value)} className="h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" placeholder="Example: 7" />
                   </label>
-                  {effectiveDate && <button type="button" onClick={resetPlanner} className="inline-flex h-[38px] items-center gap-2 rounded-md border border-slate-400 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-slate-950"><RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />Clear</button>}
+                  {effectiveDate && <button type="button" onClick={resetPlanner} className="inline-flex h-[38px] items-center gap-2 rounded-md border border-slate-400 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-slate-950"><RotateCcw className="rnn-inline-icon" aria-hidden="true" />Clear</button>}
                 </div>
               </div>
               <div className="p-4 sm:p-6">
@@ -419,7 +419,7 @@ export default function AgentCommandCenterClient({
               )}
 
               <p className="mt-6 flex gap-2 border-t border-slate-200 pt-5 text-xs leading-5 text-slate-500">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#5B438C]" aria-hidden="true" />
+                <ShieldCheck className="rnn-inline-icon text-[#5B438C]" aria-hidden="true" />
                 Partner listings are featured or paid placements where applicable, not an endorsement. Independently verify fit, availability, insurance, licensing, and terms before referring a client.
               </p>
             </div>
