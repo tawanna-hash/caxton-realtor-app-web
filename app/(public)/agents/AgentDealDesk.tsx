@@ -1057,9 +1057,9 @@ export default function AgentDealDesk({
               }}
               className={extractionState === 'extracting' ? 'pointer-events-none opacity-70' : ''}
             >
-              <div className="relative sm:w-[176px]">
+              <div className="relative w-full sm:w-[228px]">
                 <div
-                  className={`flex min-h-[42px] overflow-hidden rounded-md border text-sm font-bold transition ${
+                  className={`flex h-[42px] overflow-hidden rounded-md border text-sm font-bold transition ${
                     isContractDropActive
                       ? 'border-violet-600 bg-violet-100 text-violet-950'
                       : 'border-[#7059A8] bg-white text-[#301D5D]'
