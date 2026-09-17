@@ -114,6 +114,61 @@ function StatusCell({ status }: { status: RecurringScheduleStatus }) {
   return <span className="whitespace-nowrap text-gray-500">Ended</span>;
 }
 
+function RecurringPaymentCard({
+  schedule,
+  onEdit,
+  onPause,
+  onDelete,
+}: {
+  schedule: RecurringScheduleWithAdvertiser;
+  onEdit: () => void;
+  onPause: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="space-y-2.5 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium text-gray-900" title={schedule.name}>{schedule.name}</div>
+          <div className="truncate text-xs text-gray-600">
+            {schedule.advertiser_name ?? schedule.bill_to_name ?? `Partner ${schedule.advertiser_id}`}
+          </div>
+        </div>
+        <div className="whitespace-nowrap text-right text-sm font-semibold text-gray-900">{formatCents(scheduleAmount(schedule))}</div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <div className="text-gray-400">Interval</div>
+          <div className="text-gray-700">
+            {schedule.interval_count > 1
+              ? `Every ${schedule.interval_count} ${frequencyLabel(schedule.frequency).toLowerCase()}`
+              : frequencyLabel(schedule.frequency)}
+          </div>
+        </div>
+        <div>
+          <div className="text-gray-400">Next charge</div>
+          <div className="text-gray-700">{formatDate(schedule.next_run_at)}</div>
+        </div>
+        <div>
+          <div className="text-gray-400">Delivery</div>
+          <div className="text-gray-700">{schedule.auto_send ? 'Auto-send' : 'Manual'}</div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between border-t border-gray-100 pt-2.5 text-xs">
+        <StatusCell status={schedule.status} />
+        <div className="flex items-center gap-4">
+          <button type="button" className="font-medium text-orange-700 hover:underline" onClick={onEdit}>View/Edit</button>
+          {schedule.status === 'active' ? (
+            <button type="button" className="font-medium text-orange-700 hover:underline" onClick={onPause}>Pause</button>
+          ) : (
+            <button type="button" className="font-medium text-rose-700 hover:underline" onClick={onDelete}>Permanent delete</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function RecurringPaymentsClient({
   initialSchedules,
   advertisers,
@@ -338,7 +393,18 @@ export function RecurringPaymentsClient({
       </section>
 
       <section className="rounded border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-gray-200 md:hidden">
+          {pageRows.map((schedule) => (
+            <RecurringPaymentCard
+              key={schedule.id}
+              schedule={schedule}
+              onEdit={() => setEditingId(schedule.id)}
+              onPause={() => void pauseSchedule(schedule)}
+              onDelete={() => void permanentlyDelete(schedule)}
+            />
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[1120px] table-fixed text-left text-xs">
             <thead className="border-b border-gray-300 bg-white text-gray-700">
               <tr>

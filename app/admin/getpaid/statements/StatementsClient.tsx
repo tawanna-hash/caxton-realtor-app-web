@@ -76,6 +76,62 @@ function SummaryMetric({
   );
 }
 
+function StatementCard({
+  partner,
+  onOpenHistory,
+  onSent,
+}: {
+  partner: StatementPartnerRow;
+  onOpenHistory: () => void;
+  onSent: (sentAt: string) => void;
+}) {
+  return (
+    <div className="space-y-2.5 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium text-gray-900">{partner.advertiser_name}</div>
+          <div className="truncate text-xs text-gray-600">{partner.recipient_email ?? '— no email on file'}</div>
+        </div>
+        <div className="whitespace-nowrap text-right text-sm font-semibold text-gray-900">{formatCents(partner.outstanding_cents)}</div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <div className="text-gray-400">Invoices</div>
+          <div className="text-gray-700">{Number(partner.open_invoice_count).toLocaleString()}</div>
+        </div>
+        <div>
+          <div className="text-gray-400">Overdue</div>
+          <div className="font-medium text-orange-700">{partner.overdue_cents ? formatCents(partner.overdue_cents) : '—'}</div>
+        </div>
+        <div>
+          <div className="text-gray-400">Last sent</div>
+          <div className="text-gray-600">
+            {partner.last_sent_at ? (
+              <>
+                {new Date(partner.last_sent_at).toLocaleDateString('en-US')}
+                <span className="ml-1 text-[11px] text-gray-400">({Number(partner.send_count)}x)</span>
+              </>
+            ) : '—'}
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
+        <Link href={`/admin/getpaid/statements/${partner.advertiser_id}`} className="font-medium text-orange-700 hover:underline">
+          View
+        </Link>
+        <StatementEmailButton
+          advertiserId={partner.advertiser_id}
+          advertiserName={partner.advertiser_name}
+          recipient={partner.recipient_email ?? ''}
+          compact
+          onSent={({ sentAt }) => onSent(sentAt)}
+        />
+        <button type="button" className="font-medium text-gray-700 hover:underline" onClick={onOpenHistory}>History</button>
+      </div>
+    </div>
+  );
+}
+
 export default function StatementsClient({ partners }: { partners: StatementPartnerRow[] }) {
   const [rows, setRows] = useState(partners);
   const [query, setQuery] = useState('');
@@ -210,7 +266,21 @@ export default function StatementsClient({ partners }: { partners: StatementPart
       </section>
 
       <section className="rounded border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-gray-200 md:hidden">
+          {filtered.map((partner) => (
+            <StatementCard
+              key={partner.advertiser_id}
+              partner={partner}
+              onOpenHistory={() => void openHistory(partner)}
+              onSent={(sentAt) => setRows((current) => current.map((row) =>
+                row.advertiser_id === partner.advertiser_id
+                  ? { ...row, last_sent_at: sentAt, send_count: Number(row.send_count) + 1 }
+                  : row,
+              ))}
+            />
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[940px] table-fixed text-left text-xs">
             <thead className="border-b border-gray-300 bg-white text-gray-700">
               <tr>

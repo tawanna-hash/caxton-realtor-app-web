@@ -242,7 +242,34 @@ export default async function StatementPage({
           )}
         </div>
         {sendHistory.length > 0 && (
-          <div className="max-h-72 overflow-auto">
+          <div className="max-h-72 divide-y divide-gray-100 overflow-auto md:hidden">
+            {sendHistory.map((event) => (
+              <div key={event.id} className="space-y-1.5 px-4 py-3 text-xs">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="text-gray-700">
+                    {new Date(event.sent_at).toLocaleString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      timeZone: 'America/Chicago',
+                    })}
+                    {event.sent_by && <div className="text-[11px] text-gray-400">by {event.sent_by}</div>}
+                  </div>
+                  <div className="whitespace-nowrap text-right font-medium text-gray-900">{money(event.outstanding_cents)}</div>
+                </div>
+                <div className="text-gray-700" title={event.subject}>{event.recipient_email}</div>
+                <div className="flex items-center justify-between text-gray-500">
+                  <span>{event.sender_email}</span>
+                  <span>{event.invoice_count} {event.invoice_count === 1 ? 'invoice' : 'invoices'}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {sendHistory.length > 0 && (
+          <div className="hidden max-h-72 overflow-auto md:block">
             <table className="w-full text-left text-xs">
               <thead className="sticky top-0 bg-gray-50 text-gray-600">
                 <tr>
@@ -348,8 +375,8 @@ export default async function StatementPage({
           </section>
         )}
 
-        <section>
-          <div className="grid grid-cols-[110px_100px_100px_85px_85px_90px] bg-neutral-900 px-3 py-2 font-semibold text-white">
+        <section className="overflow-x-auto print:overflow-visible">
+          <div className="grid min-w-[570px] grid-cols-[110px_100px_100px_85px_85px_90px] bg-neutral-900 px-3 py-2 font-semibold text-white print:min-w-0">
             <div>Invoice #</div>
             <div>Invoice date</div>
             <div>Due date</div>
@@ -360,7 +387,7 @@ export default async function StatementPage({
           {invoices.map((invoice) => (
             <div
               key={invoice.id}
-              className="grid grid-cols-[110px_100px_100px_85px_85px_90px] border-b border-neutral-200 px-3 py-3"
+              className="grid min-w-[570px] grid-cols-[110px_100px_100px_85px_85px_90px] border-b border-neutral-200 px-3 py-3 print:min-w-0"
             >
               <div>
                 {isSafeHttpUrl(invoice.stripe_payment_link_url) ? (

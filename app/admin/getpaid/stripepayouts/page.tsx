@@ -83,6 +83,34 @@ async function loadStripePayouts(createdGte?: number): Promise<PayoutRow[]> {
   return rows;
 }
 
+function PayoutCard({ row }: { row: PayoutRow }) {
+  return (
+    <div className="space-y-2 px-4 py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="font-medium text-gray-900">{row.batch_date}</div>
+        <div className="text-right font-semibold text-gray-900">{formatCents(Number(row.amount_cents))}</div>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <div className="text-gray-400">Fees</div>
+          <div className="text-gray-700">{formatCents(row.fees_cents)}</div>
+        </div>
+        <div>
+          <div className="text-gray-400">Transactions</div>
+          <div className="text-gray-700">{Number(row.transactions).toLocaleString()}</div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <span className="inline-flex items-center gap-1.5 text-gray-700">
+          {row.status === 'paid' && <CheckCircle2 className="h-4 w-4 fill-emerald-600 text-white" aria-hidden="true" />}
+          {row.status.replaceAll('_', ' ')}
+        </span>
+        <span className="truncate font-mono text-gray-500" title={row.id}>{row.id}</span>
+      </div>
+    </div>
+  );
+}
+
 function isInRange(date: string, range: string) {
   if (range === 'all') return true;
   const days = range === '30-days' ? 30 : range === '90-days' ? 90 : 365;
@@ -208,7 +236,10 @@ export default async function StripePayoutsPage({ searchParams }: PageProps) {
       </form>
 
       <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-gray-200 md:hidden">
+          {pageRows.map((row) => <PayoutCard key={row.id} row={row} />)}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[920px] table-fixed text-left text-xs">
             <thead className="border-b border-gray-300 bg-white text-gray-700">
               <tr>
