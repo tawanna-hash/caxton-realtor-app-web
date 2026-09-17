@@ -117,6 +117,11 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
     label: 'Seller Documentation',
     items: [
       {
+        id: 'seller-listing-agreement',
+        label: 'Listing Agreement',
+        description: 'Formal contract between the seller and the listing brokerage.',
+      },
+      {
         id: 'executed-contract',
         label: 'TREC One to Four Family Residential Contract',
         description: 'The standard promulgated purchase agreement.',
@@ -169,15 +174,51 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
       },
     ],
   },
+  {
+    id: 'valuation-audit',
+    label: 'Valuation, Sponsorship & Audit',
+    items: [
+      {
+        id: 'valuation-cma-appraisal-bpo',
+        label: 'CMA, Appraisal, or BPO',
+        description: 'Comparative market analysis, lender appraisal, or broker price opinion supporting valuation.',
+      },
+      {
+        id: 'agent-sponsorship-agreement',
+        label: 'Agent Sponsorship Agreement',
+        description: 'Sponsoring broker agreement covering the agent for this transaction.',
+      },
+      {
+        id: 'financial-receipts-disbursements-log',
+        label: 'Financial Receipts & Disbursements Log',
+        description: 'Trust account receipts and disbursements tied to this transaction.',
+      },
+      {
+        id: 'substantive-communications-log',
+        label: 'Substantive Communications Log',
+        description: 'Emails and texts material to offers, negotiations, or disclosures for this transaction.',
+      },
+    ],
+  },
 ] as const;
 
 const DOCUMENT_TEMPLATES = DOCUMENT_GROUPS.flatMap((group) => group.items);
 const DOCUMENT_TEMPLATE_IDS = new Set<string>(DOCUMENT_TEMPLATES.map((item) => item.id));
+// 2026-09-16: added Valuation, Sponsorship & Audit checklist group. Deals created before this
+// cutover never gained those items as incomplete requirements -- see mergeReadinessDocuments.
+const VALUATION_AUDIT_GROUP_CUTOVER_AT = '2026-09-16T00:00:00.000Z';
+const VALUATION_AUDIT_ITEM_IDS = new Set<string>(
+  DOCUMENT_GROUPS.find((group) => group.id === 'valuation-audit')?.items.map((item) => item.id) ?? [],
+);
 
 function mergeReadinessDocuments(deal: AgentDeal): AgentDeal {
   const existingDocuments = new Map(deal.documents.map((document) => [document.id, document]));
   const requestedAt = deal.createdAt || new Date().toISOString();
-  const readinessDocuments: AgentDocument[] = DOCUMENT_TEMPLATES.map((template) => {
+  const isLegacyDeal = Boolean(deal.createdAt) && deal.createdAt < VALUATION_AUDIT_GROUP_CUTOVER_AT;
+  const templates = isLegacyDeal
+    ? DOCUMENT_TEMPLATES.filter((template) => !VALUATION_AUDIT_ITEM_IDS.has(template.id))
+    : DOCUMENT_TEMPLATES;
+  const readinessDocuments: AgentDocument[] = templates.map((template) => {
     const existing = existingDocuments.get(template.id);
     return existing
       ? { ...existing, label: template.label }
@@ -429,6 +470,7 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     closeoutOutcome: '',
     closeoutDate: '',
     closeoutNote: '',
+    auditLocked: false,
     contractDetails: defaultAgentContractDetails(),
     formFields: {},
     addenda: {},
@@ -568,6 +610,208 @@ function downloadBackupRecord(deal: AgentDeal): void {
   link.download = `${safeName}-backup-record-${deal.closeoutDate || 'undated'}.json`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+const TREC_RETENTION_NOTICE = 'Under TREC Rules 535.2(h) and 535.146, a broker must keep transaction records and trust account logs for four years from the date of closing, contract termination, or the date of a deposit/withdrawal.';
+const TREC_RETENTION_URL = 'https://www.trec.texas.gov/how-long-does-license-holder-have-keep-financial-and-real-estate-transactions-file';
+
+async function downloadAuditPdf(deal: AgentDeal, selectedVersions: TrecFormVersion[]): Promise<void> {
+  const { jsPDF } = await import('jspdf');
+  const autoTableModule = await import('jspdf-autotable');
+  const autoTable = autoTableModule.default;
+
+  const NAVY: [number, number, number] = [48, 29, 93];
+  const GOLD: [number, number, number] = [196, 163, 90];
+  const GREY_900: [number, number, number] = [17, 24, 39];
+  const GREY_700: [number, number, number] = [55, 65, 81];
+  const GREY_500: [number, number, number] = [107, 114, 128];
+
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 48;
+  let y = margin;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY_500);
+  doc.text('REALTYLINE AUSTIN  ·  TRANSACTION AUDIT RECORD', margin, y);
+  y += 26;
+
+  doc.setFont('times', 'normal');
+  doc.setFontSize(22);
+  doc.setTextColor(...GREY_900);
+  const title = deal.propertyAddress || deal.title || 'Transaction';
+  doc.text(title, margin, y);
+  y += 14;
+
+  doc.setDrawColor(...GOLD);
+  doc.setLineWidth(2);
+  doc.line(margin, y, margin + 60, y);
+  y += 20;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(...GREY_700);
+  doc.text(`Generated ${new Date().toLocaleString('en-US')}`, margin, y);
+  y += 22;
+
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: 'grid',
+    styles: { fontSize: 9, textColor: GREY_900 },
+    headStyles: { fillColor: NAVY, textColor: [255, 255, 255] },
+    head: [['Deal Details', '']],
+    body: [
+      ['Buyer(s)', deal.buyerNames || 'Not entered'],
+      ['Seller(s)', deal.sellerNames || 'Not entered'],
+      ['Property Address', deal.propertyAddress || 'Not entered'],
+      ['Effective Date', deal.effectiveDate || 'Not set'],
+      ['Closing Date', deal.closingDate || 'Not set'],
+      ['Closeout Outcome', deal.closeoutOutcome || 'Not set'],
+      ['Closeout Date', deal.closeoutDate || 'Not set'],
+      ['Closeout Note', deal.closeoutNote || 'Not set'],
+    ],
+  });
+  y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24;
+
+  const contractRows: [string, string][] = [
+    ['County', deal.contractDetails.county || 'Not entered'],
+    ['Legal Description', deal.contractDetails.legalDescription || 'Not entered'],
+    ['Improvements & Accessories', deal.contractDetails.improvementsAndAccessories || 'Not entered'],
+    ['Exclusions', deal.contractDetails.exclusions || 'Not entered'],
+    ['Sales Price', deal.contractDetails.salesPrice || 'Not entered'],
+    ['Cash Portion', deal.contractDetails.cashPortion || 'Not entered'],
+    ['Loan Amount', deal.contractDetails.loanAmount || 'Not entered'],
+    ['Financing Type', deal.contractDetails.financingType || 'Not entered'],
+    ['Financing Notes', deal.contractDetails.financingNotes || 'Not entered'],
+    ['Earnest Money', deal.contractDetails.earnestMoney || 'Not entered'],
+    ['Option Fee', deal.contractDetails.optionFee || 'Not entered'],
+    ['Additional Earnest Money', deal.contractDetails.additionalEarnestMoney || 'Not entered'],
+    ['Title Company', deal.contractDetails.titleCompany || 'Not entered'],
+    ['Title Policy Payer', deal.contractDetails.titlePolicyPayer || 'Not entered'],
+    ['Survey Plan', deal.contractDetails.surveyPlan || 'Not entered'],
+    ['Title & Survey Notes', deal.contractDetails.titleAndSurveyNotes || 'Not entered'],
+    ['Condition & Repair Notes', deal.contractDetails.conditionAndRepairNotes || 'Not entered'],
+    ['Possession Plan', deal.contractDetails.possessionPlan || 'Not entered'],
+    ['Special Provisions Notes', deal.contractDetails.specialProvisionsNotes || 'Not entered'],
+    ['Settlement Notes', deal.contractDetails.settlementNotes || 'Not entered'],
+    ['Notices', deal.contractDetails.notices || 'Not entered'],
+  ];
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    theme: 'grid',
+    styles: { fontSize: 9, textColor: GREY_900 },
+    headStyles: { fillColor: NAVY, textColor: [255, 255, 255] },
+    columnStyles: { 0: { cellWidth: 150 } },
+    head: [['Contract Details & Notes', '']],
+    body: contractRows,
+  });
+  y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24;
+
+  if (selectedVersions.length > 0) {
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      theme: 'grid',
+      styles: { fontSize: 9, textColor: GREY_900 },
+      headStyles: { fillColor: NAVY, textColor: [255, 255, 255] },
+      head: [['Attached TREC Forms & Addenda', 'Title']],
+      body: selectedVersions.map((version) => [version.formNumber, version.title]),
+    });
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24;
+
+    for (const version of selectedVersions) {
+      const rows = version.fields.map((field) => [field.label, deal.formFields[field.id] || '—']);
+      if (rows.length === 0) continue;
+      if (y > 620) {
+        doc.addPage();
+        y = margin;
+      }
+      autoTable(doc, {
+        startY: y,
+        margin: { left: margin, right: margin },
+        theme: 'grid',
+        styles: { fontSize: 8, textColor: GREY_900 },
+        headStyles: { fillColor: NAVY, textColor: [255, 255, 255] },
+        columnStyles: { 0: { cellWidth: 220 } },
+        head: [[`${version.formNumber} — Filled Field Values`, '']],
+        body: rows,
+      });
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24;
+    }
+  }
+
+  if (deal.tasks.length > 0) {
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      theme: 'grid',
+      styles: { fontSize: 9, textColor: GREY_900 },
+      headStyles: { fillColor: NAVY, textColor: [255, 255, 255] },
+      head: [['Task', 'Priority', 'Due', 'Status']],
+      body: deal.tasks.map((task) => [task.title, task.priority, task.dueDate || '—', task.status]),
+    });
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24;
+  }
+
+  if (deal.reminders.length > 0) {
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      theme: 'grid',
+      styles: { fontSize: 9, textColor: GREY_900 },
+      headStyles: { fillColor: NAVY, textColor: [255, 255, 255] },
+      head: [['Reminder', 'Date', 'Complete']],
+      body: deal.reminders.map((reminder) => [reminder.label, reminder.reminderDate || '—', reminder.complete ? 'Yes' : 'No']),
+    });
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24;
+  }
+
+  if (deal.documents.length > 0) {
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      theme: 'grid',
+      styles: { fontSize: 9, textColor: GREY_900 },
+      headStyles: { fillColor: NAVY, textColor: [255, 255, 255] },
+      head: [['Document', 'Status']],
+      body: deal.documents.map((document) => [document.label, document.status]),
+    });
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24;
+  }
+
+  if (deal.activity.length > 0) {
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      theme: 'grid',
+      styles: { fontSize: 8.5, textColor: GREY_900 },
+      headStyles: { fillColor: NAVY, textColor: [255, 255, 255] },
+      head: [['Timestamp', 'Activity']],
+      body: [...deal.activity].reverse().map((item) => [formatTimestamp(item.createdAt), item.message]),
+    });
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24;
+  }
+
+  const pageCount = doc.getNumberOfPages();
+  for (let page = 1; page <= pageCount; page += 1) {
+    doc.setPage(page);
+    const pageHeight = doc.internal.pageSize.getHeight();
+    doc.setDrawColor(...GOLD);
+    doc.setLineWidth(0.75);
+    doc.line(margin, pageHeight - 56, pageWidth - margin, pageHeight - 56);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...GREY_500);
+    const noticeLines = doc.splitTextToSize(`${TREC_RETENTION_NOTICE} Source: ${TREC_RETENTION_URL}`, pageWidth - margin * 2);
+    doc.text(noticeLines, margin, pageHeight - 42);
+    doc.text(`Page ${page} of ${pageCount}`, pageWidth - margin, pageHeight - 20, { align: 'right' });
+  }
+
+  const safeName = (deal.propertyAddress || deal.title || 'transaction').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'transaction';
+  doc.save(`${safeName}-audit-record-${deal.closeoutDate || 'undated'}.pdf`);
 }
 
 function calendarEventsForDeal(deal: AgentDeal): CalendarEvent[] {
@@ -893,10 +1137,11 @@ export default function AgentDealDesk({
     deal.tasks.every((task) => task.complete) &&
     deal.reminders.every((reminder) => reminder.complete) &&
     deal.documents.every((document) => document.complete);
-  const isDealClosedAndComplete = (deal: AgentDeal) => Boolean(deal.closeoutOutcome) && isDealFullyComplete(deal);
+  const isDealClosedAndComplete = (deal: AgentDeal) => deal.auditLocked || (Boolean(deal.closeoutOutcome) && isDealFullyComplete(deal));
   const activeDeals = deals.filter((deal) => !isDealClosedAndComplete(deal));
   const closedDeals = deals.filter((deal) => isDealClosedAndComplete(deal));
-  const isDealLocked = (deal: AgentDeal) => Boolean(deal.closeoutOutcome && deal.closeoutDate) && isDealFullyComplete(deal);
+  const isDealLocked = (deal: AgentDeal) =>
+    deal.auditLocked || (Boolean(deal.closeoutOutcome && deal.closeoutDate) && isDealFullyComplete(deal));
   const activePacketForms = trecFormVersions.filter((version) => version.isActive);
   const selectedFormVersions = activeDeal
     ? activePacketForms.filter((version) => activeDeal.selectedFormFamilies[version.formFamily])
@@ -1269,6 +1514,18 @@ export default function AgentDealDesk({
   const exportBackupRecord = (deal: AgentDeal) => {
     downloadBackupRecord(deal);
     trackEvent('agent_deal_desk_backup_record_exported');
+  };
+
+  const exportAuditPdf = (deal: AgentDeal) => {
+    const dealFormVersions = activePacketForms.filter((version) => deal.selectedFormFamilies[version.formFamily]);
+    void downloadAuditPdf(deal, dealFormVersions);
+    trackEvent('agent_deal_desk_audit_pdf_exported');
+  };
+
+  const lockDealRecord = () => {
+    if (!activeDeal || isDealLocked(activeDeal)) return;
+    applyActiveAction('Locked transaction record for TREC audit retention', { auditLocked: true });
+    trackEvent('agent_deal_desk_record_locked');
   };
 
   const saveProgress = () => {
@@ -2267,6 +2524,15 @@ export default function AgentDealDesk({
                     <h4 className="mt-0.5 text-lg font-semibold text-slate-950">{statusDeal.propertyAddress || statusDeal.title}</h4>
                   </div>
                   <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => exportAuditPdf(statusDeal)}
+                      title="Download PDF"
+                      aria-label="Download PDF"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#7059A8] text-[#301D5D] hover:bg-[#F8F5FF]"
+                    >
+                      <Download className="h-4 w-4" aria-hidden="true" />
+                    </button>
                     {isDealLocked(statusDeal) && (
                       <button
                         type="button"
@@ -2402,15 +2668,25 @@ export default function AgentDealDesk({
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button>
+                <button type="button" onClick={() => exportAuditPdf(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download PDF</button>
                 {isDealLocked(activeDeal) && (
                   <button type="button" onClick={() => exportBackupRecord(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Download className="h-4 w-4" aria-hidden="true" />Download backup record</button>
                 )}
+                {!isDealLocked(activeDeal) && (
+                  <button type="button" onClick={lockDealRecord} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#9A3D2B] px-4 text-sm font-bold text-white"><Lock className="h-4 w-4" aria-hidden="true" />Lock record</button>
+                )}
               </div>
             </div>
+            <p className="mt-3 text-xs text-slate-500">
+              Under <a href="https://www.trec.texas.gov/how-long-does-license-holder-have-keep-financial-and-real-estate-transactions-file" target="_blank" rel="noreferrer" className="font-semibold text-[#301D5D] underline">TREC Rules 535.2(h) and 535.146</a>, a broker must keep transaction records and trust account logs for four years from the date of closing, contract termination, or the date of a deposit/withdrawal.
+            </p>
             {isDealLocked(activeDeal) && (
               <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#5B438C]">
                 <Lock className="h-3.5 w-3.5" aria-hidden="true" />
-                Closed on {formatDate(activeDeal.closeoutDate)}. Per TREC Rules 535.2(h) and 535.146, this record is locked and retained for at least four years from the closing date — tasks and this transaction can no longer be removed.
+                {activeDeal.auditLocked && !(Boolean(activeDeal.closeoutOutcome && activeDeal.closeoutDate) && isDealFullyComplete(activeDeal))
+                  ? 'Manually locked for audit retention.'
+                  : `Closed on ${formatDate(activeDeal.closeoutDate)}.`}
+                {' '}This record is locked and retained for at least four years — tasks and this transaction can no longer be removed.
               </p>
             )}
             {Boolean(activeDeal.closeoutOutcome) && !isDealFullyComplete(activeDeal) && (

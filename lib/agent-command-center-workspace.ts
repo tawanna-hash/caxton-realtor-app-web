@@ -124,6 +124,7 @@ export const agentDealSchema = z.object({
   worksheetStep: z.number().int().min(0).max(TREC_WORKFLOW_STAGES.length - 1).default(0),
   trecFormVersionId: optionalShortText(120).default('built-in-trec-20-19'),
   closeoutOutcome: optionalShortText(120), closeoutDate: dateText.default(''), closeoutNote: optionalShortText(2_000),
+  auditLocked: z.boolean().default(false),
   contractDetails: agentContractDetailsSchema,
   formFields: agentTrecFormFieldsSchema,
   addenda: z.record(z.string(), z.boolean()).default({}),
