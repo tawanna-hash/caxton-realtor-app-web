@@ -9,7 +9,8 @@
 // Returns: { url } for hosted, { client_secret } for embedded.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSql, ensureSchema } from '@/lib/db';
+import { ensureSchema } from '@/lib/db';
+import { withNeonTransaction } from '@/lib/server/db/neon';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import {
   isInvoicePaymentMethod,
@@ -19,6 +20,14 @@ import {
 } from '@/lib/payment-processing-fees';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import {
+  InvoiceLifecycleError,
+  invalidateInvoiceCheckoutSessions,
+  lockInvoiceRemainingBalance,
+  markCheckoutSessionFailed,
+  markCheckoutSessionOpen,
+  registerInvoiceCheckoutSession,
+} from '@/lib/server/invoice-lifecycle';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -56,33 +65,45 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     ? body.payment_method
     : 'card';
 
+  let registryId: string | null = null;
+
   try {
     await ensureSchema();
-    const sql = getSql();
-    const rows = (await sql`
-      SELECT id, advertiser_id, number, status, total_cents,
-             bill_to_name, bill_to_email, stripe_customer_id, memo
-      FROM invoices WHERE id = ${id}
-    `) as unknown as InvoiceRow[];
-    if (rows.length === 0) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
-    const inv = rows[0];
 
-    if (portalUser && inv.advertiser_id !== portalUser.advertiser_id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
-    if (inv.status === 'paid') {
-      return NextResponse.json({ error: 'This invoice is already paid.' }, { status: 400 });
-    }
-    if (inv.status === 'void') {
-      return NextResponse.json({ error: 'This invoice has been voided.' }, { status: 400 });
-    }
-    if (!inv.total_cents || inv.total_cents <= 0) {
-      return NextResponse.json({ error: 'Invoice has no amount due.' }, { status: 400 });
-    }
+    // Lock the invoice, compute the REMAINING balance (not total_cents —
+    // finding API-#1), expire any prior live session for this invoice, and
+    // register the new one — all inside one transaction and before we ever
+    // call Stripe. A concurrent request blocks on the row lock instead of
+    // creating a second live, untracked session (finding API-#2).
+    const { inv, chargeAmountCents } = await withNeonTransaction(async (client) => {
+      const invoiceResult = await client.query<InvoiceRow>(
+        `SELECT id, advertiser_id, number, status, total_cents,
+                bill_to_name, bill_to_email, stripe_customer_id, memo
+           FROM invoices WHERE id = $1`,
+        [id],
+      );
+      const invoiceRow = invoiceResult.rows[0];
+      if (!invoiceRow) throw new InvoiceLifecycleError('Invoice not found', 404);
+      if (portalUser && invoiceRow.advertiser_id !== portalUser.advertiser_id) {
+        // Same 404 as "not found" — never confirm existence of another
+        // advertiser's invoice to an unauthorized portal session.
+        throw new InvoiceLifecycleError('Invoice not found', 404);
+      }
+
+      const { remainingCents } = await lockInvoiceRemainingBalance(client, id);
+      await invalidateInvoiceCheckoutSessions(client, id);
+      const registered = await registerInvoiceCheckoutSession(client, {
+        invoiceId: id,
+        baseAmountCents: remainingCents,
+        createdBy: admin?.email ?? (portalUser ? 'portal' : null),
+      });
+      registryId = registered.id;
+      return { inv: { ...invoiceRow, total_cents: remainingCents }, chargeAmountCents: remainingCents };
+    });
 
     const stripe = getStripe();
-    const feeCents = processingFeeCents(inv.total_cents, paymentMethod);
-    const chargeCents = inv.total_cents + feeCents;
+    const feeCents = processingFeeCents(chargeAmountCents, paymentMethod);
+    const chargeCents = chargeAmountCents + feeCents;
     const successUrl = `${APP_BASE_URL}/portal/invoices/${inv.id}?paid=1`;
     const cancelUrl = `${APP_BASE_URL}/portal/invoices/${inv.id}?canceled=1`;
     const stripePaymentMethodTypes = paymentMethod === 'ach'
@@ -100,7 +121,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         {
           price_data: {
             currency: 'usd',
-            unit_amount: inv.total_cents,
+            unit_amount: chargeAmountCents,
             product_data: {
               name: `Invoice ${inv.number}`,
               description: inv.memo ?? 'RealtyLine advertising invoice',
@@ -125,7 +146,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         invoice_id: inv.id,
         invoice_number: inv.number,
         payment_method_selection: paymentMethod,
-        base_amount_cents: String(inv.total_cents),
+        base_amount_cents: String(chargeAmountCents),
         processing_fee_cents: String(feeCents),
         charge_total_cents: String(chargeCents),
       },
@@ -135,7 +156,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           invoice_id: inv.id,
           invoice_number: inv.number,
           payment_method_selection: paymentMethod,
-          base_amount_cents: String(inv.total_cents),
+          base_amount_cents: String(chargeAmountCents),
           processing_fee_cents: String(feeCents),
           charge_total_cents: String(chargeCents),
         },
@@ -150,14 +171,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       sessionParams.cancel_url = cancelUrl;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const session = await stripe.checkout.sessions.create(sessionParams as any);
+    let session;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      session = await stripe.checkout.sessions.create(sessionParams as any);
+    } catch (stripeErr) {
+      if (registryId) {
+        await withNeonTransaction((client) => markCheckoutSessionFailed(client, registryId as string));
+      }
+      throw stripeErr;
+    }
 
-    await sql`
-      UPDATE invoices
-      SET stripe_checkout_session_id = ${session.id}
-      WHERE id = ${inv.id}
-    `;
+    await withNeonTransaction(async (client) => {
+      await markCheckoutSessionOpen(client, registryId as string, { id: session!.id, url: session!.url ?? null });
+      await client.query(
+        `UPDATE invoices SET stripe_checkout_session_id = $2 WHERE id = $1`,
+        [inv.id, session!.id],
+      );
+    });
 
     if (uiMode === 'embedded') {
       return NextResponse.json({
@@ -172,6 +203,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       total_cents: chargeCents,
     });
   } catch (err) {
+    if (err instanceof InvoiceLifecycleError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('invoice checkout failed', err);
     return NextResponse.json(
       { error: 'checkout failed', detail: err instanceof Error ? err.message : 'error' },

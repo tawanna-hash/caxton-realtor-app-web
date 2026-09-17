@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import {
   INVOICE_STATUS_VALUES,
+  isIsoCalendarDate,
+  isSafeCents,
   lineItemsTotal,
   type InvoiceLineItem,
   type InvoiceWithAdvertiser,
@@ -15,6 +17,8 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
+import { withNeonTransaction } from '@/lib/server/db/neon';
+import { nextDocumentNumber } from '@/lib/server/invoice-lifecycle';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -141,15 +145,58 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
   if (agreementId && !UUID_RE.test(agreementId)) {
     return NextResponse.json({ error: 'invalid agreement_id' }, { status: 400 });
   }
-  const lineItems   = Array.isArray(body.line_items) ? (body.line_items as InvoiceLineItem[]) : [];
+  if ('line_items' in body && !Array.isArray(body.line_items)) {
+    return NextResponse.json({ error: 'line_items must be an array' }, { status: 400 });
+  }
+  if ('amount_cents' in body && !isSafeCents(body.amount_cents, { positive: true })) {
+    return NextResponse.json({ error: 'amount_cents must be a positive safe integer' }, { status: 400 });
+  }
+  if ('tax_cents' in body && !isSafeCents(body.tax_cents)) {
+    return NextResponse.json({ error: 'tax_cents must be a nonnegative safe integer' }, { status: 400 });
+  }
+  const lineItems = Array.isArray(body.line_items) ? (body.line_items as InvoiceLineItem[]) : [];
   const explicitAmt = typeof body.amount_cents === 'number' ? body.amount_cents : null;
-  const amountCents = explicitAmt ?? lineItemsTotal(lineItems);
+  let amountCents: number;
+  try {
+    amountCents = explicitAmt ?? lineItemsTotal(lineItems);
+  } catch (error) {
+    return NextResponse.json({ error: errMessage(error) }, { status: 400 });
+  }
   const taxCents    = typeof body.tax_cents === 'number' ? body.tax_cents : 0;
-  const status      = typeof body.status === 'string' && INVOICE_STATUS_VALUES.has(body.status as never)
-    ? (body.status as string) : 'draft';
+  const requestedStatus = body.status ?? 'draft';
+  if (
+    typeof requestedStatus !== 'string' ||
+    !INVOICE_STATUS_VALUES.has(requestedStatus as never) ||
+    !['draft', 'sent'].includes(requestedStatus)
+  ) {
+    return NextResponse.json(
+      { error: 'new invoices may only be created as draft or sent; paid status is ledger-derived' },
+      { status: 400 },
+    );
+  }
+  const status = requestedStatus;
 
-  if (amountCents <= 0) {
-    return NextResponse.json({ error: 'amount_cents must be > 0' }, { status: 400 });
+  if (!isSafeCents(amountCents, { positive: true })) {
+    return NextResponse.json({ error: 'amount_cents must be a positive safe integer' }, { status: 400 });
+  }
+  if (!isSafeCents(taxCents)) {
+    return NextResponse.json({ error: 'tax_cents must be a nonnegative safe integer' }, { status: 400 });
+  }
+  if (!Number.isSafeInteger(amountCents + taxCents)) {
+    return NextResponse.json({ error: 'invoice total is too large' }, { status: 400 });
+  }
+  if ('due_date' in body && body.due_date !== null && !isIsoCalendarDate(body.due_date)) {
+    return NextResponse.json({ error: 'due_date must be a real YYYY-MM-DD date or null' }, { status: 400 });
+  }
+  if ('issued_at' in body && body.issued_at !== null) {
+    if (
+      typeof body.issued_at !== 'string' ||
+      body.issued_at.length < 10 ||
+      !isIsoCalendarDate(body.issued_at.slice(0, 10)) ||
+      Number.isNaN(Date.parse(body.issued_at))
+    ) {
+      return NextResponse.json({ error: 'issued_at must contain a valid ISO calendar date or be null' }, { status: 400 });
+    }
   }
 
   try {
@@ -181,36 +228,6 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       }
     }
 
-    // Keep sales receipts on their own SR sequence instead of consuming invoice numbers.
-    const year = new Date().getFullYear();
-    let number = typeof body.number === 'string' ? body.number.trim() : undefined;
-    if (!number && body.document_type === 'sales_receipt') {
-      const receiptSeqRows = await sql`
-        SELECT count(*)::int AS n
-        FROM invoices
-        WHERE number LIKE ${`SR-${year}-%`}
-      ` as unknown as Array<{ n: number }>;
-      number = `SR-${year}-${String((receiptSeqRows[0]?.n ?? 0) + 1).padStart(4, '0')}`;
-    }
-    if (!number) {
-      const numberRows = await sql`
-        SELECT (
-          GREATEST(
-            COALESCE(MAX(
-              CASE
-                WHEN number ~ '^INV #[0-9]+$' THEN substring(number from '[0-9]+')::bigint
-                WHEN number ~ '^[0-9]+$' THEN number::bigint
-                ELSE NULL
-              END
-            ), 0),
-            16200
-          ) + 1
-        )::text AS next_sequence
-        FROM invoices
-      ` as unknown as Array<{ next_sequence: string }>;
-      number = `INV #${numberRows[0]?.next_sequence ?? '16201'}`;
-    }
-
     const billTo = {
       name:    (body.bill_to_name    as string | undefined) ?? adv.name,
       email:   (body.bill_to_email   as string | undefined) ?? adv.billing_email ?? adv.contact_email,
@@ -225,33 +242,66 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       (body.due_date as string | null | undefined) ??
       (issuedAt ? addCalendarDays(issuedAt, 20) : null);
 
-    const rows = await sql`
-      INSERT INTO invoices (
-        advertiser_id, agreement_id, number,
-        amount_cents, tax_cents, status,
-        issued_at, due_date,
-        bill_to_name, bill_to_email, bill_to_address,
-        memo, line_items, created_by
-      ) VALUES (
-        ${advertiserId},
-        ${agreementId},
-        ${number},
-        ${amountCents},
-        ${taxCents},
-        ${status},
-        ${issuedAt},
-        ${dueDate},
-        ${billTo.name},
-        ${billTo.email},
-        ${billTo.address},
-        ${(body.memo as string | null | undefined) ?? null},
-        ${JSON.stringify(lineItems)}::jsonb,
-        ${admin.email ?? null}
-      )
-      RETURNING *
-    `;
-    revalidateInvoiceViews(rows[0]?.id as string | undefined);
-    return NextResponse.json({ invoice: rows[0] }, { status: 201 });
+    const invoice = await withNeonTransaction(async (client) => {
+      const year = new Date().getFullYear();
+      let number = typeof body.number === 'string' ? body.number.trim() : '';
+      if (!number && body.document_type === 'sales_receipt') {
+        const series = `sales_receipt:${year}`;
+        await client.query(
+          `INSERT INTO document_number_counters (series, next_value)
+           SELECT $1,
+                  COALESCE(MAX(substring(number from '([0-9]+)$')::integer), 0) + 1
+             FROM invoices
+            WHERE number LIKE $2
+           ON CONFLICT (series) DO NOTHING`,
+          [series, `SR-${year}-%`],
+        );
+        const sequence = await nextDocumentNumber(client, series);
+        number = `SR-${year}-${String(sequence).padStart(4, '0')}`;
+      } else if (!number) {
+        await client.query(
+          `INSERT INTO document_number_counters (series, next_value)
+           SELECT 'invoice',
+                  GREATEST(
+                    COALESCE(MAX(
+                      CASE
+                        WHEN number ~ '^INV #[0-9]+$' THEN substring(number from '[0-9]+')::integer
+                        WHEN number ~ '^[0-9]+$' THEN number::integer
+                        ELSE NULL
+                      END
+                    ), 0),
+                    16200
+                  ) + 1
+             FROM invoices
+           ON CONFLICT (series) DO NOTHING`,
+        );
+        const sequence = await nextDocumentNumber(client, 'invoice');
+        number = `INV #${sequence}`;
+      }
+
+      const rows = await client.query(
+        `INSERT INTO invoices (
+           advertiser_id, agreement_id, number,
+           amount_cents, tax_cents, status,
+           issued_at, due_date,
+           bill_to_name, bill_to_email, bill_to_address,
+           memo, line_items, created_by
+         ) VALUES (
+           $1, $2, $3, $4, $5, $6, $7, $8,
+           $9, $10, $11, $12, $13::jsonb, $14
+         )
+         RETURNING *`,
+        [
+          advertiserId, agreementId, number, amountCents, taxCents, status,
+          issuedAt, dueDate, billTo.name, billTo.email, billTo.address,
+          (body.memo as string | null | undefined) ?? null,
+          JSON.stringify(lineItems), admin.email ?? null,
+        ],
+      );
+      return rows.rows[0];
+    });
+    revalidateInvoiceViews(invoice?.id as string | undefined);
+    return NextResponse.json({ invoice }, { status: 201 });
   } catch (err) {
     console.error('[admin/invoices POST]', errMessage(err));
     captureServerEvent('invoice_create_failed', admin?.email ?? 'server', {

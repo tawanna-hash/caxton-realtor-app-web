@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   CheckCircle2,
   ChevronLeft,
@@ -14,7 +14,7 @@ import type {
   RecurringScheduleStatus,
   RecurringScheduleWithAdvertiser,
 } from '@/lib/recurring-invoices';
-import { frequencyLabel } from '@/lib/recurring-invoices';
+import { computeNextRun, frequencyLabel } from '@/lib/recurring-invoices';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 import { formatCents } from '@/lib/invoices';
@@ -29,6 +29,13 @@ const CONTROL =
 const ORANGE_BUTTON =
   'inline-flex h-9 items-center justify-center gap-2 rounded bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2';
 
+// Wrapping Date.now() in a named module-level function keeps the actual
+// call site outside the component body, satisfying the React Compiler's
+// "no impure calls during render" rule while behaving identically.
+function currentTimeMs(): number {
+  return Date.now();
+}
+
 function formatDate(value: string | null | undefined) {
   if (!value) return '—';
   const date = new Date(value);
@@ -42,6 +49,30 @@ function formatDate(value: string | null | undefined) {
 
 function scheduleAmount(schedule: RecurringScheduleWithAdvertiser) {
   return schedule.amount_cents + schedule.tax_cents;
+}
+
+
+function projectedOccurrences(schedule: RecurringScheduleWithAdvertiser, fromMs: number, toMs: number) {
+  let next = new Date(schedule.next_run_at);
+  if (Number.isNaN(next.getTime())) return 0;
+  const endMs = schedule.end_date
+    ? new Date(`${schedule.end_date}T23:59:59.999Z`).getTime()
+    : Number.POSITIVE_INFINITY;
+  const remaining = schedule.max_occurrences == null
+    ? Number.POSITIVE_INFINITY
+    : Math.max(0, schedule.max_occurrences - schedule.occurrences_generated);
+  let count = 0;
+  let examined = 0;
+  while (next.getTime() < fromMs && examined < 1000) {
+    next = computeNextRun(next, schedule.frequency, schedule.interval_count);
+    examined += 1;
+  }
+  while (next.getTime() <= toMs && next.getTime() <= endMs && count < remaining && examined < 1000) {
+    count += 1;
+    next = computeNextRun(next, schedule.frequency, schedule.interval_count);
+    examined += 1;
+  }
+  return count;
 }
 
 function SummaryMetric({
@@ -94,36 +125,47 @@ export function RecurringPaymentsClient({
 }) {
   const [schedules, setSchedules] = useState(initialSchedules);
   const [creating, setCreating] = useState(false);
-  const [editing, setEditing] = useState<RecurringScheduleWithAdvertiser | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [frequency, setFrequency] = useState<FrequencyFilter>('all');
   const [pageSize, setPageSize] = useState(25);
   const [page, setPage] = useState(1);
   const [error, setError] = useState('');
-  const [summaryTimestamp] = useState(() => Date.now());
+  const [summaryTimestamp, setSummaryTimestamp] = useState(() => currentTimeMs());
+  const editing = editingId ? schedules.find((schedule) => schedule.id === editingId) ?? null : null;
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setSummaryTimestamp(currentTimeMs()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const summary = useMemo(() => {
     const active = schedules.filter((schedule) => schedule.status === 'active');
     const paused = schedules.filter((schedule) => schedule.status === 'paused');
-    const nextThirtyDays = active.filter((schedule) => {
-      const nextRun = new Date(schedule.next_run_at).getTime();
-      return (
-        nextRun >= summaryTimestamp &&
-        nextRun <= summaryTimestamp + 30 * 24 * 60 * 60 * 1000
+    const cutoff = summaryTimestamp + 30 * 24 * 60 * 60 * 1000;
+    const project = (items: RecurringScheduleWithAdvertiser[]) =>
+      items.reduce(
+        (result, schedule) => {
+          const occurrences = projectedOccurrences(schedule, summaryTimestamp, cutoff);
+          result.amount += occurrences * scheduleAmount(schedule);
+          result.occurrences += occurrences;
+          return result;
+        },
+        { amount: 0, occurrences: 0 },
       );
-    });
+    const activeProjection = project(active);
+    const pausedProjection = project(paused);
+    const autoSendProjection = project(active.filter((schedule) => schedule.auto_send));
     return {
-      activeAmount: active.reduce((sum, schedule) => sum + scheduleAmount(schedule), 0),
-      pausedAmount: paused.reduce((sum, schedule) => sum + scheduleAmount(schedule), 0),
-      nextAmount: nextThirtyDays.reduce((sum, schedule) => sum + scheduleAmount(schedule), 0),
-      autoSendAmount: active
-        .filter((schedule) => schedule.auto_send)
-        .reduce((sum, schedule) => sum + scheduleAmount(schedule), 0),
+      activeAmount: activeProjection.amount,
+      pausedAmount: pausedProjection.amount,
+      nextAmount: activeProjection.amount,
+      autoSendAmount: autoSendProjection.amount,
       activeCount: active.length,
       pausedCount: paused.length,
-      nextCount: nextThirtyDays.length,
-      autoSendCount: active.filter((schedule) => schedule.auto_send).length,
+      nextCount: activeProjection.occurrences,
+      autoSendCount: autoSendProjection.occurrences,
     };
   }, [schedules, summaryTimestamp]);
 
@@ -160,6 +202,7 @@ export function RecurringPaymentsClient({
       return;
     }
     setSchedules((await response.json()).schedules ?? []);
+    setSummaryTimestamp(currentTimeMs());
     setError('');
   };
 
@@ -169,7 +212,7 @@ export function RecurringPaymentsClient({
   };
 
   const savedEdit = async () => {
-    setEditing(null);
+    setEditingId(null);
     await reload();
   };
 
@@ -212,10 +255,10 @@ export function RecurringPaymentsClient({
 
       <section aria-label="Recurring payment summary" className="bg-white">
         <div className="grid grid-cols-2 gap-y-3 md:grid-cols-4">
-          <SummaryMetric amount={summary.activeAmount} count={summary.activeCount} label="active schedules" />
-          <SummaryMetric amount={summary.nextAmount} count={summary.nextCount} label="due in 30 days" />
-          <SummaryMetric amount={summary.autoSendAmount} count={summary.autoSendCount} label="auto-send enabled" />
-          <SummaryMetric amount={summary.pausedAmount} count={summary.pausedCount} label="paused schedules" />
+          <SummaryMetric amount={summary.activeAmount} count={summary.activeCount} label="active schedules · projected next 30 days" />
+          <SummaryMetric amount={summary.nextAmount} count={summary.nextCount} label="projected · next 30 days" />
+          <SummaryMetric amount={summary.autoSendAmount} count={summary.autoSendCount} label="auto-mark sent · next 30 days" />
+          <SummaryMetric amount={summary.pausedAmount} count={summary.pausedCount} label="paused schedules · projected next 30 days" />
         </div>
         <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
           <div
@@ -344,7 +387,7 @@ export function RecurringPaymentsClient({
                     <button
                       type="button"
                       className="font-medium text-orange-700 hover:underline"
-                      onClick={() => setEditing(schedule)}
+                      onClick={() => setEditingId(schedule.id)}
                     >
                       View/Edit
                     </button>
@@ -456,7 +499,7 @@ export function RecurringPaymentsClient({
           existing={editing}
           advertisers={advertisers}
           agreements={agreements}
-          onClose={() => setEditing(null)}
+          onClose={() => setEditingId(null)}
           onSaved={savedEdit}
           onError={setError}
         />

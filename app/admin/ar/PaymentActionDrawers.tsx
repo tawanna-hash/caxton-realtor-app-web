@@ -1,14 +1,24 @@
 'use client';
 
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { InvoiceLineItem, InvoiceWithAdvertiser } from '@/lib/invoices';
-import { formatCents, PAYMENT_METHODS } from '@/lib/invoices';
+import { formatCents, outstandingCents, PAYMENT_METHODS } from '@/lib/invoices';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 import { DrawerFooter, DrawerShell, Field, Section } from '@/app/admin/billing/_components/DrawerShell';
 import { INPUT } from '@/app/admin/billing/_components/constants';
 import { ProductServiceSearch } from '@/app/admin/billing/_components/ProductServiceSearch';
 import { toISODateString } from '@/app/admin/billing/_components/helpers';
+
+function isSafeHttpUrl(value: unknown): value is string {
+  if (typeof value !== 'string' || !value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -119,7 +129,7 @@ function PdfPreview({
 }
 
 export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved, onError }: CommonProps) {
-  const eligible = invoices.filter((invoice) => !['paid', 'void'].includes(invoice.status) && invoice.total_cents > 0);
+  const eligible = invoices.filter((invoice) => !['draft', 'paid', 'void'].includes(invoice.status) && outstandingCents(invoice) > 0);
   const [invoiceId, setInvoiceId] = useState(
     initialInvoiceId && eligible.some((invoice) => invoice.id === initialInvoiceId)
       ? initialInvoiceId
@@ -147,7 +157,9 @@ export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error ?? 'Could not create payment link.');
-      setCreatedUrl(data.checkout_url ?? data.portal_pay_url ?? '');
+      const checkoutUrl = data.checkout_url ?? data.portal_pay_url;
+      if (!isSafeHttpUrl(checkoutUrl)) throw new Error('The payment service returned an unsafe link.');
+      setCreatedUrl(checkoutUrl);
       await onSaved();
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Could not create payment link.');
@@ -179,7 +191,7 @@ export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved
             <option value="">Select an invoice</option>
             {eligible.map((invoice) => (
               <option key={invoice.id} value={invoice.id}>
-                {invoice.number ?? 'Draft'} · {invoice.advertiser_name ?? invoice.bill_to_name ?? 'Customer'} · {formatCents(invoice.total_cents)}
+                {invoice.number ?? 'Invoice'} · {invoice.advertiser_name ?? invoice.bill_to_name ?? 'Customer'} · {formatCents(outstandingCents(invoice))}
               </option>
             ))}
           </select>
@@ -201,7 +213,7 @@ export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved
         <EmailPreview
           heading="Your payment link is ready"
           customer={selectedInvoice?.bill_to_name ?? selectedInvoice?.advertiser_name ?? 'Select a customer'}
-          amount={selectedInvoice?.total_cents ?? 0}
+          amount={selectedInvoice ? outstandingCents(selectedInvoice) : 0}
           message={selectedInvoice ? `Use this secure link to pay ${selectedInvoice.number ?? 'your invoice'}.` : 'Select an invoice to preview the payment email.'}
           actionLabel="View and pay"
         />
@@ -212,7 +224,7 @@ export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved
           number={selectedInvoice?.number ?? 'Select an invoice'}
           customer={selectedInvoice?.bill_to_name ?? selectedInvoice?.advertiser_name ?? 'Customer'}
           date={toISODateString(selectedInvoice?.issued_at) || todayIso()}
-          amount={selectedInvoice?.total_cents ?? 0}
+          amount={selectedInvoice ? outstandingCents(selectedInvoice) : 0}
           lineItems={selectedInvoice?.line_items ?? []}
           note="Use the secure payment link in your email to complete payment."
         />
@@ -238,43 +250,35 @@ export function SalesReceiptDrawer({ advertisers, onClose, onSaved, onError }: C
     ? [{ description: description.trim(), qty: quantity, unit_cents: Math.round((Number(rate) || 0) * 100) }]
     : [];
 
+  // Minted once per drawer instance so a retry after a network failure
+  // (not a fresh submission) reuses the same key and replays idempotently
+  // instead of creating a duplicate receipt.
+  const idempotencyKeyRef = useRef(crypto.randomUUID());
+
   const submit = async () => {
     if (!advertiserId) { onError('Select a client.'); return; }
     if (!description.trim() || amountCents <= 0) { onError('Add a product or service and rate.'); return; }
     setSaving(true);
     try {
-      const createResponse = await fetch('/api/admin/invoices', {
+      // Single atomic server-side transaction: creates the sales-receipt
+      // invoice and its full payment together, so a failure partway through
+      // never leaves an unpaid "receipt" behind, and retrying with the same
+      // idempotency key returns the original receipt instead of duplicating it.
+      const response = await fetch('/api/admin/sales-receipts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           advertiser_id: advertiserId,
-          document_type: 'sales_receipt',
-          status: 'sent',
           amount_cents: amountCents,
-          due_date: receiptDate,
+          receipt_date: receiptDate,
+          payment_method: paymentMethod,
           memo: `Sales receipt · ${paymentMethod}\n${memo}`.trim(),
           line_items: [{ description: description.trim(), qty: quantity, unit_cents: Math.round((Number(rate) || 0) * 100) }],
+          idempotency_key: idempotencyKeyRef.current,
         }),
       });
-      const created = await createResponse.json().catch(() => ({}));
-      if (!createResponse.ok || !created.invoice?.id) throw new Error(created.error ?? 'Could not create sales receipt.');
-      const paidResponse = await fetch('/api/admin/invoice-payments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoice_id: created.invoice.id,
-          amount_cents: amountCents,
-          payment_date: receiptDate,
-          payment_method: paymentMethod,
-          memo: `Payment recorded with sales receipt ${created.invoice.number ?? ''}`.trim(),
-          source: 'sales_receipt',
-          external_id: created.invoice.id,
-        }),
-      });
-      const paid = await paidResponse.json().catch(() => ({}));
-      if (!paidResponse.ok) {
-        throw new Error(paid.error ?? 'Receipt was created but its payment could not be recorded.');
-      }
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.invoice?.id) throw new Error(result.error ?? 'Could not create sales receipt.');
       await onSaved();
       onClose();
     } catch (error) {
@@ -353,10 +357,14 @@ export function SalesReceiptDrawer({ advertisers, onClose, onSaved, onError }: C
 }
 
 export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, onClose, onSaved, onError }: CommonProps) {
-  const initialInvoice = invoices.find((invoice) => invoice.id === initialInvoiceId);
+  const initialInvoice = invoices.find((invoice) =>
+    invoice.id === initialInvoiceId &&
+    !['draft', 'paid', 'void'].includes(invoice.status) &&
+    outstandingCents(invoice) > 0
+  );
   const [advertiserId, setAdvertiserId] = useState<number | null>(initialInvoice?.advertiser_id ?? null);
   const eligible = useMemo(
-    () => invoices.filter((invoice) => !['paid', 'void'].includes(invoice.status) && (!advertiserId || invoice.advertiser_id === advertiserId)),
+    () => invoices.filter((invoice) => !['draft', 'paid', 'void'].includes(invoice.status) && outstandingCents(invoice) > 0 && (!advertiserId || invoice.advertiser_id === advertiserId)),
     [advertiserId, invoices],
   );
   const [invoiceId, setInvoiceId] = useState(initialInvoice?.id ?? '');
@@ -365,7 +373,7 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
   const [reference, setReference] = useState('');
   const [memo, setMemo] = useState('');
   const [amount, setAmount] = useState(
-    initialInvoice ? ((initialInvoice.balance_cents ?? initialInvoice.total_cents) / 100).toFixed(2) : '',
+    initialInvoice ? (outstandingCents(initialInvoice) / 100).toFixed(2) : '',
   );
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<WorkflowTab>('edit');
@@ -404,7 +412,7 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
   };
 
   return (
-    <DrawerShell title="Receive payment" subtitle={`Amount received: ${formatCents(selectedInvoice?.total_cents ?? 0)}`} onClose={onClose} wide>
+    <DrawerShell title="Receive payment" subtitle={`Outstanding balance: ${formatCents(selectedInvoice ? outstandingCents(selectedInvoice) : 0)}`} onClose={onClose} wide>
       <WorkflowTabs active={activeTab} onChange={setActiveTab} />
       {activeTab === 'edit' && (
         <>
@@ -421,10 +429,10 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
               const nextId = event.target.value;
               setInvoiceId(nextId);
               const nextInvoice = invoices.find((invoice) => invoice.id === nextId);
-              setAmount(nextInvoice ? ((nextInvoice.balance_cents ?? nextInvoice.total_cents) / 100).toFixed(2) : '');
+              setAmount(nextInvoice ? (outstandingCents(nextInvoice) / 100).toFixed(2) : '');
             }}>
               <option value="">Select an unpaid invoice</option>
-              {eligible.map((invoice) => <option key={invoice.id} value={invoice.id}>{invoice.number ?? 'Draft'} · {formatCents(invoice.total_cents)}</option>)}
+              {eligible.map((invoice) => <option key={invoice.id} value={invoice.id}>{invoice.number ?? 'Invoice'} · {formatCents(outstandingCents(invoice))}</option>)}
             </select>
           </Field>
         </div>

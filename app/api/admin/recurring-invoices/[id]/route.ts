@@ -13,7 +13,12 @@ import {
   RECURRING_FREQUENCY_VALUES,
   type RecurringScheduleWithAdvertiser,
 } from "@/lib/recurring-invoices";
-import { lineItemsTotal, type InvoiceLineItem } from "@/lib/invoices";
+import {
+  isIsoCalendarDate,
+  isSafeCents,
+  lineItemsTotal,
+  type InvoiceLineItem,
+} from "@/lib/invoices";
 import { getCurrentAdmin } from "@/lib/server/auth/admin";
 import { withAdminTracking } from "@/lib/server/admin-tracking";
 
@@ -110,8 +115,50 @@ export const PATCH = withAdminTracking(async function PATCH(
         );
       }
     }
-    if (Array.isArray(body.line_items)) {
-      body.amount_cents = lineItemsTotal(body.line_items as InvoiceLineItem[]);
+    try {
+      if (Array.isArray(body.line_items) && !("amount_cents" in body)) {
+        body.amount_cents = lineItemsTotal(body.line_items as InvoiceLineItem[]);
+      } else if (Array.isArray(body.line_items)) {
+        lineItemsTotal(body.line_items as InvoiceLineItem[]);
+      }
+    } catch (error) {
+      return NextResponse.json({ error: errMessage(error) }, { status: 400 });
+    }
+    if ("amount_cents" in body && !isSafeCents(body.amount_cents, { positive: true })) {
+      return NextResponse.json(
+        { error: "amount_cents must be a positive safe integer" },
+        { status: 400 },
+      );
+    }
+    if ("tax_cents" in body && !isSafeCents(body.tax_cents)) {
+      return NextResponse.json(
+        { error: "tax_cents must be a nonnegative safe integer" },
+        { status: 400 },
+      );
+    }
+    if (
+      "end_date" in body &&
+      body.end_date !== null &&
+      !isIsoCalendarDate(body.end_date)
+    ) {
+      return NextResponse.json(
+        { error: "end_date must be a real YYYY-MM-DD date or null" },
+        { status: 400 },
+      );
+    }
+    if ("next_run_at" in body) {
+      const value = body.next_run_at;
+      if (
+        typeof value !== "string" ||
+        value.length < 10 ||
+        !isIsoCalendarDate(value.slice(0, 10)) ||
+        Number.isNaN(Date.parse(value))
+      ) {
+        return NextResponse.json(
+          { error: "next_run_at must contain a valid ISO calendar date" },
+          { status: 400 },
+        );
+      }
     }
 
     const updated: string[] = [];
@@ -168,6 +215,9 @@ export const PATCH = withAdminTracking(async function PATCH(
           break;
         case "day_of_month":
           await sql`UPDATE recurring_invoice_schedules SET day_of_month = ${raw as number | null}                WHERE id = ${id}`;
+          break;
+        case "amount_cents":
+          await sql`UPDATE recurring_invoice_schedules SET amount_cents = ${raw as number}                       WHERE id = ${id}`;
           break;
         case "tax_cents":
           await sql`UPDATE recurring_invoice_schedules SET tax_cents = ${raw as number}                          WHERE id = ${id}`;

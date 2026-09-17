@@ -196,6 +196,7 @@ export async function upsertStripeInvoicePayment(
      WHERE id = ${invoiceId}
   `;
   await recalculateStripeInvoice(sql, invoiceId, date);
+  await expireOpenInvoiceCheckoutSessions(sql, invoiceId);
 }
 
 /**
@@ -266,6 +267,7 @@ export async function upsertStripeStatementPayments(
       WHERE id = ${allocation.invoiceId}
     `;
     await recalculateStripeInvoice(sql, allocation.invoiceId, date);
+    await expireOpenInvoiceCheckoutSessions(sql, allocation.invoiceId);
   }
 
   await sql`
@@ -274,6 +276,44 @@ export async function upsertStripeStatementPayments(
     WHERE id = ${statementPaymentId}
   `;
   return invoiceIds;
+}
+
+/**
+ * Expire every open individual-invoice Checkout Session (payment-link /
+ * portal checkout) for one invoice. Mirrors
+ * `expireOpenStatementPaymentSessionsForInvoice` but for the
+ * `invoice_checkout_sessions` registry — call both together any time an
+ * invoice's balance changes, so a stale link from either surface can never
+ * outlive the payment that satisfied it (finding #1-3).
+ */
+export async function expireOpenInvoiceCheckoutSessions(sql: Sql, invoiceId: string): Promise<void> {
+  const rows = (await sql`
+    SELECT id, stripe_checkout_session_id
+    FROM invoice_checkout_sessions
+    WHERE invoice_id = ${invoiceId}
+      AND status IN ('creating', 'open')
+  `) as unknown as Array<{ id: string; stripe_checkout_session_id: string | null }>;
+  if (rows.length === 0) return;
+
+  if (isStripeConfigured()) {
+    const stripe = getStripe();
+    for (const row of rows) {
+      if (!row.stripe_checkout_session_id) continue;
+      try {
+        await stripe.checkout.sessions.expire(row.stripe_checkout_session_id);
+      } catch {
+        // Already expired/completed on Stripe's side — nothing to roll back.
+      }
+    }
+  }
+  for (const row of rows) {
+    await sql`
+      UPDATE invoice_checkout_sessions
+      SET status = 'expired', updated_at = NOW()
+      WHERE id = ${row.id}
+        AND status IN ('creating', 'open')
+    `;
+  }
 }
 
 export async function expireOpenStatementPaymentSessionsForInvoice(

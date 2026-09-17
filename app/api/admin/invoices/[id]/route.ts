@@ -11,6 +11,8 @@ import { getSql, ensureSchema } from '@/lib/db';
 import {
   INVOICE_PATCHABLE_FIELDS,
   INVOICE_STATUS_VALUES,
+  isIsoCalendarDate,
+  isSafeCents,
   lineItemsTotal,
   type Invoice,
   type InvoiceAuditEntry,
@@ -20,6 +22,11 @@ import {
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
+import { withNeonTransaction } from '@/lib/server/db/neon';
+import {
+  invalidateInvoiceCheckoutSessions,
+  recalculateInvoiceFromLedger,
+} from '@/lib/server/invoice-lifecycle';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,6 +36,25 @@ function errMessage(err: unknown): string {
 }
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type RouteCtx = { params: Promise<{ id: string }> };
+
+class PatchError extends Error {
+  constructor(message: string, readonly status: 400 | 404 | 409) {
+    super(message);
+  }
+}
+
+const SUPPORTED_PATCH_FIELDS = new Set([
+  'agreement_id', 'number', 'amount_cents', 'tax_cents', 'status',
+  'stripe_invoice_id', 'stripe_payment_intent_id', 'stripe_payment_link_url',
+  'issued_at', 'due_date', 'bill_to_name', 'bill_to_email',
+  'bill_to_address', 'memo', 'line_items',
+]);
+
+function validNullableTimestamp(value: unknown): value is string | null {
+  if (value === null) return true;
+  if (typeof value !== 'string' || value.length < 10 || !isIsoCalendarDate(value.slice(0, 10))) return false;
+  return !Number.isNaN(Date.parse(value));
+}
 
 export async function GET(_req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
@@ -74,170 +100,162 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
 
   try {
     await ensureSchema();
-    const sql = getSql();
-    const existing = await sql`
-      SELECT i.*,
-        COALESCE((
-          SELECT sum(p.amount_cents)
-          FROM invoice_payments p
-          WHERE p.invoice_id = i.id
-        ), 0)::int AS amount_paid_cents
-      FROM invoices i
-      WHERE i.id = ${id}
-    ` as unknown as Array<Invoice & { amount_paid_cents: number }>;
-    if (existing.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
-    const prevStatus = existing[0].status;
-
-    // A full drawer save can include the current invoice number even when the
-    // operator only changed dates. Normalize and drop an unchanged value so
-    // incidental whitespace cannot trip the unique-number constraint.
-    if ('number' in body) {
-      const incomingNumber = typeof body.number === 'string' ? body.number.trim() : body.number;
-      const currentNumber = existing[0].number?.trim() ?? null;
-      if (incomingNumber === currentNumber) {
-        delete body.number;
-      } else {
-        body.number = incomingNumber || null;
-        if (incomingNumber) {
-          const duplicate = await sql`
-            SELECT id
-              FROM invoices
-             WHERE number = ${incomingNumber}
-               AND id <> ${id}
-             LIMIT 1
-          `;
-          if (duplicate.length > 0) {
-            return NextResponse.json(
-              { error: `Invoice number ${incomingNumber} is already in use.` },
-              { status: 409 },
-            );
-          }
-        }
+    const unsupported = Object.keys(body).filter((field) => !SUPPORTED_PATCH_FIELDS.has(field));
+    if (unsupported.length > 0) {
+      return NextResponse.json(
+        { error: `unsupported field${unsupported.length === 1 ? '' : 's'}: ${unsupported.join(', ')}` },
+        { status: 400 },
+      );
+    }
+    if ('status' in body) {
+      if (typeof body.status !== 'string' || !INVOICE_STATUS_VALUES.has(body.status as never)) {
+        return NextResponse.json({ error: 'invalid status' }, { status: 400 });
+      }
+      if (body.status === 'paid') {
+        return NextResponse.json(
+          { error: 'status paid is ledger-derived; record a payment instead' },
+          { status: 400 },
+        );
       }
     }
-
+    if ('amount_cents' in body && !isSafeCents(body.amount_cents, { positive: true })) {
+      return NextResponse.json({ error: 'amount_cents must be a positive safe integer' }, { status: 400 });
+    }
+    if ('tax_cents' in body && !isSafeCents(body.tax_cents)) {
+      return NextResponse.json({ error: 'tax_cents must be a nonnegative safe integer' }, { status: 400 });
+    }
+    if ('due_date' in body && body.due_date !== null && !isIsoCalendarDate(body.due_date)) {
+      return NextResponse.json({ error: 'due_date must be a real YYYY-MM-DD date or null' }, { status: 400 });
+    }
+    if ('issued_at' in body && !validNullableTimestamp(body.issued_at)) {
+      return NextResponse.json({ error: 'issued_at must contain a valid ISO calendar date or be null' }, { status: 400 });
+    }
     if ('line_items' in body && !Array.isArray(body.line_items)) {
       return NextResponse.json({ error: 'line_items must be an array' }, { status: 400 });
     }
-
-    if ('agreement_id' in body && body.agreement_id !== null) {
-      if (typeof body.agreement_id !== 'string' || !UUID_RE.test(body.agreement_id)) {
-        return NextResponse.json({ error: 'invalid agreement_id' }, { status: 400 });
+    try {
+      if (Array.isArray(body.line_items) && !('amount_cents' in body)) {
+        body.amount_cents = lineItemsTotal(body.line_items as InvoiceLineItem[]);
+      } else if (Array.isArray(body.line_items)) {
+        lineItemsTotal(body.line_items as InvoiceLineItem[]);
       }
-      const agreements = await sql`
-        SELECT id
-        FROM agreements
-        WHERE id = ${body.agreement_id}
-          AND advertiser_id = ${existing[0].advertiser_id}
-      `;
-      if (agreements.length === 0) {
-        return NextResponse.json(
-          { error: 'agreement not found for advertiser' },
-          { status: 400 },
+    } catch (error) {
+      return NextResponse.json({ error: errMessage(error) }, { status: 400 });
+    }
+
+    const result = await withNeonTransaction(async (client) => {
+      const existingResult = await client.query<Invoice & { amount_paid_cents: number }>(
+        `SELECT i.*,
+           COALESCE((SELECT SUM(p.amount_cents) FROM invoice_payments p WHERE p.invoice_id = i.id), 0)::int
+             AS amount_paid_cents
+           FROM invoices i WHERE i.id = $1 FOR UPDATE`,
+        [id],
+      );
+      const current = existingResult.rows[0];
+      if (!current) throw new PatchError('not found', 404);
+      if (body.status === 'draft' && current.status !== 'draft') {
+        throw new PatchError('an issued invoice cannot be moved back to draft', 400);
+      }
+
+      if ('number' in body) {
+        if (body.number !== null && typeof body.number !== 'string') {
+          throw new PatchError('number must be a string or null', 400);
+        }
+        body.number = typeof body.number === 'string' ? body.number.trim() || null : null;
+        if (body.number === (current.number?.trim() ?? null)) delete body.number;
+      }
+      if ('agreement_id' in body && body.agreement_id !== null) {
+        if (typeof body.agreement_id !== 'string' || !UUID_RE.test(body.agreement_id)) {
+          throw new PatchError('invalid agreement_id', 400);
+        }
+        const agreement = await client.query(
+          `SELECT id FROM agreements WHERE id = $1 AND advertiser_id = $2`,
+          [body.agreement_id, current.advertiser_id],
         );
+        if (!agreement.rowCount) throw new PatchError('agreement not found for advertiser', 400);
       }
-    }
 
-    // Keep totals synchronized for API clients that update line items without
-    // also supplying a calculated amount.
-    if (Array.isArray(body.line_items) && typeof body.amount_cents !== 'number') {
-      body.amount_cents = lineItemsTotal(body.line_items as InvoiceLineItem[]);
-    }
-
-    if ('amount_cents' in body || 'tax_cents' in body) {
-      const amountCents = typeof body.amount_cents === 'number'
-        ? body.amount_cents
-        : Number(existing[0].amount_cents);
-      const taxCents = typeof body.tax_cents === 'number'
-        ? body.tax_cents
-        : Number(existing[0].tax_cents);
-      if (
-        Number.isFinite(amountCents) &&
-        Number.isFinite(taxCents) &&
-        amountCents + taxCents < Number(existing[0].amount_paid_cents)
-      ) {
-        return NextResponse.json(
-          { error: 'invoice total cannot be less than payments already recorded' },
-          { status: 400 },
-        );
-      }
-    }
-
-    // Auto-stamp status lifecycle timestamps
-    if ('status' in body && typeof body.status === 'string' && INVOICE_STATUS_VALUES.has(body.status as never)) {
-      const next = body.status as string;
-      if (next === 'sent' && prevStatus === 'draft' && !('issued_at' in body)) {
+      if (body.status === 'sent' && current.status === 'draft' && !('issued_at' in body)) {
         body.issued_at = new Date().toISOString();
       }
-      if (next === 'paid' && !('paid_at' in body)) {
-        body.paid_at = new Date().toISOString();
+
+      const amountCents = 'amount_cents' in body ? Number(body.amount_cents) : Number(current.amount_cents);
+      const taxCents = 'tax_cents' in body ? Number(body.tax_cents) : Number(current.tax_cents);
+      if (!Number.isSafeInteger(amountCents + taxCents) || amountCents + taxCents <= 0) {
+        throw new PatchError('invoice total must be a positive safe integer', 400);
       }
-      if (next === 'void' && !('voided_at' in body)) {
-        body.voided_at = new Date().toISOString();
+      if (amountCents + taxCents < Number(current.amount_paid_cents)) {
+        throw new PatchError('invoice total cannot be less than payments already recorded', 400);
       }
-    }
 
-    const updated: string[] = [];
-    for (const field of INVOICE_PATCHABLE_FIELDS) {
-      if (!(field in body)) continue;
-      const raw = body[field as keyof typeof body];
-
-      if (field === 'status' && typeof raw === 'string' && !INVOICE_STATUS_VALUES.has(raw as never)) continue;
-
-      switch (field) {
-        case 'agreement_id':             await sql`UPDATE invoices SET agreement_id = ${raw}                            WHERE id = ${id}`; break;
-        case 'number':                   await sql`UPDATE invoices SET number = ${raw}                                  WHERE id = ${id}`; break;
-        case 'amount_cents':             await sql`UPDATE invoices SET amount_cents = ${raw}                            WHERE id = ${id}`; break;
-        case 'tax_cents':                await sql`UPDATE invoices SET tax_cents = ${raw}                               WHERE id = ${id}`; break;
-        case 'status':                   await sql`UPDATE invoices SET status = ${raw}                                  WHERE id = ${id}`; break;
-        case 'stripe_invoice_id':        await sql`UPDATE invoices SET stripe_invoice_id = ${raw}                       WHERE id = ${id}`; break;
-        case 'stripe_payment_intent_id': await sql`UPDATE invoices SET stripe_payment_intent_id = ${raw}                WHERE id = ${id}`; break;
-        case 'stripe_payment_link_url':  await sql`UPDATE invoices SET stripe_payment_link_url = ${raw}                 WHERE id = ${id}`; break;
-        case 'issued_at':                await sql`UPDATE invoices SET issued_at = ${raw}                               WHERE id = ${id}`; break;
-        case 'due_date':                 await sql`UPDATE invoices SET due_date = ${raw}                                WHERE id = ${id}`; break;
-        case 'paid_at':                  await sql`UPDATE invoices SET paid_at = ${raw}                                 WHERE id = ${id}`; break;
-        case 'voided_at':                await sql`UPDATE invoices SET voided_at = ${raw}                               WHERE id = ${id}`; break;
-        case 'bill_to_name':             await sql`UPDATE invoices SET bill_to_name = ${raw}                            WHERE id = ${id}`; break;
-        case 'bill_to_email':            await sql`UPDATE invoices SET bill_to_email = ${raw}                           WHERE id = ${id}`; break;
-        case 'bill_to_address':          await sql`UPDATE invoices SET bill_to_address = ${raw}                         WHERE id = ${id}`; break;
-        case 'memo':                     await sql`UPDATE invoices SET memo = ${raw}                                    WHERE id = ${id}`; break;
-        case 'line_items':               await sql`UPDATE invoices SET line_items = ${JSON.stringify(raw)}::jsonb WHERE id = ${id}`; break;
+      const updated: string[] = [];
+      for (const field of INVOICE_PATCHABLE_FIELDS) {
+        if (!(field in body)) continue;
+        const raw = body[field as keyof typeof body];
+        switch (field) {
+          case 'agreement_id':             await client.query('UPDATE invoices SET agreement_id = $2 WHERE id = $1', [id, raw]); break;
+          case 'number':                   await client.query('UPDATE invoices SET number = $2 WHERE id = $1', [id, raw]); break;
+          case 'amount_cents':             await client.query('UPDATE invoices SET amount_cents = $2 WHERE id = $1', [id, raw]); break;
+          case 'tax_cents':                await client.query('UPDATE invoices SET tax_cents = $2 WHERE id = $1', [id, raw]); break;
+          case 'status':
+            await client.query(
+              `UPDATE invoices SET status = $2,
+                 voided_at = CASE WHEN $2 = 'void' THEN NOW() ELSE NULL END
+               WHERE id = $1`,
+              [id, raw],
+            );
+            break;
+          case 'stripe_invoice_id':        await client.query('UPDATE invoices SET stripe_invoice_id = $2 WHERE id = $1', [id, raw]); break;
+          case 'stripe_payment_intent_id': await client.query('UPDATE invoices SET stripe_payment_intent_id = $2 WHERE id = $1', [id, raw]); break;
+          case 'stripe_payment_link_url':  await client.query('UPDATE invoices SET stripe_payment_link_url = $2 WHERE id = $1', [id, raw]); break;
+          case 'issued_at':                await client.query('UPDATE invoices SET issued_at = $2 WHERE id = $1', [id, raw]); break;
+          case 'due_date':                 await client.query('UPDATE invoices SET due_date = $2 WHERE id = $1', [id, raw]); break;
+          case 'bill_to_name':             await client.query('UPDATE invoices SET bill_to_name = $2 WHERE id = $1', [id, raw]); break;
+          case 'bill_to_email':            await client.query('UPDATE invoices SET bill_to_email = $2 WHERE id = $1', [id, raw]); break;
+          case 'bill_to_address':          await client.query('UPDATE invoices SET bill_to_address = $2 WHERE id = $1', [id, raw]); break;
+          case 'memo':                     await client.query('UPDATE invoices SET memo = $2 WHERE id = $1', [id, raw]); break;
+          case 'line_items':               await client.query('UPDATE invoices SET line_items = $2::jsonb WHERE id = $1', [id, JSON.stringify(raw)]); break;
+        }
+        updated.push(field);
       }
-      updated.push(field);
-    }
+      if (updated.length === 0) throw new PatchError('no patchable fields', 400);
 
-    if (updated.length === 0) return NextResponse.json({ error: 'no patchable fields' }, { status: 400 });
-    const auditFields = new Set([
-      'agreement_id', 'number', 'amount_cents', 'tax_cents', 'status',
-      'issued_at', 'due_date', 'paid_at', 'voided_at',
-      'bill_to_name', 'bill_to_email', 'bill_to_address', 'memo', 'line_items',
-    ]);
-    const auditedFields = updated.filter((field) => auditFields.has(field));
-    const changes = Object.fromEntries(auditedFields.map((field) => [
-      field,
-      {
-        from: existing[0][field as keyof Invoice] ?? null,
-        to: body[field] ?? null,
-      },
-    ]));
-    const auditEntry: InvoiceAuditEntry = {
-      event: 'invoice_updated',
-      timestamp: new Date().toISOString(),
-      user_email: admin.email ?? null,
-      fields: auditedFields,
-      changes,
-    };
-    await sql`
-      UPDATE invoices
-      SET audit_log = COALESCE(audit_log, '[]'::jsonb) || ${JSON.stringify(auditEntry)}::jsonb,
-          updated_at = NOW()
-      WHERE id = ${id}
-    `;
-    const rows = await sql`SELECT * FROM invoices WHERE id = ${id}`;
+      const changes = Object.fromEntries(updated.map((field) => [
+        field,
+        { from: current[field as keyof Invoice] ?? null, to: body[field] ?? null },
+      ]));
+      const auditEntry: InvoiceAuditEntry = {
+        event: 'invoice_updated',
+        timestamp: new Date().toISOString(),
+        user_email: admin.email ?? null,
+        fields: updated,
+        changes,
+      };
+      await client.query(
+        `UPDATE invoices
+            SET audit_log = COALESCE(audit_log, '[]'::jsonb) || $2::jsonb,
+                updated_at = NOW()
+          WHERE id = $1`,
+        [id, JSON.stringify(auditEntry)],
+      );
+
+      const lifecycleChanged = updated.some((field) =>
+        ['amount_cents', 'tax_cents', 'line_items', 'status'].includes(field),
+      );
+      if (lifecycleChanged && !(current.status === 'draft' && body.status !== 'sent' && body.status !== 'void')) {
+        await recalculateInvoiceFromLedger(client, id);
+      }
+      await invalidateInvoiceCheckoutSessions(client, id);
+      const rows = await client.query('SELECT * FROM invoices WHERE id = $1', [id]);
+      return { invoice: rows.rows[0], updated };
+    });
     revalidateInvoiceViews(id);
-    return NextResponse.json({ invoice: rows[0], updated_fields: updated });
+    return NextResponse.json({ invoice: result.invoice, updated_fields: result.updated });
   } catch (err) {
     console.error('[admin/invoices PATCH]', errMessage(err));
+    if (err instanceof PatchError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     if (errMessage(err).includes('invoices_number_key')) {
       return NextResponse.json(
         { error: 'That invoice number is already in use. Choose a different number.' },
@@ -256,23 +274,32 @@ export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, 
 
   try {
     await ensureSchema();
-    const sql = getSql();
     let body: { permanent?: unknown; confirmation_id?: unknown } = {};
     try { body = await req.json(); } catch { /* Draft deletes need no body. */ }
-    const rows = await sql`SELECT status FROM invoices WHERE id = ${id}` as unknown as Array<{ status: string }>;
-    if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
-    if (rows[0].status !== 'draft') {
-      if (body.permanent !== true || body.confirmation_id !== id) {
-        return NextResponse.json({
-          error: 'issued invoices must be voided by default. To permanently delete, send permanent: true and confirmation_id equal to the invoice id.',
-          action: 'void_or_confirm_permanent_delete',
-        }, { status: 409 });
+    await withNeonTransaction(async (client) => {
+      const rows = await client.query<{ status: string }>(
+        'SELECT status FROM invoices WHERE id = $1 FOR UPDATE',
+        [id],
+      );
+      if (!rows.rows[0]) throw new PatchError('not found', 404);
+      if (
+        rows.rows[0].status !== 'draft' &&
+        (body.permanent !== true || body.confirmation_id !== id)
+      ) {
+        throw new PatchError(
+          'issued invoices must be voided by default. To permanently delete, send permanent: true and confirmation_id equal to the invoice id.',
+          409,
+        );
       }
-    }
-    await sql`DELETE FROM invoices WHERE id = ${id}`;
+      await invalidateInvoiceCheckoutSessions(client, id);
+      await client.query('DELETE FROM invoices WHERE id = $1', [id]);
+    });
     revalidateInvoiceViews(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
+    if (err instanceof PatchError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     return NextResponse.json({ error: 'delete failed', detail: errMessage(err) }, { status: 500 });
   }
 });

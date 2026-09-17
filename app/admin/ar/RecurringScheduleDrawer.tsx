@@ -14,7 +14,7 @@ import {
   type RecurringFrequency,
 } from "@/lib/recurring-invoices";
 import type { InvoiceLineItem } from "@/lib/invoices";
-import { formatCents, lineItemsTotal } from "@/lib/invoices";
+import { formatCents, previewLineItemsTotal } from "@/lib/invoices";
 import type { AgreementWithAdvertiser } from "@/lib/agreements";
 import {
   DrawerShell,
@@ -159,7 +159,7 @@ export function RecurringScheduleDrawer({
   const [saving, setSaving] = useState(false);
 
   const total = useMemo(
-    () => lineItemsTotal(lineItems) + (taxCents || 0),
+    () => previewLineItemsTotal(lineItems) + (taxCents || 0),
     [lineItems, taxCents],
   );
   const customerName =
@@ -567,8 +567,7 @@ export function RecurringScheduleDrawer({
                 checked={autoSend}
                 onChange={(e) => setAutoSend(e.target.checked)}
               />
-              Automatically mark generated invoices as &ldquo;sent&rdquo; and
-              email the payment link
+              Automatically mark generated invoices as &ldquo;sent&rdquo; (email delivery is not yet automated)
             </label>
             <div className="grid gap-2 rounded-lg border border-gray-200 p-3 sm:grid-cols-2">
               <label className="flex items-center gap-2 text-sm text-gray-700">

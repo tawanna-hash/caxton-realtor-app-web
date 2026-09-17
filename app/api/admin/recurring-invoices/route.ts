@@ -6,7 +6,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
-import { lineItemsTotal, type InvoiceLineItem } from '@/lib/invoices';
+import {
+  isIsoCalendarDate,
+  isSafeCents,
+  lineItemsTotal,
+  type InvoiceLineItem,
+} from '@/lib/invoices';
 import {
   RECURRING_FREQUENCY_VALUES,
   type RecurringFrequency,
@@ -80,9 +85,23 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     typeof body.day_of_month === 'number'
       ? Math.min(28, Math.max(1, Math.floor(body.day_of_month)))
       : null;
+  if ('line_items' in body && !Array.isArray(body.line_items)) {
+    return NextResponse.json({ error: 'line_items must be an array' }, { status: 400 });
+  }
+  if ('amount_cents' in body && !isSafeCents(body.amount_cents, { positive: true })) {
+    return NextResponse.json({ error: 'amount_cents must be a positive safe integer' }, { status: 400 });
+  }
+  if ('tax_cents' in body && !isSafeCents(body.tax_cents)) {
+    return NextResponse.json({ error: 'tax_cents must be a nonnegative safe integer' }, { status: 400 });
+  }
   const lineItems = Array.isArray(body.line_items) ? (body.line_items as InvoiceLineItem[]) : [];
   const explicitAmt = typeof body.amount_cents === 'number' ? body.amount_cents : null;
-  const amountCents = explicitAmt ?? lineItemsTotal(lineItems);
+  let amountCents: number;
+  try {
+    amountCents = explicitAmt ?? lineItemsTotal(lineItems);
+  } catch (error) {
+    return NextResponse.json({ error: errMessage(error) }, { status: 400 });
+  }
   const taxCents = typeof body.tax_cents === 'number' ? body.tax_cents : 0;
   const dueDays = typeof body.due_days === 'number' && body.due_days >= 0 ? Math.floor(body.due_days) : 15;
   const createDaysInAdvance =
@@ -98,8 +117,23 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const endDate = typeof body.end_date === 'string' && body.end_date ? body.end_date : null;
   const maxOccurrences = typeof body.max_occurrences === 'number' && body.max_occurrences > 0 ? Math.floor(body.max_occurrences) : null;
 
-  if (amountCents <= 0) {
-    return NextResponse.json({ error: 'amount_cents must be > 0' }, { status: 400 });
+  if (!isSafeCents(amountCents, { positive: true })) {
+    return NextResponse.json({ error: 'amount_cents must be a positive safe integer' }, { status: 400 });
+  }
+  if (!isSafeCents(taxCents)) {
+    return NextResponse.json({ error: 'tax_cents must be a nonnegative safe integer' }, { status: 400 });
+  }
+  if (!Number.isSafeInteger(amountCents + taxCents)) {
+    return NextResponse.json({ error: 'invoice total is too large' }, { status: 400 });
+  }
+  if (!isIsoCalendarDate(startDate)) {
+    return NextResponse.json({ error: 'start_date must be a real YYYY-MM-DD date' }, { status: 400 });
+  }
+  if (endDate !== null && !isIsoCalendarDate(endDate)) {
+    return NextResponse.json({ error: 'end_date must be a real YYYY-MM-DD date or null' }, { status: 400 });
+  }
+  if (endDate !== null && endDate < startDate) {
+    return NextResponse.json({ error: 'end_date cannot be before start_date' }, { status: 400 });
   }
 
   try {

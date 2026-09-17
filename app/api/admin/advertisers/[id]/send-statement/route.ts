@@ -71,42 +71,67 @@ export const POST = withAdminTracking(async function POST(
     });
     const rendered = renderPartnerStatementEmail(refreshed, message);
     const pdf = await generatePartnerStatementPdf(refreshed);
-    const result = await sendEmail({
-      to: recipient,
-      from: EMAIL_SENDERS[fromKey],
-      replyTo: fromKey,
-      subject,
-      html: rendered.html,
-      attachments: [
-        {
-          filename: `statement-${refreshed.advertiserName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.pdf`,
-          content: Buffer.from(pdf).toString('base64'),
-          contentType: 'application/pdf',
-        },
-      ],
-    });
-    if (!result.ok) {
-      return NextResponse.json({ error: 'send failed', detail: result.error }, { status: 502 });
-    }
 
     const sql = getSql();
     const paymentLinkCount =
       refreshed.invoices.length + (refreshed.overduePaymentLinkUrl ? 1 : 0);
-    const historyRows = (await sql`
+
+    // Write a durable 'pending' history row BEFORE attempting the send, so a
+    // crash or timeout mid-send still leaves a record that a statement was
+    // about to go out (auditable / reconcilable), instead of the previous
+    // behavior where a row only ever appeared after a successful send —
+    // meaning a send that succeeded but then crashed before the INSERT left
+    // zero trace of the email having gone out at all.
+    const pendingRows = (await sql`
       INSERT INTO statement_send_history (
         advertiser_id, advertiser_name, recipient_email, sender_email,
         subject, sent_by, message_id, statement_as_of, invoice_count,
-        outstanding_cents, payment_links_refreshed, invoice_ids
+        outstanding_cents, payment_links_refreshed, invoice_ids, status
       ) VALUES (
         ${refreshed.advertiserId}, ${refreshed.advertiserName}, ${recipient},
-        ${fromKey}, ${subject}, ${admin.email}, ${result.messageId ?? null},
+        ${fromKey}, ${subject}, ${admin.email}, ${null},
         ${refreshed.asOf}, ${refreshed.invoices.length},
         ${refreshed.outstandingCents}, ${paymentLinkCount},
-        ${JSON.stringify(refreshed.invoices.map((invoice) => invoice.id))}::jsonb
+        ${JSON.stringify(refreshed.invoices.map((invoice) => invoice.id))}::jsonb,
+        'pending'
       )
       RETURNING id, sent_at
     `) as unknown as Array<{ id: string; sent_at: string | Date }>;
-    const history = historyRows[0];
+    const pending = pendingRows[0];
+
+    let result: Awaited<ReturnType<typeof sendEmail>>;
+    try {
+      result = await sendEmail({
+        to: recipient,
+        from: EMAIL_SENDERS[fromKey],
+        replyTo: fromKey,
+        subject,
+        html: rendered.html,
+        attachments: [
+          {
+            filename: `statement-${refreshed.advertiserName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.pdf`,
+            content: Buffer.from(pdf).toString('base64'),
+            contentType: 'application/pdf',
+          },
+        ],
+      });
+    } catch (sendError) {
+      await sql`UPDATE statement_send_history SET status = 'failed' WHERE id = ${pending.id}`;
+      throw sendError;
+    }
+
+    if (!result.ok) {
+      await sql`UPDATE statement_send_history SET status = 'failed' WHERE id = ${pending.id}`;
+      return NextResponse.json({ error: 'send failed', detail: result.error }, { status: 502 });
+    }
+
+    const historyRows = (await sql`
+      UPDATE statement_send_history
+         SET status = 'sent', message_id = ${result.messageId ?? null}
+       WHERE id = ${pending.id}
+       RETURNING id, sent_at
+    `) as unknown as Array<{ id: string; sent_at: string | Date }>;
+    const history = historyRows[0] ?? pending;
 
     for (const invoice of refreshed.invoices) revalidateInvoiceViews(invoice.id);
     return NextResponse.json({

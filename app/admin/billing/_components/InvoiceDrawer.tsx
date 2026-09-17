@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { InvoiceWithAdvertiser, InvoiceStatus, InvoiceLineItem, InvoiceAuditEntry, InvoicePayment } from '@/lib/invoices';
-import { formatCents, lineItemsTotal, PAYMENT_METHODS, isCheckPayment } from '@/lib/invoices';
+import { formatCents, previewLineItemsTotal, PAYMENT_METHODS, isCheckPayment } from '@/lib/invoices';
 import { DrawerShell, DrawerFooter, Section, Field } from './DrawerShell';
 import { INPUT, INV_STATUS } from './constants';
 import { formatDateISO } from './helpers';
@@ -209,7 +209,7 @@ export function InvoiceDrawer({
   const updateLineItem = (i: number, key: keyof InvoiceLineItem, val: string | number) =>
     updateLineItems(form.line_items.map((li, idx) => idx === i ? { ...li, [key]: typeof val === 'number' ? val : (key === 'description' ? val : Number(val) || 0) } : li));
 
-  const linesTotal = lineItemsTotal(form.line_items);
+  const linesTotal = previewLineItemsTotal(form.line_items);
   const effectiveAmount = form.amount_dollars ? Math.round(parseFloat(form.amount_dollars) * 100) : linesTotal;
 
   const matchingAgreements = useMemo(

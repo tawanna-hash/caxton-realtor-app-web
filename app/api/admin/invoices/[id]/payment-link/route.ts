@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
+import { withNeonTransaction } from '@/lib/server/db/neon';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { paymentMethodLabel, processingFeeCents } from '@/lib/payment-processing-fees';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
@@ -26,6 +27,14 @@ import {
   resolveEmailSenderAddress,
   type EmailSenderAddress,
 } from '@/lib/email-sender';
+import {
+  InvoiceLifecycleError,
+  invalidateInvoiceCheckoutSessions,
+  lockInvoiceRemainingBalance,
+  markCheckoutSessionFailed,
+  markCheckoutSessionOpen,
+  registerInvoiceCheckoutSession,
+} from '@/lib/server/invoice-lifecycle';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,17 +42,21 @@ export const dynamic = 'force-dynamic';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://app.myrealtyline.com';
 
+class PaymentLinkRouteError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = 'PaymentLinkRouteError';
+  }
+}
+
 interface InvoiceRow {
   id: string;
   number: string;
-  status: string;
-  total_cents: number;
   advertiser_id: number | null;
   bill_to_name: string | null;
   bill_to_email: string | null;
   memo: string | null;
   due_date: string | null;
-  amount_paid_cents: number;
   balance_cents: number;
 }
 
@@ -75,69 +88,71 @@ export const POST = withAdminTracking(async function POST(
   try {
     await ensureSchema();
     const sql = getSql();
-    const rows = (await sql`
-      SELECT i.id, i.number, i.status, i.total_cents, i.advertiser_id,
-        i.bill_to_name, i.bill_to_email, i.memo, i.due_date,
-        COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END)::int AS amount_paid_cents,
-        GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END), 0)::int AS balance_cents
-      FROM invoices i
-      LEFT JOIN LATERAL (
-        SELECT SUM(p.amount_cents)::int AS amount_paid_cents
-        FROM invoice_payments p WHERE p.invoice_id = i.id
-      ) pay ON true
-      WHERE i.id = ${id}
-    `) as unknown as InvoiceRow[];
-    if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
-    const inv = rows[0];
-    if (inv.status === 'paid') return NextResponse.json({ error: 'invoice already paid' }, { status: 400 });
-    if (inv.status === 'void') return NextResponse.json({ error: 'invoice is void' }, { status: 400 });
-    if (!inv.balance_cents || inv.balance_cents <= 0) {
-      return NextResponse.json({ error: 'invoice has no amount due' }, { status: 400 });
-    }
+    let registryId: string | null = null;
+    const inv = await withNeonTransaction(async (client): Promise<InvoiceRow> => {
+      const { remainingCents } = await lockInvoiceRemainingBalance(client, id);
+      const invoiceResult = await client.query<Omit<InvoiceRow, 'balance_cents'>>(
+        `SELECT id, number, advertiser_id, bill_to_name, bill_to_email, memo, due_date
+           FROM invoices
+          WHERE id = $1`,
+        [id],
+      );
+      const invoice = invoiceResult.rows[0];
+      if (!invoice) throw new InvoiceLifecycleError('invoice not found', 404);
+
+      await invalidateInvoiceCheckoutSessions(client, id);
+      let registered;
+      try {
+        registered = await registerInvoiceCheckoutSession(client, {
+          invoiceId: id,
+          baseAmountCents: remainingCents,
+          createdBy: admin.adminId ?? 'admin',
+        });
+      } catch (err) {
+        if (isPostgresUniqueViolation(err)) {
+          throw new InvoiceLifecycleError('another checkout session is already being created', 409);
+        }
+        throw err;
+      }
+      registryId = registered.id;
+      return { ...invoice, balance_cents: remainingCents };
+    });
 
     const stripe = getStripe();
     const feeCents = processingFeeCents(inv.balance_cents, 'card');
     const chargeCents = inv.balance_cents + feeCents;
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['card'],
-      customer_email: inv.bill_to_email ?? undefined,
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            unit_amount: inv.balance_cents,
-            product_data: {
-              name: `Invoice ${inv.number}`,
-              description: inv.memo ?? 'RealtyLine advertising invoice',
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        customer_email: inv.bill_to_email ?? undefined,
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              unit_amount: inv.balance_cents,
+              product_data: {
+                name: `Invoice ${inv.number}`,
+                description: inv.memo ?? 'RealtyLine advertising invoice',
+              },
             },
+            quantity: 1,
           },
-          quantity: 1,
-        },
-        {
-          price_data: {
-            currency: 'usd',
-            unit_amount: feeCents,
-            product_data: {
-              name: `${paymentMethodLabel('card')} processing fee`,
-              description: 'Processing fee disclosed before payment authorization',
+          {
+            price_data: {
+              currency: 'usd',
+              unit_amount: feeCents,
+              product_data: {
+                name: `${paymentMethodLabel('card')} processing fee`,
+                description: 'Processing fee disclosed before payment authorization',
+              },
             },
+            quantity: 1,
           },
-          quantity: 1,
-        },
-      ],
-      success_url: `${APP_BASE_URL}/portal/invoices/${inv.id}?paid=1`,
-      cancel_url: `${APP_BASE_URL}/portal/invoices/${inv.id}?canceled=1`,
-      metadata: {
-        source: 'invoice_payment',
-        invoice_id: inv.id,
-        invoice_number: inv.number,
-        payment_method_selection: 'card',
-        base_amount_cents: String(inv.balance_cents),
-        processing_fee_cents: String(feeCents),
-        charge_total_cents: String(chargeCents),
-      },
-      payment_intent_data: {
+        ],
+        success_url: `${APP_BASE_URL}/portal/invoices/${inv.id}?paid=1`,
+        cancel_url: `${APP_BASE_URL}/portal/invoices/${inv.id}?canceled=1`,
         metadata: {
           source: 'invoice_payment',
           invoice_id: inv.id,
@@ -147,14 +162,48 @@ export const POST = withAdminTracking(async function POST(
           processing_fee_cents: String(feeCents),
           charge_total_cents: String(chargeCents),
         },
-      },
-    });
+        payment_intent_data: {
+          metadata: {
+            source: 'invoice_payment',
+            invoice_id: inv.id,
+            invoice_number: inv.number,
+            payment_method_selection: 'card',
+            base_amount_cents: String(inv.balance_cents),
+            processing_fee_cents: String(feeCents),
+            charge_total_cents: String(chargeCents),
+          },
+        },
+      });
+    } catch (stripeErr) {
+      if (registryId) {
+        await withNeonTransaction((client) => markCheckoutSessionFailed(client, registryId as string));
+      }
+      throw stripeErr;
+    }
 
-    await sql`
-      UPDATE invoices
-      SET stripe_payment_link_url = ${session.url}, stripe_checkout_session_id = ${session.id}, updated_at = NOW()
-      WHERE id = ${inv.id}
-    `;
+    try {
+      await withNeonTransaction(async (client) => {
+        await markCheckoutSessionOpen(client, registryId as string, {
+          id: session.id,
+          url: session.url,
+        });
+        await client.query(
+          `UPDATE invoices
+              SET stripe_payment_link_url = $2,
+                  stripe_checkout_session_id = $3,
+                  updated_at = NOW()
+            WHERE id = $1`,
+          [inv.id, session.url, session.id],
+        );
+      });
+    } catch (finalizeErr) {
+      try { await stripe.checkout.sessions.expire(session.id); } catch { /* best effort */ }
+      await withNeonTransaction((client) => markCheckoutSessionFailed(client, registryId as string));
+      if (isPostgresUniqueViolation(finalizeErr)) {
+        throw new InvoiceLifecycleError('another checkout session replaced this request', 409);
+      }
+      throw finalizeErr;
+    }
 
     let emailStatus: 'sent' | 'skipped' | 'failed' | 'no_advertiser' | 'no_email' = 'skipped';
     let emailError: string | null = null;
@@ -251,6 +300,9 @@ export const POST = withAdminTracking(async function POST(
       email_message_id: emailMessageId,
     });
   } catch (err) {
+    if (err instanceof InvoiceLifecycleError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('[admin/invoices payment-link]', err);
     return NextResponse.json(
       { error: 'payment link failed', detail: err instanceof Error ? err.message : 'error' },
@@ -270,31 +322,55 @@ export const DELETE = withAdminTracking(async function DELETE(
 
   try {
     await ensureSchema();
-    const sql = getSql();
-    const rows = (await sql`
-      SELECT id, stripe_checkout_session_id FROM invoices WHERE id = ${id}
-    `) as unknown as { id: string; stripe_checkout_session_id: string | null }[];
-    if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
-    const inv = rows[0];
+    await withNeonTransaction(async (client) => {
+      const invoiceResult = await client.query<{ id: string; stripe_checkout_session_id: string | null }>(
+        `SELECT id, stripe_checkout_session_id
+           FROM invoices
+          WHERE id = $1
+          FOR UPDATE`,
+        [id],
+      );
+      const inv = invoiceResult.rows[0];
+      if (!inv) throw new InvoiceLifecycleError('invoice not found', 404);
 
-    if (inv.stripe_checkout_session_id && isStripeConfigured()) {
-      try {
-        const stripe = getStripe();
-        await stripe.checkout.sessions.expire(inv.stripe_checkout_session_id);
-      } catch {
-        // Session may already be expired/completed - clearing our stored
-        // link is what matters, not the Stripe-side session state.
+      await invalidateInvoiceCheckoutSessions(client, id);
+      const activeRegistryRows = await client.query<{ id: string }>(
+        `SELECT id
+           FROM invoice_checkout_sessions
+          WHERE invoice_id = $1
+            AND status IN ('creating', 'open')
+          LIMIT 1`,
+        [id],
+      );
+      if (activeRegistryRows.rows.length > 0) {
+        throw new PaymentLinkRouteError(
+          'Stripe could not confirm that the payment link was revoked. Try again.',
+          502,
+        );
       }
-    }
 
-    await sql`
-      UPDATE invoices
-      SET stripe_payment_link_url = NULL, stripe_checkout_session_id = NULL, updated_at = NOW()
-      WHERE id = ${inv.id}
-    `;
-    revalidateInvoiceViews(inv.id);
+      // Support links created before the checkout-session registry existed.
+      // Never clear the only local session ID unless Stripe confirms it is
+      // expired or complete.
+      if (inv.stripe_checkout_session_id && isStripeConfigured()) {
+        await expireStripeSessionOrThrow(inv.stripe_checkout_session_id);
+      }
+
+      await client.query(
+        `UPDATE invoices
+            SET stripe_payment_link_url = NULL,
+                stripe_checkout_session_id = NULL,
+                updated_at = NOW()
+          WHERE id = $1`,
+        [inv.id],
+      );
+    });
+    revalidateInvoiceViews(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
+    if (err instanceof InvoiceLifecycleError || err instanceof PaymentLinkRouteError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('[admin/invoices payment-link DELETE]', err);
     return NextResponse.json(
       { error: 'delete failed', detail: err instanceof Error ? err.message : 'error' },
@@ -302,6 +378,32 @@ export const DELETE = withAdminTracking(async function DELETE(
     );
   }
 });
+
+async function expireStripeSessionOrThrow(sessionId: string): Promise<void> {
+  const stripe = getStripe();
+  try {
+    const expired = await stripe.checkout.sessions.expire(sessionId);
+    if (expired.status === 'expired' || expired.status === 'complete') return;
+  } catch {
+    // Expiration rejects already-terminal sessions, while transient failures
+    // need a follow-up read before local state can be cleared.
+  }
+
+  try {
+    const current = await stripe.checkout.sessions.retrieve(sessionId);
+    if (current.status === 'expired' || current.status === 'complete') return;
+  } catch {
+    // A failed verification is ambiguous, so retain the local session ID.
+  }
+  throw new PaymentLinkRouteError(
+    'Stripe could not confirm that the payment link was revoked. Try again.',
+    502,
+  );
+}
+
+function isPostgresUniqueViolation(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && 'code' in err && err.code === '23505';
+}
 
 function invoiceEmailText({
   name,

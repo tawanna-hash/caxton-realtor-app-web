@@ -1,4 +1,14 @@
 import { withNeonTransaction } from '@/lib/server/db/neon';
+import { assertInvoicePayable, invalidateInvoiceCheckoutSessions } from '@/lib/server/invoice-lifecycle';
+
+/**
+ * Sources that only the Stripe webhook is allowed to write. A generic
+ * caller (e.g. the manual "record payment" admin endpoint) must never be
+ * able to claim one of these — doing so would let it overwrite a
+ * webhook-owned ledger row via the (source, external_id) upsert below, or
+ * pre-seed that key before the real webhook delivery arrives.
+ */
+const STRIPE_OWNED_SOURCES = new Set(['stripe', 'stripe_statement']);
 
 type RecordInvoicePaymentInput = {
   invoiceId: string;
@@ -47,8 +57,16 @@ export async function recordInvoicePayment(input: RecordInvoicePaymentInput) {
     );
     const invoice = invoiceResult.rows[0];
     if (!invoice) throw new InvoicePaymentError('invoice not found', 404);
-    if (invoice.status === 'void') {
-      throw new InvoicePaymentError('cannot pay a void invoice', 400);
+    try {
+      assertInvoicePayable(invoice);
+    } catch (err) {
+      throw new InvoicePaymentError(err instanceof Error ? err.message : 'invoice is not payable', 400);
+    }
+    if (STRIPE_OWNED_SOURCES.has(input.source) && input.createdBy !== 'stripe_webhook') {
+      throw new InvoicePaymentError(
+        `source '${input.source}' is reserved for Stripe webhook processing`,
+        400,
+      );
     }
 
     let existingPaymentId: string | null = null;
@@ -144,6 +162,12 @@ export async function recordInvoicePayment(input: RecordInvoicePaymentInput) {
         WHERE id = $1`,
       [input.invoiceId, fullyPaid, input.paymentDate],
     );
+
+    // Any ledger mutation can make an existing Checkout URL wrong (partial
+    // payment leaves a stale, too-large balance still payable; full payment
+    // leaves a URL that would overpay). Expire every open session for this
+    // invoice — individual and statement-allocation — in the same transaction.
+    await invalidateInvoiceCheckoutSessions(client, input.invoiceId);
 
     return {
       payment,

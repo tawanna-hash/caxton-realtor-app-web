@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
@@ -85,15 +85,24 @@ export default function StatementsClient({ partners }: { partners: StatementPart
   const [historyPartner, setHistoryPartner] = useState<StatementPartnerRow | null>(null);
   const [history, setHistory] = useState<StatementHistory[]>([]);
   const [historyError, setHistoryError] = useState('');
+  const historyRequest = useRef(0);
 
   const openHistory = async (partner: StatementPartnerRow) => {
-    setHistoryPartner(partner); setHistory([]); setHistoryError('');
+    const requestId = ++historyRequest.current;
+    setHistoryPartner(partner);
+    setHistory([]);
+    setHistoryError('');
     try {
       const response = await fetch(`/api/admin/advertisers/${partner.advertiser_id}/statement-history`, { cache: 'no-store' });
       const data = await response.json().catch(() => ({}));
+      if (requestId !== historyRequest.current) return;
       if (!response.ok) throw new Error(data.error ?? 'Could not load statement history.');
       setHistory(data.history ?? []);
-    } catch (error) { setHistoryError(error instanceof Error ? error.message : 'Could not load statement history.'); }
+    } catch (error) {
+      if (requestId === historyRequest.current) {
+        setHistoryError(error instanceof Error ? error.message : 'Could not load statement history.');
+      }
+    }
   };
   const deleteHistory = async (entry: StatementHistory) => {
     if (!historyPartner) return;
@@ -293,7 +302,7 @@ export default function StatementsClient({ partners }: { partners: StatementPart
       </section>
       {historyPartner && (
         <section className="rounded border border-gray-200 bg-white p-4 shadow-sm" aria-label="Statement send history">
-          <div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold text-gray-900">Send history · {historyPartner.advertiser_name}</h2><p className="text-xs text-gray-500">Sent records are retained by default. Permanent deletion requires the history ID.</p></div><button type="button" onClick={() => setHistoryPartner(null)} className="text-sm text-gray-600 hover:underline">Close</button></div>
+          <div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold text-gray-900">Send history · {historyPartner.advertiser_name}</h2><p className="text-xs text-gray-500">Sent records are retained by default. Permanent deletion requires the history ID.</p></div><button type="button" onClick={() => { historyRequest.current += 1; setHistoryPartner(null); }} className="text-sm text-gray-600 hover:underline">Close</button></div>
           {historyError && <p className="mt-3 text-sm text-rose-700">{historyError}</p>}
           <div className="mt-3 divide-y divide-gray-200">{history.map((entry) => <div key={entry.id} className="flex items-center justify-between gap-3 py-3 text-sm"><div><div className="font-medium text-gray-800">{entry.recipient_email}</div><div className="text-xs text-gray-500">{new Date(entry.sent_at).toLocaleString('en-US')} · {entry.subject}</div></div><button type="button" className="text-xs font-medium text-rose-700 hover:underline" onClick={() => void deleteHistory(entry)}>Permanent delete</button></div>)}</div>
           {!historyError && history.length === 0 && <p className="mt-3 text-sm text-gray-500">No sent statements recorded.</p>}

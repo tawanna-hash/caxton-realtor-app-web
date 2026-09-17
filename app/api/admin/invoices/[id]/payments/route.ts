@@ -69,8 +69,8 @@ export async function POST(request: NextRequest, context: RouteCtx) {
 
   try {
     await ensureSchema();
-    const source = typeof body.source === 'string' && body.source.trim() ? body.source.trim() : 'manual';
-    const externalId = typeof body.external_id === 'string' && body.external_id.trim() ? body.external_id.trim() : null;
+    // Admin-entered payments are always 'manual' (finding API-#8/UI-#18) —
+    // see the sibling route for rationale.
     const result = await recordInvoicePayment({
       invoiceId: id,
       amountCents,
@@ -78,8 +78,8 @@ export async function POST(request: NextRequest, context: RouteCtx) {
       paymentMethod: typeof body.payment_method === 'string' ? body.payment_method : null,
       reference: typeof body.reference === 'string' ? body.reference : null,
       memo: typeof body.memo === 'string' ? body.memo : null,
-      source,
-      externalId,
+      source: 'manual',
+      externalId: null,
       createdBy: admin.email ?? null,
     });
 

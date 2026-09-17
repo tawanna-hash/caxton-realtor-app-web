@@ -99,9 +99,74 @@ export function formatInvoiceNumber(publication: string, year: number, seq: numb
   return `${code}-${year}-${String(seq).padStart(4, '0')}`;
 }
 
-/** Compute total cents from line items (excluding tax). */
+/**
+ * Compute total cents from line items (excluding tax). Throws rather than
+ * silently truncating/wrapping — `| 0` coerces to signed 32-bit and drops
+ * fractional quantities, which let malformed line items pass validation
+ * with a wrong total. Every quantity/unit price must be a safe nonnegative
+ * integer and the running sum must stay in the safe-integer range.
+ */
 export function lineItemsTotal(items: InvoiceLineItem[]): number {
-  return items.reduce((sum, li) => sum + (li.qty | 0) * (li.unit_cents | 0), 0);
+  return items.reduce((sum, li) => {
+    if (!Number.isSafeInteger(li.qty) || li.qty <= 0) {
+      throw new Error(`line item has an invalid quantity: ${li.qty}`);
+    }
+    if (!Number.isSafeInteger(li.unit_cents) || li.unit_cents < 0) {
+      throw new Error(`line item has an invalid unit price: ${li.unit_cents}`);
+    }
+    const next = sum + li.qty * li.unit_cents;
+    if (!Number.isSafeInteger(next)) {
+      throw new Error('line item total is too large');
+    }
+    return next;
+  }, 0);
+}
+
+/**
+ * Live-edit preview total — tolerant of transient invalid rows (e.g. a
+ * blank quantity mid-keystroke) so form UIs don't crash while typing.
+ * Server-side validation must use the strict `lineItemsTotal` above, never
+ * this one.
+ */
+export function previewLineItemsTotal(items: InvoiceLineItem[]): number {
+  return items.reduce((sum, li) => {
+    const qty = Number.isFinite(li.qty) && li.qty > 0 ? li.qty : 0;
+    const unit = Number.isFinite(li.unit_cents) && li.unit_cents > 0 ? li.unit_cents : 0;
+    return sum + Math.round(qty) * Math.round(unit);
+  }, 0);
+}
+
+/** True when `value` is a safe integer cents amount, nonnegative unless `allowZero` is false and > 0 is required by the caller. */
+export function isSafeCents(value: unknown, opts: { positive?: boolean } = {}): value is number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value)) return false;
+  return opts.positive ? value > 0 : value >= 0;
+}
+
+/** Strict ISO calendar date check — rejects shapes like `2026-99-99` that a regex alone would accept and Postgres would later reject as a 500. */
+export function isIsoCalendarDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+}
+
+/**
+ * Amount actually still owed on an invoice. Prefer this over `total_cents`
+ * anywhere the semantic value is "amount due" — a partially paid invoice's
+ * total is not what remains to be collected, and a `paid` invoice with no
+ * ledger rows should read as 0 due (the fallback below), never as if unpaid.
+ */
+export function outstandingCents(invoice: {
+  total_cents: number;
+  status: InvoiceStatus;
+  balance_cents?: number | null;
+  amount_paid_cents?: number | null;
+}): number {
+  if (typeof invoice.balance_cents === 'number') return Math.max(invoice.balance_cents, 0);
+  if (invoice.status === 'paid' || invoice.status === 'void') return 0;
+  if (typeof invoice.amount_paid_cents === 'number') {
+    return Math.max(invoice.total_cents - invoice.amount_paid_cents, 0);
+  }
+  return invoice.total_cents;
 }
 
 // ── Payment types (tender) ─────────────────────────────────────────

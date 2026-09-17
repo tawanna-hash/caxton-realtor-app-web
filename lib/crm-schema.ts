@@ -350,6 +350,11 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
 
   // ── Accounts Receivable: recurring invoices + Stripe checkout tracking ──
   await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS recurring_schedule_id   uuid`);
+  // Stable per-occurrence key for recurring-schedule generation, independent
+  // of issued_at (which is NULL for draft/non-auto-send occurrences and so
+  // can't carry uniqueness on its own). Set once at generation time to the
+  // schedule's next_run_at for that occurrence.
+  await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS recurring_occurrence_at timestamptz`);
   await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_checkout_session_id text`);
   await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_customer_id      text`);
   await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS last_reminder_sent_at   timestamptz`);
@@ -357,6 +362,15 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS audit_log                jsonb NOT NULL DEFAULT '[]'::jsonb`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_recurring_schedule ON invoices(recurring_schedule_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_stripe_checkout ON invoices(stripe_checkout_session_id)`);
+  // Backstop against duplicate-generation races (belt-and-suspenders on top
+  // of FOR UPDATE SKIP LOCKED in findDueSchedules): at most one invoice per
+  // (schedule, occurrence). Partial index so manual/non-recurring invoices
+  // (recurring_schedule_id IS NULL) are unaffected.
+  await step(() => sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS uniq_invoices_recurring_occurrence
+      ON invoices(recurring_schedule_id, recurring_occurrence_at)
+      WHERE recurring_schedule_id IS NOT NULL AND recurring_occurrence_at IS NOT NULL
+  `);
 
   // Preserve every successful statement delivery as an immutable audit event.
   // Snapshot fields keep the history useful even if the partner, balance, or
@@ -376,12 +390,22 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       invoice_count           integer NOT NULL,
       outstanding_cents       integer NOT NULL,
       payment_links_refreshed integer NOT NULL DEFAULT 0,
-      invoice_ids             jsonb NOT NULL DEFAULT '[]'::jsonb
+      invoice_ids             jsonb NOT NULL DEFAULT '[]'::jsonb,
+      status                  text NOT NULL DEFAULT 'sent'
     )
   `);
   await step(() => sql`
     CREATE INDEX IF NOT EXISTS idx_statement_send_history_advertiser_sent
       ON statement_send_history(advertiser_id, sent_at DESC)
+  `);
+  // status column added after initial launch: 'pending' is inserted BEFORE
+  // the email send attempt so a durable record exists even if the process
+  // crashes mid-send; the row is then updated to 'sent' or 'failed'.
+  // Pre-existing rows (all genuinely delivered, since history used to be
+  // written only after a successful send) default to 'sent' above.
+  await step(() => sql`
+    ALTER TABLE statement_send_history
+      ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'sent'
   `);
 
   // One Stripe Checkout session can settle every overdue invoice on a
@@ -414,6 +438,51 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       ON statement_payment_sessions(stripe_payment_intent_id)
   `);
 
+  // Checkout Session registry: the source of truth for "what Stripe sessions
+  // can currently pay this invoice", replacing the single mutable
+  // invoices.stripe_checkout_session_id column. Every payment-link creation
+  // path inserts here; every ledger mutation expires matching open rows.
+  // The partial unique index enforces at most one live session per invoice
+  // even under concurrent requests.
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS invoice_checkout_sessions (
+      id                         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      invoice_id                 uuid NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+      stripe_checkout_session_id text UNIQUE,
+      checkout_url               text,
+      status                     text NOT NULL DEFAULT 'creating'
+                                   CHECK (status IN ('creating','open','complete','expired','failed')),
+      base_amount_cents          integer NOT NULL CHECK (base_amount_cents > 0),
+      link_generation            integer NOT NULL DEFAULT 1,
+      created_by                 text,
+      created_at                 timestamptz NOT NULL DEFAULT now(),
+      updated_at                 timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`
+    CREATE INDEX IF NOT EXISTS idx_invoice_checkout_sessions_invoice
+      ON invoice_checkout_sessions(invoice_id, created_at DESC)
+  `);
+  await step(() => sql`
+    CREATE INDEX IF NOT EXISTS idx_invoice_checkout_sessions_stripe_id
+      ON invoice_checkout_sessions(stripe_checkout_session_id)
+  `);
+  await step(() => sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS one_active_invoice_checkout
+      ON invoice_checkout_sessions(invoice_id)
+      WHERE status IN ('creating','open')
+  `);
+  await step(() => sql`
+    CREATE OR REPLACE FUNCTION trg_invoice_checkout_sessions_set_updated_at()
+    RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql
+  `);
+  await step(() => sql`DROP TRIGGER IF EXISTS invoice_checkout_sessions_set_updated_at ON invoice_checkout_sessions`);
+  await step(() => sql`
+    CREATE TRIGGER invoice_checkout_sessions_set_updated_at
+      BEFORE UPDATE ON invoice_checkout_sessions
+      FOR EACH ROW EXECUTE FUNCTION trg_invoice_checkout_sessions_set_updated_at()
+  `);
+
   // Individual payments must remain separate from the invoice so partial
   // payments, payment methods, references, and imported bookkeeping history
   // can be reconciled without rewriting the invoice memo.
@@ -438,6 +507,17 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_invoice_payments_external
       ON invoice_payments(source, external_id)
       WHERE external_id IS NOT NULL
+  `);
+
+  // Atomic per-prefix document-number counters. Replaces racy
+  // COUNT(*)/MAX(*) + 1 number generation for invoices, sales receipts, and
+  // recurring-invoice occurrences, which can collide under concurrency or
+  // after a row is deleted.
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS document_number_counters (
+      series      text PRIMARY KEY,
+      next_value  integer NOT NULL DEFAULT 1
+    )
   `);
 
   await step(() => sql`

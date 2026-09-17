@@ -1,7 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import { ensureSchema, getSql } from '@/lib/db';
+import { isSafeCents } from '@/lib/invoices';
 import { paymentMethodLabel, processingFeeCents } from '@/lib/payment-processing-fees';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
+import { withNeonTransaction } from '@/lib/server/db/neon';
+import {
+  InvoiceLifecycleError,
+  invalidateInvoiceCheckoutSessions,
+  lockInvoiceRemainingBalance,
+  markCheckoutSessionFailed,
+  markCheckoutSessionOpen,
+  registerInvoiceCheckoutSession,
+} from '@/lib/server/invoice-lifecycle';
 
 const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://app.myrealtyline.com';
 
@@ -128,148 +138,264 @@ export async function loadPartnerStatement(advertiserId: number): Promise<Partne
 
 function overdueAllocations(statement: PartnerStatement): StatementInvoiceAllocation[] {
   return statement.invoices
-    .filter((invoice) => invoice.is_overdue && Number(invoice.balance_cents) > 0)
-    .map((invoice) => ({
-      invoiceId: invoice.id,
-      invoiceNumber: invoice.number ?? invoice.id.slice(0, 8),
-      amountCents: Number(invoice.balance_cents),
-    }));
+    .filter((invoice) => invoice.is_overdue)
+    .map((invoice) => {
+      const amountCents = Number(invoice.balance_cents);
+      if (!isSafeCents(amountCents, { positive: true })) {
+        throw new InvoiceLifecycleError('statement contains an invalid invoice amount', 400);
+      }
+      return {
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.number ?? invoice.id.slice(0, 8),
+        amountCents,
+      };
+    });
 }
 
-async function expireStatementPaymentSessions(
-  advertiserId: number,
-  exceptId?: string,
-): Promise<void> {
-  const sql = getSql();
-  const rows = (await sql`
-    SELECT id, stripe_checkout_session_id
-    FROM statement_payment_sessions
-    WHERE advertiser_id = ${advertiserId}
-      AND status = 'open'
-      AND (${exceptId ?? null}::uuid IS NULL OR id <> ${exceptId ?? null}::uuid)
-  `) as unknown as StatementPaymentSessionRow[];
-  if (rows.length === 0) return;
-
-  const stripe = getStripe();
-  for (const row of rows) {
-    if (row.stripe_checkout_session_id) {
-      try {
-        await stripe.checkout.sessions.expire(row.stripe_checkout_session_id);
-      } catch {
-        // Completed and already-expired sessions cannot be expired again.
-      }
+function sumSafeCents(values: number[], label: string): number {
+  let total = 0;
+  for (const value of values) {
+    if (!isSafeCents(value, { positive: true })) {
+      throw new InvoiceLifecycleError(`${label} contains an invalid amount`, 400);
+    }
+    total += value;
+    if (!isSafeCents(total, { positive: true })) {
+      throw new InvoiceLifecycleError(`${label} total is invalid`, 400);
     }
   }
-  for (const row of rows) {
-    await sql`
-      UPDATE statement_payment_sessions
-      SET status = 'expired', updated_at = NOW()
-      WHERE id = ${row.id}
-        AND status = 'open'
-    `;
-  }
+  return total;
 }
 
 export async function getOrCreatePartnerStatementOverdueLink(
   statement: PartnerStatement,
   options: { forceRefresh?: boolean } = {},
 ): Promise<PartnerStatement> {
-  const allocations = overdueAllocations(statement);
-  if (allocations.length === 0) {
+  const requestedAllocations = overdueAllocations(statement);
+  if (requestedAllocations.length === 0) {
     return { ...statement, overduePaymentLinkUrl: null };
   }
   if (!isStripeConfigured()) throw new Error('Stripe is not configured');
 
   await ensureSchema();
-  const sql = getSql();
-  const allocationsJson = JSON.stringify(allocations);
-  if (!options.forceRefresh) {
-    const existing = (await sql`
-      SELECT id, checkout_url, stripe_checkout_session_id
-      FROM statement_payment_sessions
-      WHERE advertiser_id = ${statement.advertiserId}
-        AND status = 'open'
-        AND (expires_at IS NULL OR expires_at > NOW())
-        AND invoice_allocations = ${allocationsJson}::jsonb
-      ORDER BY created_at DESC
-      LIMIT 1
-    `) as unknown as StatementPaymentSessionRow[];
-    if (existing[0]?.checkout_url) {
-      return { ...statement, overduePaymentLinkUrl: existing[0].checkout_url };
-    }
-  }
-
-  await expireStatementPaymentSessions(statement.advertiserId);
   const stripe = getStripe();
-  const paymentId = randomUUID();
-  const baseAmountCents = allocations.reduce((sum, allocation) => sum + allocation.amountCents, 0);
-  const feeCents = processingFeeCents(baseAmountCents, 'card');
-  const invoiceLabels = allocations.map((allocation) => allocation.invoiceNumber).join(', ');
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    payment_method_types: ['card'],
-    customer_email: statement.recipientEmail ?? undefined,
-    line_items: [
-      {
-        price_data: {
-          currency: 'usd',
-          unit_amount: baseAmountCents,
-          product_data: {
-            name: `Pay ${allocations.length} overdue invoice${allocations.length === 1 ? '' : 's'}`,
-            description: `Caxton Publications invoices: ${invoiceLabels}`.slice(0, 500),
+  let createdStripeSessionId: string | null = null;
+  try {
+    const result = await withNeonTransaction(async (client) => {
+      // A stable lock order prevents two overlapping "pay all" requests from
+      // deadlocking while still serializing them against individual links.
+      const requestedById = new Map(requestedAllocations.map((allocation) => [
+        allocation.invoiceId,
+        allocation,
+      ]));
+      const allocations: StatementInvoiceAllocation[] = [];
+      for (const invoiceId of [...requestedById.keys()].sort()) {
+        const { remainingCents } = await lockInvoiceRemainingBalance(client, invoiceId);
+        const owner = await client.query<{ advertiser_id: number | null; number: string | null }>(
+          `SELECT advertiser_id, number FROM invoices WHERE id = $1`,
+          [invoiceId],
+        );
+        if (owner.rows[0]?.advertiser_id !== statement.advertiserId) {
+          throw new InvoiceLifecycleError('invoice does not belong to this statement', 400);
+        }
+        allocations.push({
+          invoiceId,
+          invoiceNumber:
+            owner.rows[0].number ??
+            requestedById.get(invoiceId)?.invoiceNumber ??
+            invoiceId.slice(0, 8),
+          amountCents: remainingCents,
+        });
+      }
+
+      const allocationsJson = JSON.stringify(allocations);
+      if (!options.forceRefresh) {
+        const existing = await client.query<StatementPaymentSessionRow>(
+          `SELECT id, checkout_url, stripe_checkout_session_id
+             FROM statement_payment_sessions
+            WHERE advertiser_id = $1
+              AND status = 'open'
+              AND (expires_at IS NULL OR expires_at > NOW())
+              AND invoice_allocations = $2::jsonb
+            ORDER BY created_at DESC
+            LIMIT 1`,
+          [statement.advertiserId, allocationsJson],
+        );
+        if (existing.rows[0]?.checkout_url) {
+          return { url: existing.rows[0].checkout_url, allocations };
+        }
+      }
+
+      // This expires every individual checkout and every open statement
+      // session containing any charged invoice. It is intentionally stronger
+      // than advertiser-wide expiry: unrelated statements remain usable.
+      for (const allocation of allocations) {
+        await invalidateInvoiceCheckoutSessions(client, allocation.invoiceId);
+        const stillOpen = await client.query<{ id: string }>(
+          `SELECT id
+             FROM statement_payment_sessions
+            WHERE status = 'open'
+              AND invoice_allocations @> $1::jsonb
+            LIMIT 1`,
+          [JSON.stringify([{ invoiceId: allocation.invoiceId }])],
+        );
+        const stillOpenInvoice = await client.query<{ id: string }>(
+          `SELECT id
+             FROM invoice_checkout_sessions
+            WHERE invoice_id = $1
+              AND status IN ('creating', 'open')
+            LIMIT 1`,
+          [allocation.invoiceId],
+        );
+        if (stillOpen.rows.length > 0 || stillOpenInvoice.rows.length > 0) {
+          throw new InvoiceLifecycleError(
+            'an existing checkout session could not be safely expired',
+            409,
+          );
+        }
+        await client.query(
+          `UPDATE invoices
+              SET stripe_payment_link_url = NULL,
+                  stripe_checkout_session_id = NULL,
+                  updated_at = NOW()
+            WHERE id = $1`,
+          [allocation.invoiceId],
+        );
+      }
+
+      const paymentId = randomUUID();
+      const baseAmountCents = sumSafeCents(
+        allocations.map((allocation) => allocation.amountCents),
+        'statement payment',
+      );
+      const feeCents = processingFeeCents(baseAmountCents, 'card');
+      if (!isSafeCents(feeCents) || !isSafeCents(baseAmountCents + feeCents, { positive: true })) {
+        throw new InvoiceLifecycleError('statement payment amount is invalid', 400);
+      }
+      const invoiceLabels = allocations.map((allocation) => allocation.invoiceNumber).join(', ');
+
+      // Persist the immutable allocation intent before asking Stripe to make
+      // it payable. The schema predates a separate "creating" status, so an
+      // empty, non-published URL represents the in-transaction placeholder;
+      // any provider failure rolls this row back with the transaction.
+      await client.query(
+        `INSERT INTO statement_payment_sessions (
+           id, advertiser_id, checkout_url, invoice_allocations,
+           base_amount_cents, processing_fee_cents, status
+         ) VALUES ($1, $2, '', $3::jsonb, $4, $5, 'open')`,
+        [paymentId, statement.advertiserId, allocationsJson, baseAmountCents, feeCents],
+      );
+
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        customer_email: statement.recipientEmail ?? undefined,
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              unit_amount: baseAmountCents,
+              product_data: {
+                name: `Pay ${allocations.length} overdue invoice${allocations.length === 1 ? '' : 's'}`,
+                description: `Caxton Publications invoices: ${invoiceLabels}`.slice(0, 500),
+              },
+            },
+            quantity: 1,
+          },
+          {
+            price_data: {
+              currency: 'usd',
+              unit_amount: feeCents,
+              product_data: {
+                name: `${paymentMethodLabel('card')} processing fee`,
+                description: 'Processing fee disclosed before payment authorization',
+              },
+            },
+            quantity: 1,
+          },
+        ],
+        success_url: `${APP_BASE_URL}/portal?statement_paid=1`,
+        cancel_url: `${APP_BASE_URL}/portal?statement_canceled=1`,
+        metadata: {
+          source: 'statement_payment',
+          statement_payment_id: paymentId,
+          advertiser_id: String(statement.advertiserId),
+          base_amount_cents: String(baseAmountCents),
+          processing_fee_cents: String(feeCents),
+          charge_total_cents: String(baseAmountCents + feeCents),
+        },
+        payment_intent_data: {
+          metadata: {
+            source: 'statement_payment',
+            statement_payment_id: paymentId,
+            advertiser_id: String(statement.advertiserId),
+            base_amount_cents: String(baseAmountCents),
+            processing_fee_cents: String(feeCents),
+            charge_total_cents: String(baseAmountCents + feeCents),
+            payment_method_selection: 'card',
           },
         },
-        quantity: 1,
-      },
-      {
-        price_data: {
-          currency: 'usd',
-          unit_amount: feeCents,
-          product_data: {
-            name: `${paymentMethodLabel('card')} processing fee`,
-            description: 'Processing fee disclosed before payment authorization',
-          },
-        },
-        quantity: 1,
-      },
-    ],
-    success_url: `${APP_BASE_URL}/portal?statement_paid=1`,
-    cancel_url: `${APP_BASE_URL}/portal?statement_canceled=1`,
-    metadata: {
-      source: 'statement_payment',
-      statement_payment_id: paymentId,
-      advertiser_id: String(statement.advertiserId),
-      base_amount_cents: String(baseAmountCents),
-      processing_fee_cents: String(feeCents),
-      charge_total_cents: String(baseAmountCents + feeCents),
-    },
-    payment_intent_data: {
-      metadata: {
-        source: 'statement_payment',
-        statement_payment_id: paymentId,
-        advertiser_id: String(statement.advertiserId),
-        base_amount_cents: String(baseAmountCents),
-        processing_fee_cents: String(feeCents),
-        charge_total_cents: String(baseAmountCents + feeCents),
-        payment_method_selection: 'card',
-      },
-    },
-  });
-  if (!session.url) throw new Error('Stripe did not return a URL for the statement payment');
+      });
+      createdStripeSessionId = session.id;
+      if (!session.url) throw new Error('Stripe did not return a URL for the statement payment');
 
-  await sql`
-    INSERT INTO statement_payment_sessions (
-      id, advertiser_id, stripe_checkout_session_id, checkout_url,
-      invoice_allocations, base_amount_cents, processing_fee_cents,
-      status, expires_at
-    ) VALUES (
-      ${paymentId}, ${statement.advertiserId}, ${session.id}, ${session.url},
-      ${allocationsJson}::jsonb, ${baseAmountCents}, ${feeCents},
-      'open', ${session.expires_at ? new Date(session.expires_at * 1000).toISOString() : null}
-    )
-  `;
+      await client.query(
+        `UPDATE statement_payment_sessions
+            SET stripe_checkout_session_id = $2,
+                checkout_url = $3,
+                expires_at = $4,
+                updated_at = NOW()
+          WHERE id = $1`,
+        [
+          paymentId,
+          session.id,
+          session.url,
+          session.expires_at ? new Date(session.expires_at * 1000).toISOString() : null,
+        ],
+      );
+      return { url: session.url, allocations };
+    });
 
-  return { ...statement, overduePaymentLinkUrl: session.url };
+    const allocationById = new Map(result.allocations.map((allocation) => [
+      allocation.invoiceId,
+      allocation,
+    ]));
+    const overdueCents = sumSafeCents(
+      result.allocations.map((allocation) => allocation.amountCents),
+      'statement payment',
+    );
+    return {
+      ...statement,
+      overdueCents,
+      outstandingCents: overdueCents + statement.notYetDueCents,
+      overduePaymentLinkUrl: result.url,
+      // The aggregate session invalidated individual links for these invoices;
+      // never include the now-stale URLs in the rendered statement.
+      invoices: statement.invoices.map((invoice) => {
+        const allocation = allocationById.get(invoice.id);
+        return allocation
+          ? {
+              ...invoice,
+              amount_paid_cents: Math.max(Number(invoice.total_cents) - allocation.amountCents, 0),
+              balance_cents: allocation.amountCents,
+              stripe_payment_link_url: null,
+              stripe_checkout_session_id: null,
+            }
+          : invoice;
+      }),
+    };
+  } catch (err) {
+    // If the DB insert/commit failed after Stripe accepted the session, do not
+    // leave an externally payable session with no allocation record.
+    if (createdStripeSessionId) {
+      try {
+        await stripe.checkout.sessions.expire(createdStripeSessionId);
+      } catch {
+        // Preserve the original failure; operators can reconcile this Stripe
+        // session ID from the preceding provider request logs.
+      }
+    }
+    throw err;
+  }
 }
 
 export async function refreshPartnerStatementLinks(
@@ -277,82 +403,145 @@ export async function refreshPartnerStatementLinks(
 ): Promise<PartnerStatement> {
   if (!isStripeConfigured()) throw new Error('Stripe is not configured');
   const stripe = getStripe();
-  const sql = getSql();
 
   const invoices: PartnerStatementInvoice[] = [];
   for (const invoice of statement.invoices) {
-    if (invoice.stripe_checkout_session_id) {
-      try {
-        await stripe.checkout.sessions.expire(invoice.stripe_checkout_session_id);
-      } catch {
-        // Completed and already-expired Checkout Sessions cannot be expired again.
+    let registryId: string | null = null;
+    const current = await withNeonTransaction(async (client) => {
+      const { invoice: lockedInvoice, remainingCents } = await lockInvoiceRemainingBalance(client, invoice.id);
+      const owner = await client.query<{ advertiser_id: number | null; number: string | null }>(
+        `SELECT advertiser_id, number FROM invoices WHERE id = $1`,
+        [invoice.id],
+      );
+      if (owner.rows[0]?.advertiser_id !== statement.advertiserId) {
+        throw new InvoiceLifecycleError('invoice does not belong to this statement', 400);
       }
-    }
+      await invalidateInvoiceCheckoutSessions(client, invoice.id);
+      const stillOpenStatement = await client.query<{ id: string }>(
+        `SELECT id
+           FROM statement_payment_sessions
+          WHERE status = 'open'
+            AND invoice_allocations @> $1::jsonb
+          LIMIT 1`,
+        [JSON.stringify([{ invoiceId: invoice.id }])],
+      );
+      if (stillOpenStatement.rows.length > 0) {
+        throw new InvoiceLifecycleError(
+          'an existing statement checkout could not be safely expired',
+          409,
+        );
+      }
+      const registered = await registerInvoiceCheckoutSession(client, {
+        invoiceId: invoice.id,
+        baseAmountCents: remainingCents,
+        createdBy: 'partner-statement',
+      });
+      registryId = registered.id;
+      return {
+        amountCents: remainingCents,
+        number: owner.rows[0].number ?? invoice.number,
+        totalCents: Number(lockedInvoice.total_cents),
+      };
+    });
 
-    const amountCents = Number(invoice.balance_cents);
+    const amountCents = current.amountCents;
+    if (!isSafeCents(amountCents, { positive: true })) {
+      await withNeonTransaction((client) => markCheckoutSessionFailed(client, registryId as string));
+      throw new InvoiceLifecycleError('invoice payment amount is invalid', 400);
+    }
     const feeCents = processingFeeCents(amountCents, 'card');
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['card'],
-      customer_email: statement.recipientEmail ?? undefined,
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            unit_amount: amountCents,
-            product_data: {
-              name: `Invoice ${invoice.number ?? invoice.id.slice(0, 8)}`,
-              description: 'Caxton Publications outstanding invoice balance',
+    if (!isSafeCents(feeCents) || !isSafeCents(amountCents + feeCents, { positive: true })) {
+      await withNeonTransaction((client) => markCheckoutSessionFailed(client, registryId as string));
+      throw new InvoiceLifecycleError('invoice payment amount is invalid', 400);
+    }
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        customer_email: statement.recipientEmail ?? undefined,
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              unit_amount: amountCents,
+              product_data: {
+                name: `Invoice ${current.number ?? invoice.id.slice(0, 8)}`,
+                description: 'Caxton Publications outstanding invoice balance',
+              },
             },
+            quantity: 1,
           },
-          quantity: 1,
-        },
-        {
-          price_data: {
-            currency: 'usd',
-            unit_amount: feeCents,
-            product_data: {
-              name: `${paymentMethodLabel('card')} processing fee`,
-              description: 'Processing fee disclosed before payment authorization',
+          {
+            price_data: {
+              currency: 'usd',
+              unit_amount: feeCents,
+              product_data: {
+                name: `${paymentMethodLabel('card')} processing fee`,
+                description: 'Processing fee disclosed before payment authorization',
+              },
             },
+            quantity: 1,
           },
-          quantity: 1,
-        },
-      ],
-      success_url: `${APP_BASE_URL}/portal/invoices/${invoice.id}?paid=1`,
-      cancel_url: `${APP_BASE_URL}/portal/invoices/${invoice.id}?canceled=1`,
-      metadata: {
-        source: 'invoice_payment',
-        invoice_id: invoice.id,
-        invoice_number: invoice.number ?? '',
-        payment_method_selection: 'card',
-        base_amount_cents: String(amountCents),
-        processing_fee_cents: String(feeCents),
-        charge_total_cents: String(amountCents + feeCents),
-      },
-      payment_intent_data: {
+        ],
+        success_url: `${APP_BASE_URL}/portal/invoices/${invoice.id}?paid=1`,
+        cancel_url: `${APP_BASE_URL}/portal/invoices/${invoice.id}?canceled=1`,
         metadata: {
           source: 'invoice_payment',
           invoice_id: invoice.id,
-          invoice_number: invoice.number ?? '',
+          invoice_number: current.number ?? '',
           payment_method_selection: 'card',
           base_amount_cents: String(amountCents),
           processing_fee_cents: String(feeCents),
           charge_total_cents: String(amountCents + feeCents),
         },
-      },
-    });
-    if (!session.url) throw new Error(`Stripe did not return a URL for invoice ${invoice.number}`);
+        payment_intent_data: {
+          metadata: {
+            source: 'invoice_payment',
+            invoice_id: invoice.id,
+            invoice_number: current.number ?? '',
+            payment_method_selection: 'card',
+            base_amount_cents: String(amountCents),
+            processing_fee_cents: String(feeCents),
+            charge_total_cents: String(amountCents + feeCents),
+          },
+        },
+      });
+    } catch (stripeErr) {
+      await withNeonTransaction((client) => markCheckoutSessionFailed(client, registryId as string));
+      throw stripeErr;
+    }
+    if (!session.url) {
+      await withNeonTransaction((client) => markCheckoutSessionFailed(client, registryId as string));
+      try {
+        await stripe.checkout.sessions.expire(session.id);
+      } catch {
+        // No URL was published, and the registry is terminal; preserve the
+        // actionable provider-response error below.
+      }
+      throw new Error(`Stripe did not return a URL for invoice ${invoice.number}`);
+    }
 
-    await sql`
-      UPDATE invoices
-      SET stripe_payment_link_url = ${session.url},
-          stripe_checkout_session_id = ${session.id},
-          updated_at = NOW()
-      WHERE id = ${invoice.id}
-    `;
+    await withNeonTransaction(async (client) => {
+      await markCheckoutSessionOpen(client, registryId as string, {
+        id: session.id,
+        url: session.url,
+      });
+      await client.query(
+        `UPDATE invoices
+            SET stripe_payment_link_url = $2,
+                stripe_checkout_session_id = $3,
+                updated_at = NOW()
+          WHERE id = $1`,
+        [invoice.id, session.url, session.id],
+      );
+    });
     invoices.push({
       ...invoice,
+      number: current.number,
+      total_cents: current.totalCents,
+      amount_paid_cents: Math.max(current.totalCents - amountCents, 0),
+      balance_cents: amountCents,
       stripe_payment_link_url: session.url,
       stripe_checkout_session_id: session.id,
     });

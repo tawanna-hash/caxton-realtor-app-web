@@ -9,18 +9,40 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import {
   getOrCreatePartnerStatementOverdueLink,
-  type PartnerStatement,
+  loadPartnerStatement,
 } from '@/lib/server/partner-statement';
 import PrintInvoiceButton from '../../../invoices/[id]/preview/PrintInvoiceButton';
-import GenerateLinkButton from './GenerateLinkButton';
+import GenerateLinkButton, { GenerateStatementLinkButton } from './GenerateLinkButton';
 import StatementEmailButton from '../StatementEmailButton';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+async function generateStatementOverdueLink(advertiserId: number) {
+  'use server';
+  if (!(await getCurrentAdmin())) throw new Error('Your admin session has expired.');
+  const statement = await loadPartnerStatement(advertiserId);
+  if (!statement || statement.overdueCents <= 0) {
+    throw new Error('There are no overdue invoices to include.');
+  }
+  await getOrCreatePartnerStatementOverdueLink(statement, { forceRefresh: true });
+  revalidatePath(`/admin/getpaid/statements/${advertiserId}`);
+}
+
+function isSafeHttpUrl(value: string | null | undefined): value is string {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
 
 type StatementInvoiceRow = {
   id: string;
@@ -99,8 +121,8 @@ export default async function StatementPage({
   const invoices = (await sql`
     SELECT i.id, i.number, i.status, i.total_cents, i.issued_at, i.due_date,
       i.bill_to_name, i.bill_to_email, i.bill_to_address, i.stripe_payment_link_url,
-      COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END)::int AS amount_paid_cents,
-      GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END), 0)::int AS balance_cents,
+      COALESCE(pay.amount_paid_cents, 0)::int AS amount_paid_cents,
+      GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, 0), 0)::int AS balance_cents,
       (i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS is_overdue
     FROM invoices i
     LEFT JOIN LATERAL (
@@ -108,9 +130,9 @@ export default async function StatementPage({
       FROM invoice_payments p WHERE p.invoice_id = i.id
     ) pay ON true
     WHERE i.advertiser_id = ${advertiserIdNum}
-      AND i.status NOT IN ('paid', 'void', 'draft')
+      AND i.status NOT IN ('void', 'draft')
       AND GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, 0), 0) > 0
-    ORDER BY i.issued_at ASC NULLS LAST
+    ORDER BY i.issued_at ASC NULLS LAST, i.created_at ASC, i.id ASC
   `) as unknown as StatementInvoiceRow[];
 
   if (invoices.length === 0) notFound();
@@ -123,7 +145,19 @@ export default async function StatementPage({
     ORDER BY sent_at DESC
   `) as unknown as StatementHistoryRow[];
 
-  const billTo = invoices[invoices.length - 1];
+  const billingRows = (await sql`
+    SELECT bill_to_name, bill_to_email, bill_to_address
+    FROM invoices
+    WHERE advertiser_id = ${advertiserIdNum}
+      AND (
+        NULLIF(TRIM(bill_to_name), '') IS NOT NULL
+        OR NULLIF(TRIM(bill_to_email), '') IS NOT NULL
+        OR NULLIF(TRIM(bill_to_address), '') IS NOT NULL
+      )
+    ORDER BY created_at DESC, id DESC
+    LIMIT 1
+  `) as unknown as Array<Pick<StatementInvoiceRow, 'bill_to_name' | 'bill_to_email' | 'bill_to_address'>>;
+  const billTo = billingRows[0] ?? invoices[0];
   const recipient =
     advertiser.billing_email?.trim() ||
     billTo.bill_to_email?.trim() ||
@@ -139,32 +173,29 @@ export default async function StatementPage({
     year: 'numeric',
     timeZone: 'America/Chicago',
   });
-  let overduePaymentLinkUrl: string | null = null;
-  if (overdueCents > 0) {
-    const statement: PartnerStatement = {
-      advertiserId: advertiser.id,
-      advertiserName: advertiser.name,
-      recipientEmail: recipient || null,
-      billToName: billTo.bill_to_name?.trim() || advertiser.name,
-      billToEmail: billTo.bill_to_email?.trim() || null,
-      billToAddress: billTo.bill_to_address?.trim() || null,
-      asOf: new Date(),
-      overdueCents,
-      notYetDueCents,
-      outstandingCents,
-      overduePaymentLinkUrl: null,
-      invoices: invoices.map((invoice) => ({
-        ...invoice,
-        stripe_checkout_session_id: null,
-      })),
-    };
-    try {
-      const linked = await getOrCreatePartnerStatementOverdueLink(statement);
-      overduePaymentLinkUrl = linked.overduePaymentLinkUrl;
-    } catch (error) {
-      console.error('[statement] could not create combined overdue payment link', error);
-    }
-  }
+  const overdueAllocations = invoices
+    .filter((invoice) => invoice.is_overdue && invoice.balance_cents > 0)
+    .map((invoice) => ({
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.number ?? invoice.id.slice(0, 8),
+      amountCents: invoice.balance_cents,
+    }));
+  const existingStatementLinks = overdueAllocations.length
+    ? (await sql`
+        SELECT checkout_url
+        FROM statement_payment_sessions
+        WHERE advertiser_id = ${advertiserIdNum}
+          AND status = 'open'
+          AND (expires_at IS NULL OR expires_at > NOW())
+          AND invoice_allocations = ${JSON.stringify(overdueAllocations)}::jsonb
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1
+      `) as unknown as Array<{ checkout_url: string | null }>
+    : [];
+  const overduePaymentLinkUrl = isSafeHttpUrl(existingStatementLinks[0]?.checkout_url)
+    ? existingStatementLinks[0].checkout_url
+    : null;
+  const generateStatementLink = generateStatementOverdueLink.bind(null, advertiser.id);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 print:max-w-none print:px-0 print:py-0">
@@ -295,19 +326,25 @@ export default async function StatementPage({
           </div>
         </section>
 
-        {overduePaymentLinkUrl && (
-          <section className="mb-5 border border-orange-200 bg-orange-50 px-4 py-4 text-center">
+        {overdueCents > 0 && (
+          <section className="mb-5 border border-orange-200 bg-orange-50 px-4 py-4 text-center print:hidden">
             <div className="font-semibold text-orange-900">
               Pay all overdue invoices: {money(overdueCents)}
             </div>
-            <a
-              href={overduePaymentLinkUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-2 inline-flex rounded bg-orange-600 px-4 py-2 text-xs font-semibold text-white hover:bg-orange-700 print:text-black"
-            >
-              Pay all overdue invoices
-            </a>
+            {overduePaymentLinkUrl ? (
+              <a
+                href={overduePaymentLinkUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-flex rounded bg-orange-600 px-4 py-2 text-xs font-semibold text-white hover:bg-orange-700"
+              >
+                Pay all overdue invoices
+              </a>
+            ) : (
+              <div className="mt-2 flex justify-center">
+                <GenerateStatementLinkButton action={generateStatementLink} />
+              </div>
+            )}
           </section>
         )}
 
@@ -326,7 +363,7 @@ export default async function StatementPage({
               className="grid grid-cols-[110px_100px_100px_85px_85px_90px] border-b border-neutral-200 px-3 py-3"
             >
               <div>
-                {invoice.stripe_payment_link_url ? (
+                {isSafeHttpUrl(invoice.stripe_payment_link_url) ? (
                   <a
                     href={invoice.stripe_payment_link_url}
                     target="_blank"

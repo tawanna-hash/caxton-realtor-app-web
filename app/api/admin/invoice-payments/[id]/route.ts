@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
+import { isIsoCalendarDate } from '@/lib/invoices';
+import { withNeonTransaction } from '@/lib/server/db/neon';
+import {
+  invalidateInvoiceCheckoutSessions,
+  recalculateInvoiceFromLedger,
+} from '@/lib/server/invoice-lifecycle';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -53,8 +59,8 @@ export async function PATCH(request: NextRequest, ctx: RouteCtx) {
   if (paymentMethod !== undefined && paymentMethod !== null && paymentMethod.length > 80) {
     return NextResponse.json({ error: 'payment_method is too long' }, { status: 400 });
   }
-  if (paymentDate !== undefined && (paymentDate === null || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate))) {
-    return NextResponse.json({ error: 'payment_date must be YYYY-MM-DD' }, { status: 400 });
+  if (paymentDate !== undefined && (paymentDate === null || !isIsoCalendarDate(paymentDate))) {
+    return NextResponse.json({ error: 'payment_date must be a real YYYY-MM-DD date' }, { status: 400 });
   }
 
   try {
@@ -134,10 +140,18 @@ export async function DELETE(request: NextRequest, ctx: RouteCtx) {
   }
   try {
     await ensureSchema();
-    const sql = getSql();
-    const rows = await sql`DELETE FROM invoice_payments WHERE id = ${id} RETURNING invoice_id`;
-    if (!rows.length) return NextResponse.json({ error: 'payment not found' }, { status: 404 });
-    const invoiceId = (rows[0] as { invoice_id: string }).invoice_id;
+    const invoiceId = await withNeonTransaction(async (client) => {
+      const rows = await client.query<{ invoice_id: string }>(
+        'DELETE FROM invoice_payments WHERE id = $1 RETURNING invoice_id',
+        [id],
+      );
+      const deleted = rows.rows[0];
+      if (!deleted) return null;
+      await recalculateInvoiceFromLedger(client, deleted.invoice_id);
+      await invalidateInvoiceCheckoutSessions(client, deleted.invoice_id);
+      return deleted.invoice_id;
+    });
+    if (!invoiceId) return NextResponse.json({ error: 'payment not found' }, { status: 404 });
     revalidateInvoiceViews(invoiceId);
     return NextResponse.json({ ok: true, invoice_id: invoiceId });
   } catch (error) {

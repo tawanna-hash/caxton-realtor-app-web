@@ -27,14 +27,14 @@ export default async function StatementsIndexPage() {
         NULLIF(TRIM(adv.contact_email), ''),
         NULLIF(TRIM(adv.portal_email), '')
       ) AS recipient_email,
-      SUM(GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END), 0))::int AS outstanding_cents,
+      SUM(GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, 0), 0))::int AS outstanding_cents,
       SUM(
         CASE WHEN i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE
-          THEN GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END), 0)
+          THEN GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, 0), 0)
           ELSE 0 END
       )::int AS overdue_cents,
       COUNT(*) FILTER (
-        WHERE GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END), 0) > 0
+        WHERE GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, 0), 0) > 0
       )::int AS open_invoice_count,
       history.last_sent_at,
       COALESCE(history.send_count, 0)::int AS send_count
@@ -49,7 +49,7 @@ export default async function StatementsIndexPage() {
       FROM invoices recent
       WHERE recent.advertiser_id = adv.id
         AND NULLIF(TRIM(recent.bill_to_email), '') IS NOT NULL
-      ORDER BY recent.created_at DESC
+      ORDER BY recent.created_at DESC, recent.id DESC
       LIMIT 1
     ) latest_bill ON true
     LEFT JOIN LATERAL (
@@ -59,9 +59,9 @@ export default async function StatementsIndexPage() {
     ) history ON true
     WHERE i.status NOT IN ('void', 'draft')
     GROUP BY adv.id, adv.name, latest_bill.bill_to_email, history.last_sent_at, history.send_count
-    HAVING SUM(GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END), 0)) > 0
+    HAVING SUM(GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, 0), 0)) > 0
     ORDER BY overdue_cents DESC, outstanding_cents DESC
-  `.catch(() => [] as unknown[])) as unknown as StatementPartnerRow[];
+  `) as unknown as StatementPartnerRow[];
 
   return <StatementsClient partners={partners} />;
 }

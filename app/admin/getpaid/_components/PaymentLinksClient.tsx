@@ -12,7 +12,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
-import { formatCents } from '@/lib/invoices';
+import { formatCents, outstandingCents } from '@/lib/invoices';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 import { PaymentLinkDrawer } from '@/app/admin/ar/PaymentActionDrawers';
 import PageTitle from '@/components/ui/PageTitle';
@@ -34,6 +34,16 @@ function formatDate(value: string | null | undefined) {
     day: 'numeric',
     year: 'numeric',
   }).format(date);
+}
+
+function isSafeHttpUrl(value: string | null | undefined): value is string {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
 }
 
 function linkStatus(invoice: InvoiceWithAdvertiser): Exclude<LinkStatusFilter, 'all'> {
@@ -99,13 +109,17 @@ export function PaymentLinksClient({
 }) {
   const [invoices, setInvoices] = useState(initialInvoices);
   const [creating, setCreating] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithAdvertiser | null>(null);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<LinkStatusFilter>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const [pageSize, setPageSize] = useState(25);
   const [page, setPage] = useState(1);
   const [error, setError] = useState('');
+
+  const selectedInvoice = selectedInvoiceId
+    ? invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null
+    : null;
 
   const links = useMemo(
     () => invoices.filter((invoice) => Boolean(invoice.stripe_payment_link_url)),
@@ -117,10 +131,10 @@ export function PaymentLinksClient({
     const overdue = links.filter((invoice) => linkStatus(invoice) === 'overdue');
     const open = links.filter((invoice) => linkStatus(invoice) === 'open');
     return {
-      totalAmount: links.reduce((sum, invoice) => sum + invoice.total_cents, 0),
-      paidAmount: paid.reduce((sum, invoice) => sum + invoice.total_cents, 0),
-      overdueAmount: overdue.reduce((sum, invoice) => sum + invoice.total_cents, 0),
-      openAmount: open.reduce((sum, invoice) => sum + invoice.total_cents, 0),
+      totalAmount: links.reduce((sum, invoice) => sum + outstandingCents(invoice), 0),
+      paidAmount: paid.reduce((sum, invoice) => sum + outstandingCents(invoice), 0),
+      overdueAmount: overdue.reduce((sum, invoice) => sum + outstandingCents(invoice), 0),
+      openAmount: open.reduce((sum, invoice) => sum + outstandingCents(invoice), 0),
       paidCount: paid.length,
       overdueCount: overdue.length,
       openCount: open.length,
@@ -132,9 +146,9 @@ export function PaymentLinksClient({
     return links.filter((invoice) => {
       if (status !== 'all' && linkStatus(invoice) !== status) return false;
       if (dateFilter !== 'all') {
-        const months = dateFilter === '30-days' ? 1 : dateFilter === '3-months' ? 3 : 12;
         const cutoff = new Date();
-        cutoff.setMonth(cutoff.getMonth() - months);
+        if (dateFilter === '30-days') cutoff.setDate(cutoff.getDate() - 30);
+        else cutoff.setMonth(cutoff.getMonth() - (dateFilter === '3-months' ? 3 : 12));
         if (new Date(invoice.updated_at).getTime() < cutoff.getTime()) return false;
       }
       if (!normalizedQuery) return true;
@@ -151,7 +165,7 @@ export function PaymentLinksClient({
   const totalPages = Math.max(1, Math.ceil(filteredLinks.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const pageRows = filteredLinks.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const filteredAmount = filteredLinks.reduce((sum, invoice) => sum + invoice.total_cents, 0);
+  const filteredAmount = filteredLinks.reduce((sum, invoice) => sum + outstandingCents(invoice), 0);
 
   const updateFilters = (update: () => void) => {
     update();
@@ -170,7 +184,7 @@ export function PaymentLinksClient({
 
   const closeDrawer = () => {
     setCreating(false);
-    setSelectedInvoice(null);
+    setSelectedInvoiceId(null);
   };
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -248,7 +262,7 @@ export function PaymentLinksClient({
           </select>
         </label>
         <label className="space-y-1">
-          <span className="block text-xs text-gray-500">Created</span>
+          <span className="block text-xs text-gray-500">Last updated</span>
           <select
             className={`${CONTROL} min-w-36`}
             value={dateFilter}
@@ -287,7 +301,7 @@ export function PaymentLinksClient({
           <table className="w-full min-w-[1040px] table-fixed text-left text-xs">
             <thead className="border-b border-gray-300 bg-white text-gray-700">
               <tr>
-                <th className="w-32 px-3 py-3 font-semibold">Created</th>
+                <th className="w-32 px-3 py-3 font-semibold">Updated</th>
                 <th className="w-36 px-2 py-3 font-semibold">Invoice no.</th>
                 <th className="w-56 px-2 py-3 font-semibold">Client</th>
                 <th className="w-56 px-2 py-3 font-semibold">Email</th>
@@ -317,7 +331,7 @@ export function PaymentLinksClient({
                     {invoice.bill_to_email ?? '—'}
                   </td>
                   <td className="whitespace-nowrap px-2 py-2.5 text-right font-medium text-gray-900">
-                    {formatCents(invoice.total_cents)}
+                    {formatCents(outstandingCents(invoice))}
                   </td>
                   <td className="px-2 py-2.5">
                     <StatusCell invoice={invoice} />
@@ -326,19 +340,25 @@ export function PaymentLinksClient({
                     <button
                       type="button"
                       className="font-medium text-orange-700 hover:underline"
-                      onClick={() => setSelectedInvoice(invoice)}
+                      onClick={() => setSelectedInvoiceId(invoice.id)}
                     >
                       View/Edit
                     </button>
-                    <a
-                      className="ml-4 inline-flex items-center gap-1 font-medium text-orange-700 hover:underline"
-                      href={invoice.stripe_payment_link_url ?? '#'}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Open link
-                      <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                    </a>
+                    {isSafeHttpUrl(invoice.stripe_payment_link_url) ? (
+                      <a
+                        className="ml-4 inline-flex items-center gap-1 font-medium text-orange-700 hover:underline"
+                        href={invoice.stripe_payment_link_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open link
+                        <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                      </a>
+                    ) : (
+                      <span className="ml-4 text-gray-400" title="Stored link is not a safe HTTP(S) URL">
+                        Invalid link
+                      </span>
+                    )}
                     <button
                       type="button"
                       className="ml-4 inline-flex items-center gap-1 font-medium text-red-600 hover:underline disabled:opacity-50"

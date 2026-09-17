@@ -42,8 +42,10 @@ export async function POST(request: NextRequest) {
 
   try {
     await ensureSchema();
-    const source = typeof body.source === 'string' && body.source.trim() ? body.source.trim() : 'manual';
-    const externalId = typeof body.external_id === 'string' && body.external_id.trim() ? body.external_id.trim() : null;
+    // Admin-entered payments are always 'manual' — the client must never be
+    // able to claim 'stripe'/'stripe_statement' or supply an arbitrary
+    // external_id; those identifiers are reserved for the Stripe webhook so
+    // it can't be spoofed or collided with by a manual entry (finding API-#8).
     const result = await recordInvoicePayment({
       invoiceId,
       amountCents,
@@ -51,8 +53,8 @@ export async function POST(request: NextRequest) {
       paymentMethod: typeof body.payment_method === 'string' ? body.payment_method : null,
       reference: typeof body.reference === 'string' ? body.reference : null,
       memo: typeof body.memo === 'string' ? body.memo : null,
-      source,
-      externalId,
+      source: 'manual',
+      externalId: null,
       createdBy: admin.email ?? null,
     });
 

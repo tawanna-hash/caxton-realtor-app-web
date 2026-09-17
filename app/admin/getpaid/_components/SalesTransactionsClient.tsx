@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
-import { formatCents } from '@/lib/invoices';
+import { formatCents, outstandingCents } from '@/lib/invoices';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 import { InvoiceDrawer } from '@/app/admin/billing/_components/InvoiceDrawer';
 import {
@@ -45,9 +45,8 @@ export type SalesTransactionsClientProps = {
 };
 
 type DateFilter = 'all' | '30-days' | '3-months' | '12-months';
-type TypeFilter = 'all' | 'invoice' | 'receipt' | 'payment';
+type TypeFilter = 'all' | 'invoice' | 'receipt';
 type StatusFilter = 'all' | 'draft' | 'open' | 'overdue' | 'paid' | 'void';
-type DeliveryFilter = 'all' | 'email' | 'not-sent';
 type ErrorFilter = 'all' | 'missing-email' | 'past-due';
 type BatchAction = 'send' | 'remind' | 'print' | 'void' | 'delete';
 type SortKey = 'date' | 'billing_date' | 'payment_received' | 'type' | 'number' | 'client' | 'amount' | 'status';
@@ -67,6 +66,16 @@ const CONTROL =
 const ORANGE_BUTTON =
   'inline-flex h-9 items-center justify-center gap-2 rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:cursor-not-allowed disabled:opacity-50';
 
+function isSafeHttpUrl(value: unknown): value is string {
+  if (typeof value !== 'string' || !value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
 function formatTransactionDate(value: string | Date | null | undefined) {
   if (!value) return '—';
   const [year, month, day] = toISODateString(value).split('-').map(Number);
@@ -79,7 +88,7 @@ function formatTransactionDate(value: string | Date | null | undefined) {
 }
 
 function transactionDate(invoice: InvoiceWithAdvertiser) {
-  return invoice.paid_at ?? invoice.issued_at ?? invoice.created_at;
+  return invoice.issued_at ?? invoice.created_at;
 }
 
 /** The actual date payment was received, from the payment record(s) — not
@@ -101,14 +110,12 @@ function paymentReceivedDate(invoice: InvoiceWithAdvertiser) {
 
 function transactionType(invoice: InvoiceWithAdvertiser): Exclude<TypeFilter, 'all'> {
   if (invoice.number?.startsWith('SR-')) return 'receipt';
-  if (invoice.status === 'paid') return 'payment';
   return 'invoice';
 }
 
 function transactionTypeLabel(invoice: InvoiceWithAdvertiser) {
   const type = transactionType(invoice);
   if (type === 'receipt') return 'Sales receipt';
-  if (type === 'payment') return 'Payment';
   return 'Invoice';
 }
 
@@ -167,9 +174,9 @@ function sortValue(invoice: InvoiceWithAdvertiser, key: SortKey, referenceTime: 
 
 function inDateRange(invoice: InvoiceWithAdvertiser, filter: DateFilter, referenceDate: Date) {
   if (filter === 'all') return true;
-  const months = filter === '30-days' ? 1 : filter === '3-months' ? 3 : 12;
   const cutoff = new Date(referenceDate);
-  cutoff.setMonth(cutoff.getMonth() - months);
+  if (filter === '30-days') cutoff.setDate(cutoff.getDate() - 30);
+  else cutoff.setMonth(cutoff.getMonth() - (filter === '3-months' ? 3 : 12));
   return new Date(transactionDate(invoice)).getTime() >= cutoff.getTime();
 }
 
@@ -296,7 +303,7 @@ function EmailInvoiceDialog({
               <div className="mt-5 font-semibold text-gray-900">About this invoice</div>
               <ul className="mt-2 space-y-1">
                 <li>Total amount: {formatCents(invoice.total_cents)}</li>
-                <li>Remaining balance: {formatCents(invoice.total_cents)}</li>
+                <li>Remaining balance: {formatCents(outstandingCents(invoice))}</li>
                 <li>{invoice.is_overdue ? `${daysOverdue(invoice, referenceTime)} days overdue` : 'Open invoice'}</li>
               </ul>
             </aside>
@@ -339,7 +346,7 @@ function EmailInvoiceDialog({
               <div className="bg-blue-50 px-6 py-8 text-center">
                 <div className="text-xl font-semibold text-gray-900">Your invoice is ready!</div>
                 <div className="mt-5 text-xs uppercase tracking-wider text-gray-500">Balance due</div>
-                <div className="mt-1 text-3xl font-semibold text-gray-900">{formatCents(invoice.total_cents)}</div>
+                <div className="mt-1 text-3xl font-semibold text-gray-900">{formatCents(outstandingCents(invoice))}</div>
               </div>
             </div>
           )}
@@ -364,8 +371,9 @@ function ShareInvoiceDialog({
   onCreated: () => Promise<void>;
   onError: (message: string) => void;
 }) {
-  const [loading, setLoading] = useState(!invoice.stripe_payment_link_url);
-  const [url, setUrl] = useState(invoice.stripe_payment_link_url ?? '');
+  const existingUrl = isSafeHttpUrl(invoice.stripe_payment_link_url) ? invoice.stripe_payment_link_url : '';
+  const [loading, setLoading] = useState(!existingUrl);
+  const [url, setUrl] = useState(existingUrl);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -380,7 +388,9 @@ function ShareInvoiceDialog({
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error ?? 'Could not create invoice link.');
         if (alive) {
-          setUrl(data.checkout_url ?? data.portal_pay_url ?? '');
+          const checkoutUrl = data.checkout_url ?? data.portal_pay_url;
+          if (!isSafeHttpUrl(checkoutUrl)) throw new Error('The payment service returned an unsafe link.');
+          setUrl(checkoutUrl);
           await onCreated();
         }
       })
@@ -438,7 +448,6 @@ export function SalesTransactionsClient({
   const [type, setType] = useState<TypeFilter>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>(invoiceWorkspace ? 'all' : '3-months');
   const [status, setStatus] = useState<StatusFilter>('all');
-  const [delivery, setDelivery] = useState<DeliveryFilter>('all');
   const [errors, setErrors] = useState<ErrorFilter>('all');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
@@ -469,6 +478,7 @@ export function SalesTransactionsClient({
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error ?? 'Could not refresh sales transactions.');
     setInvoices(data.invoices ?? []);
+    setSelected(new Set());
   };
 
   const saved = async () => {
@@ -494,11 +504,11 @@ export function SalesTransactionsClient({
       return new Date(invoice.paid_at).getTime() >= cutoff.getTime();
     });
     return {
-      overdueAmount: overdue.reduce((total, invoice) => total + invoice.total_cents, 0),
+      overdueAmount: overdue.reduce((total, invoice) => total + outstandingCents(invoice), 0),
       overdueCount: overdue.length,
-      notDueAmount: open.filter((invoice) => !invoice.is_overdue).reduce((total, invoice) => total + invoice.total_cents, 0),
+      notDueAmount: open.filter((invoice) => !invoice.is_overdue).reduce((total, invoice) => total + outstandingCents(invoice), 0),
       notDueCount: open.filter((invoice) => !invoice.is_overdue).length,
-      openAmount: open.reduce((total, invoice) => total + invoice.total_cents, 0),
+      openAmount: open.reduce((total, invoice) => total + outstandingCents(invoice), 0),
       openCount: open.length,
       paidAmount: paid.reduce((total, invoice) => total + invoice.total_cents, 0),
       paidCount: paid.length,
@@ -520,8 +530,6 @@ export function SalesTransactionsClient({
         if (status === 'overdue' && !invoice.is_overdue) return false;
         if (status === 'paid' && invoice.status !== 'paid') return false;
         if (status === 'void' && invoice.status !== 'void') return false;
-        if (delivery === 'email' && !invoice.stripe_payment_link_url) return false;
-        if (delivery === 'not-sent' && invoice.stripe_payment_link_url) return false;
         if (errors === 'missing-email' && invoice.bill_to_email) return false;
         if (errors === 'past-due' && !invoice.is_overdue) return false;
         if (!normalized) return true;
@@ -544,17 +552,18 @@ export function SalesTransactionsClient({
         const cmp = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv));
         return sortDir === 'asc' ? cmp : -cmp;
       });
-  }, [dateFilter, delivery, errors, invoices, query, referenceTime, stableReferenceDate, status, type, sortKey, sortDir]);
+  }, [dateFilter, errors, invoices, query, referenceTime, stableReferenceDate, status, type, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const pageRows = filteredRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const totalAmount = filteredRows.reduce((total, invoice) => total + invoice.total_cents, 0);
+  const totalAmount = filteredRows.reduce((total, invoice) => total + outstandingCents(invoice), 0);
   const allPageSelected = pageRows.length > 0 && pageRows.every((invoice) => selected.has(invoice.id));
 
   const updateFilter = (callback: () => void) => {
     callback();
     setPage(1);
+    setSelected(new Set());
   };
 
   const togglePage = () => {
@@ -574,6 +583,7 @@ export function SalesTransactionsClient({
       setSortDir('desc');
     }
     setPage(1);
+    setSelected(new Set());
   };
 
   const patchInvoice = async (invoice: InvoiceWithAdvertiser, payload: Record<string, unknown>) => {
@@ -630,7 +640,13 @@ export function SalesTransactionsClient({
     setBusy(true);
     fail('');
     try {
-      const response = await fetch(`/api/admin/invoices/${invoice.id}/payment-link`, {
+      const currentInvoice = invoices.find((candidate) => candidate.id === invoice.id);
+      if (!currentInvoice) throw new Error('This invoice is no longer available. Refresh and try again.');
+      if (reminder && currentInvoice.status === 'draft') {
+        throw new Error('Issue the draft invoice before sending a reminder.');
+      }
+      if (currentInvoice.status === 'draft') await patchInvoice(currentInvoice, { status: 'sent' });
+      const response = await fetch(`/api/admin/invoices/${currentInvoice.id}/payment-link`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -655,7 +671,6 @@ export function SalesTransactionsClient({
               : 'Email delivery is not configured.';
         throw new Error(reason);
       }
-      if (invoice.status === 'draft') await patchInvoice(invoice, { status: 'sent' });
       await reload();
       setMessage(reminder ? `Reminder sent for ${invoice.number}.` : `${invoice.number} sent.`);
       setEmailDraft(null);
@@ -736,39 +751,70 @@ export function SalesTransactionsClient({
 
   const runBatch = async (action: BatchAction | '') => {
     if (!action) return;
-    const targets = invoices.filter((invoice) => selected.has(invoice.id));
-    if (targets.length === 0) {
-      fail('Select at least one transaction first.');
-      return;
-    }
-    if (action === 'print') {
-      targets.forEach((invoice) => printInvoice(invoice));
-      return;
-    }
-    if (!window.confirm(`${action === 'delete' ? 'Delete selected drafts' : action === 'void' ? 'Void' : action === 'remind' ? 'Send reminders for' : 'Send'} ${targets.length} selected transaction${targets.length === 1 ? '' : 's'}?`)) return;
     setBusy(true);
     fail('');
     try {
+      const visibleSelectedIds = new Set(
+        pageRows.filter((invoice) => selected.has(invoice.id)).map((invoice) => invoice.id),
+      );
+      const response = await fetch('/api/admin/invoices', { cache: 'no-store' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? 'Could not validate the selected transactions.');
+      const latestInvoices = (data.invoices ?? []) as InvoiceWithAdvertiser[];
+      const targets = latestInvoices.filter((invoice) => visibleSelectedIds.has(invoice.id));
+      if (targets.length === 0) {
+        throw new Error('The selected transactions are no longer visible or available. Select them again.');
+      }
+      if (!window.confirm(`${action === 'delete' ? 'Delete selected drafts' : action === 'void' ? 'Void' : action === 'remind' ? 'Send reminders for' : action === 'print' ? 'Print' : 'Send'} ${targets.length} visible selected transaction${targets.length === 1 ? '' : 's'}?`)) return;
+      if (action === 'print') {
+        targets.forEach((invoice) => printInvoice(invoice));
+        return;
+      }
+
+      let successes = 0;
+      const failures: string[] = [];
       for (const invoice of targets) {
-        if (action === 'delete') {
-          if (invoice.status !== 'draft') continue;
-          const response = await fetch(`/api/admin/invoices/${invoice.id}`, { method: 'DELETE' });
-          if (!response.ok) throw new Error(`Could not delete ${invoice.number}.`);
-        } else if (action === 'void') {
-          if (!['paid', 'void'].includes(invoice.status)) await patchInvoice(invoice, { status: 'void' });
-        } else {
-          const response = await fetch(`/api/admin/invoices/${invoice.id}/payment-link`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ send_email: true }),
-          });
-          if (!response.ok) throw new Error(`Could not send ${invoice.number}.`);
-          if (invoice.status === 'draft') await patchInvoice(invoice, { status: 'sent' });
+        const label = invoice.number ?? invoice.id.slice(0, 8);
+        try {
+          if (action === 'delete') {
+            if (invoice.status !== 'draft') throw new Error('not a draft');
+            const deleteResponse = await fetch(`/api/admin/invoices/${invoice.id}`, { method: 'DELETE' });
+            const deleteData = await deleteResponse.json().catch(() => ({}));
+            if (!deleteResponse.ok) throw new Error(deleteData.error ?? 'delete failed');
+          } else if (action === 'void') {
+            if (['paid', 'void'].includes(invoice.status)) throw new Error(`status is ${invoice.status}`);
+            await patchInvoice(invoice, { status: 'void' });
+          } else {
+            if (action === 'remind' && invoice.status === 'draft') {
+              throw new Error('draft invoices cannot receive reminders');
+            }
+            if (action === 'send' && invoice.status === 'draft') {
+              await patchInvoice(invoice, { status: 'sent' });
+            }
+            const sendResponse = await fetch(`/api/admin/invoices/${invoice.id}/payment-link`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                send_email: true,
+                email_mode: action === 'remind' ? 'reminder' : 'invoice',
+              }),
+            });
+            const sendData = await sendResponse.json().catch(() => ({}));
+            if (!sendResponse.ok || sendData.email_status !== 'sent') {
+              throw new Error(sendData.email_error ?? sendData.error ?? sendData.email_status ?? 'email was not sent');
+            }
+          }
+          successes += 1;
+        } catch (reason) {
+          failures.push(`${label}: ${reason instanceof Error ? reason.message : 'failed'}`);
         }
       }
       await reload();
-      setSelected(new Set());
-      setMessage('Batch action completed.');
+      if (failures.length) {
+        setError(`${successes} succeeded; ${failures.length} failed. ${failures.join(' | ')}`);
+      } else {
+        setMessage(`${successes} transaction${successes === 1 ? '' : 's'} completed successfully.`);
+      }
     } catch (value) {
       fail(value instanceof Error ? value.message : 'Batch action failed.');
     } finally {
@@ -823,8 +869,8 @@ export function SalesTransactionsClient({
           <div>
             <div className="mb-2 text-sm font-semibold text-gray-800">{formatCents(summary.paidAmount)} Paid <span className="ml-2 text-xs font-normal text-gray-500">Last 30 days</span></div>
             <div className="grid grid-cols-2">
-              <SummaryMetric amount={summary.notDepositedAmount} count={summary.notDepositedCount} label="not deposited" />
-              <div className="border-l border-gray-200 text-right"><SummaryMetric amount={summary.depositedAmount} count={summary.depositedCount} label="deposited" /></div>
+              <SummaryMetric amount={summary.notDepositedAmount} count={summary.notDepositedCount} label="other payments" />
+              <div className="border-l border-gray-200 text-right"><SummaryMetric amount={summary.depositedAmount} count={summary.depositedCount} label="Stripe payments" /></div>
             </div>
             <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
               <div className="bg-emerald-400" style={{ width: `${summary.paidAmount ? (summary.notDepositedAmount / summary.paidAmount) * 100 : 0}%` }} />
@@ -889,7 +935,6 @@ export function SalesTransactionsClient({
               <option value="all">All transactions</option>
               <option value="invoice">Invoices</option>
               <option value="receipt">Sales receipts</option>
-              <option value="payment">Payments</option>
             </select>
           </label>
           {invoiceWorkspace && (
@@ -945,7 +990,7 @@ export function SalesTransactionsClient({
               <div className="absolute right-0 top-10 z-40 w-52 rounded border border-gray-200 bg-white py-1 shadow-lg">
                 <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { setCreatingInvoice(true); setCreateMenuOpen(false); }}>Create invoice</button>
                 {!invoiceWorkspace && <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { setCreatingReceipt(true); setCreateMenuOpen(false); }}>Create sales receipt</button>}
-                <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { const first = invoices.find((invoice) => !['paid', 'void'].includes(invoice.status)); if (first) setPaymentLinkInvoice(first); else fail('No unpaid invoice is available.'); setCreateMenuOpen(false); }}>Create payment link</button>
+                <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { const first = invoices.find((invoice) => !['draft', 'paid', 'void'].includes(invoice.status) && outstandingCents(invoice) > 0); if (first) setPaymentLinkInvoice(first); else fail('No unpaid invoice is available.'); setCreateMenuOpen(false); }}>Create payment link</button>
                 <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { const first = invoices[0]; if (first) setRecurringInvoice(first); else fail('Create a customer invoice first.'); setCreateMenuOpen(false); }}>Create recurring payment</button>
               </div>
             )}
@@ -959,12 +1004,6 @@ export function SalesTransactionsClient({
             <option value="overdue">Overdue</option>
             <option value="paid">Paid</option>
             <option value="void">Void</option>
-          </select>
-          <span className="text-gray-300">·</span>
-          <select aria-label="Delivery method filter" className="rounded border-0 bg-transparent px-1 py-1.5 text-gray-600 outline-none hover:text-gray-900" value={delivery} onChange={(event) => updateFilter(() => setDelivery(event.target.value as DeliveryFilter))}>
-            <option value="all">Delivery method</option>
-            <option value="email">Payment link created</option>
-            <option value="not-sent">Not sent</option>
           </select>
           <span className="text-gray-300">·</span>
           <select aria-label="Errors filter" className="rounded border-0 bg-transparent px-1 py-1.5 text-gray-600 outline-none hover:text-gray-900" value={errors} onChange={(event) => updateFilter(() => setErrors(event.target.value as ErrorFilter))}>
@@ -1057,13 +1096,13 @@ export function SalesTransactionsClient({
                               key={action}
                               className={`flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-gray-50 ${
                                 (action === 'delete' && invoice.status !== 'draft') ||
-                                (['send', 'remind', 'share', 'void'].includes(action) && ['paid', 'void'].includes(invoice.status))
+                                ((['send', 'remind', 'share', 'void'].includes(action) && ['paid', 'void'].includes(invoice.status)) || (['remind', 'share'].includes(action) && invoice.status === 'draft'))
                                   ? 'cursor-not-allowed text-gray-400'
                                   : ''
                               }`}
                               disabled={
                                 (action === 'delete' && invoice.status !== 'draft') ||
-                                (['send', 'remind', 'share', 'void'].includes(action) && ['paid', 'void'].includes(invoice.status))
+                                ((['send', 'remind', 'share', 'void'].includes(action) && ['paid', 'void'].includes(invoice.status)) || (['remind', 'share'].includes(action) && invoice.status === 'draft'))
                               }
                               onClick={() => handleRowAction(invoice, action)}
                             >
@@ -1093,10 +1132,10 @@ export function SalesTransactionsClient({
               </select>
             </label>
             <span>{filteredRows.length ? `${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, filteredRows.length)} of ${filteredRows.length}` : '0 results'}</span>
-            <button type="button" className="rounded p-1 hover:bg-gray-200 disabled:opacity-40" disabled={currentPage === 1} onClick={() => setPage(1)}>First</button>
-            <button type="button" aria-label="Previous page" className="rounded p-1 hover:bg-gray-200 disabled:opacity-40" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}><ChevronLeft className="h-4 w-4" /></button>
-            <button type="button" aria-label="Next page" className="rounded p-1 hover:bg-gray-200 disabled:opacity-40" disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}><ChevronRight className="h-4 w-4" /></button>
-            <button type="button" className="rounded p-1 hover:bg-gray-200 disabled:opacity-40" disabled={currentPage === totalPages} onClick={() => setPage(totalPages)}>Last</button>
+            <button type="button" className="rounded p-1 hover:bg-gray-200 disabled:opacity-40" disabled={currentPage === 1} onClick={() => { setPage(1); setSelected(new Set()); }}>First</button>
+            <button type="button" aria-label="Previous page" className="rounded p-1 hover:bg-gray-200 disabled:opacity-40" disabled={currentPage === 1} onClick={() => { setPage((value) => Math.max(1, value - 1)); setSelected(new Set()); }}><ChevronLeft className="h-4 w-4" /></button>
+            <button type="button" aria-label="Next page" className="rounded p-1 hover:bg-gray-200 disabled:opacity-40" disabled={currentPage === totalPages} onClick={() => { setPage((value) => Math.min(totalPages, value + 1)); setSelected(new Set()); }}><ChevronRight className="h-4 w-4" /></button>
+            <button type="button" className="rounded p-1 hover:bg-gray-200 disabled:opacity-40" disabled={currentPage === totalPages} onClick={() => { setPage(totalPages); setSelected(new Set()); }}>Last</button>
           </div>
         </div>
       </section>
@@ -1141,7 +1180,7 @@ export function SalesTransactionsClient({
                   {statusLabel(activityInvoice, referenceTime)}
                 </div>
                 <div className="mt-2 text-xs font-medium text-gray-600">Total due</div>
-                <div className="text-3xl font-semibold tracking-tight text-gray-900">{formatCents(activityInvoice.balance_cents ?? (activityInvoice.status === 'paid' ? 0 : activityInvoice.total_cents))}</div>
+                <div className="text-3xl font-semibold tracking-tight text-gray-900">{formatCents(outstandingCents(activityInvoice))}</div>
                 <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
                   <div><div className="text-gray-500">Invoice date</div><div className="mt-1 font-medium text-gray-900">{formatTransactionDate(activityInvoice.issued_at ?? activityInvoice.created_at)}</div></div>
                   <div><div className="text-gray-500">Due date</div><div className="mt-1 font-medium text-gray-900">{formatTransactionDate(activityInvoice.due_date)}</div></div>
