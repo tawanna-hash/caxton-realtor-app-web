@@ -187,13 +187,6 @@ function emailHtml(deal: AgentDeal, deadline: DealDeadline, offset: number): str
 export async function runAgentDeadlineNotifications(now = new Date()): Promise<AgentDeadlineNotificationRun> {
   await ensureAgentDeadlineDeliverySchema();
   const today = chicagoParts(now).date;
-  const recipients = await query<WorkspaceRecipientRow>(
-    `SELECT workspace.realtor_id, workspace.workspace, realtors.email
-     FROM agent_command_center_workspaces AS workspace
-     JOIN realtors ON realtors.id = workspace.realtor_id
-     ORDER BY workspace.updated_at DESC
-     LIMIT 500`,
-  );
 
   const result: AgentDeadlineNotificationRun = {
     eligibleWorkspaces: 0,
@@ -204,64 +197,82 @@ export async function runAgentDeadlineNotifications(now = new Date()): Promise<A
     errors: [],
   };
 
-  for (const row of recipients) {
-    const parsed = agentCommandCenterWorkspaceSchema.safeParse(row.workspace);
-    if (!parsed.success) {
-      result.skipped += 1;
-      continue;
-    }
-    const preferences = parsed.data.notificationPreferences;
-    if (!preferences.emailEnabled && !preferences.pushEnabled) continue;
-    result.eligibleWorkspaces += 1;
+  const PAGE_SIZE = 500;
+  let pageOffset = 0;
+  let pageCount = PAGE_SIZE;
 
-    for (const deal of parsed.data.deals) {
-      if (deal.status === 'completed') continue;
-      for (const deadline of deadlinesForDeal(deal)) {
-        for (const offset of preferences.reminderOffsets) {
-          if (addDays(deadline.date, -offset) !== today) continue;
-          result.dueDeadlines += 1;
-          const transaction = dealLabel(deal);
-          const timing = offset === 0 ? 'due today' : `due in ${offset}d`;
+  while (pageCount === PAGE_SIZE) {
+    const recipients = await query<WorkspaceRecipientRow>(
+      `SELECT workspace.realtor_id, workspace.workspace, realtors.email
+       FROM agent_command_center_workspaces AS workspace
+       JOIN realtors ON realtors.id = workspace.realtor_id
+       ORDER BY workspace.updated_at DESC
+       LIMIT $1
+       OFFSET $2`,
+      [PAGE_SIZE, pageOffset],
+    );
+    pageCount = recipients.length;
+    pageOffset += pageCount;
 
-          if (preferences.emailEnabled && row.email) {
-            const deliveryId = await claimDelivery(row.realtor_id, deal.id, deadline, offset, 'email');
-            if (deliveryId) {
-              const sent = await sendEmail({
-                to: row.email,
-                subject: `${deadline.label} ${timing} — ${transaction}`,
-                html: emailHtml(deal, deadline, offset),
-              });
-              if (sent.ok) {
-                await markDeliverySent(deliveryId, sent.messageId);
-                result.emailSent += 1;
-              } else {
-                await releaseDelivery(deliveryId, sent.error ?? 'email send failed');
-                result.errors.push(`email ${deal.id}/${deadline.id}: ${sent.error ?? 'send failed'}`);
+    for (const row of recipients) {
+      const parsed = agentCommandCenterWorkspaceSchema.safeParse(row.workspace);
+      if (!parsed.success) {
+        result.skipped += 1;
+        continue;
+      }
+      const preferences = parsed.data.notificationPreferences;
+      if (!preferences.emailEnabled && !preferences.pushEnabled) continue;
+      result.eligibleWorkspaces += 1;
+
+      for (const deal of parsed.data.deals) {
+        if (deal.status === 'completed') continue;
+        for (const deadline of deadlinesForDeal(deal)) {
+          for (const offset of preferences.reminderOffsets) {
+            if (addDays(deadline.date, -offset) !== today) continue;
+            result.dueDeadlines += 1;
+            const transaction = dealLabel(deal);
+            const timing = offset === 0 ? 'due today' : `due in ${offset}d`;
+
+            if (preferences.emailEnabled && row.email) {
+              const deliveryId = await claimDelivery(row.realtor_id, deal.id, deadline, offset, 'email');
+              if (deliveryId) {
+                const sent = await sendEmail({
+                  to: row.email,
+                  subject: `${deadline.label} ${timing} — ${transaction}`,
+                  html: emailHtml(deal, deadline, offset),
+                });
+                if (sent.ok) {
+                  await markDeliverySent(deliveryId, sent.messageId);
+                  result.emailSent += 1;
+                } else {
+                  await releaseDelivery(deliveryId, sent.error ?? 'email send failed');
+                  result.errors.push(`email ${deal.id}/${deadline.id}: ${sent.error ?? 'send failed'}`);
+                }
               }
             }
-          }
 
-          if (preferences.pushEnabled) {
-            const deliveryId = await claimDelivery(row.realtor_id, deal.id, deadline, offset, 'web_push');
-            if (deliveryId) {
-              try {
-                const sent = await sendPushToRealtor(row.realtor_id, {
-                  title: `${deadline.label} ${timing}`,
-                  body: transaction,
-                  url: '/agents#agent-desk',
-                  tag: `agent-deadline-${deal.id}-${deadline.id}-${offset}`,
-                });
-                if (sent.sent > 0) {
-                  await markDeliverySent(deliveryId);
-                  result.pushSent += 1;
-                } else {
-                  await releaseDelivery(deliveryId, 'No active browser push subscription');
-                  result.skipped += 1;
+            if (preferences.pushEnabled) {
+              const deliveryId = await claimDelivery(row.realtor_id, deal.id, deadline, offset, 'web_push');
+              if (deliveryId) {
+                try {
+                  const sent = await sendPushToRealtor(row.realtor_id, {
+                    title: `${deadline.label} ${timing}`,
+                    body: transaction,
+                    url: '/agents#agent-desk',
+                    tag: `agent-deadline-${deal.id}-${deadline.id}-${offset}`,
+                  });
+                  if (sent.sent > 0) {
+                    await markDeliverySent(deliveryId);
+                    result.pushSent += 1;
+                  } else {
+                    await releaseDelivery(deliveryId, 'No active browser push subscription');
+                    result.skipped += 1;
+                  }
+                } catch (error) {
+                  const message = error instanceof Error ? error.message : 'push send failed';
+                  await releaseDelivery(deliveryId, message);
+                  result.errors.push(`push ${deal.id}/${deadline.id}: ${message}`);
                 }
-              } catch (error) {
-                const message = error instanceof Error ? error.message : 'push send failed';
-                await releaseDelivery(deliveryId, message);
-                result.errors.push(`push ${deal.id}/${deadline.id}: ${message}`);
               }
             }
           }

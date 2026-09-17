@@ -970,6 +970,15 @@ export default function AgentDealDesk({
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const contractPreviewUrlRef = useRef('');
+  const formDeepLinkHandledRef = useRef(false);
+  const dealsRef = useRef(deals);
+  const notificationPreferencesRef = useRef(notificationPreferences);
+  useEffect(() => {
+    dealsRef.current = deals;
+  }, [deals]);
+  useEffect(() => {
+    notificationPreferencesRef.current = notificationPreferences;
+  }, [notificationPreferences]);
 
   const clearContractPreview = useCallback(() => {
     if (contractPreviewUrlRef.current) URL.revokeObjectURL(contractPreviewUrlRef.current);
@@ -1099,16 +1108,18 @@ export default function AgentDealDesk({
   }, []);
 
   useEffect(() => {
+    if (formDeepLinkHandledRef.current) return;
     const requestedFormFamily = new URLSearchParams(window.location.search).get('form');
     const requestedVersion = trecFormVersions.find((version) => version.formFamily === requestedFormFamily && version.isActive);
     if (!ready || !requestedVersion) return;
+    formDeepLinkHandledRef.current = true;
     const timer = window.setTimeout(() => {
       setActiveTrecFormFamily(requestedVersion.formFamily);
       setActiveTrecPage(1);
       setWorkspacePage(2);
-      if (deals.length === 0) {
+      if (dealsRef.current.length === 0) {
         const deal = newDeal(requestedVersion.id);
-        const workspace = { deals: [deal], notificationPreferences };
+        const workspace = { deals: [deal], notificationPreferences: notificationPreferencesRef.current };
         setDeals([deal]);
         setActiveDealId(deal.id);
         queueCloudSave(workspace);
@@ -1116,7 +1127,7 @@ export default function AgentDealDesk({
       window.setTimeout(() => document.getElementById('trec-form-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [deals.length, notificationPreferences, queueCloudSave, ready, trecFormVersions]);
+  }, [queueCloudSave, ready, trecFormVersions]);
 
   useEffect(() => {
     if (!isCameraOpen) return;
