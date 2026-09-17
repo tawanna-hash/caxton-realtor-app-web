@@ -7,7 +7,7 @@
  *       this realtor, and bounces back to account settings.
  */
 
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { requireUser } from '@/lib/server/auth/user';
 import { withErrorHandling } from '@/lib/server/error';
 import { exchangeCodeForDriveAccount, saveDriveTokens } from '@/lib/server/google-drive-client';
@@ -83,7 +83,7 @@ function oauthFailure(err: unknown): { reason: DriveCallbackReason; status?: num
   return { reason: 'token_exchange_failed', status };
 }
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withErrorHandling(async (req: NextRequest) => {
   const user = await requireUser();
   const params = new URL(req.url).searchParams;
   const target = new URL(SETTINGS_PAGE, req.url);
