@@ -15,12 +15,3 @@
 export const ADMIN_SESSION_COOKIE_NAME = 'caxton_admin_session_v2';
 
 export const SESSION_COOKIE_NAME = 'caxton_session_v2';
-
-/**
- * Get Paid development-code gate. Set only after a signed-in admin submits
- * the correct code at /admin/getpaid-lock; value is an HMAC (not the code
- * itself) so a stolen cookie value can't be reverse-engineered into the
- * code, and it's re-derived per-admin so one admin's unlock can't be
- * replayed under a different admin's session. See lib/server/getpaid-gate.ts.
- */
-export const GETPAID_UNLOCK_COOKIE_NAME = 'caxton_getpaid_unlock_v1';

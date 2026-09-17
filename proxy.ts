@@ -33,18 +33,12 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
-import { ADMIN_SESSION_COOKIE_NAME, GETPAID_UNLOCK_COOKIE_NAME } from './lib/auth/cookie-names';
+import { ADMIN_SESSION_COOKIE_NAME } from './lib/auth/cookie-names';
 import {
   PUB_KEYS,
   PRE_LAUNCH_PUB_KEYS,
   type PubKey,
 } from './lib/pub-meta';
-import {
-  isGetPaidPagePath,
-  isGetPaidApiPath,
-  GETPAID_GATED_METHODS,
-  isValidGetPaidUnlockTag,
-} from './lib/getpaid-gate';
 
 // ============================================================================
 // CSRF: origin/referer allowlist on state-changing API routes (F-01)
@@ -273,44 +267,13 @@ export async function proxy(req: NextRequest) {
   const pubRedirect = handlePubPermalink(req);
   if (pubRedirect) return pubRedirect;
 
-  // 2.5. Get Paid development-code gate on mutating API routes. Runs before
-  // the /admin page-gate block below because these paths live under /api,
-  // not /admin. Each of these routes still separately calls requireAdmin()
-  // — this only adds the "Ripley10" code requirement on top of that. GETs
-  // are intentionally left ungated here so read-only dashboards elsewhere
-  // that happen to hit these paths aren't broken; the page-level gate below
-  // is what blocks *viewing* Get Paid pages at all without the code.
-  if (
-    GETPAID_GATED_METHODS.has(req.method) &&
-    isGetPaidApiPath(pathname)
-  ) {
-    const realtorSecret = process.env.JWT_SECRET;
-    const adminSecret = process.env.ADMIN_JWT_SECRET;
-    const token = req.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
-    const adminId = token && realtorSecret && realtorSecret.length >= 32
-      ? await resolveAdminId(token, realtorSecret, adminSecret)
-      : null;
-    // No valid admin session: let the request through to the route handler,
-    // which will reject it with 401 via requireAdmin() — that's the correct
-    // error for "not signed in", not "Get Paid is locked".
-    if (adminId) {
-      const unlockTag = req.cookies.get(GETPAID_UNLOCK_COOKIE_NAME)?.value;
-      if (!(await isValidGetPaidUnlockTag(adminId, unlockTag))) {
-        return NextResponse.json(
-          { error: 'Get Paid is locked. Enter the development code to make changes.' },
-          { status: 403 },
-        );
-      }
-    }
-  }
-
   // 3. Admin auth gate (only when on /admin/*).
   // Signed public share of the Gmail event review queue — bypass the admin gate.
   if (pathname.startsWith('/admin/events/gmail/shared/')) {
     return NextResponse.next();
   }
   if (pathname.startsWith('/admin')) {
-    if (isPublicAdminPath(pathname) || pathname === '/admin/getpaid-lock') {
+    if (isPublicAdminPath(pathname)) {
       return NextResponse.next();
     }
 
@@ -328,21 +291,6 @@ export async function proxy(req: NextRequest) {
     const token = req.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
     const adminId = token ? await resolveAdminId(token, realtorSecret, adminSecret) : null;
     if (adminId) {
-      // 3.5. Get Paid page gate: signed in as admin, but this is one of the
-      // Get Paid pages (payment links, statements, recurring payments,
-      // sales transactions, invoices, AR) and the per-admin unlock cookie
-      // isn't present/valid. Send them to the code-entry screen instead of
-      // rendering the page.
-      if (isGetPaidPagePath(pathname)) {
-        const unlockTag = req.cookies.get(GETPAID_UNLOCK_COOKIE_NAME)?.value;
-        if (!(await isValidGetPaidUnlockTag(adminId, unlockTag))) {
-          const url = req.nextUrl.clone();
-          url.pathname = '/admin/getpaid-lock';
-          url.search = '';
-          url.searchParams.set('next', pathname + search);
-          return NextResponse.redirect(url, 307);
-        }
-      }
       return NextResponse.next();
     }
 
