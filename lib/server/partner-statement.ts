@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { ensureSchema, getSql } from '@/lib/db';
 import { paymentMethodLabel, processingFeeCents } from '@/lib/payment-processing-fees';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
@@ -28,7 +29,20 @@ export type PartnerStatement = {
   overdueCents: number;
   notYetDueCents: number;
   outstandingCents: number;
+  overduePaymentLinkUrl: string | null;
   invoices: PartnerStatementInvoice[];
+};
+
+export type StatementInvoiceAllocation = {
+  invoiceId: string;
+  invoiceNumber: string;
+  amountCents: number;
+};
+
+type StatementPaymentSessionRow = {
+  id: string;
+  checkout_url: string;
+  stripe_checkout_session_id: string | null;
 };
 
 export async function loadPartnerStatement(advertiserId: number): Promise<PartnerStatement | null> {
@@ -107,8 +121,155 @@ export async function loadPartnerStatement(advertiserId: number): Promise<Partne
     overdueCents,
     notYetDueCents,
     outstandingCents: overdueCents + notYetDueCents,
+    overduePaymentLinkUrl: null,
     invoices,
   };
+}
+
+function overdueAllocations(statement: PartnerStatement): StatementInvoiceAllocation[] {
+  return statement.invoices
+    .filter((invoice) => invoice.is_overdue && Number(invoice.balance_cents) > 0)
+    .map((invoice) => ({
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.number ?? invoice.id.slice(0, 8),
+      amountCents: Number(invoice.balance_cents),
+    }));
+}
+
+async function expireStatementPaymentSessions(
+  advertiserId: number,
+  exceptId?: string,
+): Promise<void> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT id, stripe_checkout_session_id
+    FROM statement_payment_sessions
+    WHERE advertiser_id = ${advertiserId}
+      AND status = 'open'
+      AND (${exceptId ?? null}::uuid IS NULL OR id <> ${exceptId ?? null}::uuid)
+  `) as unknown as StatementPaymentSessionRow[];
+  if (rows.length === 0) return;
+
+  const stripe = getStripe();
+  for (const row of rows) {
+    if (row.stripe_checkout_session_id) {
+      try {
+        await stripe.checkout.sessions.expire(row.stripe_checkout_session_id);
+      } catch {
+        // Completed and already-expired sessions cannot be expired again.
+      }
+    }
+  }
+  for (const row of rows) {
+    await sql`
+      UPDATE statement_payment_sessions
+      SET status = 'expired', updated_at = NOW()
+      WHERE id = ${row.id}
+        AND status = 'open'
+    `;
+  }
+}
+
+export async function getOrCreatePartnerStatementOverdueLink(
+  statement: PartnerStatement,
+  options: { forceRefresh?: boolean } = {},
+): Promise<PartnerStatement> {
+  const allocations = overdueAllocations(statement);
+  if (allocations.length === 0) {
+    return { ...statement, overduePaymentLinkUrl: null };
+  }
+  if (!isStripeConfigured()) throw new Error('Stripe is not configured');
+
+  await ensureSchema();
+  const sql = getSql();
+  const allocationsJson = JSON.stringify(allocations);
+  if (!options.forceRefresh) {
+    const existing = (await sql`
+      SELECT id, checkout_url, stripe_checkout_session_id
+      FROM statement_payment_sessions
+      WHERE advertiser_id = ${statement.advertiserId}
+        AND status = 'open'
+        AND (expires_at IS NULL OR expires_at > NOW())
+        AND invoice_allocations = ${allocationsJson}::jsonb
+      ORDER BY created_at DESC
+      LIMIT 1
+    `) as unknown as StatementPaymentSessionRow[];
+    if (existing[0]?.checkout_url) {
+      return { ...statement, overduePaymentLinkUrl: existing[0].checkout_url };
+    }
+  }
+
+  await expireStatementPaymentSessions(statement.advertiserId);
+  const stripe = getStripe();
+  const paymentId = randomUUID();
+  const baseAmountCents = allocations.reduce((sum, allocation) => sum + allocation.amountCents, 0);
+  const feeCents = processingFeeCents(baseAmountCents, 'card');
+  const invoiceLabels = allocations.map((allocation) => allocation.invoiceNumber).join(', ');
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    payment_method_types: ['card'],
+    customer_email: statement.recipientEmail ?? undefined,
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          unit_amount: baseAmountCents,
+          product_data: {
+            name: `Pay ${allocations.length} overdue invoice${allocations.length === 1 ? '' : 's'}`,
+            description: `Caxton Publications invoices: ${invoiceLabels}`.slice(0, 500),
+          },
+        },
+        quantity: 1,
+      },
+      {
+        price_data: {
+          currency: 'usd',
+          unit_amount: feeCents,
+          product_data: {
+            name: `${paymentMethodLabel('card')} processing fee`,
+            description: 'Processing fee disclosed before payment authorization',
+          },
+        },
+        quantity: 1,
+      },
+    ],
+    success_url: `${APP_BASE_URL}/portal?statement_paid=1`,
+    cancel_url: `${APP_BASE_URL}/portal?statement_canceled=1`,
+    metadata: {
+      source: 'statement_payment',
+      statement_payment_id: paymentId,
+      advertiser_id: String(statement.advertiserId),
+      base_amount_cents: String(baseAmountCents),
+      processing_fee_cents: String(feeCents),
+      charge_total_cents: String(baseAmountCents + feeCents),
+    },
+    payment_intent_data: {
+      metadata: {
+        source: 'statement_payment',
+        statement_payment_id: paymentId,
+        advertiser_id: String(statement.advertiserId),
+        base_amount_cents: String(baseAmountCents),
+        processing_fee_cents: String(feeCents),
+        charge_total_cents: String(baseAmountCents + feeCents),
+        payment_method_selection: 'card',
+      },
+    },
+  });
+  if (!session.url) throw new Error('Stripe did not return a URL for the statement payment');
+
+  await sql`
+    INSERT INTO statement_payment_sessions (
+      id, advertiser_id, stripe_checkout_session_id, checkout_url,
+      invoice_allocations, base_amount_cents, processing_fee_cents,
+      status, expires_at
+    ) VALUES (
+      ${paymentId}, ${statement.advertiserId}, ${session.id}, ${session.url},
+      ${allocationsJson}::jsonb, ${baseAmountCents}, ${feeCents},
+      'open', ${session.expires_at ? new Date(session.expires_at * 1000).toISOString() : null}
+    )
+  `;
+
+  return { ...statement, overduePaymentLinkUrl: session.url };
 }
 
 export async function refreshPartnerStatementLinks(
@@ -197,7 +358,10 @@ export async function refreshPartnerStatementLinks(
     });
   }
 
-  return { ...statement, invoices };
+  return getOrCreatePartnerStatementOverdueLink(
+    { ...statement, invoices },
+    { forceRefresh: true },
+  );
 }
 
 export function statementMoney(cents: number): string {
@@ -249,6 +413,12 @@ export function renderPartnerStatementEmail(
     })
     .join('');
   const messageHtml = escapeHtml(personalMessage).replaceAll('\n', '<br>');
+  const payAllHtml = statement.overduePaymentLinkUrl
+    ? `<div style="margin:0 0 22px;padding:16px;background:#fff7ed;border:1px solid #fed7aa;text-align:center">
+        <div style="font-size:13px;font-weight:700;color:#9a3412;margin-bottom:10px">Total overdue: ${statementMoney(statement.overdueCents)}</div>
+        <a href="${escapeHtml(statement.overduePaymentLinkUrl)}" style="display:inline-block;background:#ea580c;color:#fff;padding:10px 16px;border-radius:4px;text-decoration:none;font-weight:700">Pay all overdue invoices</a>
+      </div>`
+    : '';
 
   const html = `<div style="font-family:Arial,sans-serif;max-width:760px;margin:0 auto;padding:24px;color:#262626;background:#fff">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #d4d4d4;padding-bottom:20px">
@@ -268,6 +438,7 @@ export function renderPartnerStatementEmail(
       <tr><td style="padding:7px 9px;border-bottom:1px solid #e5e7eb">Not yet due</td><td style="padding:7px 9px;border-bottom:1px solid #e5e7eb;text-align:right">${statementMoney(statement.notYetDueCents)}</td></tr>
       <tr style="background:#f5f5f5;font-weight:700"><td style="padding:10px 9px">Outstanding balance (USD)</td><td style="padding:10px 9px;text-align:right">${statementMoney(statement.outstandingCents)}</td></tr>
     </table>
+    ${payAllHtml}
     <table style="width:100%;border-collapse:collapse;font-size:12px">
       <thead><tr style="background:#171717;color:#fff">
         <th style="padding:9px 8px;text-align:left">Invoice #</th><th style="padding:9px 8px;text-align:left">Invoice date</th><th style="padding:9px 8px;text-align:left">Due date</th><th style="padding:9px 8px;text-align:right">Total</th><th style="padding:9px 8px;text-align:right">Paid</th><th style="padding:9px 8px;text-align:right">Due</th><th style="padding:9px 8px"></th>
@@ -286,7 +457,10 @@ export function renderPartnerStatementEmail(
         `${invoice.number ?? invoice.id.slice(0, 8)} | ${statementDate(invoice.due_date)} | Due ${statementMoney(invoice.balance_cents)}\nPay online: ${invoice.stripe_payment_link_url ?? 'Unavailable'}`,
     )
     .join('\n\n');
-  const text = `${personalMessage}\n\nSTATEMENT OF ACCOUNT\n${statement.billToName}\nAs of ${statementDate(statement.asOf)}\n\nOverdue: ${statementMoney(statement.overdueCents)}\nNot yet due: ${statementMoney(statement.notYetDueCents)}\nOutstanding balance (USD): ${statementMoney(statement.outstandingCents)}\n\n${invoiceText}\n\nWe appreciate your business.`;
+  const payAllText = statement.overduePaymentLinkUrl
+    ? `\nPay all overdue invoices (${statementMoney(statement.overdueCents)}): ${statement.overduePaymentLinkUrl}\n`
+    : '';
+  const text = `${personalMessage}\n\nSTATEMENT OF ACCOUNT\n${statement.billToName}\nAs of ${statementDate(statement.asOf)}\n\nOverdue: ${statementMoney(statement.overdueCents)}\nNot yet due: ${statementMoney(statement.notYetDueCents)}\nOutstanding balance (USD): ${statementMoney(statement.outstandingCents)}\n${payAllText}\n${invoiceText}\n\nWe appreciate your business.`;
 
   return { html, text };
 }

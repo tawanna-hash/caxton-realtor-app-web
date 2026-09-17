@@ -17,9 +17,12 @@ import { getStripe, isStripeConfigured, getWebhookSecret } from '@/lib/stripe';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
 import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
 import {
+  expireOpenStatementPaymentSessionsForInvoice,
   reconcileStripeRefundInGetPaid,
+  reconcileStripeStatementRefund,
   syncAgreementPaymentToGetPaid,
   upsertStripeInvoicePayment,
+  upsertStripeStatementPayments,
 } from '@/lib/server/stripe-payment-ledger-sync';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 import {
@@ -107,7 +110,7 @@ export async function POST(req: NextRequest) {
             await syncStripePlatinumSubscription(session.metadata.realtor_id, subscription);
           }
         } else if (
-          session.metadata?.source === 'invoice_payment' &&
+          ['invoice_payment', 'statement_payment'].includes(session.metadata?.source ?? '') &&
           session.payment_status === 'paid'
         ) {
           const paymentIntentId = typeof session.payment_intent === 'string'
@@ -115,7 +118,7 @@ export async function POST(req: NextRequest) {
             : session.payment_intent?.id;
           if (paymentIntentId) {
             const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-            await handleInvoicePaymentSucceeded(sql, paymentIntent);
+            await handlePaymentSucceeded(sql, paymentIntent);
           }
         }
         break;
@@ -167,6 +170,11 @@ async function handlePaymentSucceeded(
   // /api/portal/invoices/[id]/checkout, keyed by metadata.invoice_id.
   if (pi.metadata?.source === 'invoice_payment') {
     await handleInvoicePaymentSucceeded(sql, pi);
+    return;
+  }
+
+  if (pi.metadata?.source === 'statement_payment') {
+    await handleStatementPaymentSucceeded(sql, pi);
     return;
   }
 
@@ -417,7 +425,28 @@ async function handleInvoicePaymentSucceeded(
   }
 
   await upsertStripeInvoicePayment(sql, invoiceId, pi);
+  await expireOpenStatementPaymentSessionsForInvoice(sql, invoiceId);
   console.log('[stripe-webhook] invoice payment ledger synchronized \u2014 invoice', invoiceId, 'pi:', pi.id);
+}
+
+async function handleStatementPaymentSucceeded(
+  sql: ReturnType<typeof getSql>,
+  pi: Stripe.PaymentIntent,
+): Promise<void> {
+  const statementPaymentId = pi.metadata?.statement_payment_id;
+  if (!statementPaymentId) {
+    console.warn('[stripe-webhook] statement_payment succeeded missing statement_payment_id; pi:', pi.id);
+    return;
+  }
+  const invoiceIds = await upsertStripeStatementPayments(sql, statementPaymentId, pi);
+  console.log(
+    '[stripe-webhook] statement payment allocated',
+    invoiceIds.length,
+    'invoices; statement:',
+    statementPaymentId,
+    'pi:',
+    pi.id,
+  );
 }
 
 async function handlePaymentFailed(
@@ -428,6 +457,15 @@ async function handlePaymentFailed(
     // Nothing to roll back on the invoice row itself — it stays in its
     // current status (sent/overdue) so the advertiser can simply retry.
     console.warn('[stripe-webhook] invoice payment failed. invoice_id:', pi.metadata.invoice_id, 'pi:', pi.id);
+    return;
+  }
+  if (pi.metadata?.source === 'statement_payment') {
+    console.warn(
+      '[stripe-webhook] statement payment failed. statement_payment_id:',
+      pi.metadata.statement_payment_id,
+      'pi:',
+      pi.id,
+    );
     return;
   }
 
@@ -483,7 +521,9 @@ async function handleRefund(sql: ReturnType<typeof getSql>, charge: Stripe.Charg
   const invoiceId =
     pi.metadata?.invoice_id ??
     (chargeSource === 'invoice_payment' ? charge.metadata?.invoice_id : null);
-  const reconciledInvoiceIds = await reconcileStripeRefundInGetPaid(sql, pi, charge);
+  const reconciledInvoiceIds = chargeSource === 'statement_payment' && pi.metadata?.statement_payment_id
+    ? await reconcileStripeStatementRefund(sql, pi.metadata.statement_payment_id, pi, charge)
+    : await reconcileStripeRefundInGetPaid(sql, pi, charge);
   if (invoiceId && !reconciledInvoiceIds.includes(invoiceId)) {
     // Repair older payments that predate the ledger: the invoice must not stay
     // paid merely because there was no invoice_payments row to reverse.

@@ -90,6 +90,8 @@ export const POST = withAdminTracking(async function POST(
     }
 
     const sql = getSql();
+    const paymentLinkCount =
+      refreshed.invoices.length + (refreshed.overduePaymentLinkUrl ? 1 : 0);
     const historyRows = (await sql`
       INSERT INTO statement_send_history (
         advertiser_id, advertiser_name, recipient_email, sender_email,
@@ -99,7 +101,7 @@ export const POST = withAdminTracking(async function POST(
         ${refreshed.advertiserId}, ${refreshed.advertiserName}, ${recipient},
         ${fromKey}, ${subject}, ${admin.email}, ${result.messageId ?? null},
         ${refreshed.asOf}, ${refreshed.invoices.length},
-        ${refreshed.outstandingCents}, ${refreshed.invoices.length},
+        ${refreshed.outstandingCents}, ${paymentLinkCount},
         ${JSON.stringify(refreshed.invoices.map((invoice) => invoice.id))}::jsonb
       )
       RETURNING id, sent_at
@@ -111,6 +113,8 @@ export const POST = withAdminTracking(async function POST(
       sent: true,
       recipient,
       invoice_count: refreshed.invoices.length,
+      payment_link_count: paymentLinkCount,
+      overdue_payment_link_created: Boolean(refreshed.overduePaymentLinkUrl),
       message_id: result.messageId ?? null,
       history_id: history?.id ?? null,
       sent_at: history?.sent_at ?? new Date().toISOString(),

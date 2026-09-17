@@ -11,6 +11,10 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import {
+  getOrCreatePartnerStatementOverdueLink,
+  type PartnerStatement,
+} from '@/lib/server/partner-statement';
 import PrintInvoiceButton from '../../../invoices/[id]/preview/PrintInvoiceButton';
 import GenerateLinkButton from './GenerateLinkButton';
 import StatementEmailButton from '../StatementEmailButton';
@@ -135,6 +139,32 @@ export default async function StatementPage({
     year: 'numeric',
     timeZone: 'America/Chicago',
   });
+  let overduePaymentLinkUrl: string | null = null;
+  if (overdueCents > 0) {
+    const statement: PartnerStatement = {
+      advertiserId: advertiser.id,
+      advertiserName: advertiser.name,
+      recipientEmail: recipient || null,
+      billToName: billTo.bill_to_name?.trim() || advertiser.name,
+      billToEmail: billTo.bill_to_email?.trim() || null,
+      billToAddress: billTo.bill_to_address?.trim() || null,
+      asOf: new Date(),
+      overdueCents,
+      notYetDueCents,
+      outstandingCents,
+      overduePaymentLinkUrl: null,
+      invoices: invoices.map((invoice) => ({
+        ...invoice,
+        stripe_checkout_session_id: null,
+      })),
+    };
+    try {
+      const linked = await getOrCreatePartnerStatementOverdueLink(statement);
+      overduePaymentLinkUrl = linked.overduePaymentLinkUrl;
+    } catch (error) {
+      console.error('[statement] could not create combined overdue payment link', error);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 print:max-w-none print:px-0 print:py-0">
@@ -264,6 +294,22 @@ export default async function StatementPage({
             <div className="bg-neutral-100 px-2 py-2 text-right font-semibold">{money(outstandingCents)}</div>
           </div>
         </section>
+
+        {overduePaymentLinkUrl && (
+          <section className="mb-5 border border-orange-200 bg-orange-50 px-4 py-4 text-center">
+            <div className="font-semibold text-orange-900">
+              Pay all overdue invoices: {money(overdueCents)}
+            </div>
+            <a
+              href={overduePaymentLinkUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-flex rounded bg-orange-600 px-4 py-2 text-xs font-semibold text-white hover:bg-orange-700 print:text-black"
+            >
+              Pay all overdue invoices
+            </a>
+          </section>
+        )}
 
         <section>
           <div className="grid grid-cols-[110px_100px_100px_85px_85px_90px] bg-neutral-900 px-3 py-2 font-semibold text-white">

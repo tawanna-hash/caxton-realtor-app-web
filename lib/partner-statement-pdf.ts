@@ -133,6 +133,20 @@ export async function generatePartnerStatementPdf(statement: PartnerStatement): 
     rightText(page, amount, PAGE_W - MARGIN - 8, y - 13, strong ? bold : regular, 8);
     y -= 19;
   }
+  if (statement.overduePaymentLinkUrl) {
+    y -= 4;
+    page.drawRectangle({ x: 302, y: y - 24, width: PAGE_W - MARGIN - 302, height: 24, color: rgb(1, 0.95, 0.9) });
+    addLink(
+      doc,
+      page,
+      `Pay all overdue (${statementMoney(statement.overdueCents)})`,
+      statement.overduePaymentLinkUrl,
+      310,
+      y - 16,
+      bold,
+    );
+    y -= 28;
+  }
   y -= 18;
   drawTableHeader();
 

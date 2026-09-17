@@ -35,7 +35,7 @@ export default function StatementEmailButton({
   const [to, setTo] = useState(recipient);
   const [subject, setSubject] = useState(`Statement of Account from Caxton Publications, Inc.`);
   const [message, setMessage] = useState(
-    `Dear ${advertiserName},\n\nPlease find your current Statement of Account below and attached as a PDF. Each outstanding invoice includes a secure online payment link.\n\nPlease contact us if you have any questions.\n\nSincerely,\nTawanna Verock\nCaxton Publications Inc.`,
+    `Dear ${advertiserName},\n\nPlease find your current Statement of Account below and attached as a PDF. You can pay all overdue invoices with one secure link or use the separate payment link for any individual invoice.\n\nPlease contact us if you have any questions.\n\nSincerely,\nTawanna Verock\nCaxton Publications Inc.`,
   );
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
@@ -52,7 +52,7 @@ export default function StatementEmailButton({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.detail ?? data.error ?? 'Could not send statement.');
-      setResult(`Statement sent to ${data.recipient}. ${data.invoice_count} payment links refreshed.`);
+      setResult(`Statement sent to ${data.recipient}. ${data.payment_link_count ?? data.invoice_count} payment links refreshed.`);
       onSent?.({
         sentAt: String(data.sent_at ?? new Date().toISOString()),
         recipient: String(data.recipient ?? to),
@@ -96,7 +96,7 @@ export default function StatementEmailButton({
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Email Statement</h2>
                 <p className="mt-1 text-xs text-gray-500">
-                  Fresh payment links will be created before the email and PDF are generated.
+                  Fresh individual links and one pay-all-overdue link will be created before the email and PDF are generated.
                 </p>
               </div>
               <button

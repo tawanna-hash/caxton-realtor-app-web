@@ -1,6 +1,7 @@
 import type Stripe from 'stripe';
 import type { getSql } from '@/lib/db';
 import type { Agreement } from '@/lib/agreements';
+import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 
 type Sql = ReturnType<typeof getSql>;
@@ -8,6 +9,20 @@ type Sql = ReturnType<typeof getSql>;
 type InvoiceRow = {
   id: string;
   total_cents: number;
+  status: string;
+};
+
+type StatementInvoiceAllocation = {
+  invoiceId: string;
+  invoiceNumber: string;
+  amountCents: number;
+};
+
+type StatementPaymentSessionRow = {
+  id: string;
+  advertiser_id: number | null;
+  invoice_allocations: unknown;
+  base_amount_cents: number;
   status: string;
 };
 
@@ -39,6 +54,46 @@ function paymentMemo(pi: Stripe.PaymentIntent, baseAmountCents: number): string 
   const gross = (pi.amount_received / 100).toFixed(2);
   const fee = (feeCents / 100).toFixed(2);
   return `Stripe payment ${pi.id}; gross $${gross}; processing fee $${fee}`;
+}
+
+function statementAllocations(value: unknown): StatementInvoiceAllocation[] {
+  if (!Array.isArray(value)) throw new Error('statement payment allocation snapshot is invalid');
+  return value.map((item) => {
+    if (!item || typeof item !== 'object') {
+      throw new Error('statement payment allocation entry is invalid');
+    }
+    const invoiceId = 'invoiceId' in item ? item.invoiceId : null;
+    const invoiceNumber = 'invoiceNumber' in item ? item.invoiceNumber : null;
+    const amountCents = 'amountCents' in item ? Number(item.amountCents) : NaN;
+    if (
+      typeof invoiceId !== 'string' ||
+      typeof invoiceNumber !== 'string' ||
+      !Number.isSafeInteger(amountCents) ||
+      amountCents <= 0
+    ) {
+      throw new Error('statement payment allocation entry is invalid');
+    }
+    return { invoiceId, invoiceNumber, amountCents };
+  });
+}
+
+async function loadStatementPaymentSession(
+  sql: Sql,
+  statementPaymentId: string,
+): Promise<StatementPaymentSessionRow & { allocations: StatementInvoiceAllocation[] }> {
+  const rows = (await sql`
+    SELECT id, advertiser_id, invoice_allocations, base_amount_cents, status
+    FROM statement_payment_sessions
+    WHERE id = ${statementPaymentId}
+  `) as unknown as StatementPaymentSessionRow[];
+  const session = rows[0];
+  if (!session) throw new Error(`statement payment ${statementPaymentId} not found`);
+  const allocations = statementAllocations(session.invoice_allocations);
+  const allocatedCents = allocations.reduce((sum, allocation) => sum + allocation.amountCents, 0);
+  if (allocatedCents !== Number(session.base_amount_cents)) {
+    throw new Error(`statement payment ${statementPaymentId} allocation total is invalid`);
+  }
+  return { ...session, allocations };
 }
 
 /**
@@ -141,6 +196,159 @@ export async function upsertStripeInvoicePayment(
      WHERE id = ${invoiceId}
   `;
   await recalculateStripeInvoice(sql, invoiceId, date);
+}
+
+/**
+ * Split one statement Checkout payment into the original overdue invoice
+ * balances. Each invoice gets a distinct external ID derived from the same
+ * PaymentIntent so retries remain idempotent under the ledger's unique index.
+ */
+export async function upsertStripeStatementPayments(
+  sql: Sql,
+  statementPaymentId: string,
+  pi: Stripe.PaymentIntent,
+): Promise<string[]> {
+  const session = await loadStatementPaymentSession(sql, statementPaymentId);
+  if (pi.amount_received < Number(session.base_amount_cents)) {
+    throw new Error(`Stripe statement payment ${pi.id} did not cover its invoice allocations`);
+  }
+
+  const invoiceIds = session.allocations.map((allocation) => allocation.invoiceId);
+  const invoices = (await sql`
+    SELECT id, advertiser_id, status
+    FROM invoices
+    WHERE id::text IN (
+      SELECT jsonb_array_elements_text(${JSON.stringify(invoiceIds)}::jsonb)
+    )
+  `) as unknown as Array<{ id: string; advertiser_id: number | null; status: string }>;
+  const invoiceById = new Map(invoices.map((invoice) => [invoice.id, invoice]));
+  for (const allocation of session.allocations) {
+    const invoice = invoiceById.get(allocation.invoiceId);
+    if (!invoice) throw new Error(`invoice ${allocation.invoiceId} not found for statement payment ${pi.id}`);
+    if (invoice.status === 'void') {
+      throw new Error(`cannot apply statement payment ${pi.id} to void invoice ${allocation.invoiceId}`);
+    }
+    if (invoice.advertiser_id !== session.advertiser_id) {
+      throw new Error(`invoice ${allocation.invoiceId} does not belong to statement payment partner`);
+    }
+  }
+
+  const date = paymentDate(pi.created);
+  for (const allocation of session.allocations) {
+    const externalId = `${pi.id}:${allocation.invoiceId}`;
+    await sql`
+      INSERT INTO invoice_payments (
+        invoice_id, amount_cents, payment_date, payment_method,
+        reference, memo, source, external_id, created_by
+      ) VALUES (
+        ${allocation.invoiceId}, ${allocation.amountCents}, ${date}, ${paymentMethod(pi)},
+        ${pi.id}, ${paymentMemo(pi, Number(session.base_amount_cents))},
+        'stripe_statement', ${externalId}, 'stripe_webhook'
+      )
+      ON CONFLICT (source, external_id) WHERE external_id IS NOT NULL
+      DO UPDATE SET
+        invoice_id = EXCLUDED.invoice_id,
+        amount_cents = EXCLUDED.amount_cents,
+        payment_date = EXCLUDED.payment_date,
+        payment_method = EXCLUDED.payment_method,
+        reference = EXCLUDED.reference,
+        memo = EXCLUDED.memo,
+        updated_at = NOW()
+    `;
+    await sql`
+      UPDATE invoices
+      SET stripe_payment_intent_id = ${pi.id},
+          stripe_customer_id = COALESCE(
+            ${typeof pi.customer === 'string' ? pi.customer : pi.customer?.id ?? null},
+            stripe_customer_id
+          ),
+          updated_at = NOW()
+      WHERE id = ${allocation.invoiceId}
+    `;
+    await recalculateStripeInvoice(sql, allocation.invoiceId, date);
+  }
+
+  await sql`
+    UPDATE statement_payment_sessions
+    SET stripe_payment_intent_id = ${pi.id}, status = 'paid', updated_at = NOW()
+    WHERE id = ${statementPaymentId}
+  `;
+  return invoiceIds;
+}
+
+export async function expireOpenStatementPaymentSessionsForInvoice(
+  sql: Sql,
+  invoiceId: string,
+): Promise<void> {
+  const rows = (await sql`
+    SELECT id, stripe_checkout_session_id
+    FROM statement_payment_sessions
+    WHERE status = 'open'
+      AND invoice_allocations @> ${JSON.stringify([{ invoiceId }])}::jsonb
+  `) as unknown as Array<{ id: string; stripe_checkout_session_id: string | null }>;
+  if (rows.length === 0) return;
+
+  if (isStripeConfigured()) {
+    const stripe = getStripe();
+    for (const row of rows) {
+      if (!row.stripe_checkout_session_id) continue;
+      try {
+        await stripe.checkout.sessions.expire(row.stripe_checkout_session_id);
+      } catch {
+        // A concurrently completed or already-expired session needs no action.
+      }
+    }
+  }
+  for (const row of rows) {
+    await sql`
+      UPDATE statement_payment_sessions
+      SET status = 'expired', updated_at = NOW()
+      WHERE id = ${row.id}
+        AND status = 'open'
+    `;
+  }
+}
+
+export async function reconcileStripeStatementRefund(
+  sql: Sql,
+  statementPaymentId: string,
+  pi: Stripe.PaymentIntent,
+  charge: Stripe.Charge,
+): Promise<string[]> {
+  const session = await loadStatementPaymentSession(sql, statementPaymentId);
+  const originalBaseCents = Number(session.base_amount_cents);
+  let remainingBaseCents = charge.refunded
+    ? 0
+    : Math.max(originalBaseCents - Math.min(charge.amount_refunded, originalBaseCents), 0);
+
+  for (const allocation of session.allocations) {
+    const retainedCents = Math.min(allocation.amountCents, remainingBaseCents);
+    remainingBaseCents -= retainedCents;
+    const externalId = `${pi.id}:${allocation.invoiceId}`;
+    if (retainedCents > 0) {
+      await sql`
+        UPDATE invoice_payments
+        SET amount_cents = ${retainedCents},
+            memo = ${`${paymentMemo(pi, originalBaseCents)}; refunded $${(charge.amount_refunded / 100).toFixed(2)} via ${charge.id}`},
+            updated_at = NOW()
+        WHERE source = 'stripe_statement' AND external_id = ${externalId}
+      `;
+    } else {
+      await sql`
+        DELETE FROM invoice_payments
+        WHERE source = 'stripe_statement' AND external_id = ${externalId}
+      `;
+    }
+    await recalculateStripeInvoice(sql, allocation.invoiceId);
+  }
+
+  await sql`
+    UPDATE statement_payment_sessions
+    SET status = ${charge.refunded ? 'refunded' : 'partially_refunded'},
+        updated_at = NOW()
+    WHERE id = ${statementPaymentId}
+  `;
+  return session.allocations.map((allocation) => allocation.invoiceId);
 }
 
 /**
