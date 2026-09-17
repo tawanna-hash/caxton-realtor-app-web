@@ -824,7 +824,7 @@ async function downloadAuditPdf(deal: AgentDeal, selectedVersions: TrecFormVersi
 
 function calendarEventsForDeal(deal: AgentDeal): CalendarEvent[] {
   const transaction = deal.propertyAddress || deal.title;
-  const description = `Agent Command Center deadline for ${transaction}. Verify against the signed contract and your broker's process.`;
+  const description = `Agent Deal Desk deadline for ${transaction}. Verify against the signed contract and your broker's process.`;
   const deadlineEvents = dealDeadlines(deal).map((deadline) => ({
     id: `deadline-${deadline.id}`,
     date: deadline.date,
@@ -863,7 +863,7 @@ function downloadCalendar(events: CalendarEvent[], filename: string): void {
   const content = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Realty News Now//Agent Command Center//EN',
+    'PRODID:-//Realty News Now//Agent Deal Desk//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     ...events.flatMap((event) => [

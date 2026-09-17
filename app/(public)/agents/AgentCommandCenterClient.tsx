@@ -178,13 +178,13 @@ export default function AgentCommandCenterClient({
           <div>
             <p className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">
               <Sparkles className="rnn-inline-icon" aria-hidden="true" />
-              Agent Command Center
+              Agent Deal Desk
             </p>
             <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.045em] text-white sm:text-5xl lg:text-6xl">
               More Control in Every Client Transaction.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-white/75 sm:mt-6 sm:text-lg">
-              Your Command Center for contract deadlines, client-ready calculators and service partners when a client needs help.
+              Your Deal Desk for contract deadlines, client-ready calculators and service partners when a client needs help.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link

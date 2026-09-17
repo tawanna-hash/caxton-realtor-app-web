@@ -16,7 +16,7 @@ import AgentCommandCenterClient, {
 } from './AgentCommandCenterClient';
 
 export const metadata: Metadata = {
-  title: 'Agent Command Center | Realty News Now',
+  title: 'Agent Deal Desk | Realty News Now',
   description:
     'A practical real estate workspace for Texas contract timing, field tools, and local partner connections.',
 };
@@ -69,7 +69,7 @@ export default async function AgentCommandCenterPage() {
       })
       .map(({ publication: _publication, ...provider }) => provider);
   } catch (error) {
-    console.error('[Agent Command Center] Partner directory unavailable', error);
+    console.error('[Agent Deal Desk] Partner directory unavailable', error);
   }
 
   return (

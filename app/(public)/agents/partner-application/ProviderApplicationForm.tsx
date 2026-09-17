@@ -79,7 +79,7 @@ export default function ProviderApplicationForm() {
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">You&apos;re in the Review Queue.</h1>
           <p className="mt-5 text-base leading-7 text-slate-600">Thank you for sharing your company details. The Realty News Now team will review your application and contact you using the information provided.</p>
           <Link href="/agents" className="mt-8 inline-flex min-h-[46px] items-center gap-2 rounded-full bg-[#301D5D] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#513A85]">
-            Return to Agent Command Center <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            Return to Agent Deal Desk <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
       </main>
@@ -90,7 +90,7 @@ export default function ProviderApplicationForm() {
     <main className="min-h-screen bg-[#F7F5F1]">
       <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8 lg:py-14">
         <Link href="/agents#referral-network" className="inline-flex min-h-[42px] items-center gap-2 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Agent Command Center
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Agent Deal Desk
         </Link>
         <div className="mt-7 grid overflow-hidden border border-[#D8D0C2] bg-white shadow-[0_18px_45px_rgba(40,25,77,0.08)] lg:grid-cols-[0.72fr_1.28fr]">
           <aside className="bg-[#301D5D] p-7 text-white sm:p-9">
