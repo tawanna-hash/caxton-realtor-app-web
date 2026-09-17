@@ -889,9 +889,14 @@ export default function AgentDealDesk({
   };
 
   const activeDeal = deals.find((deal) => deal.id === activeDealId) ?? null;
-  const activeDeals = deals.filter((deal) => !deal.closeoutOutcome);
-  const closedDeals = deals.filter((deal) => deal.closeoutOutcome);
-  const isDealLocked = (deal: AgentDeal) => Boolean(deal.closeoutOutcome && deal.closeoutDate);
+  const isDealFullyComplete = (deal: AgentDeal) =>
+    deal.tasks.every((task) => task.complete) &&
+    deal.reminders.every((reminder) => reminder.complete) &&
+    deal.documents.every((document) => document.complete);
+  const isDealClosedAndComplete = (deal: AgentDeal) => Boolean(deal.closeoutOutcome) && isDealFullyComplete(deal);
+  const activeDeals = deals.filter((deal) => !isDealClosedAndComplete(deal));
+  const closedDeals = deals.filter((deal) => isDealClosedAndComplete(deal));
+  const isDealLocked = (deal: AgentDeal) => Boolean(deal.closeoutOutcome && deal.closeoutDate) && isDealFullyComplete(deal);
   const activePacketForms = trecFormVersions.filter((version) => version.isActive);
   const selectedFormVersions = activeDeal
     ? activePacketForms.filter((version) => activeDeal.selectedFormFamilies[version.formFamily])
@@ -2406,6 +2411,12 @@ export default function AgentDealDesk({
               <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#5B438C]">
                 <Lock className="h-3.5 w-3.5" aria-hidden="true" />
                 Closed on {formatDate(activeDeal.closeoutDate)}. Per TREC Rules 535.2(h) and 535.146, this record is locked and retained for at least four years from the closing date — tasks and this transaction can no longer be removed.
+              </p>
+            )}
+            {Boolean(activeDeal.closeoutOutcome) && !isDealFullyComplete(activeDeal) && (
+              <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#9A6B1A]">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                Outcome set to {activeDeal.closeoutOutcome}, but this transaction stays in Transactions In Progress and unlocked until every task, reminder, and readiness document is marked complete.
               </p>
             )}
             <div className="mt-5 grid gap-3 md:grid-cols-3">
