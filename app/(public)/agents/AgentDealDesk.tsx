@@ -20,6 +20,7 @@ import {
   Download,
   FileText,
   FileUp,
+  FolderDown,
   History,
   ListTodo,
   LoaderCircle,
@@ -231,6 +232,9 @@ function mergeReadinessDocuments(deal: AgentDeal): AgentDeal {
           complete: false,
           requestedAt,
           updatedAt: requestedAt,
+          driveFileId: '',
+          fileName: '',
+          fileUploadedAt: '',
         };
   });
   const additionalDocuments = deal.documents.filter((document) => !DOCUMENT_TEMPLATE_IDS.has(document.id));
@@ -245,6 +249,10 @@ function ReadinessChecklist({
   addDocument,
   updateDocument,
   reviewAlerts,
+  uploadDocumentFile,
+  removeDocumentFile,
+  documentUploadBusyId,
+  documentUploadError,
 }: {
   headingTag?: 'h2' | 'h3';
   documents: AgentDocument[];
@@ -253,11 +261,18 @@ function ReadinessChecklist({
   addDocument: () => void;
   updateDocument: (documentId: string, status: AgentDocument['status']) => void;
   reviewAlerts: string[];
+  uploadDocumentFile: (documentId: string, file: File | undefined) => void;
+  removeDocumentFile: (documentId: string) => void;
+  documentUploadBusyId: string | null;
+  documentUploadError: string;
 }) {
   const Heading = headingTag;
   const additionalDocuments = documents.filter((document) => !DOCUMENT_TEMPLATE_IDS.has(document.id));
 
-  const renderDocument = (document: AgentDocument, description?: string) => (
+  const renderDocument = (document: AgentDocument, description?: string) => {
+    const hasFile = Boolean(document.driveFileId);
+    const isUploading = documentUploadBusyId === document.id;
+    return (
     <div key={document.id} className="grid min-w-0 gap-3 border-t border-slate-200 px-4 py-4 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_140px] sm:items-center">
       <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${document.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`}>
         <Check className="h-3.5 w-3.5" aria-hidden="true" />
@@ -265,6 +280,35 @@ function ReadinessChecklist({
       <div className="min-w-0">
         <p className={`text-sm font-semibold leading-5 ${document.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{document.label}</p>
         {description ? <p className="mt-1 text-xs leading-5 text-slate-600">{description}</p> : null}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {hasFile ? (
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-[#EAF6EC] px-2 py-1 text-xs font-bold text-[#1F7A3D]">
+              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+              {document.fileName || 'File attached'}
+            </span>
+          ) : null}
+          <label className="inline-flex min-h-[32px] cursor-pointer items-center gap-1.5 rounded-md border border-slate-300 px-2.5 text-xs font-bold text-slate-600 hover:border-[#7059A8] hover:text-[#301D5D]">
+            {isUploading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <FileUp className="h-3.5 w-3.5" aria-hidden="true" />}
+            {isUploading ? 'Uploading…' : hasFile ? 'Replace file' : 'Attach file'}
+            <input
+              type="file"
+              className="hidden"
+              disabled={isUploading}
+              onChange={(event) => { void uploadDocumentFile(document.id, event.target.files?.[0]); event.target.value = ''; }}
+              aria-label={`Attach file for ${document.label}`}
+            />
+          </label>
+          {hasFile ? (
+            <button
+              type="button"
+              onClick={() => removeDocumentFile(document.id)}
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#9A3D2B]"
+              aria-label={`Remove attached file from ${document.label}`}
+            >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
       </div>
       <select
         value={document.status}
@@ -278,7 +322,8 @@ function ReadinessChecklist({
         <option value="not_needed">Not needed</option>
       </select>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="border border-slate-200 bg-white p-5 sm:p-6">
@@ -317,6 +362,13 @@ function ReadinessChecklist({
           </section>
         ) : null}
       </div>
+
+      {documentUploadError ? (
+        <p className="mt-4 flex items-center gap-2 rounded-md border border-[#E0A9A0] bg-[#FBEFEC] px-3 py-2 text-xs font-semibold text-[#9A3D2B]">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          {documentUploadError}
+        </p>
+      ) : null}
 
       <div className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
         <input
@@ -479,7 +531,7 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     selectedFormFamilies: {},
     reminders: [],
     tasks: [],
-    documents: DOCUMENT_TEMPLATES.map(({ id, label }) => ({ id, label, status: 'requested' as const, complete: false, requestedAt: now, updatedAt: now })),
+    documents: DOCUMENT_TEMPLATES.map(({ id, label }) => ({ id, label, status: 'requested' as const, complete: false, requestedAt: now, updatedAt: now, driveFileId: '', fileName: '', fileUploadedAt: '' })),
     activity: [{ id: getId('activity'), message: 'Transaction workspace created', createdAt: now }],
     createdAt: now,
     updatedAt: now,
@@ -1563,7 +1615,7 @@ export default function AgentDealDesk({
   const addDocument = () => {
     if (!activeDeal || !documentName.trim()) return;
     const now = new Date().toISOString();
-    const document: AgentDocument = { id: getId('document'), label: documentName.trim(), status: 'requested', complete: false, requestedAt: now, updatedAt: now };
+    const document: AgentDocument = { id: getId('document'), label: documentName.trim(), status: 'requested', complete: false, requestedAt: now, updatedAt: now, driveFileId: '', fileName: '', fileUploadedAt: '' };
     applyActiveAction(`Requested document: ${document.label}`, { documents: [...activeDeal.documents, document] });
     setDocumentName('');
   };
@@ -1574,6 +1626,68 @@ export default function AgentDealDesk({
     applyActiveAction(`Updated document request status to ${status.replace('_', ' ')}`, { documents: activeDeal.documents.map((document) => document.id === documentId ? { ...document, status, complete: status === 'received' || status === 'reviewed', updatedAt: now } : document) });
   };
 
+  const [documentUploadBusyId, setDocumentUploadBusyId] = useState<string | null>(null);
+  const [documentUploadError, setDocumentUploadError] = useState<string>('');
+
+  const uploadDocumentFile = async (documentId: string, file: File | undefined) => {
+    if (!file || !activeDeal) return;
+    setDocumentUploadError('');
+    setDocumentUploadBusyId(documentId);
+    try {
+      const form = new FormData();
+      form.set('file', file);
+      form.set('dealId', activeDeal.id);
+      form.set('documentId', documentId);
+      const response = await fetch('/api/agent-command-center/documents/upload', { method: 'POST', body: form });
+      const data: unknown = await response.json().catch(() => null);
+      if (response.status === 401) {
+        window.location.assign('/login?next=%2Fagents');
+        return;
+      }
+      if (response.status === 409) {
+        setDocumentUploadError('Connect Google Drive below to attach files to this checklist.');
+        return;
+      }
+      if (!response.ok || !data || typeof data !== 'object') {
+        throw new Error('Upload failed.');
+      }
+      const result = data as { driveFileId?: string; fileName?: string; fileUploadedAt?: string };
+      const driveFileId = result.driveFileId;
+      if (!driveFileId) throw new Error('Upload failed.');
+      const document = activeDeal.documents.find((entry) => entry.id === documentId);
+      const now = new Date().toISOString();
+      applyActiveAction(`Attached file to document: ${document?.label ?? 'document'}`, {
+        documents: activeDeal.documents.map((entry) => entry.id === documentId
+          ? {
+              ...entry,
+              driveFileId,
+              fileName: result.fileName ?? file.name,
+              fileUploadedAt: result.fileUploadedAt ?? now,
+              status: entry.status === 'requested' ? 'received' : entry.status,
+              complete: entry.status === 'requested' ? true : entry.complete,
+              updatedAt: now,
+            }
+          : entry),
+      });
+      trackEvent('agent_deal_desk_document_file_attached');
+    } catch {
+      setDocumentUploadError('Could not upload this file. Try again in a moment.');
+    } finally {
+      setDocumentUploadBusyId(null);
+    }
+  };
+
+  const removeDocumentFile = (documentId: string) => {
+    if (!activeDeal) return;
+    const document = activeDeal.documents.find((entry) => entry.id === documentId);
+    if (!document) return;
+    const now = new Date().toISOString();
+    applyActiveAction(`Removed attached file from document: ${document.label}`, {
+      documents: activeDeal.documents.map((entry) => entry.id === documentId
+        ? { ...entry, driveFileId: '', fileName: '', fileUploadedAt: '', updatedAt: now }
+        : entry),
+    });
+  };
 
   const removeDeal = (dealId: string) => {
     const dealToRemove = deals.find((deal) => deal.id === dealId);
@@ -1631,6 +1745,79 @@ export default function AgentDealDesk({
       backupExportToDrive(filename, blob);
     });
     trackEvent('agent_deal_desk_audit_pdf_exported');
+  };
+
+  const [dealFolderBusy, setDealFolderBusy] = useState(false);
+  const [dealFolderError, setDealFolderError] = useState('');
+
+  const exportDealFolder = async (deal: AgentDeal) => {
+    setDealFolderBusy(true);
+    setDealFolderError('');
+    try {
+      const dealFormVersions = activePacketForms.filter((version) => deal.selectedFormFamilies[version.formFamily]);
+      const { filename: pdfFilename, blob: pdfBlob } = await downloadAuditPdf(deal, dealFormVersions);
+
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+      zip.file(pdfFilename, pdfBlob);
+
+      const attachedDocuments = deal.documents.filter((document) => document.driveFileId);
+      const results = await Promise.all(attachedDocuments.map(async (document) => {
+        try {
+          const response = await fetch(`/api/agent-command-center/documents/download?fileId=${encodeURIComponent(document.driveFileId)}`);
+          if (!response.ok) return { document, ok: false as const };
+          const blob = await response.blob();
+          return { document, ok: true as const, blob };
+        } catch {
+          return { document, ok: false as const };
+        }
+      }));
+
+      const documentsFolder = zip.folder('documents');
+      let attachedCount = 0;
+      let failedCount = 0;
+      for (const result of results) {
+        if (result.ok && documentsFolder) {
+          const safeFileName = (result.document.fileName || `${result.document.label}.bin`).replace(/[\\/]+/g, '-');
+          documentsFolder.file(`${result.document.label.replace(/[\\/]+/g, '-')} - ${safeFileName}`, result.blob);
+          attachedCount += 1;
+        } else {
+          failedCount += 1;
+        }
+      }
+
+      const notAttached = deal.documents.filter((document) => !document.driveFileId);
+      const summaryLines = [
+        `Deal folder summary — ${deal.propertyAddress || deal.title || 'Transaction'}`,
+        `Generated ${new Date().toLocaleString('en-US')}`,
+        '',
+        `Files included in this folder: ${attachedCount}${failedCount ? ` (${failedCount} attached file(s) could not be fetched — see below)` : ''}`,
+        '',
+        'Attached documents:',
+        ...results.filter((result) => result.ok).map((result) => `- ${result.document.label}: ${result.document.fileName || 'file attached'}`),
+        '',
+        'Not attached:',
+        ...notAttached.map((document) => `- ${document.label} (status: ${document.status.replace('_', ' ')})`),
+        ...(failedCount ? ['', 'Could not fetch (Drive error):', ...results.filter((result) => !result.ok).map((result) => `- ${result.document.label}`)] : []),
+      ];
+      zip.file('documents-summary.txt', summaryLines.join('\n'));
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const safeName = (deal.propertyAddress || deal.title || 'transaction').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'transaction';
+      const zipFilename = `${safeName}-deal-folder-${deal.closeoutDate || 'undated'}.zip`;
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = zipFilename;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      trackEvent('agent_deal_desk_folder_exported', { attached: attachedCount, missing: notAttached.length, failed: failedCount });
+    } catch {
+      setDealFolderError('Could not build the deal folder. Try again in a moment.');
+    } finally {
+      setDealFolderBusy(false);
+    }
   };
 
   const lockDealRecord = () => {
@@ -1753,6 +1940,10 @@ export default function AgentDealDesk({
                   addDocument={addDocument}
                   updateDocument={updateDocument}
                   reviewAlerts={reviewAlerts}
+                  uploadDocumentFile={uploadDocumentFile}
+                  removeDocumentFile={removeDocumentFile}
+                  documentUploadBusyId={documentUploadBusyId}
+                  documentUploadError={documentUploadError}
                 />
               </div>
               <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
@@ -2655,6 +2846,18 @@ export default function AgentDealDesk({
                         <Download className="h-4 w-4" aria-hidden="true" />
                       </button>
                     )}
+                    {isDealLocked(statusDeal) && (
+                      <button
+                        type="button"
+                        onClick={() => void exportDealFolder(statusDeal)}
+                        disabled={dealFolderBusy}
+                        title="Download folder"
+                        aria-label="Download folder"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#7059A8] text-[#301D5D] hover:bg-[#F8F5FF] disabled:opacity-50"
+                      >
+                        {dealFolderBusy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FolderDown className="h-4 w-4" aria-hidden="true" />}
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setFormsStatusDealId(null)}
@@ -2764,6 +2967,10 @@ export default function AgentDealDesk({
               addDocument={addDocument}
               updateDocument={updateDocument}
               reviewAlerts={reviewAlerts}
+              uploadDocumentFile={uploadDocumentFile}
+              removeDocumentFile={removeDocumentFile}
+              documentUploadBusyId={documentUploadBusyId}
+              documentUploadError={documentUploadError}
             />
           </div>
           <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
@@ -2783,10 +2990,19 @@ export default function AgentDealDesk({
                 {isDealLocked(activeDeal) && (
                   <button type="button" onClick={() => exportBackupRecord(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Download className="h-4 w-4" aria-hidden="true" />Download backup record</button>
                 )}
+                {isDealLocked(activeDeal) && (
+                  <button type="button" onClick={() => void exportDealFolder(activeDeal)} disabled={dealFolderBusy} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
+                    {dealFolderBusy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FolderDown className="h-4 w-4" aria-hidden="true" />}
+                    {dealFolderBusy ? 'Building folder\u2026' : 'Download folder'}
+                  </button>
+                )}
                 {!isDealLocked(activeDeal) && (
                   <button type="button" onClick={lockDealRecord} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#9A3D2B] px-4 text-sm font-bold text-white"><Lock className="h-4 w-4" aria-hidden="true" />Lock record</button>
                 )}
               </div>
+              {dealFolderError ? (
+                <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#9A3D2B]"><AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />{dealFolderError}</p>
+              ) : null}
             </div>
             <p className="mt-3 text-xs text-slate-500">
               Under <a href="https://www.trec.texas.gov/how-long-does-license-holder-have-keep-financial-and-real-estate-transactions-file" target="_blank" rel="noreferrer" className="font-semibold text-[#301D5D] underline">TREC Rules 535.2(h) and 535.146</a>, a broker must keep transaction records and trust account logs for four years from the date of closing, contract termination, or the date of a deposit/withdrawal.
