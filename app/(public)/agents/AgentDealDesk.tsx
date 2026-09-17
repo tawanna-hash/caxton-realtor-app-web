@@ -21,6 +21,7 @@ import {
   History,
   ListTodo,
   LoaderCircle,
+  Lock,
   Mail,
   Plus,
   Save,
@@ -553,6 +554,22 @@ function downloadTextSummary(deal: AgentDeal): void {
   URL.revokeObjectURL(url);
 }
 
+function downloadBackupRecord(deal: AgentDeal): void {
+  const record = {
+    exportedAt: new Date().toISOString(),
+    recordType: 'TREC transaction backup record',
+    retentionNote: 'Retain for at least four years from the date of closing, contract termination, or the date of a deposit/withdrawal, per TREC Rules 535.2(h) and 535.146.',
+    deal,
+  };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(record, null, 2)], { type: 'application/json;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  const safeName = (deal.propertyAddress || deal.title || 'transaction').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'transaction';
+  link.download = `${safeName}-backup-record-${deal.closeoutDate || 'undated'}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function calendarEventsForDeal(deal: AgentDeal): CalendarEvent[] {
   const transaction = deal.propertyAddress || deal.title;
   const description = `Agent Command Center deadline for ${transaction}. Verify against the signed contract and your broker's process.`;
@@ -873,6 +890,8 @@ export default function AgentDealDesk({
 
   const activeDeal = deals.find((deal) => deal.id === activeDealId) ?? null;
   const activeDeals = deals.filter((deal) => !deal.closeoutOutcome);
+  const closedDeals = deals.filter((deal) => deal.closeoutOutcome);
+  const isDealLocked = (deal: AgentDeal) => Boolean(deal.closeoutOutcome && deal.closeoutDate);
   const activePacketForms = trecFormVersions.filter((version) => version.isActive);
   const selectedFormVersions = activeDeal
     ? activePacketForms.filter((version) => activeDeal.selectedFormFamilies[version.formFamily])
@@ -1174,7 +1193,7 @@ export default function AgentDealDesk({
   };
 
   const removeTask = (taskId: string) => {
-    if (!activeDeal) return;
+    if (!activeDeal || isDealLocked(activeDeal)) return;
     applyActiveAction('Removed a transaction task', { tasks: activeDeal.tasks.filter((task) => task.id !== taskId) });
   };
 
@@ -1199,6 +1218,8 @@ export default function AgentDealDesk({
 
 
   const removeDeal = (dealId: string) => {
+    const dealToRemove = deals.find((deal) => deal.id === dealId);
+    if (dealToRemove && isDealLocked(dealToRemove)) return;
     const nextDeals = deals.filter((deal) => deal.id !== dealId);
     persistDeals(nextDeals);
     setActiveDealId(nextDeals[0]?.id ?? null);
@@ -1238,6 +1259,11 @@ export default function AgentDealDesk({
     if (!activeDeal) return;
     downloadTextSummary(activeDeal);
     trackEvent('agent_deal_desk_text_summary_exported');
+  };
+
+  const exportBackupRecord = (deal: AgentDeal) => {
+    downloadBackupRecord(deal);
+    trackEvent('agent_deal_desk_backup_record_exported');
   };
 
   const saveProgress = () => {
@@ -1603,7 +1629,13 @@ export default function AgentDealDesk({
                   >
                     Start a New Transaction
                   </button>
-                  {activeDeal && (
+                  {activeDeal && isDealLocked(activeDeal) && (
+                    <span className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-500">
+                      <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+                      Locked — closed record
+                    </span>
+                  )}
+                  {activeDeal && !isDealLocked(activeDeal) && (
                     pendingRemoval === activeDeal.id ? (
                       <button
                         type="button"
@@ -1942,13 +1974,14 @@ export default function AgentDealDesk({
                                 type="checkbox"
                                 id={`form-family-${version.id}`}
                                 checked={isSelected}
+                                disabled={isDealLocked(activeDeal)}
                                 onChange={(event) => {
                                   updateActiveDeal('selectedFormFamilies', {
                                     ...activeDeal.selectedFormFamilies,
                                     [version.formFamily]: event.target.checked,
                                   });
                                 }}
-                                className="h-3.5 w-3.5 shrink-0 rounded border-slate-400 text-[#301D5D] focus:ring-[#301D5D]"
+                                className="h-3.5 w-3.5 shrink-0 rounded border-slate-400 text-[#301D5D] focus:ring-[#301D5D] disabled:cursor-not-allowed disabled:opacity-50"
                               />
                               <button
                                 type="button"
@@ -2134,6 +2167,74 @@ export default function AgentDealDesk({
           </section>
         )}
 
+        {workspacePage === 2 && closedDeals.length > 0 && (
+          <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <Lock className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closed & Audit</p>
+                <h3 className="mt-1 text-xl font-semibold text-slate-950">{closedDeals.length} Closed Transaction{closedDeals.length === 1 ? '' : 's'}</h3>
+              </div>
+            </div>
+            <div className="mt-5 overflow-x-auto">
+              <table className="w-full min-w-[820px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
+                    <th scope="col" className="py-2 pr-4 font-bold">Transaction</th>
+                    <th scope="col" className="py-2 pr-4 font-bold">Outcome</th>
+                    <th scope="col" className="py-2 pr-4 font-bold">Closing Date</th>
+                    <th scope="col" className="py-2 pr-4 font-bold">Forms</th>
+                    <th scope="col" className="py-2 pl-4" aria-label="Open transaction" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {closedDeals.map((deal) => (
+                    <tr
+                      key={deal.id}
+                      onClick={() => {
+                        focusDeal(deal.id);
+                        setFormsStatusDealId(deal.id);
+                      }}
+                      className={`cursor-pointer border-b border-slate-100 transition last:border-0 hover:bg-[#F8F5FF] ${deal.id === activeDealId ? 'bg-[#F8F5FF]' : ''}`}
+                    >
+                      <td className="py-3 pr-4">
+                        <span className="flex items-center gap-1.5 font-semibold text-slate-900">
+                          <Lock className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                          {deal.propertyAddress || deal.title}
+                        </span>
+                        {(deal.buyerNames || deal.sellerNames) && (
+                          <span className="mt-0.5 block text-xs text-slate-500">{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(' · ')}</span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4">
+                        <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-bold capitalize text-slate-700">{deal.closeoutOutcome}</span>
+                      </td>
+                      <td className="py-3 pr-4 text-slate-700">{deal.closeoutDate ? formatDate(deal.closeoutDate) : '—'}</td>
+                      <td className="py-3 pr-4">
+                        {(() => {
+                          const dealFormVersions = activePacketForms.filter((version) => deal.selectedFormFamilies[version.formFamily]);
+                          if (dealFormVersions.length === 0) return <span className="text-slate-400">—</span>;
+                          return (
+                            <span
+                              title={dealFormVersions.map((version) => version.formNumber).join(', ')}
+                              className="inline-flex rounded-md bg-[#F8F5FF] px-2 py-1 text-xs font-bold text-[#5B438C]"
+                            >
+                              {dealFormVersions.length} form{dealFormVersions.length === 1 ? '' : 's'}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className="py-3 pl-4 text-right">
+                        <ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
         {formsStatusDealId && (() => {
           const statusDeal = deals.find((deal) => deal.id === formsStatusDealId);
           if (!statusDeal) return null;
@@ -2157,17 +2258,30 @@ export default function AgentDealDesk({
               >
                 <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7059A8]">Transaction Forms</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7059A8]">{isDealLocked(statusDeal) ? 'Closed & Audit' : 'Transaction Forms'}</p>
                     <h4 className="mt-0.5 text-lg font-semibold text-slate-950">{statusDeal.propertyAddress || statusDeal.title}</h4>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setFormsStatusDealId(null)}
-                    aria-label="Close"
-                    className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-                  >
-                    <X className="h-5 w-5" aria-hidden="true" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {isDealLocked(statusDeal) && (
+                      <button
+                        type="button"
+                        onClick={() => exportBackupRecord(statusDeal)}
+                        title="Download backup record"
+                        aria-label="Download backup record"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#7059A8] text-[#301D5D] hover:bg-[#F8F5FF]"
+                      >
+                        <Download className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setFormsStatusDealId(null)}
+                      aria-label="Close"
+                      className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                    >
+                      <X className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                  </div>
                 </div>
                 <div className="p-5">
                   {statusFormVersions.length === 0 ? (
@@ -2256,7 +2370,7 @@ export default function AgentDealDesk({
               <div className="mt-5 space-y-2">
                 {!activeDeal.tasks.length && !activeDeal.reminders.length ? <p className="border border-dashed border-slate-300 bg-[#FCFBF9] p-4 text-sm text-slate-600">Use deadline presets (7d, 3d, 1d, due) in the review step or add a custom action here.</p> : <>
                   {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border border-[#E7C769] bg-[#FFF9E7] p-3"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#A97A1A] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#855D10]">{formatDate(reminder.reminderDate)}</span></div>)}
-                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-red-100 text-red-800' : task.priority === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ')}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#B6402C]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}<button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#9A3D2B]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button></div>)}
+                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-red-100 text-red-800' : task.priority === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ')}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#B6402C]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#9A3D2B]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
                 </>}
               </div>
             </div>
@@ -2271,8 +2385,34 @@ export default function AgentDealDesk({
             />
           </div>
           <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closeout and history</p><h3 className="mt-1 text-xl font-semibold text-slate-950">Outcome, Record, and Export</h3></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
-            <div className="mt-5 grid gap-3 md:grid-cols-3"><select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm"><option value="">Closeout outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select><input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm" /><input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm" placeholder="Closeout note" /></div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {isDealLocked(activeDeal) ? <Lock className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" /> : <History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />}
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">{isDealLocked(activeDeal) ? 'Closed & audit' : 'Closeout and history'}</p>
+                  <h3 className="mt-1 text-xl font-semibold text-slate-950">
+                    {isDealLocked(activeDeal) ? `${activeDeal.propertyAddress || activeDeal.title}, Closed & Audit` : 'Outcome, Record, and Export'}
+                  </h3>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button>
+                {isDealLocked(activeDeal) && (
+                  <button type="button" onClick={() => exportBackupRecord(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Download className="h-4 w-4" aria-hidden="true" />Download backup record</button>
+                )}
+              </div>
+            </div>
+            {isDealLocked(activeDeal) && (
+              <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#5B438C]">
+                <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+                Closed on {formatDate(activeDeal.closeoutDate)}. Per TREC Rules 535.2(h) and 535.146, this record is locked and retained for at least four years from the closing date — tasks and this transaction can no longer be removed.
+              </p>
+            )}
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"><option value="">Closeout outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select>
+              <input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" />
+              <input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" placeholder="Closeout note" />
+            </div>
             <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#E7C769] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
           </section>
           </>
