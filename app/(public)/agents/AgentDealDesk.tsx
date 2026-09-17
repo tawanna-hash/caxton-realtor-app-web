@@ -15,8 +15,6 @@ import {
   ChevronRight,
   Circle,
   ClipboardCheck,
-  Cloud,
-  CloudOff,
   Download,
   FileText,
   FileUp,
@@ -958,90 +956,7 @@ function backupExportToDrive(filename: string, blob: Blob): void {
   });
 }
 
-type DriveStatus = {
-  configured: boolean;
-  connected: boolean;
-  googleEmail: string | null;
-};
-
-/**
- * Account-level "Connect Google Drive" control. Every PDF/backup export
- * from the Audit section silently copies to the connected Drive folder
- * once this is set up — there is no separate per-export toggle, per the
- * "auto save while working" scoping decision.
- */
-function GoogleDriveConnectPanel() {
-  const [status, setStatus] = useState<DriveStatus | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const refreshStatus = useCallback(() => {
-    fetch('/api/agents/drive-auth/status')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: DriveStatus | null) => { if (data) setStatus(data); })
-      .catch(() => {
-        // Leave status as-is; the panel just won't render new info this pass.
-      });
-  }, []);
-
-  useEffect(() => {
-    refreshStatus();
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('drive_connected') === '1') {
-      trackEvent('agent_google_drive_connected');
-      const url = new URL(window.location.href);
-      url.searchParams.delete('drive_connected');
-      window.history.replaceState({}, '', url.toString());
-    } else if (params.get('drive_error')) {
-      trackEvent('agent_google_drive_connect_failed', { reason: params.get('drive_reason') || 'unknown' });
-      const url = new URL(window.location.href);
-      url.searchParams.delete('drive_error');
-      url.searchParams.delete('drive_reason');
-      url.searchParams.delete('status');
-      window.history.replaceState({}, '', url.toString());
-    }
-  }, [refreshStatus]);
-
-  const disconnect = () => {
-    if (busy) return;
-    setBusy(true);
-    fetch('/api/agents/drive-auth/disconnect', { method: 'POST' })
-      .then(() => {
-        trackEvent('agent_google_drive_disconnected');
-        refreshStatus();
-      })
-      .finally(() => setBusy(false));
-  };
-
-  if (!status || !status.configured) return null;
-
-  return (
-    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border border-slate-200 bg-[#FCFBF9] p-3">
-      {status.connected ? (
-        <>
-          <p className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-            <Cloud className="h-4 w-4 text-[#5B438C]" aria-hidden="true" />
-            Audit PDFs and backup records auto-save to Google Drive ({status.googleEmail}).
-          </p>
-          <button type="button" onClick={disconnect} disabled={busy} className="inline-flex min-h-[36px] items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-600 disabled:opacity-50">
-            <CloudOff className="h-3.5 w-3.5" aria-hidden="true" />
-            Disconnect
-          </button>
-        </>
-      ) : (
-        <>
-          <p className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-            <CloudOff className="h-4 w-4 text-slate-400" aria-hidden="true" />
-            Connect Google Drive to auto-save every audit PDF and backup record as you export.
-          </p>
-          <a href="/api/agents/drive-auth/start" className="inline-flex min-h-[36px] items-center gap-2 rounded-md bg-[#301D5D] px-3 text-xs font-bold text-white">
-            <Cloud className="h-3.5 w-3.5" aria-hidden="true" />
-            Connect Google Drive
-          </a>
-        </>
-      )}
-    </div>
-  );
-}
+// Google Drive integration disabled — GoogleDriveConnectPanel removed.
 
 export default function AgentDealDesk({
   workspaceKey,
@@ -3007,7 +2922,7 @@ export default function AgentDealDesk({
             <p className="mt-3 text-xs text-slate-500">
               Under <a href="https://www.trec.texas.gov/how-long-does-license-holder-have-keep-financial-and-real-estate-transactions-file" target="_blank" rel="noreferrer" className="font-semibold text-[#301D5D] underline">TREC Rules 535.2(h) and 535.146</a>, a broker must keep transaction records and trust account logs for four years from the date of closing, contract termination, or the date of a deposit/withdrawal.
             </p>
-            <GoogleDriveConnectPanel />
+            {/* Google Drive integration disabled — panel intentionally not rendered. */}
             {isDealLocked(activeDeal) && (
               <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#5B438C]">
                 <Lock className="h-3.5 w-3.5" aria-hidden="true" />
