@@ -32,6 +32,42 @@ function formatDate(s?: string) {
   return new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function GiveawayCard({ giveaway }: { giveaway: Giveaway }) {
+  return (
+    <div className="space-y-2.5 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <Link href={`/admin/giveaways/${giveaway.id}`} className="truncate text-sm font-semibold text-brand-700 hover:underline">
+            {giveaway.title}
+          </Link>
+          <div className="truncate text-xs text-gray-500">{giveaway.prize}</div>
+        </div>
+        <span className={`inline-flex whitespace-nowrap border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${STATUS_STYLES[giveaway.status] || ''}`}>
+          {giveaway.status}
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <div className="text-gray-500">Publication</div>
+          <div className="truncate text-gray-700">{PUBLICATION_LABELS_WITH_BOTH[giveaway.publication] || giveaway.publication}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">Entries</div>
+          <div className="tabular-nums text-gray-700">{giveaway.participant_count ?? 0}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">Tickets</div>
+          <div className="tabular-nums text-gray-700">{giveaway.ticket_count ?? 0}</div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-3 text-xs text-gray-600">
+        <span className="whitespace-nowrap">{formatDate(giveaway.starts_at)} – {formatDate(giveaway.ends_at)}</span>
+        <span className="truncate text-right">{giveaway.winner_name || '—'}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function GiveawaysPage() {
   const { admin, loading: authLoading } = useAdmin();
   const [items, setItems] = useState<Giveaway[]>([]);
@@ -95,7 +131,11 @@ export default function GiveawaysPage() {
       )}
 
       {items.length > 0 && (
-        <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <div className="rounded border border-gray-200 bg-white">
+        <div className="divide-y divide-gray-200 md:hidden">
+          {items.map((g) => <GiveawayCard key={g.id} giveaway={g} />)}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table>
             <thead>
               <tr>
@@ -127,6 +167,7 @@ export default function GiveawaysPage() {
               ))}
             </tbody>
           </table>
+        </div>
         </div>
       )}
     </div>

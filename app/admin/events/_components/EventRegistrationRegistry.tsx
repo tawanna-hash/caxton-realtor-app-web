@@ -25,6 +25,37 @@ function csvCell(value: string | boolean | null): string {
   return `"${text.replaceAll('"', '""')}"`;
 }
 
+function RegistrationCard({ registration }: { registration: Registration }) {
+  return (
+    <div className="space-y-2 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold text-gray-950">{registration.full_name}</div>
+          <div className="truncate text-xs text-gray-600">{registration.company}</div>
+        </div>
+        <div className="whitespace-nowrap text-right text-xs text-gray-500">
+          {new Date(registration.registered_at).toLocaleString()}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <div className="text-gray-500">REALTOR / License</div>
+          <div className="text-gray-700">
+            {registration.is_realtor ? 'Yes' : 'No'}{registration.license_number ? ` · ${registration.license_number}` : ''}
+          </div>
+        </div>
+        <div>
+          <div className="text-gray-500">Mobile</div>
+          <a className="truncate text-brand-700 hover:underline" href={`tel:${registration.mobile}`}>{registration.mobile}</a>
+        </div>
+      </div>
+      <div className="border-t border-gray-100 pt-2 text-xs">
+        <a className="truncate text-brand-700 hover:underline" href={`mailto:${registration.email}`}>{registration.email}</a>
+      </div>
+    </div>
+  );
+}
+
 export default function EventRegistrationRegistry({
   eventId,
   eventTitle,
@@ -127,7 +158,12 @@ export default function EventRegistrationRegistry({
 
       {!loading && rows.length > 0 && (
         <>
-          <div className="mt-5 overflow-x-auto">
+          <div className="mt-5 divide-y divide-gray-100 rounded-md border border-gray-200 md:hidden">
+            {rows.map((r) => (
+              <RegistrationCard key={r.id} registration={r} />
+            ))}
+          </div>
+          <div className="mt-5 hidden overflow-x-auto md:block">
             <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-wider text-gray-500">

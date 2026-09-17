@@ -127,7 +127,26 @@ export default function AdvertisePrintPage() {
             2026 print deadlines
           </p>
           <div className="border border-gray-200 rounded-md overflow-hidden">
-            <table className="w-full text-sm">
+            {/* Mobile cards */}
+            <ul className="divide-y divide-gray-100 md:hidden">
+              {PRINT_DEADLINES.map((d) => (
+                <li key={d.month} className="px-4 py-2.5">
+                  <div className="font-medium">{d.month}</div>
+                  <div className="mt-1 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <div className="text-gray-400">Materials deadline</div>
+                      <div className="text-gray-700">{d.deadline}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400">Mails on</div>
+                      <div className="text-gray-700">{d.mail}</div>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {/* Desktop table */}
+            <table className="hidden w-full text-sm md:table">
               <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-600">
                 <tr>
                   <th className="px-4 py-2 font-medium">Issue</th>

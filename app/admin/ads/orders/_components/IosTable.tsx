@@ -232,7 +232,7 @@ export default function IosTable() {
       {!loading && !error && (
         <>
         {/* mobile card list */}
-        <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+        <ul className="md:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
           {rows.length === 0 ? (
             <li className="px-3 py-6 text-center text-sm text-gray-500">No insertion orders yet.</li>
           ) : (
@@ -287,7 +287,7 @@ export default function IosTable() {
             ))
           )}
         </ul>
-        <div className="hidden sm:block overflow-x-auto rounded-md border border-gray-200 bg-white">
+        <div className="hidden overflow-x-auto rounded-md border border-gray-200 bg-white md:block">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
               <tr>

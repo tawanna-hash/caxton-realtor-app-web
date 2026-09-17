@@ -1034,43 +1034,72 @@ export function AgreementDrawer({
       <Section title="Insertion Order">
         {lineItems.length > 0 ? (
           <div className="space-y-3">
-            <div className="rounded-md border border-gray-200 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
-                  <tr>
-                    <th className="text-left px-3 py-2 font-medium">Channel</th>
-                    <th className="text-left px-3 py-2 font-medium">
-                      Package / Size
-                    </th>
-                    <th className="text-left px-3 py-2 font-medium">Freq</th>
-                    <th className="text-right px-3 py-2 font-medium">Qty</th>
-                    <th className="text-right px-3 py-2 font-medium">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {lineItems.map((li) => (
-                    <tr key={li.line_no}>
-                      <td className="px-3 py-2">
-                        <span className="inline-block rounded border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-medium capitalize text-purple-700">
-                          {li.channel ?? "—"}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-gray-700">
-                        {li.package_label ?? li.ad_size ?? "—"}
-                      </td>
-                      <td className="px-3 py-2 text-gray-700">
-                        {li.frequency ?? "—"}
-                      </td>
-                      <td className="px-3 py-2 text-right text-gray-700">
-                        {li.quantity ?? "—"}
-                      </td>
-                      <td className="px-3 py-2 text-right font-medium text-gray-900">
+            <div className="rounded-md border border-gray-200">
+              <div className="divide-y divide-gray-100 md:hidden">
+                {lineItems.map((li) => (
+                  <div key={li.line_no} className="space-y-2 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="inline-block rounded border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-medium capitalize text-purple-700">
+                        {li.channel ?? "—"}
+                      </span>
+                      <div className="whitespace-nowrap text-right text-sm font-medium text-gray-900">
                         {formatCents(li.amount_cents)}
-                      </td>
+                      </div>
+                    </div>
+                    <div className="truncate text-sm text-gray-700">
+                      {li.package_label ?? li.ad_size ?? "—"}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                      <div>
+                        <span className="text-gray-500">Freq: </span>
+                        {li.frequency ?? "—"}
+                      </div>
+                      <div className="text-right">
+                        <span className="text-gray-500">Qty: </span>
+                        {li.quantity ?? "—"}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
+                    <tr>
+                      <th className="text-left px-3 py-2 font-medium">Channel</th>
+                      <th className="text-left px-3 py-2 font-medium">
+                        Package / Size
+                      </th>
+                      <th className="text-left px-3 py-2 font-medium">Freq</th>
+                      <th className="text-right px-3 py-2 font-medium">Qty</th>
+                      <th className="text-right px-3 py-2 font-medium">Amount</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {lineItems.map((li) => (
+                      <tr key={li.line_no}>
+                        <td className="px-3 py-2">
+                          <span className="inline-block rounded border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-medium capitalize text-purple-700">
+                            {li.channel ?? "—"}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-gray-700">
+                          {li.package_label ?? li.ad_size ?? "—"}
+                        </td>
+                        <td className="px-3 py-2 text-gray-700">
+                          {li.frequency ?? "—"}
+                        </td>
+                        <td className="px-3 py-2 text-right text-gray-700">
+                          {li.quantity ?? "—"}
+                        </td>
+                        <td className="px-3 py-2 text-right font-medium text-gray-900">
+                          {formatCents(li.amount_cents)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
             <div className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
               <span className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">

@@ -136,7 +136,25 @@ export default function PrintDeadlinesPage() {
             <p className="text-sm text-gray-600 mb-4">{activeColumn.sub}</p>
 
             <div className="border border-gray-200 rounded-md overflow-hidden">
-              <table className="w-full text-sm">
+              {/* Mobile cards */}
+              <ul className="divide-y divide-gray-100 md:hidden">
+                {data.rows.map((row) => {
+                  const value =
+                    col === 'eReplicaRelease'
+                      ? row.eReplicaRelease ?? '—'
+                      : row[col];
+                  return (
+                    <li key={row.month} className="flex items-baseline justify-between gap-3 px-4 py-2.5">
+                      <span className="font-medium text-gray-900">
+                        {row.month} {data.year}
+                      </span>
+                      <span className="whitespace-nowrap text-right text-gray-700">{value}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+              {/* Desktop table */}
+              <table className="hidden w-full text-sm md:table">
                 <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-600">
                   <tr>
                     <th className="px-4 py-2 font-medium w-1/2">Month</th>

@@ -345,7 +345,7 @@ export default function OrdersTable() {
         ) : (
           <>
           {/* mobile card list */}
-          <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+          <ul className="md:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
             {data.rows.map((row) => (
               <li key={`m:${row.source}:${row.id}`} className="p-3">
                 <div className="flex items-start justify-between gap-3">
@@ -414,7 +414,7 @@ export default function OrdersTable() {
               </li>
             ))}
           </ul>
-          <div className="hidden sm:block overflow-x-auto">
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-600">
                 <tr>

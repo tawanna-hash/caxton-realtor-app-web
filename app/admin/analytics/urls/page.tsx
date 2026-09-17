@@ -39,6 +39,40 @@ interface UrlRollupResponse {
 
 type PublicationFilter = 'all' | PublicationId;
 
+function UrlRollupCard({ row }: { row: UrlRollupRow }) {
+  return (
+    <div className="space-y-2 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <a
+          href={row.display_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="min-w-0 truncate text-sm font-medium text-orange-700 hover:underline"
+          title={row.url_key}
+        >
+          {row.url_key || '(empty)'}
+        </a>
+        <div className="whitespace-nowrap text-right text-sm font-semibold tabular-nums text-gray-900">{row.clicks.toLocaleString()} clicks</div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <div className="text-gray-500">Sessions</div>
+          <div className="tabular-nums text-gray-700">{row.unique_sessions.toLocaleString()}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">Magazines</div>
+          <div className="tabular-nums text-gray-700">{row.magazines}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">Hotspots</div>
+          <div className="tabular-nums text-gray-700">{row.hotspots}</div>
+        </div>
+      </div>
+      <div className="whitespace-nowrap text-xs text-gray-600">Last click: {formatDateTime(row.last_click_at)}</div>
+    </div>
+  );
+}
+
 // Local date helpers — the API takes ISO strings, but the <input type="date">
 // value is YYYY-MM-DD in the browser's local timezone. We convert both ways.
 function todayIso(): string {
@@ -217,7 +251,17 @@ export default function UrlAnalyticsPage() {
 
       {/* Table */}
       <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
-      <div className="overflow-x-auto">
+      <div className="divide-y divide-gray-100 md:hidden">
+        {loading && <div className="px-3 py-6 text-center text-sm text-gray-500">Loading…</div>}
+        {error && !loading && <div className="px-3 py-6 text-center text-sm text-red-600">{error}</div>}
+        {!loading && !error && data && data.rows.length === 0 && (
+          <div className="px-3 py-6 text-center text-sm text-gray-500">No click events in this range.</div>
+        )}
+        {!loading && !error && data && data.rows.map((r) => (
+          <UrlRollupCard key={r.url_key} row={r} />
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
         <table className="min-w-[900px] table-fixed text-xs">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>

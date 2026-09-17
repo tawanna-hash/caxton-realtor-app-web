@@ -2329,7 +2329,74 @@ export default function AgentDealDesk({
                 <h3 className="mt-1 text-xl font-semibold text-slate-950">{activeDeals.length} Transaction{activeDeals.length === 1 ? '' : 's'} In Progress</h3>
               </div>
             </div>
-            <div className="mt-5 overflow-x-auto">
+            {/* Mobile cards */}
+            <div className="mt-5 divide-y divide-slate-100 md:hidden">
+              {activeDeals.map((deal) => {
+                const dealFormVersions = activePacketForms.filter((version) => deal.selectedFormFamilies[version.formFamily]);
+                const openTasks = deal.tasks.filter((task) => !task.complete).length;
+                const doneTasks = deal.tasks.length - openTasks;
+                const openReminders = deal.reminders.filter((reminder) => !reminder.complete).length;
+                const doneReminders = deal.reminders.length - openReminders;
+                return (
+                  <button
+                    type="button"
+                    key={deal.id}
+                    onClick={() => {
+                      focusDeal(deal.id);
+                      setFormsStatusDealId(deal.id);
+                    }}
+                    className={`block w-full py-3 text-left transition hover:bg-[#F8F5FF] ${deal.id === activeDealId ? 'bg-[#F8F5FF]' : ''}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className="block truncate font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
+                        {(deal.buyerNames || deal.sellerNames) && (
+                          <span className="mt-0.5 block truncate text-xs text-slate-500">{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(' · ')}</span>
+                        )}
+                      </div>
+                      <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                    </div>
+                    <div className="mt-2">
+                      <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span>
+                    </div>
+                    <div className="mt-2.5 grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <div className="text-slate-400">Effective Date</div>
+                        <div className="text-slate-700">{deal.effectiveDate ? formatDate(deal.effectiveDate) : '—'}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-400">Closing Date</div>
+                        <div className="text-slate-700">{deal.closingDate ? formatDate(deal.closingDate) : '—'}</div>
+                      </div>
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap gap-2">
+                      {dealFormVersions.length === 0 ? (
+                        <span className="text-xs text-slate-400">No forms</span>
+                      ) : (
+                        <span
+                          title={dealFormVersions.map((version) => version.formNumber).join(', ')}
+                          className="inline-flex rounded-md bg-[#F8F5FF] px-2 py-1 text-xs font-bold text-[#5B438C]"
+                        >
+                          {dealFormVersions.length} form{dealFormVersions.length === 1 ? '' : 's'}
+                        </span>
+                      )}
+                      {deal.tasks.length > 0 && (
+                        <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">
+                          {openTasks} open / {doneTasks} done tasks
+                        </span>
+                      )}
+                      {deal.reminders.length > 0 && (
+                        <span className="inline-flex rounded-md bg-[#FFF9E7] px-2 py-1 text-xs font-bold text-[#855D10]">
+                          {openReminders} open / {doneReminders} done reminders
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Desktop table */}
+            <div className="mt-5 hidden overflow-x-auto md:block">
               <table className="w-full min-w-[980px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
@@ -2422,7 +2489,60 @@ export default function AgentDealDesk({
                 <h3 className="mt-1 text-xl font-semibold text-slate-950">{closedDeals.length} Closed Transaction{closedDeals.length === 1 ? '' : 's'}</h3>
               </div>
             </div>
-            <div className="mt-5 overflow-x-auto">
+            {/* Mobile cards */}
+            <div className="mt-5 divide-y divide-slate-100 md:hidden">
+              {closedDeals.map((deal) => {
+                const dealFormVersions = activePacketForms.filter((version) => deal.selectedFormFamilies[version.formFamily]);
+                return (
+                  <button
+                    type="button"
+                    key={deal.id}
+                    onClick={() => {
+                      focusDeal(deal.id);
+                      setFormsStatusDealId(deal.id);
+                    }}
+                    className={`block w-full py-3 text-left transition hover:bg-[#F8F5FF] ${deal.id === activeDealId ? 'bg-[#F8F5FF]' : ''}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className="flex items-center gap-1.5 truncate font-semibold text-slate-900">
+                          <Lock className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                          <span className="truncate">{deal.propertyAddress || deal.title}</span>
+                        </span>
+                        {(deal.buyerNames || deal.sellerNames) && (
+                          <span className="mt-0.5 block truncate text-xs text-slate-500">{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(' · ')}</span>
+                        )}
+                      </div>
+                      <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                    </div>
+                    <div className="mt-2.5 grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <div className="text-slate-400">Outcome</div>
+                        <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-bold capitalize text-slate-700">{deal.closeoutOutcome}</span>
+                      </div>
+                      <div>
+                        <div className="text-slate-400">Closing Date</div>
+                        <div className="text-slate-700">{deal.closeoutDate ? formatDate(deal.closeoutDate) : '—'}</div>
+                      </div>
+                    </div>
+                    <div className="mt-2.5">
+                      {dealFormVersions.length === 0 ? (
+                        <span className="text-xs text-slate-400">No forms</span>
+                      ) : (
+                        <span
+                          title={dealFormVersions.map((version) => version.formNumber).join(', ')}
+                          className="inline-flex rounded-md bg-[#F8F5FF] px-2 py-1 text-xs font-bold text-[#5B438C]"
+                        >
+                          {dealFormVersions.length} form{dealFormVersions.length === 1 ? '' : 's'}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Desktop table */}
+            <div className="mt-5 hidden overflow-x-auto md:block">
               <table className="w-full min-w-[820px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">

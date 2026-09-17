@@ -291,8 +291,50 @@ export default function RentVsBuyClient() {
             </div>
           </div>
 
-          {/* Detail table */}
-          <div className="overflow-x-auto rounded-md border border-gray-200">
+          {/* Detail — mobile cards */}
+          <div className="divide-y divide-gray-100 rounded-md border border-gray-200 md:hidden">
+            {result.rows.map((r) => {
+              const isBreakeven = r.year === result.breakevenYear;
+              return (
+                <div key={r.year} className={`p-3 ${isBreakeven ? 'bg-[#fb923c]/10' : ''}`}>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="text-sm font-medium text-gray-700">
+                      Year {r.year}
+                      {isBreakeven && (
+                        <span className="ml-1.5 text-[10px] text-[#fb923c] font-semibold uppercase">
+                          breakeven
+                        </span>
+                      )}
+                    </div>
+                    <div className="whitespace-nowrap text-right text-sm font-semibold text-gray-900">
+                      {fmtUSD(r.netEquity)}
+                      <span className="ml-1 text-xs font-normal text-gray-500">equity</span>
+                    </div>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <div className="text-gray-400">Home Value</div>
+                      <div className="text-gray-700">{fmtUSD(r.homeValue)}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400">Loan Balance</div>
+                      <div className="text-gray-700">{fmtUSD(r.loanBalance)}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400">Buy Net</div>
+                      <div className="font-medium text-gray-900">{fmtUSD(r.buyNetCost)}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400">Rent Total</div>
+                      <div className="font-medium text-gray-900">{fmtUSD(r.rentCost)}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Detail — desktop table */}
+          <div className="hidden overflow-x-auto rounded-md border border-gray-200 md:block">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
                 <tr>

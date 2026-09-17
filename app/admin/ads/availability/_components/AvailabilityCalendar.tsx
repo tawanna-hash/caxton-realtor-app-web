@@ -452,7 +452,43 @@ export default function AvailabilityCalendar() {
             {query ? 'No bookings match this search.' : 'No bookings overlap this month.'}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* mobile card list */}
+          <div className="divide-y divide-gray-100 md:hidden">
+            {monthBookings.map((b) => (
+              <div key={b.id} className="p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <span
+                      className={`inline-flex items-center rounded border px-2 py-0.5 text-xs ${CHANNEL_BADGE_CLASS[b.channel]}`}
+                    >
+                      {AD_CHANNEL_LABEL[b.channel]}
+                    </span>
+                    <p className="mt-1.5 truncate font-medium text-gray-900">
+                      {b.advertiser_name ?? '—'}
+                    </p>
+                  </div>
+                  <Link
+                    href={detailHref(b)}
+                    className="shrink-0 whitespace-nowrap text-xs font-medium text-orange-700 hover:underline"
+                  >
+                    Open →
+                  </Link>
+                </div>
+                <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                  <dt className="text-gray-500">Slot / size</dt>
+                  <dd className="truncate text-gray-700">{b.slot_or_size ?? '—'}</dd>
+                  <dt className="text-gray-500">Window</dt>
+                  <dd className="whitespace-nowrap text-gray-700">
+                    {fmtDateShort(b.start_date)} – {fmtDateShort(b.end_date)}
+                  </dd>
+                  <dt className="text-gray-500">Status</dt>
+                  <dd className="text-gray-700">{b.status}</dd>
+                </dl>
+              </div>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="min-w-full text-sm">
               <thead className="border-b border-gray-300 bg-white text-left text-xs text-gray-700">
                 <tr>
@@ -497,6 +533,7 @@ export default function AvailabilityCalendar() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </section>
     </div>

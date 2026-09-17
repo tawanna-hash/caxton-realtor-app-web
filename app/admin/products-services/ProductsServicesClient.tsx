@@ -32,6 +32,65 @@ function marketLabel(m: string | null): string {
   return MARKET_LABELS[m] ?? m;
 }
 
+function ProductServiceCard({
+  product,
+  onEdit,
+  onToggleActive,
+  onDelete,
+}: {
+  product: ProductService;
+  onEdit: () => void;
+  onToggleActive: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className={`space-y-2.5 p-4 ${!product.is_active ? 'bg-gray-50/60' : ''}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="block max-w-full truncate text-left text-sm font-medium text-orange-700 hover:underline"
+          >
+            {product.name}
+          </button>
+          {product.sales_description && (
+            <div className="mt-0.5 truncate text-xs text-gray-500">{product.sales_description}</div>
+          )}
+        </div>
+        <div className="whitespace-nowrap text-right text-sm font-semibold text-gray-900">
+          {formatProductPrice(product.price_cents)}
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <div className="text-gray-500">SKU</div>
+          <div className="truncate font-mono text-gray-700">{product.sku ?? '—'}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">Market</div>
+          <div className="truncate text-gray-700">{marketLabel(product.market)}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">Type</div>
+          <div className="truncate text-gray-700">{ITEM_TYPE_LABELS[product.item_type as ProductServiceType]}</div>
+        </div>
+      </div>
+      <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs ${product.is_active ? 'text-gray-700' : 'text-gray-500'}`}>
+        <span className={`h-2 w-2 rounded-full ${product.is_active ? 'bg-emerald-600' : 'bg-gray-400'}`} />
+        {product.is_active ? 'Active' : 'Inactive'}
+      </span>
+      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
+        <button type="button" onClick={onEdit} className="font-medium text-orange-700 hover:underline">Edit</button>
+        <button type="button" onClick={onToggleActive} className="font-medium text-orange-700 hover:underline">
+          {product.is_active ? 'Deactivate' : 'Activate'}
+        </button>
+        <button type="button" onClick={onDelete} className="font-medium text-red-600 hover:underline">Delete</button>
+      </div>
+    </div>
+  );
+}
+
 export default function ProductsServicesClient({ initialProducts }: Props) {
   const router = useRouter();
   const [products, setProducts] = useState(initialProducts);
@@ -232,7 +291,26 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="divide-y divide-gray-200 md:hidden">
+            {grouped.map(([category, items]) => (
+              <Fragment key={category}>
+                <div className="bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700">
+                  {category} <span className="ml-1 font-normal text-gray-500">· {items.length} on this page</span>
+                </div>
+                {items.map((product) => (
+                  <ProductServiceCard
+                    key={product.id}
+                    product={product}
+                    onEdit={() => setEditing(product)}
+                    onToggleActive={() => void handleToggleActive(product)}
+                    onDelete={() => void handleDelete(product)}
+                  />
+                ))}
+              </Fragment>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[1080px] table-fixed text-left text-xs">
               <thead className="border-b border-gray-300 bg-white text-gray-700">
                 <tr>
@@ -289,6 +367,7 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
               </tbody>
             </table>
           </div>
+          </>
         )}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-300 bg-gray-50 px-4 py-3 text-xs text-gray-700">
           <div className="font-semibold">

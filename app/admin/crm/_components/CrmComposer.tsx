@@ -140,6 +140,39 @@ function clearDraft() {
 }
 
 // ── Component ───────────────────────────────────────────────────
+function RecipientCard({
+  recipient,
+  checked,
+  onToggle,
+}: {
+  recipient: SampleRow;
+  checked: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex items-start gap-2.5 p-2.5">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onToggle}
+        aria-label={`Select ${recipient.email}`}
+        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-purple-700 focus:ring-purple-500"
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="truncate font-mono text-xs text-gray-800">{recipient.email}</div>
+            <div className="truncate text-xs text-gray-700">
+              {[recipient.first_name, recipient.last_name].filter(Boolean).join(' ') || recipient.company || '—'}
+            </div>
+          </div>
+          <div className="whitespace-nowrap text-xs text-gray-500">{recipient.publication ?? '—'}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, initialFilter, prefillOutreachId, onPrefilled }: Props) {
   // Filter chip state (independent of CrmClient's chips — but seeded from them)
   const [statuses, setStatuses] = useState<AdvertiserStatus[]>(initialFilter?.statuses ?? []);
@@ -1199,7 +1232,20 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
             </div>
 
             <div className="mt-3 flex-1 overflow-y-auto rounded-md border border-gray-200 bg-white">
-              <div className="overflow-x-auto">
+              <div className="divide-y divide-gray-100 md:hidden">
+                {sampleForDisplay.length === 0 && !previewLoading && (
+                  <div className="px-2 py-4 text-center text-xs text-gray-400">No recipients match this filter.</div>
+                )}
+                {sampleForDisplay.map((r) => (
+                  <RecipientCard
+                    key={r.id}
+                    recipient={r}
+                    checked={selectedIdSet.has(r.id)}
+                    onToggle={() => toggleRecipient(r.id)}
+                  />
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full text-xs">
                   <thead className="sticky top-0 bg-gray-100 text-gray-600">
                     <tr>

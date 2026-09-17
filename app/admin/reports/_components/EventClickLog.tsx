@@ -42,6 +42,29 @@ function summarizeUserAgent(ua: string | null): string {
   return `${browser} on ${platform}`;
 }
 
+function ClickCard({ click }: { click: ClickRow }) {
+  return (
+    <div className="space-y-2 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate font-mono text-xs text-gray-600" title={click.visitor_id}>{click.visitor_id}</div>
+        </div>
+        <div className="whitespace-nowrap text-right text-xs text-gray-900">{new Date(click.occurred_at).toLocaleString()}</div>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <div className="text-gray-500">Approx. location</div>
+          <div className="truncate text-gray-700">{click.location || 'Unknown'}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">Device</div>
+          <div className="truncate text-gray-700">{summarizeUserAgent(click.user_agent)}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function EventClickLog({ eventId, days }: { eventId: string; days: number }) {
   const [data, setData] = useState<ClicksResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -113,7 +136,13 @@ export default function EventClickLog({ eventId, days }: { eventId: string; days
       )}
 
       {!loading && !error && data?.clicks && data.clicks.length > 0 && (
-        <div className="overflow-x-auto">
+        <>
+        <div className="divide-y divide-gray-200 md:hidden">
+          {pageRows.map((c, i) => (
+            <ClickCard key={`${c.visitor_id}-${c.occurred_at}-${i}`} click={c} />
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[720px] text-xs">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200">
@@ -139,6 +168,7 @@ export default function EventClickLog({ eventId, days }: { eventId: string; days
             </tbody>
           </table>
         </div>
+        </>
       )}
       {clicks.length > 25 && <InsightsPagination page={currentPage} pageSize={pageSize} total={clicks.length} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />}
     </section>

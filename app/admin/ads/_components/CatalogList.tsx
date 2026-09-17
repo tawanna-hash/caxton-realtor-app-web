@@ -100,7 +100,55 @@ export function CatalogList({ spaces, campaigns }: Props) {
         </label>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* mobile card list */}
+      <div className="divide-y divide-gray-200 md:hidden">
+        {visible.map((space) => {
+          const active = activeBySlug.get(space.slug) ?? 0;
+          return (
+            <div key={space.slug} className="p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <Link
+                    href={`/admin/ads/placements?q=${encodeURIComponent(space.slug)}`}
+                    className="font-medium text-gray-900 hover:text-orange-700 hover:underline truncate"
+                  >
+                    {space.display_name}
+                  </Link>
+                  <div className="mt-0.5 truncate font-mono text-[11px] text-gray-500">{space.slug}</div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <span className={active ? 'whitespace-nowrap font-medium text-emerald-700' : 'whitespace-nowrap text-gray-500'}>
+                    {active ? `${active} live` : 'Available'}
+                  </span>
+                  {ROTATING_SLUGS.has(space.slug) && (
+                    <div className="mt-1 inline-block rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700">
+                      Rotates
+                    </div>
+                  )}
+                </div>
+              </div>
+              <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                <dt className="text-gray-500">Zone</dt>
+                <dd className="text-gray-700">{ZONE_LABELS[space.zone]}</dd>
+                <dt className="text-gray-500">Tier</dt>
+                <dd>
+                  <span className={`inline-flex rounded px-2 py-0.5 font-medium capitalize ${
+                    space.tier === 'premium' ? 'bg-amber-100 text-amber-900' : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {space.tier}
+                  </span>
+                </dd>
+                <dt className="text-gray-500">Creative specs</dt>
+                <dd className="col-span-2 text-gray-600">
+                  <div className="line-clamp-2">{formatSizes(space.sizes_json)}</div>
+                  {space.notes && <div className="mt-0.5 line-clamp-1 text-gray-500">{space.notes}</div>}
+                </dd>
+              </dl>
+            </div>
+          );
+        })}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[900px] table-fixed text-left text-xs">
           <thead className="border-b border-gray-300 bg-white text-gray-700">
             <tr>
