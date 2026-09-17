@@ -5,7 +5,7 @@
 // Accounts Receivable dashboard: aging buckets, outstanding-by-advertiser,
 // and the recurring-invoice schedule manager.
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   AlertCircle,
@@ -116,6 +116,144 @@ const BUCKET_COLOR: Record<AgingBucket, string> = {
   d61_90: 'bg-orange-600',
   d90_plus: 'bg-rose-700',
 };
+
+function UnpaidInvoiceCard({
+  invoice,
+  onOpen,
+  onEdit,
+  onRecordPayment,
+  onSendLink,
+  isSendingLink,
+}: {
+  invoice: InvoiceWithAdvertiser & { days: number };
+  onOpen: () => void;
+  onEdit: (event: MouseEvent) => void;
+  onRecordPayment: (event: MouseEvent) => void;
+  onSendLink: (event: MouseEvent) => void;
+  isSendingLink: boolean;
+}) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      className="cursor-pointer space-y-2.5 p-4 hover:bg-orange-50/70 focus:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-orange-400"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold text-orange-700 underline decoration-orange-200 underline-offset-2">{invoice.number ?? 'Draft'}</div>
+          <div className="truncate text-xs text-gray-600">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</div>
+        </div>
+        <div className="whitespace-nowrap text-right text-sm font-semibold text-gray-900">
+          {formatCents(invoice.balance_cents ?? invoice.total_cents)}
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <span className="text-gray-500">{invoice.due_date ? shortDate(invoice.due_date) : 'No due date'}</span>
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
+          {invoice.days > 0 ? <AlertCircle className="h-4 w-4 text-orange-600" aria-hidden="true" /> : <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />}
+          {invoice.days > 0 ? `${invoice.days} days overdue` : 'Not due yet'}
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
+        <button type="button" onClick={onEdit} onKeyDown={(event) => event.stopPropagation()} className="font-medium text-gray-700 hover:text-orange-700 hover:underline">
+          Edit
+        </button>
+        <button type="button" onClick={onRecordPayment} onKeyDown={(event) => event.stopPropagation()} className="font-medium text-gray-700 hover:text-orange-700 hover:underline">
+          Record payment
+        </button>
+        <button type="button" onClick={onSendLink} onKeyDown={(event) => event.stopPropagation()} disabled={isSendingLink} className="font-medium text-orange-700 hover:underline disabled:opacity-50">
+          {isSendingLink ? 'Sending…' : 'Send payment link'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PartnerBalanceCard({ advertiser }: { advertiser: { name: string; total: number; buckets: Record<AgingBucket, number> } }) {
+  return (
+    <div className="space-y-2 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="truncate text-sm font-medium text-gray-900">{advertiser.name}</div>
+        <div className="whitespace-nowrap text-sm font-semibold tabular-nums text-gray-900">{formatCents(advertiser.total)}</div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <div className="text-gray-500">1–30</div>
+          <div className="tabular-nums text-gray-700">{formatCents(advertiser.buckets.d1_30)}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">31–60</div>
+          <div className="tabular-nums text-gray-700">{formatCents(advertiser.buckets.d31_60)}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">60+</div>
+          <div className="tabular-nums text-orange-700">{formatCents(advertiser.buckets.d61_90 + advertiser.buckets.d90_plus)}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScheduleCard({
+  schedule,
+  busyId,
+  onEdit,
+  onPauseResume,
+  onGenerateNow,
+  onDelete,
+}: {
+  schedule: RecurringScheduleWithAdvertiser;
+  busyId: string | null;
+  onEdit: () => void;
+  onPauseResume: () => void;
+  onGenerateNow: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="space-y-2.5 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium text-gray-900">{schedule.name}</div>
+          <div className="truncate text-xs text-gray-500">
+            {schedule.advertiser_name ?? '—'} · {schedule.source === 'agreement' ? 'linked to agreement' : 'standalone'}
+          </div>
+        </div>
+        <div className="whitespace-nowrap text-right text-sm font-semibold tabular-nums text-gray-900">
+          {formatCents(schedule.amount_cents + schedule.tax_cents)}
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-3 text-xs text-gray-600">
+        <span>{frequencyLabel(schedule.frequency)}{schedule.interval_count > 1 ? ` (x${schedule.interval_count})` : ''}</span>
+        <span className="whitespace-nowrap">Next: {new Date(schedule.next_run_at).toLocaleDateString()}</span>
+      </div>
+      <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs ${schedule.status === 'active' ? 'text-emerald-700' : schedule.status === 'paused' ? 'text-orange-700' : 'text-gray-600'}`}>
+        <span className={`h-2 w-2 rounded-full ${schedule.status === 'active' ? 'bg-emerald-600' : schedule.status === 'paused' ? 'bg-orange-500' : 'bg-gray-400'}`} />
+        {schedule.status}
+      </span>
+      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
+        <button type="button" onClick={onEdit} className="font-medium text-orange-700 hover:underline">Edit</button>
+        <button type="button" onClick={onPauseResume} disabled={busyId === schedule.id || schedule.status === 'ended'} className="font-medium text-orange-700 hover:underline disabled:text-gray-400 disabled:no-underline">
+          {schedule.status === 'active' ? 'Pause' : 'Resume'}
+        </button>
+        <button type="button" onClick={onGenerateNow} disabled={busyId === schedule.id || schedule.status !== 'active'} className="font-medium text-orange-700 hover:underline disabled:text-gray-400 disabled:no-underline">
+          Generate now
+        </button>
+        {schedule.status !== 'active' && (
+          <button type="button" onClick={onDelete} disabled={busyId === schedule.id} className="font-medium text-red-600 hover:underline disabled:opacity-50">
+            Delete
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const CONTROL =
   'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100';
@@ -602,7 +740,20 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
           </div>
           {bucketFilter !== 'all' && <button type="button" onClick={() => { setBucketFilter('all'); setInvoicePage(1); }} className="text-xs font-medium text-orange-700 hover:underline">Clear filter</button>}
         </div>
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-gray-200 md:hidden">
+          {invoicePagination.rows.map((invoice) => (
+            <UnpaidInvoiceCard
+              key={invoice.id}
+              invoice={invoice}
+              onOpen={() => setEditInvoice(invoice)}
+              onEdit={(event) => { event.stopPropagation(); setEditInvoice(invoice); }}
+              onRecordPayment={(event) => { event.stopPropagation(); openRecordPayment(invoice); }}
+              onSendLink={(event) => { event.stopPropagation(); void handleGetPaymentLink(invoice); }}
+              isSendingLink={busyId === invoice.id}
+            />
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[1120px] table-fixed text-left text-xs">
             <thead className="border-b border-gray-300 bg-white text-gray-700">
               <tr>
@@ -668,7 +819,12 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
             <h2 className="text-sm font-semibold text-gray-900">Outstanding by Partner</h2>
             <p className="mt-0.5 text-xs text-gray-500">Open balances by aging range</p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="divide-y divide-gray-200 md:hidden">
+            {partnerPagination.rows.map((advertiser) => (
+              <PartnerBalanceCard key={advertiser.name} advertiser={advertiser} />
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[660px] table-fixed text-left text-xs">
               <thead className="border-b border-gray-300 text-gray-700">
                 <tr>
@@ -760,7 +916,20 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
           </div>
           <button type="button" className={ORANGE_BUTTON} onClick={() => setCreateSchedule(true)}>Create schedule</button>
         </div>
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-gray-200 md:hidden">
+          {schedulePagination.rows.map((schedule) => (
+            <ScheduleCard
+              key={schedule.id}
+              schedule={schedule}
+              busyId={busyId}
+              onEdit={() => setEditSchedule(schedule)}
+              onPauseResume={() => handlePauseResume(schedule)}
+              onGenerateNow={() => handleGenerateNow(schedule)}
+              onDelete={() => handleDeleteSchedule(schedule)}
+            />
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[1120px] table-fixed text-left text-xs">
             <thead className="border-b border-gray-300 text-gray-700">
               <tr>

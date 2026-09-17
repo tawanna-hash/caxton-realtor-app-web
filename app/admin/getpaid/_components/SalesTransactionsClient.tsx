@@ -252,6 +252,141 @@ function StatusCell({ invoice, referenceTime }: { invoice: InvoiceWithAdvertiser
   return <span className="whitespace-nowrap text-gray-700">{statusLabel(invoice, referenceTime)}</span>;
 }
 
+const ROW_MENU_ACTIONS: Array<[string, string]> = [
+  ['edit', 'View/Edit'],
+  ['duplicate', 'Duplicate'],
+  ['duplicate-ai', 'Duplicate with AI'],
+  ['send', 'Send'],
+  ['remind', 'Send reminder'],
+  ['task', 'Create task'],
+  ['share', 'Share invoice link'],
+  ['recurring', 'Make recurring payment'],
+  ['print', 'Print'],
+  ['packing', 'Print packing slip'],
+  ['void', 'Void'],
+  ['delete', 'Delete'],
+  ['activity', 'View activity'],
+];
+
+function rowActionDisabled(action: string, status: InvoiceWithAdvertiser['status']) {
+  return (
+    (action === 'delete' && status !== 'draft') ||
+    ((['send', 'remind', 'share', 'void'].includes(action) && ['paid', 'void'].includes(status)) ||
+      (['remind', 'share'].includes(action) && status === 'draft'))
+  );
+}
+
+function TransactionCard({
+  invoice,
+  referenceTime,
+  invoiceWorkspace,
+  busy,
+  selected,
+  onToggleSelect,
+  onView,
+  onReceivePayment,
+  onPrint,
+  rowMenuOpen,
+  onToggleMenu,
+  onRowAction,
+}: {
+  invoice: InvoiceWithAdvertiser;
+  referenceTime: number;
+  invoiceWorkspace: boolean;
+  busy: boolean;
+  selected: boolean;
+  onToggleSelect: () => void;
+  onView: () => void;
+  onReceivePayment: () => void;
+  onPrint: () => void;
+  rowMenuOpen: boolean;
+  onToggleMenu: () => void;
+  onRowAction: (action: string) => void;
+}) {
+  const memo = memoSummary(invoice);
+  const canReceivePayment = !['paid', 'void'].includes(invoice.status);
+  return (
+    <div className="space-y-2.5 p-4">
+      <div className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          className="mt-1"
+          aria-label={`Select ${invoice.number ?? 'transaction'}`}
+          checked={selected}
+          onChange={onToggleSelect}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium text-gray-900">{invoice.number ?? 'Draft'}</div>
+              <div className="truncate text-xs text-gray-600">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</div>
+            </div>
+            <div className="whitespace-nowrap text-right text-sm font-semibold text-gray-900">{formatCents(invoice.total_cents)}</div>
+          </div>
+          {!invoiceWorkspace && <div className="mt-1 text-xs text-gray-500">{transactionTypeLabel(invoice)}</div>}
+          {!invoiceWorkspace && memo && <div className="mt-1 truncate text-xs text-gray-500" title={memo}>{memo}</div>}
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
+        <div>
+          <div className="text-gray-400">Date</div>
+          <div>{formatTransactionDate(transactionDate(invoice))}</div>
+        </div>
+        <div>
+          <div className="text-gray-400">Billing date</div>
+          <div>{formatTransactionDate(invoice.issued_at)}</div>
+        </div>
+        <div>
+          <div className="text-gray-400">Payment received</div>
+          <div>{formatTransactionDate(paymentReceivedDate(invoice))}</div>
+        </div>
+      </div>
+      <div><StatusCell invoice={invoice} referenceTime={referenceTime} /></div>
+      <div className="relative flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
+        <button type="button" disabled={busy} className="font-medium text-orange-700 hover:underline disabled:opacity-50" onClick={onView}>
+          View/Edit
+        </button>
+        {canReceivePayment ? (
+          <button type="button" disabled={busy} className="font-medium text-orange-700 hover:underline disabled:opacity-50" onClick={onReceivePayment}>
+            Receive payment
+          </button>
+        ) : (
+          <button type="button" className="font-medium text-orange-700 hover:underline" onClick={onPrint}>
+            <span className="inline-flex items-center gap-1"><Printer className="h-3.5 w-3.5" aria-hidden="true" />Print</span>
+          </button>
+        )}
+        <button
+          type="button"
+          aria-label={`More actions for ${invoice.number ?? 'transaction'}`}
+          disabled={busy}
+          className="ml-auto inline-flex rounded p-1 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
+          onClick={onToggleMenu}
+        >
+          <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+        {rowMenuOpen && (
+          <div className="absolute right-0 top-9 z-50 w-56 rounded border border-gray-200 bg-white py-1 text-left text-sm text-gray-800 shadow-xl">
+            {ROW_MENU_ACTIONS.map(([action, label]) => (
+              <button
+                type="button"
+                key={action}
+                className={`flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-gray-50 ${
+                  rowActionDisabled(action, invoice.status) ? 'cursor-not-allowed text-gray-400' : ''
+                }`}
+                disabled={rowActionDisabled(action, invoice.status)}
+                onClick={() => onRowAction(action)}
+              >
+                <span>{label}</span>
+                {action === 'duplicate-ai' && <span className="rounded bg-fuchsia-100 px-1.5 py-0.5 text-[10px] font-semibold text-fuchsia-700">NEW</span>}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function EmailInvoiceDialog({
   draft,
   busy,
@@ -1015,7 +1150,31 @@ export function SalesTransactionsClient({
       </section>
 
       <section className="relative rounded border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-gray-200 md:hidden">
+          {pageRows.map((invoice) => (
+            <TransactionCard
+              key={invoice.id}
+              invoice={invoice}
+              referenceTime={referenceTime}
+              invoiceWorkspace={invoiceWorkspace}
+              busy={busy}
+              selected={selected.has(invoice.id)}
+              onToggleSelect={() => setSelected((current) => {
+                const next = new Set(current);
+                if (next.has(invoice.id)) next.delete(invoice.id);
+                else next.add(invoice.id);
+                return next;
+              })}
+              onView={() => setEditingInvoice(invoice)}
+              onReceivePayment={() => setPaymentInvoice(invoice)}
+              onPrint={() => printInvoice(invoice)}
+              rowMenuOpen={rowMenuId === invoice.id}
+              onToggleMenu={() => setRowMenuId((id) => (id === invoice.id ? null : invoice.id))}
+              onRowAction={(action) => handleRowAction(invoice, action)}
+            />
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className={`${invoiceWorkspace ? 'min-w-[1140px]' : 'min-w-[1320px]'} w-full table-fixed text-left text-xs`}>
             <thead className="border-b border-gray-300 bg-white text-gray-700">
               <tr>

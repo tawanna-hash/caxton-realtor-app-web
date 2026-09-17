@@ -100,6 +100,70 @@ function StatusCell({ invoice }: { invoice: InvoiceWithAdvertiser }) {
   return <span className="whitespace-nowrap text-gray-700">{statusLabel(status)}</span>;
 }
 
+function PaymentLinkCard({
+  invoice,
+  deletingId,
+  onView,
+  onDelete,
+}: {
+  invoice: InvoiceWithAdvertiser;
+  deletingId: string | null;
+  onView: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="space-y-2.5 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium text-gray-900">{invoice.number ?? 'Draft'}</div>
+          <div className="truncate text-xs text-gray-600">
+            {invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}
+          </div>
+        </div>
+        <div className="whitespace-nowrap text-right text-sm font-semibold text-gray-900">
+          {formatCents(outstandingCents(invoice))}
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-3 text-xs text-gray-600">
+        <span className="truncate">{invoice.bill_to_email ?? '—'}</span>
+        <StatusCell invoice={invoice} />
+      </div>
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        <span>Updated {formatDate(invoice.updated_at)}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
+        <button type="button" className="font-medium text-orange-700 hover:underline" onClick={onView}>
+          View/Edit
+        </button>
+        {isSafeHttpUrl(invoice.stripe_payment_link_url) ? (
+          <a
+            className="inline-flex items-center gap-1 font-medium text-orange-700 hover:underline"
+            href={invoice.stripe_payment_link_url}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open link
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+          </a>
+        ) : (
+          <span className="text-gray-400" title="Stored link is not a safe HTTP(S) URL">
+            Invalid link
+          </span>
+        )}
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 font-medium text-red-600 hover:underline disabled:opacity-50"
+          onClick={onDelete}
+          disabled={deletingId === invoice.id}
+        >
+          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+          {deletingId === invoice.id ? 'Deleting…' : 'Delete'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function PaymentLinksClient({
   initialInvoices,
   advertisers,
@@ -297,7 +361,18 @@ export function PaymentLinksClient({
       </section>
 
       <section className="rounded border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-gray-200 md:hidden">
+          {pageRows.map((invoice) => (
+            <PaymentLinkCard
+              key={invoice.id}
+              invoice={invoice}
+              deletingId={deletingId}
+              onView={() => setSelectedInvoiceId(invoice.id)}
+              onDelete={() => deleteLink(invoice)}
+            />
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[1040px] table-fixed text-left text-xs">
             <thead className="border-b border-gray-300 bg-white text-gray-700">
               <tr>
