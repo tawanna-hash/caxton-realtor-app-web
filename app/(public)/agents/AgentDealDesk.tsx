@@ -606,48 +606,6 @@ function worksheetValues(deal: AgentDeal): Record<string, string> {
   };
 }
 
-function downloadTextSummary(deal: AgentDeal): void {
-  const values = worksheetValues(deal);
-  const lines = [
-    'TREC 1-4 Operational Deal Summary',
-    'Operational workspace only; verify all terms against the signed contract and broker process.',
-    '',
-    `Transaction: ${deal.title || 'Not entered'}`,
-    `Owner: ${deal.owner || 'Not assigned'}`,
-    `Workflow stage: ${TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}`,
-    `Buyer(s): ${deal.buyerNames || 'Not entered'}`,
-    `Seller(s): ${deal.sellerNames || 'Not entered'}`,
-    `Property: ${deal.propertyAddress || 'Not entered'}`,
-    `Effective date: ${deal.effectiveDate || 'Not entered'}`,
-    `Closing date: ${deal.closingDate || 'Not entered'}`,
-    `Earnest money: ${values.earnestMoney || 'Not entered'}`,
-    `Earnest money delivered: ${deal.earnestMoneyDeliveredDate || 'Not recorded'}`,
-    `Option fee: ${values.optionFee || 'Not entered'}`,
-    `Option fee delivered: ${deal.optionFeeDeliveredDate || 'Not recorded'}`,
-    `Option period: ${deal.optionPeriodDays || 'Not entered'} days`,
-    `Title objection period: ${deal.titleObjectionDays || 'Not entered'} days`,
-    '',
-    'Calculated timing:',
-    ...dealDeadlines(deal).map((deadline) => `- ${deadline.label}: ${deadline.date} (${deadline.rule})`),
-    '',
-    'Open tasks:',
-    ...(deal.tasks.filter((task) => task.status !== 'done' && task.status !== 'skipped').map((task) => `- [${task.priority}] ${task.title}${task.dueDate ? ` — due ${task.dueDate}` : ''}`) || []),
-    '',
-    'Document requests:',
-    ...deal.documents.map((document) => `- ${document.label}: ${document.status.replace('_', ' ')}`),
-    '',
-    `Closeout outcome: ${deal.closeoutOutcome || 'Not set'}`,
-    `Closeout date: ${deal.closeoutDate || 'Not set'}`,
-    `Closeout note: ${deal.closeoutNote || 'Not set'}`,
-  ];
-  const url = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'trec-1-4-operational-summary.txt';
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
 function downloadBackupRecord(deal: AgentDeal): { filename: string; blob: Blob } {
   const record = {
     exportedAt: new Date().toISOString(),
@@ -1642,12 +1600,6 @@ export default function AgentDealDesk({
     trackEvent('agent_deal_desk_calendar_exported', { scope: 'all_active_deals' });
   };
 
-  const exportTextSummary = () => {
-    if (!activeDeal) return;
-    downloadTextSummary(activeDeal);
-    trackEvent('agent_deal_desk_text_summary_exported');
-  };
-
   const exportBackupRecord = (deal: AgentDeal) => {
     const { filename, blob } = downloadBackupRecord(deal);
     backupExportToDrive(filename, blob);
@@ -1862,7 +1814,7 @@ export default function AgentDealDesk({
                 />
               </div>
               <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
-                <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Audit</p><h2 className="mt-1 text-xl font-semibold text-slate-950">Transaction History, Audit and Closeout</h2></div></div><button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button></div>
+                <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Audit</p><h2 className="mt-1 text-xl font-semibold text-slate-950">Transaction History, Audit and Closeout</h2></div></div></div>
                 <div className="mt-5 grid gap-3 md:grid-cols-3"><select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm"><option value="">Closeout outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select><input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm" /><input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm" placeholder="Closeout note" /></div>
                 <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#E7C769] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
               </section>
@@ -2900,7 +2852,6 @@ export default function AgentDealDesk({
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={exportTextSummary} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download summary</button>
                 <button type="button" onClick={() => exportAuditPdf(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download PDF</button>
                 {isDealLocked(activeDeal) && (
                   <button type="button" onClick={() => exportBackupRecord(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Download className="h-4 w-4" aria-hidden="true" />Download backup record</button>
