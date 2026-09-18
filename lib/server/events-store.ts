@@ -89,7 +89,6 @@ export interface AdminCalendarEvent {
   editedFields: string[];
   editedBy: string | null;
   editedAt: string | null;
-  confidence: number | null;
 }
 
 export interface ManualEventInput {
@@ -145,7 +144,6 @@ interface EventRow {
   edited_fields: string[] | null;
   edited_by: string | null;
   edited_at: string | Date | null;
-  n: number | string | null;
 }
 
 function toIso(d: string | Date | null): string | null {
@@ -191,7 +189,6 @@ function rowToAdminEvent(r: EventRow): AdminCalendarEvent {
     editedFields: r.edited_fields ?? [],
     editedBy: r.edited_by,
     editedAt: toIso(r.edited_at),
-    confidence: toNumber(r.n),
   };
 }
 
@@ -200,7 +197,7 @@ const SELECT_COLS = `
   start_date, end_date, location, organizer, organizer_email, website,
   tags, format, course_number, member_price, nonmember_price,
   image_url, image_thumb, instructor_name, instructor_bio, lat, lng,
-  hidden, edited_fields, edited_by, edited_at, n
+  hidden, edited_fields, edited_by, edited_at
 `;
 
 /** Admin: list ALL events (incl. hidden + past) for one or both publications. */
