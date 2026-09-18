@@ -6,7 +6,7 @@
 // set-password link; Deactivate/Reactivate toggles login access instantly;
 // Delete permanently removes an already-deactivated account.
 
-import { useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Admin {
@@ -60,6 +60,14 @@ export default function TeamClient({ initialAdmins }: Props) {
   const [formError, setFormError] = useState<string | null>(null);
   const [addedNote, setAddedNote] = useState<string | null>(null);
 
+  // Edit (name/email) state — keyed by admin id so only one row's form is
+  // open at a time. Separate from the "Add admin" form above.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editEmail, setEditEmail] = useState('');
+  const [editFullName, setEditFullName] = useState('');
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
   const activeCount = useMemo(() => admins.filter((a) => a.active).length, [admins]);
 
   const addAdmin = useCallback(
@@ -92,6 +100,42 @@ export default function TeamClient({ initialAdmins }: Props) {
       }
     },
     [email, fullName, router],
+  );
+
+  const startEdit = useCallback((a: Admin) => {
+    setEditingId(a.id);
+    setEditEmail(a.email);
+    setEditFullName(a.fullName);
+    setEditError(null);
+  }, []);
+
+  const cancelEdit = useCallback(() => {
+    setEditingId(null);
+    setEditError(null);
+  }, []);
+
+  const saveEdit = useCallback(
+    async (a: Admin) => {
+      setEditError(null);
+      setEditSubmitting(true);
+      try {
+        const res = await fetch(`/api/admin/team/${a.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: editEmail, fullName: editFullName }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setEditError(j?.error || 'Failed to save changes');
+          return;
+        }
+        setEditingId(null);
+        router.refresh();
+      } finally {
+        setEditSubmitting(false);
+      }
+    },
+    [editEmail, editFullName, router],
   );
 
   const toggleActive = useCallback(
@@ -225,46 +269,116 @@ export default function TeamClient({ initialAdmins }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {admins.map((a) => (
-                  <tr key={a.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{a.fullName}</div>
-                      {a.isOwner && (
-                        <div className="text-xs text-orange-700 font-medium">Owner</div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">{a.email}</td>
-                    <td className="px-4 py-3"><StatusPill active={a.active} /></td>
-                    <td className="px-4 py-3 text-gray-700">{formatDate(a.lastLoginAt)}</td>
-                    <td className="px-4 py-3 text-gray-700">{formatDate(a.createdAt)}</td>
-                    <td className="px-4 py-3 text-right">
-                      {a.isOwner ? (
-                        <span className="text-xs text-gray-400">—</span>
-                      ) : (
-                        <div className="inline-flex items-center gap-3">
-                          <button
-                            type="button"
-                            disabled={busyId === a.id}
-                            onClick={() => toggleActive(a)}
-                            className="text-sm font-medium text-gray-700 hover:text-gray-900 disabled:opacity-50"
-                          >
-                            {a.active ? 'Deactivate' : 'Reactivate'}
-                          </button>
-                          {!a.active && (
-                            <button
-                              type="button"
-                              disabled={busyId === a.id}
-                              onClick={() => deleteAdmin(a)}
-                              className="text-sm font-medium text-red-600 hover:text-red-800 disabled:opacity-50"
-                            >
-                              Delete
-                            </button>
+                {admins.map((a) => {
+                  const isEditing = editingId === a.id;
+                  return (
+                    <Fragment key={a.id}>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-gray-900">{a.fullName}</div>
+                          {a.isOwner && (
+                            <div className="text-xs text-orange-700 font-medium">Owner</div>
                           )}
-                        </div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-700">{a.email}</td>
+                        <td className="px-4 py-3"><StatusPill active={a.active} /></td>
+                        <td className="px-4 py-3 text-gray-700">{formatDate(a.lastLoginAt)}</td>
+                        <td className="px-4 py-3 text-gray-700">{formatDate(a.createdAt)}</td>
+                        <td className="px-4 py-3 text-right">
+                          {a.isOwner ? (
+                            <span className="text-xs text-gray-400">—</span>
+                          ) : (
+                            <div className="inline-flex items-center gap-3">
+                              <button
+                                type="button"
+                                disabled={busyId === a.id || isEditing}
+                                onClick={() => startEdit(a)}
+                                className="text-sm font-medium text-gray-700 hover:text-gray-900 disabled:opacity-50"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busyId === a.id}
+                                onClick={() => toggleActive(a)}
+                                className="text-sm font-medium text-gray-700 hover:text-gray-900 disabled:opacity-50"
+                              >
+                                {a.active ? 'Deactivate' : 'Reactivate'}
+                              </button>
+                              {!a.active && (
+                                <button
+                                  type="button"
+                                  disabled={busyId === a.id}
+                                  onClick={() => deleteAdmin(a)}
+                                  className="text-sm font-medium text-red-600 hover:text-red-800 disabled:opacity-50"
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                      {isEditing && (
+                        <tr className="bg-gray-50">
+                          <td colSpan={6} className="px-4 py-4">
+                            <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                              <div className="flex-1">
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  Full name
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={editFullName}
+                                  onChange={(e) => setEditFullName(e.target.value)}
+                                  className="w-full h-9 rounded border border-gray-300 px-3 text-sm bg-white"
+                                />
+                              </div>
+                              <div className="flex-1">
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  Email
+                                </label>
+                                <input
+                                  type="email"
+                                  required
+                                  value={editEmail}
+                                  onChange={(e) => setEditEmail(e.target.value)}
+                                  className="w-full h-9 rounded border border-gray-300 px-3 text-sm bg-white"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  disabled={editSubmitting}
+                                  onClick={() => saveEdit(a)}
+                                  className="inline-flex h-9 items-center justify-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700 disabled:opacity-60"
+                                >
+                                  {editSubmitting ? 'Saving…' : 'Save'}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={editSubmitting}
+                                  onClick={cancelEdit}
+                                  className="inline-flex h-9 items-center justify-center rounded border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                            {editError && (
+                              <div className="mt-2 text-sm text-red-600">{editError}</div>
+                            )}
+                            <div className="mt-2 text-xs text-gray-500">
+                              Changing the email doesn&apos;t affect an active session —
+                              it takes effect the next time {a.fullName.split(' ')[0]} signs in.
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                  </tr>
-                ))}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

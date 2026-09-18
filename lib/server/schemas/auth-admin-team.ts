@@ -12,3 +12,8 @@ export const createAdminSchema = z.object({
 export const updateAdminStatusSchema = z.object({
   active: z.boolean(),
 });
+
+export const updateAdminProfileSchema = z.object({
+  email: z.string().email().toLowerCase(),
+  fullName: z.string().min(1).max(200),
+});
