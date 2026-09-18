@@ -51,7 +51,13 @@ function StatusPill({ active }: { active: boolean }) {
 
 export default function TeamClient({ initialAdmins }: Props) {
   const router = useRouter();
-  const [admins] = useState(initialAdmins);
+  // Read directly from props rather than a local useState snapshot — the
+  // parent server component re-fetches on router.refresh() and passes down
+  // fresh initialAdmins, and this table never mutates rows locally (every
+  // action below saves to the server then calls router.refresh()), so
+  // there's nothing local state buys here and it was going stale on every
+  // save because a useState initializer only runs once at mount.
+  const admins = initialAdmins;
   const [busyId, setBusyId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [email, setEmail] = useState('');
