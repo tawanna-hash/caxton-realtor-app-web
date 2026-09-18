@@ -40,6 +40,11 @@ import {
 import { formatPhone, formatPhoneInput } from "@/lib/format-phone";
 import { sparsePatch } from "@/lib/sparse-patch";
 import { DrawerShell, Section, Field } from "./DrawerShell";
+import { AddCardDrawer, type SavedCardOnFile } from "./AddCardDrawer";
+import {
+  cardExpirationStatus,
+  formatCardExpiration,
+} from "@/lib/card-expiration";
 import {
   AG_STATUS,
   AG_TYPES,
@@ -168,6 +173,27 @@ export function AgreementDrawer({
   // no re-sign required.
   const [sendingAmended, setSendingAmended] = useState(false);
   const [amendedMsg, setAmendedMsg] = useState<string | null>(null);
+  // Stripe card-on-file state (separate from the reference-metadata fields in
+  // `form`): only the Stripe SetupIntent / sign-wizard flows may write these.
+  const [showAddCard, setShowAddCard] = useState(false);
+  const [savedCard, setSavedCard] = useState<SavedCardOnFile | null>(null);
+  // A card just saved through the SetupIntent flow wins over the row we were
+  // opened with, so the panel updates without waiting for a page refresh.
+  const stripeCard = useMemo(
+    () => ({
+      paymentMethodId:
+        savedCard?.paymentMethodId ?? existing?.stripe_payment_method_id ?? null,
+      cardType: savedCard?.cardType ?? existing?.card_type ?? null,
+      cardLast4: savedCard?.cardLast4 ?? existing?.card_number_last4 ?? null,
+      cardExpiration:
+        savedCard?.cardExpiration ?? existing?.card_expiration ?? null,
+    }),
+    [savedCard, existing],
+  );
+  // Gate on the Stripe payment-method id: card_type / last4 / expiration alone
+  // may just be hand-typed reference metadata with no chargeable card behind it.
+  const stripeCardPresent = Boolean(stripeCard.paymentMethodId);
+  const stripeCardExpStatus = cardExpirationStatus(stripeCard.cardExpiration);
 
   // Optional custom message for the “Send Signing Link” email. Empty
   // string → backend falls back to the standard boilerplate.
@@ -1510,6 +1536,58 @@ export function AgreementDrawer({
             </div>
           </div>
         )}
+
+        {/* ── Card on file (Stripe) ───────────────────────────────
+            The real off-session payment method, i.e. what auto-charge and
+            "Charge issue" actually use. Distinct from the reference-metadata
+            fields above, which are typed by hand and charge nothing. Only
+            available on a saved agreement, since the SetupIntent is created
+            against the agreement's Stripe customer. */}
+        {existing?.id && (
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-3 space-y-2">
+            <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
+              Card on file (Stripe)
+            </div>
+            {stripeCardPresent ? (
+              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-800">
+                <span>
+                  {stripeCard.cardType ?? "Card"} ••••
+                  {stripeCard.cardLast4 ?? "????"}
+                  {formatCardExpiration(stripeCard.cardExpiration)
+                    ? ` · exp ${formatCardExpiration(stripeCard.cardExpiration)}`
+                    : ""}
+                </span>
+                {stripeCardExpStatus === "expired" && (
+                  <span className="rounded-full border border-rose-300 bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-800">
+                    Expired
+                  </span>
+                )}
+                {stripeCardExpStatus === "expiring_soon" && (
+                  <span className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                    Expiring soon
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-600">
+                No Stripe card saved for this agreement.
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAddCard(true)}
+                className="rounded-md border border-blue-300 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50"
+              >
+                {stripeCardPresent ? "Update card on file" : "Add card on file"}
+              </button>
+              <span className="text-xs text-gray-500">
+                Captured securely by Stripe and saved for off-session charges —
+                nothing is charged.
+              </span>
+            </div>
+          </div>
+        )}
       </Section>
 
       {/* ── Terms & Digital Signature (hidden when uploaded) ──
@@ -2014,6 +2092,28 @@ export function AgreementDrawer({
           {saving ? "Saving…" : "Sign & Save"}
         </button>
       </div>
+
+      {showAddCard && existing?.id && (
+        <AddCardDrawer
+          agreementId={existing.id}
+          agreementLabel={`${existing.advertiser_name ?? existing.company_name ?? "Partner"}${existing.type ? ` \u00b7 ${existing.type}` : ""}`}
+          currentCard={{
+            cardType: stripeCard.cardType,
+            cardLast4: stripeCard.cardLast4,
+            cardExpiration: stripeCard.cardExpiration,
+          }}
+          onClose={() => setShowAddCard(false)}
+          onSaved={(card) => {
+            setSavedCard(card);
+            // Keep the reference-metadata fields consistent with the card that
+            // was actually saved (the confirm route already persisted these
+            // columns server-side; this only refreshes what's on screen).
+            if (card.cardType) upd("card_type", card.cardType);
+            if (card.cardLast4) upd("card_number_last4", card.cardLast4);
+            if (card.cardExpiration) upd("card_expiration", card.cardExpiration);
+          }}
+        />
+      )}
     </DrawerShell>
   );
 }

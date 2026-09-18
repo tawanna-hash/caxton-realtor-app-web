@@ -325,7 +325,6 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   const [requestMenuOpen, setRequestMenuOpen] = useState(false);
   const [durationMenuOpen, setDurationMenuOpen] = useState(false);
   const [incomePeriod, setIncomePeriod] = useState<IncomePeriod>('this-month');
-  const [createInvoice, setCreateInvoice] = useState(false);
   const [editInvoice, setEditInvoice] = useState<InvoiceWithAdvertiser | null>(null);
   const [paymentInvoiceId, setPaymentInvoiceId] = useState<string | null>(null);
   const [paymentAction, setPaymentAction] = useState<'payment-link' | 'sales-receipt' | 'record-payment' | 'create-partner' | null>(null);
@@ -713,11 +712,9 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
           </select>
         </label>
         <div className="relative ml-auto flex">
-          <button type="button" className={`${ORANGE_BUTTON} rounded-r-none`} onClick={() => setCreateInvoice(true)}>
+          <button type="button" aria-expanded={requestMenuOpen} className={`${ORANGE_BUTTON}`} onClick={() => setRequestMenuOpen((open) => !open)}>
             <Sparkles className="h-4 w-4" aria-hidden="true" />
-            Create invoice
-          </button>
-          <button type="button" aria-label="More create actions" aria-expanded={requestMenuOpen} className={`${ORANGE_BUTTON} -ml-px rounded-l-none px-2`} onClick={() => setRequestMenuOpen((open) => !open)}>
+            Quick actions
             <ChevronDown className="h-4 w-4" aria-hidden="true" />
           </button>
           {requestMenuOpen && (
@@ -964,15 +961,6 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
         <Pagination count={filteredSchedules.length} page={schedulePagination.currentPage} pageSize={pageSize} totalPages={schedulePagination.totalPages} onPageChange={setSchedulePage} onPageSizeChange={(size) => { setPageSize(size); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }} />
       </section>
 
-      {createInvoice && (
-        <InvoiceDrawer
-          advertisers={advertisers}
-          agreements={agreements}
-          onClose={() => setCreateInvoice(false)}
-          onSaved={async () => { setCreateInvoice(false); await reloadAll(); }}
-          onError={setError}
-        />
-      )}
       {editInvoice && (
         <InvoiceDrawer
           existing={editInvoice}

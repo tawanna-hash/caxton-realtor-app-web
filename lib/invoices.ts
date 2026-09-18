@@ -26,11 +26,17 @@ export interface InvoicePayment {
 }
 
 export interface InvoiceAuditEntry {
-  event: 'invoice_updated' | string;
+  event:
+    | 'invoice_updated'
+    | 'invoice_auto_charge_succeeded'
+    | 'invoice_auto_charge_failed'
+    | string;
   timestamp: string;
   user_email?: string | null;
   fields?: string[];
   changes?: Record<string, { from: unknown; to: unknown }>;
+  /** Free-text context for non-field events (e.g. an auto-charge failure reason). */
+  details?: string | null;
 }
 
 export interface Invoice {

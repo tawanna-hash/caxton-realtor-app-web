@@ -48,7 +48,7 @@ export default async function ArDashboardPage() {
       LEFT JOIN advertisers adv ON adv.id = s.advertiser_id
       ORDER BY s.next_run_at ASC
     `.catch(() => [] as unknown[]),
-    sql`SELECT id, name, publication, contact_email, billing_email FROM advertisers ORDER BY name ASC`
+    sql`SELECT id, name, publication, contact_email, billing_email, payment_mode, stripe_customer_id, card_last4 FROM advertisers ORDER BY name ASC`
       .catch(() => [] as unknown[]),
     sql`
       SELECT ag.*, adv.name AS advertiser_name

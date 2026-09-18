@@ -15,6 +15,13 @@ import { formatDateISO } from './helpers';
 import type { AdvertiserOption } from './types';
 import { ProductServiceSearch } from './ProductServiceSearch';
 import { sparsePatch } from '@/lib/sparse-patch';
+import { RecurringScheduleDrawer } from '@/app/admin/ar/RecurringScheduleDrawer';
+import { AddCardDrawer, type SavedCardOnFile } from './AddCardDrawer';
+import {
+  cardExpirationStatus,
+  cardExpirationWarning,
+  formatCardExpiration,
+} from '@/lib/card-expiration';
 
 // Minimal shape of an agreement_line_items row, as returned by
 // GET /api/admin/agreements/[id]/line-items.
@@ -118,6 +125,14 @@ export function InvoiceDrawer({
   const [detail, setDetail] = useState<InvoiceWithAdvertiser | null>(existing ?? null);
   const [historyLoading, setHistoryLoading] = useState(Boolean(existing));
   const isCreate = !existing;
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [autoCharge, setAutoCharge] = useState(false);
+  const [autoChargeWarning, setAutoChargeWarning] = useState<string | null>(null);
+  // Card added/updated from inside this drawer (Part 1/2 flow). Held locally so
+  // the auto-charge checkbox can appear immediately, without waiting for the
+  // parent page to refetch its `agreements` prop.
+  const [addedCard, setAddedCard] = useState<SavedCardOnFile | null>(null);
+  const [showAddCard, setShowAddCard] = useState(false);
 
   useEffect(() => {
     if (!isCreate) return;
@@ -212,10 +227,70 @@ export function InvoiceDrawer({
   const linesTotal = previewLineItemsTotal(form.line_items);
   const effectiveAmount = form.amount_dollars ? Math.round(parseFloat(form.amount_dollars) * 100) : linesTotal;
 
+  // Agreements as the drawer currently understands them: the freshly saved card
+  // (if any) is merged onto its agreement so every downstream memo behaves
+  // exactly as it will after the page refreshes.
+  const effectiveAgreements = useMemo(() => {
+    if (!addedCard) return agreements;
+    return agreements.map((a) =>
+      a.id === addedCard.agreementId
+        ? {
+            ...a,
+            stripe_customer_id: addedCard.customerId ?? a.stripe_customer_id,
+            stripe_payment_method_id: addedCard.paymentMethodId,
+            card_type: addedCard.cardType ?? a.card_type,
+            card_number_last4: addedCard.cardLast4 ?? a.card_number_last4,
+            card_expiration: addedCard.cardExpiration ?? a.card_expiration,
+          }
+        : a,
+    );
+  }, [agreements, addedCard]);
+
   const matchingAgreements = useMemo(
-    () => agreements.filter((a) => !form.advertiser_id || a.advertiser_id === form.advertiser_id),
-    [agreements, form.advertiser_id],
+    () => effectiveAgreements.filter((a) => !form.advertiser_id || a.advertiser_id === form.advertiser_id),
+    [effectiveAgreements, form.advertiser_id],
   );
+
+  // Card on file: agreements are the source of truth for the saved off-session
+  // payment method (stripe_customer_id + stripe_payment_method_id, saved by the
+  // sign wizard). When the admin explicitly links an agreement, only THAT
+  // agreement's card may be charged; with no agreement linked we fall back to
+  // the partner's most recent card-bearing agreement (advertisers have no
+  // payment-method column of their own — card_last4/payment_mode are a
+  // display-only mirror). This mirrors resolveCardOnFile() on the server.
+  const selectedAdvertiser = useMemo(
+    () => advertisers.find((a) => a.id === form.advertiser_id) ?? null,
+    [advertisers, form.advertiser_id],
+  );
+  const cardAgreement = useMemo(() => {
+    const usable = (a: AgreementWithAdvertiser) =>
+      Boolean(a.stripe_customer_id && a.stripe_payment_method_id);
+    if (form.agreement_id) {
+      const picked = effectiveAgreements.find((a) => a.id === form.agreement_id);
+      return picked && usable(picked) ? picked : null;
+    }
+    if (!form.advertiser_id) return null;
+    return matchingAgreements.find(usable) ?? null;
+  }, [effectiveAgreements, matchingAgreements, form.agreement_id, form.advertiser_id]);
+  const cardOnFile = isCreate && Boolean(cardAgreement);
+  const cardLast4 = cardAgreement?.card_number_last4 ?? selectedAdvertiser?.card_last4 ?? null;
+
+  // Which agreement a newly added card should be attached to: the explicitly
+  // linked one, else the agreement that already holds the card, else the
+  // partner's first agreement. A card always lives on an agreement — with no
+  // agreement at all there is nowhere to save it.
+  const cardTargetAgreement = useMemo(() => {
+    if (form.agreement_id) return effectiveAgreements.find((a) => a.id === form.agreement_id) ?? null;
+    return cardAgreement ?? matchingAgreements[0] ?? null;
+  }, [effectiveAgreements, matchingAgreements, cardAgreement, form.agreement_id]);
+
+  const cardExpiration = cardAgreement?.card_expiration ?? null;
+  const cardExpStatus = cardExpirationStatus(cardExpiration);
+  const cardExpMessage = cardExpirationWarning(cardExpiration);
+
+  // Derived rather than reset in an effect: if the partner/agreement changes to
+  // one with no saved card, a previously ticked box must never keep charging.
+  const autoChargeActive = autoCharge && cardOnFile;
 
   const submit = async () => {
     if (isCreate && !form.advertiser_id) { onError('partner required'); return; }
@@ -239,6 +314,7 @@ export function InvoiceDrawer({
         bill_to_email: form.bill_to_email || null,
         line_items: form.line_items,
       };
+      if (isCreate && autoChargeActive) payload.auto_charge = true;
       const initialPayload: Record<string, unknown> | null = existing ? {
         number: existing.number ?? null,
         advertiser_id: existing.advertiser_id,
@@ -263,9 +339,15 @@ export function InvoiceDrawer({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(requestBody),
       });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; detail?: string; auto_charge_error?: string };
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? data.detail ?? `Save failed (HTTP ${res.status})`);
+      }
+      // The invoice itself saved fine — a failed card charge is only a warning,
+      // surfaced both inline and on the page banner (which outlives the drawer).
+      if (data.auto_charge_error) {
+        setAutoChargeWarning(data.auto_charge_error);
+        onError(`Invoice created, but the card on file was not charged: ${data.auto_charge_error}`);
       }
       await onSaved();
     } catch (e) {
@@ -309,6 +391,22 @@ export function InvoiceDrawer({
     } finally { setSaving(false); }
   };
 
+  // Creating a recurring invoice reuses the full recurring-schedule drawer
+  // rather than duplicating its fields here, seeded with whatever partner /
+  // agreement was already picked on this drawer.
+  if (isCreate && isRecurring) {
+    return (
+      <RecurringScheduleDrawer
+        advertisers={advertisers}
+        agreements={agreements}
+        seed={{ advertiser_id: form.advertiser_id, agreement_id: form.agreement_id || null }}
+        onClose={onClose}
+        onSaved={onSaved}
+        onError={onError}
+      />
+    );
+  }
+
   return (
     <DrawerShell
       title={isCreate ? 'New invoice' : (existing?.number ?? 'Invoice')}
@@ -349,6 +447,16 @@ export function InvoiceDrawer({
             </select>
           </Field>
         </div>
+        {isCreate && (
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={isRecurring}
+              onChange={(e) => setIsRecurring(e.target.checked)}
+            />
+            Make this a recurring invoice
+          </label>
+        )}
       </Section>
 
       <Section title="Line items" className="xl:col-span-2">
@@ -390,6 +498,76 @@ export function InvoiceDrawer({
             </select>
           </Field>
         </div>
+        {isCreate && !cardOnFile && (
+          cardTargetAgreement ? (
+            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+              <span>No card on file for this partner.</span>
+              <button
+                type="button"
+                onClick={() => setShowAddCard(true)}
+                className="text-sm font-medium text-orange-600 hover:underline"
+              >
+                Add one
+              </button>
+              <span className="text-xs text-gray-500">
+                Saves a card without charging it, so you can auto-charge this invoice.
+              </span>
+            </div>
+          ) : (
+            <div className="text-xs text-gray-500">
+              Pick a partner with an agreement to add a card on file.
+            </div>
+          )
+        )}
+        {isCreate && cardOnFile && cardExpMessage && (
+          <div
+            className={
+              cardExpStatus === 'expired'
+                ? 'flex flex-wrap items-center gap-2 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-900'
+                : 'flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900'
+            }
+          >
+            <span>{cardExpMessage}</span>
+            <button
+              type="button"
+              onClick={() => setShowAddCard(true)}
+              className="font-medium underline hover:no-underline"
+            >
+              Update card
+            </button>
+          </div>
+        )}
+        {cardOnFile && (
+          <label className="flex items-start gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={autoChargeActive}
+              onChange={(e) => setAutoCharge(e.target.checked)}
+            />
+            <span>
+              Auto-charge card on file{cardLast4 ? ` (\u2022\u2022\u2022\u2022 ${cardLast4})` : ''} when created
+              <span className="mt-0.5 block text-xs text-gray-500">
+                Charges the saved card for the full invoice total immediately and marks the invoice paid.
+                {formatCardExpiration(cardExpiration) ? ` Exp ${formatCardExpiration(cardExpiration)}.` : ''}
+              </span>
+            </span>
+          </label>
+        )}
+        {cardOnFile && !cardExpMessage && (
+          <button
+            type="button"
+            onClick={() => setShowAddCard(true)}
+            className="text-xs text-orange-600 hover:underline"
+          >
+            Update card on file
+          </button>
+        )}
+        {autoChargeWarning && (
+          <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            Invoice was created, but the card was not charged: {autoChargeWarning}
+          </div>
+        )}
         <div className="text-xs text-gray-600">
           Preview total: <span className="font-medium text-gray-900">{formatCents(effectiveAmount + (form.tax_dollars ? Math.round(parseFloat(form.tax_dollars) * 100) : 0))}</span>
         </div>
@@ -446,6 +624,25 @@ export function InvoiceDrawer({
         </div>
       )}
       <DrawerFooter saving={saving} onCancel={onClose} onSubmit={submit} submitLabel={isCreate ? 'Create' : 'Save changes'} tone="orange" />
+
+      {/* Card capture stacks ABOVE this drawer (z-[60] vs z-50) so the invoice
+          being composed keeps all of its in-progress state. */}
+      {showAddCard && cardTargetAgreement && (
+        <AddCardDrawer
+          agreementId={cardTargetAgreement.id}
+          agreementLabel={`${cardTargetAgreement.advertiser_name ?? cardTargetAgreement.company_name ?? 'Partner'}${cardTargetAgreement.type ? ` \u00b7 ${cardTargetAgreement.type}` : ''}`}
+          currentCard={{
+            cardType: cardTargetAgreement.card_type ?? null,
+            cardLast4: cardTargetAgreement.card_number_last4 ?? null,
+            cardExpiration: cardTargetAgreement.card_expiration ?? null,
+          }}
+          onClose={() => setShowAddCard(false)}
+          onSaved={(card) => {
+            setAddedCard(card);
+            setAutoChargeWarning(null);
+          }}
+        />
+      )}
     </DrawerShell>
   );
 }
@@ -615,6 +812,12 @@ function PaymentHistoryRow({
 }
 
 function auditDescription(entry: InvoiceAuditEntry) {
+  if (entry.event === 'invoice_auto_charge_succeeded') {
+    return `Card on file charged${entry.details ? ` — ${entry.details}` : ''}`;
+  }
+  if (entry.event === 'invoice_auto_charge_failed') {
+    return `Card on file charge failed${entry.details ? ` — ${entry.details}` : ''}`;
+  }
   const fields = (entry.fields ?? []).map((field) => AUDIT_FIELD_LABELS[field] ?? field.replaceAll('_', ' '));
   return fields.length ? `Changed ${fields.join(', ')}` : 'Invoice updated';
 }

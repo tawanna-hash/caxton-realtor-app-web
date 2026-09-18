@@ -24,7 +24,6 @@ import {
   RecordPaymentDrawer,
   SalesReceiptDrawer,
 } from '@/app/admin/ar/PaymentActionDrawers';
-import { RecurringScheduleDrawer } from '@/app/admin/ar/RecurringScheduleDrawer';
 import PageTitle from '@/components/ui/PageTitle';
 import { toISODateString } from '@/app/admin/billing/_components/helpers';
 
@@ -260,7 +259,6 @@ const ROW_MENU_ACTIONS: Array<[string, string]> = [
   ['remind', 'Send reminder'],
   ['task', 'Create task'],
   ['share', 'Share invoice link'],
-  ['recurring', 'Make recurring payment'],
   ['print', 'Print'],
   ['packing', 'Print packing slip'],
   ['void', 'Void'],
@@ -597,7 +595,6 @@ export function SalesTransactionsClient({
   const [shareInvoice, setShareInvoice] = useState<InvoiceWithAdvertiser | null>(null);
   const [emailDraft, setEmailDraft] = useState<EmailDraft | null>(null);
   const [paymentInvoice, setPaymentInvoice] = useState<InvoiceWithAdvertiser | null>(null);
-  const [recurringInvoice, setRecurringInvoice] = useState<InvoiceWithAdvertiser | null>(null);
   const [creatingReceipt, setCreatingReceipt] = useState(false);
   const [activityInvoice, setActivityInvoice] = useState<InvoiceWithAdvertiser | null>(null);
   const [busy, setBusy] = useState(false);
@@ -966,7 +963,6 @@ export function SalesTransactionsClient({
     if (action === 'remind') setEmailDraft({ invoice, reminder: true });
     if (action === 'task') void createTask(invoice);
     if (action === 'share') setShareInvoice(invoice);
-    if (action === 'recurring') setRecurringInvoice(invoice);
     if (action === 'print') printInvoice(invoice);
     if (action === 'packing') printInvoice(invoice, true);
     if (action === 'void') void voidInvoice(invoice);
@@ -1109,10 +1105,17 @@ export function SalesTransactionsClient({
             </span>
           </label>
           <div className="relative ml-auto flex">
-            <button type="button" className={`${ORANGE_BUTTON} rounded-r-none`} onClick={() => setCreatingInvoice(true)}>
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Create invoice
-            </button>
+            {invoiceWorkspace ? (
+              <button type="button" className={`${ORANGE_BUTTON} rounded-r-none`} onClick={() => setCreatingInvoice(true)}>
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                Create invoice
+              </button>
+            ) : (
+              <button type="button" className={`${ORANGE_BUTTON} rounded-r-none`} onClick={() => setCreatingReceipt(true)}>
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                Create sales receipt
+              </button>
+            )}
             <button
               type="button"
               aria-label="More create actions"
@@ -1123,10 +1126,7 @@ export function SalesTransactionsClient({
             </button>
             {createMenuOpen && (
               <div className="absolute right-0 top-10 z-40 w-52 rounded border border-gray-200 bg-white py-1 shadow-lg">
-                <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { setCreatingInvoice(true); setCreateMenuOpen(false); }}>Create invoice</button>
-                {!invoiceWorkspace && <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { setCreatingReceipt(true); setCreateMenuOpen(false); }}>Create sales receipt</button>}
                 <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { const first = invoices.find((invoice) => !['draft', 'paid', 'void'].includes(invoice.status) && outstandingCents(invoice) > 0); if (first) setPaymentLinkInvoice(first); else fail('No unpaid invoice is available.'); setCreateMenuOpen(false); }}>Create payment link</button>
-                <button type="button" className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50" onClick={() => { const first = invoices[0]; if (first) setRecurringInvoice(first); else fail('Create a customer invoice first.'); setCreateMenuOpen(false); }}>Create recurring payment</button>
               </div>
             )}
           </div>
@@ -1243,7 +1243,6 @@ export function SalesTransactionsClient({
                             ['remind', 'Send reminder'],
                             ['task', 'Create task'],
                             ['share', 'Share invoice link'],
-                            ['recurring', 'Make recurring payment'],
                             ['print', 'Print'],
                             ['packing', 'Print packing slip'],
                             ['void', 'Void'],
@@ -1314,17 +1313,6 @@ export function SalesTransactionsClient({
       )}
       {paymentInvoice && <RecordPaymentDrawer invoices={invoices} advertisers={advertisers} initialInvoiceId={paymentInvoice.id} onClose={() => setPaymentInvoice(null)} onSaved={reload} onError={fail} />}
       {creatingReceipt && <SalesReceiptDrawer invoices={invoices} advertisers={advertisers} onClose={() => setCreatingReceipt(false)} onSaved={reload} onError={fail} />}
-      {recurringInvoice && (
-        <RecurringScheduleDrawer
-          advertisers={advertisers}
-          agreements={agreements}
-          seed={{ advertiser_id: recurringInvoice.advertiser_id, agreement_id: recurringInvoice.agreement_id }}
-          onClose={() => setRecurringInvoice(null)}
-          onSaved={async () => { setRecurringInvoice(null); setMessage('Recurring payment created.'); }}
-          onError={fail}
-        />
-      )}
-
       {activityInvoice && (
         <div className="fixed inset-0 z-[70] bg-gray-950/30" role="dialog" aria-modal="true" aria-label="Invoice activity" onMouseDown={(event) => { if (event.currentTarget === event.target) setActivityInvoice(null); }}>
           <aside className="ml-auto flex h-full w-full max-w-sm flex-col bg-white shadow-2xl">
