@@ -118,6 +118,14 @@ function confidenceStyle(c: number): string {
   return 'bg-gray-100 text-gray-700';
 }
 
+/** Gmail-scanned events don't currently carry a stored confidence score —
+ * the API omits the field entirely, so `ev.confidence` is `undefined` at
+ * runtime even though the type says `number | null`. Treat anything that
+ * isn't a finite number as "not available" rather than rendering NaN%. */
+function confidenceLabel(c: number | null | undefined): string {
+  return typeof c === 'number' && Number.isFinite(c) ? `${Math.round(c * 100)}%` : '—';
+}
+
 function LoadingShell() {
   return <div className="max-w-6xl mx-auto px-6 py-12 text-sm text-gray-500">Loading...</div>;
 }
@@ -575,7 +583,7 @@ function GmailEventsQueue() {
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-medium text-gray-900 line-clamp-2">{ev.title}</p>
                     <span className={`shrink-0 inline-block px-2 py-0.5 rounded-md text-xs font-medium ${confidenceStyle(ev.confidence ?? 0)}`}>
-                      {ev.confidence === null ? '—' : `${Math.round(ev.confidence * 100)}%`}
+                      {confidenceLabel(ev.confidence)}
                     </span>
                   </div>
                   {ev.description && (
@@ -710,7 +718,7 @@ function GmailEventsQueue() {
                     <span
                       className={`inline-block px-2 py-0.5 rounded-md text-xs font-medium ${confidenceStyle(ev.confidence ?? 0)}`}
                     >
-                      {ev.confidence === null ? '—' : `${Math.round(ev.confidence * 100)}%`}
+                      {confidenceLabel(ev.confidence)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
