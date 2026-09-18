@@ -52,7 +52,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Get Paid Dashboard', href: '/admin/getpaid/accountsreceivables', description: 'Aging and outstanding balances' },
       { label: 'Sales Transactions', href: '/admin/getpaid/salestransactions', description: 'All customer sales activity' },
       { label: 'Invoices', href: '/admin/getpaid/invoices', description: 'Billable charges and payment status' },
-      { label: 'Payment Links', href: '/admin/getpaid/paymentlinks', description: 'Create and manage payment links' },
       { label: 'Statements', href: '/admin/getpaid/statements', description: 'Partner balances, statements and payment links' },
       { label: 'Recurring Invoices', href: '/admin/getpaid/reoccuringpayments', description: 'Recurring invoice schedules' },
       { label: 'Stripe Payouts', href: '/admin/getpaid/stripepayouts', description: 'Paid and deposited Stripe activity' },

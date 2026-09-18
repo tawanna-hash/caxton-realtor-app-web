@@ -167,9 +167,11 @@ function PaymentLinkCard({
 export function PaymentLinksClient({
   initialInvoices,
   advertisers,
+  embedded = false,
 }: {
   initialInvoices: InvoiceWithAdvertiser[];
   advertisers: AdvertiserOption[];
+  embedded?: boolean;
 }) {
   const [invoices, setInvoices] = useState(initialInvoices);
   const [creating, setCreating] = useState(false);
@@ -271,17 +273,8 @@ export function PaymentLinksClient({
     }
   };
 
-  return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
-            Admin · Get Paid
-          </div>
-          <PageTitle size="md">Payment links</PageTitle>
-        </div>
-      </header>
-
+  const content = (
+    <>
       <section aria-label="Payment link summary" className="bg-white">
         <div className="grid grid-cols-2 gap-y-3 md:grid-cols-4">
           <SummaryMetric amount={summary.totalAmount} count={links.length} label="created links" />
@@ -540,6 +533,22 @@ export function PaymentLinksClient({
           onError={setError}
         />
       )}
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
+            Admin · Get Paid
+          </div>
+          <PageTitle size="md">Payment links</PageTitle>
+        </div>
+      </header>
+      {content}
     </div>
   );
 }

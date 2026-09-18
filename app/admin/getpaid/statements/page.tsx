@@ -8,6 +8,8 @@
 import { redirect } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import type { InvoiceWithAdvertiser } from '@/lib/invoices';
+import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 import StatementsClient, { type StatementPartnerRow } from './StatementsClient';
 
 export const dynamic = 'force-dynamic';
@@ -63,5 +65,16 @@ export default async function StatementsIndexPage() {
     ORDER BY overdue_cents DESC, outstanding_cents DESC
   `) as unknown as StatementPartnerRow[];
 
-  return <StatementsClient partners={partners} />;
+  const [paymentLinkInvoices, advertisers] = await Promise.all([
+    sql`SELECT i.*, adv.name AS advertiser_name, false AS is_overdue FROM invoices i LEFT JOIN advertisers adv ON adv.id = i.advertiser_id ORDER BY i.created_at DESC`.catch(() => [] as unknown[]),
+    sql`SELECT id, name, publication, contact_email, billing_email FROM advertisers ORDER BY name ASC`.catch(() => [] as unknown[]),
+  ]);
+
+  return (
+    <StatementsClient
+      partners={partners}
+      paymentLinkInvoices={paymentLinkInvoices as unknown as InvoiceWithAdvertiser[]}
+      advertisers={advertisers as unknown as AdvertiserOption[]}
+    />
+  );
 }

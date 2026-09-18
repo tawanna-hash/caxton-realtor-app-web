@@ -2,9 +2,12 @@
 
 import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowDown, ArrowUp, ArrowUpDown, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, Search } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 import { formatCents } from '@/lib/invoices';
+import type { InvoiceWithAdvertiser } from '@/lib/invoices';
+import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
+import { PaymentLinksClient } from '../_components/PaymentLinksClient';
 import StatementEmailButton from './StatementEmailButton';
 
 export type StatementPartnerRow = {
@@ -132,7 +135,15 @@ function StatementCard({
   );
 }
 
-export default function StatementsClient({ partners }: { partners: StatementPartnerRow[] }) {
+export default function StatementsClient({
+  partners,
+  paymentLinkInvoices,
+  advertisers,
+}: {
+  partners: StatementPartnerRow[];
+  paymentLinkInvoices: InvoiceWithAdvertiser[];
+  advertisers: AdvertiserOption[];
+}) {
   const [rows, setRows] = useState(partners);
   const [query, setQuery] = useState('');
   const [balance, setBalance] = useState<'all' | 'overdue' | 'current'>('all');
@@ -142,6 +153,7 @@ export default function StatementsClient({ partners }: { partners: StatementPart
   const [history, setHistory] = useState<StatementHistory[]>([]);
   const [historyError, setHistoryError] = useState('');
   const historyRequest = useRef(0);
+  const [paymentLinksOpen, setPaymentLinksOpen] = useState(false);
 
   const openHistory = async (partner: StatementPartnerRow) => {
     const requestId = ++historyRequest.current;
@@ -378,6 +390,24 @@ export default function StatementsClient({ partners }: { partners: StatementPart
           {!historyError && history.length === 0 && <p className="mt-3 text-sm text-gray-500">No sent statements recorded.</p>}
         </section>
       )}
+
+      <section aria-label="Payment links" className="space-y-3 border-t border-gray-200 pt-5">
+        <button
+          type="button"
+          onClick={() => setPaymentLinksOpen((open) => !open)}
+          aria-expanded={paymentLinksOpen}
+          className="flex w-full items-center justify-between gap-3 text-left"
+        >
+          <span>
+            <span className="text-sm font-semibold text-gray-900">Payment links</span>
+            <span className="ml-2 text-xs text-gray-500">Create and manage invoice payment links</span>
+          </span>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${paymentLinksOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+        </button>
+        {paymentLinksOpen && (
+          <PaymentLinksClient initialInvoices={paymentLinkInvoices} advertisers={advertisers} embedded />
+        )}
+      </section>
     </div>
   );
 }
