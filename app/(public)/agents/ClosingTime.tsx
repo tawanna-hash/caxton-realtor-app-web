@@ -1772,10 +1772,10 @@ export default function ClosingTime({
       <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
         <div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Private agent workspace</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Closing Time Workspace</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">ClosingTime</h2>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-              Turn contract terms into a working desk with live timing, task and document checks, and Pressing Deadlines across your active transactions.
+              Closing Time is a workspace for tracking contract deadlines, running agent calculators for net seller proceeds and closing costs, and connecting with local service partners when a client needs help.
             </p>
           </div>
         </div>
