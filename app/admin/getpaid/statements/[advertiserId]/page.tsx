@@ -105,20 +105,12 @@ export default async function StatementPage({
   await ensureSchema();
   const sql = getSql();
 
-  const advertiserRows = (await sql`
+  const [advertiserRows, invoices, sendHistory, billingRows] = (await Promise.all([
+    sql`
     SELECT id, name, billing_email, contact_email, portal_email
     FROM advertisers WHERE id = ${advertiserIdNum}
-  `) as unknown as Array<{
-    id: number;
-    name: string;
-    billing_email: string | null;
-    contact_email: string | null;
-    portal_email: string | null;
-  }>;
-  const advertiser = advertiserRows[0];
-  if (!advertiser) notFound();
-
-  const invoices = (await sql`
+  `,
+    sql`
     SELECT i.id, i.number, i.status, i.total_cents, i.issued_at, i.due_date,
       i.bill_to_name, i.bill_to_email, i.bill_to_address, i.stripe_payment_link_url,
       COALESCE(pay.amount_paid_cents, 0)::int AS amount_paid_cents,
@@ -133,19 +125,15 @@ export default async function StatementPage({
       AND i.status NOT IN ('void', 'draft')
       AND GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, 0), 0) > 0
     ORDER BY i.issued_at ASC NULLS LAST, i.created_at ASC, i.id ASC
-  `) as unknown as StatementInvoiceRow[];
-
-  if (invoices.length === 0) notFound();
-
-  const sendHistory = (await sql`
+  `,
+    sql`
     SELECT id, recipient_email, sender_email, subject, sent_by, sent_at,
       invoice_count, outstanding_cents
     FROM statement_send_history
     WHERE advertiser_id = ${advertiserIdNum}
     ORDER BY sent_at DESC
-  `) as unknown as StatementHistoryRow[];
-
-  const billingRows = (await sql`
+  `,
+    sql`
     SELECT bill_to_name, bill_to_email, bill_to_address
     FROM invoices
     WHERE advertiser_id = ${advertiserIdNum}
@@ -156,7 +144,24 @@ export default async function StatementPage({
       )
     ORDER BY created_at DESC, id DESC
     LIMIT 1
-  `) as unknown as Array<Pick<StatementInvoiceRow, 'bill_to_name' | 'bill_to_email' | 'bill_to_address'>>;
+  `,
+  ])) as unknown as [
+    Array<{
+      id: number;
+      name: string;
+      billing_email: string | null;
+      contact_email: string | null;
+      portal_email: string | null;
+    }>,
+    StatementInvoiceRow[],
+    StatementHistoryRow[],
+    Array<Pick<StatementInvoiceRow, 'bill_to_name' | 'bill_to_email' | 'bill_to_address'>>,
+  ];
+  const advertiser = advertiserRows[0];
+  if (!advertiser) notFound();
+
+  if (invoices.length === 0) notFound();
+
   const billTo = billingRows[0] ?? invoices[0];
   const recipient =
     advertiser.billing_email?.trim() ||

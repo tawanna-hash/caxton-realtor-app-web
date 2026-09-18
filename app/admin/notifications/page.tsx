@@ -44,7 +44,8 @@ export default async function AdminNotificationsPage() {
   await ensureSchema();
   const sql = getSql();
 
-  const notifications = (await sql`
+  const [notifications, statsRows] = (await Promise.all([
+    sql`
     SELECT n.id, n.category, n.title, n.body, n.deep_link_url,
            n.target_audience, n.scheduled_for, n.sent_at, n.status,
            n.created_at,
@@ -52,14 +53,14 @@ export default async function AdminNotificationsPage() {
       FROM notifications n
      ORDER BY n.created_at DESC
      LIMIT 100
-  `) as unknown as Row[];
-
-  const statsRows = (await sql`
+  `,
+    sql`
     SELECT COALESCE(market, 'unspecified') AS bucket, COUNT(*)::int AS n
       FROM push_subscriptions
      WHERE revoked_at IS NULL
      GROUP BY bucket
-  `) as unknown as Array<{ bucket: string; n: number }>;
+  `,
+  ])) as unknown as [Row[], Array<{ bucket: string; n: number }>];
 
   const stats: SubStats = {
     total: 0,
