@@ -288,6 +288,9 @@ function Pagination({
             value={pageSize}
             onChange={(event) => onPageSizeChange(Number(event.target.value))}
           >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={15}>15</option>
             <option value={25}>25</option>
             <option value={50}>50</option>
             <option value={100}>100</option>
@@ -599,10 +602,10 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   }, [reloadAll]);
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-3 px-5 py-5 lg:px-8">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Get Paid</div>
+          <div className="mb-0.5 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Get Paid</div>
           <PageTitle size="md">Get Paid Dashboard</PageTitle>
         </div>
         <a href="/admin/invoices" className="text-sm font-medium text-orange-700 hover:underline">All invoices</a>
@@ -613,22 +616,6 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
           {error || notice}
         </div>
       )}
-
-      <section aria-label="Quick Actions" className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <div className="text-sm font-semibold text-gray-800">Quick Actions</div>
-        <div className="flex flex-wrap items-center gap-2">
-          {QUICK_ACTIONS.map((action) => (
-            <button
-              type="button"
-              key={action.label}
-              onClick={() => openQuickAction(action.action)}
-              className="whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      </section>
 
       <section aria-label="Receivables summary" className="grid gap-8 bg-white lg:grid-cols-[1.35fr_1fr]">
         <div>
@@ -697,11 +684,21 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
           <span className="relative block">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
             <input
-              className={`${CONTROL} w-full pl-9`}
+              className={`${CONTROL} w-full pl-9 ${query ? 'pr-9' : ''}`}
               placeholder="Invoice, partner, email, or schedule"
               value={query}
               onChange={(event) => { setQuery(event.target.value); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }}
             />
+            {query && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => { setQuery(''); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }}
+                className="absolute right-2 top-1.5 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </span>
         </label>
         <label className="space-y-1">
