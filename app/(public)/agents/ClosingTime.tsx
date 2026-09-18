@@ -287,7 +287,7 @@ function ReadinessChecklist({
           ) : null}
           <label className="inline-flex min-h-[32px] cursor-pointer items-center gap-1.5 rounded-md border border-slate-300 px-2.5 text-xs font-bold text-slate-600 hover:border-[#7059A8] hover:text-[#301D5D]">
             {isUploading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <FileUp className="h-3.5 w-3.5" aria-hidden="true" />}
-            {isUploading ? 'Uploading…' : hasFile ? 'Replace file' : 'Attach file'}
+            {isUploading ? 'Uploading…' : hasFile ? 'Replace File' : 'Attach File'}
             <input
               type="file"
               className="hidden"
@@ -1879,7 +1879,7 @@ export default function ClosingTime({
                         onClick={() => removeDeal(activeDeal.id)}
                         className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#9A3D2B] px-4 text-sm font-bold text-white"
                       >
-                        Confirm remove
+                        Confirm Remove
                       </button>
                     ) : (
                       <button
@@ -2105,9 +2105,9 @@ export default function ClosingTime({
                             )}
                             <span className="truncate">
                               {extractionState === 'extracting'
-                                ? 'Reading contract…'
+                                ? 'Reading Contract…'
                                 : isContractDropActive
-                                  ? 'Drop to upload'
+                                  ? 'Drop to Upload'
                                   : 'Upload & Auto-fill Contract'}
                             </span>
                           </button>
@@ -2139,7 +2139,7 @@ export default function ClosingTime({
                               className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
                             >
                               <FileUp className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
-                              Choose PDF or image
+                              Choose PDF or Image
                             </button>
                             <button
                               type="button"
@@ -2151,7 +2151,7 @@ export default function ClosingTime({
                               className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
                             >
                               <Camera className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
-                              Take a photo
+                              Take a Photo
                             </button>
                             <p className="border-t border-slate-100 px-3 pt-2.5 text-xs leading-5 text-slate-500">
                               PDF, PNG, JPG, or WEBP · 15 MB maximum. Your file is read securely, then discarded.
@@ -2880,7 +2880,7 @@ export default function ClosingTime({
                   }}
                   className="inline-flex h-[42px] items-center justify-center rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-violet-50"
                 >
-                  Device camera
+                  Device Camera
                 </button>
                 <button
                   type="button"
@@ -2889,7 +2889,7 @@ export default function ClosingTime({
                   className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   <Camera className="rnn-inline-icon" aria-hidden="true" />
-                  Take picture
+                  Take Picture
                 </button>
               </div>
             </div>

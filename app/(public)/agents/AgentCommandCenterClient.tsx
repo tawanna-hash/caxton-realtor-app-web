@@ -245,7 +245,7 @@ export default function AgentCommandCenterClient({
               className="mt-4 inline-flex h-[44px] w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] sm:mt-0 sm:w-auto"
             >
               <Calculator className="rnn-inline-icon" aria-hidden="true" />
-              {quickCheckOpen ? 'Hide quick check' : 'Open quick date check'}
+              {quickCheckOpen ? 'Hide Quick Check' : 'Open Quick Date Check'}
             </button>
           </div>
 
