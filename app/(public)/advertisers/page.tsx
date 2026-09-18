@@ -26,7 +26,12 @@ export const metadata = {
     'Our advertising partners across RealtyLine Austin and Newsline San Antonio.',
 };
 
-export const dynamic = 'force-dynamic';
+// Advertiser directory: no cookie/session reads (publication filtering
+// happens client-side against localStorage, see file header), no
+// searchParams, no mutations — just an admin-curated list. Advertisers are
+// added/removed a few times a week, not hourly, so 15 min keeps changes
+// visible promptly.
+export const revalidate = 900; // 15 minutes
 
 type AdvertiserRow = {
   id: number;

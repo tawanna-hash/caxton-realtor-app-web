@@ -3,7 +3,12 @@ import { MagazineGA } from '@/components/MagazineGA';
 import { getMeasurementId } from '@/lib/publication-settings';
 
 export const metadata = { title: 'Issues — Realty News Now' };
-export const dynamic = 'force-dynamic';
+// Magazine issues are published a few times a week by admins; the index
+// itself does no per-visitor personalization (GA tags are injected for
+// both publications unconditionally; MagazineClient reads the active pub
+// client-side and fetches via API routes). 15 min keeps new issues visible
+// promptly without hitting the DB on every request.
+export const revalidate = 900; // 15 minutes
 
 export default async function MagazinePage() {
   // Inject both publications' GA4 tags on the magazine index since the

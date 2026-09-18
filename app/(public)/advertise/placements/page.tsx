@@ -21,7 +21,10 @@ import TrackPageView from '@/components/analytics/TrackPageView';
 import { APP_AD_SLOTS, MARKET_MULTIPLIERS, weeklyRateForMarkets, type AppAdSlot } from '@/lib/media-kit';
 import { PlacementWireframe, hasWireframe } from '@/components/ads/PlacementWireframe';
 
-export const dynamic = 'force-dynamic';
+// Purely static: renders from the in-repo APP_AD_SLOTS catalog, no DB
+// reads, no cookies/session, no searchParams. Content only changes when a
+// developer edits lib/media-kit.ts, so this can cache for a long time.
+export const revalidate = 86400; // 1 day
 
 export const metadata = {
   title: 'Where ads appear — Realty News Now',

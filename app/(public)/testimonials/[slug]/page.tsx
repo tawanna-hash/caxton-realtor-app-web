@@ -2,7 +2,12 @@ import { notFound } from 'next/navigation';
 import { AudioLines, ExternalLink, Quote, Star, Video } from 'lucide-react';
 import { getPublicShowcase } from '@/lib/server/testimonials-store';
 
-export const dynamic = 'force-dynamic';
+// Public showcase keyed by route param (not searchParams), no
+// cookie/session reads, read-only queries (plus memoized ensureSchema
+// bootstraps). Realtors edit their testimonials occasionally, not
+// continuously, so a shorter admin-update-style window keeps changes
+// visible reasonably fast.
+export const revalidate = 600; // 10 minutes
 
 type Ctx = { params: Promise<{ slug: string }> };
 
