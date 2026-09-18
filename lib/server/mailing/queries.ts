@@ -45,9 +45,9 @@ export async function listMailingContacts(opts: {
            AND stage = 'mailing'
            AND (
              ${filter} = 'all'
-             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
              OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                        AND (email_status IS NULL OR email_status <> 'Valid'))
+                                        AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
            )
            AND (
              ${tagFilter}::text IS NULL
@@ -86,9 +86,9 @@ export async function listMailingContacts(opts: {
            AND stage = 'mailing'
            AND (
              ${filter} = 'all'
-             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
              OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                        AND (email_status IS NULL OR email_status <> 'Valid'))
+                                        AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
            )
            AND (
              ${tagFilter}::text IS NULL
@@ -120,9 +120,9 @@ export async function listMailingContacts(opts: {
            AND stage = 'mailing'
            AND (
              ${filter} = 'all'
-             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
              OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                        AND (email_status IS NULL OR email_status <> 'Valid'))
+                                        AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
            )
            AND (
              ${tagFilter}::text IS NULL
@@ -144,9 +144,9 @@ export async function listMailingContacts(opts: {
            AND stage = 'mailing'
            AND (
              ${filter} = 'all'
-             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
              OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                        AND (email_status IS NULL OR email_status <> 'Valid'))
+                                        AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
            )
            AND (
              ${tagFilter}::text IS NULL
@@ -219,11 +219,11 @@ export async function segmentStats(segment: MailingSegment): Promise<SegmentStat
         SELECT
           COUNT(*)::int AS total,
           COUNT(*) FILTER (
-            WHERE addr_status = 'Valid' OR email_status = 'Valid'
+            WHERE addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'
           )::int AS verified,
           COUNT(*) FILTER (
             WHERE (addr_status IS NULL OR addr_status <> 'Valid')
-              AND (email_status IS NULL OR email_status <> 'Valid')
+              AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid')
           )::int AS pending,
           COUNT(*) FILTER (
             WHERE distance_sabor_mi IS NOT NULL
@@ -242,11 +242,11 @@ export async function segmentStats(segment: MailingSegment): Promise<SegmentStat
         SELECT
           COUNT(*)::int AS total,
           COUNT(*) FILTER (
-            WHERE addr_status = 'Valid' OR email_status = 'Valid'
+            WHERE addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'
           )::int AS verified,
           COUNT(*) FILTER (
             WHERE (addr_status IS NULL OR addr_status <> 'Valid')
-              AND (email_status IS NULL OR email_status <> 'Valid')
+              AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid')
           )::int AS pending,
           COUNT(*) FILTER (
             WHERE (distance_abor_mi       IS NOT NULL AND distance_abor_mi       <= ${NEAR_MI})
@@ -295,11 +295,11 @@ export async function countHolding(source?: string): Promise<{
         SELECT
           COUNT(*)::int AS total,
           COUNT(*) FILTER (
-            WHERE addr_status = 'Valid' OR email_status = 'Valid'
+            WHERE addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'
           )::int AS verified,
           COUNT(*) FILTER (
             WHERE (addr_status IS NULL OR addr_status <> 'Valid')
-              AND (email_status IS NULL OR email_status <> 'Valid')
+              AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid')
           )::int AS pending,
           COUNT(*) FILTER (
             WHERE distance_sabor_mi IS NOT NULL
@@ -319,11 +319,11 @@ export async function countHolding(source?: string): Promise<{
         SELECT
           COUNT(*)::int AS total,
           COUNT(*) FILTER (
-            WHERE addr_status = 'Valid' OR email_status = 'Valid'
+            WHERE addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'
           )::int AS verified,
           COUNT(*) FILTER (
             WHERE (addr_status IS NULL OR addr_status <> 'Valid')
-              AND (email_status IS NULL OR email_status <> 'Valid')
+              AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid')
           )::int AS pending,
           COUNT(*) FILTER (
             WHERE (distance_abor_mi       IS NOT NULL AND distance_abor_mi       <= ${NEAR_MI})
