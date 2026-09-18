@@ -307,7 +307,7 @@ export default function AgentCommandCenterClient({
               <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:mt-3 sm:text-4xl">Client-Ready Tools, One Click Away</h2>
             </div>
             <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
-              See every agent tool
+              See Every Agent Tool
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
@@ -328,7 +328,7 @@ export default function AgentCommandCenterClient({
                   <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em]">{tool.title}</h3>
                   <p className="mt-3 text-sm leading-6 opacity-75">{tool.description}</p>
                   <span className="mt-5 inline-flex items-center gap-1 text-sm font-bold">
-                    Open tool <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                    Open Tool <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
                   </span>
                 </Link>
               );
@@ -361,7 +361,7 @@ export default function AgentCommandCenterClient({
                   href="/partners"
                   className="inline-flex h-[42px] shrink-0 items-center justify-center gap-1 rounded-md border border-[#301D5D] px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white"
                 >
-                  All partners <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  All Partners <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </div>
               <div className="mt-5 flex flex-wrap gap-2">

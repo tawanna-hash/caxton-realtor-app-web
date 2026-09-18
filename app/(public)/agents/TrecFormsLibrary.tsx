@@ -124,7 +124,7 @@ export default function TrecFormsLibrary({ versions }: { versions: TrecFormVersi
                   className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-3 text-sm font-bold text-white transition hover:bg-[#42277C]"
                 >
                   <PencilLine className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  Open &amp; fill
+                  Open &amp; Fill
                 </a>
                 <a
                   href={form.pdfUrl}

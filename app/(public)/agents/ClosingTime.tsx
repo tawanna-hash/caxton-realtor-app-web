@@ -1743,8 +1743,8 @@ export default function ClosingTime({
               </div>
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Download calendar files for the active deal or every active transaction. Each export includes calculated contract dates, closing dates, open reminders, and open tasks.</p>
               <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
-                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"><Download className="rnn-inline-icon" aria-hidden="true" />Export this deal</button>
-                <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Export active deals</button>
+                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"><Download className="rnn-inline-icon" aria-hidden="true" />Export This Deal</button>
+                <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Export Active Deals</button>
               </div>
             </div>
             <div className="order-3 h-full border border-slate-200 bg-white p-4 sm:p-6">
@@ -1813,10 +1813,10 @@ export default function ClosingTime({
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Closing Time
               </Link>
               <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
-                <Save className="rnn-inline-icon" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for later'}
+                <Save className="rnn-inline-icon" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for Later'}
               </button>
               <button type="button" onClick={() => setWorkspacePage(2)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
-                Open worksheet <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                Open Worksheet <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           )}
@@ -1911,7 +1911,7 @@ export default function ClosingTime({
                 <h4 className="mt-4 text-lg font-semibold text-slate-950">Build Your First Deal Workspace</h4>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">Create a private workspace to turn the contract terms in front of you into a workable list of actions.</p>
                 <button type="button" onClick={createDeal} className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">
-                  Create transaction
+                  Create Transaction
                   <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
@@ -1928,7 +1928,7 @@ export default function ClosingTime({
                           </p>
                         </div>
                         <div className="flex shrink-0 flex-wrap gap-2">
-                          <button type="button" onClick={applyExtraction} className="inline-flex min-h-[40px] items-center justify-center rounded-md bg-emerald-700 px-4 text-sm font-bold text-white hover:bg-emerald-800">Apply to this deal</button>
+                          <button type="button" onClick={applyExtraction} className="inline-flex min-h-[40px] items-center justify-center rounded-md bg-emerald-700 px-4 text-sm font-bold text-white hover:bg-emerald-800">Apply to This Deal</button>
                           <button type="button" onClick={() => { clearContractPreview(); setExtractionDraft(null); setExtractionState('idle'); }} className="inline-flex min-h-[40px] items-center justify-center rounded-md border border-emerald-300 bg-white px-4 text-sm font-bold text-emerald-800 hover:bg-emerald-100">Discard</button>
                         </div>
                       </div>
@@ -2300,7 +2300,7 @@ export default function ClosingTime({
                       <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-white shadow-sm">
                         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2">
                           <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">Official TREC {currentTrecFormVersion.formNumber} · Page {currentTrecPage}</p>
-                          <a href={currentTrecFormVersion.pdfUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5B438C] underline underline-offset-2">Open full form</a>
+                          <a href={currentTrecFormVersion.pdfUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5B438C] underline underline-offset-2">Open Full Form</a>
                         </div>
                         <TrecPdfPagePreview
                           pdfUrl={currentTrecFormVersion.pdfUrl}
@@ -2641,8 +2641,8 @@ export default function ClosingTime({
                       <button
                         type="button"
                         onClick={() => exportBackupRecord(statusDeal)}
-                        title="Download backup record"
-                        aria-label="Download backup record"
+                        title="Download Backup Record"
+                        aria-label="Download Backup Record"
                         className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#7059A8] text-[#301D5D] hover:bg-[#F8F5FF]"
                       >
                         <Download className="h-4 w-4" aria-hidden="true" />
@@ -2653,8 +2653,8 @@ export default function ClosingTime({
                         type="button"
                         onClick={() => void exportDealFolder(statusDeal)}
                         disabled={dealFolderBusy}
-                        title="Download folder"
-                        aria-label="Download folder"
+                        title="Download Folder"
+                        aria-label="Download Folder"
                         className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#7059A8] text-[#301D5D] hover:bg-[#F8F5FF] disabled:opacity-50"
                       >
                         {dealFolderBusy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FolderDown className="h-4 w-4" aria-hidden="true" />}
@@ -2752,7 +2752,7 @@ export default function ClosingTime({
                 <select value={reminderDeadlineId} onChange={(event) => setReminderDeadlineId(event.target.value)} aria-label="Reminder deadline" className="min-h-[42px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm"><option value="">Custom reminder deadline</option>{activeDeadlines.map((deadline) => <option key={deadline.id} value={deadline.id}>{deadline.label}</option>)}</select>
                 <input type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} aria-label="Custom reminder date" className="min-h-[42px] min-w-0 w-full border border-slate-300 px-2 text-sm" />
                 <input value={reminderNote} onChange={(event) => setReminderNote(event.target.value)} aria-label="Custom reminder note" className="min-h-[42px] min-w-0 w-full border border-slate-300 px-3 text-sm" placeholder="Reminder note (optional)" />
-                <button type="button" onClick={addCustomReminder} disabled={!reminderDeadlineId || !reminderDate} className="inline-flex min-h-[42px] items-center justify-center rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-40">Add reminder</button>
+                <button type="button" onClick={addCustomReminder} disabled={!reminderDeadlineId || !reminderDate} className="inline-flex min-h-[42px] items-center justify-center rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-40">Add Reminder</button>
               </div>
               <div className="mt-5 space-y-2">
                 {!activeDeal.tasks.length && !activeDeal.reminders.length ? <p className="border border-dashed border-slate-300 bg-[#FCFBF9] p-4 text-sm text-slate-600">Use deadline presets (7d, 3d, 1d, due) in the review step or add a custom action here.</p> : <>
@@ -2789,16 +2789,16 @@ export default function ClosingTime({
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => exportAuditPdf(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download PDF</button>
                 {isDealLocked(activeDeal) && (
-                  <button type="button" onClick={() => exportBackupRecord(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Download className="h-4 w-4" aria-hidden="true" />Download backup record</button>
+                  <button type="button" onClick={() => exportBackupRecord(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Download className="h-4 w-4" aria-hidden="true" />Download Backup Record</button>
                 )}
                 {isDealLocked(activeDeal) && (
                   <button type="button" onClick={() => void exportDealFolder(activeDeal)} disabled={dealFolderBusy} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
                     {dealFolderBusy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FolderDown className="h-4 w-4" aria-hidden="true" />}
-                    {dealFolderBusy ? 'Building folder\u2026' : 'Download folder'}
+                    {dealFolderBusy ? 'Building Folder\u2026' : 'Download Folder'}
                   </button>
                 )}
                 {!isDealLocked(activeDeal) && (
-                  <button type="button" onClick={lockDealRecord} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#9A3D2B] px-4 text-sm font-bold text-white"><Lock className="h-4 w-4" aria-hidden="true" />Lock record</button>
+                  <button type="button" onClick={lockDealRecord} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#9A3D2B] px-4 text-sm font-bold text-white"><Lock className="h-4 w-4" aria-hidden="true" />Lock Record</button>
                 )}
               </div>
               {dealFolderError ? (

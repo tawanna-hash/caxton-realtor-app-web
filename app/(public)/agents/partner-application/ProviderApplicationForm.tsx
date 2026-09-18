@@ -149,7 +149,7 @@ export default function ProviderApplicationForm() {
             <label className="mt-6 flex gap-3 text-sm leading-6 text-slate-600"><input required type="checkbox" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} className="mt-1 h-4 w-4 accent-[#301D5D]" /><span>I confirm the information is accurate and authorize Realty News Now to contact me about the referral network and featured-partner options.</span></label>
             {error && <p role="alert" className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
             <button disabled={status === 'submitting'} type="submit" className="mt-7 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-[#301D5D] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#513A85] disabled:cursor-not-allowed disabled:opacity-60">
-              {status === 'submitting' ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Submitting application</> : <>Submit for review <ArrowRight className="h-4 w-4" aria-hidden="true" /></>}
+              {status === 'submitting' ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Submitting Application</> : <>Submit for Review <ArrowRight className="h-4 w-4" aria-hidden="true" /></>}
             </button>
           </form>
         </div>
