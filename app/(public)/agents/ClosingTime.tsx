@@ -1788,26 +1788,17 @@ export default function ClosingTime({
           </p>
         </div>
 
+        {workspacePage === 1 && (
         <nav aria-label="Closing Time pages" className="mt-5 border border-slate-200 bg-white p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {workspacePage === 1 && <div>
+          <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">
               Page 1 of 2
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-900">
               Overview, Pressing Deadlines, calendar and alerts
             </p>
-          </div>}
-          {workspacePage === 2 ? (
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">
-                Page 2 of 2
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
-                Workspace, Transaction Forms, Reminders & Tasks
-              </p>
-            </div>
-          ) : (
+          </div>
             <div className="flex flex-wrap gap-2">
               <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Closing Time
@@ -1819,9 +1810,9 @@ export default function ClosingTime({
                 Open Worksheet <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
-          )}
           </div>
         </nav>
+        )}
 
         {workspacePage === 1 && (
           <>
