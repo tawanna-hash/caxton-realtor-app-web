@@ -174,12 +174,12 @@ function emailHtml(deal: AgentDeal, deadline: DealDeadline, offset: number): str
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
   return `
     <div style="font-family:Arial,sans-serif;color:#1e293b;line-height:1.55;max-width:640px;margin:auto">
-      <p style="margin:0 0 8px;color:#7059A8;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">ClosingTime</p>
+      <p style="margin:0 0 8px;color:#7059A8;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Closing Time</p>
       <h1 style="margin:0 0 16px;font-size:24px;color:#301D5D">${deadlineLabel} ${timing}</h1>
       <p style="margin:0 0 8px"><strong>Transaction:</strong> ${label}</p>
       <p style="margin:0 0 20px"><strong>Deadline date:</strong> ${escapeHtml(deadline.date)}</p>
       <p style="margin:0 0 24px">Review the signed contract, delivery requirements, and your broker&apos;s process before acting.</p>
-      <a href="${siteUrl}/agents#agent-desk" style="display:inline-block;background:#301D5D;color:#ffffff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700">Open ClosingTime</a>
+      <a href="${siteUrl}/agents#agent-desk" style="display:inline-block;background:#301D5D;color:#ffffff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700">Open Closing Time</a>
     </div>
   `;
 }

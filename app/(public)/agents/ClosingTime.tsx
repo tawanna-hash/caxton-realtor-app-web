@@ -832,7 +832,7 @@ async function downloadAuditPdf(deal: AgentDeal, selectedVersions: TrecFormVersi
 
 function calendarEventsForDeal(deal: AgentDeal): CalendarEvent[] {
   const transaction = deal.propertyAddress || deal.title;
-  const description = `ClosingTime deadline for ${transaction}. Verify against the signed contract and your broker's process.`;
+  const description = `Closing Time deadline for ${transaction}. Verify against the signed contract and your broker's process.`;
   const deadlineEvents = dealDeadlines(deal).map((deadline) => ({
     id: `deadline-${deadline.id}`,
     date: deadline.date,
@@ -871,7 +871,7 @@ function downloadCalendar(events: CalendarEvent[], filename: string): void {
   const content = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Realty News Now//ClosingTime//EN',
+    'PRODID:-//Realty News Now//Closing Time//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     ...events.flatMap((event) => [
@@ -1759,7 +1759,7 @@ export default function ClosingTime({
                   {([[7, '7 days before'], [3, '3 days before'], [1, '1 day before'], [0, 'Due today']] as const).map(([offset, label]) => <label key={offset} className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600"><input type="checkbox" checked={notificationPreferences.reminderOffsets.includes(offset)} disabled={notificationPreferences.reminderOffsets.length === 1 && notificationPreferences.reminderOffsets[0] === offset} onChange={() => toggleReminderOffset(offset)} className="h-3.5 w-3.5 accent-[#301D5D]" />{label}</label>)}
                 </div>
               </div>
-              <p className="mt-4 text-xs leading-5 text-slate-500">Alerts are opt-in and send only for active transactions. Browser push requires permission on each device. Check the signed contract and your broker&apos;s process before acting.</p>
+              <p className="mt-4 text-xs leading-5 text-slate-500">Alerts are opt-in and send only for active transactions. Browser push requires permission on each device.</p>
             </div>
           </div>
         </div>
@@ -1773,7 +1773,7 @@ export default function ClosingTime({
         <div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Closing Time Workspace</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">ClosingTime</h2>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Closing Time</h2>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
               Closing Time is a workspace for tracking contract deadlines, running agent calculators for net seller proceeds and closing costs, and connecting with local service partners when a client needs help.
             </p>
@@ -1788,7 +1788,7 @@ export default function ClosingTime({
           </p>
         </div>
 
-        <nav aria-label="ClosingTime pages" className="mt-5 border border-slate-200 bg-white p-4">
+        <nav aria-label="Closing Time pages" className="mt-5 border border-slate-200 bg-white p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {workspacePage === 1 && <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">
@@ -1810,7 +1810,7 @@ export default function ClosingTime({
           ) : (
             <div className="flex flex-wrap gap-2">
               <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> ClosingTime
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Closing Time
               </Link>
               <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
                 <Save className="rnn-inline-icon" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for later'}

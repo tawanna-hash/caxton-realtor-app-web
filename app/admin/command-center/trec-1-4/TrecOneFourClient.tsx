@@ -834,7 +834,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
     <div className="pb-10">
       <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-gray-500">
         <Link href="/admin/dashboard" className="font-medium text-gray-600 hover:text-orange-700">
-          ClosingTime
+          Closing Time
         </Link>
         <span aria-hidden="true">/</span>
         <span>TREC 1–4 Deal Prep</span>
@@ -1456,7 +1456,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               </button>
             ) : (
               <Link href="/admin/dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-orange-600 px-5 text-sm font-semibold text-white hover:bg-orange-700">
-                Return to ClosingTime
+                Return to Closing Time
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             )}

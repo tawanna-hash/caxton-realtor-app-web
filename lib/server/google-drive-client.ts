@@ -25,7 +25,7 @@ type OAuth2Client = InstanceType<typeof google.auth.OAuth2>;
 
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const USERINFO_EMAIL_SCOPE = 'https://www.googleapis.com/auth/userinfo.email';
-const APP_FOLDER_NAME = 'Realty News Now ClosingTime';
+const APP_FOLDER_NAME = 'Realty News Now Closing Time';
 
 export interface ConnectedDrive {
   googleEmail: string;
@@ -274,7 +274,7 @@ async function getDriveClientForRealtor(realtorId: string): Promise<{
 }
 
 /**
- * Finds (or creates, on first use) the realtor's "Realty News Now ClosingTime"
+ * Finds (or creates, on first use) the realtor's "Realty News Now Closing Time"
  * folder in their connected Drive and persists its id for reuse.
  */
 async function ensureAppFolder(drive: drive_v3.Drive, row: TokenRow): Promise<string> {

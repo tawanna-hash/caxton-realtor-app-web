@@ -18,7 +18,7 @@ import AgentCommandCenterClient, {
 import ComingSoon from './ComingSoon';
 
 export const metadata: Metadata = {
-  title: 'ClosingTime | Realty News Now',
+  title: 'Closing Time | Realty News Now',
   description:
     'A practical real estate workspace for Texas contract timing, field tools, and local partner connections.',
 };
@@ -75,7 +75,7 @@ export default async function AgentCommandCenterPage() {
       })
       .map(({ publication: _publication, ...provider }) => provider);
   } catch (error) {
-    console.error('[ClosingTime] Partner directory unavailable', error);
+    console.error('[Closing Time] Partner directory unavailable', error);
   }
 
   return (

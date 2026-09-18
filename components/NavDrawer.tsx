@@ -116,7 +116,7 @@ const DRAWER_SECTIONS: NavSection[] = [
   {
     title: 'Platinum Tools',
     items: [
-      { label: 'ClosingTime', href: '/agents' },
+      { label: 'Closing Time', href: '/agents' },
       { label: 'Testimonials HUB', href: '/testimonial-hub' },
       { label: 'Custom Designer', href: '/custom-designer' },
       { label: 'REALTOR® Calculators & Quick References', href: '/resources' },
@@ -332,7 +332,7 @@ export default function NavDrawer({
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xl font-semibold leading-tight tracking-[-0.025em] text-[#301D5D]">ClosingTime</p>
+                  <p className="text-xl font-semibold leading-tight tracking-[-0.025em] text-[#301D5D]">Closing Time</p>
                   <p className="mt-2 text-sm font-semibold leading-5 text-[#5B438C]">Keep Ahead of Contract Deadlines</p>
                 </div>
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#301D5D] text-[#F4D06F] transition group-hover:translate-x-0.5">
