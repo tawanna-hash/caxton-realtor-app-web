@@ -718,7 +718,7 @@ export default function AdminAnalyticsPage() {
               onClick={resetFilters}
               className="text-xs text-gray-500 hover:text-orange-700 underline"
             >
-              Reset filters
+              Reset funnel filters
             </button>
           }
         >
