@@ -12,6 +12,7 @@ import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import type { RecurringScheduleWithAdvertiser } from '@/lib/recurring-invoices';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { getStripe } from '@/lib/stripe';
 import ArClient from './ArClient';
 
 export const dynamic = 'force-dynamic';
@@ -20,12 +21,43 @@ async function isAdmin(): Promise<boolean> {
   try { return (await getCurrentAdmin()) !== null; } catch { return false; }
 }
 
+// Real Stripe payouts (net amount by expected bank arrival date) for the
+// current calendar month, to date. Replaces the earlier approximation that
+// counted gross Stripe-paid invoice totals as a stand-in for "deposited".
+async function loadMonthToDateStripePayouts(): Promise<{ totalCents: number; count: number }> {
+  try {
+    const stripe = getStripe();
+    const now = new Date();
+    const monthStartSec = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1) / 1000);
+    let totalCents = 0;
+    let count = 0;
+    let startingAfter: string | undefined;
+    do {
+      const page = await stripe.payouts.list({
+        limit: 100,
+        arrival_date: { gte: monthStartSec },
+        ...(startingAfter ? { starting_after: startingAfter } : {}),
+      });
+      for (const payout of page.data) {
+        if (payout.status === 'canceled' || payout.status === 'failed') continue;
+        totalCents += payout.amount;
+        count += 1;
+      }
+      startingAfter = page.has_more ? page.data.at(-1)?.id : undefined;
+    } while (startingAfter);
+    return { totalCents, count };
+  } catch (error) {
+    console.error('[ar-dashboard] Could not load Stripe payouts for deposited total', error);
+    return { totalCents: 0, count: 0 };
+  }
+}
+
 export default async function ArDashboardPage() {
   if (!(await isAdmin())) redirect('/admin/login');
   await ensureSchema();
   const sql = getSql();
 
-  const [invoices, schedules, advertisers, agreements, monthlyIncome] = await Promise.all([
+  const [invoices, schedules, advertisers, agreements, monthlyIncome, monthToDatePayouts] = await Promise.all([
     sql`
       SELECT i.*, adv.name AS advertiser_name,
         COALESCE(pay.amount_paid_cents, CASE WHEN i.status = 'paid' THEN i.total_cents ELSE 0 END)::int AS amount_paid_cents,
@@ -78,6 +110,7 @@ export default async function ArDashboardPage() {
       GROUP BY day
       ORDER BY day ASC
     `.catch(() => [] as unknown[]),
+    loadMonthToDateStripePayouts(),
   ]);
 
   return (
@@ -87,6 +120,7 @@ export default async function ArDashboardPage() {
       advertisers={advertisers as unknown as Array<{ id: number; name: string; publication: string; contact_email: string | null; billing_email: string | null }>}
       agreements={agreements as unknown as AgreementWithAdvertiser[]}
       incomeByDay={monthlyIncome as unknown as Array<{ day: string; total_cents: number }>}
+      monthToDatePayouts={monthToDatePayouts}
     />
   );
 }

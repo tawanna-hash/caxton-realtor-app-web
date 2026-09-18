@@ -37,6 +37,7 @@ type Props = {
   advertisers: AdvertiserOption[];
   agreements: AgreementWithAdvertiser[];
   incomeByDay: Array<{ day: string; total_cents: number }>;
+  monthToDatePayouts: { totalCents: number; count: number };
 };
 
 const QUICK_ACTIONS = [
@@ -171,6 +172,40 @@ function UnpaidInvoiceCard({
         <button type="button" onClick={onSendLink} onKeyDown={(event) => event.stopPropagation()} disabled={isSendingLink} className="font-medium text-orange-700 hover:underline disabled:opacity-50">
           {isSendingLink ? 'Sending…' : 'Send payment link'}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function PaidInvoiceCard({ invoice, onOpen }: { invoice: InvoiceWithAdvertiser; onOpen: () => void }) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      className="cursor-pointer space-y-2.5 p-4 hover:bg-orange-50/70 focus:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-orange-400"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold text-orange-700 underline decoration-orange-200 underline-offset-2">{invoice.number ?? 'Draft'}</div>
+          <div className="truncate text-xs text-gray-600">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</div>
+        </div>
+        <div className="whitespace-nowrap text-right text-sm font-semibold text-gray-900">
+          {formatCents(invoice.total_cents)}
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <span className="text-gray-500">{invoice.paid_at ? shortDate(invoice.paid_at) : '—'}</span>
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+          Paid
+        </span>
       </div>
     </div>
   );
@@ -313,11 +348,12 @@ function daysPastDue(dueDate: string | null): number {
   return Math.round((today.getTime() - due) / 86400000);
 }
 
-export default function ArClient({ initialInvoices, initialSchedules, advertisers, agreements, incomeByDay }: Props) {
+export default function ArClient({ initialInvoices, initialSchedules, advertisers, agreements, incomeByDay, monthToDatePayouts }: Props) {
   const router = useRouter();
   const [invoices, setInvoices] = useState(initialInvoices);
   const [schedules, setSchedules] = useState(initialSchedules);
   const [bucketFilter, setBucketFilter] = useState<AgingBucket | 'all'>('all');
+  const [quickLook, setQuickLook] = useState<'all' | 'overdue' | 'paid'>('all');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [createSchedule, setCreateSchedule] = useState(false);
@@ -397,6 +433,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   const normalizedQuery = query.trim().toLowerCase();
   const filteredUnpaid = useMemo(() => unpaidInvoices.filter((invoice) => {
     if (bucketFilter !== 'all' && invoice.bucket !== bucketFilter) return false;
+    if (quickLook === 'overdue' && invoice.days <= 0) return false;
     if (!normalizedQuery) return true;
     return [
       invoice.number,
@@ -405,7 +442,23 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       invoice.bill_to_email,
       invoice.memo,
     ].filter(Boolean).join(' ').toLowerCase().includes(normalizedQuery);
-  }), [unpaidInvoices, bucketFilter, normalizedQuery]);
+  }), [unpaidInvoices, bucketFilter, quickLook, normalizedQuery]);
+  const paidInvoices = useMemo(
+    () => invoices
+      .filter((inv) => inv.status === 'paid')
+      .sort((a, b) => new Date(b.paid_at ?? 0).getTime() - new Date(a.paid_at ?? 0).getTime()),
+    [invoices],
+  );
+  const filteredPaid = useMemo(() => paidInvoices.filter((invoice) => {
+    if (!normalizedQuery) return true;
+    return [
+      invoice.number,
+      invoice.advertiser_name,
+      invoice.bill_to_name,
+      invoice.bill_to_email,
+      invoice.memo,
+    ].filter(Boolean).join(' ').toLowerCase().includes(normalizedQuery);
+  }), [paidInvoices, normalizedQuery]);
   const filteredAdvertisers = useMemo(
     () => normalizedQuery
       ? byAdvertiser.filter((advertiser) => advertiser.name.toLowerCase().includes(normalizedQuery))
@@ -432,7 +485,9 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       totalPages,
     };
   };
-  const invoicePagination = paginate(filteredUnpaid, invoicePage);
+  const unpaidPagination = paginate(filteredUnpaid, invoicePage);
+  const paidPagination = paginate(filteredPaid, invoicePage);
+  const invoicePagination = quickLook === 'paid' ? paidPagination : unpaidPagination;
   const partnerPagination = paginate(filteredAdvertisers, partnerPage);
   const schedulePagination = paginate(filteredSchedules, schedulePage);
 
@@ -442,7 +497,6 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
     const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     let notPaidTotal = 0, notPaidCount = 0;
     let paidTotal = 0, paidCount = 0;
-    let depositedTotal = 0, depositedCount = 0;
 
     for (const inv of invoices) {
       if (inv.status === 'void') continue;
@@ -454,17 +508,22 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
         if (paidAt && paidAt >= monthStart) {
           paidTotal += inv.total_cents ?? 0;
           paidCount += 1;
-          // No separate payouts/deposits table yet — approximate "deposited"
-          // as Stripe-settled paid invoices (card payment intent present).
-          if (inv.stripe_payment_intent_id) {
-            depositedTotal += inv.total_cents ?? 0;
-            depositedCount += 1;
-          }
         }
       }
     }
-    return { notPaidTotal, notPaidCount, paidTotal, paidCount, depositedTotal, depositedCount };
-  }, [invoices]);
+    // "Deposited" comes from actual Stripe payouts (net of fees, by bank
+    // arrival date) for the month to date — see loadMonthToDateStripePayouts
+    // in page.tsx. This reflects what has actually settled to the bank,
+    // not an approximation from invoice statuses.
+    return {
+      notPaidTotal,
+      notPaidCount,
+      paidTotal,
+      paidCount,
+      depositedTotal: monthToDatePayouts.totalCents,
+      depositedCount: monthToDatePayouts.count,
+    };
+  }, [invoices, monthToDatePayouts]);
 
   const selectedIncomeLabel = INCOME_PERIODS.find(([value]) => value === incomePeriod)?.[1] ?? 'This month';
   const selectedIncome = useMemo(() => {
@@ -702,10 +761,19 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
           </span>
         </label>
         <label className="space-y-1">
-          <span className="block text-xs text-gray-500">Aging</span>
-          <select className={`${CONTROL} min-w-40`} value={bucketFilter} onChange={(event) => { setBucketFilter(event.target.value as AgingBucket | 'all'); setInvoicePage(1); }}>
-            <option value="all">All aging buckets</option>
-            {BUCKET_ORDER.map((bucket) => <option key={bucket} value={bucket}>{AGING_BUCKET_LABELS[bucket]}</option>)}
+          <span className="block text-xs text-gray-500">Quick Look</span>
+          <select
+            className={`${CONTROL} min-w-40`}
+            value={quickLook}
+            onChange={(event) => {
+              setQuickLook(event.target.value as 'all' | 'overdue' | 'paid');
+              setBucketFilter('all');
+              setInvoicePage(1);
+            }}
+          >
+            <option value="all">All invoices</option>
+            <option value="overdue">Overdue</option>
+            <option value="paid">Paid</option>
           </select>
         </label>
         <div className="relative ml-auto flex">
@@ -729,82 +797,151 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-300 px-4 py-3">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">Unpaid Invoices</h2>
-            <p className="mt-0.5 text-xs text-gray-500">{bucketFilter === 'all' ? 'All open balances' : AGING_BUCKET_LABELS[bucketFilter]}</p>
+            <h2 className="text-sm font-semibold text-gray-900">{quickLook === 'paid' ? 'Paid Invoices' : 'Unpaid Invoices'}</h2>
+            <p className="mt-0.5 text-xs text-gray-500">
+              {quickLook === 'paid'
+                ? 'Recently paid, most recent first'
+                : quickLook === 'overdue'
+                  ? 'Past due open balances'
+                  : bucketFilter === 'all' ? 'All open balances' : AGING_BUCKET_LABELS[bucketFilter]}
+            </p>
           </div>
-          {bucketFilter !== 'all' && <button type="button" onClick={() => { setBucketFilter('all'); setInvoicePage(1); }} className="text-xs font-medium text-orange-700 hover:underline">Clear filter</button>}
+          {(quickLook !== 'all' || bucketFilter !== 'all') && (
+            <button type="button" onClick={() => { setQuickLook('all'); setBucketFilter('all'); setInvoicePage(1); }} className="text-xs font-medium text-orange-700 hover:underline">Clear filter</button>
+          )}
         </div>
-        <div className="divide-y divide-gray-200 md:hidden">
-          {invoicePagination.rows.map((invoice) => (
-            <UnpaidInvoiceCard
-              key={invoice.id}
-              invoice={invoice}
-              onOpen={() => setEditInvoice(invoice)}
-              onEdit={(event) => { event.stopPropagation(); setEditInvoice(invoice); }}
-              onRecordPayment={(event) => { event.stopPropagation(); openRecordPayment(invoice); }}
-              onSendLink={(event) => { event.stopPropagation(); void handleGetPaymentLink(invoice); }}
-              isSendingLink={busyId === invoice.id}
-            />
-          ))}
-        </div>
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full min-w-[1120px] table-fixed text-left text-xs">
-            <thead className="border-b border-gray-300 bg-white text-gray-700">
-              <tr>
-                <th className="w-32 px-4 py-3 font-semibold">Invoice</th>
-                <th className="w-64 px-3 py-3 font-semibold">Partner</th>
-                <th className="w-32 px-3 py-3 text-right font-semibold">Balance</th>
-                <th className="w-32 px-3 py-3 font-semibold">Due date</th>
-                <th className="w-40 px-3 py-3 font-semibold">Aging status</th>
-                <th className="w-80 px-4 py-3 text-right font-semibold"><span className="sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {invoicePagination.rows.map((invoice) => (
-                <tr
-                  key={invoice.id}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Open ${invoice.number ?? 'draft invoice'} for ${invoice.advertiser_name ?? invoice.bill_to_name ?? 'partner'}`}
-                  onClick={() => setEditInvoice(invoice)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      setEditInvoice(invoice);
-                    }
-                  }}
-                  className="cursor-pointer hover:bg-orange-50/70 focus:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-orange-400"
-                >
-                  <td className="truncate px-4 py-2.5 font-semibold text-orange-700 underline decoration-orange-200 underline-offset-2">{invoice.number ?? 'Draft'}</td>
-                  <td className="truncate px-3 py-2.5 text-gray-800">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
-                  <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(invoice.balance_cents ?? invoice.total_cents)}</td>
-                  <td className="whitespace-nowrap px-3 py-2.5 text-gray-600">{invoice.due_date ? shortDate(invoice.due_date) : 'No due date'}</td>
-                  <td className="px-3 py-2.5">
-                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
-                      {invoice.days > 0 ? <AlertCircle className="h-4 w-4 text-orange-600" aria-hidden="true" /> : <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />}
-                      {invoice.days > 0 ? `${invoice.days} days overdue` : 'Not due yet'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-right">
-                    <div className="flex items-center justify-end gap-3">
-                    <button type="button" onClick={(event) => { event.stopPropagation(); setEditInvoice(invoice); }} onKeyDown={(event) => event.stopPropagation()} className="font-medium text-gray-700 hover:text-orange-700 hover:underline">
-                      Edit
-                    </button>
-                    <button type="button" onClick={(event) => { event.stopPropagation(); openRecordPayment(invoice); }} onKeyDown={(event) => event.stopPropagation()} className="font-medium text-gray-700 hover:text-orange-700 hover:underline">
-                      Record payment
-                    </button>
-                    <button type="button" onClick={(event) => { event.stopPropagation(); void handleGetPaymentLink(invoice); }} onKeyDown={(event) => event.stopPropagation()} disabled={busyId === invoice.id} className="font-medium text-orange-700 hover:underline disabled:opacity-50">
-                      {busyId === invoice.id ? 'Sending…' : 'Send payment link'}
-                    </button>
-                    </div>
-                  </td>
-                </tr>
+        {quickLook === 'paid' ? (
+          <>
+            <div className="divide-y divide-gray-200 md:hidden">
+              {paidPagination.rows.map((invoice) => (
+                <PaidInvoiceCard key={invoice.id} invoice={invoice} onOpen={() => setEditInvoice(invoice)} />
               ))}
-            </tbody>
-          </table>
-        </div>
-        {invoicePagination.rows.length === 0 && <div className="p-10 text-center text-sm text-gray-500">No unpaid invoices match these filters.</div>}
-        <Pagination count={filteredUnpaid.length} page={invoicePagination.currentPage} pageSize={pageSize} totalPages={invoicePagination.totalPages} onPageChange={setInvoicePage} onPageSizeChange={(size) => { setPageSize(size); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }} />
+            </div>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[900px] table-fixed text-left text-xs">
+                <thead className="border-b border-gray-300 bg-white text-gray-700">
+                  <tr>
+                    <th className="w-32 px-4 py-3 font-semibold">Invoice</th>
+                    <th className="w-64 px-3 py-3 font-semibold">Partner</th>
+                    <th className="w-32 px-3 py-3 text-right font-semibold">Amount</th>
+                    <th className="w-32 px-3 py-3 font-semibold">Paid on</th>
+                    <th className="w-40 px-3 py-3 font-semibold">Status</th>
+                    <th className="w-40 px-4 py-3 text-right font-semibold"><span className="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {paidPagination.rows.map((invoice) => (
+                    <tr
+                      key={invoice.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Open ${invoice.number ?? 'draft invoice'} for ${invoice.advertiser_name ?? invoice.bill_to_name ?? 'partner'}`}
+                      onClick={() => setEditInvoice(invoice)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          setEditInvoice(invoice);
+                        }
+                      }}
+                      className="cursor-pointer hover:bg-orange-50/70 focus:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-orange-400"
+                    >
+                      <td className="truncate px-4 py-2.5 font-semibold text-orange-700 underline decoration-orange-200 underline-offset-2">{invoice.number ?? 'Draft'}</td>
+                      <td className="truncate px-3 py-2.5 text-gray-800">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(invoice.total_cents)}</td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-gray-600">{invoice.paid_at ? shortDate(invoice.paid_at) : '—'}</td>
+                      <td className="px-3 py-2.5">
+                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                          Paid
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right">
+                        <button type="button" onClick={(event) => { event.stopPropagation(); setEditInvoice(invoice); }} onKeyDown={(event) => event.stopPropagation()} className="font-medium text-gray-700 hover:text-orange-700 hover:underline">
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {paidPagination.rows.length === 0 && <div className="p-10 text-center text-sm text-gray-500">No paid invoices match these filters.</div>}
+          </>
+        ) : (
+          <>
+            <div className="divide-y divide-gray-200 md:hidden">
+              {unpaidPagination.rows.map((invoice) => (
+                <UnpaidInvoiceCard
+                  key={invoice.id}
+                  invoice={invoice}
+                  onOpen={() => setEditInvoice(invoice)}
+                  onEdit={(event) => { event.stopPropagation(); setEditInvoice(invoice); }}
+                  onRecordPayment={(event) => { event.stopPropagation(); openRecordPayment(invoice); }}
+                  onSendLink={(event) => { event.stopPropagation(); void handleGetPaymentLink(invoice); }}
+                  isSendingLink={busyId === invoice.id}
+                />
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[1120px] table-fixed text-left text-xs">
+                <thead className="border-b border-gray-300 bg-white text-gray-700">
+                  <tr>
+                    <th className="w-32 px-4 py-3 font-semibold">Invoice</th>
+                    <th className="w-64 px-3 py-3 font-semibold">Partner</th>
+                    <th className="w-32 px-3 py-3 text-right font-semibold">Balance</th>
+                    <th className="w-32 px-3 py-3 font-semibold">Due date</th>
+                    <th className="w-40 px-3 py-3 font-semibold">Aging status</th>
+                    <th className="w-80 px-4 py-3 text-right font-semibold"><span className="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {unpaidPagination.rows.map((invoice) => (
+                    <tr
+                      key={invoice.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Open ${invoice.number ?? 'draft invoice'} for ${invoice.advertiser_name ?? invoice.bill_to_name ?? 'partner'}`}
+                      onClick={() => setEditInvoice(invoice)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          setEditInvoice(invoice);
+                        }
+                      }}
+                      className="cursor-pointer hover:bg-orange-50/70 focus:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-orange-400"
+                    >
+                      <td className="truncate px-4 py-2.5 font-semibold text-orange-700 underline decoration-orange-200 underline-offset-2">{invoice.number ?? 'Draft'}</td>
+                      <td className="truncate px-3 py-2.5 text-gray-800">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(invoice.balance_cents ?? invoice.total_cents)}</td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-gray-600">{invoice.due_date ? shortDate(invoice.due_date) : 'No due date'}</td>
+                      <td className="px-3 py-2.5">
+                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
+                          {invoice.days > 0 ? <AlertCircle className="h-4 w-4 text-orange-600" aria-hidden="true" /> : <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />}
+                          {invoice.days > 0 ? `${invoice.days} days overdue` : 'Not due yet'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right">
+                        <div className="flex items-center justify-end gap-3">
+                        <button type="button" onClick={(event) => { event.stopPropagation(); setEditInvoice(invoice); }} onKeyDown={(event) => event.stopPropagation()} className="font-medium text-gray-700 hover:text-orange-700 hover:underline">
+                          Edit
+                        </button>
+                        <button type="button" onClick={(event) => { event.stopPropagation(); openRecordPayment(invoice); }} onKeyDown={(event) => event.stopPropagation()} className="font-medium text-gray-700 hover:text-orange-700 hover:underline">
+                          Record payment
+                        </button>
+                        <button type="button" onClick={(event) => { event.stopPropagation(); void handleGetPaymentLink(invoice); }} onKeyDown={(event) => event.stopPropagation()} disabled={busyId === invoice.id} className="font-medium text-orange-700 hover:underline disabled:opacity-50">
+                          {busyId === invoice.id ? 'Sending…' : 'Send payment link'}
+                        </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {unpaidPagination.rows.length === 0 && <div className="p-10 text-center text-sm text-gray-500">No unpaid invoices match these filters.</div>}
+          </>
+        )}
+        <Pagination count={quickLook === 'paid' ? filteredPaid.length : filteredUnpaid.length} page={invoicePagination.currentPage} pageSize={pageSize} totalPages={invoicePagination.totalPages} onPageChange={setInvoicePage} onPageSizeChange={(size) => { setPageSize(size); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }} />
       </section>
 
       <section className="grid gap-5 xl:grid-cols-2">
