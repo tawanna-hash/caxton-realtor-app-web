@@ -49,7 +49,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'Get Paid',
     links: [
-      { label: 'Accounts Receivable', href: '/admin/getpaid/accountsreceivables', description: 'Aging and outstanding balances' },
+      { label: 'Get Paid Dashboard', href: '/admin/getpaid/accountsreceivables', description: 'Aging and outstanding balances' },
       { label: 'Sales Transactions', href: '/admin/getpaid/salestransactions', description: 'All customer sales activity' },
       { label: 'Invoices', href: '/admin/getpaid/invoices', description: 'Billable charges and payment status' },
       { label: 'Payment Links', href: '/admin/getpaid/paymentlinks', description: 'Create and manage payment links' },

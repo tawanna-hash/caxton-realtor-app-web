@@ -603,7 +603,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       <header className="flex items-start justify-between gap-4">
         <div>
           <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Get Paid</div>
-          <PageTitle size="md">Accounts receivable</PageTitle>
+          <PageTitle size="md">Get Paid Dashboard</PageTitle>
         </div>
         <a href="/admin/invoices" className="text-sm font-medium text-orange-700 hover:underline">All invoices</a>
       </header>
