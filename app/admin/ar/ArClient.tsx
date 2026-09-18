@@ -41,7 +41,7 @@ type Props = {
 
 const QUICK_ACTIONS = [
   { label: 'Create payment link', action: 'payment-link' },
-  { label: 'Create recurring payment', action: 'recurring' },
+  { label: 'Create recurring invoice', action: 'recurring' },
   { label: 'Create sales receipt', action: 'sales-receipt' },
   { label: 'Record payment', action: 'record-payment' },
   { label: 'Create partner', action: 'create-partner' },

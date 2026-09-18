@@ -253,7 +253,7 @@ export function RecurringPaymentsClient({
   const reload = async () => {
     const response = await fetch('/api/admin/recurring-invoices', { cache: 'no-store' });
     if (!response.ok) {
-      setError('Could not refresh recurring payments.');
+      setError('Could not refresh recurring invoices.');
       return;
     }
     setSchedules((await response.json()).schedules ?? []);
@@ -304,11 +304,11 @@ export function RecurringPaymentsClient({
           <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
             Admin · Get Paid
           </div>
-          <PageTitle size="md">Recurring payments</PageTitle>
+          <PageTitle size="md">Recurring invoices</PageTitle>
         </div>
       </header>
 
-      <section aria-label="Recurring payment summary" className="bg-white">
+      <section aria-label="Recurring invoice summary" className="bg-white">
         <div className="grid grid-cols-2 gap-y-3 md:grid-cols-4">
           <SummaryMetric amount={summary.activeAmount} count={summary.activeCount} label="active schedules · projected next 30 days" />
           <SummaryMetric amount={summary.nextAmount} count={summary.nextCount} label="projected · next 30 days" />
@@ -338,7 +338,7 @@ export function RecurringPaymentsClient({
         </div>
       )}
 
-      <section aria-label="Recurring payment filters" className="flex flex-wrap items-end gap-2">
+      <section aria-label="Recurring invoice filters" className="flex flex-wrap items-end gap-2">
         <label className="space-y-1">
           <span className="block text-xs text-gray-500">Status</span>
           <select
@@ -388,7 +388,7 @@ export function RecurringPaymentsClient({
         </label>
         <button type="button" className={`${ORANGE_BUTTON} ml-auto`} onClick={() => setCreating(true)}>
           <Plus className="h-4 w-4" aria-hidden="true" />
-          Create recurring payment
+          Create recurring invoice
         </button>
       </section>
 
@@ -471,7 +471,7 @@ export function RecurringPaymentsClient({
         {pageRows.length === 0 && (
           <div className="p-12 text-center">
             <Clock3 className="mx-auto h-8 w-8 text-gray-300" aria-hidden="true" />
-            <div className="mt-3 text-sm font-medium text-gray-800">No recurring payments found</div>
+            <div className="mt-3 text-sm font-medium text-gray-800">No recurring invoices found</div>
             <p className="mt-1 text-sm text-gray-500">
               {schedules.length
                 ? 'Adjust your filters to see more results.'
@@ -483,7 +483,7 @@ export function RecurringPaymentsClient({
                 className="mt-4 text-sm font-medium text-orange-700 hover:underline"
                 onClick={() => setCreating(true)}
               >
-                Create recurring payment
+                Create recurring invoice
               </button>
             )}
           </div>

@@ -59,6 +59,14 @@ type InvoiceSender =
   | 'tawanna@newslinesa.com'
   | 'hello@myrealtyline.com'
   | 'hello@newslinesa.com';
+/**
+ * 'auto' means "let the server pick the From address from the partner's
+ * publication" (RealtyLine markets -> tawanna@myrealtyline.com, Newsline
+ * San Antonio -> tawanna@newslinesa.com). It is the default so invoices are
+ * always branded for the right market; picking a concrete address here still
+ * overrides that routing server-side.
+ */
+type InvoiceSenderChoice = InvoiceSender | 'auto';
 
 const CONTROL =
   'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100';
@@ -396,13 +404,11 @@ function EmailInvoiceDialog({
   busy: boolean;
   referenceTime: number;
   onClose: () => void;
-  onSend: (values: { from: InvoiceSender; to: string; subject: string; message: string }) => void;
+  onSend: (values: { from: InvoiceSenderChoice; to: string; subject: string; message: string }) => void;
 }) {
   const { invoice, reminder } = draft;
   const client = invoice.bill_to_name ?? invoice.advertiser_name ?? 'Customer';
-  const [from, setFrom] = useState<InvoiceSender>(
-    reminder ? 'tawanna@newslinesa.com' : 'hello@newslinesa.com',
-  );
+  const [from, setFrom] = useState<InvoiceSenderChoice>('auto');
   const [to, setTo] = useState(invoice.bill_to_email ?? '');
   const [subject, setSubject] = useState(
     reminder
@@ -446,8 +452,9 @@ function EmailInvoiceDialog({
               <select
                 className={`${CONTROL} mt-1 w-full`}
                 value={from}
-                onChange={(event) => setFrom(event.target.value as InvoiceSender)}
+                onChange={(event) => setFrom(event.target.value as InvoiceSenderChoice)}
               >
+                <option value="auto">Match partner&rsquo;s publication (recommended)</option>
                 <option value="tawanna@myrealtyline.com">Tawanna Verock &lt;tawanna@myrealtyline.com&gt;</option>
                 <option value="tawanna@newslinesa.com">Tawanna Verock &lt;tawanna@newslinesa.com&gt;</option>
                 <option value="hello@myrealtyline.com">Caxton Publications Inc. &lt;hello@myrealtyline.com&gt;</option>
@@ -767,7 +774,7 @@ export function SalesTransactionsClient({
   const sendInvoice = async (
     invoice: InvoiceWithAdvertiser,
     reminder = false,
-    email?: { from: InvoiceSender; to: string; subject: string; message: string },
+    email?: { from: InvoiceSenderChoice; to: string; subject: string; message: string },
   ) => {
     setBusy(true);
     fail('');
@@ -784,7 +791,8 @@ export function SalesTransactionsClient({
         body: JSON.stringify({
           send_email: true,
           email_mode: reminder ? 'reminder' : 'invoice',
-          email_from: email?.from,
+          // Omit email_from for 'auto' so the API routes by publication.
+          email_from: email && email.from !== 'auto' ? email.from : undefined,
           email_to: email?.to,
           email_subject: email?.subject,
           email_message: email?.message,

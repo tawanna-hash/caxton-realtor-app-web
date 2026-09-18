@@ -128,10 +128,10 @@ export function RecurringScheduleDrawer({
   >("tawanna@newslinesa.com");
   const [emailCcBcc, setEmailCcBcc] = useState("");
   const [emailSubject, setEmailSubject] = useState(
-    `Set up recurring payment by ${shortDate(existing?.start_date ?? new Date())}`,
+    `Set up recurring invoice by ${shortDate(existing?.start_date ?? new Date())}`,
   );
   const [emailBody, setEmailBody] = useState(
-    `Dear ${existing?.bill_to_name || existing?.advertiser_name || "customer"},\n\nWe appreciate your business. Please set up the recurring payment before ${shortDate(existing?.start_date ?? new Date())}. You only need to set it up once and, after that, you'll get charged automatically. Feel free to contact us if you have any questions.\n\nHave a great day,\nCaxton Publications Inc.`,
+    `Dear ${existing?.bill_to_name || existing?.advertiser_name || "customer"},\n\nWe appreciate your business. Please set up the recurring invoice before ${shortDate(existing?.start_date ?? new Date())}. You only need to set it up once and, after that, you'll receive each invoice automatically. Feel free to contact us if you have any questions.\n\nHave a great day,\nCaxton Publications Inc.`,
   );
   const [templateMode, setTemplateMode] = useState<
     "scheduled" | "reminder" | "unscheduled"
@@ -793,7 +793,7 @@ export function RecurringScheduleDrawer({
                 </Field>
               </div>
               <p className="mt-3 text-xs leading-5 text-gray-500">
-                The recurring payment authorization and notices are
+                The recurring invoice authorization and notices are
                 informational. Customers can cancel according to the terms shown
                 in their secure payment page.
               </p>
@@ -812,7 +812,7 @@ export function RecurringScheduleDrawer({
                 </div>
                 <div className="mx-8 bg-orange-50 px-6 py-7 text-center">
                   <h3 className="mx-auto max-w-sm text-xl font-semibold leading-7 text-gray-900">
-                    Set up recurring payment to Caxton Publications Inc. by{" "}
+                    Set up recurring invoice to Caxton Publications Inc. by{" "}
                     {firstChargeDate}
                   </h3>
                   <div className="mt-3 text-sm text-gray-600">
@@ -825,7 +825,7 @@ export function RecurringScheduleDrawer({
                     type="button"
                     className="mt-5 rounded-md bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
                   >
-                    Set up recurring payment
+                    Set up recurring invoice
                   </button>
                 </div>
                 <div className="space-y-5 px-10 py-7">
@@ -839,7 +839,7 @@ export function RecurringScheduleDrawer({
                   </div>
                   <div className="border-t border-gray-200 pt-5">
                     <h4 className="text-center text-sm font-semibold text-gray-900">
-                      Here Are the Details of Your Recurring Payment
+                      Here Are the Details of Your Recurring Invoice
                     </h4>
                     <dl className="mx-auto mt-4 grid max-w-sm grid-cols-[1fr_auto] gap-x-8 gap-y-2 text-sm">
                       <dt className="font-medium text-gray-700">Repeats</dt>
@@ -868,7 +868,7 @@ export function RecurringScheduleDrawer({
                         type="button"
                         className="rounded-md bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
                       >
-                        Set up recurring payment
+                        Set up recurring invoice
                       </button>
                       <p className="mt-2 text-xs text-gray-500">
                         You can cancel at any time.

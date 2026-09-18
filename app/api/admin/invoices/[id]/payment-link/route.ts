@@ -13,20 +13,14 @@ import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { paymentMethodLabel, processingFeeCents } from '@/lib/payment-processing-fees';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
-import {
-  generateMagicLinkToken,
-  hashMagicLinkToken,
-  PORTAL_LINK_TTL_MS,
-} from '@/lib/portal';
-import { Resend } from 'resend';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
+import { resolveEmailSenderAddress } from '@/lib/email-sender';
+import { ensurePublicationColumn } from '@/lib/publication-theme';
 import {
-  DEFAULT_EMAIL_SENDER,
-  EMAIL_SENDERS,
-  getResendApiKeyForFrom,
-  resolveEmailSenderAddress,
-  type EmailSenderAddress,
-} from '@/lib/email-sender';
+  APP_BASE_URL,
+  sendInvoiceEmail,
+  type InvoiceEmailStatus,
+} from '@/lib/server/invoice-email';
 import {
   InvoiceLifecycleError,
   invalidateInvoiceCheckoutSessions,
@@ -40,7 +34,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://app.myrealtyline.com';
 
 class PaymentLinkRouteError extends Error {
   constructor(message: string, readonly status: number) {
@@ -58,6 +51,8 @@ interface InvoiceRow {
   memo: string | null;
   due_date: string | null;
   balance_cents: number;
+  /** advertisers.publication for advertiser_id — routes the email From address. */
+  advertiser_publication: string | null;
 }
 
 export const POST = withAdminTracking(async function POST(
@@ -87,14 +82,19 @@ export const POST = withAdminTracking(async function POST(
 
   try {
     await ensureSchema();
+    // advertisers.publication is lazily migrated; ensure it before reading it.
+    await ensurePublicationColumn();
     const sql = getSql();
     let registryId: string | null = null;
     const inv = await withNeonTransaction(async (client): Promise<InvoiceRow> => {
       const { remainingCents } = await lockInvoiceRemainingBalance(client, id);
       const invoiceResult = await client.query<Omit<InvoiceRow, 'balance_cents'>>(
-        `SELECT id, number, advertiser_id, bill_to_name, bill_to_email, memo, due_date
-           FROM invoices
-          WHERE id = $1`,
+        `SELECT i.id, i.number, i.advertiser_id, i.bill_to_name, i.bill_to_email,
+                i.memo, i.due_date,
+                (SELECT a.publication FROM advertisers a WHERE a.id = i.advertiser_id)
+                  AS advertiser_publication
+           FROM invoices i
+          WHERE i.id = $1`,
         [id],
       );
       const invoice = invoiceResult.rows[0];
@@ -205,89 +205,36 @@ export const POST = withAdminTracking(async function POST(
       throw finalizeErr;
     }
 
-    let emailStatus: 'sent' | 'skipped' | 'failed' | 'no_advertiser' | 'no_email' = 'skipped';
+    // The email send (magic link + Resend) deliberately runs after every
+    // transaction above has committed: a network send must never sit inside a
+    // DB transaction that could roll back.
+    let emailStatus: InvoiceEmailStatus = 'skipped';
     let emailError: string | null = null;
     let emailMessageId: string | null = null;
     let consumeUrl: string | null = null;
-    if (sendEmail && inv.advertiser_id) {
-      const sendTo = typeof body.email_to === 'string' && body.email_to.trim()
-        ? body.email_to.trim()
-        : inv.bill_to_email;
-      if (!sendTo) {
-        emailStatus = 'no_email';
-      } else {
-        const raw = generateMagicLinkToken();
-        const tokenHash = hashMagicLinkToken(raw);
-        const linkExpires = new Date(Date.now() + PORTAL_LINK_TTL_MS).toISOString();
-        await sql`
-          INSERT INTO portal_magic_links (advertiser_id, token_hash, purpose, link_expires_at, sent_to_email, created_by, entity_id)
-          VALUES (${inv.advertiser_id}, ${tokenHash}, 'pay_invoice', ${linkExpires}, ${sendTo}, ${admin.email ?? null}, ${inv.id})
-        `;
-        consumeUrl = `${APP_BASE_URL}/portal/consume?token=${encodeURIComponent(raw)}`;
-
-        const sender: EmailSenderAddress = resolvedSender
-          ? resolvedSender
-          : emailMode === 'reminder'
-            ? 'tawanna@newslinesa.com'
-            : DEFAULT_EMAIL_SENDER;
-        const resendApiKey = getResendApiKeyForFrom(sender);
-        if (resendApiKey) {
-          try {
-            const resend = new Resend(resendApiKey);
-            const subject = typeof body.email_subject === 'string' && body.email_subject.trim()
-              ? body.email_subject.trim()
-              : emailMode === 'reminder'
-                ? `Reminder: Invoice ${inv.number} from Caxton Publications is due`
-                : `Invoice ${inv.number} from Caxton Publications`;
-            const customMessage = typeof body.email_message === 'string' ? body.email_message.trim() : '';
-            const { data: resendData, error: resendError } = await resend.emails.send({
-              from: EMAIL_SENDERS[sender],
-              replyTo: sender,
-              to: sendTo,
-              subject,
-              html: invoiceEmailHtml({
-                name: inv.bill_to_name ?? 'there',
-                number: inv.number,
-                consumeUrl,
-                amountCents: inv.balance_cents,
-                customMessage,
-                reminder: emailMode === 'reminder',
-              }),
-              text: invoiceEmailText({
-                name: inv.bill_to_name ?? 'there',
-                number: inv.number,
-                consumeUrl,
-                amountCents: inv.balance_cents,
-                customMessage,
-                reminder: emailMode === 'reminder',
-              }),
-            });
-            if (resendError) {
-              throw new Error(resendError.message || 'Resend rejected the email.');
-            }
-            if (!resendData?.id) {
-              throw new Error('Resend accepted the request without returning a message ID.');
-            }
-            emailMessageId = resendData.id;
-            emailStatus = 'sent';
-            if (emailMode === 'reminder') {
-              await sql`
-                UPDATE invoices
-                SET last_reminder_sent_at = NOW(),
-                    reminder_count = COALESCE(reminder_count, 0) + 1,
-                    updated_at = NOW()
-                WHERE id = ${inv.id}
-              `;
-            }
-          } catch (err) {
-            emailStatus = 'failed';
-            emailError = err instanceof Error ? err.message : 'Unknown email provider error.';
-            console.error('invoice payment-link email failed', err);
-          }
-        }
-      }
-    } else if (sendEmail && !inv.advertiser_id) {
-      emailStatus = 'no_advertiser';
+    if (sendEmail) {
+      const outcome = await sendInvoiceEmail({
+        sql,
+        invoiceId: inv.id,
+        invoiceNumber: inv.number,
+        advertiserId: inv.advertiser_id,
+        billToName: inv.bill_to_name,
+        billToEmail: typeof body.email_to === 'string' && body.email_to.trim()
+          ? body.email_to.trim()
+          : inv.bill_to_email,
+        balanceCents: inv.balance_cents,
+        // Explicit admin-selected From wins; otherwise route by publication.
+        publication: inv.advertiser_publication,
+        sender: resolvedSender ?? undefined,
+        subject: typeof body.email_subject === 'string' ? body.email_subject : undefined,
+        customMessage: typeof body.email_message === 'string' ? body.email_message : undefined,
+        reminder: emailMode === 'reminder',
+        createdBy: admin.email ?? null,
+      });
+      emailStatus = outcome.status;
+      emailError = outcome.error ?? null;
+      emailMessageId = outcome.messageId ?? null;
+      consumeUrl = outcome.consumeUrl ?? null;
     }
 
     revalidateInvoiceViews(inv.id);
@@ -403,110 +350,4 @@ async function expireStripeSessionOrThrow(sessionId: string): Promise<void> {
 
 function isPostgresUniqueViolation(err: unknown): boolean {
   return typeof err === 'object' && err !== null && 'code' in err && err.code === '23505';
-}
-
-function invoiceEmailText({
-  name,
-  number,
-  consumeUrl,
-  amountCents,
-  customMessage,
-  reminder,
-}: {
-  name: string;
-  number: string;
-  consumeUrl: string;
-  amountCents: number;
-  customMessage: string;
-  reminder: boolean;
-}): string {
-  if (customMessage) {
-    return [
-      customMessage,
-      '',
-      `Balance due: ${formatEmailCents(amountCents)}`,
-      '',
-      consumeUrl,
-      '',
-      'This link is valid for 24 hours and may only be used once.',
-    ].join('\n');
-  }
-
-  return [
-    `Dear ${name},`,
-    '',
-    reminder
-      ? `This is a reminder that invoice ${number} has not been paid. If you have any questions, please reach out to our office.`
-      : `We appreciate your business. Your invoice ${number} is ready to review and pay.`,
-    '',
-    `Balance due: ${formatEmailCents(amountCents)}`,
-    '',
-    consumeUrl,
-    '',
-    'This link is valid for 24 hours and may only be used once.',
-    '',
-    'Sincerely,',
-    'Caxton Publications Inc.',
-  ].join('\n');
-}
-
-function invoiceEmailHtml({
-  name,
-  number,
-  consumeUrl,
-  amountCents,
-  customMessage,
-  reminder,
-}: {
-  name: string;
-  number: string;
-  consumeUrl: string;
-  amountCents: number;
-  customMessage: string;
-  reminder: boolean;
-}): string {
-  const message = customMessage || (reminder
-    ? `This is a reminder that invoice ${number} has not been paid. If you have any questions, please reach out to our office.`
-    : `We appreciate your business. Your invoice ${number} is ready to review and pay.`);
-  const greeting = customMessage
-    ? ''
-    : `<p style="font-size:15px;line-height:1.6">Dear ${escapeEmailHtml(name)},</p>`;
-  const closing = customMessage
-    ? ''
-    : '<p style="font-size:14px;line-height:1.6">Sincerely,<br><strong>Caxton Publications Inc.</strong></p>';
-  return `
-  <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#202124;background:#fff">
-    <div style="text-align:center;padding:12px 0 24px">
-      <img src="${APP_BASE_URL}/brand/caxton-logo.jpg" width="125" alt="Caxton Publications Inc." style="display:inline-block;max-height:105px;object-fit:contain">
-    </div>
-    <div style="background:#eef6fb;padding:28px;text-align:center">
-      <h2 style="font-size:24px;margin:0 0 18px">${reminder ? 'Payment reminder' : 'Your invoice is ready!'}</h2>
-      <div style="font-size:11px;color:#667085;text-transform:uppercase;letter-spacing:.08em">Balance due</div>
-      <div style="font-size:38px;font-weight:600;margin-top:4px">${formatEmailCents(amountCents)}</div>
-    </div>
-    <div style="padding:28px 12px">
-      ${greeting}
-      <p style="font-size:15px;line-height:1.6;white-space:pre-line">${escapeEmailHtml(message)}</p>
-      <p style="margin:26px 0;text-align:center">
-      <a href="${consumeUrl}" style="display:inline-block;background:#ea580c;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:600">
-        View &amp; pay invoice ${escapeEmailHtml(number)}
-      </a>
-      </p>
-      <p style="font-size:13px;color:#667085">This secure link is valid for 24 hours and may only be used once.</p>
-      ${closing}
-    </div>
-  </div>`;
-}
-
-function formatEmailCents(cents: number): string {
-  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function escapeEmailHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
 }

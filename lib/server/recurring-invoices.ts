@@ -12,8 +12,10 @@ import {
   isScheduleExhausted,
   type RecurringFrequency,
 } from '@/lib/recurring-invoices';
+import { ensurePublicationColumn } from '@/lib/publication-theme';
 import { withNeonTransaction } from '@/lib/server/db/neon';
 import { nextDocumentNumber } from '@/lib/server/invoice-lifecycle';
+import { sendInvoiceEmail, type InvoiceEmailStatus } from '@/lib/server/invoice-email';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 
 type Sql = ReturnType<typeof getSql>;
@@ -49,6 +51,85 @@ export interface GenerationResult {
   invoice_id: string | null;
   invoice_number: string | null;
   skipped_reason?: string;
+  /** Outcome of the auto_send email; absent when the schedule is not auto_send. */
+  email_status?: InvoiceEmailStatus;
+  email_error?: string;
+}
+
+/**
+ * Read `advertisers.publication` for the schedule's advertiser so the invoice
+ * email goes out from the market's verified domain. Runs on the pooled client
+ * (outside the generating transaction) and never throws: a missing row or a
+ * failed read returns null, which routes to the RealtyLine sender by default.
+ */
+async function publicationForAdvertiserEmail(advertiserId: number): Promise<string | null> {
+  try {
+    await ensurePublicationColumn();
+    const sql = getSql();
+    const rows = (await sql`
+      SELECT publication FROM advertisers WHERE id = ${advertiserId}
+    `) as unknown as { publication: string | null }[];
+    return rows[0]?.publication ?? null;
+  } catch (err) {
+    console.warn(
+      '[recurring-invoices] publication lookup failed for advertiser',
+      advertiserId,
+      err instanceof Error ? err.message : String(err),
+    );
+    return null;
+  }
+}
+
+/**
+ * Deliver the auto_send invoice email for a freshly generated invoice.
+ *
+ * Called only AFTER the generating transaction has committed — a Resend call
+ * must never live inside a DB transaction/savepoint, because a rollback cannot
+ * unsend an email (and would re-send it on retry). Mirrors the non-blocking
+ * side-effect idiom in lib/server/invoice-auto-charge.ts: the invoice is
+ * already generated, so an email failure is recorded on the result and logged,
+ * never thrown.
+ *
+ * The From address is routed by the advertiser's publication (RealtyLine
+ * markets vs Newsline San Antonio) — see lib/invoice-sender-routing.ts.
+ */
+async function deliverAutoSendEmail(
+  schedule: DueScheduleRow,
+  result: GenerationResult,
+): Promise<void> {
+  if (!result.invoice_id || !schedule.auto_send) return;
+  try {
+    const publication = await publicationForAdvertiserEmail(schedule.advertiser_id);
+    const outcome = await sendInvoiceEmail({
+      invoiceId: result.invoice_id,
+      invoiceNumber: result.invoice_number ?? '',
+      advertiserId: schedule.advertiser_id,
+      billToName: schedule.bill_to_name,
+      billToEmail: schedule.bill_to_email,
+      balanceCents: schedule.amount_cents + schedule.tax_cents,
+      publication,
+      createdBy: 'recurring-schedule',
+    });
+    result.email_status = outcome.status;
+    if (outcome.error) result.email_error = outcome.error;
+    if (outcome.status === 'failed') {
+      console.error(
+        '[recurring-invoices] email send failed for',
+        result.invoice_id,
+        outcome.error ?? '',
+      );
+    } else if (outcome.status !== 'sent') {
+      console.warn(
+        '[recurring-invoices] email not sent for',
+        result.invoice_id,
+        outcome.status,
+      );
+    }
+  } catch (err) {
+    result.email_status = 'failed';
+    result.email_error = err instanceof Error ? err.message : 'unknown email error';
+    console.error('[recurring-invoices] email send failed for', result.invoice_id, err);
+  }
 }
 
 const SCHEDULE_COLUMNS = `
@@ -202,7 +283,7 @@ export async function generateInvoiceFromSchedule(
   _sql: Sql,
   schedule: DueScheduleRow,
 ): Promise<GenerationResult> {
-  const result = await withNeonTransaction(async (client) => {
+  const { result, claimedSchedule } = await withNeonTransaction(async (client) => {
     const claimed = await client.query<DueScheduleRow>(
       `SELECT ${SCHEDULE_COLUMNS}
          FROM recurring_invoice_schedules
@@ -213,14 +294,19 @@ export async function generateInvoiceFromSchedule(
     const current = claimed.rows[0];
     if (!current) {
       return {
-        schedule_id: schedule.id,
-        invoice_id: null,
-        invoice_number: null,
-        skipped_reason: 'schedule is locked or no longer exists',
+        result: {
+          schedule_id: schedule.id,
+          invoice_id: null,
+          invoice_number: null,
+          skipped_reason: 'schedule is locked or no longer exists',
+        } satisfies GenerationResult,
+        claimedSchedule: null,
       };
     }
-    return generateWithClient(client, current);
+    return { result: await generateWithClient(client, current), claimedSchedule: current };
   });
+  // Outside the transaction on purpose (see deliverAutoSendEmail).
+  if (claimedSchedule) await deliverAutoSendEmail(claimedSchedule, result);
   if (result.invoice_id) revalidateInvoiceViews(result.invoice_id);
   return result;
 }
@@ -230,6 +316,7 @@ export async function runRecurringInvoiceSweep(_sql: Sql): Promise<{
   processed: number;
   generated: GenerationResult[];
 }> {
+  const pendingEmails: { schedule: DueScheduleRow; result: GenerationResult }[] = [];
   const summary = await withNeonTransaction(async (client) => {
     const due = await findDueSchedules(client);
     const generated: GenerationResult[] = [];
@@ -239,8 +326,11 @@ export async function runRecurringInvoiceSweep(_sql: Sql): Promise<{
       const savepoint = `recurring_schedule_${index}`;
       await client.query(`SAVEPOINT ${savepoint}`);
       try {
-        generated.push(await generateWithClient(client, schedule));
+        const result = await generateWithClient(client, schedule);
+        generated.push(result);
         await client.query(`RELEASE SAVEPOINT ${savepoint}`);
+        // Queue the email for after COMMIT — never send inside the savepoint.
+        if (result.invoice_id && schedule.auto_send) pendingEmails.push({ schedule, result });
       } catch (err) {
         await client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
         await client.query(`RELEASE SAVEPOINT ${savepoint}`);
@@ -255,6 +345,12 @@ export async function runRecurringInvoiceSweep(_sql: Sql): Promise<{
     }
     return { processed: due.length, generated };
   });
+
+  // Side effects run only after the sweep transaction has committed, so the
+  // `generated` entries mutated here are the exact objects in the summary.
+  for (const pending of pendingEmails) {
+    await deliverAutoSendEmail(pending.schedule, pending.result);
+  }
 
   for (const result of summary.generated) {
     if (result.invoice_id) revalidateInvoiceViews(result.invoice_id);
