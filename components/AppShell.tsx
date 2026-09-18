@@ -17,7 +17,7 @@
 //
 // Replaces: SiteHeader.tsx, HamburgerMenu.tsx, admin layout inline nav.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getApiBase } from '@/lib/api-base';
@@ -33,10 +33,7 @@ import SwipeBackShell from '@/components/SwipeBackShell';
 import { AdSlot } from '@/components/ads/AdSlot';
 import AdminQuickLinks from '@/components/admin/AdminQuickLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
-import { ADMIN_NAV as ADMIN_GROUPS, isAdminGroupActive as isGroupActive } from '@/lib/admin-nav';
-import UnreadAdsBadge from '@/components/UnreadAdsBadge';
-import BillingAlertsBadge from '@/components/BillingAlertsBadge';
-import PendingGmailBadge from '@/components/PendingGmailBadge';
+import AdminSidebar from '@/components/admin/AdminSidebar';
 import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
 import { getPublicActivePub, isPubId, isPublicActivePubId } from '@/lib/publications';
 
@@ -45,9 +42,6 @@ import { getPublicActivePub, isPubId, isPublicActivePubId } from '@/lib/publicat
 // ============================================================
 
 type User = { id?: string; email?: string } | null;
-type ContentTab = 'Editorial' | 'Events' | 'Listings' | 'Tools';
-
-const CONTENT_TABS: readonly ContentTab[] = ['Editorial', 'Events', 'Listings', 'Tools'];
 
 const PUB_COLORS: Record<string, string> = {
   realtyline: '#301D5D',
@@ -277,36 +271,6 @@ export default function AppShell({
     // No hard reload — persistPub() dispatched 'savedPubChange'.
   }, [pub]);
 
-  // Dropdown menu state — which admin group is currently open. null = none.
-  // Declared before any early return to keep hook order stable.
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [contentTab, setContentTab] = useState<ContentTab>('Editorial');
-  const navRef = useRef<HTMLDivElement | null>(null);
-
-  // Close menus on outside click or Escape
-  useEffect(() => {
-    if (!openMenu) return;
-    const onClick = (e: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        setOpenMenu(null);
-      }
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpenMenu(null);
-    };
-    document.addEventListener('mousedown', onClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [openMenu]);
-
-  // Close menu when route changes
-  useEffect(() => {
-    queueMicrotask(() => { setOpenMenu(null); });
-  }, [pathname]);
-
   // Record last front-end route so admins can jump back to it from the
   // admin surfaces (header link + drawer entry). Skip admin paths, auth
   // pages, and API paths — none of them are useful landing spots.
@@ -393,185 +357,10 @@ export default function AppShell({
             })()}
           </div>
 
-          {/* Right: desktop admin dropdowns (hidden on mobile) + logout */}
+          {/* Right: desktop nav (public only — admin nav lives in the left
+              sidebar now, see AdminSidebar.tsx) + logout */}
           <div className="flex items-center gap-1">
-            {/* Desktop nav. Admins get dropdown menus grouped by domain;
-                public visitors get a flat link bar mirroring BottomNav so
-                desktop users see the same destinations as mobile. */}
-            {isAdmin ? (
-              <nav ref={navRef} className="hidden lg:flex items-center gap-1 mr-2 relative">
-                {ADMIN_GROUPS.map((group, groupIdx) => {
-                  // Anchor menus so they extend in the direction with the
-                  // most room. The first three groups (leftmost) open to
-                  // the right; the last two open to the left so they don't
-                  // run off the right edge of narrow laptop screens.
-                  const menuAlign =
-                    groupIdx >= ADMIN_GROUPS.length - 2 ? 'right-0' : 'left-0';
-                  const isOpen   = openMenu === group.label;
-                  const isActive = isGroupActive(group, pathname);
-                  return (
-                    <div key={group.label} className="relative">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!isOpen && group.label === 'Content') {
-                            const activeSection = group.links.find(
-                              (link) => pathname === link.href || pathname.startsWith(link.href + '/'),
-                            )?.section;
-                            setContentTab(activeSection ?? 'Editorial');
-                          }
-                          setOpenMenu(isOpen ? null : group.label);
-                        }}
-                        onMouseEnter={() => { if (openMenu) setOpenMenu(group.label); }}
-                        aria-haspopup="menu"
-                        aria-expanded={isOpen}
-                        className={`px-3 py-1.5 text-xs rounded-md transition inline-flex items-center gap-1 ${
-                          isOpen
-                            ? 'text-white bg-white/15'
-                            : isActive
-                              ? 'text-white bg-white/10 hover:bg-white/15'
-                              : 'text-white/70 hover:text-white hover:bg-white/10'
-                        }`}
-                      >
-                        <span>{group.label}</span>
-                        {/* Surface unread ad inquiries as a red dot on the
-                            group that owns Ad Inquiries; expiring/overdue
-                            billing as an amber dot on the group that owns
-                            Billing. Driven by group membership so the
-                            badges follow links if the nav is reorganized. */}
-                        {group.links.some((l) => l.href === '/admin/ads/inquiries') && (
-                          <UnreadAdsBadge />
-                        )}
-                        {group.links.some((l) => l.href === '/admin/agreements') && (
-                          <BillingAlertsBadge />
-                        )}
-                        {group.links.some((l) => l.href === '/admin/events/gmail') && (
-                          <PendingGmailBadge />
-                        )}
-                        <svg
-                          width="10"
-                          height="10"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                          aria-hidden
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </button>
-                      {isOpen && (
-                        group.label === 'Content' ? (
-                          <div
-                            role="menu"
-                            className={`absolute ${menuAlign} mt-1.5 w-[32rem] max-w-[calc(100vw-2rem)] rounded-lg bg-white text-gray-900 shadow-xl border border-gray-200 p-2 z-50`}
-                          >
-                            <div className="flex items-center gap-1 border-b border-gray-200 pb-2" role="tablist" aria-label="Content sections">
-                              {CONTENT_TABS.map((tab) => (
-                                <button
-                                  key={tab}
-                                  type="button"
-                                  role="tab"
-                                  aria-selected={contentTab === tab}
-                                  onClick={() => setContentTab(tab)}
-                                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition ${
-                                    contentTab === tab
-                                      ? 'bg-[#301D5D] text-white'
-                                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                                  }`}
-                                >
-                                  {tab}
-                                </button>
-                              ))}
-                            </div>
-                            <div className="grid grid-cols-2 gap-1 pt-2" role="tabpanel">
-                              {group.links.filter((link) => link.section === contentTab).map((link) => {
-                                const linkActive = pathname === link.href || pathname.startsWith(link.href + '/');
-                                return (
-                                  <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    role="menuitem"
-                                    onClick={() => setOpenMenu(null)}
-                                    className={`rounded-md px-3 py-2 text-sm transition ${
-                                      linkActive
-                                        ? 'bg-gray-100 text-gray-900'
-                                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                                    }`}
-                                  >
-                                    <div className="font-medium flex items-center">
-                                      <span>{link.label}</span>
-                                      {link.href === '/admin/events/gmail' && (
-                                        <PendingGmailBadge variant="inline" />
-                                      )}
-                                    </div>
-                                    {link.description && (
-                                      <div className="text-[11px] leading-4 text-gray-500 mt-0.5">
-                                        {link.description}
-                                      </div>
-                                    )}
-                                  </Link>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ) : (
-                          <div
-                            role="menu"
-                            className={`absolute ${menuAlign} mt-1.5 min-w-[16rem] rounded-md bg-white text-gray-900 shadow-lg border border-gray-200 py-1.5 z-50`}
-                          >
-                            <div className="px-3 pt-1.5 pb-1 text-[10px] uppercase tracking-[0.15em] text-gray-400 font-semibold">
-                              {group.label}
-                            </div>
-                            {group.links.map((link) => {
-                            const linkActive = pathname.startsWith(link.href);
-                            return (
-                              <Link
-                                key={link.href}
-                                href={link.href}
-                                role="menuitem"
-                                onClick={() => setOpenMenu(null)}
-                                className={`block px-3 py-2 text-sm transition ${
-                                  linkActive
-                                    ? 'bg-gray-100 text-gray-900'
-                                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                                }`}
-                              >
-                                <div className="font-medium flex items-center">
-                                  <span>{link.label}</span>
-                                  {/* Inline unread count next to the Ad
-                                      Inquiries link so admins see how many
-                                      new leads are waiting without leaving
-                                      the dropdown. */}
-                                  {link.href === '/admin/ads/inquiries' && (
-                                    <UnreadAdsBadge variant="inline" />
-                                  )}
-                                  {link.href === '/admin/agreements' && (
-                                    <BillingAlertsBadge variant="inline" />
-                                  )}
-                                  {link.href === '/admin/events/gmail' && (
-                                    <PendingGmailBadge variant="inline" />
-                                  )}
-                                </div>
-                                {link.description && (
-                                  <div className="text-[11px] text-gray-500 mt-0.5">
-                                    {link.description}
-                                  </div>
-                                )}
-                              </Link>
-                            );
-                          })}
-                          </div>
-                        )
-                      )}
-                    </div>
-                  );
-                })}
-              </nav>
-            ) : (
+            {!isAdmin && (
               <nav className="hidden lg:flex items-center gap-1 mr-2">
                 {PUBLIC_DESKTOP_LINKS.map((link) => {
                   const active = isPublicLinkActive(pathname, link.href);
@@ -650,19 +439,27 @@ export default function AppShell({
       <NativeNetworkBanner />
       <NativeAppLifecycle />
       {/* SwipeBackShell wraps just the main content — the sticky chrome
-          (header, drawer, BottomNav) intentionally stays put while only
-          the page contents track the finger. The shell maps the AppShell
-          variant to the area the swipe-back rules expect. */}
-      <main
-        className={`flex-1 ${isAdmin ? 'pb-0' : 'pb-20'}`}
-        data-admin-density={useCompactAdminDensity ? 'compact' : undefined}
-        data-admin-ui={isAdmin ? 'true' : undefined}
-      >
-        {isAdmin && <AdminQuickLinks />}
-        <SwipeBackShell area={isAdmin ? 'admin' : 'public'}>
-          {children}
-        </SwipeBackShell>
-      </main>
+          (header, drawer, BottomNav, sidebar) intentionally stays put while
+          only the page contents track the finger. The shell maps the
+          AppShell variant to the area the swipe-back rules expect.
+
+          Admin desktop: persistent left sidebar (AdminSidebar) + main
+          column, side by side. Sidebar is `hidden lg:flex` internally, so
+          this row collapses to just <main> below the lg breakpoint where
+          the hamburger + NavDrawer take over navigation instead. */}
+      <div className={isAdmin ? 'flex' : undefined}>
+        {isAdmin && <AdminSidebar />}
+        <main
+          className={`flex-1 min-w-0 ${isAdmin ? 'pb-0' : 'pb-20'}`}
+          data-admin-density={useCompactAdminDensity ? 'compact' : undefined}
+          data-admin-ui={isAdmin ? 'true' : undefined}
+        >
+          {isAdmin && <AdminQuickLinks />}
+          <SwipeBackShell area={isAdmin ? 'admin' : 'public'}>
+            {children}
+          </SwipeBackShell>
+        </main>
+      </div>
       {!isAdmin ? (
         <>
           {/* Inline newsletter signup — shown on every public page above the footer. */}

@@ -120,6 +120,15 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'URL Analytics',      href: '/admin/analytics/urls', description: 'Clicks grouped by destination URL' },
     ],
   },
+  {
+    label: 'Team',
+    // Owner-only surface (enforced server-side in app/admin/team, not by
+    // hiding the nav link — non-owners who click it see a clear
+    // "owner access only" message rather than the roster).
+    links: [
+      { label: 'Team', href: '/admin/team', description: 'Admin login access & offboarding' },
+    ],
+  },
 ];
 
 /** True if the current pathname falls under any link in the group. */
