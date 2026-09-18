@@ -69,7 +69,7 @@ export default function SwipeBackShell({ area, children }: Props) {
   }, [pathname]);
 
   const onBack = useCallback(() => {
-    if (pathname === '/agents/deal-desk' || pathname?.startsWith('/agents/deal-desk/')) {
+    if (pathname === '/agents/closing-time' || pathname?.startsWith('/agents/closing-time/')) {
       router.push('/agents');
       return;
     }

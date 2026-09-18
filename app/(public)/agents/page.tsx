@@ -8,7 +8,7 @@ import {
   type PublicationKey,
 } from '@/lib/publication-theme';
 import { getCurrentUser } from '@/lib/server/auth/user';
-import { isDealDeskGated } from '@/lib/server/agent-deal-desk-gate';
+import { isClosingTimeGated } from '@/lib/server/closing-time-gate';
 import { getAgentCommandCenterWorkspace } from '@/lib/server/agent-command-center-workspaces';
 import { getActiveTrecFormVersion, listTrecFormVersions } from '@/lib/server/trec-form-versions';
 import { getRealtorMe } from '@/lib/server/realtors-store';
@@ -18,7 +18,7 @@ import AgentCommandCenterClient, {
 import ComingSoon from './ComingSoon';
 
 export const metadata: Metadata = {
-  title: 'Agent Deal Desk | Realty News Now',
+  title: 'ClosingTime | Realty News Now',
   description:
     'A practical real estate workspace for Texas contract timing, field tools, and local partner connections.',
 };
@@ -30,7 +30,7 @@ type AdvertiserRow = ReferralProvider & {
 };
 
 export default async function AgentCommandCenterPage() {
-  if (await isDealDeskGated()) {
+  if (await isClosingTimeGated()) {
     return <ComingSoon />;
   }
 
@@ -75,7 +75,7 @@ export default async function AgentCommandCenterPage() {
       })
       .map(({ publication: _publication, ...provider }) => provider);
   } catch (error) {
-    console.error('[Agent Deal Desk] Partner directory unavailable', error);
+    console.error('[ClosingTime] Partner directory unavailable', error);
   }
 
   return (

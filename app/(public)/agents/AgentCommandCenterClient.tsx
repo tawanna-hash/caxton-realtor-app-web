@@ -20,7 +20,7 @@ import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines'
 import type { AgentCommandCenterWorkspace } from '@/lib/agent-command-center-workspace';
 import type { TrecFormVersion } from '@/lib/trec-form-versions';
 import { trackEvent } from '@/app/posthog-provider';
-import AgentDealDesk from './AgentDealDesk';
+import ClosingTime from './ClosingTime';
 
 export type ReferralProvider = {
   id: number;
@@ -178,21 +178,21 @@ export default function AgentCommandCenterClient({
           <div>
             <p className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">
               <Sparkles className="rnn-inline-icon" aria-hidden="true" />
-              Agent Deal Desk
+              ClosingTime
             </p>
             <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.045em] text-white sm:text-5xl lg:text-6xl">
               More Control in Every Client Transaction.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-white/75 sm:mt-6 sm:text-lg">
-              Your Deal Desk for contract deadlines, client-ready calculators and service partners when a client needs help.
+              ClosingTime tracks your contract deadlines, client-ready calculators and service partners when a client needs help.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/agents/deal-desk"
-                onClick={() => trackEvent('agent_command_center_deal_desk_opened')}
+                href="/agents/closing-time"
+                onClick={() => trackEvent('closing_time_opened')}
                 className="inline-flex h-[46px] items-center justify-center gap-2 rounded-md bg-[#F4D06F] px-5 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
               >
-                Open my Deal Desktop
+                Open ClosingTime
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
               <a
@@ -235,7 +235,7 @@ export default function AgentCommandCenterClient({
               </span>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Quick date check</p>
-                <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Need a Date Without Opening Your Deal Desktop?</h2>
+                <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Need a Date Without Opening ClosingTime?</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">Use the compact, unsaved TREC timing check only when you need a fast answer.</p>
               </div>
             </div>
@@ -289,7 +289,7 @@ export default function AgentCommandCenterClient({
         </div>
       </section>
 
-      <AgentDealDesk
+      <ClosingTime
         panelsOnly
         workspaceKey={workspaceKey}
         realtorId={realtorId}

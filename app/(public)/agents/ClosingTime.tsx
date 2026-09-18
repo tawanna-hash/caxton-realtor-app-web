@@ -832,7 +832,7 @@ async function downloadAuditPdf(deal: AgentDeal, selectedVersions: TrecFormVersi
 
 function calendarEventsForDeal(deal: AgentDeal): CalendarEvent[] {
   const transaction = deal.propertyAddress || deal.title;
-  const description = `Agent Deal Desk deadline for ${transaction}. Verify against the signed contract and your broker's process.`;
+  const description = `ClosingTime deadline for ${transaction}. Verify against the signed contract and your broker's process.`;
   const deadlineEvents = dealDeadlines(deal).map((deadline) => ({
     id: `deadline-${deadline.id}`,
     date: deadline.date,
@@ -871,7 +871,7 @@ function downloadCalendar(events: CalendarEvent[], filename: string): void {
   const content = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Realty News Now//Agent Deal Desk//EN',
+    'PRODID:-//Realty News Now//ClosingTime//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     ...events.flatMap((event) => [
@@ -916,7 +916,7 @@ function backupExportToDrive(filename: string, blob: Blob): void {
 
 // Google Drive integration disabled — GoogleDriveConnectPanel removed.
 
-export default function AgentDealDesk({
+export default function ClosingTime({
   workspaceKey,
   realtorId,
   initialWorkspace,
@@ -1297,7 +1297,7 @@ export default function AgentDealDesk({
     persistDeals([deal, ...deals]);
     setActiveDealId(deal.id);
     setPendingRemoval(null);
-    trackEvent('agent_deal_desk_transaction_created');
+    trackEvent('closing_time_transaction_created');
   };
 
   const updateActiveDeal = <Key extends keyof AgentDeal>(key: Key, value: AgentDeal[Key]) => {
@@ -1356,7 +1356,7 @@ export default function AgentDealDesk({
       });
       setExtractionWarnings(Array.isArray(record.warnings) ? record.warnings.filter((warning): warning is string => typeof warning === 'string') : []);
       setExtractionState('ready');
-      trackEvent('agent_deal_desk_contract_extracted');
+      trackEvent('closing_time_contract_extracted');
     } catch (error) {
       clearContractPreview();
       setExtractionError(error instanceof Error ? error.message : 'Could not read this contract.');
@@ -1436,7 +1436,7 @@ export default function AgentDealDesk({
     clearContractPreview();
     setExtractionDraft(null);
     setExtractionState('idle');
-    trackEvent('agent_deal_desk_contract_suggestions_applied');
+    trackEvent('closing_time_contract_suggestions_applied');
   };
 
   const updateTrecFormField = (key: string, value: string) => {
@@ -1477,7 +1477,7 @@ export default function AgentDealDesk({
     const task: AgentTask = { id: getId('task'), title: taskTitle.trim(), dueDate: taskDueDate, priority: taskPriority, status: 'todo', complete: false };
     applyActiveAction(`Added ${taskPriority} priority task: ${task.title}`, { tasks: [...activeDeal.tasks, task] });
     setTaskTitle(''); setTaskDueDate(''); setTaskPriority('normal');
-    trackEvent('agent_deal_desk_task_added');
+    trackEvent('closing_time_task_added');
   };
 
   const updateTask = (taskId: string, patch: Partial<AgentTask>) => {
@@ -1553,7 +1553,7 @@ export default function AgentDealDesk({
             }
           : entry),
       });
-      trackEvent('agent_deal_desk_document_file_attached');
+      trackEvent('closing_time_document_file_attached');
     } catch {
       setDocumentUploadError('Could not upload this file. Try again in a moment.');
     } finally {
@@ -1580,7 +1580,7 @@ export default function AgentDealDesk({
     persistDeals(nextDeals);
     setActiveDealId(nextDeals[0]?.id ?? null);
     setPendingRemoval(null);
-    trackEvent('agent_deal_desk_transaction_removed');
+    trackEvent('closing_time_transaction_removed');
   };
 
   const focusDeal = (dealId: string) => {
@@ -1600,7 +1600,7 @@ export default function AgentDealDesk({
   const exportActiveDealCalendar = () => {
     if (!activeDeal) return;
     downloadCalendar(calendarEventsForDeal(activeDeal), 'realty-news-now-deal-dates.ics');
-    trackEvent('agent_deal_desk_calendar_exported', { scope: 'active_deal' });
+    trackEvent('closing_time_calendar_exported', { scope: 'active_deal' });
   };
 
   const exportAllDealsCalendar = () => {
@@ -1608,13 +1608,13 @@ export default function AgentDealDesk({
       .filter((deal) => deal.status !== 'completed')
       .flatMap(calendarEventsForDeal);
     downloadCalendar(events, 'realty-news-now-active-deal-dates.ics');
-    trackEvent('agent_deal_desk_calendar_exported', { scope: 'all_active_deals' });
+    trackEvent('closing_time_calendar_exported', { scope: 'all_active_deals' });
   };
 
   const exportBackupRecord = (deal: AgentDeal) => {
     const { filename, blob } = downloadBackupRecord(deal);
     backupExportToDrive(filename, blob);
-    trackEvent('agent_deal_desk_backup_record_exported');
+    trackEvent('closing_time_backup_record_exported');
   };
 
   const exportAuditPdf = (deal: AgentDeal) => {
@@ -1622,7 +1622,7 @@ export default function AgentDealDesk({
     void downloadAuditPdf(deal, dealFormVersions).then(({ filename, blob }) => {
       backupExportToDrive(filename, blob);
     });
-    trackEvent('agent_deal_desk_audit_pdf_exported');
+    trackEvent('closing_time_audit_pdf_exported');
   };
 
   const [dealFolderBusy, setDealFolderBusy] = useState(false);
@@ -1690,7 +1690,7 @@ export default function AgentDealDesk({
       link.click();
       URL.revokeObjectURL(url);
 
-      trackEvent('agent_deal_desk_folder_exported', { attached: attachedCount, missing: notAttached.length, failed: failedCount });
+      trackEvent('closing_time_folder_exported', { attached: attachedCount, missing: notAttached.length, failed: failedCount });
     } catch {
       setDealFolderError('Could not build the deal folder. Try again in a moment.');
     } finally {
@@ -1701,7 +1701,7 @@ export default function AgentDealDesk({
   const lockDealRecord = () => {
     if (!activeDeal || isDealLocked(activeDeal)) return;
     applyActiveAction('Locked transaction record for TREC audit retention', { auditLocked: true });
-    trackEvent('agent_deal_desk_record_locked');
+    trackEvent('closing_time_record_locked');
   };
 
   const saveProgress = () => {
@@ -1713,7 +1713,7 @@ export default function AgentDealDesk({
     } : deal) : deals;
     setDeals(nextDeals);
     void saveToCloud({ deals: nextDeals, notificationPreferences });
-    trackEvent('agent_deal_desk_progress_saved');
+    trackEvent('closing_time_progress_saved');
   };
 
   if (panelsOnly) {
@@ -1773,7 +1773,7 @@ export default function AgentDealDesk({
         <div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Private agent workspace</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Your Deal Desktop</h2>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">ClosingTime</h2>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
               Turn contract terms into a working desk with live timing, task and document checks, and Pressing Deadlines across your active transactions.
             </p>
@@ -1788,7 +1788,7 @@ export default function AgentDealDesk({
           </p>
         </div>
 
-        <nav aria-label="Deal Desktop pages" className="mt-5 border border-slate-200 bg-white p-4">
+        <nav aria-label="ClosingTime pages" className="mt-5 border border-slate-200 bg-white p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {workspacePage === 1 && <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">
@@ -1810,7 +1810,7 @@ export default function AgentDealDesk({
           ) : (
             <div className="flex flex-wrap gap-2">
               <Link href="/agents" className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#301D5D]">
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Deal Desktop
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" /> ClosingTime
               </Link>
               <button type="button" onClick={saveProgress} disabled={!ready || syncState === 'saving'} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
                 <Save className="rnn-inline-icon" aria-hidden="true" /> {syncState === 'saving' ? 'Saving…' : 'Save for later'}
@@ -1908,7 +1908,7 @@ export default function AgentDealDesk({
             {!activeDeal ? (
               <div className="mt-7 flex min-h-[260px] flex-col items-center justify-center border border-dashed border-slate-300 bg-[#FCFBF9] px-6 text-center">
                 <ClipboardCheck className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
-                <h4 className="mt-4 text-lg font-semibold text-slate-950">Build Your First Deal Desktop</h4>
+                <h4 className="mt-4 text-lg font-semibold text-slate-950">Build Your First Deal Workspace</h4>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">Create a private workspace to turn the contract terms in front of you into a workable list of actions.</p>
                 <button type="button" onClick={createDeal} className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">
                   Create transaction
