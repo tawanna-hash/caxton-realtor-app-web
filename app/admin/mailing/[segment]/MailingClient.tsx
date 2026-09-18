@@ -363,6 +363,8 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       if (action === 'set') {
         body.status = status;
         if (reason && reason.trim()) body.reason = reason.trim();
+      } else {
+        body.status = null;
       }
       const res = await fetch('/api/admin/mailing/email-override', {
         method: 'POST', credentials: 'include',
