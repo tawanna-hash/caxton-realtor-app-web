@@ -69,7 +69,7 @@ export function RecurringScheduleDrawer({
   const [agreementId, setAgreementId] = useState<string>(
     existing?.agreement_id ?? seed?.agreement_id ?? "",
   );
-  const [name, setName] = useState(existing?.name ?? "");
+  const name = existing?.name ?? "";
   const [frequency, setFrequency] = useState<RecurringFrequency>(
     existing?.frequency ?? "monthly",
   );
@@ -166,6 +166,9 @@ export function RecurringScheduleDrawer({
     billToName ||
     advertisers.find((advertiser) => advertiser.id === advertiserId)?.name ||
     "Customer";
+  const derivedName =
+    name.trim() ||
+    `${advertisers.find((advertiser) => advertiser.id === advertiserId)?.name ?? "Partner"} — ${frequencyLabel(frequency)}`;
   const firstChargeDate = shortDate(startDate);
   const recurringDescription = useMemo(() => {
     if (frequency === "monthly" && dayOfMonth)
@@ -204,10 +207,6 @@ export function RecurringScheduleDrawer({
       onError("Select a partner");
       return;
     }
-    if (!name.trim()) {
-      onError("Name is required");
-      return;
-    }
     if (total <= 0) {
       onError("Amount must be greater than $0");
       return;
@@ -221,7 +220,7 @@ export function RecurringScheduleDrawer({
       ...(isEdit
         ? {}
         : { advertiser_id: advertiserId, agreement_id: agreementId || null }),
-      name: name.trim(),
+      name: derivedName,
       frequency,
       interval_count: intervalCount,
       day_of_month:
@@ -355,16 +354,8 @@ export function RecurringScheduleDrawer({
 
       {activeTab === "edit" && (
         <div className="grid gap-4 xl:grid-cols-2">
-          <Section title="Recurring invoice template">
+          <Section title="Recurring invoice">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field label="Template name">
-                <input
-                  className={INPUT}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Monthly banner ad"
-                />
-              </Field>
               <Field label="Type">
                 <select
                   className={INPUT}
@@ -416,6 +407,33 @@ export function RecurringScheduleDrawer({
                     </option>
                   ))}
                 </select>
+              </Field>
+            </div>
+          </Section>
+
+          <Section title="Recurring schedule">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="Start date">
+                <input
+                  type="date"
+                  className={INPUT}
+                  value={startDate}
+                  disabled={isEdit}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </Field>
+              <Field label="Create invoice days in advance">
+                <input
+                  type="number"
+                  min={0}
+                  className={INPUT}
+                  value={createDaysInAdvance}
+                  onChange={(e) =>
+                    setCreateDaysInAdvance(
+                      Math.max(0, Number(e.target.value) || 0),
+                    )
+                  }
+                />
               </Field>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
@@ -479,33 +497,6 @@ export function RecurringScheduleDrawer({
                   value={dueDays}
                   onChange={(e) =>
                     setDueDays(Math.max(0, Number(e.target.value) || 0))
-                  }
-                />
-              </Field>
-            </div>
-          </Section>
-
-          <Section title="Recurring schedule">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field label="Start date">
-                <input
-                  type="date"
-                  className={INPUT}
-                  value={startDate}
-                  disabled={isEdit}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </Field>
-              <Field label="Create invoice days in advance">
-                <input
-                  type="number"
-                  min={0}
-                  className={INPUT}
-                  value={createDaysInAdvance}
-                  onChange={(e) =>
-                    setCreateDaysInAdvance(
-                      Math.max(0, Number(e.target.value) || 0),
-                    )
                   }
                 />
               </Field>
@@ -951,7 +942,7 @@ export function RecurringScheduleDrawer({
               </div>
               <div className="mt-3 flex justify-between text-sm">
                 <span>Invoice</span>
-                <span>{name || "[INVOICE NO.]"}</span>
+                <span>{derivedName}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Total</span>
@@ -995,7 +986,7 @@ export function RecurringScheduleDrawer({
               {billToEmail}
             </div>
             <div className="text-right">
-              Invoice: Recurring template
+              Invoice: Recurring invoice
               <br />
               Terms: Net {dueDays}
               <br />
