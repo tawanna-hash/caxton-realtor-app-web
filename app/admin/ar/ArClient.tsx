@@ -13,6 +13,8 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronsUpDown,
   Search,
   Sparkles,
   X,
@@ -340,6 +342,38 @@ function Pagination({
   );
 }
 
+function SortableHeader<T extends string>({
+  column,
+  label,
+  align = 'left',
+  active,
+  direction,
+  onSort,
+  className = '',
+}: {
+  column: T;
+  label: string;
+  align?: 'left' | 'right';
+  active: boolean;
+  direction: 'asc' | 'desc';
+  onSort: (column: T) => void;
+  className?: string;
+}) {
+  const Icon = active ? (direction === 'asc' ? ChevronUp : ChevronDown) : ChevronsUpDown;
+  return (
+    <th className={className} aria-sort={active ? (direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
+      <button
+        type="button"
+        onClick={() => onSort(column)}
+        className={`inline-flex items-center gap-1 font-semibold text-gray-700 hover:text-orange-700 ${align === 'right' ? 'flex-row-reverse' : ''}`}
+      >
+        <span>{label}</span>
+        <Icon className={`h-3.5 w-3.5 ${active ? 'text-orange-600' : 'text-gray-400'}`} aria-hidden="true" />
+      </button>
+    </th>
+  );
+}
+
 function daysPastDue(dueDate: string | null): number {
   if (!dueDate) return -9999; // no due date yet ⇒ treat as current
   const due = new Date(dueDate).getTime();
@@ -372,6 +406,8 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   const [invoicePage, setInvoicePage] = useState(1);
   const [partnerPage, setPartnerPage] = useState(1);
   const [schedulePage, setSchedulePage] = useState(1);
+  const [unpaidSort, setUnpaidSort] = useState<{ column: 'invoice' | 'partner' | 'balance' | 'due_date' | 'aging'; direction: 'asc' | 'desc' }>({ column: 'aging', direction: 'desc' });
+  const [paidSort, setPaidSort] = useState<{ column: 'invoice' | 'partner' | 'amount' | 'paid_on'; direction: 'asc' | 'desc' }>({ column: 'paid_on', direction: 'desc' });
 
   const openQuickAction = (action: (typeof QUICK_ACTIONS)[number]['action']) => {
     if (action === 'recurring') setCreateSchedule(true);
@@ -431,34 +467,68 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   );
 
   const normalizedQuery = query.trim().toLowerCase();
-  const filteredUnpaid = useMemo(() => unpaidInvoices.filter((invoice) => {
-    if (bucketFilter !== 'all' && invoice.bucket !== bucketFilter) return false;
-    if (quickLook === 'overdue' && invoice.days <= 0) return false;
-    if (!normalizedQuery) return true;
-    return [
-      invoice.number,
-      invoice.advertiser_name,
-      invoice.bill_to_name,
-      invoice.bill_to_email,
-      invoice.memo,
-    ].filter(Boolean).join(' ').toLowerCase().includes(normalizedQuery);
-  }), [unpaidInvoices, bucketFilter, quickLook, normalizedQuery]);
+  const filteredUnpaid = useMemo(() => {
+    const rows = unpaidInvoices.filter((invoice) => {
+      if (bucketFilter !== 'all' && invoice.bucket !== bucketFilter) return false;
+      if (quickLook === 'overdue' && invoice.days <= 0) return false;
+      if (!normalizedQuery) return true;
+      return [
+        invoice.number,
+        invoice.advertiser_name,
+        invoice.bill_to_name,
+        invoice.bill_to_email,
+        invoice.memo,
+      ].filter(Boolean).join(' ').toLowerCase().includes(normalizedQuery);
+    });
+    const dir = unpaidSort.direction === 'asc' ? 1 : -1;
+    const sorted = [...rows].sort((a, b) => {
+      switch (unpaidSort.column) {
+        case 'invoice':
+          return dir * (a.number ?? '').localeCompare(b.number ?? '');
+        case 'partner':
+          return dir * (a.advertiser_name ?? a.bill_to_name ?? '').localeCompare(b.advertiser_name ?? b.bill_to_name ?? '');
+        case 'balance':
+          return dir * ((a.balance_cents ?? a.total_cents ?? 0) - (b.balance_cents ?? b.total_cents ?? 0));
+        case 'due_date':
+          return dir * (new Date(a.due_date ?? 0).getTime() - new Date(b.due_date ?? 0).getTime());
+        case 'aging':
+        default:
+          return dir * (a.days - b.days);
+      }
+    });
+    return sorted;
+  }, [unpaidInvoices, bucketFilter, quickLook, normalizedQuery, unpaidSort]);
   const paidInvoices = useMemo(
-    () => invoices
-      .filter((inv) => inv.status === 'paid')
-      .sort((a, b) => new Date(b.paid_at ?? 0).getTime() - new Date(a.paid_at ?? 0).getTime()),
+    () => invoices.filter((inv) => inv.status === 'paid'),
     [invoices],
   );
-  const filteredPaid = useMemo(() => paidInvoices.filter((invoice) => {
-    if (!normalizedQuery) return true;
-    return [
-      invoice.number,
-      invoice.advertiser_name,
-      invoice.bill_to_name,
-      invoice.bill_to_email,
-      invoice.memo,
-    ].filter(Boolean).join(' ').toLowerCase().includes(normalizedQuery);
-  }), [paidInvoices, normalizedQuery]);
+  const filteredPaid = useMemo(() => {
+    const rows = paidInvoices.filter((invoice) => {
+      if (!normalizedQuery) return true;
+      return [
+        invoice.number,
+        invoice.advertiser_name,
+        invoice.bill_to_name,
+        invoice.bill_to_email,
+        invoice.memo,
+      ].filter(Boolean).join(' ').toLowerCase().includes(normalizedQuery);
+    });
+    const dir = paidSort.direction === 'asc' ? 1 : -1;
+    const sorted = [...rows].sort((a, b) => {
+      switch (paidSort.column) {
+        case 'invoice':
+          return dir * (a.number ?? '').localeCompare(b.number ?? '');
+        case 'partner':
+          return dir * (a.advertiser_name ?? a.bill_to_name ?? '').localeCompare(b.advertiser_name ?? b.bill_to_name ?? '');
+        case 'amount':
+          return dir * ((a.total_cents ?? 0) - (b.total_cents ?? 0));
+        case 'paid_on':
+        default:
+          return dir * (new Date(a.paid_at ?? 0).getTime() - new Date(b.paid_at ?? 0).getTime());
+      }
+    });
+    return sorted;
+  }, [paidInvoices, normalizedQuery, paidSort]);
   const filteredAdvertisers = useMemo(
     () => normalizedQuery
       ? byAdvertiser.filter((advertiser) => advertiser.name.toLowerCase().includes(normalizedQuery))
@@ -797,7 +867,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-300 px-4 py-3">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">{quickLook === 'paid' ? 'Paid Invoices' : 'Unpaid Invoices'}</h2>
+            <h2 className="text-sm font-semibold text-gray-900">Invoices</h2>
             <p className="mt-0.5 text-xs text-gray-500">
               {quickLook === 'paid'
                 ? 'Recently paid, most recent first'
@@ -821,10 +891,10 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
               <table className="w-full min-w-[900px] table-fixed text-left text-xs">
                 <thead className="border-b border-gray-300 bg-white text-gray-700">
                   <tr>
-                    <th className="w-32 px-4 py-3 font-semibold">Invoice</th>
-                    <th className="w-64 px-3 py-3 font-semibold">Partner</th>
-                    <th className="w-32 px-3 py-3 text-right font-semibold">Amount</th>
-                    <th className="w-32 px-3 py-3 font-semibold">Paid on</th>
+                    <SortableHeader column="invoice" label="Invoice" active={paidSort.column === 'invoice'} direction={paidSort.direction} onSort={(c) => setPaidSort((s) => ({ column: c, direction: s.column === c && s.direction === 'asc' ? 'desc' : 'asc' }))} className="w-32 px-4 py-3" />
+                    <SortableHeader column="partner" label="Partner" active={paidSort.column === 'partner'} direction={paidSort.direction} onSort={(c) => setPaidSort((s) => ({ column: c, direction: s.column === c && s.direction === 'asc' ? 'desc' : 'asc' }))} className="w-64 px-3 py-3" />
+                    <SortableHeader column="amount" label="Amount" align="right" active={paidSort.column === 'amount'} direction={paidSort.direction} onSort={(c) => setPaidSort((s) => ({ column: c, direction: s.column === c && s.direction === 'asc' ? 'desc' : 'asc' }))} className="w-32 px-3 py-3 text-right" />
+                    <SortableHeader column="paid_on" label="Paid on" active={paidSort.column === 'paid_on'} direction={paidSort.direction} onSort={(c) => setPaidSort((s) => ({ column: c, direction: s.column === c && s.direction === 'asc' ? 'desc' : 'asc' }))} className="w-32 px-3 py-3" />
                     <th className="w-40 px-3 py-3 font-semibold">Status</th>
                     <th className="w-40 px-4 py-3 text-right font-semibold"><span className="sr-only">Actions</span></th>
                   </tr>
@@ -886,11 +956,11 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
               <table className="w-full min-w-[1120px] table-fixed text-left text-xs">
                 <thead className="border-b border-gray-300 bg-white text-gray-700">
                   <tr>
-                    <th className="w-32 px-4 py-3 font-semibold">Invoice</th>
-                    <th className="w-64 px-3 py-3 font-semibold">Partner</th>
-                    <th className="w-32 px-3 py-3 text-right font-semibold">Balance</th>
-                    <th className="w-32 px-3 py-3 font-semibold">Due date</th>
-                    <th className="w-40 px-3 py-3 font-semibold">Aging status</th>
+                    <SortableHeader column="invoice" label="Invoice" active={unpaidSort.column === 'invoice'} direction={unpaidSort.direction} onSort={(c) => setUnpaidSort((s) => ({ column: c, direction: s.column === c && s.direction === 'asc' ? 'desc' : 'asc' }))} className="w-32 px-4 py-3" />
+                    <SortableHeader column="partner" label="Partner" active={unpaidSort.column === 'partner'} direction={unpaidSort.direction} onSort={(c) => setUnpaidSort((s) => ({ column: c, direction: s.column === c && s.direction === 'asc' ? 'desc' : 'asc' }))} className="w-64 px-3 py-3" />
+                    <SortableHeader column="balance" label="Balance" align="right" active={unpaidSort.column === 'balance'} direction={unpaidSort.direction} onSort={(c) => setUnpaidSort((s) => ({ column: c, direction: s.column === c && s.direction === 'asc' ? 'desc' : 'asc' }))} className="w-32 px-3 py-3 text-right" />
+                    <SortableHeader column="due_date" label="Due date" active={unpaidSort.column === 'due_date'} direction={unpaidSort.direction} onSort={(c) => setUnpaidSort((s) => ({ column: c, direction: s.column === c && s.direction === 'asc' ? 'desc' : 'asc' }))} className="w-32 px-3 py-3" />
+                    <SortableHeader column="aging" label="Aging status" active={unpaidSort.column === 'aging'} direction={unpaidSort.direction} onSort={(c) => setUnpaidSort((s) => ({ column: c, direction: s.column === c && s.direction === 'asc' ? 'desc' : 'asc' }))} className="w-40 px-3 py-3" />
                     <th className="w-80 px-4 py-3 text-right font-semibold"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
