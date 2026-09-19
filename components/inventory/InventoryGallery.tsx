@@ -13,6 +13,8 @@
 // Keeps state purely local; the parent passes immutable props.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Ruler } from 'lucide-react';
+import Floorplanner from '@/components/Floorplanner';
 
 type Props = {
   galleryUrls: string[] | null;
@@ -21,6 +23,7 @@ type Props = {
 };
 
 export default function InventoryGallery({ galleryUrls, thumbnailUrl, alt }: Props) {
+  const [toolsOpen, setToolsOpen] = useState(false);
   const images = useMemo(() => {
     const seen = new Set<string>();
     const out: string[] = [];
@@ -99,6 +102,14 @@ export default function InventoryGallery({ galleryUrls, thumbnailUrl, alt }: Pro
           alt={alt}
           className="absolute inset-0 w-full h-full object-cover"
         />
+        <button
+          type="button"
+          onClick={() => setToolsOpen(true)}
+          className="absolute bottom-3 left-3 flex items-center gap-1.5 bg-white/90 hover:bg-white text-gray-900 text-xs font-medium pl-2 pr-3 py-1.5 rounded-full shadow-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900"
+        >
+          <Ruler className="w-3.5 h-3.5" />
+          Floorplan Tools
+        </button>
         {showControls && (
           <>
             <button
@@ -154,6 +165,18 @@ export default function InventoryGallery({ galleryUrls, thumbnailUrl, alt }: Pro
               />
             </button>
           ))}
+        </div>
+      )}
+
+      {toolsOpen && (
+        <div className="fixed inset-0 z-[60]">
+          <Floorplanner
+            src={images[active]}
+            alt={alt}
+            subtitle="Pan, zoom, mirror, measure, and add notes"
+            onClose={() => setToolsOpen(false)}
+            className="h-full"
+          />
         </div>
       )}
     </div>
