@@ -173,7 +173,7 @@ function smallestCardAncestor(
   return $(el);
 }
 
-export function parseCalendar(html: string): Listing[] {
+function parseCalendar(html: string): Listing[] {
   const $ = cheerio.load(html);
   const found = new Map<string, Listing>();
 
@@ -242,7 +242,7 @@ function labelValue($: cheerio.CheerioAPI, label: string): string {
   return result;
 }
 
-export function parseDetail(html: string): Detail {
+function parseDetail(html: string): Detail {
   const $ = cheerio.load(html);
   const detail: Detail = {
     title: '',
@@ -394,7 +394,7 @@ export function parseDetail(html: string): Detail {
 
 // ------------------------------ orchestration ------------------------------
 
-export async function collectListings(months: number): Promise<Listing[]> {
+async function collectListings(months: number): Promise<Listing[]> {
   const today = new Date();
   let year = today.getUTCFullYear();
   let month = today.getUTCMonth() + 1;
@@ -422,7 +422,7 @@ export async function collectListings(months: number): Promise<Listing[]> {
   return out;
 }
 
-export async function enrichListings(listings: Listing[]): Promise<EventInput[]> {
+async function enrichListings(listings: Listing[]): Promise<EventInput[]> {
   const events: EventInput[] = [];
   for (const l of listings) {
     try {

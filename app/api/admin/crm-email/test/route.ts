@@ -23,6 +23,8 @@ const testSchema = z.object({
   from_name: z.string().trim().max(120).optional(),
   reply_to: z.string().regex(emailRe).optional(),
   reply_to_list: z.array(z.string().regex(emailRe)).max(10).optional(),
+  cc: z.array(z.string().regex(emailRe)).max(10).optional(),
+  bcc: z.array(z.string().regex(emailRe)).max(10).optional(),
   preview_text: z.string().trim().max(150).optional(),
   attachments: z.array(z.object({
     filename: z.string(),
@@ -70,7 +72,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     : undefined;
 
   const from = input.from_name
-    ? `${input.from_name} <${(process.env.EMAIL_FROM ?? 'hello@myrealtyline.com').replace(/^.*<|>$/g, '')}>`
+    ? `${input.from_name} <${(process.env.EMAIL_FROM ?? 'hello@newslinesa.com').replace(/^.*<|>$/g, '')}>`
     : undefined;
 
   try {
@@ -90,6 +92,8 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       brand,
       from,
       replyTo: replyToFinal,
+      cc: input.cc,
+      bcc: input.bcc,
       attachments: attachments.length > 0 ? attachments : undefined,
       attachmentLinks: input.attachments && input.attachments.length > 0
         ? input.attachments.map((a) => ({ filename: a.filename, url: a.url }))

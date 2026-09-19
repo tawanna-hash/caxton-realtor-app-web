@@ -114,6 +114,37 @@ function validate(body: Partial<RealtyLineReport>): { ok: true; data: RealtyLine
   };
 }
 
+function validatePatch(body: unknown): { ok: true; data: Partial<RealtyLineReport> } | { ok: false; error: string } {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return { ok: false, error: 'patch body must be an object' };
+  const data = body as Record<string, unknown>;
+  const stringFields = ['month_label', 'month_label_es', 'released_at', 'subtitle_en', 'subtitle_es', 'headline_value', 'headline_delta', 'headline_label_en', 'headline_label_es', 'pdf_storage_key'];
+  for (const key of stringFields) if (key in data && data[key] !== null && typeof data[key] !== 'string') return { ok: false, error: `${key} must be a string or null` };
+  if ('headline_delta_direction' in data && !isDir(data.headline_delta_direction)) return { ok: false, error: 'headline_delta_direction must be up|down|flat' };
+  if ('page_count' in data && data.page_count !== null && (!Number.isInteger(data.page_count) || (data.page_count as number) < 0)) return { ok: false, error: 'page_count must be a non-negative integer or null' };
+  const arrayChecks: Array<[string, (value: unknown) => boolean]> = [['indicator_stats', (v) => Array.isArray(v) && v.every(validateIndicator)], ['listing_counts', (v) => Array.isArray(v) && v.every(validateListingCount)], ['price_bands', (v) => Array.isArray(v) && v.every(validatePriceBand)]];
+  for (const [key, check] of arrayChecks) if (key in data && !check(data[key])) return { ok: false, error: `${key} is invalid` };
+  const allowed = new Set([...stringFields, 'headline_delta_direction', 'page_count', ...arrayChecks.map(([key]) => key)]);
+  const patch = Object.fromEntries(Object.entries(data).filter(([key]) => allowed.has(key))) as Partial<RealtyLineReport>;
+  return Object.keys(patch).length ? { ok: true, data: patch } : { ok: false, error: 'no fields to update' };
+}
+
+async function updatePatch(id: number, data: Partial<RealtyLineReport>) {
+  const columns: Record<keyof RealtyLineReport, string> = { month_label: 'month_label', month_label_es: 'month_label_es', released_at: 'released_at', subtitle_en: 'subtitle_en', subtitle_es: 'subtitle_es', headline_value: 'headline_value', headline_delta: 'headline_delta', headline_delta_direction: 'headline_delta_direction', headline_label_en: 'headline_label_en', headline_label_es: 'headline_label_es', indicator_stats: 'indicator_stats', listing_counts: 'listing_counts', price_bands: 'price_bands', page_count: 'page_count', pdf_storage_key: 'pdf_storage_key' };
+  const values: unknown[] = [];
+  const clauses: string[] = [];
+  for (const [key, column] of Object.entries(columns) as [keyof RealtyLineReport, string][]) {
+    if (!(key in data)) continue;
+    const json = key === 'indicator_stats' || key === 'listing_counts' || key === 'price_bands';
+    clauses.push(`${column} = $${values.length + 1}${json ? '::jsonb' : ''}`);
+    values.push(json ? JSON.stringify(data[key]) : data[key]);
+  }
+  values.push(id);
+  await getSql().query(
+    `UPDATE realtyline_mls_reports SET ${clauses.join(', ')}, updated_at = NOW() WHERE id = $${values.length}`,
+    values,
+  );
+}
+
 async function ensureSchema() {
   const sql = getSql();
   // Mirrors sabor_mls_reports but is its own table — RealtyLine + SABOR
@@ -208,31 +239,10 @@ export const PATCH = withAdminTracking(async (req: NextRequest) => {
   const id = Number(req.nextUrl.searchParams.get('id'));
   if (!Number.isFinite(id) || id <= 0) throw new ApiError(400, 'invalid id');
   const body = await req.json();
-  const v = validate(body);
-  if (!v.ok) throw new ApiError(400, v.error);
-  const d = v.data;
-  const sql = getSql();
-  await sql`
-    UPDATE realtyline_mls_reports
-       SET month_label              = ${d.month_label},
-           month_label_es           = ${d.month_label_es},
-           released_at              = ${d.released_at},
-           subtitle_en              = ${d.subtitle_en},
-           subtitle_es              = ${d.subtitle_es},
-           headline_value           = ${d.headline_value},
-           headline_delta           = ${d.headline_delta},
-           headline_delta_direction = ${d.headline_delta_direction},
-           headline_label_en        = ${d.headline_label_en},
-           headline_label_es        = ${d.headline_label_es},
-           indicator_stats          = ${JSON.stringify(d.indicator_stats)}::jsonb,
-           listing_counts           = ${JSON.stringify(d.listing_counts)}::jsonb,
-           price_bands              = ${JSON.stringify(d.price_bands)}::jsonb,
-           page_count               = ${d.page_count},
-           pdf_storage_key          = ${d.pdf_storage_key},
-           updated_at               = NOW()
-     WHERE id = ${id}
-  `;
-  return NextResponse.json({ ok: true });
+    const v = validatePatch(body);
+    if (!v.ok) throw new ApiError(400, v.error);
+    await updatePatch(id, v.data);
+    return NextResponse.json({ ok: true });
 });
 
 export const DELETE = withAdminTracking(async (req: NextRequest) => {

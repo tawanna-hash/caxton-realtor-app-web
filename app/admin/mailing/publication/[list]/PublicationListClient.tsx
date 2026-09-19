@@ -14,8 +14,9 @@ import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
 import EmailBadge, { type EmailBadgeStatus } from '@/app/admin/_components/EmailBadge';
 import { PAGE_SIZE_OPTIONS } from '@/app/admin/_components/Pager';
 import type { PublicationCount } from '@/lib/server/mailing/publication-counts';
+import type { PubId } from '@/lib/publications';
 
-type Pub = 'realtyline' | 'newsline';
+type Pub = PubId;
 
 type Row = {
   email: string;
@@ -44,10 +45,14 @@ const DEFAULT_PAGE_SIZE = 50;
 const PUB_LABEL: Record<Pub, string> = {
   realtyline: 'RealtyLine (Austin)',
   newsline: 'Newsline (San Antonio)',
+  'realtyline-houston': 'RealtyLine (Houston)',
+  'realtyline-dallas': 'RealtyLine (Dallas/Ft. Worth)',
 };
 const PUB_ACCENT: Record<Pub, string> = {
   realtyline: '#301D5D',
   newsline: '#c2410c',
+  'realtyline-houston': '#301D5D',
+  'realtyline-dallas': '#301D5D',
 };
 
 interface Props {
@@ -151,7 +156,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
   ) : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="mailing-admin-page">
       <MailingBreadcrumb
         trail={[
           { label: 'Mailing', href: '/admin/mailing' },
@@ -167,21 +172,14 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
           <PageTitle size="md">{PUB_LABEL[pub]}</PageTitle>
           <p className="mt-2 text-sm text-gray-600 max-w-2xl">
             Merged + deduped email list across segments, board mirror, app
-            subscribers, and newsletter signups. Drop rules match the CSV
+            subscribers, and email signups. Drop rules match the CSV
             download exactly.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <a
             href={`/api/admin/mailing/publication-list?list=${pub}&format=csv`}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-semibold transition hover:text-white"
-            style={{ borderColor: accent, color: accent, ['--hover-bg' as string]: accent }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = accent;
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = '';
-            }}
+            className="mailing-primary-action"
           >
             <span aria-hidden>⤓</span>
             Download CSV
@@ -190,7 +188,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="mailing-summary-strip grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
         <Kpi label="Total" value={initialCounts.total} accent={accent} />
         <Kpi label="Valid" value={initialCounts.valid} accent="#059669" />
         <Kpi label="Invalid" value={initialCounts.invalid} accent="#e11d48" />
@@ -230,7 +228,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
           <option value="all">All sources</option>
           <option value="mailing_contacts">Mailing / Holding</option>
           <option value="realtors">App subscribers</option>
-          <option value="newsletter_subscribers">Newsletter</option>
+          <option value="newsletter_subscribers">Email</option>
         </select>
         <span className="ml-auto text-xs text-gray-500">
           {loading ? 'Loading…' : `${filtered.length.toLocaleString()} of ${(rows?.length ?? 0).toLocaleString()} shown`}
@@ -247,7 +245,35 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
       {pagerNode}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+      {/* Mobile card list — read-only mirror of the desktop table above. */}
+      <div className="sm:hidden rounded-md border border-gray-200 bg-white divide-y divide-gray-100">
+        {loading && (
+          <div className="px-3 py-6 text-center text-sm text-gray-500">Loading…</div>
+        )}
+        {!loading && pageRows.length === 0 && (
+          <div className="px-3 py-6 text-center text-sm text-gray-500">No matching rows.</div>
+        )}
+        {!loading && pageRows.map((r) => {
+          const name = [r.first_name, r.last_name].filter(Boolean).join(' ') || '—';
+          const badgeStatus: EmailBadgeStatus =
+            r.verification_status === 'unverified' ? null : (r.verification_status as EmailBadgeStatus);
+          return (
+            <div key={r.email} className="px-3 py-3 space-y-1.5">
+              <div className="font-mono text-[13px] text-gray-900 break-all">{r.email}</div>
+              <div className="text-sm text-gray-800">{name}</div>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                <dt className="text-gray-500 uppercase tracking-wider">Source</dt>
+                <dd className="text-gray-800 text-right break-words">{prettySource(r.source_table)}</dd>
+                <dt className="text-gray-500 uppercase tracking-wider">Segment</dt>
+                <dd className="text-gray-800 text-right break-words">{r.source_segment}</dd>
+              </dl>
+              <div className="pt-0.5"><EmailBadge status={badgeStatus} /></div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden sm:block overflow-x-auto rounded-md border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
@@ -309,7 +335,7 @@ function prettySource(s: string): string {
   switch (s) {
     case 'mailing_contacts': return 'Mailing / Holding';
     case 'realtors': return 'App subscribers';
-    case 'newsletter_subscribers': return 'Newsletter';
+    case 'newsletter_subscribers': return 'Email';
     default: return s;
   }
 }

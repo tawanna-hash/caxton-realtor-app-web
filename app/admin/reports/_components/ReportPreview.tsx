@@ -79,14 +79,14 @@ export function buildReportHtml(report: ArticleReport, overrides: ReportOverride
       </div>
     </div>
 
-    <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;\">Shares by channel</h3>
+    <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;\">Shares by Channel</h3>
     <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #e5e7eb; border-radius: 4px; overflow: hidden;\">
       <tbody>
         ${sharesRows}
       </tbody>
     </table>
 
-    <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;\">Reading depth</h3>
+    <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;\">Reading Depth</h3>
     <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #e5e7eb; border-radius: 4px; overflow: hidden;\">
       <tbody>
         ${scrollRow(25)}
@@ -96,7 +96,7 @@ export function buildReportHtml(report: ArticleReport, overrides: ReportOverride
       </tbody>
     </table>
 
-    <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;\">Time on article</h3>
+    <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;\">Time on Article</h3>
     <p style=\"margin: 0 0 24px 0; font-size: 13px; color: #374151;\">
       Average ${avgTime} across ${report.sessions_with_time.toLocaleString()} ${pluralize(report.sessions_with_time, 'session')} where reading time was measured.
     </p>

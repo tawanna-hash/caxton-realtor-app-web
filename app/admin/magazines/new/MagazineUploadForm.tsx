@@ -27,9 +27,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { upload } from '@vercel/blob/client';
 import MagazineDropZone from '@/components/MagazineDropZone';
+import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
 import PageTitle from '@/components/ui/PageTitle';
-type Pub = 'austin' | 'san_antonio';
+type Pub = PublicationId;
 
 type StepStatus = 'pending' | 'running' | 'done' | 'error';
 
@@ -251,6 +252,13 @@ export default function MagazineUploadForm() {
       { label: 'Upload page images', status: 'pending' },
       ...(pdfFile ? [{ label: 'Extract page text from PDF', status: 'pending' as StepStatus }] : []),
       { label: 'Create magazine record', status: 'pending' },
+      // Unified auto-extract: embedded PDF links + text-layer scan + QR
+      // codes in one server call. Best-effort — a failure just leaves the
+      // magazine with no imported hotspots and the admin can re-run from
+      // the hotspot editor toolbar.
+      ...(pdfFile ? [
+        { label: 'Extract hotspots (PDF links + text + QR + logo matches)', status: 'pending' as StepStatus },
+      ] : []),
     ];
     setSteps(stepList);
     let stepIdx = 0;
@@ -418,7 +426,45 @@ export default function MagazineUploadForm() {
       return;
     }
 
-    setTimeout(() => router.push('/admin/magazines'), 800);
+    // Auto-populate hotspots via the unified extract-all endpoint. Failures
+    // here are non-fatal — the magazine row has already been created and
+    // the admin can re-run from the hotspot editor toolbar.
+    if (pdfFile) {
+      stepIdx++;
+      updateStep(stepIdx, { status: 'running' });
+      try {
+        const r = await fetch(`/api/admin/magazines/${createdId}/extract-all`, {
+          method: 'POST',
+        });
+        if (!r.ok) throw new Error(await r.text());
+        const body = await r.json();
+        const d = body?.diagnostics ?? {};
+        const findings = d.findings ?? {};
+        updateStep(stepIdx, {
+          status: 'done',
+          detail:
+            `${d.inserted ?? 0} hotspot(s) added ` +
+            `(${findings.pdf_links ?? 0} embedded, ${findings.text_scan ?? 0} text, ${findings.qr_codes ?? 0} QR, ${findings.logo_matches ?? 0} logo)`,
+        });
+      } catch (err: unknown) {
+        // Non-fatal.
+        updateStep(stepIdx, {
+          status: 'error',
+          detail: `${errMessage(err)} (retry from editor)`,
+        });
+      }
+    }
+
+    // After a PDF upload we auto-populate hotspots, so route the admin
+    // straight to the hotspot editor to review the drafts. Non-PDF uploads
+    // (image-only pages) still go to the list — nothing to review.
+    setTimeout(() => {
+      if (pdfFile) {
+        router.push(`/admin/magazines/${createdId}/hotspots`);
+      } else {
+        router.push('/admin/magazines');
+      }
+    }, 800);
   }
 
   // __DROPZONE_HANDLER_V2__
@@ -474,8 +520,11 @@ export default function MagazineUploadForm() {
               disabled={running}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900"
             >
-              <option value="austin">RealtyLine Austin</option>
-              <option value="san_antonio">Newsline San Antonio</option>
+              {PUBLICATIONS.map((publication) => (
+                <option key={publication.id} value={publication.id}>
+                  {publication.label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -609,12 +658,12 @@ export default function MagazineUploadForm() {
                   value={renderDpi}
                   onChange={(e) => setRenderDpi(Number(e.target.value))}
                   disabled={running}
-                  className="border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-900"
+                  className="border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-900 max-w-full"
                 >
                   <option value={100}>100 DPI (small, fast)</option>
                   <option value={150}>150 DPI (legacy default)</option>
-                  <option value={220}>220 DPI (recommended, sharp at 2-3x zoom)</option>
-                  <option value={300}>300 DPI (print-quality, large)</option>
+                  <option value={220}>220 DPI (recommended, sharp)</option>
+                  <option value={300}>300 DPI (print-quality)</option>
                 </select>
               </div>
             )}

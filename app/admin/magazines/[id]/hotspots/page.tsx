@@ -28,7 +28,7 @@ async function isAdmin(): Promise<boolean> {
 
 type PrevIssue = {
   id: number;
-  publication: 'austin' | 'san_antonio';
+  publication: 'austin' | 'san_antonio' | 'houston' | 'dallas';
   issue_label: string;
   hotspot_count: number;
 };
@@ -44,29 +44,31 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   await ensureSchema();
   const sql = getSql();
 
-  // 1. Fetch the magazine.
-  const mags = (await sql`
+  // 1. Fetch the magazine and its hotspots (drafts + published) in
+  //    parallel — neither depends on the other's result, both only
+  //    need idNum.
+  const [mags, hotspots] = (await Promise.all([
+    sql`
     SELECT id, publication, year, month, issue_label,
            cover_url, reader_url, page_urls, page_count,
            to_char(sort_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS sort_date
     FROM magazines
     WHERE id = ${idNum}
-  `) as unknown as Magazine[];
-  if (mags.length === 0) notFound();
-  const magazine = mags[0];
-
-  // 2. Fetch all hotspots (drafts + published) for this magazine.
-  const hotspots = (await sql`
+  `,
+    sql`
     SELECT id, magazine_id, page_idx,
            x_frac, y_frac, w_frac, h_frac,
            type, config, label, advertiser_name,
            is_published, source, created_by, created_at, updated_by, updated_at
     FROM magazine_hotspots
     WHERE magazine_id = ${idNum}
-    ORDER BY page_idx, id
-  `) as unknown as Hotspot[];
+    ORDER BY page_idx, z_index, id
+  `,
+  ])) as unknown as [Magazine[], Hotspot[]];
+  if (mags.length === 0) notFound();
+  const magazine = mags[0];
 
-  // 3. Fetch up to 12 previous issues of the same publication that have
+  // 2. Fetch up to 12 previous issues of the same publication that have
   //    hotspots, for the "Copy from previous issue" dropdown.
   const prevIssues = (await sql`
     SELECT m.id, m.publication, m.issue_label,

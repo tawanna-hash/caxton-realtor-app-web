@@ -336,7 +336,7 @@ export default function MoveInReadyGuideContent() {
       <Section title="Two files to create per builder">
         <div className="grid md:grid-cols-2 gap-4">
           <div className="rounded-md border border-gray-200 p-5 bg-white">
-            <h3 className="font-semibold text-gray-900 mb-1">1. Scraper module</h3>
+            <h3 className="font-semibold text-gray-900 mb-1">1. Scraper Module</h3>
             <code className="text-xs text-brand-700 bg-brand-600/5 px-2 py-1 rounded inline-block">
               lib/scrapers/&lt;builder&gt;.ts
             </code>
@@ -349,7 +349,7 @@ export default function MoveInReadyGuideContent() {
             </p>
           </div>
           <div className="rounded-md border border-gray-200 p-5 bg-white">
-            <h3 className="font-semibold text-gray-900 mb-1">2. Cron endpoint</h3>
+            <h3 className="font-semibold text-gray-900 mb-1">2. Cron Endpoint</h3>
             <code className="text-xs text-brand-700 bg-brand-600/5 px-2 py-1 rounded inline-block">
               app/api/cron/scrape-&lt;builder&gt;/route.ts
             </code>
@@ -396,7 +396,7 @@ export default function MoveInReadyGuideContent() {
           <code className="text-xs bg-white/60 px-1 py-0.5 rounded">
             status=&apos;expired&apos;
           </code>{' '}
-          — use the Advertiser Pages visibility toggle instead.
+          — use the Partner Pages visibility toggle instead.
         </div>
       </Section>
     </>

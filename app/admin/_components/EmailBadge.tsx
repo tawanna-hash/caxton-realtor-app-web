@@ -88,14 +88,3 @@ export default function EmailBadge({ status, title, size = 'xs', className = '' 
     </span>
   );
 }
-
-/** Map the unified status into the legacy `EmailVerdict` ('Valid'|'Invalid'|'Pending')
- *  used by older admin code paths that still consume that vocabulary. */
-export function unifiedToLegacy(
-  status: EmailBadgeStatus,
-): 'Valid' | 'Invalid' | 'Pending' | null {
-  if (status === 'valid')   return 'Valid';
-  if (status === 'invalid') return 'Invalid';
-  if (status === 'risky' || status === 'unknown' || status === 'pending') return 'Pending';
-  return null;
-}

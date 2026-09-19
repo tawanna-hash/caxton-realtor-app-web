@@ -1,0 +1,323 @@
+'use client';
+
+// app/admin/analytics/urls/page.tsx
+//
+// URL rollup analytics dashboard. Aggregates magazine_hotspot_clicks by
+// outbound URL (domain + path, query stripped) so you can measure
+// publisher / partner / any destination link without an advertisers row.
+//
+// Sibling of /admin/analytics/advertiser/[id] — same click event source,
+// different grouping key. Useful for RealtyLine masthead, ABoR /
+// UnlockMLS, campaign landing pages, etc.
+//
+// Data source: /api/admin/analytics/urls
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import PageTitle from '@/components/ui/PageTitle';
+import InsightsPagination from '@/components/admin/InsightsPagination';
+import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
+
+interface UrlRollupRow {
+  url_key: string;
+  display_url: string;
+  clicks: number;
+  unique_sessions: number;
+  magazines: number;
+  hotspots: number;
+  first_click_at: string | null;
+  last_click_at: string | null;
+}
+
+interface UrlRollupResponse {
+  rows: UrlRollupRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  from: string;
+  to: string;
+}
+
+type PublicationFilter = 'all' | PublicationId;
+
+function UrlRollupCard({ row }: { row: UrlRollupRow }) {
+  return (
+    <div className="space-y-2 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <a
+          href={row.display_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="min-w-0 truncate text-sm font-medium text-orange-700 hover:underline"
+          title={row.url_key}
+        >
+          {row.url_key || '(empty)'}
+        </a>
+        <div className="whitespace-nowrap text-right text-sm font-semibold tabular-nums text-gray-900">{row.clicks.toLocaleString()} clicks</div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <div className="text-gray-500">Sessions</div>
+          <div className="tabular-nums text-gray-700">{row.unique_sessions.toLocaleString()}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">Magazines</div>
+          <div className="tabular-nums text-gray-700">{row.magazines}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">Hotspots</div>
+          <div className="tabular-nums text-gray-700">{row.hotspots}</div>
+        </div>
+      </div>
+      <div className="whitespace-nowrap text-xs text-gray-600">Last click: {formatDateTime(row.last_click_at)}</div>
+    </div>
+  );
+}
+
+// Local date helpers — the API takes ISO strings, but the <input type="date">
+// value is YYYY-MM-DD in the browser's local timezone. We convert both ways.
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+function daysAgoIso(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+function formatDateTime(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+export default function UrlAnalyticsPage() {
+  const [from, setFrom] = useState<string>(daysAgoIso(30));
+  const [to, setTo] = useState<string>(todayIso());
+  const [publication, setPublication] = useState<PublicationFilter>('all');
+  const [magazineId, setMagazineId] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(50);
+
+  const [data, setData] = useState<UrlRollupResponse | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  // Manual refresh nonce: bump to force a refetch with the same filters.
+  const [nonce, setNonce] = useState<number>(0);
+
+  const query = useMemo(() => {
+    const p = new URLSearchParams();
+    p.set('from', new Date(`${from}T00:00:00`).toISOString());
+    p.set('to', new Date(`${to}T23:59:59`).toISOString());
+    if (publication !== 'all') p.set('publication', publication);
+    if (magazineId.trim()) p.set('magazineId', magazineId.trim());
+    p.set('page', String(page));
+    p.set('pageSize', String(pageSize));
+    return p.toString();
+  }, [from, to, publication, magazineId, page, pageSize]);
+
+  // Fetch on filter change or manual refresh. All setState happens inside
+  // async callbacks (never synchronously in the effect body) to satisfy the
+  // repo's react-hooks/set-state-in-effect lint rule.
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/admin/analytics/urls?${query}`, { credentials: 'include' })
+      .then(async (res) => {
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          throw new Error(`Request failed (${res.status}) ${txt.slice(0, 200)}`);
+        }
+        return res.json() as Promise<UrlRollupResponse>;
+      })
+      .then((json) => {
+        if (cancelled) return;
+        setData(json);
+        setError(null);
+        setLoading(false);
+      })
+      .catch((err: Error) => {
+        if (cancelled) return;
+        setError(err.message);
+        setData(null);
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [query, nonce]);
+
+  const refresh = useCallback(() => {
+    setNonce((n) => n + 1);
+  }, []);
+
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
+  const totalClicks = useMemo(
+    () => (data?.rows ?? []).reduce((s, r) => s + r.clicks, 0),
+    [data],
+  );
+
+  return (
+    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+      <header>
+      <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Insights</div>
+      <PageTitle size="md">URL analytics</PageTitle>
+      <p className="mt-1 max-w-3xl text-sm text-gray-600">
+        Click totals grouped by outbound URL. Includes every clickable hotspot
+        regardless of partner link status — useful for publisher, partner,
+        and non-CRM destinations.
+      </p>
+      </header>
+
+      {/* Filters */}
+      <section aria-label="URL analytics filters" className="flex flex-wrap items-end gap-2">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-700">From</label>
+          <input
+            type="date"
+            value={from}
+            max={to}
+            onChange={(e) => { setFrom(e.target.value); setPage(1); }}
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-700">To</label>
+          <input
+            type="date"
+            value={to}
+            min={from}
+            max={todayIso()}
+            onChange={(e) => { setTo(e.target.value); setPage(1); }}
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-700">Publication</label>
+          <select
+            value={publication}
+            onChange={(e) => { setPublication(e.target.value as PublicationFilter); setPage(1); }}
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+          >
+            <option value="all">All</option>
+            {PUBLICATIONS.map((publicationOption) => (
+              <option key={publicationOption.id} value={publicationOption.id}>
+                {publicationOption.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-700">Magazine ID</label>
+          <input
+            type="number"
+            value={magazineId}
+            placeholder="optional"
+            onChange={(e) => { setMagazineId(e.target.value); setPage(1); }}
+            className="h-9 w-32 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+          />
+        </div>
+        <div className="ml-auto flex gap-2">
+          <button
+            onClick={() => { setFrom(daysAgoIso(30)); setTo(todayIso()); setPublication('all'); setMagazineId(''); setPage(1); }}
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Reset
+          </button>
+          <button
+            onClick={refresh}
+            className="h-9 rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+          >
+            Refresh
+          </button>
+        </div>
+      </section>
+
+      {/* Summary */}
+      {data && !loading && !error && (
+        <section aria-label="URL analytics summary" className="grid grid-cols-2 bg-white sm:w-fit">
+          <div className="border-r border-gray-200 px-4 py-2">
+            <div className="text-xs text-gray-500">Unique URLs</div>
+            <div className="mt-0.5 text-xl font-semibold tabular-nums text-gray-900">{data.total.toLocaleString()}</div>
+          </div>
+          <div className="px-4 py-2">
+            <div className="text-xs text-gray-500">Clicks on this page</div>
+            <div className="mt-0.5 text-xl font-semibold tabular-nums text-gray-900">{totalClicks.toLocaleString()}</div>
+          </div>
+        </section>
+      )}
+
+      {/* Table */}
+      <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+      <div className="divide-y divide-gray-100 md:hidden">
+        {loading && <div className="px-3 py-6 text-center text-sm text-gray-500">Loading…</div>}
+        {error && !loading && <div className="px-3 py-6 text-center text-sm text-red-600">{error}</div>}
+        {!loading && !error && data && data.rows.length === 0 && (
+          <div className="px-3 py-6 text-center text-sm text-gray-500">No click events in this range.</div>
+        )}
+        {!loading && !error && data && data.rows.map((r) => (
+          <UrlRollupCard key={r.url_key} row={r} />
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
+        <table className="min-w-[900px] table-fixed text-xs">
+          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
+            <tr>
+              <th className="px-3 py-2 text-left">URL</th>
+              <th className="px-3 py-2 text-right">Clicks</th>
+              <th className="px-3 py-2 text-right">Sessions</th>
+              <th className="px-3 py-2 text-right">Magazines</th>
+              <th className="px-3 py-2 text-right">Hotspots</th>
+              <th className="px-3 py-2 text-left">Last click</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {loading && (
+              <tr>
+                <td colSpan={6} className="px-3 py-6 text-center text-gray-500">Loading…</td>
+              </tr>
+            )}
+            {error && !loading && (
+              <tr>
+                <td colSpan={6} className="px-3 py-6 text-center text-red-600">{error}</td>
+              </tr>
+            )}
+            {!loading && !error && data && data.rows.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
+                  No click events in this range.
+                </td>
+              </tr>
+            )}
+            {!loading && !error && data && data.rows.map((r) => (
+              <tr key={r.url_key} className="hover:bg-gray-50">
+                <td className="px-3 py-2">
+                  <a
+                    href={r.display_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block truncate font-medium text-orange-700 hover:underline"
+                    title={r.url_key}
+                  >
+                    {r.url_key || '(empty)'}
+                  </a>
+                </td>
+                <td className="px-3 py-2 text-right font-medium tabular-nums">{r.clicks.toLocaleString()}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{r.unique_sessions.toLocaleString()}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{r.magazines}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{r.hotspots}</td>
+                <td className="px-3 py-2 text-gray-600">{formatDateTime(r.last_click_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {data && <InsightsPagination page={Math.min(page, totalPages)} pageSize={pageSize} total={data.total} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />}
+      </section>
+    </div>
+  );
+}

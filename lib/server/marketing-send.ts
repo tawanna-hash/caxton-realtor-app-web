@@ -7,12 +7,13 @@ import { getSql } from '@/lib/db';
 import { resolveAudience, type AudienceFilter, type OutreachAudienceSource } from '@/lib/marketing-campaigns';
 import { sendOneRecipient, makeUnsubToken } from '@/lib/marketing-email';
 import { syncProspectFromOutreach } from '@/lib/server/marketing-prospect-sync';
+import type { PubId } from '@/lib/publications';
 
 export interface MaterializeAudienceInput {
   sources: OutreachAudienceSource[];
   advertiserFilter?: AudienceFilter;
   subscriberFilter?: {
-    publication?: 'realtyline' | 'newsline';
+    publication?: PubId;
     status?: 'active' | 'unsubscribed';
     verified?: string;
   };
@@ -168,6 +169,8 @@ export interface DispatchInput {
   previewText?: string | null;
   fromName?: string | null;
   replyTo?: string | string[] | null;
+  cc?: string[] | null;
+  bcc?: string[] | null;
   repName?: string | null;
   brand?: 'realtyline' | 'newsline' | 'caxton';
   attachments?: Array<{ filename: string; content: string; contentType?: string }>;
@@ -199,7 +202,7 @@ export async function dispatchOutreach(input: DispatchInput): Promise<DispatchRe
   let failed = 0;
 
   const from = input.fromName
-    ? `${input.fromName} <${(process.env.EMAIL_FROM ?? 'hello@myrealtyline.com').replace(/^.*<|>$/g, '')}>`
+    ? `${input.fromName} <${(process.env.EMAIL_FROM ?? 'hello@newslinesa.com').replace(/^.*<|>$/g, '')}>`
     : undefined;
 
   // Serial send to stay polite with Resend rate limits (10/s default).
@@ -214,6 +217,8 @@ export async function dispatchOutreach(input: DispatchInput): Promise<DispatchRe
       brand: input.brand,
       from,
       replyTo: input.replyTo ?? undefined,
+      cc: input.cc ?? undefined,
+      bcc: input.bcc ?? undefined,
       attachments: input.attachments,
       attachmentLinks: input.attachmentLinks,
     });

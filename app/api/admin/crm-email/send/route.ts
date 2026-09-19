@@ -20,6 +20,10 @@ import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// Bulk sends dispatch recipients serially and update the delivery ledger after
+// each message. Give the request the same runtime budget as the send cron so a
+// normal CRM audience cannot be cut off by the platform's default duration.
+export const maxDuration = 300;
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -45,6 +49,8 @@ const sendSchema = z.object({
   from_name: z.string().trim().max(120).optional(),
   reply_to: z.string().regex(emailRe).optional(),
   reply_to_list: z.array(z.string().regex(emailRe)).max(10).optional(),
+  cc: z.array(z.string().regex(emailRe)).max(10).optional(),
+  bcc: z.array(z.string().regex(emailRe)).max(10).optional(),
   preview_text: z.string().trim().max(150).optional(),
   attachments: z.array(attachmentSchema).max(20).optional(),
   attachment_link_url: z.string().url().max(2000).optional(),
@@ -55,6 +61,7 @@ const sendSchema = z.object({
   scheduled_for: z.string().datetime({ offset: true }).optional(),
   recurrence_interval_days: z.number().int().positive().max(365).optional(),
   recurrence_until: z.string().datetime({ offset: true }).optional(),
+  manual_emails: z.array(z.string().regex(emailRe)).max(10000).optional(),
 }).strict().refine(
   (v) => v.mode !== 'schedule' || !!v.scheduled_for,
   { message: 'scheduled_for required when mode=schedule', path: ['scheduled_for'] },
@@ -64,6 +71,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  let stage = 'parse_request';
+  let outreachId: string | null = null;
+
+  try {
   const parsed = sendSchema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json({ error: 'invalid input', detail: parsed.error.flatten() }, { status: 400 });
@@ -80,27 +91,51 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const bodyClean = bodyWithLinkEarly.replace(/<!--\s*signature-here\s*-->/g, '');
   const bodyFinal = appendSignature(bodyClean, { skip: !input.include_signature });
 
+  stage = 'ensure_schema';
   await ensureSchema();
   const sql = getSql();
 
   // Materialize the audience from the filter.
+  stage = 'resolve_audience';
   const audience = await resolveCrmAudience(input.filter as CrmAudienceFilter);
-  if (audience.length === 0) {
+  const seen = new Set<string>();
+  const seeds: RecipientSeed[] = [];
+  for (const r of audience) {
+    const key = r.email.trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    seeds.push({
+      recipient_type: 'advertiser',
+      recipient_id: r.id,
+      email: r.email,
+      first_name: r.first_name,
+      last_name: r.last_name,
+      company: r.company,
+    });
+  }
+  for (const raw of input.manual_emails ?? []) {
+    const email = raw.trim();
+    const key = email.toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    seeds.push({
+      recipient_type: 'manual',
+      recipient_id: null,
+      email,
+      first_name: null,
+      last_name: null,
+      company: null,
+    });
+  }
+  if (seeds.length === 0) {
     return NextResponse.json({ error: 'no recipients matched' }, { status: 422 });
   }
 
-  const seeds: RecipientSeed[] = audience.map((r) => ({
-    recipient_type: 'advertiser',
-    recipient_id: r.id,
-    email: r.email,
-    first_name: r.first_name,
-    last_name: r.last_name,
-    company: r.company,
-  }));
-
   // Ensure a synthetic campaign row (FK requirement).
+  stage = 'ensure_campaign';
   const campaignId = await ensureCrmOutreachCampaign(input.publication_scope);
 
+  stage = 'create_outreach';
   const initialStatus = input.mode === 'schedule' ? 'scheduled' : 'sending';
   const created = (await sql`
     INSERT INTO marketing_campaign_outreach (
@@ -108,7 +143,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       recipient_ids, recipient_count, audience_sources, subscriber_ids, manual_emails,
       from_name, reply_to, preview_text,
       recurrence_interval_days, recurrence_until,
-      audience_snapshot, reply_to_list,
+      audience_snapshot, reply_to_list, cc, bcc,
       attachments, attachment_link_url, attachment_link_label,
       created_by
     ) VALUES (
@@ -116,30 +151,40 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       ${input.subject}, ${bodyFinal},
       ${initialStatus},
       ${input.scheduled_for ?? null},
-      ${JSON.stringify(seeds.map((s) => s.recipient_id))}::jsonb,
+      ${JSON.stringify(seeds.flatMap((s) => s.recipient_id == null ? [] : [s.recipient_id]))}::jsonb,
       ${seeds.length},
-      ${JSON.stringify(['advertisers'])}::jsonb,
+      ${JSON.stringify([
+        ...(seeds.some((s) => s.recipient_type === 'advertiser') ? ['advertisers'] : []),
+        ...(seeds.some((s) => s.recipient_type === 'manual') ? ['manual'] : []),
+      ])}::jsonb,
       ${JSON.stringify([])}::jsonb,
-      ${JSON.stringify([])}::jsonb,
+      ${JSON.stringify(seeds.filter((s) => s.recipient_type === 'manual').map((s) => s.email))}::jsonb,
       ${input.from_name ?? null},
       ${input.reply_to ?? null},
       ${input.preview_text ?? null},
       ${input.recurrence_interval_days ?? null},
       ${input.recurrence_until ?? null},
       ${JSON.stringify({
-        sources: ['advertisers'],
+        sources: [
+          ...(seeds.some((s) => s.recipient_type === 'advertiser') ? ['advertisers'] : []),
+          ...(seeds.some((s) => s.recipient_type === 'manual') ? ['manual'] : []),
+        ],
         crmFilter: input.filter,
+        manualEmails: seeds.filter((s) => s.recipient_type === 'manual').map((s) => s.email),
         publicationScope: input.publication_scope,
       })}::jsonb,
-      ${input.reply_to_list ? JSON.stringify(input.reply_to_list) : null}::jsonb,
-      ${input.attachments ? JSON.stringify(input.attachments) : null}::jsonb,
+      ${JSON.stringify(input.reply_to_list ?? [])}::jsonb,
+      ${JSON.stringify(input.cc ?? [])}::jsonb,
+      ${JSON.stringify(input.bcc ?? [])}::jsonb,
+      ${JSON.stringify(input.attachments ?? [])}::jsonb,
       ${input.attachment_link_url ?? null},
       ${input.attachment_link_label ?? null},
       ${admin.email ?? null}
     ) RETURNING id
   `) as unknown as Array<{ id: string }>;
-  const outreachId = created[0].id;
+  outreachId = created[0].id;
 
+  stage = 'insert_recipient_ledger';
   await insertRecipientsLedger(outreachId, seeds);
 
   if (input.mode === 'schedule') {
@@ -163,16 +208,20 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     : undefined;
 
   // Prepare attachments (attachment link button + signature already applied above)
+  stage = 'resolve_attachments';
   const attachments = await resolveAttachments(
     input.attachments as AttachmentRef[] | undefined,
   );
 
+  stage = 'dispatch_recipients';
   const result = await dispatchOutreach({
     outreachId,
     subject: input.subject,
     body: bodyFinal,
     fromName: input.from_name,
     replyTo: replyToFinal,
+    cc: input.cc,
+    bcc: input.bcc,
     previewText: input.preview_text,
     brand,
     attachments: attachments.length > 0 ? attachments : undefined,
@@ -189,4 +238,26 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     sent: result.sent,
     failed: result.failed,
   });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error('[crm-email/send] failed', { stage, outreachId, detail });
+
+    if (outreachId) {
+      try {
+        const sql = getSql();
+        await sql`
+          UPDATE marketing_campaign_outreach
+          SET status = 'failed', error_message = ${`${stage}: ${detail}`}
+          WHERE id = ${outreachId}
+        `;
+      } catch (markErr) {
+        console.error('[crm-email/send] could not mark outreach failed', markErr);
+      }
+    }
+
+    return NextResponse.json(
+      { error: 'CRM email send failed', stage, detail, outreach_id: outreachId },
+      { status: 500 },
+    );
+  }
 });

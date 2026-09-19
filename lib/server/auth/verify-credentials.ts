@@ -31,7 +31,7 @@ const DUMMY_HASH = "$2b$12$0000000000000000000000.000000000000000000000000000000
 export interface VerifiedCredentials {
   realtorId: string;
   email: string;
-  emailVerified: Date;
+  emailVerified: Date | null;
 }
 
 /**
@@ -59,9 +59,10 @@ export async function verifyCredentials(
   const ok = await bcrypt.compare(parsed.data.password, realtor.password_hash);
   if (!ok) return null;
 
-  if (!realtor.email_verified_at) {
-    throw new EmailNotVerifiedError();
-  }
+  // Email verification gate removed — with password-based auth, the
+  // password IS the proof of identity. The email_verified_at check was
+  // only needed for the magic-link flow (to prove email ownership before
+  // issuing a session). Users with a valid password can sign in regardless.
 
   await bumpLoginNow(realtor.id);
 

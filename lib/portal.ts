@@ -55,8 +55,8 @@ export interface PortalFile {
   updated_at: string;
 }
 
-export type PortalFormFieldType = 'text' | 'tel' | 'url' | 'email' | 'textarea' | 'select';
-export interface PortalFormField {
+type PortalFormFieldType = 'text' | 'tel' | 'url' | 'email' | 'textarea' | 'select';
+interface PortalFormField {
   key: string;
   label: string;
   type: PortalFormFieldType;
@@ -65,33 +65,6 @@ export interface PortalFormField {
 }
 export interface PortalFormSchema {
   fields: PortalFormField[];
-}
-export interface PortalForm {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  schema: PortalFormSchema;
-  active: boolean;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export type PortalFormAssignmentStatus = 'pending' | 'in_progress' | 'submitted';
-export interface PortalFormAssignment {
-  id: string;
-  form_id: string;
-  advertiser_id: number;
-  status: PortalFormAssignmentStatus;
-  answers: Record<string, string | number | boolean | null>;
-  assigned_by: string | null;
-  assigned_at: string;
-  submitted_at: string | null;
-  due_at: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
 }
 
 // ── Token helpers ───────────────────────────────────────────────────
@@ -108,20 +81,6 @@ export function hashMagicLinkToken(raw: string): string {
 // ── Allow-lists ─────────────────────────────────────────────────────
 export const PORTAL_LINK_PURPOSE_VALUES = new Set<PortalLinkPurpose>(
   ['login', 'sign_agreement', 'pay_invoice', 'form']);
-
-export const PORTAL_FILE_PATCHABLE_FIELDS = [
-  'title', 'description', 'category', 'visibility',
-  'file_url', 'file_name', 'file_mime', 'file_size_bytes',
-  'agreement_id', 'invoice_id',
-] as const;
-
-export const PORTAL_FORM_PATCHABLE_FIELDS = [
-  'title', 'description', 'schema', 'active', 'slug',
-] as const;
-
-export const PORTAL_ASSIGNMENT_STATUS_VALUES = new Set<PortalFormAssignmentStatus>(
-  ['pending', 'in_progress', 'submitted']);
-
 // ── Session helpers ─────────────────────────────────────────────────
 /** Validates that a magic-link row is currently a valid session bearer. */
 export function isSessionActive(row: Pick<PortalMagicLink, 'session_expires_at' | 'revoked_at' | 'consumed_at'>): boolean {

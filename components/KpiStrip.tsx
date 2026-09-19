@@ -58,7 +58,7 @@ export default function KpiStrip() {
     : '';
 
   return (
-    <section aria-label="At a glance" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <section aria-label="At a glance" className="grid grid-cols-2 gap-y-3 bg-white lg:grid-cols-4">
       <Tile
         label="Subscribers"
         value={fmt(data?.subscribers.total)}
@@ -74,7 +74,7 @@ export default function KpiStrip() {
         href="/admin/magazines"
       />
       <Tile
-        label="Top advertiser · 30d"
+        label="Top partner · 30d"
         value={data?.topAdvertiser ? data.topAdvertiser.name : '—'}
         sub={data?.topAdvertiser ? `${fmt(data.topAdvertiser.clicks)} clicks` : 'No clicks yet'}
         loading={loading}
@@ -82,7 +82,7 @@ export default function KpiStrip() {
         valueSmall
       />
       <Tile
-        label="Linked advertisers"
+        label="Linked partners"
         value={fmt(data?.linkedAdvertisers)}
         sub="With ≥1 tracked hotspot"
         loading={loading}
@@ -108,7 +108,7 @@ function Tile({
   valueSmall?: boolean;
 }) {
   const inner = (
-    <div className="rounded-md border border-gray-200 bg-white p-4 h-full transition hover:border-gray-300 hover:shadow-sm">
+    <div className="h-full min-w-0 border-r border-gray-200 bg-white px-4 py-2 transition last:border-r-0 hover:bg-orange-50/40">
       {loading ? (
         <div className="animate-pulse">
           <div className="h-2.5 bg-gray-200 rounded-md w-24" />
@@ -120,7 +120,7 @@ function Tile({
           <p className="text-[11px] font-medium text-gray-500 truncate">{label}</p>
           <p
             className={`font-semibold mt-1 tracking-tight text-gray-900 truncate ${
-              valueSmall ? 'text-lg' : 'text-2xl'
+              valueSmall ? 'text-base' : 'text-xl'
             }`}
             title={value}
           >

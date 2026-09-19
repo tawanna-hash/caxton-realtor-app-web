@@ -17,7 +17,7 @@
 // drawLabelValue() draws "Label: value" on a single line, e.g.
 // "Ad Size: 1/2 page", "Ad Rate: $1,234.56".
 
-export type ExtractedAgreementFields = {
+type ExtractedAgreementFields = {
   company_name?: string;
   advertiser_email?: string;
   advertiser_phone?: string;
@@ -112,7 +112,7 @@ function firstPhone(text: string): string | undefined {
  * The ADVERTISER block (per agreement-pdf.ts) is unlabeled lines under an
  * "ADVERTISER" header: company_name, rep_name?, "street, city, ST zip",
  * email, phone. Email/phone are matched WITHIN this block only — the
- * PUBLISHER block (which contains tawanna@myrealtyline.com) is drawn
+ * PUBLISHER block (which contains tawanna@realtynewsnow.app) is drawn
  * before the advertiser block, so a global email match would wrongly
  * capture the publisher's address.
  */

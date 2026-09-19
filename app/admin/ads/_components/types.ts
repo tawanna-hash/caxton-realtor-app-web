@@ -4,7 +4,9 @@
 
 export type AdZone = 'article' | 'feed' | 'calendar' | 'newsletter' | 'app' | 'account' | 'misc';
 export type AdTier = 'premium' | 'standard' | 'house';
-export type AdPublication = 'austin' | 'san_antonio' | 'both';
+import type { PublicationScope } from '@/lib/publications';
+
+export type AdPublication = PublicationScope;
 
 export interface AdSize {
   w: number;
@@ -56,7 +58,7 @@ export const ZONE_LABELS: Record<AdZone, string> = {
   article: 'Article',
   feed: 'Feed',
   calendar: 'Calendar',
-  newsletter: 'Newsletter',
+  newsletter: 'Email',
   app: 'App-level',
   account: 'Account',
   misc: 'Misc',
@@ -79,21 +81,4 @@ export function isCampaignActive(c: AdCampaign): boolean {
   if (!c.active) return false;
   const today = new Date().toISOString().slice(0, 10);
   return c.start_date <= today && today <= c.end_date;
-}
-
-export function campaignStatus(c: AdCampaign): {
-  label: string;
-  className: string;
-} {
-  if (!c.active) {
-    return { label: 'Paused', className: 'bg-gray-100 text-gray-700 rounded-md' };
-  }
-  const today = new Date().toISOString().slice(0, 10);
-  if (today < c.start_date) {
-    return { label: 'Scheduled', className: 'bg-blue-100 text-blue-800' };
-  }
-  if (today > c.end_date) {
-    return { label: 'Expired', className: 'bg-red-100 text-red-700 rounded-md' };
-  }
-  return { label: 'Live', className: 'bg-green-100 text-green-800 rounded-md' };
 }

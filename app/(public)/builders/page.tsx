@@ -118,7 +118,7 @@ export default async function BuildersHubPage() {
             href="/advertisers"
             className="inline-block text-sm uppercase tracking-[0.2em] text-gray-500 hover:text-gray-900 font-medium mb-2 transition-colors"
           >
-            Advertisers
+            Partners
           </Link>
           <PageTitle size="md">Builders &amp; Developers</PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">

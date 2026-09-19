@@ -36,6 +36,16 @@ type Attachment = {
   size?: number;
 };
 
+type RewriteMode = 'polish' | 'shorten' | 'friendly' | 'persuasive';
+
+type RewriteSuggestion = {
+  subject: string;
+  previewText: string;
+  body: string;
+};
+
+type OriginalMessage = RewriteSuggestion;
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -65,11 +75,18 @@ const TOKENS = [
 
 const STATUS_OPTIONS: Array<{ value: AdvertiserStatus; label: string }> = [
   { value: 'prospect',   label: 'Prospect' },
-  { value: 'advertiser', label: 'Advertiser' },
+  { value: 'advertiser', label: 'Partner' },
   { value: 'archived',   label: 'Archived' },
 ];
 
 const PUB_OPTIONS: PublicationKey[] = [...PUBLICATION_KEYS];
+
+const REWRITE_OPTIONS: Array<{ value: RewriteMode; label: string; description: string }> = [
+  { value: 'polish', label: 'Polish', description: 'Clearer and more professional' },
+  { value: 'shorten', label: 'Shorten', description: 'Tighter and easier to scan' },
+  { value: 'friendly', label: 'Friendlier', description: 'Warmer and more conversational' },
+  { value: 'persuasive', label: 'More persuasive', description: 'Stronger value and call to action' },
+];
 
 const DRAFT_KEY = 'crm-composer-draft-v1';
 
@@ -80,6 +97,8 @@ type Draft = {
   fromName: string;
   replyTo: string;
   replyToList: string;
+  cc: string;
+  bcc: string;
   previewText: string;
   attachmentLinkUrl: string;
   attachmentLinkLabel: string;
@@ -92,6 +111,8 @@ type Draft = {
   query: string;
   tag: string;
   includeSignature: boolean;
+  manualEmails: string;
+  selectedRecipientIds: number[] | null;
 };
 
 function loadDraft(): Partial<Draft> {
@@ -119,12 +140,48 @@ function clearDraft() {
 }
 
 // ── Component ───────────────────────────────────────────────────
+function RecipientCard({
+  recipient,
+  checked,
+  onToggle,
+}: {
+  recipient: SampleRow;
+  checked: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex items-start gap-2.5 p-2.5">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onToggle}
+        aria-label={`Select ${recipient.email}`}
+        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-purple-700 focus:ring-purple-500"
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="truncate font-mono text-xs text-gray-800">{recipient.email}</div>
+            <div className="truncate text-xs text-gray-700">
+              {[recipient.first_name, recipient.last_name].filter(Boolean).join(' ') || recipient.company || '—'}
+            </div>
+          </div>
+          <div className="whitespace-nowrap text-xs text-gray-500">{recipient.publication ?? '—'}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, initialFilter, prefillOutreachId, onPrefilled }: Props) {
   // Filter chip state (independent of CrmClient's chips — but seeded from them)
   const [statuses, setStatuses] = useState<AdvertiserStatus[]>(initialFilter?.statuses ?? []);
   const [publications, setPublications] = useState<PublicationKey[]>(initialFilter?.publications ?? []);
   const [query, setQuery] = useState(initialFilter?.query ?? '');
   const [tag, setTag] = useState('');
+  const [manualEmails, setManualEmails] = useState('');
+  // null means every recipient matching the current filter is selected.
+  const [selectedRecipientIds, setSelectedRecipientIds] = useState<number[] | null>(null);
 
   // Compose fields
   const [subject, setSubject] = useState('');
@@ -132,6 +189,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
   const [fromName, setFromName] = useState('');
   const [replyTo, setReplyTo] = useState('');
   const [replyToList, setReplyToList] = useState(''); // comma-separated
+  const [cc, setCc] = useState('');
+  const [bcc, setBcc] = useState('');
   const [previewText, setPreviewText] = useState('');
 
   // Attachments + link
@@ -160,6 +219,12 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
   const [submitErr, setSubmitErr] = useState<string | null>(null);
   const [showTokenMenu, setShowTokenMenu] = useState(false);
   const [restoredDraft, setRestoredDraft] = useState(false);
+  const [rewriteOpen, setRewriteOpen] = useState(false);
+  const [rewriteMode, setRewriteMode] = useState<RewriteMode>('polish');
+  const [rewriteLoading, setRewriteLoading] = useState(false);
+  const [rewriteError, setRewriteError] = useState<string | null>(null);
+  const [rewriteSuggestion, setRewriteSuggestion] = useState<RewriteSuggestion | null>(null);
+  const [originalMessage, setOriginalMessage] = useState<OriginalMessage | null>(null);
 
   // ── Restore draft on open ─────────────────────────────────────
   useEffect(() => {
@@ -172,6 +237,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       setFromName(d.fromName ?? '');
       setReplyTo(d.replyTo ?? '');
       setReplyToList(d.replyToList ?? '');
+      setCc(d.cc ?? '');
+      setBcc(d.bcc ?? '');
       setPreviewText(d.previewText ?? '');
       setAttachmentLinkUrl(d.attachmentLinkUrl ?? '');
       setAttachmentLinkLabel(d.attachmentLinkLabel ?? '');
@@ -184,6 +251,10 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       if (d.publications) setPublications(d.publications);
       if (typeof d.query === 'string') setQuery(d.query);
       if (typeof d.tag === 'string') setTag(d.tag);
+      if (typeof d.manualEmails === 'string') setManualEmails(d.manualEmails);
+      if (d.selectedRecipientIds === null || Array.isArray(d.selectedRecipientIds)) {
+        setSelectedRecipientIds(d.selectedRecipientIds);
+      }
       setRestoredDraft(true);
       setTimeout(() => setRestoredDraft(false), 3500);
     });
@@ -204,6 +275,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         if (typeof row.body === 'string') setBody(row.body);
         if (typeof row.from_name === 'string') setFromName(row.from_name);
         if (typeof row.reply_to === 'string') setReplyTo(row.reply_to);
+        if (Array.isArray(row.cc)) setCc(row.cc.join(', '));
+        if (Array.isArray(row.bcc)) setBcc(row.bcc.join(', '));
         if (typeof row.preview_text === 'string') setPreviewText(row.preview_text);
         if (typeof row.attachment_link_url === 'string') setAttachmentLinkUrl(row.attachment_link_url);
         if (typeof row.attachment_link_label === 'string') setAttachmentLinkLabel(row.attachment_link_label);
@@ -220,20 +293,22 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     if (!open) return;
     const t = setTimeout(() => {
       saveDraft({
-        subject, body, fromName, replyTo, replyToList, previewText,
+        subject, body, fromName, replyTo, replyToList, cc, bcc, previewText,
         attachmentLinkUrl, attachmentLinkLabel,
         recurrenceIntervalDays, recurrenceUntil, scheduledFor,
         publicationScope, statuses, publications, query, tag,
         includeSignature,
+        manualEmails,
+        selectedRecipientIds,
       });
     }, 600);
     return () => clearTimeout(t);
   }, [
-    open, subject, body, fromName, replyTo, replyToList, previewText,
+    open, subject, body, fromName, replyTo, replyToList, cc, bcc, previewText,
     attachmentLinkUrl, attachmentLinkLabel,
     recurrenceIntervalDays, recurrenceUntil, scheduledFor,
     publicationScope, statuses, publications, query, tag,
-    includeSignature,
+    includeSignature, manualEmails, selectedRecipientIds,
   ]);
 
   // ── Client-side audience preview (mirrors backend logic) ─────
@@ -322,6 +397,51 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     return replyToList.split(',').map((s) => s.trim()).filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s));
   }, [replyToList]);
 
+  const parseCopyList = useCallback((value: string): string[] => {
+    return Array.from(new Set(
+      value
+        .split(/[\s,;]+/)
+        .map((item) => item.trim().toLowerCase())
+        .filter((item) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item)),
+    )).slice(0, 10);
+  }, []);
+
+  const parsedManualEmails = useMemo(() => {
+    const seen = new Set<string>();
+    return manualEmails
+      .split(/[\s,;]+/)
+      .map((value) => value.trim().toLowerCase())
+      .filter((value) => {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || seen.has(value)) return false;
+        seen.add(value);
+        return true;
+      });
+  }, [manualEmails]);
+
+  const selectedIds = useMemo(
+    () => selectedRecipientIds ?? (preview?.ids ?? localAudience.map((row) => row.id)),
+    [selectedRecipientIds, preview, localAudience],
+  );
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const selectedCrmEmails = useMemo(() => {
+    return new Set(
+      localAudience
+        .filter((row) => selectedIdSet.has(row.id))
+        .map((row) => row.email.trim().toLowerCase()),
+    );
+  }, [localAudience, selectedIdSet]);
+  const uniqueManualCount = parsedManualEmails.filter((email) => !selectedCrmEmails.has(email)).length;
+  const recipientCount = selectedIds.length + uniqueManualCount;
+
+  const toggleRecipient = useCallback((id: number) => {
+    setSelectedRecipientIds((current) => {
+      const base = new Set(current ?? (preview?.ids ?? localAudience.map((row) => row.id)));
+      if (base.has(id)) base.delete(id);
+      else base.add(id);
+      return Array.from(base);
+    });
+  }, [preview, localAudience]);
+
   const insertToken = useCallback((tok: string) => {
     setBody((prev) => `${prev}${tok}`);
     setShowTokenMenu(false);
@@ -332,6 +452,54 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
 
 <!-- signature-here -->`);
   }, []);
+
+  const requestRewrite = useCallback(async () => {
+    if (!subject.trim() && !body.replace(/<[^>]*>/g, '').trim()) {
+      setRewriteError('Add a subject or message before requesting a rewrite.');
+      return;
+    }
+
+    setRewriteLoading(true);
+    setRewriteError(null);
+    try {
+      const response = await fetch('/api/admin/crm-email/rewrite', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mode: rewriteMode, subject, previewText, body }),
+      });
+      const data = await response.json().catch(() => null) as
+        | { suggestion?: RewriteSuggestion; error?: string }
+        | null;
+      if (!response.ok || !data?.suggestion) {
+        throw new Error(data?.error ?? 'Could not create a rewrite suggestion.');
+      }
+      setRewriteSuggestion(data.suggestion);
+    } catch (error) {
+      setRewriteSuggestion(null);
+      setRewriteError(error instanceof Error ? error.message : 'Could not create a rewrite suggestion.');
+    } finally {
+      setRewriteLoading(false);
+    }
+  }, [body, previewText, rewriteMode, subject]);
+
+  const applyRewrite = useCallback(() => {
+    if (!rewriteSuggestion) return;
+    setOriginalMessage({ subject, previewText, body });
+    setSubject(rewriteSuggestion.subject);
+    setPreviewText(rewriteSuggestion.previewText);
+    setBody(rewriteSuggestion.body);
+    setRewriteSuggestion(null);
+    setRewriteError(null);
+    setRewriteOpen(false);
+  }, [body, previewText, rewriteSuggestion, subject]);
+
+  const undoRewrite = useCallback(() => {
+    if (!originalMessage) return;
+    setSubject(originalMessage.subject);
+    setPreviewText(originalMessage.previewText);
+    setBody(originalMessage.body);
+    setOriginalMessage(null);
+  }, [originalMessage]);
 
   const onUpload = useCallback(async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -379,6 +547,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
           from_name: fromName || undefined,
           reply_to: replyTo || undefined,
           reply_to_list: parseReplyToList().length > 0 ? parseReplyToList() : undefined,
+          cc: parseCopyList(cc).length > 0 ? parseCopyList(cc) : undefined,
+          bcc: parseCopyList(bcc).length > 0 ? parseCopyList(bcc) : undefined,
           preview_text: previewText || undefined,
           attachments: attachments.length > 0
             ? attachments.map(({ filename, url, content_type }) => ({ filename, url, content_type }))
@@ -400,7 +570,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     } finally {
       setTestSending(false);
     }
-  }, [testTo, subject, body, fromName, replyTo, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel, publicationScope, includeSignature, parseReplyToList]);
+  }, [testTo, subject, body, fromName, replyTo, cc, bcc, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel, publicationScope, includeSignature, parseReplyToList, parseCopyList]);
 
   const onSubmit = useCallback(async () => {
     if (!subject || !body) {
@@ -411,8 +581,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       setSubmitErr('scheduled_for is required for scheduled sends');
       return;
     }
-    if ((preview?.count ?? 0) === 0) {
-      setSubmitErr('no recipients match the current filter');
+    if (recipientCount === 0) {
+      setSubmitErr('select at least one CRM recipient or add a valid email address');
       return;
     }
     setSubmitting(true);
@@ -420,16 +590,16 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     try {
       const payload = {
         filter: {
-          query: query || undefined,
-          status: statuses.length > 0 ? statuses : undefined,
-          publication: publications.length > 0 ? publications : undefined,
-          tag: tag || undefined,
+          ids: selectedIds,
         },
+        manual_emails: parsedManualEmails.length > 0 ? parsedManualEmails : undefined,
         subject,
         body,
         from_name: fromName || undefined,
         reply_to: replyTo || undefined,
         reply_to_list: parseReplyToList().length > 0 ? parseReplyToList() : undefined,
+        cc: parseCopyList(cc).length > 0 ? parseCopyList(cc) : undefined,
+        bcc: parseCopyList(bcc).length > 0 ? parseCopyList(bcc) : undefined,
         preview_text: previewText || undefined,
         attachments: attachments.length > 0 ? attachments.map(({ filename, url, content_type }) => ({ filename, url, content_type })) : undefined,
         attachment_link_url: attachmentLinkUrl || undefined,
@@ -459,15 +629,15 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       setSubmitting(false);
     }
   }, [
-    subject, body, mode, scheduledFor, preview, query, statuses, publications, tag,
-    fromName, replyTo, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel,
-    publicationScope, includeSignature, recurrenceIntervalDays, recurrenceUntil, parseReplyToList, onSent, onClose,
+    subject, body, mode, scheduledFor, recipientCount, selectedIds, parsedManualEmails,
+    fromName, replyTo, cc, bcc, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel,
+    publicationScope, includeSignature, recurrenceIntervalDays, recurrenceUntil, parseReplyToList, parseCopyList, onSent, onClose,
   ]);
 
   if (!open) return null;
 
   const serverCount = preview?.count ?? null;
-  const sampleForDisplay = preview?.sample ?? localAudience.slice(0, 25);
+  const sampleForDisplay = localAudience.length > 0 ? localAudience : (preview?.sample ?? []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-stretch justify-stretch bg-black/40 backdrop-blur-sm">
@@ -476,7 +646,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-gray-500">CRM outreach</div>
-            <h2 className="mt-0.5 font-serif text-2xl text-gray-900">Compose email</h2>
+            <h2 className="mt-0.5 font-serif text-2xl text-gray-900">Compose Email</h2>
           </div>
           <div className="flex items-center gap-3">
             {restoredDraft && (
@@ -518,7 +688,10 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                         <button
                           key={opt.value}
                           type="button"
-                          onClick={() => toggleFrom<AdvertiserStatus>(setStatuses, opt.value)}
+                          onClick={() => {
+                            setSelectedRecipientIds(null);
+                            toggleFrom<AdvertiserStatus>(setStatuses, opt.value);
+                          }}
                           className={`rounded-full border px-3 py-1 text-xs ${on ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'}`}
                         >
                           {opt.label}
@@ -537,7 +710,10 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                         <button
                           key={p}
                           type="button"
-                          onClick={() => toggleFrom<PublicationKey>(setPublications, p)}
+                          onClick={() => {
+                            setSelectedRecipientIds(null);
+                            toggleFrom<PublicationKey>(setPublications, p);
+                          }}
                           className={`rounded-full border px-3 py-1 text-xs ${on ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'}`}
                         >
                           {p}
@@ -553,7 +729,10 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     <input
                       type="text"
                       value={query}
-                      onChange={(e) => setQuery(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedRecipientIds(null);
+                        setQuery(e.target.value);
+                      }}
                       placeholder="name / company / email"
                       className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
@@ -563,10 +742,29 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     <input
                       type="text"
                       value={tag}
-                      onChange={(e) => setTag(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedRecipientIds(null);
+                        setTag(e.target.value);
+                      }}
                       placeholder="optional single tag"
                       className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Add emails manually
+                  </label>
+                  <textarea
+                    value={manualEmails}
+                    onChange={(e) => setManualEmails(e.target.value)}
+                    rows={2}
+                    placeholder="name@example.com, another@example.com"
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  <div className="mt-1 text-xs text-gray-500">
+                    Separate addresses with commas, spaces, semicolons, or new lines. {parsedManualEmails.length} valid.
                   </div>
                 </div>
               </div>
@@ -598,9 +796,25 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <label className="text-xs font-medium uppercase tracking-wide text-gray-500">Body</label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        data-testid="crm-rewrite-toggle"
+                        aria-expanded={rewriteOpen}
+                        onClick={() => {
+                          setRewriteOpen((current) => !current);
+                          setRewriteError(null);
+                        }}
+                        className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+                          rewriteOpen
+                            ? 'border-purple-600 bg-purple-50 text-purple-700'
+                            : 'border-purple-300 bg-white text-purple-700 hover:bg-purple-50'
+                        }`}
+                      >
+                        Rewrite
+                      </button>
                       <button
                         type="button"
                         onClick={insertSignatureNow}
@@ -635,6 +849,139 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     </div>
                     </div>
                   </div>
+                  {originalMessage && (
+                    <div
+                      className="mt-2 flex items-center justify-between gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900"
+                      role="status"
+                    >
+                      <span>Rewrite applied to this draft.</span>
+                      <button
+                        type="button"
+                        data-testid="crm-rewrite-undo"
+                        onClick={undoRewrite}
+                        className="shrink-0 font-semibold underline decoration-emerald-400 underline-offset-2 hover:text-emerald-700"
+                      >
+                        Undo
+                      </button>
+                    </div>
+                  )}
+                  {rewriteOpen && (
+                    <div
+                      data-testid="crm-rewrite-panel"
+                      className="mt-2 rounded-lg border border-purple-200 bg-purple-50/60 p-3"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <div className="text-sm font-semibold text-gray-900">Rewrite suggestion</div>
+                          <p className="mt-0.5 text-xs text-gray-600">
+                            Choose a direction. Your draft stays unchanged until you apply it.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRewriteOpen(false);
+                            setRewriteSuggestion(null);
+                            setRewriteError(null);
+                          }}
+                          className="rounded px-2 py-1 text-xs text-gray-600 hover:bg-white hover:text-gray-900"
+                          aria-label="Close rewrite suggestions"
+                        >
+                          Close
+                        </button>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {REWRITE_OPTIONS.map((option) => {
+                          const selected = rewriteMode === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              data-testid={`crm-rewrite-mode-${option.value}`}
+                              aria-pressed={selected}
+                              onClick={() => {
+                                setRewriteMode(option.value);
+                                setRewriteSuggestion(null);
+                                setRewriteError(null);
+                              }}
+                              className={`rounded-md border px-2 py-2 text-left transition-colors ${
+                                selected
+                                  ? 'border-purple-600 bg-white text-purple-800 shadow-sm'
+                                  : 'border-gray-200 bg-white/70 text-gray-700 hover:border-purple-300'
+                              }`}
+                            >
+                              <span className="block text-xs font-semibold">{option.label}</span>
+                              <span className="mt-0.5 block text-[11px] leading-4 text-gray-500">{option.description}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          data-testid="crm-rewrite-generate"
+                          onClick={requestRewrite}
+                          disabled={rewriteLoading}
+                          className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {rewriteLoading ? 'Writing suggestion…' : rewriteSuggestion ? 'Try again' : 'Suggest rewrite'}
+                        </button>
+                        <span className="text-[11px] text-gray-500">Tokens, links, and signature placement are protected.</span>
+                      </div>
+
+                      {rewriteError && (
+                        <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+                          {rewriteError}
+                        </div>
+                      )}
+
+                      {rewriteSuggestion && (
+                        <div data-testid="crm-rewrite-result" className="mt-3 overflow-hidden rounded-md border border-gray-200 bg-white">
+                          <div className="border-b border-gray-200 px-3 py-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Suggested subject</div>
+                            <div className="mt-0.5 text-sm font-medium text-gray-900">{rewriteSuggestion.subject || 'No subject'}</div>
+                          </div>
+                          {rewriteSuggestion.previewText && (
+                            <div className="border-b border-gray-200 px-3 py-2">
+                              <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Suggested preview text</div>
+                              <div className="mt-0.5 text-xs text-gray-700">{rewriteSuggestion.previewText}</div>
+                            </div>
+                          )}
+                          <div className="px-3 py-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Suggested body</div>
+                            <div
+                              className="mt-1 max-h-56 overflow-y-auto text-sm leading-6 text-gray-800 [&_a]:text-purple-700 [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
+                              dangerouslySetInnerHTML={{ __html: rewriteSuggestion.body }}
+                            />
+                          </div>
+                          <div className="flex flex-wrap justify-end gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2">
+                            <button
+                              type="button"
+                              data-testid="crm-rewrite-keep-original"
+                              onClick={() => {
+                                setRewriteSuggestion(null);
+                                setRewriteOpen(false);
+                                setRewriteError(null);
+                              }}
+                              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+                            >
+                              Keep original
+                            </button>
+                            <button
+                              type="button"
+                              data-testid="crm-rewrite-apply"
+                              onClick={applyRewrite}
+                              className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-800"
+                            >
+                              Apply suggestion
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="mt-1">
                     <RichTextEditor value={body} onChange={setBody} />
                   </div>
@@ -684,6 +1031,28 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                       className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">CC (comma separated)</label>
+                    <input
+                      type="text"
+                      value={cc}
+                      onChange={(e) => setCc(e.target.value)}
+                      placeholder="person@example.com"
+                      autoComplete="off"
+                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">BCC (comma separated)</label>
+                    <input
+                      type="text"
+                      value={bcc}
+                      onChange={(e) => setBcc(e.target.value)}
+                      placeholder="private-copy@example.com"
+                      autoComplete="off"
+                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
                 </div>
               </div>
             </section>
@@ -691,7 +1060,9 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
             {/* Attachments */}
             <section className="mb-5 border-t border-gray-200 pt-5">
               <h3 className="text-sm font-semibold text-gray-900">Attachments</h3>
-              <p className="mt-0.5 text-xs text-gray-500">Files upload to Vercel Blob and are linked in the email (no 4.5 MB body limit).</p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Uploaded files automatically appear as download buttons in the email.
+              </p>
               <div className="mt-2 space-y-2">
                 {attachments.map((a, i) => (
                   <div key={a.url} className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs">
@@ -716,7 +1087,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
 
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">Attachment link URL (button)</label>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">Additional button URL (optional)</label>
                   <input
                     type="url"
                     value={attachmentLinkUrl}
@@ -726,7 +1097,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">Button label</label>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">Additional button label</label>
                   <input
                     type="text"
                     value={attachmentLinkLabel}
@@ -797,7 +1168,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
 
             {/* Test send */}
             <section className="mb-5 border-t border-gray-200 pt-5">
-              <h3 className="text-sm font-semibold text-gray-900">Test send</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Test Send</h3>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <input
                   type="email"
@@ -832,7 +1203,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
             <div className="mt-2 rounded-md border border-gray-200 bg-white px-3 py-2">
               <div className="text-xs uppercase tracking-wide text-gray-500">Recipients</div>
               <div className="mt-0.5 font-serif text-3xl text-gray-900">
-                {previewLoading ? '…' : serverCount ?? localAudience.length}
+                {previewLoading && selectedRecipientIds === null ? '…' : recipientCount}
               </div>
               {previewErr && <div className="mt-1 text-xs text-red-600">{previewErr}</div>}
               {!previewErr && serverCount != null && serverCount !== localAudience.length && (
@@ -842,42 +1213,87 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
               )}
             </div>
 
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedRecipientIds(null)}
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+              >
+                Select all ({serverCount ?? localAudience.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedRecipientIds([])}
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+              >
+                Clear all
+              </button>
+              <span className="text-xs text-gray-500">{selectedIds.length} CRM selected</span>
+            </div>
+
             <div className="mt-3 flex-1 overflow-y-auto rounded-md border border-gray-200 bg-white">
-              <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-gray-100 text-gray-600">
-                  <tr>
-                    <th className="px-2 py-1 text-left font-medium">Email</th>
-                    <th className="px-2 py-1 text-left font-medium">Name</th>
-                    <th className="px-2 py-1 text-left font-medium">Pub</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sampleForDisplay.length === 0 && !previewLoading && (
-                    <tr><td colSpan={3} className="px-2 py-4 text-center text-gray-400">No recipients match this filter.</td></tr>
-                  )}
-                  {sampleForDisplay.map((r) => (
-                    <tr key={r.id} className="border-t border-gray-100">
-                      <td className="px-2 py-1 font-mono text-gray-800">{r.email}</td>
-                      <td className="px-2 py-1 text-gray-700">
-                        {[r.first_name, r.last_name].filter(Boolean).join(' ') || r.company || '—'}
-                      </td>
-                      <td className="px-2 py-1 text-gray-500">{r.publication ?? '—'}</td>
+              <div className="divide-y divide-gray-100 md:hidden">
+                {sampleForDisplay.length === 0 && !previewLoading && (
+                  <div className="px-2 py-4 text-center text-xs text-gray-400">No recipients match this filter.</div>
+                )}
+                {sampleForDisplay.map((r) => (
+                  <RecipientCard
+                    key={r.id}
+                    recipient={r}
+                    checked={selectedIdSet.has(r.id)}
+                    onToggle={() => toggleRecipient(r.id)}
+                  />
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-gray-100 text-gray-600">
+                    <tr>
+                      <th className="w-9 px-2 py-1 text-left font-medium">
+                        <span className="sr-only">Selected</span>
+                      </th>
+                      <th className="px-2 py-1 text-left font-medium">Email</th>
+                      <th className="px-2 py-1 text-left font-medium">Name</th>
+                      <th className="px-2 py-1 text-left font-medium">Pub</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {sampleForDisplay.length === 0 && !previewLoading && (
+                      <tr><td colSpan={4} className="px-2 py-4 text-center text-gray-400">No recipients match this filter.</td></tr>
+                    )}
+                    {sampleForDisplay.map((r) => (
+                      <tr key={r.id} className="border-t border-gray-100">
+                        <td className="px-2 py-1">
+                          <input
+                            type="checkbox"
+                            checked={selectedIdSet.has(r.id)}
+                            onChange={() => toggleRecipient(r.id)}
+                            aria-label={`Select ${r.email}`}
+                            className="h-4 w-4 rounded border-gray-300 text-purple-700 focus:ring-purple-500"
+                          />
+                        </td>
+                        <td className="px-2 py-1 font-mono text-gray-800">{r.email}</td>
+                        <td className="px-2 py-1 text-gray-700">
+                          {[r.first_name, r.last_name].filter(Boolean).join(' ') || r.company || '—'}
+                        </td>
+                        <td className="px-2 py-1 text-gray-500">{r.publication ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div className="mt-4 space-y-2">
               <button
                 type="button"
                 onClick={onSubmit}
-                disabled={submitting || (serverCount ?? localAudience.length) === 0}
+                disabled={submitting || recipientCount === 0}
                 className="w-full rounded-md bg-purple-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap"
               >
                 {submitting
                   ? (mode === 'schedule' ? 'Scheduling…' : 'Sending…')
-                  : (mode === 'schedule' ? `Schedule (${serverCount ?? localAudience.length})` : `Send now (${serverCount ?? localAudience.length})`)}
+                  : (mode === 'schedule' ? `Schedule (${recipientCount})` : `Send now (${recipientCount})`)}
               </button>
               <p className="text-[11px] text-gray-500">
                 Drafts autosave locally. Backend uses the exact same query as /admin/crm.

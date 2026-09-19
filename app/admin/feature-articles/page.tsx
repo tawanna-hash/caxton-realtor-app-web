@@ -147,7 +147,7 @@ export default function AdminFeatureArticlesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.advertiserId) { setError('Pick an advertiser for this article.'); return; }
+    if (!form.advertiserId) { setError('Pick an partner for this article.'); return; }
     if (!form.title.trim()) { setError('Title is required.'); return; }
     setSubmitting(true);
     setError(null);
@@ -199,21 +199,28 @@ export default function AdminFeatureArticlesPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
-      <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="content-admin-shell">
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">Admin</p>
           <PageTitle size="md">Feature Articles</PageTitle>
           <p className="text-sm text-gray-600 font-light mt-2 max-w-2xl">
-            Editorial pieces tied to an advertiser. Published articles appear on that
-            advertiser&apos;s public detail page beneath their event photos.
+            Editorial pieces tied to an partner. Published articles appear on that
+            partner&apos;s public detail page beneath their event photos.
           </p>
         </div>
         <button onClick={openCreate}
-          className="shrink-0 inline-flex items-center gap-2 bg-brand-700 text-white px-5 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors whitespace-nowrap self-start">
+          className="shrink-0 inline-flex items-center gap-2 bg-orange-600 text-white px-5 py-2 text-sm font-medium hover:bg-orange-700 rounded-md transition-colors whitespace-nowrap self-start">
           <Plus size={16} /> Add Article
         </button>
       </div>
+
+      <section className="content-admin-summary" aria-label="Feature article summary">
+        <div><strong>{(articles?.length ?? 0).toLocaleString()}</strong><span>Total articles</span></div>
+        <div><strong>{(articles?.filter((article) => article.status === 'published').length ?? 0).toLocaleString()}</strong><span>Published</span></div>
+        <div><strong>{(articles?.filter((article) => article.status === 'draft').length ?? 0).toLocaleString()}</strong><span>Drafts</span></div>
+        <div><strong>{advertisers.length.toLocaleString()}</strong><span>Partners</span></div>
+      </section>
 
       {error && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center justify-between">
@@ -228,12 +235,12 @@ export default function AdminFeatureArticlesPage() {
           <h2 className="text-sm font-semibold text-gray-900">Filter</h2>
         </div>
         <div className="max-w-sm">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Advertiser</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Partner</label>
           <AdvertiserPicker
             advertisers={advertisers}
             value={filterAdvertiser}
             onChange={setFilterAdvertiser}
-            placeholder="All advertisers"
+            placeholder="All partners"
           />
         </div>
       </div>
@@ -241,8 +248,9 @@ export default function AdminFeatureArticlesPage() {
       {articles === null ? (
         <p className="text-sm text-gray-500">Loading…</p>
       ) : articles.length === 0 ? (
-        <div className="border border-dashed border-gray-300 rounded-lg px-6 py-12 text-center">
-          <p className="text-sm text-gray-500">No feature articles yet.</p>
+        <div className="content-admin-empty">
+          <p className="font-semibold text-gray-900">No feature articles yet</p>
+          <p className="mt-1 text-sm text-gray-500">Add an editorial story to a partner page.</p>
           <button onClick={openCreate} className="mt-3 text-sm font-medium text-brand-700 hover:text-brand-800 underline">
             Add the first one
           </button>
@@ -283,7 +291,7 @@ export default function AdminFeatureArticlesPage() {
                       )}
                       {adv && (
                         <a href={`/advertisers/${adv.slug}`} target="_blank" rel="noopener"
-                          className="text-gray-400 hover:text-gray-700" title="View advertiser page">
+                          className="text-gray-400 hover:text-gray-700" title="View partner page">
                           <ExternalLink size={15} />
                         </a>
                       )}
@@ -328,10 +336,10 @@ export default function AdminFeatureArticlesPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Advertiser *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Partner *</label>
                 <AdvertiserPicker advertisers={advertisers} value={form.advertiserId}
                   onChange={(id) => setForm((f) => ({ ...f, advertiserId: id }))}
-                  placeholder="Select an advertiser" />
+                  placeholder="Select a partner" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
@@ -425,7 +433,7 @@ function AdvertiserPicker({
   advertisers,
   value,
   onChange,
-  placeholder = 'All advertisers',
+  placeholder = 'All partners',
 }: {
   advertisers: PickerAdvertiser[];
   value: number | null;
@@ -461,7 +469,7 @@ function AdvertiserPicker({
       {open && (
         <div className="absolute z-20 mt-1 w-full min-w-56 bg-white border border-gray-200 rounded-md shadow-lg">
           <input autoFocus type="text" value={query} onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search advertisers..."
+            placeholder="Search partners..."
             className="w-full border-b border-gray-200 px-3 py-2 text-xs focus:outline-none" />
           <ul className="max-h-56 overflow-y-auto py-1">
             <li>
@@ -480,7 +488,7 @@ function AdvertiserPicker({
             ))}
             {filtered.length === 0 && (
               <li className="px-3 py-2 text-xs text-gray-400">
-                {advertisers.length === 0 ? 'No advertisers available' : 'No matches'}
+                {advertisers.length === 0 ? 'No partners available' : 'No matches'}
               </li>
             )}
           </ul>

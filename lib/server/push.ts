@@ -24,7 +24,7 @@ function ensureVapid(): void {
   vapidConfigured = true;
 }
 
-export type PushSubscriptionRow = {
+type PushSubscriptionRow = {
   id: string;
   realtor_id: string | null;
   endpoint: string;
@@ -97,6 +97,47 @@ const RNN_NOTIFICATION_ICON = '/icon-192.png';
 export type PushMarketFilter = 'austin' | 'san_antonio' | 'houston' | 'dallas';
 
 /**
+ * Send browser push to every active browser registered by one signed-in
+ * realtor. This intentionally does not write generic admin notification
+ * delivery rows because personal deal deadlines have their own private,
+ * account-scoped delivery ledger.
+ */
+export async function sendPushToRealtor(
+  realtorId: string,
+  payload: PushPayload,
+): Promise<{ sent: number; failed: number; revoked: number }> {
+  const sql = getSql();
+  const subs = await sql`
+    SELECT id, realtor_id, endpoint, p256dh, auth, market
+    FROM push_subscriptions
+    WHERE realtor_id = ${realtorId}::uuid
+      AND revoked_at IS NULL
+  ` as unknown as PushSubscriptionRow[];
+
+  let sent = 0;
+  let failed = 0;
+  let revoked = 0;
+
+  for (const sub of subs) {
+    const result = await sendPush(sub, {
+      ...payload,
+      icon: payload.icon || RNN_NOTIFICATION_ICON,
+      badge: payload.badge || RNN_NOTIFICATION_ICON,
+    });
+    if (result.ok) {
+      sent += 1;
+    } else if (result.gone) {
+      revoked += 1;
+      await markSubscriptionGone(sub.endpoint);
+    } else {
+      failed += 1;
+    }
+  }
+
+  return { sent, failed, revoked };
+}
+
+/**
  * Fan out a payload to every active subscription matching the audience
  * filter. Returns counts for the admin UI.
  *
@@ -108,7 +149,7 @@ export type PushMarketFilter = 'austin' | 'san_antonio' | 'houston' | 'dallas';
  * so the admin can see per-realtor delivery status. Anonymous subscriptions
  * (realtor_id NULL) are still sent to but skip the delivery row.
  */
-export async function broadcastPush(
+async function broadcastPush(
   notificationId: string,
   payload: PushPayload,
   marketFilter?: PushMarketFilter,

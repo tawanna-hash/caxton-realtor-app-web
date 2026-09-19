@@ -8,10 +8,17 @@
 // body limit and avoids the egress cost.
 //
 // Pathname conventions:
-//   inventory-thumbs/{id}/{filename} — images (jpg, png, webp), up to 10MB
-//   inventory-flyers/{id}/{filename} — PDF, up to 25MB
+//   inventory-thumbs/{id}/{filename}         — image replacement on existing row
+//   inventory-flyers/{id}/{filename}         — PDF replacement on existing row
+//   inventory-thumbs/new/{uuid}/{filename}   — image for admin create form
+//                                              (row not created yet; uuid is a
+//                                              client-generated draft id)
+//   inventory-flyers/new/{uuid}/{filename}   — PDF for admin create form
 // Other pathnames are rejected to prevent admins from writing outside
 // the inventory namespace (e.g. overwriting ad media or other features).
+//
+// Note: the startsWith() checks below match both {id}/ and new/{uuid}/
+// forms since 'new/' is just a subdirectory under the same prefix.
 //
 // After upload completes the client receives a public blob URL. The
 // admin UI then PATCHes the row's thumbnail_url or flyer_pdf_url field

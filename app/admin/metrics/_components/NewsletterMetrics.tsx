@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { KPITile } from './KPITile';
+import { MetricList } from './MetricList';
 
 type Stats = {
   totals: { active: number; unsubscribed: number; total: number };
@@ -28,7 +29,7 @@ function MiniBars({ series }: { series: Array<{ date: string; count: number }> }
         return (
           <div
             key={s.date}
-            className="flex-1 bg-brand-700/80 rounded-md"
+            className="flex-1 rounded-sm bg-orange-600/80"
             style={{ height: `${Math.max(2, pct)}%` }}
             title={`${s.date}: ${s.count}`}
           />
@@ -77,18 +78,18 @@ export function NewsletterMetrics({ days }: { days: number }) {
     <section>
       <div className="flex items-baseline justify-between mb-3">
         <h2 className="text-lg font-semibold text-gray-900">
-          Newsletter signups
+          Email Signups
         </h2>
         <a
           href="/admin/newsletter"
-          className="text-xs uppercase tracking-wider text-brand-700 underline"
+          className="text-xs font-medium text-orange-700 hover:underline"
         >
           View list &rarr;
         </a>
       </div>
 
       {loading && !stats && (
-        <p className="text-sm text-gray-500">Loading newsletter stats&hellip;</p>
+        <p className="text-sm text-gray-500">Loading email stats&hellip;</p>
       )}
 
       {error && (
@@ -99,7 +100,7 @@ export function NewsletterMetrics({ days }: { days: number }) {
 
       {stats && (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-y-3 bg-white md:grid-cols-4">
             <KPITile label="Total subscribers" value={stats.totals.total} />
             <KPITile label="Active" value={stats.totals.active} />
             <KPITile
@@ -114,7 +115,7 @@ export function NewsletterMetrics({ days }: { days: number }) {
             />
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-md p-4">
+          <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
             <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
               Daily signups &middot; last {stats.days} days
             </p>
@@ -126,48 +127,34 @@ export function NewsletterMetrics({ days }: { days: number }) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white border border-gray-200 rounded-md p-4">
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
+            <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+              <p className="border-b border-gray-200 px-4 py-3 text-xs font-semibold text-gray-700">
                 By source
               </p>
-              {stats.by_source.length === 0 ? (
-                <p className="text-sm text-gray-500">No data yet.</p>
-              ) : (
-                <table className="w-full text-sm">
-                  <tbody>
-                    {stats.by_source.map((row) => (
-                      <tr key={row.source} className="border-t border-gray-100 first:border-t-0">
-                        <td className="py-2 text-gray-900">{row.source}</td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.count.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+              <MetricList
+                rows={stats.by_source}
+                keyFn={(row) => row.source}
+                emptyMessage="No data yet."
+                columns={[
+                  { header: 'Source', role: 'primary', render: (row) => row.source },
+                  { header: 'Count', role: 'value', render: (row) => row.count.toLocaleString() },
+                ]}
+              />
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-md p-4">
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
+            <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+              <p className="border-b border-gray-200 px-4 py-3 text-xs font-semibold text-gray-700">
                 By publication
               </p>
-              {stats.by_publication.length === 0 ? (
-                <p className="text-sm text-gray-500">No data yet.</p>
-              ) : (
-                <table className="w-full text-sm">
-                  <tbody>
-                    {stats.by_publication.map((row) => (
-                      <tr key={row.publication} className="border-t border-gray-100 first:border-t-0">
-                        <td className="py-2 text-gray-900 capitalize">{row.publication}</td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.count.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+              <MetricList
+                rows={stats.by_publication}
+                keyFn={(row) => row.publication}
+                emptyMessage="No data yet."
+                columns={[
+                  { header: 'Publication', role: 'primary', render: (row) => <span className="capitalize">{row.publication}</span> },
+                  { header: 'Count', role: 'value', render: (row) => row.count.toLocaleString() },
+                ]}
+              />
             </div>
           </div>
         </div>

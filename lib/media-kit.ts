@@ -5,7 +5,7 @@
 // PressBook CRM (pressbook-crm/app2.js lines 17150–17240) so the same source
 // of truth drives both apps.
 
-export interface AdSizeRate {
+interface AdSizeRate {
   size: string;
   dim: string;
   price: number;
@@ -22,6 +22,36 @@ export interface Package {
   /** Empty when the package only sells the Brand[12 Plus] Full Page tier. */
   sizes: AdSizeRate[];
 }
+
+export interface PrintAdSpec {
+  size: string;
+  layouts: Array<{
+    orientation: string;
+    dimensions: string;
+  }>;
+}
+
+export const PRINT_AD_SPECS: PrintAdSpec[] = [
+  {
+    size: 'Full page',
+    layouts: [
+      { orientation: 'Full page', dimensions: '10 inches across × 11 inches down' },
+    ],
+  },
+  {
+    size: '1/2 page',
+    layouts: [
+      { orientation: 'Vertical', dimensions: '5 inches across × 11 inches down' },
+      { orientation: 'Horizontal', dimensions: '10 inches across × 5.25 inches down' },
+    ],
+  },
+  {
+    size: '1/4 page',
+    layouts: [
+      { orientation: 'Quarter page', dimensions: '5 inches across × 5.25 inches down' },
+    ],
+  },
+];
 
 export interface EBlast {
   name: string;
@@ -71,20 +101,30 @@ export function eblastPriceForPub(blast: EBlast, pub: MediaKitPub): number {
   return blast.priceByPub?.[pub] ?? blast.price;
 }
 
-/** Resolve the bundled-send count for the active publication tab. */
-export function eblastSendsForPub(blast: EBlast, pub: MediaKitPub): number {
-  return blast.sendsByPub?.[pub] ?? blast.sends;
-}
-
-/** Resolve the feature-list for the active publication tab. */
-export function eblastFeaturesForPub(blast: EBlast, pub: MediaKitPub): string[] {
-  return blast.featuresByPub?.[pub] ?? blast.features;
-}
-
 export interface PrintDeadline {
   month: string;
+  /** Space-reservation / ads-due deadline (camera-ready). */
   deadline: string;
+  /** Print magazine mail date. */
   mail: string;
+  /**
+   * e-Replica edition + e-Blast release date.  Business rule:
+   * this is the Friday following the mid-month digital drop, or
+   * the drop date itself if it already falls on a Friday.
+   */
+  eReplicaRelease?: string;
+}
+
+export type DeadlinesPub = 'realtyline' | 'newsline';
+
+export interface PubDeadlines {
+  pub: DeadlinesPub;
+  name: string;
+  year: number;
+  /** Empty array = deadlines not yet published for this pub. */
+  rows: PrintDeadline[];
+  /** Source-of-truth page users can visit to double-check dates. */
+  sourceUrl?: string;
 }
 
 export interface PolicyNote {
@@ -111,8 +151,8 @@ export interface PolicyNote {
 // (lib/server/slot-availability.ts) and the rate card share one source.
 export const ROTATION_CAPACITY = 6;
 
-export type AppAdSlotTier = 'standard' | 'premium';
-export type AppAdSlotZone =
+type AppAdSlotTier = 'standard' | 'premium';
+type AppAdSlotZone =
   | 'feed'
   | 'article'
   | 'calendar'
@@ -174,6 +214,59 @@ export type MediaKitPub =
   | 'realtyline-houston'
   | 'realtyline-dallas'
   | 'both';
+
+export const EBLAST_ORDER_MARKETS = [
+  {
+    id: 'realtyline',
+    label: 'RealtyLine Austin',
+    audience: '44K+ subscribers',
+    checkoutEnabled: true,
+  },
+  {
+    id: 'newsline',
+    label: 'Newsline San Antonio',
+    audience: '20K+ subscribers',
+    checkoutEnabled: true,
+  },
+  {
+    id: 'both',
+    label: 'Austin + San Antonio',
+    audience: '64K+ subscribers · bundle pricing',
+    checkoutEnabled: true,
+  },
+  {
+    id: 'realtyline-houston',
+    label: 'RealtyLine Houston',
+    audience: '50K subscribers',
+    checkoutEnabled: false,
+  },
+  {
+    id: 'realtyline-dallas',
+    label: 'RealtyLine Dallas/Fort Worth',
+    audience: '27K subscribers',
+    checkoutEnabled: false,
+  },
+] as const satisfies ReadonlyArray<{
+  id: MediaKitPub;
+  label: string;
+  audience: string;
+  checkoutEnabled: boolean;
+}>;
+
+export const EBLAST_ORDER_MARKET_IDS = [
+  'realtyline',
+  'newsline',
+  'both',
+  'realtyline-houston',
+  'realtyline-dallas',
+] as const;
+
+export type EblastOrderMarketId = (typeof EBLAST_ORDER_MARKET_IDS)[number];
+
+/** Flip checkoutEnabled above to launch a wired e-Blast market. */
+export function isEblastCheckoutEnabled(pub: EblastOrderMarketId): boolean {
+  return EBLAST_ORDER_MARKETS.find((market) => market.id === pub)?.checkoutEnabled ?? false;
+}
 
 /**
  * Resolve the set of publication scopes a slot can be booked on. Centralized
@@ -340,8 +433,8 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     monthlySingle: null,
     monthlyBoth: null,
     pricingUnit: 'per send',
-    sizes: '600×200 email · 600×100 email slim',
-    notes: 'Top of every send. Ships when newsletter ships.',
+    sizes: '600×300 Email Banner',
+    notes: 'Top of every send. Ships with the Friday Email.',
   },
   {
     slug: 'splash_welcome',
@@ -445,10 +538,6 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     notes: 'Top of calendar tab, both pubs.',
   },
 ];
-
-export const APP_AD_AUDIENCE_NOTE =
-  '16 ad spaces unified under <AdSlot>. PostHog ad_impression / ad_click tracking on every render. Unsold inventory auto-fills with RealtyLine House creatives.';
-
 // ── Packages ────────────────────────────────────────────────────────────────
 
 export const PACKAGES: Package[] = [
@@ -460,9 +549,9 @@ export const PACKAGES: Package[] = [
     popular: false,
     features: ['Ad Creative in Print & Digital Editions'],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11.0833 in',                        price: 1440 },
-      { size: 'Half-Page',     dim: '10 × 5.25 in or 4.8333 × 11.0833 in',    price: 1150 },
-      { size: 'Quarter-Page',  dim: '4.8333 × 5.25 in',                       price:  880 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1440 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price: 1150 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  880 },
     ],
   },
   {
@@ -477,9 +566,9 @@ export const PACKAGES: Package[] = [
       'Unlimited Calendar of Events Entries Online',
     ],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11.0833 in',                        price: 1205 },
-      { size: 'Half-Page',     dim: '10 × 5.25 in or 4.8333 × 11.0833 in',    price:  915 },
-      { size: 'Quarter-Page',  dim: '4.8333 × 5.25 in',                       price:  645 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1205 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  915 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  645 },
     ],
   },
   {
@@ -499,9 +588,9 @@ export const PACKAGES: Package[] = [
       'Builder/Developer Inventory in Weekly e-Blast',
     ],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11.0833 in',                        price: 1140 },
-      { size: 'Half-Page',     dim: '10 × 5.25 in or 4.8333 × 11.0833 in',    price:  845 },
-      { size: 'Quarter-Page',  dim: '4.8333 × 5.25 in',                       price:  575 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1140 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  845 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  575 },
     ],
   },
   {
@@ -521,9 +610,9 @@ export const PACKAGES: Package[] = [
       'Builder/Developer Inventory in Weekly e-Blast',
     ],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11.0833 in',                        price: 1050 },
-      { size: 'Half-Page',     dim: '10 × 5.25 in or 4.8333 × 11.0833 in',    price:  755 },
-      { size: 'Quarter-Page',  dim: '4.8333 × 5.25 in',                       price:  485 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1050 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  755 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  485 },
     ],
   },
   {
@@ -546,7 +635,7 @@ export const PACKAGES: Package[] = [
       'Logo & Link — Weekly Emails',
     ],
     sizes: [
-      { size: 'Full Page', dim: '10 × 11.0833 in', price: 1680 },
+      { size: 'Full Page', dim: '10 × 11 in', price: 1680 },
     ],
   },
 ];
@@ -628,20 +717,50 @@ export const EBLASTS: EBlast[] = [
 
 // ── Print Deadlines (2026) ─────────────────────────────────────────────────
 
-export const PRINT_DEADLINES: PrintDeadline[] = [
-  { month: 'January',   deadline: 'January 12',    mail: 'January 20'   },
-  { month: 'February',  deadline: 'February 5',    mail: 'February 20'  },
-  { month: 'March',     deadline: 'March 5',       mail: 'March 20'     },
-  { month: 'April',     deadline: 'April 7',       mail: 'April 20'     },
-  { month: 'May',       deadline: 'May 6',         mail: 'May 20'       },
-  { month: 'June',      deadline: 'June 5',        mail: 'June 20'      },
-  { month: 'July',      deadline: 'July 8',        mail: 'July 21'      },
-  { month: 'August',    deadline: 'August 5',      mail: 'August 20'    },
-  { month: 'September', deadline: 'September 9',   mail: 'September 20' },
-  { month: 'October',   deadline: 'October 7',     mail: 'October 20'   },
-  { month: 'November',  deadline: 'November 6',    mail: 'November 20'  },
-  { month: 'December',  deadline: 'December 9',    mail: 'December 19'  },
+// Source of truth for RealtyLine 2026 dates:
+// https://realtyline.us/2026-deadlines-2/
+// Verified against WordPress editor 2026-08-21.
+const REALTYLINE_2026: PrintDeadline[] = [
+  { month: 'January',   deadline: 'January 7',    mail: 'January 21',    eReplicaRelease: 'January 16'   },
+  { month: 'February',  deadline: 'February 5',   mail: 'February 20',   eReplicaRelease: 'February 20'  },
+  { month: 'March',     deadline: 'March 5',      mail: 'March 23',      eReplicaRelease: 'March 20'     },
+  { month: 'April',     deadline: 'April 7',      mail: 'April 23',      eReplicaRelease: 'April 17'     },
+  { month: 'May',       deadline: 'May 6',        mail: 'May 22',        eReplicaRelease: 'May 15'       },
+  { month: 'June',      deadline: 'June 5',       mail: 'June 22',       eReplicaRelease: 'June 19'      },
+  { month: 'July',      deadline: 'July 8',       mail: 'July 23',       eReplicaRelease: 'July 17'      },
+  { month: 'August',    deadline: 'August 5',     mail: 'August 21',     eReplicaRelease: 'August 14'    },
+  { month: 'September', deadline: 'September 9',  mail: 'September 22',  eReplicaRelease: 'September 18' },
+  { month: 'October',   deadline: 'October 7',    mail: 'October 23',    eReplicaRelease: 'October 16'   },
+  { month: 'November',  deadline: 'November 6',   mail: 'November 23',   eReplicaRelease: 'November 20'  },
+  { month: 'December',  deadline: 'December 9',   mail: 'December 21',   eReplicaRelease: 'December 18'  },
 ];
+
+// Newsline San Antonio publishes on the same 2026 print / digital
+// calendar as RealtyLine.  Alias the RealtyLine array so future
+// corrections only need to touch REALTYLINE_2026.
+const NEWSLINE_2026: PrintDeadline[] = REALTYLINE_2026;
+
+export const PRINT_DEADLINES_BY_PUB: Record<DeadlinesPub, PubDeadlines> = {
+  realtyline: {
+    pub: 'realtyline',
+    name: 'RealtyLine',
+    year: 2026,
+    rows: REALTYLINE_2026,
+    sourceUrl: 'https://realtyline.us/2026-deadlines-2/',
+  },
+  newsline: {
+    pub: 'newsline',
+    name: 'Newsline San Antonio',
+    year: 2026,
+    rows: NEWSLINE_2026,
+  },
+};
+
+// Legacy alias for existing callers that still expect a bare 2026
+// RealtyLine list (app/(public)/advertise/print/page.tsx, admin
+// media-kit reference, availability calendar).  Do not remove
+// without updating those callers.
+export const PRINT_DEADLINES: PrintDeadline[] = REALTYLINE_2026;
 
 // ── Rate matrix (Size × Frequency) ─────────────────────────────────────────
 
@@ -658,8 +777,6 @@ export const FREQ_TERMS:  [string, string, string, string] = [
 ];
 
 // Brand[12 Plus] is a separate premium tier — Full Page only at $1,680/mo
-export const BRAND_12_PLUS_RATE = 1680;
-
 // ── Audience stats (RealtyLine) ────────────────────────────────────────────
 
 export interface AudienceStat {
@@ -719,10 +836,7 @@ export const AUDIENCE_STATS: AudienceStat[] = [
 // MediaKitPub should filter through this so pricing, slot inventory, and public
 // checkout stay in sync with the Expansion section.
 
-export const LAUNCHING_SOON_PUBS: ReadonlySet<MediaKitPub> = new Set<MediaKitPub>([
-  'realtyline-houston',
-  'realtyline-dallas',
-]);
+const LAUNCHING_SOON_PUBS: ReadonlySet<MediaKitPub> = new Set<MediaKitPub>();
 
 export function isLaunchingSoon(pub: MediaKitPub): boolean {
   return LAUNCHING_SOON_PUBS.has(pub);
@@ -734,7 +848,7 @@ export function isLive(pub: MediaKitPub): boolean {
 
 // ── Network expansion — publications by launch status ────────────────────
 
-export type ExpansionStatus = 'active' | 'launching-soon';
+type ExpansionStatus = 'active' | 'launching-soon';
 
 export interface ExpansionPub {
   name: string;

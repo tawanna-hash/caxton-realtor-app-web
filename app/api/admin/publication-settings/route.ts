@@ -12,12 +12,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { PUBLICATION_IDS, type PublicationId } from '@/lib/publications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const PUBLICATIONS = ['austin', 'san_antonio'] as const;
-type Publication = (typeof PUBLICATIONS)[number];
+const PUBLICATIONS = PUBLICATION_IDS;
+type Publication = PublicationId;
 
 type SettingsRow = {
   publication: Publication;

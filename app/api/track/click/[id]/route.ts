@@ -31,31 +31,29 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   }
 
   if (UUID_RE.test(id)) {
-    void (async () => {
-      try {
-        await ensureSchema();
-        const sql = getSql();
-        const rows = await sql`
-          UPDATE marketing_campaign_outreach_recipients
-          SET clicked_at = COALESCE(clicked_at, now()),
-              click_count = click_count + 1
-          WHERE id = ${id}
-          RETURNING email, campaign_id
-        ` as unknown as { email: string | null; campaign_id: string | null }[];
-        const row = rows[0];
-        // Fire PostHog event so email engagement shows up in analytics
-        if (row) {
-          captureServerEvent('email_clicked', row.email || id, {
-            recipient_id: id,
-            campaign_id: row.campaign_id || undefined,
-            target_url: target,
-            source: 'email_pixel',
-          });
-        }
-      } catch {
-        // ignore
+    try {
+      await ensureSchema();
+      const sql = getSql();
+      const rows = await sql`
+        UPDATE marketing_campaign_outreach_recipients
+        SET clicked_at = COALESCE(clicked_at, now()),
+            click_count = click_count + 1
+        WHERE id = ${id}
+        RETURNING email, outreach_id AS campaign_id
+      ` as unknown as { email: string | null; campaign_id: string | null }[];
+      const row = rows[0];
+      // Fire PostHog event so email engagement shows up in analytics
+      if (row) {
+        captureServerEvent('email_clicked', row.email || id, {
+          recipient_id: id,
+          campaign_id: row.campaign_id || undefined,
+          target_url: target,
+          source: 'email_pixel',
+        });
       }
-    })();
+    } catch {
+      // Tracking failures must never block the destination redirect.
+    }
   }
   return NextResponse.redirect(target, 302);
 }

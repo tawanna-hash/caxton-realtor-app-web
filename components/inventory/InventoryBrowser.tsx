@@ -35,7 +35,7 @@ import { trackEvent } from '@/app/posthog-provider';
 import BuilderInventoryRowCard from '@/components/builders/BuilderInventoryRowCard';
 import PageTitle from '@/components/ui/PageTitle';
 
-export type InventorySurface = 'inventory' | 'promotions' | 'builders';
+type InventorySurface = 'inventory' | 'promotions' | 'builders';
 
 const BED_BATH_OPTS = [0, 1, 2, 3, 4, 5];
 

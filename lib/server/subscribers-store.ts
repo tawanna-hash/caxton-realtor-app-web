@@ -26,7 +26,7 @@ function isMissingSchemaError(err: unknown): err is { code: string } {
 export interface ListSubscribersOptions {
   page: number;
   pageSize: number;
-  market?: 'austin' | 'san_antonio';
+  market?: import('@/lib/publications').PublicationId;
   q?: string;
   sort?: string;
   dir?: 'asc' | 'desc';
@@ -261,7 +261,7 @@ export async function deactivateSubscriber(id: string): Promise<
 // Delete (cascade-aware, transaction)
 // -----------------------------------------------------------------------------
 
-export interface DeleteSubscriberCounts {
+interface DeleteSubscriberCounts {
   event_rsvps: number;
   notification_deliveries: number;
   magic_links: number;
@@ -398,4 +398,3 @@ export function csvEscape(v: unknown): string {
   }
   return s;
 }
-

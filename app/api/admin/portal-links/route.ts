@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { verifiedEmailFrom } from '@/lib/email-sender';
 import { getSql, ensureSchema } from '@/lib/db';
 import {
   generateMagicLinkToken,
@@ -19,7 +20,10 @@ import { withAdminTracking } from '@/lib/server/admin-tracking';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const PORTAL_FROM_EMAIL = process.env.PORTAL_FROM_EMAIL ?? 'no-reply@myrealtyline.com';
+const PORTAL_FROM_EMAIL = verifiedEmailFrom(
+  process.env.PORTAL_FROM_EMAIL,
+  'Realty News Now',
+);
 const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://app.myrealtyline.com';
 
 export async function GET(req: NextRequest) {
@@ -71,6 +75,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       ? (body.purpose as PortalLinkPurpose)
       : 'login';
   const sendEmail = body.send_email !== false; // default true
+  const entityId = typeof body.entity_id === 'string' && body.entity_id ? body.entity_id : null;
 
   try {
     await ensureSchema();
@@ -80,7 +85,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       SELECT id, name, portal_email, email FROM advertisers WHERE id = ${advertiserId}
     `) as unknown as { id: number; name: string; portal_email: string | null; email: string | null }[];
     if (adv.length === 0) {
-      return NextResponse.json({ error: 'advertiser not found' }, { status: 404 });
+      return NextResponse.json({ error: 'partner not found' }, { status: 404 });
     }
     const a = adv[0];
     const sendTo = (typeof body.email === 'string' && body.email) || a.portal_email || a.email;
@@ -96,14 +101,15 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     const inserted = (await sql`
       INSERT INTO portal_magic_links (
         advertiser_id, token_hash, purpose, link_expires_at,
-        sent_to_email, created_by
+        sent_to_email, created_by, entity_id
       ) VALUES (
         ${advertiserId},
         ${tokenHash},
         ${purpose},
         ${linkExpires},
         ${sendTo},
-        ${admin.email ?? null}
+        ${admin.email ?? null},
+        ${entityId}
       )
       RETURNING id
     `) as unknown as { id: string }[];

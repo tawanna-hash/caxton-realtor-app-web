@@ -12,7 +12,7 @@ import type { getSql } from '@/lib/db';
 type Sql = ReturnType<typeof getSql>;
 
 // Fields the advertiser is allowed to update via the portal — strings / null
-export const SIGN_PATCHABLE_STR = new Set([
+const SIGN_PATCHABLE_STR = new Set([
   'company_name', 'rep_name', 'advertiser_email', 'advertiser_phone',
   'address', 'city', 'state', 'zip',
   'ad_size', 'frequency', 'page_position',
@@ -23,15 +23,15 @@ export const SIGN_PATCHABLE_STR = new Set([
 ]);
 
 // Integer cents fields
-export const SIGN_PATCHABLE_INT = new Set([
+const SIGN_PATCHABLE_INT = new Set([
   'ad_rate_cents', 'discount_cents', 'ad_premium_cents', 'total_monthly_rate_cents',
 ]);
 
 // Date fields (YYYY-MM-DD)
-export const SIGN_PATCHABLE_DATE = new Set(['exp_date', 'start_date', 'end_date']);
+const SIGN_PATCHABLE_DATE = new Set(['exp_date', 'start_date', 'end_date']);
 
 // JSON object fields
-export const SIGN_PATCHABLE_JSON = new Set(['ad_timing_months']);
+const SIGN_PATCHABLE_JSON = new Set(['ad_timing_months', 'preferred_send_dates']);
 
 const MAX_CENTS = 100_000_000;
 
@@ -104,6 +104,18 @@ export async function applyPatches(
       }
 
     } else if (SIGN_PATCHABLE_JSON.has(field)) {
+      if (field === 'preferred_send_dates') {
+        if (val === null) {
+          await sql`UPDATE agreements SET preferred_send_dates = NULL WHERE id = ${id}`;
+          continue;
+        }
+        if (!Array.isArray(val)) continue;
+        const dates = val.filter(
+          (date): date is string => typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date),
+        ).slice(0, 4);
+        await sql`UPDATE agreements SET preferred_send_dates = ${JSON.stringify(dates)}::jsonb WHERE id = ${id}`;
+        continue;
+      }
       if (val === null) {
         await sql`UPDATE agreements SET ad_timing_months = NULL WHERE id = ${id}`;
         continue;
@@ -117,13 +129,29 @@ export async function applyPatches(
       let updatedAny = false;
       for (const entry of val) {
         if (!entry || typeof entry !== 'object') continue;
-        const e = entry as { line_no?: unknown; start_date?: unknown; end_date?: unknown };
+        const e = entry as {
+          line_no?: unknown;
+          start_date?: unknown;
+          end_date?: unknown;
+          preferred_send_dates?: unknown;
+        };
         if (typeof e.line_no !== 'number' || !Number.isInteger(e.line_no)) continue;
         if (typeof e.start_date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.start_date)) continue;
         if (typeof e.end_date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.end_date)) continue;
+        const preferredDates = Array.isArray(e.preferred_send_dates)
+          ? e.preferred_send_dates.filter(
+              (date): date is string => typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date),
+            ).slice(0, 4)
+          : null;
         const res = await sql`
           UPDATE agreement_line_items
-          SET start_date = ${e.start_date}::date, end_date = ${e.end_date}::date
+          SET start_date = ${e.start_date}::date,
+              end_date = ${e.end_date}::date,
+              preferred_send_dates = CASE
+                WHEN channel = 'email' AND ${preferredDates !== null}
+                  THEN ${preferredDates !== null ? JSON.stringify(preferredDates) : null}::jsonb
+                ELSE preferred_send_dates
+              END
           WHERE agreement_id = ${id} AND line_no = ${e.line_no} AND channel IN ('app', 'email')
           RETURNING 1
         `;

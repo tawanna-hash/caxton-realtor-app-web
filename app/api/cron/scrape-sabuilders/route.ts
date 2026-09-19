@@ -6,13 +6,14 @@
 
 import { upsertEvents, pruneStale } from '@/lib/events-store';
 import { scrapeSabuilders } from '@/lib/sabuilders-scraper';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 export const runtime = 'nodejs';
 // GSABA walks N month pages and fetches per-event ICS + HTML — keep the
 // generous 300s budget so a slow upstream day doesn't kill the run.
 export const maxDuration = 300;
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   // ---- auth ----
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret) {
@@ -64,3 +65,5 @@ export async function GET(req: Request) {
     );
   }
 }
+
+export const GET = withScraperRun('scrape-sabuilders', _GET);

@@ -18,12 +18,12 @@ import ExcelJS from 'exceljs';
 import { XMLParser } from 'fast-xml-parser';
 import type { ExtractedLocation, ExtractedStaffMember } from './gemini-screenshot-extract';
 
-export interface TabularImportResult {
+interface TabularImportResult {
   locations: ExtractedLocation[];
   staff: ExtractedStaffMember[];
 }
 
-export type TabularImportError =
+type TabularImportError =
   | { ok: false; reason: 'empty' | 'parse-error' | 'no-rows' | 'no-recognized-columns'; detail?: string };
 
 export type TabularImportOutcome =
@@ -585,7 +585,7 @@ export async function parseTabularUpload(args: {
 }
 
 // Re-export for tests / debugging.
-export const _internal = {
+const _internal = {
   parseCsv,
   normalizeHeader,
   mapHeaders,

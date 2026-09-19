@@ -59,6 +59,7 @@ export default function SaborMlsAdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<SaborReport>(blankForm());
+  const initialFormRef = useRef<SaborReport | null>(null);
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
@@ -224,6 +225,7 @@ export default function SaborMlsAdminPage() {
 
   function startNew() {
     setEditingId(null);
+    initialFormRef.current = null;
     setForm(blankForm());
   }
 
@@ -232,24 +234,26 @@ export default function SaborMlsAdminPage() {
     // Defensive: if a legacy row sneaks in without v2 arrays, fall back to
     // a blank report seeded with the legacy headline.
     const base = makeBlankReport(r.month_label, r.released_at);
-    setForm({
+    const editForm: SaborReport = {
       ...base,
       month_label: r.month_label,
-      month_label_es: r.month_label_es || translateMonthLabel(r.month_label),
+      month_label_es: r.month_label_es ?? '',
       released_at: r.released_at,
-      subtitle_en: r.subtitle_en || DEFAULT_SUBTITLE_EN,
-      subtitle_es: r.subtitle_es || DEFAULT_SUBTITLE_ES,
+      subtitle_en: r.subtitle_en ?? '',
+      subtitle_es: r.subtitle_es ?? '',
       headline_value: r.headline_value,
       headline_delta: r.headline_delta,
       headline_delta_direction: r.headline_delta_direction,
-      headline_label_en: r.headline_label_en || DEFAULT_HEADLINE_LABEL_EN,
-      headline_label_es: r.headline_label_es || DEFAULT_HEADLINE_LABEL_ES,
-      indicator_stats: r.indicator_stats && r.indicator_stats.length > 0 ? r.indicator_stats : base.indicator_stats,
-      listing_counts: r.listing_counts && r.listing_counts.length > 0 ? r.listing_counts : base.listing_counts,
-      price_bands: r.price_bands && r.price_bands.length > 0 ? r.price_bands : base.price_bands,
+      headline_label_en: r.headline_label_en ?? '',
+      headline_label_es: r.headline_label_es ?? '',
+      indicator_stats: Array.isArray(r.indicator_stats) ? r.indicator_stats : [],
+      listing_counts: Array.isArray(r.listing_counts) ? r.listing_counts : [],
+      price_bands: Array.isArray(r.price_bands) ? r.price_bands : [],
       page_count: r.page_count,
       pdf_storage_key: r.pdf_storage_key,
-    });
+    };
+    initialFormRef.current = editForm;
+    setForm(editForm);
   }
 
   async function save() {
@@ -262,7 +266,11 @@ export default function SaborMlsAdminPage() {
         method,
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(editingId
+          ? Object.fromEntries(Object.entries(form).filter(([key, value]) =>
+              JSON.stringify(value) !== JSON.stringify(initialFormRef.current?.[key as keyof SaborReport]),
+            ))
+          : form),
       });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || 'Save failed');
@@ -351,7 +359,7 @@ export default function SaborMlsAdminPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="content-admin-shell">
       <div className="mb-6">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin</p>
         <PageTitle size="md">SABOR Report</PageTitle>
@@ -361,6 +369,13 @@ export default function SaborMlsAdminPage() {
           toggle between languages. The most recent row by release date powers the card.
         </p>
       </div>
+
+      <section className="content-admin-summary" aria-label="SABOR report summary">
+        <div><strong>{reports.length}</strong><span>Saved reports</span></div>
+        <div><strong>{reports[0]?.month_label || '—'}</strong><span>Latest month</span></div>
+        <div><strong>{form.indicator_stats.length}</strong><span>Indicators</span></div>
+        <div><strong>{editingId ? 'Editing' : 'New'}</strong><span>Workspace mode</span></div>
+      </section>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">{error}</div>
@@ -459,7 +474,7 @@ export default function SaborMlsAdminPage() {
 
           {/* Headline */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
-            <h2 className="font-semibold mb-4">Headline number</h2>
+            <h2 className="font-semibold mb-4">Headline Number</h2>
 
             <div className="grid grid-cols-3 gap-4">
               <Field label="Headline value">
@@ -511,7 +526,7 @@ export default function SaborMlsAdminPage() {
 
           {/* Indicator stats */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
-            <h2 className="font-semibold mb-1">Indicator stats</h2>
+            <h2 className="font-semibold mb-1">Indicator Stats</h2>
             <p className="text-xs text-gray-500 mb-4">Days on Market, Price/SqFt, Close to List, Months of Inventory, Avg Rental, Total Sales, Avg Price, Median Price.</p>
             <div className="space-y-3">
               {form.indicator_stats.map((s, i) => (
@@ -527,7 +542,7 @@ export default function SaborMlsAdminPage() {
 
           {/* Listing counts */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
-            <h2 className="font-semibold mb-1">Listing counts</h2>
+            <h2 className="font-semibold mb-1">Listing Counts</h2>
             <p className="text-xs text-gray-500 mb-4">New, Active, Pending, Active Residential Rental.</p>
             <div className="space-y-3">
               {form.listing_counts.map((s, i) => (
@@ -543,7 +558,7 @@ export default function SaborMlsAdminPage() {
 
           {/* Price bands */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
-            <h2 className="font-semibold mb-1">Price bands (% of sales)</h2>
+            <h2 className="font-semibold mb-1">Price Bands (% of Sales)</h2>
             <p className="text-xs text-gray-500 mb-4">Share of closed sales by price tier.</p>
             <div className="space-y-3">
               {form.price_bands.map((b, i) => (
@@ -632,7 +647,10 @@ export default function SaborMlsAdminPage() {
           {loading ? (
             <p className="text-gray-500">{'Loading\u2026'}</p>
           ) : reports.length === 0 ? (
-            <p className="text-gray-500 italic">No reports yet. Create one to populate the Newsline San Antonio card.</p>
+            <div className="content-admin-empty">
+              <strong>No SABOR reports yet</strong>
+              <span>Create the first monthly report to populate the Newsline San Antonio card.</span>
+            </div>
           ) : (
             <ul className="space-y-2">
               {reports.map((r, i) => (

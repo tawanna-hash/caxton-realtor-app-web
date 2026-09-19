@@ -23,8 +23,12 @@ import {
   type SignupRow,
 } from '@/lib/server/realtors-store';
 import { getRequestIp } from '@/lib/server/auth/admin';
-import { signIn } from '@/lib/server/auth/authjs';
+import { encode } from 'next-auth/jwt';
+import { SESSION_COOKIE_NAME } from '@/lib/auth/cookie-names';
 import { logger } from '@/lib/server/logger';
+
+// Must match lib/server/auth/authjs.ts's session.maxAge exactly.
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 export const runtime = 'nodejs';
 
@@ -149,25 +153,44 @@ export const POST = withErrorHandling(async (req: Request) => {
     }
   });
 
-  // -- Auto-sign-in path via Auth.js -----------------------------------------
+  // -- Auto-sign-in path -----------------------------------------------------
   // Brand-new account WITH password -> issue a session cookie right now so
   // the in-app WebView is signed in on the next request. We do NOT send a
   // magic link here; the client routes straight to the feed.
+  //
+  // Uses encode() + response.cookies.set() directly (same pattern as
+  // password-login). signIn('credentials', { redirect: false }) from a
+  // custom Route Handler does NOT reliably write the Set-Cookie header
+  // on the JSON response — empirically verified. See password-login for
+  // the full write-up (BUG-H in the sign-in audit).
   if (autoSignIn && newRealtorId && newRealtorEmail && input.password) {
     try {
-      // redirect: false → do not throw a NEXT_REDIRECT; return the response
-      // so we can also return JSON. Auth.js sets the cookie on the response.
-      await signIn('credentials', {
-        email: newRealtorEmail,
-        password: input.password,
-        redirect: false,
+      const token = await encode({
+        secret: process.env.JWT_SECRET!,
+        salt: SESSION_COOKIE_NAME,
+        maxAge: SESSION_MAX_AGE_SECONDS,
+        token: {
+          sub: newRealtorId,
+          email: newRealtorEmail,
+          realtorId: newRealtorId,
+        },
       });
-      logger.info({ realtorId: newRealtorId }, 'Signup auto-sign-in succeeded (Auth.js)');
-      return NextResponse.json({
+      logger.info({ realtorId: newRealtorId }, 'Signup auto-sign-in succeeded (encode())');
+      const sessionExpires = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
+      const response = NextResponse.json({
         success: true,
         autoSignedIn: true,
         message: 'Account created. You are signed in.',
       });
+      response.cookies.set(SESSION_COOKIE_NAME, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: SESSION_MAX_AGE_SECONDS,
+        expires: sessionExpires,
+      });
+      return response;
     } catch (err) {
       logger.error({ err, realtorId: newRealtorId }, 'Signup succeeded but auto-sign-in failed');
       return NextResponse.json({

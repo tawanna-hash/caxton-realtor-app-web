@@ -88,8 +88,8 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
         payment_method: ag.stripe_payment_method_id,
         off_session: true,
         confirm: true,
-        description: `${ag.company_name ?? 'Advertiser'} \u2014 ${ag.ad_size ?? 'ad'} \u2014 ${issueMonth}`,
-        statement_descriptor: 'REALTYLINE AUSTIN',
+        description: `${ag.company_name ?? 'Partner'} \u2014 ${ag.ad_size ?? 'ad'} \u2014 ${issueMonth}`,
+        statement_descriptor_suffix: 'REALTYLINE AUSTIN',
         receipt_email: ag.advertiser_email ?? ag.billing_email ?? undefined,
         metadata: {
           agreement_id: ag.id,

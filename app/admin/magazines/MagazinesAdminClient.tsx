@@ -13,13 +13,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { PUBLICATIONS, PUBLICATION_LABELS, type PublicationId } from '@/lib/publications';
 
 import PageTitle from '@/components/ui/PageTitle';
 type GifVariant = 'full' | 'teaser' | 'pingpong';
 
 type Magazine = {
   id: number;
-  publication: 'austin' | 'san_antonio';
+  publication: PublicationId;
   year: number;
   month: number;
   issue_label: string;
@@ -35,11 +36,6 @@ type Magazine = {
 
 type Props = {
   initialMagazines: Magazine[];
-};
-
-const PUB_LABEL: Record<'austin' | 'san_antonio', string> = {
-  austin: 'RealtyLine Austin',
-  san_antonio: 'Newsline San Antonio',
 };
 
 const VARIANT_LABEL: Record<GifVariant, string> = {
@@ -64,14 +60,19 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
   const [magazines, setMagazines] = useState<Magazine[]>(initialMagazines);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<string | null>(null);
 
   // Per-(magazine,variant) UI state for the GIF buttons.
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [variantError, setVariantError] = useState<Record<string, string>>({});
 
-  const austin = magazines.filter((m) => m.publication === 'austin');
-  const sa = magazines.filter((m) => m.publication === 'san_antonio');
+  // With the full archive (500+ issues across both publications) mounting
+  // every card's GIF controls at once bloats the page. Each column starts
+  // capped and grows via "Show more", independent per publication.
+  const VISIBLE_STEP = 20;
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
 
   async function handleDelete(id: number, label: string) {
     if (!confirm(`Delete "${label}"? This removes the row from the database. Uploaded files remain in Vercel Blob.`)) {
@@ -91,6 +92,60 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
       setError(msg);
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function handleRealtyLineArchiveImport() {
+    setImporting(true);
+    setError(null);
+    setImportProgress('Preparing 87 RealtyLine issues…');
+    const failures: string[] = [];
+    let inserted = 0;
+    let updated = 0;
+    let preserved = 0;
+
+    try {
+      for (let index = 0; index < 87; index++) {
+        setImportProgress(
+          `Processing issue ${index + 1} of 87 · ${inserted} new · ${updated} updated · ${preserved} preserved`,
+        );
+        try {
+          const response = await fetch('/api/admin/magazines/import-realtyline-archive', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ index }),
+          });
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(body?.error || `Import failed (${response.status})`);
+          }
+          if (body?.status === 'inserted') inserted += 1;
+          else if (body?.status === 'updated') updated += 1;
+          else if (body?.status === 'preserved') preserved += 1;
+          if (Array.isArray(body?.warnings) && body.warnings.length > 0) {
+            failures.push(`${body.issue}: ${body.warnings.join('; ')}`);
+          }
+        } catch (issueError) {
+          failures.push(
+            `Issue ${index + 1}: ${
+              issueError instanceof Error ? issueError.message : 'unknown error'
+            }`,
+          );
+        }
+      }
+
+      setImportProgress(
+        `Finished · ${inserted} new · ${updated} updated · ${preserved} preserved${
+          failures.length ? ` · ${failures.length} warning(s)` : ''
+        }`,
+      );
+      if (failures.length) {
+        setError(`Import completed with warnings: ${failures.slice(0, 5).join(' | ')}`);
+      }
+      window.setTimeout(() => window.location.reload(), 1200);
+    } finally {
+      setImporting(false);
     }
   }
 
@@ -138,12 +193,32 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
     }
   }
 
+  async function handleCopyShare(magazineId: number) {
+    const key = `share:${magazineId}`;
+    const url = `${window.location.origin}/magazine/${magazineId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey((curr) => (curr === key ? null : curr)), 1500);
+    } catch (err) {
+      console.error('[MagazinesAdminClient] Clipboard write failed:', err);
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-white p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="content-admin-shell">
+      <div className="w-full">
         <div className="flex items-center justify-between mb-6">
           <PageTitle size="md">Magazines</PageTitle>
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRealtyLineArchiveImport}
+              disabled={importing}
+              className="text-sm text-brand-700 hover:text-brand-800 px-3 py-2 border border-brand-700 rounded-md hover:bg-brand-50 disabled:opacity-60"
+            >
+              {importing ? 'Importing RealtyLine…' : 'Import RealtyLine past issues'}
+            </button>
             <Link
               href="/admin/magazines/settings"
               className="text-sm text-gray-700 hover:text-gray-900 px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
@@ -152,12 +227,23 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
             </Link>
             <Link
               href="/admin/magazines/new"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm"
+              className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md font-medium text-sm"
             >
               + New Issue
             </Link>
           </div>
         </div>
+
+        <section className="content-admin-summary" aria-label="Magazine summary">
+          <div><strong>{magazines.length.toLocaleString()}</strong><span>Total issues</span></div>
+          {PUBLICATIONS.map((publication) => (
+            <div key={publication.id}>
+              <strong>{magazines.filter((magazine) => magazine.publication === publication.id).length.toLocaleString()}</strong>
+              <span>{PUBLICATION_LABELS[publication.id]}</span>
+            </div>
+          ))}
+          <div><strong>{magazines.reduce((sum, magazine) => sum + magazine.page_count, 0).toLocaleString()}</strong><span>Total pages</span></div>
+        </section>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md mb-4">
@@ -165,29 +251,35 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
           </div>
         )}
 
+        {importProgress && (
+          <div className="bg-brand-50 border border-brand-200 text-brand-900 px-4 py-3 rounded-md mb-4">
+            {importProgress}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Column
-            label={PUB_LABEL.austin}
-            magazines={austin}
-            deletingId={deletingId}
-            onDelete={handleDelete}
-            busyKey={busyKey}
-            copiedKey={copiedKey}
-            variantError={variantError}
-            onGenerateGif={handleGenerateGif}
-            onCopy={handleCopy}
-          />
-          <Column
-            label={PUB_LABEL.san_antonio}
-            magazines={sa}
-            deletingId={deletingId}
-            onDelete={handleDelete}
-            busyKey={busyKey}
-            copiedKey={copiedKey}
-            variantError={variantError}
-            onGenerateGif={handleGenerateGif}
-            onCopy={handleCopy}
-          />
+          {PUBLICATIONS.map((publication) => (
+            <Column
+              key={publication.id}
+              label={PUBLICATION_LABELS[publication.id]}
+              magazines={magazines.filter((magazine) => magazine.publication === publication.id)}
+              deletingId={deletingId}
+              onDelete={handleDelete}
+              busyKey={busyKey}
+              copiedKey={copiedKey}
+              variantError={variantError}
+              onGenerateGif={handleGenerateGif}
+              onCopy={handleCopy}
+              onCopyShare={handleCopyShare}
+              visibleCount={visibleCounts[publication.id] ?? VISIBLE_STEP}
+              onShowMore={() =>
+                setVisibleCounts((prev) => ({
+                  ...prev,
+                  [publication.id]: (prev[publication.id] ?? VISIBLE_STEP) + VISIBLE_STEP,
+                }))
+              }
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -204,6 +296,9 @@ function Column({
   variantError,
   onGenerateGif,
   onCopy,
+  onCopyShare,
+  visibleCount,
+  onShowMore,
 }: {
   label: string;
   magazines: Magazine[];
@@ -214,15 +309,24 @@ function Column({
   variantError: Record<string, string>;
   onGenerateGif: (magazine: Magazine, variant: GifVariant, force: boolean) => void;
   onCopy: (magazineId: number, variant: GifVariant, url: string) => void;
+  onCopyShare: (magazineId: number) => void;
+  visibleCount: number;
+  onShowMore: () => void;
 }) {
+  const visibleMagazines = magazines.slice(0, visibleCount);
   return (
     <div>
-      <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">{label}</h2>
+      <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">
+        {label} <span className="text-gray-400">({magazines.length.toLocaleString()})</span>
+      </h2>
       {magazines.length === 0 ? (
-        <p className="text-gray-400 text-sm italic">No issues yet.</p>
+        <div className="content-admin-empty">
+          <p className="font-semibold text-gray-900">No issues yet</p>
+          <p className="mt-1 text-sm text-gray-500">Upload a new issue to start this publication archive.</p>
+        </div>
       ) : (
         <ul className="space-y-3">
-          {magazines.map((m) => (
+          {visibleMagazines.map((m) => (
             <li
               key={m.id}
               className="bg-white border border-gray-200 rounded-md p-3 flex items-start gap-3"
@@ -265,6 +369,13 @@ function Column({
                     className="text-sm text-red-600 hover:underline disabled:opacity-50"
                   >
                     {deletingId === m.id ? 'Deleting…' : 'Delete'}
+                  </button>
+                  <button
+                    onClick={() => onCopyShare(m.id)}
+                    className="text-sm text-purple-700 hover:underline"
+                    title="Copy public share link for social media"
+                  >
+                    {copiedKey === `share:${m.id}` ? 'Copied!' : 'Copy Share Link'}
                   </button>
                 </div>
 
@@ -323,6 +434,17 @@ function Column({
             </li>
           ))}
         </ul>
+      )}
+      {magazines.length > visibleCount && (
+        <div className="flex justify-center pt-4">
+          <button
+            type="button"
+            onClick={onShowMore}
+            className="text-sm text-brand-700 hover:text-brand-800 px-4 py-2 border border-brand-200 rounded-md hover:bg-brand-50"
+          >
+            Show more issues ({magazines.length - visibleCount} remaining)
+          </button>
+        </div>
       )}
     </div>
   );

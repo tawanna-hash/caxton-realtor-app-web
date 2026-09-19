@@ -7,19 +7,6 @@
 import { randomBytes } from 'crypto';
 import { getSql } from '@/lib/db';
 
-export interface AdvertiserEmailGrant {
-  id: number;
-  advertiser_id: number;
-  grant_token: string;
-  email: string;
-  created_at: string;
-  expires_at: string;
-  used_at: string | null;
-  verified_at: string | null;
-  ip_at_request: string | null;
-  ip_at_verify: string | null;
-}
-
 /** ~32 url-safe chars (192 bits of entropy). */
 export function generateGrantToken(): string {
   return randomBytes(24).toString('base64url');

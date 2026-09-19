@@ -120,7 +120,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     }
     if (!advertiser.requires_email_gate) {
       return NextResponse.json(
-        { error: 'email gate disabled for this advertiser' },
+        { error: 'email gate disabled for this partner' },
         { status: 400 },
       );
     }
@@ -163,20 +163,20 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
             from: { name: fromName },
           });
           if (!result.success) {
-            console.error('[advertiser-grant] send failed:', result.error);
-            console.log('[advertiser-grant] magic link (send fallback):', magicLink);
+            console.error('[partner-grant] send failed:', result.error);
+            console.log('[partner-grant] magic link (send fallback):', magicLink);
           }
         } catch (err) {
-          console.error('[advertiser-grant] send exception:', errMessage(err));
-          console.log('[advertiser-grant] magic link (exception fallback):', magicLink);
+          console.error('[partner-grant] send exception:', errMessage(err));
+          console.log('[partner-grant] magic link (exception fallback):', magicLink);
         }
       } else {
-        console.warn('[advertiser-grant] RESEND_API_KEY not configured');
-        console.log('[advertiser-grant] magic link:', magicLink);
+        console.warn('[partner-grant] RESEND_API_KEY not configured');
+        console.log('[partner-grant] magic link:', magicLink);
       }
     } else {
       // F-11: log masked email so PII doesn't end up in Vercel Logs.
-      console.log('[advertiser-grant] non-matching email attempt for', slug, ':', maskEmail(email));
+      console.log('[partner-grant] non-matching email attempt for', slug, ':', maskEmail(email));
     }
 
     return NextResponse.json({ ok: true });

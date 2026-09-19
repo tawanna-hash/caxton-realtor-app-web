@@ -27,6 +27,7 @@ export type AgreementLineItem = {
   publication: string | null;
   start_date: string | null;
   end_date: string | null;
+  preferred_send_dates: string[] | null;
   amount_cents: number | null;
 };
 
@@ -46,7 +47,7 @@ export async function GET(
   const sql = getSql();
   const rows = (await sql`
     SELECT line_no, channel, package_label, ad_size, frequency, quantity,
-           publication, start_date, end_date, amount_cents
+           publication, start_date, end_date, amount_cents, preferred_send_dates
       FROM agreement_line_items
      WHERE agreement_id = ${id}
      ORDER BY line_no ASC

@@ -146,6 +146,25 @@ export default function IosTable() {
     }
   }
 
+  async function deleteIo(io: InsertionOrderWithAdvertiser) {
+    const confirmation = window.prompt(
+      `Permanently delete insertion order ${io.io_number} for ${io.advertiser_name ?? 'this partner'}?\n\nThis cannot be undone. Type the IO number to confirm.`,
+    );
+    if (confirmation !== io.io_number) return;
+
+    setBusyId(io.id);
+    try {
+      const r = await fetch(`/api/admin/insertion-orders/${io.id}`, { method: 'DELETE' });
+      const data = (await r.json().catch(() => null)) as { error?: string; ok?: boolean } | null;
+      if (!r.ok || !data?.ok) throw new Error(data?.error || `HTTP ${r.status}`);
+      setRows((prev) => prev.filter((row) => row.id !== io.id));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Delete failed');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <div>
       {/* Channel tab strip */}
@@ -186,7 +205,7 @@ export default function IosTable() {
         </select>
         <input
           type="search"
-          placeholder="Search IO number, notes, advertiser…"
+          placeholder="Search IO number, notes, partner…"
           value={qInput}
           onChange={(e) => setQInput(e.target.value)}
           onKeyDown={(e) => {
@@ -211,12 +230,69 @@ export default function IosTable() {
       )}
 
       {!loading && !error && (
-        <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+        <>
+        {/* mobile card list */}
+        <ul className="md:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+          {rows.length === 0 ? (
+            <li className="px-3 py-6 text-center text-sm text-gray-500">No insertion orders yet.</li>
+          ) : (
+            rows.map((io) => (
+              <li key={`m-${io.id}`} className="p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-xs text-gray-700">{io.io_number}</span>
+                      <span className={'inline-block px-2 py-0.5 rounded border text-[10px] font-medium ' + STATUS_BADGE[io.status]}>
+                        {IO_STATUS_LABEL[io.status]}
+                      </span>
+                    </div>
+                    <p className="font-medium text-gray-900 mt-1.5 truncate">{io.advertiser_name ?? '—'}</p>
+                  </div>
+                  <div className="text-right shrink-0 text-sm font-medium tabular-nums text-gray-900">
+                    {formatMoney(io.total_cents)}
+                  </div>
+                </div>
+                <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                  <dt className="text-gray-500">Channel</dt>
+                  <dd className="text-gray-700 capitalize">{io.channel}</dd>
+                  <dt className="text-gray-500">Publication</dt>
+                  <dd className="text-gray-700">{io.publication ?? '—'}</dd>
+                  <dt className="text-gray-500">Flight</dt>
+                  <dd className="text-gray-700">{formatDate(io.flight_start)} → {formatDate(io.flight_end)}</dd>
+                </dl>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  <a
+                    href={`/api/admin/insertion-orders/${io.id}/pdf`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50 rounded-md"
+                  >
+                    PDF
+                  </a>
+                  {io.status === 'draft' && (
+                    <button type="button" disabled={busyId === io.id} onClick={() => sendIo(io.id)} className="text-xs px-2 py-1 rounded border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50">Send</button>
+                  )}
+                  {io.status === 'sent' && (
+                    <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'acknowledged')} className="text-xs px-2 py-1 rounded border border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50">Ack</button>
+                  )}
+                  {io.status === 'acknowledged' && (
+                    <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'active')} className="text-xs px-2 py-1 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">Activate</button>
+                  )}
+                  {io.status === 'active' && (
+                    <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'fulfilled')} className="text-xs px-2 py-1 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">Fulfill</button>
+                  )}
+                  <button type="button" disabled={busyId === io.id} onClick={() => void deleteIo(io)} className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50">Delete</button>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
+        <div className="hidden overflow-x-auto rounded-md border border-gray-200 bg-white md:block">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
               <tr>
                 <th className="px-3 py-2">IO #</th>
-                <th className="px-3 py-2">Advertiser</th>
+                <th className="px-3 py-2">Partner</th>
                 <th className="px-3 py-2">Channel</th>
                 <th className="px-3 py-2">Publication</th>
                 <th className="px-3 py-2">Flight</th>
@@ -305,6 +381,14 @@ export default function IosTable() {
                             Fulfill
                           </button>
                         )}
+                        <button
+                          type="button"
+                          disabled={busyId === io.id}
+                          onClick={() => void deleteIo(io)}
+                          className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -313,6 +397,7 @@ export default function IosTable() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

@@ -95,18 +95,23 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
         const elements = useElements();
         const [confirming, setConfirming] = useState(false);
         const [innerError, setInnerError] = useState<string | null>(null);
+        const [paymentElementReady, setPaymentElementReady] = useState(false);
 
-        // Notify parent when Stripe + Elements are mounted (form is ready).
+        // Stripe + Elements context can exist before the hosted card fields have
+        // loaded. Only enable authorization after PaymentElement fires `ready`.
         useEffect(() => {
-          onReady?.(!!stripe && !!elements);
-        }, [stripe, elements, onReady]);
+          onReady?.(!!stripe && !!elements && paymentElementReady);
+          return () => onReady?.(false);
+        }, [stripe, elements, paymentElementReady, onReady]);
 
         useImperativeHandle(
           innerRef,
           (): StripePaymentHandle => ({
-            isReady: !!stripe && !!elements,
+            isReady: !!stripe && !!elements && paymentElementReady,
             async confirm() {
-              if (!stripe || !elements) throw new Error('Stripe not ready');
+              if (!stripe || !elements || !paymentElementReady) {
+                throw new Error('Secure card fields are not ready. Please wait or reload the page.');
+              }
               setConfirming(true);
               setInnerError(null);
               try {
@@ -130,12 +135,32 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
               }
             },
           }),
-          [stripe, elements, paymentIntentId],
+          [stripe, elements, paymentElementReady, paymentIntentId],
         );
 
         return (
           <div className="space-y-3">
-            <PaymentElement options={{ layout: 'tabs' }} />
+            {!paymentElementReady && !innerError && (
+              <p className="text-sm text-gray-500">Loading secure card fields…</p>
+            )}
+            <PaymentElement
+              options={{ layout: 'tabs' }}
+              onLoaderStart={() => {
+                setPaymentElementReady(false);
+                setInnerError(null);
+              }}
+              onReady={() => {
+                setPaymentElementReady(true);
+                setInnerError(null);
+              }}
+              onLoadError={(event) => {
+                setPaymentElementReady(false);
+                setInnerError(
+                  event.error?.message
+                    ?? 'Secure card fields failed to load. Please reload the page or contact Realty News Now.',
+                );
+              }}
+            />
             {confirming && <p className="text-sm text-gray-500">Authorizing card…</p>}
             {innerError && (
               <p className="text-sm text-red-600 bg-red-50 rounded-md p-2">{innerError}</p>

@@ -5,8 +5,16 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/recurring-invoices",
+      "schedule": "0 8 * * *"
+    },
+    {
       "path": "/api/cron/sync-advertisers",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/refresh-payment-links",
+      "schedule": "20 * * * *"
     },
     {
       "path": "/api/cron/scrape-unlockmls",
@@ -19,6 +27,10 @@
     {
       "path": "/api/cron/scrape-hba",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-realtyline",
+      "schedule": "10 13 * * *"
     },
     {
       "path": "/api/cron/scrape-sabor",
@@ -139,6 +151,14 @@
     {
       "path": "/api/cron/agreement-lifecycle",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/renewal-rate-reminders",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/agent-deadline-notifications",
+      "schedule": "0 * * * *"
     },
     {
       "path": "/api/cron/expire-promotions",

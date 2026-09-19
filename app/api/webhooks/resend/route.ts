@@ -177,8 +177,30 @@ export async function POST(req: NextRequest) {
         const result = await exec(
           `UPDATE marketing_campaign_outreach_recipients
               SET open_count = COALESCE(open_count, 0) + 1,
-                  opened_at  = NOW()
+                  opened_at  = COALESCE(opened_at, NOW())
             WHERE message_id = $1`,
+          [emailId],
+        );
+        await exec(
+          `UPDATE advertisers a
+              SET open_count = totals.open_count,
+                  last_opened_at = totals.last_opened_at
+             FROM (
+               SELECT
+                 recipient_id,
+                 COALESCE(SUM(open_count), 0)::int AS open_count,
+                 MAX(opened_at) AS last_opened_at
+               FROM marketing_campaign_outreach_recipients
+               WHERE recipient_type = 'advertiser'
+                 AND recipient_id = (
+                   SELECT recipient_id
+                   FROM marketing_campaign_outreach_recipients
+                   WHERE message_id = $1
+                   LIMIT 1
+                 )
+               GROUP BY recipient_id
+             ) totals
+            WHERE a.id = totals.recipient_id`,
           [emailId],
         );
         logger.info(
@@ -191,7 +213,8 @@ export async function POST(req: NextRequest) {
       case 'email.clicked': {
         const result = await exec(
           `UPDATE marketing_campaign_outreach_recipients
-              SET click_count = COALESCE(click_count, 0) + 1
+              SET click_count = COALESCE(click_count, 0) + 1,
+                  clicked_at  = COALESCE(clicked_at, NOW())
             WHERE message_id = $1`,
           [emailId],
         );

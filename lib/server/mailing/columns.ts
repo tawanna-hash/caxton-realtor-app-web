@@ -21,7 +21,7 @@ export type MailingColumnId =
   | 'addr_status'
   | 'created_at';
 
-export const MAILING_COLUMNS: {
+const MAILING_COLUMNS: {
   id: MailingColumnId;
   label: string;
   sortable: boolean;
@@ -43,10 +43,6 @@ export const MAILING_COLUMNS: {
   { id: 'addr_status',    label: 'USPS',       sortable: false, defaultVisible: true  },
   { id: 'created_at',     label: 'Added',      sortable: true,  defaultVisible: true  },
 ];
-
-export const DEFAULT_VISIBLE_COLUMNS: MailingColumnId[] =
-  MAILING_COLUMNS.filter((c) => c.defaultVisible).map((c) => c.id);
-
 const SORTABLE_COLUMNS = new Set<MailingColumnId>(
   MAILING_COLUMNS.filter((c) => c.sortable).map((c) => c.id),
 );

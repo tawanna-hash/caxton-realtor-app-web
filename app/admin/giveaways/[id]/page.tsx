@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
+import { PUBLICATIONS } from '@/lib/publications';
 
 import PageTitle from '@/components/ui/PageTitle';
 const RULE_ACTIONS = [
@@ -43,6 +44,7 @@ export default function GiveawayDetailPage() {
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
   const [drawAt, setDrawAt] = useState('');
+  const initialDetailsRef = useRef<Record<string, unknown> | null>(null);
 
   const loadGiveaway = async () => {
     const data = await adminApi.getGiveaway(id);
@@ -63,6 +65,16 @@ export default function GiveawayDetailPage() {
     setStartsAt(toDateTimeLocal(g.starts_at as string));
     setEndsAt(toDateTimeLocal(g.ends_at as string));
     setDrawAt(toDateTimeLocal(g.draw_at as string));
+    initialDetailsRef.current = {
+      title: (g.title as string) || '',
+      description: (g.description as string | null) ?? null,
+      prize: (g.prize as string) || '',
+      publication: (g.publication as string) || 'both',
+      status: (g.status as string) || 'draft',
+      startsAt: g.starts_at ? new Date(g.starts_at as string).toISOString() : null,
+      endsAt: g.ends_at ? new Date(g.ends_at as string).toISOString() : null,
+      drawAt: g.draw_at ? new Date(g.draw_at as string).toISOString() : null,
+    };
     setLoading(false);
   };
 
@@ -81,18 +93,20 @@ export default function GiveawayDetailPage() {
     setError(null);
     setSaving(true);
     try {
-      // Schema (lib/server/schemas/giveaways.ts) expects camelCase keys
-      // and rejects null description / drawAt. Omit those keys when empty.
-      const payload: Record<string, unknown> = {
+      const fullPayload: Record<string, unknown> = {
         title,
+        description: description || null,
         prize,
         publication,
         status,
-        startsAt: new Date(startsAt).toISOString(),
-        endsAt: new Date(endsAt).toISOString(),
+        startsAt: startsAt ? new Date(startsAt).toISOString() : null,
+        endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+        drawAt: drawAt ? new Date(drawAt).toISOString() : null,
       };
-      if (description) payload.description = description;
-      if (drawAt) payload.drawAt = new Date(drawAt).toISOString();
+      const payload = Object.fromEntries(Object.entries(fullPayload).filter(([key, value]) =>
+        JSON.stringify(value) !== JSON.stringify(initialDetailsRef.current?.[key]),
+      ));
+      if (Object.keys(payload).length === 0) return;
       await adminApi.updateGiveaway(id, payload);
       await loadGiveaway();
     } catch (err) {
@@ -157,7 +171,7 @@ export default function GiveawayDetailPage() {
         </Link>
       </div>
 
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <PageTitle size="md">{giveaway.title as string}</PageTitle>
           <div className="text-xs uppercase tracking-wider text-gray-500 mt-1">
@@ -231,9 +245,12 @@ export default function GiveawayDetailPage() {
                 onChange={(e) => setPublication(e.target.value)}
                 className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-brand-700 bg-white rounded-md"
               >
-                <option value="both">Both Publications</option>
-                <option value="austin">RealtyLine Austin</option>
-                <option value="san_antonio">Newsline San Antonio</option>
+                <option value="both">Austin + San Antonio</option>
+                {PUBLICATIONS.map((publicationOption) => (
+                  <option key={publicationOption.id} value={publicationOption.id}>
+                    {publicationOption.label}
+                  </option>
+                ))}
               </select>
             </FieldRow>
             <FieldRow label="Status">

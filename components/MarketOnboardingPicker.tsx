@@ -15,8 +15,8 @@
 
 import { useEffect, useState } from 'react';
 import {
-  PUB_ACTIVE,
-  PUB_COMING_SOON,
+  PUBLIC_PUB_ACTIVE,
+  PUBLIC_PUB_COMING_SOON,
   persistPub,
   type PubId,
 } from '@/lib/publications';
@@ -32,6 +32,17 @@ export default function MarketOnboardingPicker() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    // The shareable product tour must open cleanly for prospects and partners.
+    // It demonstrates all markets and does not need a persisted publication.
+    if (window.location.pathname === '/product-tour') return;
+    // Dashboard owns its sign-in and publication flow. Showing this global
+    // picker there created two stacked market-selection screens and hid the
+    // account actions underneath.
+    if (
+      window.location.pathname === '/dashboard' ||
+      window.location.pathname === '/login' ||
+      window.location.pathname.startsWith('/auth/')
+    ) return;
     // Skip the onboarding picker when opened for printing (?print=1).
     // The in-app Safari (SFSafariViewController) doesn't share localStorage
     // with the native app, so the picker would intercept the page load.
@@ -97,7 +108,7 @@ export default function MarketOnboardingPicker() {
           </p>
 
           <ul className="space-y-3">
-            {PUB_ACTIVE.map((p) => (
+            {PUBLIC_PUB_ACTIVE.map((p) => (
               <li key={p.id}>
                 <button
                   type="button"
@@ -133,11 +144,13 @@ export default function MarketOnboardingPicker() {
             ))}
           </ul>
 
+          {PUBLIC_PUB_COMING_SOON.length > 0 && (
+          <>
           <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400 font-medium text-center mt-8 mb-3">
             Coming soon
           </p>
           <ul className="space-y-2">
-            {PUB_COMING_SOON.map((p) => (
+            {PUBLIC_PUB_COMING_SOON.map((p) => (
               <li key={p.id}>
                 <button
                   type="button"
@@ -159,6 +172,8 @@ export default function MarketOnboardingPicker() {
               </li>
             ))}
           </ul>
+          </>
+          )}
         </div>
       </div>
     </div>

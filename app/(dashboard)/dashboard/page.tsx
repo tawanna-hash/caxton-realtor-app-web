@@ -9,8 +9,6 @@ import { useSwipeBack } from '@/hooks/use-swipe-back';
 import ProfilePanel from '@/components/ProfilePanel';
 import { getApiBase } from '@/lib/api-base';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
-import PushOptInBanner from '@/components/PushOptInBanner';
-import NativePushBanner from '@/components/NativePushBanner';
 import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import SaborReportCard from '@/components/SaborReportCard';
@@ -26,6 +24,7 @@ import { openExternal } from '@/lib/native/external-link';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
 import TrendingTicker from '@/components/feed/TrendingTicker';
+import { isNative } from '@/lib/native/runtime';
 
 const API = getApiBase();
 
@@ -66,13 +65,13 @@ function canonicalShareUrl(article?: { id?: string | number | null; link?: strin
 // datacenter-IP filter). Old saved values for caxton_cat_* in localStorage
 // that reference 'Social' fall through to 'All' via the validCats check in
 // Feed's useState initializer below.
-const RL_CATS = ['All', 'ABoR', 'Five Points', 'Featured Advertisers', "Editor's Choice", 'Faces of Real Estate', 'WCR Austin'];
-const NS_CATS = ['All', 'SABOR', 'GSABA', 'WCR San Antonio', 'Residential', 'Featured Advertisers', "Editor's Choice", 'Faces of Real Estate'];
+const RL_CATS = ['All', 'ABoR', 'Five Points', 'Featured Partners', "Editor's Choice", 'Faces of Real Estate', 'WCR Austin'];
+const NS_CATS = ['All', 'SABOR', 'GSABA', 'WCR San Antonio', 'Residential', 'Featured Partners', "Editor's Choice", 'Faces of Real Estate'];
 
 const RL_NEWS = [
   { id: 1, cat: 'ABoR', head: 'ABoR Announces 2026 Board Election Results', sum: 'New leadership elected with a focus on affordability and inventory.', time: '2 hours ago' },
   { id: 2, cat: 'Five Points', head: 'Five Points BoR Hosts CE Workshop on Settlement Changes', sum: 'New CE courses cover commission disclosure rules and best practices.', time: '5 hours ago' },
-  { id: 3, cat: 'Featured Advertisers', head: 'Austin Title Marks 30 Years Serving Central Texas REALTORS', sum: 'Anniversary milestone celebrated with a new fast-close service tier.', time: '1 day ago' },
+  { id: 3, cat: 'Featured Partners', head: 'Austin Title Marks 30 Years Serving Central Texas REALTORS', sum: 'Anniversary milestone celebrated with a new fast-close service tier.', time: '1 day ago' },
   { id: 4, cat: "Editor's Choice", head: 'Austin Home Sales Rise 12% in April', sum: 'The Austin-Round Rock metro saw a jump in closed sales last month.', time: '1 day ago' },
   { id: 5, cat: 'Faces of Real Estate', head: 'Faces of Real Estate: May Profile Edition Released', sum: 'Six Austin agents share their stories, strategies, and 2026 outlook.', time: '2 days ago' },
   { id: 6, cat: 'WCR Austin', head: 'WCR Austin Announces Spring Networking Mixer', sum: 'Members and guests gather May 22 at the Driskill for an evening of connections.', time: '2 days ago' },
@@ -83,7 +82,7 @@ const NS_NEWS = [
   { id: 2, cat: 'GSABA', head: 'GSABA Hosts Builder Certification Workshop', sum: 'Two-day workshop covers green building standards and permit updates.', time: '6 hours ago' },
   { id: 3, cat: 'WCR San Antonio', head: 'WCR San Antonio Hosts Spring Leadership Forum', sum: 'Members convene for networking and professional development sessions.', time: '1 day ago' },
   { id: 4, cat: 'Residential', head: 'San Antonio Median Home Price Hits New High', sum: 'Bexar County saw record prices in April across all segments.', time: '1 day ago' },
-  { id: 5, cat: 'Featured Advertisers', head: 'Alamo Title Expands SA Operations With New Branch', sum: 'Local title leader adds capacity to serve South San Antonio agents.', time: '1 day ago' },
+  { id: 5, cat: 'Featured Partners', head: 'Alamo Title Expands SA Operations With New Branch', sum: 'Local title leader adds capacity to serve South San Antonio agents.', time: '1 day ago' },
   { id: 6, cat: "Editor's Choice", head: 'Pearl District Office Tower Sells for $85M', sum: 'The 12-story Class A tower traded to an out-of-state investor.', time: '2 days ago' },
   { id: 7, cat: 'Faces of Real Estate', head: 'Faces of Real Estate: SA Profile Edition Released', sum: 'Six San Antonio agents share their stories and 2026 strategies.', time: '2 days ago' },
 ];
@@ -404,10 +403,20 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
   );
 }
 
-function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void }) {
+function AuthGate({
+  pub,
+  onAuth,
+  onNeedMarket,
+  initialMode = 'login',
+}: {
+  pub: string;
+  onAuth: (user: any) => void;
+  onNeedMarket: () => void;
+  initialMode?: 'login' | 'signup';
+}) {
   // Honor /auth/sign-in and /auth/sign-up aliases via ?auth=login|signup so
   // visitors land directly on the right form instead of the 'choice' screen.
-  const [mode, setMode] = useState<'choice' | 'signup' | 'login' | 'sent'>('choice');
+  const [mode, setMode] = useState<'choice' | 'signup' | 'login' | 'sent'>(initialMode);
   const [step, setStep] = useState(1);
   const [licenseType, setLicenseType] = useState('TREC #');
   const [licenseNum, setLicenseNum] = useState('');
@@ -508,6 +517,14 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             if (meRes.ok) {
               const meData = await meRes.json().catch(() => ({}));
               const realtor = meData?.realtor || meData;
+              try {
+                if (realtor?.id && realtor?.email) {
+                  window.localStorage.setItem(
+                    'caxton_session_user',
+                    JSON.stringify({ id: realtor.id, email: realtor.email }),
+                  );
+                }
+              } catch {}
               if (realtor?.id) {
                 void haptics.notify('success');
                 try { window.dispatchEvent(new CustomEvent('caxton:authSuccess', { detail: { mode: 'signup' } })); } catch {}
@@ -613,12 +630,22 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Sign-in failed');
       }
-      const meRes = await fetch(API + '/auth/me', { credentials: 'include' });
-      if (!meRes.ok) throw new Error('Signed in but could not load your account');
-      const meData = await meRes.json();
-      const realtor = meData.realtor || meData;
+      // /auth/password-login now returns the realtor payload — no need for
+      // a second /auth/me round-trip (BUG-C in the sign-in audit).
+      const data = await res.json().catch(() => ({}));
+      const realtor = data.realtor;
+      if (!realtor) throw new Error('Signed in but could not load your account');
       trackEvent('password_signin_succeeded', { pub });
       void haptics.notify('success');
+      // Persist to localStorage FIRST so AppShell + NavDrawer see the user
+      // synchronously (before /auth/me round-trip). Fixes drawer showing
+      // LOGIN after sign-in.
+      try {
+        window.localStorage.setItem(
+          'caxton_session_user',
+          JSON.stringify({ id: realtor.id, email: realtor.email }),
+        );
+      } catch {}
       try { window.dispatchEvent(new CustomEvent('caxton:authSuccess', { detail: { mode: 'password' } })); } catch {}
       onAuth({
         id: realtor.id,
@@ -710,7 +737,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 </select>
 
                 <button onClick={() => { void haptics.light(); setStep(2); }} disabled={!fullName} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mt-4 disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
-                <button onClick={() => setMode('choice')} className="w-full text-center py-2 text-base text-gray-400 font-light mt-2">Back</button>
+                <button onClick={() => setMode('login')} className="w-full text-center py-2 text-base text-gray-400 font-light mt-2">Back to sign in</button>
               </div>
             )}
 
@@ -824,7 +851,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 </div>
 
                 <p className="text-xs text-gray-500 font-light mb-3">Your license number is used only to avoid duplicate records and for RealtyLine&apos;s use only. It is never shared, sold or displayed publicly. Providing a license number is optional.</p>
-                <p className="text-xs text-gray-400 font-light mb-4">By creating an account, you agree to receive communications from Caxton Publications, Inc. We will send a magic link to your email - no password needed.</p>
+                <p className="text-xs text-gray-400 font-light mb-4">By creating an account, you agree to receive communications from Caxton Publications, Inc. Your password lets you sign in anytime — no email link needed.</p>
 
                 <div className="flex gap-2">
                   <button onClick={() => { void haptics.light(); setStep(2); }} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
@@ -841,33 +868,122 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   if (mode === 'login') {
     return (
       <div
-        className="fixed inset-0 bg-white z-50 overflow-y-auto"
+        className="fixed inset-0 z-50 overflow-y-auto bg-[#f7f5fa]"
         style={{
           ...SW,
-          paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
+          paddingTop: 'calc(env(safe-area-inset-top) + 32px)',
           paddingBottom:
-            'calc(env(safe-area-inset-bottom) + var(--kb-inset-bottom, 0px) + 40px)',
+            'calc(env(safe-area-inset-bottom) + var(--kb-inset-bottom, 0px) + 32px)',
         }}
       >
         <div className="min-h-full flex flex-col items-center justify-center">
-        <div className="w-full max-w-md px-8">
-          <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
-          <h2 className="text-2xl text-gray-900 font-semibold text-center mb-6">Welcome Back</h2>
-          {error && <p className="text-base text-red-500 text-center mb-4 font-light">{error}</p>}
-          <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className={ic} autoComplete="username" />
-          <div className="relative mb-3">
-            <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className={ic + ' pr-16'} autoComplete="current-password" onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordLogin(); }} />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-400">{showPassword ? 'Hide' : 'Show'}</button>
+          <div className="w-full max-w-md px-5">
+            <div className="rounded-2xl border border-[#e5dfec] bg-white px-6 py-8 shadow-[0_18px_55px_rgba(48,29,93,0.10)] sm:px-8">
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#301D5D] text-sm font-bold tracking-wide text-white">
+                RNN
+              </div>
+              <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.24em]" style={{ color: info.color }}>
+                Realty News Now
+              </p>
+              <h1 className="text-center text-3xl font-semibold tracking-tight text-gray-900">
+                Welcome Back
+              </h1>
+              <p className="mb-7 mt-2 text-center text-sm font-light leading-relaxed text-gray-500">
+                Sign in for your saved profile, preferences, and subscriptions.
+              </p>
+
+              {error && (
+                <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
+              <label className="mb-1.5 block text-sm font-medium text-gray-700" htmlFor="dashboard-login-email">
+                Email address
+              </label>
+              <input
+                id="dashboard-login-email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-3.5 text-base text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/10"
+                autoComplete="username"
+              />
+
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700" htmlFor="dashboard-login-password">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') window.location.href = '/auth/forgot-password';
+                  }}
+                  className="text-xs font-medium text-[#301D5D] hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative mb-4">
+                <input
+                  id="dashboard-login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3.5 pr-16 text-base text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/10"
+                  autoComplete="current-password"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void handlePasswordLogin();
+                  }}
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  void haptics.medium();
+                  void handlePasswordLogin();
+                }}
+                disabled={loading || !email || !password}
+                className="mb-3 w-full rounded-lg bg-[#301D5D] py-3.5 text-base font-semibold text-white transition hover:bg-[#241646] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {loading ? 'Signing in…' : 'Sign in'}
+              </button>
+
+              <button
+                onClick={() => {
+                  if (isPubKey(pub)) setMode('signup');
+                  else onNeedMarket();
+                }}
+                className="w-full rounded-lg border border-[#301D5D] py-3.5 text-base font-semibold text-[#301D5D] transition hover:bg-[#f7f5fa]"
+              >
+                Create an account
+              </button>
+
+              <div className="my-5 flex items-center" aria-hidden="true">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="px-3 text-xs uppercase tracking-[0.18em] text-gray-400">or</span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </div>
+
+              <button
+                onClick={() => {
+                  void haptics.light();
+                  onAuth({ guest: true });
+                }}
+                className="w-full py-2 text-center text-sm font-semibold text-gray-600 hover:text-[#301D5D]"
+              >
+                Continue as a guest
+              </button>
+              <p className="mt-2 text-center text-xs font-light text-gray-400">
+                No account is required to browse news, events, builders, partners, and resources.
+              </p>
+            </div>
           </div>
-          <button onClick={() => { void haptics.medium(); void handlePasswordLogin(); }} disabled={loading || !email || !password} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Signing in…' : 'Sign In'}</button>
-          <div className="flex items-center my-3" aria-hidden="true">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
-            <div className="flex-1 h-px bg-gray-200" />
-          </div>
-          <button onClick={() => { if (typeof window !== 'undefined') window.location.href = '/auth/forgot-password'; }} className="w-full text-center py-2 text-sm text-gray-500 font-light">Forgot password?</button>
-          <button onClick={() => setMode('choice')} className="w-full text-center py-2 text-base text-gray-400 font-light">Back</button>
-        </div>
         </div>
       </div>
     );
@@ -886,14 +1002,32 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       <div className="min-h-full flex flex-col items-center justify-center">
       <div className="w-full max-w-md px-8">
         <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
-        <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign In to Continue</h2>
-        <button onClick={() => setMode('signup')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3" style={{ backgroundColor: info.color }}>Create Your Account</button>
+        <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign in to Continue</h2>
+        <button
+          onClick={() => {
+            if (isPubKey(pub)) setMode('signup');
+            else onNeedMarket();
+          }}
+          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3"
+          style={{ backgroundColor: info.color }}
+        >
+          Create Your Account
+        </button>
         <button onClick={() => setMode('login')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-3 rounded-md">I Already Have an Account</button>
         <div className="flex items-center my-4" aria-hidden="true">
           <div className="flex-1 h-px bg-gray-200" />
           <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
+        <button
+          onClick={() => {
+            void haptics.light();
+            onAuth({ guest: true });
+          }}
+          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-gray-700 border border-gray-300 rounded-md"
+        >
+          Continue as a Guest
+        </button>
       </div>
       </div>
     </div>
@@ -909,6 +1043,7 @@ export default function DashboardPage() {
   const [newsRefreshNonce, setNewsRefreshNonce] = useState(0);
   const [pub, setPub] = useState('');
   const [user, setUser] = useState<any>(null);
+  const [authEntry, setAuthEntry] = useState<'login' | 'signup'>('login');
   const [hydrated, setHydrated] = useState(false);
 
   // Rehydrate from localStorage so refresh stays where the user was.
@@ -918,7 +1053,7 @@ export default function DashboardPage() {
       const savedPub = localStorage.getItem('caxton_pub');
       const savedPhase = localStorage.getItem('caxton_phase');
       const savedArticle = localStorage.getItem('caxton_selected_article');
-      if (savedPub === 'realtyline' || savedPub === 'newsline') {
+      if (isPubKey(savedPub)) {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO(S18-lint-debt): restructure rehydration effect
         setPub(savedPub);
       }
@@ -944,12 +1079,8 @@ export default function DashboardPage() {
       }
     } catch {}
 
-    // Check if we already have a server session. If there is NO realtor on
-    // the server, we must override any saved localStorage phase that would
-    // render protected content (feed/article). The edge proxy already
-    // blocks unauthenticated access to /dashboard, but when the dashboard
-    // is reached via the documented ?auth=login|signup bypass for the
-    // sign-in form, the AuthGate must be the only thing visible.
+    // The downloaded iOS/Android app keeps its account gate. The browser
+    // website is public and sends signed-out visitors straight to the feed.
     fetch(`${API}/auth/me`, { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -965,19 +1096,18 @@ export default function DashboardPage() {
             setPhase('feed');
           }
         } else {
-          // No server session — force the AuthGate regardless of saved phase.
-          // This closes a content-leak window where a stale localStorage
-          // 'caxton_phase=feed' could briefly render feed components for a
-          // signed-out visitor who reached /dashboard?auth=login.
           setUser(null);
+          setAuthEntry('login');
           setPhase('auth');
-          try { localStorage.removeItem('caxton_phase'); } catch {}
+          if (isNative()) {
+            try { localStorage.removeItem('caxton_phase'); } catch {}
+          }
         }
       })
       .catch(() => {
-        // Treat /api/auth/me network failures as logged-out for safety.
         if (cancelled) return;
         setUser(null);
+        setAuthEntry('login');
         setPhase('auth');
       });
 
@@ -987,12 +1117,35 @@ export default function DashboardPage() {
     };
   }, []);
 
+  // Listen for cross-component pub changes (MarketSwitcherSheet /
+  // AppShell NavDrawer call persistPub() which dispatches this event).
+  // Updating pub state here triggers the Feed's useEffect to re-fetch
+  // data for the new market — no hard reload needed (which was causing
+  // re-auth via the Edge proxy).
+  useEffect(() => {
+    function onPubChange() {
+      try {
+        const saved = localStorage.getItem('caxton_pub');
+        if (isPubKey(saved)) {
+          setPub(saved);
+          // The existing useEffect [pub] already resets the category.
+          // Clear any saved article from the old market.
+          setSelectedArticle(null);
+          try { localStorage.removeItem('caxton_selected_article'); } catch {}
+          try { localStorage.removeItem('caxton_selected_event'); } catch {}
+        }
+      } catch {}
+    }
+    window.addEventListener('savedPubChange', onPubChange);
+    return () => window.removeEventListener('savedPubChange', onPubChange);
+  }, []);
+
   // Persist phase + pub on every change (after initial hydration).
   useEffect(() => {
     if (!hydrated) return;
     try {
       const maxAge = 60 * 60 * 24 * 365;
-      if (pub === 'realtyline' || pub === 'newsline') {
+      if (isPubKey(pub)) {
         document.cookie = `caxton_pub=${pub}; path=/; max-age=${maxAge}; SameSite=Lax`;
         localStorage.setItem('caxton_pub', pub);
       } else {
@@ -1018,6 +1171,41 @@ export default function DashboardPage() {
       }
     } catch {}
   }, [selectedArticle, hydrated]);
+
+  // A refreshed reader is initially restored from localStorage so users keep
+  // their place. That saved object can predate an admin edit (for example, a
+  // newly uploaded featured image), so replace it with the latest merged API
+  // record every time an article reader opens or is restored.
+  useEffect(() => {
+    if (!hydrated || phase !== 'article' || !selectedArticle?.id) return;
+
+    let cancelled = false;
+    const articleId = String(selectedArticle.id);
+    const market = articleId.startsWith('san_antonio-') ? 'san_antonio' : 'austin';
+
+    fetch(`${API}/news/${market}`, { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        const articles = Array.isArray(data?.articles) ? data.articles : [];
+        const freshArticle = articles.find((item: any) => String(item?.id) === articleId);
+        if (!freshArticle) return;
+
+        setSelectedArticle(freshArticle);
+        setGlobalArticles(articles);
+      })
+      .catch((error) => {
+        // Keep the saved article readable during a transient network failure.
+        console.warn(`[Article] Fresh lookup failed for ${articleId}:`, error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, phase, selectedArticle?.id]);
 
 
 
@@ -1109,9 +1297,33 @@ export default function DashboardPage() {
     }
   }, [phase]);
 
-  if (phase === 'splash') return <SplashScreen onDone={() => { trackEvent('splash_dismissed'); setPhase('select'); }} />;
-  if (phase === 'select') return <PubSelector onSelect={(id) => { trackEvent('pub_selected', { pub: id }); setPub(id); setPhase('auth'); }} />;
-  if (phase === 'auth') return <AuthGate pub={pub} onAuth={(u) => { setUser(u); identifyUser(u?.id || null, { email: u?.email }); trackEvent('auth_completed', { is_guest: !!u?.guest, pub }); setPhase('feed'); }} />;
+  if (phase === 'splash') return <SplashScreen onDone={() => { trackEvent('splash_dismissed'); setPhase('auth'); }} />;
+  if (phase === 'select') return <PubSelector onSelect={(id) => {
+    trackEvent('pub_selected', { pub: id });
+    setPub(id);
+    setPhase(authEntry === 'signup' ? 'auth' : 'feed');
+  }} />;
+  if (phase === 'auth') return (
+    <AuthGate
+      pub={pub}
+      initialMode={authEntry}
+      onNeedMarket={() => {
+        setAuthEntry('signup');
+        setPhase('select');
+      }}
+      onAuth={(u) => {
+        setUser(u);
+        identifyUser(u?.id || null, { email: u?.email });
+        trackEvent('auth_completed', { is_guest: !!u?.guest, pub });
+        if (isPubKey(pub)) {
+          setPhase('feed');
+        } else {
+          setAuthEntry('login');
+          setPhase('select');
+        }
+      }}
+    />
+  );
 
   
   // caxton-article-reader-b1-phase
@@ -1260,7 +1472,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
     setNewsLoading(true);
     setNewsError(null);
     const market = pub === 'realtyline' ? 'austin' : 'san_antonio';
-    fetch(`${API}/news/${market}`)
+    // Always request the latest merged article payload. WordPress itself is
+    // cached server-side, while local admin overrides must appear immediately.
+    fetch(`${API}/news/${market}`, { cache: 'no-store' })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -1444,38 +1658,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
           the AppShell header now handles title-as-switcher with the same
           MarketSwitcherSheet, per iOS HIG dedupe pass. */}
       {!showPreLaunch && (
-        <DashboardHero pub={pub as "realtyline" | "newsline"} />
-      )}
-      {!showPreLaunch && (
-        <PushOptInBanner
-          market={
-            pub === 'realtyline'
-              ? 'austin'
-              : pub === 'newsline'
-              ? 'san_antonio'
-              : pub === 'realtyline-houston'
-              ? 'houston'
-              : pub === 'realtyline-dallas'
-              ? 'dallas'
-              : null
-          }
-        />
-      )}
-      {!showPreLaunch && (
-        <NativePushBanner
-          realtorId={user?.id ?? null}
-          market={
-            pub === 'realtyline'
-              ? 'austin'
-              : pub === 'newsline'
-              ? 'san_antonio'
-              : pub === 'realtyline-houston'
-              ? 'houston'
-              : pub === 'realtyline-dallas'
-              ? 'dallas'
-              : null
-          }
-        />
+        <DashboardHero pub={pub as "realtyline" | "newsline" | "realtyline-dallas" | "realtyline-houston"} />
       )}
       {user?.guest && (
         <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
@@ -1489,16 +1672,14 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
       {tab === 'n' && !showPreLaunch && (
         <div>
           <FeedTopBanner pub={pub} />
-          {(pub === 'realtyline' || pub === 'newsline') && (
-            <TrendingTicker market={pub} className="mx-4 mt-3" />
-          )}
+          <TrendingTicker market={pub as PubKey} className="mx-4 mt-3" />
           <div className="flex gap-2 overflow-x-auto px-4 py-3 bg-white border-b border-gray-200" style={{ scrollbarWidth: 'none' }}>
             {CATS.map((c) => (
               <button
                 key={c}
                 onClick={() => { void haptics.selection(); setCat(c); }}
                 aria-pressed={cat === c}
-                // BUG-16: add flex-shrink-0 so long chips like "Featured Advertisers"
+                // BUG-16: add flex-shrink-0 so long chips like "Featured Partners"
                 // don't get squeezed by sibling flex children and overflow the row.
                 className={
                   cat === c
@@ -1862,33 +2043,17 @@ function splitHtmlIntoChunks(html: string, chunks: number): string[] {
 // Article ad slots — all delegate to <AdSlotComponent> so they share one
 // fetch path, one impression-tracking path, and one source of fallback
 // creative (the DB). The wrapper components here only own the surrounding
-// layout chrome (the "Advertisement" eyebrow, the dismissable popup shell).
+// layout chrome (spacing and the dismissable popup shell).
 // ─────────────────────────────────────────────────────────────────────────
 
 // Publication is read by <AdSlotComponent> from localStorage.caxton_pub,
 // so the ad wrappers below don't need pub or articleId props anymore.
 // Props are kept on the function signatures only where call sites pass them.
 
-// Disclosure eyebrow. We split the visible string across two spans so the
-// rendered text node is not the literal word that uBlock/AdGuard/Brave
-// cosmetic filters key on (/advertisement/i, /advertising/i).
-function PromotedEyebrow({ className = '' }: { className?: string }) {
-  return (
-    <p
-      aria-label="Advertising partner"
-      className={`text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center font-medium ${className}`}
-    >
-      <span aria-hidden="true">{'Advertising'}</span>
-      <span aria-hidden="true">{'\u00a0Partner'}</span>
-    </p>
-  );
-}
-
 function FeedTopBanner({}: { pub: string }) {
   return (
     <div className="bg-white border-b border-gray-200">
-      <PromotedEyebrow className="pt-3 pb-2" />
-      <div className="pb-3 px-4">
+      <div className="py-3 px-4">
         <AdSlotComponent slug="feed_top_banner" variant="bare" />
       </div>
     </div>
@@ -1898,7 +2063,6 @@ function FeedTopBanner({}: { pub: string }) {
 function AdLeaderboard({}: { pub: string; articleId: string }) {
   return (
     <div className="my-6 -mx-5">
-      <PromotedEyebrow className="mb-2" />
       <AdSlotComponent slug="article_top_leaderboard" variant="bare" />
     </div>
   );
@@ -1908,7 +2072,6 @@ function AdRectangle({}: { pub: string; articleId: string; idx: number }) {
   return (
     <div className="my-8">
       <div className="border-t border-gray-200 pt-4">
-        <PromotedEyebrow className="mb-3" />
         <AdSlotComponent slug="article_mid_inline" variant="bare" />
         <div className="border-t border-gray-200 mt-4" />
       </div>
@@ -2345,6 +2508,14 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
       </div>
 
 
+      {/* Featured article ad — shown before the editorial image so paid
+          placement remains the first content unit beneath the app header. */}
+      <div className="px-5">
+        <div className="max-w-2xl mx-auto">
+          <AdLeaderboard pub={pub} articleId={articleId} />
+        </div>
+      </div>
+
       {/* Featured image — constrained to the same max-w-2xl column as the
           article body, so it doesn't stretch edge-to-edge on wide desktop
           windows (which also upscaled smaller source images and made them
@@ -2367,104 +2538,114 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
           ~62px pill) plus the BottomNav underneath, with breathing room.
           Was pb-44 — the bar overlapped the last paragraph on short
           articles and the "Read on website" link (BUG-18). */}
-      <div className="px-5 pt-6 pb-52 max-w-2xl mx-auto">
-        {/* Top leaderboard ad — first thing in the article column */}
-        <AdLeaderboard pub={pub} articleId={articleId} />
-
-        {/* Eyebrow */}
-        {(article.cat || article.category) && (
-          <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: info.color }}>
-            {article.cat || article.category}
-          </p>
-        )}
-
-        {/* Headline */}
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-tight mb-3">
-          {headline}
-        </h1>
-
-        {/* Byline */}
-        {(author?.name || dateLong) && (
-          <div className="flex items-center gap-3 mb-2 pb-6 border-b border-gray-200">
-            {author?.avatar && (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={author.avatar}
-                alt=""
-                width={96}
-                height={96}
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  // Hide the avatar element entirely when Gravatar 404s
-                  // (author has no registered Gravatar). Avoids broken-image icon.
-                  (e.currentTarget as HTMLImageElement).style.display = 'none';
-                }}
-                className="w-16 h-16 rounded-full object-cover bg-gray-100 flex-shrink-0"
-              />
+      <div className="px-5 pt-6 pb-52">
+        <div className="mx-auto flex max-w-[1040px] items-start justify-center gap-10">
+          <main className="w-full min-w-0 max-w-2xl">
+            {/* Eyebrow */}
+            {(article.cat || article.category) && (
+              <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: info.color }}>
+                {article.cat || article.category}
+              </p>
             )}
-            <div className="min-w-0 flex-1">
-              {author?.name && (
-                <p className="text-sm text-gray-900 font-medium leading-tight">By {author.name}</p>
-              )}
-              {dateLong && (
-                <p className="text-xs text-gray-500 font-light leading-tight mt-0.5">{dateLong}</p>
-              )}
+
+            {/* Headline */}
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-tight mb-3">
+              {headline}
+            </h1>
+
+            {/* Byline */}
+            {(author?.name || dateLong) && (
+              <div className="flex items-center gap-3 mb-2 pb-6 border-b border-gray-200">
+                {author?.avatar && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={author.avatar}
+                    alt=""
+                    width={96}
+                    height={96}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      // Hide the avatar element entirely when Gravatar 404s
+                      // (author has no registered Gravatar). Avoids broken-image icon.
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
+                    }}
+                    className="w-16 h-16 rounded-full object-cover bg-gray-100 flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  {author?.name && (
+                    <p className="text-sm text-gray-900 font-medium leading-tight">By {author.name}</p>
+                  )}
+                  {dateLong && (
+                    <p className="text-xs text-gray-500 font-light leading-tight mt-0.5">{dateLong}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Article body — chunked with mid-article ads if long enough */}
+            {cleanedHtml ? (
+              showMidAds ? (
+                <>
+                  <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: chunks[0] }} />
+                  <AdRectangle pub={pub} articleId={articleId} idx={1} />
+                  <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: chunks[1] }} />
+                  <AdRectangle pub={pub} articleId={articleId} idx={2} />
+                  <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: chunks[2] }} />
+                </>
+              ) : (
+                <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: cleanedHtml }} />
+              )
+            ) : (
+              <p className="text-base text-gray-700 leading-relaxed font-light">
+                {decodeHtmlEntities(article.sum || '')}
+              </p>
+            )}
+
+            {/* Tags */}
+            <TagsRow article={article} pubColor={info.color} />
+
+            {/* Share row (icons) */}
+            <div className="mt-6">
+              <ShareRow article={article} pubColor={info.color} onCopied={() => flashToast('Link copied')} />
             </div>
-          </div>
-        )}
 
-        {/* Article body — chunked with mid-article ads if long enough */}
-        {cleanedHtml ? (
-          showMidAds ? (
-            <>
-              <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: chunks[0] }} />
-              <AdRectangle pub={pub} articleId={articleId} idx={1} />
-              <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: chunks[1] }} />
-              <AdRectangle pub={pub} articleId={articleId} idx={2} />
-              <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: chunks[2] }} />
-            </>
-          ) : (
-            <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: cleanedHtml }} />
-          )
-        ) : (
-          <p className="text-base text-gray-700 leading-relaxed font-light">
-            {decodeHtmlEntities(article.sum || '')}
-          </p>
-        )}
+            {/* Read Next */}
+            <ReadNext
+              allArticles={allArticles || []}
+              currentId={article.id}
+              onSelect={(a) => { if (onSelectArticle) onSelectArticle(a); }}
+              pubColor={info.color}
+            />
 
-        {/* Tags */}
-        <TagsRow article={article} pubColor={info.color} />
+            {/* Read on website fallback */}
+            {article.link && (
+              <div className="mt-10 pt-6 border-t border-gray-200">
+                <a
+                  href={article.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm uppercase tracking-wider font-medium"
+                  style={{ color: info.color }}
+                >
+                  Read on {info.name} →
+                </a>
+              </div>
+            )}
 
-        {/* Share row (icons) */}
-        <div className="mt-6">
-          <ShareRow article={article} pubColor={info.color} onCopied={() => flashToast('Link copied')} />
+            {/* Article bottom ad slot (renders only when a campaign is active) */}
+            <AdSlotComponent slug="article_bottom" className="mt-10" />
+          </main>
+
+          {/* Desktop article-sidebar inventory. The bare variant preserves the
+              uploaded creative's natural aspect ratio instead of stretching it
+              to fill the rail. Hidden on mobile and tablet by design. */}
+          <aside className="hidden w-[320px] shrink-0 lg:block" aria-label="Article advertising partner">
+            <div className="sticky top-24">
+              <AdSlotComponent slug="article_sidebar_desktop" variant="bare" />
+            </div>
+          </aside>
         </div>
-
-        {/* Read Next */}
-        <ReadNext
-          allArticles={allArticles || []}
-          currentId={article.id}
-          onSelect={(a) => { if (onSelectArticle) onSelectArticle(a); }}
-          pubColor={info.color}
-        />
-
-        {/* Read on website fallback */}
-        {article.link && (
-          <div className="mt-10 pt-6 border-t border-gray-200">
-            <a
-              href={article.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm uppercase tracking-wider font-medium"
-              style={{ color: info.color }}
-            >
-              Read on {info.name} →
-            </a>
-          </div>
-        )}
-
-        {/* Article bottom ad slot (renders only when a campaign is active) */}
-        <AdSlotComponent slug="article_bottom" className="mt-10" />
       </div>
 
       {/* Sticky action bar */}
@@ -2552,4 +2733,3 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
     </div>
   );
 }
-

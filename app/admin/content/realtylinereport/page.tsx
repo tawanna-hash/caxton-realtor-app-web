@@ -54,6 +54,7 @@ export default function RealtyLineMlsAdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<RealtyLineReport>(blankForm());
+  const initialFormRef = useRef<RealtyLineReport | null>(null);
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string>('');
@@ -183,30 +184,33 @@ export default function RealtyLineMlsAdminPage() {
 
   function startNew() {
     setEditingId(null);
+    initialFormRef.current = null;
     setForm(blankForm());
   }
 
   function startEdit(r: ReportRow) {
     setEditingId(r.id);
     const base = makeBlankReport(r.month_label, r.released_at);
-    setForm({
+    const editForm: RealtyLineReport = {
       ...base,
       month_label: r.month_label,
-      month_label_es: r.month_label_es || translateMonthLabel(r.month_label),
+      month_label_es: r.month_label_es ?? '',
       released_at: r.released_at,
-      subtitle_en: r.subtitle_en || DEFAULT_SUBTITLE_EN,
-      subtitle_es: r.subtitle_es || DEFAULT_SUBTITLE_ES,
+      subtitle_en: r.subtitle_en ?? '',
+      subtitle_es: r.subtitle_es ?? '',
       headline_value: r.headline_value,
       headline_delta: r.headline_delta,
       headline_delta_direction: r.headline_delta_direction,
-      headline_label_en: r.headline_label_en || DEFAULT_HEADLINE_LABEL_EN,
-      headline_label_es: r.headline_label_es || DEFAULT_HEADLINE_LABEL_ES,
-      indicator_stats: r.indicator_stats && r.indicator_stats.length > 0 ? r.indicator_stats : base.indicator_stats,
+      headline_label_en: r.headline_label_en ?? '',
+      headline_label_es: r.headline_label_es ?? '',
+      indicator_stats: Array.isArray(r.indicator_stats) ? r.indicator_stats : [],
       listing_counts: Array.isArray(r.listing_counts) ? r.listing_counts : [],
       price_bands: Array.isArray(r.price_bands) ? r.price_bands : [],
       page_count: r.page_count,
       pdf_storage_key: r.pdf_storage_key,
-    });
+    };
+    initialFormRef.current = editForm;
+    setForm(editForm);
   }
 
   async function save() {
@@ -219,7 +223,11 @@ export default function RealtyLineMlsAdminPage() {
         method,
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(editingId
+          ? Object.fromEntries(Object.entries(form).filter(([key, value]) =>
+              JSON.stringify(value) !== JSON.stringify(initialFormRef.current?.[key as keyof RealtyLineReport]),
+            ))
+          : form),
       });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || 'Save failed');
@@ -315,7 +323,7 @@ export default function RealtyLineMlsAdminPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="content-admin-shell">
       <div className="mb-6">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin</p>
         <PageTitle size="md">ABOR Report</PageTitle>
@@ -325,6 +333,13 @@ export default function RealtyLineMlsAdminPage() {
           labels so the public card can toggle between languages. The most recent row by release date powers the card.
         </p>
       </div>
+
+      <section className="content-admin-summary" aria-label="ABOR report summary">
+        <div><strong>{reports.length}</strong><span>Saved reports</span></div>
+        <div><strong>{reports[0]?.month_label || '—'}</strong><span>Latest month</span></div>
+        <div><strong>{form.indicator_stats.length}</strong><span>Indicators</span></div>
+        <div><strong>{editingId ? 'Editing' : 'New'}</strong><span>Workspace mode</span></div>
+      </section>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">{error}</div>
@@ -341,7 +356,7 @@ export default function RealtyLineMlsAdminPage() {
                 type="button"
                 onClick={onPickFile}
                 disabled={importing}
-                className="text-xs font-medium px-3 py-1.5 border border-purple-700 bg-purple-700 text-white rounded-md hover:bg-purple-800 transition disabled:opacity-60"
+                className="text-xs font-medium px-3 py-1.5 border border-orange-700 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition disabled:opacity-60"
               >
                 {importing ? 'Extracting\u2026' : 'Upload graphic to autopopulate'}
               </button>
@@ -421,7 +436,7 @@ export default function RealtyLineMlsAdminPage() {
 
           {/* Headline */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
-            <h2 className="font-semibold mb-4">Headline number</h2>
+            <h2 className="font-semibold mb-4">Headline Number</h2>
 
             <div className="grid grid-cols-3 gap-4">
               <Field label="Headline value">
@@ -473,7 +488,7 @@ export default function RealtyLineMlsAdminPage() {
 
           {/* Indicator stats */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
-            <h2 className="font-semibold mb-1">Indicator stats</h2>
+            <h2 className="font-semibold mb-1">Indicator Stats</h2>
             <p className="text-xs text-gray-500 mb-4">Median Sales Price, Closed Sales, New Listings, Months of Inventory, Active Listings, Pending Sales, Sales Dollar Volume, Average Days on Market, Average Close to List Price.</p>
             <div className="space-y-3">
               {form.indicator_stats.map((s, i) => (
@@ -490,7 +505,7 @@ export default function RealtyLineMlsAdminPage() {
           {/* Listing counts (optional) */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
             <div className="flex items-center justify-between mb-1">
-              <h2 className="font-semibold">Listing counts (optional)</h2>
+              <h2 className="font-semibold">Listing Counts (Optional)</h2>
               <button
                 type="button"
                 onClick={addListingRow}
@@ -526,7 +541,7 @@ export default function RealtyLineMlsAdminPage() {
           {/* Price bands (optional) */}
           <div className="bg-white border border-gray-200 rounded-md p-5">
             <div className="flex items-center justify-between mb-1">
-              <h2 className="font-semibold">Price bands (optional)</h2>
+              <h2 className="font-semibold">Price Bands (Optional)</h2>
               <button
                 type="button"
                 onClick={addBandRow}
@@ -636,7 +651,10 @@ export default function RealtyLineMlsAdminPage() {
           {loading ? (
             <p className="text-gray-500">{'Loading\u2026'}</p>
           ) : reports.length === 0 ? (
-            <p className="text-gray-500 italic">No reports yet. Create one to populate the RealtyLine Austin card.</p>
+            <div className="content-admin-empty">
+              <strong>No ABOR reports yet</strong>
+              <span>Create the first monthly report to populate the RealtyLine Austin card.</span>
+            </div>
           ) : (
             <ul className="space-y-2">
               {reports.map((r, i) => (

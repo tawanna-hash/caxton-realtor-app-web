@@ -130,7 +130,7 @@ export default function OtherPromotionsCarousel({
   return (
     <section className="mt-10 border-t border-gray-200 pt-6">
       <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-4">
-        Other promotions
+        Other Promotions
       </h2>
       <div className="flex gap-4 overflow-x-auto pb-3 -mx-2 px-2 snap-x">
         {promotions.map((p) => (

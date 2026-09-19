@@ -1,14 +1,24 @@
 'use client';
 
-import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import { upload } from '@vercel/blob/client';
+
+import {
+  useState,
+  useEffect,
+  type FormEvent,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from 'react';
 import { useRouter } from 'next/navigation';
 
 type Kind = 'listing' | 'promotion';
-type Publication = 'realtyline' | 'newsline' | 'both';
+type Publication = 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas' | 'both';
 const PUBLICATION_OPTIONS: { value: Publication; label: string }[] = [
   { value: 'realtyline', label: 'RealtyLine Austin' },
   { value: 'newsline', label: 'Newsline San Antonio' },
-  { value: 'both', label: 'Both publications' },
+  { value: 'realtyline-houston', label: 'RealtyLine Houston' },
+  { value: 'realtyline-dallas', label: 'RealtyLine Dallas/Ft. Worth' },
+  { value: 'both', label: 'Austin + San Antonio' },
 ];
 
 const fieldStyle =
@@ -28,6 +38,10 @@ export default function AdminInventoryCreateForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [builderName, setBuilderName] = useState<string>('');
+  const [builderSuggestions, setBuilderSuggestions] = useState<string[]>([]);
+  const [builderSuggestionsOpen, setBuilderSuggestionsOpen] = useState(false);
+  const [builderSuggestionsLoading, setBuilderSuggestionsLoading] = useState(false);
+  const [activeBuilderSuggestion, setActiveBuilderSuggestion] = useState(0);
   const [title, setTitle] = useState<string>('');
   const [city, setCity] = useState<string>('Greater Austin');
   const [state, setState] = useState<string>('TX');
@@ -64,6 +78,8 @@ export default function AdminInventoryCreateForm() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- city default mirrors selected publication; refactor tracked separately
     if (publication === 'realtyline') setCity('Greater Austin');
     else if (publication === 'newsline') setCity('Greater San Antonio');
+    else if (publication === 'realtyline-houston') setCity('Greater Houston');
+    else if (publication === 'realtyline-dallas') setCity('Dallas/Ft. Worth');
     // 'both' leaves city untouched — admin chooses
   }, [publication]);
 
@@ -75,6 +91,80 @@ export default function AdminInventoryCreateForm() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time URL param read on mount
     if (k === 'listing' || k === 'promotion') setKind(k);
   }, []);
+
+  // Look up existing builder and developer names as the admin types. This
+  // remains a free-text field so a new builder can still be entered directly.
+  useEffect(() => {
+    const query = builderName.trim();
+    if (!query) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset lookup state when the search field clears
+      setBuilderSuggestions([]);
+      setBuilderSuggestionsOpen(false);
+      setBuilderSuggestionsLoading(false);
+      setActiveBuilderSuggestion(0);
+      return;
+    }
+
+    const controller = new AbortController();
+    const debounce = window.setTimeout(async () => {
+      setBuilderSuggestionsLoading(true);
+      try {
+        const response = await fetch(
+          `/api/admin/inventory/builder-suggestions?q=${encodeURIComponent(query)}`,
+          { credentials: 'include', signal: controller.signal },
+        );
+        const body = (await response.json().catch(() => null)) as
+          | { builders?: string[] }
+          | null;
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const suggestions = body?.builders ?? [];
+        setBuilderSuggestions(suggestions);
+        setActiveBuilderSuggestion(0);
+        setBuilderSuggestionsOpen(true);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setBuilderSuggestions([]);
+        setBuilderSuggestionsOpen(false);
+      } finally {
+        if (!controller.signal.aborted) setBuilderSuggestionsLoading(false);
+      }
+    }, 150);
+
+    return () => {
+      window.clearTimeout(debounce);
+      controller.abort();
+    };
+  }, [builderName]);
+
+  function chooseBuilderSuggestion(name: string) {
+    setBuilderName(name);
+    setBuilderSuggestionsOpen(false);
+  }
+
+  function handleBuilderNameKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Escape') {
+      setBuilderSuggestionsOpen(false);
+      return;
+    }
+
+    if (!builderSuggestions.length) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setBuilderSuggestionsOpen(true);
+      setActiveBuilderSuggestion((index) => (index + 1) % builderSuggestions.length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setBuilderSuggestionsOpen(true);
+      setActiveBuilderSuggestion((index) =>
+        (index - 1 + builderSuggestions.length) % builderSuggestions.length,
+      );
+    } else if (event.key === 'Enter' && builderSuggestionsOpen) {
+      event.preventDefault();
+      chooseBuilderSuggestion(builderSuggestions[activeBuilderSuggestion]);
+    }
+  }
 
   function onImageChange(e: ChangeEvent<HTMLInputElement>) {
     setImageError(null);
@@ -190,39 +280,81 @@ export default function AdminInventoryCreateForm() {
         throw new Error('Expiration date is required for promotions.');
       }
 
-      const fd = new FormData();
-      fd.append('mode', 'admin');
-      fd.append('kind', kind);
-      fd.append('publication', publication);
-      fd.append('submittedByName', 'Admin');
-      fd.append('submittedByEmail', 'tawanna@myrealtyline.com');
-      fd.append('builderName', builderName.trim());
-      fd.append('title', title.trim());
-      fd.append('city', city.trim());
-      fd.append('state', state.trim() || 'TX');
-      if (description.trim()) fd.append('description', description.trim());
-      if (sourceUrl.trim()) fd.append('sourceUrl', sourceUrl.trim());
+      // Direct-to-Blob upload for image + PDF (bypasses the 4.5MB
+      // Vercel serverless body cap).  The files never touch our
+      // /api/inventory/submit function — they go straight to Blob
+      // edge, and we send only the resulting URLs to the server.
+      const draftId =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-      if (kind === 'listing') {
-        if (bedsMin) fd.append('bedsMin', bedsMin);
-        if (bedsMax) fd.append('bedsMax', bedsMax);
-        if (bathsMin) fd.append('bathsMin', bathsMin);
-        if (bathsMax) fd.append('bathsMax', bathsMax);
-        if (sqftMin) fd.append('sqftMin', sqftMin);
-        if (sqftMax) fd.append('sqftMax', sqftMax);
-        if (priceMin) fd.append('priceMin', priceMin);
-        if (priceMax) fd.append('priceMax', priceMax);
-      } else {
-        if (startsAt) fd.append('startsAt', startsAt);
-        if (expiresAt) fd.append('expiresAt', expiresAt);
+      let uploadedImageUrl: string | null = null;
+      let uploadedFlyerPdfUrl: string | null = null;
+
+      if (imageFile) {
+        setPdfError(null);
+        const safeName = imageFile.name.replace(/[^a-zA-Z0-9._-]+/g, '-');
+        const b = await upload(
+          `inventory-thumbs/new/${draftId}/${safeName}`,
+          imageFile,
+          {
+            access: 'public',
+            handleUploadUrl: '/api/admin/inventory/upload-token',
+            contentType: imageFile.type,
+          },
+        );
+        uploadedImageUrl = b.url;
+      }
+      if (pdfFile) {
+        setPdfError(null);
+        const safeName = pdfFile.name.replace(/[^a-zA-Z0-9._-]+/g, '-');
+        const b = await upload(
+          `inventory-flyers/new/${draftId}/${safeName}`,
+          pdfFile,
+          {
+            access: 'public',
+            handleUploadUrl: '/api/admin/inventory/upload-token',
+            contentType: 'application/pdf',
+          },
+        );
+        uploadedFlyerPdfUrl = b.url;
       }
 
-      if (imageFile) fd.append('image', imageFile);
-      if (pdfFile) fd.append('flyerPdf', pdfFile);
+      // JSON body — every field goes as a string/number, no multipart.
+      const jsonBody: Record<string, unknown> = {
+        mode: 'admin',
+        kind,
+        publication,
+        submittedByName: 'Admin',
+        submittedByEmail: 'tawanna@realtynewsnow.app',
+        builderName: builderName.trim(),
+        title: title.trim(),
+        city: city.trim(),
+        state: (state.trim() || 'TX'),
+        description: description.trim() || null,
+        sourceUrl: sourceUrl.trim() || null,
+        imageUrl: uploadedImageUrl,
+        flyerPdfUrl: uploadedFlyerPdfUrl,
+      };
+      if (kind === 'listing') {
+        if (bedsMin) jsonBody.bedsMin = bedsMin;
+        if (bedsMax) jsonBody.bedsMax = bedsMax;
+        if (bathsMin) jsonBody.bathsMin = bathsMin;
+        if (bathsMax) jsonBody.bathsMax = bathsMax;
+        if (sqftMin) jsonBody.sqftMin = sqftMin;
+        if (sqftMax) jsonBody.sqftMax = sqftMax;
+        if (priceMin) jsonBody.priceMin = priceMin;
+        if (priceMax) jsonBody.priceMax = priceMax;
+      } else {
+        if (startsAt) jsonBody.startsAt = startsAt;
+        if (expiresAt) jsonBody.expiresAt = expiresAt;
+      }
 
       const res = await fetch('/api/inventory/submit', {
         method: 'POST',
-        body: fd,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonBody),
         credentials: 'include',
       });
 
@@ -309,8 +441,8 @@ export default function AdminInventoryCreateForm() {
         />
       </div>
 
-      {/* Builder name (free text) */}
-      <div>
+      {/* Builder name (existing names are suggested, but free text remains allowed). */}
+      <div className="relative">
         <label htmlFor="builderName" className={labelStyle}>
           Builder / developer name
         </label>
@@ -318,12 +450,64 @@ export default function AdminInventoryCreateForm() {
           id="builderName"
           type="text"
           value={builderName}
-          onChange={(e) => setBuilderName(e.target.value)}
+          onChange={(e) => {
+            setBuilderName(e.target.value);
+            setBuilderSuggestionsOpen(true);
+          }}
+          onFocus={() => {
+            if (builderName.trim()) setBuilderSuggestionsOpen(true);
+          }}
+          onBlur={() => {
+            window.setTimeout(() => setBuilderSuggestionsOpen(false), 120);
+          }}
+          onKeyDown={handleBuilderNameKeyDown}
           required
           disabled={submitting}
           className={fieldStyle}
           placeholder="e.g. M/I Homes, Lennar, KB Home"
+          autoComplete="off"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={builderSuggestionsOpen && builderSuggestions.length > 0}
+          aria-controls="builderNameSuggestions"
+          aria-activedescendant={
+            builderSuggestionsOpen && builderSuggestions.length > 0
+              ? `builderNameSuggestion-${activeBuilderSuggestion}`
+              : undefined
+          }
         />
+        {builderSuggestionsOpen && (builderSuggestionsLoading || builderSuggestions.length > 0) && (
+          <div
+            id="builderNameSuggestions"
+            role="listbox"
+            aria-label="Builder and developer suggestions"
+            className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+          >
+            {builderSuggestionsLoading && builderSuggestions.length === 0 ? (
+              <div className="px-4 py-2 text-sm text-gray-500">Searching builders…</div>
+            ) : (
+              builderSuggestions.map((name, index) => (
+                <button
+                  key={name}
+                  id={`builderNameSuggestion-${index}`}
+                  type="button"
+                  role="option"
+                  aria-selected={index === activeBuilderSuggestion}
+                  className={
+                    'block w-full px-4 py-2 text-left text-sm transition-colors ' +
+                    (index === activeBuilderSuggestion
+                      ? 'bg-brand-50 text-brand-800'
+                      : 'text-gray-800 hover:bg-gray-50')
+                  }
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => chooseBuilderSuggestion(name)}
+                >
+                  {name}
+                </button>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* Publication + city + state */}

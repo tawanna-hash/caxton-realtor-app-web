@@ -19,9 +19,9 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // Empty string disables alerts entirely. Falsy check below already handles
-// undefined/null. We default to tawanna@myrealtyline.com — newslinesa.com
+// undefined/null. We default to tawanna@realtynewsnow.app — newslinesa.com
 // is the publication domain but mail goes through myrealtyline.com.
-const ALERT_RECIPIENT = process.env.ACTIVITY_ALERT_TO ?? 'tawanna@myrealtyline.com';
+const ALERT_RECIPIENT = process.env.ACTIVITY_ALERT_TO ?? 'tawanna@realtynewsnow.app';
 
 const AlertSchema = z.object({
   kind: z.enum(['form_submit', 'client_error']),

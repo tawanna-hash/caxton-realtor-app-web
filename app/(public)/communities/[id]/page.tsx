@@ -162,7 +162,7 @@ export default async function CommunityDetailPage(
 
           <section className="mt-6">
             <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-              About this community
+              About This Community
             </h2>
             <p className="mt-3 whitespace-pre-line text-sm leading-6 text-neutral-700 dark:text-neutral-300">
               {aboutDesc}

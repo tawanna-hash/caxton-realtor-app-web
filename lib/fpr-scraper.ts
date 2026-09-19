@@ -141,7 +141,7 @@ function naiveLocalToIso(naive: string | null | undefined): string | null {
  * `format` and `description` carry that info. Enforces REALTOR/REALTORS
  * uppercase per NAR style (project §6, non-negotiable).
  */
-export function normalizeTitle(raw: string): string {
+function normalizeTitle(raw: string): string {
   let t = clean(raw);
   if (!t) return t;
 
@@ -316,7 +316,7 @@ interface RawRapamsEntry {
  * decrement the depth counter. Backslash-escaped quotes are skipped
  * properly.
  */
-export function findVarObject(html: string, varName: string): string | null {
+function findVarObject(html: string, varName: string): string | null {
   const startMarker = `var ${varName}`;
   const startIdx = html.indexOf(startMarker);
   if (startIdx < 0) return null;
@@ -354,7 +354,7 @@ export function findVarObject(html: string, varName: string): string | null {
  * If a variable is missing or its JSON doesn't parse, log a warning and
  * skip it — the other one is still useful on its own.
  */
-export function extractEmbeddedEvents(html: string): RawRapamsEntry[] {
+function extractEmbeddedEvents(html: string): RawRapamsEntry[] {
   const out: RawRapamsEntry[] = [];
 
   for (const varName of ['rapcalSourceEvents', 'rapcalSourceClasses']) {

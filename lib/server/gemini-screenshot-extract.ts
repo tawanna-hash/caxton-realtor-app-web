@@ -39,7 +39,7 @@ export interface ExtractedStaffMember {
   location_index: number | null;
 }
 
-export interface ExtractedScreenshot {
+interface ExtractedScreenshot {
   locations: ExtractedLocation[];
   staff: ExtractedStaffMember[];
 }

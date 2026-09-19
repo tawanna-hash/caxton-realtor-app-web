@@ -28,7 +28,7 @@ export async function generateMetadata(ctx: RouteCtx): Promise<Metadata> {
   const { slot } = await ctx.params;
   const s = APP_AD_SLOTS.find((x) => x.slug === slot);
   return {
-    title: s ? `Book ${s.name} — RealtyLine Austin` : 'Advertiser Checkout',
+    title: s ? `Book ${s.name} — RealtyLine Austin` : 'Partner Checkout',
     robots: { index: false, follow: false },
   };
 }
@@ -139,7 +139,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
 
         <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 mb-6 shadow-sm">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-            Placement summary
+            Placement Summary
           </h2>
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div>

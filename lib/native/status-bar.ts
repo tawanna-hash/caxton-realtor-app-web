@@ -59,23 +59,3 @@ export async function setStatusBarTheme(
     // Plugin missing / call failed — non-fatal.
   }
 }
-
-/** Hide the status bar for fullscreen views (article reader, magazine). */
-export async function hideStatusBar(): Promise<void> {
-  if (!isNative()) return;
-  try {
-    await StatusBar.hide();
-  } catch {
-    /* ignore */
-  }
-}
-
-/** Restore the status bar after a fullscreen view. */
-export async function showStatusBar(): Promise<void> {
-  if (!isNative()) return;
-  try {
-    await StatusBar.show();
-  } catch {
-    /* ignore */
-  }
-}

@@ -6,6 +6,7 @@
 // lib/realtor-resources.ts. No fetches, no state beyond expand/collapse.
 
 import PageTitle from '@/components/ui/PageTitle';
+import Link from 'next/link';
 import {
   RESOURCE_GUIDES,
   RESOURCE_LINKS,
@@ -16,52 +17,76 @@ import {
 const EYEBROW = 'text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2';
 const SECTION_EYEBROW = 'text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 mb-4';
 
-export default function ResourcesClient() {
+type ResourcesView = 'tools' | 'guides' | 'links';
+
+const VIEW_COPY: Record<ResourcesView, { eyebrow: string; title: string; description: string }> = {
+  tools: {
+    eyebrow: 'REALTOR® Platinum Tools',
+    title: 'Calculators & Quick References',
+    description: 'Practical calculators and transaction references built for REALTORS®.',
+  },
+  guides: {
+    eyebrow: 'REALTOR® Platinum Tools',
+    title: 'Downloadable Guides',
+    description: 'REALTOR® checklists, workbooks, and field guides for buyer, seller, new-build, and marketing workflows.',
+  },
+  links: {
+    eyebrow: 'Curated Links',
+    title: 'Official Sources & Industry References',
+    description: 'A curated collection of trusted external sources for real estate professionals and consumers.',
+  },
+};
+
+export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesView }) {
+  const copy = VIEW_COPY[view];
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       {/* ── Page header ─────────────────────────────────────────────── */}
       <header className="mb-8 sm:mb-10">
-        <p className={EYEBROW}>REALTOR® Resources</p>
-        <PageTitle size="md">Tools, partners, and training for Austin agents.</PageTitle>
+        <p className={EYEBROW}>{copy.eyebrow}</p>
+        <PageTitle size="md">{copy.title}</PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
-          A curated collection of downloadable guides and external
-          links our team relies on. Have
-          something to add?{' '}
-          <a
-            href="mailto:hello@myrealtyline.com?subject=Resources%20Page%20Suggestion"
-            className="text-brand-700 font-medium underline underline-offset-2"
-          >
-            Send us a suggestion
-          </a>
-          .
+          {copy.description}
+          {view !== 'tools' && (
+            <>
+              {' '}Have something to add?{' '}
+              <a
+                href="mailto:hello@myrealtyline.com?subject=Resources%20Page%20Suggestion"
+                className="text-brand-700 font-medium underline underline-offset-2"
+              >
+                Send us a suggestion
+              </a>
+              .
+            </>
+          )}
         </p>
       </header>
 
-      {/* ── Quick jump links ────────────────────────────────────────── */}
-      <nav className="mb-12 flex flex-wrap gap-2 text-sm">
-        {[
-          { href: '#tools', label: 'Tools' },
-          { href: '#guides', label: 'Guides & PDFs' },
-          { href: '#links', label: 'External Links' },
-        ].map((j) => (
-          <a
-            key={j.href}
-            href={j.href}
-            className="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:border-brand-700 hover:text-brand-700 transition"
-          >
-            {j.label}
-          </a>
-        ))}
-      </nav>
+      {view === 'tools' && (
+      <aside className="mb-8 flex flex-col gap-3 rounded-md border border-brand-700/20 bg-brand-700/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-gray-900">Add your REALTOR® branding</p>
+          <p className="mt-1 text-sm leading-relaxed text-gray-600">
+            Build your email signature once in Custom Designer. Its name, headshot, logo, and contact details are automatically added to calculator and quick-reference sheets.
+          </p>
+        </div>
+        <Link
+          href="/custom-designer"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800"
+        >
+          Open Custom Designer
+        </Link>
+      </aside>
+      )}
 
-      {/* ── Section 1: Guides ───────────────────────────────────────── */}
+      {view === 'tools' && (
       <section id="tools" className="mb-16 scroll-mt-24">
-        <p className={SECTION_EYEBROW}>Realtor Tools</p>
+        <p className={SECTION_EYEBROW}>REALTOR® Tools</p>
         <h2
           className="text-2xl md:text-3xl text-gray-900 mb-6"
         >
-          Calculators & quick references
+          Calculators & Quick References
         </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <ToolCard
@@ -120,13 +145,15 @@ export default function ResourcesClient() {
           />
         </div>
       </section>
+      )}
 
+      {view === 'guides' && (
       <section id="guides" className="mb-16 scroll-mt-24">
-        <p className={SECTION_EYEBROW}>Downloadable Guides</p>
+        <p className={SECTION_EYEBROW}>REALTOR® Downloadable Guides</p>
         <h2
           className="text-2xl md:text-3xl text-gray-900 mb-6"
         >
-          PDFs, checklists, and workbooks
+          PDFs, Checklists, and Workbooks
         </h2>
         <div className="grid sm:grid-cols-2 gap-4">
           {RESOURCE_GUIDES.map((g) => (
@@ -134,14 +161,15 @@ export default function ResourcesClient() {
           ))}
         </div>
       </section>
+      )}
 
-      {/* ── Section 4: External Links ───────────────────────────────── */}
+      {view === 'links' && (
       <section id="links" className="mb-16 scroll-mt-24">
         <p className={SECTION_EYEBROW}>Curated Links</p>
         <h2
           className="text-2xl md:text-3xl text-gray-900 mb-6"
         >
-          Official sources & industry reference
+          Official Sources & Industry Reference
         </h2>
         <ul className="divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden">
           {RESOURCE_LINKS.map((l) => (
@@ -149,6 +177,7 @@ export default function ResourcesClient() {
           ))}
         </ul>
       </section>
+      )}
 
       {/* ── Footer note ─────────────────────────────────────────────── */}
       <p className="text-xs text-gray-500 mt-12">

@@ -5,7 +5,7 @@
 //
 // Two ID schemes coexist here:
 //
-//   1. PublicationId ('austin' | 'san_antonio')
+//   1. PublicationId ('austin' | 'san_antonio' | 'houston' | 'dallas')
 //      - Used by the admin surfaces (events, ads, subscribers, giveaways,
 //        inventory). Stored in the database. Do NOT rename.
 //
@@ -25,7 +25,14 @@
 // Admin (database-backed) publication catalog
 // -----------------------------------------------------------------------------
 
-export type PublicationId = 'austin' | 'san_antonio';
+export const PUBLICATION_IDS = ['austin', 'san_antonio', 'houston', 'dallas'] as const;
+export type PublicationId = (typeof PUBLICATION_IDS)[number];
+export type PublicationScope = PublicationId | 'both';
+
+export function isPublicationId(value: unknown): value is PublicationId {
+  return typeof value === 'string'
+    && (PUBLICATION_IDS as readonly string[]).includes(value);
+}
 
 export interface Publication {
   id: PublicationId;
@@ -58,30 +65,42 @@ export const PUBLICATIONS: readonly Publication[] = [
     filterLabel: 'Newsline San Antonio',
     pillStyle: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
   },
+  {
+    id: 'houston',
+    name: 'RealtyLine Houston',
+    market: 'Houston',
+    label: 'RealtyLine Houston',
+    filterLabel: 'Houston',
+    pillStyle: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
+  },
+  {
+    id: 'dallas',
+    name: 'RealtyLine Dallas/Ft. Worth',
+    market: 'Dallas/Ft. Worth',
+    label: 'RealtyLine Dallas/Ft. Worth',
+    filterLabel: 'Dallas/Ft. Worth',
+    pillStyle: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
+  },
 ] as const;
 
 // Convenience lookup by id. Throws if id is not a known publication —
 // callers should only pass values typed as PublicationId.
-export function getPublication(id: PublicationId): Publication {
-  const found = PUBLICATIONS.find((p) => p.id === id);
-  if (!found) {
-    throw new Error(`Unknown publication id: ${id}`);
-  }
-  return found;
-}
-
 // Legacy compatibility shim: callers that previously had a local
 // PUB_LABELS or PUBLICATION_LABELS map keyed by id can use this directly.
 // New code should prefer getPublication(id).label.
 export const PUBLICATION_LABELS: Record<PublicationId, string> = {
   austin: 'RealtyLine Austin',
   san_antonio: 'Newsline San Antonio',
+  houston: 'RealtyLine Houston',
+  dallas: 'RealtyLine Dallas/Ft. Worth',
 };
 
 // Same shape as above but with the short filter labels.
 export const PUBLICATION_FILTER_LABELS: Record<PublicationId, string> = {
   austin: 'RealtyLine',
   san_antonio: 'Newsline San Antonio',
+  houston: 'Houston',
+  dallas: 'Dallas/Ft. Worth',
 };
 
 // Variant for surfaces that also support "both publications" scope.
@@ -90,6 +109,8 @@ export const PUBLICATION_FILTER_LABELS: Record<PublicationId, string> = {
 export const PUBLICATION_LABELS_WITH_BOTH: Record<PublicationId | 'both', string> = {
   austin: 'RealtyLine Austin',
   san_antonio: 'Newsline San Antonio',
+  houston: 'RealtyLine Houston',
+  dallas: 'RealtyLine Dallas/Ft. Worth',
   both: 'Both publications',
 };
 
@@ -107,7 +128,34 @@ export const PUBLICATION_LABELS_WITH_BOTH: Record<PublicationId | 'both', string
 // hard reload to '/' so server components, pub-scoped fetches, and chrome
 // re-mount with the new context (the BUG-03 fix).
 
-export type PubId = 'realtyline' | 'newsline';
+export type PubId = 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
+
+export function isPubId(value: unknown): value is PubId {
+  return typeof value === 'string'
+    && ['realtyline', 'newsline', 'realtyline-houston', 'realtyline-dallas'].includes(value);
+}
+
+export const PUBLICATION_TO_PUB_ID: Record<PublicationId, PubId> = {
+  austin: 'realtyline',
+  san_antonio: 'newsline',
+  houston: 'realtyline-houston',
+  dallas: 'realtyline-dallas',
+};
+
+export const PUB_ID_TO_PUBLICATION: Record<PubId, PublicationId> = {
+  realtyline: 'austin',
+  newsline: 'san_antonio',
+  'realtyline-houston': 'houston',
+  'realtyline-dallas': 'dallas',
+};
+
+export function publicationToPubId(publication: PublicationId): PubId {
+  return PUBLICATION_TO_PUB_ID[publication];
+}
+
+export function pubIdToPublication(pub: PubId): PublicationId {
+  return PUB_ID_TO_PUBLICATION[pub];
+}
 
 export type PubMeta = {
   id: PubId;
@@ -139,9 +187,6 @@ export const PUB_ACTIVE: PubMeta[] = [
     shortLabel: 'San Antonio',
     monogram: 'NS',
   },
-];
-
-export const PUB_COMING_SOON: ComingSoonPub[] = [
   {
     id: 'realtyline-houston',
     label: 'RealtyLine Houston',
@@ -151,15 +196,42 @@ export const PUB_COMING_SOON: ComingSoonPub[] = [
   {
     id: 'realtyline-dallas',
     label: 'RealtyLine Dallas/Ft. Worth',
-    shortLabel: 'Dallas/FW',
+    shortLabel: 'Dallas / Ft. Worth',
     monogram: 'RD',
   },
 ];
+
+export const PUB_COMING_SOON: ComingSoonPub[] = [];
+
+// Public launch availability is intentionally separate from PUB_ACTIVE.
+// Admin tools need all four publications while the public app currently
+// allows readers to enter only Austin and San Antonio.
+export const PUBLIC_PUB_ACTIVE: PubMeta[] = PUB_ACTIVE.filter(
+  (publication) => publication.id === 'realtyline' || publication.id === 'newsline',
+);
+
+export const PUBLIC_PUB_COMING_SOON: ComingSoonPub[] = PUB_ACTIVE
+  .filter(
+    (publication) =>
+      publication.id === 'realtyline-houston'
+      || publication.id === 'realtyline-dallas',
+  )
+  .map((publication) => ({ ...publication }));
+
+export function isPublicActivePubId(value: unknown): value is PubId {
+  return value === 'realtyline' || value === 'newsline';
+}
 
 /** Resolve a PubMeta by id. Returns null for coming-soon or unknown ids. */
 export function getActivePub(id: string | null | undefined): PubMeta | null {
   if (!id) return null;
   return PUB_ACTIVE.find((p) => p.id === id) ?? null;
+}
+
+/** Resolve only publications currently selectable in the public app. */
+export function getPublicActivePub(id: string | null | undefined): PubMeta | null {
+  if (!id) return null;
+  return PUBLIC_PUB_ACTIVE.find((p) => p.id === id) ?? null;
 }
 
 /** Persist the chosen publication and notify all listeners.

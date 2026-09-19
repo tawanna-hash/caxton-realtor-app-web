@@ -46,7 +46,7 @@ type Props = {
 
 // Destination routes the bar can navigate to. /dashboard isn't included
 // because Feed taps usually fire a same-page event rather than a route push.
-const PREFETCH_ROUTES = ['/calendar', '/builders', '/magazine', '/advertisers', '/dashboard'] as const;
+const PREFETCH_ROUTES = ['/calendar', '/builders', '/magazine', '/partners', '/dashboard'] as const;
 
 export default function BottomNav({ info, onMoreClick }: Props) {
   const pathname = usePathname();
@@ -88,7 +88,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
   const isCalendar = matches('/calendar');
   const isBuilders = matches('/builders');
   const isMagazine = matches('/magazine');
-  const isAdvertisers = matches('/advertisers');
+  const isAdvertisers = matches('/partners') || matches('/advertisers');
 
   function navigate(target: string) {
     if (pathname === target) return;
@@ -141,13 +141,13 @@ export default function BottomNav({ info, onMoreClick }: Props) {
         <Tab label="Calendar" active={isCalendar} accent={accent} onClick={() => navigate('/calendar')}>
           <Calendar strokeWidth={1.75} size={22} />
         </Tab>
-        <Tab label="Builders / Devs" active={isBuilders} accent={accent} onClick={() => navigate('/builders')}>
+        <Tab label="Builders" active={isBuilders} accent={accent} onClick={() => navigate('/builders')}>
           <Building2 strokeWidth={1.75} size={22} />
         </Tab>
         <Tab label="Issues" active={isMagazine} accent={accent} onClick={() => navigate('/magazine')}>
           <BookOpen strokeWidth={1.75} size={22} />
         </Tab>
-        <Tab label="Advertisers" active={isAdvertisers} accent={accent} onClick={() => navigate('/advertisers')}>
+        <Tab label="Partners" active={isAdvertisers} accent={accent} onClick={() => navigate('/partners')}>
           <Megaphone strokeWidth={1.75} size={22} />
         </Tab>
         <Tab label="More" active={false} accent={accent} onClick={onMoreClick}>
@@ -181,17 +181,25 @@ function Tab({
       //   our own pressed-state is the only thing the user sees
       // px-0 so six tabs fit on a 320px-wide iPhone SE without truncating
       // the all-caps labels; flex-1 still distributes width evenly.
-      className="flex flex-col items-center justify-center flex-1 px-0 gap-1 min-h-[44px] transition-transform duration-75 active:scale-95"
+      className="flex flex-col items-center justify-center flex-1 min-w-0 px-0 gap-1 min-h-[44px] transition-transform duration-75 active:scale-95"
       style={{
         color: active ? accent : '#9ca3af',
         WebkitTapHighlightColor: 'transparent',
       }}
     >
-      {children}
-      {/* Tracking tightened from -wider to -tight so 'Advertisers' (11 chars)
-          fits inside its ~53px tab slice on a 320px-wide iPhone SE without
-          truncation. The label set is fixed so this won't break other text. */}
-      <span className="text-[10px] font-medium uppercase tracking-tight whitespace-nowrap">
+      <span
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors"
+        style={{ backgroundColor: active ? `${accent}18` : 'rgb(48 29 93 / 0.06)' }}
+      >
+        {children}
+      </span>
+      {/* Label span shrinks with the tab: min-w-0 on the button (above) lets
+          flex-1 actually distribute equal width, and max-w-full + truncate
+          on the span keeps a naturally-wide label from pushing the whole nav
+          past the viewport on 375px iPhone SE. Prior version relied on tight
+          tracking + short labels to fit; that broke the moment a wider tab
+          (Builders / Devs at 81px) was added. */}
+      <span className="text-[10px] font-medium uppercase tracking-tight whitespace-nowrap max-w-full truncate">
         {label}
       </span>
     </button>

@@ -9,7 +9,7 @@ import { exec, query } from '@/lib/server/db/neon';
 import { sendEmail } from '@/lib/email';
 import { logger } from '@/lib/server/logger';
 
-const ALERT_TO = process.env.BOUNCE_ALERT_TO ?? 'tawanna@myrealtyline.com';
+const ALERT_TO = process.env.BOUNCE_ALERT_TO ?? 'tawanna@realtynewsnow.app';
 
 export async function handleBounceAlert(params: {
   emailId: string;

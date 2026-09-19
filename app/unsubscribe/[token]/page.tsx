@@ -54,7 +54,7 @@ export default async function UnsubscribePage({
       <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
         {result.ok ? (
           <>
-            <h1 className="font-serif text-2xl text-gray-900 mb-2">You&apos;ve been unsubscribed.</h1>
+            <h1 className="font-serif text-2xl text-gray-900 mb-2">You&apos;ve Been Unsubscribed.</h1>
             <p className="text-gray-600 text-sm">
               {result.email
                 ? <>We won&apos;t send any more marketing emails to <strong>{result.email}</strong>.</>
@@ -66,7 +66,7 @@ export default async function UnsubscribePage({
           </>
         ) : (
           <>
-            <h1 className="font-serif text-2xl text-gray-900 mb-2">Link expired</h1>
+            <h1 className="font-serif text-2xl text-gray-900 mb-2">Link Expired</h1>
             <p className="text-gray-600 text-sm">
               This unsubscribe link is no longer valid. To stop receiving emails,
               reply to any past message with &ldquo;unsubscribe&rdquo;.

@@ -620,7 +620,32 @@ function AmortizationTab(p: AmortizationTabProps) {
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border border-gray-200">
+      {/* Mobile cards */}
+      <div className="divide-y divide-gray-100 rounded-md border border-gray-200 md:hidden">
+        {p.annual.map((row) => (
+          <div key={row.year} className="p-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <div className="text-sm font-medium text-gray-700">Year {row.year}</div>
+              <div className="whitespace-nowrap text-right text-sm font-semibold text-gray-900">
+                {fmtUSD(row.endingBalance, { cents: true })}
+                <span className="ml-1 text-xs font-normal text-gray-500">balance</span>
+              </div>
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <div className="text-gray-400">Principal Paid</div>
+                <div className="text-gray-900">{fmtUSD(row.principalPaid, { cents: true })}</div>
+              </div>
+              <div>
+                <div className="text-gray-400">Interest Paid</div>
+                <div className="text-gray-700">{fmtUSD(row.interestPaid, { cents: true })}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Desktop table */}
+      <div className="hidden overflow-x-auto rounded-md border border-gray-200 md:block">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
             <tr>

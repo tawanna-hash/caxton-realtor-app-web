@@ -5,7 +5,6 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { getApiBase } from '@/lib/api-base';
 import PasswordSection from '@/components/PasswordSection';
-import PushOptInButton from '@/components/PushOptInButton';
 import DeleteAccountSection from '@/components/DeleteAccountSection';
 
 const API = getApiBase();
@@ -109,7 +108,7 @@ export default function ProfileClient() {
   const fullName = `${first} ${last}`.trim() || 'Your account';
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-2xl mx-auto">
       <div className="px-5 py-6" style={{ backgroundColor: accent }}>
         <p className="text-xs uppercase tracking-[0.2em] text-white/70">My Profile</p>
         <h1 className="text-lg text-white font-medium truncate">{fullName}</h1>
@@ -121,29 +120,7 @@ export default function ProfileClient() {
       <div className="p-5 space-y-5">
         <PasswordSection accentColor={accent} hasPassword={!!user.hasPassword} />
 
-        <section className="rounded-md border border-gray-200 bg-white p-4">
-          <h2 className="text-sm font-medium text-gray-900 mb-1">Notifications</h2>
-          <p className="text-xs text-gray-500 font-light mb-3">
-            Get breaking news and new issue alerts delivered to this device.
-          </p>
-          <PushOptInButton
-            market={
-              pub === 'newsline'
-                ? 'san_antonio'
-                : pub === 'realtyline-houston'
-                ? 'houston'
-                : pub === 'realtyline-dallas'
-                ? 'dallas'
-                : 'austin'
-            }
-          />
-        </section>
-
         <DeleteAccountSection accentColor={accent} email={user.email ?? ''} />
-
-        <p className="text-xs text-gray-400 font-light text-center">
-          More profile settings coming soon.
-        </p>
       </div>
     </div>
   );

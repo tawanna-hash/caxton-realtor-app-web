@@ -1,10 +1,12 @@
 'use client';
 
 import { useId, useMemo, useState, useTransition } from 'react';
+import { useUrlState, useUrlString } from '@/lib/use-url-state';
 import { useRouter } from 'next/navigation';
 import type { NewsArticle } from '@/lib/server/wp-news';
 
 import PageTitle from '@/components/ui/PageTitle';
+import ContentPagination from '@/app/admin/_components/ContentPagination';
 export type AdminArticle = NewsArticle & {
   hidden: boolean;
   editedFields: string[];
@@ -40,9 +42,15 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
-  const [filter, setFilter] = useState<PubFilter>('all');
-  const [search, setSearch] = useState('');
+  // Filter and search live in the URL so refresh preserves them.
+  const [filter, setFilter] = useUrlString<PubFilter>('filter', 'all');
+  const [search, setSearch] = useUrlState<string>('q', '', {
+    parse: (raw) => raw ?? '',
+    stringify: (v) => (v ? v : null),
+  });
   const [editing, setEditing] = useState<AdminArticle | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -62,6 +70,14 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     for (const a of initialArticles) c[a.publication] += 1;
     return c;
   }, [initialArticles]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageArticles = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const changePageSize = (size: number) => {
+    setPageSize(size);
+    setPage(1);
+  };
 
   async function handleSync() {
     setSyncing(true);
@@ -92,7 +108,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
   const busy = syncing || pending;
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+    <div className="content-admin-shell">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
@@ -109,7 +125,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             type="button"
             onClick={handleSync}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700/90 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
+            className="inline-flex items-center gap-2 rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
           >
             {busy ? (
               <>
@@ -144,6 +160,13 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           {syncError && <span className="text-xs text-red-600">{syncError}</span>}
         </div>
       </div>
+
+      <section className="content-admin-summary" aria-label="Article summary">
+        <div><strong>{counts.all.toLocaleString()}</strong><span>Total articles</span></div>
+        <div><strong>{counts.austin.toLocaleString()}</strong><span>Austin</span></div>
+        <div><strong>{counts.san_antonio.toLocaleString()}</strong><span>San Antonio</span></div>
+        <div><strong>{initialArticles.filter((article) => article.hidden).length.toLocaleString()}</strong><span>Hidden</span></div>
+      </section>
 
       {/* Feed errors */}
       {initialErrors.length > 0 && (
@@ -195,7 +218,60 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
+        <>
+        {/* mobile card list */}
+        <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+          {pageArticles.map((a) => (
+            <li key={`m-${a.id}`} className={`p-3 ${a.hidden ? 'opacity-50' : ''}`}>
+              <div className="flex items-start gap-3">
+                {a.imageThumb || a.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={a.imageThumb || a.imageUrl || ''}
+                    alt=""
+                    className="w-14 h-14 object-cover rounded-md flex-shrink-0 bg-gray-100"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-md bg-gray-100 flex-shrink-0" aria-hidden="true" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border ${PUB_STYLES[a.publication]}`}>
+                      {PUB_LABEL[a.publication]}
+                    </span>
+                    {a.editedFields.length > 0 && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Edited</span>
+                    )}
+                    {a.hidden && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">Hidden</span>
+                    )}
+                  </div>
+                  <p className="font-medium text-gray-900 mt-1 line-clamp-2">{a.head}</p>
+                  {a.sum && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{a.sum}</p>}
+                </div>
+              </div>
+              <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                <dt className="text-gray-500">Category</dt>
+                <dd className="text-gray-700">{a.cat}</dd>
+                <dt className="text-gray-500">Author</dt>
+                <dd className="text-gray-700">{a.author?.name || 'Staff'}</dd>
+                <dt className="text-gray-500">Published</dt>
+                <dd className="text-gray-700">{formatDate(a.dateIso || a.publishedAt)}</dd>
+              </dl>
+              <div className="mt-2 flex items-center gap-3">
+                <button type="button" onClick={() => setEditing(a)} className="text-brand-700 hover:underline text-xs font-medium">Edit</button>
+                <a href={a.link} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:underline text-xs">View ↗</a>
+              </div>
+            </li>
+          ))}
+          <li className="px-3 py-2 bg-gray-50 text-xs text-gray-500">
+            Showing {filtered.length} of {initialArticles.length} articles
+          </li>
+        </ul>
+        <div className="hidden sm:block overflow-hidden rounded-md border border-gray-200 bg-white">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
@@ -209,7 +285,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.map((a) => (
+                {pageArticles.map((a) => (
                   <tr
                     key={a.id}
                     className={`hover:bg-gray-50 ${a.hidden ? 'opacity-50' : ''}`}
@@ -287,10 +363,15 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
               </tbody>
             </table>
           </div>
-          <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 text-xs text-gray-500">
-            Showing {filtered.length} of {initialArticles.length} articles
-          </div>
+          <ContentPagination
+            count={filtered.length}
+            page={safePage}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={changePageSize}
+          />
         </div>
+        </>
       )}
 
       {editing && (

@@ -71,3 +71,4 @@ ios/DerivedData/
 *.xcuserstate
 xcuserdata/
 
+.fix-notes/

@@ -10,20 +10,44 @@
 // IDs are stored verbatim in the DB column advertisers.footer_template
 // (admin-set default) and in localStorage key
 // 'rnn:footer-template' (per-device override picked at download time).
-// Unknown / legacy values coerce back to 'minimal' on read.
+// Unknown / removed legacy values coerce back to Layout 1 on read.
 
-export const FOOTER_TEMPLATE_IDS = [
-  'business-card',
-  'banner',
-  'minimal',
-  'signature',
-  'two-column',
-  'stacked',
-] as const;
+export const FOOTER_TEMPLATE_IDS = ['split-column', 'minimal-rows'] as const;
 
 export type FooterTemplateId = (typeof FOOTER_TEMPLATE_IDS)[number];
 
-export const FOOTER_TEMPLATE_DEFAULT: FooterTemplateId = 'business-card';
+export const FOOTER_TEMPLATE_PICKER_IDS = FOOTER_TEMPLATE_IDS;
+
+export interface FooterColumnWidths {
+  headshot: number;
+  details: number;
+  logo: number;
+}
+
+export const DEFAULT_FOOTER_COLUMN_WIDTHS: FooterColumnWidths = {
+  headshot: 170,
+  details: 344,
+  logo: 190,
+};
+
+export function coerceFooterColumnWidths(value: unknown): FooterColumnWidths {
+  if (!value || typeof value !== 'object') return DEFAULT_FOOTER_COLUMN_WIDTHS;
+  const candidate = value as Partial<Record<keyof FooterColumnWidths, unknown>>;
+  const read = (key: keyof FooterColumnWidths) => {
+    if (candidate[key] === null || candidate[key] === undefined) {
+      return DEFAULT_FOOTER_COLUMN_WIDTHS[key];
+    }
+    const width = Number(candidate[key]);
+    return Number.isFinite(width) ? Math.min(500, Math.max(100, Math.round(width))) : DEFAULT_FOOTER_COLUMN_WIDTHS[key];
+  };
+  return {
+    headshot: read('headshot'),
+    details: read('details'),
+    logo: read('logo'),
+  };
+}
+
+const FOOTER_TEMPLATE_DEFAULT: FooterTemplateId = 'split-column';
 
 export function coerceFooterTemplateId(value: unknown): FooterTemplateId {
   if (typeof value !== 'string') return FOOTER_TEMPLATE_DEFAULT;
@@ -33,8 +57,9 @@ export function coerceFooterTemplateId(value: unknown): FooterTemplateId {
 }
 
 /**
- * Brand fields the renderer can pull from. All optional - the renderer
- * skips blank lines so a partially-filled profile still looks tidy.
+ * Brand fields the renderer can pull from. Calculator branding requires
+ * `company` at save time so every public-facing export identifies the
+ * broker. Other blank fields are skipped by the renderer.
  *
  * `publication` controls the color palette: 'austin' (RealtyLine) uses
  * navy + gold, 'san_antonio' (Newsline San Antonio) uses plum + gold, 'both' falls
@@ -57,7 +82,7 @@ export interface FooterBrand {
   zip: string | null;
   license_number: string | null;
   tagline: string | null;
-  publication: 'austin' | 'san_antonio' | 'both' | null;
+  publication: import('./publications').PublicationScope | null;
 }
 
 /** Color palette derived from a brand's publication. The renderer uses
@@ -100,62 +125,22 @@ export interface FooterTemplateMeta {
 }
 
 export const FOOTER_TEMPLATE_META: Record<FooterTemplateId, FooterTemplateMeta> = {
-  'business-card': {
-    id: 'business-card',
-    label: 'Business card',
-    blurb: 'Headshot + logo on the left, full contact card on the right.',
-    heightPt: 88,
+  'split-column': {
+    id: 'split-column',
+    label: 'Split Column (Classic)',
+    blurb: 'Headshot, contact details, and company logo in three clean columns.',
+    heightPt: 112,
     placement: 'every-page',
   },
-  banner: {
-    id: 'banner',
-    label: 'Brand banner',
-    blurb: 'Navy bar - headshot and logo on the left, contact stack on the right.',
-    heightPt: 80,
+  'minimal-rows': {
+    id: 'minimal-rows',
+    label: 'Minimal Rows (Stack)',
+    blurb: 'A compact stacked identity and contact layout with headshot and logo.',
+    heightPt: 112,
     placement: 'every-page',
-  },
-  minimal: {
-    id: 'minimal',
-    label: 'Minimal',
-    blurb: 'Compact two-line card. Lightest touch, still on every page.',
-    heightPt: 60,
-    placement: 'every-page',
-  },
-  signature: {
-    id: 'signature',
-    label: 'Signature',
-    blurb: 'Headshot, italic name, full contact - feels personal.',
-    heightPt: 100,
-    placement: 'last-page',
-  },
-  'two-column': {
-    id: 'two-column',
-    label: 'Two-column',
-    blurb: 'Photo + identity on the left, labeled contact rows on the right.',
-    heightPt: 100,
-    placement: 'every-page',
-  },
-  stacked: {
-    id: 'stacked',
-    label: 'Stacked',
-    blurb: 'Centered - photo, logo, name, contact, license & date.',
-    heightPt: 128,
-    placement: 'last-page',
   },
 };
 
 export function getFooterTemplateMeta(id: FooterTemplateId): FooterTemplateMeta {
   return FOOTER_TEMPLATE_META[id] ?? FOOTER_TEMPLATE_META[FOOTER_TEMPLATE_DEFAULT];
-}
-
-/** True when a brand has enough fields to make any footer template look real. */
-export function brandLooksComplete(b: FooterBrand): boolean {
-  // Want at least: name OR company, plus one of (phone, email, website).
-  const hasIdentity = Boolean((b.name && b.name.trim()) || (b.company && b.company.trim()));
-  const hasChannel = Boolean(
-    (b.phone && b.phone.trim()) ||
-    (b.email && b.email.trim()) ||
-    (b.website && b.website.trim()),
-  );
-  return hasIdentity && hasChannel;
 }

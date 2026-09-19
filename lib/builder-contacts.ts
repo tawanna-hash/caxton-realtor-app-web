@@ -10,11 +10,11 @@
 // case-insensitively against inventory row.builderName.
 
 export const DEFAULT_INQUIRY_TO =
-  process.env.LISTING_INQUIRY_TO ?? 'tawanna@myrealtyline.com';
+  process.env.LISTING_INQUIRY_TO ?? 'tawanna@realtynewsnow.app';
 
 // builderName -> sales-team email. Leave an entry out (or null) to use the
 // default inbox. Populate as emails are confirmed.
-export const BUILDER_SALES_EMAILS: Record<string, string> = {
+const BUILDER_SALES_EMAILS: Record<string, string> = {
   // 'Newmark Homes': 'sales@newmarkhomes.com',
   // 'M/I Homes': 'sales@mihomes.com',
 };

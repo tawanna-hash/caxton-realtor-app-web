@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
+import ContentPagination from '@/app/admin/_components/ContentPagination';
 
 type BuilderVisibility = {
   builder_name: string;
@@ -12,6 +13,8 @@ type BuilderVisibility = {
   active_count: number;
   public_enabled: boolean;
   is_developer: boolean;
+  advertiser_id: number | null;
+  is_advertising_partner: boolean;
 };
 
 export default function AdminBuilderPagesPage() {
@@ -21,6 +24,8 @@ export default function AdminBuilderPagesPage() {
   const [pending, setPending] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,14 +74,14 @@ export default function AdminBuilderPagesPage() {
     }
   }, []);
 
-  const handleDelete = useCallback(async (builderName: string) => {
-    if (!confirm(`Delete all rows for "${builderName}"?\nThis removes all inventory and community rows. This cannot be undone.`)) {
+  const handleDelete = useCallback(async (builder: BuilderVisibility) => {
+    if (!confirm(`Delete all rows for "${builder.builder_name}"?\nThis removes all inventory and community rows. This cannot be undone.`)) {
       return;
     }
-    setDeleting(builderName);
+    setDeleting(builder.builder_name);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/inventory/builders?builderName=${encodeURIComponent(builderName)}`, {
+      const res = await fetch(`/api/admin/inventory/builders?builderName=${encodeURIComponent(builder.builder_name)}`, {
         method: 'DELETE',
       });
       if (!res.ok) {
@@ -84,7 +89,17 @@ export default function AdminBuilderPagesPage() {
         throw new Error(`Failed to delete (${res.status}) ${txt}`);
       }
       setBuilders((prev) =>
-        (prev ?? []).filter((b) => b.builder_name !== builderName),
+        (prev ?? []).flatMap((b) => {
+          if (b.builder_name !== builder.builder_name) return [b];
+          if (!b.is_advertising_partner) return [];
+          return [{
+            ...b,
+            developer_name: null,
+            total_count: 0,
+            active_count: 0,
+            is_developer: false,
+          }];
+        }),
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to delete');
@@ -103,6 +118,13 @@ export default function AdminBuilderPagesPage() {
   const standaloneBuilders = allBuilders.filter((b) => !b.is_developer && !b.developer_name);
   const childrenOf = (devName: string) =>
     allBuilders.filter((b) => !b.is_developer && b.developer_name === devName);
+  const partnerCount = allBuilders.filter((b) => b.is_advertising_partner).length;
+  const inventoryCount = allBuilders.filter((b) => b.total_count > 0).length;
+  const topLevelBuilders = [...developers, ...standaloneBuilders];
+  const safePage = Math.min(page, Math.max(1, Math.ceil(topLevelBuilders.length / pageSize)));
+  const pageTopLevel = topLevelBuilders.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const pageDevelopers = pageTopLevel.filter((builder) => builder.is_developer);
+  const pageStandaloneBuilders = pageTopLevel.filter((builder) => !builder.is_developer);
 
   const renderToggle = (b: BuilderVisibility) => {
     const busy = pending === b.builder_name;
@@ -113,26 +135,27 @@ export default function AdminBuilderPagesPage() {
         disabled={busy}
         className="bg-green-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-green-700 rounded-md transition-colors disabled:opacity-60"
       >
-        {busy ? '…' : 'Enabled · hide'}
+        {busy ? '…' : 'On'}
       </button>
     ) : (
       <button
         type="button"
         onClick={() => toggle(b.builder_name, true)}
         disabled={busy}
-        className="bg-red-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-red-700 rounded-md transition-colors disabled:opacity-60"
+        className="bg-gray-500 text-white px-3 py-1.5 text-xs font-medium hover:bg-gray-600 rounded-md transition-colors disabled:opacity-60"
       >
-        {busy ? '…' : 'Hidden · enable'}
+        {busy ? '…' : 'Off'}
       </button>
     );
   };
 
   const renderDelete = (b: BuilderVisibility) => {
+    if (b.total_count === 0) return null;
     const isDeleting = deleting === b.builder_name;
     return (
       <button
         type="button"
-        onClick={() => handleDelete(b.builder_name)}
+        onClick={() => handleDelete(b)}
         disabled={isDeleting}
         className="text-red-600 hover:text-red-700 disabled:opacity-40 transition-colors"
         title={`Delete ${b.builder_name}`}
@@ -143,17 +166,22 @@ export default function AdminBuilderPagesPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
+    <div className="content-admin-shell">
       <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
             Admin
           </p>
-          <PageTitle size="md">Advertiser Pages</PageTitle>
+          <PageTitle size="md">Partner Pages</PageTitle>
           <p className="text-sm text-gray-600 font-light mt-2 max-w-2xl">
-            Enable or disable individual builder (advertiser) public pages.
-            Developers show their child builders as nested rows.
+            Turn advertising partner and inventory pages On or Off. Developers
+            show their child builders as nested rows.
           </p>
+          {builders && (
+            <p className="text-xs text-gray-500 mt-2">
+              {partnerCount} advertising partners · {inventoryCount} inventory brands
+            </p>
+          )}
         </div>
         <Link
           href="/admin/inventory"
@@ -163,20 +191,113 @@ export default function AdminBuilderPagesPage() {
         </Link>
       </div>
 
+      <section className="content-admin-summary" aria-label="Partner page summary">
+        <div><strong>{partnerCount.toLocaleString()}</strong><span>Advertising partners</span></div>
+        <div><strong>{inventoryCount.toLocaleString()}</strong><span>Inventory brands</span></div>
+        <div><strong>{(builders?.filter((builder) => builder.public_enabled).length ?? 0).toLocaleString()}</strong><span>Pages on</span></div>
+        <div><strong>{(builders?.filter((builder) => !builder.public_enabled).length ?? 0).toLocaleString()}</strong><span>Pages off</span></div>
+      </section>
+
       {error && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+      {/* mobile card list */}
+      <div className="sm:hidden bg-white border border-gray-200 rounded-md overflow-hidden">
+        {builders === null ? (
+          <div className="px-4 py-10 text-center text-gray-500">Loading…</div>
+        ) : builders.length === 0 ? (
+          <div className="px-4 py-10 text-center text-gray-500">No partners or builders found.</div>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {pageDevelopers.map((dev) => {
+              const kids = childrenOf(dev.builder_name);
+              const isCollapsed = collapsed[dev.builder_name] ?? false;
+              return (
+                <li key={`m-${dev.builder_name}`}>
+                  <div className="p-3">
+                    <div className="flex items-start gap-2">
+                      {kids.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleCollapse(dev.builder_name)}
+                          className="mt-0.5 text-gray-400 hover:text-gray-700 shrink-0"
+                          aria-label={isCollapsed ? 'Expand' : 'Collapse'}
+                        >
+                          {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-gray-900 truncate">
+                          {dev.builder_name}
+                          <span className="ml-2 text-xs text-gray-400 font-normal">developer</span>
+                          {dev.is_advertising_partner && (
+                            <span className="ml-2 text-xs text-brand-700 font-normal">advertising partner</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {dev.active_count} active · {dev.total_count} total
+                        </div>
+                        <div className="mt-2 flex items-center gap-3 text-xs">
+                          <div>{renderToggle(dev)}</div>
+                          <div>{renderDelete(dev)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {!isCollapsed && kids.map((kid) => (
+                    <div key={`m-kid-${kid.builder_name}`} className="p-3 pl-8 border-t border-gray-100 bg-gray-50/60">
+                      <div className="text-sm text-gray-700 truncate">
+                        ↳ {kid.builder_name}
+                        {kid.is_advertising_partner && (
+                          <span className="ml-2 text-xs text-brand-700">advertising partner</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {kid.active_count} active · {kid.total_count} total
+                      </div>
+                      <div className="mt-2 flex items-center gap-3 text-xs">
+                        <div>{renderToggle(kid)}</div>
+                        <div>{renderDelete(kid)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </li>
+              );
+            })}
+            {pageStandaloneBuilders.map((b) => (
+              <li key={`m-solo-${b.builder_name}`} className="p-3">
+                <div className="font-medium text-gray-900 truncate">
+                  {b.builder_name}
+                  {b.is_advertising_partner && (
+                    <span className="ml-2 text-xs text-brand-700 font-normal">advertising partner</span>
+                  )}
+                </div>
+                {b.total_count > 0 && (
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    {b.active_count} active · {b.total_count} total
+                  </div>
+                )}
+                <div className="mt-2 flex items-center gap-3 text-xs">
+                  <div>{renderToggle(b)}</div>
+                  <div>{renderDelete(b)}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="hidden sm:block bg-white border border-gray-200 rounded-md overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-600">
             <tr>
-              <th className="px-4 py-3 font-medium">Builder / Advertiser</th>
+              <th className="px-4 py-3 font-medium">Partner / Builder</th>
               <th className="px-4 py-3 font-medium text-right">Active</th>
               <th className="px-4 py-3 font-medium text-right">Total</th>
-              <th className="px-4 py-3 font-medium text-right">Public page</th>
+              <th className="px-4 py-3 font-medium text-right">On / Off</th>
               <th className="px-4 py-3 font-medium text-right w-12">Delete</th>
             </tr>
           </thead>
@@ -190,13 +311,13 @@ export default function AdminBuilderPagesPage() {
             ) : builders.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
-                  No builders found.
+                  No partners or builders found.
                 </td>
               </tr>
             ) : (
               <>
                 {/* Developers with collapsible child builders */}
-                {developers.map((dev) => {
+                {pageDevelopers.map((dev) => {
                   const kids = childrenOf(dev.builder_name);
                   const isCollapsed = collapsed[dev.builder_name] ?? false;
                   return (
@@ -218,6 +339,11 @@ export default function AdminBuilderPagesPage() {
                           <span className="ml-2 text-xs text-gray-400 font-normal">
                             developer
                           </span>
+                          {dev.is_advertising_partner && (
+                            <span className="ml-2 text-xs text-brand-700 font-normal">
+                              advertising partner
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right text-gray-700">{dev.active_count}</td>
                         <td className="px-4 py-3 text-right text-gray-500">{dev.total_count}</td>
@@ -228,6 +354,11 @@ export default function AdminBuilderPagesPage() {
                         <tr key={kid.builder_name} className="border-t border-gray-100 bg-gray-50/60">
                           <td className="px-4 py-3 pl-10 text-gray-700">
                             ↳ {kid.builder_name}
+                            {kid.is_advertising_partner && (
+                              <span className="ml-2 text-xs text-brand-700">
+                                advertising partner
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-right text-gray-700">{kid.active_count}</td>
                           <td className="px-4 py-3 text-right text-gray-500">{kid.total_count}</td>
@@ -240,12 +371,23 @@ export default function AdminBuilderPagesPage() {
                 })}
 
                 {/* Standalone builders */}
-                {standaloneBuilders.map((b) => (
+                {pageStandaloneBuilders.map((b) => (
                   <RowsForKey key={b.builder_name}>
                     <tr className="border-t border-gray-100">
-                      <td className="px-4 py-3 font-medium text-gray-900">{b.builder_name}</td>
-                      <td className="px-4 py-3 text-right text-gray-700">{b.active_count}</td>
-                      <td className="px-4 py-3 text-right text-gray-500">{b.total_count}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {b.builder_name}
+                        {b.is_advertising_partner && (
+                          <span className="ml-2 text-xs text-brand-700 font-normal">
+                            advertising partner
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-700">
+                        {b.total_count > 0 ? b.active_count : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-500">
+                        {b.total_count > 0 ? b.total_count : '—'}
+                      </td>
                       <td className="px-4 py-3 text-right">{renderToggle(b)}</td>
                       <td className="px-4 py-3 text-right">{renderDelete(b)}</td>
                     </tr>
@@ -256,6 +398,18 @@ export default function AdminBuilderPagesPage() {
           </tbody>
         </table>
       </div>
+      {builders && builders.length > 0 && (
+        <ContentPagination
+          count={topLevelBuilders.length}
+          page={safePage}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -7,7 +7,7 @@
  *   1. AGREEMENT_SIGNED_NOTIFICATION_EMAIL env var
  *   2. ADMIN_NOTIFICATION_EMAIL env var
  *   3. EMAIL_REPLY_TO env var
- *   4. tawanna@myrealtyline.com (hard-coded fallback)
+ *   4. tawanna@realtynewsnow.app (hard-coded fallback)
  */
 
 import { sendEmail } from '@/lib/email';
@@ -25,7 +25,7 @@ function pickRecipient(): string {
     process.env.AGREEMENT_SIGNED_NOTIFICATION_EMAIL ||
     process.env.ADMIN_NOTIFICATION_EMAIL ||
     process.env.EMAIL_REPLY_TO ||
-    'tawanna@myrealtyline.com'
+    'tawanna@realtynewsnow.app'
   );
 }
 
@@ -44,12 +44,12 @@ export async function notifyProposalApproved(ag: Agreement): Promise<void> {
   const frequency = ag.frequency || '—';
   const monthly = fmtCents(ag.total_monthly_rate_cents);
 
-  const subject = `[Realty News Now] Proposal approved — ${company.slice(0, 80)}`;
+  const subject = `[Realty News Now] Insertion order approved — ${company.slice(0, 80)}`;
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
-      <h2 style="color: #301D5D; margin: 0 0 12px;">Proposal approved — ready for the final agreement</h2>
+      <h2 style="color: #301D5D; margin: 0 0 12px;">Insertion order approved — ready for final signature</h2>
       <p style="color: #444; font-size: 14px; line-height: 1.5; margin: 0 0 16px;">
-        <strong>${escapeHtml(company)}</strong> approved their advertising proposal. Review their selections,
+        <strong>${escapeHtml(company)}</strong> approved their advertising insertion order. Review their selections,
         then send the final agreement for signature.
       </p>
 

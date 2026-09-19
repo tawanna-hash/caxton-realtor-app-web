@@ -38,7 +38,39 @@ export default async function PortalFilesPage() {
         </div>
       ) : (
         <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
-          <table className="w-full text-sm">
+          {/* Mobile cards */}
+          <ul className="divide-y divide-gray-100 md:hidden">
+            {files.map((f) => (
+              <li key={f.id} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-medium text-gray-900 truncate">{f.title}</div>
+                    {f.description && <div className="text-xs text-gray-500 truncate">{f.description}</div>}
+                  </div>
+                  <a
+                    href={f.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 whitespace-nowrap text-sm text-blue-700 hover:underline"
+                  >
+                    Download
+                  </a>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <div className="text-gray-400">Category</div>
+                    <div className="text-gray-600">{f.category}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-400">Added</div>
+                    <div className="text-gray-600">{new Date(f.created_at).toLocaleDateString()}</div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {/* Desktop table */}
+          <table className="hidden w-full text-sm md:table">
             <thead className="bg-gray-50 text-gray-600 text-left">
               <tr>
                 <th className="px-4 py-3 font-medium">Title</th>

@@ -16,11 +16,10 @@ const OPTIONS: Array<{ value: DaysOption; label: string }> = [
 
 export function DateRangePicker({ value, onChange, disabled = false }: Props) {
   return (
-    <div className="inline-flex bg-white border border-gray-200 rounded-md overflow-hidden">
+    <div className="inline-flex h-9 overflow-hidden rounded border border-gray-300 bg-white">
       {OPTIONS.map((opt, idx) => {
         const isActive = opt.value === value;
         const isFirst = idx === 0;
-        const isLast = idx === OPTIONS.length - 1;
         return (
           <button
             key={opt.value}
@@ -28,10 +27,10 @@ export function DateRangePicker({ value, onChange, disabled = false }: Props) {
             disabled={disabled}
             onClick={() => onChange(opt.value)}
             className={[
-              'px-4 py-2 text-sm font-medium transition-colors',
+              'px-3 text-sm font-medium transition-colors',
               !isFirst ? 'border-l border-gray-200' : '',
               isActive
-                ? 'bg-brand-700 text-white'
+                ? 'bg-orange-600 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50',
               disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
             ].filter(Boolean).join(' ')}

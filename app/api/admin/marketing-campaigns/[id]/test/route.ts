@@ -65,7 +65,7 @@ export const POST = withAdminTracking(async (
   });
 
   const from = input.from_name
-    ? `${input.from_name} <${(process.env.EMAIL_FROM ?? 'hello@myrealtyline.com').replace(/^.*<|>$/g, '')}>`
+    ? `${input.from_name} <${(process.env.EMAIL_FROM ?? 'hello@newslinesa.com').replace(/^.*<|>$/g, '')}>`
     : undefined;
 
   const { attachments: resendAttachments } = await fetchBlobAttachments(input.attachments);

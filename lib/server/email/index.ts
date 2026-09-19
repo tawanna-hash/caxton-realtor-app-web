@@ -32,4 +32,4 @@ export function getEmailProvider(): EmailProvider {
   return cached;
 }
 
-export type { EmailProvider, EmailSendInput, EmailSendResult, EmailRecipient } from './types';
+export type { EmailProvider,    } from './types';

@@ -20,8 +20,13 @@ import {
   materializeAudience,
   insertRecipientsLedger,
   buildMediaKitTokens,
+  type RecipientSeed,
 } from '@/lib/server/marketing-send';
 import { fetchAttachmentContent, type AttachmentRef } from '@/lib/server/email-attachments';
+import {
+  resolveCrmAudience,
+  type CrmAudienceFilter,
+} from '@/app/api/admin/crm-email/_shared';
 
 export const runtime     = 'nodejs';
 export const dynamic     = 'force-dynamic';
@@ -48,6 +53,8 @@ interface DueRow {
   recurrence_parent_id: string | null;
   audience_snapshot: unknown;
   reply_to_list: unknown;
+  cc: unknown;
+  bcc: unknown;
   attachments: unknown;
   attachment_link_url: string | null;
   attachment_link_label: string | null;
@@ -57,6 +64,7 @@ interface DueRow {
 interface AudienceSnapshot {
   sources?: Array<'advertisers' | 'subscribers' | 'segment' | 'manual'>;
   advertiserFilter?: Record<string, unknown>;
+  crmFilter?: CrmAudienceFilter;
   subscriberFilter?: {
     publication?: 'realtyline' | 'newsline';
     status?: 'active' | 'unsubscribed';
@@ -86,6 +94,7 @@ export async function GET(req: Request) {
     RETURNING o.id, o.campaign_id, o.subject, o.body, o.from_name, o.reply_to,
               o.preview_text, o.recurrence_interval_days, o.recurrence_until,
               o.recurrence_parent_id, o.audience_snapshot, o.reply_to_list,
+              o.cc, o.bcc,
               o.attachments, o.attachment_link_url, o.attachment_link_label, o.scheduled_for
   `) as unknown as DueRow[];
 
@@ -109,13 +118,55 @@ export async function GET(req: Request) {
       // Re-materialize audience on each fire when a snapshot is present.
       // This picks up newly-added prospects and drops recent unsubscribes.
       const snapshot = o.audience_snapshot as AudienceSnapshot | null;
-      if (snapshot && Array.isArray(snapshot.sources) && snapshot.sources.length > 0) {
-        const seeds = await materializeAudience({
-          sources: snapshot.sources,
-          advertiserFilter: snapshot.advertiserFilter,
-          subscriberFilter: snapshot.subscriberFilter,
-          manualEmails: snapshot.manualEmails,
-        });
+      const ledgerRows = (await sql`
+        SELECT count(*)::int AS count
+        FROM marketing_campaign_outreach_recipients
+        WHERE outreach_id = ${o.id}
+      `) as unknown as Array<{ count: number }>;
+      const hasStoredRecipients = (ledgerRows[0]?.count ?? 0) > 0;
+      if (
+        !hasStoredRecipients
+        && snapshot
+        && Array.isArray(snapshot.sources)
+        && snapshot.sources.length > 0
+      ) {
+        let seeds: RecipientSeed[];
+        if (snapshot.crmFilter) {
+          const crmRows = await resolveCrmAudience(snapshot.crmFilter);
+          const seen = new Set<string>();
+          seeds = crmRows.map((row) => {
+            seen.add(row.email.trim().toLowerCase());
+            return {
+              recipient_type: 'advertiser' as const,
+              recipient_id: row.id,
+              email: row.email,
+              first_name: row.first_name,
+              last_name: row.last_name,
+              company: row.company,
+            };
+          });
+          for (const raw of snapshot.manualEmails ?? []) {
+            const email = raw.trim();
+            const key = email.toLowerCase();
+            if (!email || seen.has(key)) continue;
+            seen.add(key);
+            seeds.push({
+              recipient_type: 'manual',
+              recipient_id: null,
+              email,
+              first_name: null,
+              last_name: null,
+              company: null,
+            });
+          }
+        } else {
+          seeds = await materializeAudience({
+            sources: snapshot.sources,
+            advertiserFilter: snapshot.advertiserFilter,
+            subscriberFilter: snapshot.subscriberFilter,
+            manualEmails: snapshot.manualEmails,
+          });
+        }
         if (seeds.length > 0) {
           await insertRecipientsLedger(o.id, seeds);
         }
@@ -126,6 +177,8 @@ export async function GET(req: Request) {
       const replyTo: string | string[] | null =
         replyToList && replyToList.length > 0 ? replyToList
         : (o.reply_to ?? null);
+      const cc = Array.isArray(o.cc) ? (o.cc as string[]).filter((s) => typeof s === 'string' && s.length > 0) : [];
+      const bcc = Array.isArray(o.bcc) ? (o.bcc as string[]).filter((s) => typeof s === 'string' && s.length > 0) : [];
 
       // Attachments: fetch each from Blob URL (or inline content) at send time.
       const attachmentRefs = Array.isArray(o.attachments) ? (o.attachments as AttachmentRef[]) : [];
@@ -171,6 +224,8 @@ export async function GET(req: Request) {
         previewText: o.preview_text,
         fromName: o.from_name,
         replyTo,
+        cc,
+        bcc,
         brand,
         attachments: attachments.length > 0 ? attachments : undefined,
         attachmentLinks: attachmentRefs.length > 0
@@ -180,36 +235,47 @@ export async function GET(req: Request) {
 
       // Chain-insert the next occurrence if within window.
       let nextIso: string | null = null;
-      if (o.recurrence_interval_days && o.recurrence_interval_days > 0) {
-        const nextTs = (await sql`
-          SELECT (${o.scheduled_for}::timestamptz + (${o.recurrence_interval_days}::int || ' days')::interval) AS next
-        `) as unknown as Array<{ next: string }>;
-        const nextRun = nextTs[0]?.next;
-        const until = o.recurrence_until ? new Date(o.recurrence_until) : null;
-        const nextDate = nextRun ? new Date(nextRun) : null;
-        if (nextRun && (!until || (nextDate && nextDate <= until))) {
-          const parentId = o.recurrence_parent_id ?? o.id;
-          await sql`
-            INSERT INTO marketing_campaign_outreach (
-              campaign_id, channel, subject, body, status, scheduled_for,
-              from_name, reply_to, preview_text,
-              recurrence_interval_days, recurrence_until, recurrence_parent_id,
-              audience_snapshot, reply_to_list, attachments,
-              attachment_link_url, attachment_link_label,
-              created_by
-            ) VALUES (
-              ${o.campaign_id}, 'email', ${o.subject}, ${o.body}, 'scheduled', ${nextRun},
-              ${o.from_name}, ${o.reply_to}, ${o.preview_text},
-              ${o.recurrence_interval_days}, ${o.recurrence_until}, ${parentId},
-              ${o.audience_snapshot ? JSON.stringify(o.audience_snapshot) : null}::jsonb,
-              ${o.reply_to_list ? JSON.stringify(o.reply_to_list) : null}::jsonb,
-              ${o.attachments ? JSON.stringify(o.attachments) : null}::jsonb,
-              ${o.attachment_link_url}, ${o.attachment_link_label},
-              'cron:recurrence'
-            )
-          `;
-          nextIso = nextRun;
+      try {
+        if (o.recurrence_interval_days && o.recurrence_interval_days > 0) {
+          const nextTs = (await sql`
+            SELECT (${o.scheduled_for}::timestamptz + (${o.recurrence_interval_days}::int || ' days')::interval) AS next
+          `) as unknown as Array<{ next: string }>;
+          const nextRun = nextTs[0]?.next;
+          const until = o.recurrence_until ? new Date(o.recurrence_until) : null;
+          const nextDate = nextRun ? new Date(nextRun) : null;
+          if (nextRun && (!until || (nextDate && nextDate <= until))) {
+            const parentId = o.recurrence_parent_id ?? o.id;
+            await sql`
+              INSERT INTO marketing_campaign_outreach (
+                campaign_id, channel, subject, body, status, scheduled_for,
+                from_name, reply_to, preview_text,
+                recurrence_interval_days, recurrence_until, recurrence_parent_id,
+                audience_snapshot, reply_to_list, cc, bcc, attachments,
+                attachment_link_url, attachment_link_label,
+                created_by
+              ) VALUES (
+                ${o.campaign_id}, 'email', ${o.subject}, ${o.body}, 'scheduled', ${nextRun},
+                ${o.from_name}, ${o.reply_to}, ${o.preview_text},
+                ${o.recurrence_interval_days}, ${o.recurrence_until}, ${parentId},
+                ${o.audience_snapshot ? JSON.stringify(o.audience_snapshot) : null}::jsonb,
+                ${o.reply_to_list ? JSON.stringify(o.reply_to_list) : null}::jsonb,
+                ${JSON.stringify(cc)}::jsonb,
+                ${JSON.stringify(bcc)}::jsonb,
+                ${o.attachments ? JSON.stringify(o.attachments) : null}::jsonb,
+                ${o.attachment_link_url}, ${o.attachment_link_label},
+                'cron:recurrence'
+              )
+            `;
+            nextIso = nextRun;
+          }
         }
+      } catch (err) {
+        const recurrenceError = err instanceof Error ? err.message : 'unknown recurrence scheduling error';
+        await sql`
+          UPDATE marketing_campaign_outreach
+          SET error_message = ${`Next recurring send was not scheduled: ${recurrenceError}`}
+          WHERE id = ${o.id}
+        `;
       }
 
       results.push({ outreach_id: o.id, ...r, next: nextIso });

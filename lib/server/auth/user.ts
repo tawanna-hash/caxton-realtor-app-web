@@ -15,20 +15,25 @@
 import { ApiError } from '../error';
 import type { RealtorSessionPayload } from '../jwt';
 import { auth } from './authjs';
-import { SESSION_COOKIE_NAME } from '@/lib/auth/cookie-names';
-
 // Re-exported so existing call sites keep working. Canonical declaration
 // lives in lib/auth/cookie-names.ts (see admin.ts for the same pattern).
-export { SESSION_COOKIE_NAME };
+;
 
 /**
  * /api/auth/me intentionally returns 200 with `{ realtor: null }` for guests
  * (see L3 in the sign-in audit). Routes that need a 401 must call requireUser.
  */
 export async function getCurrentUser(): Promise<RealtorSessionPayload | null> {
-  const session = await auth();
-  if (!session?.user) return null;
-  return { realtorId: session.user.realtorId, email: session.user.email };
+  try {
+    const session = await auth();
+    if (!session?.user) return null;
+    if (typeof session.user.realtorId !== 'string' || typeof session.user.email !== 'string') {
+      return null;
+    }
+    return { realtorId: session.user.realtorId, email: session.user.email };
+  } catch {
+    return null;
+  }
 }
 
 export async function requireUser(): Promise<RealtorSessionPayload> {

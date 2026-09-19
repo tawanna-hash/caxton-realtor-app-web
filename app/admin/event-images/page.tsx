@@ -5,13 +5,10 @@
 // inline edit all fields, single/bulk/folder delete.
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon, ChevronDown, Folder, CheckSquare, Square, X } from 'lucide-react';
+import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon, ChevronDown, Folder, CheckSquare, Square, MinusSquare, X } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 import MonthPicker from './MonthPicker';
-
-const PUBLICATIONS = [
-  { id: 'realtyline', label: 'RealtyLine Austin' },
-] as const;
+import { PUB_ACTIVE, type PubId } from '@/lib/publications';
 
 type EventPhoto = {
   id: number;
@@ -20,7 +17,7 @@ type EventPhoto = {
   imageUrl: string;
   thumbnailUrl: string | null;
   description: string | null;
-  publication: string;
+  publication: PubId;
   uploadedBy: string | null;
   advertiserId: number | null;
   createdAt: string;
@@ -37,7 +34,6 @@ export default function AdminEventImagesPage() {
   const [photos, setPhotos] = useState<EventPhoto[] | null>(null);
   const [advertisers, setAdvertisers] = useState<PickerAdvertiser[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
@@ -48,13 +44,13 @@ export default function AdminEventImagesPage() {
   })();
   const [newFolderMonth, setNewFolderMonth] = useState(currentMonth);
   const [newFolderTitle, setNewFolderTitle] = useState('');
-  const [newFolderPub, setNewFolderPub] = useState<string>('realtyline');
+  const [newFolderPub, setNewFolderPub] = useState<PubId>('realtyline');
   const [newFolderAdvertiser, setNewFolderAdvertiser] = useState<number | null>(null);
 
   // Bulk upload state
   const [bulkDate, setBulkDate] = useState(currentMonth);
   const [bulkTitle, setBulkTitle] = useState('');
-  const [bulkPub, setBulkPub] = useState<string>('realtyline');
+  const [bulkPub, setBulkPub] = useState<PubId>('realtyline');
   const [bulkAdvertiser, setBulkAdvertiser] = useState<number | null>(null);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ uploaded: number; failed: number; total: number } | null>(null);
@@ -65,6 +61,11 @@ export default function AdminEventImagesPage() {
   // Folder state
   const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
   const [selectedPhotos, setSelectedPhotos] = useState<Set<number>>(new Set());
+  // Only the newest folders render open/mounted by default — with hundreds of
+  // month folders, rendering every photo grid expanded at once bloats the page
+  // to thousands of DOM nodes. Older folders load on demand via "Show more".
+  const VISIBLE_MONTH_STEP = 6;
+  const [visibleMonthCount, setVisibleMonthCount] = useState(VISIBLE_MONTH_STEP);
 
   // Inline editing
   const [editingTitle, setEditingTitle] = useState<number | null>(null);
@@ -108,7 +109,7 @@ export default function AdminEventImagesPage() {
 
   // Compress image client-side: max 2400px, JPEG 0.92
   const compressImage = (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (!file.type.startsWith('image/')) { resolve(file); return; }
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -152,7 +153,11 @@ export default function AdminEventImagesPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // load() only touches state — safe inside effect, and we want it on mount + load-fn change
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, [load]);
 
   // Advertisers populate the optional association pickers. A failure here is
   // non-fatal — the pickers just stay empty and photos upload unassociated.
@@ -385,7 +390,12 @@ export default function AdminEventImagesPage() {
 
   // --- Selection helpers ---
   const toggleSelect = (id: number) => {
-    setSelectedPhotos((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setSelectedPhotos((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
   };
   const toggleSelectAllInFolder = (photoIds: number[]) => {
     setSelectedPhotos((prev) => {
@@ -399,8 +409,8 @@ export default function AdminEventImagesPage() {
   const clearSelection = () => setSelectedPhotos(new Set());
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
-      <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="content-admin-shell">
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">Admin</p>
           <PageTitle size="md">Event Images</PageTitle>
@@ -414,6 +424,13 @@ export default function AdminEventImagesPage() {
           View page <ExternalLink size={14} />
         </a>
       </div>
+
+      <section className="content-admin-summary" aria-label="Event image summary">
+        <div><strong>{photos?.length ?? 0}</strong><span>Photos</span></div>
+        <div><strong>{monthGroups.length}</strong><span>Folders</span></div>
+        <div><strong>{photos?.filter((photo) => photo.advertiserId).length ?? 0}</strong><span>Partner linked</span></div>
+        <div><strong>{selectedPhotos.size}</strong><span>Selected</span></div>
+      </section>
 
       {error && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center justify-between">
@@ -453,21 +470,21 @@ export default function AdminEventImagesPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Publication</label>
-            <select value={newFolderPub} onChange={(e) => setNewFolderPub(e.target.value)}
+            <select value={newFolderPub} onChange={(e) => setNewFolderPub(e.target.value as PubId)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
-              {PUBLICATIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+              {PUB_ACTIVE.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Advertiser <span className="text-gray-400">(optional)</span>
+              Partner <span className="text-gray-400">(optional)</span>
             </label>
             <AdvertiserPicker advertisers={advertisers} value={newFolderAdvertiser} onChange={setNewFolderAdvertiser} />
           </div>
         </div>
         <div className="mt-4">
           <button type="submit"
-            className="inline-flex items-center gap-2 bg-brand-700 text-white px-5 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors">
+            className="inline-flex items-center gap-2 bg-orange-600 text-white px-5 py-2 text-sm font-medium hover:bg-orange-700 rounded-md transition-colors">
             <Plus size={16} /> Create Folder &amp; Upload
           </button>
           <p className="mt-2 text-xs text-gray-400">Creates a folder for the selected month and scrolls to the upload section.</p>
@@ -498,17 +515,17 @@ export default function AdminEventImagesPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Publication</label>
-                <select value={bulkPub} onChange={(e) => setBulkPub(e.target.value)}
+                <select value={bulkPub} onChange={(e) => setBulkPub(e.target.value as PubId)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
-                  {PUBLICATIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+                  {PUB_ACTIVE.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Advertiser <span className="text-gray-400">(optional)</span>
+                  Partner <span className="text-gray-400">(optional)</span>
                 </label>
                 <AdvertiserPicker advertisers={advertisers} value={bulkAdvertiser} onChange={setBulkAdvertiser} />
-                <p className="mt-1 text-xs text-gray-400">Shown on that advertiser&apos;s public page.</p>
+                <p className="mt-1 text-xs text-gray-400">Shown on that partner&apos;s public page.</p>
               </div>
             </div>
 
@@ -559,11 +576,17 @@ export default function AdminEventImagesPage() {
         {photos === null ? (
           <p className="text-sm text-gray-500">Loading...</p>
         ) : photos.length === 0 ? (
-          <p className="text-sm text-gray-500">No photos yet. Create a folder above to get started.</p>
+          <div className="content-admin-empty">
+            <strong>No event photos yet</strong>
+            <span>Create a folder above, then upload the first set of images.</span>
+          </div>
         ) : (
           <div className="space-y-3">
-            {monthGroups.map((group) => {
-              const expanded = expandedMonths[group.key] ?? true;
+            {monthGroups.slice(0, visibleMonthCount).map((group, index) => {
+              // Default only the newest few folders open; older ones start
+              // collapsed (still listed, but their photo grid isn't mounted
+              // until the user expands them).
+              const expanded = expandedMonths[group.key] ?? index < 2;
               const folderPhotoIds = group.photos.map((p) => p.id);
               const allSelected = folderPhotoIds.every((id) => selectedPhotos.has(id));
               const someSelected = folderPhotoIds.some((id) => selectedPhotos.has(id));
@@ -583,7 +606,11 @@ export default function AdminEventImagesPage() {
                     {/* Select all in folder */}
                     <button onClick={() => toggleSelectAllInFolder(folderPhotoIds)}
                       className="text-gray-400 hover:text-brand-600 p-1" title={allSelected ? 'Deselect all' : 'Select all'}>
-                      {allSelected ? <CheckSquare size={16} className="text-brand-600" /> : <Square size={16} />}
+                      {allSelected
+                        ? <CheckSquare size={16} className="text-brand-600" />
+                        : someSelected
+                          ? <MinusSquare size={16} className="text-brand-600" />
+                          : <Square size={16} />}
                     </button>
                     {/* Delete folder */}
                     <button onClick={() => handleDeleteFolder(group.key, group.label)} disabled={bulkDeleting}
@@ -611,7 +638,7 @@ export default function AdminEventImagesPage() {
                             advertisers={advertisers}
                             value={group.photos[0]?.advertiserId ?? null}
                             onChange={(id) => saveFolderAdvertiser(group, id)}
-                            placeholder="Assign advertiser..."
+                            placeholder="Assign partner..."
                             compact
                           />
                         </div>
@@ -683,7 +710,7 @@ export default function AdminEventImagesPage() {
                                 )}
                                 {/* Advertiser association — set per folder above */}
                                 {advName && (
-                                  <p className="text-xs text-brand-700 truncate" title="Associated advertiser">
+                                  <p className="text-xs text-brand-700 truncate" title="Associated partner">
                                     {advName}
                                   </p>
                                 )}
@@ -697,7 +724,7 @@ export default function AdminEventImagesPage() {
                                     }).then(() => load()).catch(() => {});
                                   }}
                                   className="w-full text-xs border border-gray-300 rounded px-1 py-0.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-brand-500">
-                                  {PUBLICATIONS.map((pub) => <option key={pub.id} value={pub.id}>{pub.label}</option>)}
+                                  {PUB_ACTIVE.map((pub) => <option key={pub.id} value={pub.id}>{pub.label}</option>)}
                                 </select>
                               </div>
                               {/* Delete */}
@@ -715,6 +742,17 @@ export default function AdminEventImagesPage() {
                 </div>
               );
             })}
+            {monthGroups.length > visibleMonthCount && (
+              <div className="flex justify-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setVisibleMonthCount((n) => n + VISIBLE_MONTH_STEP)}
+                  className="text-sm text-brand-700 hover:text-brand-800 px-4 py-2 border border-brand-200 rounded-md hover:bg-brand-50"
+                >
+                  Show more months ({monthGroups.length - visibleMonthCount} remaining)
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -729,7 +767,7 @@ function AdvertiserPicker({
   advertisers,
   value,
   onChange,
-  placeholder = 'No advertiser',
+  placeholder = 'No partner',
   compact = false,
 }: {
   advertisers: PickerAdvertiser[];
@@ -768,7 +806,7 @@ function AdvertiserPicker({
       {open && (
         <div className="absolute z-20 mt-1 w-full min-w-56 bg-white border border-gray-200 rounded-md shadow-lg">
           <input autoFocus type="text" value={query} onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search advertisers..."
+            placeholder="Search partners..."
             className="w-full border-b border-gray-200 px-3 py-2 text-xs focus:outline-none" />
           <ul className="max-h-56 overflow-y-auto py-1">
             <li>
@@ -787,7 +825,7 @@ function AdvertiserPicker({
             ))}
             {filtered.length === 0 && (
               <li className="px-3 py-2 text-xs text-gray-400">
-                {advertisers.length === 0 ? 'No advertisers available' : 'No matches'}
+                {advertisers.length === 0 ? 'No partners available' : 'No matches'}
               </li>
             )}
           </ul>

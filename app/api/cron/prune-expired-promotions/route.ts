@@ -5,7 +5,7 @@
 // status='expired' — i.e. promotions whose expires_at passed and were
 // auto-hidden from the public feed by the every-3-hours
 // /api/cron/expire-promotions job (which also sends a daily 8am digest email
-// to tawanna@myrealtyline.com when rows flip).
+// to tawanna@realtynewsnow.app when rows flip).
 //
 // Vercel cron schedule: 1 6 1 * *  (06:01 UTC on day 1)
 //   - CST (winter, UTC-6): 12:01am on the 1st

@@ -7,6 +7,7 @@
 
 import { upsertEvents, pruneStale } from '@/lib/events-store';
 import { scrapeFpr } from '@/lib/fpr-scraper';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 export const runtime = 'nodejs';
 // Plain HTTP fetch + regex extract — no headless browser needed since the
@@ -14,7 +15,7 @@ export const runtime = 'nodejs';
 // the unlockmls scraper's runtime budget for symmetry across cron jobs.
 export const maxDuration = 300;
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   // ---- auth ----
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret) {
@@ -70,3 +71,5 @@ export async function GET(req: Request) {
   }
 }
 
+
+export const GET = withScraperRun('scrape-fpr', _GET);

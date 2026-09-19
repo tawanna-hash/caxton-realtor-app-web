@@ -18,7 +18,7 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const MARKETS: readonly TrendingMarket[] = ['realtyline', 'newsline'] as const;
+const MARKETS: readonly TrendingMarket[] = ['realtyline', 'newsline', 'realtyline-houston', 'realtyline-dallas'] as const;
 
 function coerceMarkets(v: unknown): TrendingMarket[] {
   if (!Array.isArray(v)) return ['realtyline'];

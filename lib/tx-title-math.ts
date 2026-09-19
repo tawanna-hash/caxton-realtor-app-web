@@ -58,7 +58,7 @@ const BRACKETS: RateBracket[] = [
 ];
 
 /** Minimum basic premium ($25,000 and below). */
-export const MIN_BASIC_PREMIUM = 308;
+const MIN_BASIC_PREMIUM = 308;
 
 /**
  * Basic Premium Rate for a policy of any face value, per TDI R-1.
@@ -88,7 +88,7 @@ export function basicPremium(faceValue: number): number {
 // R-5 Simultaneous Issue — Owner's + Loan Policy at same closing
 // ────────────────────────────────────────────────────────────────────────────
 
-export interface SimultaneousIssueResult {
+interface SimultaneousIssueResult {
   /** Owner's Title Policy premium (always at Basic Rate). */
   owner: number;
   /** Lender's Title Policy premium (simultaneous-issue rate). */
@@ -103,7 +103,7 @@ export interface SimultaneousIssueResult {
  *
  * If loanAmount is 0 (cash purchase), the lender's policy is $0.
  */
-export function simultaneousIssue(
+function simultaneousIssue(
   ownerAmount: number,
   loanAmount: number,
 ): SimultaneousIssueResult {
@@ -136,7 +136,7 @@ export type ReissueAge = 'within-4yr' | '4-to-8yr' | 'over-8yr' | 'none';
  * Returns the lender's policy premium for a refinance (no owner's policy).
  * Minimum is the promulgated minimum basic premium.
  */
-export function refinanceLoanPolicy(loanAmount: number, age: ReissueAge): number {
+function refinanceLoanPolicy(loanAmount: number, age: ReissueAge): number {
   if (loanAmount <= 0) return 0;
   const basic = basicPremium(loanAmount);
   let creditPct = 0;
@@ -150,7 +150,7 @@ export function refinanceLoanPolicy(loanAmount: number, age: ReissueAge): number
 // Endorsements — most common residential ones in Texas closings
 // ────────────────────────────────────────────────────────────────────────────
 
-export interface EndorsementOptions {
+interface EndorsementOptions {
   /** T-19.1 — Restrictions, Encroachments, Minerals (Owner's Policy). */
   t19_1: boolean;
   /** T-19 — Restrictions, Encroachments, Minerals (Loan Policy). */
@@ -170,13 +170,13 @@ export interface EndorsementOptions {
   residential: boolean;
 }
 
-export interface EndorsementLine {
+interface EndorsementLine {
   code: string;
   label: string;
   amount: number;
 }
 
-export function endorsementCharges(
+function endorsementCharges(
   ownerAmount: number,
   loanAmount: number,
   opts: EndorsementOptions,
@@ -261,7 +261,7 @@ export interface TitleQuoteInput {
   recordingFees: number;
 }
 
-export interface TitleQuoteLine {
+interface TitleQuoteLine {
   code: string;
   label: string;
   amount: number;

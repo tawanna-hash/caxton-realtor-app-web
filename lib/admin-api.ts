@@ -81,7 +81,7 @@ export const adminApi = {
     adminFetch(`/admin/giveaways/${giveawayId}/draw`, { method: 'POST' }),
 
   // Events (manual events admin — Phase 3 endpoints on droplet)
-  listEvents: (publication?: 'austin' | 'san_antonio') => {
+  listEvents: (publication?: import('@/lib/publications').PublicationId) => {
     const qs = publication ? `?publication=${publication}` : '';
     return adminFetch(`/admin/events${qs}`);
   },
@@ -95,10 +95,10 @@ export const adminApi = {
     adminFetch(`/admin/events/${id}/hide`, { method: 'POST' }),
   unhideEvent: (id: number) =>
     adminFetch(`/admin/events/${id}/unhide`, { method: 'POST' }),
-  // Bulk soft-hide all events whose start date is in the past.
-  // Returns { hiddenCount: number }.
-  hideExpiredEvents: () =>
-    adminFetch('/admin/events/hide-expired', { method: 'POST' }),
+  // Permanently delete events whose end date (or start date when no end exists) is past.
+  // Returns { deletedCount: number }.
+  deleteExpiredEvents: () =>
+    adminFetch('/admin/events/delete-expired', { method: 'POST' }),
 
   // Pending-event review queue (advertiser submissions + Gemini FB scans)
   listPendingEvents: () => adminFetch('/admin/events/pending'),
@@ -111,8 +111,22 @@ export const adminApi = {
   listPendingGmailEvents: () => adminFetch('/admin/events/gmail/pending'),
   rejectGmailEvent: (id: number) =>
     adminFetch(`/admin/events/gmail/${id}/reject`, { method: 'POST' }),
+  bulkRejectGmailEvents: (ids: number[]) =>
+    adminFetch('/admin/events/gmail/bulk-reject', {
+      method: 'POST',
+      body: { ids },
+    }) as Promise<{ deleted: number; missing: number; ids: number[] }>,
+  deleteDuplicateGmailEvents: () =>
+    adminFetch('/admin/events/gmail/delete-duplicates', { method: 'POST' }) as Promise<{
+      deletedCount: number;
+    }>,
   getGmailEventSource: (id: number) => adminFetch(`/admin/events/gmail/${id}/source`),
   scanGmailNow: () => adminFetch('/admin/events/gmail/scan', { method: 'POST' }),
+  createGmailShareLink: () =>
+    adminFetch('/admin/events/gmail/share', { method: 'POST' }) as Promise<{
+      url: string;
+      expiresInSeconds: number;
+    }>,
 
   // Ads dashboard (Phase 1 — May 9, 2026)
   // Spaces: read-only catalog of 15 ad slots
@@ -123,6 +137,15 @@ export const adminApi = {
 
   // Subscribers (realtors)
   getSubscriber: (id: string) => adminFetch('/admin/subscribers/' + encodeURIComponent(id)),
+
+  getSubscriberPlatinum: (id: string) =>
+    adminFetch(`/admin/subscribers/${encodeURIComponent(id)}/platinum`),
+
+  updateSubscriberPlatinum: (id: string, active: boolean) =>
+    adminFetch(`/admin/subscribers/${encodeURIComponent(id)}/platinum`, {
+      method: 'PATCH',
+      body: { active },
+    }),
 
   updateSubscriber: (id: string, patch: Record<string, unknown>) =>
     adminFetch(`/admin/subscribers/${encodeURIComponent(id)}`, { method: 'PATCH', body: patch }),
@@ -136,7 +159,7 @@ export const adminApi = {
   deleteSubscriber: (id: string) =>
     adminFetch(`/admin/subscribers/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
-  listSubscribers: (params: { page?: number; pageSize?: number; market?: 'austin' | 'san_antonio'; q?: string; sort?: string; dir?: 'asc' | 'desc'; verified?: string } = {}) => {
+  listSubscribers: (params: { page?: number; pageSize?: number; market?: import('@/lib/publications').PublicationId; q?: string; sort?: string; dir?: 'asc' | 'desc'; verified?: string } = {}) => {
     const qs = new URLSearchParams();
     if (params.page) qs.set('page', String(params.page));
     if (params.pageSize) qs.set('pageSize', String(params.pageSize));
@@ -193,7 +216,7 @@ export const adminApi = {
     advertiser_name: string;
     ad_space_slug: string;
     creative_id: string;
-    publication: 'austin' | 'san_antonio' | 'both';
+    publication: import('@/lib/publications').PublicationScope;
     start_date: string;
     end_date: string;
     price_total: number | null;

@@ -66,10 +66,10 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
     return cat === "Editor's Choice";
   });
 
-  // Note: API uses plural "Featured Advertisers"; UI label is singular.
+  // Note: API uses plural "Featured Partners"; UI label is singular.
   const featuredAdvertiser = items.find((a: NewsArticle) => {
     const cat = normalizeApostrophe(String(a?.cat || a?.category || ''));
-    return cat === 'Featured Advertisers';
+    return cat === 'Featured Partners';
   });
 
   const renderArticleCard = (article: NewsArticle, label: string, sizeClass: string, summaryClamp: string) => {
@@ -137,7 +137,7 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
 
         <div className="space-y-10">
           {editorsChoice && renderArticleCard(editorsChoice, "Editor's Choice", "text-2xl md:text-3xl", "line-clamp-3")}
-          {featuredAdvertiser && renderArticleCard(featuredAdvertiser, "Featured Advertiser", "text-xl md:text-2xl", "line-clamp-2")}
+          {featuredAdvertiser && renderArticleCard(featuredAdvertiser, "Featured Partner", "text-xl md:text-2xl", "line-clamp-2")}
           {!editorsChoice && !featuredAdvertiser && (
             <div className="border-l-2 pl-6 py-4" style={{ borderColor: brandColor }}>
               <p className="text-[10px] uppercase tracking-[0.25em] font-semibold mb-3 text-gray-400">

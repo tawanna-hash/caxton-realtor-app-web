@@ -72,7 +72,7 @@ export function buildEventReportHtml(report: EventReport, overrides: ReportOverr
       </div>
     </div>
 
-    <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;\">Engagement actions</h3>
+    <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;\">Engagement Actions</h3>
     <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #e5e7eb; border-radius: 4px; overflow: hidden;\">
       <tbody>
         <tr>
@@ -91,7 +91,7 @@ export function buildEventReportHtml(report: EventReport, overrides: ReportOverr
     </table>
 
     ${report.shares_total > 0 ? `
-      <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;\">Shares by channel</h3>
+      <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;\">Shares by Channel</h3>
       <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #e5e7eb; border-radius: 4px; overflow: hidden;\">
         <tbody>
           ${sharesRows}

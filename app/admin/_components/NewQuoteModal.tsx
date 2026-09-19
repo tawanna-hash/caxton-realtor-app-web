@@ -38,7 +38,7 @@ function eblastId(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '');
 }
 
-type Publication = 'austin' | 'san_antonio' | 'both';
+type Publication = PublicationScope;
 import {
   AD_SIZES, FREQUENCIES, FREQ_PKG_AG, MONTHS_LIST,
 } from '@/lib/pressbook-constants';
@@ -46,6 +46,12 @@ import {
   lookupRate, pagePositionPremium, computeExp,
 } from '@/lib/agreement-pricing';
 import { quoteLineSubtotalCents } from '@/lib/quote-pricing';
+import {
+  PUBLICATION_IDS,
+  PUBLICATION_LABELS_WITH_BOTH,
+  publicationToPubId,
+  type PublicationScope,
+} from '@/lib/publications';
 
 type Channel = 'print' | 'email' | 'app';
 type AppCadence = 'weekly' | 'monthly';
@@ -54,6 +60,7 @@ interface AdvertiserRow {
   id: number;
   name: string;
   contact_email: string | null;
+  billing_email: string | null;
   publication: string;
 }
 
@@ -120,6 +127,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   const [createNew, setCreateNew] = useState(false);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [newBillingEmail, setNewBillingEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newPublication, setNewPublication] = useState<Publication>('austin');
 
@@ -155,10 +163,11 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   const [appMarkets, setAppMarkets] = useState<MarketCount>(1);
 
   const [publication, setPublication] = useState<Publication>('austin');
-  // Email preferred send dates (up to 3, all optional; blank ⇒ advertiser picks)
+  // Email send dates: one preferred date plus up to three optional alternatives.
   const [ebDate1, setEbDate1] = useState<string>('');
   const [ebDate2, setEbDate2] = useState<string>('');
   const [ebDate3, setEbDate3] = useState<string>('');
+  const [ebDate4, setEbDate4] = useState<string>('');
   // Review overlay
   const [showReview, setShowReview] = useState<boolean>(false);
   const [dueDate, setDueDate] = useState<string>('');
@@ -280,6 +289,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     setCreateNew(false);
     setNewName('');
     setNewEmail('');
+    setNewBillingEmail('');
     setNewPhone('');
     setNewPublication('austin');
     setChannel('print');
@@ -297,6 +307,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     setEbDate1('');
     setEbDate2('');
     setEbDate3('');
+    setEbDate4('');
     setShowReview(false);
     setDueDate('');
     setMemo('');
@@ -322,7 +333,8 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       .filter(
         (a) =>
           a.name.toLowerCase().includes(q) ||
-          (a.contact_email ?? '').toLowerCase().includes(q),
+          (a.contact_email ?? '').toLowerCase().includes(q) ||
+          (a.billing_email ?? '').toLowerCase().includes(q),
       )
       .slice(0, 20);
   }, [advertisers, advertiserSearch]);
@@ -407,10 +419,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       return 0;
     }
     if (channel === 'email' && selectedEmailPackage) {
-      const mkPub =
-        publication === 'austin' ? 'realtyline' :
-        publication === 'san_antonio' ? 'newsline' :
-        'both';
+      const mkPub = publication === 'both' ? 'both' : publicationToPubId(publication);
       return Math.round(eblastPriceForPub(selectedEmailPackage, mkPub) * 100) * sends;
     }
     if (channel === 'app' && selectedAppSlot) {
@@ -609,7 +618,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       ioTimingMonths: channel === 'print' ? ioTimingMonths : undefined,
       ioTimingYears: channel === 'print' ? ioTimingYears : undefined,
       preferredSendDates: channel === 'email'
-        ? [ebDate1, ebDate2, ebDate3].filter(Boolean)
+        ? [ebDate1, ebDate2, ebDate3, ebDate4].filter(Boolean)
         : undefined,
       publication: channel === 'email' ? publication : undefined,
       runStart: runMode === 'dates' ? runStart : undefined,
@@ -661,6 +670,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       setEbDate1(line.preferredSendDates?.[0] ?? '');
       setEbDate2(line.preferredSendDates?.[1] ?? '');
       setEbDate3(line.preferredSendDates?.[2] ?? '');
+      setEbDate4(line.preferredSendDates?.[3] ?? '');
     } else {
       setAppCadence(line.appCadence ?? 'weekly');
       setAppWeeks(line.appWeeks ?? 1);
@@ -697,6 +707,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       ? {
           name: newName.trim(),
           contact_email: newEmail.trim(),
+          ...(newBillingEmail.trim() ? { billing_email: newBillingEmail.trim() } : {}),
           publication: newPublication,
           ...(newPhone.trim() ? { phone: newPhone.trim() } : {}),
         }
@@ -712,6 +723,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       appWeeks,
       appMarkets,
       publication,
+      preferredSendDates: channel === 'email'
+        ? [ebDate1, ebDate2, ebDate3, ebDate4].filter(Boolean)
+        : undefined,
       runMode,
       runStart,
       runEnd,
@@ -731,6 +745,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     } else if (src.channel === 'email') {
       payload.sends = src.sends ?? 1;
       payload.publication = src.publication;
+      if (src.preferredSendDates && src.preferredSendDates.length > 0) {
+        payload.preferred_send_dates = src.preferredSendDates;
+      }
     } else {
       payload.app_cadence = src.appCadence;
       payload.app_markets = src.appMarkets;
@@ -776,6 +793,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         ? {
             name: newName.trim(),
             contact_email: newEmail.trim(),
+            ...(newBillingEmail.trim() ? { billing_email: newBillingEmail.trim() } : {}),
             publication: newPublication,
             ...(newPhone.trim() ? { phone: newPhone.trim() } : {}),
           }
@@ -824,6 +842,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
           ? {
               name: newName.trim(),
               contact_email: newEmail.trim(),
+              ...(newBillingEmail.trim() ? { billing_email: newBillingEmail.trim() } : {}),
               publication: newPublication,
               ...(newPhone.trim() ? { phone: newPhone.trim() } : {}),
             }
@@ -934,7 +953,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     }
   }
 
-  // Test-mode send: server forces recipient to admin.email, does NOT
+  // Test-mode send: server forces recipient to the Realty News Now test inbox, does NOT
   // update agreement.status / sent_to_email. Endpoint added in 4155b71.
   async function handleSendTest() {
     if (!createdAgreement) return;
@@ -952,8 +971,8 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         },
       );
       if (!res.ok) {
-        const j = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(j?.error || `Test send failed (${res.status})`);
+        const j = (await res.json().catch(() => null)) as { error?: string; detail?: string } | null;
+        throw new Error(j?.detail || j?.error || `Test send failed (${res.status})`);
       }
       setTestSent(true);
     } catch (err) {
@@ -1025,7 +1044,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               onClick={handleSendTest}
               disabled={sending || sendingTest}
               className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-purple-300 bg-white text-purple-700 hover:bg-purple-50 disabled:opacity-60"
-              title="Send the notification email to yourself. Does not touch advertiser record."
+              title="Send the notification email to yourself. Does not touch partner record."
             >
               {sendingTest ? 'Sending…' : 'Email me a test'}
             </button>
@@ -1068,7 +1087,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
             <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/60 overflow-y-auto py-8 px-4">
               <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl">
                 <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-                  <h3 className="text-base font-semibold text-gray-900">Review quote before sending</h3>
+                  <h3 className="text-base font-semibold text-gray-900">Review Quote Before Sending</h3>
                   <button
                     type="button"
                     onClick={() => setShowReview(false)}
@@ -1111,7 +1130,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                                 <div>Preferred dates: <b>{line.preferredSendDates.join(', ')}</b></div>
                               )}
                               {(!line.preferredSendDates || line.preferredSendDates.length === 0) && (
-                                <div className="italic text-gray-500">Advertiser will pick dates</div>
+                                <div className="italic text-gray-500">Partner will pick dates</div>
                               )}
                             </>
                           )}
@@ -1161,7 +1180,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         <section className="border border-gray-200 rounded-md p-3 bg-gray-50">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs uppercase tracking-wider text-gray-600 font-semibold">
-              Advertiser
+              Partner
             </p>
             <button
               type="button"
@@ -1193,6 +1212,12 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     <span className="text-purple-800 ml-2">
                       {selectedAdvertiser.contact_email ?? 'no email'}
                     </span>
+                    {selectedAdvertiser.billing_email &&
+                    selectedAdvertiser.billing_email !== selectedAdvertiser.contact_email ? (
+                      <span className="block text-purple-700">
+                        Billing: {selectedAdvertiser.billing_email}
+                      </span>
+                    ) : null}
                   </div>
                   <button
                     type="button"
@@ -1206,7 +1231,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                 <ul className="mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md bg-white text-sm divide-y divide-gray-100">
                   {filteredAdvertisers.length === 0 ? (
                     <li className="px-2 py-2 text-xs text-gray-500 italic">
-                      No matches. Try &ldquo;+ Create new advertiser&rdquo;.
+                      No matches. Try &ldquo;+ Create new partner&rdquo;.
                     </li>
                   ) : (
                     filteredAdvertisers.map((a) => (
@@ -1220,6 +1245,11 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                           <span className="ml-2 text-xs text-gray-500">
                             {a.contact_email ?? 'no email'}
                           </span>
+                          {a.billing_email && a.billing_email !== a.contact_email ? (
+                            <span className="block text-xs text-gray-500">
+                              Billing: {a.billing_email}
+                            </span>
+                          ) : null}
                         </button>
                       </li>
                     ))
@@ -1250,6 +1280,16 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                 />
               </label>
               <label className="text-xs text-gray-700">
+                Billing email (optional)
+                <input
+                  type="email"
+                  value={newBillingEmail}
+                  onChange={(e) => setNewBillingEmail(e.target.value)}
+                  placeholder="Uses contact email if blank"
+                  className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                />
+              </label>
+              <label className="text-xs text-gray-700">
                 Phone (optional)
                 <input
                   type="tel"
@@ -1265,9 +1305,10 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   onChange={(e) => setNewPublication(e.target.value as Publication)}
                   className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
                 >
-                  <option value="austin">RealtyLine (Austin)</option>
-                  <option value="san_antonio">Newsline (San Antonio)</option>
-                  <option value="both">Both</option>
+                  {PUBLICATION_IDS.map((id) => (
+                    <option key={id} value={id}>{PUBLICATION_LABELS_WITH_BOTH[id]}</option>
+                  ))}
+                  <option value="both">Austin + San Antonio</option>
                 </select>
               </label>
             </div>
@@ -1563,18 +1604,19 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     onChange={(e) => setPublication(e.target.value as Publication)}
                     className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
                   >
-                    <option value="austin">RealtyLine (Austin)</option>
-                    <option value="san_antonio">Newsline (San Antonio)</option>
-                    <option value="both">Both</option>
+                    {PUBLICATION_IDS.map((id) => (
+                      <option key={id} value={id}>{PUBLICATION_LABELS_WITH_BOTH[id]}</option>
+                    ))}
+                    <option value="both">Austin + San Antonio bundle</option>
                   </select>
                 </label>
                 <div className="sm:col-span-2 border-t border-gray-200 pt-3 mt-1">
                   <p className="text-[11px] uppercase tracking-wider text-gray-600 font-semibold mb-1">
-                    Preferred send dates <span className="normal-case font-normal text-gray-500">(optional — leave blank if advertiser will choose)</span>
+                    Preferred send dates <span className="normal-case font-normal text-gray-500">(optional — leave blank if partner will choose)</span>
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <label className="text-xs text-gray-700">
-                      1st choice
+                      Preferred send date
                       <input
                         type="date"
                         value={ebDate1}
@@ -1583,7 +1625,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       />
                     </label>
                     <label className="text-xs text-gray-700">
-                      2nd choice
+                      Optional date 1
                       <input
                         type="date"
                         value={ebDate2}
@@ -1592,11 +1634,20 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       />
                     </label>
                     <label className="text-xs text-gray-700">
-                      3rd choice
+                      Optional date 2
                       <input
                         type="date"
                         value={ebDate3}
                         onChange={(e) => setEbDate3(e.target.value)}
+                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                      />
+                    </label>
+                    <label className="text-xs text-gray-700">
+                      Optional date 3
+                      <input
+                        type="date"
+                        value={ebDate4}
+                        onChange={(e) => setEbDate4(e.target.value)}
                         className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                       />
                     </label>
@@ -1681,7 +1732,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               <ul className="mt-1 space-y-0.5 text-[11px] text-yellow-900">
                 {appCollisions.slice(0, 3).map((c, i) => (
                   <li key={i}>
-                    · {c.advertiser_name ?? 'Unknown advertiser'} — {c.start_date} → {c.end_date}
+                    · {c.advertiser_name ?? 'Unknown partner'} — {c.start_date} → {c.end_date}
                   </li>
                 ))}
                 {appCollisions.length > 3 && (
@@ -1714,15 +1765,15 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         {/* Notes to advertiser */}
         <section className="border border-gray-200 rounded-md p-3">
           <p className="text-xs uppercase tracking-wider text-gray-600 font-semibold mb-1">
-            Notes to advertiser
+            Notes to partner
           </p>
           <p className="text-[11px] text-gray-500 mb-2">
-            Shown on the agreement when the advertiser reviews and signs.
+            Shown on the agreement when the partner reviews and signs.
           </p>
           <textarea
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
-            placeholder="Add a note for the advertiser (e.g. proof due date, placement details, special terms)…"
+            placeholder="Add a note for the partner (e.g. proof due date, placement details, special terms)…"
             rows={4}
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-y"
           />
@@ -1962,4 +2013,3 @@ function ModalShell({
     </div>
   );
 }
-

@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     const tokenHash = hashMagicLinkToken(token);
 
     const rows = (await sql`
-      SELECT id, advertiser_id, link_expires_at, consumed_at, revoked_at
+      SELECT id, advertiser_id, link_expires_at, consumed_at, revoked_at, purpose, entity_id
       FROM portal_magic_links
       WHERE token_hash = ${tokenHash}
     `) as unknown as {
@@ -41,6 +41,8 @@ export async function GET(req: NextRequest) {
       link_expires_at: string;
       consumed_at: string | null;
       revoked_at: string | null;
+      purpose: string;
+      entity_id: string | null;
     }[];
     if (rows.length === 0) return redirectToError(req, 'invalid');
     const row = rows[0];
@@ -59,8 +61,16 @@ export async function GET(req: NextRequest) {
       WHERE id = ${row.id}
     `;
 
+    // Route by purpose: pay_invoice links land straight on the invoice pay page.
+    let destination = '/portal';
+    if (row.purpose === 'pay_invoice' && row.entity_id) {
+      destination = `/portal/invoices/${row.entity_id}`;
+    } else if (row.purpose === 'sign_agreement' && row.entity_id) {
+      destination = `/portal/orders?agreement=${row.entity_id}`;
+    }
+
     // Build redirect with cookie. No Max-Age = browser-close kills it.
-    const res = NextResponse.redirect(new URL('/portal', req.url));
+    const res = NextResponse.redirect(new URL(destination, req.url));
     res.cookies.set({
       name: PORTAL_SESSION_COOKIE,
       value: row.id,

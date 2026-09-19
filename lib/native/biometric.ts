@@ -11,7 +11,7 @@
 import { BiometricAuth } from '@aparajita/capacitor-biometric-auth';
 import { isNative, nativePlatform } from './runtime';
 
-export type BiometryKind = 'face' | 'fingerprint' | 'iris' | 'none';
+type BiometryKind = 'face' | 'fingerprint' | 'iris' | 'none';
 
 export type BiometricAvailability = {
   available: boolean;

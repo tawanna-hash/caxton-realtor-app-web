@@ -65,6 +65,16 @@ const PUBLICATION_CONFIG: Record<string, PublicationConfig> = {
     hostPattern: null,
     hasHistoricalData: false,
   },
+  'RealtyLine Houston': {
+    propertyValue: 'realtyline-houston',
+    hostPattern: null,
+    hasHistoricalData: false,
+  },
+  'RealtyLine Dallas/Ft. Worth': {
+    propertyValue: 'realtyline-dallas',
+    hostPattern: null,
+    hasHistoricalData: false,
+  },
   'RealtyNewsNow': {
     propertyValue: 'realtynewsnow',
     hostPattern: '%realtynewsnow%',

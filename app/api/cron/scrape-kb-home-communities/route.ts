@@ -13,6 +13,7 @@ import { fetchKBHomeAustinCommunities } from '@/lib/scrapers/kb-home-communities
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
 import { neon } from '@neondatabase/serverless';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -152,7 +153,7 @@ async function runScrape(strip: boolean) {
   };
 }
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   const auth = verifyCronAuth(req);
   if (!auth.ok) {
     return NextResponse.json(
@@ -180,3 +181,5 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return GET(req);
 }
+
+export const GET = withScraperRun('scrape-kb-home-communities', _GET);

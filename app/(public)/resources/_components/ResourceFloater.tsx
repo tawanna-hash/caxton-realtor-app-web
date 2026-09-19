@@ -6,17 +6,32 @@
 // Wraps <FloaterPill> and bakes in the four standard actions:
 //   Back - Share - Download - Print
 //
-// Download flow (simplified 2026-06-15): every Download tap produces
-// the plain calculator PDF with no branded footer. The old
-// FooterPickerSheet flow (admin / portal branded footer templates)
-// was removed per Tawanna's direction - one-tap download for
-// everyone, no role fetch, no sheet.
+// Signed-in REALTORS automatically receive their saved custom branding
+// on printed, downloaded, and file-shared calculator sheets.
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
-import { downloadCalcReport, type CalcReport } from './calcPdf';
+import { createCalcReportFile, downloadCalcReport, type CalcReport } from './calcPdf';
 import { printCurrentPage } from '@/lib/native/print';
+import { getApiBase } from '@/lib/api-base';
+import {
+  DEFAULT_FOOTER_COLUMN_WIDTHS,
+  type FooterBrand,
+  type FooterColumnWidths,
+  type FooterTemplateId,
+} from '@/lib/footer-templates';
+
+const API = getApiBase();
+const DESIGNER_SIGNATURE_STORAGE_KEY = 'rnn:custom-designer-signature';
+const DESIGNER_SIGNATURE_TEMPLATE_STORAGE_KEY = 'rnn:custom-designer-signature-template';
+const DESIGNER_SIGNATURE_COLUMNS_STORAGE_KEY = 'rnn:custom-designer-signature-columns';
+
+type BrandFooter = {
+  template: FooterTemplateId;
+  brand: FooterBrand;
+  columns?: FooterColumnWidths;
+};
 
 interface Props {
   /** Share dialog title - usually the calculator name. */
@@ -37,6 +52,77 @@ export default function ResourceFloater({
   bottomOffsetClass = 'bottom-[96px]',
 }: Props) {
   const router = useRouter();
+  const [brandFooter, setBrandFooter] = useState<BrandFooter | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let designerBranding: BrandFooter | null = null;
+    try {
+      const saved = window.localStorage.getItem(DESIGNER_SIGNATURE_STORAGE_KEY);
+      if (saved) {
+        const signature = JSON.parse(saved) as {
+          name?: string;
+          title?: string;
+          company?: string;
+          phone?: string;
+          email?: string;
+          website?: string;
+          photo?: string;
+          logo?: string;
+        };
+        if (signature.name?.trim() && signature.company?.trim()) {
+          const savedTemplate = window.localStorage.getItem(DESIGNER_SIGNATURE_TEMPLATE_STORAGE_KEY);
+          const savedColumns = window.localStorage.getItem(DESIGNER_SIGNATURE_COLUMNS_STORAGE_KEY);
+          designerBranding = {
+            template: savedTemplate === 'minimal-rows' ? 'minimal-rows' : 'split-column',
+            columns: savedColumns
+              ? { ...DEFAULT_FOOTER_COLUMN_WIDTHS, ...JSON.parse(savedColumns) }
+              : DEFAULT_FOOTER_COLUMN_WIDTHS,
+            brand: {
+              name: signature.name,
+              company: signature.company,
+              title: signature.title || null,
+              email: signature.email || null,
+              phone: signature.phone || null,
+              office_phone: null,
+              website: signature.website || null,
+              logo_url: signature.logo || null,
+              photo_url: signature.photo || null,
+              address: null,
+              address_2: null,
+              city: null,
+              state: null,
+              zip: null,
+              license_number: null,
+              tagline: null,
+              publication: null,
+            },
+          };
+        }
+      }
+    } catch {}
+
+    fetch(`${API}/calculator-branding`, { credentials: 'include' })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        const data = await response.json();
+        return (data?.branding ?? null) as BrandFooter | null;
+      })
+      .then((branding) => {
+        if (!cancelled) setBrandFooter(branding ?? designerBranding);
+      })
+      .catch(() => {
+        if (!cancelled) setBrandFooter(designerBranding);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const buildBrandedReport = useCallback((): CalcReport => {
+    const report = buildReport();
+    return brandFooter ? { ...report, brandFooter } : report;
+  }, [brandFooter, buildReport]);
 
   const onBack = useCallback(() => {
     if (typeof window !== 'undefined' && window.history.length > 1) {
@@ -49,24 +135,48 @@ export default function ResourceFloater({
   const onShare = useCallback(async () => {
     if (typeof window === 'undefined') return;
     const url = window.location.href;
-    const { share: nativeShare } = await import('@/lib/native/share');
     const { haptics } = await import('@/lib/native/haptics');
     haptics.light();
-    const res = await nativeShare({ title: shareTitle, text: shareText, url });
-    if (res.ok && res.method === 'clipboard') {
-      window.alert('Link copied to clipboard');
+    try {
+      const report = buildBrandedReport();
+      const file = await createCalcReportFile(report);
+      const payload: ShareData = {
+        title: shareTitle,
+        text: shareText,
+        files: [file],
+      };
+      if (
+        typeof navigator.share === 'function'
+        && (typeof navigator.canShare !== 'function' || navigator.canShare(payload))
+      ) {
+        await navigator.share(payload);
+        return;
+      }
+
+      await downloadCalcReport(report);
+      const { share: nativeShare } = await import('@/lib/native/share');
+      const res = await nativeShare({ title: shareTitle, text: shareText, url });
+      if (res.ok) {
+        window.alert('The branded PDF was downloaded and the calculator link was shared.');
+      } else {
+        window.alert('The branded PDF was downloaded. Attach it to your email or text.');
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      console.error('[ResourceFloater] PDF sharing failed:', err);
+      window.alert('Could not share the calculator sheet. Please try Download instead.');
     }
-  }, [shareTitle, shareText]);
+  }, [buildBrandedReport, shareTitle, shareText]);
 
   const onDownload = useCallback(async () => {
     try {
-      const report = buildReport();
+      const report = buildBrandedReport();
       await downloadCalcReport(report);
     } catch (err) {
       console.error('[ResourceFloater] PDF generation failed:', err);
       window.alert('Could not generate PDF - please try again.');
     }
-  }, [buildReport]);
+  }, [buildBrandedReport]);
 
   const onPrint = useCallback(() => {
     void printCurrentPage();
@@ -118,9 +228,57 @@ export default function ResourceFloater({
   ];
 
   return (
-    <FloaterPill
-      actions={actions}
-      bottomOffsetClass={bottomOffsetClass}
-    />
+    <>
+      <div className="print:hidden">
+        <FloaterPill
+          actions={actions}
+          bottomOffsetClass={bottomOffsetClass}
+        />
+      </div>
+      {brandFooter && <PrintBrandFooter template={brandFooter.template} brand={brandFooter.brand} />}
+    </>
+  );
+}
+
+function PrintBrandFooter({ template, brand }: BrandFooter) {
+  const contact = [brand.phone, brand.email, brand.website].filter(Boolean).join('  •  ');
+  const location = [
+    [brand.address, brand.address_2].filter(Boolean).join(', '),
+    [[brand.city, brand.state].filter(Boolean).join(', '), brand.zip].filter(Boolean).join(' '),
+  ].filter(Boolean).join('  •  ');
+  return (
+    <aside
+      aria-label="REALTOR contact information"
+      className={`hidden print:fixed print:inset-x-0 print:bottom-0 print:z-50 print:bg-white print:px-8 print:py-3 print:text-gray-900 ${
+        template === 'minimal-rows'
+          ? 'print:flex print:items-center print:gap-5 print:border-t-2 print:border-[#301D5D]'
+          : 'print:grid print:grid-cols-[72px_minmax(0,1fr)_100px] print:items-center print:gap-4 print:border-t print:border-gray-300'
+      }`}
+    >
+      {brand.photo_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={brand.photo_url} alt="" className="h-14 w-14 rounded-full object-cover" />
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold">{brand.name || brand.company || 'REALTOR®'}</p>
+        <p className="text-xs">
+          {[brand.title, brand.company].filter(Boolean).join(' · ')}
+        </p>
+        {contact && <p className="mt-0.5 text-[10px] text-gray-700">{contact}</p>}
+        {location && <p className="text-[10px] text-gray-600">{location}</p>}
+        <p className="text-[10px] text-gray-600">
+          {[
+            brand.license_number
+              ? `TREC #${brand.license_number.replace(/^TREC\s*#?/i, '')}`
+              : null,
+            brand.tagline,
+          ].filter(Boolean).join('  •  ')}
+        </p>
+      </div>
+      {brand.logo_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={brand.logo_url} alt="" className="h-12 w-20 object-contain" />
+      )}
+    </aside>
   );
 }

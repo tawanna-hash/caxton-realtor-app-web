@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ArrowRight, CalendarDays } from 'lucide-react';
 import type { DashboardData, MarketSnapshot } from './data';
 
 function fmtNumber(n: number): string {
@@ -74,7 +75,7 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
         <span className="text-4xl font-bold tabular-nums text-gray-900">
           {fmtNumber(snapshot.advertiserCount)}
         </span>
-        <span className="text-sm text-gray-500">advertisers</span>
+        <span className="text-sm text-gray-500">partners</span>
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -161,6 +162,51 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
 export default function DashboardClient({ data }: { data: DashboardData }) {
   return (
     <div className="space-y-6">
+      <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-orange-700" aria-hidden="true" />
+            <h2 className="text-sm font-semibold text-gray-950">Date Radar</h2>
+            <span className="ml-auto text-xs text-gray-500">Next 14 days</span>
+          </div>
+          {data.radar.length > 0 ? (
+            <ul className="mt-4 divide-y divide-gray-100">
+              {data.radar.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    href={item.href}
+                    className="flex items-center gap-3 py-3 transition hover:text-orange-700"
+                  >
+                    <span
+                      className={
+                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-[10px] font-semibold uppercase ' +
+                        (item.tone === 'warning'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-gray-100 text-gray-700')
+                      }
+                    >
+                      {new Date(`${item.date}T12:00:00`).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium text-gray-900">
+                        {item.title}
+                      </span>
+                      <span className="block truncate text-xs text-gray-500">{item.detail}</span>
+                    </span>
+                    <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 rounded-md bg-gray-50 px-3 py-4 text-sm leading-5 text-gray-600">
+              No upcoming invoice due dates or campaign end dates need attention.
+            </p>
+          )}
+      </section>
+
       {/* Attention strip */}
       {data.attention.length > 0 && (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3">
@@ -180,6 +226,10 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
       )}
 
       {/* Market cards */}
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 className="text-base font-semibold text-gray-950">Market Snapshot</h2>
+        <span className="text-xs text-gray-500">Live operational totals by publication</span>
+      </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {data.markets.map((snapshot) => (
           <MarketCard key={snapshot.market} snapshot={snapshot} />

@@ -7,16 +7,13 @@ import { NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/server/error';
 import { ensureSchema } from '@/lib/db';
 import { ensureTrendingSchema, getActiveTrending, type TrendingMarket } from '@/lib/server/trending-store';
+import { isPubKey } from '@/lib/pub-meta';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const MARKETS: readonly TrendingMarket[] = ['realtyline', 'newsline'] as const;
-
 function parseMarket(v: string | null): TrendingMarket {
-  return (MARKETS as readonly string[]).includes(v ?? '')
-    ? (v as TrendingMarket)
-    : 'realtyline';
+  return isPubKey(v) ? v : 'realtyline';
 }
 
 export const GET = withErrorHandling(async (req: Request) => {

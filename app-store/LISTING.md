@@ -44,7 +44,7 @@ Realty News Now is the same publication network real estate agents have trusted 
 
 SUPPORT
 
-Email tawanna@myrealtyline.com or visit realtynewsnow.app/support.
+Email tawanna@realtynewsnow.app or visit realtynewsnow.app/support.
 
 Published by Caxton Publications, Inc.
 

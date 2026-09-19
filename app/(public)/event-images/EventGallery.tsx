@@ -137,13 +137,17 @@ export default function EventGallery({ months }: Props) {
             className="max-w-[90vw] max-h-[85vh] relative"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Lightbox uses raw <img> so the viewport-sized image can auto-size to its
+                natural aspect ratio without a fixed width/height. next/image would either
+                force a stretch (fill) or a fixed intrinsic size, neither of which fits a
+                dynamic lightbox. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={photos[lightboxIndex].imageUrl}
               alt={photos[lightboxIndex].title}
               className="max-w-full max-h-[85vh] object-contain rounded"
             />
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-              <p className="text-white font-medium">{photos[lightboxIndex].title}</p>
               {photos[lightboxIndex].description && (
                 <p className="text-white/70 text-sm mt-1">{photos[lightboxIndex].description}</p>
               )}

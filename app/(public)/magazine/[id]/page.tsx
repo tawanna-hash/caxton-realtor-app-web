@@ -13,8 +13,11 @@ import { MagazineGA } from '@/components/MagazineGA';
 import { getMeasurementId, type PublicationKey } from '@/lib/publication-settings';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Individual issue share links: fetched by id (route param, not
+// searchParams), no cookie/session reads, no mutations. Issues rarely
+// change after publish, so this can cache longer than the index. 1 hour
+// balances "new issue visible reasonably fast" against skipping the DB.
+export const revalidate = 3600; // 1 hour
 
 type PageProps = { params: Promise<{ id: string }> };
 

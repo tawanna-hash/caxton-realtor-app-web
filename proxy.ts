@@ -2,10 +2,7 @@
  * Edge proxy (Next.js 16): unified edge-runtime entry point handling:
  *   1. Publication permalink (?pub=<key> → cookie + clean redirect)
  *   2. Admin auth gate on /admin/* pages
- *   3. Realtor auth gate on all app content — see REALTOR_PUBLIC_PREFIXES
- *      below for the public allowlist. Logged-out users land on `/`
- *      (marketing) with ?next=<original>.
- *   4. CSRF origin/referer allowlist on cookie-authed mutating API routes (F-01)
+ *   3. CSRF origin/referer allowlist on cookie-authed mutating API routes (F-01)
  *
  * Same role as the old `middleware.ts` — renamed to `proxy.ts` per Next 16:
  *   https://nextjs.org/docs/messages/middleware-to-proxy
@@ -36,8 +33,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
-import { getToken } from 'next-auth/jwt';
-import { ADMIN_SESSION_COOKIE_NAME, SESSION_COOKIE_NAME } from './lib/auth/cookie-names';
+import { ADMIN_SESSION_COOKIE_NAME } from './lib/auth/cookie-names';
 import {
   PUB_KEYS,
   PRE_LAUNCH_PUB_KEYS,
@@ -141,6 +137,7 @@ const PUBLIC_ADMIN_PATHS = new Set<string>([
   '/admin/login',
   '/admin/forgot-password',
   '/admin/reset-password',
+  '/admin/r',
 ]);
 
 function isPublicAdminPath(pathname: string): boolean {
@@ -151,17 +148,20 @@ function isPublicAdminPath(pathname: string): boolean {
   return false;
 }
 
-async function verifyWithSecret(token: string, secret: string): Promise<boolean> {
+async function verifiedAdminId(token: string, secret: string): Promise<string | null> {
   try {
     const key = new TextEncoder().encode(secret);
     const { payload } = await jwtVerify(token, key, { algorithms: ['HS256'] });
-    return (
+    if (
       payload.type === 'admin' &&
       typeof payload.adminId === 'string' &&
       typeof payload.email === 'string'
-    );
+    ) {
+      return payload.adminId;
+    }
+    return null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -172,102 +172,21 @@ async function verifyWithSecret(token: string, secret: string): Promise<boolean>
  * provisioned keep working until they expire (7d max). Once those have
  * aged out the fallback becomes dead weight — kept as cheap insurance.
  *
- * Mirrors verifyAdminSessionToken() in lib/server/jwt.ts.
+ * Mirrors verifyAdminSessionToken() in lib/server/jwt.ts. Returns the
+ * verified adminId on success (used by the Get Paid unlock-tag check),
+ * or null if the token doesn't verify against either secret.
  */
-async function isValidAdminToken(
+async function resolveAdminId(
   token: string,
   realtorSecret: string,
   adminSecret: string | undefined,
-): Promise<boolean> {
+): Promise<string | null> {
   if (adminSecret && adminSecret.length >= 32) {
-    if (await verifyWithSecret(token, adminSecret)) return true;
-    if (adminSecret === realtorSecret) return false;
+    const viaAdmin = await verifiedAdminId(token, adminSecret);
+    if (viaAdmin) return viaAdmin;
+    if (adminSecret === realtorSecret) return null;
   }
-  return verifyWithSecret(token, realtorSecret);
-}
-
-// ============================================================================
-// Realtor auth gate on all app content
-// ============================================================================
-//
-// The dashboard, portal, and all (public)/* content routes previously had no
-// server-side auth check — the dashboard's AuthGate runs client-side only and
-// could be bypassed via a stale localStorage flag. We now gate everything at
-// the edge so unauthenticated users never see app content.
-//
-// Public allowlist (anything matched here bypasses the realtor gate):
-//   /                       — marketing landing page
-//   /auth/*                 — sign-in, sign-up, verify, forgot/reset password
-//   /privacy, /terms        — App Store / CAN-SPAM legal pages (must be public)
-//   /support                — support contact (must be reachable without sign-in)
-//   /subscribe              — newsletter signup (top-of-funnel)
-//   /submit-event           — public event submission form
-//   /magazine, /magazine/*  — published issues are top-of-funnel content;
-//                             everything else (feed, calendar, advertisers,
-//                             builders, etc.) still requires an account
-//   /manifest.webmanifest   — PWA manifest (static, but explicit for clarity)
-//
-// Note: /admin/* is handled by its own gate above and never reaches this code.
-// Note: /api/* routes have their own server-side auth (requireUser/requireAdmin)
-//       and CSRF is already enforced above. We do not gate /api at the edge
-//       so that the auth endpoints themselves (/api/auth/login etc.) remain
-//       callable from the sign-in form.
-
-const REALTOR_PUBLIC_PREFIXES: ReadonlyArray<string> = [
-  '/auth/',
-  '/api/',
-  '/privacy',
-  '/terms',
-  '/support',
-  '/subscribe',
-  '/submit-event',
-  '/magazine/',
-  '/communities/',
-  '/inventory/',
-  '/builders/',
-  '/promotions/',
-  '/event-images',
-];
-
-const REALTOR_PUBLIC_EXACT = new Set<string>([
-  '/',
-  '/magazine',
-  '/manifest.webmanifest',
-]);
-
-function isPublicRealtorPath(pathname: string): boolean {
-  if (REALTOR_PUBLIC_EXACT.has(pathname)) return true;
-  for (const prefix of REALTOR_PUBLIC_PREFIXES) {
-    if (pathname === prefix.replace(/\/$/, '')) return true;
-    if (pathname.startsWith(prefix)) return true;
-  }
-  return false;
-}
-
-/**
- * Verify a realtor session at the Edge via Auth.js's getToken() — decrypts
- * the caxton_session_v2 JWE and returns the claims lib/server/auth/authjs.ts's
- * jwt() callback puts there (realtorId, email). See file header for why this
- * replaced a hand-rolled jose jwtVerify().
- */
-async function isValidRealtorToken(
-  req: NextRequest,
-  realtorSecret: string,
-): Promise<boolean> {
-  try {
-    const token = await getToken({
-      req,
-      secret: realtorSecret,
-      cookieName: SESSION_COOKIE_NAME,
-    });
-    return (
-      !!token &&
-      typeof token.realtorId === 'string' &&
-      typeof token.email === 'string'
-    );
-  } catch {
-    return false;
-  }
+  return verifiedAdminId(token, realtorSecret);
 }
 
 // ============================================================================
@@ -349,6 +268,10 @@ export async function proxy(req: NextRequest) {
   if (pubRedirect) return pubRedirect;
 
   // 3. Admin auth gate (only when on /admin/*).
+  // Signed public share of the Gmail event review queue — bypass the admin gate.
+  if (pathname.startsWith('/admin/events/gmail/shared/')) {
+    return NextResponse.next();
+  }
   if (pathname.startsWith('/admin')) {
     if (isPublicAdminPath(pathname)) {
       return NextResponse.next();
@@ -366,7 +289,8 @@ export async function proxy(req: NextRequest) {
     }
 
     const token = req.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
-    if (token && (await isValidAdminToken(token, realtorSecret, adminSecret))) {
+    const adminId = token ? await resolveAdminId(token, realtorSecret, adminSecret) : null;
+    if (adminId) {
       return NextResponse.next();
     }
 
@@ -378,49 +302,10 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(url, 307);
   }
 
-  // 4. Realtor auth gate. Everything that isn't on the public allowlist
-  //    requires a valid realtor session cookie. Unauthenticated visitors are
-  //    sent to `/` (marketing) with ?next=<original path+query> so the
-  //    landing page can deep-link them back after sign-in.
-  if (isPublicRealtorPath(pathname)) {
-    return NextResponse.next();
-  }
-
-  // Special case: the dashboard hosts the AuthGate component, and existing
-  // links across the app use /auth/sign-in and /auth/sign-up which then
-  // redirect to /dashboard?auth=login|signup. Allow that specific entry
-  // through the gate so the sign-in form itself stays reachable to
-  // logged-out visitors. The dashboard component refuses to render feed
-  // content when /api/auth/me reports no session, so no protected content
-  // leaks from this bypass.
-  if (pathname === '/dashboard') {
-    const authParam = req.nextUrl.searchParams.get('auth');
-    if (authParam === 'login' || authParam === 'signup') {
-      return NextResponse.next();
-    }
-  }
-
-  const realtorSecret = process.env.JWT_SECRET;
-  if (!realtorSecret || realtorSecret.length < 32) {
-    // Fail closed: misconfigured server → send to marketing rather than
-    // rendering protected content unauthenticated.
-    const url = req.nextUrl.clone();
-    url.pathname = '/';
-    url.search = '';
-    return NextResponse.redirect(url, 307);
-  }
-
-  if (await isValidRealtorToken(req, realtorSecret)) {
-    return NextResponse.next();
-  }
-
-  // Logged-out → marketing landing page. Preserve original destination via
-  // ?next= so post-sign-in we can bounce back.
-  const url = req.nextUrl.clone();
-  url.pathname = '/';
-  url.search = '';
-  url.searchParams.set('next', pathname + search);
-  return NextResponse.redirect(url, 307);
+  // 4. Public website routes are intentionally open. Authentication is
+  // enforced only by the admin gate above and by account-specific API/page
+  // handlers that protect private records.
+  return NextResponse.next();
 }
 
 // Matcher covers:

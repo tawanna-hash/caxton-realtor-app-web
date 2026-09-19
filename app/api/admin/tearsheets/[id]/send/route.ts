@@ -56,7 +56,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'Realty News Now <ads@realtynewsnow.app>',
+          from: 'Realty News Now <hello@newslinesa.com>',
           to,
           subject: `Your ad tearsheet${ts.issue_label ? ' — ' + ts.issue_label : ''}`,
           html: `<p>Attached is the tearsheet for your recent ad placement.</p>

@@ -15,8 +15,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { trackEvent } from '../../app/posthog-provider';
+import type { PubKey } from '@/lib/pub-meta';
 
-type Market = 'realtyline' | 'newsline';
+type Market = PubKey;
 
 interface TrendingItem {
   id: number;
@@ -36,12 +37,12 @@ interface Props {
 const ROTATE_MS = 5000;
 const DISMISS_KEY_PREFIX = 'caxton_ticker_dismissed_';
 
-function todayKey(): string {
+function todayKey(market: Market): string {
   const d = new Date();
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  return `${DISMISS_KEY_PREFIX}${y}${m}${day}`;
+  return `${DISMISS_KEY_PREFIX}${market}_${y}${m}${day}`;
 }
 
 export default function TrendingTicker({ market, className = '' }: Props) {
@@ -55,11 +56,12 @@ export default function TrendingTicker({ market, className = '' }: Props) {
   // check dismissed state on mount
   useEffect(() => {
     try {
-      if (typeof window !== 'undefined' && window.localStorage.getItem(todayKey()) === '1') {
-        queueMicrotask(() => { setDismissed(true); });
+      if (typeof window !== 'undefined') {
+        const isDismissed = window.localStorage.getItem(todayKey(market)) === '1';
+        queueMicrotask(() => { setDismissed(isDismissed); });
       }
     } catch { /* ignore */ }
-  }, []);
+  }, [market]);
 
   // detect prefers-reduced-motion
   useEffect(() => {
@@ -105,7 +107,7 @@ export default function TrendingTicker({ market, className = '' }: Props) {
   const safeIndex = items.length > 0 ? index % items.length : 0;
 
   const dismiss = useCallback(() => {
-    try { window.localStorage.setItem(todayKey(), '1'); } catch { /* ignore */ }
+    try { window.localStorage.setItem(todayKey(market), '1'); } catch { /* ignore */ }
     setDismissed(true);
     const item = items[safeIndex];
     trackEvent('trending_dismissed', {

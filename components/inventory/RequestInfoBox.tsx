@@ -63,7 +63,7 @@ export default function RequestInfoBox({
       >
         <div className="bg-[#5a0e5f] px-4 py-3">
           <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
-            Request more information
+            Request More Information
           </h2>
           <p className="mt-0.5 text-xs text-white/80">
             Get details and availability straight from the builder&apos;s sales team.
@@ -142,7 +142,7 @@ export default function RequestInfoBox({
     >
       <div className="bg-[#5a0e5f] px-4 py-3">
         <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
-          Request more information
+          Request More Information
         </h2>
         <p className="mt-0.5 text-xs text-white/80">
           Interested in this home? Send us your details and we&apos;ll be in touch.

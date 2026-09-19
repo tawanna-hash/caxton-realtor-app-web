@@ -99,7 +99,10 @@ export default function AdvertiserImageUploader({
       // behind them.
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+      // Cast: pdfjs 5.x requires `canvas` in RenderParameters, pdfjs 4.x
+      // (which we're pinned to for Chrome 116 compat) doesn't type it.
+      // Passing it is harmless at runtime under 4.x.
+      await page.render({ canvasContext: ctx, viewport, canvas } as unknown as Parameters<typeof page.render>[0]).promise;
 
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob((b) => resolve(b), 'image/png', 0.95),

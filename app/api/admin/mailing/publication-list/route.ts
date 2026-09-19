@@ -21,6 +21,7 @@ import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { getSql } from '@/lib/db';
 import { suppressedSubset } from '@/lib/server/email-suppressions';
+import { PUB_ACTIVE, type PubId } from '@/lib/publications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,7 +29,7 @@ export const dynamic = 'force-dynamic';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DROP_STATUSES = new Set(['unsubscribed', 'bounced', 'suppressed', 'inactive']);
 
-type Pub = 'realtyline' | 'newsline';
+type Pub = PubId;
 
 type Row = {
   email: string;
@@ -41,21 +42,43 @@ type Row = {
 };
 
 function configFor(pub: Pub) {
-  return pub === 'realtyline'
-    ? {
+  const configs: Record<Pub, {
+    segments: string[];
+    market: string;
+    holdingSource: string;
+    holdingLabel: string;
+    newsletterPub: string;
+  }> = {
+    realtyline: {
         segments: ['realtyline-atx-print', 'email-only-atx'],
         market: 'austin',
         holdingSource: 'unlockmls',
         holdingLabel: 'abor-members',
         newsletterPub: 'realtyline',
-      }
-    : {
+    },
+    newsline: {
         segments: ['newsline-sa-print', 'email-only-sa'],
         market: 'san_antonio',
         holdingSource: 'ramco-sabor',
         holdingLabel: 'sabor-members',
         newsletterPub: 'newsline',
-      };
+    },
+    'realtyline-houston': {
+      segments: [],
+      market: 'houston',
+      holdingSource: '__none__',
+      holdingLabel: 'houston',
+      newsletterPub: 'realtyline-houston',
+    },
+    'realtyline-dallas': {
+      segments: [],
+      market: 'dallas',
+      holdingSource: '__none__',
+      holdingLabel: 'dallas-ft-worth',
+      newsletterPub: 'realtyline-dallas',
+    },
+  };
+  return configs[pub];
 }
 
 function normaliseEmail(raw: unknown): string | null {
@@ -227,8 +250,8 @@ export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const url = new URL(req.url);
   const pubParam = (url.searchParams.get('list') || url.searchParams.get('pub') || '').toLowerCase();
-  if (pubParam !== 'realtyline' && pubParam !== 'newsline') {
-    throw new ApiError(400, 'invalid_list', "list must be 'realtyline' or 'newsline'");
+  if (!PUB_ACTIVE.some((publication) => publication.id === pubParam)) {
+    throw new ApiError(400, 'invalid_list', 'list must be an active publication');
   }
   const pub = pubParam as Pub;
   const format = (url.searchParams.get('format') || 'csv').toLowerCase();

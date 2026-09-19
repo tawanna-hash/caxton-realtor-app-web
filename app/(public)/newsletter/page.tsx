@@ -10,8 +10,8 @@ import NewsletterCTA from '@/components/NewsletterCTA';
 import TrackPageView from '@/components/analytics/TrackPageView';
 
 export const metadata = {
-  title: 'Newsletter — RealtyLine & Newsline San Antonio',
-  description: 'Sign up for our free weekly newsletter. Stay current on new builders, communities, inventory, giveaways, and events.',
+  title: 'Weekly Email — RealtyLine & Newsline San Antonio',
+  description: 'Sign up for our free weekly email. Stay current on new builders, communities, inventory, giveaways, and events.',
 };
 
 export default function NewsletterLandingPage() {
@@ -19,9 +19,9 @@ export default function NewsletterLandingPage() {
     <div className="max-w-3xl mx-auto px-5 py-10">
       <TrackPageView event="newsletter_page_viewed" />
       <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-        Newsletter
+        Weekly Email
       </p>
-      <PageTitle size="md">The Weekly Newsletter</PageTitle>
+      <PageTitle size="md">The Weekly Email</PageTitle>
       <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mb-10">
         Every Friday. One short email. Everything we published that week —
         new builders, communities, inventory drops, giveaways, and events —
@@ -33,7 +33,7 @@ export default function NewsletterLandingPage() {
       </div>
 
       <section className="mb-12">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">What you&rsquo;ll get</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">What You&rsquo;ll Get</h2>
         <ul className="space-y-3 text-base text-gray-700 font-light leading-relaxed">
           <li className="flex gap-3">
             <span className="text-gray-400">&bull;</span>
@@ -67,9 +67,9 @@ export default function NewsletterLandingPage() {
       </section>
 
       <section className="mb-12 border-t border-gray-200 pt-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Choose your edition</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Choose Your Edition</h2>
         <p className="text-base text-gray-700 font-light leading-relaxed mb-4">
-          We publish two newsletters. Pick the one for your market &mdash; or
+          We publish two weekly emails. Pick the one for your market &mdash; or
           switch publications from the nav drawer to subscribe to both.
         </p>
         <ul className="space-y-2 text-sm text-gray-700">

@@ -15,12 +15,12 @@
 
 import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useUrlState, useUrlString } from '@/lib/use-url-state';
 import Link from 'next/link';
 import type {
   AdvertiserCrmRow,
   AdvertiserStaff,
   AdvertiserStatus,
-  AdvertiserType,
 } from '@/lib/advertisers';
 import type { Publication, PublicationKey } from '@/lib/publication-theme';
 import CrmComposer from './_components/CrmComposer';
@@ -45,19 +45,15 @@ import {
   coerceHeaderStyle,
 } from '@/lib/advertiser-header-styles';
 
-type Props = { initialRows: AdvertiserCrmRow[] };
+type Props = {
+  initialRows: AdvertiserCrmRow[];
+  renderedAt: number;
+};
 
 const STATUS_OPTIONS: { value: AdvertiserStatus; label: string; tone: string }[] = [
   { value: 'prospect',   label: 'Prospect',   tone: 'bg-sky-50 text-sky-700 border-sky-200' },
-  { value: 'advertiser', label: 'Advertiser', tone: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { value: 'advertiser', label: 'Partner', tone: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   { value: 'archived',   label: 'Archived',   tone: 'bg-gray-100 text-gray-600 border-gray-200' },
-];
-
-const TYPE_OPTIONS: { value: AdvertiserType; label: string }[] = [
-  { value: 'advertiser', label: 'Advertiser' },
-  { value: 'client',     label: 'Client' },
-  { value: 'prospect',   label: 'Prospect' },
-  { value: 'mailing',    label: 'Mailing only' },
 ];
 
 // Sort options for the advertisers table. Value encodes field + direction.
@@ -73,20 +69,26 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
   { value: 'clicks_asc',   label: 'Fewest clicks (30d)' },
 ];
 
-export default function CrmClient({ initialRows }: Props) {
+export default function CrmClient({ initialRows, renderedAt }: Props) {
   const [rows, setRows] = useState(initialRows);
-  const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<AdvertiserStatus | 'all'>('all');
-  const [typeFilter, setTypeFilter] = useState<AdvertiserType | 'all'>('all');
-  const [pubFilter, setPubFilter] = useState<PublicationKey | 'all'>('all');
-  const [sortBy, setSortBy] = useState('updated_desc');
+  const [pageSize, setPageSize] = useState(25);
+  const [page, setPage] = useState(1);
+  // Filters / view / sort are URL-backed so refresh restores them.
+  // Defaults are stripped from the URL to keep it clean.
+  const [query, setQuery] = useUrlState<string>('q', '', {
+    parse: (raw) => raw ?? '',
+    stringify: (v) => (v ? v : null),
+  });
+  const [statusFilter, setStatusFilter] = useUrlString<AdvertiserStatus | 'all'>('status', 'all');
+  const [sortBy, setSortBy] = useUrlString<string>('sort', 'updated_desc');
   const [editing, setEditing] = useState<AdvertiserCrmRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
-  const [view, setView] = useState<'audience' | 'sent'>('audience');
+  const [view, setView] = useUrlString<'audience' | 'sent'>('view', 'audience');
   const [prefillOutreachId, setPrefillOutreachId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [lockingIds, setLockingIds] = useState<Set<number>>(() => new Set());
   const router = useRouter();
   const searchParams = useSearchParams();
   useEffect(() => {
@@ -101,51 +103,32 @@ export default function CrmClient({ initialRows }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Market tabs <-> ?market= URL param <-> pubFilter ─────────────
-  // Dashboard cards deep-link here with ?market=austin etc.; the tab
-  // reflects the current publication filter and pushes the URL when
-  // the user clicks a different tab. We keep pubFilter as the source
-  // of truth for filtering (chips already read from it).
-  //
-  // Rather than mirroring URL -> state with an effect (which triggers a
-  // cascading render and lints against react-hooks/set-state-in-effect),
-  // we derive activeMarket directly from either the URL or pubFilter
-  // per render and let handleMarketTab keep them in sync when the user
-  // clicks a tab.
-  // URL is source of truth for market. Both server and client derive
-  // activeMarket from searchParams identically -> no hydration mismatch.
-  // pubFilter mirrors the URL so downstream filtering keeps working.
-  const marketFromUrl: Market | 'all' = (() => {
-    const raw = searchParams?.get('market');
+  // ── Market tabs <-> ?market= URL param ───────────────────────────
+  // The market tabs are the only publication filter. Keeping one URL
+  // parameter avoids competing router updates from duplicate controls.
+  const activeMarket: Market | 'all' = (() => {
+    // Accept the retired `pub` parameter so old CRM links still open to
+    // the intended market. The next tab click cleans it from the URL.
+    const raw = searchParams?.get('market') ?? searchParams?.get('pub');
     if (!raw) return 'all';
     return (MARKETS as readonly string[]).includes(raw) ? (raw as Market) : 'all';
   })();
 
-  const activeMarket: Market | 'all' = marketFromUrl !== 'all'
-    ? marketFromUrl
-    : (() => {
-        if (pubFilter === 'all') return 'all';
-        for (const m of MARKETS) {
-          if ((m as string) === (pubFilter as string)) return m;
-        }
-        return 'all';
-      })();
-
   const handleMarketTab = useCallback(
     (market: Market | 'all') => {
+      // Preserve useful filters while removing retired duplicate controls.
+      const params = new URLSearchParams(searchParams?.toString() ?? '');
+      params.delete('pub');
+      params.delete('type');
       if (market === 'all') {
-        setPubFilter('all');
-        router.replace('/admin/crm');
-        return;
+        params.delete('market');
+      } else {
+        params.set('market', market);
       }
-      // Store the market key directly. Market ids and PublicationKey
-      // values share strings ('austin', 'san_antonio', 'houston', 'dallas'),
-      // and parsePublications() returns PublicationKey — so comparing
-      // filter against advPubs works one-to-one.
-      setPubFilter(market as unknown as PublicationKey);
-      router.replace(`/admin/crm?market=${market}`);
+      const qs = params.toString();
+      router.replace(qs ? `/admin/crm?${qs}` : '/admin/crm', { scroll: false });
     },
-    [router],
+    [router, searchParams],
   );
 
   const marketCounts = useMemo(() => {
@@ -179,15 +162,14 @@ export default function CrmClient({ initialRows }: Props) {
     const q = query.trim().toLowerCase();
     const out = rows.filter((r) => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
-      if (typeFilter !== 'all' && r.type !== typeFilter) return false;
-      if (pubFilter !== 'all') {
+      if (activeMarket !== 'all') {
         const advPubs = parsePublications(r.publication);
-        if (!advPubs.includes(pubFilter)) return false;
+        if (!advPubs.includes(activeMarket as unknown as PublicationKey)) return false;
       }
       if (!q) return true;
       const hay = [
         r.name, r.company, r.first_name, r.last_name,
-        r.contact_email, r.portal_email, r.phone, r.office_phone,
+        r.contact_email, r.billing_email, r.portal_email, r.phone, r.office_phone,
         r.city, r.state, r.notes,
         ...(r.tags ?? []),
       ].filter(Boolean).join(' ').toLowerCase();
@@ -214,22 +196,29 @@ export default function CrmClient({ initialRows }: Props) {
         : String(av).localeCompare(String(bv));
       return cmp * mul;
     });
-  }, [rows, query, statusFilter, typeFilter, pubFilter, sortBy]);
+  }, [rows, query, statusFilter, activeMarket, sortBy]);
 
   // ── counts for filter chips ─────────────────────────────────────
+  const marketRows = useMemo(() => {
+    if (activeMarket === 'all') return rows;
+    return rows.filter((r) =>
+      parsePublications(r.publication).includes(activeMarket as unknown as PublicationKey),
+    );
+  }, [rows, activeMarket]);
+
   // Recent bounces — any advertiser with a bounce flag set. We keep this
   // pure (no Date.now) so React can dedupe renders; the webhook sets the
   // flag and it stays visible until the user resolves the row.
   const recentBounces = useMemo(
-    () => rows.filter((r) => !!r.last_bounced_at),
-    [rows],
+    () => marketRows.filter((r) => !!r.last_bounced_at),
+    [marketRows],
   );
 
   const statusCounts = useMemo(() => {
     const c: Record<AdvertiserStatus, number> = { prospect: 0, advertiser: 0, archived: 0 };
-    for (const r of rows) c[r.status ?? 'prospect'] = (c[r.status ?? 'prospect'] ?? 0) + 1;
+    for (const r of marketRows) c[r.status ?? 'prospect'] = (c[r.status ?? 'prospect'] ?? 0) + 1;
     return c;
-  }, [rows]);
+  }, [marketRows]);
 
   const reload = useCallback(async () => {
     try {
@@ -256,19 +245,64 @@ export default function CrmClient({ initialRows }: Props) {
     }
   }, [router]);
 
+  const toggleRecordLock = useCallback(async (row: AdvertiserCrmRow) => {
+    if (lockingIds.has(row.id)) return;
+    const nextLocked = !row.is_locked;
+
+    setLockingIds((prev) => new Set(prev).add(row.id));
+    setRows((prev) => prev.map((item) => (
+      item.id === row.id ? { ...item, is_locked: nextLocked } : item
+    )));
+
+    try {
+      const res = await fetch(`/api/admin/advertisers/${row.id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ is_locked: nextLocked }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || data?.detail || `HTTP ${res.status}`);
+
+      const saved = data?.advertiser as AdvertiserCrmRow | undefined;
+      if (saved) {
+        setRows((prev) => prev.map((item) => (
+          item.id === row.id
+            ? { ...item, ...saved, hotspot_count: item.hotspot_count, clicks_30d: item.clicks_30d, last_click_at: item.last_click_at }
+            : item
+        )));
+      }
+      flash(nextLocked ? 'Partner record locked' : 'Partner record unlocked');
+    } catch (err) {
+      setRows((prev) => prev.map((item) => (
+        item.id === row.id ? { ...item, is_locked: row.is_locked } : item
+      )));
+      setError(err instanceof Error ? err.message : 'lock update failed');
+    } finally {
+      setLockingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(row.id);
+        return next;
+      });
+    }
+  }, [flash, lockingIds]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-5">
+    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
       {/* Header ─────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-            Admin · Advertisers
+          <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
+            Admin · Partners
           </div>
           <PageTitle size="md">
-            Advertisers
+            Partners
           </PageTitle>
           <p className="text-sm text-gray-600 mt-1">
-            Unified workspace for advertiser relationships. Search, filter,
+            Unified workspace for partner relationships. Search, filter,
             copy share links, view analytics, and edit contact details, status,
             notes, and tags.
           </p>
@@ -277,16 +311,16 @@ export default function CrmClient({ initialRows }: Props) {
           <button
             type="button"
             onClick={() => setComposerOpen(true)}
-            className="px-4 py-2 rounded-md bg-purple-700 text-white text-sm hover:bg-purple-800"
+            className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700"
           >
             Compose email
           </button>
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
+            className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700"
           >
-            New advertiser
+            New partner
           </button>
         </div>
       </div>
@@ -311,7 +345,7 @@ export default function CrmClient({ initialRows }: Props) {
           aria-selected={activeMarket === 'all'}
           onClick={() => handleMarketTab('all')}
           className={
-            'px-4 py-2 rounded-md text-sm font-medium border transition-colors ' +
+            'h-9 px-3 rounded text-sm font-medium border transition-colors ' +
             (activeMarket === 'all'
               ? 'bg-gray-900 text-white border-gray-900'
               : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50')
@@ -336,8 +370,9 @@ export default function CrmClient({ initialRows }: Props) {
               role="tab"
               aria-selected={isActive}
               onClick={() => handleMarketTab(market)}
+              data-testid={`market-filter-${market}`}
               className={
-                'px-4 py-2 rounded-md text-sm font-medium border transition-colors ' +
+                'h-9 px-3 rounded text-sm font-medium border transition-colors ' +
                 (isActive
                   ? 'bg-gray-900 text-white border-gray-900'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50') +
@@ -366,45 +401,35 @@ export default function CrmClient({ initialRows }: Props) {
       <div className="mt-4 flex gap-2 border-b border-gray-200" role="tablist" aria-label="CRM view">
         <button type="button" role="tab" aria-selected={view === 'audience'}
           onClick={() => setView('audience')}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'audience' ? 'border-purple-700 text-purple-800' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'audience' ? 'border-orange-600 text-orange-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >Audience</button>
         <button type="button" role="tab" aria-selected={view === 'sent'}
           onClick={() => setView('sent')}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'sent' ? 'border-purple-700 text-purple-800' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'sent' ? 'border-orange-600 text-orange-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >Sent</button>
       </div>
 
       {view === 'audience' && <>
       {/* Filters ────────────────────────────────────────────────── */}
-      <div className="rounded-md border border-gray-200 bg-white p-4 space-y-3">
-        <div className="flex flex-wrap gap-2 items-center">
+      <div className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label htmlFor="partner-search" className="sr-only">Search partners</label>
           <input
+            id="partner-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name, email, phone, city, tags…"
-            className="flex-1 min-w-[240px] px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Search partners"
+            data-testid="input-partner-search"
+            className="h-9 flex-1 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
           />
+          <label htmlFor="partner-sort" className="sr-only">Sort partners</label>
           <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as AdvertiserType | 'all')}
-            className="px-3 py-2 rounded-md border border-gray-300 text-sm"
-          >
-            <option value="all">All types</option>
-            {TYPE_OPTIONS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
-          <select
-            value={pubFilter}
-            onChange={(e) => setPubFilter(e.target.value as PublicationKey | 'all')}
-            className="px-3 py-2 rounded-md border border-gray-300 text-sm"
-          >
-            <option value="all">All publications</option>
-            {PUBLICATION_OPTIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-          </select>
-          <select
+            id="partner-sort"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-3 py-2 rounded-md border border-gray-300 text-sm"
-            aria-label="Sort advertisers"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 sm:w-auto"
+            aria-label="Sort partners"
+            data-testid="select-partner-sort"
           >
             {SORT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
@@ -415,7 +440,7 @@ export default function CrmClient({ initialRows }: Props) {
             <span className="text-lg leading-none">⚠</span>
             <div className="flex-1 min-w-0">
               <div className="font-semibold">
-                {recentBounces.length} advertiser{recentBounces.length === 1 ? '' : 's'} with recent bounce{recentBounces.length === 1 ? '' : 's'}
+                {recentBounces.length} partner{recentBounces.length === 1 ? '' : 's'} with recent bounce{recentBounces.length === 1 ? '' : 's'}
               </div>
               <div className="mt-1 text-xs text-red-800 truncate">
                 {recentBounces.slice(0, 5).map((r) => r.contact_email ?? r.name).filter(Boolean).join(', ')}
@@ -426,7 +451,7 @@ export default function CrmClient({ initialRows }: Props) {
         )}
 
         <div className="flex flex-wrap gap-2">
-          <StatusChip label="All" active={statusFilter === 'all'} count={rows.length} onClick={() => setStatusFilter('all')} />
+          <StatusChip label="All" active={statusFilter === 'all'} count={marketRows.length} onClick={() => setStatusFilter('all')} />
           {STATUS_OPTIONS.map((s) => (
             <StatusChip
               key={s.value}
@@ -442,8 +467,9 @@ export default function CrmClient({ initialRows }: Props) {
       </div>
 
       {/* List */}
-      <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
-        <div className="grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
+      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <div className="min-w-[900px]">
+        <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
           <div className="col-span-4">Contact</div>
           <div className="col-span-1">Status</div>
           <div className="col-span-2">Publication</div>
@@ -458,11 +484,14 @@ export default function CrmClient({ initialRows }: Props) {
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {filtered.map((r) => (
+            {pageRows.map((r) => (
               <CrmRow
                 key={r.id}
                 row={r}
+                renderedAt={renderedAt}
                 onOpen={() => setEditing(r)}
+                lockBusy={lockingIds.has(r.id)}
+                onToggleLock={() => toggleRecordLock(r)}
                 onCopyLink={async () => {
                   const origin = typeof window !== 'undefined' ? window.location.origin : '';
                   const url = `${origin}/r/advertiser/${r.slug}?t=${r.share_token}`;
@@ -477,20 +506,53 @@ export default function CrmClient({ initialRows }: Props) {
             ))}
           </div>
         )}
+        </div>
       </div>
+      {filtered.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-600">
+          <div>
+            Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)} of {filtered.length}
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2">
+              Rows
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                className="h-9 rounded border border-gray-300 bg-white px-2 text-xs"
+              >
+                {[25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+              </select>
+            </label>
+            <button type="button" disabled={currentPage === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="h-9 rounded border border-gray-300 bg-white px-3 disabled:opacity-40">Previous</button>
+            <span className="tabular-nums">Page {currentPage} of {totalPages}</span>
+            <button type="button" disabled={currentPage === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="h-9 rounded border border-gray-300 bg-white px-3 disabled:opacity-40">Next</button>
+          </div>
+        </div>
+      )}
 
       {/* Edit drawer */}
       {editing && (
         <EditDrawer
           row={editing}
           onClose={() => setEditing(null)}
-          onSaved={async () => {
+          onSaved={async (saved) => {
+            setRows((prev) => prev.map((item) => (
+              item.id === saved.id
+                ? { ...item, ...saved, hotspot_count: item.hotspot_count, clicks_30d: item.clicks_30d, last_click_at: item.last_click_at }
+                : item
+            )));
             setEditing(null);
+            flash('Partner changes saved');
             await reload();
           }}
           onDeleted={async () => {
+            const deletedId = editing.id;
+            setRows((prev) => prev.filter((item) => item.id !== deletedId));
             setEditing(null);
-            await reload();
+            flash('Partner deleted');
           }}
           onError={(msg) => setError(msg)}
         />
@@ -526,7 +588,7 @@ export default function CrmClient({ initialRows }: Props) {
         adminEmail={null}
         initialFilter={{
           statuses: statusFilter === 'all' ? [] : [statusFilter],
-          publications: pubFilter === 'all' ? [] : [pubFilter],
+          publications: activeMarket === 'all' ? [] : [activeMarket as unknown as PublicationKey],
           query,
         }}
       />
@@ -537,85 +599,133 @@ export default function CrmClient({ initialRows }: Props) {
 // CrmRow: list-row UI with quick actions (copy share link, analytics, edit).
 function CrmRow({
   row,
+  renderedAt,
   onOpen,
+  lockBusy,
+  onToggleLock,
   onCopyLink,
 }: {
   row: AdvertiserCrmRow;
+  renderedAt: number;
   onOpen: () => void;
+  lockBusy: boolean;
+  onToggleLock: () => void | Promise<void>;
   onCopyLink: () => void | Promise<void>;
 }) {
-  return (
-    <div className="grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-blue-50/40 transition">
+  // Shared cells so mobile card and desktop grid stay in sync.
+  const contactCell = (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="min-w-0 text-left w-full"
+    >
+      <div className="font-medium text-gray-900 truncate hover:underline">{row.name}</div>
+      <div className="text-xs text-gray-500 truncate">
+        {[row.contact_email, formatPhone(row.phone)].filter(Boolean).join(' - ') || row.slug}
+      </div>
+      {row.billing_email && row.billing_email !== row.contact_email ? (
+        <div className="text-[11px] text-gray-400 truncate">
+          Billing: {row.billing_email}
+        </div>
+      ) : null}
+    </button>
+  );
+
+  const hotspotCell = (
+    <div className="text-sm text-gray-700">
+      {row.hotspot_count} <span className="text-gray-400">/</span>{' '}
+      <span className="text-gray-500">{row.clicks_30d} clicks</span>
+      {row.last_click_at && (
+        <div className="text-xs text-gray-400">
+          last touch {relativeTime(row.last_click_at, renderedAt)}
+        </div>
+      )}
+    </div>
+  );
+
+  const opensCell = row.last_bounced_at ? (
+    <div className="flex flex-col leading-tight gap-0.5">
+      <span
+        className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-800 border border-red-300 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit"
+        title={`Last bounce: ${row.last_bounce_type ?? 'unknown'} on ${formatShortDate(row.last_bounced_at)}`}
+      >
+        Bounced
+      </span>
+      <span className="text-gray-500 text-xs">{formatShortDate(row.last_bounced_at)}</span>
+    </div>
+  ) : row.open_count && row.open_count > 0 ? (
+    <div className="flex flex-col leading-tight">
+      <span className="font-medium text-emerald-700 text-sm">{row.open_count} opens</span>
+      <span className="text-gray-500 text-xs">{formatShortDate(row.last_opened_at)}</span>
+    </div>
+  ) : (
+    <span className="text-gray-400 text-xs">No opens</span>
+  );
+
+  const actionsCell = (
+    <div className="flex items-center justify-end gap-1.5 flex-wrap">
+      <button
+        type="button"
+        onClick={onToggleLock}
+        disabled={lockBusy}
+        aria-pressed={!!row.is_locked}
+        className={`px-2 py-1 text-xs rounded-md border font-medium disabled:opacity-50 ${
+          row.is_locked
+            ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+        }`}
+        title={row.is_locked ? 'Unlock this partner record' : 'Lock this partner record against deletion'}
+      >
+        {lockBusy ? 'Saving…' : row.is_locked ? 'Locked' : 'Lock'}
+      </button>
+      <button
+        type="button"
+        onClick={onCopyLink}
+        className="px-2 py-1 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+        title="Copy public share link"
+      >
+        Copy link
+      </button>
       <button
         type="button"
         onClick={onOpen}
-        className="col-span-4 min-w-0 text-left"
+        className="rounded bg-orange-600 px-2 py-1 text-xs font-medium text-white hover:bg-orange-700"
       >
-        <div className="font-medium text-gray-900 truncate hover:underline">{row.name}</div>
-        <div className="text-xs text-gray-500 truncate">
-          {[row.contact_email, formatPhone(row.phone)].filter(Boolean).join(' - ') || row.slug}
-        </div>
+        Edit
       </button>
-      <div className="col-span-1">
-        <StatusBadge status={row.status ?? 'prospect'} />
-      </div>
-      <div className="col-span-2">
-        <PublicationBadge publication={row.publication ?? 'austin'} />
-      </div>
-      <div className="col-span-2 text-sm text-gray-700">
-        {row.hotspot_count} <span className="text-gray-400">/</span>{' '}
-        <span className="text-gray-500">{row.clicks_30d} clicks</span>
-        {row.last_click_at && (
-          <div className="text-xs text-gray-400">
-            last touch {relativeTime(row.last_click_at)}
-          </div>
-        )}
-      </div>
-      <div className="col-span-1 text-xs">
-        {row.last_bounced_at ? (
-          <div className="flex flex-col leading-tight gap-0.5">
-            <span
-              className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-800 border border-red-300 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit"
-              title={`Last bounce: ${row.last_bounce_type ?? 'unknown'} on ${formatShortDate(row.last_bounced_at)}`}
-            >
-              Bounced
-            </span>
-            <span className="text-gray-500">{formatShortDate(row.last_bounced_at)}</span>
-          </div>
-        ) : row.open_count && row.open_count > 0 ? (
-          <div className="flex flex-col leading-tight">
-            <span className="font-medium text-emerald-700">{row.open_count}</span>
-            <span className="text-gray-500">{formatShortDate(row.last_opened_at)}</span>
-          </div>
-        ) : (
-          <span className="text-gray-400">-</span>
-        )}
-      </div>
-      <div className="col-span-2 flex items-center justify-end gap-1.5 flex-wrap">
-        <button
-          type="button"
-          onClick={onCopyLink}
-          className="px-2 py-1 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
-          title="Copy public share link"
-        >
-          Copy link
-        </button>
-        <Link
-          href={`/admin/reports?tab=advertisers&advertiserId=${row.id}`}
-          className="px-2 py-1 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
-          title="Open advertiser analytics dashboard"
-        >
-          Open
-        </Link>
-        <button
-          type="button"
-          onClick={onOpen}
-          className="px-2 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
-        >
-          Edit
-        </button>
-      </div>
     </div>
+  );
+
+  return (
+    <>
+      {/* Desktop grid ≥ sm — unchanged layout */}
+      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2.5 text-xs items-center hover:bg-orange-50/40 transition">
+        <div className="col-span-4">{contactCell}</div>
+        <div className="col-span-1">
+          <StatusBadge status={row.status ?? 'prospect'} />
+        </div>
+        <div className="col-span-2">
+          <PublicationBadge publication={row.publication ?? 'austin'} />
+        </div>
+        <div className="col-span-2">{hotspotCell}</div>
+        <div className="col-span-1 text-xs">{opensCell}</div>
+        <div className="col-span-2">{actionsCell}</div>
+      </div>
+
+      {/* Mobile card < sm */}
+      <div className="sm:hidden px-4 py-3 space-y-2 hover:bg-blue-50/40 transition">
+        {contactCell}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <StatusBadge status={row.status ?? 'prospect'} />
+          <PublicationBadge publication={row.publication ?? 'austin'} />
+        </div>
+        <div className="flex items-start justify-between gap-3">
+          {hotspotCell}
+          <div className="text-right">{opensCell}</div>
+        </div>
+        {actionsCell}
+      </div>
+    </>
   );
 }
 
@@ -624,7 +734,11 @@ function formatShortDate(iso: string | null | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'America/Chicago',
+  });
 }
 
 function publicationTone(key: PublicationKey): string {
@@ -665,7 +779,7 @@ function StatusChip({
   label: string; active: boolean; count: number; tone?: string; onClick: () => void;
 }) {
   const base = active
-    ? 'bg-blue-600 text-white border-blue-600'
+    ? 'bg-orange-600 text-white border-orange-600'
     : tone || 'bg-white text-gray-700 border-gray-300';
   return (
     <button
@@ -686,9 +800,9 @@ function StatusBadge({ status }: { status: AdvertiserStatus }) {
   );
 }
 
-function relativeTime(iso: string): string {
+function relativeTime(iso: string, renderedAt: number): string {
   const then = new Date(iso).getTime();
-  const diff = Date.now() - then;
+  const diff = renderedAt - then;
   const day = 1000 * 60 * 60 * 24;
   if (diff < day) return 'today';
   if (diff < 2 * day) return 'yesterday';
@@ -705,7 +819,7 @@ function EditDrawer({
 }: {
   row: AdvertiserCrmRow;
   onClose: () => void;
-  onSaved: () => Promise<void>;
+  onSaved: (saved: AdvertiserCrmRow) => Promise<void>;
   onDeleted: () => Promise<void>;
   onError: (msg: string) => void;
 }) {
@@ -728,10 +842,13 @@ function EditDrawer({
     });
   };
   const [contactEmail, setContactEmail] = useState(row.contact_email ?? '');
+  const [billingEmail, setBillingEmail] = useState(row.billing_email ?? '');
+  const [displayName, setDisplayName] = useState(row.name);
   const [shareToken, setShareToken] = useState<string>(row.share_token);
   const [shareBusy, setShareBusy] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteRequested, setDeleteRequested] = useState(false);
 
   // Staff lifted from <LocationsStaffEditor> so we can hide company-level
   // Person/Contact fields when they would duplicate an existing staff row.
@@ -814,13 +931,17 @@ function EditDrawer({
   };
 
   const deleteAdvertiser = async () => {
-    if (!window.confirm(`Delete "${row.name}"? Their hotspot links will be unlinked (hotspots remain).`)) {
+    if (row.is_locked) {
+      onError('This partner record is locked. Unlock it from the Partners list before deleting.');
       return;
     }
     setDeleting(true);
     try {
       const res = await fetch(`/api/admin/advertisers/${row.id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.detail || data?.error || `Delete failed (HTTP ${res.status})`);
+      }
       await onDeleted();
     } catch (err) {
       onError(err instanceof Error ? err.message : 'delete failed');
@@ -833,6 +954,48 @@ function EditDrawer({
   // returned by /api/admin/portal-links.
   const [sendingLink, setSendingLink] = useState(false);
   const [linkResult, setLinkResult] = useState<{ url?: string; status?: string; error?: string } | null>(null);
+  const [portalLinks, setPortalLinks] = useState<Array<{
+    id: string; purpose: string; sent_to_email: string | null; sent_at: string | null;
+    link_expires_at: string; consumed_at: string | null; revoked_at: string | null;
+  }>>([]);
+  const [portalLinksLoading, setPortalLinksLoading] = useState(true);
+  const [revokingPortalLink, setRevokingPortalLink] = useState<string | null>(null);
+
+  const loadPortalLinks = useCallback(async () => {
+    setPortalLinksLoading(true);
+    try {
+      const res = await fetch(`/api/admin/portal-links?advertiser_id=${row.id}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+      setPortalLinks(data.links ?? []);
+    } catch (err) {
+      setLinkResult({ error: err instanceof Error ? err.message : 'Could not load portal links' });
+    } finally {
+      setPortalLinksLoading(false);
+    }
+  }, [row.id]);
+
+  useEffect(() => {
+    queueMicrotask(() => { void loadPortalLinks(); });
+  }, [loadPortalLinks]);
+
+  const revokePortalLink = async (link: { id: string; sent_to_email: string | null; purpose: string }) => {
+    const confirmation = window.prompt(
+      `Revoke this ${link.purpose.replace('_', ' ')} portal link${link.sent_to_email ? ` sent to ${link.sent_to_email}` : ''}?\n\nIt will stop working immediately. Type REVOKE to confirm.`,
+    );
+    if (confirmation !== 'REVOKE') return;
+    setRevokingPortalLink(link.id);
+    try {
+      const res = await fetch(`/api/admin/portal-links/${link.id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+      await loadPortalLinks();
+    } catch (err) {
+      setLinkResult({ error: err instanceof Error ? err.message : 'Could not revoke portal link' });
+    } finally {
+      setRevokingPortalLink(null);
+    }
+  };
 
   // Submission-token state. We mirror row.submission_token in local state
   // so the drawer reflects the new token immediately after Generate without
@@ -905,6 +1068,7 @@ function EditDrawer({
         return;
       }
       setLinkResult({ url: data.consume_url, status: data.email_status });
+      await loadPortalLinks();
     } catch (err) {
       setLinkResult({ error: err instanceof Error ? err.message : 'send failed' });
     } finally {
@@ -952,6 +1116,14 @@ function EditDrawer({
   const update = <K extends keyof typeof form>(k: K, v: typeof form[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
+  // The CRM title and Company Name field represent the same live partner
+  // identity. Keep them synchronized once either is edited so one save updates
+  // the canonical advertiser name used throughout admin.
+  const updateCompanyName = (value: string) => {
+    setDisplayName(value);
+    update('company', value);
+  };
+
   // ---- Duplicate-of-staff detection ------------------------------------
   //
   // Tawanna's rule (June 2026): if the company-level Person fields (name,
@@ -990,23 +1162,36 @@ function EditDrawer({
   const officeMatch = matchStaffByPhone(form.office_phone);
 
   const submit = async () => {
+    if (deleteRequested) {
+      await deleteAdvertiser();
+      return;
+    }
+    const canonicalName = displayName.trim();
+    if (!canonicalName) {
+      onError('Company name is required.');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
         ...form,
+        name: canonicalName,
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
         // Ad-management fields merged from the legacy /admin/advertisers page.
         // Multi-pub: send as canonical CSV. API accepts either array or CSV.
         publication: serializePublications(publications),
         contact_email: contactEmail.trim() || null,
+        billing_email: billingEmail.trim() || null,
       };
       const res = await fetch(`/api/admin/advertisers/${row.id}`, {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      await onSaved();
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || data?.detail || `HTTP ${res.status}`);
+      if (!data?.advertiser) throw new Error('The partner saved, but the updated record was not returned.');
+      await onSaved(data.advertiser as AdvertiserCrmRow);
     } catch (err) {
       onError(err instanceof Error ? err.message : 'save failed');
     } finally {
@@ -1021,9 +1206,17 @@ function EditDrawer({
       {/* drawer */}
       <div className="w-full max-w-xl bg-white shadow-xl overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <div>
+          <div className="min-w-0 flex-1 pr-4">
             <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">CRM contact</div>
-            <h2 className="text-xl text-gray-900">{row.name}</h2>
+            <label htmlFor={`crm-display-name-${row.id}`} className="sr-only">Partner company name</label>
+            <input
+              id={`crm-display-name-${row.id}`}
+              value={displayName}
+              onChange={(e) => updateCompanyName(e.target.value)}
+              className="mt-0.5 w-full rounded border border-transparent bg-transparent px-0 text-xl text-gray-900 outline-none transition hover:border-gray-300 hover:px-2 focus:border-blue-500 focus:px-2 focus:ring-2 focus:ring-blue-100"
+              placeholder="Partner company name"
+              autoComplete="organization"
+            />
             <div className="text-xs text-gray-500 mt-0.5">{row.slug}</div>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
@@ -1046,7 +1239,7 @@ function EditDrawer({
           <Section title="Company Details">
             <div className="grid grid-cols-2 gap-3">
               <Field label="Company Name" className="col-span-2">
-                <input value={form.company} onChange={(e) => update('company', e.target.value)} className={INPUT} placeholder="Company or brand name" />
+                <input value={form.company} onChange={(e) => updateCompanyName(e.target.value)} className={INPUT} placeholder="Company or brand name" />
               </Field>
               <Field label="Address" className="col-span-2">
                 <input value={form.address} onChange={(e) => update('address', e.target.value)} className={INPUT} placeholder="Street address" />
@@ -1124,6 +1317,19 @@ function EditDrawer({
                   <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={INPUT} placeholder="name@company.com" inputMode="email" />
                 </Field>
               )}
+              <Field label="Billing Email" className="col-span-2">
+                <input
+                  type="email"
+                  value={billingEmail}
+                  onChange={(e) => setBillingEmail(e.target.value)}
+                  className={INPUT}
+                  placeholder="billing@company.com"
+                  inputMode="email"
+                />
+                <small className="mt-1 block text-xs text-gray-500">
+                  Used for invoices, recurring invoices, agreements, and statements.
+                </small>
+              </Field>
               <Field label="Address" className="col-span-2">
                 <input value={form.rep_address} onChange={(e) => update('rep_address', e.target.value)} className={INPUT} placeholder="Street address" />
               </Field>
@@ -1173,7 +1379,7 @@ function EditDrawer({
                         type="button"
                         onClick={addIndustry}
                         disabled={industryBusy || !newIndustryLabel.trim()}
-                        className="shrink-0 rounded-md bg-purple-700 px-3 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-40"
+                        className="shrink-0 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-40"
                       >
                         Add
                       </button>
@@ -1209,13 +1415,13 @@ function EditDrawer({
                         type="checkbox"
                         checked={publications.includes(p.id)}
                         onChange={() => togglePublication(p.id)}
-                        className="h-4 w-4 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 rounded-md border-gray-300 text-orange-600 focus:ring-orange-500"
                       />
                       <span>{p.label}</span>
                     </label>
                   ))}
                   <p className="text-[11px] text-gray-500 mt-1">
-                    Pick one or more. Advertisers tagged to a publication appear
+                    Pick one or more. Partners tagged to a publication appear
                     in that publication&apos;s mailing list and filters.
                   </p>
                 </div>
@@ -1258,7 +1464,7 @@ function EditDrawer({
               </div>
               <Link
                 href={`/admin/reports?tab=advertisers&advertiserId=${row.id}`}
-                className="inline-block text-xs text-blue-600 hover:underline"
+                className="inline-block text-xs text-orange-600 hover:underline"
               >
                 Open analytics dashboard
               </Link>
@@ -1268,7 +1474,7 @@ function EditDrawer({
           {/* ── Public Profile (kept as-is) ──────────────────────────── */}
           <Section title="Public profile">
             <p className="text-xs text-gray-500 mb-3">
-              Shown on the public advertiser page at <span className="font-mono">/advertisers/{row.slug}</span>.
+              Shown on the public partner page at <span className="font-mono">/partners/{row.slug}</span>.
             </p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Company logo" className="col-span-2">
@@ -1376,6 +1582,39 @@ function EditDrawer({
                   />
                 </div>
               )}
+              <div className="border-t border-gray-200 pt-3">
+                <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">Recent portal links</div>
+                {portalLinksLoading ? (
+                  <div className="text-xs text-gray-500">Loading links…</div>
+                ) : portalLinks.length === 0 ? (
+                  <div className="text-xs text-gray-500">No portal links have been created for this partner.</div>
+                ) : (
+                  <div className="space-y-2">
+                    {portalLinks.map((link) => {
+                      const active = !link.consumed_at && !link.revoked_at && new Date(link.link_expires_at) > new Date();
+                      return (
+                        <div key={link.id} className="flex items-center justify-between gap-3 text-xs">
+                          <div className="min-w-0 text-gray-600">
+                            <span className="font-medium text-gray-800 capitalize">{link.purpose.replace('_', ' ')}</span>
+                            {link.sent_to_email ? <span className="truncate"> · {link.sent_to_email}</span> : null}
+                            <span className="text-gray-400"> · {link.revoked_at ? 'revoked' : link.consumed_at ? 'used' : active ? 'active' : 'expired'}</span>
+                          </div>
+                          {active && (
+                            <button
+                              type="button"
+                              onClick={() => void revokePortalLink(link)}
+                              disabled={revokingPortalLink === link.id}
+                              className="shrink-0 rounded border border-red-300 bg-red-50 px-2 py-1 font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                            >
+                              {revokingPortalLink === link.id ? 'Revoking…' : 'Revoke'}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </Section>
 
@@ -1386,7 +1625,7 @@ function EditDrawer({
                 <div>
                   <div className="text-sm font-medium text-gray-900">Public submission form</div>
                   <div className="text-xs text-gray-500 mt-0.5">
-                    Share this URL with the advertiser so they can submit
+                    Share this URL with the partner so they can submit
                     events directly into the review queue. Each submission
                     lands in the Events queue for your approval.
                   </div>
@@ -1430,7 +1669,7 @@ function EditDrawer({
                     href={submissionUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs text-blue-600 underline"
+                    className="text-xs text-orange-600 underline"
                   >
                     Open form in new tab ↗
                   </a>
@@ -1447,7 +1686,7 @@ function EditDrawer({
           <Section title="Location & Staff">
             <LocationsStaffEditor
               advertiserId={row.id}
-              onError={(msg) => onError(msg)}
+              onError={onError}
               onStaffChange={setEditorStaff}
             />
           </Section>
@@ -1467,6 +1706,15 @@ function EditDrawer({
             </Field>
           </Section>
 
+          {deleteRequested && (
+            <div
+              role="alert"
+              className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            >
+              <strong>{row.name}</strong> is marked for deletion. Click <strong>Save &amp; delete</strong> to permanently remove the record, or undo the deletion.
+            </div>
+          )}
+
           <div className="sticky bottom-0 -mx-6 px-6 py-4 bg-white border-t border-gray-200 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="text-xs text-gray-500">
@@ -1474,12 +1722,16 @@ function EditDrawer({
               </div>
               <button
                 type="button"
-                onClick={deleteAdvertiser}
-                disabled={deleting}
-                className="px-3 py-1.5 rounded-md border border-red-200 text-red-700 text-xs hover:bg-red-50 disabled:opacity-50"
-                title="Delete this advertiser (hotspots remain, links unlinked)"
+                onClick={() => setDeleteRequested((requested) => !requested)}
+                disabled={deleting || row.is_locked}
+                className={`px-3 py-1.5 rounded-md border text-xs disabled:opacity-50 ${
+                  deleteRequested
+                    ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    : 'border-red-200 text-red-700 hover:bg-red-50'
+                }`}
+                title={row.is_locked ? 'Unlock this partner from the Partners list before deleting' : 'Mark this partner for deletion'}
               >
-                {deleting ? 'Deleting...' : 'Delete advertiser'}
+                {row.is_locked ? 'Partner locked' : deleteRequested ? 'Undo deletion' : 'Delete partner'}
               </button>
             </div>
             <div className="flex gap-2">
@@ -1488,10 +1740,14 @@ function EditDrawer({
               </button>
               <button
                 onClick={submit}
-                disabled={saving}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+                disabled={saving || deleting}
+                className={`px-4 py-2 rounded-md text-white text-sm disabled:opacity-50 whitespace-nowrap ${
+                  deleteRequested
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-orange-600 hover:bg-orange-700'
+                }`}
               >
-                {saving ? 'Saving...' : 'Save changes'}
+                {deleting ? 'Deleting...' : saving ? 'Saving...' : deleteRequested ? 'Save & delete' : 'Save changes'}
               </button>
             </div>
           </div>
@@ -1501,7 +1757,7 @@ function EditDrawer({
   );
 }
 
-const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -1581,18 +1837,18 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
       {!hasAgreement && !hasAnyBilling ? (
         <p className="text-xs text-gray-500 italic">
           No agreement linked yet. Create or sign one from{' '}
-          <a href="/admin/agreements" className="text-blue-600 hover:underline">/admin/agreements</a>{' '}
+          <a href="/admin/agreements" className="text-orange-600 hover:underline">/admin/agreements</a>{' '}
           and it will appear here automatically.
         </p>
       ) : (
         <>
           <p className="text-xs text-gray-500 mb-3">
-            Read-only mirror of the advertiser&rsquo;s most recent active-ish agreement.
+            Read-only mirror of the partner&rsquo;s most recent active-ish agreement.
             To edit, open{' '}
             {row.current_agreement_id ? (
-              <a href={`/admin/agreements?id=${row.current_agreement_id}`} className="text-blue-600 hover:underline">/admin/agreements</a>
+              <a href={`/admin/agreements?id=${row.current_agreement_id}`} className="text-orange-600 hover:underline">/admin/agreements</a>
             ) : (
-              <a href="/admin/agreements" className="text-blue-600 hover:underline">/admin/agreements</a>
+              <a href="/admin/agreements" className="text-orange-600 hover:underline">/admin/agreements</a>
             )}
             {' '}&mdash; saves there flow back here.
           </p>
@@ -1687,6 +1943,7 @@ function CreateAdvertiserModal({
     });
   };
   const [contactEmail, setContactEmail] = useState('');
+  const [billingEmail, setBillingEmail] = useState('');
   const [status, setStatus] = useState<AdvertiserStatus>('prospect');
   const [saving, setSaving] = useState(false);
 
@@ -1700,6 +1957,7 @@ function CreateAdvertiserModal({
         body: JSON.stringify({
           name: name.trim(),
           contact_email: contactEmail.trim() || null,
+          billing_email: billingEmail.trim() || null,
           publication: serializePublications(publications),
           status,
         }),
@@ -1714,7 +1972,7 @@ function CreateAdvertiserModal({
     } finally {
       setSaving(false);
     }
-  }, [name, publications, contactEmail, status, onCreated, onError]);
+  }, [name, publications, contactEmail, billingEmail, status, onCreated, onError]);
 
   return (
     <div
@@ -1723,7 +1981,7 @@ function CreateAdvertiserModal({
     >
       <div className="w-full max-w-lg rounded-md bg-white shadow-xl border border-gray-200">
         <div className="px-5 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">New advertiser</h2>
+          <h2 className="text-lg font-semibold text-gray-900">New Partner</h2>
           <p className="text-xs text-gray-500 mt-0.5">Create the contact record. You can fill in everything else from the edit drawer afterwards.</p>
         </div>
         <div className="p-5 space-y-4">
@@ -1734,7 +1992,7 @@ function CreateAdvertiserModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="e.g. La Cima"
               disabled={saving}
               autoFocus
@@ -1750,13 +2008,13 @@ function CreateAdvertiserModal({
                     checked={publications.includes(opt.id)}
                     onChange={() => togglePublication(opt.id)}
                     disabled={saving}
-                    className="h-4 w-4 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded-md border-gray-300 text-orange-600 focus:ring-orange-500"
                   />
                   <span>{opt.label}</span>
                 </label>
               ))}
             </div>
-            <p className="text-[11px] text-gray-500">Check one or more publications this advertiser belongs to.</p>
+            <p className="text-[11px] text-gray-500">Check one or more publications this partner belongs to.</p>
           </div>
           <label className="block space-y-1">
             <span className="text-sm font-medium text-gray-700">Status</span>
@@ -1764,12 +2022,12 @@ function CreateAdvertiserModal({
               value={status}
               onChange={(e) => setStatus(e.target.value as AdvertiserStatus)}
               disabled={saving}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
               <option value="prospect">Prospect</option>
-              <option value="advertiser">Advertiser</option>
+              <option value="advertiser">Partner</option>
             </select>
-            <p className="text-[11px] text-gray-500">Use Prospect for leads, Advertiser once they are active.</p>
+            <p className="text-[11px] text-gray-500">Use Prospect for leads, Partner once they are active.</p>
           </label>
           <label className="block space-y-1">
             <span className="text-sm font-medium text-gray-700">Contact email</span>
@@ -1777,10 +2035,24 @@ function CreateAdvertiserModal({
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="contact@example.com"
               disabled={saving}
             />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-gray-700">Billing email</span>
+            <input
+              type="email"
+              value={billingEmail}
+              onChange={(e) => setBillingEmail(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="billing@example.com"
+              disabled={saving}
+            />
+            <p className="text-[11px] text-gray-500">
+              Leave blank to use the contact email for billing.
+            </p>
           </label>
         </div>
         <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
@@ -1793,7 +2065,7 @@ function CreateAdvertiserModal({
           </button>
           <button
             onClick={save}
-            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 text-sm whitespace-nowrap"
+            className="px-4 py-2 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 text-sm whitespace-nowrap"
             disabled={saving || !name.trim()}
           >
             {saving ? 'Creating...' : 'Create'}
@@ -1803,4 +2075,3 @@ function CreateAdvertiserModal({
     </div>
   );
 }
-

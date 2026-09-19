@@ -57,19 +57,19 @@ export default function HotspotPerformance() {
   }, []);
 
   return (
-    <section className="rounded-md border border-gray-200 bg-white p-5 shadow-sm">
+    <section className="overflow-hidden rounded border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">Hotspot performance</h3>
+          <h3 className="text-sm font-semibold text-gray-900">Hotspot Performance</h3>
           <p className="text-[11px] text-gray-500 mt-0.5">
             Magazine hotspot clicks, last 30 days. Independent of PostHog.
           </p>
         </div>
         <Link
           href="/admin/crm"
-          className="text-[10px] text-blue-600 uppercase tracking-wider self-start sm:self-auto hover:underline"
+          className="self-start text-xs font-medium text-orange-700 hover:underline sm:self-auto"
         >
-          All advertisers
+          All partners
         </Link>
       </div>
 
@@ -81,21 +81,21 @@ export default function HotspotPerformance() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Top advertisers */}
           <div>
-            <p className="text-[11px] font-medium text-gray-500 mb-2">Top advertisers</p>
+            <p className="text-[11px] font-medium text-gray-500 mb-2">Top partners</p>
             {loading ? (
               <TableSkeleton rows={5} cols={3} />
             ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-[11px] text-gray-500 border-b border-gray-200">
-                    <th className="text-left font-medium pb-2">Advertiser</th>
+                    <th className="text-left font-medium pb-2">Partner</th>
                     <th className="text-right font-medium pb-2">Hotspots</th>
                     <th className="text-right font-medium pb-2">Clicks</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {data?.topAdvertisers.map((a) => (
-                    <tr key={a.name} className="hover:bg-gray-50">
+                    <tr key={a.name} className="hover:bg-orange-50/40">
                       <td className="py-2.5 pl-2 truncate max-w-[180px]" title={a.name}>{a.name}</td>
                       <td className="py-2.5 text-right font-mono text-gray-500">{a.hotspots}</td>
                       <td className="py-2.5 text-right font-mono pr-2">{a.clicks.toLocaleString('en-US')}</td>
@@ -127,7 +127,7 @@ export default function HotspotPerformance() {
                     const primary = h.advertiserName || h.label || `Hotspot #${h.id}`;
                     const context = `${h.publicationLabel} · ${h.issueLabel} · p.${h.page}`;
                     return (
-                      <tr key={h.id} className="hover:bg-gray-50">
+                      <tr key={h.id} className="hover:bg-orange-50/40">
                         <td className="py-2.5 pl-2">
                           <div className="truncate max-w-[220px]" title={primary}>{primary}</div>
                           <div className="text-[10px] text-gray-400 truncate max-w-[220px]" title={context}>{context}</div>

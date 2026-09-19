@@ -38,9 +38,9 @@ import {
   IconShare,
 } from './icons';
 
-export type FloaterSurface = 'inventory' | 'community' | 'builder' | 'builderList';
+type FloaterSurface = 'inventory' | 'community' | 'builder' | 'builderList';
 
-export type FloaterEvents = {
+type FloaterEvents = {
   /** Generic event fired (with { action }) on every action. Optional. */
   floater?: string;
   back?: string;

@@ -21,6 +21,7 @@ import { APP_AD_SLOTS } from '@/lib/media-kit';
 import { deriveChannelFromSlot } from '@/lib/ad-channels';
 import { randomUUID } from 'crypto';
 import { appendAudit } from '@/lib/agreements';
+import { isPartnerDeletionTombstoned } from '@/lib/advertiser-deletion-tombstones';
 
 /**
  * Phase 3 (2026-06-17): write the canonical pubs[] array AND a back-compat
@@ -114,7 +115,7 @@ export async function POST(req: NextRequest) {
     const slot = APP_AD_SLOTS.find((s) => s.slug === slotSlug);
     if (!slot) return NextResponse.json({ error: 'unknown_slot' }, { status: 400 });
 
-    const advertiserName = m.advertiser_name || m.rep_name || 'Advertiser';
+    const advertiserName = m.advertiser_name || m.rep_name || 'Partner';
     const advertiserEmail = m.advertiser_email || pi.receipt_email || '';
     const repName = m.rep_name || '';
     const phone = m.advertiser_phone || '';
@@ -201,16 +202,25 @@ export async function POST(req: NextRequest) {
       if (adRows.length > 0) {
         advertiserId = adRows[0].id;
       } else {
+        const baseSlug =
+          advertiserName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'advertiser';
         const slug =
-          (advertiserName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'advertiser') +
+          baseSlug +
           '-' +
           Math.random().toString(36).slice(2, 8);
-        const ins = (await sql`
-          INSERT INTO advertisers (name, slug, contact_email, share_token)
-          VALUES (${advertiserName}, ${slug}, ${advertiserEmail}, ${randomUUID()})
-          RETURNING id
-        `) as unknown as { id: number }[];
-        advertiserId = ins[0]?.id ?? null;
+        const wasDeleted = await isPartnerDeletionTombstoned({
+          email: advertiserEmail,
+          name: advertiserName,
+          slug: baseSlug,
+        });
+        if (!wasDeleted) {
+          const ins = (await sql`
+            INSERT INTO advertisers (name, slug, contact_email, share_token)
+            VALUES (${advertiserName}, ${slug}, ${advertiserEmail}, ${randomUUID()})
+            RETURNING id
+          `) as unknown as { id: number }[];
+          advertiserId = ins[0]?.id ?? null;
+        }
       }
     }
 

@@ -90,6 +90,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
   let body: {
     name?: string;
     contact_email?: string;
+    billing_email?: string;
     requires_email_gate?: boolean;
     publication?: string | string[];
     status?: string;
@@ -105,6 +106,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'name required' }, { status: 400 });
   }
   const contactEmail = (body.contact_email || '').trim() || null;
+  const billingEmail = (body.billing_email || '').trim() || null;
   const requiresGate = !!body.requires_email_gate;
   const publication = normalizePublication(body.publication);
   const status: 'prospect' | 'advertiser' | 'archived' =
@@ -133,10 +135,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     const shareToken = generateShareToken();
     const inserted = (await sql`
       INSERT INTO advertisers (
-        name, slug, share_token, contact_email,
+        name, slug, share_token, contact_email, billing_email,
         requires_email_gate, publication, status, created_at, updated_at
       ) VALUES (
-        ${name}, ${slug}, ${shareToken}, ${contactEmail},
+        ${name}, ${slug}, ${shareToken}, ${contactEmail}, ${billingEmail},
         ${requiresGate}, ${publication}, ${status}, NOW(), NOW()
       )
       RETURNING *

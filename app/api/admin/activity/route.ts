@@ -23,9 +23,11 @@ const POSTHOG_API_KEY = process.env.POSTHOG_PERSONAL_API_KEY;
 
 // UI exposes four logical buckets. We translate to PostHog event names below.
 const FILTER_SCHEMA = z.object({
-  bucket: z.enum(['all', 'pageview', 'click', 'form', 'error']).default('all'),
+  bucket: z.enum(['all', 'pageview', 'click', 'rageclick', 'form', 'error']).default('all'),
   minutes: z.coerce.number().int().min(1).max(10080).default(60),
   path: z.string().optional(),
+  city: z.string().optional(),
+  search: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
 });
 
@@ -34,6 +36,7 @@ const BUCKET_FILTER: Record<string, string> = {
   all: "event IN ('$pageview','$autocapture','$rageclick','$exception','form_submitted','cta_clicked','newsletter_signup','giveaway_entered','advertiser_signed','article_opened','share_click')",
   pageview: "event = '$pageview'",
   click: "event IN ('$autocapture','$rageclick','cta_clicked','share_click','article_opened')",
+  rageclick: "event = '$rageclick'",
   form: "event IN ('form_submitted','newsletter_signup','giveaway_entered','advertiser_signed')",
   error: "event IN ('$exception','client_error')",
 };
@@ -70,10 +73,12 @@ export const GET = withAdminTracking(async (req: Request) => {
     bucket: url.searchParams.get('bucket') ?? undefined,
     minutes: url.searchParams.get('minutes') ?? undefined,
     path: url.searchParams.get('path') ?? undefined,
+    city: url.searchParams.get('city') ?? undefined,
+    search: url.searchParams.get('search') ?? undefined,
     limit: url.searchParams.get('limit') ?? undefined,
   });
   if (!parsed.success) throw new ApiError(400, 'Invalid query params');
-  const { bucket, minutes, path, limit } = parsed.data;
+  const { bucket, minutes, path, city, search, limit } = parsed.data;
 
   const conditions: string[] = [
     `timestamp >= now() - INTERVAL ${minutes} MINUTE`,
@@ -86,6 +91,27 @@ export const GET = withAdminTracking(async (req: Request) => {
     // Safe: HogQL escapes via parameter substitution? Be defensive with a regex.
     const safePath = path.replace(/[^a-zA-Z0-9/_-]/g, '');
     if (safePath) conditions.push(`properties.$pathname LIKE '%${safePath}%'`);
+  }
+  if (city) {
+    // Cities can have spaces, hyphens, apostrophes, and periods.
+    // Strip everything else to keep the string safe to interpolate.
+    const safeCity = city.replace(/[^a-zA-Z\s\-'.]/g, '').trim();
+    if (safeCity) conditions.push(`properties.$geoip_city_name ILIKE '%${safeCity}%'`);
+  }
+  if (search) {
+    // Free-text search across error message, exception value, and
+    // clicked element text.  Restrict character set so we can safely
+    // interpolate into HogQL without a param binding path.
+    const safeSearch = search.replace(/[^a-zA-Z0-9 ._\-]/g, '').trim();
+    if (safeSearch) {
+      conditions.push(
+        `(
+          positionCaseInsensitive(properties.$exception_message, '${safeSearch}') > 0
+          OR positionCaseInsensitive(properties.$exception_list.1.value, '${safeSearch}') > 0
+          OR positionCaseInsensitive(properties.$el_text, '${safeSearch}') > 0
+        )`,
+      );
+    }
   }
 
   // Limit-bound HogQL query. Pull the fields the dashboard needs.
@@ -104,9 +130,18 @@ export const GET = withAdminTracking(async (req: Request) => {
       properties.$geoip_country_name AS country,
       distinct_id,
       person.properties.email AS email,
-      properties.$exception_message AS error_message,
+      coalesce(
+        properties.$exception_message,
+        properties.$exception_list.1.value
+      ) AS error_message,
+      properties.$exception_list.1.type AS exception_type,
+      properties.$exception_source AS exception_source,
+      properties.$exception_lineno AS exception_lineno,
+      properties.masked_by_browser AS masked_by_browser,
+      properties.user_agent AS captured_user_agent,
       properties.$el_text AS el_text,
       properties.$el_href AS el_href,
+      elements_chain AS elements_chain,
       properties.action AS action,
       properties.form_name AS form_name
     FROM events
@@ -124,7 +159,8 @@ export const GET = withAdminTracking(async (req: Request) => {
       countIf(event IN ('$autocapture','$rageclick','cta_clicked','share_click','article_opened')) AS clicks,
       countIf(event IN ('form_submitted','newsletter_signup','giveaway_entered','advertiser_signed')) AS forms,
       countIf(event IN ('$exception','client_error')) AS errors,
-      uniq(distinct_id) AS visitors
+      uniq(distinct_id) AS visitors,
+      countIf(event = '$rageclick') AS rageclicks
     FROM events
     WHERE timestamp >= now() - INTERVAL ${minutes} MINUTE
       AND properties.$pathname NOT LIKE '/admin%'
@@ -141,7 +177,8 @@ export const GET = withAdminTracking(async (req: Request) => {
       forms: Number(rollup[2] ?? 0),
       errors: Number(rollup[3] ?? 0),
       visitors: Number(rollup[4] ?? 0),
+      rageclicks: Number(rollup[5] ?? 0),
     },
-    window: { bucket, minutes, path: path ?? null, limit },
+    window: { bucket, minutes, path: path ?? null, city: city ?? null, search: search ?? null, limit },
   });
 });

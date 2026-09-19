@@ -1,10 +1,10 @@
 // app/admin/metrics/_types.ts
 // Shared types for the admin metrics dashboard.
 
-export type EventTotal = { event: string; total: number };
-export type FilterUsage = { filter: string; total: number };
-export type TopBuilder = { builder_name: string; source_page: string; total: number };
-export type TopInventory = {
+type EventTotal = { event: string; total: number };
+type FilterUsage = { filter: string; total: number };
+type TopBuilder = { builder_name: string; source_page: string; total: number };
+type TopInventory = {
   builder_name: string;
   row_id: string;
   kind: string;
@@ -17,13 +17,13 @@ export type TimeSeriesPoint = { day: string; event: string; total: number };
 // `surface` is one of: 'inventory', 'communities', 'builders', 'event',
 // 'inventory_detail', 'magazine'. `action` is one of: 'back', 'share',
 // 'download', 'add_calendar', 'directions', 'promotions'.
-export type PillEngagement = {
+type PillEngagement = {
   surface: string;
   action: string;
   total: number;
 };
 
-export type ShareBreakdown = {
+type ShareBreakdown = {
   surface: string;
   channel: string;
   total: number;
@@ -32,7 +32,7 @@ export type ShareBreakdown = {
 // 'Request more information' actions from /inventory/[id], grouped by
 // builder. Covers link-outs to a builder's community contact form and
 // inline-form submissions.
-export type ListingInquiry = {
+type ListingInquiry = {
   builder_name: string;
   total: number;
 };
@@ -77,8 +77,8 @@ export const EVENT_LABELS: Record<string, string> = {
   ad_click: 'Ad clicks',
   // Server-side CRM / lifecycle events (fired from API routes via
   // lib/server/posthog.ts captureServerEvent).
-  advertiser_linked: 'CRM — Advertiser linked to agreement',
-  advertiser_signed: 'CRM — Advertiser signed agreement',
+  advertiser_linked: 'CRM — Partner linked to agreement',
+  advertiser_signed: 'CRM — Partner signed agreement',
   agreement_create_failed: 'CRM — Agreement create failed',
   amended_pdf_sent: 'CRM — Amended agreement PDF sent',
   dispatch_failed: 'Email — Dispatch failed',
@@ -102,7 +102,7 @@ export const EVENT_LABELS: Record<string, string> = {
   login_attempted: 'Login — Attempted',
   subscribe_page_viewed: 'Subscribe page — Viewed',
   subscribe_attempted: 'Subscribe — Attempted',
-  newsletter_page_viewed: 'Newsletter landing — Viewed',
+  newsletter_page_viewed: 'Weekly Email landing — Viewed',
   giveaway_page_viewed: 'Giveaways page — Viewed',
   advertise_page_viewed: 'Advertise main — Viewed',
   advertise_digital_page_viewed: 'Advertise digital — Viewed',
@@ -112,7 +112,7 @@ export const EVENT_LABELS: Record<string, string> = {
   advertise_placements_page_viewed: 'Advertise placements — Viewed',
   advertise_portal_page_viewed: 'Advertise portal — Viewed',
   advertise_checkout_page_viewed: 'Advertise checkout — Viewed',
-  newsletter_signup_attempted: 'Newsletter — Signup attempted',
+  newsletter_signup_attempted: 'Email — Signup attempted',
 };
 
 export const SURFACE_LABELS: Record<string, string> = {
@@ -148,7 +148,7 @@ export const EVENT_COLORS: Record<string, string> = {
   builder_tab_clicked: '#c2410c',
 };
 
-export type KPISummary = {
+type KPISummary = {
   today: number;
   yesterday: number;
   week: number;

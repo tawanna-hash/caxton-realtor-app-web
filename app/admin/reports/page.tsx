@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { ArticleListItem, ArticleReport, EventListItem, EventReport, ReportOverrides } from './_types';
 import { ReportPreview, buildReportHtml, buildReportPlainText } from './_components/ReportPreview';
 import { EventReportPreview, buildEventReportHtml, buildEventReportPlainText } from './_components/EventReportPreview';
+import EventClickLog from './_components/EventClickLog';
 import AdvertisersReportTab from './_components/AdvertisersReportTab';
 import EditReportDrawer from './_components/EditReportDrawer';
 import ReportPicker, { type PickerItem } from './_components/ReportPicker';
@@ -32,7 +33,7 @@ function parseTab(value: string | null): TabKey {
 export default function AdminReportsPage() {
   return (
     <Suspense fallback={
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="mx-auto max-w-[1500px] px-5 py-7 lg:px-8">
         <div className="text-sm text-gray-500">Loading reports…</div>
       </div>
     }>
@@ -245,28 +246,28 @@ function AdminReportsPageInner() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="mb-8">
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
-          Admin
+    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+      <header>
+        <p className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
+          Admin · Insights
         </p>
         <PageTitle size="md">
           Client Reports
         </PageTitle>
-        <p className="text-sm text-gray-600 font-light mt-2 max-w-2xl">
+        <p className="mt-1 max-w-2xl text-sm text-gray-600">
           Generate engagement reports for client handoff.
           Pick an article and date range, then copy the
           branded HTML or plain text into an email.
         </p>
-      </div>
+      </header>
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200">
-        <nav className="flex gap-6">
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-6 overflow-x-auto">
           {([
             { key: 'articles', label: 'Articles' },
             { key: 'events', label: 'Events' },
-            { key: 'advertisers', label: 'Advertisers' },
+            { key: 'advertisers', label: 'Partners' },
           ] as const).map((tab) => {
             const isActive = activeTab === tab.key;
             return (
@@ -277,7 +278,7 @@ function AdminReportsPageInner() {
                 className={[
                   'px-1 pb-3 text-sm font-medium border-b-2 transition-colors',
                   isActive
-                    ? 'border-brand-700 text-gray-900'
+                    ? 'border-orange-600 text-gray-900'
                     : 'border-transparent text-gray-500 hover:text-gray-700',
                 ].join(' ')}
                 aria-current={isActive ? 'page' : undefined}
@@ -292,8 +293,8 @@ function AdminReportsPageInner() {
       {activeTab === 'articles' && (
       <>
       {/* Controls */}
-      <div className="bg-white border border-gray-200 rounded-md p-6 mb-6 space-y-4">
-        <div>
+      <section className="flex flex-wrap items-end gap-4 rounded border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="min-w-[280px] flex-1">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Article
           </label>
@@ -325,7 +326,7 @@ function AdminReportsPageInner() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Date range
           </label>
-          <div className="inline-flex bg-white border border-gray-200 rounded-md overflow-hidden">
+            <div className="inline-flex h-9 overflow-hidden rounded border border-gray-300 bg-white">
             {DAYS_OPTIONS.map((opt, idx) => {
               const isActive = opt.value === days;
               const isFirst = idx === 0;
@@ -335,9 +336,9 @@ function AdminReportsPageInner() {
                   type="button"
                   onClick={() => setDays(opt.value)}
                   className={[
-                    'px-4 py-2 text-sm font-medium transition-colors',
+                    'px-3 text-sm font-medium transition-colors',
                     !isFirst ? 'border-l border-gray-200' : '',
-                    isActive ? 'bg-brand-700 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                    isActive ? 'bg-orange-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
                   ].filter(Boolean).join(' ')}
                 >
                   {opt.label}
@@ -352,12 +353,12 @@ function AdminReportsPageInner() {
             type="button"
             onClick={generateReport}
             disabled={!selectedArticleId || reportLoading}
-            className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {reportLoading ? 'Generating…' : 'Generate report'}
           </button>
         </div>
-      </div>
+      </section>
 
       {/* Report output (skeleton — branded preview comes in R3b) */}
       {reportError && (
@@ -398,10 +399,10 @@ function AdminReportsPageInner() {
         const hasNote = noteOverride.trim().length > 0;
         return (
           <div className="space-y-6">
-            <div className="bg-white border border-gray-200 rounded-md p-6">
+            <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
               <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
                 <div className="min-w-0">
-                  <h2 className="text-base font-semibold text-gray-900">Report customization</h2>
+                  <h2 className="text-base font-semibold text-gray-900">Report Customization</h2>
                   <p className="text-xs text-gray-500 mt-1">
                     Override the title, publication branding, and editorial
                     note before copying. Click Edit to open the editor.
@@ -418,7 +419,7 @@ function AdminReportsPageInner() {
                   <button
                     type="button"
                     onClick={copyHtml}
-                    className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"
+                    className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
                   >
                     Copy HTML
                   </button>
@@ -480,8 +481,8 @@ function AdminReportsPageInner() {
       {activeTab === 'events' && (
       <>
       {/* Events controls */}
-      <div className="bg-white border border-gray-200 rounded-md p-6 mb-6 space-y-4">
-        <div>
+      <section className="flex flex-wrap items-end gap-4 rounded border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="min-w-[280px] flex-1">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Event
           </label>
@@ -513,7 +514,7 @@ function AdminReportsPageInner() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Date range
           </label>
-          <div className="inline-flex bg-white border border-gray-200 rounded-md overflow-hidden">
+          <div className="inline-flex h-9 overflow-hidden rounded border border-gray-300 bg-white">
             {DAYS_OPTIONS.map((opt, idx) => {
               const isActive = opt.value === eventDays;
               const isFirst = idx === 0;
@@ -523,9 +524,9 @@ function AdminReportsPageInner() {
                   type="button"
                   onClick={() => setEventDays(opt.value)}
                   className={[
-                    'px-4 py-2 text-sm font-medium transition-colors',
+                    'px-3 text-sm font-medium transition-colors',
                     !isFirst ? 'border-l border-gray-200' : '',
-                    isActive ? 'bg-brand-700 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                    isActive ? 'bg-orange-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
                   ].filter(Boolean).join(' ')}
                 >
                   {opt.label}
@@ -540,12 +541,12 @@ function AdminReportsPageInner() {
             type="button"
             onClick={generateEventReport}
             disabled={!selectedEventId || eventReportLoading}
-            className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {eventReportLoading ? 'Generating…' : 'Generate report'}
           </button>
         </div>
-      </div>
+      </section>
 
       {eventReportError && (
         <div className="border border-red-300 bg-red-50 px-4 py-3 rounded-md mb-6">
@@ -585,10 +586,10 @@ function AdminReportsPageInner() {
         const hasNote = eventNoteOverride.trim().length > 0;
         return (
           <div className="space-y-6">
-            <div className="bg-white border border-gray-200 rounded-md p-6">
+            <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
               <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
                 <div className="min-w-0">
-                  <h2 className="text-base font-semibold text-gray-900">Report customization</h2>
+                  <h2 className="text-base font-semibold text-gray-900">Report Customization</h2>
                   <p className="text-xs text-gray-500 mt-1">
                     Override the title, publication branding, and editorial
                     note before copying. Click Edit to open the editor.
@@ -605,7 +606,7 @@ function AdminReportsPageInner() {
                   <button
                     type="button"
                     onClick={copyHtml}
-                    className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"
+                    className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
                   >
                     Copy HTML
                   </button>
@@ -643,6 +644,8 @@ function AdminReportsPageInner() {
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">Preview</p>
               <EventReportPreview report={r} overrides={overrides} />
             </div>
+
+            <EventClickLog eventId={selectedEventId} days={eventDays} />
 
             <EditReportDrawer
               open={eventEditOpen}

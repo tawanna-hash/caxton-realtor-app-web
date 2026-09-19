@@ -45,28 +45,26 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     instagram: 'https://www.instagram.com/newsline_sanantonio/',
     linkedin: 'https://www.linkedin.com/company/newsline-san-antonio/',
   },
-  // RealtyLine Houston - activated 2026-06-15 (Phase 2 PR A).
-  // Empty-shell content; surfaces render the "Content launches soon" empty
-  // state until real categories, advertisers, events, and socials are added.
+  // RealtyLine Houston.
   // TODO(houston): swap tagline/reach with real numbers once research lands.
   // TODO(houston): set ads@ email and social URLs.
   'realtyline-houston': {
     name: 'RealtyLine Houston',
     city: 'Houston',
     color: '#301D5D', // unified RNN brand purple
-    tagline: 'Coming soon to Houston real estate professionals',
+    tagline: 'Serving Houston real estate professionals',
     reach: 'Houston REALTORS',
     email: 'info@myrealtyline.com',
     facebook: '#',
     instagram: '#',
     linkedin: '#',
   },
-  // RealtyLine Dallas/FTW - activated 2026-06-15 (Phase 2 PR A). See notes above.
+  // RealtyLine Dallas/FTW.
   'realtyline-dallas': {
     name: 'RealtyLine Dallas/FTW',
     city: 'Dallas',
     color: '#301D5D', // unified RNN brand purple
-    tagline: 'Coming soon to Dallas real estate professionals',
+    tagline: 'Serving Dallas/Ft. Worth real estate professionals',
     reach: 'Dallas REALTORS',
     email: 'info@myrealtyline.com',
     facebook: '#',
@@ -83,14 +81,8 @@ export function isPubKey(v: unknown): v is PubKey {
   return typeof v === 'string' && (PUB_KEYS as readonly string[]).includes(v);
 }
 
-// Markets that have been activated for app use (picker, content, etc.) but
-// haven't yet shipped real content. They render as Coming Soon on the picker
-// and show empty-state copy on every content surface. Phase 2 PR C will
-// move a market out of this list once it has real content + ad inventory.
-export const PRE_LAUNCH_PUB_KEYS: readonly PubKey[] = [
-  'realtyline-houston',
-  'realtyline-dallas',
-];
+// Markets that are still gated behind pre-launch empty states.
+export const PRE_LAUNCH_PUB_KEYS: readonly PubKey[] = [];
 
 export function isPreLaunchPub(key: PubKey): boolean {
   return (PRE_LAUNCH_PUB_KEYS as readonly PubKey[]).includes(key);

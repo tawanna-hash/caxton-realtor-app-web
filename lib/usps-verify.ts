@@ -44,17 +44,18 @@ async function getAccessToken(): Promise<string> {
     return cachedToken.access_token;
   }
 
-  const body = new URLSearchParams({
-    grant_type:    'client_credentials',
-    client_id:     id,
-    client_secret: secret,
-    scope:         'addresses',
-  });
+  const credentials = Buffer.from(`${id}:${secret}`).toString('base64');
 
   const res = await fetch(OAUTH_URL, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body:    body.toString(),
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
+    },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
+    }).toString(),
   });
 
   if (!res.ok) {

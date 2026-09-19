@@ -1,12 +1,12 @@
 'use client';
 
 import { type PubKey } from '@/lib/pub-meta';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReaderRouter from '@/components/MagazineReaderRouter';
 import MagazineFeatured from '@/components/MagazineFeatured';
-import MagazineGuestCTA from '@/components/MagazineGuestCTA';
 import type { Magazine } from '@/lib/magazines';
 
 // Local pub type mirrors CalendarClient. Values are the dashboard SPA's
@@ -69,18 +69,81 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
     : storedPub;
   const info = PUBS_INFO[pub];
 
-  const [openMag, setOpenMag] = useState<Magazine | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [openMag, setOpenMagState] = useState<Magazine | null>(null);
   const [currentMag, setCurrentMag] = useState<Magazine | null>(null);
   const [autoOpenLatest, setAutoOpenLatest] = useState<boolean>(false);
-  // Guest article gate: probe /api/auth/me once on mount so we know
-  // whether to intercept article link clicks with a sign-up modal.
-  // Defaults to 'guest' so a network failure errs on showing the modal
-  // (worst case: a signed-in user sees an account-creation pitch they
-  // can dismiss; better than letting guests through to a route that
-  // does not exist yet).
-  const [authState, setAuthState] = useState<'loading' | 'guest' | 'authed'>('loading');
-  const [showArticleGate, setShowArticleGate] = useState(false);
 
+  // Snapshot ?page= from the URL exactly once on mount so both readers seed
+  // their initial page from it. useState lazy-init runs only on the first
+  // render — later URL writes (from onPageChange below) won't cause the
+  // reader to remount / lose animation state because we never read the
+  // URL again for this value.
+  const [initialReaderPage] = useState<number>(() => {
+    const raw = searchParams?.get('page');
+    const n = raw == null ? NaN : Number(raw);
+    return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+  });
+
+  // Track the currently-open magazine id in a ref so URL writers always
+  // see the latest value even when scheduled router.replace calls race
+  // each other. Reading `openMag` from closure isn't enough — the reader's
+  // onPageChange effect fires on mount before the setOpenMag render has
+  // committed, so a plain state read there would see null.
+  const openMagIdRef = useRef<number | null>(null);
+
+  // Wrap setOpenMag so opening / closing the reader keeps ?read=<id> in the
+  // URL. On refresh the effect below rehydrates openMag by fetching the
+  // magazine by that id so the reader re-opens on the same page (BUG-30).
+  //
+  // URL writers read from window.location.search (live) rather than the
+  // useSearchParams snapshot (stale between render commits). setOpenMag
+  // and handleReaderPageChange can fire in the same tick when the user
+  // clicks a cover — the reader mounts, its useEffect([currentPage])
+  // fires onPageChange(initialPage), and both writers race to router.replace.
+  // Reading from the live URL and preserving ?read=<openMagIdRef.current>
+  // makes the last-write-wins reconcile keep both params.
+  function setOpenMag(m: Magazine | null) {
+    openMagIdRef.current = m ? m.id : null;
+    setOpenMagState(m);
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (m) {
+        params.set('read', String(m.id));
+      } else {
+        params.delete('read');
+        // also strip in-reader page cursor when closing
+        params.delete('page');
+      }
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : (pathname || '/magazine'), { scroll: false });
+    } catch {}
+  }
+
+  // Persist the reader's current page into ?page=<n>. Stable identity via
+  // useCallback so we don't retrigger the reader's onPageChange effect.
+  // Always reasserts ?read=<id> from the ref so a racing router.replace
+  // that hasn't landed yet can't strip it (see setOpenMag comment).
+  const handleReaderPageChange = useCallback((page: number) => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const openId = openMagIdRef.current;
+      if (openId != null) {
+        params.set('read', String(openId));
+      }
+      if (page > 0) {
+        params.set('page', String(page));
+      } else {
+        params.delete('page');
+      }
+      const qs = params.toString();
+      const url = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+      router.replace(url, { scroll: false });
+    } catch {}
+  }, [router]);
   // Honor caxton:openLatestMagazine if the user lands here from the existing
   // BottomNav dispatch (will be removed in C2 once nav routes here directly).
   useEffect(() => {
@@ -96,36 +159,47 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
       setOpenMag(currentMag);
       setAutoOpenLatest(false);
     }
+    // setOpenMag is a stable function declared in this component, safe to
+    // omit from deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoOpenLatest, currentMag]);
 
   // When opened via /magazine/[id], auto-open the reader on mount.
   useEffect(() => {
     if (initialMagazine) {
+      openMagIdRef.current = initialMagazine.id;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time on mount, matches autoOpenLatest pattern above
-      setOpenMag(initialMagazine);
+      setOpenMagState(initialMagazine);
     }
     // initialMagazine is a server-passed prop, never changes after mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Probe /api/auth/me once on mount to decide whether article clicks
-  // should pass through (authed) or open the create-account gate (guest).
-  // Endpoint returns { realtor: null } for guests, { realtor: {...} } for
-  // signed-in users (always 200, never 401 -- BUG-23 contract).
+  // Rehydrate the reader from ?read=<id> on refresh so the user lands back
+  // in the same issue they were reading. Only runs on /magazine (no
+  // initialMagazine) since /magazine/[id] already opens the reader above.
   useEffect(() => {
+    if (initialMagazine) return;
+    if (openMag) return;
+    const readId = searchParams?.get('read');
+    if (!readId) return;
+    const idNum = Number(readId);
+    if (!Number.isInteger(idNum) || idNum < 1) return;
     let cancelled = false;
-    fetch('/api/auth/me', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((j) => {
-        if (cancelled) return;
-        setAuthState(j && j.realtor ? 'authed' : 'guest');
+    // Seed the ref immediately so URL writers preserve ?read= while the
+    // fetch is in flight and the reader hasn't mounted yet.
+    openMagIdRef.current = idNum;
+    fetch(`/api/magazines/${idNum}`, { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((mag) => {
+        if (cancelled || !mag) return;
+        openMagIdRef.current = (mag as Magazine).id;
+        setOpenMagState(mag as Magazine);
       })
-      .catch(() => {
-        if (!cancelled) setAuthState('guest');
-      });
-    return () => {
-      cancelled = true;
-    };
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // Only run once on mount; ?read= is captured from initial searchParams.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -146,7 +220,6 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
             users still see which market they're viewing. */}
         <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
       </div>
-      <MagazineGuestCTA brandColor={info.color} />
       {/* Quick-jump pill: scrolls to the issues archive below the current
           issue spotlight. Hidden until currentMag has loaded so the page
           doesn't show a jump-to-nothing affordance during the initial
@@ -172,15 +245,7 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
           magazine={currentMag}
           brandColor={info.color}
           onOpenMagazine={() => setOpenMag(currentMag)}
-          onOpenArticle={() => {
-            // Guests must create an account to read full articles; the
-            // gate modal below renders the brand-colored Create account
-            // and Sign in CTAs. Signed-in users currently no-op until
-            // /article/[id] is wired (S23-followup).
-            if (authState !== 'authed') {
-              setShowArticleGate(true);
-            }
-          }}
+          onOpenArticle={() => {}}
         />
       )}
       <div id="archives" style={{ scrollMarginTop: 72 }}>
@@ -196,72 +261,10 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
           magazine={openMag}
           brandColor={info.color}
           onClose={() => setOpenMag(null)}
+          initialPage={initialReaderPage}
+          onPageChange={handleReaderPageChange}
         />
       )}
-      {showArticleGate && (
-        <GuestArticleGateModal
-          brandColor={info.color}
-          onClose={() => setShowArticleGate(false)}
-        />
-      )}
-    </div>
-  );
-}
-
-function GuestArticleGateModal({
-  brandColor,
-  onClose,
-}: {
-  brandColor: string;
-  onClose: () => void;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-md bg-white rounded-md shadow-2xl p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none w-8 h-8 flex items-center justify-center"
-        >
-          {'\u00D7'}
-        </button>
-        <p
-          className="text-[10px] uppercase tracking-[0.25em] font-semibold mb-3"
-          style={{ color: brandColor }}
-        >
-          Realtor Account Required
-        </p>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">
-          Create a free account to read articles.
-        </h3>
-        <p className="text-sm text-gray-600 leading-relaxed mb-5">
-          Magazine PDFs are free to read. Full articles, the advertiser
-          directory, events calendar, and the weekly feed are unlocked
-          with a free realtor account.
-        </p>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/auth/sign-up"
-            className="inline-flex items-center justify-center px-4 py-2.5 text-xs font-medium uppercase tracking-[0.1em] text-white rounded-md"
-            style={{ backgroundColor: brandColor }}
-          >
-            Create Account
-          </Link>
-          <Link
-            href="/auth/sign-in"
-            className="inline-flex items-center justify-center px-4 py-2.5 text-xs font-medium uppercase tracking-[0.1em] text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            Sign In
-          </Link>
-        </div>
-      </div>
     </div>
   );
 }

@@ -88,7 +88,7 @@ export function buildOpenApiSpec(): Record<string, unknown> {
         'This spec is generated from server-side zod schemas at build time. ' +
         'Schema-backed routes have full request/response definitions; the remaining ' +
         'routes are documented at the index level.',
-      contact: { name: 'Caxton Publications', email: 'tawanna@myrealtyline.com' },
+      contact: { name: 'Caxton Publications', email: 'tawanna@realtynewsnow.app' },
     },
     servers: [
       { url: 'https://realtynewsnow.app', description: 'Production' },

@@ -25,16 +25,26 @@ export interface MarketSnapshot {
   } | null;
 }
 
-export interface AttentionItem {
+interface AttentionItem {
   kind: 'bounce' | 'unsigned_agreement' | 'unpaid_invoice' | 'renewal_due';
   count: number;
   label: string;
   href: string;
 }
 
+export interface RadarItem {
+  id: string;
+  date: string;
+  title: string;
+  detail: string;
+  href: string;
+  tone: 'warning' | 'neutral';
+}
+
 export interface DashboardData {
   markets: MarketSnapshot[];
   attention: AttentionItem[];
+  radar: RadarItem[];
   generatedAt: string;
 }
 
@@ -171,7 +181,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     attention.push({
       kind: 'bounce',
       count: bounceTotal,
-      label: `${bounceTotal} advertiser${bounceTotal === 1 ? '' : 's'} with recent bounce${bounceTotal === 1 ? '' : 's'}`,
+      label: `${bounceTotal} partner${bounceTotal === 1 ? '' : 's'} with recent bounce${bounceTotal === 1 ? '' : 's'}`,
       href: '/admin/crm',
     });
   }
@@ -210,9 +220,73 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     }
   } catch {}
 
+  // ── Date radar ───────────────────────────────────────────────────────
+  // Surface upcoming, source-of-truth dates without inferring payment
+  // settlement or campaign fulfillment from derived values.
+  const radar: RadarItem[] = [];
+
+  try {
+    const dueInvoices = await query<{
+      id: string;
+      number: string | null;
+      bill_to_name: string | null;
+      due_date: string;
+      status: string;
+    }>(
+      `SELECT id::text, number, bill_to_name, due_date::text, status
+       FROM invoices
+       WHERE status IN ('sent', 'overdue')
+         AND due_date >= CURRENT_DATE
+         AND due_date <= CURRENT_DATE + 14
+       ORDER BY due_date ASC
+       LIMIT 6`,
+      [],
+    );
+    radar.push(
+      ...dueInvoices.map<RadarItem>((invoice) => ({
+        id: `invoice-${invoice.id}`,
+        date: invoice.due_date,
+        title: `${invoice.status === 'overdue' ? 'Past due' : 'Invoice due'}${invoice.number ? ` · ${invoice.number}` : ''}`,
+        detail: invoice.bill_to_name || 'Open invoice',
+        href: `/admin/getpaid/invoices?id=${invoice.id}`,
+        tone: invoice.status === 'overdue' ? 'warning' : 'neutral',
+      })),
+    );
+  } catch {}
+
+  try {
+    const endingCampaigns = await query<{
+      id: string;
+      advertiser_name: string | null;
+      end_date: string;
+    }>(
+      `SELECT id::text, advertiser_name, end_date::text
+       FROM ad_campaigns
+       WHERE active = true
+         AND end_date >= CURRENT_DATE
+         AND end_date <= CURRENT_DATE + 14
+       ORDER BY end_date ASC
+       LIMIT 6`,
+      [],
+    );
+    radar.push(
+      ...endingCampaigns.map((campaign) => ({
+        id: `campaign-${campaign.id}`,
+        date: campaign.end_date,
+        title: 'Campaign ends',
+        detail: campaign.advertiser_name || 'Open campaign',
+        href: `/admin/ads/campaigns/${campaign.id}`,
+        tone: 'neutral' as const,
+      })),
+    );
+  } catch {}
+
+  radar.sort((a, b) => a.date.localeCompare(b.date));
+
   return {
     markets: snapshots,
     attention,
+    radar: radar.slice(0, 6),
     generatedAt: new Date().toISOString(),
   };
 }

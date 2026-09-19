@@ -586,64 +586,6 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
     'Westin Homes',
   ];
 
-  // Collect unique neighborhoods from showcase homes.
-  const neighborhoodsInCommunity = [
-    ...new Set(
-      showcaseRows
-        .map((r) => {
-          const cn = r.communityName ?? '';
-          const parts = cn.split(' \u00b7 ');
-          return parts.length > 1 ? parts[1].trim() : null;
-        })
-        .filter(Boolean),
-    ),
-  ].sort();
-
-  const communityData: CommunityData = {
-    communityName: 'Santa Rita Ranch',
-    city: 'Liberty Hill',
-    status: null,
-    priceFrom: priceMin != null && priceMax != null
-      ? `$${priceMin.toLocaleString()} \u2013 $${priceMax.toLocaleString()}`
-      : null,
-    sqftRange: sqftMin != null && sqftMax != null
-      ? `${sqftMin.toLocaleString()} \u2013 ${sqftMax.toLocaleString()}`
-      : null,
-    imageUrls: [
-      'https://santaritaranchaustin.com/wp-content/uploads/2022/05/Ranch-House-Stargazer-Patio1-1024x540.jpg',
-      'https://santaritaranchaustin.com/wp-content/uploads/2022/05/The-Green4-1024x682.jpg',
-      'https://santaritaranchaustin.com/wp-content/uploads/2022/05/splash-957x1024.jpg',
-    ],
-    amenities: [
-      'Ranch House',
-      'Ranch Camp Amenity Center',
-      'The Paddock (newest amenity)',
-      'The Green Play Park',
-      'Happyland Play Park',
-      'Happy\'s Wellness Barn (fitness center)',
-      'Resort-Style Pools',
-      'Giant Water Slides (Big and Lil\' Dip)',
-      'Kids\' Splash Parks and Pool',
-      'Pickleball Courts (Indoor & Outdoor)',
-      'Memorial Plaza',
-      'Nature Trails',
-      'Catch-and-Release Fishing Lakes (Ed\'s Lake, C.A.\'s Lake)',
-      'Dog Park',
-      'The Hub Clubhouse',
-      'BBQ Barn',
-      'Cabanas and Lounge Areas',
-      'Regency Clubhouse (55+ exclusive)',
-    ],
-    builders: buildersInCommunity,
-    salesOffice: {
-      address: '3000 Santa Rita Blvd, Liberty Hill, TX 78628',
-      hours: 'Mon-Sat 10am-6pm, Sun 12pm-5pm',
-      phone: '512-555-0142',
-      lat: 30.5669,
-      lng: -97.7834,
-    },
-  };
-
   // ─────────────────────────────────────────────────────────────────────────
   // Neighborhood community rows
   //
@@ -883,8 +825,6 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
     const builderCount = new Map<string, number>();
 
     const plans = sorted.map((h) => {
-      const ed = h.extraDetails as Record<string, string> | null;
-      const floorplanUrl = ed?._floorplanUrl ?? null;
       const gallery = h.galleryUrls ?? [];
       const imageUrl = gallery[0] ?? null;
       const sqft = h.sqftMin ?? h.sqftMax;

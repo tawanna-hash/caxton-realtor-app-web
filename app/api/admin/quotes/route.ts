@@ -15,6 +15,7 @@
  *     advertiser:
  *       | { id: number }                                     // existing
  *       | { name: string; contact_email: string;             // new
+ *           billing_email?: string;
  *           publication: 'austin' | 'san_antonio' | 'both';
  *           phone?: string; }
  *   }
@@ -48,6 +49,7 @@ const advertiserExistingSchema = z.object({
 const advertiserNewSchema = z.object({
   name: z.string().trim().min(1).max(200),
   contact_email: z.string().trim().email().max(320),
+  billing_email: z.string().trim().email().max(320).optional(),
   publication: z.enum(['austin', 'san_antonio', 'both']),
   phone: z.string().trim().max(40).optional(),
 });
@@ -69,6 +71,7 @@ const quotesSchema = z
     // drafter uses them verbatim instead of computing from today.
     start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    preferred_send_dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(4).optional(),
     // Custom pricing overrides — rep-facing. Server accepts either the
     // full total or a per-unit price (mutually exclusive).
     override_total_cents: z.number().int().min(0).max(100_000_000).optional(),
@@ -102,7 +105,7 @@ const quotesSchema = z
     pos_premium_active: z.boolean().optional(),
     ad_timing_months: z.record(z.string(), z.boolean()).optional(),
     ad_timing_years: z.record(z.string(), z.string()).optional(),
-    preferred_send_dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(3).optional(),
+    preferred_send_dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(4).optional(),
   })).optional(),
   memo: z.string().max(2000).optional(),
     advertiser: z.union([advertiserExistingSchema, advertiserNewSchema]),
@@ -128,6 +131,23 @@ export const POST = withAdminTracking(async (req: Request) => {
 
   const body = quotesSchema.parse(await req.json());
   const sql = getSql();
+  // Do not rely exclusively on the broad schema bootstrap for these new
+  // scheduling fields. ensureSchema intentionally suppresses and caches a
+  // bootstrap failure, which can leave later migrations unapplied while the
+  // request continues. These idempotent guards keep quote creation self-healing.
+  try {
+    await sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS preferred_send_dates jsonb`;
+    // A single insertion order never writes agreement_line_items. Do not make
+    // it depend on that optional bundle table existing in older databases.
+    if (body.line_items && body.line_items.length > 0) {
+      await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS preferred_send_dates jsonb`;
+    }
+  } catch (err) {
+    throw new ApiError(500, 'quote_schema_update_failed', {
+      stage: 'scheduling_schema',
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   // ── Resolve advertiser ─────────────────────────────────────────────
   let advertiser: DrafterAdvertiser | null = null;
@@ -135,7 +155,7 @@ export const POST = withAdminTracking(async (req: Request) => {
 
   if ('id' in body.advertiser) {
     const rows = (await sql`
-      SELECT id, name, contact_email, publication, address, address_2,
+      SELECT id, name, contact_email, billing_email, publication, address, address_2,
              city, state, zip
         FROM advertisers
        WHERE id = ${body.advertiser.id}
@@ -146,7 +166,7 @@ export const POST = withAdminTracking(async (req: Request) => {
   } else {
     // Look up by email first (idempotent — matches public form behavior).
     const existing = (await sql`
-      SELECT id, name, contact_email, publication, address, address_2,
+      SELECT id, name, contact_email, billing_email, publication, address, address_2,
              city, state, zip
         FROM advertisers
        WHERE lower(contact_email) = lower(${body.advertiser.contact_email})
@@ -172,13 +192,13 @@ export const POST = withAdminTracking(async (req: Request) => {
       const shareToken = generateShareToken();
       const inserted = (await sql`
         INSERT INTO advertisers (
-          name, slug, share_token, contact_email,
+          name, slug, share_token, contact_email, billing_email,
           requires_email_gate, publication, status, created_at, updated_at
         ) VALUES (
-          ${name}, ${slug}, ${shareToken}, ${body.advertiser.contact_email},
+          ${name}, ${slug}, ${shareToken}, ${body.advertiser.contact_email}, ${body.advertiser.billing_email ?? null},
           ${false}, ${body.advertiser.publication}, ${'prospect'}, NOW(), NOW()
         )
-        RETURNING id, name, contact_email, publication, address, address_2,
+        RETURNING id, name, contact_email, billing_email, publication, address, address_2,
                   city, state, zip
       `) as unknown as DrafterAdvertiser[];
       advertiser = inserted[0] ?? null;
@@ -203,28 +223,41 @@ export const POST = withAdminTracking(async (req: Request) => {
   }
 
   // ── Draft the quote ────────────────────────────────────────────────
-  const result = await draftQuote(advertiser, {
-    channel: body.channel,
-    package_id: body.package_id,
-    size: body.size,
-    months: body.months,
-    sends: body.sends,
-    app_cadence: body.app_cadence,
-    app_weeks: body.app_weeks,
-    app_markets: body.app_markets,
-    override_total_cents: body.override_total_cents,
-    override_unit_cents: body.override_unit_cents,
-    line_items: body.line_items,
-    start_date: body.start_date,
-    end_date: body.end_date,
-    publication: body.publication,
-    due_date: body.due_date,
-    memo: body.memo,
-    rep_name: body.rep_name ?? null,
-    advertiser_phone: suppliedPhone,
-    linked_inquiry_id: null,
-    actor_email: admin.email ?? null,
-  });
+  let result: Awaited<ReturnType<typeof draftQuote>>;
+  try {
+    result = await draftQuote(advertiser, {
+      channel: body.channel,
+      package_id: body.package_id,
+      size: body.size,
+      months: body.months,
+      sends: body.sends,
+      app_cadence: body.app_cadence,
+      app_weeks: body.app_weeks,
+      app_markets: body.app_markets,
+      override_total_cents: body.override_total_cents,
+      override_unit_cents: body.override_unit_cents,
+      line_items: body.line_items,
+      start_date: body.start_date,
+      end_date: body.end_date,
+      preferred_send_dates: body.preferred_send_dates,
+      publication: body.publication,
+      due_date: body.due_date,
+      memo: body.memo,
+      rep_name: body.rep_name ?? null,
+      advertiser_phone: suppliedPhone,
+      linked_inquiry_id: null,
+      actor_email: admin.email ?? null,
+    });
+  } catch (err) {
+    if (err instanceof ApiError) throw err;
+    const databaseError = err as Error & { code?: string; constraint?: string };
+    throw new ApiError(500, 'quote_draft_failed', {
+      stage: 'agreement_or_invoice',
+      message: databaseError instanceof Error ? databaseError.message : String(err),
+      code: databaseError?.code,
+      constraint: databaseError?.constraint,
+    });
+  }
 
   try {
     await logAudit({
@@ -257,4 +290,3 @@ export const POST = withAdminTracking(async (req: Request) => {
     { status: 201 },
   );
 });
-

@@ -206,7 +206,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       });
     } catch (err) {
       console.warn(
-        '[admin/agreements/upload POST] advertiser promote failed:',
+        '[admin/agreements/upload POST] partner promote failed:',
         err instanceof Error ? err.message : String(err),
       );
     }

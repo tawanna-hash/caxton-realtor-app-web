@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { PUB_META, type PubKey } from '@/lib/pub-meta';
 import { SW } from '@/lib/style-constants';
 import type { CalendarEvent } from '@/lib/events-store';
@@ -13,6 +14,7 @@ import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
 import PageTitle from '@/components/ui/PageTitle';
 import { share as nativeShare } from '@/lib/native/share';
 import { openExternal } from '@/lib/native/external-link';
+import { EventRegistrationModal } from './EventRegistrationModal';
 
 /**
  * Returns true only when the location string looks like a real physical
@@ -43,6 +45,7 @@ export interface EventDetailProps {
 
 export function EventDetail({ pub, event, onBack }: EventDetailProps) {
   const info = PUB_META[pub as PubKey] || PUB_META.realtyline;
+  const [registrationOpen, setRegistrationOpen] = useState(false);
   if (!event) {
     return (
       <div className="fixed inset-0 bg-white z-30 flex items-center justify-center" style={SW}>
@@ -59,6 +62,7 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
   const sponsored = isSponsored(event);
   const title = decodeEntities(event.title);
   const description = decodeEntities(event.description);
+  const registrationUrl = event.link;
 
   // Action handlers
   const onAddToCalendar = () => {
@@ -76,10 +80,15 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
   };
 
   const onRegister = () => {
-    if (!event.website) return;
-    trackEvent('event_register_clicked', { event_id: event.id, event_title: event.title, website: event.website, pub });
+    if (!registrationUrl) {
+      setRegistrationOpen(true);
+      return;
+    }
+    const trackedUrl = new URL(`/e/${event.id}`, window.location.origin).toString();
+    // The /e/[id] redirect records the authoritative registration click.
+    // Do not also emit it here or admin reports will double-count one tap.
     // Use the in-app browser on iOS so users stay inside Realty News Now.
-    void openExternal(event.website);
+    void openExternal(trackedUrl);
   };
 
   const onShare = async () => {
@@ -255,16 +264,22 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
         className="fixed left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-2 z-50"
         style={{ ...SW, bottom: 'calc(68px + env(safe-area-inset-bottom, 0px))' }}
       >
-        {event.website && (
-          <button
-            onClick={onRegister}
-            className="w-full py-3 text-white text-sm font-semibold uppercase tracking-wider rounded-md"
-            style={{ backgroundColor: info.color }}
-          >
-            Register
-          </button>
-        )}
+        <button
+          onClick={onRegister}
+          className="w-full py-3 text-white text-sm font-semibold uppercase tracking-wider rounded-md"
+          style={{ backgroundColor: info.color }}
+        >
+          Register
+        </button>
       </div>
+      {registrationOpen && (
+        <EventRegistrationModal
+          eventId={event.id}
+          eventTitle={title}
+          color={info.color}
+          onClose={() => setRegistrationOpen(false)}
+        />
+      )}
       {/* Floating action pill — shared <FloaterPill>. Stacked above the
           Register bar (which itself sits above the BottomNav). FloaterPill
           adds env(safe-area-inset-bottom) on top of bottomOffsetClass

@@ -10,7 +10,7 @@
 // in a new tab when set. The gated analytics report at
 // /r/advertiser/<slug> is separate and unchanged.
 //
-// Linked from the BottomNav "Advertisers" tab and the NavDrawer Content
+// Linked from the BottomNav "Partners" tab and the NavDrawer Content
 // section.
 
 import { ensureSchema, getSql } from '@/lib/db';
@@ -18,14 +18,20 @@ import { ensurePublicationColumn, getPublicationTheme } from '@/lib/publication-
 import PageTitle from '@/components/ui/PageTitle';
 import { AdSlot } from '@/components/ads/AdSlot';
 import AdvertisersDirectoryClient from './AdvertisersDirectoryClient';
+import { ensureBuilderInventorySchema } from '@/lib/builder-inventory';
 
 export const metadata = {
-  title: 'Advertisers \u2014 Realty News Now',
+  title: 'Partners \u2014 Realty News Now',
   description:
     'Our advertising partners across RealtyLine Austin and Newsline San Antonio.',
 };
 
-export const dynamic = 'force-dynamic';
+// Advertiser directory: no cookie/session reads (publication filtering
+// happens client-side against localStorage, see file header), no
+// searchParams, no mutations — just an admin-curated list. Advertisers are
+// added/removed a few times a week, not hourly, so 15 min keeps changes
+// visible promptly.
+export const revalidate = 900; // 15 minutes
 
 type AdvertiserRow = {
   id: number;
@@ -39,6 +45,7 @@ type AdvertiserRow = {
 
 export default async function AdvertisersDirectoryPage() {
   await ensureSchema();
+  await ensureBuilderInventorySchema();
   await ensurePublicationColumn();
   const sql = getSql();
 
@@ -49,6 +56,12 @@ export default async function AdvertisersDirectoryPage() {
     SELECT id, name, slug, website, publication, industry, tagline
     FROM advertisers
     WHERE COALESCE(status, 'advertiser') IN ('advertiser', 'active')
+      AND NOT EXISTS (
+        SELECT 1
+        FROM builder_page_visibility v
+        WHERE LOWER(TRIM(v.builder_name)) = LOWER(TRIM(advertisers.name))
+          AND v.public_enabled = false
+      )
     ORDER BY name ASC
   `) as unknown as AdvertiserRow[];
 
@@ -80,11 +93,10 @@ export default async function AdvertisersDirectoryPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             Partners
           </p>
-          <PageTitle size="md">Advertisers</PageTitle>
+          <PageTitle size="md">Partners</PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
-            The local businesses, builders, and brands who make our
-            publication possible. Switch publications to see partners
-            for RealtyLine Austin or Newsline San Antonio.
+            The local businesses, builders, and brands who make each
+            publication possible. Switch publications to see local partners.
           </p>
         </header>
 

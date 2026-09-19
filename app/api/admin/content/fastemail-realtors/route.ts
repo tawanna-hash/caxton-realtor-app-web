@@ -28,11 +28,23 @@ function htmlToLines(html: string) {
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>');
 }
-function body(message: any) {
+// Minimal shape of a Gmail message payload part we walk. Only the fields we read.
+// Google's Schema$Message uses `string | null | undefined` for optional strings,
+// so we mirror that here to avoid casting at every call site.
+interface GmailPart {
+  mimeType?: string | null;
+  body?: { data?: string | null } | null;
+  parts?: GmailPart[] | null;
+}
+interface GmailMessage {
+  payload?: GmailPart | null;
+}
+
+function body(message: GmailMessage) {
   const plain: string[] = []; const html: string[] = [];
-  const visit = (part: any) => {
+  const visit = (part: GmailPart | null | undefined) => {
     if (!part) return;
-    const value = decode(part.body?.data);
+    const value = decode(part.body?.data ?? undefined);
     if (value) {
       if ((part.mimeType || '').toLowerCase() === 'text/html') html.push(value);
       else if ((part.mimeType || '').toLowerCase() === 'text/plain') plain.push(value);
@@ -103,7 +115,7 @@ export async function PATCH(req: NextRequest) {
   await requireAdmin(); await setup();
   const { id, action } = await req.json() as { id?: string; action?: 'realtyline' | 'san_antonio' | 'reject' };
   if (!id || !['realtyline','san_antonio','reject'].includes(action || '')) return NextResponse.json({ error: 'A valid record and action are required.' }, { status: 400 });
-  const sql = getSql(); const found = await sql`SELECT * FROM fastemail_realtor_imports WHERE id = ${id} LIMIT 1` as unknown as any[]; const row = found[0];
+  const sql = getSql(); const found = await sql`SELECT * FROM fastemail_realtor_imports WHERE id = ${id} LIMIT 1` as unknown as Record<string, unknown>[]; const row = found[0] as Record<string, string | null | undefined> | undefined;
   if (!row) return NextResponse.json({ error: 'Record not found.' }, { status: 404 });
   if (action === 'reject') { await sql`UPDATE fastemail_realtor_imports SET status = 'rejected', reviewed_at = NOW() WHERE id = ${id}`; return NextResponse.json({ ok: true }); }
   const segment = action === 'realtyline' ? 'realtyline-atx-print' : 'newsline-sa-print';

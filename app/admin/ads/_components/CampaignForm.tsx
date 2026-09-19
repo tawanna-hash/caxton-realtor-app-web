@@ -13,7 +13,7 @@ import type {
   AdSpace, AdCreative, AdCampaign, AdPublication,
 } from './types';
 import { ZONE_LABELS, formatSizes } from './types';
-import { PUBLICATION_LABELS_WITH_BOTH as PUBLICATION_LABELS } from '@/lib/publications';
+import { PUBLICATION_IDS, PUBLICATION_LABELS_WITH_BOTH as PUBLICATION_LABELS } from '@/lib/publications';
 
 interface Props {
   initial?: AdCampaign;  // edit mode if present, create mode if not
@@ -102,7 +102,7 @@ export function CampaignForm({ initial }: Props) {
     setError(null);
 
     // Client-side validation
-    if (!advertiserName.trim()) return setError('Advertiser name is required');
+    if (!advertiserName.trim()) return setError('Partner name is required');
     if (!adSpaceSlug) return setError('Ad slot is required');
     if (!creativeId) return setError('Creative is required');
     if (!startDate) return setError('Start date is required');
@@ -171,7 +171,7 @@ export function CampaignForm({ initial }: Props) {
       )}
 
       {/* Advertiser */}
-      <Field label="Advertiser name" required>
+      <Field label="Partner name" required>
         <input
           type="text"
           value={advertiserName}
@@ -207,7 +207,7 @@ export function CampaignForm({ initial }: Props) {
       {/* Publication */}
       <Field label="Publication" required>
         <div className="space-y-2">
-          {(['both', 'austin', 'san_antonio'] as const).map((pub) => (
+          {(['both', ...PUBLICATION_IDS] as const).map((pub) => (
             <label key={pub} className="flex items-center gap-2">
               <input
                 type="radio"
@@ -282,7 +282,7 @@ export function CampaignForm({ initial }: Props) {
                 onUploaded={handleCreativeUploaded}
               />
               <p className="text-xs text-gray-600">
-                Fill advertiser name + click URL above before choosing a file.
+                Fill partner name + click URL above before choosing a file.
               </p>
             </div>
           )}
@@ -290,6 +290,7 @@ export function CampaignForm({ initial }: Props) {
           {selectedCreative && (
             <div className="rounded-md border border-gray-200 p-2 bg-white">
               <p className="text-xs text-gray-600 mb-1">Selected creative:</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={selectedCreative.blob_url}
                 alt={selectedCreative.alt_text || ''}
@@ -326,7 +327,7 @@ export function CampaignForm({ initial }: Props) {
       </div>
 
       {/* Price */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Field label="Price total ($)">
           <input
             type="number"

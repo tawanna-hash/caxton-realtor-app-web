@@ -1,0 +1,1039 @@
+"use client";
+
+// app/admin/ar/RecurringScheduleDrawer.tsx
+//
+// Create/edit drawer for a recurring invoice schedule. Works for both
+// agreement-linked (agreement_id set, locked) and standalone schedules
+// (advertiser + agreement picked freely).
+
+import { useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import {
+  frequencyLabel,
+  type RecurringScheduleWithAdvertiser,
+  type RecurringFrequency,
+} from "@/lib/recurring-invoices";
+import type { InvoiceLineItem } from "@/lib/invoices";
+import { formatCents, previewLineItemsTotal } from "@/lib/invoices";
+import type { AgreementWithAdvertiser } from "@/lib/agreements";
+import {
+  DrawerShell,
+  DrawerFooter,
+  Section,
+  Field,
+} from "@/app/admin/billing/_components/DrawerShell";
+import { INPUT } from "@/app/admin/billing/_components/constants";
+import { ProductServiceSearch } from "@/app/admin/billing/_components/ProductServiceSearch";
+import type { AdvertiserOption } from "@/app/admin/billing/_components/types";
+import {
+  shortDate,
+  toISODateString,
+} from "@/app/admin/billing/_components/helpers";
+import { sparsePatch } from "@/lib/sparse-patch";
+
+const FREQ_OPTIONS: { value: RecurringFrequency; label: string }[] = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "biweekly", label: "Every 2 weeks" },
+  { value: "monthly", label: "Monthly" },
+  { value: "quarterly", label: "Quarterly" },
+  { value: "annually", label: "Yearly" },
+];
+
+type Seed = {
+  advertiser_id: number | null;
+  agreement_id: string | null;
+};
+
+export function RecurringScheduleDrawer({
+  existing,
+  advertisers,
+  agreements,
+  seed,
+  onClose,
+  onSaved,
+  onError,
+}: {
+  existing?: RecurringScheduleWithAdvertiser;
+  advertisers: AdvertiserOption[];
+  agreements: AgreementWithAdvertiser[];
+  seed?: Seed;
+  onClose: () => void;
+  onSaved: () => void | Promise<void>;
+  onError: (msg: string) => void;
+}) {
+  const isEdit = !!existing;
+  const [advertiserId, setAdvertiserId] = useState<number | null>(
+    existing?.advertiser_id ?? seed?.advertiser_id ?? null,
+  );
+  const [agreementId, setAgreementId] = useState<string>(
+    existing?.agreement_id ?? seed?.agreement_id ?? "",
+  );
+  const name = existing?.name ?? "";
+  const [frequency, setFrequency] = useState<RecurringFrequency>(
+    existing?.frequency ?? "monthly",
+  );
+  const [intervalCount, setIntervalCount] = useState<number>(
+    existing?.interval_count ?? 1,
+  );
+  const [dayOfMonth, setDayOfMonth] = useState<number>(
+    existing?.day_of_month ?? 18,
+  );
+  const [lineItems, setLineItems] = useState<InvoiceLineItem[]>(
+    existing?.line_items?.length
+      ? existing.line_items
+      : [{ description: "", qty: 1, unit_cents: 0 }],
+  );
+  const [taxCents, setTaxCents] = useState<number>(existing?.tax_cents ?? 0);
+  const [dueDays, setDueDays] = useState<number>(existing?.due_days ?? 15);
+  const [createDaysInAdvance, setCreateDaysInAdvance] = useState<number>(
+    existing?.create_days_in_advance ?? 0,
+  );
+  const [autoSend, setAutoSend] = useState<boolean>(
+    existing?.auto_send ?? true,
+  );
+  const [startDate, setStartDate] = useState<string>(
+    toISODateString(existing?.start_date) ||
+      new Date().toISOString().slice(0, 10),
+  );
+  const [endDate, setEndDate] = useState<string>(
+    toISODateString(existing?.end_date),
+  );
+  const [maxOccurrences, setMaxOccurrences] = useState<string>(
+    existing?.max_occurrences != null ? String(existing.max_occurrences) : "",
+  );
+  const [endMode, setEndMode] = useState<"never" | "after" | "date">(
+    existing?.max_occurrences != null
+      ? "after"
+      : existing?.end_date
+        ? "date"
+        : "never",
+  );
+  const [memo, setMemo] = useState(existing?.memo ?? "");
+  const [billToName, setBillToName] = useState(existing?.bill_to_name ?? "");
+  const initialAdvertiser = advertisers.find(
+    (advertiser) => advertiser.id === (existing?.advertiser_id ?? seed?.advertiser_id ?? null),
+  );
+  const [billToEmail, setBillToEmail] = useState(
+    existing?.bill_to_email ??
+      initialAdvertiser?.billing_email ??
+      initialAdvertiser?.contact_email ??
+      "",
+  );
+  const [emailFrom, setEmailFrom] = useState<
+    | "tawanna@myrealtyline.com"
+    | "tawanna@newslinesa.com"
+    | "hello@myrealtyline.com"
+    | "hello@newslinesa.com"
+  >("tawanna@newslinesa.com");
+  const [emailCcBcc, setEmailCcBcc] = useState("");
+  const [emailSubject, setEmailSubject] = useState(
+    `Set up recurring invoice by ${shortDate(existing?.start_date ?? new Date())}`,
+  );
+  const [emailBody, setEmailBody] = useState(
+    `Dear ${existing?.bill_to_name || existing?.advertiser_name || "customer"},\n\nWe appreciate your business. Please set up the recurring invoice before ${shortDate(existing?.start_date ?? new Date())}. You only need to set it up once and, after that, you'll receive each invoice automatically. Feel free to contact us if you have any questions.\n\nHave a great day,\nCaxton Publications Inc.`,
+  );
+  const [templateMode, setTemplateMode] = useState<
+    "scheduled" | "reminder" | "unscheduled"
+  >(existing?.template_mode ?? "scheduled");
+  const [includeUnbilledCharges, setIncludeUnbilledCharges] = useState(
+    existing?.include_unbilled_charges ?? false,
+  );
+  const [printLater, setPrintLater] = useState(existing?.print_later ?? false);
+  const [emailReminders, setEmailReminders] = useState(
+    existing?.email_reminders ?? true,
+  );
+  const [paymentInstructions, setPaymentInstructions] = useState(
+    existing?.payment_instructions ?? "",
+  );
+  const [noteToClient, setNoteToClient] = useState(
+    existing?.note_to_client ??
+      "PLEASE MAKE CHECKS PAYABLE TO: CAXTON PUBLICATIONS INC",
+  );
+  const [statementMemo, setStatementMemo] = useState(
+    existing?.statement_memo ?? "",
+  );
+  const [activeTab, setActiveTab] = useState<
+    "edit" | "email" | "payor" | "pdf"
+  >("edit");
+  const [saving, setSaving] = useState(false);
+
+  const total = useMemo(
+    () => previewLineItemsTotal(lineItems) + (taxCents || 0),
+    [lineItems, taxCents],
+  );
+  const customerName =
+    billToName ||
+    advertisers.find((advertiser) => advertiser.id === advertiserId)?.name ||
+    "Customer";
+  const derivedName =
+    name.trim() ||
+    `${advertisers.find((advertiser) => advertiser.id === advertiserId)?.name ?? "Partner"} — ${frequencyLabel(frequency)}`;
+  const firstChargeDate = shortDate(startDate);
+  const recurringDescription = useMemo(() => {
+    if (frequency === "monthly" && dayOfMonth)
+      return `Monthly on the ${dayOfMonth}${dayOfMonth === 1 || dayOfMonth === 21 || dayOfMonth === 31 ? "st" : dayOfMonth === 2 || dayOfMonth === 22 ? "nd" : dayOfMonth === 3 || dayOfMonth === 23 ? "rd" : "th"} day`;
+    const label = frequencyLabel(frequency);
+    return intervalCount > 1
+      ? `Every ${intervalCount} ${label.toLowerCase().replace(/ly$/, "")} periods`
+      : label;
+  }, [dayOfMonth, frequency, intervalCount]);
+
+  const agreementOptions = useMemo(
+    () =>
+      agreements.filter(
+        (a) => !advertiserId || a.advertiser_id === advertiserId,
+      ),
+    [agreements, advertiserId],
+  );
+
+  function updateLine(i: number, patch: Partial<InvoiceLineItem>) {
+    setLineItems((prev) =>
+      prev.map((li, idx) => (idx === i ? { ...li, ...patch } : li)),
+    );
+  }
+  function addLine() {
+    setLineItems((prev) => [
+      ...prev,
+      { description: "", qty: 1, unit_cents: 0 },
+    ]);
+  }
+  function removeLine(i: number) {
+    setLineItems((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  async function handleSubmit() {
+    if (!advertiserId) {
+      onError("Select a partner");
+      return;
+    }
+    if (total <= 0) {
+      onError("Amount must be greater than $0");
+      return;
+    }
+
+    setSaving(true);
+    onError("");
+    const payload: Record<string, unknown> = {
+      // These fields are intentionally create-only; PATCH does not advertise a
+      // save for controls the endpoint does not support changing.
+      ...(isEdit
+        ? {}
+        : { advertiser_id: advertiserId, agreement_id: agreementId || null }),
+      name: derivedName,
+      frequency,
+      interval_count: intervalCount,
+      day_of_month:
+        frequency === "monthly" ||
+        frequency === "quarterly" ||
+        frequency === "annually"
+          ? dayOfMonth
+          : null,
+      line_items: lineItems.filter(
+        (li) => li.description.trim() || li.unit_cents,
+      ),
+      tax_cents: taxCents,
+      due_days: dueDays,
+      create_days_in_advance: createDaysInAdvance,
+      auto_send: autoSend,
+      template_mode: templateMode,
+      include_unbilled_charges: includeUnbilledCharges,
+      print_later: printLater,
+      email_reminders: emailReminders,
+      payment_instructions: paymentInstructions || null,
+      note_to_client: noteToClient || null,
+      statement_memo: statementMemo || null,
+      ...(isEdit ? {} : { start_date: startDate }),
+      end_date: endMode === "date" && endDate ? endDate : null,
+      max_occurrences:
+        endMode === "after" && maxOccurrences ? Number(maxOccurrences) : null,
+      memo: memo || null,
+      bill_to_name: billToName || null,
+      bill_to_email: billToEmail || null,
+    };
+    const initialPayload = initialEditPayload.current;
+    const requestBody =
+      isEdit && initialPayload ? sparsePatch(payload, initialPayload) : payload;
+    if (isEdit && Object.keys(requestBody).length === 0) {
+      await onSaved();
+      setSaving(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        isEdit
+          ? `/api/admin/recurring-invoices/${existing!.id}`
+          : "/api/admin/recurring-invoices",
+        {
+          method: isEdit ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        },
+      );
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        onError(j.error ?? "Save failed");
+        setSaving(false);
+        return;
+      }
+      await onSaved();
+    } catch {
+      onError("Network error while saving");
+      setSaving(false);
+    }
+  }
+
+  const initialEditPayload = useRef<Record<string, unknown> | null>(
+    isEdit
+      ? {
+          advertiser_id: advertiserId,
+          agreement_id: agreementId || null,
+          name: name.trim(),
+          frequency,
+          interval_count: intervalCount,
+          day_of_month:
+            frequency === "monthly" ||
+            frequency === "quarterly" ||
+            frequency === "annually"
+              ? dayOfMonth
+              : null,
+          line_items: lineItems.filter(
+            (li) => li.description.trim() || li.unit_cents,
+          ),
+          tax_cents: taxCents,
+          due_days: dueDays,
+          create_days_in_advance: createDaysInAdvance,
+          auto_send: autoSend,
+          template_mode: templateMode,
+          include_unbilled_charges: includeUnbilledCharges,
+          print_later: printLater,
+          email_reminders: emailReminders,
+          payment_instructions: paymentInstructions || null,
+          note_to_client: noteToClient || null,
+          statement_memo: statementMemo || null,
+          start_date: startDate,
+          end_date: endMode === "date" && endDate ? endDate : null,
+          max_occurrences:
+            endMode === "after" && maxOccurrences
+              ? Number(maxOccurrences)
+              : null,
+          memo: memo || null,
+          bill_to_name: billToName || null,
+          bill_to_email: billToEmail || null,
+        }
+      : null,
+  );
+
+  return (
+    <DrawerShell
+      title={isEdit ? "Edit recurring schedule" : "New recurring schedule"}
+      subtitle={isEdit ? (existing!.advertiser_name ?? undefined) : undefined}
+      onClose={onClose}
+      wide
+    >
+      <div className="flex gap-1 border-b border-gray-200">
+        {(
+          [
+            ["edit", "Edit"],
+            ["email", "Email view"],
+            ["payor", "Payor view"],
+            ["pdf", "PDF view"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setActiveTab(value)}
+            className={`border-b-2 px-4 py-2 text-sm ${activeTab === value ? "border-orange-600 font-medium text-orange-700" : "border-transparent text-gray-500 hover:text-gray-800"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "edit" && (
+        <div className="grid gap-4 xl:grid-cols-2">
+          <Section title="Recurring invoice">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="Type">
+                <select
+                  className={INPUT}
+                  value={templateMode}
+                  onChange={(e) =>
+                    setTemplateMode(e.target.value as typeof templateMode)
+                  }
+                >
+                  <option value="scheduled">Scheduled</option>
+                  <option value="reminder">Reminder</option>
+                  <option value="unscheduled">Unscheduled</option>
+                </select>
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Partner">
+                <select
+                  className={INPUT}
+                  value={advertiserId ?? ""}
+                  disabled={isEdit}
+                  onChange={(e) => {
+                    const nextAdvertiserId = e.target.value ? Number(e.target.value) : null;
+                    const advertiser = advertisers.find((item) => item.id === nextAdvertiserId);
+                    setAdvertiserId(nextAdvertiserId);
+                    setBillToName(advertiser?.name ?? "");
+                    setBillToEmail(advertiser?.billing_email ?? advertiser?.contact_email ?? "");
+                    setAgreementId("");
+                  }}
+                >
+                  <option value="">Select…</option>
+                  {advertisers.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Linked agreement (optional)">
+                <select
+                  className={INPUT}
+                  value={agreementId}
+                  disabled={isEdit}
+                  onChange={(e) => setAgreementId(e.target.value)}
+                >
+                  <option value="">Standalone (no agreement)</option>
+                  {agreementOptions.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.advertiser_name} — {a.id.slice(0, 8)}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          </Section>
+
+          <Section title="Recurring schedule">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="Start date">
+                <input
+                  type="date"
+                  className={INPUT}
+                  value={startDate}
+                  disabled={isEdit}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </Field>
+              <Field label="Create invoice days in advance">
+                <input
+                  type="number"
+                  min={0}
+                  className={INPUT}
+                  value={createDaysInAdvance}
+                  onChange={(e) =>
+                    setCreateDaysInAdvance(
+                      Math.max(0, Number(e.target.value) || 0),
+                    )
+                  }
+                />
+              </Field>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+              <Field label="Frequency">
+                <select
+                  className={INPUT}
+                  value={frequency}
+                  onChange={(e) =>
+                    setFrequency(e.target.value as RecurringFrequency)
+                  }
+                >
+                  {FREQ_OPTIONS.map((f) => (
+                    <option key={f.value} value={f.value}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Every N periods">
+                <input
+                  type="number"
+                  min={1}
+                  className={INPUT}
+                  value={intervalCount}
+                  onChange={(e) =>
+                    setIntervalCount(Math.max(1, Number(e.target.value) || 1))
+                  }
+                />
+              </Field>
+              {(frequency === "monthly" ||
+                frequency === "quarterly" ||
+                frequency === "annually") && (
+                <Field label="Day">
+                  <select
+                    className={INPUT}
+                    value={dayOfMonth}
+                    onChange={(e) => setDayOfMonth(Number(e.target.value))}
+                  >
+                    {Array.from({ length: 28 }, (_, index) => index + 1).map(
+                      (day) => (
+                        <option key={day} value={day}>
+                          {day}
+                          {day === 1 || day === 21
+                            ? "st"
+                            : day === 2 || day === 22
+                              ? "nd"
+                              : day === 3 || day === 23
+                                ? "rd"
+                                : "th"}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </Field>
+              )}
+              <Field label="Due days">
+                <input
+                  type="number"
+                  min={0}
+                  className={INPUT}
+                  value={dueDays}
+                  onChange={(e) =>
+                    setDueDays(Math.max(0, Number(e.target.value) || 0))
+                  }
+                />
+              </Field>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="End">
+                <select
+                  className={INPUT}
+                  value={endMode}
+                  onChange={(e) =>
+                    setEndMode(e.target.value as "never" | "after" | "date")
+                  }
+                >
+                  <option value="never">Never</option>
+                  <option value="date">By</option>
+                  <option value="after">After</option>
+                </select>
+              </Field>
+              {endMode === "after" && (
+                <Field label="Number of occurrences">
+                  <input
+                    type="number"
+                    min={1}
+                    className={INPUT}
+                    value={maxOccurrences}
+                    onChange={(e) => setMaxOccurrences(e.target.value)}
+                  />
+                </Field>
+              )}
+              {endMode === "date" && (
+                <Field label="End date">
+                  <input
+                    type="date"
+                    className={INPUT}
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </Field>
+              )}
+            </div>
+            <div className="rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-800">
+              Repeats{" "}
+              {frequency === "monthly"
+                ? "monthly"
+                : frequencyLabel(frequency).toLowerCase()}
+              {intervalCount > 1 ? ` every ${intervalCount} periods` : ""}.
+              Invoices are created {createDaysInAdvance} day
+              {createDaysInAdvance === 1 ? "" : "s"} in advance
+              {endMode === "after" && maxOccurrences
+                ? ` and stop after ${maxOccurrences} invoices`
+                : endMode === "date" && endDate
+                  ? ` through ${endDate}`
+                  : " with no end date"}
+              .
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={autoSend}
+                onChange={(e) => setAutoSend(e.target.checked)}
+              />
+              Automatically mark generated invoices as &ldquo;sent&rdquo; (email delivery is not yet automated)
+            </label>
+            <div className="grid gap-2 rounded-lg border border-gray-200 p-3 sm:grid-cols-2">
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={includeUnbilledCharges}
+                  onChange={(e) => setIncludeUnbilledCharges(e.target.checked)}
+                />
+                Include unbilled charges
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={printLater}
+                  onChange={(e) => setPrintLater(e.target.checked)}
+                />
+                Mark generated invoices as print later
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={emailReminders}
+                  onChange={(e) => setEmailReminders(e.target.checked)}
+                />
+                Automatic invoice reminders
+              </label>
+            </div>
+          </Section>
+
+          <Section title="Line items">
+            {lineItems.map((li, i) => (
+              <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                <ProductServiceSearch
+                  className="col-span-6"
+                  value={li.description}
+                  onChange={(value) => updateLine(i, { description: value })}
+                  onSelect={(item) =>
+                    updateLine(i, {
+                      description: item.sales_description || item.name,
+                      unit_cents: item.price_cents ?? 0,
+                    })
+                  }
+                />
+                <input
+                  type="number"
+                  min={1}
+                  className={`${INPUT} col-span-2`}
+                  value={li.qty}
+                  onChange={(e) =>
+                    updateLine(i, {
+                      qty: Math.max(1, Number(e.target.value) || 1),
+                    })
+                  }
+                />
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  className={`${INPUT} col-span-3`}
+                  value={(li.unit_cents / 100).toFixed(2)}
+                  onChange={(e) =>
+                    updateLine(i, {
+                      unit_cents: Math.round(Number(e.target.value) * 100) || 0,
+                    })
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => removeLine(i)}
+                  className="col-span-1 text-gray-400 hover:text-red-600 text-lg leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addLine}
+              className="text-sm text-orange-600 hover:text-orange-700"
+            >
+              + Add line item
+            </button>
+            <div className="flex items-center gap-3 pt-2">
+              <Field label="Tax ($)" className="w-32">
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  className={INPUT}
+                  value={(taxCents / 100).toFixed(2)}
+                  onChange={(e) =>
+                    setTaxCents(Math.round(Number(e.target.value) * 100) || 0)
+                  }
+                />
+              </Field>
+              <div className="ml-auto text-sm text-gray-700">
+                Total per invoice:{" "}
+                <span className="font-semibold text-gray-900">
+                  {formatCents(total)}
+                </span>
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Bill to">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Name (optional override)">
+                <input
+                  className={INPUT}
+                  value={billToName}
+                  onChange={(e) => setBillToName(e.target.value)}
+                  placeholder="Defaults to partner name"
+                />
+              </Field>
+              <Field label="Email (optional override)">
+                <input
+                  className={INPUT}
+                  value={billToEmail}
+                  onChange={(e) => setBillToEmail(e.target.value)}
+                  placeholder="Defaults to partner billing email"
+                />
+              </Field>
+            </div>
+            <Field label="Memo (optional)">
+              <textarea
+                className={INPUT}
+                rows={2}
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+              />
+            </Field>
+            <Field label="Payment instructions">
+              <textarea
+                className={INPUT}
+                rows={2}
+                value={paymentInstructions}
+                onChange={(e) => setPaymentInstructions(e.target.value)}
+                placeholder="Enter your bank or preferred payment service provider details here."
+              />
+            </Field>
+            <Field label="Note to client">
+              <textarea
+                className={INPUT}
+                rows={2}
+                value={noteToClient}
+                onChange={(e) => setNoteToClient(e.target.value)}
+              />
+            </Field>
+            <Field label="Memo on statement">
+              <textarea
+                className={INPUT}
+                rows={2}
+                value={statementMemo}
+                onChange={(e) => setStatementMemo(e.target.value)}
+                placeholder="This memo appears on customer statements."
+              />
+            </Field>
+          </Section>
+        </div>
+      )}
+
+      {activeTab === "email" && (
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
+          <div className="grid min-h-[610px] xl:grid-cols-[0.95fr_1.2fr]">
+            <div className="border-b border-gray-200 bg-white p-5 xl:border-b-0 xl:border-r">
+              <div className="space-y-3">
+                <Field label="From">
+                  <select
+                    className={INPUT}
+                    value={emailFrom}
+                    onChange={(event) =>
+                      setEmailFrom(event.target.value as typeof emailFrom)
+                    }
+                  >
+                    <option value="tawanna@myrealtyline.com">
+                      Tawanna Verock &lt;tawanna@myrealtyline.com&gt;
+                    </option>
+                    <option value="tawanna@newslinesa.com">
+                      Tawanna Verock &lt;tawanna@newslinesa.com&gt;
+                    </option>
+                    <option value="hello@myrealtyline.com">
+                      Caxton Publications Inc. &lt;hello@myrealtyline.com&gt;
+                    </option>
+                    <option value="hello@newslinesa.com">
+                      Caxton Publications Inc. &lt;hello@newslinesa.com&gt;
+                    </option>
+                  </select>
+                </Field>
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                  <Field label="To">
+                    <input
+                      type="email"
+                      className={INPUT}
+                      value={billToEmail}
+                      onChange={(event) => setBillToEmail(event.target.value)}
+                      placeholder="customer@example.com"
+                    />
+                  </Field>
+                  <button
+                    type="button"
+                    onClick={() => setEmailCcBcc((value) => (value ? "" : " "))}
+                    className="mt-6 h-9 rounded-md px-2 text-xs font-medium text-orange-700 hover:bg-orange-50"
+                  >
+                    Cc/Bcc
+                  </button>
+                </div>
+                {emailCcBcc !== "" && (
+                  <Field label="Cc/Bcc">
+                    <input
+                      className={INPUT}
+                      value={emailCcBcc.trimStart()}
+                      onChange={(event) =>
+                        setEmailCcBcc(` ${event.target.value}`)
+                      }
+                      placeholder="Optional recipients"
+                    />
+                  </Field>
+                )}
+                <Field label="Subject">
+                  <input
+                    className={INPUT}
+                    value={emailSubject}
+                    onChange={(event) => setEmailSubject(event.target.value)}
+                  />
+                </Field>
+                <Field label="Email body">
+                  <textarea
+                    className={`${INPUT} min-h-[305px] resize-y leading-6`}
+                    value={emailBody}
+                    onChange={(event) => setEmailBody(event.target.value)}
+                  />
+                </Field>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-gray-500">
+                The recurring invoice authorization and notices are
+                informational. Customers can cancel according to the terms shown
+                in their secure payment page.
+              </p>
+            </div>
+
+            <div className="overflow-auto bg-white p-5 sm:p-8">
+              <div className="mx-auto max-w-[520px] border border-gray-200 bg-white text-gray-800 shadow-sm">
+                <div className="px-8 pb-3 pt-7 text-center">
+                  <Image
+                    src="/brand/caxton-logo.jpg"
+                    alt="Caxton Publications"
+                    width={120}
+                    height={135}
+                    className="mx-auto h-20 w-auto object-contain"
+                  />
+                </div>
+                <div className="mx-8 bg-orange-50 px-6 py-7 text-center">
+                  <h3 className="mx-auto max-w-sm text-xl font-semibold leading-7 text-gray-900">
+                    Set up recurring invoice to Caxton Publications Inc. by{" "}
+                    {firstChargeDate}
+                  </h3>
+                  <div className="mt-3 text-sm text-gray-600">
+                    {recurringDescription}
+                  </div>
+                  <div className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
+                    {formatCents(total)}
+                  </div>
+                  <button
+                    type="button"
+                    className="mt-5 rounded-md bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+                  >
+                    Set up recurring invoice
+                  </button>
+                </div>
+                <div className="space-y-5 px-10 py-7">
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {emailSubject}
+                    </div>
+                    <div className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-600">
+                      {emailBody}
+                    </div>
+                  </div>
+                  <div className="border-t border-gray-200 pt-5">
+                    <h4 className="text-center text-sm font-semibold text-gray-900">
+                      Here Are the Details of Your Recurring Invoice
+                    </h4>
+                    <dl className="mx-auto mt-4 grid max-w-sm grid-cols-[1fr_auto] gap-x-8 gap-y-2 text-sm">
+                      <dt className="font-medium text-gray-700">Repeats</dt>
+                      <dd className="text-right text-gray-600">
+                        {recurringDescription}
+                      </dd>
+                      <dt className="font-medium text-gray-700">
+                        First charge date
+                      </dt>
+                      <dd className="text-right text-gray-600">
+                        {firstChargeDate}
+                      </dd>
+                      <dt className="font-medium text-gray-700">
+                        Payment amount
+                      </dt>
+                      <dd className="text-right font-semibold text-gray-900">
+                        {formatCents(total)}
+                      </dd>
+                      <dt className="font-medium text-gray-700">Due by</dt>
+                      <dd className="text-right text-gray-600">
+                        {firstChargeDate}
+                      </dd>
+                    </dl>
+                    <div className="mt-6 text-center">
+                      <button
+                        type="button"
+                        className="rounded-md bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+                      >
+                        Set up recurring invoice
+                      </button>
+                      <p className="mt-2 text-xs text-gray-500">
+                        You can cancel at any time.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="border-t border-gray-200 bg-gray-50 px-8 py-4 text-center text-xs leading-5 text-gray-500">
+                  <strong className="text-gray-700">
+                    Caxton Publications Inc.
+                  </strong>
+                  <br />
+                  PO Box 81366 · Austin, TX 78708-1366
+                  <br />
+                  {emailFrom} · realtynewsnow.app
+                </div>
+              </div>
+              <div className="mx-auto mt-3 max-w-[520px] text-right text-xs text-gray-500">
+                Preview for {customerName}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "payor" && (
+        <div className="mx-auto grid max-w-3xl gap-4 rounded-lg border border-gray-200 bg-gray-100 p-5 shadow-sm sm:grid-cols-[1.4fr_0.8fr]">
+          <div className="rounded-lg bg-white p-6">
+            <div className="text-xs font-medium text-gray-500">
+              Payment amount
+            </div>
+            <div className="mt-1 text-3xl font-semibold text-gray-900">
+              {formatCents(total)}
+            </div>
+            <Field label="Email">
+              <input
+                className={INPUT}
+                value={billToEmail}
+                readOnly
+                placeholder="payer@example.com"
+              />
+            </Field>
+            <div className="mt-5 text-xs font-medium text-gray-500">
+              Payment method
+            </div>
+            <div className="mt-2 grid grid-cols-5 gap-2">
+              {["Debit", "Credit", "Bank", "Venmo", "PayPal"].map((method) => (
+                <div
+                  key={method}
+                  className="rounded border border-gray-200 bg-gray-50 px-2 py-3 text-center text-xs text-gray-700"
+                >
+                  {method}
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 rounded-md border border-gray-200 bg-gray-50 px-3 py-3 text-xs text-gray-500">
+              Secure Stripe checkout will collect the selected payment method.
+            </div>
+          </div>
+          <aside className="space-y-4">
+            <div className="rounded-lg bg-white p-4">
+              <Image
+                src="/brand/caxton-logo.jpg"
+                alt="Caxton Publications"
+                width={90}
+                height={100}
+                className="h-16 w-auto object-contain"
+              />
+              <div className="mt-3 font-semibold text-gray-900">
+                Caxton Publications Inc.
+              </div>
+              <div className="mt-3 flex justify-between text-sm">
+                <span>Invoice</span>
+                <span>{derivedName}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Total</span>
+                <strong>{formatCents(total)}</strong>
+              </div>
+            </div>
+            <div className="rounded-lg bg-white p-4 text-xs text-gray-600">
+              <strong>Business details</strong>
+              <br />
+              Email: tawanna@newslinesa.com
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {activeTab === "pdf" && (
+        <div className="mx-auto max-w-2xl bg-white px-8 py-10 text-[10px] text-gray-800 shadow-sm ring-1 ring-gray-200">
+          <header className="flex items-start justify-between border-b border-gray-300 pb-4">
+            <Image
+              src="/brand/caxton-logo.jpg"
+              alt="Caxton Publications"
+              width={130}
+              height={145}
+              className="h-24 w-auto object-contain"
+            />
+            <div className="text-right">
+              <div className="text-2xl tracking-wide">INVOICE</div>
+              <strong>Caxton Publications, Inc.</strong>
+              <br />
+              PO Box 81366
+              <br />
+              Austin, Texas 78708-1366
+            </div>
+          </header>
+          <div className="grid grid-cols-2 gap-8 py-5">
+            <div>
+              <span className="text-gray-500">BILL TO</span>
+              <br />
+              <strong>{billToName || "Customer"}</strong>
+              <br />
+              {billToEmail}
+            </div>
+            <div className="text-right">
+              Invoice: Recurring invoice
+              <br />
+              Terms: Net {dueDays}
+              <br />
+              <strong>Amount due: {formatCents(total)}</strong>
+            </div>
+          </div>
+          <div className="grid grid-cols-[1fr_60px_80px_90px] bg-gray-900 px-3 py-2 font-semibold text-white">
+            <div>Services</div>
+            <div>Qty</div>
+            <div className="text-right">Rate</div>
+            <div className="text-right">Amount</div>
+          </div>
+          {lineItems.map((item, index) => (
+            <div
+              key={index}
+              className="grid grid-cols-[1fr_60px_80px_90px] border-b border-gray-200 px-3 py-3"
+            >
+              <div>{item.description || "Service"}</div>
+              <div>{item.qty}</div>
+              <div className="text-right">{formatCents(item.unit_cents)}</div>
+              <div className="text-right">
+                {formatCents(item.qty * item.unit_cents)}
+              </div>
+            </div>
+          ))}
+          <div className="ml-auto mt-4 w-56 text-right text-sm font-semibold">
+            Amount Due (USD): {formatCents(total)}
+          </div>
+          {(noteToClient || statementMemo) && (
+            <div className="mt-6 border-t border-gray-200 pt-4 whitespace-pre-line">
+              {noteToClient}
+              {statementMemo ? `\n\n${statementMemo}` : ""}
+            </div>
+          )}
+          <div className="mt-10 text-center text-gray-500">
+            We appreciate your business.
+          </div>
+        </div>
+      )}
+
+      <DrawerFooter
+        saving={saving}
+        onCancel={onClose}
+        onSubmit={handleSubmit}
+        submitLabel={isEdit ? "Save changes" : "Create schedule"}
+        tone="orange"
+      />
+    </DrawerShell>
+  );
+}

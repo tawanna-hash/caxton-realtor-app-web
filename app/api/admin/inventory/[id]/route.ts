@@ -47,7 +47,13 @@ function parseId(idParam: string): number | null {
 }
 
 const VALID_STATUS: Status[] = ['pending', 'active', 'rejected', 'expired'];
-const VALID_PUBLICATION: Publication[] = ['realtyline', 'newsline', 'both'];
+const VALID_PUBLICATION: Publication[] = [
+  'realtyline',
+  'newsline',
+  'realtyline-houston',
+  'realtyline-dallas',
+  'both',
+];
 const VALID_PROMO: PromoType[] = ['rate_buydown', 'incentive', 'event', 'broker_bonus', 'other'];
 
 function coerceNum(v: unknown): number | null | undefined {

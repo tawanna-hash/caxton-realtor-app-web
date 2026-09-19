@@ -58,7 +58,7 @@ export function CreativeUpload({ advertiserName, clickUrl, altText, onUploaded, 
 
     try {
       // Validate inputs first — better to fail fast than after a Blob upload.
-      if (!advertiserName.trim()) throw new Error('Advertiser name is required before uploading');
+      if (!advertiserName.trim()) throw new Error('Partner name is required before uploading');
       if (!clickUrl.trim()) throw new Error('Click URL is required before uploading');
       try {
         new URL(clickUrl);
@@ -110,15 +110,15 @@ export function CreativeUpload({ advertiserName, clickUrl, altText, onUploaded, 
           onChange={handlePick}
           disabled={busy || disabled}
           className="block w-full text-sm text-gray-900
-                     file:mr-4 file:py-2 file:px-4 file:rounded-md
-                     file:border-0 file:text-sm file:font-medium
-                     file:bg-blue-600 file:text-white
-                     hover:file:bg-blue-700
+                     file:mr-4 file:h-9 file:px-4 file:rounded
+                     file:border file:border-orange-700 file:text-sm file:font-semibold
+                     file:bg-orange-600 file:text-white
+                     hover:file:bg-orange-700
                      disabled:opacity-50"
         />
       </label>
       {progress && (
-        <p className="text-sm text-blue-700" aria-live="polite">{progress}</p>
+        <p className="text-sm text-orange-700" aria-live="polite">{progress}</p>
       )}
       {error && (
         <p className="text-sm text-red-700" role="alert">{error}</p>

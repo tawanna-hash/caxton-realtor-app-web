@@ -7,9 +7,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { upload } from '@vercel/blob/client';
+import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
 import PageTitle from '@/components/ui/PageTitle';
-type Pub = 'austin' | 'san_antonio';
+type Pub = PublicationId;
 
 type Magazine = {
   id: number;
@@ -261,8 +262,11 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
               onChange={(e) => setPublication(e.target.value as Pub)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900"
             >
-              <option value="austin">RealtyLine Austin</option>
-              <option value="san_antonio">Newsline San Antonio</option>
+              {PUBLICATIONS.map((publication) => (
+                <option key={publication.id} value={publication.id}>
+                  {publication.label}
+                </option>
+              ))}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -321,7 +325,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
 
         {/* Cover */}
         <div className="bg-white border border-gray-200 rounded-md p-6 mb-6">
-          <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">Cover image</h2>
+          <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">Cover Image</h2>
           <div className="flex items-start gap-4">
             {coverUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -347,7 +351,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
 
         {/* PDF */}
         <div className="bg-white border border-gray-200 rounded-md p-6 mb-6">
-          <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">PDF (enables search)</h2>
+          <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">PDF (Enables Search)</h2>
           {readerUrl ? (
             <p className="text-sm text-gray-700 mb-2 break-all">{readerUrl}</p>
           ) : (

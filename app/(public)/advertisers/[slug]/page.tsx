@@ -12,10 +12,11 @@ import { notFound } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
 import { ensurePublicationColumn, getPublicationTheme } from '@/lib/publication-theme';
 import type { Advertiser, AdvertiserLocation, AdvertiserStaff } from '@/lib/advertisers';
-import { listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
+import { ensureBuilderInventorySchema, listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
 import { listEventPhotosByAdvertiser, type EventPhotoMonth } from '@/lib/event-photos';
 import { listFeatureArticlesByAdvertiser, type FeatureArticle } from '@/lib/feature-articles';
 import { getNews, type NewsArticle } from '@/lib/server/wp-news';
+import { BUILDER_CLIENTS } from '@/lib/builder-clients';
 import AdvertiserDetailClient from './AdvertiserDetailClient';
 
 // Advertiser detail pages change infrequently (edits happen via /admin, not
@@ -26,16 +27,33 @@ import AdvertiserDetailClient from './AdvertiserDetailClient';
 // background so edits surface within ~10 min without a manual purge.
 export const revalidate = 600;
 
+const COMMUNITY_MAPS: Record<
+  string,
+  { title: string; pdfUrl: string; previewImageUrl: string }
+> = {
+  'kb-home': {
+    title: 'KB Home Communities in the Austin Area',
+    pdfUrl: '/partners/kb-home/kb-home-austin-community-map.pdf',
+    previewImageUrl: '/partners/kb-home/kb-home-austin-community-map-preview.png',
+  },
+};
+
 // Pre-render the active advertiser slugs at build time. This makes the very
 // first visit after a deploy fast too — no on-demand render. New advertisers
 // fall through to on-demand rendering and get cached on first hit.
 export async function generateStaticParams() {
   try {
     await ensureSchema();
+    await ensureBuilderInventorySchema();
     const sql = getSql();
     const rows = (await sql`
       SELECT slug FROM advertisers
       WHERE COALESCE(status, 'advertiser') IN ('advertiser', 'active')
+        AND NOT EXISTS (
+          SELECT 1 FROM builder_page_visibility v
+          WHERE LOWER(TRIM(v.builder_name)) = LOWER(TRIM(advertisers.name))
+            AND v.public_enabled = false
+        )
     `) as unknown as Array<{ slug: string }>;
     return rows.map((r) => ({ slug: r.slug }));
   } catch {
@@ -53,20 +71,26 @@ type PageProps = {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   await ensureSchema();
+  await ensureBuilderInventorySchema();
   const sql = getSql();
   const rows = (await sql`
     SELECT name, tagline FROM advertisers
     WHERE slug = ${slug}
       AND COALESCE(status, 'advertiser') IN ('advertiser', 'active')
+      AND NOT EXISTS (
+        SELECT 1 FROM builder_page_visibility v
+        WHERE LOWER(TRIM(v.builder_name)) = LOWER(TRIM(advertisers.name))
+          AND v.public_enabled = false
+      )
     LIMIT 1
   `) as unknown as Array<{ name: string; tagline: string | null }>;
-  if (rows.length === 0) return { title: 'Advertiser not found' };
+  if (rows.length === 0) return { title: 'Partner not found' };
   const r = rows[0];
   // Per-page canonical — without this the root layout's `alternates.canonical:
   // '/'` propagates and every advertiser page tells Google its canonical URL
   // is the homepage. That made all advertiser pages compete with `/` in the
   // index instead of standing on their own (PSI SEO flag on every page).
-  const canonical = `/advertisers/${slug}`;
+  const canonical = `/partners/${slug}`;
   return {
     title: `${r.name} — Realty News Now`,
     description: r.tagline ?? `${r.name} on Realty News Now.`,
@@ -83,6 +107,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
   const { slug } = await params;
 
   await ensureSchema();
+  await ensureBuilderInventorySchema();
   await ensurePublicationColumn();
   const sql = getSql();
 
@@ -92,6 +117,11 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
     SELECT * FROM advertisers
     WHERE slug = ${slug}
       AND COALESCE(status, 'advertiser') IN ('advertiser', 'active')
+      AND NOT EXISTS (
+        SELECT 1 FROM builder_page_visibility v
+        WHERE LOWER(TRIM(v.builder_name)) = LOWER(TRIM(advertisers.name))
+          AND v.public_enabled = false
+      )
     LIMIT 1
   `) as unknown as Advertiser[];
   if (rows.length === 0) notFound();
@@ -163,7 +193,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
       location_ids: staffLocMap.get(s.id) ?? [],
     }));
   } catch (err) {
-    console.warn('[advertiser detail] locations/staff load failed:', err);
+    console.warn('[partner detail] locations/staff load failed:', err);
   }
 
   // Event photo coverage the admin tagged with this advertiser. Best-effort:
@@ -172,7 +202,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
   try {
     eventPhotos = await listEventPhotosByAdvertiser(advertiser.id, advertiser.name);
   } catch (err) {
-    console.warn('[advertiser detail] event photos load failed:', err);
+    console.warn('[partner detail] event photos load failed:', err);
   }
 
   // Editorial features the admin wrote for this advertiser. Best-effort for the
@@ -181,7 +211,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
   try {
     featureArticles = await listFeatureArticlesByAdvertiser(advertiser.id);
   } catch (err) {
-    console.warn('[advertiser detail] feature articles load failed:', err);
+    console.warn('[partner detail] feature articles load failed:', err);
   }
 
   // Auto-match WordPress news articles whose headline or summary mentions
@@ -228,10 +258,15 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
       });
     }
   } catch (err) {
-    console.warn('[advertiser detail] WP news auto-match failed:', err);
+    console.warn('[partner detail] WP news auto-match failed:', err);
   }
 
   const theme = getPublicationTheme(advertiser.publication);
+  const isBuilderDeveloper =
+    inventoryRows.length > 0 ||
+    BUILDER_CLIENTS.some(
+      (client) => client.value !== 'other' && client.value === advertiser.slug,
+    );
 
   return (
     <AdvertiserDetailClient
@@ -241,6 +276,8 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
       staff={staff}
       eventPhotos={eventPhotos}
       featureArticles={featureArticles}
+      isBuilderDeveloper={isBuilderDeveloper}
+      communityMap={COMMUNITY_MAPS[advertiser.slug] ?? null}
       theme={{
         accent: theme.primaryColor,
         label:
@@ -248,8 +285,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
             ? 'Newsline San Antonio'
             : 'RealtyLine Austin',
       }}
-      backHref="/advertisers"
+      backHref="/partners"
     />
   );
 }
-

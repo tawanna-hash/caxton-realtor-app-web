@@ -30,6 +30,7 @@ import QRCode from 'qrcode';
 import type { Magazine } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
 import HotspotLayer from './HotspotLayer';
+import ReaderLinksPanel from './ReaderLinksPanel';
 import type { PublicHotspot } from '@/lib/hotspots';
 
 // ---- Phase 6 (Option C): PDF-annotation link click tracking ----
@@ -104,6 +105,41 @@ function matchHotspotByUrl(
   }
   return null;
 }
+
+// Decide whether a PDF-embedded link annotation should be suppressed on a
+// page that also has manual admin-drawn hotspots. Rules:
+//   1. If the overlay's URL matches any manual link/mls hotspot on the page,
+//      the manual hotspot wins — the PDF overlay is redundant and would
+//      swallow clicks because it renders on top.
+//   2. If the overlay's rectangle geometrically contains at least one manual
+//      hotspot on the page (e.g. a page-wide storefront link with email
+//      hotspots sitting inside it), the smaller manual hotspots would never
+//      catch a click — suppress the overlay so they can.
+// Coordinates: overlay rect is in CSS pixels; manual hotspots are fractions
+// of displayWidth/displayHeight.
+function shouldSuppressOverlay(
+  overlay: LinkOverlay,
+  pageHotspots: PublicHotspot[],
+  displayWidth: number,
+  displayHeight: number,
+): boolean {
+  if (matchHotspotByUrl(overlay.url, pageHotspots)) return true;
+  if (displayWidth <= 0 || displayHeight <= 0) return false;
+  // Small epsilon so a hotspot flush with a page-wide overlay still counts.
+  const eps = 1;
+  const ox1 = overlay.x - eps;
+  const oy1 = overlay.y - eps;
+  const ox2 = overlay.x + overlay.w + eps;
+  const oy2 = overlay.y + overlay.h + eps;
+  for (const h of pageHotspots) {
+    const hx1 = h.x * displayWidth;
+    const hy1 = h.y * displayHeight;
+    const hx2 = hx1 + h.w * displayWidth;
+    const hy2 = hy1 + h.h * displayHeight;
+    if (hx1 >= ox1 && hy1 >= oy1 && hx2 <= ox2 && hy2 <= oy2) return true;
+  }
+  return false;
+}
 // ---- end Phase 6 (Option C) helpers ----
 
 
@@ -113,6 +149,10 @@ interface InteractiveMagazineReaderProps {
   onClose: () => void;
   /** Optional handler for the reader's "home" link in the top chrome. Defaults to window.location.assign('/'). */
   onHome?: () => void;
+  /** Zero-indexed page to open the reader on. Used to restore position after refresh. */
+  initialPage?: number;
+  /** Fires whenever the current page changes so the parent can persist it (URL / storage). */
+  onPageChange?: (page: number) => void;
 }
 
 type ActionMode = null | 'share' | 'qr' | 'download' | 'email' | 'embed' | 'search';
@@ -265,6 +305,8 @@ export default function InteractiveMagazineReader({
   brandColor,
   onClose,
   onHome,
+  initialPage,
+  onPageChange,
 }: InteractiveMagazineReaderProps) {
   const handleHome = () => {
     if (onHome) {
@@ -277,7 +319,14 @@ export default function InteractiveMagazineReader({
     }
   };
   const [doc, setDoc] = useState<PdfJsDoc | null>(null);
-  const [currentPage, setCurrentPage] = useState(0); // zero-indexed
+  // Zero-indexed. Restored from ?page= via prop from MagazineClient.
+  const clampedInitialPage = (() => {
+    const n = initialPage ?? 0;
+    if (!Number.isFinite(n)) return 0;
+    const max = Math.max(0, magazine.page_count - 1);
+    return Math.max(0, Math.min(max, Math.floor(n)));
+  })();
+  const [currentPage, setCurrentPage] = useState(clampedInitialPage);
   const [zoomIdx, setZoomIdx] = useState<number>(() => getDefaultZoomIdx());
   const [actionMode, setActionMode] = useState<ActionMode>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -388,6 +437,16 @@ export default function InteractiveMagazineReader({
       setPanY(0);
     });
   }, [zoomIdx, currentPage]);
+
+  // Notify parent (MagazineClient) whenever the current page changes so it
+  // can persist ?page=<n> to the URL. On refresh MagazineClient reads that
+  // param back and passes it in as initialPage, restoring position.
+  useEffect(() => {
+    if (onPageChange) onPageChange(currentPage);
+    // Only fire when the page changes; onPageChange identity is stable via
+    // useCallback in the parent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   // ---- Load PDF on mount ----
   useEffect(() => {
@@ -1256,7 +1315,7 @@ export default function InteractiveMagazineReader({
                 <path d="m21 21-4.3-4.3" />
               </svg>
             </button>
-            <button onClick={zoomOut} disabled={zoomIdx === 0} aria-label="Zoom out" className="text-white/80 hover:text-white p-1.5 disabled:opacity-30 min-w-[44px] min-h-[44px] flex items-center justify-center">
+            <button onClick={zoomOut} aria-label="Zoom out" aria-hidden={zoomIdx === 0} tabIndex={zoomIdx === 0 ? -1 : 0} className={`text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center ${zoomIdx === 0 ? 'invisible pointer-events-none' : ''}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3M8 11h6" />
@@ -1281,7 +1340,7 @@ export default function InteractiveMagazineReader({
                 <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
               </svg>
             </button>
-            <button onClick={zoomIn} disabled={zoomIdx === ZOOM_LEVELS.length - 1} aria-label="Zoom in" className="text-white/80 hover:text-white p-1.5 disabled:opacity-30 min-w-[44px] min-h-[44px] flex items-center justify-center">
+            <button onClick={zoomIn} aria-label="Zoom in" aria-hidden={zoomIdx === ZOOM_LEVELS.length - 1} tabIndex={zoomIdx === ZOOM_LEVELS.length - 1 ? -1 : 0} className={`text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center ${zoomIdx === ZOOM_LEVELS.length - 1 ? 'invisible pointer-events-none' : ''}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3M11 8v6M8 11h6" />
@@ -1301,27 +1360,41 @@ export default function InteractiveMagazineReader({
       {/* Side arrows — floating, vertically centered */}
       {chromeVisible && doc && (
         <>
-          <button
-            onClick={goPrev}
-            disabled={currentSpreadIdx === 0}
-            aria-label="Previous spread"
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-black/50 text-white/90 hover:bg-black/70 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center backdrop-blur"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-          </button>
-          <button
-            onClick={goNext}
-            disabled={currentSpreadIdx >= spreads.length - 1}
-            aria-label="Next spread"
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-black/50 text-white/90 hover:bg-black/70 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center backdrop-blur"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </button>
+          {currentSpreadIdx > 0 && (
+            <button
+              onClick={goPrev}
+              aria-label="Previous spread"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-black/50 text-white/90 hover:bg-black/70 flex items-center justify-center backdrop-blur"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+          )}
+          {currentSpreadIdx < spreads.length - 1 && (
+            <button
+              onClick={goNext}
+              aria-label="Next spread"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-black/50 text-white/90 hover:bg-black/70 flex items-center justify-center backdrop-blur"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+          )}
         </>
+      )}
+
+      {/* Interactive links panel — pill + slide-out sidebar. Only shown when
+          the visible spread actually has hotspots, so pages with none stay
+          uncluttered. */}
+      {chromeVisible && (
+        <ReaderLinksPanel
+          hotspots={hotspots.filter((h) =>
+            h.page_idx === currentSpread.left || h.page_idx === currentSpread.right
+          )}
+          brandColor={brandColor}
+        />
       )}
 
       {/* Bottom chrome — floating */}
@@ -1443,11 +1516,16 @@ function PageCanvas({
   canvasRef, overlays, pageNum, trackContext, transitionClass,
   hotspots, displayWidth, displayHeight,
 }: PageCanvasProps) {
+  // Suppress PDF-embedded link annotations that would eat clicks meant for
+  // manual hotspots on the same page. See shouldSuppressOverlay above.
+  const visibleOverlays = overlays.filter(
+    (o) => !shouldSuppressOverlay(o, hotspots, displayWidth, displayHeight),
+  );
   return (
     <div className="relative inline-block shadow-2xl">
       <canvas ref={canvasRef} className="block bg-white" />
       <HotspotLayer hotspots={hotspots} displayWidth={displayWidth} displayHeight={displayHeight} />
-      {overlays.map((o, i) => (
+      {visibleOverlays.map((o, i) => (
         <a
           key={i}
           href={o.url}

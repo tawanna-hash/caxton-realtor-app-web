@@ -91,53 +91,127 @@ const PATCHABLE_FIELDS: (keyof MailingContactInput)[] = [
 
 export async function updateMailingContact(id: string, input: MailingContactInput): Promise<MailingContactRow | null> {
   const sql = getSql();
-  // Apply each provided field individually with a typed UPDATE.
+
+  const existingRows = (
+    await sql`SELECT * FROM mailing_contacts WHERE id = ${id}`
+  ) as unknown as MailingContactRow[];
+  const existing = existingRows[0];
+  if (!existing) return null;
+
+  const addressFields = ['address', 'address_2', 'city', 'state', 'zip'] as const;
+  const addressChanged = addressFields.some((field) => {
+    if (!(field in input)) return false;
+
+    const incoming = input[field];
+    const nextValue = incoming === null ? null : normString(incoming);
+    return nextValue !== existing[field];
+  });
+
   for (const field of PATCHABLE_FIELDS) {
     if (!(field in input)) continue;
+
     const raw = input[field];
+
     if (field === 'segment') {
-      if (!isMailingSegment(raw)) continue;
-      await sql`UPDATE mailing_contacts SET segment = ${raw} WHERE id = ${id}`;
+      if (isMailingSegment(raw)) {
+        await sql`UPDATE mailing_contacts SET segment = ${raw} WHERE id = ${id}`;
+      }
       continue;
     }
+
     if (field === 'tags') {
       if (Array.isArray(raw)) {
         await sql`UPDATE mailing_contacts SET tags = ${JSON.stringify(raw)}::jsonb WHERE id = ${id}`;
       }
       continue;
     }
+
     if (field === 'advertiser_id') {
-      const v = typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
-      await sql`UPDATE mailing_contacts SET advertiser_id = ${v} WHERE id = ${id}`;
+      const value = typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
+      await sql`UPDATE mailing_contacts SET advertiser_id = ${value} WHERE id = ${id}`;
       continue;
     }
+
     if (field === 'first_name') {
-      const v = normString(raw);
-      if (v) await sql`UPDATE mailing_contacts SET first_name = ${v} WHERE id = ${id}`;
+      const value = normString(raw);
+      if (value) {
+        await sql`UPDATE mailing_contacts SET first_name = ${value} WHERE id = ${id}`;
+      }
       continue;
     }
-    const v = raw === null ? null : normString(raw);
+
+    const value = raw === null ? null : normString(raw);
+
     switch (field) {
-      case 'last_name':      await sql`UPDATE mailing_contacts SET last_name      = ${v} WHERE id = ${id}`; break;
-      case 'email':          await sql`UPDATE mailing_contacts SET email          = ${v} WHERE id = ${id}`; break;
-      case 'phone':          await sql`UPDATE mailing_contacts SET phone          = ${v} WHERE id = ${id}`; break;
-      case 'company':        await sql`UPDATE mailing_contacts SET company        = ${v} WHERE id = ${id}`; break;
-      case 'title':          await sql`UPDATE mailing_contacts SET title          = ${v} WHERE id = ${id}`; break;
-      case 'license_number': await sql`UPDATE mailing_contacts SET license_number = ${v} WHERE id = ${id}`; break;
-      case 'address':        await sql`UPDATE mailing_contacts SET address        = ${v} WHERE id = ${id}`; break;
-      case 'address_2':      await sql`UPDATE mailing_contacts SET address_2      = ${v} WHERE id = ${id}`; break;
-      case 'city':           await sql`UPDATE mailing_contacts SET city           = ${v} WHERE id = ${id}`; break;
-      case 'state':          await sql`UPDATE mailing_contacts SET state          = ${v} WHERE id = ${id}`; break;
-      case 'zip':            await sql`UPDATE mailing_contacts SET zip            = ${v} WHERE id = ${id}`; break;
-      case 'website':        await sql`UPDATE mailing_contacts SET website        = ${v} WHERE id = ${id}`; break;
-      case 'notes':          await sql`UPDATE mailing_contacts SET notes          = ${v} WHERE id = ${id}`; break;
-      case 'source':         await sql`UPDATE mailing_contacts SET source         = ${v} WHERE id = ${id}`; break;
+      case 'last_name':
+        await sql`UPDATE mailing_contacts SET last_name = ${value} WHERE id = ${id}`;
+        break;
+      case 'email':
+        await sql`UPDATE mailing_contacts SET email = ${value} WHERE id = ${id}`;
+        break;
+      case 'phone':
+        await sql`UPDATE mailing_contacts SET phone = ${value} WHERE id = ${id}`;
+        break;
+      case 'company':
+        await sql`UPDATE mailing_contacts SET company = ${value} WHERE id = ${id}`;
+        break;
+      case 'title':
+        await sql`UPDATE mailing_contacts SET title = ${value} WHERE id = ${id}`;
+        break;
+      case 'license_number':
+        await sql`UPDATE mailing_contacts SET license_number = ${value} WHERE id = ${id}`;
+        break;
+      case 'address':
+        await sql`UPDATE mailing_contacts SET address = ${value} WHERE id = ${id}`;
+        break;
+      case 'address_2':
+        await sql`UPDATE mailing_contacts SET address_2 = ${value} WHERE id = ${id}`;
+        break;
+      case 'city':
+        await sql`UPDATE mailing_contacts SET city = ${value} WHERE id = ${id}`;
+        break;
+      case 'state':
+        await sql`UPDATE mailing_contacts SET state = ${value} WHERE id = ${id}`;
+        break;
+      case 'zip':
+        await sql`UPDATE mailing_contacts SET zip = ${value} WHERE id = ${id}`;
+        break;
+      case 'website':
+        await sql`UPDATE mailing_contacts SET website = ${value} WHERE id = ${id}`;
+        break;
+      case 'notes':
+        await sql`UPDATE mailing_contacts SET notes = ${value} WHERE id = ${id}`;
+        break;
+      case 'source':
+        await sql`UPDATE mailing_contacts SET source = ${value} WHERE id = ${id}`;
+        break;
     }
   }
-  // After applying caller's patches, reclassify so address/email edits
-  // automatically move the row into / out of the email-only segment.
+
+  if (addressChanged) {
+    await sql`
+      UPDATE mailing_contacts
+      SET
+        addr_status = 'Pending',
+        addr_verified_at = NULL,
+        addr_usps_normalized = NULL,
+        lat = NULL,
+        lon = NULL,
+        geocoded_at = NULL,
+        distance_abor_mi = NULL,
+        distance_fivepoints_mi = NULL,
+        distance_sabor_mi = NULL,
+        updated_at = NOW()
+      WHERE id = ${id}
+    `;
+  }
+
   await reclassifySegment(id);
-  const rows = (await sql`SELECT * FROM mailing_contacts WHERE id = ${id}`) as unknown as MailingContactRow[];
+
+  const rows = (
+    await sql`SELECT * FROM mailing_contacts WHERE id = ${id}`
+  ) as unknown as MailingContactRow[];
+
   return rows[0] ?? null;
 }
 

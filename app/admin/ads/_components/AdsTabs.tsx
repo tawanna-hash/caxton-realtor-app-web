@@ -34,22 +34,24 @@ export function AdsTabs({ current, catalogCount, creativesCount }: Props) {
   ];
 
   return (
-    <div className="border-b border-gray-200">
-      <nav className="-mb-px flex gap-6">
+    <div className="border-b border-gray-300">
+      <nav className="-mb-px flex gap-5" aria-label="Inventory views">
         {tabs.map((t) => {
           const isActive = current === t.key;
           return (
             <button
               key={t.key}
               onClick={() => go(t.key)}
-              className={`py-3 border-b-2 text-sm font-medium ${
+              type="button"
+              className={`h-9 border-b-2 px-1 text-sm font-medium ${
                 isActive
-                  ? 'border-blue-600 text-blue-700'
+                  ? 'border-orange-600 text-orange-700'
                   : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300'
               }`}
+              aria-current={isActive ? 'page' : undefined}
             >
               {t.label}
-              <span className="ml-2 inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
+              <span className="ml-2 inline-block rounded bg-gray-100 px-1.5 py-0.5 text-xs tabular-nums text-gray-700">
                 {t.count}
               </span>
             </button>

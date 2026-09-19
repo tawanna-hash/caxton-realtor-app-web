@@ -5,7 +5,7 @@
 
 import { PUB_META, type PubKey } from '@/lib/pub-meta';
 
-export type EventsView = 'month' | 'upcoming';
+type EventsView = 'month' | 'upcoming';
 
 interface EventsViewToggleProps {
   pub: PubKey;

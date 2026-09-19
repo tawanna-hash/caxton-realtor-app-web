@@ -138,7 +138,10 @@ export default function NewsletterCTA({
               disabled={submitting}
               // BUG-19: relied on focus:outline-none with no visible :focus-visible fallback.
               // Add an explicit focus-visible ring so keyboard users see focus.
-              className="flex-1 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-700/40 focus:border-brand-700 placeholder:text-[#d1d5db] disabled:opacity-60"
+              // min-w-0 lets flex-1 actually shrink the input below its
+              // intrinsic content width; without it, the placeholder + button
+              // combined push the row past its max-w-md parent on 375px.
+              className="flex-1 min-w-0 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-700/40 focus:border-brand-700 placeholder:text-[#d1d5db] disabled:opacity-60"
             />
             <button
               onClick={handleSubmit}
@@ -152,7 +155,7 @@ export default function NewsletterCTA({
           {error && <p className="text-center text-sm text-red-600 mt-3">{error}</p>}
           <div className="flex items-center justify-center gap-6 mt-4 text-xs uppercase tracking-wider text-gray-600 font-medium">
             <a href="/newsletter" className="border-b border-gray-400 pb-0.5">
-              All Newsletters
+              All Emails
             </a>
             <a href="/privacy" className="border-b border-gray-400 pb-0.5">
               Privacy Policy

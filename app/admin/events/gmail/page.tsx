@@ -4,7 +4,8 @@
 //
 // The scanner (lib/server/gmail-event-scanner.ts) drops Gemini detections here
 // as hidden events; approving one flips hidden=false and it appears on the
-// public calendar for its publication. Rejecting deletes the row.
+// public calendar for its publication. Rejecting removes the row from review
+// while retaining its source-message tombstone so it cannot be queued again.
 //
 // Styling and data-loading follow app/admin/events/page.tsx so the two review
 // surfaces stay visually consistent.
@@ -19,7 +20,8 @@ import { useSearchParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import PageTitle from '@/components/ui/PageTitle';
-import { PUBLICATION_FILTER_LABELS, type PublicationId } from '@/lib/publications';
+import ContentPagination from '@/app/admin/_components/ContentPagination';
+import { PUBLICATION_FILTER_LABELS, PUBLICATION_IDS, type PublicationId } from '@/lib/publications';
 
 type GmailEvent = {
   id: number;
@@ -35,6 +37,23 @@ type GmailEvent = {
   organizerEmail: string | null;
   confidence: number | null;
 };
+
+type SortKey = 'title' | 'when' | 'location' | 'organizer' | 'publication' | 'confidence';
+type SortDir = 'asc' | 'desc';
+
+/** Comparator that puts nulls/undefineds last regardless of direction. */
+function compareWithNullsLast<T>(a: T | null | undefined, b: T | null | undefined, dir: SortDir): number {
+  const aNull = a === null || a === undefined || a === '';
+  const bNull = b === null || b === undefined || b === '';
+  if (aNull && bNull) return 0;
+  if (aNull) return 1;
+  if (bNull) return -1;
+  const av = a as unknown as number | string;
+  const bv = b as unknown as number | string;
+  if (av < bv) return dir === 'asc' ? -1 : 1;
+  if (av > bv) return dir === 'asc' ? 1 : -1;
+  return 0;
+}
 
 type Mailbox = { emailAddress: string; scope: string; updatedAt: string | null } | null;
 
@@ -55,7 +74,7 @@ type ScanCounts = {
   errors: number;
 };
 
-const PUB_OPTIONS: PublicationId[] = ['austin', 'san_antonio'];
+const PUB_OPTIONS: readonly PublicationId[] = PUBLICATION_IDS;
 
 // Google's error codes are terse; map the ones an admin can actually act on.
 const OAUTH_ERRORS: Record<string, string> = {
@@ -99,6 +118,14 @@ function confidenceStyle(c: number): string {
   return 'bg-gray-100 text-gray-700';
 }
 
+/** Gmail-scanned events don't currently carry a stored confidence score —
+ * the API omits the field entirely, so `ev.confidence` is `undefined` at
+ * runtime even though the type says `number | null`. Treat anything that
+ * isn't a finite number as "not available" rather than rendering NaN%. */
+function confidenceLabel(c: number | null | undefined): string {
+  return typeof c === 'number' && Number.isFinite(c) ? `${Math.round(c * 100)}%` : '—';
+}
+
 function LoadingShell() {
   return <div className="max-w-6xl mx-auto px-6 py-12 text-sm text-gray-500">Loading...</div>;
 }
@@ -123,8 +150,17 @@ function GmailEventsQueue() {
   const [toast, setToast] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [dedupeBusy, setDedupeBusy] = useState(false);
 
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>('when');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
   const [drawerFor, setDrawerFor] = useState<GmailEvent | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [source, setSource] = useState<SourceEmail | null>(null);
   const [sourceError, setSourceError] = useState<string | null>(null);
 
@@ -168,7 +204,7 @@ function GmailEventsQueue() {
   };
 
   const handleReject = async (ev: GmailEvent) => {
-    if (!window.confirm(`Reject "${ev.title}"? The queued event is deleted.`)) return;
+    if (!window.confirm(`Reject "${ev.title}" and remove it from the review queue?`)) return;
     setBusyId(ev.id);
     try {
       await adminApi.rejectGmailEvent(ev.id);
@@ -191,6 +227,102 @@ function GmailEventsQueue() {
       alert(err instanceof Error ? err.message : String(err));
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const toggleRow = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      if (prev.size === items.length && items.length > 0) return new Set();
+      return new Set(items.map((e) => e.id));
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const n = selectedIds.size;
+    if (!window.confirm(`Delete ${n} pending event${n === 1 ? '' : 's'} permanently? This cannot be undone.`)) return;
+    setBulkBusy(true);
+    setError(null);
+    try {
+      const res = await adminApi.bulkRejectGmailEvents(Array.from(selectedIds));
+      setToast(`Deleted ${res.deleted} event${res.deleted === 1 ? '' : 's'}${res.missing > 0 ? ` (${res.missing} already gone)` : ''}.`);
+      setSelectedIds(new Set());
+      reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Bulk delete failed');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const toggleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedItems = [...items].sort((a, b) => {
+    switch (sortKey) {
+      case 'title':
+        return compareWithNullsLast(a.title?.toLowerCase(), b.title?.toLowerCase(), sortDir);
+      case 'when':
+        return compareWithNullsLast(a.startDate, b.startDate, sortDir);
+      case 'location':
+        return compareWithNullsLast(a.location?.toLowerCase(), b.location?.toLowerCase(), sortDir);
+      case 'organizer':
+        return compareWithNullsLast(a.organizer?.toLowerCase(), b.organizer?.toLowerCase(), sortDir);
+      case 'publication':
+        return compareWithNullsLast(
+          PUBLICATION_FILTER_LABELS[a.publication],
+          PUBLICATION_FILTER_LABELS[b.publication],
+          sortDir,
+        );
+      case 'confidence':
+        return compareWithNullsLast(a.confidence, b.confidence, sortDir);
+      default:
+        return 0;
+    }
+  });
+  const totalPages = Math.max(1, Math.ceil(sortedItems.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = sortedItems.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const handleDownloadPdf = () => {
+    setShareMenuOpen(false);
+    // Admin route is cookie-authed — a direct navigation works.
+    window.location.assign('/api/admin/events/gmail/pdf');
+  };
+
+  const handleCopyShareLink = async () => {
+    setShareLoading(true);
+    try {
+      const res = await adminApi.createGmailShareLink();
+      if (!res?.url) throw new Error('No URL returned');
+      try {
+        await navigator.clipboard.writeText(res.url);
+        setToast(`Share link copied — expires in ${Math.round(res.expiresInSeconds / 86400)} days.`);
+      } catch {
+        window.prompt('Copy this share link:', res.url);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setShareLoading(false);
+      setShareMenuOpen(false);
     }
   };
 
@@ -217,6 +349,31 @@ function GmailEventsQueue() {
     }
   };
 
+  const handleDeleteDuplicates = async () => {
+    if (
+      !window.confirm(
+        'Permanently remove duplicate Gmail-detected events? One published or oldest event will be kept for each matching title and date.',
+      )
+    ) {
+      return;
+    }
+    setDedupeBusy(true);
+    setToast(null);
+    try {
+      const result = await adminApi.deleteDuplicateGmailEvents();
+      setToast(
+        result.deletedCount === 0
+          ? 'No duplicate Gmail events were found.'
+          : `Removed ${result.deletedCount} duplicate Gmail event${result.deletedCount === 1 ? '' : 's'}.`,
+      );
+      reload();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDedupeBusy(false);
+    }
+  };
+
   const openDrawer = async (ev: GmailEvent) => {
     setDrawerFor(ev);
     setSource(null);
@@ -233,16 +390,60 @@ function GmailEventsQueue() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
-      <div className="flex items-start justify-between gap-4 mb-6">
+    <div className="content-admin-shell">
+      <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
         <div>
           <PageTitle size="md">Gmail Event Review</PageTitle>
           <p className="text-sm text-gray-500 mt-1">
-            Events the scanner found in mail from advertisers and curated association
+            Events the scanner found in mail from partners and curated association
             domains. Approving publishes to the public calendar for the selected publication.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleDeleteDuplicates}
+            disabled={dedupeBusy}
+            className="px-4 py-2 bg-white text-red-700 text-sm font-medium rounded-md border border-red-300 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {dedupeBusy ? 'Removing…' : 'Remove duplicates'}
+          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShareMenuOpen((v) => !v)}
+              disabled={shareLoading}
+              className="px-4 py-2 bg-white text-brand-700 text-sm font-medium rounded-md border border-brand-700 hover:bg-gray-50 transition-colors disabled:opacity-40 whitespace-nowrap"
+              aria-haspopup="menu"
+              aria-expanded={shareMenuOpen}
+            >
+              {shareLoading ? 'Working…' : 'Share'}
+            </button>
+            {shareMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-10"
+                onMouseLeave={() => setShareMenuOpen(false)}
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={handleDownloadPdf}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-gray-50"
+                >
+                  Download PDF
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={handleCopyShareLink}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-gray-50 border-t border-gray-100"
+                >
+                  Copy share link
+                </button>
+              </div>
+            )}
+          </div>
           {mailbox && (
             <button
               type="button"
@@ -265,6 +466,13 @@ function GmailEventsQueue() {
           </a>
         </div>
       </div>
+
+      <section className="content-admin-summary" aria-label="Gmail event review summary">
+        <div><strong>{items.length.toLocaleString()}</strong><span>Awaiting review</span></div>
+        <div><strong>{items.filter((item) => item.confidence !== null && item.confidence >= 0.8).length.toLocaleString()}</strong><span>High confidence</span></div>
+        <div><strong>{items.filter((item) => !item.startDate).length.toLocaleString()}</strong><span>Date needed</span></div>
+        <div><strong>{selectedIds.size.toLocaleString()}</strong><span>Selected</span></div>
+      </section>
 
       <div className="mb-4 text-sm">
         {mailbox ? (
@@ -322,23 +530,148 @@ function GmailEventsQueue() {
           Nothing awaiting review. The scanner runs daily; use &ldquo;Scan now&rdquo; to check immediately.
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
+        <>
+        {selectedIds.size > 0 && (
+          <div className="mb-3 flex items-center gap-3 flex-wrap bg-brand-700/5 border border-brand-700/20 rounded-md px-3 py-2 text-sm">
+            <span className="font-medium text-gray-800">{selectedIds.size} selected</span>
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              disabled={bulkBusy}
+              className="px-3 py-1.5 rounded-md text-white bg-red-600 hover:bg-red-700 text-xs font-medium disabled:opacity-50"
+            >
+              {bulkBusy ? 'Deleting…' : `Delete selected (${selectedIds.size})`}
+            </button>
+            <button
+              type="button"
+              onClick={clearSelection}
+              disabled={bulkBusy}
+              className="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-medium disabled:opacity-50"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
+        {/* mobile card list */}
+        <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+          <li className="flex items-center gap-2 px-3 py-2 bg-gray-50">
+            <input
+              id="gmail-select-all-mobile"
+              type="checkbox"
+              checked={items.length > 0 && selectedIds.size === items.length}
+              ref={(el) => {
+                if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < items.length;
+              }}
+              onChange={toggleSelectAll}
+              className="h-4 w-4 rounded border-gray-300 text-brand-700 focus:ring-brand-700"
+            />
+            <label htmlFor="gmail-select-all-mobile" className="text-xs font-medium text-gray-700">Select all</label>
+          </li>
+          {pageItems.map((ev) => (
+            <li key={`m-${ev.id}`} className="p-3">
+              <div className="flex items-start gap-3">
+                <input
+                  id={`gmail-select-mobile-${ev.id}`}
+                  type="checkbox"
+                  checked={selectedIds.has(ev.id)}
+                  onChange={() => toggleRow(ev.id)}
+                  aria-label={`Select ${ev.title}`}
+                  className="h-4 w-4 mt-1 rounded border-gray-300 text-brand-700 focus:ring-brand-700"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium text-gray-900 line-clamp-2">{ev.title}</p>
+                    <span className={`shrink-0 inline-block px-2 py-0.5 rounded-md text-xs font-medium ${confidenceStyle(ev.confidence ?? 0)}`}>
+                      {confidenceLabel(ev.confidence)}
+                    </span>
+                  </div>
+                  {ev.description && (
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{ev.description}</p>
+                  )}
+                  <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                    <dt className="text-gray-500">When</dt>
+                    <dd className="text-gray-700">
+                      {ev.startDate ? formatWhen(ev.startDate, ev.endDate) : <span className="text-amber-700">Date TBD</span>}
+                    </dd>
+                    <dt className="text-gray-500">Location</dt>
+                    <dd className="text-gray-700">{ev.location || '—'}</dd>
+                    <dt className="text-gray-500">Host</dt>
+                    <dd className="text-gray-700">{ev.organizer || '—'}</dd>
+                  </dl>
+                  <div className="mt-2">
+                    <label className="sr-only" htmlFor={`pub-mobile-${ev.id}`}>Publication for {ev.title}</label>
+                    <select
+                      id={`pub-mobile-${ev.id}`}
+                      value={ev.publication}
+                      disabled={busyId === ev.id}
+                      onChange={(e) => handlePublicationChange(ev, e.target.value as PublicationId)}
+                      className="text-xs font-semibold px-2 py-1 rounded-md border bg-brand-700/10 text-brand-700 border-brand-700/20 disabled:opacity-50"
+                    >
+                      {PUB_OPTIONS.map((pp) => (
+                        <option key={pp} value={pp}>{PUBLICATION_FILTER_LABELS[pp]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mt-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => openDrawer(ev)}
+                      className="text-brand-700 hover:underline break-all"
+                    >
+                      {senderAddress(ev.organizerEmail)}
+                    </button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                    <button onClick={() => handleApprove(ev)} disabled={busyId === ev.id} className="text-green-700 hover:text-green-900 font-medium disabled:opacity-50">Approve</button>
+                    <Link href={`/admin/events/${ev.id}`} className="text-brand-700 hover:underline">Edit</Link>
+                    <button onClick={() => handleReject(ev)} disabled={busyId === ev.id} className="text-red-600 hover:text-red-800 disabled:opacity-50">Reject</button>
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden sm:block bg-white border border-gray-200 rounded-md overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Event</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">When</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Host</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Publication</th>
+                <th className="px-3 py-3 w-10">
+                  <label className="sr-only" htmlFor="gmail-select-all">Select all</label>
+                  <input
+                    id="gmail-select-all"
+                    type="checkbox"
+                    checked={items.length > 0 && selectedIds.size === items.length}
+                    ref={(el) => {
+                      if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < items.length;
+                    }}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 rounded border-gray-300 text-brand-700 focus:ring-brand-700"
+                  />
+                </th>
+                <SortableTh label="Event"       k="title"       sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
+                <SortableTh label="When"        k="when"        sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
+                <SortableTh label="Location"    k="location"    sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
+                <SortableTh label="Host"        k="organizer"   sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
+                <SortableTh label="Publication" k="publication" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Source Email</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Confidence</th>
+                <SortableTh label="Confidence"  k="confidence"  sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
                 <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {items.map((ev) => (
+              {pageItems.map((ev) => (
                 <tr key={ev.id}>
+                  <td className="px-3 py-3 w-10">
+                    <label className="sr-only" htmlFor={`gmail-select-${ev.id}`}>Select row</label>
+                    <input
+                      id={`gmail-select-${ev.id}`}
+                      type="checkbox"
+                      checked={selectedIds.has(ev.id)}
+                      onChange={() => toggleRow(ev.id)}
+                      className="h-4 w-4 rounded border-gray-300 text-brand-700 focus:ring-brand-700"
+                    />
+                  </td>
                   <td className="px-4 py-3 max-w-xs">
                     <div className="font-medium text-gray-900">{ev.title}</div>
                     {ev.description && (
@@ -385,7 +718,7 @@ function GmailEventsQueue() {
                     <span
                       className={`inline-block px-2 py-0.5 rounded-md text-xs font-medium ${confidenceStyle(ev.confidence ?? 0)}`}
                     >
-                      {ev.confidence === null ? '—' : `${Math.round(ev.confidence * 100)}%`}
+                      {confidenceLabel(ev.confidence)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
@@ -415,6 +748,14 @@ function GmailEventsQueue() {
             </tbody>
           </table>
         </div>
+        <ContentPagination
+          count={sortedItems.length}
+          page={safePage}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+        />
+        </>
       )}
 
       {drawerFor && (
@@ -482,5 +823,41 @@ function SourceDrawer({
         </div>
       </aside>
     </div>
+  );
+}
+
+/** Clickable table header cell that shows the current sort state. */
+function SortableTh({
+  label,
+  k,
+  sortKey,
+  sortDir,
+  onToggle,
+}: {
+  label: string;
+  k: SortKey;
+  sortKey: SortKey;
+  sortDir: SortDir;
+  onToggle: (k: SortKey) => void;
+}) {
+  const active = sortKey === k;
+  const indicator = active ? (sortDir === 'asc' ? '▲' : '▼') : '↕';
+  return (
+    <th
+      className="text-left px-4 py-3 font-medium text-gray-700"
+      aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+    >
+      <button
+        type="button"
+        onClick={() => onToggle(k)}
+        className={`inline-flex items-center gap-1 hover:text-brand-700 transition-colors ${
+          active ? 'text-brand-700' : 'text-gray-700'
+        }`}
+        aria-label={`Sort by ${label}`}
+      >
+        <span>{label}</span>
+        <span className={`text-xs ${active ? 'opacity-100' : 'opacity-40'}`}>{indicator}</span>
+      </button>
+    </th>
   );
 }

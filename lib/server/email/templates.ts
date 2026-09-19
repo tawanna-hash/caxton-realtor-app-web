@@ -105,41 +105,6 @@ Newsline San Antonio
 }
 
 /**
- * Render a simple welcome email after first email verification.
- */
-export function renderWelcomeEmail(opts: {
-  firstName: string;
-  appUrl: string;
-}): MagicLinkTemplate {
-  const subject = 'Welcome to Caxton Publications';
-  const text = `Hi ${opts.firstName},
-
-Welcome to the Caxton Publications REALTOR® app! Your account is now active.
-
-You can sign in anytime at: ${opts.appUrl}
-
-Here's what you can do right away:
-  • Browse aggregated Texas real estate news
-  • View the upcoming events calendar (HBA, ABoR, SABOR, GSABA, and more)
-  • Search the verified vendor directory
-  • Look up TREC license status
-
-You'll also start receiving the print edition of ${opts.firstName}, plus our weekly digest with digital replica access, events, and advertiser incentives.
-
-—
-Caxton Publications, Inc.
-RealtyLine · Newsline San Antonio
-`;
-
-  const html = `<p>Hi ${escapeHtml(opts.firstName)},</p>
-<p>Welcome to the Caxton Publications REALTOR® app! Your account is now active.</p>
-<p><a href="${escapeHtml(opts.appUrl)}">Sign in</a> anytime to browse news, events, and tools built for Texas REALTORS®.</p>
-<p>—<br>Caxton Publications, Inc.<br>RealtyLine · Newsline San Antonio</p>`;
-
-  return { subject, text, html };
-}
-
-/**
  * Render the newsletter signup confirmation email. Sent immediately after a
  * visitor signs up via the inline NewsletterCTA on the public site.
  */
@@ -185,10 +150,6 @@ RealtyLine \u00B7 Newsline San Antonio
 
 
 // Re-export config-derived constants if templates need them
-export const FROM_NAME = process.env.EMAIL_FROM_NAME ?? 'Caxton Publications';
-export const FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS ?? '';
-
-
 // =============================================================================
 // Giveaway winner notification
 // =============================================================================
@@ -261,7 +222,8 @@ export function renderPasswordResetEmail(opts: {
 }): { subject: string; text: string; html: string } {
   const subject = 'Reset your admin password — Caxton Publications';
   const greeting = `Hi ${opts.fullName},`;
-  const intro = 'We received a request to reset your admin password. Click the link below to choose a new one.';
+  const intro =
+    'We received a request to reset your admin password. Click the link below to choose a new one.';
 
   const text = `${greeting}
 
@@ -277,6 +239,15 @@ RealtyLine — Putting A Face on Real Estate since 1995
 Newsline San Antonio
 `;
 
+  // NOTE: no styled button. Gmail's link auditor was rewriting styled
+  // <a> anchors and dropping the ?token= query string, causing recipients
+  // to land on /admin/forgot-password. A single prominent text link
+  // (Stripe / GitHub / Vercel pattern) survives every mail client and
+  // keeps the query string intact.
+  //
+  // The href is the raw URL (no escapeHtml) because the URL contains no
+  // characters that need HTML-attribute escaping in this template. The
+  // visible link text IS escaped so a malformed URL cannot inject HTML.
   const html = `
 <!DOCTYPE html>
 <html>
@@ -300,14 +271,9 @@ Newsline San Antonio
             <td style="padding:32px 40px;color:#333;font-size:16px;line-height:1.6;">
               <p style="margin:0 0 16px;">${escapeHtml(greeting)}</p>
               <p style="margin:0 0 24px;">${escapeHtml(intro)}</p>
-              <p style="margin:0 0 32px;text-align:center;">
-                <a href="${escapeHtml(opts.resetUrl)}"
-                   style="display:inline-block;background:#301D5D;color:#ffffff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
-                  Reset my password
-                </a>
+              <p style="margin:0 0 24px;font-size:15px;">
+                <a href="${opts.resetUrl}" style="color:#301D5D;font-weight:600;text-decoration:underline;word-break:break-all;">${escapeHtml(opts.resetUrl)}</a>
               </p>
-              <p style="margin:0 0 8px;color:#666;font-size:14px;">Or copy and paste this URL into your browser:</p>
-              <p style="margin:0 0 24px;word-break:break-all;font-size:13px;color:#301D5D;">${escapeHtml(opts.resetUrl)}</p>
               <p style="margin:0;color:#888;font-size:13px;line-height:1.5;">
                 This link expires in ${opts.expiryMinutes} minutes. If you did not request a password reset, you can safely ignore this email — your password will not change.
               </p>
@@ -325,7 +291,85 @@ Newsline San Antonio
   </table>
 </body>
 </html>
-`.trim();
+`;
+
+  return { subject, text, html };
+}
+
+// =============================================================================
+// Admin team invite (new admin account set-password link)
+// =============================================================================
+
+export function renderAdminInviteEmail(opts: {
+  fullName: string;
+  setPasswordUrl: string;
+  expiryHours: number;
+  invitedBy: string;
+}): { subject: string; text: string; html: string } {
+  const subject = "You've been added as a RealtyLine admin — set your password";
+  const greeting = `Hi ${opts.fullName},`;
+  const intro = `${opts.invitedBy} has added you as an admin on the RealtyLine / Caxton Publications dashboard. Click the link below to set your password and sign in.`;
+
+  const text = `${greeting}
+
+${intro}
+
+${opts.setPasswordUrl}
+
+This link expires in ${opts.expiryHours} hours. If you weren't expecting this, please let ${opts.invitedBy} know — your account won't be able to sign in until a password is set.
+
+—
+Caxton Publications, Inc.
+RealtyLine — Putting A Face on Real Estate since 1995
+Newsline San Antonio
+`;
+
+  // Same plain-text-link pattern as renderPasswordResetEmail — styled
+  // buttons get rewritten by Gmail's link auditor and drop the token.
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="padding:32px 40px 16px;text-align:center;border-bottom:1px solid #f3f4f6;">
+              <div style="font-size:18px;font-weight:600;color:#333;letter-spacing:0.3px;">Caxton Publications Admin</div>
+              <div style="font-size:13px;color:#888;margin-top:4px;">Welcome — set your password</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 40px;color:#333;font-size:16px;line-height:1.6;">
+              <p style="margin:0 0 16px;">${escapeHtml(greeting)}</p>
+              <p style="margin:0 0 24px;">${escapeHtml(intro)}</p>
+              <p style="margin:0 0 24px;font-size:15px;">
+                <a href="${opts.setPasswordUrl}" style="color:#301D5D;font-weight:600;text-decoration:underline;word-break:break-all;">${escapeHtml(opts.setPasswordUrl)}</a>
+              </p>
+              <p style="margin:0;color:#888;font-size:13px;line-height:1.5;">
+                This link expires in ${opts.expiryHours} hours. If you weren't expecting this, please let ${escapeHtml(opts.invitedBy)} know — your account won't be able to sign in until a password is set.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #f3f4f6;color:#888;font-size:12px;line-height:1.5;text-align:center;">
+              <div>© Caxton Publications, Inc.</div>
+              <div style="margin-top:4px;font-style:italic;">Putting A Face on Real Estate since 1995</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
 
   return { subject, text, html };
 }

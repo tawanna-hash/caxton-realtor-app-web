@@ -1,5 +1,6 @@
 import { logger } from '../logger';
 import type { EmailProvider, EmailSendInput, EmailSendResult } from './types';
+import { getResendApiKeyForFrom, verifiedEmailFrom } from '@/lib/email-sender';
 
 /**
  * Resend transactional email. https://resend.com/docs/api-reference/emails/send-email
@@ -10,8 +11,13 @@ export class ResendEmailProvider implements EmailProvider {
   readonly name = 'resend';
 
   constructor() {
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY is required when EMAIL_PROVIDER=resend.');
+    if (
+      !process.env.RESEND_API_KEY &&
+      !process.env.RESEND_API_KEY_NEWSLINESA &&
+      !process.env.RESEND_API_KEY_MYREALTYLINE &&
+      !process.env.RESEND_API_KEY_REALTYNEWSNOW
+    ) {
+      throw new Error('At least one Resend API key is required when EMAIL_PROVIDER=resend.');
     }
   }
 
@@ -20,10 +26,14 @@ export class ResendEmailProvider implements EmailProvider {
 
     const fromEmail = input.from?.email ?? process.env.EMAIL_FROM_ADDRESS;
     const fromName = input.from?.name ?? process.env.EMAIL_FROM_NAME;
-    if (!fromEmail) {
-      return { success: false, error: 'EMAIL_FROM_ADDRESS is not set' };
+    const requestedFrom = fromEmail
+      ? (fromName ? `${fromName} <${fromEmail}>` : fromEmail)
+      : undefined;
+    const from = verifiedEmailFrom(requestedFrom, fromName ?? 'Caxton Publications Inc.');
+    const apiKey = getResendApiKeyForFrom(from);
+    if (!apiKey) {
+      return { success: false, error: `Resend API key not configured for ${from}` };
     }
-    const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
 
     const tagList = input.tags ?? [input.emailType];
     const tags = tagList.map((t) => ({ name: 'category', value: sanitizeTag(t) }));
@@ -37,6 +47,15 @@ export class ResendEmailProvider implements EmailProvider {
       tags,
     };
 
+    if (input.disableTracking) {
+      // Resend accepts tracking flags either as top-level `tracking`
+      // (newer API) or as flat `click_tracking`/`open_tracking`
+      // booleans (older). Set both to be safe across API versions.
+      (payload as Record<string, unknown>).tracking = { click: false, open: false };
+      (payload as Record<string, unknown>).click_tracking = false;
+      (payload as Record<string, unknown>).open_tracking = false;
+    }
+
     const replyTo = input.replyTo ?? process.env.EMAIL_REPLY_TO;
     if (replyTo) payload.reply_to = replyTo;
 
@@ -45,7 +64,7 @@ export class ResendEmailProvider implements EmailProvider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify(payload),
       });

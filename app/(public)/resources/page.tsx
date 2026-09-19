@@ -7,11 +7,11 @@ import type { Metadata } from 'next';
 import ResourcesClient from './ResourcesClient';
 
 export const metadata: Metadata = {
-  title: 'REALTOR Resources — RealtyLine Austin',
+  title: 'REALTOR® Calculators & Quick References — Realty News Now',
   description:
-    'Downloadable guides, recommended vendors, training videos, and curated links for Austin-area REALTORS®.',
+    'Calculators and quick references built for REALTORS® and their client conversations.',
 };
 
 export default function ResourcesPage() {
-  return <ResourcesClient />;
+  return <ResourcesClient view="tools" />;
 }

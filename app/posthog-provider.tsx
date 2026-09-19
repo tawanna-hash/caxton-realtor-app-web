@@ -24,6 +24,21 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       capture_pageview: false,
       capture_pageleave: true,
       autocapture: true,
+      // Disable PostHog's built-in exception autocapture — we have our
+      // own onError() in lib/activity-tracker.ts that emits
+      // 'client_error' with a guaranteed non-empty message.  Leaving
+      // PostHog's built-in on produces duplicate $exception events
+      // with empty $exception_message for non-Error throws, which
+      // land in /admin/activity as 'Unknown error (no message
+      // captured)' (see 12:35 PM 8/21 /magazine/330 iOS mobile bursts).
+      capture_exceptions: false,
+      // Disable PostHog's built-in exception autocapture — we have our
+      // own onError() in lib/activity-tracker.ts that emits
+      // 'client_error' with a guaranteed non-empty message.  Leaving
+      // PostHog's built-in on produces duplicate $exception events
+      // with empty $exception_message for non-Error throws, which
+      // land in /admin/activity as 'Unknown error (no message
+      // captured)' (see 12:35 PM 8/21 /magazine/330 iOS mobile bursts).
       // crossorigin='anonymous' on the recorder/loader scripts so the
       // browser unmasks any error they throw. Without this, errors from
       // PostHog-loaded scripts hit window.onerror as the literal string
@@ -97,7 +112,7 @@ export function trackEvent(event: string, properties?: Record<string, unknown>) 
 
 const PUB_STORAGE_KEY = 'caxton_pub';
 
-export function registerActivePublication(): void {
+function registerActivePublication(): void {
   if (typeof window === 'undefined') return;
   if (!initialized) return;
 

@@ -12,6 +12,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ADMIN_NAV } from '@/lib/admin-nav';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
@@ -19,8 +20,8 @@ import PendingGmailBadge from '@/components/PendingGmailBadge';
 import PushOptInButton from '@/components/PushOptInButton';
 import { isNative } from '@/lib/native/runtime';
 import {
-  PUB_ACTIVE as SHARED_PUB_ACTIVE,
-  PUB_COMING_SOON as SHARED_PUB_COMING_SOON,
+  PUBLIC_PUB_ACTIVE as SHARED_PUB_ACTIVE,
+  PUBLIC_PUB_COMING_SOON as SHARED_PUB_COMING_SOON,
 } from '@/lib/publications';
 
 // Push notifications work in: the native iOS app (Capacitor + APNs) and any
@@ -59,6 +60,7 @@ interface NavSection {
   title?: string;
   items: NavItem[];
   adminOnly?: boolean;
+  authOnly?: boolean;
   groups?: { label: string; links: NavItem[] }[];
 }
 
@@ -87,31 +89,54 @@ const DRAWER_SECTIONS: NavSection[] = [
     title: 'Content',
     items: [
       { label: 'Issues', href: '/magazine' },
-      { label: 'Calendar', href: '/calendar' },
+      {
+        label: 'Calendar',
+        href: '/calendar',
+        subitems: [
+          { label: 'Submit an Event', href: '/calendar/submit-event' },
+        ],
+      },
       { label: 'Event Images', href: '/event-images', pubOnly: ['realtyline'] },
       { label: 'Giveaways', href: '/giveaways' },
       { label: 'Inventory & Promotions', href: '/inventory' },
       { label: 'Communities', href: '/communities' },
       { label: 'Builders & Developers', href: '/builders' },
-      { label: 'Advertisers', href: '/advertisers' },
-      { label: 'REALTOR® Resources', href: '/resources' },
+      { label: 'Partners', href: '/partners' },
+      { label: 'Curated Links', href: '/resources/links' },
     ],
   },
   {
     title: 'Subscribe',
     items: [
-      { label: 'Digital Newsletters', href: '/newsletter' },
+      { label: 'Digital Emails', href: '/newsletter' },
       { label: 'Subscribe to Print', href: '/subscribe' },
       { label: 'FAQs', href: '/faq' },
     ],
   },
   {
+    title: 'Platinum Tools',
+    items: [
+      { label: 'Closing Time', href: '/agents' },
+      { label: 'Testimonials HUB', href: '/testimonial-hub' },
+      { label: 'Custom Designer', href: '/custom-designer' },
+      { label: 'REALTOR® Calculators & Quick References', href: '/resources' },
+      { label: 'REALTOR® Downloadable Guides', href: '/resources/guides' },
+    ],
+  },
+  {
     title: 'About',
     items: [
-      { label: 'My Feed', href: '/dashboard', authOnly: true },
+      { label: 'My Feed', href: '/dashboard' },
       { label: 'About Us', href: '/about' },
-      { label: 'Advertise', href: '/advertise' },
+      {
+        label: 'Advertise',
+        href: '/advertise',
+        subitems: [
+          { label: 'Print Deadlines', href: '/print-deadlines' },
+        ],
+      },
       { label: 'Support', href: '/support' },
+      { label: 'Interactive Product Tour', href: '/product-tour' },
       { label: 'My Profile', href: '/profile', authOnly: true },
     ],
   },
@@ -152,17 +177,19 @@ export default function NavDrawer({
   onPubSwitch,
 }: Props) {
   const pathname = usePathname();
+  const router = useRouter();
   const pushSupported = usePushSupported();
 
   // Collapsible parent state. Auto-open any parent whose subitem matches the
   // current pathname so users see where they are without a manual click.
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
   const isSubmenuOpen = (parent: NavItem): boolean => {
+    // Explicit user toggle wins over any default.
     if (openSubmenus[parent.href] !== undefined) return openSubmenus[parent.href];
     if (!parent.subitems) return false;
-    return parent.subitems.some(
-      (s) => pathname === s.href || pathname.startsWith(s.href + '/'),
-    );
+    // Default to open so subitems are discoverable without needing
+    // a chevron tap.  User can still collapse via the chevron.
+    return true;
   };
   const toggleSubmenu = (parent: NavItem) => {
     setOpenSubmenus((prev) => ({
@@ -296,10 +323,49 @@ export default function NavDrawer({
           </div>
         )}
 
-        {/* Sections */}
+        {!isAdmin && (
+          <div className="px-5 pt-4">
+            <Link
+              href="/agents"
+              onClick={onClose}
+              className="group block border border-white/20 bg-white p-4 text-[#301D5D] shadow-xl shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[#FFF8E6]"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xl font-semibold leading-tight tracking-[-0.025em] text-[#301D5D]">Closing Time</p>
+                  <p className="mt-2 text-sm font-semibold leading-5 text-[#5B438C]">Keep Ahead of Contract Deadlines</p>
+                </div>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#301D5D] text-[#F4D06F] transition group-hover:translate-x-0.5">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-[0.11em] text-[#5B438C]">
+                <span className="rounded-md bg-[#F0EBF8] px-2.5 py-1">TREC Forms</span>
+                <span className="rounded-md bg-[#F0EBF8] px-2.5 py-1">Run Numbers</span>
+                <span className="rounded-md bg-[#F0EBF8] px-2.5 py-1">Find Partners</span>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Sections. When on an admin route, surface the Admin section first
+            so admin users don't have to scroll past Content/Subscribe/About to
+            reach their day-to-day nav. */}
         <div className="px-5 py-6 space-y-1">
-          {DRAWER_SECTIONS.map((section) => {
+          {(() => {
+            const onAdminRoute = isAdmin && pathname.startsWith('/admin');
+            const ordered = onAdminRoute
+              ? [
+                  ...DRAWER_SECTIONS.filter((s) => s.title === 'Admin'),
+                  ...DRAWER_SECTIONS.filter((s) => s.title !== 'Admin'),
+                ]
+              : DRAWER_SECTIONS;
+            return ordered;
+          })().map((section) => {
             if (section.adminOnly && !isAdmin) return null;
+            if (section.authOnly && !user) return null;
 
             const renderItem = (item: NavItem) => {
               if (item.adminOnly && !isAdmin) return null;
@@ -344,7 +410,13 @@ export default function NavDrawer({
                       </Link>
                       <button
                         type="button"
-                        onClick={() => toggleSubmenu(item)}
+                        onClick={(e) => {
+                          // Don't let the chevron bubble to the parent
+                          // Link — keep the tap strictly a toggle.
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleSubmenu(item);
+                        }}
                         aria-expanded={expanded}
                         aria-label={expanded ? 'Collapse menu' : 'Expand menu'}
                         className="px-3 flex items-center justify-center text-white/60 hover:text-white"
@@ -371,6 +443,8 @@ export default function NavDrawer({
                       <div className="mt-1 ml-3 pl-3 border-l border-white/15 space-y-0.5">
                         {item.subitems.map((sub) => {
                           if (sub.adminOnly && !isAdmin) return null;
+                          if (sub.authOnly && !user) return null;
+                          if (sub.pubOnly && !sub.pubOnly.includes(pub)) return null;
                           const subActive =
                             pathname === sub.href ||
                             pathname.startsWith(sub.href + '/');
@@ -464,6 +538,25 @@ export default function NavDrawer({
                     />
                   </div>
                 )}
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      onClose();
+                      let target = '/';
+                      try {
+                        const v = window.localStorage.getItem('caxton_last_frontend');
+                        if (v && v.startsWith('/') && !v.startsWith('/admin')) target = v;
+                      } catch {}
+                      router.push(target);
+                    }}
+                    className="flex items-center gap-2 w-full text-left px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-md hover:text-white hover:bg-white/10 transition"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M3 12l6-6M3 12l6 6M3 12h18" />
+                    </svg>
+                    Return to app
+                  </button>
+                )}
                 <button
                   onClick={onLogout}
                   className="block w-full text-left px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-md hover:text-white hover:bg-white/10 transition"
@@ -484,31 +577,39 @@ export default function NavDrawer({
                 >
                   Login
                 </Link>
-                {/* Admin login — accessible to staff from the public drawer
-                    so they don't need to bookmark /admin/login separately. */}
-                <Link
-                  href="/admin/login"
-                  onClick={onClose}
-                  className="flex items-center gap-2 px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/60 font-medium rounded-md hover:bg-white/10 hover:text-white/90 transition"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="11" width="18" height="11" rx="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                  Admin Login
-                </Link>
               </>
             )}
           </div>
+
+          {/* Admin Login — always visible to non-admins (whether signed
+              in as a realtor or not) so staff can reach /admin/login
+              without bookmarking it. Hidden once you're already inside
+              the admin surface. */}
+          {!isAdmin && (
+            <div className="py-2 border-t border-white/10">
+              <Link
+                href="/admin/login"
+                onClick={onClose}
+                className="flex items-center gap-2 px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/60 font-medium rounded-md hover:bg-white/10 hover:text-white/90 transition"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Admin Login
+              </Link>
+            </div>
+          )}
 
           <p className="text-[10px] text-white/25 font-light text-center pt-4">
             {'\u00A9'} 2026 Realty News Now

@@ -125,6 +125,10 @@ const nextConfig: NextConfig = {
       { source: '/subscriptions', destination: '/newsletter', permanent: false },
       { source: '/contact', destination: '/about', permanent: false },
       { source: '/five-points', destination: '/communities', permanent: false },
+      { source: '/advertisers/:path*', destination: '/partners/:path*', permanent: true },
+      // Agent Deal Desk renamed to ClosingTime (Sep 2026). Redirect old links/bookmarks.
+      { source: '/agents/deal-desk', destination: '/agents/closing-time', permanent: true },
+      { source: '/agents/deal-desk/:path*', destination: '/agents/closing-time/:path*', permanent: true },
       // Legacy /auth/* pages replaced by the /dashboard modal auth pattern.
       // Everything routes through the dashboard, which drives the Auth.js flow.
       { source: '/auth/sign-in', destination: '/dashboard?auth=login', permanent: false },

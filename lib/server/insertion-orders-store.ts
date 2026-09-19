@@ -15,7 +15,7 @@ import {
 } from '@/lib/insertion-orders';
 
 // State machine — draft is the only entry, cancelled is terminal.
-export const IO_STATE_TRANSITIONS: Record<IoStatus, IoStatus[]> = {
+const IO_STATE_TRANSITIONS: Record<IoStatus, IoStatus[]> = {
   draft: ['sent', 'cancelled'],
   sent: ['acknowledged', 'cancelled', 'draft'],
   acknowledged: ['active', 'cancelled'],
@@ -98,7 +98,7 @@ function toIo(r: RawIo): InsertionOrder {
  * Reserve the next IO number for the current year using the io_counters
  * table. Format: IO-YYYY-NNNN (4-digit zero-padded, resets each year).
  */
-export async function reserveIoNumber(): Promise<string> {
+async function reserveIoNumber(): Promise<string> {
   const year = new Date().getUTCFullYear();
   const rows = await query<{ last_seq: number }>(
     `INSERT INTO io_counters (year, last_seq)

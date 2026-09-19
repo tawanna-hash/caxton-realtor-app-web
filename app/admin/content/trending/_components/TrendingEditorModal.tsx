@@ -14,8 +14,10 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { PUB_ACTIVE } from '@/lib/publications';
+import { sparsePatch } from '@/lib/sparse-patch';
 
-export type TrendingMarket = 'realtyline' | 'newsline';
+export type TrendingMarket = 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
 
 export interface TrendingItem {
   id: number;
@@ -67,7 +69,8 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
   const [subheadline, setSubheadline] = useState(item?.subheadline ?? '');
   const [articleUrl, setArticleUrl] = useState(item?.article_url ?? '');
   const [thumbnailUrl, setThumbnailUrl] = useState(item?.thumbnail_url ?? '');
-  const [iconPrefix, setIconPrefix] = useState(item?.icon_prefix ?? '🔥');
+  // The flame is a create-only default; preserve an existing blank icon.
+  const [iconPrefix, setIconPrefix] = useState(item ? (item.icon_prefix ?? '') : '🔥');
   const [markets, setMarkets] = useState<TrendingMarket[]>(item?.markets ?? ['realtyline']);
   const [sortOrder, setSortOrder] = useState<number>(item?.sort_order ?? 0);
   const [publishNow, setPublishNow] = useState<boolean>(
@@ -85,6 +88,15 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
   }, [onClose]);
+
+  // Keep the page behind the dialog stationary while its form body scrolls.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   const toggleMarket = useCallback((m: TrendingMarket) => {
     setMarkets((cur) => cur.includes(m) ? cur.filter((x) => x !== m) : [...cur, m]);
@@ -118,18 +130,42 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
     if (markets.length === 0) { setError('Pick at least one market'); return; }
 
     const now = new Date().toISOString();
-    const payload = {
+    const common = {
       headline: headline.trim(),
       subheadline: subheadline.trim() || null,
       thumbnail_url: thumbnailUrl.trim() || null,
       article_url: articleUrl.trim(),
-      icon_prefix: iconPrefix || '🔥',
+      icon_prefix: iconPrefix || null,
       markets,
       sort_order: sortOrder,
-      is_published: publishNow || !!publishedAt,
-      published_at: publishNow ? now : localInputToIso(publishedAt),
       expires_at: localInputToIso(expiresAt),
     };
+    const payload: Record<string, unknown> = isEdit
+      ? sparsePatch(common, {
+          headline: item!.headline,
+          subheadline: item!.subheadline,
+          thumbnail_url: item!.thumbnail_url,
+          article_url: item!.article_url,
+          icon_prefix: item!.icon_prefix,
+          markets: item!.markets,
+          sort_order: item!.sort_order,
+          expires_at: item!.expires_at ? localInputToIso(isoToLocalInput(item!.expires_at)) : null,
+        })
+      : {
+          ...common,
+          // Default icon only belongs to a newly-created record.
+          icon_prefix: iconPrefix || '🔥',
+          is_published: publishNow || !!publishedAt,
+          published_at: publishNow ? now : localInputToIso(publishedAt),
+        };
+    if (isEdit) {
+      const initialPublishNow = !!(item!.is_published && (!item!.published_at || new Date(item!.published_at).getTime() <= Date.now()));
+      const initialPublishedAt = isoToLocalInput(item!.published_at);
+      if (publishNow !== initialPublishNow || (!publishNow && publishedAt !== initialPublishedAt)) {
+        payload.is_published = publishNow || !!publishedAt;
+        payload.published_at = publishNow ? now : localInputToIso(publishedAt);
+      }
+    }
 
     setSaving(true);
     try {
@@ -154,13 +190,20 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-start sm:items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/50 p-2 sm:p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl my-8">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="trending-editor-title"
+        className="flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-xl sm:max-h-[calc(100dvh-2rem)]"
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white p-4">
           <h3 className="text-lg font-semibold text-gray-900">
+            <span id="trending-editor-title">
             {isEdit ? 'Edit trending item' : 'New trending item'}
+            </span>
           </h3>
           <button
             type="button"
@@ -172,7 +215,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
           </button>
         </div>
 
-        <div className="p-4 sm:p-6 space-y-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4 sm:p-6">
           {/* Headline */}
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-1">
@@ -283,16 +326,16 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
             <label className="block text-sm font-medium text-gray-900 mb-1">
               Markets <span className="text-red-600">*</span>
             </label>
-            <div className="flex gap-4">
-              {(['realtyline', 'newsline'] as TrendingMarket[]).map((m) => (
-                <label key={m} className="flex items-center gap-2 text-sm cursor-pointer">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {PUB_ACTIVE.map((publication) => (
+                <label key={publication.id} className="flex items-center gap-2 text-sm cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={markets.includes(m)}
-                    onChange={() => toggleMarket(m)}
+                    checked={markets.includes(publication.id)}
+                    onChange={() => toggleMarket(publication.id)}
                     className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                   />
-                  <span className="capitalize">{m}</span>
+                  <span>{publication.shortLabel}</span>
                 </label>
               ))}
             </div>
@@ -355,7 +398,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+        <div className="flex shrink-0 items-center justify-end gap-2 rounded-b-lg border-t border-gray-200 bg-gray-50 p-4">
           <button
             type="button"
             onClick={onClose}

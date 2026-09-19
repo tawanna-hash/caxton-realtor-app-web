@@ -21,26 +21,6 @@ export type CanonicalImportField =
   | 'zip'
   | 'website'
   | 'notes';
-
-export const IMPORT_FIELDS: { id: CanonicalImportField; label: string }[] = [
-  { id: 'skip',           label: '— Skip this column —' },
-  { id: 'full_name',      label: 'Full Name (auto-split)' },
-  { id: 'first_name',     label: 'First Name' },
-  { id: 'last_name',      label: 'Last Name' },
-  { id: 'email',          label: 'Email' },
-  { id: 'phone',          label: 'Phone' },
-  { id: 'company',        label: 'Company' },
-  { id: 'title',          label: 'Title' },
-  { id: 'license_number', label: 'License #' },
-  { id: 'address',        label: 'Address' },
-  { id: 'address_2',      label: 'Address 2' },
-  { id: 'city',           label: 'City' },
-  { id: 'state',          label: 'State' },
-  { id: 'zip',            label: 'ZIP' },
-  { id: 'website',        label: 'Website' },
-  { id: 'notes',          label: 'Notes' },
-];
-
 const GUESS_TABLE: Record<string, CanonicalImportField> = {
   'first name': 'first_name', 'firstname': 'first_name', 'fname': 'first_name', 'given name': 'first_name',
   'last name': 'last_name', 'lastname': 'last_name', 'lname': 'last_name', 'surname': 'last_name', 'family name': 'last_name',

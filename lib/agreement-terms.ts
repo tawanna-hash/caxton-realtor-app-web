@@ -10,7 +10,7 @@
 
 import type { AdChannel } from '@/lib/ad-channels';
 
-export const ADVERTISING_TERMS = `Advertising Agreement Terms
+const ADVERTISING_TERMS = `Advertising Agreement Terms
 1. Agreement Overview
 These Advertising Agreement Terms (“Terms”) are incorporated into and form part of each applicable insertion order or other signing document accepted by Caxton Publications, Inc. (“Publisher”) and the advertiser identified in that document and, if applicable, its advertising agency (collectively, the “Agreement”). This Agreement governs the purchase of advertising from Publisher for the following products, as applicable: (a) the print editions of RealtyLine Austin and Newsline San Antonio (the “Print Edition”); (b) the corresponding electronic replica editions (the “e-Replica Edition”); (c) mobile app advertising products (the “Mobile App Products”); and (d) e-Blast Campaigns.
 Unless this Agreement expressly states otherwise, its terms apply to both print and digital products. If a provision applies only to a specific product type, that product-specific provision controls for that product.
@@ -72,7 +72,7 @@ All notices under this Agreement must be in writing.
 Notices to Publisher must be sent by one of the following methods:
 • personal delivery;
 • U.S. mail to: Caxton Publications, Inc., P.O. Box 81366, Austin, Texas 78708-1366; or
-• email to tawanna@myrealtyline.com or tawanna@newslinesa.com, provided that Publisher confirms receipt.
+• email to tawanna@realtynewsnow.app or tawanna@realtynewsnow.app, provided that Publisher confirms receipt.
 7.2 Notices to Advertiser or Agency
 Publisher may send notices to the email address, mailing address, or other contact information listed in the Insertion Order. Notice to Agency constitutes notice to Advertiser, and notice to Advertiser constitutes notice to Agency.
 7.3 Effectiveness
@@ -272,10 +272,6 @@ The applicable Insertion Order or other signing document incorporating these Ter
 Signatures delivered by PDF, electronic signature platform, scanned image, or other electronic means are deemed effective as originals.`;
 
 // Backward-compatible aliases. All channels now share the unified terms above.
-export const TERMS_RL = ADVERTISING_TERMS;
-export const TERMS_DIGITAL = ADVERTISING_TERMS;
-export const TERMS_EMAIL = ADVERTISING_TERMS;
-export const TERMS_APP = ADVERTISING_TERMS;
 
 /**
  * Return the Advertising Agreement Terms for the given channel.
@@ -286,9 +282,7 @@ export const TERMS_APP = ADVERTISING_TERMS;
  * but no longer affect the returned text.
  */
 export function termsForChannel(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for call-site compatibility
   _channel: AdChannel,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for call-site compatibility
   _publication?: string | null,
 ): string {
   return ADVERTISING_TERMS;

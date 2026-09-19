@@ -40,15 +40,6 @@ export const uuidSchema = z.string().uuid();
 export const idParamSchema = z.object({
   id: uuidSchema,
 });
-export type IdParam = z.infer<typeof idParamSchema>;
-
-/**
- * Sort direction shared by every list route.
- */
-export const sortDirSchema = z
-  .enum(['asc', 'desc'])
-  .default('desc');
-
 /**
  * Pagination defaults: `limit` 1..500 (default 100), `offset` ≥ 0
  * (default 0). `z.coerce.number()` accepts the string form the browser
@@ -65,8 +56,6 @@ export const paginationSchema = z.object({
   limit:  z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
-export type Pagination = z.infer<typeof paginationSchema>;
-
 /**
  * Bulk action over a list of ids. Used by `/mailing/holding/promote`,
  * `/reject`, etc. `min(1)` so empty arrays 400 instead of silently
@@ -75,18 +64,6 @@ export type Pagination = z.infer<typeof paginationSchema>;
 export const bulkIdsSchema = z.object({
   ids: z.array(uuidSchema).min(1).max(1000),
 });
-export type BulkIds = z.infer<typeof bulkIdsSchema>;
-
-/**
- * Tagged-union "ID or ids" body — accept either `{ id }` or `{ ids }`,
- * since some legacy clients send the singular. Routes can `.transform()`
- * to a canonical array.
- */
-export const idOrIdsSchema = z.union([
-  z.object({ id: uuidSchema }).transform(({ id }) => ({ ids: [id] })),
-  bulkIdsSchema,
-]);
-
 // ---------------------------------------------------------------------------
 // Request helpers
 // ---------------------------------------------------------------------------

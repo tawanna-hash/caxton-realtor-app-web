@@ -5,10 +5,12 @@
 // drawer in components/NavDrawer.tsx import from here. Add or move a
 // link in this file and both surfaces stay in sync.
 
-export type AdminNavLink = {
+type AdminNavLink = {
   label: string;
   href: string;
   description?: string;
+  /** Optional desktop-menu tab. Mobile keeps rendering one flat list. */
+  section?: 'Editorial' | 'Events' | 'Listings' | 'Tools';
 };
 
 export type AdminNavGroup = {
@@ -37,11 +39,25 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'Sales',
     links: [
-      { label: 'Advertisers',  href: '/admin/crm',           description: 'Accounts, contacts, share links' },
+      { label: 'Partners',     href: '/admin/crm',           description: 'Accounts, contacts, share links' },
+      { label: 'Referral Network', href: '/admin/referral-network', description: 'Provider applications and approvals' },
       { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
       { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
-      { label: 'Invoices',     href: '/admin/invoices',      description: 'Billable charges & payment status' },
       { label: 'Media Kit',    href: '/admin/ads/media-kit',   description: '2026 packages, rates & deadlines' },
+    ],
+  },
+  {
+    label: 'Get Paid',
+    links: [
+      { label: 'Get Paid Dashboard', href: '/admin/getpaid/accountsreceivables', description: 'Aging and outstanding balances' },
+      { label: 'Sales Transactions', href: '/admin/getpaid/salestransactions', description: 'All customer sales activity' },
+      { label: 'Invoices', href: '/admin/getpaid/invoices', description: 'Billable charges and payment status' },
+      { label: 'Statements', href: '/admin/getpaid/statements', description: 'Partner balances, statements and payment links' },
+      { label: 'Recurring Invoices', href: '/admin/getpaid/reoccuringpayments', description: 'Recurring invoice schedules' },
+      { label: 'Stripe Payouts', href: '/admin/getpaid/stripepayouts', description: 'Paid and deposited Stripe activity' },
+      { label: 'Deposit Slip', href: '/admin/reports/deposits', description: 'Printable check deposit summary' },
+      { label: 'Deposit Detail', href: '/admin/reports/detail', description: 'Printable check payment detail report' },
+      { label: 'Products & Services', href: '/admin/getpaid/product&services', description: 'Ad slots, packages and billable items' },
     ],
   },
   {
@@ -53,7 +69,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       // Subscribers, and the public subscribe form are all reachable from
       // /admin/mailing.
       { label: 'Mailing List HUB', href: '/admin/mailing',       description: 'All audience lists in one place' },
-      { label: 'Newsletter',       href: '/admin/newsletter',    description: 'Subscriber email stats & queue' },
+      { label: 'Email Subscribers', href: '/admin/newsletter',   description: 'Subscriber email stats & queue' },
       { label: 'Verify Emails',    href: '/admin/email-verify',  description: 'Ad-hoc single / bulk verifier (no DB writes)' },
     ],
   },
@@ -68,22 +84,23 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'Content',
     links: [
-      { label: 'Trending',  href: '/admin/content/trending', description: 'Rotating feed ticker CTAs' },
-      { label: 'Articles',  href: '/admin/articles',  description: 'WordPress feeds & sync' },
-      { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions' },
-      { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
-      { label: 'Gmail Events', href: '/admin/events/gmail', description: 'Scanned advertiser & association event mail' },
-      { label: 'FastEmail Realtor Review', href: '/admin/content/fastemail-realtors', description: 'Review realtor contacts scanned from FastEmail flyers' },
-      { label: 'Event Images', href: '/admin/event-images', description: 'Event photo gallery' },
-      { label: 'Feature Articles', href: '/admin/feature-articles', description: 'Editorial features on advertiser pages' },
-      { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries' },
-      { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
-      { label: 'Scraper Hub', href: '/admin/content/scrapers', description: 'Run & monitor all scrapers' },
-      { label: 'Promotions', href: '/admin/inventory/promotions', description: 'Builder offers & rate buydowns' },
-      { label: 'Advertiser Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility' },
-      { label: 'SABOR Report', href: '/admin/content/saborreport', description: 'San Antonio MLS monthly report card' },
-      { label: 'ABOR Report', href: '/admin/content/realtylinereport', description: 'Austin (ABOR) MLS monthly report card' },
-      { label: 'Notifications', href: '/admin/notifications', description: 'Web push to subscribers' },
+      { label: 'Trending',  href: '/admin/content/trending', description: 'Rotating feed ticker CTAs', section: 'Editorial' },
+      { label: 'Articles',  href: '/admin/articles',  description: 'WordPress feeds & sync', section: 'Editorial' },
+      { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions', section: 'Editorial' },
+      { label: 'Feature Articles', href: '/admin/feature-articles', description: 'Editorial features on advertiser pages', section: 'Editorial' },
+      { label: 'Testimonials', href: '/admin/testimonials', description: 'Review and publish subscriber testimonials', section: 'Editorial' },
+      { label: 'Events',    href: '/admin/events',    description: 'Calendar publications', section: 'Events' },
+      { label: 'Gmail Events', href: '/admin/events/gmail', description: 'Scanned advertiser & association event mail', section: 'Events' },
+      { label: 'Event Images', href: '/admin/event-images', description: 'Event photo gallery', section: 'Events' },
+      { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes', section: 'Listings' },
+      { label: 'Promotions', href: '/admin/inventory/promotions', description: 'Builder offers & rate buydowns', section: 'Listings' },
+      { label: 'Partner Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility', section: 'Listings' },
+      { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries', section: 'Listings' },
+      { label: 'Scraper Hub', href: '/admin/content/scrapers', description: 'Run & monitor all scrapers', section: 'Tools' },
+      { label: 'FastEmail Realtor Review', href: '/admin/content/fastemail-realtors', description: 'Review contacts scanned from FastEmail flyers', section: 'Tools' },
+      { label: 'SABOR Report', href: '/admin/content/saborreport', description: 'San Antonio MLS monthly report card', section: 'Tools' },
+      { label: 'ABOR Report', href: '/admin/content/realtylinereport', description: 'Austin MLS monthly report card', section: 'Tools' },
+      { label: 'Notifications', href: '/admin/notifications', description: 'Web push to subscribers', section: 'Tools' },
     ],
   },
   {
@@ -94,10 +111,22 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     //   • Site Analytics     — PostHog traffic & user behavior
     // Labels are explicit so admins can tell them apart at a glance.
     links: [
+      { label: 'Admin Dashboard', href: '/admin/dashboard', description: 'Publishing, revenue, and operational priorities' },
+      { label: 'Agent Center', href: '/admin/agent-center', description: 'Agent tools and official TREC form versions' },
       { label: 'Live Activity',      href: '/admin/activity',  description: 'Real-time public app events (last 7d)' },
       { label: 'Engagement Metrics', href: '/admin/metrics',   description: 'In-app click events & surface engagement' },
       { label: 'Client Reports',     href: '/admin/reports',   description: 'Shareable article, event & advertiser recaps' },
       { label: 'Site Analytics',     href: '/admin/analytics', description: 'PostHog traffic & user behavior' },
+      { label: 'URL Analytics',      href: '/admin/analytics/urls', description: 'Clicks grouped by destination URL' },
+    ],
+  },
+  {
+    label: 'Team',
+    // Owner-only surface (enforced server-side in app/admin/team, not by
+    // hiding the nav link — non-owners who click it see a clear
+    // "owner access only" message rather than the roster).
+    links: [
+      { label: 'Team', href: '/admin/team', description: 'Admin login access & offboarding' },
     ],
   },
 ];

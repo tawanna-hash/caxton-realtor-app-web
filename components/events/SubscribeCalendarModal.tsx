@@ -115,7 +115,7 @@ export function SubscribeCalendarModal({ open, onClose, pub }: Props) {
             id="subscribe-modal-title"
             className="text-xl text-gray-900 font-light leading-tight"
           >
-            Subscribe to this calendar
+            Subscribe to This Calendar
           </h2>
           <p className="text-sm text-gray-600 font-light leading-relaxed mt-2">
             Add real estate events to your personal calendar. New events appear automatically.

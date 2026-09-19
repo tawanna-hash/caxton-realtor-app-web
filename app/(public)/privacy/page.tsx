@@ -23,7 +23,7 @@ export default function PrivacyPage() {
 
       <section className="space-y-8 text-gray-700 text-base leading-relaxed font-light">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-3">Who we are</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-3">Who We Are</h2>
           <p>
             Caxton Publications, Inc. (&ldquo;Caxton,&rdquo; &ldquo;we,&rdquo;
             &ldquo;us&rdquo;) operates Realty News Now (the &ldquo;app&rdquo;) and publishes
@@ -35,7 +35,7 @@ export default function PrivacyPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            Information we collect
+            Information We Collect
           </h2>
           <p className="mb-3">When you use the app, we collect:</p>
           <ul className="space-y-2 ml-6 list-disc">
@@ -77,7 +77,7 @@ export default function PrivacyPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            How we use your information
+            How We Use Your Information
           </h2>
           <p className="mb-3">We use your information to:</p>
           <ul className="space-y-2 ml-6 list-disc">
@@ -97,12 +97,12 @@ export default function PrivacyPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            Who we share information with
+            Who We Share Information With
           </h2>
           <p className="mb-3">
             <strong className="font-semibold text-gray-900">
               We do not sell, rent, or share your subscriber information with
-              advertisers, sponsors, or any third party for marketing purposes.
+              partners, sponsors, or any third party for marketing purposes.
             </strong>{' '}
             Your contact information stays with us.
           </p>
@@ -116,7 +116,7 @@ export default function PrivacyPage() {
               </strong>{' '}
               we use to operate the app — including our email delivery
               provider, our cloud hosting providers, our push notification
-              service, and our newsletter platform. These providers are bound
+              service, and our email platform. These providers are bound
               to use your information only to provide their service to us.
             </li>
             <li>
@@ -129,16 +129,16 @@ export default function PrivacyPage() {
           </ul>
           <p className="mt-3">
             If you choose to enter a giveaway, RSVP to an event, or otherwise
-            interact directly with an advertiser through a clearly labeled
+            interact directly with an partner through a clearly labeled
             opt-in, only the information you provide in that specific
-            interaction is shared with that advertiser — and only because you
+            interaction is shared with that partner — and only because you
             chose to share it.
           </p>
         </div>
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            How long we keep your information
+            How Long We Keep Your Information
           </h2>
           <p>
             We keep account information as long as your account is active. If
@@ -151,7 +151,7 @@ export default function PrivacyPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            Your choices
+            Your Choices
           </h2>
           <ul className="space-y-2 ml-6 list-disc">
             <li>
@@ -225,7 +225,7 @@ export default function PrivacyPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            Cookies and similar technology
+            Cookies and Similar Technology
           </h2>
           <p>
             Realty News Now uses cookies and similar technology only for what&apos;s
@@ -241,7 +241,7 @@ export default function PrivacyPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            Business transfers
+            Business Transfers
           </h2>
           <p>
             If Caxton Publications, Inc. is involved in a merger, acquisition,
@@ -257,7 +257,7 @@ export default function PrivacyPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            State privacy rights
+            State Privacy Rights
           </h2>
           <p>
             Residents of states with consumer privacy laws — including Texas,
@@ -282,7 +282,7 @@ export default function PrivacyPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            Changes to this notice
+            Changes to This Notice
           </h2>
           <p>
             We may update this notice as our practices change or as required by
@@ -294,7 +294,7 @@ export default function PrivacyPage() {
 
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            Contact us
+            Contact Us
           </h2>
           <p className="mb-4">
             Questions about this notice, requests to access or delete your

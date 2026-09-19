@@ -11,6 +11,10 @@ import { sendEmail } from '@/lib/email';
 import { agreementNotificationEmail, brandForPublication } from '@/lib/email-templates';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
 import { cleanRepNote } from '@/lib/agreement-notes';
+import {
+  formatRenewalOfferDeadline,
+  renewalOfferDeadline,
+} from '@/lib/renewal-offer';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
@@ -37,7 +41,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const ag = rows[0];
 
-    // Test-mode: recipient is FORCED to the current admin's email.
+    // Test-mode: recipient is always the Realty News Now monitored test inbox.
     // Never touches agreement.status / sent_to_email.
     const urlObj = new URL(req.url);
     const isTest =
@@ -46,10 +50,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       body.test === true;
 
     const recipient = isTest
-      ? admin.email
+      ? 'tawanna@myrealtyline.com'
       : ((body.to as string | undefined) || ag.advertiser_email || ag.billing_email);
     if (!recipient) {
-      return NextResponse.json({ error: isTest ? 'admin has no email in session' : 'no email address on agreement' }, { status: 400 });
+      return NextResponse.json({ error: 'no email address on agreement' }, { status: 400 });
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
@@ -60,18 +64,23 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     // message typed into the drawer. Falls back to the boilerplate.
     const brand = brandForPublication(ag.publication);
 
-    // Two-stage proposal->agreement flow:
+    // Two-stage insertion-order flow:
     //   stage='proposal'  -> status proposal_sent  (client reviews/edits IO, no signature)
-    //   stage='agreement' -> status sent          (final agreement, legal terms + sign)
+    //   stage='agreement' -> status sent          (final IO, legal terms + sign)
     const stage = body.stage === 'proposal' ? 'proposal' : 'agreement';
     const isProposalStage = stage === 'proposal';
+    const renewalDeadline = ag.is_renewal ? renewalOfferDeadline() : null;
     const customMessage =
       typeof body.customMessage === 'string' && body.customMessage.trim().length > 0
         ? body.customMessage.trim()
         : null;
     const defaultMessage = isProposalStage
-      ? `Your ${brand.brandName} advertising proposal is ready for review. You can adjust your ad package, placement dates, and markets, then approve to convert it into your advertising agreement. Nothing is binding until you sign the final agreement I'll send after you approve. As always, I'm happy to help should you have any questions or concerns.`
-      : `Your ${brand.brandName} advertising agreement is ready for your review and signature. Click below to open your secure portal, confirm your placement start date, and sign. If you need to change your preferred date after signing, just let me know and I will update it for you. As always, I'm happy to help should you have any questions or concerns.`;
+      ? ag.is_renewal
+        ? `Thank you for your continued partnership with ${brand.brandName}. Your advertising renewal for ${ag.company_name ?? 'your company'} is ready for review. Please confirm the company information, advertising schedule, placement, markets, and renewal rate, then approve the insertion order so we can prepare the final agreement for signature. Completing the renewal promptly helps maintain uninterrupted visibility and reserve your planned placement. Nothing is binding until the final renewal insertion order is signed.`
+        : `Your ${brand.brandName} advertising insertion order is ready for review. Confirm the company name, select your preferred send date and up to three optional dates when applicable, review the placement and markets, then approve it. Nothing is binding until the final insertion order is signed. As always, I'm happy to help should you have any questions or concerns.`
+      : ag.is_renewal
+        ? `Thank you for your continued partnership with ${brand.brandName}. Your advertising renewal for ${ag.company_name ?? 'your company'} is ready for review and signature. Please confirm the renewal details and sign the agreement to continue your advertising schedule and maintain uninterrupted market visibility. The rate, schedule, and placement shown are the terms offered for this renewal. As always, I'm happy to help should you have any questions or concerns.`
+        : `Your ${brand.brandName} advertising insertion order is ready for your review and signature. Click below to open your secure portal, confirm your preferred send date and up to three optional dates when applicable, and sign. The insertion order becomes a binding advertising agreement when signed. As always, I'm happy to help should you have any questions or concerns.`;
 
     // Fetch line items so bundles show all lines in the email recap.
     type LineItemRow = {
@@ -81,7 +90,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       ad_size: string | null;
       frequency: string | null;
       quantity: number;
-      publication: 'austin' | 'san_antonio' | 'both' | null;
+      publication: import('@/lib/publications').PublicationScope | null;
       start_date: string | null;
       end_date: string | null;
       amount_cents: number;
@@ -114,24 +123,58 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       repName: ag.rep_name ?? undefined,
       adSize: ag.ad_size ?? undefined,
       adRate: ag.ad_rate_cents != null ? ag.ad_rate_cents / 100 : null,
+      adRateUnit: ag.type === 'eblast' ? 'send' : 'issue',
       status: isProposalStage ? 'proposal_sent' : 'sent',
+      isRenewal: ag.is_renewal === true,
       message: customMessage ?? defaultMessage,
       notes: repNote ?? undefined,
       signingLink,
       lines: notificationLines,
       totalCents,
+      renewalOfferDeadline: renewalDeadline
+        ? formatRenewalOfferDeadline(renewalDeadline)
+        : undefined,
     });
 
-    const subject = isTest
-      ? `[TEST] ${brand.brandName} ${isProposalStage ? 'Proposal' : 'Agreement'} — ${ag.company_name ?? (isProposalStage ? 'Proposal' : 'Agreement')}`
-      : isProposalStage
-        ? `Action Required: Review Your ${brand.brandName} Advertising Proposal — ${ag.company_name ?? 'Proposal'}`
-        : `Action Required: Sign Your ${brand.brandName} Advertising Agreement — ${ag.company_name ?? 'Agreement'}`;
-    const result = await sendEmail({
+    const subject = ag.is_renewal
+      ? isTest
+        ? `[TEST] ${brand.brandName} Advertising Renewal — ${ag.company_name ?? 'Renewal Agreement'}`
+        : isProposalStage
+          ? `Action Required: Review Your ${brand.brandName} Advertising Renewal — ${ag.company_name ?? 'Renewal Agreement'}`
+          : `Action Required: Sign Your ${brand.brandName} Renewal Agreement — ${ag.company_name ?? 'Renewal Agreement'}`
+      : isTest
+        ? `[TEST] ${brand.brandName} Insertion Order — ${ag.company_name ?? 'Insertion Order'}`
+        : isProposalStage
+          ? `Action Required: Review Your ${brand.brandName} Advertising Insertion Order — ${ag.company_name ?? 'Insertion Order'}`
+          : `Action Required: Sign Your ${brand.brandName} Advertising Insertion Order — ${ag.company_name ?? 'Insertion Order'}`;
+    const isNewslineSender =
+      ag.publication === 'san_antonio'
+      || ag.company_name?.trim().toLowerCase() === 'newsline san antonio';
+    let result = await sendEmail({
       to: recipient,
+      from: isNewslineSender ? 'Newsline San Antonio <hello@newslinesa.com>' : undefined,
+      replyTo: isNewslineSender ? 'hello@newslinesa.com' : undefined,
       subject,
       html,
     });
+
+    // Keep Newsline mail deliverable while its Resend domain verification is
+    // pending. The rejected attempt does not send; retry once from the verified
+    // RealtyLine default while preserving Newsline branding and reply handling.
+    // As soon as newslinesa.com is verified, the first attempt succeeds and this
+    // fallback is bypassed automatically.
+    const newslineDomainUnverified =
+      isNewslineSender
+      && !result.ok
+      && /newslinesa\.com domain is not verified/i.test(result.error ?? '');
+    if (newslineDomainUnverified) {
+      result = await sendEmail({
+        to: recipient,
+        replyTo: 'hello@newslinesa.com',
+        subject,
+        html,
+      });
+    }
 
     if (!result.ok) {
       return NextResponse.json({ error: 'email send failed', detail: result.error }, { status: 502 });
@@ -141,7 +184,19 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     // Test send: skip both; just audit the test.
     if (!isTest) {
       const newStatus = isProposalStage ? 'proposal_sent' : 'sent';
-      await sql`UPDATE agreements SET status = ${newStatus}, sent_to_email = ${recipient}, updated_at = NOW() WHERE id = ${id}`;
+      if (ag.is_renewal && renewalDeadline) {
+        await sql`
+          UPDATE agreements
+          SET status = ${newStatus},
+              sent_to_email = ${recipient},
+              renewal_offer_expires_at = ${renewalDeadline.toISOString()},
+              renewal_offer_reminder_sent_at = NULL,
+              updated_at = NOW()
+          WHERE id = ${id}
+        `;
+      } else {
+        await sql`UPDATE agreements SET status = ${newStatus}, sent_to_email = ${recipient}, updated_at = NOW() WHERE id = ${id}`;
+      }
     }
 
     // Append audit entry (different event label for tests).
@@ -153,8 +208,8 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       timestamp: new Date().toISOString(),
       user_email: admin.email,
       details: isTest
-        ? `Test ${isProposalStage ? 'proposal' : 'agreement'} email sent to admin ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`
-        : `${isProposalStage ? 'Proposal' : 'Agreement'} notification sent to ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`,
+        ? `Test insertion order email sent to admin ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`
+        : `Insertion order notification sent to ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`,
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${id}`;
 

@@ -53,7 +53,7 @@ const DETAIL_TIMEOUT_MS = 30_000;
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 /** Subset of the Sitecore Discover "Lot" record — only the fields we read. */
-export interface BrookfieldLot {
+interface BrookfieldLot {
   id?: string;
   name?: string;
   addressline1?: string;
@@ -97,7 +97,7 @@ interface DiscoverResponse {
   }>;
 }
 
-export interface BrookfieldDetail {
+interface BrookfieldDetail {
   galleryUrls?: string[];
   virtualTourUrl?: string | null;
   floorplanUrl?: string | null;

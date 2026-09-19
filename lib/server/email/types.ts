@@ -2,7 +2,7 @@
  * Provider-agnostic email interface used by all server code.
  */
 
-export interface EmailRecipient {
+interface EmailRecipient {
   email: string;
   name?: string;
 }
@@ -15,6 +15,13 @@ export interface EmailSendInput {
   replyTo?: string;
   tags?: string[];
   emailType: string;
+  /**
+   * When true, ask the provider to disable open+click tracking for this
+   * send. Required for password-reset and account-verification links
+   * because the tracking wrapper strips the ?token= query string on
+   * redirect, silently breaking the link.
+   */
+  disableTracking?: boolean;
   /**
    * Optional per-send override of the From identity. When omitted, the
    * provider uses EMAIL_FROM_ADDRESS / EMAIL_FROM_NAME from env. Either

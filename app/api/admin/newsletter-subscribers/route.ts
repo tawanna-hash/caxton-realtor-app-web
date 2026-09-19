@@ -18,10 +18,10 @@ import { requireAdmin } from '@/lib/server/auth/admin';
 import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { getSql } from '@/lib/db';
+import { isPubId } from '@/lib/publications';
 
 export const runtime = 'nodejs';
 
-const ALLOWED_PUBS = new Set(['realtyline', 'newsline']);
 const ALLOWED_STATUS = new Set(['active', 'unsubscribed']);
 const ALLOWED_VERIFIED = new Set(['valid','invalid','risky','unknown','pending','unverified']);
 
@@ -36,7 +36,7 @@ export const GET = withAdminTracking(async (req: Request) => {
   );
 
   const pubParam = url.searchParams.get('publication') || '';
-  const publication = ALLOWED_PUBS.has(pubParam) ? pubParam : null;
+  const publication = isPubId(pubParam) ? pubParam : null;
 
   const statusParam = url.searchParams.get('status') || '';
   const status = ALLOWED_STATUS.has(statusParam) ? statusParam : null;
@@ -117,4 +117,21 @@ export const GET = withAdminTracking(async (req: Request) => {
     totalPages,
     subscribers: rows,
   });
+});
+
+// Newsletter signups are independent, email-only records. A targeted delete
+// intentionally does not touch a realtor account or any analytics data.
+export const DELETE = withAdminTracking(async (req: Request) => {
+  await requireAdmin();
+  const id = Number(new URL(req.url).searchParams.get('id'));
+  if (!Number.isSafeInteger(id) || id <= 0) throw new ApiError(400, 'invalid id');
+
+  const sql = getSql();
+  const deleted = await sql`
+    DELETE FROM newsletter_subscribers
+    WHERE id = ${id}
+    RETURNING id
+  `;
+  if (deleted.length === 0) throw new ApiError(404, 'subscriber not found');
+  return NextResponse.json({ ok: true, id });
 });

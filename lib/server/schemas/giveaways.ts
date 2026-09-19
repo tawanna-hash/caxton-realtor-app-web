@@ -3,18 +3,22 @@
  */
 
 import { z } from 'zod';
+import { PUBLICATION_IDS } from '@/lib/publications';
 
 export const createGiveawaySchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(5000).optional(),
   prize: z.string().min(1).max(500),
-  publication: z.enum(['austin', 'san_antonio', 'both']),
+  publication: z.enum([...PUBLICATION_IDS, 'both']),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime(),
   drawAt: z.string().datetime().optional(),
 });
 
 export const updateGiveawaySchema = createGiveawaySchema.partial().extend({
+  // Unlike creation, an edit may deliberately clear either optional field.
+  description: z.string().max(5000).nullable().optional(),
+  drawAt: z.string().datetime().nullable().optional(),
   status: z.enum(['draft', 'active', 'closed', 'announced']).optional(),
 });
 
@@ -56,5 +60,3 @@ export const addEntrySchema = z.object({
   // When omitted, entries are created for ALL rules on the giveaway.
   ruleId: z.string().uuid().optional(),
 });
-
-export type AddEntryInput = z.infer<typeof addEntrySchema>;

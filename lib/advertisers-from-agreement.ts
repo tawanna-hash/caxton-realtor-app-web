@@ -10,6 +10,7 @@ import { getSql } from '@/lib/db';
 import { slugify, generateShareToken, type Advertiser } from '@/lib/advertisers';
 import { upsertAdvertiserMailingByAdvertiserId } from '@/lib/mailing';
 import type { Agreement } from '@/lib/agreements';
+import { isPartnerDeletionTombstoned } from '@/lib/advertiser-deletion-tombstones';
 
 /**
  * Result describes what happened so callers can audit-log it.
@@ -75,6 +76,13 @@ export async function ensureAdvertiserForAgreement(
 ): Promise<EnsureAdvertiserResult> {
   const sql = getSql();
   const desiredStatus: 'prospect' | 'advertiser' = opts.desiredStatus ?? 'prospect';
+  const contactEmail = pickContactEmail(ag);
+  const name = pickAdvertiserName(ag);
+  const candidateSlug = name ? (slugify(name) || `advertiser-${Date.now()}`) : null;
+
+  if (await isPartnerDeletionTombstoned({ email: contactEmail, name, slug: candidateSlug })) {
+    return { outcome: 'skipped', reason: 'partner was intentionally deleted' };
+  }
 
   // Promote an existing advertiser from 'prospect' to 'advertiser' when the
   // caller signals that this agreement is now signed. Never demote, never
@@ -96,7 +104,6 @@ export async function ensureAdvertiserForAgreement(
   }
 
   // 2) Match by contact_email (case-insensitive).
-  const contactEmail = pickContactEmail(ag);
   if (contactEmail) {
     const byEmail = (await sql`
       SELECT id FROM advertisers
@@ -112,12 +119,11 @@ export async function ensureAdvertiserForAgreement(
   }
 
   // 3) Match by exact slug derived from name.
-  const name = pickAdvertiserName(ag);
   if (!name) {
     return { outcome: 'skipped', reason: 'no usable name on agreement' };
   }
 
-  const baseSlug = slugify(name) || `advertiser-${Date.now()}`;
+  const baseSlug = candidateSlug as string;
   const bySlug = (await sql`
     SELECT id FROM advertisers WHERE slug = ${baseSlug} LIMIT 1
   `) as unknown as Array<{ id: number }>;

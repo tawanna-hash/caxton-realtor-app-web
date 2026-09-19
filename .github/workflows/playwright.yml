@@ -29,6 +29,9 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Check date field styling lock
+        run: node scripts/check-date-field-lock.mjs
+
       - name: Install deps
         run: npm ci
 

@@ -6,12 +6,13 @@
 
 import { upsertEvents, pruneStale } from '@/lib/events-store';
 import { scrapeUnlockMls } from '@/lib/unlockmls-scraper';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 export const runtime = 'nodejs';
 // Vercel's Pro plan default is 60s; the scrape can take longer for 3 months.
 export const maxDuration = 300;
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   // ---- auth ----
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret) {
@@ -64,3 +65,5 @@ export async function GET(req: Request) {
     );
   }
 }
+
+export const GET = withScraperRun('scrape-unlockmls', _GET);

@@ -30,7 +30,7 @@ export interface ArticleOverride {
   editedAt: string | null;
 }
 
-export type OverrideField =
+type OverrideField =
   | 'head'
   | 'excerpt'
   | 'contentHtml'
@@ -43,7 +43,7 @@ export type OverrideField =
 
 let schemaEnsured = false;
 
-export async function ensureArticleOverridesSchema(): Promise<void> {
+async function ensureArticleOverridesSchema(): Promise<void> {
   if (schemaEnsured) return;
   const sql = getSql();
   await sql`
@@ -104,21 +104,6 @@ function rowToOverride(r: OverrideRow): ArticleOverride {
     editedBy: r.edited_by,
     editedAt: r.edited_at,
   };
-}
-
-/** Fetch one override by composite key, or null. */
-export async function getArticleOverride(
-  publication: Publication,
-  wpPostId: string,
-): Promise<ArticleOverride | null> {
-  await ensureArticleOverridesSchema();
-  const sql = getSql();
-  const rows = (await sql`
-    SELECT * FROM wp_article_overrides
-    WHERE publication = ${publication} AND wp_post_id = ${wpPostId}
-    LIMIT 1
-  `) as unknown as OverrideRow[];
-  return rows[0] ? rowToOverride(rows[0]) : null;
 }
 
 /**

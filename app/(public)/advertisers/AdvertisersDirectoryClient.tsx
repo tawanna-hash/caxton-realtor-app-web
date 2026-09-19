@@ -1,6 +1,6 @@
 'use client';
 
-import { type PubKey } from '@/lib/pub-meta';
+import { isPubKey, type PubKey } from '@/lib/pub-meta';
 
 // app/(public)/advertisers/AdvertisersDirectoryClient.tsx
 //
@@ -55,7 +55,7 @@ function readSavedPub(): SitePub {
   if (typeof window === 'undefined') return 'realtyline';
   try {
     const v = window.localStorage.getItem('caxton_pub');
-    if (v === 'realtyline' || v === 'newsline') return v;
+    if (isPubKey(v)) return v;
   } catch {}
   return 'realtyline';
 }
@@ -76,14 +76,13 @@ function getServerPubSnapshot(): SitePub {
 }
 
 // Maps the UI-level site pub to the DB-level publication value used on
-// the advertisers table. Houston/Dallas inherit the RealtyLine ('austin')
-// publication slug because they're pre-launch with no advertisers of their
-// own yet - filtering on 'austin' returns the empty set safely.
-const SITE_TO_DB: Record<SitePub, 'austin' | 'san_antonio'> = {
+// the advertisers table. Houston/Dallas do not have advertiser publication
+// values yet, so they intentionally render an empty directory.
+const SITE_TO_DB: Record<SitePub, 'austin' | 'san_antonio' | null> = {
   realtyline: 'austin',
   newsline: 'san_antonio',
-  'realtyline-houston': 'austin',
-  'realtyline-dallas': 'austin',
+  'realtyline-houston': null,
+  'realtyline-dallas': null,
 };
 
 export default function AdvertisersDirectoryClient({ advertisers, themes }: Props) {
@@ -95,7 +94,7 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
 
   const dbPub = SITE_TO_DB[pub];
   const inPub = useMemo(
-    () => advertisers.filter((a) => a.publication === dbPub),
+    () => dbPub === null ? [] : advertisers.filter((a) => a.publication === dbPub),
     [advertisers, dbPub],
   );
   const theme = themes[pub];
@@ -137,7 +136,7 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
           style={{ color: theme.accent }}
         >
           {filtered.length}{' '}
-          {filtered.length === 1 ? 'advertiser' : 'advertisers'}
+          {filtered.length === 1 ? 'partner' : 'partners'}
         </span>
       </div>
 
@@ -145,7 +144,7 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
         <div className="mb-4 space-y-3">
           {/* Search */}
           <label className="block">
-            <span className="sr-only">Search advertisers</span>
+            <span className="sr-only">Search partners</span>
             <div className="relative">
               <svg
                 aria-hidden="true"
@@ -206,7 +205,7 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
                   aria-hidden="true"
                 />
                 <Link
-                  href={`/advertisers/${a.slug}`}
+                  href={`/partners/${a.slug}`}
                   className="flex-1 min-w-0 block hover:underline underline-offset-2"
                 >
                   <span className="block text-base text-gray-900 font-medium leading-tight truncate">
@@ -252,12 +251,12 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
         </ul>
       ) : inPub.length > 0 ? (
         <p className="text-center text-gray-500 font-light py-12 border-t border-b border-gray-200">
-          No advertisers match{query.trim() ? ` \u201c${query.trim()}\u201d` : ''}
+          No partners match{query.trim() ? ` \u201c${query.trim()}\u201d` : ''}
           {activeCategory ? ` in ${activeCategory}` : ''}.
         </p>
       ) : (
         <p className="text-center text-gray-500 font-light py-12 border-t border-b border-gray-200">
-          No advertisers to display for {theme.label} right now.
+          No partners to display for {theme.label} right now.
         </p>
       )}
     </section>

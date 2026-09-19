@@ -8,6 +8,8 @@
 
 const OVERRIDE_LINE =
   /^(Rack|Unit rack) \$[\d,]+(?:\.\d+)? → [Qq]uoted \$[\d,]+(?:\.\d+)? \(\d+(?:\.\d+)?% off\)$/;
+const INTERNAL_RENEWAL_LINE =
+  /^Renewed from agreement [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function cleanRepNote(notes: string | null | undefined): string | null {
   const raw = (notes ?? '').trim();
@@ -15,6 +17,6 @@ export function cleanRepNote(notes: string | null | undefined): string | null {
   const kept = raw
     .split('\n')
     .map((l) => l.trim())
-    .filter((l) => l && !OVERRIDE_LINE.test(l));
+    .filter((l) => l && !OVERRIDE_LINE.test(l) && !INTERNAL_RENEWAL_LINE.test(l));
   return kept.length ? kept.join('\n') : null;
 }

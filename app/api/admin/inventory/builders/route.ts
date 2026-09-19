@@ -5,16 +5,15 @@
 // builder_inventory (see builder_page_visibility join in lib/builder-inventory).
 
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { neon } from '@neondatabase/serverless';
+import { ensureSchema, getSql } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureBuilderInventorySchema } from '@/lib/builder-inventory';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const sql = neon(process.env.DATABASE_URL!);
 
 const patchSchema = z.object({
   builderName: z.string().trim().min(1).max(120),
@@ -23,9 +22,11 @@ const patchSchema = z.object({
 
 export const GET = withAdminTracking(async () => {
   await requireAdmin();
+  await ensureSchema();
   await ensureBuilderInventorySchema();
+  const sql = getSql();
 
-  const rows = (await sql`
+  const inventoryRows = (await sql`
     SELECT
       b.builder_name                        AS builder_name,
       b.developer_name                      AS developer_name,
@@ -46,12 +47,62 @@ export const GET = withAdminTracking(async () => {
     is_developer: boolean;
   }[];
 
-  return NextResponse.json({ builders: rows });
+  const partnerRows = (await sql`
+    SELECT
+      a.id,
+      a.name,
+      COALESCE(v.public_enabled, true) AS public_enabled
+    FROM advertisers a
+    LEFT JOIN builder_page_visibility v
+      ON LOWER(TRIM(v.builder_name)) = LOWER(TRIM(a.name))
+    WHERE COALESCE(a.status, 'advertiser') IN ('advertiser', 'active')
+    ORDER BY a.name ASC
+  `) as {
+    id: number;
+    name: string;
+    public_enabled: boolean;
+  }[];
+
+  const partnersByName = new Map(
+    partnerRows.map((partner) => [partner.name.trim().toLowerCase(), partner]),
+  );
+  const inventoryNames = new Set(
+    inventoryRows.map((row) => row.builder_name.trim().toLowerCase()),
+  );
+
+  const builders = inventoryRows.map((row) => {
+    const partner = partnersByName.get(row.builder_name.trim().toLowerCase());
+    return {
+      ...row,
+      advertiser_id: partner?.id ?? null,
+      is_advertising_partner: Boolean(partner),
+      public_enabled: partner?.public_enabled ?? row.public_enabled,
+    };
+  });
+
+  for (const partner of partnerRows) {
+    if (inventoryNames.has(partner.name.trim().toLowerCase())) continue;
+    builders.push({
+      builder_name: partner.name,
+      developer_name: null,
+      total_count: 0,
+      active_count: 0,
+      public_enabled: partner.public_enabled,
+      is_developer: false,
+      advertiser_id: partner.id,
+      is_advertising_partner: true,
+    });
+  }
+
+  builders.sort((a, b) => a.builder_name.localeCompare(b.builder_name));
+  return NextResponse.json({ builders });
 });
 
 export const PATCH = withAdminTracking(async (req: Request) => {
   await requireAdmin();
+  await ensureSchema();
   await ensureBuilderInventorySchema();
+  const sql = getSql();
 
   const body = await req.json();
   const { builderName, publicEnabled } = patchSchema.parse(body);
@@ -65,16 +116,26 @@ export const PATCH = withAdminTracking(async (req: Request) => {
     DO UPDATE SET public_enabled = EXCLUDED.public_enabled, updated_at = NOW()
   `;
 
-  return NextResponse.json({ builderName, publicEnabled });
-});
+  const partners = (await sql`
+    SELECT slug
+    FROM advertisers
+    WHERE LOWER(TRIM(name)) = LOWER(TRIM(${builderName}))
+  `) as { slug: string }[];
+  revalidatePath('/advertisers');
+  revalidatePath('/partners');
+  for (const partner of partners) {
+    revalidatePath(`/advertisers/${partner.slug}`);
+    revalidatePath(`/partners/${partner.slug}`);
+    revalidatePath(`/r/advertiser/${partner.slug}`);
+  }
 
-const deleteSchema = z.object({
-  builderName: z.string().trim().min(1).max(120),
+  return NextResponse.json({ builderName, publicEnabled });
 });
 
 export const DELETE = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureBuilderInventorySchema();
+  const sql = getSql();
 
   const url = new URL(req.url);
   const builderName = url.searchParams.get('builderName');

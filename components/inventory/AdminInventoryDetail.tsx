@@ -383,7 +383,7 @@ export default function AdminInventoryDetail({
 
           <section className="border border-gray-200 bg-white px-4 py-4 rounded-md">
             <h3 className="text-xs uppercase tracking-wide text-gray-500 font-medium mb-3">
-              Replace files
+              Replace Files
             </h3>
             <div className="space-y-3">
               <div>
@@ -520,7 +520,7 @@ export default function AdminInventoryDetail({
 
           <section className="border border-gray-200 bg-white px-5 py-5 rounded-md">
             <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-4">
-              Edit details
+              Edit Details
             </h2>
 
             <div className="space-y-4">
@@ -587,9 +587,11 @@ export default function AdminInventoryDetail({
                   onChange={(e) => setEdit({ ...edit, publication: e.target.value as Publication })}
                   className={fieldStyle}
                 >
-                  <option value="both">Both (RealtyLine + Newsline San Antonio)</option>
-                  <option value="realtyline">RealtyLine only</option>
-                  <option value="newsline">Newsline San Antonio only</option>
+                  <option value="realtyline">RealtyLine Austin</option>
+                  <option value="newsline">Newsline San Antonio</option>
+                  <option value="realtyline-houston">RealtyLine Houston</option>
+                  <option value="realtyline-dallas">RealtyLine Dallas/Ft. Worth</option>
+                  <option value="both">Austin + San Antonio</option>
                 </select>
               </div>
 
@@ -687,7 +689,7 @@ export default function AdminInventoryDetail({
 
           <section className="border border-red-200 bg-red-50 px-5 py-5 rounded-md">
             <h2 className="text-sm uppercase tracking-[0.15em] text-red-700 font-medium mb-2">
-              Danger zone
+              Danger Zone
             </h2>
             <p className="text-sm text-red-900 font-light mb-3">
               Permanently delete this submission. The flyer PDF and thumbnail JPG will be orphaned and can be cleaned up later.

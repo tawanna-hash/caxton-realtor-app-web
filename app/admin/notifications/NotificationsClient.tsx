@@ -11,8 +11,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import NewNotificationModal, { type EditableNotification } from '@/components/admin/NewNotificationModal';
 import SubscribersSection from './SubscribersSection';
-
-type Status = 'draft' | 'scheduled' | 'sending' | 'sent' | 'cancelled';
+import ContentPagination from '@/app/admin/_components/ContentPagination';
 
 interface Notification {
   id: string;
@@ -84,6 +83,11 @@ export default function NotificationsClient({ initialNotifications, initialStats
   const [editing, setEditing] = useState<EditableNotification | null>(null);
   const [notifications] = useState(initialNotifications);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const totalPages = Math.max(1, Math.ceil(notifications.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageNotifications = notifications.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const openEdit = useCallback((n: Notification) => {
     setEditing({
@@ -141,15 +145,22 @@ export default function NotificationsClient({ initialNotifications, initialStats
 
   return (
     <>
-      <section className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <section className="mb-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div className="text-sm text-gray-600">{subscriberSummary}</div>
         <button
           type="button"
           onClick={() => { setEditing(null); setOpen(true); }}
-          className="inline-flex items-center justify-center px-4 py-2 rounded-md text-white font-medium text-sm bg-brand-700 hover:bg-brand-800 transition-colors"
+          className="inline-flex h-9 items-center justify-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700"
         >
           New notification
         </button>
+      </section>
+
+      <section className="content-admin-summary" aria-label="Notification summary">
+        <div><strong>{notifications.length.toLocaleString()}</strong><span>Recent notifications</span></div>
+        <div><strong>{notifications.filter((item) => item.status === 'sent').length.toLocaleString()}</strong><span>Sent</span></div>
+        <div><strong>{notifications.reduce((sum, item) => sum + item.delivered_count, 0).toLocaleString()}</strong><span>Delivered</span></div>
+        <div><strong>{notifications.reduce((sum, item) => sum + item.clicked_count, 0).toLocaleString()}</strong><span>Clicks</span></div>
       </section>
 
       <section className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -158,72 +169,140 @@ export default function NotificationsClient({ initialNotifications, initialStats
             No notifications yet. Click <span className="font-medium">New notification</span> to send the first one.
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium">Title</th>
-                <th className="text-left px-4 py-3 font-medium">Category</th>
-                <th className="text-left px-4 py-3 font-medium">Market</th>
-                <th className="text-left px-4 py-3 font-medium">Status</th>
-                <th className="text-left px-4 py-3 font-medium">Delivered</th>
-                <th className="text-left px-4 py-3 font-medium">Clicks</th>
-                <th className="text-left px-4 py-3 font-medium">Sent</th>
-                <th className="text-right px-4 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {notifications.map((n) => (
-                <tr key={n.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900 line-clamp-1">{n.title}</div>
-                    <div className="text-gray-500 text-xs line-clamp-1">{n.body}</div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700">{formatCategory(n.category)}</td>
-                  <td className="px-4 py-3 text-gray-700">
-                    {n.target_audience?.market === 'all'
-                      ? 'All'
-                      : n.target_audience?.market === 'austin'
-                      ? 'Austin'
-                      : n.target_audience?.market === 'san_antonio'
-                      ? 'San Antonio'
-                      : n.target_audience?.market === 'houston'
-                      ? 'Houston'
-                      : n.target_audience?.market === 'dallas'
-                      ? 'Dallas'
-                      : '—'}
-                  </td>
-                  <td className="px-4 py-3"><StatusPill status={n.status} /></td>
-                  <td className="px-4 py-3 text-gray-700">{n.delivered_count}</td>
-                  <td className="px-4 py-3 text-gray-700">{n.clicked_count}</td>
-                  <td className="px-4 py-3 text-gray-700 text-xs">{formatDate(n.sent_at || n.created_at)}</td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
-                    {(n.status === 'draft' || n.status === 'scheduled') ? (
-                      <div className="inline-flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(n)}
-                          disabled={busyId === n.id}
-                          className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => cancelNotification(n)}
-                          disabled={busyId === n.id}
-                          className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
-                        >
-                          {busyId === n.id ? 'Cancelling...' : 'Cancel'}
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">—</span>
-                    )}
-                  </td>
+          <>
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium">Title</th>
+                  <th className="text-left px-4 py-3 font-medium">Category</th>
+                  <th className="text-left px-4 py-3 font-medium">Market</th>
+                  <th className="text-left px-4 py-3 font-medium">Status</th>
+                  <th className="text-left px-4 py-3 font-medium">Delivered</th>
+                  <th className="text-left px-4 py-3 font-medium">Clicks</th>
+                  <th className="text-left px-4 py-3 font-medium">Sent</th>
+                  <th className="text-right px-4 py-3 font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {pageNotifications.map((n) => (
+                  <tr key={n.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900 line-clamp-1">{n.title}</div>
+                      <div className="text-gray-500 text-xs line-clamp-1">{n.body}</div>
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">{formatCategory(n.category)}</td>
+                    <td className="px-4 py-3 text-gray-700">
+                      {n.target_audience?.market === 'all'
+                        ? 'All'
+                        : n.target_audience?.market === 'austin'
+                        ? 'Austin'
+                        : n.target_audience?.market === 'san_antonio'
+                        ? 'San Antonio'
+                        : n.target_audience?.market === 'houston'
+                        ? 'Houston'
+                        : n.target_audience?.market === 'dallas'
+                        ? 'Dallas'
+                        : '—'}
+                    </td>
+                    <td className="px-4 py-3"><StatusPill status={n.status} /></td>
+                    <td className="px-4 py-3 text-gray-700">{n.delivered_count}</td>
+                    <td className="px-4 py-3 text-gray-700">{n.clicked_count}</td>
+                    <td className="px-4 py-3 text-gray-700 text-xs">{formatDate(n.sent_at || n.created_at)}</td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      {(n.status === 'draft' || n.status === 'scheduled') ? (
+                        <div className="inline-flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(n)}
+                            disabled={busyId === n.id}
+                            className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => cancelNotification(n)}
+                            disabled={busyId === n.id}
+                            className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+                          >
+                            {busyId === n.id ? 'Cancelling...' : 'Cancel'}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Mobile card list. */}
+          <ul className="sm:hidden divide-y divide-gray-100">
+            {pageNotifications.map((n) => {
+              const market = n.target_audience?.market;
+              const marketLabel =
+                market === 'all' ? 'All' :
+                market === 'austin' ? 'Austin' :
+                market === 'san_antonio' ? 'San Antonio' :
+                market === 'houston' ? 'Houston' :
+                market === 'dallas' ? 'Dallas' :
+                '—';
+              const isDraftOrScheduled = n.status === 'draft' || n.status === 'scheduled';
+              return (
+                <li key={n.id} className="px-4 py-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-gray-900 line-clamp-2 break-words">{n.title}</div>
+                      <div className="text-gray-500 text-xs line-clamp-2 break-words">{n.body}</div>
+                    </div>
+                    <StatusPill status={n.status} />
+                  </div>
+                  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                    <dt className="text-gray-500 uppercase tracking-wider">Category</dt>
+                    <dd className="text-gray-800 text-right">{formatCategory(n.category)}</dd>
+                    <dt className="text-gray-500 uppercase tracking-wider">Market</dt>
+                    <dd className="text-gray-800 text-right">{marketLabel}</dd>
+                    <dt className="text-gray-500 uppercase tracking-wider">Delivered</dt>
+                    <dd className="text-gray-800 text-right tabular-nums">{n.delivered_count}</dd>
+                    <dt className="text-gray-500 uppercase tracking-wider">Clicks</dt>
+                    <dd className="text-gray-800 text-right tabular-nums">{n.clicked_count}</dd>
+                    <dt className="text-gray-500 uppercase tracking-wider">Sent</dt>
+                    <dd className="text-gray-800 text-right">{formatDate(n.sent_at || n.created_at)}</dd>
+                  </dl>
+                  {isDraftOrScheduled && (
+                    <div className="pt-1 flex gap-3 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(n)}
+                        disabled={busyId === n.id}
+                        className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => cancelNotification(n)}
+                        disabled={busyId === n.id}
+                        className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+                      >
+                        {busyId === n.id ? 'Cancelling...' : 'Cancel'}
+                      </button>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          <ContentPagination
+            count={notifications.length}
+            page={safePage}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+          />
+          </>
         )}
       </section>
 

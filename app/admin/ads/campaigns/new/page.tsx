@@ -12,7 +12,7 @@ export default function NewCampaignPage() {
       <div className="mb-6">
         <PageTitle size="md">New campaign</PageTitle>
         <p className="text-sm text-gray-700 mt-1">
-          Schedule an advertiser into one of the 15 ad slots.
+          Schedule an partner into one of the 15 ad slots.
         </p>
       </div>
       <CampaignForm />

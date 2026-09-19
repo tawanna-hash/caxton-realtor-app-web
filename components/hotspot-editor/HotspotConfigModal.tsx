@@ -17,16 +17,21 @@
 
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { upload } from '@vercel/blob/client';
 import type { Hotspot, HotspotType, HotspotConfig } from '@/lib/hotspots';
 import { defaultConfigForType, TYPE_LABELS } from '@/lib/hotspot-editor-helpers';
+import {
+  PUBLICATIONS,
+  PUBLICATION_LABELS_WITH_BOTH,
+  type PublicationScope,
+} from '@/lib/publications';
 
 type PickerAdvertiser = {
   id: number;
   name: string;
   slug: string;
-  publication: 'austin' | 'san_antonio' | 'both';
+  publication: PublicationScope;
 };
 
 interface Props {
@@ -42,7 +47,7 @@ interface Props {
   onClose: () => void;
   onRequestDelete: () => void;
   /** Default publication for the inline "+ New advertiser" form. */
-  defaultPublication?: 'austin' | 'san_antonio' | 'both';
+  defaultPublication?: PublicationScope;
 }
 
 export default function HotspotConfigModal({
@@ -63,20 +68,28 @@ export default function HotspotConfigModal({
     setConfig(defaultConfigForType(newType));
   };
 
-  // Trap focus, restore on close, support escape.
+  // Trap focus once on mount, restore on unmount, support escape.
+  // We deliberately keep the dep array empty and read the latest onClose
+  // through a ref so parent re-renders (e.g. the 10s Saved-indicator
+  // ticker) don't refire this effect and steal focus from the input the
+  // editor is typing into. Prior behaviour was a `[onClose]` dep, which
+  // caused `dialogRef.current.focus()` to yank focus off the active
+  // input every parent render — the "jumpy fields" bug.
   const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   useEffect(() => {
     const prevFocus = document.activeElement as HTMLElement | null;
     dialogRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     };
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
       prevFocus?.focus?.();
     };
-  }, [onClose]);
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
@@ -112,10 +125,74 @@ export default function HotspotConfigModal({
     }
   }, []);
 
+  // Backdrop close only fires if BOTH mousedown and mouseup happen on the
+  // backdrop itself. Prevents the modal from closing when a text selection
+  // or drag starts inside the dialog and releases outside it, and when a
+  // stray click bubbles from an autocomplete/portal element that unmounts
+  // between mousedown and click.
+  const backdropMouseDownRef = useRef(false);
+  const handleBackdropMouseDown = useCallback((e: ReactMouseEvent) => {
+    backdropMouseDownRef.current = e.target === e.currentTarget;
+  }, []);
+  const handleBackdropMouseUp = useCallback((e: ReactMouseEvent) => {
+    if (backdropMouseDownRef.current && e.target === e.currentTarget) {
+      onClose();
+    }
+    backdropMouseDownRef.current = false;
+  }, [onClose]);
+
+  // Draggable dialog: the modal is a lot of vertical real estate on smaller
+  // laptops and often covers the very hotspot the editor is trying to see.
+  // We track a translation offset applied on top of the centered position
+  // so the editor can drag it out of the way by the header. Reset to (0,0)
+  // whenever the modal reopens (i.e. hotspot id changes) so it always
+  // starts centered.
+  // Reset the offset when the hotspot id changes. React's official
+  // "resetting state on prop change" pattern: store the previous key in
+  // useState and compare in render, then setState synchronously if it
+  // changed. React re-runs the render immediately and doesn't cascade.
+  const [prevHotspotId, setPrevHotspotId] = useState(hotspot.id);
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  if (prevHotspotId !== hotspot.id) {
+    setPrevHotspotId(hotspot.id);
+    setDragOffset({ x: 0, y: 0 });
+  }
+  const dragStateRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number } | null>(null);
+  const handleHeaderPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    // Only start a drag on the header background itself — don't hijack
+    // clicks that land on interactive header controls.
+    const targetEl = e.target as HTMLElement;
+    if (targetEl.closest('button, a, input, select, textarea')) return;
+    // Pointer capture routes every subsequent pointermove/pointerup for
+    // this pointerId to this element, even if the pointer leaves it.
+    // That means the drag reliably ends on release regardless of where
+    // the cursor is — no window-level listeners, no stuck-drag bugs.
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    dragStateRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      baseX: dragOffset.x,
+      baseY: dragOffset.y,
+    };
+  }, [dragOffset.x, dragOffset.y]);
+  const handleHeaderPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const st = dragStateRef.current;
+    if (!st) return;
+    setDragOffset({
+      x: st.baseX + (e.clientX - st.startX),
+      y: st.baseY + (e.clientY - st.startY),
+    });
+  }, []);
+  const handleHeaderPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    dragStateRef.current = null;
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+  }, []);
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={onClose}
+      onMouseDown={handleBackdropMouseDown}
+      onMouseUp={handleBackdropMouseUp}
     >
       <div
         ref={dialogRef}
@@ -123,11 +200,21 @@ export default function HotspotConfigModal({
         role="dialog"
         aria-modal="true"
         className="bg-white rounded-md shadow-xl max-w-2xl w-full my-8 outline-none"
-        onClick={(e) => e.stopPropagation()}
+        style={{ transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Configure hotspot</h2>
+        {/* Header — drag handle. cursor-move signals draggability; the close
+            (X) button and any future header controls short-circuit the drag
+            via the closest() guard in handleHeaderMouseDown. */}
+        <div
+          className="px-6 py-4 border-b border-gray-200 flex items-center justify-between select-none cursor-move touch-none"
+          onPointerDown={handleHeaderPointerDown}
+          onPointerMove={handleHeaderPointerMove}
+          onPointerUp={handleHeaderPointerUp}
+          onPointerCancel={handleHeaderPointerUp}
+        >
+          <h2 className="text-lg font-semibold text-gray-900">Configure Hotspot</h2>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <span className="sr-only">Close</span>
             <svg width={20} height={20} viewBox="0 0 20 20" fill="currentColor"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg>
@@ -241,7 +328,7 @@ function AdvertiserPicker({
 }: {
   selectedId: number | null;
   legacyName: string;
-  defaultPublication: 'austin' | 'san_antonio' | 'both';
+  defaultPublication: PublicationScope;
   onChange: (adv: PickerAdvertiser | null) => void;
   onError: (err: string | null) => void;
 }) {
@@ -249,7 +336,7 @@ function AdvertiserPicker({
   const [loading, setLoading] = useState(true);
   const [showNewForm, setShowNewForm] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newPublication, setNewPublication] = useState<'austin' | 'san_antonio' | 'both'>(defaultPublication);
+  const [newPublication, setNewPublication] = useState<PublicationScope>(defaultPublication);
   const [newEmail, setNewEmail] = useState('');
   const [creating, setCreating] = useState(false);
 
@@ -258,11 +345,11 @@ function AdvertiserPicker({
     (async () => {
       try {
         const res = await fetch('/api/admin/advertisers/picker', { credentials: 'include' });
-        if (!res.ok) throw new Error('Failed to load advertisers');
+        if (!res.ok) throw new Error('Failed to load partners');
         const data = await res.json() as { advertisers: PickerAdvertiser[] };
         if (!cancelled) setAdvertisers(data.advertisers ?? []);
       } catch (err) {
-        if (!cancelled) onError(err instanceof Error ? err.message : 'Failed to load advertisers');
+        if (!cancelled) onError(err instanceof Error ? err.message : 'Failed to load partners');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -286,7 +373,7 @@ function AdvertiserPicker({
   const handleCreate = async () => {
     const name = newName.trim();
     if (!name) {
-      onError('Advertiser name is required');
+      onError('Partner name is required');
       return;
     }
     setCreating(true);
@@ -309,7 +396,7 @@ function AdvertiserPicker({
       }
       const data = (await res.json()) as { advertiser?: PickerAdvertiser };
       const created = data.advertiser;
-      if (!created) throw new Error('No advertiser returned');
+      if (!created) throw new Error('No partner returned');
       setAdvertisers((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       onChange(created);
       setShowNewForm(false);
@@ -329,7 +416,7 @@ function AdvertiserPicker({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Advertiser</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Partner</label>
       <select
         value={selectedId === null ? '' : String(selectedId)}
         onChange={(e) => handleSelect(e.target.value)}
@@ -339,7 +426,7 @@ function AdvertiserPicker({
         <option value="">— None —</option>
         {advertisers.map((a) => (
           <option key={a.id} value={String(a.id)}>
-            {a.name} {a.publication === 'san_antonio' ? '(Newsline San Antonio)' : a.publication === 'both' ? '(Both)' : '(RealtyLine)'}
+            {a.name} ({a.publication === 'both' ? 'Austin + San Antonio' : PUBLICATION_LABELS_WITH_BOTH[a.publication]})
           </option>
         ))}
       </select>
@@ -347,9 +434,9 @@ function AdvertiserPicker({
       <div className="mt-1 flex items-start justify-between gap-2">
         <p className="text-xs text-gray-500 flex-1">
           {showLegacyHint ? (
-            <>Legacy text: <em>{legacyName}</em>. Pick an advertiser above (or create one) to link click tracking and reports.</>
+            <>Legacy text: <em>{legacyName}</em>. Pick an partner above (or create one) to link click tracking and reports.</>
           ) : (
-            'Used for advertiser performance reports and dashboard access.'
+            'Used for partner performance reports and dashboard access.'
           )}
         </p>
         {!showNewForm && (
@@ -358,7 +445,7 @@ function AdvertiserPicker({
             onClick={() => setShowNewForm(true)}
             className="text-xs text-blue-600 hover:underline whitespace-nowrap"
           >
-            + New advertiser…
+            + New partner…
           </button>
         )}
       </div>
@@ -381,12 +468,15 @@ function AdvertiserPicker({
               <label className="block text-xs font-medium text-gray-700 mb-1">Publication</label>
               <select
                 value={newPublication}
-                onChange={(e) => setNewPublication(e.target.value as 'austin' | 'san_antonio' | 'both')}
+                onChange={(e) => setNewPublication(e.target.value as PublicationScope)}
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md bg-white"
               >
-                <option value="austin">RealtyLine Austin</option>
-                <option value="san_antonio">Newsline San Antonio</option>
-                <option value="both">Both</option>
+                {PUBLICATIONS.map((publication) => (
+                  <option key={publication.id} value={publication.id}>
+                    {publication.label}
+                  </option>
+                ))}
+                <option value="both">Austin + San Antonio</option>
               </select>
             </div>
             <div>

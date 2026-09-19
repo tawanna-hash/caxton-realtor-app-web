@@ -85,7 +85,7 @@ export default function DeleteAccountSection({ accentColor = '#301D5D', email }:
   return (
     <>
       <section className="rounded-md border border-red-200 bg-red-50/40 p-4">
-        <h2 className="text-sm font-medium text-red-900 mb-1">Delete account</h2>
+        <h2 className="text-sm font-medium text-red-900 mb-1">Delete Account</h2>
         <p className="text-xs text-red-900/70 font-light mb-3">
           Permanently delete your account and all associated data, including saved
           articles, push subscriptions, and notification
@@ -118,7 +118,7 @@ export default function DeleteAccountSection({ accentColor = '#301D5D', email }:
                 className="text-base font-medium"
                 style={{ color: accentColor }}
               >
-                Permanently delete account?
+                Permanently Delete Account?
               </h3>
               <p className="text-xs text-gray-600 font-light mt-2">
                 This will immediately and permanently remove:

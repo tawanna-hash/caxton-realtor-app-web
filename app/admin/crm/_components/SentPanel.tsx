@@ -2,6 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+type FailedRecipient = {
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  company: string | null;
+  status: string;
+  error: string | null;
+};
+
 export type SentRow = {
   id: string;
   subject: string | null;
@@ -18,6 +27,8 @@ export type SentRow = {
   recipient_count: number | null;
   sent_count: number | null;
   failed_count: number | null;
+  error_message?: string | null;
+  failed_recipients?: FailedRecipient[];
   runs_sent?: number | null;
   runs_total?: number | null;
   last_sent_at?: string | null;
@@ -55,7 +66,54 @@ function StatusBadge({ status }: { status: string }) {
   return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{status}</span>;
 }
 
-export default function SentPanel({ limit = 50, showFilters = true, onEditResend }: Props) {
+function FailedRecipientDropdown({ row }: { row: SentRow }) {
+  if (!row.failed_count && !row.error_message) return null;
+  const failures = row.failed_recipients ?? [];
+  const label = row.failed_count
+    ? `${row.failed_count} failed`
+    : 'View failure reason';
+
+  return (
+    <details className="mt-0.5 text-left">
+      <summary className="cursor-pointer select-none text-xs font-medium text-red-700 hover:text-red-900">
+        {label}
+      </summary>
+      <div className="mt-1 w-72 max-w-[calc(100vw-3rem)] rounded-md border border-red-200 bg-red-50 p-2 text-xs text-gray-800 shadow-sm">
+        {row.error_message && (
+          <div className="mb-2 break-words font-medium text-red-900">
+            Campaign error: {row.error_message}
+          </div>
+        )}
+        {failures.length === 0 ? (
+          !row.error_message && (
+            <div className="text-red-800">Failure details are unavailable for this send.</div>
+          )
+        ) : (
+          <ul className="space-y-2">
+            {failures.map((failure, index) => {
+              const name = [failure.first_name, failure.last_name].filter(Boolean).join(' ');
+              return (
+                <li key={`${failure.email}-${index}`} className="break-words">
+                  <div className="font-semibold text-red-900">{failure.email}</div>
+                  {(name || failure.company) && (
+                    <div className="text-gray-600">
+                      {[name, failure.company].filter(Boolean).join(' · ')}
+                    </div>
+                  )}
+                  <div className="mt-0.5 text-red-800">
+                    {failure.error || (failure.status === 'bounced' ? 'Email bounced' : 'Provider did not return a reason')}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </details>
+  );
+}
+
+export default function SentPanel({ limit: initialLimit = 50, showFilters = true, onEditResend }: Props) {
   const [rows, setRows] = useState<SentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +122,7 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
   const [recurring, setRecurring] = useState<'any' | 'series' | 'oneoff'>('any');
   const [group, setGroup] = useState<'flat' | 'series'>('flat');
   const [offset, setOffset] = useState(0);
+  const [pageSize, setPageSize] = useState(initialLimit);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const query = useMemo(() => {
@@ -72,10 +131,10 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
     if (status) p.set('status', status);
     if (recurring !== 'any') p.set('recurring', recurring);
     p.set('group', group);
-    p.set('limit', String(limit));
+    p.set('limit', String(pageSize));
     p.set('offset', String(offset));
     return p.toString();
-  }, [q, status, recurring, group, limit, offset]);
+  }, [q, status, recurring, group, pageSize, offset]);
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
@@ -125,12 +184,12 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
             <label className="block text-xs uppercase tracking-wide text-gray-500">Search subject</label>
             <input type="text" value={q} onChange={(e) => { setQ(e.target.value); setOffset(0); }}
               placeholder="Subject contains…"
-              className="mt-1 w-64 rounded-md border border-gray-300 px-2 py-1 text-sm" />
+              className="mt-1 h-9 w-64 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wide text-gray-500">Status</label>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setOffset(0); }}
-                    className="mt-1 rounded-md border border-gray-300 px-2 py-1 text-sm">
+                    className="mt-1 h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100">
               <option value="">Any</option>
               <option value="sent">Sent</option>
               <option value="scheduled">Scheduled</option>
@@ -142,7 +201,7 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
           <div>
             <label className="block text-xs uppercase tracking-wide text-gray-500">Type</label>
             <select value={recurring} onChange={(e) => { setRecurring(e.target.value as 'any' | 'series' | 'oneoff'); setOffset(0); }}
-                    className="mt-1 rounded-md border border-gray-300 px-2 py-1 text-sm">
+                    className="mt-1 h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100">
               <option value="any">Any</option>
               <option value="oneoff">One-off</option>
               <option value="series">Recurring</option>
@@ -154,7 +213,7 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
             Group recurring
           </label>
           <button type="button" onClick={() => void load()}
-                  className="ml-auto rounded-md border border-gray-300 bg-white px-3 py-1 text-sm hover:bg-gray-50">
+                  className="ml-auto h-9 rounded border border-gray-300 bg-white px-3 text-sm hover:bg-gray-50">
             Refresh
           </button>
         </div>
@@ -162,8 +221,83 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
 
       {error && <div className="mb-2 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{error}</div>}
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="w-full text-sm">
+      {/* mobile card list */}
+      <ul className="sm:hidden divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white overflow-hidden">
+        {loading && <li className="px-3 py-6 text-center text-sm text-gray-500">Loading…</li>}
+        {!loading && rows.length === 0 && <li className="px-3 py-6 text-center text-sm text-gray-500">No sent emails match your filters.</li>}
+        {!loading && rows.map((row) => {
+          const isSeries = row.recurrence_interval_days != null || row.recurrence_parent_id != null;
+          return (
+            <li key={`m-${row.id}`} className="p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-gray-900 truncate">
+                    {row.subject || <em className="text-gray-400">no subject</em>}
+                  </div>
+                  {row.from_name && <div className="text-xs text-gray-500 truncate">from {row.from_name}</div>}
+                  {row.preview_text && <div className="mt-0.5 line-clamp-1 text-xs text-gray-500">{row.preview_text}</div>}
+                </div>
+                <div className="shrink-0 text-right">
+                  <StatusBadge status={row.status} />
+                  {isSeries && <div className="mt-1 text-[11px] text-purple-700">Recurring</div>}
+                </div>
+              </div>
+              <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                <dt className="text-gray-500">Recipients</dt>
+                <dd className="text-gray-700 tabular-nums">
+                  {row.recipient_count ?? '—'}
+                  {row.sent_count != null && (
+                    <span className="text-gray-500"> · {row.sent_count} sent</span>
+                  )}
+                  <FailedRecipientDropdown row={row} />
+                </dd>
+                <dt className="text-gray-500">{group === 'series' ? 'Last sent' : 'Sent at'}</dt>
+                <dd className="text-gray-700">{fmt(group === 'series' ? (row.last_sent_at ?? row.sent_at) : (row.sent_at ?? row.scheduled_for))}</dd>
+                {group === 'series' && (
+                  <>
+                    <dt className="text-gray-500">Next</dt>
+                    <dd className="text-gray-700">{fmt(row.next_scheduled_for ?? null)}</dd>
+                    <dt className="text-gray-500">Runs</dt>
+                    <dd className="text-gray-700 tabular-nums">{row.runs_sent ?? 0}/{row.runs_total ?? 0}</dd>
+                  </>
+                )}
+                <dt className="text-gray-500">Opens / Clicks</dt>
+                <dd className="text-gray-700 tabular-nums">{row.open_count ?? 0} / {row.click_count ?? 0}</dd>
+              </dl>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={busyId === row.id}
+                  onClick={() => void doResend(row.id)}
+                  className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Resend
+                </button>
+                <button
+                  type="button"
+                  disabled={busyId === row.id || !onEditResend}
+                  onClick={() => onEditResend?.(row)}
+                  className="rounded border border-orange-300 bg-orange-50 px-2 py-1 text-xs text-orange-800 hover:bg-orange-100 disabled:opacity-50"
+                >
+                  Edit &amp; Resend
+                </button>
+                {isSeries && (
+                  <button
+                    type="button"
+                    disabled={busyId === row.id}
+                    onClick={() => void doCancelSeries(row.id)}
+                    className="rounded-md border border-red-300 bg-white px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    Cancel series
+                  </button>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="hidden overflow-x-auto rounded border border-gray-200 sm:block">
+        <table className="min-w-[1050px] w-full text-xs">
           <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
             <tr>
               <th className="px-3 py-2">Subject</th>
@@ -203,9 +337,10 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
                     {row.recipient_count ?? '—'}
                     {row.sent_count != null && (
                       <div className="text-xs text-gray-500">
-                        {row.sent_count} sent{row.failed_count ? ` · ${row.failed_count} failed` : ''}
+                        {row.sent_count} sent
                       </div>
                     )}
+                    <FailedRecipientDropdown row={row} />
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-700">
                     {fmt(group === 'series' ? (row.last_sent_at ?? row.sent_at) : (row.sent_at ?? row.scheduled_for))}
@@ -228,7 +363,7 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
                         title="Resend as-is to the original audience">Resend</button>
                       <button type="button" disabled={busyId === row.id || !onEditResend}
                         onClick={() => onEditResend?.(row)}
-                        className="rounded-md border border-purple-300 bg-purple-50 px-2 py-1 text-xs text-purple-800 hover:bg-purple-100 disabled:opacity-50"
+                        className="rounded border border-orange-300 bg-orange-50 px-2 py-1 text-xs text-orange-800 hover:bg-orange-100 disabled:opacity-50"
                         title="Open composer prefilled with this email">Edit &amp; Resend</button>
                       {isSeries && (
                         <button type="button" disabled={busyId === row.id}
@@ -246,15 +381,22 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
       </div>
 
       {showFilters && (
-        <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-600">
           <div>Showing {rows.length} row{rows.length === 1 ? '' : 's'} (offset {offset})</div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2">
+              Rows
+              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setOffset(0); }}
+                className="h-9 rounded border border-gray-300 bg-white px-2 text-xs">
+                {[25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+              </select>
+            </label>
             <button type="button" disabled={offset === 0}
-                    onClick={() => setOffset(Math.max(0, offset - limit))}
-                    className="rounded-md border border-gray-300 bg-white px-3 py-1 hover:bg-gray-50 disabled:opacity-40">Prev</button>
-            <button type="button" disabled={rows.length < limit}
-                    onClick={() => setOffset(offset + limit)}
-                    className="rounded-md border border-gray-300 bg-white px-3 py-1 hover:bg-gray-50 disabled:opacity-40">Next</button>
+                    onClick={() => setOffset(Math.max(0, offset - pageSize))}
+                    className="h-9 rounded border border-gray-300 bg-white px-3 hover:bg-gray-50 disabled:opacity-40">Previous</button>
+            <button type="button" disabled={rows.length < pageSize}
+                    onClick={() => setOffset(offset + pageSize)}
+                    className="h-9 rounded border border-gray-300 bg-white px-3 hover:bg-gray-50 disabled:opacity-40">Next</button>
           </div>
         </div>
       )}

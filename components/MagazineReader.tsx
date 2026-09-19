@@ -18,6 +18,10 @@ interface MagazineReaderProps {
   onClose: () => void;
   /** Optional handler for the reader's "home" link in the top chrome. Defaults to window.location.assign('/'). */
   onHome?: () => void;
+  /** Zero-indexed page to open the reader on. Used to restore position after refresh. */
+  initialPage?: number;
+  /** Fires whenever the current page changes so the parent can persist it (URL / storage). */
+  onPageChange?: (page: number) => void;
 }
 
 type ActionMode = null | 'share' | 'qr' | 'download' | 'email' | 'embed' | 'search';
@@ -42,7 +46,7 @@ interface MagazineMaybeWithTexts {
   page_texts?: unknown;
 }
 
-export default function MagazineReader({ magazine, brandColor, onClose, onHome }: MagazineReaderProps) {
+export default function MagazineReader({ magazine, brandColor, onClose, onHome, initialPage, onPageChange }: MagazineReaderProps) {
   const handleHome = () => {
     if (onHome) {
       onHome();
@@ -53,7 +57,14 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
       window.location.assign('/');
     }
   };
-  const [currentPage, setCurrentPage] = useState(0);
+  // Zero-indexed. Initial value comes from prop (restored from ?page= in
+  // MagazineClient). Clamped to the magazine's page range.
+  const clampedInitial = (() => {
+    const n = initialPage ?? 0;
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.min(magazine.page_count - 1, Math.floor(n)));
+  })();
+  const [currentPage, setCurrentPage] = useState(clampedInitial);
   const [actionMode, setActionMode] = useState<ActionMode>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [dims, setDims] = useState({ w: 400, h: 560 });
@@ -360,6 +371,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
       const prev = currentPage;
       const next = e.data;
       setCurrentPage(next);
+      if (onPageChange) onPageChange(next);
       // Recenter the page after a flip so the user doesn't land on a new
       // page already panned off-screen.
       setPanX(0);
@@ -429,7 +441,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
             <button
               onClick={() => setActionMode('search')}
               aria-label="Search in issue"
-              className="text-white/80 hover:text-white p-1"
+              className="text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
               title="Search (S)"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -441,7 +453,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
           <button
             onClick={() => cycleZoom(1)}
             aria-label="Zoom"
-            className="text-white/80 hover:text-white p-1"
+            className="text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md"
             title={`Zoom ${zoom}x (next: cycle)`}
           >
             <span className="text-[10px] uppercase tracking-wider">{zoom}x</span>
@@ -452,7 +464,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
               onClick={toggleGrab}
               aria-label={grabActive ? 'Disable grab tool' : 'Enable grab tool to drag the page'}
               aria-pressed={grabActive}
-              className={`p-1 transition-colors ${grabActive ? 'text-white bg-white/20 rounded' : 'text-white/80 hover:text-white'}`}
+              className={`p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors ${grabActive ? 'text-white bg-white/20 rounded' : 'text-white/80 hover:text-white'}`}
               title={grabActive ? 'Grab tool ON — click to disable' : 'Grab tool — drag to move the page'}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -466,7 +478,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
           <button
             onClick={toggleFullscreen}
             aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-            className="text-white/80 hover:text-white p-1"
+            className="text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
             title="Fullscreen (F)"
           >
             {isFullscreen ? (
@@ -546,7 +558,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
             drawShadow={true}
             flippingTime={650}
             usePortrait={true}
-            startPage={0}
+            startPage={clampedInitial}
             autoSize={false}
             maxShadowOpacity={0.5}
             showCover={true}
@@ -586,9 +598,10 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
       >
         <button
           onClick={flipPrev}
-          disabled={currentPage === 0}
           aria-label="Previous page"
-          className="text-white/80 hover:text-white p-1.5 disabled:opacity-30"
+          aria-hidden={currentPage === 0}
+          tabIndex={currentPage === 0 ? -1 : 0}
+          className={`text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center ${currentPage === 0 ? 'invisible pointer-events-none' : ''}`}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m15 18-6-6 6-6" />
@@ -611,9 +624,10 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
 
         <button
           onClick={flipNext}
-          disabled={currentPage >= magazine.page_count - 1}
           aria-label="Next page"
-          className="text-white/80 hover:text-white p-1.5 disabled:opacity-30"
+          aria-hidden={currentPage >= magazine.page_count - 1}
+          tabIndex={currentPage >= magazine.page_count - 1 ? -1 : 0}
+          className={`text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center ${currentPage >= magazine.page_count - 1 ? 'invisible pointer-events-none' : ''}`}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m9 18 6-6-6-6" />

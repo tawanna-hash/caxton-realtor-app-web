@@ -74,14 +74,6 @@ export interface RealtorMeRow {
 // Reads
 // -----------------------------------------------------------------------------
 
-export async function findRealtorByEmail(email: string): Promise<RealtorBasic | null> {
-  const rows = await query<RealtorBasic>(
-    `SELECT id, email, email_verified_at FROM realtors WHERE email = $1`,
-    [email],
-  );
-  return rows[0] ?? null;
-}
-
 export async function findRealtorForLogin(
   email: string,
 ): Promise<{ first_name: string; email_verified_at: Date | null } | null> {
@@ -589,67 +581,6 @@ export async function deleteRealtorAccount(realtorId: string): Promise<boolean> 
 // -----------------------------------------------------------------------------
 // Sign in with Apple support
 // -----------------------------------------------------------------------------
-
-export interface RealtorWithApple extends RealtorBasic {
-  apple_sub: string | null;
-  google_sub: string | null;
-  first_name: string;
-  last_name: string;
-}
-
-/** Look up a realtor by their stable Apple `sub` identifier. */
-
-/**
- * Attach an Apple `sub` to an existing realtor (matched by email on first
- * Apple sign-in). Also verifies their email since Apple has done so.
- */
-
-/**
- * Create a brand-new realtor from a Sign in with Apple flow. Apple only
- * shares first/last name on the FIRST authorization, so callers should be
- * prepared for blank names — we accept whatever we got and let the user
- * edit later from their profile screen.
- *
- * Email is auto-verified because Apple verifies it for us.
- */
-export async function insertRealtorViaApple(
-  client: PoolClient,
-  args: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    appleSub: string;
-    consentText: string;
-    ipAddress: string | null;
-  },
-): Promise<{ id: string; email: string }> {
-  const { rows } = await client.query<{ id: string; email: string }>(
-    `INSERT INTO realtors (
-       email, first_name, last_name, market,
-       master_list_consent_at, master_list_consent_text, master_list_consent_ip,
-       subscriptions,
-       apple_sub,
-       email_verified_at
-     ) VALUES (
-       $1, $2, $3, 'austin',
-       NOW(), $4, $5,
-       ARRAY['daily_brief']::text[],
-       $6,
-       NOW()
-     )
-     RETURNING id, email`,
-    [
-      args.email,
-      args.firstName || '',
-      args.lastName || '',
-      args.consentText,
-      args.ipAddress,
-      args.appleSub,
-    ],
-  );
-  return rows[0];
-}
-
 /**
  * Look up a realtor by their Google `sub` (stable per-account id from the
  * verified Google ID token). Used by /api/auth/google/native.

@@ -140,6 +140,63 @@ async function _runEnsureSchema(): Promise<void> {
   await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ`;
 
   // ============================================================
+  // Event registration short-link clicks (Sep 2026)
+  // Every tap of the public "Register" button routes through
+  // /e/[id], which logs a row here before redirecting to the
+  // organizer's URL with UTM params. visitor_id is the PostHog
+  // anonymous distinct_id read from the ph_*_posthog cookie when
+  // present, so repeat clicks from the same browser share an id
+  // without requiring a login. Falls back to a per-request random
+  // id when the cookie is absent (e.g. ad blockers, first-party
+  // cookie disabled).
+  // ============================================================
+  await sql`
+    CREATE TABLE IF NOT EXISTS event_registration_clicks (
+      id            BIGSERIAL PRIMARY KEY,
+      event_id      INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      visitor_id    TEXT NOT NULL,
+      ip            TEXT,
+      city          TEXT,
+      region        TEXT,
+      country       TEXT,
+      user_agent    TEXT,
+      referrer      TEXT,
+      destination_host TEXT,
+      occurred_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_event_reg_clicks_event
+      ON event_registration_clicks(event_id, occurred_at DESC)
+  `;
+
+  // First-party attendee registry for events that do not provide an
+  // external registration link. This contains private contact information
+  // and is only exposed through admin-authenticated routes.
+  await sql`
+    CREATE TABLE IF NOT EXISTS event_registrations (
+      id                    BIGSERIAL PRIMARY KEY,
+      event_id              INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      full_name             TEXT NOT NULL,
+      company               TEXT NOT NULL,
+      is_realtor            BOOLEAN NOT NULL DEFAULT false,
+      license_number        TEXT,
+      email                 TEXT NOT NULL,
+      mobile                TEXT NOT NULL,
+      consented_at          TIMESTAMPTZ NOT NULL,
+      notification_sent_at  TIMESTAMPTZ,
+      ip                    TEXT,
+      user_agent            TEXT,
+      registered_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CONSTRAINT event_registrations_event_email_uniq UNIQUE (event_id, email)
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_event_registrations_event
+      ON event_registrations(event_id, registered_at DESC)
+  `;
+
+  // ============================================================
   // Ads dashboard (Phase 1 — May 9, 2026)
   // 15-slot ad inventory catalog, uploaded creatives, scheduled
   // campaigns. See DECISIONS.md #10 (ads dashboard scope).
@@ -361,8 +418,8 @@ async function _runEnsureSchema(): Promise<void> {
       display_name: 'e-Blast Top Banner',
       zone: 'newsletter',
       tier: 'premium',
-      sizes: [{w:600,h:200,context:'email'},{w:600,h:100,context:'email-slim'}],
-      notes: 'Top of every send. Ships when newsletter ships (FOLLOW_UPS.md #10).',
+      sizes: [{w:600,h:300,context:'email-banner'}],
+      notes: 'Top of every send. Ships with the Friday Email (FOLLOW_UPS.md #10).',
     },
     {
       slug: 'splash_welcome',
@@ -434,6 +491,15 @@ async function _runEnsureSchema(): Promise<void> {
     `;
   }
 
+  // Keep the Email Banner catalog in sync for existing deployments. The
+  // general catalog seed intentionally preserves custom specifications.
+  await sql`
+    UPDATE ad_spaces
+       SET sizes_json = ${JSON.stringify([{ w: 600, h: 300, context: 'email-banner' }])}::jsonb,
+           notes = 'Top of every send. Ships with the Friday Email (FOLLOW_UPS.md #10).'
+     WHERE slug = 'newsletter_banner'
+  `;
+
   // ============================================================
   // House-ad placeholder seed (June 2026)
   // Fills the 5 starter ad slots with "Feature your brand here"
@@ -492,9 +558,9 @@ async function _runEnsureSchema(): Promise<void> {
       slug: 'newsletter_banner',
       blob_url: '/ads/house-newsletter-banner.svg',
       width: 600,
-      height: 200,
-      alt: 'Top-of-newsletter sponsorship',
-      subject: 'Newsletter Sponsor inquiry',
+      height: 300,
+      alt: 'Top-of-email sponsorship',
+      subject: 'Email Sponsor inquiry',
     },
     // ---- Article-reader slots (June 2026 unification) ----
     // Previously rendered by inline <HouseAd> JSX in app/(dashboard)/dashboard/page.tsx.
@@ -623,6 +689,15 @@ async function _runEnsureSchema(): Promise<void> {
     `;
   }
 
+  // Update the bundled Email Banner placeholder dimensions for deployments
+  // that already have the house creative seeded.
+  await sql`
+    UPDATE ad_creatives
+       SET width = 600, height = 300, alt_text = 'Top-of-email sponsorship'
+     WHERE uploaded_by = 'system:house-ad-seed'
+       AND blob_url = '/ads/house-newsletter-banner.svg'
+  `;
+
   // ============================================================
   // Magazine hotspots (Phase 1 — May 27, 2026)
   // Clickable regions overlaid on magazine pages. Position stored
@@ -657,11 +732,39 @@ async function _runEnsureSchema(): Promise<void> {
   `;
 
   // Phase 2.5: track how each hotspot was created.
-  // 'manual' = drawn in the editor; 'pdf_import' = extracted from embedded PDF links.
-  // Re-importing PDF links deletes existing 'pdf_import' rows but never touches 'manual'.
+  // 'manual' = drawn in the editor OR edited-from-import; 'pdf_import' = a
+  // still-untouched extractor row eligible for wipe-and-reinsert on the next
+  // Extract-all. On any human edit the row is promoted to 'manual' so it
+  // survives future re-runs (see app/api/admin/hotspots/[id]/route.ts).
   await sql`
     ALTER TABLE magazine_hotspots
     ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'manual'
+  `;
+
+  // Origin flag: true if this row was ever created by the extractor pipeline,
+  // even after being edited (source flips to 'manual' on edit, but this stays
+  // true). Used by the admin editor to visually distinguish edited-imports
+  // from truly hand-drawn hotspots.
+  await sql`
+    ALTER TABLE magazine_hotspots
+    ADD COLUMN IF NOT EXISTS was_imported BOOLEAN NOT NULL DEFAULT FALSE
+  `;
+  // Backfill: every row currently marked source='pdf_import' was, by
+  // definition, imported. Safe to run every boot — the WHERE keeps it O(0)
+  // once each row's flag has been set.
+  await sql`
+    UPDATE magazine_hotspots
+    SET was_imported = TRUE
+    WHERE source = 'pdf_import' AND was_imported = FALSE
+  `;
+
+  // Option B: per-hotspot paint order within a page. Higher z_index paints on
+  // top. Default 0 preserves creation order (ties broken by id). Editors
+  // change this via bring-forward / send-backward controls; readers just
+  // consume the order.
+  await sql`
+    ALTER TABLE magazine_hotspots
+    ADD COLUMN IF NOT EXISTS z_index INTEGER NOT NULL DEFAULT 0
   `;
 
   // Fast lookup of published hotspots for a given magazine page.
@@ -744,7 +847,15 @@ async function _runEnsureSchema(): Promise<void> {
   // lib/footer-templates.ts; the app coerces unknown values back to
   // the default on read so adding a new template requires no migration.
   await sql`
-    ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS footer_template TEXT NOT NULL DEFAULT 'business-card'
+    ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS footer_template TEXT NOT NULL DEFAULT 'split-column'
+  `;
+  await sql`
+    ALTER TABLE advertisers ALTER COLUMN footer_template SET DEFAULT 'split-column'
+  `;
+  await sql`
+    UPDATE advertisers
+    SET footer_template = 'split-column'
+    WHERE footer_template NOT IN ('split-column', 'minimal-rows')
   `;
 
   // Event-pipeline metadata (advertiser submissions + Gemini-detected from FB).
@@ -852,6 +963,16 @@ async function _runEnsureSchema(): Promise<void> {
         .slice(0, 80);
       if (!slug) continue;
 
+      const deleted = (await sql`
+        SELECT 1
+        FROM advertiser_deletion_tombstones
+        WHERE normalized_email IN (${`__slug__:${slug}`}, ${`__name__:${name.toLowerCase()}`})
+           OR LOWER(COALESCE(original_slug, '')) = ${slug}
+           OR LOWER(COALESCE(original_name, '')) = ${name.toLowerCase()}
+        LIMIT 1
+      `) as unknown as Array<{ '?column?': number }>;
+      if (deleted.length > 0) continue;
+
       const existing = (await sql`
         SELECT id FROM advertisers WHERE slug = ${slug} LIMIT 1
       `) as unknown as { id: number }[];
@@ -895,6 +1016,7 @@ async function _runEnsureSchema(): Promise<void> {
   // status can follow the agreement lifecycle. Nullable — existing
   // Pressbook-imported agreements have no originating inquiry.
   await sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS linked_inquiry_id uuid`;
+  await sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS preferred_send_dates jsonb`;
   await sql`
     CREATE INDEX IF NOT EXISTS agreements_linked_inquiry_idx
     ON agreements(linked_inquiry_id)
@@ -1009,137 +1131,22 @@ async function _runEnsureSchema(): Promise<void> {
     INSERT INTO publication_settings (publication) VALUES ('san_antonio')
     ON CONFLICT (publication) DO NOTHING
   `;
+  await sql`
+    INSERT INTO publication_settings (publication) VALUES ('houston'), ('dallas')
+    ON CONFLICT (publication) DO NOTHING
+  `;
 
   await ensureCrmSchema(sql);
+  await sql`
+    ALTER TABLE advertisers
+    ADD COLUMN IF NOT EXISTS publication TEXT NOT NULL DEFAULT 'austin'
+  `;
 
-  // Backfill: ensure every existing agreement has a linked advertiser
-  // row so CRM contacts surface the full deal pipeline. Idempotent —
-  // matches on contact_email first, then exact slug-from-name, otherwise
-  // creates a new row with status='prospect' (drafts/sent agreements)
-  // or 'advertiser' (signed agreements). NULL status is treated as 'prospect'.
-  // Inlined SQL avoids a circular import with lib/advertisers-from-agreement.
-  try {
-    const orphanAgreements = (await sql`
-      SELECT id, status,
-             company_name, rep_name, billing_contact_name, signer_name,
-             advertiser_email, billing_email, sent_to_email
-        FROM agreements
-       WHERE advertiser_id IS NULL
-    `) as unknown as Array<{
-      id: string;
-      status: string | null;
-      company_name: string | null;
-      rep_name: string | null;
-      billing_contact_name: string | null;
-      signer_name: string | null;
-      advertiser_email: string | null;
-      billing_email: string | null;
-      sent_to_email: string | null;
-    }>;
-
-    for (const ag of orphanAgreements) {
-      // Pick the best display name available.
-      const nameCandidates = [
-        ag.company_name, ag.rep_name, ag.billing_contact_name, ag.signer_name,
-      ];
-      let name = '';
-      for (const c of nameCandidates) {
-        const trimmed = (c ?? '').trim();
-        if (trimmed) { name = trimmed; break; }
-      }
-      if (!name) continue;
-
-      // Pick the best contact email available.
-      let contactEmail: string | null = null;
-      for (const c of [ag.advertiser_email, ag.billing_email, ag.sent_to_email]) {
-        const trimmed = (c ?? '').trim();
-        if (trimmed) { contactEmail = trimmed.toLowerCase(); break; }
-      }
-
-      const desiredStatus = ag.status === 'signed' ? 'advertiser' : 'prospect';
-
-      // 1) Match by contact_email.
-      let advertiserId: number | null = null;
-      if (contactEmail) {
-        const byEmail = (await sql`
-          SELECT id FROM advertisers
-           WHERE LOWER(contact_email) = ${contactEmail}
-           LIMIT 1
-        `) as unknown as Array<{ id: number }>;
-        if (byEmail.length > 0) advertiserId = byEmail[0].id;
-      }
-
-      // 2) Match by slug derived from name.
-      const baseSlug = name
-        .toLowerCase()
-        .replace(/['"]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        .replace(/-{2,}/g, '-')
-        .slice(0, 80);
-      if (advertiserId == null && baseSlug) {
-        const bySlug = (await sql`
-          SELECT id, contact_email FROM advertisers WHERE slug = ${baseSlug} LIMIT 1
-        `) as unknown as Array<{ id: number; contact_email: string | null }>;
-        if (bySlug.length > 0 && !bySlug[0].contact_email) {
-          advertiserId = bySlug[0].id;
-          if (contactEmail) {
-            await sql`UPDATE advertisers SET contact_email = ${contactEmail}, updated_at = NOW() WHERE id = ${advertiserId}`;
-          }
-        }
-      }
-
-      // 3) Allocate a unique slug and insert.
-      if (advertiserId == null) {
-        let slug = baseSlug || `advertiser-${Date.now()}`;
-        let suffix = 2;
-        while (true) {
-          const dup = (await sql`
-            SELECT id FROM advertisers WHERE slug = ${slug} LIMIT 1
-          `) as unknown as Array<{ id: number }>;
-          if (dup.length === 0) break;
-          slug = `${baseSlug}-${suffix}`;
-          suffix += 1;
-          if (suffix > 100) { slug = ''; break; }
-        }
-        if (!slug) continue;
-
-        const { randomBytes } = await import('crypto');
-        const shareToken = randomBytes(18).toString('base64url');
-        const inserted = (await sql`
-          INSERT INTO advertisers (
-            name, slug, share_token, contact_email,
-            requires_email_gate, publication, status, created_at, updated_at
-          ) VALUES (
-            ${name}, ${slug}, ${shareToken}, ${contactEmail},
-            false, 'austin', ${desiredStatus}, NOW(), NOW()
-          )
-          RETURNING id
-        `) as unknown as Array<{ id: number }>;
-        advertiserId = inserted[0]?.id ?? null;
-      }
-
-      if (advertiserId == null) continue;
-
-      // Link the agreement.
-      await sql`
-        UPDATE agreements SET advertiser_id = ${advertiserId}
-         WHERE id = ${ag.id}
-      `;
-
-      // Promote prospect -> advertiser when this agreement is signed.
-      if (desiredStatus === 'advertiser') {
-        await sql`
-          UPDATE advertisers
-             SET status = 'advertiser', updated_at = NOW()
-           WHERE id = ${advertiserId}
-             AND COALESCE(status, 'prospect') = 'prospect'
-        `;
-      }
-    }
-  } catch (err) {
-    console.warn('[ensureSchema] agreements->advertisers backfill failed:', err);
-  }
+  // Partner rows are business data, not schema. Do not seed, restore, or
+  // backfill advertisers here: ensureSchema() runs during normal requests,
+  // and doing so would resurrect records an admin intentionally deleted.
+  // New agreement workflows call ensureAdvertiserForAgreement() directly;
+  // historical backfills must remain explicit one-time admin operations.
 
   // Web push subscriptions. Stores each browser's PushSubscription so the
   // admin notification sender can fan out web_push deliveries. Tied to a

@@ -477,16 +477,6 @@ async function scrapeNahrepChapter(chapter: ChapterConfig, months = 12): Promise
   return out;
 }
 
-/** NAHREP San Antonio chapter (Newsline San Antonio). */
-export async function scrapeNahrep(months = 12): Promise<EventInput[]> {
-  return scrapeNahrepChapter(CHAPTER_SAN_ANTONIO, months);
-}
-
-/** NAHREP Austin chapter (RealtyLine Austin). */
-export async function scrapeNahrepAustin(months = 12): Promise<EventInput[]> {
-  return scrapeNahrepChapter(CHAPTER_AUSTIN, months);
-}
-
 /**
  * Scrape ALL configured NAHREP chapters (San Antonio + Austin) in one pass.
  * The cron route uses this so pruneStale('nahrep') can run safely without

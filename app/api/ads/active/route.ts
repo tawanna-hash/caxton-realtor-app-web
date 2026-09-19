@@ -22,6 +22,7 @@ import {
   getActiveCampaignForSlot,
   getActiveCampaignsForSlot,
 } from '@/lib/server/ads-store';
+import { PUB_ID_TO_PUBLICATION, type PubId, type PublicationId } from '@/lib/publications';
 
 export const runtime = 'nodejs';
 
@@ -34,10 +35,7 @@ const LEGACY_SLOT_ALIASES: Record<string, string> = {
   calendar_top: 'calendar_top_banner',
 };
 
-const PUB_MAP: Record<string, 'austin' | 'san_antonio'> = {
-  realtyline: 'austin',
-  newsline: 'san_antonio',
-};
+const PUB_MAP: Record<PubId, PublicationId> = PUB_ID_TO_PUBLICATION;
 
 // Slugs must be lowercase letters, digits, and underscores. Belt + suspenders
 // against SQL probing via the public endpoint.
@@ -76,7 +74,7 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
   const limitParam = Number(req.nextUrl.searchParams.get('limit') ?? '5');
 
   const dbSlot = LEGACY_SLOT_ALIASES[slotParam] ?? slotParam;
-  const dbPub = PUB_MAP[pubParam];
+  const dbPub = PUB_MAP[pubParam as PubId];
 
   if (!dbSlot || !SLUG_RE.test(dbSlot) || !dbPub) {
     return multiParam

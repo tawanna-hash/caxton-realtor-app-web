@@ -10,10 +10,12 @@
  *   - event_source_orgs (active=true) — associations and boards
  *   - advertisers.contact_email domains — anyone we already do business with
  *
- * Idempotency has two layers: messages already scanned are skipped before we
- * spend a Gemini call, and the events_external_uniq constraint on
- * (external_source, external_id) catches anything that slips past. That makes
- * overlapping cron windows safe.
+ * Idempotency has three layers: messages already scanned are skipped before we
+ * spend a Gemini call, the events_external_uniq constraint on
+ * (external_source, external_id) catches repeated message/event pairs, and the
+ * event store rejects matching normalized titles on the same Central-time
+ * event date. Rejected Gmail rows remain as hidden tombstones, so deleting a
+ * queue item cannot cause it to reappear during the next overlapping scan.
  *
  * Never throws for a single bad message — per-message failures increment the
  * `errors` count and the scan continues.
@@ -30,7 +32,7 @@ import {
 import { query } from './db/neon';
 import { logger } from './logger';
 
-export interface GmailScanCounts {
+interface GmailScanCounts {
   /** Messages fetched and passed to Gemini. */
   scanned: number;
   /** Candidate events Gemini returned across all messages. */
@@ -43,7 +45,7 @@ export interface GmailScanCounts {
   errors: number;
 }
 
-export interface GmailEventCandidate {
+interface GmailEventCandidate {
   messageId: string;
   emailFrom: string;
   emailSubject: string;
@@ -162,7 +164,7 @@ function buildKeywordPattern(keywords: readonly string[]): RegExp {
  * mail far more often than San Antonio terms do, so an email mentioning both
  * ("Texas REALTORS, San Antonio chapter") is almost always the SA event.
  */
-export function detectPublication(
+function detectPublication(
   parts: ReadonlyArray<string | null>,
   fallback: Publication,
 ): Publication {
@@ -303,7 +305,7 @@ function parseTimes(timeText: string | null): Array<{ hour: number; minute: numb
  * Returns nulls when the date is unparseable — the caller keeps the raw text
  * in the description so an admin can fix it by hand.
  */
-export function parseEventWhen(
+function parseEventWhen(
   dateText: string | null,
   timeText: string | null,
   receivedAt: Date | null,

@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
+import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import InvoicesClient from './InvoicesClient';
 
@@ -36,7 +37,7 @@ export default async function InvoicesPage() {
       LEFT JOIN advertisers adv ON adv.id = ag.advertiser_id
       ORDER BY ag.updated_at DESC
     `.catch(() => [] as unknown[]),
-    sql`SELECT id, name, publication FROM advertisers ORDER BY name ASC`
+    sql`SELECT id, name, publication, contact_email, billing_email, payment_mode, stripe_customer_id, card_last4 FROM advertisers ORDER BY name ASC`
       .catch(() => [] as unknown[]),
   ]);
 
@@ -44,7 +45,8 @@ export default async function InvoicesPage() {
     <InvoicesClient
       initialInvoices={invoices as unknown as InvoiceWithAdvertiser[]}
       agreements={agreements as unknown as AgreementWithAdvertiser[]}
-      advertisers={advertisers as unknown as Array<{ id: number; name: string; publication: string }>}
+      advertisers={advertisers as unknown as AdvertiserOption[]}
+      referenceDate={new Date().toISOString()}
     />
   );
 }

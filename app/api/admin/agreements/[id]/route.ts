@@ -21,10 +21,10 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { autoCreateForAgreement } from '@/lib/renewal-reminders';
 import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
 import {
-  syncAgreementToAdvertiser,
+  refreshAdvertiserAgreementMirror,
   syncAgreementToLocationsAndStaff,
 } from '@/lib/server/billing-crm-sync';
-import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
+import { allowsCheckPayment, deriveChannelFromAgreementType, isAdChannel } from '@/lib/ad-channels';
 import { captureServerEvent } from '@/lib/server/posthog';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 
@@ -79,13 +79,31 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
 
     // Fetch existing for status-change detection + audit log merge
     const existingRows = await sql`SELECT * FROM agreements WHERE id = ${id}` as unknown as Array<{
-      status: string; audit_log: AgreementAuditEntry[] | null;
+      advertiser_id: number | null;
+      status: string;
+      type: string | null;
+      channel: string | null;
+      audit_log: AgreementAuditEntry[] | null;
     }>;
     if (existingRows.length === 0) {
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
     const existing = existingRows[0];
+    const formerAdvertiserId = existing.advertiser_id;
     const prevStatus = existing.status;
+    const requestedType = typeof body.type === 'string' ? body.type : existing.type;
+    const effectiveChannel =
+      typeof body.type === 'string'
+        ? deriveChannelFromAgreementType(requestedType)
+        : isAdChannel(existing.channel)
+          ? existing.channel
+          : deriveChannelFromAgreementType(requestedType);
+    if (body.payment_mode === 'check' && !allowsCheckPayment(effectiveChannel)) {
+      return NextResponse.json(
+        { error: 'check payment is only available for print agreements' },
+        { status: 400 },
+      );
+    }
 
     const updated: string[] = [];
     const apply = async (col: string, val: unknown, exec: () => Promise<unknown>) => {
@@ -124,6 +142,9 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
             const derivedChannel = deriveChannelFromAgreementType(raw);
             try {
               await sql`UPDATE agreements SET channel = ${derivedChannel} WHERE id = ${id}`;
+              if (!allowsCheckPayment(derivedChannel)) {
+                await sql`UPDATE agreements SET payment_mode = 'card' WHERE id = ${id} AND payment_mode = 'check'`;
+              }
               updated.push('channel');
             } catch (e) {
               console.error('[admin/agreements PATCH] channel write failed', e instanceof Error ? e.message : 'unknown');
@@ -262,12 +283,32 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
       }
     }
 
-    // Mirror agreement -> advertiser sync columns (best effort).
+    // Recompute the new/current advertiser's mirror (best effort). Going
+    // through the ranking helper also handles status changes that demote this
+    // row, rather than leaving its old values cached as current.
     if (savedAg.advertiser_id) {
       try {
-        await syncAgreementToAdvertiser(savedAg);
+        await refreshAdvertiserAgreementMirror(savedAg.advertiser_id);
       } catch (e) {
-        console.error('[admin/agreements PATCH] syncAgreementToAdvertiser failed', errMessage(e));
+        console.error('[admin/agreements PATCH] advertiser mirror refresh failed', errMessage(e));
+      }
+    }
+
+    // Moving an agreement must repair both sides: the new owner is synced
+    // above, while the former owner promotes its next valid agreement (or
+    // clears the agreement-backed cache when none remains).
+    if (
+      updated.includes('advertiser_id') &&
+      formerAdvertiserId &&
+      formerAdvertiserId !== savedAg.advertiser_id
+    ) {
+      try {
+        await refreshAdvertiserAgreementMirror(formerAdvertiserId);
+      } catch (e) {
+        console.error(
+          '[admin/agreements PATCH] former advertiser mirror refresh failed',
+          errMessage(e),
+        );
       }
     }
 
@@ -324,7 +365,25 @@ export const DELETE = withAdminTracking(async function DELETE(_req: NextRequest,
   try {
     await ensureSchema();
     const sql = getSql();
-    await sql`DELETE FROM agreements WHERE id = ${id}`;
+    const rows = (await sql`
+      DELETE FROM agreements
+       WHERE id = ${id}
+       RETURNING advertiser_id
+    `) as unknown as Array<{ advertiser_id: number | null }>;
+    if (rows.length === 0) {
+      return NextResponse.json({ error: 'not found' }, { status: 404 });
+    }
+    const advertiserId = rows[0].advertiser_id;
+    if (advertiserId) {
+      try {
+        await refreshAdvertiserAgreementMirror(advertiserId);
+      } catch (e) {
+        console.error(
+          '[admin/agreements DELETE] advertiser mirror refresh failed',
+          errMessage(e),
+        );
+      }
+    }
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ error: 'delete failed', detail: errMessage(err) }, { status: 500 });

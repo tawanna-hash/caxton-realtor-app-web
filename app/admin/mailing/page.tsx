@@ -40,12 +40,36 @@ export default async function MailingHubPage() {
   //    and app subscribers (realtors table). These match what each
   //    dedicated page reports, so the HUB tiles agree with their
   //    destination pages.
-  const [counts, sources, realtylineCount, newslineCount] = await Promise.all([
+  const [
+    countsResult,
+    sourcesResult,
+    realtylineResult,
+    newslineResult,
+    houstonResult,
+    dallasResult,
+  ] = await Promise.allSettled([
     countBySegment(),
     countAudienceSources(),
     countPublicationList('realtyline'),
     countPublicationList('newsline'),
+    countPublicationList('realtyline-houston'),
+    countPublicationList('realtyline-dallas'),
   ]);
+  const emptyCounts = Object.fromEntries([
+    ['total', 0],
+    ...SEGMENTS.map((segment) => [segment.segment, 0] as const),
+  ]) as Awaited<ReturnType<typeof countBySegment>>;
+  const counts = countsResult.status === 'fulfilled' ? countsResult.value : emptyCounts;
+  const sources = sourcesResult.status === 'fulfilled'
+    ? sourcesResult.value
+    : { aborMembers: 0, saborMembers: 0, appSubscribers: 0 };
+  const publicationTotal = (
+    result: PromiseSettledResult<Awaited<ReturnType<typeof countPublicationList>>>,
+  ) => result.status === 'fulfilled' ? result.value.total : 0;
+  const realtylineCount = publicationTotal(realtylineResult);
+  const newslineCount = publicationTotal(newslineResult);
+  const houstonCount = publicationTotal(houstonResult);
+  const dallasCount = publicationTotal(dallasResult);
 
   // Accents: each tile uses a distinct palette hue so they remain visually
   // distinguishable while staying in the 4-color lockdown.
@@ -63,7 +87,7 @@ export default async function MailingHubPage() {
     {
       label: 'App Subscribers — RealtyLine Austin',
       href: '/admin/subscribers?market=austin',
-      caption: 'RealtyLine Austin newsletter signups from realtynewsnow.app.',
+      caption: 'RealtyLine Austin email signups from realtynewsnow.app.',
       accent: '#ea580c',
       initial: 'A',
     },
@@ -87,7 +111,7 @@ export default async function MailingHubPage() {
     {
       label: 'App Subscribers — Newsline San Antonio',
       href: '/admin/subscribers?market=san_antonio',
-      caption: 'Newsline San Antonio newsletter signups from realtynewsnow.app.',
+      caption: 'Newsline San Antonio email signups from realtynewsnow.app.',
       accent: '#ea580c',
       initial: 'N',
     },
@@ -100,19 +124,39 @@ export default async function MailingHubPage() {
     },
   ];
 
+  const houstonAudienceTiles: AudienceTile[] = [
+    {
+      label: 'App Subscribers — RealtyLine Houston',
+      href: '/admin/subscribers?market=houston',
+      caption: 'Houston app and email subscribers.',
+      accent: '#301D5D',
+      initial: 'H',
+    },
+  ];
+
+  const dallasAudienceTiles: AudienceTile[] = [
+    {
+      label: 'App Subscribers — RealtyLine Dallas/Ft. Worth',
+      href: '/admin/subscribers?market=dallas',
+      caption: 'Dallas/Ft. Worth app and email subscribers.',
+      accent: '#301D5D',
+      initial: 'D',
+    },
+  ];
+
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mailing-admin-page">
       <MailingBreadcrumb trail={[{ label: 'Mailing' }]} />
       {/* Header */}
       <div>
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
+        <p className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
           Audience
         </p>
         <PageTitle size="md">Mailing List HUB</PageTitle>
         <p className="mt-2 text-sm text-gray-600 max-w-2xl">
           Every audience source in one place — segments, board mirrors, app
-          signups, and manual entries. Active advertisers and their staff sync
-          into the Advertisers segment automatically.
+          signups, and manual entries. Active partners and their staff sync
+          into the Partners segment automatically.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <span className="text-xs uppercase tracking-[0.15em] text-gray-500 font-medium">
@@ -125,9 +169,9 @@ export default async function MailingHubPage() {
             <span>RealtyLine (Austin)</span>
             <span
               className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-700/10 text-brand-700 group-hover/dl:bg-white/20 group-hover/dl:text-white"
-              title={`${realtylineCount.total.toLocaleString()} unique deliverable emails`}
+              title={`${realtylineCount.toLocaleString()} unique deliverable emails`}
             >
-              {realtylineCount.total.toLocaleString()}
+              {realtylineCount.toLocaleString()}
             </span>
           </Link>
           <Link
@@ -137,13 +181,37 @@ export default async function MailingHubPage() {
             <span>Newsline (San Antonio)</span>
             <span
               className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#c2410c]/10 text-[#c2410c] group-hover/dl:bg-white/20 group-hover/dl:text-white"
-              title={`${newslineCount.total.toLocaleString()} unique deliverable emails`}
+              title={`${newslineCount.toLocaleString()} unique deliverable emails`}
             >
-              {newslineCount.total.toLocaleString()}
+              {newslineCount.toLocaleString()}
+            </span>
+          </Link>
+          <Link
+            href="/admin/mailing/publication/realtyline-houston"
+            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
+          >
+            <span>RealtyLine Houston</span>
+            <span
+              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-700/10 text-brand-700 group-hover/dl:bg-white/20 group-hover/dl:text-white"
+              title={`${houstonCount.toLocaleString()} unique deliverable emails`}
+            >
+              {houstonCount.toLocaleString()}
+            </span>
+          </Link>
+          <Link
+            href="/admin/mailing/publication/realtyline-dallas"
+            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
+          >
+            <span>RealtyLine Dallas/Ft. Worth</span>
+            <span
+              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-700/10 text-brand-700 group-hover/dl:bg-white/20 group-hover/dl:text-white"
+              title={`${dallasCount.toLocaleString()} unique deliverable emails`}
+            >
+              {dallasCount.toLocaleString()}
             </span>
           </Link>
           <span className="text-xs text-gray-500">
-            Merges segments + board mirrors + app subscribers + newsletter signups, deduped by email. CSV download lives inside.
+            Merges segments + board mirrors + app subscribers + email signups, deduped by email. CSV download lives inside.
           </span>
         </div>
         <div className="mt-3 text-xs text-gray-500">
@@ -159,13 +227,13 @@ export default async function MailingHubPage() {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
+      <div className="mailing-summary-strip grid grid-cols-2 lg:grid-cols-6">
         <KpiCard label="Segments total"      value={counts.total}                       sub="all mailing segments" />
-        <KpiCard label="RealtyLine ATX Print" value={counts['realtyline-atx-print']}    sub="advertisers + REALTORS" accent="#301D5D" />
-        <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="advertisers + non-advertisers + manual" accent="#c2410c" />
+        <KpiCard label="RealtyLine ATX Print" value={counts['realtyline-atx-print']}    sub="partners + REALTORS" accent="#301D5D" />
+        <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="partners + non-partners + manual" accent="#c2410c" />
         <KpiCard label="ABOR Members"        value={sources.aborMembers}                sub="UnlockMLS holding"   accent="#6b7280" />
         <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#ea580c" />
-        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="newsletter signups"  accent="#ea580c" />
+        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="email signups"  accent="#ea580c" />
       </div>
 
       {/* Segment tiles — split by publication */}
@@ -183,11 +251,11 @@ export default async function MailingHubPage() {
             <Link
               key={s.slug}
               href={`/admin/mailing/${s.slug}`}
-              className="group block rounded-md border border-gray-200 bg-white p-5 hover:shadow-sm transition"
+              className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-orange-300 hover:bg-orange-50/30"
             >
               <div className="flex items-start justify-between mb-3">
                 <div
-                  className="h-10 w-10 rounded-md flex items-center justify-center text-sm font-semibold"
+                  className="flex h-8 w-8 items-center justify-center rounded text-xs font-semibold"
                   style={{ backgroundColor: `${s.accent}15`, color: s.accent }}
                 >
                   {s.label.charAt(0)}
@@ -199,9 +267,9 @@ export default async function MailingHubPage() {
                   {c.toLocaleString()}
                 </span>
               </div>
-              <div className="font-serif text-lg text-gray-900">{s.label}</div>
-              <p className="mt-1 text-sm text-gray-600">{s.caption}</p>
-              <div className="mt-3 text-xs font-medium text-gray-700 group-hover:text-gray-900">
+              <div className="text-sm font-semibold text-gray-900">{s.label}</div>
+              <p className="mt-1 text-xs leading-5 text-gray-600">{s.caption}</p>
+              <div className="mt-2 text-xs font-medium text-orange-700">
                 Open list
               </div>
             </Link>
@@ -209,22 +277,22 @@ export default async function MailingHubPage() {
         };
 
         return (
-          <div className="space-y-8">
+          <div className="space-y-5">
             <div>
-              <div className="flex items-baseline gap-3 mb-3">
-                <h2 className="font-serif text-xl text-gray-900">RealtyLine Austin</h2>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Austin</h2>
                 <span className="text-xs uppercase tracking-[0.15em] text-gray-500">ABoR-anchored segments</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {austinSegments.map(renderTile)}
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-3 mb-3">
-                <h2 className="font-serif text-xl text-gray-900">Newsline San Antonio</h2>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">Newsline San Antonio</h2>
                 <span className="text-xs uppercase tracking-[0.15em] text-gray-500">SABOR-anchored segments</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {sanAntonioSegments.map(renderTile)}
               </div>
             </div>
@@ -239,39 +307,55 @@ export default async function MailingHubPage() {
           <Link
             key={t.href}
             href={t.href}
-            className="group block rounded-md border border-gray-200 bg-white p-5 hover:shadow-sm transition"
+            className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-orange-300 hover:bg-orange-50/30"
           >
             <div className="flex items-start justify-between mb-3">
               <div
-                className="h-10 w-10 rounded-md flex items-center justify-center text-sm font-semibold"
+                className="flex h-8 w-8 items-center justify-center rounded text-xs font-semibold"
                 style={{ backgroundColor: `${t.accent}15`, color: t.accent }}
               >
                 {t.initial}
               </div>
             </div>
-            <div className="font-serif text-lg text-gray-900">{t.label}</div>
-            <p className="mt-1 text-sm text-gray-600">{t.caption}</p>
-            <div className="mt-3 text-xs font-medium text-gray-700 group-hover:text-gray-900">
+            <div className="text-sm font-semibold text-gray-900">{t.label}</div>
+            <p className="mt-1 text-xs leading-5 text-gray-600">{t.caption}</p>
+            <div className="mt-2 text-xs font-medium text-orange-700">
               Open page
             </div>
           </Link>
         );
         return (
-          <div className="space-y-8">
+          <div className="space-y-5">
             <div>
-              <div className="flex items-baseline gap-3 mb-3">
-                <h2 className="font-serif text-xl text-gray-900">RealtyLine Austin audience pages</h2>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Austin Audience Pages</h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {austinAudienceTiles.map(renderAudienceTile)}
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-3 mb-3">
-                <h2 className="font-serif text-xl text-gray-900">Newsline San Antonio audience pages</h2>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">Newsline San Antonio Audience Pages</h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {sanAntonioAudienceTiles.map(renderAudienceTile)}
+              </div>
+            </div>
+            <div>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Houston Audience Pages</h2>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {houstonAudienceTiles.map(renderAudienceTile)}
+              </div>
+            </div>
+            <div>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Dallas/Ft. Worth Audience Pages</h2>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {dallasAudienceTiles.map(renderAudienceTile)}
               </div>
             </div>
           </div>
@@ -281,7 +365,7 @@ export default async function MailingHubPage() {
       {/* Footer hint */}
       <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 px-6 py-6 text-center">
         <h3 className="font-serif text-lg text-gray-900 mb-1">
-          Import and export from every segment
+          Import and Export from Every Segment
         </h3>
         <p className="text-sm text-gray-600 max-w-xl mx-auto">
           Each segment page supports CSV / TSV / JSON import and export with

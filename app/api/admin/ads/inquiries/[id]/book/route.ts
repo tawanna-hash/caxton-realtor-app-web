@@ -40,6 +40,11 @@ import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { logAudit } from '@/lib/server/audit';
 import { ensureSchema, getSql } from '@/lib/db';
 import {
+  PUBLICATION_IDS,
+  publicationToPubId,
+  type PublicationScope,
+} from '@/lib/publications';
+import {
   getAdInquiry,
   updateAdInquiry,
   type AdInquiryRow,
@@ -61,18 +66,17 @@ function eblastId(name: string): string {
  */
 function eblastCentsForDbPub(
   eb: (typeof EBLASTS)[number],
-  dbPub: 'austin' | 'san_antonio' | 'both',
+  dbPub: PublicationScope,
 ): number {
-  const mkPub =
-    dbPub === 'austin'      ? 'realtyline' as const :
-    dbPub === 'san_antonio' ? 'newsline'   as const :
-                              'both'       as const;
+  const mkPub = dbPub === 'both' ? 'both' : publicationToPubId(dbPub);
   return Math.round(eblastPriceForPub(eb, mkPub) * 100);
 }
 
 
-function inquiryPubToDb(p: string | null): 'austin' | 'san_antonio' | 'both' {
+function inquiryPubToDb(p: string | null): PublicationScope {
   if (p === 'newsline' || p === 'san_antonio') return 'san_antonio';
+  if (p === 'realtyline-houston' || p === 'houston') return 'houston';
+  if (p === 'realtyline-dallas' || p === 'dallas') return 'dallas';
   if (p === 'both') return 'both';
   return 'austin';
 }
@@ -88,7 +92,7 @@ const bookSchema = z
     sends: z.number().int().min(1).max(24).optional(),
     start_date: z.string().regex(ISO_DATE, 'start_date must be YYYY-MM-DD'),
     end_date: z.string().regex(ISO_DATE, 'end_date must be YYYY-MM-DD'),
-    publication: z.enum(['austin', 'san_antonio', 'both']).optional(),
+    publication: z.enum([...PUBLICATION_IDS, 'both']).optional(),
     payment_mode: z.enum(['card', 'link', 'invoice', 'check']).optional(),
     stripe_payment_link_url: z.string().url().optional(),
     memo: z.string().max(2000).optional(),

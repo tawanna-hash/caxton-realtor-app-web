@@ -107,7 +107,7 @@ function deriveFirstLast(adv: AdvertiserSyncRow): { first_name: string; last_nam
 // advertiser's own address columns are blank. Use the staff member's
 // assigned location when available, else the primary location, else the
 // first location by sort_order.
-export type LocationAddressParts = {
+type LocationAddressParts = {
   address: string | null;
   address_2: string | null;
   city: string | null;
@@ -115,7 +115,7 @@ export type LocationAddressParts = {
   zip: string | null;
 };
 
-export async function loadLocationAddressForAdvertiser(
+async function loadLocationAddressForAdvertiser(
   advertiserId: number,
   opts: { staffId?: string | null } = {},
 ): Promise<LocationAddressParts | null> {
@@ -150,7 +150,7 @@ export async function loadLocationAddressForAdvertiser(
   return rows[0] ?? null;
 }
 
-export function mergeAddresses(
+function mergeAddresses(
   primary: LocationAddressParts,
   fallback: LocationAddressParts | null,
 ): LocationAddressParts {

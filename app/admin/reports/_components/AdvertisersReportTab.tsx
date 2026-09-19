@@ -19,6 +19,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import InsightsPagination from '@/components/admin/InsightsPagination';
+import {
+  PUBLICATION_LABELS_WITH_BOTH,
+  type PublicationScope,
+} from '@/lib/publications';
 
 // Lazy-load recharts so admin/reports first paint isn't blocked by ~320 kB.
 const AdvertiserDashboardPane = dynamic(() => import('./AdvertiserDashboardPane'), {
@@ -42,7 +47,7 @@ interface Advertiser {
   id: number;
   name: string;
   slug: string;
-  publication: 'austin' | 'san_antonio' | 'both';
+  publication: PublicationScope;
   contact_email: string | null;
 }
 
@@ -55,7 +60,7 @@ interface SendResult {
 }
 
 function publicationLabel(pub: Advertiser['publication']): string {
-  return pub === 'san_antonio' ? 'Newsline San Antonio' : pub === 'both' ? 'Both' : 'RealtyLine';
+  return pub === 'both' ? 'Austin + San Antonio' : PUBLICATION_LABELS_WITH_BOTH[pub];
 }
 
 function rangeFromDays(days: DaysOption): { from: string; to: string } {
@@ -82,6 +87,8 @@ export default function AdvertisersReportTab() {
   const [sending, setSending] = useState(false);
   const [results, setResults] = useState<SendResult[] | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     let cancelled = false;
@@ -174,20 +181,23 @@ export default function AdvertisersReportTab() {
   };
 
   const selectedCount = selected.size;
+  const totalPages = Math.max(1, Math.ceil(advertisers.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageAdvertisers = advertisers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">Advertiser reports</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Partner Reports</h2>
         <p className="text-sm text-gray-500 mt-0.5">
-          Pick an advertiser to see their live performance dashboard, or select multiple to email
-          their reports in one click. Only advertisers with a contact email can be sent to.
+          Pick a partner to see their live performance dashboard, or select multiple to email
+          their reports in one click. Only partners with a contact email can be sent to.
         </p>
       </div>
 
       {loadError ? (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          Failed to load advertisers: {loadError}
+          Failed to load partners: {loadError}
         </div>
       ) : null}
 
@@ -199,16 +209,16 @@ export default function AdvertisersReportTab() {
               <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1">
                 Reporting window
               </label>
-              <div className="inline-flex rounded-md border border-gray-300 overflow-hidden">
+              <div className="inline-flex h-9 overflow-hidden rounded border border-gray-300">
                 {DAYS_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => setDays(opt.value)}
                     className={[
-                      'px-3 py-1.5 text-sm border-r border-gray-300 last:border-r-0 transition-colors',
+                      'px-3 text-sm border-r border-gray-300 last:border-r-0 transition-colors',
                       days === opt.value
-                        ? 'bg-brand-700 text-white'
+                        ? 'bg-orange-600 text-white'
                         : 'bg-white text-gray-700 hover:bg-gray-50',
                     ].join(' ')}
                   >
@@ -222,7 +232,7 @@ export default function AdvertisersReportTab() {
                 type="button"
                 onClick={selectAllSendable}
                 disabled={loading || sendable.length === 0}
-                className="text-xs text-brand-700 hover:underline disabled:text-gray-400 disabled:no-underline"
+                className="text-xs text-orange-700 hover:underline disabled:text-gray-400 disabled:no-underline"
               >
                 Select all sendable
               </button>
@@ -246,10 +256,10 @@ export default function AdvertisersReportTab() {
                 ))}
               </div>
             ) : advertisers.length === 0 ? (
-              <p className="p-4 text-sm text-gray-400">No advertisers yet.</p>
+              <p className="p-4 text-sm text-gray-400">No partners yet.</p>
             ) : (
               <ul className="divide-y divide-gray-100">
-                {advertisers.map((a) => {
+                {pageAdvertisers.map((a) => {
                   const email = (a.contact_email || '').trim();
                   const canSend = email.length > 0;
                   const isChecked = selected.has(a.id);
@@ -260,7 +270,7 @@ export default function AdvertisersReportTab() {
                       onClick={() => handleRowClick(a)}
                       className={[
                         'flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors',
-                        isActive ? 'bg-brand-700/5' : 'hover:bg-gray-50',
+                        isActive ? 'bg-orange-50' : 'hover:bg-orange-50/40',
                       ].join(' ')}
                     >
                       <input
@@ -279,11 +289,11 @@ export default function AdvertisersReportTab() {
                           </span>
                         </p>
                         <p className="text-xs text-gray-500 truncate">
-                          {canSend ? email : 'No contact email — add one on the Advertisers page to send'}
+                          {canSend ? email : 'No contact email — add one on the Partners page to send'}
                         </p>
                       </div>
                       {isActive ? (
-                        <span className="text-[10px] uppercase tracking-wider font-medium text-brand-700 shrink-0">
+                        <span className="text-[10px] uppercase tracking-wider font-medium text-orange-700 shrink-0">
                           Viewing
                         </span>
                       ) : null}
@@ -292,6 +302,7 @@ export default function AdvertisersReportTab() {
                 })}
               </ul>
             )}
+            {advertisers.length > 25 && <InsightsPagination page={currentPage} pageSize={pageSize} total={advertisers.length} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />}
           </div>
 
           <div>
@@ -312,7 +323,7 @@ export default function AdvertisersReportTab() {
               type="button"
               onClick={handleSend}
               disabled={sending || selectedCount === 0}
-              className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-40 whitespace-nowrap"
+              className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 disabled:opacity-40"
             >
               {sending ? 'Sending…' : `Send ${selectedCount || ''} report${selectedCount === 1 ? '' : 's'}`}
             </button>
@@ -350,7 +361,7 @@ export default function AdvertisersReportTab() {
             />
           ) : (
             <div className="bg-white border border-gray-200 border-dashed rounded-md p-10 text-center text-sm text-gray-500">
-              {loading ? 'Loading advertisers…' : 'Select an advertiser to view their dashboard.'}
+              {loading ? 'Loading partners…' : 'Select an advertiser to view their dashboard.'}
             </div>
           )}
         </div>

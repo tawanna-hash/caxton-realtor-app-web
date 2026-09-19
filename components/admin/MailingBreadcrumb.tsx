@@ -19,7 +19,7 @@ export default function MailingBreadcrumb({
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex items-center gap-2 text-sm text-gray-500"
+      className="flex min-h-5 items-center gap-1.5 text-xs text-gray-500"
     >
       <Link href="/admin" className="hover:text-gray-900">
         Admin

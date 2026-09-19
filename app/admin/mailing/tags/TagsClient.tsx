@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
+import { Pager, PAGE_SIZE_OPTIONS } from '@/app/admin/_components/Pager';
 
 const ACCENT = '#301D5D';
 
@@ -27,7 +28,7 @@ type TagStyle = { bg: string; fg: string; label?: string };
 // so this page is the visual source-of-truth for tag colors.
 function styleFor(t: string): TagStyle {
   switch (t) {
-    case 'active-advertiser': return { bg: '#ffedd5', fg: '#c2410c', label: 'Active Advertiser' };
+    case 'active-advertiser': return { bg: '#ffedd5', fg: '#c2410c', label: 'Active Partner' };
     case 'non-advertiser':    return { bg: '#fed7aa', fg: '#9a3412', label: 'Non-Advertiser' };
     case 'manual':            return { bg: '#ede9fe', fg: '#301D5D', label: 'Manual' };
     case 'REALTOR':           return { bg: '#dcfce7', fg: '#16a34a' };
@@ -63,8 +64,11 @@ export default function TagsClient() {
   const [error, setError] = useState<string | null>(null);
   const [busyTag, setBusyTag] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<{ from: string; to: string } | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [creating, setCreating] = useState<string>('');
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -93,6 +97,7 @@ export default function TagsClient() {
     () => rows.filter((r) => r.tag.startsWith(PROVENANCE_PREFIX)),
     [rows],
   );
+  const pageRows = visibleRows.slice((page - 1) * pageSize, page * pageSize);
 
   async function doRename(from: string, to: string) {
     const trimmedTo = to.trim();
@@ -152,16 +157,19 @@ export default function TagsClient() {
   }
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
+    <div className="mailing-admin-page">
       <MailingBreadcrumb trail={[{ label: 'Mailing List', href: '/admin/mailing' }, { label: 'Manage Tags' }]} />
-      <PageTitle size="md">Tag Library</PageTitle>
-      <p className="-mt-2 text-sm text-gray-600">
-        Rename, merge, or delete tags across the entire mailing system.
-      </p>
+      <header>
+        <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Mailing</div>
+        <PageTitle size="md">Tag Library</PageTitle>
+        <p className="mt-1 text-sm text-gray-600">
+          Rename, merge, or delete tags across the entire mailing system.
+        </p>
+      </header>
 
       <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-600">
         <p>
-          Tags live on <strong>mailing_contacts</strong>, <strong>advertisers</strong>, and{' '}
+          Tags live on <strong>mailing_contacts</strong>, <strong>partners</strong>, and{' '}
           <strong>realtors</strong>. Renaming a tag updates every row that has it across all three tables.
           Deleting a tag strips it from every row but keeps the rows themselves.
         </p>
@@ -197,13 +205,89 @@ export default function TagsClient() {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile card list. */}
+        <div className="sm:hidden divide-y divide-gray-100">
+          {visibleRows.length === 0 && !loading && (
+            <div className="px-4 py-6 text-center text-sm text-gray-500">No tags yet.</div>
+          )}
+          {pageRows.map((r) => {
+            const isRenaming = renaming?.from === r.tag;
+            const isBusy = busyTag === r.tag;
+            return (
+              <div key={r.tag} className="px-4 py-3 space-y-2">
+                {isRenaming ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="text"
+                      value={renaming.to}
+                      onChange={(e) => setRenaming({ ...renaming, to: e.target.value })}
+                      className="rounded border border-gray-300 px-2 py-1 text-sm flex-1 min-w-[120px]"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') void doRename(r.tag, renaming.to);
+                        if (e.key === 'Escape') setRenaming(null);
+                      }}
+                    />
+                    <button
+                      onClick={() => void doRename(r.tag, renaming.to)}
+                      disabled={isBusy}
+                      className="rounded bg-orange-600 px-2 py-1 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
+                    >
+                      {isBusy ? 'Saving…' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => setRenaming(null)}
+                      className="rounded border border-gray-300 px-2 py-1 text-xs"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <TagChip tag={r.tag} />
+                    <span className="font-mono text-xs text-gray-400 break-all">{r.tag}</span>
+                  </div>
+                )}
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                  <dt className="text-gray-500 uppercase tracking-wider">Mailing</dt>
+                  <dd className="text-gray-800 text-right tabular-nums">{r.mailing_contacts.toLocaleString()}</dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">Partners</dt>
+                  <dd className="text-gray-800 text-right tabular-nums">{r.advertisers.toLocaleString()}</dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">Realtors</dt>
+                  <dd className="text-gray-800 text-right tabular-nums">{r.realtors.toLocaleString()}</dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">Total</dt>
+                  <dd className="text-gray-900 text-right tabular-nums font-semibold">{r.total.toLocaleString()}</dd>
+                </dl>
+                {!isRenaming && (
+                  <div className="pt-1 flex gap-2 justify-end">
+                    <button
+                      onClick={() => setRenaming({ from: r.tag, to: r.tag })}
+                      disabled={isBusy}
+                      className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Rename
+                    </button>
+                    <button
+                      onClick={() => void doDelete(r.tag, r.total)}
+                      disabled={isBusy}
+                      className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {isBusy ? 'Working…' : 'Delete'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="hidden sm:block overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-xs uppercase text-gray-500">
               <tr>
                 <th className="px-4 py-2 text-left">Tag</th>
                 <th className="px-4 py-2 text-right">Mailing</th>
-                <th className="px-4 py-2 text-right">Advertisers</th>
+                <th className="px-4 py-2 text-right">Partners</th>
                 <th className="px-4 py-2 text-right">Realtors</th>
                 <th className="px-4 py-2 text-right">Total</th>
                 <th className="px-4 py-2 text-right">Actions</th>
@@ -213,7 +297,7 @@ export default function TagsClient() {
               {visibleRows.length === 0 && !loading && (
                 <tr><td className="px-4 py-6 text-center text-gray-500" colSpan={6}>No tags yet.</td></tr>
               )}
-              {visibleRows.map((r) => {
+              {pageRows.map((r) => {
                 const isRenaming = renaming?.from === r.tag;
                 const isBusy = busyTag === r.tag;
                 return (
@@ -235,7 +319,7 @@ export default function TagsClient() {
                           <button
                             onClick={() => void doRename(r.tag, renaming.to)}
                             disabled={isBusy}
-                            className="rounded bg-brand-700 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                            className="rounded bg-orange-600 px-2 py-1 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
                           >
                             {isBusy ? 'Saving…' : 'Save'}
                           </button>
@@ -282,6 +366,17 @@ export default function TagsClient() {
               })}
             </tbody>
           </table>
+        </div>
+        <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
+          <Pager
+            currentPage={page}
+            totalItems={visibleRows.length}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+            summary={`${visibleRows.length.toLocaleString()} tags`}
+          />
         </div>
       </div>
 

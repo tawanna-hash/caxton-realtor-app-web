@@ -249,7 +249,7 @@ export default function AdsHubPage() {
         />
         <SectionCard
           title="Public advertise page"
-          desc="What advertisers see at realtynewsnow.app/advertise. Useful sanity check before launching changes."
+          desc="What partners see at realtynewsnow.app/advertise. Useful sanity check before launching changes."
           href="/advertise"
           cta="View public page"
           newTab

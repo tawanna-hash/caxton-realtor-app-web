@@ -7,6 +7,18 @@ export type AdvertiserOption = {
   id: number;
   name: string;
   publication: string;
+  contact_email: string | null;
+  billing_email: string | null;
+  /**
+   * Read-only card-on-file mirror kept in sync FROM the signed agreement by
+   * lib/server/billing-crm-sync.ts. Used only to *display* which card is on
+   * file (e.g. "•••• 4242") — never written from billing UI code, and never
+   * the source of truth for charging. Agreements own
+   * stripe_customer_id/stripe_payment_method_id.
+   */
+  payment_mode?: string | null;
+  stripe_customer_id?: string | null;
+  card_last4?: string | null;
 };
 
 export type AdCampaignOption = {

@@ -127,7 +127,7 @@ function Dashboard({
     <div className="min-h-screen bg-white">
       <div style={{ backgroundColor: theme.primaryColor }} className="text-white">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-sm font-medium">{theme.name} &middot; Advertiser Report</div>
+          <div className="text-sm font-medium">{theme.name} &middot; Partner Report</div>
           <div className="text-xs opacity-75">{advertiser.name}</div>
         </div>
       </div>
@@ -183,7 +183,7 @@ function Dashboard({
             </div>
 
             <div className="bg-white border border-gray-200 rounded-md p-4 mb-6">
-              <h2 className="text-sm font-medium text-gray-700 mb-3">Clicks per day</h2>
+              <h2 className="text-sm font-medium text-gray-700 mb-3">Clicks per Day</h2>
               <div className="w-full h-64">
                 <DailyClicksAreaChart
                   data={data.daily_clicks}
@@ -196,53 +196,86 @@ function Dashboard({
 
             <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-200">
-                <h2 className="text-sm font-medium text-gray-700">Where your readers clicked</h2>
+                <h2 className="text-sm font-medium text-gray-700">Where Your Readers Clicked</h2>
               </div>
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr className="text-left text-xs uppercase tracking-wider text-gray-600">
-                    <th className="px-4 py-2">Issue / Page</th>
-                    <th className="px-4 py-2">Linked to</th>
-                    <th className="px-4 py-2 text-right">Clicks</th>
-                    <th className="px-4 py-2 text-right">Unique</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.hotspot_breakdown.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="px-4 py-12 text-center text-gray-500">
-                        No active placements yet. Your report will populate once ads go live.
-                      </td>
-                    </tr>
-                  )}
-                  {data.hotspot_breakdown.map((h, idx) => (
-                    <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="px-4 py-2">
-                        <div className="text-gray-900">{h.magazine_label}</div>
-                        <div className="text-xs text-gray-500">
-                          Page {h.page_idx + 1}{h.label ? ` · ${h.label}` : ''}
+              {data.hotspot_breakdown.length === 0 ? (
+                <div className="px-4 py-12 text-center text-gray-500">
+                  No active placements yet. Your report will populate once ads go live.
+                </div>
+              ) : (
+                <>
+                  {/* Mobile cards */}
+                  <ul className="divide-y divide-gray-100 md:hidden">
+                    {data.hotspot_breakdown.map((h, idx) => (
+                      <li key={idx} className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-gray-900 truncate">{h.magazine_label}</div>
+                            <div className="text-xs text-gray-500">
+                              Page {h.page_idx + 1}{h.label ? ` · ${h.label}` : ''}
+                            </div>
+                          </div>
+                          <div className="shrink-0 whitespace-nowrap text-right">
+                            <div className="font-medium text-gray-900">{h.clicks} clicks</div>
+                            <div className="text-xs text-gray-500">{h.unique_sessions} unique</div>
+                          </div>
                         </div>
-                      </td>
-                      <td className="px-4 py-2 text-gray-500 text-xs">
-                        {h.config_url ? (
+                        {h.config_url && (
                           <a
                             href={h.config_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hover:underline"
+                            className="mt-1.5 block truncate text-xs text-gray-500 hover:underline"
                             title={h.config_url}
                           >
                             {h.config_url.replace(/^https?:\/\//, '').slice(0, 50)}
                             {h.config_url.length > 50 ? '…' : ''}
                           </a>
-                        ) : '—'}
-                      </td>
-                      <td className="px-4 py-2 text-gray-900 font-medium text-right">{h.clicks}</td>
-                      <td className="px-4 py-2 text-gray-700 text-right">{h.unique_sessions}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  {/* Desktop table */}
+                  <table className="hidden w-full text-sm md:table">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr className="text-left text-xs uppercase tracking-wider text-gray-600">
+                        <th className="px-4 py-2">Issue / Page</th>
+                        <th className="px-4 py-2">Linked to</th>
+                        <th className="px-4 py-2 text-right">Clicks</th>
+                        <th className="px-4 py-2 text-right">Unique</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.hotspot_breakdown.map((h, idx) => (
+                        <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="px-4 py-2">
+                            <div className="text-gray-900">{h.magazine_label}</div>
+                            <div className="text-xs text-gray-500">
+                              Page {h.page_idx + 1}{h.label ? ` · ${h.label}` : ''}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 text-gray-500 text-xs">
+                            {h.config_url ? (
+                              <a
+                                href={h.config_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                                title={h.config_url}
+                              >
+                                {h.config_url.replace(/^https?:\/\//, '').slice(0, 50)}
+                                {h.config_url.length > 50 ? '…' : ''}
+                              </a>
+                            ) : '—'}
+                          </td>
+                          <td className="px-4 py-2 text-gray-900 font-medium text-right">{h.clicks}</td>
+                          <td className="px-4 py-2 text-gray-700 text-right">{h.unique_sessions}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
             </div>
 
             <p className="text-xs text-gray-500 text-center mt-8">

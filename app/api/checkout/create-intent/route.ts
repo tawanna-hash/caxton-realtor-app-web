@@ -114,7 +114,7 @@ export function computeAmountCents(
   if (slot.pricingUnit === 'per send' || slot.pricingUnit === 'per push') {
     return {
       baseCents: weeklyRate * 100 * units,
-      description: `${units} ${slot.pricingUnit}${units > 1 ? 's' : ''} (${slot.pricingUnit === 'per send' ? 'newsletter' : 'push'}) across ${n} market${n > 1 ? 's' : ''}`,
+      description: `${units} ${slot.pricingUnit}${units > 1 ? 's' : ''} (${slot.pricingUnit === 'per send' ? 'email' : 'push'}) across ${n} market${n > 1 ? 's' : ''}`,
     };
   }
   if (billing_period === 'monthly') {

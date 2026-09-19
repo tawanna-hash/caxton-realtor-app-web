@@ -36,8 +36,11 @@ function getOrCreateSessionId(): string {
 
 function trackClick(hotspotId: number): void {
   const sessionId = getOrCreateSessionId();
-  console.log('[HotspotLayer] trackClick fired', { hotspotId, sessionId });
-  if (!sessionId) { console.warn('[HotspotLayer] no session id, aborting'); return; }
+  // No session id means the browser refused to set a cookie (private mode
+  // with strict settings, or document undefined during SSR). Nothing to
+  // attribute a click to — skip. All other errors are silent by design;
+  // click tracking is best-effort and must never surface to the reader.
+  if (!sessionId) return;
   // Fire and forget. sendBeacon survives navigation away from the page —
   // important for link hotspots where the user is leaving.
   const payload = JSON.stringify({ session_id: sessionId });
@@ -190,11 +193,34 @@ export default function HotspotLayer({
         }
         if (h.type === 'email' && h.config.type === 'email') {
           const cfg = h.config;
-          const parts = [`mailto:${cfg.address}`];
+          // Normalize the address before building the mailto URI:
+          //   - trim leading/trailing whitespace (legacy rows sometimes have it)
+          //   - URL-encode the local + domain so Chrome's Gmail handler
+          //     (registered as `?extsrc=mailto&url=%s`) can pass the URI
+          //     through without losing the To. An unencoded address occasionally
+          //     causes Gmail's URL parser to drop the recipient and just
+          //     open compose with an empty To field.
+          const rawAddress = (cfg.address ?? '').trim();
+          if (!rawAddress) {
+            // No usable address on this row — render a non-interactive slot
+            // instead of a broken link that would open Gmail with no To.
+            return (
+              <div
+                key={h.id}
+                className={`${baseClass} opacity-40`}
+                style={style}
+                aria-label={ariaLabel}
+                aria-disabled="true"
+              />
+            );
+          }
+          const encodedAddress = encodeURIComponent(rawAddress);
           const q: string[] = [];
           if (cfg.subject) q.push(`subject=${encodeURIComponent(cfg.subject)}`);
           if (cfg.body) q.push(`body=${encodeURIComponent(cfg.body)}`);
-          const href = q.length ? `${parts[0]}?${q.join('&')}` : parts[0];
+          const href = q.length
+            ? `mailto:${encodedAddress}?${q.join('&')}`
+            : `mailto:${encodedAddress}`;
           return (
             <a
               key={h.id}

@@ -9,9 +9,9 @@ import type { AdvertiserHeaderStyle } from '@/lib/advertiser-header-styles';
 // ── CRM enums (mirror migration CHECK constraints) ────────────────
 export type AdvertiserType   = 'advertiser' | 'client' | 'prospect' | 'mailing';
 export type AdvertiserStatus = 'prospect' | 'advertiser' | 'archived';
-export type EmailStatus      = 'valid' | 'invalid' | 'risk' | 'unknown';
+type EmailStatus      = 'valid' | 'invalid' | 'risk' | 'unknown';
 
-export type AdditionalContact = {
+type AdditionalContact = {
   first_name?: string;
   last_name?: string;
   email?: string;
@@ -32,6 +32,8 @@ export interface Advertiser {
   submission_token?: string | null;
   contact_email: string | null;
   requires_email_gate: boolean;
+  /** Prevents accidental deletion from the CRM and API. */
+  is_locked?: boolean;
   /**
    * Which publication this advertiser primarily belongs to.
    * Drives branding on the public dashboard and outbound emails.
@@ -172,17 +174,6 @@ export interface AdvertiserStaff {
   updated_at: string;
 }
 
-export const LOCATION_PATCHABLE_FIELDS = [
-  'label', 'address', 'address_2', 'city', 'state', 'zip',
-  'phone', 'email', 'hours', 'is_primary', 'sort_order',
-] as const;
-export type LocationPatchableField = (typeof LOCATION_PATCHABLE_FIELDS)[number];
-
-export const STAFF_PATCHABLE_FIELDS = [
-  'name', 'title', 'email', 'phone', 'photo_url', 'sort_order',
-] as const;
-export type StaffPatchableField = (typeof STAFF_PATCHABLE_FIELDS)[number];
-
 export interface AdvertiserWithStats extends Advertiser {
   hotspot_count: number;
   clicks_30d: number;
@@ -200,7 +191,7 @@ export interface AdvertiserCrmRow extends Advertiser {
 // Used by PATCH /api/admin/advertisers/[id] to gate which columns
 // clients may write.
 export const CRM_PATCHABLE_FIELDS = [
-  'type', 'status',
+  'type', 'status', 'is_locked',
   'first_name', 'last_name', 'company', 'title', 'industry',
   'license_number', 'avatar_url',
   'portal_email', 'phone', 'office_phone', 'website',
@@ -211,9 +202,9 @@ export const CRM_PATCHABLE_FIELDS = [
   'rep_address', 'rep_city', 'rep_state', 'rep_zip',
   'portal_activated_at', 'portal_onboarded_at',
   'additional_contacts', 'notes', 'tags',
+  'billing_contact_name', 'billing_contact_phone', 'billing_email',
+  'payment_mode', 'stripe_customer_id', 'card_last4',
 ] as const;
-
-export type CrmPatchableField = (typeof CRM_PATCHABLE_FIELDS)[number];
 
 /** Generate a URL-safe slug from a free-form name. */
 export function slugify(name: string): string {

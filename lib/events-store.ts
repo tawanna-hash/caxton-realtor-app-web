@@ -5,7 +5,7 @@
 
 import { ensureSchema, getSql } from './db';
 
-export type Publication = 'austin' | 'san_antonio';
+export type Publication = import('@/lib/publications').PublicationId;
 export type EventSource =
   | 'unlockmls'
   | 'wordpress'
@@ -16,6 +16,7 @@ export type EventSource =
   | 'sabuilders'
   | 'tmbsa'
   | 'nahrep'
+  | 'realtyline'
   | 'submission'
   | 'facebook-llm';
 
@@ -256,6 +257,102 @@ export async function upsertEvents(
 }
 
 /**
+ * Upsert a scraper feed without duplicating an event already supplied by a
+ * different source. A source's own stable external IDs are always updated.
+ * New rows are skipped when their normalized title and Central calendar date
+ * already exist for the same publication.
+ */
+export async function upsertMissingEventsByTitleDate(
+  events: EventInput[],
+): Promise<{ inserted: number; updated: number; skippedExisting: number }> {
+  await ensureSchema();
+  if (events.length === 0) {
+    return { inserted: 0, updated: 0, skippedExisting: 0 };
+  }
+
+  const sql = getSql();
+  const existing = (await sql`
+    SELECT
+      external_source,
+      external_id,
+      publication,
+      title,
+      (start_date AT TIME ZONE 'America/Chicago')::date::text AS event_date
+    FROM events
+    WHERE start_date IS NOT NULL
+      AND start_date >= NOW() - INTERVAL '1 day'
+  `) as unknown as Array<{
+    external_source: string;
+    external_id: string;
+    publication: Publication;
+    title: string;
+    event_date: string;
+  }>;
+
+  const normalizeTitle = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/®/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+      .replace(/^(abor|hba)\s+/, '');
+
+  const ownIds = new Set(
+    existing.map((row) => `${row.external_source}:${row.external_id}`),
+  );
+  const titlesByPublicationDate = new Map<string, string[]>();
+  for (const row of existing) {
+    const key = `${row.publication}:${row.event_date}`;
+    const titles = titlesByPublicationDate.get(key) || [];
+    titles.push(normalizeTitle(row.title));
+    titlesByPublicationDate.set(key, titles);
+  }
+
+  const toUpsert: EventInput[] = [];
+  let skippedExisting = 0;
+
+  for (const event of events) {
+    const ownKey = `${event.externalSource}:${event.externalId}`;
+    const eventDate = event.startDate?.slice(0, 10);
+    const publicationDateKey = eventDate
+      ? `${event.publication}:${eventDate}`
+      : null;
+    const normalizedTitle = normalizeTitle(event.title);
+
+    if (ownIds.has(ownKey)) {
+      toUpsert.push(event);
+      continue;
+    }
+    if (publicationDateKey) {
+      const sameDayTitles =
+        titlesByPublicationDate.get(publicationDateKey) || [];
+      const duplicate = sameDayTitles.some(
+        (candidate) =>
+          candidate === normalizedTitle ||
+          candidate.includes(normalizedTitle) ||
+          normalizedTitle.includes(candidate),
+      );
+      if (duplicate) {
+        skippedExisting += 1;
+        continue;
+      }
+    }
+
+    toUpsert.push(event);
+    ownIds.add(ownKey);
+    if (publicationDateKey) {
+      const titles =
+        titlesByPublicationDate.get(publicationDateKey) || [];
+      titles.push(normalizedTitle);
+      titlesByPublicationDate.set(publicationDateKey, titles);
+    }
+  }
+
+  const counts = await upsertEvents(toUpsert);
+  return { ...counts, skippedExisting };
+}
+
+/**
  * Delete future events from the given source whose last_synced_at is older
  * than the cutoff. This drops upstream cancellations the day after they
  * vanish from the source. Past events are left alone.
@@ -282,241 +379,3 @@ export async function pruneStale(
 // the /admin/events route. Public listEvents() above filters out
 // hidden rows; this admin layer sees everything.
 // ============================================================
-
-/** Admin-facing event shape. Includes provenance + edit metadata. */
-export interface AdminCalendarEvent extends CalendarEvent {
-  externalSource: EventSource;
-  externalId: string;
-  hidden: boolean;
-  editedFields: string[];
-  editedBy: string | null;
-  editedAt: string | null;
-}
-
-interface AdminEventRow extends EventRow {
-  external_source: EventSource;
-  external_id: string;
-  hidden: boolean;
-  edited_fields: string[];
-  edited_by: string | null;
-  edited_at: string | Date | null;
-}
-
-function rowToAdminEvent(r: AdminEventRow): AdminCalendarEvent {
-  return {
-    ...rowToEvent(r),
-    externalSource: r.external_source,
-    externalId: r.external_id,
-    hidden: r.hidden,
-    editedFields: r.edited_fields ?? [],
-    editedBy: r.edited_by,
-    editedAt: toIso(r.edited_at),
-  };
-}
-
-/**
- * Admin: list ALL events (including hidden, including past) for one or both
- * publications. Sorted newest-first by start date so admins see what's
- * currently live at the top.
- */
-export async function listAllEventsForAdmin(
-  publication?: Publication,
-): Promise<AdminCalendarEvent[]> {
-  await ensureSchema();
-  const sql = getSql();
-  const rows = publication
-    ? ((await sql`
-        SELECT *
-          FROM events
-         WHERE publication = ${publication}
-         ORDER BY (start_date IS NULL), start_date DESC, id DESC
-      `) as unknown as AdminEventRow[])
-    : ((await sql`
-        SELECT *
-          FROM events
-         ORDER BY (start_date IS NULL), start_date DESC, id DESC
-      `) as unknown as AdminEventRow[]);
-  return rows.map(rowToAdminEvent);
-}
-
-/**
- * Admin: create a manual event. Generates a UUID for external_id and
- * stamps external_source='manual'. The createdBy email lands in edited_by
- * so we have an audit trail of who created what.
- */
-export async function createManualEvent(
-  input: Omit<EventInput, 'externalSource' | 'externalId'>,
-  createdBy: string,
-): Promise<AdminCalendarEvent> {
-  await ensureSchema();
-  const sql = getSql();
-  const externalId = crypto.randomUUID();
-
-  const rows = (await sql`
-    INSERT INTO events (
-      external_source, external_id, publication, title, description, link,
-      start_date, end_date, location, organizer, organizer_email, website,
-      tags, format, course_number, member_price, nonmember_price,
-      image_url, image_thumb, instructor_name, instructor_bio, lat, lng,
-      edited_by, edited_at, last_synced_at, updated_at
-    ) VALUES (
-      'manual', ${externalId}, ${input.publication}, ${input.title},
-      ${input.description ?? null}, ${input.link ?? null},
-      ${input.startDate ?? null}, ${input.endDate ?? null},
-      ${input.location ?? null}, ${input.organizer ?? null}, ${input.organizerEmail ?? null},
-      ${input.website ?? null}, ${input.tags ?? null}, ${input.format ?? null},
-      ${input.courseNumber ?? null}, ${input.memberPrice ?? null}, ${input.nonmemberPrice ?? null},
-      ${input.imageUrl ?? null}, ${input.imageThumb ?? null},
-      ${input.instructorName ?? null}, ${input.instructorBio ?? null},
-      ${input.lat ?? null}, ${input.lng ?? null},
-      ${createdBy}, NOW(), NOW(), NOW()
-    )
-    RETURNING *
-  `) as unknown as AdminEventRow[];
-
-  return rowToAdminEvent(rows[0]);
-}
-
-/**
- * Admin: partial update of an event. Any field passed in `fields` is
- * written; any field omitted is left as-is. The set of column names being
- * updated gets unioned (deduped) into edited_fields, so on the next scraper
- * upsert the per-field merge will preserve these values.
- *
- * Implementation note: building dynamic SET clauses with the Neon tagged-
- * template client is awkward. Instead we read the row, merge in JS, and do
- * a single full UPDATE. Two queries per edit — fine for admin volume.
- */
-export async function updateEvent(
-  id: number,
-  fields: Partial<Omit<EventInput, 'externalSource' | 'externalId'>>,
-  editedBy: string,
-): Promise<AdminCalendarEvent | null> {
-  await ensureSchema();
-  const sql = getSql();
-
-  const existingRows = (await sql`
-    SELECT * FROM events WHERE id = ${id}
-  `) as unknown as AdminEventRow[];
-  if (existingRows.length === 0) return null;
-  const existing = existingRows[0];
-
-  // Map EventInput keys → DB column names.
-  const colMap: Record<string, string> = {
-    publication: 'publication',
-    title: 'title',
-    description: 'description',
-    link: 'link',
-    startDate: 'start_date',
-    endDate: 'end_date',
-    location: 'location',
-    organizer: 'organizer',
-    organizerEmail: 'organizer_email',
-    website: 'website',
-    tags: 'tags',
-    format: 'format',
-    courseNumber: 'course_number',
-    memberPrice: 'member_price',
-    nonmemberPrice: 'nonmember_price',
-    imageUrl: 'image_url',
-    imageThumb: 'image_thumb',
-    instructorName: 'instructor_name',
-    instructorBio: 'instructor_bio',
-    lat: 'lat',
-    lng: 'lng',
-  };
-
-  // Compute which columns are actually being changed (key exists AND value
-  // differs from existing). No-op fields don't get added to edited_fields.
-  const newEditedFields = new Set(existing.edited_fields ?? []);
-  const merged: Record<string, unknown> = {};
-  for (const [key, dbCol] of Object.entries(colMap)) {
-    if (key in fields) {
-      const incoming = (fields as Record<string, unknown>)[key];
-      const current = (existing as unknown as Record<string, unknown>)[dbCol];
-      merged[dbCol] = incoming ?? null;
-      if (incoming !== current) {
-        newEditedFields.add(dbCol);
-      }
-    } else {
-      merged[dbCol] = (existing as unknown as Record<string, unknown>)[dbCol];
-    }
-  }
-
-  const editedFieldsArr = Array.from(newEditedFields);
-
-  const rows = (await sql`
-    UPDATE events SET
-      publication      = ${merged.publication as string},
-      title            = ${merged.title as string},
-      description      = ${(merged.description as string | null) ?? null},
-      link             = ${(merged.link as string | null) ?? null},
-      start_date       = ${(merged.start_date as string | null) ?? null},
-      end_date         = ${(merged.end_date as string | null) ?? null},
-      location         = ${(merged.location as string | null) ?? null},
-      organizer        = ${(merged.organizer as string | null) ?? null},
-      organizer_email  = ${(merged.organizer_email as string | null) ?? null},
-      website          = ${(merged.website as string | null) ?? null},
-      tags             = ${(merged.tags as string | null) ?? null},
-      format           = ${(merged.format as string | null) ?? null},
-      course_number    = ${(merged.course_number as string | null) ?? null},
-      member_price     = ${(merged.member_price as string | null) ?? null},
-      nonmember_price  = ${(merged.nonmember_price as string | null) ?? null},
-      image_url        = ${(merged.image_url as string | null) ?? null},
-      image_thumb      = ${(merged.image_thumb as string | null) ?? null},
-      instructor_name  = ${(merged.instructor_name as string | null) ?? null},
-      instructor_bio   = ${(merged.instructor_bio as string | null) ?? null},
-      lat              = ${(merged.lat as number | null) ?? null},
-      lng              = ${(merged.lng as number | null) ?? null},
-      edited_fields    = ${editedFieldsArr},
-      edited_by        = ${editedBy},
-      edited_at        = NOW(),
-      updated_at       = NOW()
-    WHERE id = ${id}
-    RETURNING *
-  `) as unknown as AdminEventRow[];
-
-  return rows.length > 0 ? rowToAdminEvent(rows[0]) : null;
-}
-
-/**
- * Admin: hide or unhide an event. Hide is the right operation for scraped
- * events because the next scraper run would just recreate a deleted row.
- * Doesn't touch edited_fields — hidden is metadata, not content.
- */
-export async function setHidden(
-  id: number,
-  hidden: boolean,
-  editedBy: string,
-): Promise<AdminCalendarEvent | null> {
-  await ensureSchema();
-  const sql = getSql();
-  const rows = (await sql`
-    UPDATE events SET
-      hidden     = ${hidden},
-      edited_by  = ${editedBy},
-      edited_at  = NOW(),
-      updated_at = NOW()
-    WHERE id = ${id}
-    RETURNING *
-  `) as unknown as AdminEventRow[];
-
-  return rows.length > 0 ? rowToAdminEvent(rows[0]) : null;
-}
-
-/**
- * Admin: hard-delete a manual event. Refuses to delete scraped events
- * (use setHidden(id, true) instead — scrapers would just recreate a delete).
- * Returns false if the event doesn't exist or isn't manual.
- */
-export async function deleteEvent(id: number): Promise<boolean> {
-  await ensureSchema();
-  const sql = getSql();
-  const rows = (await sql`
-    DELETE FROM events
-     WHERE id = ${id}
-       AND external_source = 'manual'
-     RETURNING id
-  `) as unknown as { id: number }[];
-  return rows.length > 0;
-}

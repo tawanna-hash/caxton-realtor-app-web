@@ -41,7 +41,7 @@ import crypto from 'node:crypto';
 
 export type EmailVerdict = 'Valid' | 'Invalid' | 'Pending';
 
-export interface EmailVerifySignals {
+interface EmailVerifySignals {
   syntaxOk:       boolean;
   disposable:     boolean;
   roleAccount:    boolean;

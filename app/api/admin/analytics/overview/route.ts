@@ -19,6 +19,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { listSubscribers } from '@/lib/server/subscribers-store';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { PUBLICATION_IDS, type PublicationId } from '@/lib/publications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,8 +32,10 @@ async function fetchSubscriberCounts(): Promise<{
   total: number | null;
   austin: number | null;
   san_antonio: number | null;
+  houston: number | null;
+  dallas: number | null;
 }> {
-  async function countFor(market?: 'austin' | 'san_antonio'): Promise<number | null> {
+  async function countFor(market?: PublicationId): Promise<number | null> {
     try {
       const result = await listSubscribers({ page: 1, pageSize: 1, market });
       return result.total;
@@ -40,12 +43,17 @@ async function fetchSubscriberCounts(): Promise<{
       return null;
     }
   }
-  const [total, austin, san_antonio] = await Promise.all([
+  const [total, ...marketCounts] = await Promise.all([
     countFor(),
-    countFor('austin'),
-    countFor('san_antonio'),
+    ...PUBLICATION_IDS.map((market) => countFor(market)),
   ]);
-  return { total, austin, san_antonio };
+  return {
+    total,
+    austin: marketCounts[0] ?? null,
+    san_antonio: marketCounts[1] ?? null,
+    houston: marketCounts[2] ?? null,
+    dallas: marketCounts[3] ?? null,
+  };
 }
 
 export const GET = withAdminTracking(async () => {

@@ -9,7 +9,7 @@
  * client. `contentType` is recommended but optional — Resend will sniff
  * if omitted. See https://resend.com/docs/api-reference/emails/send-email
  */
-export interface EmailAttachment {
+interface EmailAttachment {
   filename: string;
   content: string; // base64
   contentType?: string;
@@ -22,6 +22,7 @@ export interface SendEmailOptions {
   html: string;
   replyTo?: string | string[];
   cc?: string | string[];
+  bcc?: string | string[];
   attachments?: EmailAttachment[];
 }
 
@@ -32,27 +33,32 @@ export interface SendEmailResult {
 }
 
 import { captureServerEvent } from '@/lib/server/posthog';
+import { getResendApiKeyForFrom, verifiedEmailFrom } from '@/lib/email-sender';
 
-// myrealtyline.com is verified in Resend. realtynewsnow.app is not (yet).
-// hello@ is the role mailbox that forwards to a monitored inbox; noreply@
-// was a dead address that silently dropped sends. Override with EMAIL_FROM.
-const FROM_DEFAULT = process.env.EMAIL_FROM ?? 'RealtyLine <hello@myrealtyline.com>';
+// The active Resend team has newslinesa.com verified. verifiedEmailFrom also
+// protects sends from stale deployment variables that still name old domains.
+const FROM_DEFAULT = verifiedEmailFrom(process.env.EMAIL_FROM);
 
 export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const from = verifiedEmailFrom(opts.from ?? FROM_DEFAULT);
+  const apiKey = getResendApiKeyForFrom(from);
   if (!apiKey) {
-    return { ok: false, error: 'RESEND_API_KEY not configured' };
+    return {
+      ok: false,
+      error: `Resend API key not configured for ${from.split('@').at(-1)?.replace('>', '') ?? 'sender domain'}`,
+    };
   }
 
   const recipients = Array.isArray(opts.to) ? opts.to : [opts.to];
   const payload: Record<string, unknown> = {
-    from: opts.from ?? FROM_DEFAULT,
+    from,
     to: recipients,
     subject: opts.subject,
     html: opts.html,
   };
   if (opts.replyTo) payload.reply_to = opts.replyTo;
   if (opts.cc) payload.cc = Array.isArray(opts.cc) ? opts.cc : [opts.cc];
+  if (opts.bcc) payload.bcc = Array.isArray(opts.bcc) ? opts.bcc : [opts.bcc];
   if (opts.attachments && opts.attachments.length > 0) {
     // Resend expects { filename, content, content_type? } with content
     // already base64-encoded by the caller.

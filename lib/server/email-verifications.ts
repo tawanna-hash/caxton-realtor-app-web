@@ -22,7 +22,7 @@
 import { getSql } from '@/lib/db';
 import { verifyEmail, type EmailVerdict, type EmailVerifyResult } from '@/lib/email-verify';
 
-export type UnifiedStatus = 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending';
+type UnifiedStatus = 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending';
 
 export interface EmailVerificationRow {
   email: string;
@@ -193,39 +193,4 @@ export async function getStatus(rawEmail: string): Promise<EmailVerificationRow 
     FROM email_verifications WHERE email = ${email} LIMIT 1
   `) as EmailVerificationRow[];
   return rows[0] ?? null;
-}
-
-/**
- * One-shot: copy mailing_contacts.email_status / email_override_status
- * into email_verifications. Caller is the admin backfill endpoint.
- * Idempotent — ON CONFLICT DO NOTHING (we don't want to overwrite
- * fresh SMTP probes with older legacy labels).
- */
-export async function backfillFromMailingContacts(): Promise<number> {
-  const sql = getSql();
-  const result = (await sql`
-    WITH src AS (
-      SELECT
-        lower(email) AS email,
-        CASE
-          WHEN COALESCE(email_override_status, email_status) = 'Valid'   THEN 'valid'
-          WHEN COALESCE(email_override_status, email_status) = 'Invalid' THEN 'invalid'
-          WHEN COALESCE(email_override_status, email_status) = 'Pending' THEN 'pending'
-          ELSE NULL
-        END AS status,
-        email_verified_at AS verified_at
-      FROM mailing_contacts
-      WHERE email IS NOT NULL AND email <> ''
-    ),
-    inserted AS (
-      INSERT INTO email_verifications (email, status, provider, verified_at)
-      SELECT email, status, 'smtp', verified_at
-      FROM src
-      WHERE status IS NOT NULL
-      ON CONFLICT (email) DO NOTHING
-      RETURNING 1
-    )
-    SELECT count(*)::int AS inserted FROM inserted
-  `) as Array<{ inserted: number }>;
-  return result[0]?.inserted ?? 0;
 }

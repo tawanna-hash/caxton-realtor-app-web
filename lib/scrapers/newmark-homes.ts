@@ -27,8 +27,8 @@ import * as cheerio from 'cheerio';
 import type { CommunityData } from './david-weekley';
 
 const BASE_URL = 'https://newmarkhomes.com';
-export const NEWMARK_COMMUNITIES_URL = `${BASE_URL}/new-homes/austin/communities`;
-export const NEWMARK_MOVE_IN_READY_URL = `${BASE_URL}/new-homes/austin`;
+const NEWMARK_COMMUNITIES_URL = `${BASE_URL}/new-homes/austin/communities`;
+const NEWMARK_MOVE_IN_READY_URL = `${BASE_URL}/new-homes/austin`;
 
 const USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +

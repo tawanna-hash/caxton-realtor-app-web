@@ -3,52 +3,12 @@
 // Types + helpers for the `agreements` table. Pattern mirrors
 // `lib/advertisers.ts`.
 
+import type { PublicationScope } from './publications';
+
 export type AgreementStatus =
   | 'draft' | 'proposal_sent' | 'proposal_approved' | 'sent' | 'signed' | 'active' | 'expired' | 'cancelled';
 
 export type PaymentMode = 'card' | 'link' | 'invoice' | 'check';
-
-export interface AgreementLineItem {
-  id: string;
-  agreement_id: string;
-  line_no: number;
-  channel: 'print' | 'email' | 'app';
-  package_id: string;
-  package_label: string;
-  ad_size: string | null;
-  frequency: string | null;
-  quantity: number;
-  unit_cents: number;
-  amount_cents: number;
-  publication: 'austin' | 'san_antonio' | 'both' | null;
-  start_date: string | null;
-  end_date: string | null;
-  pay_now: boolean;
-  meta: Record<string, unknown>;
-  created_at: string;
-
-  // Insertion Order pricing fields (print lines, populated by quote-drafter).
-  ad_rate_cents: number | null;
-  ad_rate_base_cents: number | null;
-  discount_cents: number | null;
-  ad_premium_cents: number | null;
-  page_position: string | null;
-  pos_premium_active: boolean | null;
-  total_monthly_cents: number | null;
-
-  // Print run window (per-line — mirrors the agreement's ad_timing grid).
-  // ad_timing_months is a Record<monthKey, boolean> as saved from the modal;
-  // ad_timing_years is Record<monthKey, yearStr>. Together they describe
-  // exactly which issues this line covers.
-  ad_timing_months: Record<string, boolean> | null;
-  ad_timing_years: Record<string, string> | null;
-  expiration_date: string | null;
-  renewal_reminder_date: string | null;
-
-  // Email lines only: ISO dates the campaign should send on.
-  preferred_send_dates: string[] | null;
-}
-
 export type AgreementType =
   | 'print_ad' | 'eblast' | 'app_ad' | 'sponsored_content' | 'package' | 'other';
 
@@ -59,12 +19,12 @@ export type AgreementAuditEntry = {
   details?: string;
 };
 
-export type AgreementAdTiming = {
+type AgreementAdTiming = {
   months: string[];   // e.g. ["jan","feb","mar"]
   years: number;      // count of issue years
 };
 
-export type AgreementAttachmentFile = {
+type AgreementAttachmentFile = {
   name: string;
   size: number;
   url: string;
@@ -100,6 +60,7 @@ export interface Agreement {
   ad_rate_cents: number | null;
   ad_timing: AgreementAdTiming | null;
   eblast_packages: string[];
+  preferred_send_dates: string[] | null;
 
   // Pressbook pricing
   discount_cents: number | null;
@@ -154,6 +115,8 @@ export interface Agreement {
   // Renewals
   is_renewal: boolean | null;
   renewed_from_id: string | null;
+  renewal_offer_expires_at: string | null;
+  renewal_offer_reminder_sent_at: string | null;
 
   notes: string | null;
 
@@ -161,7 +124,7 @@ export interface Agreement {
   // 'san_antonio' (Newsline San Antonio), or 'both'. Drives the PUB column
   // on /admin/ads/orders and per-market filtering for agreement-sourced
   // orders. Defaults from the linked advertiser's publication on create.
-  publication: 'austin' | 'san_antonio' | 'both' | null;
+  publication: PublicationScope | null;
 
   audit_log: AgreementAuditEntry[];
   created_by: string | null;
@@ -204,9 +167,6 @@ export const AGREEMENT_PATCHABLE_FIELDS = [
 export const AGREEMENT_PUBLICATION_VALUES = new Set<NonNullable<Agreement['publication']>>([
   'austin', 'san_antonio', 'both',
 ]);
-
-export type AgreementPatchableField = (typeof AGREEMENT_PATCHABLE_FIELDS)[number];
-
 export const AGREEMENT_STATUS_VALUES = new Set<AgreementStatus>([
   'draft','proposal_sent','proposal_approved','sent','signed','active','expired','cancelled',
 ]);
@@ -225,4 +185,3 @@ export function appendAudit(
   const base = Array.isArray(log) ? log : [];
   return [...base, entry];
 }
-

@@ -61,7 +61,7 @@ export default async function PortalHome() {
 
       <section className="rounded-md border border-gray-200 bg-white p-6">
         <h2 className="font-serif text-xl text-gray-900 mb-3">
-          What you can do here
+          What You Can Do Here
         </h2>
         <ul className="space-y-2 text-gray-700 text-sm">
           <li>• <Link href="/portal/files" className="text-blue-700 hover:underline">View files</Link> we&apos;ve shared with you (agreements, invoices, proofs, photos).</li>

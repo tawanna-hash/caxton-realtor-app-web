@@ -17,9 +17,9 @@ export const ADVERTISER_HEADER_STYLES = [
 
 export type AdvertiserHeaderStyle = (typeof ADVERTISER_HEADER_STYLES)[number];
 
-export const DEFAULT_HEADER_STYLE: AdvertiserHeaderStyle = 'current';
+const DEFAULT_HEADER_STYLE: AdvertiserHeaderStyle = 'current';
 
-export function isAdvertiserHeaderStyle(v: unknown): v is AdvertiserHeaderStyle {
+function isAdvertiserHeaderStyle(v: unknown): v is AdvertiserHeaderStyle {
   return typeof v === 'string' && (ADVERTISER_HEADER_STYLES as readonly string[]).includes(v);
 }
 

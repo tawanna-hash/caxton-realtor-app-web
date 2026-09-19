@@ -17,6 +17,7 @@ import {
   updateBuilderInventory,
 } from '@/lib/builder-inventory';
 import { deleteStaleBuilderPromotions } from '@/lib/builder-inventory-sync';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -140,7 +141,7 @@ async function runScrape() {
   };
 }
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   const auth = verifyCronAuth(req);
   if (!auth.ok) {
     return NextResponse.json(
@@ -166,3 +167,5 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return GET(req);
 }
+
+export const GET = withScraperRun('scrape-david-weekley-promotions', _GET);

@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import PageTitle from '@/components/ui/PageTitle';
+import ContentPagination from '@/app/admin/_components/ContentPagination';
 import {
+  PUBLICATIONS,
   PUBLICATION_FILTER_LABELS,
   type PublicationId,
 } from '@/lib/publications';
@@ -14,7 +16,7 @@ type AdminEvent = {
   id: number;
   externalSource: 'unlockmls' | 'wordpress' | 'manual' | 'fpr' | 'hba';
   externalId: string;
-  publication: 'austin' | 'san_antonio';
+  publication: PublicationId;
   title: string;
   startDate: string | null;
   endDate: string | null;
@@ -30,6 +32,8 @@ type SortKey = 'title' | 'pub' | 'when' | 'source' | 'status';
 const PUB_STYLES: Record<PublicationId, string> = {
   austin: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
   san_antonio: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
+  houston: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
+  dallas: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
 };
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -38,6 +42,7 @@ const SOURCE_LABELS: Record<string, string> = {
   wordpress: 'WordPress',
   fpr: 'Five Points',
   hba: 'HBA Austin',
+  realtyline: 'RealtyLine',
   gmail: 'Gmail',
 };
 
@@ -57,14 +62,16 @@ export default function EventsPage() {
   const [items, setItems] = useState<AdminEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'austin' | 'san_antonio'>('all');
+  const [filter, setFilter] = useState<'all' | PublicationId>('all');
   const [busyId, setBusyId] = useState<number | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('when');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
-  // "Expired" = start_date is in the past. Mirrors the server-side
-  // criterion in POST /admin/events/hide-expired. Stored as state and
+  // "Expired" = end_date is in the past, or start_date when no end exists.
+  // Mirrors the server-side criterion in POST /admin/events/delete-expired. Stored as state and
   // computed in the loader (see `reload`) so Date.now() never runs
   // during render — keeps react-hooks/purity happy.
   const [expiredVisibleCount, setExpiredVisibleCount] = useState(0);
@@ -93,6 +100,9 @@ export default function EventsPage() {
       default: return 0;
     }
   });
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const reload = () => {
     setLoading(true);
@@ -104,9 +114,9 @@ export default function EventsPage() {
         setItems(events);
         const now = Date.now();
         const expired = events.reduce((n, ev) => {
-          if (ev.hidden) return n;
-          if (!ev.startDate) return n;
-          return new Date(ev.startDate).getTime() < now ? n + 1 : n;
+          const expiration = ev.endDate ?? ev.startDate;
+          if (!expiration) return n;
+          return new Date(expiration).getTime() < now ? n + 1 : n;
         }, 0);
         setExpiredVisibleCount(expired);
         setLoading(false);
@@ -154,22 +164,21 @@ export default function EventsPage() {
     }
   };
 
-  const handleHideExpired = async () => {
+  const handleDeleteExpired = async () => {
     if (expiredVisibleCount === 0) {
-      alert('No expired events to hide.');
+      alert('No expired events to delete.');
       return;
     }
     const msg =
-      `Hide ${expiredVisibleCount} expired event${expiredVisibleCount === 1 ? '' : 's'} ` +
-      `(start date in the past)? They will no longer appear on the public calendar. ` +
-      `You can unhide any of them individually afterwards.`;
+      `Permanently delete ${expiredVisibleCount} expired event${expiredVisibleCount === 1 ? '' : 's'}? ` +
+      `This includes hidden events and cannot be undone.`;
     if (!window.confirm(msg)) return;
     setBulkBusy(true);
     try {
-      const res = await adminApi.hideExpiredEvents();
-      const n = res?.hiddenCount ?? 0;
+      const res = await adminApi.deleteExpiredEvents();
+      const n = res?.deletedCount ?? 0;
       reload();
-      alert(`Hid ${n} expired event${n === 1 ? '' : 's'}.`);
+      alert(`Deleted ${n} expired event${n === 1 ? '' : 's'}.`);
     } catch (err) {
       alert(err instanceof Error ? err.message : String(err));
     } finally {
@@ -181,13 +190,13 @@ export default function EventsPage() {
     return <div className="max-w-6xl mx-auto px-6 py-12 text-sm text-gray-500">Loading...</div>;
   }
 
-  const filterButton = (key: 'all' | 'austin' | 'san_antonio', label: string) => (
+  const filterButton = (key: 'all' | PublicationId, label: string) => (
     <button
       key={key}
       onClick={() => setFilter(key)}
       className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
         filter === key
-          ? 'bg-brand-700 text-white border-brand-700'
+          ? 'bg-orange-600 text-white border-brand-700'
           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
       }`}
     >
@@ -196,8 +205,8 @@ export default function EventsPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="content-admin-shell">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
         <div>
           <PageTitle size="md">Events</PageTitle>
           <p className="text-sm text-gray-500 mt-1">
@@ -207,37 +216,45 @@ export default function EventsPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={handleHideExpired}
+            onClick={handleDeleteExpired}
             disabled={bulkBusy || expiredVisibleCount === 0}
             title={
               expiredVisibleCount === 0
-                ? 'No expired events to hide'
-                : `Hide ${expiredVisibleCount} event${expiredVisibleCount === 1 ? '' : 's'} whose start date is in the past`
+                ? 'No expired events to delete'
+                : `Permanently delete ${expiredVisibleCount} expired event${expiredVisibleCount === 1 ? '' : 's'}`
             }
-            className="px-4 py-2 bg-white text-brand-700 text-sm font-medium rounded-md border border-brand-700 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+            className="px-4 py-2 bg-white text-red-700 text-sm font-medium rounded-md border border-red-300 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {bulkBusy
-              ? 'Hiding\u2026'
-              : `Hide expired${expiredVisibleCount > 0 ? ` (${expiredVisibleCount})` : ''}`}
+              ? 'Deleting\u2026'
+              : `Delete expired${expiredVisibleCount > 0 ? ` (${expiredVisibleCount})` : ''}`}
           </button>
           <Link
             href="/admin/events/new"
-            className="px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-brand-700 transition-colors"
+            className="px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-orange-700 transition-colors"
           >
             + New Event
           </Link>
         </div>
       </div>
 
+      <section className="content-admin-summary" aria-label="Event summary">
+        <div><strong>{items.length.toLocaleString()}</strong><span>Total events</span></div>
+        <div><strong>{items.filter((event) => !event.hidden).length.toLocaleString()}</strong><span>Visible</span></div>
+        <div><strong>{items.filter((event) => event.hidden).length.toLocaleString()}</strong><span>Hidden</span></div>
+        <div><strong>{expiredVisibleCount.toLocaleString()}</strong><span>Expired</span></div>
+      </section>
+
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2">
           {filterButton('all', 'All')}
-          {filterButton('austin', 'RealtyLine')}
-          {filterButton('san_antonio', 'Newsline San Antonio')}
+          {PUBLICATIONS.map((publication) => (
+            filterButton(publication.id, publication.filterLabel)
+          ))}
         </div>
         {/* BUG-29: surface counts so admins can see at a glance how many events are loaded + how many are hidden */}
         {!loading && items.length > 0 && (
-          <div className="flex items-center gap-2 text-xs text-gray-600">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
             <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 border border-gray-200 font-medium">
               {items.length} total
             </span>
@@ -264,7 +281,63 @@ export default function EventsPage() {
           No events found. <Link href="/admin/events/new" className="text-brand-700 underline">Create one</Link>.
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+        <>
+        {/* mobile card list */}
+        <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+          {pageItems.map((ev) => {
+            const isManual = ev.externalSource === 'manual';
+            const hasEdits = ev.editedFields.length > 0;
+            return (
+              <li key={`m-${ev.id}`} className={`p-3 ${ev.hidden ? 'bg-gray-50' : ''}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <Link href={`/admin/events/${ev.id}`} className="font-medium text-gray-900 hover:text-brand-700 hover:underline">
+                      {ev.title}
+                    </Link>
+                    {hasEdits && !isManual && (
+                      <div className="text-xs text-amber-700 mt-0.5">✎ Edited: {ev.editedFields.join(', ')}</div>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md border ${PUB_STYLES[ev.publication] || ''}`}>
+                      {PUBLICATION_FILTER_LABELS[ev.publication] || ev.publication}
+                    </span>
+                    {ev.hidden ? (
+                      <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-700">Hidden</span>
+                    ) : (
+                      <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-medium bg-green-100 text-green-800">Visible</span>
+                    )}
+                  </div>
+                </div>
+                <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                  <dt className="text-gray-500">When</dt>
+                  <dd className="text-gray-700">{formatDateTime(ev.startDate)}</dd>
+                  <dt className="text-gray-500">Source</dt>
+                  <dd className="text-gray-600">{SOURCE_LABELS[ev.externalSource] || ev.externalSource}</dd>
+                </dl>
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                  <Link href={`/admin/events/${ev.id}`} className="text-brand-700 hover:underline">Edit</Link>
+                  <button
+                    onClick={() => handleHideToggle(ev)}
+                    disabled={busyId === ev.id}
+                    className="text-gray-700 hover:text-gray-900 disabled:opacity-50"
+                  >
+                    {ev.hidden ? 'Unhide' : 'Hide'}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(ev)}
+                    disabled={!isManual || busyId === ev.id}
+                    title={isManual ? '' : 'Scraped events can only be hidden — they would be recreated on next scraper run.'}
+                    className="text-red-600 hover:text-red-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="hidden sm:block bg-white border border-gray-200 rounded-md overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -277,7 +350,7 @@ export default function EventsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {sorted.map((ev) => {
+              {pageItems.map((ev) => {
                 const isManual = ev.externalSource === 'manual';
                 const hasEdits = ev.editedFields.length > 0;
                 return (
@@ -336,6 +409,14 @@ export default function EventsPage() {
             </tbody>
           </table>
         </div>
+        <ContentPagination
+          count={sorted.length}
+          page={safePage}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+        />
+        </>
       )}
     </div>
   );

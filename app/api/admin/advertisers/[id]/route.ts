@@ -20,6 +20,8 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { upsertAdvertiserMailingByAdvertiserId } from '@/lib/mailing';
 import { syncAdvertiserToAgreement } from '@/lib/server/billing-crm-sync';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { revalidatePath } from 'next/cache';
+import { partnerDeletionTombstoneKey } from '@/lib/advertiser-deletion-tombstones';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -87,6 +89,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
 const STATUS_VALUES = new Set(['prospect', 'advertiser', 'archived']);
 const TYPE_VALUES   = new Set(['advertiser', 'client', 'prospect', 'mailing']);
 const EMAIL_STATUS  = new Set(['valid', 'invalid', 'risk', 'unknown']);
+const PAYMENT_MODES = new Set(['card', 'link', 'invoice', 'check']);
 
 export async function PATCH(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
@@ -108,15 +111,35 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     await ensurePublicationColumn();
     const sql = getSql();
 
+    const existingRows = (await sql`
+      SELECT name FROM advertisers WHERE id = ${idNum} LIMIT 1
+    `) as unknown as Array<{ name: string }>;
+    if (existingRows.length === 0) {
+      return NextResponse.json({ error: 'not found' }, { status: 404 });
+    }
     const updates: string[] = [];
     const setClauses: { col: string; val: unknown }[] = [];
 
+    // Company Name is the canonical partner identity throughout admin. Some
+    // clients historically sent only `company`, while others sent both
+    // `name` and `company`; accepting the form field first prevents a saved
+    // company edit from leaving the list/header name stale.
+    const requestedName =
+      typeof body.company === 'string' && body.company.trim()
+        ? body.company.trim()
+        : typeof body.name === 'string' && body.name.trim()
+          ? body.name.trim()
+          : null;
+
     // Legacy fields
-    if (typeof body.name === 'string' && body.name.trim()) {
-      const name = body.name.trim();
+    if (requestedName) {
+      const name = requestedName;
       const baseSlug = slugify(name) || `advertiser-${idNum}`;
       setClauses.push({ col: 'name', val: name });
       setClauses.push({ col: 'slug', val: baseSlug });
+      // Keep the newer CRM company column identical even when an older admin
+      // surface submits only `name`.
+      body.company = name;
     }
     if ('contact_email' in body) {
       const v = body.contact_email;
@@ -124,6 +147,9 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     }
     if ('requires_email_gate' in body) {
       setClauses.push({ col: 'requires_email_gate', val: !!body.requires_email_gate });
+    }
+    if ('is_locked' in body) {
+      setClauses.push({ col: 'is_locked', val: !!body.is_locked });
     }
     if ('publication' in body) {
       const pub = normalizePublication(body.publication);
@@ -138,6 +164,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       if (field === 'type'         && typeof raw === 'string' && !TYPE_VALUES.has(raw)) continue;
       if (field === 'status'       && typeof raw === 'string' && !STATUS_VALUES.has(raw)) continue;
       if (field === 'email_status' && raw !== null && typeof raw === 'string' && !EMAIL_STATUS.has(raw)) continue;
+      if (field === 'payment_mode' && raw !== null && typeof raw === 'string' && !PAYMENT_MODES.has(raw)) continue;
 
       if (field === 'additional_contacts' || field === 'tags') {
         if (raw === null || Array.isArray(raw)) {
@@ -169,6 +196,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'slug':                await sql`UPDATE advertisers SET slug = ${val}                       WHERE id = ${idNum}`; break;
         case 'contact_email':       await sql`UPDATE advertisers SET contact_email = ${val}              WHERE id = ${idNum}`; break;
         case 'requires_email_gate': await sql`UPDATE advertisers SET requires_email_gate = ${val}        WHERE id = ${idNum}`; break;
+        case 'is_locked':           await sql`UPDATE advertisers SET is_locked = ${val}                  WHERE id = ${idNum}`; break;
         case 'publication':         await sql`UPDATE advertisers SET publication = ${val}                WHERE id = ${idNum}`; break;
         case 'type':                await sql`UPDATE advertisers SET type = ${val}                       WHERE id = ${idNum}`; break;
         case 'status':              await sql`UPDATE advertisers SET status = ${val}                     WHERE id = ${idNum}`; break;
@@ -202,6 +230,12 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'additional_contacts': await sql`UPDATE advertisers SET additional_contacts = ${val}::jsonb WHERE id = ${idNum}`; break;
         case 'notes':               await sql`UPDATE advertisers SET notes = ${val}                      WHERE id = ${idNum}`; break;
         case 'tags':                await sql`UPDATE advertisers SET tags = ${val}::jsonb                WHERE id = ${idNum}`; break;
+        case 'billing_contact_name':  await sql`UPDATE advertisers SET billing_contact_name = ${val}     WHERE id = ${idNum}`; break;
+        case 'billing_contact_phone': await sql`UPDATE advertisers SET billing_contact_phone = ${val}    WHERE id = ${idNum}`; break;
+        case 'billing_email':         await sql`UPDATE advertisers SET billing_email = ${val}            WHERE id = ${idNum}`; break;
+        case 'payment_mode':          await sql`UPDATE advertisers SET payment_mode = ${val}             WHERE id = ${idNum}`; break;
+        case 'stripe_customer_id':    await sql`UPDATE advertisers SET stripe_customer_id = ${val}       WHERE id = ${idNum}`; break;
+        case 'card_last4':            await sql`UPDATE advertisers SET card_last4 = ${val}                WHERE id = ${idNum}`; break;
         // Public profile fields. These columns were added but missing here,
         // so edits saved through the admin modal silently dropped on the
         // floor. (Found 2026-06-12.)
@@ -230,6 +264,75 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       updates.push(col);
     }
 
+    const nextName = setClauses.find(({ col }) => col === 'name')?.val;
+    if (typeof nextName === 'string') {
+      // A partner rename must be atomic from the admin user's perspective.
+      // Several workflows intentionally keep a local company-name copy so they
+      // remain readable after a relationship is removed. Refresh every linked
+      // live/admin copy here; immutable delivery artifacts such as statement
+      // send snapshots and already-rendered signed PDFs remain as-issued.
+      await sql`
+        UPDATE agreements
+           SET company_name = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+      await sql`
+        UPDATE invoices
+           SET bill_to_name = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+      await sql`
+        UPDATE recurring_invoice_schedules
+           SET bill_to_name = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+      await sql`
+        UPDATE renewal_reminders rr
+           SET company_name = ${nextName}
+         WHERE EXISTS (
+           SELECT 1
+             FROM agreements ag
+            WHERE ag.id = rr.agreement_id
+              AND ag.advertiser_id = ${idNum}
+         )
+      `;
+      await sql`
+        UPDATE ad_inquiries
+           SET company = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+      await sql`
+        UPDATE mailing_contacts
+           SET company = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+      await sql`
+        UPDATE marketing_campaign_outreach_recipients
+           SET company = ${nextName}
+         WHERE recipient_type = 'advertiser'
+           AND recipient_id = ${idNum}
+      `;
+      await sql`
+        UPDATE ad_creatives
+           SET advertiser_name = ${nextName}
+         WHERE id IN (
+           SELECT creative_id
+             FROM ad_campaigns
+            WHERE advertiser_id = ${idNum}
+         )
+      `;
+      await sql`
+        UPDATE ad_campaigns
+           SET advertiser_name = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+      await sql`
+        UPDATE magazine_hotspots
+           SET advertiser_name = ${nextName}, updated_at = NOW()
+         WHERE advertiser_id = ${idNum}
+      `;
+    }
+
     await sql`UPDATE advertisers SET updated_at = NOW() WHERE id = ${idNum}`;
 
     const rows = (await sql`SELECT * FROM advertisers WHERE id = ${idNum}`) as unknown as Advertiser[];
@@ -252,8 +355,10 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     // facts that should flow advertiser <- agreement, not the other way.
     const IDENTITY_COLS = new Set([
       'name', 'company', 'first_name', 'last_name',
-      'contact_email', 'phone',
-      'address', 'city', 'state', 'zip',
+      'contact_email', 'portal_email', 'phone',
+      'address', 'address_2', 'city', 'state', 'zip',
+      'billing_contact_name', 'billing_contact_phone', 'billing_email',
+      'payment_mode', 'stripe_customer_id', 'card_last4',
     ]);
     if (updates.some((c) => IDENTITY_COLS.has(c))) {
       try {
@@ -282,13 +387,72 @@ export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, 
   try {
     await ensureSchema();
     const sql = getSql();
-    const result = (await sql`
-      DELETE FROM advertisers WHERE id = ${idNum} RETURNING id
-    `) as unknown as Array<{ id: number }>;
-    if (result.length === 0) {
+    const existing = (await sql`
+      SELECT id, is_locked, name, slug, contact_email
+      FROM advertisers
+      WHERE id = ${idNum}
+    `) as unknown as Array<{
+      id: number;
+      is_locked: boolean;
+      name: string;
+      slug: string;
+      contact_email: string | null;
+    }>;
+    const advertiser = existing[0];
+    if (!advertiser) {
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
-    return NextResponse.json({ ok: true });
+    if (advertiser.is_locked) {
+      return NextResponse.json(
+        { error: 'This partner record is locked. Unlock it before deleting.' },
+        { status: 423 },
+      );
+    }
+
+    const tombstoneKey = partnerDeletionTombstoneKey({
+      email: advertiser.contact_email,
+      name: advertiser.name,
+      slug: advertiser.slug,
+    });
+    const statements = [
+      sql`
+        INSERT INTO advertiser_deletion_tombstones (
+          normalized_email, original_advertiser_id, original_name,
+          original_slug, deleted_at
+        ) VALUES (
+          ${tombstoneKey}, ${advertiser.id}, ${advertiser.name},
+          ${advertiser.slug}, now()
+        )
+        ON CONFLICT (normalized_email) DO UPDATE SET
+          original_advertiser_id = EXCLUDED.original_advertiser_id,
+          original_name = EXCLUDED.original_name,
+          original_slug = EXCLUDED.original_slug,
+          deleted_at = now()
+      `,
+      // Preserve issued invoices while removing their CRM relationship.
+      sql`UPDATE invoices SET advertiser_id = NULL WHERE advertiser_id = ${idNum}`,
+      sql`DELETE FROM advertisers WHERE id = ${idNum} AND is_locked = false RETURNING id`,
+    ];
+
+    // Use Neon's HTTP transaction path, which is already proven in this
+    // serverless app and rolls every statement back if one fails.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const results = await (sql as any).transaction(
+      statements,
+      { isolationLevel: 'Serializable' },
+    );
+    const deleted = results[2] as Array<{ id: number }> | undefined;
+    if (!Array.isArray(deleted) || deleted.length === 0) {
+      return NextResponse.json(
+        { error: 'The partner changed while deleting. Refresh and try again.' },
+        { status: 409 },
+      );
+    }
+    revalidatePath('/advertisers');
+    revalidatePath(`/advertisers/${advertiser.slug}`);
+    revalidatePath('/partners');
+    revalidatePath(`/partners/${advertiser.slug}`);
+    return NextResponse.json({ ok: true, deleted_id: idNum });
   } catch (err) {
     console.error('[admin/advertisers DELETE]', errMessage(err));
     return NextResponse.json({ error: 'delete failed', detail: errMessage(err) }, { status: 500 });

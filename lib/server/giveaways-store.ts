@@ -8,6 +8,7 @@
  */
 
 import { query, exec, withNeonTransaction } from './db/neon';
+import type { PublicationId } from '@/lib/publications';
 import type {
   CreateGiveawayInput,
   UpdateGiveawayInput,
@@ -112,7 +113,7 @@ export interface PublicGiveawayRow {
  * "Optional internal note", so it must not surface to the public.
  */
 export async function listPublicGiveaways(
-  market: 'austin' | 'san_antonio' | null,
+  market: PublicationId | null,
 ): Promise<PublicGiveawayRow[]> {
   const giveaways = await query<Omit<PublicGiveawayRow, 'rules'>>(
     `SELECT id, title, prize, publication, starts_at, ends_at
@@ -120,7 +121,7 @@ export async function listPublicGiveaways(
      WHERE status = 'active'
        AND starts_at <= NOW()
        AND ends_at >= NOW()
-       AND (publication = 'both' OR publication = $1::market_enum)
+       AND (publication::text = 'both' OR publication::text = $1::text)
      ORDER BY ends_at ASC`,
     [market],
   );

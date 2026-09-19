@@ -18,15 +18,18 @@
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 import TrackPageView from '@/components/analytics/TrackPageView';
-import { APP_AD_SLOTS, type AppAdSlot } from '@/lib/media-kit';
+import { APP_AD_SLOTS, MARKET_MULTIPLIERS, weeklyRateForMarkets, type AppAdSlot } from '@/lib/media-kit';
 import { PlacementWireframe, hasWireframe } from '@/components/ads/PlacementWireframe';
 
-export const dynamic = 'force-dynamic';
+// Purely static: renders from the in-repo APP_AD_SLOTS catalog, no DB
+// reads, no cookies/session, no searchParams. Content only changes when a
+// developer edits lib/media-kit.ts, so this can cache for a long time.
+export const revalidate = 86400; // 1 day
 
 export const metadata = {
   title: 'Where ads appear — Realty News Now',
   description:
-    'See every digital ad placement in the Realty News Now app — feed, article, calendar, account, newsletter and push — with a visual preview of exactly where your creative renders.',
+    'See every digital ad placement in the Realty News Now app — feed, article, calendar, account, email and push — with a visual preview of exactly where your creative renders.',
 };
 
 const ZONE_LABEL: Record<AppAdSlot['zone'], string> = {
@@ -34,7 +37,7 @@ const ZONE_LABEL: Record<AppAdSlot['zone'], string> = {
   article: 'Article',
   calendar: 'Calendar',
   account: 'Account',
-  newsletter: 'Newsletter',
+  newsletter: 'Email',
   app: 'App-wide',
 };
 
@@ -55,11 +58,25 @@ const HOST_PAGE_BY_SLUG: Record<string, string> = {
   calendar_event_sponsor: 'Promoted event card in the calendar',
   account_splash:         'Top of the account + profile screens',
   splash_welcome:         'First-launch welcome screen',
-  newsletter_banner:      'Friday email newsletter',
+  newsletter_banner:      'Friday Email',
   push_sponsorship:       'iOS / Android push notification',
 };
 
 const TIER_ORDER: Record<AppAdSlot['tier'], number> = { premium: 0, standard: 1 };
+
+const MARKET_LABELS: Record<1 | 2 | 3 | 4, { name: string; comingSoon: boolean }> = {
+  1: { name: 'RealtyLine Austin', comingSoon: false },
+  2: { name: 'Newsline San Antonio', comingSoon: false },
+  3: { name: 'RealtyLine Houston', comingSoon: true },
+  4: { name: 'RealtyLine Dallas/Ft. Worth', comingSoon: true },
+};
+
+function representativeSlot() {
+  const sorted = [...APP_AD_SLOTS]
+    .filter((slot) => slot.weeklySingle > 0 && slot.tier === 'standard')
+    .sort((a, b) => a.weeklySingle - b.weeklySingle);
+  return sorted[Math.floor(sorted.length / 2)] ?? APP_AD_SLOTS[0]!;
+}
 
 function priceLine(s: AppAdSlot): string {
   const unit = s.pricingUnit ?? 'week';
@@ -68,8 +85,67 @@ function priceLine(s: AppAdSlot): string {
   return `$${s.weeklySingle}/${u} single pub${mo}`;
 }
 
+function BundleSavingsSection() {
+  const sample = representativeSlot();
+  const baseRate = sample.weeklySingle;
+  const ladder = ([1, 2, 3, 4] as const).map((markets) => {
+    const total = weeklyRateForMarkets(sample, markets);
+    const separately = baseRate * markets;
+    const savingsPct = markets === 1 ? 0 : Math.round(((separately - total) / separately) * 100);
+    return { markets, total, separately, savingsPct };
+  });
+
+  return (
+    <section className="mb-8 rounded-md border border-emerald-200 bg-emerald-50/60 p-6 md:p-8">
+      <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-800">
+        Bundle &amp; save
+      </p>
+      <h2 className="text-xl font-bold tracking-tight text-gray-900 md:text-2xl">
+        Buy More Markets, Pay Less per Market
+      </h2>
+      <p className="mt-1.5 max-w-2xl text-sm font-light text-gray-700">
+        Every placement scales down per market the more markets you buy. Below is a real example using our {sample.name}{' '}
+        slot (${baseRate}/wk single market).
+      </p>
+      <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+        {ladder.map((row) => (
+          <div key={row.markets} className="rounded-md border border-emerald-200 bg-white p-4">
+            <p className="min-h-[2.2em] text-[11px] font-medium uppercase leading-tight tracking-wider text-gray-500">
+              {MARKET_LABELS[row.markets].name}
+              {MARKET_LABELS[row.markets].comingSoon && (
+                <>
+                  {' '}
+                  <span className="normal-case tracking-normal text-gray-400">(coming soon)</span>
+                </>
+              )}
+            </p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-gray-900 md:text-3xl">
+              ${row.total.toLocaleString()}
+              <span className="text-sm font-normal text-gray-500">/wk</span>
+            </p>
+            <p className="mt-1.5 text-xs text-gray-500">
+              {row.savingsPct > 0 ? (
+                <>
+                  <span className="font-semibold text-emerald-700">{row.savingsPct}% off</span>
+                  <span className="text-gray-400"> vs ${row.separately.toLocaleString()}</span>
+                </>
+              ) : (
+                <span className="text-gray-400">Base rate</span>
+              )}
+            </p>
+            <p className="mt-1 text-[10px] uppercase tracking-wider text-gray-400">
+              {MARKET_MULTIPLIERS[row.markets].toFixed(1)}{'\u00d7'} base
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function PlacementCard({ slot }: { slot: AppAdSlot }) {
   const hostPage = HOST_PAGE_BY_SLUG[slot.slug] ?? ZONE_LABEL[slot.zone];
+  const showRotationNotice = slot.rotates && slot.slug !== 'newsletter_banner';
 
   return (
     <article className="rounded-md border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
@@ -95,7 +171,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
               {slot.name}
             </h3>
           </div>
-          {slot.rotates && (
+          {showRotationNotice && (
             <span
               className="shrink-0 inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
               title="Rotates with up to 5 active campaigns. 6s dwell, 2s cross-fade."
@@ -108,7 +184,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
             </span>
           )}
         </div>
-        {slot.rotates && (
+        {showRotationNotice && (
           <div className="text-[11px] text-blue-700">
             Shared placement · up to 5 partners cycle · 6-second view + 2-second fade
           </div>
@@ -196,6 +272,8 @@ export default function PublicAdvertisePlacementsPage() {
           </Link>
         </div>
       </header>
+
+      <BundleSavingsSection />
 
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {sorted.map((slot) => (

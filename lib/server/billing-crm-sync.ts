@@ -44,10 +44,27 @@ function splitName(full: string | null | undefined): { first: string | null; las
   };
 }
 
+/** Whether an optional agreement column exists in this deployment. */
+async function agreementHasColumn(column: 'address_2'): Promise<boolean> {
+  const sql = getSql();
+  const rows = await sql`
+    SELECT 1
+      FROM information_schema.columns
+     WHERE table_schema = current_schema()
+       AND table_name = 'agreements'
+       AND column_name = ${column}
+     LIMIT 1
+  `;
+  return rows.length > 0;
+}
+
 /**
  * Pick the most-recent "active-ish" agreement for an advertiser.
- * Preference order: signed > active > sent > draft, then most recent
- * sign_date / created_at.
+ * Preference order: signed > active > sent > proposal approved >
+ * proposal sent > draft, then most recent sign_date / created_at.
+ *
+ * Expired and cancelled rows are deliberately excluded: neither is a valid
+ * replacement for the advertiser's current agreement mirror.
  */
 async function pickCurrentAgreementId(advertiserId: number): Promise<string | null> {
   const sql = getSql();
@@ -55,14 +72,18 @@ async function pickCurrentAgreementId(advertiserId: number): Promise<string | nu
     SELECT id
       FROM agreements
      WHERE advertiser_id = ${advertiserId}
+       AND status IN (
+         'signed', 'active', 'sent', 'proposal_approved',
+         'proposal_sent', 'draft'
+       )
      ORDER BY
        CASE status
-         WHEN 'signed'    THEN 0
-         WHEN 'active'    THEN 1
-         WHEN 'sent'      THEN 2
-         WHEN 'draft'     THEN 3
-         WHEN 'expired'   THEN 4
-         WHEN 'cancelled' THEN 5
+         WHEN 'signed'            THEN 0
+         WHEN 'active'            THEN 1
+         WHEN 'sent'              THEN 2
+         WHEN 'proposal_approved' THEN 3
+         WHEN 'proposal_sent'     THEN 4
+         WHEN 'draft'             THEN 5
          ELSE 6
        END,
        COALESCE(signed_at, created_at) DESC
@@ -76,8 +97,9 @@ async function pickCurrentAgreementId(advertiserId: number): Promise<string | nu
  * its linked advertiser row.
  *
  *  - Contact identity (company, rep_name → name + first/last, contact email,
- *    phone, address) — only fills in BLANK fields on the advertiser so we
- *    never clobber a manually-curated CRM value.
+ *    phone, address) — mirrors only for the current agreement. This makes
+ *    deliberate clears flow in both directions without allowing a historical
+ *    agreement to overwrite the live CRM row.
  *  - Billing + payment fields — overwrite unconditionally; agreement is
  *    the source of truth.
  *  - Deal facts (current_*) — overwrite unconditionally.
@@ -95,102 +117,55 @@ export async function syncAgreementToAdvertiser(ag: Agreement): Promise<string[]
   const currentId = await pickCurrentAgreementId(advertiserId);
   const isCurrent = currentId === ag.id;
 
-  // Fetch current advertiser snapshot to decide which identity fields to
-  // overwrite (we only fill blanks).
-  const advRows = (await sql`
-    SELECT id, name, company, first_name, last_name, contact_email, portal_email,
-           phone, address, city, state, zip
-      FROM advertisers
-     WHERE id = ${advertiserId}
-     LIMIT 1
-  `) as unknown as Array<{
-    id: number;
-    name: string | null;
-    company: string | null;
-    first_name: string | null;
-    last_name: string | null;
-    contact_email: string | null;
-    portal_email: string | null;
-    phone: string | null;
-    address: string | null;
-    city: string | null;
-    state: string | null;
-    zip: string | null;
-  }>;
-  if (advRows.length === 0) return [];
-  const adv = advRows[0];
-
   const updates: string[] = [];
 
-  // ── Identity (fill-blank only) ─────────────────────────────────
-  const company = nz(ag.company_name);
-  if (company && !nz(adv.company)) {
-    await sql`UPDATE advertisers SET company = ${company} WHERE id = ${advertiserId}`;
-    updates.push('company');
-  }
-
-  const repName = nz(ag.rep_name);
-  if (repName && !nz(adv.name)) {
-    // Advertiser.name is NOT NULL — only overwrite when blank-ish.
-    await sql`UPDATE advertisers SET name = ${repName} WHERE id = ${advertiserId}`;
-    updates.push('name');
-  }
-  if (repName) {
+  // ── Identity ────────────────────────────────────────────────────
+  if (isCurrent) {
+    const company = nz(ag.company_name);
+    const repName = nz(ag.rep_name);
     const { first, last } = splitName(repName);
-    if (first && !nz(adv.first_name)) {
-      await sql`UPDATE advertisers SET first_name = ${first} WHERE id = ${advertiserId}`;
-      updates.push('first_name');
+    const email = nz(ag.advertiser_email)?.toLowerCase() ?? null;
+    const phone = nz(ag.advertiser_phone);
+    // Prefer the structured Pressbook address, falling back to the legacy
+    // single-line value only when the structured value is absent.
+    const addr = nz(ag.address) ?? nz(ag.advertiser_address);
+
+    await sql`
+      UPDATE advertisers SET
+        name          = COALESCE(${repName}, name),
+        company       = ${company},
+        first_name    = ${first},
+        last_name     = ${last},
+        contact_email = ${email},
+        portal_email  = ${email},
+        phone         = ${phone},
+        address       = ${addr},
+        city          = ${nz(ag.city)},
+        state         = ${nz(ag.state)},
+        zip           = ${nz(ag.zip)}
+      WHERE id = ${advertiserId}
+    `;
+    updates.push(
+      'name', 'company', 'first_name', 'last_name', 'contact_email',
+      'portal_email', 'phone', 'address', 'city', 'state', 'zip',
+    );
+
+    // Some databases already carry a structured second address line on
+    // agreements, while the baseline schema does not. Mirror it only where
+    // both sides support that lossless mapping; otherwise leave the CRM's
+    // address_2 untouched.
+    if (await agreementHasColumn('address_2')) {
+      const address2 = nz((ag as Agreement & { address_2?: string | null }).address_2);
+      await sql`UPDATE advertisers SET address_2 = ${address2} WHERE id = ${advertiserId}`;
+      updates.push('address_2');
     }
-    if (last && !nz(adv.last_name)) {
-      await sql`UPDATE advertisers SET last_name = ${last} WHERE id = ${advertiserId}`;
-      updates.push('last_name');
-    }
-  }
-
-  const email = nz(ag.advertiser_email)?.toLowerCase() ?? null;
-  if (email && !nz(adv.contact_email)) {
-    await sql`UPDATE advertisers SET contact_email = ${email} WHERE id = ${advertiserId}`;
-    updates.push('contact_email');
-  }
-  if (email && !nz(adv.portal_email)) {
-    await sql`UPDATE advertisers SET portal_email = ${email} WHERE id = ${advertiserId}`;
-    updates.push('portal_email');
-  }
-
-  const phone = nz(ag.advertiser_phone);
-  if (phone && !nz(adv.phone)) {
-    await sql`UPDATE advertisers SET phone = ${phone} WHERE id = ${advertiserId}`;
-    updates.push('phone');
-  }
-
-  // Address — prefer the structured Pressbook columns, fall back to the
-  // legacy single-line `advertiser_address`.
-  const addr  = nz(ag.address)  ?? nz(ag.advertiser_address);
-  const city  = nz(ag.city);
-  const state = nz(ag.state);
-  const zip   = nz(ag.zip);
-  if (addr && !nz(adv.address)) {
-    await sql`UPDATE advertisers SET address = ${addr} WHERE id = ${advertiserId}`;
-    updates.push('address');
-  }
-  if (city && !nz(adv.city)) {
-    await sql`UPDATE advertisers SET city = ${city} WHERE id = ${advertiserId}`;
-    updates.push('city');
-  }
-  if (state && !nz(adv.state)) {
-    await sql`UPDATE advertisers SET state = ${state} WHERE id = ${advertiserId}`;
-    updates.push('state');
-  }
-  if (zip && !nz(adv.zip)) {
-    await sql`UPDATE advertisers SET zip = ${zip} WHERE id = ${advertiserId}`;
-    updates.push('zip');
   }
 
   // ── Billing contact + payment (overwrite — agreement is source) ─
   // Only mirror onto the advertiser cache when this agreement is the
   // current one for the advertiser; otherwise leave the cache alone.
   if (isCurrent) {
-    const billingName  = nz(ag.billing_contact_name);
+    const billingName  = nz(ag.billing_contact_name) ?? nz(ag.billing_name);
     const billingPhone = nz(ag.billing_contact_phone);
     const billingEmail = nz(ag.billing_email);
     const paymentMode  = nz(ag.payment_mode);
@@ -244,6 +219,63 @@ export async function syncAgreementToAdvertiser(ag: Agreement): Promise<string[]
   return updates;
 }
 
+const MIRROR_FIELDS = [
+  'billing_contact_name',
+  'billing_contact_phone',
+  'billing_email',
+  'payment_mode',
+  'stripe_customer_id',
+  'card_last4',
+  'current_agreement_id',
+  'current_ad_size',
+  'current_frequency',
+  'current_ad_rate_cents',
+  'current_amount_cents',
+  'current_exp_date',
+] as const;
+
+/**
+ * Recompute an advertiser's agreement-backed cache.
+ *
+ * Used after ownership changes and deletion, where synchronizing only the
+ * agreement being edited is insufficient. If another valid agreement exists
+ * it is promoted; otherwise every agreement-backed companion field is
+ * cleared together so stale billing/deal data cannot remain visible.
+ */
+export async function refreshAdvertiserAgreementMirror(
+  advertiserId: number,
+): Promise<string[]> {
+  const sql = getSql();
+  const currentId = await pickCurrentAgreementId(advertiserId);
+
+  if (!currentId) {
+    await sql`
+      UPDATE advertisers SET
+        billing_contact_name  = NULL,
+        billing_contact_phone = NULL,
+        billing_email         = NULL,
+        payment_mode          = NULL,
+        stripe_customer_id    = NULL,
+        card_last4            = NULL,
+        current_agreement_id  = NULL,
+        current_ad_size       = NULL,
+        current_frequency     = NULL,
+        current_ad_rate_cents = NULL,
+        current_amount_cents  = NULL,
+        current_exp_date      = NULL,
+        updated_at            = NOW()
+      WHERE id = ${advertiserId}
+    `;
+    return [...MIRROR_FIELDS];
+  }
+
+  const rows = (await sql`
+    SELECT * FROM agreements WHERE id = ${currentId} LIMIT 1
+  `) as unknown as Agreement[];
+  if (rows.length === 0) return [];
+  return syncAgreementToAdvertiser(rows[0]);
+}
+
 /**
  * Mirror contact/identity edits made on the advertiser row back onto the
  * advertiser's current (most-recent active-ish) agreement.
@@ -251,12 +283,14 @@ export async function syncAgreementToAdvertiser(ag: Agreement): Promise<string[]
  * Only mirrors fields that map cleanly to the agreement snapshot:
  *  - company → company_name
  *  - first_name + last_name → rep_name (if both present)
- *  - contact_email → advertiser_email
+ *  - contact_email / portal_email → advertiser_email
  *  - phone → advertiser_phone
  *  - address / city / state / zip → same columns
+ *  - agreement-backed billing cache → matching agreement billing fields
  *
- * Uses COALESCE so a blank value on the advertiser never nulls out a
- * non-blank value on the agreement.
+ * Values are assigned directly so intentional clears are preserved. The
+ * WHERE clause targets exactly one current agreement and therefore never
+ * rewrites unrelated historical agreements.
  */
 export async function syncAdvertiserToAgreement(advertiserId: number): Promise<string[]> {
   const sql = getSql();
@@ -265,8 +299,10 @@ export async function syncAdvertiserToAgreement(advertiserId: number): Promise<s
   if (!currentId) return [];
 
   const advRows = (await sql`
-    SELECT company, first_name, last_name, contact_email, phone,
-           address, city, state, zip
+    SELECT company, first_name, last_name, contact_email, portal_email, phone,
+           address, address_2, city, state, zip,
+           billing_contact_name, billing_contact_phone, billing_email,
+           payment_mode, stripe_customer_id, card_last4
       FROM advertisers
      WHERE id = ${advertiserId}
      LIMIT 1
@@ -275,18 +311,26 @@ export async function syncAdvertiserToAgreement(advertiserId: number): Promise<s
     first_name: string | null;
     last_name: string | null;
     contact_email: string | null;
+    portal_email: string | null;
     phone: string | null;
     address: string | null;
+    address_2: string | null;
     city: string | null;
     state: string | null;
     zip: string | null;
+    billing_contact_name: string | null;
+    billing_contact_phone: string | null;
+    billing_email: string | null;
+    payment_mode: string | null;
+    stripe_customer_id: string | null;
+    card_last4: string | null;
   }>;
   if (advRows.length === 0) return [];
   const adv = advRows[0];
 
   const repName = [nz(adv.first_name), nz(adv.last_name)].filter(Boolean).join(' ') || null;
   const company = nz(adv.company);
-  const email   = nz(adv.contact_email)?.toLowerCase() ?? null;
+  const email   = nz(adv.contact_email ?? adv.portal_email)?.toLowerCase() ?? null;
   const phone   = nz(adv.phone);
   const addr    = nz(adv.address);
   const city    = nz(adv.city);
@@ -295,21 +339,39 @@ export async function syncAdvertiserToAgreement(advertiserId: number): Promise<s
 
   await sql`
     UPDATE agreements SET
-      company_name       = COALESCE(${company}, company_name),
-      rep_name           = COALESCE(${repName}, rep_name),
-      advertiser_email   = COALESCE(${email}, advertiser_email),
-      advertiser_phone   = COALESCE(${phone}, advertiser_phone),
-      address            = COALESCE(${addr}, address),
-      city               = COALESCE(${city}, city),
-      state              = COALESCE(${state}, state),
-      zip                = COALESCE(${zip}, zip),
+      company_name          = ${company},
+      rep_name              = ${repName},
+      advertiser_email      = ${email},
+      advertiser_phone      = ${phone},
+      address               = ${addr},
+      city                  = ${city},
+      state                 = ${state},
+      zip                   = ${zip},
+      billing_contact_name  = ${nz(adv.billing_contact_name)},
+      billing_contact_phone = ${nz(adv.billing_contact_phone)},
+      billing_email         = ${nz(adv.billing_email)},
+      payment_mode          = ${nz(adv.payment_mode)},
+      stripe_customer_id    = ${nz(adv.stripe_customer_id)},
+      card_number_last4     = ${nz(adv.card_last4)},
       updated_at         = NOW()
     WHERE id = ${currentId}
   `;
 
+  // `agreements.address_2` is optional across deployments. Keep it symmetric
+  // when present without making older schemas fail the whole synchronization.
+  const hasAddress2 = await agreementHasColumn('address_2');
+  if (hasAddress2) {
+    await sql.query(
+      'UPDATE agreements SET address_2 = $1, updated_at = NOW() WHERE id = $2',
+      [nz(adv.address_2), currentId],
+    );
+  }
+
   return [
     'company_name', 'rep_name', 'advertiser_email', 'advertiser_phone',
-    'address', 'city', 'state', 'zip',
+    'address', ...(hasAddress2 ? ['address_2'] : []),
+    'city', 'state', 'zip', 'billing_contact_name', 'billing_contact_phone',
+    'billing_email', 'payment_mode', 'stripe_customer_id', 'card_number_last4',
   ];
 }
 

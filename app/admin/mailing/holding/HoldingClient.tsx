@@ -16,6 +16,7 @@
 //   - Bulk select → Promote / Reject
 //   - "Sync from UnlockMLS" button
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
@@ -483,7 +484,7 @@ export default function HoldingClient() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+    <div className="mailing-admin-page">
       <MailingBreadcrumb trail={[{ label: 'Mailing', href: '/admin/mailing' }, { label: 'ABOR Members' }]} />
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -513,7 +514,7 @@ export default function HoldingClient() {
             type="button"
             disabled={busy !== null}
             onClick={syncFromUnlockMLS}
-            className="px-4 py-2 rounded-md bg-brand-700 text-white text-sm font-medium hover:bg-[#5a0e5f] disabled:opacity-50 whitespace-nowrap"
+            className="mailing-primary-action"
           >
             {busy === 'sync' ? 'Syncing…' : 'Sync from UnlockMLS'}
           </button>
@@ -601,7 +602,7 @@ export default function HoldingClient() {
       )}
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="mailing-summary-strip grid grid-cols-2 md:grid-cols-5">
         <KpiCard label="Total members"  value={counts?.total    ?? 0} sub="awaiting review" />
         <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#f97316" />
         <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#f97316" />
@@ -693,7 +694,110 @@ export default function HoldingClient() {
       />
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+      {/* Mobile card list — mirrors the desktop table above. */}
+      <div className="sm:hidden rounded-md border border-gray-200 bg-white divide-y divide-gray-100">
+        <div className="px-3 py-2 flex items-center gap-2 text-xs text-gray-600 border-b border-gray-200 bg-gray-50">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={(e) => handleSelectAll(e.target.checked)}
+            aria-label="Select all rows"
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <span>Select all ({selectedIds.size} of {rows.length})</span>
+        </div>
+        {loading && (
+          <div className="px-3 py-8 text-center text-sm text-gray-500">Loading…</div>
+        )}
+        {!loading && rows.length === 0 && (
+          <div className="px-3 py-8 text-center text-sm text-gray-500">No members. Try “Sync from UnlockMLS” above.</div>
+        )}
+        {!loading && rows.map((r) => {
+          const hasAddr = !!(r.address || r.city || r.state || r.zip);
+          const fullName = toTitleCaseName([r.first_name, r.last_name].filter(Boolean).join(' '));
+          return (
+            <div
+              key={r.id}
+              className="px-3 py-3 flex items-start gap-3 hover:bg-gray-50 cursor-pointer"
+              onClick={(e) => {
+                const target = e.target as HTMLElement;
+                if (target.closest('input,button,a')) return;
+                setEditing(r);
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={selectedIds.has(r.id)}
+                onChange={(e) => handleSelect(r.id, e.target.checked)}
+                aria-label={`Select ${fullName || r.email || r.id}`}
+                className="mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div>
+                  <div className="text-sm font-medium text-gray-900 break-words">{fullName || '—'}</div>
+                  {r.title && <div className="text-[11px] text-gray-500">{toTitleCaseRole(r.title)}</div>}
+                </div>
+                {r.email && (
+                  <div className="text-sm">
+                    <a
+                      href={`mailto:${r.email}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-blue-600 hover:underline break-words"
+                    >{r.email}</a>
+                  </div>
+                )}
+                {(r.company || r.city || r.phone || r.mobile_phone) && (
+                  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                    {r.company && (
+                      <>
+                        <dt className="text-gray-500 uppercase tracking-wider">Company</dt>
+                        <dd className="text-gray-800 text-right break-words">{r.company}</dd>
+                      </>
+                    )}
+                    {r.city && (
+                      <>
+                        <dt className="text-gray-500 uppercase tracking-wider">City</dt>
+                        <dd className="text-gray-800 text-right break-words">{r.city}</dd>
+                      </>
+                    )}
+                    {(r.phone || r.mobile_phone) && (
+                      <>
+                        <dt className="text-gray-500 uppercase tracking-wider">Phone</dt>
+                        <dd className="text-gray-800 text-right">
+                          {formatPhone(r.phone)}
+                          {r.mobile_phone && <div className="text-[10px] text-gray-500">m: {formatPhone(r.mobile_phone)}</div>}
+                        </dd>
+                      </>
+                    )}
+                  </dl>
+                )}
+                <div><ProximityBadges row={r} /></div>
+                <div className="pt-1 flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <VerifyCell
+                    status={r.addr_status}
+                    hasData={hasAddr}
+                    busy={busy === `addr-${r.id}`}
+                    onVerify={() => verifyAddress(r.id)}
+                    label="USPS"
+                  />
+                  <div className="flex flex-col gap-1">
+                    <VerifyCell
+                      status={r.email_status}
+                      hasData={!!r.email}
+                      busy={busy === `email-${r.id}`}
+                      onVerify={() => verifyEmail(r.id)}
+                      label="SMTP"
+                    />
+                    <EmailFlags row={r} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden sm:block overflow-x-auto rounded-md border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-xs text-gray-600 uppercase tracking-wider">
             <tr>
@@ -1231,7 +1335,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-2.5 py-1 rounded-md bg-brand-700 text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify with USPS'}
               </button>
@@ -1259,7 +1363,7 @@ function EditDrawer({
                 type="button"
                 disabled={emailBusy || !form.email}
                 onClick={onVerifyEmail}
-                className="text-xs px-2.5 py-1 rounded-md bg-brand-700 text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
               >
                 {emailBusy ? 'Verifying…' : 'Verify Email'}
               </button>

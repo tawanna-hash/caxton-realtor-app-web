@@ -11,6 +11,7 @@
 import { NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import type { PublicationScope } from '@/lib/publications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,7 +20,7 @@ type PickerAdvertiser = {
   id: number;
   name: string;
   slug: string;
-  publication: 'austin' | 'san_antonio' | 'both';
+  publication: PublicationScope;
 };
 
 async function isAdmin(): Promise<boolean> {
