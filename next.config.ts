@@ -118,6 +118,36 @@ const nextConfig: NextConfig = {
   // Redirect to the closest existing destination instead of a bare 404.
   async redirects() {
     return [
+      // Sunset domains: newslinesa.com and realtyline.us (San Antonio /
+      // Austin legacy publication sites) now point their DNS at this
+      // Vercel project so they get a free, valid TLS cert instead of
+      // DreamHost's redirect-only hosting (which can't terminate HTTPS
+      // for a non-hosted domain). Send every path on any of the four
+      // hostnames straight to the dashboard on the primary domain.
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'newslinesa.com' }],
+        destination: 'https://realtynewsnow.app/dashboard',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.newslinesa.com' }],
+        destination: 'https://realtynewsnow.app/dashboard',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'realtyline.us' }],
+        destination: 'https://realtynewsnow.app/dashboard',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.realtyline.us' }],
+        destination: 'https://realtynewsnow.app/dashboard',
+        permanent: true,
+      },
       { source: '/feed', destination: '/dashboard', permanent: false },
       { source: '/search', destination: '/dashboard', permanent: false },
       { source: '/more', destination: '/dashboard?tab=more', permanent: false },
