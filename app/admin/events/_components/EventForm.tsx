@@ -1,9 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ImagePlus, Loader2, Sparkles, UploadCloud, X } from 'lucide-react';
+import { ChevronDown, ImagePlus, Loader2, Sparkles, UploadCloud, X } from 'lucide-react';
 import { adminApi } from '@/lib/admin-api';
 import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
@@ -30,6 +30,7 @@ export type EventFormData = {
   instructorBio: string;
   lat: string;
   lng: string;
+  advertiserIds: number[];
 };
 
 export const EMPTY_EVENT: EventFormData = {
@@ -54,6 +55,7 @@ export const EMPTY_EVENT: EventFormData = {
   instructorBio: '',
   lat: '',
   lng: '',
+  advertiserIds: [],
 };
 
 /** Convert ISO 8601 (with TZ) to "YYYY-MM-DDTHH:mm" for datetime-local input. */
@@ -104,6 +106,7 @@ function fieldsToPayload(data: EventFormData): Record<string, unknown> {
     instructorBio: str(data.instructorBio),
     lat: num(data.lat),
     lng: num(data.lng),
+    advertiserIds: [...data.advertiserIds].sort((a, b) => a - b),
   };
 }
 
@@ -128,6 +131,23 @@ export function EventForm({
   const [autoCaptureNotice, setAutoCaptureNotice] = useState<string | null>(null);
   const [autoCaptureDragActive, setAutoCaptureDragActive] = useState(false);
   const autoCaptureInputRef = useRef<HTMLInputElement>(null);
+  const [partners, setPartners] = useState<PickerAdvertiser[]>([]);
+
+  useEffect(() => {
+    if (mode === 'public') return; // public submitters don't tag partners
+    let cancelled = false;
+    fetch('/api/admin/advertisers/picker', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : { advertisers: [] }))
+      .then((json: { advertisers?: PickerAdvertiser[] }) => {
+        if (!cancelled) setPartners(json.advertisers ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setPartners([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
 
   const update = <K extends keyof EventFormData>(key: K, value: EventFormData[K]) => {
     setData((d) => ({ ...d, [key]: value }));
@@ -188,13 +208,17 @@ export function EventForm({
 
     setAutoCapturing(true);
     try {
-      const formData = new FormData();
-      formData.append('image', file);
-      const response = await fetch('/api/admin/events/extract-flyer', {
-        method: 'POST',
-        body: formData,
-      });
-      const result = (await response.json().catch(() => ({}))) as {
+      const extractFormData = new FormData();
+      extractFormData.append('image', file);
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const [extractResponse, uploadResponse] = await Promise.all([
+        fetch('/api/admin/events/extract-flyer', { method: 'POST', body: extractFormData }),
+        fetch('/api/events/upload-flyer', { method: 'POST', body: uploadFormData }),
+      ]);
+
+      const result = (await extractResponse.json().catch(() => ({}))) as {
         ok?: boolean;
         extracted?: {
           title: string | null;
@@ -217,14 +241,19 @@ export function EventForm({
         };
         error?: string;
       };
-      if (!response.ok || !result.ok || !result.extracted) {
-        throw new Error(result.error ?? `Auto-capture failed (${response.status})`);
+      const uploadResult = (await uploadResponse.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+
+      if (!extractResponse.ok || !result.ok || !result.extracted) {
+        throw new Error(result.error ?? `Auto-capture failed (${extractResponse.status})`);
       }
+
+      const flyerUrl = uploadResponse.ok ? uploadResult.url ?? null : null;
       const ex = result.extracted;
-      if (!ex.title && ex.confidence === 0) {
-        setAutoCaptureNotice("Couldn't find event details in that image — fields left as-is.");
-        return;
-      }
+      const noDetailsFound = !ex.title && ex.confidence === 0;
+
       setData((current) => ({
         ...current,
         title: ex.title ?? current.title,
@@ -241,13 +270,26 @@ export function EventForm({
         nonmemberPrice: ex.nonmemberPrice ?? current.nonmemberPrice,
         instructorName: ex.instructorName ?? current.instructorName,
         instructorBio: ex.instructorBio ?? current.instructorBio,
+        imageUrl: flyerUrl ?? current.imageUrl,
+        imageThumb: flyerUrl ?? current.imageThumb,
       }));
-      if (!ex.startDate && ex.rawDate) {
+
+      if (noDetailsFound) {
         setAutoCaptureNotice(
-          `Filled in what I could read. Couldn't auto-parse the date "${ex.rawDate}${ex.rawTime ? ` ${ex.rawTime}` : ''}" — please set it manually.`,
+          flyerUrl
+            ? "Couldn't find event details in that image, but the flyer was attached as the event image."
+            : "Couldn't find event details in that image — fields left as-is.",
+        );
+      } else if (!ex.startDate && ex.rawDate) {
+        setAutoCaptureNotice(
+          `Filled in what I could read and attached the flyer image. Couldn't auto-parse the date "${ex.rawDate}${ex.rawTime ? ` ${ex.rawTime}` : ''}" — please set it manually.`,
         );
       } else {
-        setAutoCaptureNotice('Fields filled in from the flyer — please review before saving.');
+        setAutoCaptureNotice(
+          flyerUrl
+            ? 'Fields filled in and flyer attached as the event image — please review before saving.'
+            : 'Fields filled in from the flyer — please review before saving.',
+        );
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Auto-capture failed');
@@ -419,6 +461,22 @@ export function EventForm({
               </div>
               {autoCaptureNotice && (
                 <p className="mt-2 text-xs text-gray-600">{autoCaptureNotice}</p>
+              )}
+              {data.imageUrl && (
+                <div className="mt-3 flex items-center gap-3 rounded-md border border-gray-200 bg-white p-2">
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-sm bg-gray-100">
+                    <Image
+                      src={data.imageUrl}
+                      alt="Attached flyer preview"
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Flyer attached as the event image — it will show on the public listing.
+                  </p>
+                </div>
               )}
               <input
                 ref={autoCaptureInputRef}
@@ -781,6 +839,19 @@ export function EventForm({
               className={fieldClass}
             />
           </div>
+          {mode !== 'public' && (
+            <div className="md:col-span-2">
+              <label className={labelClass}>Partners</label>
+              <p className="mb-1.5 text-xs text-gray-500">
+                Tag one or more partners — the event will show on each partner&rsquo;s public page.
+              </p>
+              <PartnerMultiPicker
+                partners={partners}
+                value={data.advertiserIds}
+                onChange={(ids) => update('advertiserIds', ids)}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -823,5 +894,126 @@ export function EventForm({
         </button>
       </div>
     </form>
+  );
+}
+
+type PickerAdvertiser = {
+  id: number;
+  name: string;
+  slug: string;
+  publication: string;
+};
+
+function PartnerMultiPicker({
+  partners,
+  value,
+  onChange,
+}: {
+  partners: PickerAdvertiser[];
+  value: number[];
+  onChange: (ids: number[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocMouseDown = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, [open]);
+
+  const selected = value
+    .map((id) => partners.find((p) => p.id === id))
+    .filter((p): p is PickerAdvertiser => !!p);
+
+  const q = query.trim().toLowerCase();
+  const filtered = q ? partners.filter((p) => p.name.toLowerCase().includes(q)) : partners;
+
+  const toggle = (id: number) => {
+    if (value.includes(id)) {
+      onChange(value.filter((v) => v !== id));
+    } else {
+      onChange([...value, id]);
+    }
+  };
+
+  const remove = (id: number) => onChange(value.filter((v) => v !== id));
+
+  return (
+    <div ref={wrapRef} className="relative">
+      {selected.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {selected.map((p) => (
+            <span
+              key={p.id}
+              className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-700/30 px-2.5 py-1 text-xs font-medium text-brand-700"
+            >
+              {p.name}
+              <button
+                type="button"
+                onClick={() => remove(p.id)}
+                aria-label={`Remove ${p.name}`}
+                className="text-brand-700/70 hover:text-brand-900"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => {
+          setOpen(!open);
+          setQuery('');
+        }}
+        className="w-full flex items-center justify-between gap-2 border border-gray-300 rounded-md bg-white text-left text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+      >
+        <span className="truncate text-gray-500">
+          {selected.length > 0 ? 'Add another partner...' : 'Select partners...'}
+        </span>
+        <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+      </button>
+      {open && (
+        <div className="absolute z-20 mt-1 w-full min-w-56 bg-white border border-gray-200 rounded-md shadow-lg">
+          <input
+            autoFocus
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search partners..."
+            className="w-full border-b border-gray-200 px-3 py-2 text-xs focus:outline-none"
+          />
+          <ul className="max-h-56 overflow-y-auto py-1">
+            {filtered.map((p) => {
+              const checked = value.includes(p.id);
+              return (
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    onClick={() => toggle(p.id)}
+                    className={`w-full flex items-center gap-2 text-left px-3 py-1.5 text-xs hover:bg-gray-50 truncate ${
+                      checked ? 'text-brand-700 font-medium' : 'text-gray-800'
+                    }`}
+                  >
+                    <input type="checkbox" checked={checked} readOnly className="pointer-events-none" />
+                    {p.name}
+                  </button>
+                </li>
+              );
+            })}
+            {filtered.length === 0 && (
+              <li className="px-3 py-2 text-xs text-gray-400">
+                {partners.length === 0 ? 'No partners available' : 'No matches'}
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }

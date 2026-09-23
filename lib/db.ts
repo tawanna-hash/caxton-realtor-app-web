@@ -823,6 +823,19 @@ async function _runEnsureSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_advertisers_slug ON advertisers(slug)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_advertisers_share_token ON advertisers(share_token)`;
 
+  // Partner tagging (Sep 2026) — many-to-many so several partners/advertisers
+  // can be tagged on the same event. Renders on each tagged partner's public
+  // page (app/(public)/partners/[slug] -> advertisers/[slug]).
+  await sql`
+    CREATE TABLE IF NOT EXISTS event_advertisers (
+      event_id      INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      advertiser_id INTEGER NOT NULL REFERENCES advertisers(id) ON DELETE CASCADE,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (event_id, advertiser_id)
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS event_advertisers_advertiser_idx ON event_advertisers (advertiser_id)`;
+
   // Event submission token (separate from share_token so revoking event
   // submission privileges doesn't break magazine sharing). NULL until the
   // admin generates one for an advertiser; the public /submit-event/[token]

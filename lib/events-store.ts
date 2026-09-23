@@ -160,6 +160,28 @@ export async function listEvents(publication: Publication): Promise<CalendarEven
 }
 
 /**
+ * List upcoming (and recently past, 1-day grace) events tagged with a given
+ * partner/advertiser via the `event_advertisers` join table. Used on the
+ * public partner/advertiser detail page to show events they're tagged on.
+ */
+export async function listUpcomingEventsByAdvertiser(
+  advertiserId: number,
+): Promise<CalendarEvent[]> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT e.*
+      FROM events e
+      JOIN event_advertisers ea ON ea.event_id = e.id
+     WHERE ea.advertiser_id = ${advertiserId}
+       AND e.hidden = false
+       AND (e.end_date IS NULL OR e.end_date >= NOW() - INTERVAL '1 day')
+     ORDER BY (e.start_date IS NULL), e.start_date ASC, e.id ASC
+  `) as unknown as EventRow[];
+  return rows.map(rowToEvent);
+}
+
+/**
  * Look up a single event by id within a publication.
  * Returns null if the event doesn't exist, is hidden, or belongs to a
  * different publication. Past events ARE returned (shareable URLs may

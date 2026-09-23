@@ -15,6 +15,7 @@ import type { Advertiser, AdvertiserLocation, AdvertiserStaff } from '@/lib/adve
 import { ensureBuilderInventorySchema, listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
 import { listEventPhotosByAdvertiser, type EventPhotoMonth } from '@/lib/event-photos';
 import { listFeatureArticlesByAdvertiser, type FeatureArticle } from '@/lib/feature-articles';
+import { listUpcomingEventsByAdvertiser, type CalendarEvent } from '@/lib/events-store';
 import { getNews, type NewsArticle } from '@/lib/server/wp-news';
 import { BUILDER_CLIENTS } from '@/lib/builder-clients';
 import AdvertiserDetailClient from './AdvertiserDetailClient';
@@ -214,6 +215,15 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
     console.warn('[partner detail] feature articles load failed:', err);
   }
 
+  // Calendar events the admin tagged with this partner. Best-effort for the
+  // same reason as the gallery above — supplementary content shouldn't 500.
+  let taggedEvents: CalendarEvent[] = [];
+  try {
+    taggedEvents = await listUpcomingEventsByAdvertiser(advertiser.id);
+  } catch (err) {
+    console.warn('[partner detail] tagged events load failed:', err);
+  }
+
   // Auto-match WordPress news articles whose headline or summary mentions
   // the advertiser by name. This pulls prior/published articles into the
   // advertiser's Feature Articles section without manual re-entry.
@@ -276,6 +286,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
       staff={staff}
       eventPhotos={eventPhotos}
       featureArticles={featureArticles}
+      taggedEvents={taggedEvents}
       isBuilderDeveloper={isBuilderDeveloper}
       communityMap={COMMUNITY_MAPS[advertiser.slug] ?? null}
       theme={{

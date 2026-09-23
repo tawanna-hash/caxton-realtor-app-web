@@ -29,6 +29,7 @@ export const manualEventInputSchema = z.object({
   instructorBio: z.string().optional().nullable(),
   lat: z.number().optional().nullable(),
   lng: z.number().optional().nullable(),
+  advertiserIds: z.array(z.number().int().positive()).optional(),
 });
 
 export const updateEventInputSchema = manualEventInputSchema.partial();

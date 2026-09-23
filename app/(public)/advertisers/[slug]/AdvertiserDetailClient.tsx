@@ -17,6 +17,9 @@ import type {
 import type { BuilderInventoryRow } from '@/lib/builder-inventory';
 import type { EventPhoto, EventPhotoMonth } from '@/lib/event-photos';
 import type { FeatureArticle } from '@/lib/feature-articles';
+import type { CalendarEvent } from '@/lib/events-store';
+import { formatEventTimeRange, dayOfMonth } from '@/lib/events/dates';
+import { decodeEntities } from '@/lib/events/text';
 import { builderNameToSlug } from '@/lib/builder-slug';
 import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 import AdvertiserHeader from '@/components/AdvertiserHeader';
@@ -36,6 +39,7 @@ type Props = {
   staff?: AdvertiserStaff[];
   eventPhotos?: EventPhotoMonth[];
   featureArticles?: FeatureArticle[];
+  taggedEvents?: CalendarEvent[];
   isBuilderDeveloper?: boolean;
   communityMap?: CommunityMap | null;
   theme: ThemeInfo;
@@ -89,6 +93,7 @@ export default function AdvertiserDetailClient({
   staff = [],
   eventPhotos = [],
   featureArticles = [],
+  taggedEvents = [],
   isBuilderDeveloper = false,
   communityMap = null,
   theme,
@@ -170,6 +175,7 @@ export default function AdvertiserDetailClient({
           hasBio={!!a.bio}
           hasEventPhotos={eventPhotos.length > 0}
           hasArticles={featureArticles.length > 0}
+          hasEvents={taggedEvents.length > 0}
           hasLocations={sortedLocations.length > 0 || (!!address && locations.length === 0)}
           hasStaff={sortedStaff.length > 0}
           hasPromotions={promotions.length > 0}
@@ -183,6 +189,8 @@ export default function AdvertiserDetailClient({
           }
           accent={BRAND_PURPLE}
         />
+
+        {taggedEvents.length > 0 && <TaggedEventsSection events={taggedEvents} accent={BRAND_PURPLE} />}
 
         {a.bio && (
           <section id="about" className="mb-10 scroll-mt-4">
@@ -570,6 +578,7 @@ function SectionPills({
   hasBio,
   hasEventPhotos,
   hasArticles,
+  hasEvents,
   hasLocations,
   hasStaff,
   hasPromotions,
@@ -581,6 +590,7 @@ function SectionPills({
   hasBio: boolean;
   hasEventPhotos: boolean;
   hasArticles: boolean;
+  hasEvents: boolean;
   hasLocations: boolean;
   hasStaff: boolean;
   hasPromotions: boolean;
@@ -589,6 +599,7 @@ function SectionPills({
   accent: string;
 }) {
   const pills: { id: string; label: string; href?: string }[] = [];
+  if (hasEvents) pills.push({ id: 'events', label: 'Events' });
   if (hasBio) pills.push({ id: 'about', label: 'About' });
   if (hasEventPhotos) pills.push({ id: 'event-photos', label: 'Event Photos' });
   if (hasArticles) pills.push({ id: 'feature-articles', label: 'Articles' });
@@ -738,6 +749,68 @@ function EventPhotosSection({ months }: { months: EventPhotoMonth[] }) {
 // Editorial pieces the publication wrote about this advertiser. Articles either
 // link out to the full piece (WordPress) or carry their body inline, in which
 // case the card expands in place rather than navigating away.
+function TaggedEventsSection({
+  events,
+  accent,
+}: {
+  events: CalendarEvent[];
+  accent: string;
+}) {
+  return (
+    <section id="events" className="mb-10 scroll-mt-4">
+      <h2
+        className="text-xl sm:text-2xl font-semibold tracking-tight mb-5"
+        style={{ color: accent }}
+      >
+        Upcoming Events
+      </h2>
+
+      <ul className="space-y-3">
+        {events.map((event) => (
+          <li key={event.id}>
+            <TaggedEventCard event={event} accent={accent} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function TaggedEventCard({ event, accent }: { event: CalendarEvent; accent: string }) {
+  const { mo, dy } = dayOfMonth(event.startDate);
+  const href = `/calendar/${event.publication}/${event.id}`;
+
+  return (
+    <a
+      href={href}
+      className="flex gap-4 border border-gray-200 rounded-md p-4 hover:bg-gray-50 transition-colors"
+    >
+      <div
+        className="flex-shrink-0 w-14 h-14 flex flex-col items-center justify-center rounded-md"
+        style={{ backgroundColor: accent }}
+      >
+        <span className="text-[10px] uppercase text-white/70 font-medium leading-none tracking-wider">
+          {mo}
+        </span>
+        <span className="text-xl font-medium text-white leading-none mt-1">{dy}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="text-base font-semibold text-gray-900 leading-snug">
+          {decodeEntities(event.title)}
+        </h3>
+        {event.startDate && (
+          <p className="text-sm text-gray-500 font-light mt-0.5">
+            {formatEventTimeRange(event.startDate, event.endDate)}
+          </p>
+        )}
+        {event.location && (
+          <p className="text-sm text-gray-500 font-light">{event.location}</p>
+        )}
+      </div>
+    </a>
+  );
+}
+
 function FeatureArticlesSection({ articles }: { articles: FeatureArticle[] }) {
   return (
     <section id="feature-articles" className="border-t border-gray-200 pt-8 mb-10 scroll-mt-4">

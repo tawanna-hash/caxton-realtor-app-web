@@ -13,6 +13,7 @@ import { ApiError } from './error';
 import { query } from './db/neon';
 import { geocodeAddress } from '@/lib/geocode';
 import { logger } from './logger';
+import { ensureSchema } from '@/lib/db';
 
 const GMAIL_REJECTED_TAG = '__gmail_rejected__';
 
@@ -89,6 +90,8 @@ export interface AdminCalendarEvent {
   editedFields: string[];
   editedBy: string | null;
   editedAt: string | null;
+  /** Partners/advertisers tagged on this event (many-to-many). */
+  advertiserIds: number[];
 }
 
 export interface ManualEventInput {
@@ -113,6 +116,8 @@ export interface ManualEventInput {
   instructorBio?: string | null;
   lat?: number | null;
   lng?: number | null;
+  /** Partner/advertiser ids to tag on this event (many-to-many). Omit to leave unchanged. */
+  advertiserIds?: number[];
 }
 
 interface EventRow {
@@ -189,7 +194,57 @@ function rowToAdminEvent(r: EventRow): AdminCalendarEvent {
     editedFields: r.edited_fields ?? [],
     editedBy: r.edited_by,
     editedAt: toIso(r.edited_at),
+    advertiserIds: [],
   };
+}
+
+/**
+ * Attach tagged partner/advertiser ids to a batch of admin events in one
+ * query (avoids N+1 lookups on the admin list view). Mutates and returns
+ * the same array for convenience.
+ */
+async function attachAdvertiserIds(
+  events: AdminCalendarEvent[],
+): Promise<AdminCalendarEvent[]> {
+  if (events.length === 0) return events;
+  await ensureSchema();
+  const ids = events.map((e) => e.id);
+  const rows = await query<{ event_id: number; advertiser_id: number }>(
+    `SELECT event_id, advertiser_id FROM event_advertisers WHERE event_id = ANY($1::int[])`,
+    [ids],
+  );
+  const byEvent = new Map<number, number[]>();
+  for (const r of rows) {
+    const arr = byEvent.get(r.event_id) ?? [];
+    arr.push(r.advertiser_id);
+    byEvent.set(r.event_id, arr);
+  }
+  for (const ev of events) {
+    ev.advertiserIds = byEvent.get(ev.id) ?? [];
+  }
+  return events;
+}
+
+/** Replace the full set of tagged partners/advertisers for one event. */
+async function setEventAdvertisers(
+  eventId: number,
+  advertiserIds: number[],
+): Promise<void> {
+  await ensureSchema();
+  const unique = Array.from(new Set(advertiserIds.filter((id) => Number.isInteger(id) && id > 0)));
+  await query(`DELETE FROM event_advertisers WHERE event_id = $1`, [eventId]);
+  if (unique.length === 0) return;
+  const values: string[] = [];
+  const params: unknown[] = [eventId];
+  unique.forEach((advertiserId, idx) => {
+    values.push(`($1, $${idx + 2})`);
+    params.push(advertiserId);
+  });
+  await query(
+    `INSERT INTO event_advertisers (event_id, advertiser_id) VALUES ${values.join(', ')}
+     ON CONFLICT (event_id, advertiser_id) DO NOTHING`,
+    params,
+  );
 }
 
 const SELECT_COLS = `
@@ -211,7 +266,8 @@ export async function listAllEventsForAdmin(
     : `SELECT ${SELECT_COLS} FROM events
         ORDER BY (start_date IS NULL), start_date DESC, id DESC`;
   const params = publication ? [publication] : [];
-  return (await query<EventRow>(sql, params)).map(rowToAdminEvent);
+  const events = (await query<EventRow>(sql, params)).map(rowToAdminEvent);
+  return attachAdvertiserIds(events);
 }
 
 /** Admin: fetch one event by id. */
@@ -220,7 +276,9 @@ export async function getEventById(id: number): Promise<AdminCalendarEvent | nul
     `SELECT ${SELECT_COLS} FROM events WHERE id = $1`,
     [id],
   );
-  return rows[0] ? rowToAdminEvent(rows[0]) : null;
+  if (!rows[0]) return null;
+  const [event] = await attachAdvertiserIds([rowToAdminEvent(rows[0])]);
+  return event;
 }
 
 /** Admin: create a manual event. */
@@ -271,7 +329,12 @@ export async function createManualEvent(
     ],
   );
   if (!rows[0]) throw new ApiError(500, 'Event INSERT returned no row');
-  return rowToAdminEvent(rows[0]);
+  const event = rowToAdminEvent(rows[0]);
+  if (input.advertiserIds && input.advertiserIds.length > 0) {
+    await setEventAdvertisers(event.id, input.advertiserIds);
+    event.advertiserIds = input.advertiserIds;
+  }
+  return event;
 }
 
 /**
@@ -581,7 +644,7 @@ export async function updateEvent(
   fields: Partial<ManualEventInput>,
   editedBy: string,
 ): Promise<AdminCalendarEvent | null> {
-  const colMap: Record<keyof ManualEventInput, string> = {
+  const colMap: Record<Exclude<keyof ManualEventInput, 'advertiserIds'>, string> = {
     publication: 'publication',
     title: 'title',
     description: 'description',
@@ -619,31 +682,56 @@ export async function updateEvent(
     }
   }
 
-  if (setClauses.length === 0) {
+  const updatingAdvertisers = 'advertiserIds' in fields;
+
+  if (setClauses.length === 0 && !updatingAdvertisers) {
     throw new ApiError(400, 'No fields to update');
   }
 
-  setClauses.push(
-    `edited_fields = ARRAY(SELECT DISTINCT unnest(events.edited_fields || $${i++}::text[]))`,
-  );
-  values.push(newlyEditedCols);
+  let event: AdminCalendarEvent | null;
 
-  setClauses.push(`edited_by = $${i++}`);
-  values.push(editedBy);
+  if (setClauses.length === 0) {
+    // Only the partner tags changed — column UPDATE would fail with no SET
+    // clauses, so just re-fetch the current row.
+    const rows = await query<EventRow>(
+      `SELECT ${SELECT_COLS} FROM events WHERE id = $1`,
+      [id],
+    );
+    event = rows[0] ? rowToAdminEvent(rows[0]) : null;
+  } else {
+    setClauses.push(
+      `edited_fields = ARRAY(SELECT DISTINCT unnest(events.edited_fields || $${i++}::text[]))`,
+    );
+    values.push(newlyEditedCols);
 
-  setClauses.push(`edited_at = NOW()`);
-  setClauses.push(`updated_at = NOW()`);
+    setClauses.push(`edited_by = $${i++}`);
+    values.push(editedBy);
 
-  values.push(id);
+    setClauses.push(`edited_at = NOW()`);
+    setClauses.push(`updated_at = NOW()`);
 
-  const rows = await query<EventRow>(
-    `UPDATE events SET ${setClauses.join(', ')}
-       WHERE id = $${i}
-   RETURNING ${SELECT_COLS}`,
-    values,
-  );
+    values.push(id);
 
-  return rows[0] ? rowToAdminEvent(rows[0]) : null;
+    const rows = await query<EventRow>(
+      `UPDATE events SET ${setClauses.join(', ')}
+         WHERE id = $${i}
+     RETURNING ${SELECT_COLS}`,
+      values,
+    );
+    event = rows[0] ? rowToAdminEvent(rows[0]) : null;
+  }
+
+  if (!event) return null;
+
+  if (updatingAdvertisers) {
+    const advertiserIds = fields.advertiserIds ?? [];
+    await setEventAdvertisers(id, advertiserIds);
+    event.advertiserIds = advertiserIds;
+  } else {
+    [event] = await attachAdvertiserIds([event]);
+  }
+
+  return event;
 }
 
 /** Admin: hide / unhide. Returns null if not found. */

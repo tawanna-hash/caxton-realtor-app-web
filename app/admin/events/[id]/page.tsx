@@ -39,6 +39,7 @@ type AdminEvent = {
   editedFields: string[];
   editedBy: string | null;
   editedAt: string | null;
+  advertiserIds: number[];
 };
 
 function eventToForm(ev: AdminEvent): EventFormData {
@@ -65,6 +66,7 @@ function eventToForm(ev: AdminEvent): EventFormData {
     instructorBio: ev.instructorBio ?? '',
     lat: ev.lat !== null ? String(ev.lat) : '',
     lng: ev.lng !== null ? String(ev.lng) : '',
+    advertiserIds: ev.advertiserIds ?? [],
   };
 }
 
