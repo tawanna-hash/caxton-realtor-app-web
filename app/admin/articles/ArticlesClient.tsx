@@ -7,10 +7,13 @@ import type { NewsArticle } from '@/lib/server/wp-news';
 
 import PageTitle from '@/components/ui/PageTitle';
 import ContentPagination from '@/app/admin/_components/ContentPagination';
+import FeatureArticlesPanel from './FeatureArticlesPanel';
 export type AdminArticle = NewsArticle & {
   hidden: boolean;
   editedFields: string[];
 };
+
+type ArticlesTab = 'monthly' | 'featured';
 
 type Props = {
   initialArticles: AdminArticle[];
@@ -42,7 +45,8 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
-  // Filter and search live in the URL so refresh preserves them.
+  // Tab, filter, and search live in the URL so refresh/sharing preserves them.
+  const [tab, setTab] = useUrlString<ArticlesTab>('tab', 'monthly');
   const [filter, setFilter] = useUrlString<PubFilter>('filter', 'all');
   const [search, setSearch] = useUrlState<string>('q', '', {
     parse: (raw) => raw ?? '',
@@ -119,14 +123,15 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Content</p>
-          <PageTitle size="md">Articles</PageTitle>
+          <PageTitle size="md">Monthly Articles</PageTitle>
           <p className="text-sm text-gray-600 mt-1">
-            All articles pulled from WordPress feeds. Edits are saved locally and applied
-            instantly to the public app — WordPress is untouched. Use Sync now to refresh
-            the upstream feed.
+            {tab === 'monthly'
+              ? 'All articles pulled from WordPress feeds. Edits are saved locally and applied instantly to the public app — WordPress is untouched. Use Sync now to refresh the upstream feed.'
+              : 'Editorial pieces tied to a partner. Published articles appear on that partner\u2019s public detail page beneath their event photos.'}
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
+          {tab === 'monthly' && (
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -183,13 +188,39 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             )}
           </button>
           </div>
-          {syncedAt && !syncError && (
+          )}
+          {tab === 'monthly' && syncedAt && !syncError && (
             <span className="text-xs text-gray-500">Last sync: {syncedAt}</span>
           )}
-          {syncError && <span className="text-xs text-red-600">{syncError}</span>}
+          {tab === 'monthly' && syncError && <span className="text-xs text-red-600">{syncError}</span>}
         </div>
       </div>
 
+      {/* Tab switcher */}
+      <div className="flex items-center gap-2 mb-4 border-b border-gray-200">
+        {([
+          { key: 'monthly' as const, label: 'Monthly Articles' },
+          { key: 'featured' as const, label: 'Featured Articles' },
+        ]).map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tab === key
+                ? 'border-brand-700 text-brand-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'featured' ? (
+        <FeatureArticlesPanel />
+      ) : (
+      <>
       <section className="content-admin-summary" aria-label="Article summary">
         <div><strong>{counts.all.toLocaleString()}</strong><span>Total articles</span></div>
         <div><strong>{counts.austin.toLocaleString()}</strong><span>Austin</span></div>
@@ -413,6 +444,8 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
 
       {creating && (
         <CreateModal onClose={() => setCreating(false)} onCreated={handleCreated} />
+      )}
+      </>
       )}
     </div>
   );

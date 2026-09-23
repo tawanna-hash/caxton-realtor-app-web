@@ -1,7 +1,8 @@
 // lib/feature-articles.ts
 //
-// Editorial feature articles tied to an advertiser. Admins write them in
-// /admin/feature-articles and they render on the advertiser's public detail
+// Editorial feature articles tied to an advertiser. Admins write them from
+// the "Featured Articles" tab on /admin/articles (the combined Monthly
+// Articles admin page) and they render on the advertiser's public detail
 // page beneath the event photo gallery.
 //
 // Schema:
