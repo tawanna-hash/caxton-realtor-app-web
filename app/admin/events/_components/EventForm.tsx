@@ -126,6 +126,7 @@ export function EventForm({
   const flyerInputRef = useRef<HTMLInputElement>(null);
   const [autoCapturing, setAutoCapturing] = useState(false);
   const [autoCaptureNotice, setAutoCaptureNotice] = useState<string | null>(null);
+  const [autoCaptureDragActive, setAutoCaptureDragActive] = useState(false);
   const autoCaptureInputRef = useRef<HTMLInputElement>(null);
 
   const update = <K extends keyof EventFormData>(key: K, value: EventFormData[K]) => {
@@ -362,33 +363,63 @@ export function EventForm({
       )}
 
       {(mode === 'create' || mode === 'edit') && (
-        <div className="rounded-md border border-dashed border-brand-700/40 bg-brand-50/40 p-5">
+        <div className="rounded-md border border-brand-700/40 bg-brand-50/40 p-5">
           <div className="flex items-start gap-3">
             <Sparkles size={18} className="mt-0.5 shrink-0 text-brand-700" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-gray-900">Auto-fill from flyer</p>
               <p className="mt-0.5 text-xs text-gray-600">
-                Upload a photo or screenshot of an event flyer and the fields below will be filled
-                in automatically. Review everything before saving.
+                Drop a photo or screenshot of an event flyer below and the fields will be filled in
+                automatically. Review everything before saving.
               </p>
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  disabled={autoCapturing}
-                  onClick={() => !autoCapturing && autoCaptureInputRef.current?.click()}
-                  className="inline-flex items-center gap-2 rounded-md bg-brand-700 px-3 py-2 text-sm font-medium text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {autoCapturing ? (
-                    <Loader2 size={15} className="animate-spin" />
-                  ) : (
-                    <UploadCloud size={15} />
-                  )}
-                  {autoCapturing ? 'Reading flyer...' : 'Upload flyer image'}
-                </button>
-                {autoCaptureNotice && (
-                  <p className="text-xs text-gray-600">{autoCaptureNotice}</p>
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => !autoCapturing && autoCaptureInputRef.current?.click()}
+                onKeyDown={(event) => {
+                  if ((event.key === 'Enter' || event.key === ' ') && !autoCapturing) {
+                    event.preventDefault();
+                    autoCaptureInputRef.current?.click();
+                  }
+                }}
+                onDragEnter={(event) => {
+                  event.preventDefault();
+                  setAutoCaptureDragActive(true);
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setAutoCaptureDragActive(true);
+                }}
+                onDragLeave={(event) => {
+                  event.preventDefault();
+                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                    setAutoCaptureDragActive(false);
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setAutoCaptureDragActive(false);
+                  void autoCaptureFlyer(event.dataTransfer.files[0]);
+                }}
+                className={`mt-3 flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-6 text-center transition-colors ${
+                  autoCaptureDragActive
+                    ? 'border-brand-700 bg-brand-100/60'
+                    : 'border-brand-700/40 bg-white hover:border-brand-700 hover:bg-brand-50/60'
+                }`}
+              >
+                {autoCapturing ? (
+                  <Loader2 className="mb-2 animate-spin text-brand-700" size={26} />
+                ) : (
+                  <UploadCloud className="mb-2 text-brand-700" size={26} />
                 )}
+                <p className="text-sm font-medium text-gray-900">
+                  {autoCapturing ? 'Reading flyer...' : 'Drop your flyer here or click to browse'}
+                </p>
+                <p className="mt-1 text-xs text-gray-500">JPG, PNG, or WebP up to 10 MB</p>
               </div>
+              {autoCaptureNotice && (
+                <p className="mt-2 text-xs text-gray-600">{autoCaptureNotice}</p>
+              )}
               <input
                 ref={autoCaptureInputRef}
                 type="file"
