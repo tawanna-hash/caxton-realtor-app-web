@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ImagePlus, Loader2, UploadCloud, X } from 'lucide-react';
+import { ImagePlus, Loader2, Sparkles, UploadCloud, X } from 'lucide-react';
 import { adminApi } from '@/lib/admin-api';
 import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
@@ -124,6 +124,9 @@ export function EventForm({
   const [dragActive, setDragActive] = useState(false);
   const [uploadingFlyer, setUploadingFlyer] = useState(false);
   const flyerInputRef = useRef<HTMLInputElement>(null);
+  const [autoCapturing, setAutoCapturing] = useState(false);
+  const [autoCaptureNotice, setAutoCaptureNotice] = useState<string | null>(null);
+  const autoCaptureInputRef = useRef<HTMLInputElement>(null);
 
   const update = <K extends keyof EventFormData>(key: K, value: EventFormData[K]) => {
     setData((d) => ({ ...d, [key]: value }));
@@ -166,6 +169,90 @@ export function EventForm({
     } finally {
       setUploadingFlyer(false);
       if (flyerInputRef.current) flyerInputRef.current.value = '';
+    }
+  };
+
+  const autoCaptureFlyer = async (file: File | undefined) => {
+    if (!file) return;
+    setError(null);
+    setAutoCaptureNotice(null);
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Flyer must be a JPG, PNG, or WebP image');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Flyer image must be 10 MB or smaller');
+      return;
+    }
+
+    setAutoCapturing(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await fetch('/api/admin/events/extract-flyer', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        extracted?: {
+          title: string | null;
+          description: string | null;
+          startDate: string | null;
+          endDate: string | null;
+          location: string | null;
+          organizer: string | null;
+          organizerEmail: string | null;
+          website: string | null;
+          format: string | null;
+          courseNumber: string | null;
+          memberPrice: string | null;
+          nonmemberPrice: string | null;
+          instructorName: string | null;
+          instructorBio: string | null;
+          rawDate: string | null;
+          rawTime: string | null;
+          confidence: number;
+        };
+        error?: string;
+      };
+      if (!response.ok || !result.ok || !result.extracted) {
+        throw new Error(result.error ?? `Auto-capture failed (${response.status})`);
+      }
+      const ex = result.extracted;
+      if (!ex.title && ex.confidence === 0) {
+        setAutoCaptureNotice("Couldn't find event details in that image — fields left as-is.");
+        return;
+      }
+      setData((current) => ({
+        ...current,
+        title: ex.title ?? current.title,
+        description: ex.description ?? current.description,
+        startDate: ex.startDate ?? current.startDate,
+        endDate: ex.endDate ?? current.endDate,
+        location: ex.location ?? current.location,
+        organizer: ex.organizer ?? current.organizer,
+        organizerEmail: ex.organizerEmail ?? current.organizerEmail,
+        website: ex.website ?? current.website,
+        format: ex.format ?? current.format,
+        courseNumber: ex.courseNumber ?? current.courseNumber,
+        memberPrice: ex.memberPrice ?? current.memberPrice,
+        nonmemberPrice: ex.nonmemberPrice ?? current.nonmemberPrice,
+        instructorName: ex.instructorName ?? current.instructorName,
+        instructorBio: ex.instructorBio ?? current.instructorBio,
+      }));
+      if (!ex.startDate && ex.rawDate) {
+        setAutoCaptureNotice(
+          `Filled in what I could read. Couldn't auto-parse the date "${ex.rawDate}${ex.rawTime ? ` ${ex.rawTime}` : ''}" — please set it manually.`,
+        );
+      } else {
+        setAutoCaptureNotice('Fields filled in from the flyer — please review before saving.');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Auto-capture failed');
+    } finally {
+      setAutoCapturing(false);
+      if (autoCaptureInputRef.current) autoCaptureInputRef.current.value = '';
     }
   };
 
@@ -271,6 +358,46 @@ export function EventForm({
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md">
           {error}
+        </div>
+      )}
+
+      {(mode === 'create' || mode === 'edit') && (
+        <div className="rounded-md border border-dashed border-brand-700/40 bg-brand-50/40 p-5">
+          <div className="flex items-start gap-3">
+            <Sparkles size={18} className="mt-0.5 shrink-0 text-brand-700" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-900">Auto-fill from flyer</p>
+              <p className="mt-0.5 text-xs text-gray-600">
+                Upload a photo or screenshot of an event flyer and the fields below will be filled
+                in automatically. Review everything before saving.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  disabled={autoCapturing}
+                  onClick={() => !autoCapturing && autoCaptureInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 rounded-md bg-brand-700 px-3 py-2 text-sm font-medium text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {autoCapturing ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <UploadCloud size={15} />
+                  )}
+                  {autoCapturing ? 'Reading flyer...' : 'Upload flyer image'}
+                </button>
+                {autoCaptureNotice && (
+                  <p className="text-xs text-gray-600">{autoCaptureNotice}</p>
+                )}
+              </div>
+              <input
+                ref={autoCaptureInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={(event) => void autoCaptureFlyer(event.target.files?.[0])}
+              />
+            </div>
+          </div>
         </div>
       )}
 

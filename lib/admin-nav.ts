@@ -88,7 +88,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Monthly Articles', href: '/admin/articles', description: 'WordPress feeds, manual articles & advertiser features', section: 'Editorial' },
       { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions', section: 'Editorial' },
       { label: 'Testimonials', href: '/admin/testimonials', description: 'Review and publish subscriber testimonials', section: 'Editorial' },
-      { label: 'Events',    href: '/admin/events',    description: 'Calendar publications', section: 'Events' },
+      { label: 'Calendar Events', href: '/admin/events', description: 'Calendar publications', section: 'Events' },
       { label: 'Gmail Events', href: '/admin/events/gmail', description: 'Scanned advertiser & association event mail', section: 'Events' },
       { label: 'Event Images', href: '/admin/event-images', description: 'Event photo gallery', section: 'Events' },
       { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes', section: 'Listings' },

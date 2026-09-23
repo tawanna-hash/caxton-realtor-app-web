@@ -16,7 +16,7 @@ export default function NewEventPage() {
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="mb-6">
         <Link href="/admin/events" className="text-xs text-gray-500 hover:text-gray-900">
-          ← Events
+          ← Calendar Events
         </Link>
         <PageTitle size="md">New Event</PageTitle>
         <p className="text-sm text-gray-500 mt-1">

@@ -102,7 +102,7 @@ export default function EditEventPage() {
     return (
       <div className="max-w-6xl mx-auto px-6 py-12">
         <Link href="/admin/events" className="text-xs text-gray-500 hover:text-gray-900">
-          ← Events
+          ← Calendar Events
         </Link>
         <div className="text-sm text-gray-500 mt-6">
           Event not found.{error ? ` (${error})` : ''}
@@ -131,7 +131,7 @@ export default function EditEventPage() {
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="mb-6">
         <Link href="/admin/events" className="text-xs text-gray-500 hover:text-gray-900">
-          ← Events
+          ← Calendar Events
         </Link>
         <div className="flex items-baseline gap-3 mt-2">
           <PageTitle size="md">Edit Event</PageTitle>

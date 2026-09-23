@@ -208,7 +208,7 @@ export default function EventsPage() {
     <div className="content-admin-shell">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
         <div>
-          <PageTitle size="md">Events</PageTitle>
+          <PageTitle size="md">Calendar Events</PageTitle>
           <p className="text-sm text-gray-500 mt-1">
             Manage scraped + manual events. Manual events appear in the public calendar; scraped events can be hidden.
           </p>
