@@ -49,6 +49,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     stringify: (v) => (v ? v : null),
   });
   const [editing, setEditing] = useState<AdminArticle | null>(null);
+  const [creating, setCreating] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
@@ -105,6 +106,11 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     startTransition(() => router.refresh());
   }
 
+  function handleCreated() {
+    setCreating(false);
+    startTransition(() => router.refresh());
+  }
+
   const busy = syncing || pending;
 
   return (
@@ -120,7 +126,29 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             the upstream feed.
           </p>
         </div>
-        <div className="flex flex-col items-end gap-1">
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCreating(true)}
+              className="inline-flex items-center gap-2 rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700/90 min-h-[44px] whitespace-nowrap"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              New article
+            </button>
           <button
             type="button"
             onClick={handleSync}
@@ -154,6 +182,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
               </>
             )}
           </button>
+          </div>
           {syncedAt && !syncError && (
             <span className="text-xs text-gray-500">Last sync: {syncedAt}</span>
           )}
@@ -380,6 +409,10 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
         />
+      )}
+
+      {creating && (
+        <CreateModal onClose={() => setCreating(false)} onCreated={handleCreated} />
       )}
     </div>
   );
@@ -623,6 +656,231 @@ function EditModal({
               {saving ? 'Saving…' : 'Save changes'}
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Create modal — manual article, no WordPress post backing it. Same field
+// layout as EditModal plus Publication and Published date (fixed/derived for
+// existing WP-sourced articles, so EditModal doesn't need them).
+// =============================================================================
+
+function CreateModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [publication, setPublication] = useState<'austin' | 'san_antonio'>('austin');
+  const [head, setHead] = useState('');
+  const [excerpt, setExcerpt] = useState('');
+  const [contentHtml, setContentHtml] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [authorName, setAuthorName] = useState('');
+  const [authorAvatar, setAuthorAvatar] = useState('');
+  const [cat, setCat] = useState('');
+  const [tagsCsv, setTagsCsv] = useState('');
+  const [publishedAt, setPublishedAt] = useState(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16); // yyyy-MM-ddTHH:mm for <input type=datetime-local>
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save() {
+    if (!head.trim()) {
+      setError('Title is required');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const body = {
+        publication,
+        head: head.trim(),
+        excerpt: excerpt.trim() || null,
+        contentHtml: contentHtml.trim() || null,
+        imageUrl: imageUrl.trim() || null,
+        authorName: authorName.trim() || null,
+        authorAvatar: authorAvatar.trim() || null,
+        cat: cat.trim() || null,
+        tags: tagsCsv
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+        publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
+      };
+      const res = await fetch('/api/admin/articles', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({}));
+        throw new Error(b?.error || `Create failed (${res.status})`);
+      }
+      onCreated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Create failed');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white rounded-md shadow-xl max-w-3xl w-full my-8">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
+              New article
+            </p>
+            <h2 className="font-serif text-xl text-gray-900 mt-1">Create article</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-700 text-xl leading-none min-h-[44px] min-w-[44px]"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Publication">
+              <select
+                value={publication}
+                onChange={(e) => setPublication(e.target.value as 'austin' | 'san_antonio')}
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
+              >
+                <option value="austin">Austin</option>
+                <option value="san_antonio">San Antonio</option>
+              </select>
+            </Field>
+            <Field label="Published date">
+              <input
+                type="datetime-local"
+                value={publishedAt}
+                onChange={(e) => setPublishedAt(e.target.value)}
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
+              />
+            </Field>
+          </div>
+
+          <Field label="Title">
+            <input
+              type="text"
+              value={head}
+              onChange={(e) => setHead(e.target.value)}
+              placeholder="Article headline"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
+            />
+          </Field>
+
+          <Field label="Category">
+            <input
+              type="text"
+              value={cat}
+              onChange={(e) => setCat(e.target.value)}
+              placeholder="e.g. Market News"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
+            />
+          </Field>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Author name">
+              <input
+                type="text"
+                value={authorName}
+                onChange={(e) => setAuthorName(e.target.value)}
+                placeholder="Staff"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
+              />
+            </Field>
+            <Field label="Author photo" hint="Upload an image or paste a URL">
+              <ImageUpload
+                kind="author"
+                value={authorAvatar}
+                onChange={setAuthorAvatar}
+                previewClassName="w-16 h-16 rounded-full"
+              />
+            </Field>
+          </div>
+
+          <Field label="Featured image" hint="Upload an image or paste a URL">
+            <ImageUpload
+              kind="featured"
+              value={imageUrl}
+              onChange={setImageUrl}
+              previewClassName="w-32 h-20 rounded-md"
+            />
+          </Field>
+
+          <Field label="Excerpt / summary">
+            <textarea
+              value={excerpt}
+              onChange={(e) => setExcerpt(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700 resize-y"
+            />
+          </Field>
+
+          <Field label="Body (HTML)" hint="Raw HTML for the article body.">
+            <textarea
+              value={contentHtml}
+              onChange={(e) => setContentHtml(e.target.value)}
+              rows={10}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700 resize-y"
+            />
+          </Field>
+
+          <Field label="Tags" hint="Comma-separated">
+            <input
+              type="text"
+              value={tagsCsv}
+              onChange={(e) => setTagsCsv(e.target.value)}
+              placeholder="tag1, tag2, tag3"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
+            />
+          </Field>
+
+          {error && (
+            <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-3 rounded-b-lg">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50 min-h-[44px]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="px-4 py-2 text-sm font-medium text-white bg-brand-700 hover:bg-brand-700/90 rounded-md disabled:opacity-50 min-h-[44px] whitespace-nowrap"
+          >
+            {saving ? 'Creating…' : 'Create article'}
+          </button>
         </div>
       </div>
     </div>

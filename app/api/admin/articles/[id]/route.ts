@@ -17,6 +17,11 @@ import {
   upsertArticleOverride,
   deleteArticleOverride,
 } from '@/lib/server/article-overrides';
+import {
+  isManualArticleId,
+  updateArchivedArticle,
+  deleteArchivedArticle,
+} from '@/lib/server/article-archive';
 
 export const runtime = 'nodejs';
 
@@ -118,6 +123,27 @@ export const PATCH = withAdminTracking(
 
     const body = validateBody(await req.json().catch(() => ({})));
 
+    // Manually-created articles (no WordPress post backing them) are edited
+    // directly — there's no upstream value to "override", so the override
+    // table (keyed to a real wp_post_id) doesn't apply here. `wpPostId` here
+    // is already the FULL article id, matching what article-archive.ts stores
+    // in its own wp_post_id column.
+    if (isManualArticleId(wpPostId)) {
+      const updated = await updateArchivedArticle(publication, wpPostId, {
+        head: body.head,
+        excerpt: body.excerpt,
+        contentHtml: body.contentHtml,
+        imageUrl: body.imageUrl,
+        authorName: body.authorName,
+        authorAvatar: body.authorAvatar,
+        cat: body.cat,
+        tags: body.tags,
+      });
+      if (!updated) throw new ApiError(404, 'Article not found');
+      invalidate(publication);
+      return NextResponse.json({ ok: true, article: updated });
+    }
+
     const saved = await upsertArticleOverride({
       publication,
       wpPostId,
@@ -136,6 +162,14 @@ export const DELETE = withAdminTracking(
     await requireAdmin();
     const { id } = await ctx.params;
     const { publication, wpPostId } = parseArticleId(id);
+
+    // Manually-created articles are deleted outright — "revert to WordPress"
+    // has no meaning for an article that never came from WordPress.
+    if (isManualArticleId(wpPostId)) {
+      const deleted = await deleteArchivedArticle(publication, wpPostId);
+      invalidate(publication);
+      return NextResponse.json({ ok: true, deleted });
+    }
 
     const deleted = await deleteArticleOverride(publication, wpPostId);
     invalidate(publication);

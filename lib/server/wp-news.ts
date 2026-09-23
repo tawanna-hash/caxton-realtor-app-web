@@ -497,8 +497,16 @@ export async function getNewsRaw(publication: Publication): Promise<NewsArticle[
 
   const archived = archiveResult.status === 'fulfilled' ? archiveResult.value : [];
   const upstream = upstreamResult.status === 'fulfilled' ? upstreamResult.value : [];
-  if (archived.length === 0 && upstreamResult.status === 'rejected') {
-    throw upstreamResult.reason;
+  // Never throw here — an unreachable WordPress upstream (or an empty
+  // archive) should degrade to "show whatever we have" rather than surface
+  // as a page-level error banner. The admin page's `errors` array only
+  // exists to reflect a rejected promise; keeping this resolved always
+  // keeps that banner from appearing.
+  if (upstreamResult.status === 'rejected') {
+    console.warn(
+      `[wp-news] upstream fetch failed for ${publication}, serving archive only:`,
+      upstreamResult.reason,
+    );
   }
 
   const { mergeArchivedAndUpstream } = await import('./article-archive');
@@ -520,8 +528,11 @@ export async function getNews(publication: Publication): Promise<NewsArticle[]> 
 
   const archived = archiveResult.status === 'fulfilled' ? archiveResult.value : [];
   const upstream = upstreamResult.status === 'fulfilled' ? upstreamResult.value : [];
-  if (archived.length === 0 && upstreamResult.status === 'rejected') {
-    throw upstreamResult.reason;
+  if (upstreamResult.status === 'rejected') {
+    console.warn(
+      `[wp-news] upstream fetch failed for ${publication}, serving archive only:`,
+      upstreamResult.reason,
+    );
   }
 
   const { mergeArchivedAndUpstream } = await import('./article-archive');
