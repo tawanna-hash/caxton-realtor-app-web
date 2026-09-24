@@ -126,10 +126,10 @@ function pushContent(deal: AgentDeal, deadline: DealDeadline, offset: number, fi
   const lastName = clientLastName(deal);
   const address = (deal.propertyAddress || '').trim();
   const client = [lastName ? titleCase(lastName) : '', address].filter(Boolean).join(', ') || 'Your Transaction';
-  const name = firstName?.trim() ? titleCase(firstName.trim()) : 'You';
+  void firstName;
   return {
-    title: `Closing Time · ${titleCase(deadline.label)} ${pushTiming(offset)}`,
-    body: `A Very Important Reminder For ${name},\n${client}\nDue ${formatDeadlineDate(deadline.date)}.`,
+    title: `${titleCase(deadline.label)} ${pushTiming(offset)}`,
+    body: `${client}\nDue ${formatDeadlineDate(deadline.date)}.\nFrom Closing Time`,
   };
 }
 
