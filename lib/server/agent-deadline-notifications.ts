@@ -100,12 +100,16 @@ function titleCase(value: string): string {
   return value.replace(/\b([a-z])/g, (c) => c.toUpperCase());
 }
 
-function buyerLastName(deal: AgentDeal): string {
+function lastNameFrom(names: string | undefined): string {
+  const first = (names || '').split(/[,&]| and /i)[0]?.trim() ?? '';
+  const parts = first.split(/\s+/).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : '';
+}
+
+function clientLastName(deal: AgentDeal): string {
   const title = (deal.title || '').trim();
   if (title && !/^new transaction$/i.test(title)) return title;
-  const buyers = (deal.buyerNames || '').split(/[,&]| and /i)[0]?.trim() ?? '';
-  const parts = buyers.split(/\s+/).filter(Boolean);
-  return parts.length ? parts[parts.length - 1] : '';
+  return lastNameFrom(deal.buyerNames) || lastNameFrom(deal.sellerNames);
 }
 
 function pushTiming(offset: number): string {
@@ -119,13 +123,13 @@ function formatDeadlineDate(value: string): string {
 }
 
 function pushContent(deal: AgentDeal, deadline: DealDeadline, offset: number, firstName: string | null): { title: string; body: string } {
-  const lastName = buyerLastName(deal);
+  const lastName = clientLastName(deal);
   const address = (deal.propertyAddress || '').trim();
-  const client = [lastName ? titleCase(lastName) : '', address].filter(Boolean).join(' · ') || 'Your Transaction';
-  const greeting = firstName?.trim() ? `${titleCase(firstName.trim())}, ` : '';
+  const client = [lastName ? titleCase(lastName) : '', address].filter(Boolean).join(', ') || 'Your Transaction';
+  const name = firstName?.trim() ? titleCase(firstName.trim()) : 'You';
   return {
     title: `Closing Time · ${titleCase(deadline.label)} ${pushTiming(offset)}`,
-    body: `${greeting}${client}. Due ${formatDeadlineDate(deadline.date)}.`,
+    body: `A Very Important Reminder For ${name},\n${client}\nDue ${formatDeadlineDate(deadline.date)}.`,
   };
 }
 
