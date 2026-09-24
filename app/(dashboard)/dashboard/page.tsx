@@ -1529,6 +1529,26 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
   const filt = cat === 'All' ? NEWS : NEWS.filter((article) =>
     canonicalArticleCategory(article.cat || '', market) === cat);
 
+  // Month-by-month feed: show this month's articles first, then a Show More
+  // button reveals the next older month instead of an endless scroll.
+  const [nowMonth] = useState(() => { const d = new Date(); return d.getFullYear() * 12 + d.getMonth(); });
+  const [feedMonths, setFeedMonths] = useState<{ key: string; n: number }>({ key: '', n: 1 });
+  const feedKey = `${pub}|${cat}`;
+  const monthsShown = feedMonths.key === feedKey ? feedMonths.n : 1;
+  const articleMonth = (article: any): number => {
+    const d = new Date(article?.publishedAt || article?.dateIso || '');
+    return Number.isNaN(d.getTime()) ? nowMonth : d.getFullYear() * 12 + d.getMonth();
+  };
+  const monthCutoff = nowMonth - (monthsShown - 1);
+  let visibleNews = filt.filter((article) => articleMonth(article) >= monthCutoff);
+  if (visibleNews.length < 5) visibleNews = filt.slice(0, Math.max(5, visibleNews.length));
+  const nextOlderArticle = filt.find((article) => !visibleNews.includes(article));
+  const showMoreNews = () => {
+    if (!nextOlderArticle) return;
+    void haptics.selection();
+    setFeedMonths({ key: feedKey, n: Math.max(monthsShown + 1, nowMonth - articleMonth(nextOlderArticle) + 1) });
+  };
+
   const feed: { t: 'n' | 'a' | 'c' | 's' | 'e' | 'm' | 'r'; d?: any }[] = [];
   const isLoadingFirstFetch = newsLoading && liveNews === null;
 
@@ -1608,7 +1628,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
       feed.push({ t: 'r', d: { variant: 'hero' } });
     }
 
-    filt.forEach((item, i) => {
+    visibleNews.forEach((item, i) => {
       feed.push({ t: 'n', d: item });
       if (i === 2) {
         feed.push({ t: 'c' });
@@ -1748,6 +1768,17 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
               }
               return [node];
             })}
+            {!isLoadingFirstFetch && nextOlderArticle && (
+              <div className="px-4 py-5 border-b border-gray-200">
+                <button
+                  type="button"
+                  onClick={showMoreNews}
+                  className="w-full py-3 text-base font-semibold uppercase tracking-wider border border-gray-900 text-gray-900 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Show More
+                </button>
+              </div>
+            )}
             {/* Follow-us card pinned at the bottom of the feed, brand-colored
                 per pub. URLs live in lib/pub-meta.ts — placeholders render
                 as disabled icons until real URLs are wired in. */}
