@@ -290,6 +290,7 @@ export default function AppShell({
 
   const drawerBg = PUB_COLORS[pub] ?? PUB_COLORS.realtynewsnow;
   const isLoginPage = pathname === '/admin/login';
+  const isSignInPage = pathname === '/login' || pathname.startsWith('/auth/');
 
   // Admin login page — no nav
   if (isLoginPage) {
@@ -416,7 +417,7 @@ export default function AppShell({
           </div>
         </div>
       </header>
-      {!isAdmin && pub === 'realtyline' && <FeaturedPartnersCarousel placement="top" />}
+      {!isAdmin && !isSignInPage && pub === 'realtyline' && <FeaturedPartnersCarousel placement="top" />}
 
       {/* ======== DRAWER (extracted to NavDrawer in S18) ======== */}
       <NavDrawer
@@ -488,7 +489,7 @@ export default function AppShell({
       ) : null}
       {/* Admin chrome stays admin-only — the public Footer (RealtyLine /
           Newsline San Antonio / Resources columns) was leaking onto every /admin page. */}
-      {!isAdmin && <Footer showAustinPartners={pub === 'realtyline'} />}
+      {!isAdmin && <Footer showAustinPartners={pub === 'realtyline' && !isSignInPage} />}
     </div>
   );
 }
