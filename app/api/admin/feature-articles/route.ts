@@ -24,7 +24,7 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
   const body = await req.json();
   const {
     advertiserId, title, excerpt, content, imageUrl, articleUrl,
-    author, publishedAt, sortOrder, status,
+    author, authorAvatar, publishedAt, sortOrder, status,
   } = body;
 
   const advertiserIdNum = Number(advertiserId);
@@ -46,6 +46,7 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
     imageUrl: imageUrl || null,
     articleUrl: articleUrl || null,
     author: author || null,
+    authorAvatar: authorAvatar || null,
     publishedAt,
     sortOrder: Number(sortOrder) || 0,
     status: status === 'draft' ? 'draft' : 'published',

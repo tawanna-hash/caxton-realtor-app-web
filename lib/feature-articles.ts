@@ -32,6 +32,7 @@ export type FeatureArticle = {
   imageUrl: string | null;
   articleUrl: string | null;
   author: string | null;
+  authorAvatar: string | null;
   publishedAt: string;       // ISO date
   sortOrder: number;
   status: string;
@@ -62,6 +63,7 @@ async function ensureFeatureArticlesSchema() {
   await sql`CREATE INDEX IF NOT EXISTS idx_feature_articles_advertiser ON feature_articles (advertiser_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_feature_articles_published ON feature_articles (published_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_feature_articles_status ON feature_articles (status)`;
+  await sql`ALTER TABLE feature_articles ADD COLUMN IF NOT EXISTS author_avatar TEXT`;
   schemaReady = true;
 }
 
@@ -74,6 +76,7 @@ type FeatureArticleRow = {
   image_url: string | null;
   article_url: string | null;
   author: string | null;
+  author_avatar: string | null;
   published_at: string | Date;
   sort_order: number;
   status: string;
@@ -100,6 +103,7 @@ function rowToArticle(r: FeatureArticleRow): FeatureArticle {
     imageUrl: r.image_url ?? null,
     articleUrl: r.article_url ?? null,
     author: r.author ?? null,
+    authorAvatar: r.author_avatar ?? null,
     publishedAt,
     sortOrder: r.sort_order ?? 0,
     status: r.status,
@@ -149,6 +153,7 @@ export async function createFeatureArticle(input: {
   imageUrl?: string | null;
   articleUrl?: string | null;
   author?: string | null;
+  authorAvatar?: string | null;
   publishedAt: string;
   sortOrder?: number;
   status?: string;
@@ -157,10 +162,10 @@ export async function createFeatureArticle(input: {
   const sql = getSql();
   const rows = (await sql`
     INSERT INTO feature_articles
-      (advertiser_id, title, excerpt, content, image_url, article_url, author, published_at, sort_order, status)
+      (advertiser_id, title, excerpt, content, image_url, article_url, author, author_avatar, published_at, sort_order, status)
     VALUES (${input.advertiserId}, ${input.title}, ${input.excerpt ?? null},
             ${input.content ?? null}, ${input.imageUrl ?? null}, ${input.articleUrl ?? null},
-            ${input.author ?? null}, ${input.publishedAt}, ${input.sortOrder ?? 0},
+            ${input.author ?? null}, ${input.authorAvatar ?? null}, ${input.publishedAt}, ${input.sortOrder ?? 0},
             ${input.status ?? 'published'})
     RETURNING *
   `) as unknown as FeatureArticleRow[];
@@ -175,6 +180,7 @@ export async function updateFeatureArticle(id: number, fields: {
   imageUrl?: string | null;
   articleUrl?: string | null;
   author?: string | null;
+  authorAvatar?: string | null;
   publishedAt?: string;
   sortOrder?: number;
   status?: string;
@@ -189,12 +195,13 @@ export async function updateFeatureArticle(id: number, fields: {
   const setImage = fields.imageUrl !== undefined;
   const setArticleUrl = fields.articleUrl !== undefined;
   const setAuthor = fields.author !== undefined;
+  const setAuthorAvatar = fields.authorAvatar !== undefined;
   const setPublishedAt = fields.publishedAt !== undefined;
   const setSortOrder = fields.sortOrder !== undefined;
   const setStatus = fields.status !== undefined;
   if (
     !setAdvertiser && !setTitle && !setExcerpt && !setContent && !setImage &&
-    !setArticleUrl && !setAuthor && !setPublishedAt && !setSortOrder && !setStatus
+    !setArticleUrl && !setAuthor && !setAuthorAvatar && !setPublishedAt && !setSortOrder && !setStatus
   ) return null;
 
   // Neon's tagged template can't interpolate a dynamically built SET clause, so
@@ -211,6 +218,7 @@ export async function updateFeatureArticle(id: number, fields: {
       image_url     = CASE WHEN ${setImage}::boolean THEN ${fields.imageUrl ?? null}::text ELSE image_url END,
       article_url   = CASE WHEN ${setArticleUrl}::boolean THEN ${fields.articleUrl ?? null}::text ELSE article_url END,
       author        = CASE WHEN ${setAuthor}::boolean THEN ${fields.author ?? null}::text ELSE author END,
+      author_avatar = CASE WHEN ${setAuthorAvatar}::boolean THEN ${fields.authorAvatar ?? null}::text ELSE author_avatar END,
       published_at  = CASE WHEN ${setPublishedAt}::boolean THEN ${fields.publishedAt ?? null}::date ELSE published_at END,
       sort_order    = CASE WHEN ${setSortOrder}::boolean THEN ${fields.sortOrder ?? null}::int ELSE sort_order END,
       status        = CASE WHEN ${setStatus}::boolean THEN ${fields.status ?? null}::text ELSE status END

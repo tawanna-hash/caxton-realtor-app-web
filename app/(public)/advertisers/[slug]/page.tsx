@@ -261,6 +261,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
         imageUrl: a.imageUrl ?? null,
         articleUrl: a.link ?? null,
         author: a.author?.name ?? null,
+        authorAvatar: a.author?.avatar ?? null,
         publishedAt: a.dateIso ?? a.publishedAt ?? a.time ?? new Date().toISOString(),
         sortOrder: 100, // WP-matched articles sort after manually curated ones
         status: 'published',

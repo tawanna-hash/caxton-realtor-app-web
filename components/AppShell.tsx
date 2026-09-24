@@ -22,6 +22,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getApiBase } from '@/lib/api-base';
 import { Footer } from '@/components/footer';
+import { FeaturedPartnersCarousel } from '@/components/FeaturedPartnersCarousel';
 import NavDrawer from '@/components/NavDrawer';
 import BottomNav from '@/components/BottomNav';
 import GlobalPullToRefresh from '@/components/GlobalPullToRefresh';
@@ -406,6 +407,7 @@ export default function AppShell({
           </div>
         </div>
       </header>
+      {!isAdmin && <FeaturedPartnersCarousel placement="top" />}
 
       {/* ======== DRAWER (extracted to NavDrawer in S18) ======== */}
       <NavDrawer

@@ -854,7 +854,15 @@ function FeatureArticleCard({ article }: { article: FeatureArticle }) {
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 leading-snug">
           {article.title}
         </h3>
-        {byline && <p className="mt-1 text-xs text-gray-500">{byline}</p>}
+        {byline && (
+          <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+            {article.authorAvatar && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={article.authorAvatar} alt="" className="h-7 w-7 rounded-full object-cover" />
+            )}
+            <span>{byline}</span>
+          </div>
+        )}
         {article.excerpt && (
           <p className="mt-2 text-sm text-gray-700 font-light leading-relaxed">
             {article.excerpt}

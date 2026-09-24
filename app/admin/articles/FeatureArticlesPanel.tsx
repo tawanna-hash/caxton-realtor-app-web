@@ -7,6 +7,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Trash2, Plus, Pencil, ChevronDown, ExternalLink, X, FileText } from 'lucide-react';
+import AuthorPicker from './AuthorPicker';
+import type { ArticleAuthor } from '@/lib/server/article-authors';
 
 type FeatureArticle = {
   id: number;
@@ -17,6 +19,7 @@ type FeatureArticle = {
   imageUrl: string | null;
   articleUrl: string | null;
   author: string | null;
+  authorAvatar: string | null;
   publishedAt: string;
   sortOrder: number;
   status: string;
@@ -37,6 +40,7 @@ type FormState = {
   imageUrl: string;
   articleUrl: string;
   author: string;
+  authorAvatar: string;
   publishedAt: string;
   sortOrder: string;
   status: string;
@@ -52,6 +56,7 @@ const emptyForm = (): FormState => ({
   imageUrl: '',
   articleUrl: '',
   author: '',
+  authorAvatar: '',
   publishedAt: today(),
   sortOrder: '0',
   status: 'published',
@@ -65,7 +70,7 @@ function formatDate(iso: string): string {
   });
 }
 
-export default function FeatureArticlesPanel() {
+export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: ArticleAuthor[] }) {
   const [articles, setArticles] = useState<FeatureArticle[] | null>(null);
   const [advertisers, setAdvertisers] = useState<PickerAdvertiser[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -138,6 +143,7 @@ export default function FeatureArticlesPanel() {
       imageUrl: a.imageUrl ?? '',
       articleUrl: a.articleUrl ?? '',
       author: a.author ?? '',
+      authorAvatar: a.authorAvatar ?? '',
       publishedAt: a.publishedAt.slice(0, 10),
       sortOrder: String(a.sortOrder),
       status: a.status,
@@ -160,6 +166,7 @@ export default function FeatureArticlesPanel() {
         imageUrl: form.imageUrl.trim(),
         articleUrl: form.articleUrl.trim(),
         author: form.author.trim(),
+        authorAvatar: form.authorAvatar.trim(),
         publishedAt: form.publishedAt || today(),
         sortOrder: Number(form.sortOrder) || 0,
         status: form.status,
@@ -379,9 +386,8 @@ export default function FeatureArticlesPanel() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Author <span className="text-gray-400">(optional)</span>
                 </label>
-                <input type="text" value={form.author}
-                  onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                <AuthorPicker name={form.author} avatar={form.authorAvatar} seedAuthors={seedAuthors}
+                  onChange={(author) => setForm((f) => ({ ...f, author: author.name, authorAvatar: author.avatar || '' }))} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Published Date *</label>

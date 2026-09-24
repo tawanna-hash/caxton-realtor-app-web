@@ -8,6 +8,8 @@ import type { NewsArticle } from '@/lib/server/wp-news';
 import PageTitle from '@/components/ui/PageTitle';
 import ContentPagination from '@/app/admin/_components/ContentPagination';
 import FeatureArticlesPanel from './FeatureArticlesPanel';
+import AuthorPicker from './AuthorPicker';
+import type { ArticleAuthor } from '@/lib/server/article-authors';
 export type AdminArticle = NewsArticle & {
   hidden: boolean;
   editedFields: string[];
@@ -74,6 +76,18 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     const c = { all: initialArticles.length, austin: 0, san_antonio: 0 };
     for (const a of initialArticles) c[a.publication] += 1;
     return c;
+  }, [initialArticles]);
+  const seedAuthors = useMemo(() => {
+    const map = new Map<string, ArticleAuthor>();
+    for (const article of initialArticles) {
+      if (!article.author?.name) continue;
+      const name = article.author.name.trim();
+      const key = name.toLowerCase();
+      if (!map.has(key) || (!map.get(key)?.avatar && article.author.avatar)) {
+        map.set(key, { name, avatar: article.author.avatar ?? null });
+      }
+    }
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [initialArticles]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -218,7 +232,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
       </div>
 
       {tab === 'featured' ? (
-        <FeatureArticlesPanel />
+        <FeatureArticlesPanel seedAuthors={seedAuthors} />
       ) : (
       <>
       <section className="content-admin-summary" aria-label="Article summary">
@@ -437,13 +451,14 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
       {editing && (
         <EditModal
           article={editing}
+          seedAuthors={seedAuthors}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
         />
       )}
 
       {creating && (
-        <CreateModal onClose={() => setCreating(false)} onCreated={handleCreated} />
+        <CreateModal seedAuthors={seedAuthors} onClose={() => setCreating(false)} onCreated={handleCreated} />
       )}
       </>
       )}
@@ -457,10 +472,12 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
 
 function EditModal({
   article,
+  seedAuthors,
   onClose,
   onSaved,
 }: {
   article: AdminArticle;
+  seedAuthors: ArticleAuthor[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -584,13 +601,9 @@ function EditModal({
           </Field>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Author name">
-              <input
-                type="text"
-                value={authorName}
-                onChange={(e) => setAuthorName(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
-              />
+            <Field label="Author">
+              <AuthorPicker name={authorName} avatar={authorAvatar} seedAuthors={seedAuthors}
+                onChange={(author) => { setAuthorName(author.name); setAuthorAvatar(author.avatar || ''); }} />
             </Field>
             <Field label="Author photo" hint="Upload an image or paste a URL">
               <ImageUpload
@@ -702,9 +715,11 @@ function EditModal({
 // =============================================================================
 
 function CreateModal({
+  seedAuthors,
   onClose,
   onCreated,
 }: {
+  seedAuthors: ArticleAuthor[];
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -834,14 +849,9 @@ function CreateModal({
           </Field>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Author name">
-              <input
-                type="text"
-                value={authorName}
-                onChange={(e) => setAuthorName(e.target.value)}
-                placeholder="Staff"
-                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
-              />
+            <Field label="Author">
+              <AuthorPicker name={authorName} avatar={authorAvatar} seedAuthors={seedAuthors}
+                onChange={(author) => { setAuthorName(author.name); setAuthorAvatar(author.avatar || ''); }} />
             </Field>
             <Field label="Author photo" hint="Upload an image or paste a URL">
               <ImageUpload

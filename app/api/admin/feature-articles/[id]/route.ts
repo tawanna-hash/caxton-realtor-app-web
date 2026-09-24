@@ -44,6 +44,7 @@ export const PUT = withAdminTracking(async (req: NextRequest, ctx: RouteCtx) => 
   if (body.imageUrl !== undefined) updates.imageUrl = body.imageUrl || null;
   if (body.articleUrl !== undefined) updates.articleUrl = body.articleUrl || null;
   if (body.author !== undefined) updates.author = body.author || null;
+  if (body.authorAvatar !== undefined) updates.authorAvatar = body.authorAvatar || null;
   if (body.publishedAt !== undefined) updates.publishedAt = body.publishedAt;
   if (body.sortOrder !== undefined) updates.sortOrder = Number(body.sortOrder) || 0;
   if (body.status !== undefined) updates.status = body.status === 'draft' ? 'draft' : 'published';

@@ -57,6 +57,7 @@ async function ensureArticleArchiveSchema(): Promise<void> {
     CREATE TABLE IF NOT EXISTS wp_article_archive (
       publication   TEXT NOT NULL,
       wp_post_id    TEXT NOT NULL,
+      slug          TEXT NOT NULL,
       head          TEXT NOT NULL,
       excerpt       TEXT NOT NULL DEFAULT '',
       content_html  TEXT NOT NULL DEFAULT '',
@@ -70,6 +71,7 @@ async function ensureArticleArchiveSchema(): Promise<void> {
       source_url    TEXT
     )
   `);
+  await query(`ALTER TABLE wp_article_archive ADD COLUMN IF NOT EXISTS slug TEXT`);
   await query(`ALTER TABLE wp_article_archive ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
   await query(`ALTER TABLE wp_article_archive ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
   await query(
@@ -199,16 +201,17 @@ export async function createArchivedArticle(
   const publishedAt = input.publishedAt ? new Date(input.publishedAt) : new Date();
   const rows = await query<ArchivedArticleRow>(
     `INSERT INTO wp_article_archive
-       (publication, wp_post_id, head, excerpt, content_html, image_url,
+       (publication, wp_post_id, slug, head, excerpt, content_html, image_url,
         image_thumb, author_name, author_avatar, cat, tags, published_at,
         source_url, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
      RETURNING publication, wp_post_id, head, excerpt, content_html, image_url,
                image_thumb, author_name, author_avatar, cat, tags, published_at,
                source_url`,
     [
       input.publication,
       wpPostId,
+      `${input.head.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 100) || 'article'}-${wpPostId.split('-').slice(-2).join('-')}`,
       input.head,
       input.excerpt ?? '',
       input.contentHtml ?? '',
