@@ -20,7 +20,7 @@ export function Footer() {
             />
             <div>
               <p className="text-sm font-semibold text-gray-900">Realty News Now</p>
-              <h2 className="text-xs font-medium tracking-[0.2em] text-gray-500">Brand [12] Plus Partners</h2>
+              <h2 className="text-xs font-medium tracking-[0.2em] text-gray-500">BRAND [12] PLUS PARTNERS</h2>
             </div>
           </div>
           <FeaturedPartnersCarousel placement="footer" />

@@ -20,6 +20,19 @@ function keyFor(name: string): string {
   return name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US');
 }
 
+function usableAvatar(name: string, avatar: string | null | undefined): string | null {
+  // The retired WordPress hosts redirect uploads to the app's dashboard, so
+  // their old author-photo URLs render as broken images. Do not advertise them.
+  if (avatar && /^https?:\/\/(?:www\.)?(?:realtyline\.us|newslinesa\.com)\/wp-content\/uploads\//i.test(avatar)) {
+    return keyFor(name) === 'tawanna verock' ? '/email/tawanna-verock-headshot-20260827.png' : null;
+  }
+  if (avatar && /(?:^|\/\/)secure\.gravatar\.com\/avatar\//i.test(avatar)) {
+    return avatar.replace(/([?&])d=(?:mm|mp|mystery|blank)\b/i, '$1d=404');
+  }
+  if (!avatar && keyFor(name) === 'tawanna verock') return '/email/tawanna-verock-headshot-20260827.png';
+  return avatar || null;
+}
+
 export async function listArticleAuthors(): Promise<ArticleAuthor[]> {
   await ensureAuthorSchema();
   const [saved, austin, sanAntonio, featured] = await Promise.allSettled([
@@ -33,8 +46,9 @@ export async function listArticleAuthors(): Promise<ArticleAuthor[]> {
     if (!name?.trim()) return;
     const normalized = name.trim().replace(/\s+/g, ' ');
     const key = keyFor(normalized);
+    const photo = usableAvatar(normalized, avatar);
     const prior = authors.get(key);
-    if (!prior || (!prior.avatar && avatar)) authors.set(key, { name: normalized, avatar: avatar || null });
+    if (!prior || (!prior.avatar && photo)) authors.set(key, { name: normalized, avatar: photo });
   }
   // Save curated profiles last so their chosen image takes precedence.
   for (const result of [austin, sanAntonio] as const) {
@@ -46,11 +60,23 @@ export async function listArticleAuthors(): Promise<ArticleAuthor[]> {
     for (const article of featured.value) add(article.author, article.authorAvatar);
   }
   if (saved.status === 'fulfilled') {
-    for (const author of saved.value) authors.set(keyFor(author.name), author);
+    for (const author of saved.value) authors.set(keyFor(author.name), { ...author, avatar: usableAvatar(author.name, author.avatar) });
   } else if (authors.size === 0) {
     throw saved.reason;
   }
   return [...authors.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function updateArticleAuthorPhoto(name: string, avatar: string | null): Promise<ArticleAuthor> {
+  await ensureAuthorSchema();
+  const cleanName = name.trim().replace(/\s+/g, ' ');
+  const rows = await query<ArticleAuthor>(
+    `INSERT INTO article_authors (name_key, name, avatar) VALUES ($1, $2, $3)
+     ON CONFLICT (name_key) DO UPDATE SET avatar = EXCLUDED.avatar
+     RETURNING name, avatar`,
+    [keyFor(cleanName), cleanName, avatar],
+  );
+  return rows[0];
 }
 
 export async function createArticleAuthor(name: string, avatar: string | null): Promise<ArticleAuthor | null> {
