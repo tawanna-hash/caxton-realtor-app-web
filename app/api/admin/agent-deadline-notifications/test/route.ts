@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   await requireAdmin();
-  const body = (await req.json().catch(() => ({}))) as { email?: string };
+  const body = (await req.json().catch(() => ({}))) as { email?: string; emailTo?: string };
   if (!body.email) return NextResponse.json({ error: 'email required' }, { status: 400 });
-  const result = await sendAgentDeadlineTestAlert(body.email);
+  const result = await sendAgentDeadlineTestAlert(body.email, body.emailTo);
   return NextResponse.json(result, { status: result.ok ? 200 : 404 });
 }

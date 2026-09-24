@@ -323,7 +323,7 @@ export async function runAgentDeadlineNotifications(now = new Date()): Promise<A
  * using their next upcoming deadline (or a sample deal when they have none).
  * Bypasses the 8–10 AM window and the delivery ledger.
  */
-export async function sendAgentDeadlineTestAlert(email: string): Promise<Record<string, unknown>> {
+export async function sendAgentDeadlineTestAlert(email: string, emailTo?: string): Promise<Record<string, unknown>> {
   await ensureAgentCommandCenterWorkspaceSchema();
   const realtors = await query<{ id: string; email: string; first_name: string | null }>(
     `SELECT id, email, first_name FROM realtors WHERE LOWER(email) = LOWER($1) LIMIT 1`,
@@ -360,7 +360,7 @@ export async function sendAgentDeadlineTestAlert(email: string): Promise<Record<
   const timing = offset === 0 ? 'today' : `in ${offset} day${offset === 1 ? '' : 's'}`;
 
   const emailResult = await sendEmail({
-    to: realtor.email,
+    to: emailTo || realtor.email,
     subject: `${deadline.label}: ${timing} — ${dealLabel(deal)}`,
     html: emailHtml(deal, deadline, offset),
   });
@@ -380,7 +380,7 @@ export async function sendAgentDeadlineTestAlert(email: string): Promise<Record<
   return {
     ok: true,
     sampleDeal: sample,
-    email: { to: realtor.email, ok: emailResult.ok, error: emailResult.ok ? undefined : emailResult.error },
+    email: { to: emailTo || realtor.email, ok: emailResult.ok, error: emailResult.ok ? undefined : emailResult.error },
     push: { ...payload, result: pushResult },
     devices,
     apns: getApnsConfigStatus(),
