@@ -184,7 +184,8 @@ export default function AgentCommandCenterClient({
               More Control in Every Client Transaction.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-white/75 sm:mt-6 sm:text-lg">
-              Closing Time tracks your contract deadlines, client-ready calculators and service partners when a client needs help.
+              <span className="font-semibold text-white">Closing Time Keeps Your Deals Moving.</span>{' '}
+              Never Miss A Critical Contract Deadline, Run Instant Financial Calculations, And Connect Clients With Trusted Service Partners When Help Is Needed.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
