@@ -134,6 +134,23 @@ export async function sendPushToRealtor(
     }
   }
 
+  // Also reach the signed-in agent's iOS app so the tap opens inside the app.
+  try {
+    const { sendNativePushToRealtor } = await import('@/lib/server/native-push');
+    const branded = {
+      ...payload,
+      icon: payload.icon || RNN_NOTIFICATION_ICON,
+      badge: payload.badge || RNN_NOTIFICATION_ICON,
+    };
+    const native = await sendNativePushToRealtor(realtorId, branded);
+    sent += native.sent;
+    failed += native.failed;
+    revoked += native.revoked;
+  } catch (error) {
+    console.error('[sendPushToRealtor] native push failed', error);
+    failed += 1;
+  }
+
   return { sent, failed, revoked };
 }
 

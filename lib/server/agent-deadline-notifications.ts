@@ -212,7 +212,7 @@ function emailHtml(deal: AgentDeal, deadline: DealDeadline, offset: number): str
       <h1 style="margin:0 0 16px;font-size:24px;color:#301D5D">${deadlineLabel}: ${timing}</h1>
       <p style="margin:0 0 8px"><strong>Transaction:</strong> ${label}</p>
       <p style="margin:0 0 24px">Due ${escapeHtml(formatDeadlineDate(deadline.date))}.</p>
-      <a href="${siteUrl}/agents#agent-desk" style="display:inline-block;background:#301D5D;color:#ffffff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700">Open Closing Time</a>
+      <a href="${siteUrl}/agents/closing-time" style="display:inline-block;background:#301D5D;color:#ffffff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700">Open Closing Time</a>
     </div>
   `;
 }
@@ -292,14 +292,14 @@ export async function runAgentDeadlineNotifications(now = new Date()): Promise<A
                   const sent = await sendPushToRealtor(row.realtor_id, {
                     title: push.title,
                     body: push.body,
-                    url: '/agents#agent-desk',
+                    url: '/agents/closing-time',
                     tag: `agent-deadline-${deal.id}-${deadline.id}-${offset}`,
                   });
                   if (sent.sent > 0) {
                     await markDeliverySent(deliveryId);
                     result.pushSent += 1;
                   } else {
-                    await releaseDelivery(deliveryId, 'No active browser push subscription');
+                    await releaseDelivery(deliveryId, 'No active browser or app push subscription');
                     result.skipped += 1;
                   }
                 } catch (error) {

@@ -313,3 +313,35 @@ export async function broadcastNativePush(
   console.log('[broadcastNativePush] done', { notificationId, sent, failed, revoked });
   return { sent, failed, revoked, skipped: false };
 }
+
+/**
+ * Send to every active iOS app token for one realtor (e.g. Closing Time
+ * deadline alerts). No-op when APNs isn't configured.
+ */
+export async function sendNativePushToRealtor(
+  realtorId: string,
+  payload: PushPayload,
+): Promise<{ sent: number; failed: number; revoked: number; skipped: boolean }> {
+  const client = getApnsClient();
+  if (!client) return { sent: 0, failed: 0, revoked: 0, skipped: true };
+  const sql = getSql();
+  const tokens = (await sql`
+    SELECT id, realtor_id, token, platform, market
+      FROM native_push_tokens
+     WHERE realtor_id = ${realtorId}::uuid
+       AND revoked_at IS NULL
+       AND platform = 'ios'
+  `) as unknown as NativeRow[];
+  let sent = 0;
+  let failed = 0;
+  let revoked = 0;
+  for (const row of tokens) {
+    const res = await sendNativePush(row.token, payload);
+    if (res.ok) sent += 1;
+    else if (res.gone) {
+      revoked += 1;
+      await markNativeTokenGone(row.token);
+    } else failed += 1;
+  }
+  return { sent, failed, revoked, skipped: false };
+}
