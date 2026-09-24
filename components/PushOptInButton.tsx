@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from 'react';
 import { isNative } from '@/lib/native/runtime';
-import { registerNativePush } from '@/lib/native/push';
+import { registerNativePush, disableNativePush } from '@/lib/native/push';
 import { haptics } from '@/lib/native/haptics';
 
 type Status = 'unknown' | 'unsupported' | 'ios-needs-pwa' | 'denied' | 'subscribed' | 'idle' | 'pending';
@@ -117,7 +117,8 @@ export default function PushOptInButton({ realtorId, market, className, hideWhen
         realtorId: realtorId ?? null,
         market: market ?? null,
       });
-      if (res.ok) {
+      const alreadyOn = !res.ok && res.reason === 'error' && res.error === 'already-registered';
+      if (res.ok || alreadyOn) {
         haptics.notify('success');
         setStatus('subscribed');
       } else if (res.reason === 'denied') {
@@ -164,6 +165,15 @@ export default function PushOptInButton({ realtorId, market, className, hideWhen
 
   async function handleUnsubscribe() {
     setStatus('pending');
+
+    // Native app: there is no service worker in the WebView, so the web
+    // path below would hang forever. Revoke the device token instead.
+    if (isNative()) {
+      const res = await disableNativePush();
+      setStatus(res.ok ? 'idle' : 'subscribed');
+      return;
+    }
+
     try {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
