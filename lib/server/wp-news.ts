@@ -38,8 +38,32 @@ const ARTICLE_ALLOWED_ATTR = [
   'href','src','srcset','sizes','alt','title','class','id','target','rel',
   'width','height','loading','decoding',
   'colspan','rowspan','scope','align',
-  'allow','allowfullscreen','frameborder','referrerpolicy','sandbox',
+  'allow','allowfullscreen','frameborder','referrerpolicy','sandbox','style',
 ];
+
+// Preserve editorial typography without allowing arbitrary CSS (including
+// positioning, background URLs or expressions) into public article HTML.
+function safeArticleStyle(style: string): string {
+  const safe: string[] = [];
+  for (const declaration of style.split(';')) {
+    const separator = declaration.indexOf(':');
+    if (separator < 0) continue;
+    const property = declaration.slice(0, separator).trim().toLowerCase();
+    const value = declaration.slice(separator + 1).trim();
+    if (/[\\{}<>@]/.test(value) || /url\s*\(|expression\s*\(|var\s*\(|!important/i.test(value)) continue;
+    const valid =
+      (property === 'text-align' && /^(left|right|center|justify)$/i.test(value)) ||
+      (property === 'font-weight' && /^(normal|bold|[1-9]00)$/i.test(value)) ||
+      (property === 'font-style' && /^(normal|italic|oblique)$/i.test(value)) ||
+      (property === 'text-decoration' && /^(none|underline|line-through)$/i.test(value)) ||
+      (property === 'font-size' && /^(?:\d{1,2}(?:\.\d+)?)(?:px|rem|em|%)$/i.test(value)) ||
+      (property === 'line-height' && /^(?:\d(?:\.\d+)?)(?:px|rem|em)?$/i.test(value)) ||
+      ((property === 'color' || property === 'background-color') &&
+        (/^#[0-9a-f]{3,8}$/i.test(value) || /^(?:transparent|black|white|red|blue|gray|grey)$/i.test(value)));
+    if (valid) safe.push(`${property}: ${value}`);
+  }
+  return safe.join('; ');
+}
 
 // Lazy-loaded DOMPurify. The module pulls jsdom at first call which can fail
 // in serverless cold starts when the bundler doesn't include the native deps.
@@ -57,13 +81,19 @@ async function getSanitizer(): Promise<Sanitizer> {
   try {
     const mod = await import('isomorphic-dompurify');
     const DOMPurify = mod.default ?? mod;
+    DOMPurify.addHook('uponSanitizeAttribute', (_node, attribute) => {
+      if (attribute.attrName === 'style') {
+        attribute.attrValue = safeArticleStyle(attribute.attrValue);
+        if (!attribute.attrValue) attribute.keepAttr = false;
+      }
+    });
     sanitizer = (html: string) =>
       DOMPurify.sanitize(html, {
         ALLOWED_TAGS: ARTICLE_ALLOWED_TAGS,
         ALLOWED_ATTR: ARTICLE_ALLOWED_ATTR,
         ALLOW_DATA_ATTR: false,
         FORBID_TAGS: ['script','style','object','embed','form','input','button','meta','link'],
-        FORBID_ATTR: ['onerror','onload','onclick','onmouseover','onfocus','onblur','onchange','onsubmit','style'],
+        FORBID_ATTR: ['onerror','onload','onclick','onmouseover','onfocus','onblur','onchange','onsubmit'],
         ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
       });
     return sanitizer;
@@ -85,8 +115,11 @@ function fallbackScrub(html: string): string {
     .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
     .replace(/\son\w+\s*=\s*[^\s>]+/gi, '')
     .replace(/javascript:/gi, '')
-    .replace(/\sstyle\s*=\s*"[^"]*"/gi, '')
-    .replace(/\sstyle\s*=\s*'[^']*'/gi, '');
+    .replace(/\sstyle\s*=\s*(["'])([\s\S]*?)\1/gi, (_match, _quote: string, value: string) => {
+      const safe = safeArticleStyle(value);
+      return safe ? ` style="${safe}"` : '';
+    })
+    .replace(/\sstyle\s*=\s*(?!["'])[^\s>]+/gi, '');
 }
 
 // Synchronous wrapper that uses whichever sanitizer is already loaded; on first
@@ -97,6 +130,10 @@ function sanitizeArticleHtml(html: string): string {
   // Fire-and-forget the load so subsequent calls get the real sanitizer.
   void getSanitizer();
   return fallbackScrub(html);
+}
+
+export async function sanitizeArticleHtmlForStorage(html: string): Promise<string> {
+  return (await getSanitizer())(html);
 }
 
 // -----------------------------------------------------------------------------

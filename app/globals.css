@@ -1036,3 +1036,96 @@ input[type='date']::-webkit-calendar-picker-indicator {
     background-size: 1.0625rem 1.0625rem !important;
   }
 }
+
+/* The visual article editor and reader render the same semantic HTML.
+   Tailwind's reset removes native paragraph, heading and list formatting. */
+.article-body-rich,
+.caxton-article-prose {
+  overflow-wrap: anywhere;
+}
+.article-body-rich {
+  color: #301d5d;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.article-body-rich p,
+.caxton-article-prose p {
+  margin-bottom: 1.2em;
+}
+.article-body-rich h1,
+.caxton-article-prose h1 {
+  font-size: 1.8em;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 1.5em 0 0.5em;
+}
+.article-body-rich h2,
+.caxton-article-prose h2 {
+  font-size: 1.45em;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 1.5em 0 0.5em;
+}
+.article-body-rich h3,
+.caxton-article-prose h3 {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin: 1.25em 0 0.5em;
+}
+.article-body-rich h4,
+.article-body-rich h5,
+.article-body-rich h6,
+.caxton-article-prose h4,
+.caxton-article-prose h5,
+.caxton-article-prose h6 {
+  font-weight: 700;
+  margin: 1em 0 0.5em;
+}
+.article-body-rich strong,
+.article-body-rich b,
+.caxton-article-prose b { font-weight: 700; }
+.article-body-rich em,
+.article-body-rich i,
+.caxton-article-prose em,
+.caxton-article-prose i { font-style: italic; }
+.article-body-rich u,
+.caxton-article-prose u { text-decoration: underline; }
+.article-body-rich ul,
+.caxton-article-prose ul { list-style: disc; }
+.article-body-rich ol,
+.caxton-article-prose ol { list-style: decimal; }
+.article-body-rich ul,
+.article-body-rich ol,
+.caxton-article-prose ul,
+.caxton-article-prose ol {
+  margin: 0 0 1.2em;
+  padding-left: 1.5em;
+}
+.article-body-rich li,
+.caxton-article-prose li { margin-bottom: 0.35em; }
+.article-body-rich blockquote,
+.caxton-article-prose blockquote {
+  border-left: 3px solid #301d5d;
+  padding-left: 1em;
+  margin: 1.2em 0;
+  font-style: italic;
+}
+.article-body-rich a,
+.caxton-article-prose a {
+  color: #301d5d;
+  text-decoration: underline;
+}
+.article-body-rich img,
+.caxton-article-prose img { max-width: 100%; height: auto; }
+.article-body-rich figure,
+.caxton-article-prose figure { margin: 1.2em 0; }
+.article-body-rich figcaption,
+.caxton-article-prose figcaption { font-size: 0.85em; color: #6b7280; }
+.article-body-rich table,
+.caxton-article-prose table { border-collapse: collapse; width: 100%; margin: 1.2em 0; }
+.article-body-rich th,
+.article-body-rich td,
+.caxton-article-prose th,
+.caxton-article-prose td { border: 1px solid #d1d5db; padding: 0.5em; }
+.article-body-rich hr,
+.caxton-article-prose hr { border-top: 1px solid #d1d5db; margin: 1.5em 0; }

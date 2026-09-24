@@ -13,6 +13,7 @@ import { requireAdmin } from '@/lib/server/auth/admin';
 import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import type { Publication } from '@/lib/server/wp-news';
+import { sanitizeArticleHtmlForStorage } from '@/lib/server/wp-news';
 import {
   upsertArticleOverride,
 } from '@/lib/server/article-overrides';
@@ -121,6 +122,7 @@ export const PATCH = withAdminTracking(
     const { publication, wpPostId } = parseArticleId(id);
 
     const body = validateBody(await req.json().catch(() => ({})));
+    if (body.contentHtml) body.contentHtml = await sanitizeArticleHtmlForStorage(body.contentHtml);
 
     // Manually-created articles (no WordPress post backing them) are edited
     // directly — there's no upstream value to "override", so the override

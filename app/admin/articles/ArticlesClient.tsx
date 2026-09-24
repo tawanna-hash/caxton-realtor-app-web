@@ -76,13 +76,24 @@ function ArticleBodyEditor({ value, onChange }: { value: string; onChange: (html
       {mode === 'visual' ? (
         <div ref={editor} contentEditable suppressContentEditableWarning role="textbox" aria-label="Article body"
           aria-multiline="true" onInput={(e) => onChange(e.currentTarget.innerHTML)}
-          className={`${style} min-h-56 max-h-[55vh] overflow-y-auto leading-relaxed`} />
+          className={`${style} article-body-rich min-h-56 max-h-[55vh] overflow-y-auto leading-relaxed`} />
       ) : (
         <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={10}
           aria-label="Article body HTML" className={`${style} font-mono text-xs resize-y`} />
       )}
     </div>
   );
+}
+
+function excerptFromHtml(html: string): string {
+  const spacedHtml = html.replace(/<(?:br)\b[^>]*\/?>|<\/(?:p|div|h[1-6]|li|blockquote)>/gi, ' $&');
+  const document = new DOMParser().parseFromString(spacedHtml, 'text/html');
+  document.querySelectorAll('script, style, noscript').forEach((element) => element.remove());
+  const text = (document.body.textContent || '').replace(/\s+/g, ' ').trim();
+  if (text.length <= 240) return text;
+  const prefix = text.slice(0, 241);
+  const lastSpace = prefix.lastIndexOf(' ');
+  return `${prefix.slice(0, lastSpace > 180 ? lastSpace : 240).trimEnd()}…`;
 }
 
 function formatDate(iso: string | undefined): string {
@@ -573,8 +584,13 @@ function EditModal({
   onSaved: () => void;
 }) {
   const [head, setHead] = useState(article.head);
-  const [excerpt, setExcerpt] = useState(article.sum || article.excerpt || '');
+  const [excerpt, setExcerpt] = useState(article.excerpt || article.sum || '');
   const [contentHtml, setContentHtml] = useState(article.contentHtml || '');
+  const [summaryEdited, setSummaryEdited] = useState(false);
+  const updateBody = (html: string) => {
+    setContentHtml(html);
+    if (!summaryEdited) setExcerpt(excerptFromHtml(html));
+  };
   const [imageUrl, setImageUrl] = useState(article.imageUrl || '');
   const [authorName, setAuthorName] = useState(article.author?.name || '');
   const [authorAvatar, setAuthorAvatar] = useState(article.author?.avatar || '');
@@ -710,17 +726,17 @@ function EditModal({
             />
           </Field>
 
-          <Field label="Excerpt / summary">
+          <Field label="Excerpt / summary" hint="Updates from the article body until you edit this summary yourself.">
             <textarea
               value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
+              onChange={(e) => { setSummaryEdited(true); setExcerpt(e.target.value); }}
               rows={3}
               className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700 resize-y"
             />
           </Field>
 
           <Field label="Article body" hint="Edit visually or switch to HTML code. Leave blank to use upstream content.">
-            <ArticleBodyEditor value={contentHtml} onChange={setContentHtml} />
+            <ArticleBodyEditor value={contentHtml} onChange={updateBody} />
           </Field>
 
           <Field label="Tags" hint="Comma-separated">
@@ -808,6 +824,11 @@ function CreateModal({
   const [head, setHead] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [contentHtml, setContentHtml] = useState('');
+  const [summaryEdited, setSummaryEdited] = useState(false);
+  const updateBody = (html: string) => {
+    setContentHtml(html);
+    if (!summaryEdited) setExcerpt(excerptFromHtml(html));
+  };
   const [imageUrl, setImageUrl] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [authorAvatar, setAuthorAvatar] = useState('');
@@ -951,17 +972,17 @@ function CreateModal({
             />
           </Field>
 
-          <Field label="Excerpt / summary">
+          <Field label="Excerpt / summary" hint="Updates from the article body until you edit this summary yourself.">
             <textarea
               value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
+              onChange={(e) => { setSummaryEdited(true); setExcerpt(e.target.value); }}
               rows={3}
               className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700 resize-y"
             />
           </Field>
 
           <Field label="Article body" hint="Edit visually or switch to HTML code.">
-            <ArticleBodyEditor value={contentHtml} onChange={setContentHtml} />
+            <ArticleBodyEditor value={contentHtml} onChange={updateBody} />
           </Field>
 
           <Field label="Tags" hint="Comma-separated">

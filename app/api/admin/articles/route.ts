@@ -18,6 +18,7 @@ import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ApiError } from '@/lib/server/error';
 import { createArchivedArticle } from '@/lib/server/article-archive';
 import type { Publication } from '@/lib/server/wp-news';
+import { sanitizeArticleHtmlForStorage } from '@/lib/server/wp-news';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -109,7 +110,7 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
     publication: parsed.publication,
     head: parsed.head,
     excerpt: parsed.excerpt,
-    contentHtml: parsed.contentHtml,
+    contentHtml: parsed.contentHtml ? await sanitizeArticleHtmlForStorage(parsed.contentHtml) : null,
     imageUrl: parsed.imageUrl,
     imageThumb: parsed.imageThumb,
     authorName: parsed.authorName,
