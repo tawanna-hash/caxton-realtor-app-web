@@ -7,6 +7,15 @@ import { ChevronDown, ImagePlus, Loader2, Sparkles, UploadCloud, X } from 'lucid
 import { adminApi } from '@/lib/admin-api';
 import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
+export type EventPersonForm = {
+  name: string;
+  email: string;
+  company: string;
+  phone: string;
+};
+
+export const EMPTY_EVENT_PERSON: EventPersonForm = { name: '', email: '', company: '', phone: '' };
+
 export type EventFormData = {
   id?: number;
   publication: PublicationId;
@@ -31,6 +40,8 @@ export type EventFormData = {
   lat: string;
   lng: string;
   advertiserIds: number[];
+  additionalHosts: EventPersonForm[];
+  additionalInstructors: EventPersonForm[];
 };
 
 export const EMPTY_EVENT: EventFormData = {
@@ -56,7 +67,32 @@ export const EMPTY_EVENT: EventFormData = {
   lat: '',
   lng: '',
   advertiserIds: [],
+  additionalHosts: [],
+  additionalInstructors: [],
 };
+
+/**
+ * Title-case a free-typed name/place field: capitalizes the first letter of
+ * each word, lowercases the rest, but leaves words that are already
+ * ALL-CAPS-with-more-than-one-letter alone (acronyms like "HAR", "ABoR").
+ */
+export function toTitleCase(value: string): string {
+  return value.replace(/[A-Za-z''-]+/g, (word) => {
+    if (word.length > 1 && word === word.toUpperCase() && /[A-Z]/.test(word)) {
+      return word; // preserve acronyms, e.g. "HAR", "MLS"
+    }
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  });
+}
+
+/** Prefix a bare domain/URL with https:// if no protocol is present. */
+export function normalizeUrlInput(value: string): string {
+  const v = value.trim();
+  if (v === '') return v;
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(v)) return v; // already has a scheme
+  if (v.startsWith('//')) return `https:${v}`;
+  return `https://${v}`;
+}
 
 /** Convert ISO 8601 (with TZ) to "YYYY-MM-DDTHH:mm" for datetime-local input. */
 export function isoToLocalInput(iso: string | null | undefined): string {
@@ -74,6 +110,23 @@ function localInputToIso(local: string): string | null {
   const d = new Date(local);
   if (Number.isNaN(d.getTime())) return null;
   return d.toISOString();
+}
+
+/** Drop rows with a blank name and trim/null-out the rest for the API. */
+function peopleToPayload(people: EventPersonForm[]): Array<{
+  name: string;
+  email: string | null;
+  company: string | null;
+  phone: string | null;
+}> {
+  return people
+    .filter((p) => p.name.trim() !== '')
+    .map((p) => ({
+      name: p.name.trim(),
+      email: p.email.trim() === '' ? null : p.email.trim(),
+      company: p.company.trim() === '' ? null : p.company.trim(),
+      phone: p.phone.trim() === '' ? null : p.phone.trim(),
+    }));
 }
 
 function fieldsToPayload(data: EventFormData): Record<string, unknown> {
@@ -107,6 +160,8 @@ function fieldsToPayload(data: EventFormData): Record<string, unknown> {
     lat: num(data.lat),
     lng: num(data.lng),
     advertiserIds: [...data.advertiserIds].sort((a, b) => a - b),
+    additionalHosts: peopleToPayload(data.additionalHosts),
+    additionalInstructors: peopleToPayload(data.additionalInstructors),
   };
 }
 
@@ -152,6 +207,26 @@ export function EventForm({
   const update = <K extends keyof EventFormData>(key: K, value: EventFormData[K]) => {
     setData((d) => ({ ...d, [key]: value }));
   };
+
+  /** On blur, Title Case a name/place text field (Title, Location, Organizer, Instructor Name, ...). */
+  const titleCaseOnBlur =
+    (key: Extract<keyof EventFormData, string>) => () => {
+      setData((d) => {
+        const v = d[key];
+        if (typeof v !== 'string' || v.trim() === '') return d;
+        return { ...d, [key]: toTitleCase(v) };
+      });
+    };
+
+  /** On blur, prefix a bare domain/URL field with https:// if missing a scheme. */
+  const urlOnBlur =
+    (key: Extract<keyof EventFormData, string>) => () => {
+      setData((d) => {
+        const v = d[key];
+        if (typeof v !== 'string' || v.trim() === '') return d;
+        return { ...d, [key]: normalizeUrlInput(v) };
+      });
+    };
 
   const uploadFlyer = async (file: File | undefined) => {
     if (!file) return;
@@ -501,6 +576,7 @@ export function EventForm({
               type="text"
               value={data.title}
               onChange={(e) => update('title', e.target.value)}
+              onBlur={titleCaseOnBlur('title')}
               className={fieldClass}
             />
           </div>
@@ -543,6 +619,7 @@ export function EventForm({
               type="url"
               value={data.link}
               onChange={(e) => update('link', e.target.value)}
+              onBlur={urlOnBlur('link')}
               placeholder="https://..."
               className={fieldClass}
             />
@@ -588,6 +665,7 @@ export function EventForm({
               type="text"
               value={data.location}
               onChange={(e) => update('location', e.target.value)}
+              onBlur={titleCaseOnBlur('location')}
               className={fieldClass}
             />
           </div>
@@ -627,6 +705,7 @@ export function EventForm({
               type="text"
               value={data.organizer}
               onChange={(e) => update('organizer', e.target.value)}
+              onBlur={titleCaseOnBlur('organizer')}
               className={fieldClass}
             />
           </div>
@@ -648,8 +727,20 @@ export function EventForm({
               type="url"
               value={data.website}
               onChange={(e) => update('website', e.target.value)}
+              onBlur={urlOnBlur('website')}
               placeholder="https://..."
               className={fieldClass}
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className={labelClass}>Additional Event Hosts</label>
+            <p className="mb-1.5 text-xs text-gray-500">
+              Extra hosts beyond the primary organizer above.
+            </p>
+            <PeopleListEditor
+              people={data.additionalHosts}
+              onChange={(people) => update('additionalHosts', people)}
+              addLabel="Add Host"
             />
           </div>
           <div>
@@ -658,6 +749,7 @@ export function EventForm({
               type="text"
               value={data.instructorName}
               onChange={(e) => update('instructorName', e.target.value)}
+              onBlur={titleCaseOnBlur('instructorName')}
               className={fieldClass}
             />
           </div>
@@ -677,6 +769,17 @@ export function EventForm({
               onChange={(e) => update('instructorBio', e.target.value)}
               rows={3}
               className={fieldClass}
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className={labelClass}>Additional Instructors</label>
+            <p className="mb-1.5 text-xs text-gray-500">
+              Extra instructors beyond the primary instructor above.
+            </p>
+            <PeopleListEditor
+              people={data.additionalInstructors}
+              onChange={(people) => update('additionalInstructors', people)}
+              addLabel="Add Instructor"
             />
           </div>
         </div>
@@ -1014,6 +1117,84 @@ function PartnerMultiPicker({
           </ul>
         </div>
       )}
+    </div>
+  );
+}
+
+function PeopleListEditor({
+  people,
+  onChange,
+  addLabel,
+}: {
+  people: EventPersonForm[];
+  onChange: (people: EventPersonForm[]) => void;
+  addLabel: string;
+}) {
+  const update = (index: number, patch: Partial<EventPersonForm>) => {
+    onChange(people.map((p, i) => (i === index ? { ...p, ...patch } : p)));
+  };
+  const remove = (index: number) => {
+    onChange(people.filter((_, i) => i !== index));
+  };
+  const add = () => {
+    onChange([...people, { ...EMPTY_EVENT_PERSON }]);
+  };
+  const smallField = 'w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500';
+
+  return (
+    <div className="space-y-3">
+      {people.map((person, index) => (
+        <div
+          key={index}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 rounded-md border border-gray-200 bg-gray-50 p-3"
+        >
+          <input
+            type="text"
+            value={person.name}
+            onChange={(e) => update(index, { name: e.target.value })}
+            onBlur={() => update(index, { name: toTitleCase(person.name) })}
+            placeholder="Name"
+            className={smallField}
+          />
+          <input
+            type="email"
+            value={person.email}
+            onChange={(e) => update(index, { email: e.target.value })}
+            placeholder="Email"
+            className={smallField}
+          />
+          <input
+            type="text"
+            value={person.company}
+            onChange={(e) => update(index, { company: e.target.value })}
+            onBlur={() => update(index, { company: toTitleCase(person.company) })}
+            placeholder="Company"
+            className={smallField}
+          />
+          <input
+            type="tel"
+            value={person.phone}
+            onChange={(e) => update(index, { phone: e.target.value })}
+            placeholder="Phone"
+            className={smallField}
+          />
+          <button
+            type="button"
+            onClick={() => remove(index)}
+            aria-label="Remove"
+            className="flex items-center justify-center rounded-md border border-gray-300 px-2 py-1.5 text-gray-500 hover:text-red-600 hover:border-red-300"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={add}
+        className="text-xs font-medium text-brand-700 hover:text-brand-800"
+      >
+        + {addLabel}
+      </button>
     </div>
   );
 }

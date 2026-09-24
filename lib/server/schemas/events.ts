@@ -7,6 +7,13 @@ import { PUBLICATION_IDS } from '@/lib/publications';
 
 export const publicationSchema = z.enum(PUBLICATION_IDS);
 
+export const eventPersonSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  email: z.union([z.string().trim().email(), z.literal('')]).optional().nullable(),
+  company: z.string().trim().max(300).optional().nullable(),
+  phone: z.string().trim().max(50).optional().nullable(),
+});
+
 export const manualEventInputSchema = z.object({
   publication: publicationSchema,
   title: z.string().min(1).max(500),
@@ -30,6 +37,8 @@ export const manualEventInputSchema = z.object({
   lat: z.number().optional().nullable(),
   lng: z.number().optional().nullable(),
   advertiserIds: z.array(z.number().int().positive()).optional(),
+  additionalHosts: z.array(eventPersonSchema).max(20).optional(),
+  additionalInstructors: z.array(eventPersonSchema).max(20).optional(),
 });
 
 export const updateEventInputSchema = manualEventInputSchema.partial();

@@ -61,6 +61,13 @@ type EventSource =
  */
 const REVIEW_QUEUE_SOURCES = ['submission', 'facebook-llm', 'facebook-graph', 'gmail'] as const;
 
+export interface EventPerson {
+  name: string;
+  email?: string | null;
+  company?: string | null;
+  phone?: string | null;
+}
+
 export interface AdminCalendarEvent {
   id: number;
   externalSource: EventSource;
@@ -92,6 +99,10 @@ export interface AdminCalendarEvent {
   editedAt: string | null;
   /** Partners/advertisers tagged on this event (many-to-many). */
   advertiserIds: number[];
+  /** Extra hosts beyond the primary organizer. */
+  additionalHosts: EventPerson[];
+  /** Extra instructors beyond the primary instructor. */
+  additionalInstructors: EventPerson[];
 }
 
 export interface ManualEventInput {
@@ -118,6 +129,8 @@ export interface ManualEventInput {
   lng?: number | null;
   /** Partner/advertiser ids to tag on this event (many-to-many). Omit to leave unchanged. */
   advertiserIds?: number[];
+  additionalHosts?: EventPerson[];
+  additionalInstructors?: EventPerson[];
 }
 
 interface EventRow {
@@ -149,6 +162,8 @@ interface EventRow {
   edited_fields: string[] | null;
   edited_by: string | null;
   edited_at: string | Date | null;
+  additional_hosts: unknown;
+  additional_instructors: unknown;
 }
 
 function toIso(d: string | Date | null): string | null {
@@ -162,6 +177,20 @@ function toNumber(v: number | string | null): number | null {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null;
   const n = parseFloat(v);
   return Number.isFinite(n) ? n : null;
+}
+
+function toPeopleArray(v: unknown): EventPerson[] {
+  const raw = typeof v === 'string' ? JSON.parse(v) : v;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((p): p is Record<string, unknown> => !!p && typeof p === 'object')
+    .map((p) => ({
+      name: typeof p.name === 'string' ? p.name : '',
+      email: typeof p.email === 'string' ? p.email : null,
+      company: typeof p.company === 'string' ? p.company : null,
+      phone: typeof p.phone === 'string' ? p.phone : null,
+    }))
+    .filter((p) => p.name.trim() !== '');
 }
 
 function rowToAdminEvent(r: EventRow): AdminCalendarEvent {
@@ -195,6 +224,8 @@ function rowToAdminEvent(r: EventRow): AdminCalendarEvent {
     editedBy: r.edited_by,
     editedAt: toIso(r.edited_at),
     advertiserIds: [],
+    additionalHosts: toPeopleArray(r.additional_hosts),
+    additionalInstructors: toPeopleArray(r.additional_instructors),
   };
 }
 
@@ -252,7 +283,8 @@ const SELECT_COLS = `
   start_date, end_date, location, organizer, organizer_email, website,
   tags, format, course_number, member_price, nonmember_price,
   image_url, image_thumb, instructor_name, instructor_bio, lat, lng,
-  hidden, edited_fields, edited_by, edited_at
+  hidden, edited_fields, edited_by, edited_at,
+  additional_hosts, additional_instructors
 `;
 
 /** Admin: list ALL events (incl. hidden + past) for one or both publications. */
@@ -293,13 +325,15 @@ export async function createManualEvent(
        start_date, end_date, location, organizer, organizer_email, website,
        tags, format, course_number, member_price, nonmember_price,
        image_url, image_thumb, instructor_name, instructor_bio, lat, lng,
+       additional_hosts, additional_instructors,
        edited_by, edited_at, last_synced_at, updated_at
      ) VALUES (
        'manual', $1, $2, $3, $4, $5,
        $6, $7, $8, $9, $10, $11,
        $12, $13, $14, $15, $16,
        $17, $18, $19, $20, $21, $22,
-       $23, NOW(), NOW(), NOW()
+       $23::jsonb, $24::jsonb,
+       $25, NOW(), NOW(), NOW()
      )
      RETURNING ${SELECT_COLS}`,
     [
@@ -325,6 +359,8 @@ export async function createManualEvent(
       input.instructorBio ?? null,
       input.lat ?? null,
       input.lng ?? null,
+      JSON.stringify(input.additionalHosts ?? []),
+      JSON.stringify(input.additionalInstructors ?? []),
       createdBy,
     ],
   );
@@ -364,6 +400,8 @@ export async function createSubmittedEvent(input: {
   imageThumb?: string | null;
   instructorName?: string | null;
   instructorBio?: string | null;
+  additionalHosts?: EventPerson[];
+  additionalInstructors?: EventPerson[];
   lat?: number | null;
   lng?: number | null;
   advertiserId: number | null;
@@ -380,6 +418,7 @@ export async function createSubmittedEvent(input: {
        start_date, end_date, location, organizer, organizer_email, website,
        tags, format, course_number, member_price, nonmember_price,
        image_url, image_thumb, instructor_name, instructor_bio,
+       additional_hosts, additional_instructors,
        submitted_by_advertiser_id, lat, lng, hidden,
        last_synced_at, updated_at
      ) VALUES (
@@ -387,7 +426,8 @@ export async function createSubmittedEvent(input: {
        $6, $7, $8, $9, $10, $11,
        $12, $13, $14, $15, $16,
        $17, $18, $19, $20,
-       $21, $22, $23, true,
+       $21::jsonb, $22::jsonb,
+       $23, $24, $25, true,
        NOW(), NOW()
      )
      RETURNING ${SELECT_COLS}`,
@@ -412,6 +452,8 @@ export async function createSubmittedEvent(input: {
       input.imageThumb ?? null,
       input.instructorName ?? null,
       input.instructorBio ?? null,
+      JSON.stringify(input.additionalHosts ?? []),
+      JSON.stringify(input.additionalInstructors ?? []),
       input.advertiserId,
       coords?.lat ?? null,
       coords?.lng ?? null,
@@ -644,7 +686,10 @@ export async function updateEvent(
   fields: Partial<ManualEventInput>,
   editedBy: string,
 ): Promise<AdminCalendarEvent | null> {
-  const colMap: Record<Exclude<keyof ManualEventInput, 'advertiserIds'>, string> = {
+  const colMap: Record<
+    Exclude<keyof ManualEventInput, 'advertiserIds' | 'additionalHosts' | 'additionalInstructors'>,
+    string
+  > = {
     publication: 'publication',
     title: 'title',
     description: 'description',
@@ -667,6 +712,10 @@ export async function updateEvent(
     lat: 'lat',
     lng: 'lng',
   };
+  const jsonColMap: Record<'additionalHosts' | 'additionalInstructors', string> = {
+    additionalHosts: 'additional_hosts',
+    additionalInstructors: 'additional_instructors',
+  };
 
   const setClauses: string[] = [];
   const values: unknown[] = [];
@@ -678,6 +727,15 @@ export async function updateEvent(
       const v = (fields as Record<string, unknown>)[key];
       setClauses.push(`${col} = $${i++}`);
       values.push(v ?? null);
+      newlyEditedCols.push(col);
+    }
+  }
+
+  for (const [key, col] of Object.entries(jsonColMap)) {
+    if (key in fields) {
+      const v = (fields as Record<string, unknown>)[key];
+      setClauses.push(`${col} = $${i++}::jsonb`);
+      values.push(JSON.stringify(v ?? []));
       newlyEditedCols.push(col);
     }
   }

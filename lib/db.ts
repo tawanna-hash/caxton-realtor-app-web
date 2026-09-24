@@ -138,6 +138,11 @@ async function _runEnsureSchema(): Promise<void> {
   await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS edited_fields TEXT[] NOT NULL DEFAULT '{}'::text[]`;
   await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS edited_by TEXT`;
   await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ`;
+  // Additional event hosts / instructors beyond the single organizer and
+  // instructor fields (Sep 2026). Each is a JSON array of
+  // { name, email, company, phone } objects.
+  await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS additional_hosts JSONB NOT NULL DEFAULT '[]'::jsonb`;
+  await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS additional_instructors JSONB NOT NULL DEFAULT '[]'::jsonb`;
 
   // ============================================================
   // Event registration short-link clicks (Sep 2026)

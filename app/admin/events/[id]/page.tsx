@@ -5,7 +5,12 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
-import { EventForm, isoToLocalInput, type EventFormData } from '../_components/EventForm';
+import {
+  EventForm,
+  isoToLocalInput,
+  type EventFormData,
+  type EventPersonForm,
+} from '../_components/EventForm';
 import EventRegistrationRegistry from '../_components/EventRegistrationRegistry';
 import type { PublicationId } from '@/lib/publications';
 
@@ -40,7 +45,22 @@ type AdminEvent = {
   editedBy: string | null;
   editedAt: string | null;
   advertiserIds: number[];
+  additionalHosts?: Array<{ name: string; email?: string | null; company?: string | null; phone?: string | null }>;
+  additionalInstructors?: Array<{ name: string; email?: string | null; company?: string | null; phone?: string | null }>;
 };
+
+function toPersonForm(
+  people:
+    | Array<{ name: string; email?: string | null; company?: string | null; phone?: string | null }>
+    | undefined,
+): EventPersonForm[] {
+  return (people ?? []).map((p) => ({
+    name: p.name ?? '',
+    email: p.email ?? '',
+    company: p.company ?? '',
+    phone: p.phone ?? '',
+  }));
+}
 
 function eventToForm(ev: AdminEvent): EventFormData {
   return {
@@ -67,6 +87,8 @@ function eventToForm(ev: AdminEvent): EventFormData {
     lat: ev.lat !== null ? String(ev.lat) : '',
     lng: ev.lng !== null ? String(ev.lng) : '',
     advertiserIds: ev.advertiserIds ?? [],
+    additionalHosts: toPersonForm(ev.additionalHosts),
+    additionalInstructors: toPersonForm(ev.additionalInstructors),
   };
 }
 

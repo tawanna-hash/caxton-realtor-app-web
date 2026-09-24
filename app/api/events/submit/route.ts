@@ -75,6 +75,8 @@ export const POST = withErrorHandling(async (req: Request) => {
     imageThumb: input.imageThumb ?? null,
     instructorName: input.instructorName ?? null,
     instructorBio: input.instructorBio ?? null,
+    additionalHosts: input.additionalHosts ?? [],
+    additionalInstructors: input.additionalInstructors ?? [],
     lat: input.lat ?? null,
     lng: input.lng ?? null,
     advertiserId: null,
