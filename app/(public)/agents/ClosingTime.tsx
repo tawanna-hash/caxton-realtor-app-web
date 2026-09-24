@@ -1997,8 +1997,8 @@ export default function ClosingTime({
 
                 <div className="mt-7 min-w-0">
                   <label className="block min-w-0">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Deal Name: Buyer&apos;s Last Name</span>
-                    <input value={activeDeal.title} onChange={(event) => updateActiveDeal('title', event.target.value)} className="h-[46px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-base outline-none focus:border-[#301D5D] sm:max-w-xl sm:text-sm" placeholder="Buyer’s last name" />
+                    <span className="mb-2 block text-sm font-semibold text-slate-800">Deal Name: Buyer Or Seller Last Name</span>
+                    <input value={activeDeal.title} onChange={(event) => updateActiveDeal('title', event.target.value)} className="h-[46px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-base outline-none focus:border-[#301D5D] sm:max-w-xl sm:text-sm" placeholder="Buyer Or Seller Last Name" />
                   </label>
                 </div>
 
