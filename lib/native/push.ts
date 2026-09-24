@@ -201,6 +201,25 @@ export async function installNativePushHandlers(): Promise<void> {
   }
 }
 
+// Re-send the cached device token so the server links it to the agent who
+// just signed in (the launch-time registration may have run signed out).
+export async function relinkNativePush(): Promise<void> {
+  if (!isNative()) return;
+  const token = getCachedNativePushToken();
+  const platform = nativePlatform();
+  if (!token || (platform !== 'ios' && platform !== 'android')) return;
+  try {
+    await fetch('/api/push/native', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ token, platform, userAgent: navigator.userAgent }),
+    });
+  } catch {
+    /* best-effort */
+  }
+}
+
 // Tell the backend this token should stop receiving pushes. Keeps the
 // row around for analytics but flips revoked_at so the sender skips it.
 export async function disableNativePush(): Promise<{ ok: boolean }> {

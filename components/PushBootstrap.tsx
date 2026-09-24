@@ -18,7 +18,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isNative } from '@/lib/native/runtime';
-import { installNativePushHandlers, registerNativePush } from '@/lib/native/push';
+import { installNativePushHandlers, registerNativePush, relinkNativePush } from '@/lib/native/push';
 import { PushNotifications } from '@capacitor/push-notifications';
 
 export default function PushBootstrap() {
@@ -42,6 +42,8 @@ export default function PushBootstrap() {
       router.replace(target);
     };
     window.addEventListener('caxton:push-nav', onNav);
+    const onAuth = () => { void relinkNativePush(); };
+    window.addEventListener('caxton:authSuccess', onAuth);
 
     (async () => {
       try {
@@ -67,6 +69,7 @@ export default function PushBootstrap() {
     return () => {
       cancelled = true;
       window.removeEventListener('caxton:push-nav', onNav);
+      window.removeEventListener('caxton:authSuccess', onAuth);
     };
   }, [router]);
 

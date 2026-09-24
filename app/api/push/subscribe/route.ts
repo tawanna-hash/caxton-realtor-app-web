@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
 import { withErrorHandling } from '@/lib/server/error';
+import { getCurrentUser } from '@/lib/server/auth/user';
 import { pushSubscribeBodySchema } from '@/lib/server/schemas/push';
 
 export const runtime = 'nodejs';
@@ -18,7 +19,8 @@ export const POST = withErrorHandling(async (req: Request): Promise<Response> =>
   const sub = body.subscription;
 
   const sql = getSql();
-  const realtorId = body.realtorId ?? null;
+  // Fall back to the signed-in agent so Closing Time alerts reach this device.
+  const realtorId = body.realtorId ?? (await getCurrentUser().catch(() => null))?.realtorId ?? null;
   const market = body.market ?? null;
   const userAgent = body.userAgent ?? req.headers.get('user-agent') ?? null;
 
