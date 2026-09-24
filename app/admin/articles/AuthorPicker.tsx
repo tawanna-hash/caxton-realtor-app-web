@@ -9,10 +9,10 @@ export function AuthorPhoto({ name, src }: { name: string; src: string | null })
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '?';
   return (
-    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-xs font-semibold text-gray-600">
+    <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-sm font-semibold text-gray-600">
       {src && failedSrc !== src ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt="" className="h-full w-full object-cover" onError={() => setFailedSrc(src)} />
+        <img src={src} alt="" className="h-full w-full object-cover object-[center_20%]" onError={() => setFailedSrc(src)} />
       ) : initials}
     </span>
   );

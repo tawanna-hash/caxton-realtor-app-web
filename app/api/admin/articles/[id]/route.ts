@@ -15,7 +15,6 @@ import { withAdminTracking } from '@/lib/server/admin-tracking';
 import type { Publication } from '@/lib/server/wp-news';
 import {
   upsertArticleOverride,
-  deleteArticleOverride,
 } from '@/lib/server/article-overrides';
 import {
   isManualArticleId,
@@ -171,9 +170,14 @@ export const DELETE = withAdminTracking(
       return NextResponse.json({ ok: true, deleted });
     }
 
-    const deleted = await deleteArticleOverride(publication, wpPostId);
+    // Imported/WordPress articles may return on the next sync. Hide them
+    // through an override instead of deleting only the override row.
+    const admin = await requireAdmin();
+    const saved = await upsertArticleOverride({
+      publication, wpPostId, hidden: true, editedBy: admin.email,
+    });
     invalidate(publication);
 
-    return NextResponse.json({ ok: true, deleted });
+    return NextResponse.json({ ok: true, deleted: saved.hidden });
   },
 );

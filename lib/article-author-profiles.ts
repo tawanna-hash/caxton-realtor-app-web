@@ -3,6 +3,8 @@ const knownNames: Record<string, string> = {
   rebekah: 'Rebekah Murtagh',
   rachel: 'Rachel Arterberry',
   ojas: 'Ojas Tasker',
+  caroline: 'Caroline Carver',
+  realtyline_1995: 'Tawanna Verock',
   newslinesa_rax22k: 'Tawanna Verock',
   newsline: 'Tawanna Verock',
 };

@@ -167,9 +167,9 @@ export async function upsertArticleOverride(
     if (d.value !== undefined) newlyEdited.push(d.key);
   }
 
-  // We can't use the tagged-template sql for a dynamic SET clause cleanly,
-  // so use the pool-style query for the UPSERT.
-  const { query } = await import('./db/neon');
+  // Parameterized HTTP queries do not require a WebSocket Pool in serverless.
+  const query = async <T,>(text: string, values: unknown[]): Promise<T[]> =>
+    await getSql().query(text, values) as T[];
 
   // Build INSERT column list (always include all columns; missing fields
   // get null / default).

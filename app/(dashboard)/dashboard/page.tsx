@@ -2569,7 +2569,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
                       // (author has no registered Gravatar). Avoids broken-image icon.
                       (e.currentTarget as HTMLImageElement).style.display = 'none';
                     }}
-                    className="w-16 h-16 rounded-full object-cover bg-gray-100 flex-shrink-0"
+                    className="w-20 h-20 rounded-full object-cover object-[center_20%] bg-gray-100 flex-shrink-0"
                   />
                 )}
                 <div className="min-w-0 flex-1">

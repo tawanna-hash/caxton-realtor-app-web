@@ -36,7 +36,9 @@ const PUB_STYLES: Record<NewsArticle['publication'], string> = {
 
 const DEFAULT_CATEGORIES = [
   'Featured Partner',
+  'Featured Advertiser',
   "Editor's Choice",
+  'Editor’s Choice',
   'Five Points Board of REALTORS',
 ];
 
@@ -122,10 +124,14 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
   const [creating, setCreating] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return initialArticles.filter((a) => {
+      if (a.hidden || (categoryFilter && a.cat !== categoryFilter)) return false;
       if (filter !== 'all' && a.publication !== filter) return false;
       if (!q) return true;
       return (
@@ -134,11 +140,15 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
         a.cat.toLowerCase().includes(q)
       );
     });
-  }, [initialArticles, filter, search]);
+  }, [initialArticles, filter, search, categoryFilter]);
 
   const counts = useMemo(() => {
-    const c = { all: initialArticles.length, austin: 0, san_antonio: 0 };
-    for (const a of initialArticles) c[a.publication] += 1;
+    const c = { all: 0, austin: 0, san_antonio: 0 };
+    for (const a of initialArticles) {
+      if (a.hidden) continue;
+      c.all += 1;
+      c[a.publication] += 1;
+    }
     return c;
   }, [initialArticles]);
   const seedAuthors = useMemo(() => {
@@ -192,6 +202,26 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
   function handleCreated() {
     setCreating(false);
     startTransition(() => router.refresh());
+  }
+
+  async function handleDelete(article: AdminArticle) {
+    if (!window.confirm(`Delete "${article.head}"?\n\n${article.id.includes('-manual-') ? 'This manually created article will be permanently removed.' : 'This imported article will be removed from the app and public feed.'}`)) return;
+    setDeletingId(article.id);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/admin/articles/${encodeURIComponent(article.id)}`, {
+        method: 'DELETE', credentials: 'include',
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Delete failed (${res.status})`);
+      }
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Delete failed');
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   const busy = syncing || pending;
@@ -320,6 +350,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
       )}
 
       {/* Filters */}
+      {deleteError && <p role="alert" className="mb-3 text-sm text-red-700">{deleteError}</p>}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {(['all', 'austin', 'san_antonio'] as const).map((key) => (
           <button
@@ -338,6 +369,13 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             </span>
           </button>
         ))}
+        <select aria-label="Filter by category" value={categoryFilter}
+          onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
+          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700">
+          <option value="">All categories</option>
+          {[...categories].sort((a, b) => a.localeCompare(b)).map((category) =>
+            <option key={category} value={category}>{category}</option>)}
+        </select>
         <input
           type="search"
           value={search}
@@ -368,7 +406,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                   <img
                     src={a.imageThumb || a.imageUrl || ''}
                     alt=""
-                    className="w-14 h-14 object-cover rounded-md flex-shrink-0 bg-gray-100"
+                    className="w-14 h-14 object-cover object-[center_20%] rounded-md flex-shrink-0 bg-gray-100"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).style.display = 'none';
                     }}
@@ -403,6 +441,8 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
               <div className="mt-2 flex items-center gap-3">
                 <button type="button" onClick={() => setEditing(a)} className="text-brand-700 hover:underline text-xs font-medium">Edit</button>
                 <a href={a.link} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:underline text-xs">View ↗</a>
+                <button type="button" onClick={() => void handleDelete(a)} disabled={deletingId === a.id}
+                  className="text-red-700 hover:underline text-xs disabled:opacity-50">{deletingId === a.id ? 'Deleting…' : 'Delete'}</button>
               </div>
             </li>
           ))}
@@ -436,7 +476,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                           <img
                             src={a.imageThumb || a.imageUrl || ''}
                             alt=""
-                            className="w-12 h-12 object-cover rounded-md flex-shrink-0 bg-gray-100"
+                            className="w-12 h-12 object-cover object-[center_20%] rounded-md flex-shrink-0 bg-gray-100"
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).style.display = 'none';
                             }}
@@ -495,6 +535,8 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                         >
                           View ↗
                         </a>
+                        <button type="button" onClick={() => void handleDelete(a)} disabled={deletingId === a.id}
+                          className="text-red-700 hover:underline text-xs disabled:opacity-50">{deletingId === a.id ? 'Deleting…' : 'Delete'}</button>
                       </div>
                     </td>
                   </tr>

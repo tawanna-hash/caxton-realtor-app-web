@@ -372,6 +372,12 @@ export default function AppShell({
                     <Link
                       key={link.href}
                       href={link.href}
+                      onClick={(event) => {
+                        if (link.href === '/dashboard' && pathname === '/dashboard') {
+                          event.preventDefault();
+                          window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'feed' }));
+                        }
+                      }}
                       aria-current={active ? 'page' : undefined}
                       className={`px-3 py-1.5 text-xs uppercase tracking-[0.15em] rounded-md transition ${
                         active
