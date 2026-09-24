@@ -13,6 +13,7 @@ import type { ArticleAuthor } from '@/lib/server/article-authors';
 import { ARTICLE_CATEGORIES, canonicalArticleCategory } from '@/lib/article-categories';
 import DOMPurify from 'isomorphic-dompurify';
 import ArticleFeedCardBody from '@/components/ArticleFeedCardBody';
+import { normalizeArticleHtml } from '@/lib/article-html';
 export type AdminArticle = NewsArticle & {
   hidden: boolean;
   editedFields: string[];
@@ -71,7 +72,7 @@ function ArticleBodyEditor({
 }) {
   const [mode, setMode] = useState<'visual' | 'html' | 'reader' | 'feed'>('visual');
   const editor = useRef<HTMLDivElement>(null);
-  const safePreviewHtml = useMemo(() => DOMPurify.sanitize(value), [value]);
+  const safePreviewHtml = useMemo(() => normalizeArticleHtml(DOMPurify.sanitize(value)), [value]);
   useEffect(() => {
     if (mode === 'visual' && editor.current) editor.current.innerHTML = value;
     // Initialize only when entering Visual mode. Rewriting on each keystroke moves the caret.

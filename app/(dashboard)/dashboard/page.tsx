@@ -25,6 +25,7 @@ import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
 import TrendingTicker from '@/components/feed/TrendingTicker';
 import ArticleFeedCardBody from '@/components/ArticleFeedCardBody';
+import { normalizeArticleHtml } from '@/lib/article-html';
 import { isNative } from '@/lib/native/runtime';
 import { ARTICLE_CATEGORIES, articleCategoriesForPublication, canonicalArticleCategory } from '@/lib/article-categories';
 
@@ -1999,9 +2000,9 @@ function cleanArticleHtml(raw: string | undefined): string {
   // Defensive: if cleaning destroyed >80% of content, return raw.
   // The Elementor regex chain occasionally over-matches and eats the body.
   if (raw.trim() && cleaned.length < raw.trim().length * 0.2) {
-    return raw.trim();
+    return normalizeArticleHtml(raw.trim());
   }
-  return cleaned;
+  return normalizeArticleHtml(cleaned);
 }
 
 // Split article HTML into chunks at paragraph boundaries.

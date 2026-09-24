@@ -56,10 +56,7 @@ function safeArticleStyle(style: string): string {
       (property === 'font-weight' && /^(normal|bold|[1-9]00)$/i.test(value)) ||
       (property === 'font-style' && /^(normal|italic|oblique)$/i.test(value)) ||
       (property === 'text-decoration' && /^(none|underline|line-through)$/i.test(value)) ||
-      (property === 'font-size' && /^(?:\d{1,2}(?:\.\d+)?)(?:px|rem|em|%)$/i.test(value)) ||
-      (property === 'line-height' && /^(?:\d(?:\.\d+)?)(?:px|rem|em)?$/i.test(value)) ||
-      ((property === 'color' || property === 'background-color') &&
-        (/^#[0-9a-f]{3,8}$/i.test(value) || /^(?:transparent|black|white|red|blue|gray|grey)$/i.test(value)));
+      false;
     if (valid) safe.push(`${property}: ${value}`);
   }
   return safe.join('; ');
