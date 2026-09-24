@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { Magazine } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
 import { usePtrRefresh } from '@/hooks/use-ptr-refresh';
+import { canonicalArticleCategory } from '@/lib/article-categories';
 
 // Loose shape — the news feed comes from WordPress via /api/news/[publication]
 // and uses inconsistent field names (head/title, sum/excerpt/summary, etc.).
@@ -57,19 +58,16 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
     // ptrNonce intentionally retriggers the fetch on pull-to-refresh.
   }, [magazine.publication, ptrNonce]);
 
-  // Normalize apostrophes so straight (U+0027) and curly (U+2019) both match.
-  const normalizeApostrophe = (str: string) => str.replace(/\u2019/g, "'");
   const items = liveNews || [];
 
   const editorsChoice = items.find((a: NewsArticle) => {
-    const cat = normalizeApostrophe(String(a?.cat || a?.category || ''));
+    const cat = canonicalArticleCategory(String(a?.cat || a?.category || ''), magazine.publication);
     return cat === "Editor's Choice";
   });
 
-  // Note: API uses plural "Featured Partners"; UI label is singular.
   const featuredAdvertiser = items.find((a: NewsArticle) => {
-    const cat = normalizeApostrophe(String(a?.cat || a?.category || ''));
-    return cat === 'Featured Partners';
+    const cat = canonicalArticleCategory(String(a?.cat || a?.category || ''), magazine.publication);
+    return cat === 'Featured Partner';
   });
 
   const renderArticleCard = (article: NewsArticle, label: string, sizeClass: string, summaryClamp: string) => {

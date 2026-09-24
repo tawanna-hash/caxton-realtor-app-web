@@ -25,6 +25,7 @@ import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
 import TrendingTicker from '@/components/feed/TrendingTicker';
 import { isNative } from '@/lib/native/runtime';
+import { ARTICLE_CATEGORIES, articleCategoriesForPublication, canonicalArticleCategory } from '@/lib/article-categories';
 
 const API = getApiBase();
 
@@ -60,29 +61,21 @@ function canonicalShareUrl(article?: { id?: string | number | null; link?: strin
   }
 }
 
-// Social pill removed 2026-06-02 — Facebook Group integration didn't pan out
-// (Groups API deprecated by Meta in 2024, OG-tag harvester blocked by FB's
-// datacenter-IP filter). Old saved values for caxton_cat_* in localStorage
-// that reference 'Social' fall through to 'All' via the validCats check in
-// Feed's useState initializer below.
-const RL_CATS = ['All', 'ABoR', 'Five Points', 'Featured Partners', "Editor's Choice", 'Faces of Real Estate', 'WCR Austin'];
-const NS_CATS = ['All', 'SABOR', 'GSABA', 'WCR San Antonio', 'Residential', 'Featured Partners', "Editor's Choice", 'Faces of Real Estate'];
-
 const RL_NEWS = [
-  { id: 1, cat: 'ABoR', head: 'ABoR Announces 2026 Board Election Results', sum: 'New leadership elected with a focus on affordability and inventory.', time: '2 hours ago' },
-  { id: 2, cat: 'Five Points', head: 'Five Points BoR Hosts CE Workshop on Settlement Changes', sum: 'New CE courses cover commission disclosure rules and best practices.', time: '5 hours ago' },
-  { id: 3, cat: 'Featured Partners', head: 'Austin Title Marks 30 Years Serving Central Texas REALTORS', sum: 'Anniversary milestone celebrated with a new fast-close service tier.', time: '1 day ago' },
+  { id: 1, cat: 'Austin Board of REALTORS (ABOR)', head: 'ABoR Announces 2026 Board Election Results', sum: 'New leadership elected with a focus on affordability and inventory.', time: '2 hours ago' },
+  { id: 2, cat: 'Five Points Board of REALTORS (Five Points)', head: 'Five Points BoR Hosts CE Workshop on Settlement Changes', sum: 'New CE courses cover commission disclosure rules and best practices.', time: '5 hours ago' },
+  { id: 3, cat: 'Featured Partner', head: 'Austin Title Marks 30 Years Serving Central Texas REALTORS', sum: 'Anniversary milestone celebrated with a new fast-close service tier.', time: '1 day ago' },
   { id: 4, cat: "Editor's Choice", head: 'Austin Home Sales Rise 12% in April', sum: 'The Austin-Round Rock metro saw a jump in closed sales last month.', time: '1 day ago' },
   { id: 5, cat: 'Faces of Real Estate', head: 'Faces of Real Estate: May Profile Edition Released', sum: 'Six Austin agents share their stories, strategies, and 2026 outlook.', time: '2 days ago' },
-  { id: 6, cat: 'WCR Austin', head: 'WCR Austin Announces Spring Networking Mixer', sum: 'Members and guests gather May 22 at the Driskill for an evening of connections.', time: '2 days ago' },
+  { id: 6, cat: "Women's Council of REALTORS Austin", head: 'WCR Austin Announces Spring Networking Mixer', sum: 'Members and guests gather May 22 at the Driskill for an evening of connections.', time: '2 days ago' },
 ];
 
 const NS_NEWS = [
-  { id: 1, cat: 'SABOR', head: 'SABOR Announces Annual Awards Finalists', sum: 'Nominees span residential, commercial, and affiliate categories.', time: '3 hours ago' },
-  { id: 2, cat: 'GSABA', head: 'GSABA Hosts Builder Certification Workshop', sum: 'Two-day workshop covers green building standards and permit updates.', time: '6 hours ago' },
-  { id: 3, cat: 'WCR San Antonio', head: 'WCR San Antonio Hosts Spring Leadership Forum', sum: 'Members convene for networking and professional development sessions.', time: '1 day ago' },
-  { id: 4, cat: 'Residential', head: 'San Antonio Median Home Price Hits New High', sum: 'Bexar County saw record prices in April across all segments.', time: '1 day ago' },
-  { id: 5, cat: 'Featured Partners', head: 'Alamo Title Expands SA Operations With New Branch', sum: 'Local title leader adds capacity to serve South San Antonio agents.', time: '1 day ago' },
+  { id: 1, cat: 'San Antonio Board of REALTORS (SABOR)', head: 'SABOR Announces Annual Awards Finalists', sum: 'Nominees span residential, commercial, and affiliate categories.', time: '3 hours ago' },
+  { id: 2, cat: 'Greater San Antonio Builders Association (GSABA)', head: 'GSABA Hosts Builder Certification Workshop', sum: 'Two-day workshop covers green building standards and permit updates.', time: '6 hours ago' },
+  { id: 3, cat: "Women's Council of REALTORS San Antonio", head: 'WCR San Antonio Hosts Spring Leadership Forum', sum: 'Members convene for networking and professional development sessions.', time: '1 day ago' },
+  { id: 4, cat: "Editor's Choice", head: 'San Antonio Median Home Price Hits New High', sum: 'Bexar County saw record prices in April across all segments.', time: '1 day ago' },
+  { id: 5, cat: 'Featured Partner', head: 'Alamo Title Expands SA Operations With New Branch', sum: 'Local title leader adds capacity to serve South San Antonio agents.', time: '1 day ago' },
   { id: 6, cat: "Editor's Choice", head: 'Pearl District Office Tower Sells for $85M', sum: 'The 12-story Class A tower traded to an out-of-state investor.', time: '2 days ago' },
   { id: 7, cat: 'Faces of Real Estate', head: 'Faces of Real Estate: SA Profile Edition Released', sum: 'Six San Antonio agents share their stories and 2026 strategies.', time: '2 days ago' },
 ];
@@ -1504,8 +1497,15 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
   const NEWS: any[] = liveNews ?? (newsError ? fallbackNews : []);
   const EVTS = pub === 'realtyline' ? RL_EVTS : NS_EVTS;
   const pubAds = ADS.filter((a) => a.pub === pub);
-  const CATS = pub === 'realtyline' ? RL_CATS : NS_CATS;
-  const filt = cat === 'All' ? NEWS : NEWS.filter((n) => n.cat === cat);
+  const market = pub === 'realtyline' ? 'austin' : 'san_antonio';
+  const marketCategories = articleCategoriesForPublication(market);
+  // Include any approved category used by this market, even if it is not in
+  // the usual market-specific pill set (for example an RRC story in Austin).
+  const CATS = ['All', ...marketCategories, ...ARTICLE_CATEGORIES.filter((category) =>
+    !marketCategories.includes(category) && NEWS.some((article) =>
+      canonicalArticleCategory(article.cat || '', market) === category))];
+  const filt = cat === 'All' ? NEWS : NEWS.filter((article) =>
+    canonicalArticleCategory(article.cat || '', market) === cat);
 
   const feed: { t: 'n' | 'a' | 'c' | 's' | 'e' | 'm' | 'r'; d?: any }[] = [];
   const isLoadingFirstFetch = newsLoading && liveNews === null;
@@ -1679,7 +1679,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
                 key={c}
                 onClick={() => { void haptics.selection(); setCat(c); }}
                 aria-pressed={cat === c}
-                // BUG-16: add flex-shrink-0 so long chips like "Featured Partners"
+                // BUG-16: add flex-shrink-0 so long category chips
                 // don't get squeezed by sibling flex children and overflow the row.
                 className={
                   cat === c

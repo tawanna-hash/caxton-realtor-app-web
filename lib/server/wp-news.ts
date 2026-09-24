@@ -10,12 +10,14 @@
 import { unstable_cache } from 'next/cache';
 import { logger } from './logger';
 import { authorPortrait, canonicalAuthorName } from '@/lib/article-author-profiles';
+import { canonicalArticleCategory } from '@/lib/article-categories';
 
 function withKnownAuthor(article: NewsArticle): NewsArticle {
-  if (!article.author?.name) return article;
+  const categorized = { ...article, cat: canonicalArticleCategory(article.cat, article.publication) };
+  if (!article.author?.name) return categorized;
   const name = canonicalAuthorName(article.author.name, article.publication);
   const avatar = authorPortrait(name, article.author.avatar);
-  return { ...article, author: { name, ...(avatar ? { avatar } : {}) } };
+  return { ...categorized, author: { name, ...(avatar ? { avatar } : {}) } };
 }
 
 // Allowlist for sanitized article HTML. Wide enough to preserve WordPress formatting
@@ -169,11 +171,11 @@ const PUBS: Record<Publication, PublicationConfig> = {
   austin: {
     baseUrl: 'https://realtyline.us',
     slugToAppCategory: {
-      'austin-board-of-realtors': 'ABoR',
-      'five-points-realtors': 'Five Points',
-      'womens-council-of-realtors': 'WCR Austin',
-      'featured-advertiser': 'Featured Partners',
-      'featured-advertisers': 'Featured Partners',
+      'austin-board-of-realtors': 'Austin Board of REALTORS (ABOR)',
+      'five-points-realtors': 'Five Points Board of REALTORS (Five Points)',
+      'womens-council-of-realtors': "Women's Council of REALTORS Austin",
+      'featured-advertiser': 'Featured Partner',
+      'featured-advertisers': 'Featured Partner',
       'editors-choice': "Editor's Choice",
       'faces-of-real-estate': 'Faces of Real Estate',
     },
@@ -182,12 +184,11 @@ const PUBS: Record<Publication, PublicationConfig> = {
   san_antonio: {
     baseUrl: 'https://newslinesa.com',
     slugToAppCategory: {
-      'san-antonio-board-of-realtors': 'SABOR',
-      'greater-san-antonio-builders-association': 'GSABA',
-      'womens-council-of-realtors': 'WCR San Antonio',
-      residential: 'Residential',
-      'featured-advertiser': 'Featured Partners',
-      'featured-advertisers': 'Featured Partners',
+      'san-antonio-board-of-realtors': 'San Antonio Board of REALTORS (SABOR)',
+      'greater-san-antonio-builders-association': 'Greater San Antonio Builders Association (GSABA)',
+      'womens-council-of-realtors': "Women's Council of REALTORS San Antonio",
+      'featured-advertiser': 'Featured Partner',
+      'featured-advertisers': 'Featured Partner',
       'editors-choice': "Editor's Choice",
       'faces-of-real-estate': 'Faces of Real Estate',
     },

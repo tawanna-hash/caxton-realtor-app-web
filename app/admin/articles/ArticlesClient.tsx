@@ -10,6 +10,7 @@ import ContentPagination from '@/app/admin/_components/ContentPagination';
 import FeatureArticlesPanel from './FeatureArticlesPanel';
 import AuthorPicker, { AuthorPhoto } from './AuthorPicker';
 import type { ArticleAuthor } from '@/lib/server/article-authors';
+import { ARTICLE_CATEGORIES, canonicalArticleCategory } from '@/lib/article-categories';
 export type AdminArticle = NewsArticle & {
   hidden: boolean;
   editedFields: string[];
@@ -33,20 +34,6 @@ const PUB_STYLES: Record<NewsArticle['publication'], string> = {
   austin: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
   san_antonio: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
 };
-
-const ARTICLE_CATEGORIES = [
-  'Austin Board of REALTORS (ABOR)',
-  'Five Points Board of REALTORS (Five Points)',
-  "Women's Council of REALTORS San Antonio",
-  "Women's Council of REALTORS Austin",
-  'Greater San Antonio Builders Association (GSABA)',
-  'Home Builders Association of Austin (HBA Austin)',
-  'San Antonio Board of REALTORS (SABOR)',
-  "Editor's Choice",
-  'Featured Partner',
-  'Faces of Real Estate',
-  'Residential Real Estate Council (RRC)',
-] as const;
 
 function CategoryPicker({
   value, onChange,
@@ -129,7 +116,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return initialArticles.filter((a) => {
-      if (a.hidden || (categoryFilter && a.cat !== categoryFilter)) return false;
+      if (a.hidden || (categoryFilter && canonicalArticleCategory(a.cat, a.publication) !== categoryFilter)) return false;
       if (filter !== 'all' && a.publication !== filter) return false;
       if (!q) return true;
       return (
