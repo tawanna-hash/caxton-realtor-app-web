@@ -75,7 +75,7 @@ export const EMPTY_EVENT: EventFormData = {
 // Matched case-insensitively so "mls", "Mls", "MLS" all normalize to "MLS".
 const PRESERVED_ACRONYMS = [
   'MLS', 'HAR', 'ABoR', 'SABoR', 'TREC', 'NAR', 'TAR', 'CE', 'HOA', 'REALTOR',
-  'REALTORS', 'CRM', 'RSVP', 'HVAC', 'FAQ', 'CEO', 'VP', 'PC', 'LLC', 'HGTV',
+  'REALTORS', 'CRM', 'RSVP', 'HVAC', 'FAQ', 'CEO', 'VP', 'PC', 'LLC', 'HGTV', 'TX',
 ];
 const ACRONYM_LOOKUP = new Map(PRESERVED_ACRONYMS.map((a) => [a.toUpperCase(), a]));
 
@@ -343,19 +343,19 @@ export function EventForm({
 
       setData((current) => ({
         ...current,
-        title: ex.title ?? current.title,
+        title: ex.title ? toTitleCase(ex.title) : current.title,
         description: ex.description ?? current.description,
         startDate: ex.startDate ?? current.startDate,
         endDate: ex.endDate ?? current.endDate,
-        location: ex.location ?? current.location,
-        organizer: ex.organizer ?? current.organizer,
+        location: ex.location ? toTitleCase(ex.location) : current.location,
+        organizer: ex.organizer ? toTitleCase(ex.organizer) : current.organizer,
         organizerEmail: ex.organizerEmail ?? current.organizerEmail,
-        website: ex.website ?? current.website,
+        website: ex.website ? normalizeUrlInput(ex.website) : current.website,
         format: ex.format ?? current.format,
         courseNumber: ex.courseNumber ?? current.courseNumber,
         memberPrice: ex.memberPrice ?? current.memberPrice,
         nonmemberPrice: ex.nonmemberPrice ?? current.nonmemberPrice,
-        instructorName: ex.instructorName ?? current.instructorName,
+        instructorName: ex.instructorName ? toTitleCase(ex.instructorName) : current.instructorName,
         instructorBio: ex.instructorBio ?? current.instructorBio,
         imageUrl: flyerUrl ?? current.imageUrl,
         imageThumb: flyerUrl ?? current.imageThumb,
