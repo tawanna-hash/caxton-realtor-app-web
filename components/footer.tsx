@@ -3,13 +3,13 @@ import Image from 'next/image';
 import { SocialLinks } from '@/components/SocialLinks';
 import { FeaturedPartnersCarousel } from '@/components/FeaturedPartnersCarousel';
 
-export function Footer() {
+export function Footer({ showAustinPartners = false }: { showAustinPartners?: boolean }) {
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className="bg-gray-50 border-t border-gray-200 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-28">
-        <div className="border-b border-gray-200 pb-8 mb-8">
+        {showAustinPartners && <div className="border-b border-gray-200 pb-8 mb-8">
           <div className="flex items-center gap-3 mb-5">
             <Image
               src="/brand/rnn-logo.jpg"
@@ -24,7 +24,7 @@ export function Footer() {
             </div>
           </div>
           <FeaturedPartnersCarousel placement="footer" />
-        </div>
+        </div>}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-sm font-semibold text-gray-900 mb-3">RealtyLine Austin</h3>

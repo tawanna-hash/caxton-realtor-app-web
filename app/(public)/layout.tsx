@@ -6,7 +6,7 @@ export default async function PublicLayout({ children }: { children: React.React
   const initialPub = await getServerPub();
   return (
     <PublicationProvider initialPub={initialPub}>
-      <AppShell variant="public">
+      <AppShell variant="public" initialPub={initialPub}>
         {children}
       </AppShell>
     </PublicationProvider>

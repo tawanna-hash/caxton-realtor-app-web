@@ -17,7 +17,7 @@ export default async function DashboardLayout({
   const initialPub = await getServerPub();
   return (
     <PublicationProvider initialPub={initialPub}>
-      <AppShell variant="public">
+      <AppShell variant="public" initialPub={initialPub}>
         {children}
       </AppShell>
     </PublicationProvider>

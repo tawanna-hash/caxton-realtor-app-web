@@ -37,6 +37,7 @@ import NewsletterCTA from '@/components/NewsletterCTA';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
 import { getPublicActivePub, isPubId, isPublicActivePubId } from '@/lib/publications';
+import type { Pub } from '@/lib/publication';
 
 // ============================================================
 // Types + constants
@@ -94,9 +95,11 @@ function getLastFrontendRoute(): string {
 export default function AppShell({
   children,
   variant = 'public',
+  initialPub = 'realtyline',
 }: {
   children: React.ReactNode;
   variant?: 'admin' | 'public';
+  initialPub?: Pub;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -111,9 +114,9 @@ export default function AppShell({
     pathname.startsWith('/admin/events/gmail/shared/') ||
     /^\/admin\/invoices\/[^/]+\/preview$/.test(pathname);
   const useCompactAdminDensity = isAdmin && !compactAdminExcluded;
-  // Server + first client render default to 'realtyline'. Real value is read from cookie/localStorage in useEffect below.
-  // Actual pub is read from localStorage post-mount in the useEffect below.
-  const [pub, setPub] = useState<string>('realtyline');
+  // Start with the market selected on the server so Newsline never receives
+  // Austin-only partner logos during the initial render.
+  const [pub, setPub] = useState<string>(initialPub);
   // Resolve the current pub metadata for the header title-as-switcher.
   // Null when the user hasn't picked yet (first launch) or when the
   // stored id isn't a known active pub — in which case the header falls
@@ -407,7 +410,7 @@ export default function AppShell({
           </div>
         </div>
       </header>
-      {!isAdmin && <FeaturedPartnersCarousel placement="top" />}
+      {!isAdmin && pub === 'realtyline' && <FeaturedPartnersCarousel placement="top" />}
 
       {/* ======== DRAWER (extracted to NavDrawer in S18) ======== */}
       <NavDrawer
@@ -479,7 +482,7 @@ export default function AppShell({
       ) : null}
       {/* Admin chrome stays admin-only — the public Footer (RealtyLine /
           Newsline San Antonio / Resources columns) was leaking onto every /admin page. */}
-      {!isAdmin && <Footer />}
+      {!isAdmin && <Footer showAustinPartners={pub === 'realtyline'} />}
     </div>
   );
 }
