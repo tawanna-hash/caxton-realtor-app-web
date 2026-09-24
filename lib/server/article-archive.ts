@@ -354,12 +354,13 @@ export async function upsertImportedArticle(
   input: ImportedArticleInput,
 ): Promise<NewsArticle> {
   await ensureArticleArchiveSchema();
+  const slug = `${input.publication}-${input.head.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 100) || 'article'}-${input.wpPostId}`;
   const rows = await query<ArchivedArticleRow>(
     `INSERT INTO wp_article_archive
-       (publication, wp_post_id, head, excerpt, content_html, image_url,
+       (publication, wp_post_id, slug, head, excerpt, content_html, image_url,
         image_thumb, author_name, author_avatar, cat, tags, published_at,
         source_url, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
      ON CONFLICT (publication, wp_post_id) DO UPDATE SET
         head          = EXCLUDED.head,
         excerpt       = EXCLUDED.excerpt,
@@ -379,6 +380,7 @@ export async function upsertImportedArticle(
     [
       input.publication,
       input.wpPostId,
+      slug,
       input.head,
       input.excerpt ?? '',
       input.contentHtml ?? '',
