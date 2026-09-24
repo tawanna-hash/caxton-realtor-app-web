@@ -124,7 +124,7 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
       },
       {
         id: 'executed-contract',
-        label: 'TREC One to Four Family Residential Contract',
+        label: 'TREC One To Four Family Residential Contract',
         description: 'The standard promulgated purchase agreement.',
       },
       {
@@ -181,7 +181,7 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
     items: [
       {
         id: 'valuation-cma-appraisal-bpo',
-        label: 'CMA, Appraisal, or BPO',
+        label: 'CMA, Appraisal, Or BPO',
         description: 'Comparative market analysis, lender appraisal, or broker price opinion supporting valuation.',
       },
       {
@@ -317,7 +317,7 @@ function ReadinessChecklist({
         <option value="requested">Requested</option>
         <option value="received">Received</option>
         <option value="reviewed">Reviewed</option>
-        <option value="not_needed">Not needed</option>
+        <option value="not_needed">Not Needed</option>
       </select>
     </div>
     );
@@ -386,7 +386,7 @@ function ReadinessChecklist({
       </div>
 
       <div className="mt-5 border-t border-slate-200 pt-5">
-        <p className="text-sm font-semibold text-slate-800">Operational review alerts</p>
+        <p className="text-sm font-semibold text-slate-800">Operational Review Alerts</p>
         {reviewAlerts.length ? (
           <ul className="mt-3 space-y-2">
             {reviewAlerts.slice(0, 4).map((alert) => (
@@ -499,7 +499,7 @@ function newDeal(trecFormVersionId: string): AgentDeal {
   const now = new Date().toISOString();
   return {
     id: getId('deal'),
-    title: 'New transaction',
+    title: 'New Transaction',
     propertyAddress: '',
     buyerNames: '',
     sellerNames: '',
@@ -1753,10 +1753,10 @@ export default function ClosingTime({
                 <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline Alerts</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Choose How You Are Notified</h2></div>
               </div>
               <div className="mt-4 space-y-3">
-                <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Mail className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />Send deadline alerts by email</label>
-                <div className="flex flex-wrap items-center gap-3"><label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.pushEnabled} onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Smartphone className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />Send browser push alerts</label><PushOptInButton realtorId={realtorId} label="Connect this device" className="inline-flex min-h-[36px] items-center rounded-md border border-[#7059A8] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]" /></div>
+                <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Mail className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />Send Deadline Alerts By Email</label>
+                <div className="flex flex-wrap items-center gap-3"><label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.pushEnabled} onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Smartphone className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />Send Browser Push Alerts</label><PushOptInButton realtorId={realtorId} label="Connect This Device" className="inline-flex min-h-[36px] items-center rounded-md border border-[#7059A8] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]" /></div>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-slate-100 pt-3 sm:flex sm:flex-wrap sm:gap-x-4">
-                  {([[7, '7 days before'], [3, '3 days before'], [1, '1 day before'], [0, 'Due today']] as const).map(([offset, label]) => <label key={offset} className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600"><input type="checkbox" checked={notificationPreferences.reminderOffsets.includes(offset)} disabled={notificationPreferences.reminderOffsets.length === 1 && notificationPreferences.reminderOffsets[0] === offset} onChange={() => toggleReminderOffset(offset)} className="h-3.5 w-3.5 accent-[#301D5D]" />{label}</label>)}
+                  {([[7, '7 Days Before'], [3, '3 Days Before'], [1, '1 Day Before'], [0, 'Due Today']] as const).map(([offset, label]) => <label key={offset} className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600"><input type="checkbox" checked={notificationPreferences.reminderOffsets.includes(offset)} disabled={notificationPreferences.reminderOffsets.length === 1 && notificationPreferences.reminderOffsets[0] === offset} onChange={() => toggleReminderOffset(offset)} className="h-3.5 w-3.5 accent-[#301D5D]" />{label}</label>)}
                 </div>
               </div>
               <p className="mt-4 text-xs leading-5 text-slate-500">Alerts are opt-in and send only for active transactions. Browser push requires permission on each device.</p>
@@ -1865,7 +1865,7 @@ export default function ClosingTime({
                     }}
                     className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"
                   >
-                    Start a New Transaction
+                    Start A New Transaction
                   </button>
                   {activeDeal && isDealLocked(activeDeal) && (
                     <span className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-500">
@@ -2737,11 +2737,11 @@ export default function ClosingTime({
               <div className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2">
                 <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a transaction task" />
                 <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
-                <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-[44px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select>
+                <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-[44px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
                 <button type="button" onClick={addTask} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
               </div>
               <div className="mt-4 grid min-w-0 gap-2 border-y border-slate-100 py-4 sm:grid-cols-2">
-                <select value={reminderDeadlineId} onChange={(event) => setReminderDeadlineId(event.target.value)} aria-label="Reminder deadline" className="min-h-[42px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm"><option value="">Custom reminder deadline</option>{activeDeadlines.map((deadline) => <option key={deadline.id} value={deadline.id}>{deadline.label}</option>)}</select>
+                <select value={reminderDeadlineId} onChange={(event) => setReminderDeadlineId(event.target.value)} aria-label="Reminder deadline" className="min-h-[42px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm"><option value="">Custom Reminder Deadline</option>{activeDeadlines.map((deadline) => <option key={deadline.id} value={deadline.id}>{deadline.label}</option>)}</select>
                 <input type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} aria-label="Custom reminder date" className="min-h-[42px] min-w-0 w-full border border-slate-300 px-2 text-sm" />
                 <input value={reminderNote} onChange={(event) => setReminderNote(event.target.value)} aria-label="Custom reminder note" className="min-h-[42px] min-w-0 w-full border border-slate-300 px-3 text-sm" placeholder="Reminder note (optional)" />
                 <button type="button" onClick={addCustomReminder} disabled={!reminderDeadlineId || !reminderDate} className="inline-flex min-h-[42px] items-center justify-center rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-40">Add Reminder</button>
@@ -2749,7 +2749,7 @@ export default function ClosingTime({
               <div className="mt-5 space-y-2">
                 {!activeDeal.tasks.length && !activeDeal.reminders.length ? <p className="border border-dashed border-slate-300 bg-[#FCFBF9] p-4 text-sm text-slate-600">Use deadline presets (7d, 3d, 1d, due) in the review step or add a custom action here.</p> : <>
                   {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border border-[#E7C769] bg-[#FFF9E7] p-3"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#A97A1A] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#855D10]">{formatDate(reminder.reminderDate)}</span></div>)}
-                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-red-100 text-red-800' : task.priority === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ')}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#B6402C]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#9A3D2B]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
+                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}><Check className="h-3.5 w-3.5" aria-hidden="true" /></button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-red-100 text-red-800' : task.priority === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'} capitalize`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#B6402C]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#9A3D2B]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
                 </>}
               </div>
             </div>
@@ -2817,7 +2817,7 @@ export default function ClosingTime({
               </p>
             )}
             <div className="mt-5 grid gap-3 md:grid-cols-3">
-              <select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"><option value="">Closeout outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select>
+              <select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"><option value="">Closeout Outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select>
               <input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" />
               <input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" placeholder="Closeout note" />
             </div>

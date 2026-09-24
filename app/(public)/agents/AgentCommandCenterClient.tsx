@@ -39,11 +39,11 @@ type ReferralCategory = {
 };
 
 const REFERRAL_CATEGORIES: ReferralCategory[] = [
-  { id: 'all', label: 'All services', description: 'Every featured local partner', keywords: [] },
+  { id: 'all', label: 'All Services', description: 'Every Featured Local Partner', keywords: [] },
   { id: 'title', label: 'Title', description: 'Closing, escrow, and title services', keywords: ['title', 'escrow', 'closing'] },
   { id: 'appraisal', label: 'Appraisal', description: 'Appraisal and valuation support', keywords: ['apprais', 'valuation'] },
   { id: 'remodeling', label: 'Remodeling', description: 'Renovation and repair services', keywords: ['remodel', 'renovat', 'contractor', 'repair'] },
-  { id: 'hvac', label: 'A/C & heating', description: 'HVAC comfort and service experts', keywords: ['hvac', 'air condition', 'heating', 'a/c', 'ac repair'] },
+  { id: 'hvac', label: 'A/C & Heating', description: 'HVAC comfort and service experts', keywords: ['hvac', 'air condition', 'heating', 'a/c', 'ac repair'] },
   { id: 'roofing', label: 'Roofing', description: 'Roof inspections and replacement', keywords: ['roof', 'gutter'] },
   { id: 'inspection', label: 'Inspection', description: 'Property and specialty inspections', keywords: ['inspect'] },
   { id: 'lending', label: 'Lending', description: 'Mortgage and financing partners', keywords: ['lender', 'mortgage', 'loan', 'finance'] },
@@ -199,7 +199,7 @@ export default function AgentCommandCenterClient({
                 href="#referral-network"
                 className="inline-flex h-[46px] items-center justify-center gap-2 rounded-md border border-white/25 px-5 text-sm font-semibold text-white transition hover:bg-white/10"
               >
-                Find a local partner
+                Find A Local Partner
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </a>
             </div>
@@ -209,9 +209,9 @@ export default function AgentCommandCenterClient({
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">Today&apos;s agent desk</p>
             <div className="mt-5 space-y-4">
               {[
-                ['01', 'Map key TREC dates', 'Bring the effective date and period terms.'],
-                ['02', 'Prepare the numbers', 'Run the seller net sheet or commission split.'],
-                ['03', 'Solve the next need', 'Connect with a local partner from the network.'],
+                ['01', 'Map Key TREC Dates', 'Bring the effective date and period terms.'],
+                ['02', 'Prepare The Numbers', 'Run the seller net sheet or commission split.'],
+                ['03', 'Solve The Next Need', 'Connect with a local partner from the network.'],
               ].map(([number, title, description]) => (
                 <div key={number} className="flex gap-3 border-t border-white/10 pt-4 first:border-t-0 first:pt-0">
                   <span className="pt-0.5 text-xs font-bold text-[#F4D06F]">{number}</span>
