@@ -150,13 +150,18 @@ export async function GET(req: NextRequest) {
   });
 }
 
-export const POST = withAdminTracking(async () => {
+export const POST = withAdminTracking(async (req: NextRequest) => {
   await requireAdmin();
 
+  const publication = req.nextUrl.searchParams.get('publication');
+  if (publication && publication !== 'austin' && publication !== 'san_antonio') {
+    return NextResponse.json({ error: 'publication must be austin or san_antonio' }, { status: 400 });
+  }
+  const selectedRows = publication ? ROWS.filter((row) => row.publication === publication) : ROWS;
   let imported = 0;
   const errors: { publication: Publication; wpPostId: string; error: string }[] = [];
 
-  for (const row of ROWS) {
+  for (const row of selectedRows) {
     try {
       await upsertImportedArticle({
         publication: row.publication,
@@ -190,7 +195,7 @@ export const POST = withAdminTracking(async () => {
   return NextResponse.json({
     ok: errors.length === 0,
     imported,
-    total: ROWS.length,
+    total: selectedRows.length,
     errors,
   });
 });
