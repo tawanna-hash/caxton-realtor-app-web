@@ -1759,7 +1759,7 @@ export default function ClosingTime({
                   {([[7, '7 Days Before'], [3, '3 Days Before'], [1, '1 Day Before'], [0, 'Due Today']] as const).map(([offset, label]) => <label key={offset} className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600"><input type="checkbox" checked={notificationPreferences.reminderOffsets.includes(offset)} disabled={notificationPreferences.reminderOffsets.length === 1 && notificationPreferences.reminderOffsets[0] === offset} onChange={() => toggleReminderOffset(offset)} className="h-3.5 w-3.5 accent-[#301D5D]" />{label}</label>)}
                 </div>
               </div>
-              <p className="mt-4 text-xs leading-5 text-slate-500">Alerts are opt-in and send only for active transactions. Browser push requires permission on each device.</p>
+              <p className="mt-4 text-xs leading-5 text-slate-500">Alerts are opt-in and send only for active transactions. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
             </div>
           </div>
         </div>
