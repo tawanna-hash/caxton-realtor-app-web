@@ -18,7 +18,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { isNative } from '@/lib/native/runtime';
-import { installNativePushHandlers, registerNativePush, relinkNativePush } from '@/lib/native/push';
+import { ensureNativePushActive, installNativePushHandlers, registerNativePush } from '@/lib/native/push';
 import { PushNotifications } from '@capacitor/push-notifications';
 
 const PENDING_KEY = 'caxton_pending_push_nav';
@@ -68,8 +68,18 @@ export default function PushBootstrap() {
       router.replace(target);
     };
     window.addEventListener('caxton:push-nav', onNav);
-    const onAuth = () => { void relinkNativePush(); };
+    const onAuth = () => { void ensureNativePushActive(); };
     window.addEventListener('caxton:authSuccess', onAuth);
+    // Re-confirm the device every time the app comes back to the foreground.
+    let removeResume: (() => void) | null = null;
+    void import('@capacitor/app').then(({ App }) =>
+      App.addListener('appStateChange', (state) => {
+        if (state.isActive) void ensureNativePushActive();
+      }).then((handle) => {
+        if (cancelled) void handle.remove();
+        else removeResume = () => { void handle.remove(); };
+      }),
+    ).catch(() => undefined);
 
     (async () => {
       try {
@@ -96,6 +106,7 @@ export default function PushBootstrap() {
       cancelled = true;
       window.removeEventListener('caxton:push-nav', onNav);
       window.removeEventListener('caxton:authSuccess', onAuth);
+      removeResume?.();
     };
   }, [router]);
 

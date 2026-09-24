@@ -220,6 +220,26 @@ export async function relinkNativePush(): Promise<void> {
   }
 }
 
+// Keep this device's alerts switched on: whenever the app launches, returns
+// to the foreground, or an agent signs in, confirm the token with the
+// server. This re-activates a token the server may have marked inactive and
+// links it to whoever is signed in, so an enabled phone never silently drops.
+export async function ensureNativePushActive(): Promise<void> {
+  if (!isNative()) return;
+  try {
+    const perm = await PushNotifications.checkPermissions();
+    if (perm.receive !== 'granted') return;
+    if (getCachedNativePushToken()) {
+      await relinkNativePush();
+    } else {
+      registered = false;
+      await registerNativePush();
+    }
+  } catch {
+    /* best-effort */
+  }
+}
+
 // Tell the backend this token should stop receiving pushes. Keeps the
 // row around for analytics but flips revoked_at so the sender skips it.
 export async function disableNativePush(): Promise<{ ok: boolean }> {
