@@ -9,7 +9,6 @@ import { useSwipeBack } from '@/hooks/use-swipe-back';
 import ProfilePanel from '@/components/ProfilePanel';
 import { getApiBase } from '@/lib/api-base';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
-import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import SaborReportCard from '@/components/SaborReportCard';
 import RealtyLineReportCard from '@/components/RealtyLineReportCard';
@@ -1779,10 +1778,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
                 </button>
               </div>
             )}
-            {/* Follow-us card pinned at the bottom of the feed, brand-colored
-                per pub. URLs live in lib/pub-meta.ts — placeholders render
-                as disabled icons until real URLs are wired in. */}
-            <SocialLinks pub={pub as 'realtyline' | 'newsline'} variant="feed" />
           </div>
         </div>
       )}
