@@ -215,8 +215,7 @@ function emailHtml(deal: AgentDeal, deadline: DealDeadline, offset: number): str
       <p style="margin:0 0 8px;color:#7059A8;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Closing Time</p>
       <h1 style="margin:0 0 16px;font-size:24px;color:#301D5D">${deadlineLabel} ${timing}</h1>
       <p style="margin:0 0 8px"><strong>Transaction:</strong> ${label}</p>
-      <p style="margin:0 0 20px"><strong>Deadline date:</strong> ${escapeHtml(deadline.date)}</p>
-      <p style="margin:0 0 24px">Review the signed contract, delivery requirements, and your broker&apos;s process before acting.</p>
+      <p style="margin:0 0 24px"><strong>Deadline date:</strong> ${escapeHtml(deadline.date)}</p>
       <a href="${siteUrl}/agents#agent-desk" style="display:inline-block;background:#301D5D;color:#ffffff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700">Open Closing Time</a>
     </div>
   `;
