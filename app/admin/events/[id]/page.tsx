@@ -8,6 +8,7 @@ import { adminApi } from '@/lib/admin-api';
 import {
   EventForm,
   isoToLocalInput,
+  toTitleCase,
   type EventFormData,
   type EventPersonForm,
 } from '../_components/EventForm';
@@ -55,9 +56,9 @@ function toPersonForm(
     | undefined,
 ): EventPersonForm[] {
   return (people ?? []).map((p) => ({
-    name: p.name ?? '',
+    name: toTitleCase(p.name ?? ''),
     email: p.email ?? '',
-    company: p.company ?? '',
+    company: toTitleCase(p.company ?? ''),
     phone: p.phone ?? '',
   }));
 }
@@ -66,13 +67,13 @@ function eventToForm(ev: AdminEvent): EventFormData {
   return {
     id: ev.id,
     publication: ev.publication,
-    title: ev.title,
+    title: toTitleCase(ev.title),
     description: ev.description ?? '',
     link: ev.link ?? '',
     startDate: isoToLocalInput(ev.startDate),
     endDate: isoToLocalInput(ev.endDate),
-    location: ev.location ?? '',
-    organizer: ev.organizer ?? '',
+    location: toTitleCase(ev.location ?? ''),
+    organizer: toTitleCase(ev.organizer ?? ''),
     organizerEmail: ev.organizerEmail ?? '',
     website: ev.website ?? '',
     tags: ev.tags ?? '',
@@ -82,7 +83,7 @@ function eventToForm(ev: AdminEvent): EventFormData {
     nonmemberPrice: ev.nonmemberPrice ?? '',
     imageUrl: ev.imageUrl ?? '',
     imageThumb: ev.imageThumb ?? '',
-    instructorName: ev.instructor ?? '',
+    instructorName: toTitleCase(ev.instructor ?? ''),
     instructorBio: ev.instructorBio ?? '',
     lat: ev.lat !== null ? String(ev.lat) : '',
     lng: ev.lng !== null ? String(ev.lng) : '',

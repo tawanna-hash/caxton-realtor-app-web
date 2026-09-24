@@ -71,16 +71,28 @@ export const EMPTY_EVENT: EventFormData = {
   additionalInstructors: [],
 };
 
+// Known real-estate/industry acronyms to preserve verbatim when Title Casing.
+// Matched case-insensitively so "mls", "Mls", "MLS" all normalize to "MLS".
+const PRESERVED_ACRONYMS = [
+  'MLS', 'HAR', 'ABoR', 'SABoR', 'TREC', 'NAR', 'TAR', 'CE', 'HOA', 'REALTOR',
+  'REALTORS', 'CRM', 'RSVP', 'HVAC', 'FAQ', 'CEO', 'VP', 'PC', 'LLC', 'HGTV',
+];
+const ACRONYM_LOOKUP = new Map(PRESERVED_ACRONYMS.map((a) => [a.toUpperCase(), a]));
+
 /**
  * Title-case a free-typed name/place field: capitalizes the first letter of
- * each word, lowercases the rest, but leaves words that are already
- * ALL-CAPS-with-more-than-one-letter alone (acronyms like "HAR", "ABoR").
+ * each word and lowercases the rest, except for a fixed whitelist of known
+ * industry acronyms (MLS, HAR, TREC, etc.), which are preserved in their
+ * canonical casing regardless of how the source text was cased. This is
+ * deliberately NOT based on guessing from capitalization patterns — data
+ * imported verbatim (e.g. from Gmail-scanned events) is often entirely
+ * ALL CAPS, and that should always be converted to normal Title Case rather
+ * than left untouched.
  */
 export function toTitleCase(value: string): string {
   return value.replace(/[A-Za-z''-]+/g, (word) => {
-    if (word.length > 1 && word === word.toUpperCase() && /[A-Z]/.test(word)) {
-      return word; // preserve acronyms, e.g. "HAR", "MLS"
-    }
+    const acronym = ACRONYM_LOOKUP.get(word.toUpperCase());
+    if (acronym) return acronym;
     return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
   });
 }
