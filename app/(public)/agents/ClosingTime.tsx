@@ -1775,7 +1775,8 @@ export default function ClosingTime({
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Closing Time Workspace</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Closing Time</h2>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-              Closing Time is a workspace for tracking contract deadlines, running agent calculators for net seller proceeds and closing costs, and connecting with local service partners when a client needs help.
+              <span className="font-semibold text-slate-900">Closing Time Keeps Your Deals Moving.</span>{' '}
+              Never Miss A Critical Contract Deadline, Run Instant Financial Calculations, And Connect Clients With Trusted Service Partners When Help Is Needed.
             </p>
           </div>
         </div>
