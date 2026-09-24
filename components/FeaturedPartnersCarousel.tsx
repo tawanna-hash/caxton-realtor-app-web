@@ -15,15 +15,14 @@ export function FeaturedPartnersCarousel({ placement }: { placement: 'top' | 'fo
   const top = placement === 'top';
   return (
     <section
-      aria-label="Featured advertising partners"
-      className={top ? 'border-b border-gray-200 bg-white py-3 sm:py-4' : ''}
+      aria-label="Brand [12] Plus Partners"
+      className={top ? 'mb-8 border-b border-gray-200 bg-white pt-5 pb-6 sm:mb-10 sm:pt-6 sm:pb-8' : ''}
     >
       <div className={top ? 'mx-auto max-w-7xl px-4 sm:px-6 lg:px-8' : ''}>
         {top && (
-          <div className="mb-2 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-brand-700" aria-hidden="true" />
-            <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-700">Featured partners</h2>
-          </div>
+          <h2 className="mb-5 text-center text-xs font-medium tracking-[0.2em] text-gray-500 sm:mb-6">
+            Brand [12] Plus Partners
+          </h2>
         )}
         <div className="partner-carousel overflow-hidden" aria-label="Partner logos advance automatically">
           <div className="partner-carousel-track flex w-max">
@@ -32,24 +31,24 @@ export function FeaturedPartnersCarousel({ placement }: { placement: 'top' | 'fo
                 key={String(duplicate)}
                 aria-hidden={duplicate ? 'true' : undefined}
                 inert={duplicate ? true : undefined}
-                className="flex shrink-0 gap-3 pr-3 sm:gap-4 sm:pr-4"
+                className="flex shrink-0 gap-6 pr-6 sm:gap-8 sm:pr-8"
               >
                 {partners.map((partner) => (
-                  <li key={partner.name} className={top ? 'w-36 shrink-0 sm:w-44' : 'w-40 shrink-0 sm:w-48'}>
+                  <li key={partner.name} className={top ? 'w-32 shrink-0 sm:w-36' : 'w-36 shrink-0 sm:w-40'}>
                     <a
                       href={partner.href}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={`Visit ${partner.name} (opens in a new tab)`}
-                      className={`flex items-center justify-center rounded-lg border border-gray-200 bg-white p-3 transition-colors hover:border-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 ${top ? 'h-20 sm:h-24' : 'h-24 sm:h-28'}`}
+                      className={`flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 transition-colors hover:border-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 ${top ? 'h-16 sm:h-20' : 'h-20 sm:h-24'}`}
                     >
                       <Image
                         src={partner.image}
                         alt={partner.name}
                         width={partner.width}
                         height={partner.height}
-                        sizes="(max-width: 640px) 136px, 176px"
-                        className="max-h-full w-auto max-w-full object-contain"
+                        sizes="(max-width: 640px) 112px, 144px"
+                        className="max-h-[72%] w-auto max-w-[78%] object-contain"
                       />
                     </a>
                   </li>
