@@ -16,13 +16,36 @@
 //      re-register if permission is already granted.
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { isNative } from '@/lib/native/runtime';
 import { installNativePushHandlers, registerNativePush, relinkNativePush } from '@/lib/native/push';
 import { PushNotifications } from '@capacitor/push-notifications';
 
+const PENDING_KEY = 'caxton_pending_push_nav';
+
 export default function PushBootstrap() {
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Re-apply a pending alert tap if a startup redirect pulled the user away.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isNative()) return;
+    try {
+      const raw = window.sessionStorage.getItem(PENDING_KEY);
+      if (!raw) return;
+      const { target, at } = JSON.parse(raw) as { target?: string; at?: number };
+      if (!target || !at || Date.now() - at > 20000) {
+        window.sessionStorage.removeItem(PENDING_KEY);
+        return;
+      }
+      const targetPath = target.split(/[?#]/)[0];
+      if (pathname === targetPath) {
+        window.sessionStorage.removeItem(PENDING_KEY);
+        return;
+      }
+      router.replace(target);
+    } catch { /* ignore */ }
+  }, [pathname, router]);
 
   // Native: install push handlers + (if already granted) refresh the
   // server-side token. Listen for caxton:push-nav so a notification tap
@@ -37,8 +60,11 @@ export default function PushBootstrap() {
       const detail = (e as CustomEvent<{ target?: string }>).detail;
       const target = detail?.target;
       if (typeof target !== 'string' || target.length === 0) return;
-      // Use replace so the system 'Open' from a notification doesn't stack
-      // a phantom history entry the user can't back out of.
+      // Remember the target briefly: on launch/resume the app's own startup
+      // redirect (/ -> /dashboard) can land after this and override it.
+      try {
+        window.sessionStorage.setItem(PENDING_KEY, JSON.stringify({ target, at: Date.now() }));
+      } catch { /* ignore */ }
       router.replace(target);
     };
     window.addEventListener('caxton:push-nav', onNav);
