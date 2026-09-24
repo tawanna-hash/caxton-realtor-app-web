@@ -181,11 +181,13 @@ export default function AgentCommandCenterClient({
               Closing Time
             </p>
             <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.045em] text-white sm:text-5xl lg:text-6xl">
-              More Control in Every Client Transaction.
+              Keep Your Deals Moving
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-white/75 sm:mt-6 sm:text-lg">
-              <span className="font-semibold text-white">Closing Time Keeps Your Deals Moving.</span>{' '}
-              Never Miss A Critical Contract Deadline, Run Instant Financial Calculations, And Connect Clients With Trusted Service Partners When Help Is Needed.
+            <p className="mt-4 max-w-2xl text-xl font-semibold leading-8 text-white sm:text-2xl">
+              Stay Ahead Of Deadlines. Deliver Smoother Closings.
+            </p>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">
+              Never Miss A Critical Contract Deadline With Automated Notifications, Generate Instant Financial Estimates, And Connect Clients With Vetted Vendor Partners—All From One Agent-First Platform.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
