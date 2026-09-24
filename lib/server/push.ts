@@ -134,7 +134,7 @@ export async function sendPushToRealtor(
     }
   }
 
-  // Also reach the signed-in agent's iOS app so the tap opens inside the app.
+  // Also reach the signed-in agent's iOS and Android apps so the tap opens inside the app.
   try {
     const { sendNativePushToRealtor } = await import('@/lib/server/native-push');
     const branded = {
@@ -146,6 +146,11 @@ export async function sendPushToRealtor(
     sent += native.sent;
     failed += native.failed;
     revoked += native.revoked;
+    const { sendAndroidPushToRealtor } = await import('@/lib/server/android-push');
+    const android = await sendAndroidPushToRealtor(realtorId, branded);
+    sent += android.sent;
+    failed += android.failed;
+    revoked += android.revoked;
   } catch (error) {
     console.error('[sendPushToRealtor] native push failed', error);
     failed += 1;

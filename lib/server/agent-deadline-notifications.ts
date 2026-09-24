@@ -118,7 +118,7 @@ function formatDeadlineDate(value: string): string {
   return date.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric' });
 }
 
-function pushContent(deal: AgentDeal, deadline: DealDeadline, offset: number, firstName: string | null): { title: string; body: string } {
+export function pushContent(deal: AgentDeal, deadline: DealDeadline, offset: number, firstName: string | null): { title: string; body: string } {
   const lastName = clientLastName(deal);
   const address = (deal.propertyAddress || '').trim();
   const client = [lastName ? titleCase(lastName) : '', address].filter(Boolean).join(', ') || 'Your Transaction';
@@ -201,7 +201,7 @@ async function releaseDelivery(id: string, failureReason: string): Promise<void>
   console.warn('[agent-deadline-notifications] delivery released', { id, failureReason });
 }
 
-function emailHtml(deal: AgentDeal, deadline: DealDeadline, offset: number): string {
+export function emailHtml(deal: AgentDeal, deadline: DealDeadline, offset: number): string {
   const label = escapeHtml(dealLabel(deal));
   const deadlineLabel = escapeHtml(deadline.label);
   const timing = offset === 0 ? 'today' : `in ${offset} day${offset === 1 ? '' : 's'}`;
@@ -264,14 +264,14 @@ export async function runAgentDeadlineNotifications(now = new Date()): Promise<A
             if (addDays(deadline.date, -offset) !== today) continue;
             result.dueDeadlines += 1;
             const transaction = dealLabel(deal);
-            const timing = offset === 0 ? 'due today' : `due in ${offset}d`;
+            const timing = offset === 0 ? 'today' : `in ${offset} day${offset === 1 ? '' : 's'}`;
 
             if (preferences.emailEnabled && row.email) {
               const deliveryId = await claimDelivery(row.realtor_id, deal.id, deadline, offset, 'email');
               if (deliveryId) {
                 const sent = await sendEmail({
                   to: row.email,
-                  subject: `${deadline.label} ${timing} — ${transaction}`,
+                  subject: `${deadline.label}: ${timing} — ${transaction}`,
                   html: emailHtml(deal, deadline, offset),
                 });
                 if (sent.ok) {
@@ -316,4 +316,74 @@ export async function runAgentDeadlineNotifications(now = new Date()): Promise<A
   }
 
   return result;
+}
+
+/**
+ * Admin-only live test: sends one Closing Time email + push to a realtor
+ * using their next upcoming deadline (or a sample deal when they have none).
+ * Bypasses the 8–10 AM window and the delivery ledger.
+ */
+export async function sendAgentDeadlineTestAlert(email: string): Promise<Record<string, unknown>> {
+  await ensureAgentCommandCenterWorkspaceSchema();
+  const realtors = await query<{ id: string; email: string; first_name: string | null }>(
+    `SELECT id, email, first_name FROM realtors WHERE LOWER(email) = LOWER($1) LIMIT 1`,
+    [email],
+  );
+  const realtor = realtors[0];
+  if (!realtor) return { ok: false, error: 'realtor not found' };
+
+  const workspaces = await query<{ workspace: unknown }>(
+    `SELECT workspace FROM agent_command_center_workspaces WHERE realtor_id = $1 LIMIT 1`,
+    [realtor.id],
+  );
+  const parsed = workspaces[0] ? agentCommandCenterWorkspaceSchema.safeParse(workspaces[0].workspace) : null;
+  const today = chicagoParts().date;
+  let pick: { deal: AgentDeal; deadline: DealDeadline } | null = null;
+  if (parsed?.success) {
+    for (const deal of parsed.data.deals) {
+      if (deal.status === 'completed') continue;
+      for (const deadline of deadlinesForDeal(deal)) {
+        if (deadline.date >= today && (!pick || deadline.date < pick.deadline.date)) pick = { deal, deadline };
+      }
+    }
+  }
+  const sample = !pick;
+  if (!pick) {
+    pick = {
+      deal: { title: 'Smith', propertyAddress: '1234 Oak Hollow Dr, Austin, TX 78745' } as AgentDeal,
+      deadline: { id: 'option-period-ends', label: 'Option period ends', date: addDays(today, 3) },
+    };
+  }
+  const { deal, deadline } = pick;
+  const msPerDay = 86_400_000;
+  const offset = Math.max(0, Math.round((Date.parse(`${deadline.date}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / msPerDay));
+  const timing = offset === 0 ? 'today' : `in ${offset} day${offset === 1 ? '' : 's'}`;
+
+  const emailResult = await sendEmail({
+    to: realtor.email,
+    subject: `${deadline.label}: ${timing} — ${dealLabel(deal)}`,
+    html: emailHtml(deal, deadline, offset),
+  });
+
+  const push = pushContent(deal, deadline, offset, realtor.first_name);
+  const payload = { title: push.title, body: push.body, url: '/agents/closing-time', tag: `agent-deadline-test-${Date.now()}` };
+  const devices = await query<{ kind: string; n: number }>(
+    `SELECT 'web' AS kind, COUNT(*)::int AS n FROM push_subscriptions WHERE realtor_id = $1 AND revoked_at IS NULL
+     UNION ALL
+     SELECT platform AS kind, COUNT(*)::int AS n FROM native_push_tokens WHERE realtor_id = $1 AND revoked_at IS NULL GROUP BY platform`,
+    [realtor.id],
+  );
+  const pushResult = await sendPushToRealtor(realtor.id, payload);
+  const { getApnsConfigStatus } = await import('@/lib/server/native-push');
+  const { isFcmConfigured } = await import('@/lib/server/android-push');
+
+  return {
+    ok: true,
+    sampleDeal: sample,
+    email: { to: realtor.email, ok: emailResult.ok, error: emailResult.ok ? undefined : emailResult.error },
+    push: { ...payload, result: pushResult },
+    devices,
+    apns: getApnsConfigStatus(),
+    fcmConfigured: isFcmConfigured(),
+  };
 }
