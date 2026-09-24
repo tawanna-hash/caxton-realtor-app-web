@@ -266,10 +266,8 @@ export async function getNativePushPermission(): Promise<
  */
 export async function clearDeliveredAndBadge(): Promise<void> {
   if (!isNative()) return;
-  try {
-    // Removes the notifications from Notification Center (the tray).
-    await PushNotifications.removeAllDeliveredNotifications();
-  } catch {
-    /* ignore */
-  }
+  // Intentionally does NOT call removeAllDeliveredNotifications: wiping the
+  // tray on every foreground made Closing Time alerts vanish seconds after
+  // they arrived, before the agent could read them. Alerts stay in
+  // Notification Center until the agent taps or dismisses them.
 }
