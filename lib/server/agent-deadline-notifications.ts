@@ -112,10 +112,6 @@ function clientLastName(deal: AgentDeal): string {
   return lastNameFrom(deal.buyerNames) || lastNameFrom(deal.sellerNames);
 }
 
-function pushTiming(offset: number): string {
-  return offset === 0 ? 'Due Today' : `Due In ${offset} Day${offset === 1 ? '' : 's'}`;
-}
-
 function formatDeadlineDate(value: string): string {
   const date = new Date(`${value}T12:00:00Z`);
   if (Number.isNaN(date.getTime())) return value;
@@ -128,7 +124,7 @@ function pushContent(deal: AgentDeal, deadline: DealDeadline, offset: number, fi
   const client = [lastName ? titleCase(lastName) : '', address].filter(Boolean).join(', ') || 'Your Transaction';
   void firstName;
   return {
-    title: `${titleCase(deadline.label)} ${pushTiming(offset)}`,
+    title: `${deadline.label}: ${offset === 0 ? 'today' : `in ${offset} day${offset === 1 ? '' : 's'}`}`,
     body: `${client}\nDue ${formatDeadlineDate(deadline.date)}.\nFrom Closing Time`,
   };
 }
