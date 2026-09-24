@@ -1243,6 +1243,26 @@ export default function DashboardPage() {
     }
   }, [globalArticles]);
 
+  // Returning from an article always lands at the top of the feed. The feed
+  // scrolls the window, which otherwise keeps a stale offset (often the
+  // bottom) from before the reader opened.
+  const prevPhaseRef = useRef(phase);
+  useEffect(() => {
+    const prev = prevPhaseRef.current;
+    prevPhaseRef.current = phase;
+    if (prev !== 'article' || phase !== 'feed' || typeof window === 'undefined') return;
+    const toTop = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    toTop();
+    const raf = requestAnimationFrame(toTop);
+    const t1 = setTimeout(toTop, 120);
+    const t2 = setTimeout(toTop, 400);
+    return () => { cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2); };
+  }, [phase]);
+
   // caxton-article-reader-b2a-fix (newsList listener)
   useEffect(() => {
     const onNewsList = (e: any) => {
