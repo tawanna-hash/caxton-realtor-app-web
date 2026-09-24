@@ -389,7 +389,7 @@ export async function upsertImportedArticle(
       input.authorName ?? 'Staff',
       input.authorAvatar ?? null,
       input.cat ?? '',
-      input.tags && input.tags.length > 0 ? input.tags : null,
+      input.tags ?? [],
       new Date(input.publishedAt).toISOString(),
       input.sourceUrl ?? null,
     ],
