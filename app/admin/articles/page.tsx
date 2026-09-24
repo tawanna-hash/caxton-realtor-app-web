@@ -5,6 +5,7 @@ import {
   type ArticleOverride,
 } from '@/lib/server/article-overrides';
 import ArticlesClient, { type AdminArticle } from './ArticlesClient';
+import { authorPortrait, canonicalAuthorName } from '@/lib/article-author-profiles';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +16,10 @@ async function loadForPublication(publication: Publication): Promise<AdminArticl
   ]);
   return upstream.map((a) => {
     const merged = applyOverride(a, overrides.get(a.id));
+    const authorName = canonicalAuthorName(merged.author?.name || 'Staff', publication);
     return {
       ...(merged as NewsArticle),
+      author: { name: authorName, avatar: authorPortrait(authorName, merged.author?.avatar) ?? undefined },
       hidden: (merged as { hidden?: boolean }).hidden ?? false,
       editedFields: (merged as { editedFields?: string[] }).editedFields ?? [],
     };

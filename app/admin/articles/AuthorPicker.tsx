@@ -5,7 +5,7 @@ import type { ArticleAuthor } from '@/lib/server/article-authors';
 
 const fieldStyle = 'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-700/30';
 
-function AuthorPhoto({ name, src }: { name: string; src: string | null }) {
+export function AuthorPhoto({ name, src }: { name: string; src: string | null }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '?';
   return (

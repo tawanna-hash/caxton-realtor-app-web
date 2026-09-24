@@ -9,6 +9,14 @@
 
 import { unstable_cache } from 'next/cache';
 import { logger } from './logger';
+import { authorPortrait, canonicalAuthorName } from '@/lib/article-author-profiles';
+
+function withKnownAuthor(article: NewsArticle): NewsArticle {
+  if (!article.author?.name) return article;
+  const name = canonicalAuthorName(article.author.name, article.publication);
+  const avatar = authorPortrait(name, article.author.avatar);
+  return { ...article, author: { name, ...(avatar ? { avatar } : {}) } };
+}
 
 // Allowlist for sanitized article HTML. Wide enough to preserve WordPress formatting
 // (headings, lists, blockquotes, tables, figures, embeds) while stripping <script>,
@@ -510,7 +518,7 @@ export async function getNewsRaw(publication: Publication): Promise<NewsArticle[
   }
 
   const { mergeArchivedAndUpstream } = await import('./article-archive');
-  return mergeArchivedAndUpstream(archived, upstream);
+  return mergeArchivedAndUpstream(archived, upstream).map(withKnownAuthor);
 }
 
 /** Public-cached variant used by the public feed (kept on unstable_cache). */
@@ -536,7 +544,7 @@ export async function getNews(publication: Publication): Promise<NewsArticle[]> 
   }
 
   const { mergeArchivedAndUpstream } = await import('./article-archive');
-  const combined = mergeArchivedAndUpstream(archived, upstream);
+  const combined = mergeArchivedAndUpstream(archived, upstream).map(withKnownAuthor);
 
   // Apply admin overrides on top of upstream. Overrides are NOT inside the
   // unstable_cache wrapper above, so edits take effect immediately without
@@ -545,7 +553,7 @@ export async function getNews(publication: Publication): Promise<NewsArticle[]> 
     const { getAllOverridesForPublication, applyOverride } = await import('./article-overrides');
     const overrides = await getAllOverridesForPublication(publication);
     if (overrides.size === 0) return combined;
-    const merged = combined.map((a) => applyOverride(a, overrides.get(a.id)));
+    const merged = combined.map((a) => withKnownAuthor(applyOverride(a, overrides.get(a.id))));
     // Filter out hidden articles for public consumers.
     return merged.filter((a) => !(a as { hidden?: boolean }).hidden);
   } catch (err) {

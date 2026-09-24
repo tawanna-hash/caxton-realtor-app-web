@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useMemo, useState, useTransition } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, useTransition } from 'react';
 import { useUrlState, useUrlString } from '@/lib/use-url-state';
 import { useRouter } from 'next/navigation';
 import type { NewsArticle } from '@/lib/server/wp-news';
@@ -8,7 +8,7 @@ import type { NewsArticle } from '@/lib/server/wp-news';
 import PageTitle from '@/components/ui/PageTitle';
 import ContentPagination from '@/app/admin/_components/ContentPagination';
 import FeatureArticlesPanel from './FeatureArticlesPanel';
-import AuthorPicker from './AuthorPicker';
+import AuthorPicker, { AuthorPhoto } from './AuthorPicker';
 import type { ArticleAuthor } from '@/lib/server/article-authors';
 export type AdminArticle = NewsArticle & {
   hidden: boolean;
@@ -33,6 +33,70 @@ const PUB_STYLES: Record<NewsArticle['publication'], string> = {
   austin: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
   san_antonio: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
 };
+
+const DEFAULT_CATEGORIES = [
+  'Featured Partner',
+  "Editor's Choice",
+  'Five Points Board of REALTORS',
+];
+
+function CategoryPicker({
+  value, onChange, categories,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  categories: string[];
+}) {
+  const options = [...new Set([...DEFAULT_CATEGORIES, ...categories.filter(Boolean)])]
+    .sort((a, b) => a.localeCompare(b));
+  const [addingNew, setAddingNew] = useState(Boolean(value && !options.includes(value)));
+  const custom = addingNew || Boolean(value && !options.includes(value));
+  const style = 'w-full px-3 py-2 rounded-md border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700';
+  return (
+    <div className="space-y-2">
+      <select value={custom ? '__new' : value} onChange={(e) => {
+        setAddingNew(e.target.value === '__new');
+        onChange(e.target.value === '__new' ? '' : e.target.value);
+      }} className={style}>
+        <option value="">Select a category</option>
+        {options.map((category) => <option key={category} value={category}>{category}</option>)}
+        <option value="__new">Add a new category…</option>
+      </select>
+      {custom && <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder="New category" aria-label="New category" className={style} />}
+    </div>
+  );
+}
+
+function ArticleBodyEditor({ value, onChange }: { value: string; onChange: (html: string) => void }) {
+  const [mode, setMode] = useState<'visual' | 'html'>('visual');
+  const editor = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (mode === 'visual' && editor.current) editor.current.innerHTML = value;
+    // Initialize only when entering Visual mode. Rewriting on each keystroke moves the caret.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+  const style = 'w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700';
+  return (
+    <div>
+      <div className="mb-2 flex gap-2" aria-label="Article body editing mode">
+        {(['visual', 'html'] as const).map((option) => (
+          <button key={option} type="button" onClick={() => setMode(option)}
+            className={`rounded-md px-3 py-1 text-xs ${mode === option ? 'bg-brand-700 text-white' : 'border border-gray-300 text-gray-700'}`}>
+            {option === 'visual' ? 'Visual editor' : 'HTML code'}
+          </button>
+        ))}
+      </div>
+      {mode === 'visual' ? (
+        <div ref={editor} contentEditable suppressContentEditableWarning role="textbox" aria-label="Article body"
+          aria-multiline="true" onInput={(e) => onChange(e.currentTarget.innerHTML)}
+          className={`${style} min-h-56 max-h-[55vh] overflow-y-auto leading-relaxed`} />
+      ) : (
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={10}
+          aria-label="Article body HTML" className={`${style} font-mono text-xs resize-y`} />
+      )}
+    </div>
+  );
+}
 
 function formatDate(iso: string | undefined): string {
   if (!iso) return '-';
@@ -89,6 +153,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     }
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [initialArticles]);
+  const categories = useMemo(() => [...new Set(initialArticles.map((article) => article.cat).filter(Boolean))], [initialArticles]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
   const pageArticles = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
@@ -331,7 +396,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                 <dt className="text-gray-500">Category</dt>
                 <dd className="text-gray-700">{a.cat}</dd>
                 <dt className="text-gray-500">Author</dt>
-                <dd className="text-gray-700">{a.author?.name || 'Staff'}</dd>
+                <dd className="flex items-center gap-2 text-gray-700"><AuthorPhoto name={a.author?.name || 'Staff'} src={a.author?.avatar || null} />{a.author?.name || 'Staff'}</dd>
                 <dt className="text-gray-500">Published</dt>
                 <dd className="text-gray-700">{formatDate(a.dateIso || a.publishedAt)}</dd>
               </dl>
@@ -408,7 +473,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-700">{a.cat}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-700">
-                      {a.author?.name || <span className="text-gray-400">Staff</span>}
+                      <span className="flex items-center gap-2"><AuthorPhoto name={a.author?.name || 'Staff'} src={a.author?.avatar || null} />{a.author?.name || <span className="text-gray-400">Staff</span>}</span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-600">
                       {formatDate(a.dateIso || a.publishedAt)}
@@ -452,13 +517,14 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
         <EditModal
           article={editing}
           seedAuthors={seedAuthors}
+          categories={categories}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
         />
       )}
 
       {creating && (
-        <CreateModal seedAuthors={seedAuthors} onClose={() => setCreating(false)} onCreated={handleCreated} />
+        <CreateModal seedAuthors={seedAuthors} categories={categories} onClose={() => setCreating(false)} onCreated={handleCreated} />
       )}
       </>
       )}
@@ -473,11 +539,13 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
 function EditModal({
   article,
   seedAuthors,
+  categories,
   onClose,
   onSaved,
 }: {
   article: AdminArticle;
   seedAuthors: ArticleAuthor[];
+  categories: string[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -592,12 +660,7 @@ function EditModal({
           </Field>
 
           <Field label="Category">
-            <input
-              type="text"
-              value={cat}
-              onChange={(e) => setCat(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
-            />
+            <CategoryPicker value={cat} onChange={setCat} categories={categories} />
           </Field>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -633,13 +696,8 @@ function EditModal({
             />
           </Field>
 
-          <Field label="Body (HTML)" hint="Raw HTML. Leave blank to use upstream content.">
-            <textarea
-              value={contentHtml}
-              onChange={(e) => setContentHtml(e.target.value)}
-              rows={10}
-              className="w-full px-3 py-2 rounded-md border border-gray-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700 resize-y"
-            />
+          <Field label="Article body" hint="Edit visually or switch to HTML code. Leave blank to use upstream content.">
+            <ArticleBodyEditor value={contentHtml} onChange={setContentHtml} />
           </Field>
 
           <Field label="Tags" hint="Comma-separated">
@@ -716,10 +774,12 @@ function EditModal({
 
 function CreateModal({
   seedAuthors,
+  categories,
   onClose,
   onCreated,
 }: {
   seedAuthors: ArticleAuthor[];
+  categories: string[];
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -839,13 +899,7 @@ function CreateModal({
           </Field>
 
           <Field label="Category">
-            <input
-              type="text"
-              value={cat}
-              onChange={(e) => setCat(e.target.value)}
-              placeholder="e.g. Market News"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
-            />
+            <CategoryPicker value={cat} onChange={setCat} categories={categories} />
           </Field>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -881,13 +935,8 @@ function CreateModal({
             />
           </Field>
 
-          <Field label="Body (HTML)" hint="Raw HTML for the article body.">
-            <textarea
-              value={contentHtml}
-              onChange={(e) => setContentHtml(e.target.value)}
-              rows={10}
-              className="w-full px-3 py-2 rounded-md border border-gray-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700 resize-y"
-            />
+          <Field label="Article body" hint="Edit visually or switch to HTML code.">
+            <ArticleBodyEditor value={contentHtml} onChange={setContentHtml} />
           </Field>
 
           <Field label="Tags" hint="Comma-separated">

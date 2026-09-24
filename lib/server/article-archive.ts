@@ -1,5 +1,11 @@
-import { query } from './db/neon';
+import { getSql } from '@/lib/db';
 import type { NewsArticle, Publication } from './wp-news';
+import { authorPortrait, canonicalAuthorName } from '@/lib/article-author-profiles';
+
+// HTTP queries work in serverless functions without a WebSocket-based Pool.
+async function query<T = Record<string, unknown>>(text: string, values: unknown[] = []): Promise<T[]> {
+  return await getSql().query(text, values) as T[];
+}
 
 interface ArchivedArticleRow {
   publication: Publication;
@@ -118,12 +124,8 @@ function formatRelativeTime(iso: string): string {
 
 function rowToArticle(row: ArchivedArticleRow): NewsArticle {
   const publishedAt = new Date(row.published_at).toISOString();
-  const ojas = row.publication === 'san_antonio' && row.author_name.trim().toLowerCase() === 'ojas';
-  const tanya = row.publication === 'austin' && row.author_name.trim().toLowerCase() === 'tanya chappell';
-  const authorName = ojas ? 'Ojas Tasker' : row.author_name || 'Staff';
-  const authorAvatar = ojas
-    ? '/ojas-tasker-headshot.jpeg'
-    : tanya ? '/tanya-chappell-headshot.jpg' : row.author_avatar;
+  const authorName = canonicalAuthorName(row.author_name || 'Staff', row.publication);
+  const authorAvatar = authorPortrait(authorName, row.author_avatar);
   return {
     id: row.wp_post_id,
     publication: row.publication,

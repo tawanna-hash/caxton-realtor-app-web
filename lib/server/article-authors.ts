@@ -1,8 +1,13 @@
-import { query } from './db/neon';
+import { getSql } from '@/lib/db';
 import { getNewsRaw } from './wp-news';
 import { listFeatureArticles } from '@/lib/feature-articles';
+import { authorPortrait, canonicalAuthorName } from '@/lib/article-author-profiles';
 
 export type ArticleAuthor = { name: string; avatar: string | null };
+
+async function query<T = Record<string, unknown>>(text: string, values: unknown[] = []): Promise<T[]> {
+  return await getSql().query(text, values) as T[];
+}
 
 let schemaReady = false;
 async function ensureAuthorSchema(): Promise<void> {
@@ -21,6 +26,8 @@ function keyFor(name: string): string {
 }
 
 function usableAvatar(name: string, avatar: string | null | undefined): string | null {
+  const local = authorPortrait(name, avatar);
+  if (local) return local;
   if (keyFor(name) === 'ojas tasker' && (!avatar || /^https?:\/\/(?:www\.)?newslinesa\.com\/wp-content\/uploads\//i.test(avatar))) {
     return '/ojas-tasker-headshot.jpeg';
   }
@@ -50,7 +57,7 @@ export async function listArticleAuthors(): Promise<ArticleAuthor[]> {
   const authors = new Map<string, ArticleAuthor>();
   function add(name: string | null | undefined, avatar?: string | null) {
     if (!name?.trim()) return;
-    const normalized = name.trim().replace(/\s+/g, ' ') === 'ojas' ? 'Ojas Tasker' : name.trim().replace(/\s+/g, ' ');
+    const normalized = canonicalAuthorName(name);
     const key = keyFor(normalized);
     const photo = usableAvatar(normalized, avatar);
     const prior = authors.get(key);
@@ -66,7 +73,10 @@ export async function listArticleAuthors(): Promise<ArticleAuthor[]> {
     for (const article of featured.value) add(article.author, article.authorAvatar);
   }
   if (saved.status === 'fulfilled') {
-    for (const author of saved.value) authors.set(keyFor(author.name), { ...author, avatar: usableAvatar(author.name, author.avatar) });
+    for (const author of saved.value) {
+      const name = canonicalAuthorName(author.name);
+      authors.set(keyFor(name), { name, avatar: usableAvatar(name, author.avatar) });
+    }
   } else if (authors.size === 0) {
     throw saved.reason;
   }

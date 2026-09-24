@@ -7,8 +7,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Trash2, Plus, Pencil, ChevronDown, ExternalLink, X, FileText } from 'lucide-react';
-import AuthorPicker from './AuthorPicker';
+import AuthorPicker, { AuthorPhoto } from './AuthorPicker';
 import type { ArticleAuthor } from '@/lib/server/article-authors';
+import { authorPortrait, canonicalAuthorName } from '@/lib/article-author-profiles';
 
 type FeatureArticle = {
   id: number;
@@ -282,9 +283,9 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
                       <p className="text-xs text-gray-500 mt-0.5">
                         {adv ? adv.name : `Advertiser #${a.advertiserId}`}
                         {' · '}{formatDate(a.publishedAt)}
-                        {a.author ? ` · ${a.author}` : ''}
                         {' · '}sort {a.sortOrder}
                       </p>
+                      {a.author && <span className="mt-2 flex items-center gap-2 text-xs text-gray-600"><AuthorPhoto name={a.author} src={authorPortrait(a.author, a.authorAvatar)} />{canonicalAuthorName(a.author)}</span>}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {a.status === 'draft' && (
