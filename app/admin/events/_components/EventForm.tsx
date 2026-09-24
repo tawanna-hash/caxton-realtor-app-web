@@ -22,6 +22,13 @@ export type EventScheduleFormItem = {
   details: string;
 };
 
+export type EventSpeakerFormItem = {
+  name: string;
+  title: string;
+  company: string;
+  bio: string;
+};
+
 export type EventFormData = {
   id?: number;
   publication: PublicationId;
@@ -49,6 +56,7 @@ export type EventFormData = {
   additionalHosts: EventPersonForm[];
   additionalInstructors: EventPersonForm[];
   schedule: EventScheduleFormItem[];
+  speakers: EventSpeakerFormItem[];
 };
 
 export const EMPTY_EVENT: EventFormData = {
@@ -77,6 +85,7 @@ export const EMPTY_EVENT: EventFormData = {
   additionalHosts: [],
   additionalInstructors: [],
   schedule: [],
+  speakers: [],
 };
 
 // Known real-estate/industry acronyms to preserve verbatim when Title Casing.
@@ -115,11 +124,11 @@ export function normalizeUrlInput(value: string): string {
   return `https://${v}`;
 }
 
-const MAX_SCHEDULE_PAGES = 10;
-const MAX_SCHEDULE_SOURCE_BYTES = 20 * 1024 * 1024;
-const MAX_SCHEDULE_PAGE_BYTES = 3 * 1024 * 1024;
+const MAX_DOCUMENT_PAGES = 10;
+const MAX_DOCUMENT_SOURCE_BYTES = 20 * 1024 * 1024;
+const MAX_DOCUMENT_PAGE_BYTES = 3 * 1024 * 1024;
 
-async function scheduleCanvasFile(canvas: HTMLCanvasElement, pageNumber: number): Promise<File> {
+async function documentCanvasFile(canvas: HTMLCanvasElement, pageNumber: number): Promise<File> {
   for (const scale of [1, 0.75, 0.55]) {
     const output = document.createElement('canvas');
     output.width = Math.max(1, Math.round(canvas.width * scale));
@@ -131,12 +140,96 @@ async function scheduleCanvasFile(canvas: HTMLCanvasElement, pageNumber: number)
     context.drawImage(canvas, 0, 0, output.width, output.height);
     for (const quality of [0.84, 0.68, 0.5]) {
       const blob = await new Promise<Blob | null>((resolve) => output.toBlob(resolve, 'image/jpeg', quality));
-      if (blob && blob.size <= MAX_SCHEDULE_PAGE_BYTES) {
-        return new File([blob], `schedule-page-${pageNumber}.jpg`, { type: 'image/jpeg' });
+      if (blob && blob.size <= MAX_DOCUMENT_PAGE_BYTES) {
+        return new File([blob], `event-page-${pageNumber}.jpg`, { type: 'image/jpeg' });
       }
     }
   }
   throw new Error(`Page ${pageNumber} is too detailed to read. Try a smaller PDF or image.`);
+}
+
+async function readDocumentPages(
+  files: File[],
+  onPage: (file: File, page: number) => Promise<void>,
+  onProgress: (progress: string) => void,
+): Promise<number> {
+  type PdfDocument = import('pdfjs-dist').PDFDocumentProxy;
+  type PageSource =
+    | { kind: 'image'; file: File }
+    | { kind: 'pdf'; document: PdfDocument; page: number };
+  const documents: PdfDocument[] = [];
+  try {
+    const sources: PageSource[] = [];
+    for (const file of files) {
+      if (file.size === 0 || file.size > MAX_DOCUMENT_SOURCE_BYTES) {
+        throw new Error('Each document file must be 20 MB or smaller.');
+      }
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        onProgress(`Opening ${file.name}...`);
+        const pdfjs = await import('pdfjs-dist');
+        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+        const pdfDocument = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+        documents.push(pdfDocument);
+        for (let page = 1; page <= pdfDocument.numPages; page++) {
+          sources.push({ kind: 'pdf', document: pdfDocument, page });
+        }
+      } else if (['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        sources.push({ kind: 'image', file });
+      } else {
+        throw new Error('Use a PDF, JPG, PNG, or WebP document.');
+      }
+      if (sources.length > MAX_DOCUMENT_PAGES) {
+        throw new Error('Upload no more than 10 pages in total.');
+      }
+    }
+
+    for (const [index, source] of sources.entries()) {
+      onProgress(`Reading page ${index + 1} of ${sources.length}...`);
+      const canvas = document.createElement('canvas');
+      if (source.kind === 'pdf') {
+        const pdfPage = await source.document.getPage(source.page);
+        const unscaled = pdfPage.getViewport({ scale: 1 });
+        const viewport = pdfPage.getViewport({
+          scale: Math.min(2.5, 2000 / unscaled.width, 2600 / unscaled.height),
+        });
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Could not render this document page.');
+        context.fillStyle = 'white';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        await pdfPage.render({ canvasContext: context, viewport }).promise;
+        pdfPage.cleanup();
+      } else {
+        const bitmap = await createImageBitmap(source.file);
+        try {
+          const scale = Math.min(1, 2000 / bitmap.width, 2600 / bitmap.height);
+          canvas.width = Math.ceil(bitmap.width * scale);
+          canvas.height = Math.ceil(bitmap.height * scale);
+          const context = canvas.getContext('2d');
+          if (!context) throw new Error('Could not read this document image.');
+          context.fillStyle = 'white';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        } finally {
+          bitmap.close();
+        }
+      }
+      const pageFile = await documentCanvasFile(canvas, index + 1);
+      canvas.width = 0;
+      canvas.height = 0;
+      await onPage(pageFile, index + 1);
+    }
+    return sources.length;
+  } finally {
+    await Promise.all(documents.map((pdfDocument) => pdfDocument.destroy().catch(() => undefined)));
+  }
+}
+
+function mergePrintedBio(first: string, second: string): string {
+  if (!second || first.includes(second)) return first;
+  if (!first || second.includes(first)) return second;
+  return `${first}\n\n${second}`.slice(0, 5000);
 }
 
 /** Convert ISO 8601 (with TZ) to "YYYY-MM-DDTHH:mm" for datetime-local input. */
@@ -214,6 +307,14 @@ function fieldsToPayload(data: EventFormData): Record<string, unknown> {
         title: item.title.trim(),
         details: item.details.trim(),
       })),
+    speakers: data.speakers
+      .filter((person) => person.name.trim() !== '')
+      .map((person) => ({
+        name: person.name.trim(),
+        title: person.title.trim(),
+        company: person.company.trim(),
+        bio: person.bio.trim(),
+      })),
   };
 }
 
@@ -243,6 +344,11 @@ export function EventForm({
   const [scheduleProgress, setScheduleProgress] = useState('');
   const [scheduleNotice, setScheduleNotice] = useState<string | null>(null);
   const scheduleInputRef = useRef<HTMLInputElement>(null);
+  const [readingSpeakers, setReadingSpeakers] = useState(false);
+  const [speakerDragActive, setSpeakerDragActive] = useState(false);
+  const [speakerProgress, setSpeakerProgress] = useState('');
+  const [speakerNotice, setSpeakerNotice] = useState<string | null>(null);
+  const speakerInputRef = useRef<HTMLInputElement>(null);
   const [partners, setPartners] = useState<PickerAdvertiser[]>([]);
 
   useEffect(() => {
@@ -444,72 +550,9 @@ export function EventForm({
     setError(null);
     setScheduleNotice(null);
     setReadingSchedule(true);
-    type PdfDocument = import('pdfjs-dist').PDFDocumentProxy;
-    type PageSource =
-      | { kind: 'image'; file: File }
-      | { kind: 'pdf'; document: PdfDocument; page: number };
-    const documents: PdfDocument[] = [];
     try {
-      const sources: PageSource[] = [];
-      for (const file of files) {
-        if (file.size === 0 || file.size > MAX_SCHEDULE_SOURCE_BYTES) {
-          throw new Error('Each schedule file must be 20 MB or smaller.');
-        }
-        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-          setScheduleProgress(`Opening ${file.name}...`);
-          const pdfjs = await import('pdfjs-dist');
-          pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-          const document = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-          documents.push(document);
-          for (let page = 1; page <= document.numPages; page++) {
-            sources.push({ kind: 'pdf', document, page });
-          }
-        } else if (['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-          sources.push({ kind: 'image', file });
-        } else {
-          throw new Error('Use a PDF, JPG, PNG, or WebP schedule file.');
-        }
-        if (sources.length > MAX_SCHEDULE_PAGES) {
-          throw new Error('Upload no more than 10 schedule pages in total.');
-        }
-      }
-
       const extracted: EventScheduleFormItem[] = [];
-      for (const [index, source] of sources.entries()) {
-        setScheduleProgress(`Reading page ${index + 1} of ${sources.length}...`);
-        const canvas = document.createElement('canvas');
-        if (source.kind === 'pdf') {
-          const pdfPage = await source.document.getPage(source.page);
-          const unscaled = pdfPage.getViewport({ scale: 1 });
-          const viewport = pdfPage.getViewport({
-            scale: Math.min(2.5, 2000 / unscaled.width, 2600 / unscaled.height),
-          });
-          canvas.width = Math.ceil(viewport.width);
-          canvas.height = Math.ceil(viewport.height);
-          const context = canvas.getContext('2d');
-          if (!context) throw new Error('Could not render this schedule page.');
-          context.fillStyle = 'white';
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          await pdfPage.render({ canvasContext: context, viewport }).promise;
-          pdfPage.cleanup();
-        } else {
-          const bitmap = await createImageBitmap(source.file);
-          try {
-            const scale = Math.min(1, 2000 / bitmap.width, 2600 / bitmap.height);
-            canvas.width = Math.ceil(bitmap.width * scale);
-            canvas.height = Math.ceil(bitmap.height * scale);
-            const context = canvas.getContext('2d');
-            if (!context) throw new Error('Could not read this schedule image.');
-            context.fillStyle = 'white';
-            context.fillRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-          } finally {
-            bitmap.close();
-          }
-        }
-        const pageFile = await scheduleCanvasFile(canvas, index + 1);
-        canvas.width = 0;
-        canvas.height = 0;
+      const count = await readDocumentPages(files, async (pageFile, page) => {
         const body = new FormData();
         body.append('page', pageFile);
         const response = await fetch('/api/admin/events/extract-schedule', { method: 'POST', body });
@@ -518,10 +561,10 @@ export function EventForm({
           error?: string;
         };
         if (!response.ok || !Array.isArray(result.schedule)) {
-          throw new Error(`${result.error ?? 'Could not read schedule'} (page ${index + 1}).`);
+          throw new Error(`${result.error ?? 'Could not read schedule'} (page ${page}).`);
         }
         extracted.push(...result.schedule);
-      }
+      }, setScheduleProgress);
       if (!extracted.length) {
         setScheduleNotice('No schedule entries found. Your existing schedule was left unchanged.');
         return;
@@ -539,16 +582,89 @@ export function EventForm({
       update('schedule', [...data.schedule, ...additions]);
       setScheduleNotice(
         additions.length
-          ? `Added ${additions.length} schedule ${additions.length === 1 ? 'item' : 'items'} from ${sources.length} ${sources.length === 1 ? 'page' : 'pages'}. Review before saving.`
+          ? `Added ${additions.length} schedule ${additions.length === 1 ? 'item' : 'items'} from ${count} ${count === 1 ? 'page' : 'pages'}. Review before saving.`
           : 'All extracted schedule entries were already on this event.',
       );
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Could not read the schedule.');
     } finally {
-      await Promise.all(documents.map((document) => document.destroy().catch(() => undefined)));
       setReadingSchedule(false);
       setScheduleProgress('');
       if (scheduleInputRef.current) scheduleInputRef.current.value = '';
+    }
+  };
+
+  const readSpeakerUpload = async (files: File[]) => {
+    if (readingSpeakers || !files.length) return;
+    setError(null);
+    setSpeakerNotice(null);
+    setReadingSpeakers(true);
+    try {
+      const extracted: EventSpeakerFormItem[] = [];
+      const count = await readDocumentPages(files, async (pageFile, page) => {
+        const body = new FormData();
+        body.append('page', pageFile);
+        const response = await fetch('/api/admin/events/extract-speakers', { method: 'POST', body });
+        const result = (await response.json().catch(() => ({}))) as {
+          speakers?: EventSpeakerFormItem[];
+          error?: string;
+        };
+        if (!response.ok || !Array.isArray(result.speakers)) {
+          throw new Error(`${result.error ?? 'Could not read speakers'} (page ${page}).`);
+        }
+        extracted.push(...result.speakers);
+      }, setSpeakerProgress);
+      const unique = new Map<string, EventSpeakerFormItem>();
+      for (const speaker of extracted) {
+        if (!speaker.name?.trim()) continue;
+        const normalized = {
+          name: toTitleCase(speaker.name.trim()),
+          title: speaker.title?.trim() ?? '',
+          company: speaker.company?.trim() ?? '',
+          bio: speaker.bio?.trim() ?? '',
+        };
+        const key = normalized.name.toLocaleLowerCase();
+        const previous = unique.get(key);
+        unique.set(key, previous ? {
+          ...previous,
+          title: previous.title || normalized.title,
+          company: previous.company || normalized.company,
+          bio: mergePrintedBio(previous.bio, normalized.bio),
+        } : normalized);
+      }
+      if (!unique.size) {
+        setSpeakerNotice('No named speakers found. Your existing speakers were left unchanged.');
+        return;
+      }
+      const knownNames = new Set(data.speakers.map((speaker) => speaker.name.trim().toLocaleLowerCase()));
+      if (data.speakers.length + [...unique.keys()].filter((key) => !knownNames.has(key)).length > 50) {
+        throw new Error('An event can hold up to 50 speakers.');
+      }
+      setData((current) => {
+        const existing = new Map(current.speakers.map((speaker, index) => [speaker.name.trim().toLocaleLowerCase(), index]));
+        const next = current.speakers.map((speaker) => ({ ...speaker }));
+        for (const [key, speaker] of unique) {
+          const index = existing.get(key);
+          if (index === undefined) {
+            next.push(speaker);
+          } else {
+            next[index] = {
+              ...next[index],
+              title: next[index].title || speaker.title,
+              company: next[index].company || speaker.company,
+              bio: next[index].bio || speaker.bio,
+            };
+          }
+        }
+        return { ...current, speakers: next };
+      });
+      setSpeakerNotice(`Read ${unique.size} ${unique.size === 1 ? 'speaker' : 'speakers'} from ${count} ${count === 1 ? 'page' : 'pages'}. Review before saving.`);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Could not read speakers.');
+    } finally {
+      setReadingSpeakers(false);
+      setSpeakerProgress('');
+      if (speakerInputRef.current) speakerInputRef.current.value = '';
     }
   };
 
@@ -1102,6 +1218,114 @@ export function EventForm({
         </div>
       </div>
 
+      {/* Speakers are separate from the legacy instructor/host fields. */}
+      <div className={sectionClass}>
+        <div className={sectionTitleClass}>Speakers</div>
+        <p className="mb-3 text-sm text-gray-600">Add each speaker’s name, title, company, and bio. Uploaded details can be reviewed before saving.</p>
+        {mode !== 'public' && (
+          <div className="mb-4">
+            <div
+              role="button"
+              tabIndex={readingSpeakers ? -1 : 0}
+              aria-label="Upload event speakers"
+              aria-disabled={readingSpeakers}
+              onClick={() => !readingSpeakers && speakerInputRef.current?.click()}
+              onKeyDown={(event) => {
+                if ((event.key === 'Enter' || event.key === ' ') && !readingSpeakers) {
+                  event.preventDefault();
+                  speakerInputRef.current?.click();
+                }
+              }}
+              onDragEnter={(event) => { event.preventDefault(); setSpeakerDragActive(true); }}
+              onDragOver={(event) => { event.preventDefault(); setSpeakerDragActive(true); }}
+              onDragLeave={(event) => {
+                event.preventDefault();
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setSpeakerDragActive(false);
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                setSpeakerDragActive(false);
+                if (!readingSpeakers) void readSpeakerUpload(Array.from(event.dataTransfer.files));
+              }}
+              className={`flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-5 text-center transition-colors ${
+                speakerDragActive ? 'border-brand-700 bg-brand-50' : 'border-gray-300 bg-gray-50 hover:border-brand-700 hover:bg-brand-50/50'
+              }`}
+            >
+              {readingSpeakers ? <Loader2 className="mb-2 animate-spin text-brand-700" size={26} /> : <UploadCloud className="mb-2 text-brand-700" size={26} />}
+              <p className="text-sm font-medium text-gray-900">
+                {readingSpeakers ? speakerProgress : 'Drop speaker pages here or click to upload'}
+              </p>
+              <p className="mt-1 text-xs text-gray-500">
+                PDF or JPG, PNG, WebP images. Up to 10 pages total, 20 MB per file.
+              </p>
+            </div>
+            <input
+              ref={speakerInputRef}
+              type="file"
+              accept="application/pdf,.pdf,image/jpeg,image/png,image/webp"
+              multiple
+              className="sr-only"
+              aria-label="Choose event speaker files"
+              onChange={(event) => void readSpeakerUpload(Array.from(event.target.files ?? []))}
+            />
+            {readingSpeakers && <p role="status" className="mt-2 text-xs text-gray-600">{speakerProgress}</p>}
+            {speakerNotice && <p role="status" className="mt-2 text-xs text-gray-600">{speakerNotice}</p>}
+          </div>
+        )}
+        <div className="space-y-3">
+          {data.speakers.map((speaker, index) => (
+            <div key={index} className="rounded-md border border-gray-200 bg-gray-50 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-700">Speaker {index + 1}</span>
+                <button
+                  type="button"
+                  disabled={readingSpeakers}
+                  aria-label={`Remove speaker ${index + 1}`}
+                  onClick={() => update('speakers', data.speakers.filter((_, i) => i !== index))}
+                  className="text-xs font-medium text-red-700 hover:underline"
+                >Remove</button>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {(['name', 'title', 'company'] as const).map((field) => (
+                  <div key={field} className={field === 'name' ? 'sm:col-span-2' : ''}>
+                    <label className={labelClass} htmlFor={`speaker-${field}-${index}`}>
+                      {field.charAt(0).toUpperCase() + field.slice(1)}
+                    </label>
+                    <input
+                      id={`speaker-${field}-${index}`}
+                      type="text"
+                      maxLength={field === 'name' ? 200 : 300}
+                      disabled={readingSpeakers}
+                      value={speaker[field]}
+                      onChange={(event) => update('speakers', data.speakers.map((item, i) => i === index ? { ...item, [field]: event.target.value } : item))}
+                      className={fieldClass}
+                    />
+                  </div>
+                ))}
+                <div className="sm:col-span-2">
+                  <label className={labelClass} htmlFor={`speaker-bio-${index}`}>Bio</label>
+                  <textarea
+                    id={`speaker-bio-${index}`}
+                    rows={4}
+                    maxLength={5000}
+                    disabled={readingSpeakers}
+                    value={speaker.bio}
+                    onChange={(event) => update('speakers', data.speakers.map((item, i) => i === index ? { ...item, bio: event.target.value } : item))}
+                    className={fieldClass}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          disabled={readingSpeakers || data.speakers.length >= 50}
+          onClick={() => update('speakers', [...data.speakers, { name: '', title: '', company: '', bio: '' }])}
+          className="mt-3 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-brand-700 disabled:opacity-50"
+        >Add Speaker</button>
+      </div>
+
       {/* Pricing */}
       <div className={sectionClass}>
         <div className={sectionTitleClass}>Pricing</div>
@@ -1301,7 +1525,7 @@ export function EventForm({
         </button>
         <button
           type="submit"
-          disabled={submitting || readingSchedule}
+          disabled={submitting || readingSchedule || readingSpeakers}
           className="px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-brand-700 transition-colors disabled:opacity-50 whitespace-nowrap"
         >
           {submitting

@@ -74,6 +74,13 @@ export interface EventScheduleItem {
   details: string;
 }
 
+export interface EventSpeaker {
+  name: string;
+  title: string;
+  company: string;
+  bio: string;
+}
+
 export interface AdminCalendarEvent {
   id: number;
   externalSource: EventSource;
@@ -110,6 +117,7 @@ export interface AdminCalendarEvent {
   /** Extra instructors beyond the primary instructor. */
   additionalInstructors: EventPerson[];
   schedule: EventScheduleItem[];
+  speakers: EventSpeaker[];
 }
 
 export interface ManualEventInput {
@@ -139,6 +147,7 @@ export interface ManualEventInput {
   additionalHosts?: EventPerson[];
   additionalInstructors?: EventPerson[];
   schedule?: EventScheduleItem[];
+  speakers?: EventSpeaker[];
 }
 
 interface EventRow {
@@ -172,6 +181,7 @@ interface EventRow {
   edited_at: string | Date | null;
   additional_hosts: unknown;
   additional_instructors: unknown;
+  speakers: unknown;
   schedule: unknown;
 }
 
@@ -215,6 +225,20 @@ function toScheduleArray(v: unknown): EventScheduleItem[] {
     .filter((item) => item.title.trim() !== '');
 }
 
+function toSpeakersArray(v: unknown): EventSpeaker[] {
+  const raw = typeof v === 'string' ? JSON.parse(v) : v;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((person): person is Record<string, unknown> => !!person && typeof person === 'object')
+    .map((person) => ({
+      name: typeof person.name === 'string' ? person.name : '',
+      title: typeof person.title === 'string' ? person.title : '',
+      company: typeof person.company === 'string' ? person.company : '',
+      bio: typeof person.bio === 'string' ? person.bio : '',
+    }))
+    .filter((person) => person.name.trim());
+}
+
 function rowToAdminEvent(r: EventRow): AdminCalendarEvent {
   return {
     id: r.id,
@@ -249,6 +273,7 @@ function rowToAdminEvent(r: EventRow): AdminCalendarEvent {
     additionalHosts: toPeopleArray(r.additional_hosts),
     additionalInstructors: toPeopleArray(r.additional_instructors),
     schedule: toScheduleArray(r.schedule),
+    speakers: toSpeakersArray(r.speakers),
   };
 }
 
@@ -307,7 +332,7 @@ const SELECT_COLS = `
   tags, format, course_number, member_price, nonmember_price,
   image_url, image_thumb, instructor_name, instructor_bio, lat, lng,
   hidden, edited_fields, edited_by, edited_at,
-  additional_hosts, additional_instructors, schedule
+  additional_hosts, additional_instructors, schedule, speakers
 `;
 
 /** Admin: list ALL events (incl. hidden + past) for one or both publications. */
@@ -351,15 +376,15 @@ export async function createManualEvent(
        start_date, end_date, location, organizer, organizer_email, website,
        tags, format, course_number, member_price, nonmember_price,
        image_url, image_thumb, instructor_name, instructor_bio, lat, lng,
-       additional_hosts, additional_instructors, schedule,
+       additional_hosts, additional_instructors, schedule, speakers,
        edited_by, edited_at, last_synced_at, updated_at
      ) VALUES (
        'manual', $1, $2, $3, $4, $5,
        $6, $7, $8, $9, $10, $11,
        $12, $13, $14, $15, $16,
        $17, $18, $19, $20, $21, $22,
-       $23::jsonb, $24::jsonb, $25::jsonb,
-       $26, NOW(), NOW(), NOW()
+       $23::jsonb, $24::jsonb, $25::jsonb, $26::jsonb,
+       $27, NOW(), NOW(), NOW()
      )
      RETURNING ${SELECT_COLS}`,
     [
@@ -388,6 +413,7 @@ export async function createManualEvent(
       JSON.stringify(input.additionalHosts ?? []),
       JSON.stringify(input.additionalInstructors ?? []),
       JSON.stringify(input.schedule ?? []),
+      JSON.stringify(input.speakers ?? []),
       createdBy,
     ],
   );
@@ -718,7 +744,7 @@ export async function updateEvent(
 ): Promise<AdminCalendarEvent | null> {
   await ensureSchema();
   const colMap: Record<
-    Exclude<keyof ManualEventInput, 'advertiserIds' | 'additionalHosts' | 'additionalInstructors' | 'schedule'>,
+    Exclude<keyof ManualEventInput, 'advertiserIds' | 'additionalHosts' | 'additionalInstructors' | 'schedule' | 'speakers'>,
     string
   > = {
     publication: 'publication',
@@ -743,10 +769,11 @@ export async function updateEvent(
     lat: 'lat',
     lng: 'lng',
   };
-  const jsonColMap: Record<'additionalHosts' | 'additionalInstructors' | 'schedule', string> = {
+  const jsonColMap: Record<'additionalHosts' | 'additionalInstructors' | 'schedule' | 'speakers', string> = {
     additionalHosts: 'additional_hosts',
     additionalInstructors: 'additional_instructors',
     schedule: 'schedule',
+    speakers: 'speakers',
   };
 
   const setClauses: string[] = [];

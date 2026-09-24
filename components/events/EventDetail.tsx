@@ -190,6 +190,28 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
           </DetailSection>
         )}
 
+        {event.speakers?.length > 0 && (
+          <DetailSection label="Speakers">
+            <div className="divide-y divide-gray-200">
+              {event.speakers.map((speaker, index) => (
+                <div key={`${speaker.name}-${index}`} className="py-4 first:pt-0">
+                  <p className="text-base font-medium text-gray-900">{decodeEntities(speaker.name)}</p>
+                  {(speaker.title || speaker.company) && (
+                    <p className="mt-1 text-sm text-gray-600">
+                      {[speaker.title, speaker.company].filter(Boolean).map(decodeEntities).join(' · ')}
+                    </p>
+                  )}
+                  {speaker.bio && (
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+                      {decodeEntities(speaker.bio)}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </DetailSection>
+        )}
+
         {/* DATE section */}
         {event.startDate && (
           <DetailSection label="Date">

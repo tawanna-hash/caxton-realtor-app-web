@@ -14,7 +14,7 @@
  */
 
 import { logger } from './logger';
-import type { EventScheduleItem } from './events-store';
+import type { EventScheduleItem, EventSpeaker } from './events-store';
 
 export interface ExtractedEventFlyer {
   title: string | null;
@@ -207,6 +207,69 @@ Include every scheduled session, break, meal, and opening/closing item visible o
     if (!text) return { ok: false, reason: 'parse-error' };
     const parsed = JSON.parse(text) as { schedule?: unknown };
     return { ok: true, schedule: normalize({ schedule: parsed.schedule }).schedule };
+  } catch (error) {
+    return { ok: false, reason: error instanceof Error && error.name === 'AbortError' ? 'timeout' : 'parse-error' };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Read named speakers from one uploaded page without modifying event metadata. */
+export async function extractEventSpeakersPage({
+  imageBase64,
+  mimeType,
+}: CallArgs): Promise<
+  | { ok: true; speakers: EventSpeaker[] }
+  | { ok: false; reason: 'no-key' | 'rate-limit' | 'parse-error' | 'http-error' | 'timeout' }
+> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return { ok: false, reason: 'no-key' };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const response = await fetch(`${ENDPOINT}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        system_instruction: {
+          parts: [{ text: `Read this SINGLE PAGE of event speaker information. Return only JSON:
+{"speakers":[{"name":"printed full name","title":"printed job title or empty string","company":"printed organization/company or empty string","bio":"printed biographical text or empty string"}]}
+Include only people explicitly identified as speakers, presenters, panelists, moderators, or instructors. Do not treat an organizer, sponsor, venue, or session title as a speaker. Only include names and details visible on this page. Do not invent missing titles, companies, or biographies. Preserve proper names and acronyms. If a bio continues across pages, include only the portion printed on this page. Return [] when no named speakers are visible.` }],
+        },
+        contents: [{
+          role: 'user',
+          parts: [
+            { inline_data: { mime_type: mimeType, data: imageBase64 } },
+            { text: 'Extract the named event speakers and their printed details on this page.' },
+          ],
+        }],
+        generation_config: {
+          temperature: 0,
+          response_mime_type: 'application/json',
+          max_output_tokens: 4096,
+        },
+      }),
+    });
+    if (response.status === 429) return { ok: false, reason: 'rate-limit' };
+    if (!response.ok) {
+      logger?.warn?.(`[event-speaker-extract] gemini status=${response.status}`);
+      return { ok: false, reason: 'http-error' };
+    }
+    const text = extractText(await response.json());
+    if (!text) return { ok: false, reason: 'parse-error' };
+    const parsed = JSON.parse(text) as { speakers?: unknown };
+    if (!Array.isArray(parsed.speakers)) return { ok: false, reason: 'parse-error' };
+    const speakers: EventSpeaker[] = parsed.speakers
+      .filter((person): person is Record<string, unknown> => !!person && typeof person === 'object')
+      .map((person) => ({
+        name: typeof person.name === 'string' ? person.name.trim().slice(0, 200) : '',
+        title: typeof person.title === 'string' ? person.title.trim().slice(0, 300) : '',
+        company: typeof person.company === 'string' ? person.company.trim().slice(0, 300) : '',
+        bio: typeof person.bio === 'string' ? person.bio.trim().slice(0, 5000) : '',
+      }))
+      .filter((person) => person.name);
+    return { ok: true, speakers };
   } catch (error) {
     return { ok: false, reason: error instanceof Error && error.name === 'AbortError' ? 'timeout' : 'parse-error' };
   } finally {
