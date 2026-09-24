@@ -1042,6 +1042,9 @@ input[type='date']::-webkit-calendar-picker-indicator {
 .article-body-rich,
 .caxton-article-prose {
   overflow-wrap: anywhere;
+  color: #301d5d;
+  font-size: 1.0625rem;
+  line-height: 1.7;
 }
 .article-body-rich {
   color: #301d5d;
@@ -1129,3 +1132,26 @@ input[type='date']::-webkit-calendar-picker-indicator {
 .caxton-article-prose td { border: 1px solid #d1d5db; padding: 0.5em; }
 .article-body-rich hr,
 .caxton-article-prose hr { border-top: 1px solid #d1d5db; margin: 1.5em 0; }
+
+/* Reader, editor and preview share the dashboard's article typography. */
+.caxton-article-prose p { margin-bottom: 1.25rem; font-weight: 300; }
+.caxton-article-prose h2 {
+  font-size: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: #111827;
+  letter-spacing: -0.01em;
+}
+.caxton-article-prose h3 {
+  font-size: 1.25rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #111827;
+}
+.caxton-article-prose strong { font-weight: 600; color: #111827; }
+.caxton-article-prose ul,
+.caxton-article-prose ol { margin-bottom: 1.25rem; font-weight: 300; }
+.caxton-article-prose li { margin-bottom: 0.4rem; }
+.caxton-article-prose a { text-underline-offset: 2px; }
+.caxton-article-prose img { margin: 1.5rem 0; border-radius: 4px; }
+.caxton-article-prose blockquote { color: #4b5563; }

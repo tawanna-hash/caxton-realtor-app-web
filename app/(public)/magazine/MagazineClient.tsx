@@ -245,7 +245,9 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
           magazine={currentMag}
           brandColor={info.color}
           onOpenMagazine={() => setOpenMag(currentMag)}
-          onOpenArticle={() => {}}
+          onOpenArticle={(article) => {
+            if (article.id != null) router.push(`/dashboard?article=${encodeURIComponent(String(article.id))}`);
+          }}
         />
       )}
       <div id="archives" style={{ scrollMarginTop: 72 }}>

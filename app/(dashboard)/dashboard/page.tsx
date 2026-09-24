@@ -24,6 +24,7 @@ import { openExternal } from '@/lib/native/external-link';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
 import TrendingTicker from '@/components/feed/TrendingTicker';
+import ArticleFeedCardBody from '@/components/ArticleFeedCardBody';
 import { isNative } from '@/lib/native/runtime';
 import { ARTICLE_CATEGORIES, articleCategoriesForPublication, canonicalArticleCategory } from '@/lib/article-categories';
 
@@ -1822,20 +1823,7 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
 
 function ArticleCard({ item, pub }: { item: any; pub: string }) {
   const body = (
-    <div className="flex items-start gap-4">
-      <div className="flex-1 min-w-0">
-        <span className="text-xs uppercase tracking-[0.15em] font-medium text-brand-700 mb-2 block">{item.cat}</span>
-        <h3 className="text-lg text-gray-900 leading-snug mb-2 font-semibold">{item.head}</h3>
-        <p className="text-sm text-gray-500 leading-relaxed mb-3 font-light">{item.sum}</p>
-        <span className="text-xs text-gray-400 font-light">{item.time}</span>
-      </div>
-      {item.imageUrl && (
-        <div className="flex-shrink-0 w-32 h-28 bg-gray-100 border border-gray-200 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={item.imageUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
-        </div>
-      )}
-    </div>
+    <ArticleFeedCardBody category={item.cat} headline={item.head} summary={item.sum} date={item.time} imageUrl={item.imageUrl} />
   );
 
   // caxton-article-reader-b1-card
@@ -2670,66 +2658,6 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
         </div>
       )}
 
-      {/* Inline styles for the article prose */}
-      <style jsx>{`
-        :global(.caxton-article-prose) {
-          color: #301D5D;
-          font-size: 1.0625rem;
-          line-height: 1.7;
-        }
-        :global(.caxton-article-prose p) {
-          margin-bottom: 1.25rem;
-          font-weight: 300;
-        }
-        :global(.caxton-article-prose h2) {
-          font-size: 1.5rem;
-          font-weight: 700;
-          margin-top: 2rem;
-          margin-bottom: 0.75rem;
-          color: #111827;
-          letter-spacing: -0.01em;
-        }
-        :global(.caxton-article-prose h3) {
-          font-size: 1.25rem;
-          font-weight: 600;
-          margin-top: 1.5rem;
-          margin-bottom: 0.5rem;
-          color: #111827;
-        }
-        :global(.caxton-article-prose strong) {
-          font-weight: 600;
-          color: #111827;
-        }
-        :global(.caxton-article-prose ul),
-        :global(.caxton-article-prose ol) {
-          margin-bottom: 1.25rem;
-          padding-left: 1.5rem;
-          font-weight: 300;
-        }
-        :global(.caxton-article-prose ul) { list-style-type: disc; }
-        :global(.caxton-article-prose ol) { list-style-type: decimal; }
-        :global(.caxton-article-prose li) {
-          margin-bottom: 0.4rem;
-        }
-        :global(.caxton-article-prose a) {
-          color: ${info.color};
-          text-decoration: underline;
-          text-underline-offset: 2px;
-        }
-        :global(.caxton-article-prose img) {
-          max-width: 100%;
-          height: auto;
-          margin: 1.5rem 0;
-          border-radius: 4px;
-        }
-        :global(.caxton-article-prose blockquote) {
-          border-left: 3px solid ${info.color};
-          padding-left: 1rem;
-          margin: 1.5rem 0;
-          font-style: italic;
-          color: #4b5563;
-        }
-      `}</style>
     </div>
   );
 }

@@ -11,6 +11,8 @@ import FeatureArticlesPanel from './FeatureArticlesPanel';
 import AuthorPicker, { AuthorPhoto } from './AuthorPicker';
 import type { ArticleAuthor } from '@/lib/server/article-authors';
 import { ARTICLE_CATEGORIES, canonicalArticleCategory } from '@/lib/article-categories';
+import DOMPurify from 'isomorphic-dompurify';
+import ArticleFeedCardBody from '@/components/ArticleFeedCardBody';
 export type AdminArticle = NewsArticle & {
   hidden: boolean;
   editedFields: string[];
@@ -54,9 +56,22 @@ function CategoryPicker({
   );
 }
 
-function ArticleBodyEditor({ value, onChange }: { value: string; onChange: (html: string) => void }) {
-  const [mode, setMode] = useState<'visual' | 'html'>('visual');
+function ArticleBodyEditor({
+  value, onChange, headline, category, summary, imageUrl, authorName, authorAvatar, publishedAt,
+}: {
+  value: string;
+  onChange: (html: string) => void;
+  headline: string;
+  category: string;
+  summary: string;
+  imageUrl: string;
+  authorName: string;
+  authorAvatar: string;
+  publishedAt?: string;
+}) {
+  const [mode, setMode] = useState<'visual' | 'html' | 'reader' | 'feed'>('visual');
   const editor = useRef<HTMLDivElement>(null);
+  const safePreviewHtml = useMemo(() => DOMPurify.sanitize(value), [value]);
   useEffect(() => {
     if (mode === 'visual' && editor.current) editor.current.innerHTML = value;
     // Initialize only when entering Visual mode. Rewriting on each keystroke moves the caret.
@@ -66,20 +81,50 @@ function ArticleBodyEditor({ value, onChange }: { value: string; onChange: (html
   return (
     <div>
       <div className="mb-2 flex gap-2" aria-label="Article body editing mode">
-        {(['visual', 'html'] as const).map((option) => (
+        {(['visual', 'html', 'reader', 'feed'] as const).map((option) => (
           <button key={option} type="button" onClick={() => setMode(option)}
             className={`rounded-md px-3 py-1 text-xs ${mode === option ? 'bg-brand-700 text-white' : 'border border-gray-300 text-gray-700'}`}>
-            {option === 'visual' ? 'Visual editor' : 'HTML code'}
+            {option === 'visual' ? 'Visual editor' : option === 'html' ? 'HTML code' : option === 'reader' ? 'Reader preview' : 'Feed preview'}
           </button>
         ))}
       </div>
       {mode === 'visual' ? (
         <div ref={editor} contentEditable suppressContentEditableWarning role="textbox" aria-label="Article body"
           aria-multiline="true" onInput={(e) => onChange(e.currentTarget.innerHTML)}
-          className={`${style} article-body-rich min-h-56 max-h-[55vh] overflow-y-auto leading-relaxed`} />
-      ) : (
+          className={`${style} caxton-article-prose min-h-56 max-h-[55vh] overflow-y-auto leading-relaxed`} />
+      ) : mode === 'html' ? (
         <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={10}
           aria-label="Article body HTML" className={`${style} font-mono text-xs resize-y`} />
+      ) : mode === 'feed' ? (
+        <div className="border border-gray-200 bg-white rounded-md px-4 py-5">
+          <ArticleFeedCardBody category={category} headline={headline || 'Article headline'} summary={summary}
+            imageUrl={imageUrl} date={publishedAt ? formatDate(publishedAt) : undefined} />
+        </div>
+      ) : (
+        <div className="border border-gray-200 bg-white rounded-md overflow-hidden">
+          {imageUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={imageUrl} alt="" className="w-full h-auto max-h-[60vh] object-cover bg-gray-100" />
+          )}
+          <main className="max-w-2xl mx-auto px-5 pt-6 pb-8">
+            {category && <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3 text-brand-700">{category}</p>}
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-tight mb-3">{headline || 'Article headline'}</h1>
+            {(authorName || publishedAt) && (
+              <div className="flex items-center gap-3 mb-2 pb-6 border-b border-gray-200">
+                {authorAvatar && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={authorAvatar} alt="" className="w-20 h-20 rounded-full object-cover object-[center_20%] bg-gray-100" />
+                )}
+                <div>
+                  {authorName && <p className="text-sm text-gray-900 font-medium leading-tight">By {authorName}</p>}
+                  {publishedAt && <p className="text-xs text-gray-500 font-light mt-0.5">{formatDate(publishedAt)}</p>}
+                </div>
+              </div>
+            )}
+            {safePreviewHtml ? <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: safePreviewHtml }} />
+              : <p className="text-base text-gray-700 leading-relaxed font-light">{summary}</p>}
+          </main>
+        </div>
       )}
     </div>
   );
@@ -736,7 +781,9 @@ function EditModal({
           </Field>
 
           <Field label="Article body" hint="Edit visually or switch to HTML code. Leave blank to use upstream content.">
-            <ArticleBodyEditor value={contentHtml} onChange={updateBody} />
+            <ArticleBodyEditor value={contentHtml} onChange={updateBody} headline={head} category={cat}
+              summary={excerpt} imageUrl={imageUrl} authorName={authorName} authorAvatar={authorAvatar}
+              publishedAt={article.publishedAt || article.dateIso} />
           </Field>
 
           <Field label="Tags" hint="Comma-separated">
@@ -982,7 +1029,9 @@ function CreateModal({
           </Field>
 
           <Field label="Article body" hint="Edit visually or switch to HTML code.">
-            <ArticleBodyEditor value={contentHtml} onChange={updateBody} />
+            <ArticleBodyEditor value={contentHtml} onChange={updateBody} headline={head} category={cat}
+              summary={excerpt} imageUrl={imageUrl} authorName={authorName} authorAvatar={authorAvatar}
+              publishedAt={publishedAt} />
           </Field>
 
           <Field label="Tags" hint="Comma-separated">

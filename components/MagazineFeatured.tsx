@@ -5,6 +5,7 @@ import type { Magazine } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
 import { usePtrRefresh } from '@/hooks/use-ptr-refresh';
 import { canonicalArticleCategory } from '@/lib/article-categories';
+import ArticleFeedCardBody from '@/components/ArticleFeedCardBody';
 
 // Loose shape — the news feed comes from WordPress via /api/news/[publication]
 // and uses inconsistent field names (head/title, sum/excerpt/summary, etc.).
@@ -70,40 +71,17 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
     return cat === 'Featured Partner';
   });
 
-  const renderArticleCard = (article: NewsArticle, label: string, sizeClass: string, summaryClamp: string) => {
+  const renderArticleCard = (article: NewsArticle, label: string, _sizeClass: string, _summaryClamp: string) => {
     const img = article.image || article.imageUrl || article.thumbnail;
     const title = article.head || article.title || 'Featured article';
     const summary = article.sum || article.excerpt || article.summary;
     return (
       <button
         onClick={() => { trackEvent('magazine_featured_article_clicked', { magazine_id: magazine.id, article_id: article?.id, label }); onOpenArticle(article); }}
-        className="block w-full text-left group"
+        className="block w-full text-left group px-4 py-5 hover:bg-gray-50 transition-colors rounded-md"
         aria-label={`Open ${title}`}
       >
-        <p className="text-[10px] uppercase tracking-[0.25em] font-semibold mb-3" style={{ color: brandColor }}>
-          {label}
-        </p>
-        {img && (
-          <div className="relative w-full aspect-[16/10] overflow-hidden mb-4 bg-gray-100 rounded-md">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={img}
-              alt=""
-              className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform"
-            />
-          </div>
-        )}
-        <h3 className={`${sizeClass} font-serif text-gray-900 leading-tight mb-3 group-hover:underline`}>
-          {title}
-        </h3>
-        {summary && (
-          <p className={`text-sm text-gray-600 leading-relaxed ${summaryClamp}`}>
-            {summary}
-          </p>
-        )}
-        <p className="text-xs uppercase tracking-[0.2em] mt-4 font-medium" style={{ color: brandColor }}>
-          Read Article →
-        </p>
+        <ArticleFeedCardBody category={label} headline={title} summary={summary} imageUrl={img} />
       </button>
     );
   };
