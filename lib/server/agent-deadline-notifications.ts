@@ -13,6 +13,7 @@ import { ensureAgentCommandCenterWorkspaceSchema } from '@/lib/server/agent-comm
 type WorkspaceRecipientRow = {
   realtor_id: string;
   email: string | null;
+  first_name: string | null;
   workspace: unknown;
 };
 
@@ -93,6 +94,39 @@ function deadlinesForDeal(deal: AgentDeal): DealDeadline[] {
     });
   }
   return deadlines;
+}
+
+function titleCase(value: string): string {
+  return value.replace(/\b([a-z])/g, (c) => c.toUpperCase());
+}
+
+function buyerLastName(deal: AgentDeal): string {
+  const title = (deal.title || '').trim();
+  if (title && !/^new transaction$/i.test(title)) return title;
+  const buyers = (deal.buyerNames || '').split(/[,&]| and /i)[0]?.trim() ?? '';
+  const parts = buyers.split(/\s+/).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : '';
+}
+
+function pushTiming(offset: number): string {
+  return offset === 0 ? 'Due Today' : `Due In ${offset} Day${offset === 1 ? '' : 's'}`;
+}
+
+function formatDeadlineDate(value: string): string {
+  const date = new Date(`${value}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+function pushContent(deal: AgentDeal, deadline: DealDeadline, offset: number, firstName: string | null): { title: string; body: string } {
+  const lastName = buyerLastName(deal);
+  const address = (deal.propertyAddress || '').trim();
+  const client = [lastName ? titleCase(lastName) : '', address].filter(Boolean).join(' · ') || 'Your Transaction';
+  const greeting = firstName?.trim() ? `${titleCase(firstName.trim())}, ` : '';
+  return {
+    title: `Closing Time · ${titleCase(deadline.label)} ${pushTiming(offset)}`,
+    body: `${greeting}${client}. Due ${formatDeadlineDate(deadline.date)}.`,
+  };
 }
 
 async function ensureAgentDeadlineDeliverySchema(): Promise<void> {
@@ -203,7 +237,7 @@ export async function runAgentDeadlineNotifications(now = new Date()): Promise<A
 
   while (pageCount === PAGE_SIZE) {
     const recipients = await query<WorkspaceRecipientRow>(
-      `SELECT workspace.realtor_id, workspace.workspace, realtors.email
+      `SELECT workspace.realtor_id, workspace.workspace, realtors.email, realtors.first_name
        FROM agent_command_center_workspaces AS workspace
        JOIN realtors ON realtors.id = workspace.realtor_id
        ORDER BY workspace.updated_at DESC
@@ -255,9 +289,10 @@ export async function runAgentDeadlineNotifications(now = new Date()): Promise<A
               const deliveryId = await claimDelivery(row.realtor_id, deal.id, deadline, offset, 'web_push');
               if (deliveryId) {
                 try {
+                  const push = pushContent(deal, deadline, offset, row.first_name);
                   const sent = await sendPushToRealtor(row.realtor_id, {
-                    title: `${deadline.label} ${timing}`,
-                    body: transaction,
+                    title: push.title,
+                    body: push.body,
                     url: '/agents#agent-desk',
                     tag: `agent-deadline-${deal.id}-${deadline.id}-${offset}`,
                   });
