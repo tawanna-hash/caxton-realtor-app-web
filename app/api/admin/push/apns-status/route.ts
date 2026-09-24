@@ -36,8 +36,17 @@ export const GET = withAdminTracking(async () => {
   `) as unknown as Array<{ count: number }>;
   const nativeTokenCount = rows[0]?.count ?? 0;
 
+  const recentTokens = (await sql`
+    SELECT LEFT(token, 8) AS "tokenPrefix", platform, realtor_id AS "realtorId",
+           created_at AS "createdAt", last_seen_at AS "lastSeenAt", revoked_at AS "revokedAt"
+      FROM native_push_tokens
+     ORDER BY COALESCE(last_seen_at, created_at) DESC
+     LIMIT 8
+  `) as unknown as Array<Record<string, unknown>>;
+
   return NextResponse.json({
     ...status,
     nativeTokenCount,
+    recentTokens,
   });
 });
