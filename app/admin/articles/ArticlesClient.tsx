@@ -34,37 +34,35 @@ const PUB_STYLES: Record<NewsArticle['publication'], string> = {
   san_antonio: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
 };
 
-const DEFAULT_CATEGORIES = [
-  'Featured Partner',
-  'Featured Advertiser',
+const ARTICLE_CATEGORIES = [
+  'Austin Board of REALTORS (ABOR)',
+  'Five Points Board of REALTORS (Five Points)',
+  "Women's Council of REALTORS San Antonio",
+  "Women's Council of REALTORS Austin",
+  'Greater San Antonio Builders Association (GSABA)',
+  'Home Builders Association of Austin (HBA Austin)',
+  'San Antonio Board of REALTORS (SABOR)',
   "Editor's Choice",
-  'Editor’s Choice',
-  'Five Points Board of REALTORS',
-];
+  'Featured Partner',
+  'Faces of Real Estate',
+  'Residential Real Estate Council (RRC)',
+] as const;
 
 function CategoryPicker({
-  value, onChange, categories,
+  value, onChange,
 }: {
   value: string;
   onChange: (value: string) => void;
-  categories: string[];
 }) {
-  const options = [...new Set([...DEFAULT_CATEGORIES, ...categories.filter(Boolean)])]
-    .sort((a, b) => a.localeCompare(b));
-  const [addingNew, setAddingNew] = useState(Boolean(value && !options.includes(value)));
-  const custom = addingNew || Boolean(value && !options.includes(value));
+  const legacyCategory = value && !ARTICLE_CATEGORIES.includes(value as typeof ARTICLE_CATEGORIES[number]);
   const style = 'w-full px-3 py-2 rounded-md border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700';
   return (
     <div className="space-y-2">
-      <select value={custom ? '__new' : value} onChange={(e) => {
-        setAddingNew(e.target.value === '__new');
-        onChange(e.target.value === '__new' ? '' : e.target.value);
-      }} className={style}>
+      <select value={legacyCategory ? '' : value} onChange={(e) => onChange(e.target.value)} className={style}>
         <option value="">Select a category</option>
-        {options.map((category) => <option key={category} value={category}>{category}</option>)}
-        <option value="__new">Add a new category…</option>
+        {ARTICLE_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
       </select>
-      {custom && <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder="New category" aria-label="New category" className={style} />}
+      {legacyCategory && <p className="text-xs text-gray-600">Current category: {value}. Select an approved category to replace it.</p>}
     </div>
   );
 }
@@ -163,7 +161,6 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     }
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [initialArticles]);
-  const categories = useMemo(() => [...new Set(initialArticles.map((article) => article.cat).filter(Boolean))], [initialArticles]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
   const pageArticles = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
@@ -373,7 +370,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
           className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700">
           <option value="">All categories</option>
-          {[...categories].sort((a, b) => a.localeCompare(b)).map((category) =>
+          {ARTICLE_CATEGORIES.map((category) =>
             <option key={category} value={category}>{category}</option>)}
         </select>
         <input
@@ -559,14 +556,13 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
         <EditModal
           article={editing}
           seedAuthors={seedAuthors}
-          categories={categories}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
         />
       )}
 
       {creating && (
-        <CreateModal seedAuthors={seedAuthors} categories={categories} onClose={() => setCreating(false)} onCreated={handleCreated} />
+        <CreateModal seedAuthors={seedAuthors} onClose={() => setCreating(false)} onCreated={handleCreated} />
       )}
       </>
       )}
@@ -581,13 +577,11 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
 function EditModal({
   article,
   seedAuthors,
-  categories,
   onClose,
   onSaved,
 }: {
   article: AdminArticle;
   seedAuthors: ArticleAuthor[];
-  categories: string[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -702,7 +696,7 @@ function EditModal({
           </Field>
 
           <Field label="Category">
-            <CategoryPicker value={cat} onChange={setCat} categories={categories} />
+            <CategoryPicker value={cat} onChange={setCat} />
           </Field>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -816,12 +810,10 @@ function EditModal({
 
 function CreateModal({
   seedAuthors,
-  categories,
   onClose,
   onCreated,
 }: {
   seedAuthors: ArticleAuthor[];
-  categories: string[];
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -845,6 +837,10 @@ function CreateModal({
   async function save() {
     if (!head.trim()) {
       setError('Title is required');
+      return;
+    }
+    if (!ARTICLE_CATEGORIES.includes(cat as typeof ARTICLE_CATEGORIES[number])) {
+      setError('Select a category from the approved list');
       return;
     }
     setSaving(true);
@@ -941,7 +937,7 @@ function CreateModal({
           </Field>
 
           <Field label="Category">
-            <CategoryPicker value={cat} onChange={setCat} categories={categories} />
+            <CategoryPicker value={cat} onChange={setCat} />
           </Field>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
