@@ -118,6 +118,12 @@ function formatRelativeTime(iso: string): string {
 
 function rowToArticle(row: ArchivedArticleRow): NewsArticle {
   const publishedAt = new Date(row.published_at).toISOString();
+  const ojas = row.publication === 'san_antonio' && row.author_name.trim().toLowerCase() === 'ojas';
+  const tanya = row.publication === 'austin' && row.author_name.trim().toLowerCase() === 'tanya chappell';
+  const authorName = ojas ? 'Ojas Tasker' : row.author_name || 'Staff';
+  const authorAvatar = ojas
+    ? '/ojas-tasker-headshot.jpeg'
+    : tanya ? '/tanya-chappell-headshot.jpg' : row.author_avatar;
   return {
     id: row.wp_post_id,
     publication: row.publication,
@@ -132,9 +138,9 @@ function rowToArticle(row: ArchivedArticleRow): NewsArticle {
     imageUrl: row.image_url,
     imageThumb: row.image_thumb || row.image_url,
     time: formatRelativeTime(publishedAt),
-    author: row.author_avatar
-      ? { name: row.author_name || 'Staff', avatar: row.author_avatar }
-      : { name: row.author_name || 'Staff' },
+    author: authorAvatar
+      ? { name: authorName, avatar: authorAvatar }
+      : { name: authorName },
     tags: row.tags ?? [],
   };
 }
@@ -220,7 +226,7 @@ export async function createArchivedArticle(
       input.authorName ?? 'Staff',
       input.authorAvatar ?? null,
       input.cat ?? '',
-      input.tags && input.tags.length > 0 ? input.tags : null,
+      input.tags ?? [],
       publishedAt.toISOString(),
       input.sourceUrl ?? null,
     ],
@@ -287,7 +293,7 @@ export async function updateArchivedArticle(
       setAuthorName, fields.authorName ?? null,
       setAuthorAvatar, fields.authorAvatar ?? null,
       setCat, fields.cat ?? null,
-      setTags, fields.tags && fields.tags.length > 0 ? fields.tags : null,
+      setTags, fields.tags ?? [],
       setPublishedAt, fields.publishedAt ?? null,
     ],
   );

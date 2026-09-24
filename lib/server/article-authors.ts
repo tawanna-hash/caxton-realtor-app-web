@@ -21,6 +21,12 @@ function keyFor(name: string): string {
 }
 
 function usableAvatar(name: string, avatar: string | null | undefined): string | null {
+  if (keyFor(name) === 'ojas tasker' && (!avatar || /^https?:\/\/(?:www\.)?newslinesa\.com\/wp-content\/uploads\//i.test(avatar))) {
+    return '/ojas-tasker-headshot.jpeg';
+  }
+  if (keyFor(name) === 'tanya chappell' && (!avatar || /(?:^|\/\/)(?:www\.)?(?:realtyline\.us\/wp-content\/uploads\/|secure\.gravatar\.com\/avatar\/)/i.test(avatar))) {
+    return '/tanya-chappell-headshot.jpg';
+  }
   // The retired WordPress hosts redirect uploads to the app's dashboard, so
   // their old author-photo URLs render as broken images. Do not advertise them.
   if (avatar && /^https?:\/\/(?:www\.)?(?:realtyline\.us|newslinesa\.com)\/wp-content\/uploads\//i.test(avatar)) {
@@ -44,7 +50,7 @@ export async function listArticleAuthors(): Promise<ArticleAuthor[]> {
   const authors = new Map<string, ArticleAuthor>();
   function add(name: string | null | undefined, avatar?: string | null) {
     if (!name?.trim()) return;
-    const normalized = name.trim().replace(/\s+/g, ' ');
+    const normalized = name.trim().replace(/\s+/g, ' ') === 'ojas' ? 'Ojas Tasker' : name.trim().replace(/\s+/g, ' ');
     const key = keyFor(normalized);
     const photo = usableAvatar(normalized, avatar);
     const prior = authors.get(key);
