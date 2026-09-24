@@ -170,6 +170,26 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
           </DetailSection>
         )}
 
+        {event.schedule?.length > 0 && (
+          <DetailSection label="Schedule">
+            <ol className="divide-y divide-gray-200">
+              {event.schedule.map((item, index) => (
+                <li key={index} className="grid gap-1 py-3 first:pt-0 sm:grid-cols-[9rem_1fr] sm:gap-4">
+                  <span className="text-sm font-semibold text-gray-600">{item.time || 'Time TBD'}</span>
+                  <div>
+                    <p className="text-base font-medium text-gray-900">{decodeEntities(item.title)}</p>
+                    {item.details && (
+                      <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-gray-600">
+                        {decodeEntities(item.details)}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </DetailSection>
+        )}
+
         {/* DATE section */}
         {event.startDate && (
           <DetailSection label="Date">

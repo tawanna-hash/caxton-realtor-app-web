@@ -4,6 +4,7 @@
 // so no frontend type changes are needed.
 
 import { ensureSchema, getSql } from './db';
+import type { EventScheduleItem } from './server/events-store';
 
 export type Publication = import('@/lib/publications').PublicationId;
 export type EventSource =
@@ -44,6 +45,7 @@ export interface CalendarEvent {
   instructorBio: string | null;
   lat: number | null;
   lng: number | null;
+  schedule: EventScheduleItem[];
   // Sponsored support — populated from WP _event_sponsored, _event_sponsor_tier, _event_sponsor_advertiser.
   // Optional because columns may not exist on all rows; SELECT * passes them through when present.
   sponsored?: string;        // "1" or "" from WP
@@ -101,6 +103,7 @@ interface EventRow {
   instructor_bio: string | null;
   lat: number | string | null;
   lng: number | string | null;
+  schedule: unknown;
 }
 
 function toIso(d: string | Date | null): string | null {
@@ -115,6 +118,19 @@ function toNumber(v: number | string | null): number | null {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null;
   const n = parseFloat(v);
   return Number.isFinite(n) ? n : null;
+}
+
+function toScheduleArray(v: unknown): EventScheduleItem[] {
+  const raw = typeof v === 'string' ? JSON.parse(v) : v;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    .map((item) => ({
+      time: typeof item.time === 'string' ? item.time : '',
+      title: typeof item.title === 'string' ? item.title : '',
+      details: typeof item.details === 'string' ? item.details : '',
+    }))
+    .filter((item) => item.title.trim() !== '');
 }
 
 function rowToEvent(r: EventRow): CalendarEvent {
@@ -141,6 +157,7 @@ function rowToEvent(r: EventRow): CalendarEvent {
     instructorBio: r.instructor_bio,
     lat: toNumber(r.lat),
     lng: toNumber(r.lng),
+    schedule: toScheduleArray(r.schedule),
   };
 }
 

@@ -7,7 +7,7 @@
  * Returns:
  *   { ok: true, extracted: { title, description, startDate, endDate,
  *       location, organizer, organizerEmail, website, format, courseNumber,
- *       memberPrice, nonmemberPrice, instructorName, instructorBio,
+ *       memberPrice, nonmemberPrice, instructorName, instructorBio, schedule,
  *       rawDate, rawTime, confidence } }
  *
  * The client (New/Edit Event admin form) merges `extracted` into its form
@@ -119,6 +119,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       nonmemberPrice: result.data.nonmemberPrice,
       instructorName: result.data.instructorName,
       instructorBio: result.data.instructorBio,
+      schedule: result.data.schedule,
       rawDate: result.data.date,
       rawTime: timeRange,
       confidence: result.data.confidence,

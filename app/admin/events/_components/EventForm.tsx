@@ -16,6 +16,12 @@ export type EventPersonForm = {
 
 export const EMPTY_EVENT_PERSON: EventPersonForm = { name: '', email: '', company: '', phone: '' };
 
+export type EventScheduleFormItem = {
+  time: string;
+  title: string;
+  details: string;
+};
+
 export type EventFormData = {
   id?: number;
   publication: PublicationId;
@@ -42,6 +48,7 @@ export type EventFormData = {
   advertiserIds: number[];
   additionalHosts: EventPersonForm[];
   additionalInstructors: EventPersonForm[];
+  schedule: EventScheduleFormItem[];
 };
 
 export const EMPTY_EVENT: EventFormData = {
@@ -69,6 +76,7 @@ export const EMPTY_EVENT: EventFormData = {
   advertiserIds: [],
   additionalHosts: [],
   additionalInstructors: [],
+  schedule: [],
 };
 
 // Known real-estate/industry acronyms to preserve verbatim when Title Casing.
@@ -174,6 +182,13 @@ function fieldsToPayload(data: EventFormData): Record<string, unknown> {
     advertiserIds: [...data.advertiserIds].sort((a, b) => a - b),
     additionalHosts: peopleToPayload(data.additionalHosts),
     additionalInstructors: peopleToPayload(data.additionalInstructors),
+    schedule: data.schedule
+      .filter((item) => item.title.trim() !== '')
+      .map((item) => ({
+        time: item.time.trim(),
+        title: item.title.trim(),
+        details: item.details.trim(),
+      })),
   };
 }
 
@@ -322,6 +337,7 @@ export function EventForm({
           nonmemberPrice: string | null;
           instructorName: string | null;
           instructorBio: string | null;
+          schedule?: EventScheduleFormItem[];
           rawDate: string | null;
           rawTime: string | null;
           confidence: number;
@@ -357,6 +373,13 @@ export function EventForm({
         nonmemberPrice: ex.nonmemberPrice ?? current.nonmemberPrice,
         instructorName: ex.instructorName ? toTitleCase(ex.instructorName) : current.instructorName,
         instructorBio: ex.instructorBio ?? current.instructorBio,
+        schedule: ex.schedule?.length
+          ? ex.schedule.map((item) => ({
+              time: item.time,
+              title: toTitleCase(item.title),
+              details: item.details,
+            }))
+          : current.schedule,
         imageUrl: flyerUrl ?? current.imageUrl,
         imageThumb: flyerUrl ?? current.imageThumb,
       }));
@@ -665,6 +688,83 @@ export function EventForm({
             />
           </div>
         </div>
+      </div>
+
+      {/* Event schedule */}
+      <div className={sectionClass}>
+        <div className={sectionTitleClass}>Event Schedule</div>
+        <p className="mb-4 text-xs text-gray-500">
+          Add the agenda in order, including sessions, breaks, and lunch. Times and speaker details are optional.
+        </p>
+        <div className="space-y-3">
+          {data.schedule.map((item, index) => (
+            <div key={index} className="rounded-md border border-gray-200 bg-gray-50 p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <span className="text-xs font-semibold text-gray-700">Item {index + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => update('schedule', data.schedule.filter((_, i) => i !== index))}
+                  className="text-xs font-medium text-red-700 hover:underline"
+                  aria-label={`Remove schedule item ${index + 1}`}
+                >
+                  Remove
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,12rem)_1fr]">
+                <div>
+                  <label className={labelClass} htmlFor={`schedule-time-${index}`}>Time</label>
+                  <input
+                    id={`schedule-time-${index}`}
+                    type="text"
+                    value={item.time}
+                    onChange={(e) => update('schedule', data.schedule.map((entry, i) =>
+                      i === index ? { ...entry, time: e.target.value } : entry,
+                    ))}
+                    placeholder="8:30–9:10 AM"
+                    className={fieldClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor={`schedule-title-${index}`}>Session / activity</label>
+                  <input
+                    id={`schedule-title-${index}`}
+                    type="text"
+                    value={item.title}
+                    onChange={(e) => update('schedule', data.schedule.map((entry, i) =>
+                      i === index ? { ...entry, title: e.target.value } : entry,
+                    ))}
+                    onBlur={() => update('schedule', data.schedule.map((entry, i) =>
+                      i === index ? { ...entry, title: toTitleCase(entry.title) } : entry,
+                    ))}
+                    placeholder="Opening Remarks"
+                    className={fieldClass}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className={labelClass} htmlFor={`schedule-details-${index}`}>Speakers / details</label>
+                  <textarea
+                    id={`schedule-details-${index}`}
+                    value={item.details}
+                    onChange={(e) => update('schedule', data.schedule.map((entry, i) =>
+                      i === index ? { ...entry, details: e.target.value } : entry,
+                    ))}
+                    placeholder="Moderator: ... / Panelists: ..."
+                    rows={2}
+                    className={fieldClass}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => update('schedule', [...data.schedule, { time: '', title: '', details: '' }])}
+          disabled={data.schedule.length >= 50}
+          className="mt-4 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+        >
+          Add Schedule Item
+        </button>
       </div>
 
       {/* Where */}

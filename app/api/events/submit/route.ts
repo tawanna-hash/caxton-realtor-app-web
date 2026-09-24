@@ -77,6 +77,7 @@ export const POST = withErrorHandling(async (req: Request) => {
     instructorBio: input.instructorBio ?? null,
     additionalHosts: input.additionalHosts ?? [],
     additionalInstructors: input.additionalInstructors ?? [],
+    schedule: input.schedule ?? [],
     lat: input.lat ?? null,
     lng: input.lng ?? null,
     advertiserId: null,

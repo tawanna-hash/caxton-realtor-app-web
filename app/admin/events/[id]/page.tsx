@@ -48,6 +48,7 @@ type AdminEvent = {
   advertiserIds: number[];
   additionalHosts?: Array<{ name: string; email?: string | null; company?: string | null; phone?: string | null }>;
   additionalInstructors?: Array<{ name: string; email?: string | null; company?: string | null; phone?: string | null }>;
+  schedule?: Array<{ time: string; title: string; details: string }>;
 };
 
 function toPersonForm(
@@ -90,6 +91,7 @@ function eventToForm(ev: AdminEvent): EventFormData {
     advertiserIds: ev.advertiserIds ?? [],
     additionalHosts: toPersonForm(ev.additionalHosts),
     additionalInstructors: toPersonForm(ev.additionalInstructors),
+    schedule: (ev.schedule ?? []).map((item) => ({ ...item, title: toTitleCase(item.title) })),
   };
 }
 

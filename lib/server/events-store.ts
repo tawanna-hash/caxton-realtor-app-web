@@ -68,6 +68,12 @@ export interface EventPerson {
   phone?: string | null;
 }
 
+export interface EventScheduleItem {
+  time: string;
+  title: string;
+  details: string;
+}
+
 export interface AdminCalendarEvent {
   id: number;
   externalSource: EventSource;
@@ -103,6 +109,7 @@ export interface AdminCalendarEvent {
   additionalHosts: EventPerson[];
   /** Extra instructors beyond the primary instructor. */
   additionalInstructors: EventPerson[];
+  schedule: EventScheduleItem[];
 }
 
 export interface ManualEventInput {
@@ -131,6 +138,7 @@ export interface ManualEventInput {
   advertiserIds?: number[];
   additionalHosts?: EventPerson[];
   additionalInstructors?: EventPerson[];
+  schedule?: EventScheduleItem[];
 }
 
 interface EventRow {
@@ -164,6 +172,7 @@ interface EventRow {
   edited_at: string | Date | null;
   additional_hosts: unknown;
   additional_instructors: unknown;
+  schedule: unknown;
 }
 
 function toIso(d: string | Date | null): string | null {
@@ -191,6 +200,19 @@ function toPeopleArray(v: unknown): EventPerson[] {
       phone: typeof p.phone === 'string' ? p.phone : null,
     }))
     .filter((p) => p.name.trim() !== '');
+}
+
+function toScheduleArray(v: unknown): EventScheduleItem[] {
+  const raw = typeof v === 'string' ? JSON.parse(v) : v;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    .map((item) => ({
+      time: typeof item.time === 'string' ? item.time : '',
+      title: typeof item.title === 'string' ? item.title : '',
+      details: typeof item.details === 'string' ? item.details : '',
+    }))
+    .filter((item) => item.title.trim() !== '');
 }
 
 function rowToAdminEvent(r: EventRow): AdminCalendarEvent {
@@ -226,6 +248,7 @@ function rowToAdminEvent(r: EventRow): AdminCalendarEvent {
     advertiserIds: [],
     additionalHosts: toPeopleArray(r.additional_hosts),
     additionalInstructors: toPeopleArray(r.additional_instructors),
+    schedule: toScheduleArray(r.schedule),
   };
 }
 
@@ -284,13 +307,14 @@ const SELECT_COLS = `
   tags, format, course_number, member_price, nonmember_price,
   image_url, image_thumb, instructor_name, instructor_bio, lat, lng,
   hidden, edited_fields, edited_by, edited_at,
-  additional_hosts, additional_instructors
+  additional_hosts, additional_instructors, schedule
 `;
 
 /** Admin: list ALL events (incl. hidden + past) for one or both publications. */
 export async function listAllEventsForAdmin(
   publication?: Publication,
 ): Promise<AdminCalendarEvent[]> {
+  await ensureSchema();
   const sql = publication
     ? `SELECT ${SELECT_COLS} FROM events
         WHERE publication = $1
@@ -304,6 +328,7 @@ export async function listAllEventsForAdmin(
 
 /** Admin: fetch one event by id. */
 export async function getEventById(id: number): Promise<AdminCalendarEvent | null> {
+  await ensureSchema();
   const rows = await query<EventRow>(
     `SELECT ${SELECT_COLS} FROM events WHERE id = $1`,
     [id],
@@ -318,6 +343,7 @@ export async function createManualEvent(
   input: ManualEventInput,
   createdBy: string,
 ): Promise<AdminCalendarEvent> {
+  await ensureSchema();
   const externalId = crypto.randomUUID();
   const rows = await query<EventRow>(
     `INSERT INTO events (
@@ -325,15 +351,15 @@ export async function createManualEvent(
        start_date, end_date, location, organizer, organizer_email, website,
        tags, format, course_number, member_price, nonmember_price,
        image_url, image_thumb, instructor_name, instructor_bio, lat, lng,
-       additional_hosts, additional_instructors,
+       additional_hosts, additional_instructors, schedule,
        edited_by, edited_at, last_synced_at, updated_at
      ) VALUES (
        'manual', $1, $2, $3, $4, $5,
        $6, $7, $8, $9, $10, $11,
        $12, $13, $14, $15, $16,
        $17, $18, $19, $20, $21, $22,
-       $23::jsonb, $24::jsonb,
-       $25, NOW(), NOW(), NOW()
+       $23::jsonb, $24::jsonb, $25::jsonb,
+       $26, NOW(), NOW(), NOW()
      )
      RETURNING ${SELECT_COLS}`,
     [
@@ -361,6 +387,7 @@ export async function createManualEvent(
       input.lng ?? null,
       JSON.stringify(input.additionalHosts ?? []),
       JSON.stringify(input.additionalInstructors ?? []),
+      JSON.stringify(input.schedule ?? []),
       createdBy,
     ],
   );
@@ -402,10 +429,12 @@ export async function createSubmittedEvent(input: {
   instructorBio?: string | null;
   additionalHosts?: EventPerson[];
   additionalInstructors?: EventPerson[];
+  schedule?: EventScheduleItem[];
   lat?: number | null;
   lng?: number | null;
   advertiserId: number | null;
 }): Promise<AdminCalendarEvent> {
+  await ensureSchema();
   const externalId = crypto.randomUUID();
   const suppliedCoords =
     typeof input.lat === 'number' && typeof input.lng === 'number'
@@ -418,7 +447,7 @@ export async function createSubmittedEvent(input: {
        start_date, end_date, location, organizer, organizer_email, website,
        tags, format, course_number, member_price, nonmember_price,
        image_url, image_thumb, instructor_name, instructor_bio,
-       additional_hosts, additional_instructors,
+       additional_hosts, additional_instructors, schedule,
        submitted_by_advertiser_id, lat, lng, hidden,
        last_synced_at, updated_at
      ) VALUES (
@@ -426,8 +455,8 @@ export async function createSubmittedEvent(input: {
        $6, $7, $8, $9, $10, $11,
        $12, $13, $14, $15, $16,
        $17, $18, $19, $20,
-       $21::jsonb, $22::jsonb,
-       $23, $24, $25, true,
+       $21::jsonb, $22::jsonb, $23::jsonb,
+       $24, $25, $26, true,
        NOW(), NOW()
      )
      RETURNING ${SELECT_COLS}`,
@@ -454,6 +483,7 @@ export async function createSubmittedEvent(input: {
       input.instructorBio ?? null,
       JSON.stringify(input.additionalHosts ?? []),
       JSON.stringify(input.additionalInstructors ?? []),
+      JSON.stringify(input.schedule ?? []),
       input.advertiserId,
       coords?.lat ?? null,
       coords?.lng ?? null,
@@ -686,8 +716,9 @@ export async function updateEvent(
   fields: Partial<ManualEventInput>,
   editedBy: string,
 ): Promise<AdminCalendarEvent | null> {
+  await ensureSchema();
   const colMap: Record<
-    Exclude<keyof ManualEventInput, 'advertiserIds' | 'additionalHosts' | 'additionalInstructors'>,
+    Exclude<keyof ManualEventInput, 'advertiserIds' | 'additionalHosts' | 'additionalInstructors' | 'schedule'>,
     string
   > = {
     publication: 'publication',
@@ -712,9 +743,10 @@ export async function updateEvent(
     lat: 'lat',
     lng: 'lng',
   };
-  const jsonColMap: Record<'additionalHosts' | 'additionalInstructors', string> = {
+  const jsonColMap: Record<'additionalHosts' | 'additionalInstructors' | 'schedule', string> = {
     additionalHosts: 'additional_hosts',
     additionalInstructors: 'additional_instructors',
+    schedule: 'schedule',
   };
 
   const setClauses: string[] = [];

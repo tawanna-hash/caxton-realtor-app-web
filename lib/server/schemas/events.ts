@@ -14,6 +14,12 @@ export const eventPersonSchema = z.object({
   phone: z.string().trim().max(50).optional().nullable(),
 });
 
+export const eventScheduleItemSchema = z.object({
+  time: z.string().trim().max(100),
+  title: z.string().trim().min(1).max(300),
+  details: z.string().trim().max(2000),
+});
+
 export const manualEventInputSchema = z.object({
   publication: publicationSchema,
   title: z.string().min(1).max(500),
@@ -39,6 +45,7 @@ export const manualEventInputSchema = z.object({
   advertiserIds: z.array(z.number().int().positive()).optional(),
   additionalHosts: z.array(eventPersonSchema).max(20).optional(),
   additionalInstructors: z.array(eventPersonSchema).max(20).optional(),
+  schedule: z.array(eventScheduleItemSchema).max(50).optional(),
 });
 
 export const updateEventInputSchema = manualEventInputSchema.partial();

@@ -14,6 +14,7 @@
  */
 
 import { logger } from './logger';
+import type { EventScheduleItem } from './events-store';
 
 export interface ExtractedEventFlyer {
   title: string | null;
@@ -32,6 +33,7 @@ export interface ExtractedEventFlyer {
   nonmemberPrice: string | null;
   instructorName: string | null;
   instructorBio: string | null;
+  schedule: EventScheduleItem[];
   confidence: number;
 }
 
@@ -69,6 +71,9 @@ Schema:
   "nonmember_price": string | null,    // Price for non-members if a separate price is shown, else null
   "instructor_name": string | null,    // The named instructor/speaker, if the flyer labels someone as instructor/speaker/presenter
   "instructor_bio": string | null,     // Instructor's title + company if shown, e.g. "TREC Commissioner & Broker, CB&A Realtors"
+  "schedule": [                        // Ordered agenda entries, [] if no actual schedule is printed
+    { "time": string, "title": string, "details": string }
+  ],                                   // time as printed (e.g. "8:30–9:10 AM"), title = session/break/lunch name, details = speaker/moderator/panelists as printed or ""
   "confidence": number                 // 0.0-1.0, your confidence this is a real event with a real date
 }
 
@@ -76,6 +81,7 @@ Rules:
 - Copy date, time, and location strings VERBATIM from the flyer. Do NOT normalize, reformat, or convert them — a downstream parser handles that and needs the original text.
 - If the flyer lists multiple hosts/partners without a clear single "instructor" or "speaker" label, leave instructor_name null rather than guessing which name is the instructor.
 - If a field is not visible or not stated, use null. NEVER invent a date, venue, price, or contact that is not on the flyer.
+- Include only schedule entries visibly printed on the flyer, in their original order. Do not invent a breakdown from the event's overall start and end times. Keep speaker names and titles as written.
 - Set confidence below 0.5 when the date is ambiguous, illegible, or missing.
 - If the image is not actually an event flyer (e.g. it's a listing photo, a logo, an unrelated graphic), return {"title": null, "confidence": 0} for every field.`;
 
@@ -105,7 +111,7 @@ export async function extractFromEventFlyer({
     generation_config: {
       temperature: 0.0,
       response_mime_type: 'application/json',
-      max_output_tokens: 2048,
+      max_output_tokens: 4096,
     },
   };
 
@@ -197,6 +203,17 @@ function normalize(parsed: unknown): ExtractedEventFlyer {
     nonmemberPrice: str(p.nonmember_price),
     instructorName: str(p.instructor_name),
     instructorBio: str(p.instructor_bio),
+    schedule: Array.isArray(p.schedule)
+      ? p.schedule
+          .slice(0, 50)
+          .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+          .map((item) => ({
+            time: str(item.time)?.slice(0, 100) ?? '',
+            title: str(item.title)?.slice(0, 300) ?? '',
+            details: str(item.details)?.slice(0, 2000) ?? '',
+          }))
+          .filter((item) => item.title !== '')
+      : [],
     confidence,
   };
 }
