@@ -84,6 +84,7 @@ export const EMPTY_EVENT: EventFormData = {
 const PRESERVED_ACRONYMS = [
   'MLS', 'HAR', 'ABoR', 'SABoR', 'TREC', 'NAR', 'TAR', 'CE', 'HOA', 'REALTOR',
   'REALTORS', 'CRM', 'RSVP', 'HVAC', 'FAQ', 'CEO', 'VP', 'PC', 'LLC', 'HGTV', 'TX',
+  'AI', 'FHA', 'HUD', 'TMBA', 'MBA', 'GNMA', 'CFPB', 'NMLS',
 ];
 const ACRONYM_LOOKUP = new Map(PRESERVED_ACRONYMS.map((a) => [a.toUpperCase(), a]));
 
@@ -112,6 +113,30 @@ export function normalizeUrlInput(value: string): string {
   if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(v)) return v; // already has a scheme
   if (v.startsWith('//')) return `https:${v}`;
   return `https://${v}`;
+}
+
+const MAX_SCHEDULE_PAGES = 10;
+const MAX_SCHEDULE_SOURCE_BYTES = 20 * 1024 * 1024;
+const MAX_SCHEDULE_PAGE_BYTES = 3 * 1024 * 1024;
+
+async function scheduleCanvasFile(canvas: HTMLCanvasElement, pageNumber: number): Promise<File> {
+  for (const scale of [1, 0.75, 0.55]) {
+    const output = document.createElement('canvas');
+    output.width = Math.max(1, Math.round(canvas.width * scale));
+    output.height = Math.max(1, Math.round(canvas.height * scale));
+    const context = output.getContext('2d');
+    if (!context) throw new Error(`Could not render schedule page ${pageNumber}.`);
+    context.fillStyle = 'white';
+    context.fillRect(0, 0, output.width, output.height);
+    context.drawImage(canvas, 0, 0, output.width, output.height);
+    for (const quality of [0.84, 0.68, 0.5]) {
+      const blob = await new Promise<Blob | null>((resolve) => output.toBlob(resolve, 'image/jpeg', quality));
+      if (blob && blob.size <= MAX_SCHEDULE_PAGE_BYTES) {
+        return new File([blob], `schedule-page-${pageNumber}.jpg`, { type: 'image/jpeg' });
+      }
+    }
+  }
+  throw new Error(`Page ${pageNumber} is too detailed to read. Try a smaller PDF or image.`);
 }
 
 /** Convert ISO 8601 (with TZ) to "YYYY-MM-DDTHH:mm" for datetime-local input. */
@@ -213,6 +238,11 @@ export function EventForm({
   const [autoCaptureNotice, setAutoCaptureNotice] = useState<string | null>(null);
   const [autoCaptureDragActive, setAutoCaptureDragActive] = useState(false);
   const autoCaptureInputRef = useRef<HTMLInputElement>(null);
+  const [readingSchedule, setReadingSchedule] = useState(false);
+  const [scheduleDragActive, setScheduleDragActive] = useState(false);
+  const [scheduleProgress, setScheduleProgress] = useState('');
+  const [scheduleNotice, setScheduleNotice] = useState<string | null>(null);
+  const scheduleInputRef = useRef<HTMLInputElement>(null);
   const [partners, setPartners] = useState<PickerAdvertiser[]>([]);
 
   useEffect(() => {
@@ -406,6 +436,119 @@ export function EventForm({
     } finally {
       setAutoCapturing(false);
       if (autoCaptureInputRef.current) autoCaptureInputRef.current.value = '';
+    }
+  };
+
+  const readScheduleUpload = async (files: File[]) => {
+    if (readingSchedule || !files.length) return;
+    setError(null);
+    setScheduleNotice(null);
+    setReadingSchedule(true);
+    type PdfDocument = import('pdfjs-dist').PDFDocumentProxy;
+    type PageSource =
+      | { kind: 'image'; file: File }
+      | { kind: 'pdf'; document: PdfDocument; page: number };
+    const documents: PdfDocument[] = [];
+    try {
+      const sources: PageSource[] = [];
+      for (const file of files) {
+        if (file.size === 0 || file.size > MAX_SCHEDULE_SOURCE_BYTES) {
+          throw new Error('Each schedule file must be 20 MB or smaller.');
+        }
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+          setScheduleProgress(`Opening ${file.name}...`);
+          const pdfjs = await import('pdfjs-dist');
+          pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+          const document = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+          documents.push(document);
+          for (let page = 1; page <= document.numPages; page++) {
+            sources.push({ kind: 'pdf', document, page });
+          }
+        } else if (['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+          sources.push({ kind: 'image', file });
+        } else {
+          throw new Error('Use a PDF, JPG, PNG, or WebP schedule file.');
+        }
+        if (sources.length > MAX_SCHEDULE_PAGES) {
+          throw new Error('Upload no more than 10 schedule pages in total.');
+        }
+      }
+
+      const extracted: EventScheduleFormItem[] = [];
+      for (const [index, source] of sources.entries()) {
+        setScheduleProgress(`Reading page ${index + 1} of ${sources.length}...`);
+        const canvas = document.createElement('canvas');
+        if (source.kind === 'pdf') {
+          const pdfPage = await source.document.getPage(source.page);
+          const unscaled = pdfPage.getViewport({ scale: 1 });
+          const viewport = pdfPage.getViewport({
+            scale: Math.min(2.5, 2000 / unscaled.width, 2600 / unscaled.height),
+          });
+          canvas.width = Math.ceil(viewport.width);
+          canvas.height = Math.ceil(viewport.height);
+          const context = canvas.getContext('2d');
+          if (!context) throw new Error('Could not render this schedule page.');
+          context.fillStyle = 'white';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          await pdfPage.render({ canvasContext: context, viewport }).promise;
+          pdfPage.cleanup();
+        } else {
+          const bitmap = await createImageBitmap(source.file);
+          try {
+            const scale = Math.min(1, 2000 / bitmap.width, 2600 / bitmap.height);
+            canvas.width = Math.ceil(bitmap.width * scale);
+            canvas.height = Math.ceil(bitmap.height * scale);
+            const context = canvas.getContext('2d');
+            if (!context) throw new Error('Could not read this schedule image.');
+            context.fillStyle = 'white';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          } finally {
+            bitmap.close();
+          }
+        }
+        const pageFile = await scheduleCanvasFile(canvas, index + 1);
+        canvas.width = 0;
+        canvas.height = 0;
+        const body = new FormData();
+        body.append('page', pageFile);
+        const response = await fetch('/api/admin/events/extract-schedule', { method: 'POST', body });
+        const result = (await response.json().catch(() => ({}))) as {
+          schedule?: EventScheduleFormItem[];
+          error?: string;
+        };
+        if (!response.ok || !Array.isArray(result.schedule)) {
+          throw new Error(`${result.error ?? 'Could not read schedule'} (page ${index + 1}).`);
+        }
+        extracted.push(...result.schedule);
+      }
+      if (!extracted.length) {
+        setScheduleNotice('No schedule entries found. Your existing schedule was left unchanged.');
+        return;
+      }
+      const existing = new Set(data.schedule.map((item) =>
+        `${item.time.trim()}|${item.title.trim()}|${item.details.trim()}`.toLowerCase(),
+      ));
+      const additions = extracted.filter((item) => {
+        const key = `${item.time.trim()}|${toTitleCase(item.title).trim()}|${item.details.trim()}`.toLowerCase();
+        return !existing.has(key);
+      }).map((item) => ({ ...item, title: toTitleCase(item.title) }));
+      if (data.schedule.length + additions.length > 50) {
+        throw new Error('The event can hold up to 50 schedule entries. Remove some entries and try again.');
+      }
+      update('schedule', [...data.schedule, ...additions]);
+      setScheduleNotice(
+        additions.length
+          ? `Added ${additions.length} schedule ${additions.length === 1 ? 'item' : 'items'} from ${sources.length} ${sources.length === 1 ? 'page' : 'pages'}. Review before saving.`
+          : 'All extracted schedule entries were already on this event.',
+      );
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Could not read the schedule.');
+    } finally {
+      await Promise.all(documents.map((document) => document.destroy().catch(() => undefined)));
+      setReadingSchedule(false);
+      setScheduleProgress('');
+      if (scheduleInputRef.current) scheduleInputRef.current.value = '';
     }
   };
 
@@ -696,6 +839,64 @@ export function EventForm({
         <p className="mb-4 text-xs text-gray-500">
           Add the agenda in order, including sessions, breaks, and lunch. Times and speaker details are optional.
         </p>
+        {mode !== 'public' && (
+          <div className="mb-5">
+            <div
+              role="button"
+              tabIndex={readingSchedule ? -1 : 0}
+              aria-label="Upload event schedule"
+              aria-disabled={readingSchedule}
+              onClick={() => !readingSchedule && scheduleInputRef.current?.click()}
+              onKeyDown={(event) => {
+                if ((event.key === 'Enter' || event.key === ' ') && !readingSchedule) {
+                  event.preventDefault();
+                  scheduleInputRef.current?.click();
+                }
+              }}
+              onDragEnter={(event) => {
+                event.preventDefault();
+                setScheduleDragActive(true);
+              }}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setScheduleDragActive(true);
+              }}
+              onDragLeave={(event) => {
+                event.preventDefault();
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setScheduleDragActive(false);
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                setScheduleDragActive(false);
+                if (!readingSchedule) void readScheduleUpload(Array.from(event.dataTransfer.files));
+              }}
+              className={`flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-5 text-center transition-colors ${
+                scheduleDragActive
+                  ? 'border-brand-700 bg-brand-50'
+                  : 'border-gray-300 bg-gray-50 hover:border-brand-700 hover:bg-brand-50/50'
+              }`}
+            >
+              {readingSchedule ? <Loader2 className="mb-2 animate-spin text-brand-700" size={26} /> : <UploadCloud className="mb-2 text-brand-700" size={26} />}
+              <p className="text-sm font-medium text-gray-900">
+                {readingSchedule ? scheduleProgress : 'Drop schedule pages here or click to upload'}
+              </p>
+              <p className="mt-1 text-xs text-gray-500">
+                PDF or JPG, PNG, WebP images. Up to 10 pages total, 20 MB per file.
+              </p>
+            </div>
+            <input
+              ref={scheduleInputRef}
+              type="file"
+              accept="application/pdf,.pdf,image/jpeg,image/png,image/webp"
+              multiple
+              className="sr-only"
+              aria-label="Choose event schedule files"
+              onChange={(event) => void readScheduleUpload(Array.from(event.target.files ?? []))}
+            />
+            {readingSchedule && <p role="status" className="mt-2 text-xs text-gray-600">{scheduleProgress}</p>}
+            {scheduleNotice && <p role="status" className="mt-2 text-xs text-gray-600">{scheduleNotice}</p>}
+          </div>
+        )}
         <div className="space-y-3">
           {data.schedule.map((item, index) => (
             <div key={index} className="rounded-md border border-gray-200 bg-gray-50 p-4">
@@ -703,6 +904,7 @@ export function EventForm({
                 <span className="text-xs font-semibold text-gray-700">Item {index + 1}</span>
                 <button
                   type="button"
+                  disabled={readingSchedule}
                   onClick={() => update('schedule', data.schedule.filter((_, i) => i !== index))}
                   className="text-xs font-medium text-red-700 hover:underline"
                   aria-label={`Remove schedule item ${index + 1}`}
@@ -716,6 +918,7 @@ export function EventForm({
                   <input
                     id={`schedule-time-${index}`}
                     type="text"
+                    disabled={readingSchedule}
                     value={item.time}
                     onChange={(e) => update('schedule', data.schedule.map((entry, i) =>
                       i === index ? { ...entry, time: e.target.value } : entry,
@@ -729,6 +932,7 @@ export function EventForm({
                   <input
                     id={`schedule-title-${index}`}
                     type="text"
+                    disabled={readingSchedule}
                     value={item.title}
                     onChange={(e) => update('schedule', data.schedule.map((entry, i) =>
                       i === index ? { ...entry, title: e.target.value } : entry,
@@ -744,6 +948,7 @@ export function EventForm({
                   <label className={labelClass} htmlFor={`schedule-details-${index}`}>Speakers / details</label>
                   <textarea
                     id={`schedule-details-${index}`}
+                    disabled={readingSchedule}
                     value={item.details}
                     onChange={(e) => update('schedule', data.schedule.map((entry, i) =>
                       i === index ? { ...entry, details: e.target.value } : entry,
@@ -760,7 +965,7 @@ export function EventForm({
         <button
           type="button"
           onClick={() => update('schedule', [...data.schedule, { time: '', title: '', details: '' }])}
-          disabled={data.schedule.length >= 50}
+          disabled={readingSchedule || data.schedule.length >= 50}
           className="mt-4 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
         >
           Add Schedule Item
@@ -1096,7 +1301,7 @@ export function EventForm({
         </button>
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || readingSchedule}
           className="px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-brand-700 transition-colors disabled:opacity-50 whitespace-nowrap"
         >
           {submitting

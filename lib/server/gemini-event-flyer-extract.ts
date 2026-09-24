@@ -161,6 +161,59 @@ export async function extractFromEventFlyer({
   return { ok: true, data: normalize(parsed) };
 }
 
+/** Read one agenda page. Kept separate from flyer extraction so no event metadata is changed. */
+export async function extractEventSchedulePage({
+  imageBase64,
+  mimeType,
+}: CallArgs): Promise<
+  | { ok: true; schedule: EventScheduleItem[] }
+  | { ok: false; reason: 'no-key' | 'rate-limit' | 'parse-error' | 'http-error' | 'timeout' }
+> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return { ok: false, reason: 'no-key' };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const response = await fetch(`${ENDPOINT}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        system_instruction: {
+          parts: [{ text: `Read this SINGLE PAGE of an event agenda. Return only JSON:
+{"schedule":[{"time":"printed time or range, or empty string","title":"session/activity title","details":"speakers, moderators, panelists and other printed session details, or empty string"}]}
+Include every scheduled session, break, meal, and opening/closing item visible on this page, in printed order. Do not invent times or sessions. Do not turn the overall event time/date into a session. Do not add an event heading as a session. If a day/date heading is printed, prefix each entry's details with "Day: [printed heading]" so multi-day agendas remain clear. If a session continues across pages, include only what is actually visible on this page. Preserve proper names and acronyms. Return [] if no agenda entries are visible.` }],
+        },
+        contents: [{
+          role: 'user',
+          parts: [
+            { inline_data: { mime_type: mimeType, data: imageBase64 } },
+            { text: 'Extract the printed schedule entries on this page.' },
+          ],
+        }],
+        generation_config: {
+          temperature: 0,
+          response_mime_type: 'application/json',
+          max_output_tokens: 4096,
+        },
+      }),
+    });
+    if (response.status === 429) return { ok: false, reason: 'rate-limit' };
+    if (!response.ok) {
+      logger?.warn?.(`[event-schedule-extract] gemini status=${response.status}`);
+      return { ok: false, reason: 'http-error' };
+    }
+    const text = extractText(await response.json());
+    if (!text) return { ok: false, reason: 'parse-error' };
+    const parsed = JSON.parse(text) as { schedule?: unknown };
+    return { ok: true, schedule: normalize({ schedule: parsed.schedule }).schedule };
+  } catch (error) {
+    return { ok: false, reason: error instanceof Error && error.name === 'AbortError' ? 'timeout' : 'parse-error' };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function extractText(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null;
   const p = payload as Record<string, unknown>;
