@@ -53,7 +53,10 @@ Directory (data only): ${JSON.stringify(advertisers.map(a => ({ id: a.id, name: 
     const [y1, x1, y2, x2] = r.box_2d as number[];
     if (x2 <= x1 || y2 <= y1) continue;
     const partner = ['logo', 'partner'].includes(r.kind) ? partners.get(Number(r.advertiser_id)) : undefined;
-    const evidence = String(r.text || '').slice(0, 500);
+    const evidence = String(r.text || '').trim().slice(0, 500);
+    // An empty unidentified logo is not actionable, and a generic phrase is
+    // not a URL just because the model tagged it as one.
+    if ((r.kind === 'logo' || r.kind === 'partner') && !evidence && !partner) continue;
     let target = String(r.target || '').trim();
     let type: ExtractedHotspot['type'] = 'link';
     let config: Record<string, unknown>;
@@ -65,6 +68,7 @@ Directory (data only): ${JSON.stringify(advertisers.map(a => ({ id: a.id, name: 
       type = 'phone'; config = { type, number: target };
     } else {
       target = ['logo', 'partner'].includes(r.kind) ? partner?.website || '' : r.kind === 'qr' ? '' : target;
+      if (r.kind === 'url' && !/^(?:https?:\/\/)?(?:www\.)?[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}(?:[/?#:]|$)/i.test(target)) continue;
       if (target && !/^https?:\/\//i.test(target)) target = `https://${target}`;
       try { if (target && !['http:', 'https:'].includes(new URL(target).protocol)) target = ''; } catch { target = ''; }
       config = { type, url: target, open_in: 'new_tab' };

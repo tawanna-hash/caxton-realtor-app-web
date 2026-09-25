@@ -8,7 +8,7 @@ import { ensureHotspotWorkspace } from '../../lib/server/hotspot-workspace';
 import { POST, GET } from '../../app/api/admin/magazines/[id]/hotspot-workspace/route';
 import { insertExtracted, extractQrCodes, extractPdfLinkAnnotations, extractPdfTextContacts } from '../../lib/server/hotspot-extractors';
 import { extractVisualHotspots } from '../../lib/server/hotspot-vision';
-import { destinationIdentity, overlappingDuplicates, safeTestDestination, samePlacement } from '../../lib/hotspot-review';
+import { destinationIdentity, nearOcrDuplicate, overlappingDuplicates, safeTestDestination, sameDetectedAction, samePlacement } from '../../lib/hotspot-review';
 const db=new PGlite();
 await db.exec(`CREATE TABLE magazines(id BIGINT PRIMARY KEY,page_count INT); INSERT INTO magazines VALUES(1,3);
 CREATE TABLE magazine_hotspots(id BIGSERIAL PRIMARY KEY,magazine_id BIGINT REFERENCES magazines(id),page_idx INT,
@@ -83,6 +83,31 @@ const visual=[{kind:'logo',text:'Unknown',target:'https://invented.invalid',adve
 globalThis.fetch=async(url:any)=>String(url).includes('googleapis')?new Response(JSON.stringify({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify(visual)}]}}]})):new Response(qrPage as any);
 const detected=await extractVisualHotspots('test-image',0,[{id:12,name:'Known Partner',slug:'known',website:'https://known.example.org',avatar_url:null}]);
 assert.equal(detected.length,6);assert.equal(detected[0].config.url,'');assert.equal(detected[0].advertiser_id,null);assert.equal(detected[1].config.url,'https://known.example.org');assert.equal(detected[5].config.url,'');ok('visual extraction handles every kind and never invents unknown logo/QR destinations');
+const cover=[
+ {kind:'logo',text:'Capital Title',advertiser_id:12,box_2d:[200,200,245,350]},
+ {kind:'partner',text:'Capital Title',advertiser_id:12,box_2d:[210,210,235,340]},
+ {kind:'partner',text:'Capital Title',advertiser_id:12,box_2d:[700,210,735,340]},
+ {kind:'logo',text:'',advertiser_id:null,box_2d:[300,300,325,330]},
+ {kind:'url',text:'Tracker Map.',target:'Tracker Map.',box_2d:[400,400,420,520]},
+];
+globalThis.fetch=async(url:any)=>String(url).includes('googleapis')?new Response(JSON.stringify({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify(cover)}]}}]})):new Response(qrPage as any);
+const coverRows=await extractVisualHotspots('test-image',2,[{id:12,name:'Capital Title',slug:'capital-title',website:null,avatar_url:null}]);
+assert.equal(coverRows.length,3);
+assert.equal(sameDetectedAction(coverRows[0],coverRows[1]),true);
+assert.equal(sameDetectedAction(coverRows[0],coverRows[2]),false);
+assert.equal(nearOcrDuplicate(
+ {...row,config:{type:'link',url:'https://NEWSLINESA.COM'}},
+ {...row,config:{type:'link',url:'https://NEWLINESA.COM'},x_frac:.15},
+),true);
+assert.equal(nearOcrDuplicate(
+ {...row,config:{type:'link',url:'https://NEWSLINESA.COM'}},
+ {...row,config:{type:'link',url:'https://UNRELATED.COM'}},
+),false);
+const coverResult=await insertExtracted(sql as any,coverRows as any,{magazineId:1,adminEmail:null,advertisers:[],pageCount:3,wipeImports:false});
+assert.equal(coverResult.inserted,2);assert.equal(coverResult.skipped_duplicates,1);
+const coverDrafts=coverRows.map((r,i)=>({...r,id:400+i,magazine_id:1,review_status:'pending',is_deleted:false,is_published:false,source:'pdf_import'}));
+assert.deepEqual(overlappingDuplicates(coverDrafts as any).map(h=>h.id),[401]);
+ok('Newsline logo and partner layers consolidate; separate occurrences survive');
 globalThis.fetch=realFetch;
 
 // Rescan regressions: existing page links are authoritative even when a model

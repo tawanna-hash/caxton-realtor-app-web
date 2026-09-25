@@ -2,7 +2,7 @@ import { getSql } from '@/lib/db';
 import { ensureHotspotWorkspace } from './hotspot-workspace';
 import { extractPdfLinkAnnotations, extractPdfTextContacts, extractQrCodes, insertExtracted, type AdvertiserLite, type ExtractedHotspot } from './hotspot-extractors';
 import { extractVisualHotspots } from './hotspot-vision';
-import { overlapRatio } from '@/lib/hotspot-review';
+import { nearOcrDuplicate, overlapRatio } from '@/lib/hotspot-review';
 
 export async function prepareHotspotScan(id: number) {
   await ensureHotspotWorkspace();
@@ -53,6 +53,8 @@ export async function scanHotspotPage(scan: Awaited<ReturnType<typeof prepareHot
   } else warnings.push('Page image missing; QR and image text/logo scans could not run');
   // Do not add a needs-match visual QR over a successfully decoded QR.
   vision = vision.filter(v => !v.label.startsWith('QR Code') || !qr.some(q => overlapRatio(q, v) > 0.3));
+  const pdfContacts = [...scan.links, ...scan.text].filter(r => r.page_idx === pageIdx);
+  vision = vision.filter(v => !pdfContacts.some(p => nearOcrDuplicate(p, v)));
   const rows = [...scan.links.filter(r => r.page_idx === pageIdx), ...scan.text.filter(r => r.page_idx === pageIdx), ...qr, ...vision];
   const result = await insertExtracted(sql, rows, {
     magazineId: scan.id, adminEmail, advertisers: scan.advertisers, pageCount: scan.pageCount, wipeImports: false,

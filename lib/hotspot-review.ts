@@ -77,15 +77,81 @@ export function samePlacement(a: Rect & { page_idx: number }, b: Rect & { page_i
   return w * h / Math.max(0.000001, Math.min(a.w_frac * a.h_frac, b.w_frac * b.h_frac)) >= 0.8;
 }
 
+type DetectedAction = Rect & {
+  page_idx: number;
+  type: string;
+  config: Record<string, unknown> | HotspotConfig;
+  advertiser_id?: number | null;
+  label?: string | null;
+  identity?: string;
+  detection?: { identity?: string; origin?: string } | null;
+};
+
+export function occurrenceCoverage(a: Rect, b: Rect): number {
+  const x = Math.max(0, Math.min(a.x_frac + a.w_frac, b.x_frac + b.w_frac) - Math.max(a.x_frac, b.x_frac));
+  const y = Math.max(0, Math.min(a.y_frac + a.h_frac, b.y_frac + b.h_frac) - Math.max(a.y_frac, b.y_frac));
+  return x * y / Math.max(0.000001, Math.min(a.w_frac * a.h_frac, b.w_frac * b.h_frac));
+}
+
+/** Logo and partner-name boxes can be nested or slightly offset on the same mark.
+ * Require a shared known partner or a matching nonempty name; empty URLs alone
+ * never establish identity. Separate occurrences of the same brand stay separate.
+ */
+export function sameDetectedAction(a: DetectedAction, b: DetectedAction): boolean {
+  if (a.page_idx !== b.page_idx || a.type !== b.type) return false;
+  const aTarget = destinationIdentity(a.config as HotspotConfig);
+  const bTarget = destinationIdentity(b.config as HotspotConfig);
+  if (aTarget && bTarget && aTarget === bTarget && occurrenceCoverage(a, b) >= 0.5) return true;
+  if (aTarget && bTarget && aTarget !== bTarget) return false;
+  const aKey = a.identity || a.detection?.identity || '';
+  const bKey = b.identity || b.detection?.identity || '';
+  const brandKey = (key: string, label?: string | null) => {
+    const value = /^(?:logo|partner):(.+)$/i.exec(key)?.[1] ||
+      /^(?:Logo|Partner) · (.+)$/i.exec(label || '')?.[1] || '';
+    return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+  };
+  const aBrand = brandKey(aKey, a.label), bBrand = brandKey(bKey, b.label);
+  const sharedBrand = (!!a.advertiser_id && a.advertiser_id === b.advertiser_id) ||
+    (!!aBrand && !!bBrand && (aBrand === bBrand ||
+      (Math.min(aBrand.length, bBrand.length) >= 5 &&
+        (aBrand.includes(bBrand) || bBrand.includes(aBrand)))));
+  if (!sharedBrand) return false;
+  return occurrenceCoverage(a, b) >= 0.5;
+}
+
+/** An image OCR typo must not create a second action over an exact PDF contact.
+ * Only a 1-character difference in the same lengthy printed target qualifies.
+ */
+export function nearOcrDuplicate(exact: DetectedAction, vision: DetectedAction): boolean {
+  if (exact.page_idx !== vision.page_idx || exact.type !== vision.type ||
+      !['link', 'email', 'phone'].includes(exact.type) || occurrenceCoverage(exact, vision) < 0.5) return false;
+  const a = destinationIdentity(exact.config as HotspotConfig).replace(/[^a-z0-9]/gi, '').toLowerCase();
+  const b = destinationIdentity(vision.config as HotspotConfig).replace(/[^a-z0-9]/gi, '').toLowerCase();
+  if (Math.min(a.length, b.length) < 10 || Math.abs(a.length - b.length) > 1) return false;
+  if (a === b) return true;
+  let i = 0, j = 0, edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++edits > 1) return false;
+    if (a.length > b.length) i++;
+    else if (b.length > a.length) j++;
+    else { i++; j++; }
+  }
+  return edits + (a.length - i) + (b.length - j) <= 1;
+}
+
 /** Never remove different destinations or non-overlapping placements. */
 export function overlappingDuplicates(rows: Hotspot[]): Hotspot[] {
   const kept: Hotspot[] = [], duplicates: Hotspot[] = [];
   const ranked = rows.filter(h => !h.is_deleted && reviewStatus(h) !== 'rejected').sort((a, b) =>
     Number(b.is_published) - Number(a.is_published) ||
-    Number(b.source === 'manual') - Number(a.source === 'manual') || Number(a.id) - Number(b.id));
+    Number(b.source === 'manual') - Number(a.source === 'manual') ||
+    Number(!!hotspotDestination(b.config)) - Number(!!hotspotDestination(a.config)) ||
+    Number(!!b.label?.replace(/^(?:Logo|Partner) ·\s*/i, '').trim()) -
+      Number(!!a.label?.replace(/^(?:Logo|Partner) ·\s*/i, '').trim()) ||
+    Number(a.id) - Number(b.id));
   for (const row of ranked) {
-    const identity = destinationIdentity(row.config);
-    if (identity && kept.some(h => h.type === row.type && destinationIdentity(h.config) === identity && samePlacement(h, row))) duplicates.push(row);
+    if (kept.some(h => sameDetectedAction(h, row))) duplicates.push(row);
     else kept.push(row);
   }
   return duplicates;

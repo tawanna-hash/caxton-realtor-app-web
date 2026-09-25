@@ -38,7 +38,7 @@ import type { HotspotType, HotspotConfig } from '@/lib/hotspots';
 import type { NeonQueryFunction } from '@neondatabase/serverless';
 import { logger } from './logger';
 import { ensureHotspotWorkspace } from './hotspot-workspace';
-import { destinationIdentity, samePlacement } from '@/lib/hotspot-review';
+import { destinationIdentity, sameDetectedAction, samePlacement } from '@/lib/hotspot-review';
 
 // ============================================================
 // Advertiser matching (shared across all three passes)
@@ -1291,12 +1291,8 @@ export async function insertExtracted(
         (!/^(logo|partner|qr):/i.test(originalIdentity) || !!originalIdentity.split(':').slice(1).join(':').trim())) return true;
       if (row.origin === 'logo_match' && row.advertiser_id && e.advertiser_id === row.advertiser_id) return true;
       const original = { ...e, ...e.detection?.rect };
-      return samePlacement(original, row) && (
-        originalIdentity === row.identity ||
-        (e.type === row.type && row.needs_match === true && !configIdentity(row.type, row.config))
-      );
-    }) || accepted.some(e => e.type === row.type &&
-      (configIdentity(e.type, e.config) || e.identity) === identity && samePlacement(e, row));
+      return sameDetectedAction(original, row);
+    }) || accepted.some(e => sameDetectedAction(e, row));
     if (duplicate) {
       result.skipped_duplicates++;
       continue;
