@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
-  Bell,
   Building2,
   Camera,
   CalendarDays,
@@ -1278,20 +1277,11 @@ export default function ClosingTime({
     error: 'Cloud sync needs attention. Keep this page open and refresh before leaving.',
   }[syncState];
   const activeDeadlines = activeDeal ? dealDeadlines(activeDeal) : [];
-  const radarWindowDays = (() => {
-    if (!activeDeal?.closingDate || activeDeal.closingDate < today) return 14;
-    const start = new Date(`${today}T12:00:00Z`).getTime();
-    const end = new Date(`${activeDeal.closingDate}T12:00:00Z`).getTime();
-    return Math.max(1, Math.ceil((end - start) / 86_400_000));
-  })();
-
   const radarItems = (() => {
-    const windowEnd = activeDeal?.closingDate && activeDeal.closingDate >= today
-      ? activeDeal.closingDate
-      : addDays(today, 14);
+    const windowEnd = addDays(today, 14);
     const items: RadarItem[] = [];
 
-    deals.filter((deal) => deal.status !== 'completed' && (!activeDeal || deal.id === activeDeal.id)).forEach((deal) => {
+    deals.filter((deal) => deal.status !== 'completed' && !isDealClosedAndComplete(deal)).forEach((deal) => {
       dealDeadlines(deal).forEach((deadline) => {
         if (deadline.date <= windowEnd && deadline.date >= addDays(today, -7)) {
           items.push({
@@ -1346,6 +1336,7 @@ export default function ClosingTime({
 
 
   const activeDealCount = deals.filter((deal) => deal.status !== 'completed').length;
+  const overviewDealCount = activeDeals.filter((deal) => deal.status !== 'completed').length;
   const closingSoonCount = deals.filter((deal) => deal.status !== 'completed' && deal.closingDate >= today && deal.closingDate <= addDays(today, 30)).length;
   const overdueTaskCount = deals.flatMap((deal) => deal.tasks).filter((task) => !task.complete && task.dueDate < today).length;
 
@@ -1835,79 +1826,42 @@ export default function ClosingTime({
     return (
       <section id="agent-deal-tools" className="bg-[#F7F5F1]">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8 lg:py-10">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border border-[#D9D0BF] bg-[#FFFDF8] p-4 sm:mb-5 sm:p-5">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closing Time · All Transactions</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
-                {activeDeals.length} active deal{activeDeals.length === 1 ? '' : 's'}
-              </p>
+          <div className="border border-slate-200 bg-white p-4 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">
+                  All Transactions · {overviewDealCount} Active Deal{overviewDealCount === 1 ? '' : 's'}
+                </p>
+                <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">What Needs Attention</h2>
+              </div>
+              <span data-testid="text-dashboard-next-closing-countdown" className="bg-[#F8F5FF] px-3 py-2 text-xs font-bold text-[#301D5D]">
+                {nextClosingDays === null
+                  ? 'No upcoming closings'
+                  : nextClosingDays === 0
+                    ? 'Next closing today'
+                    : `Next closing · ${nextClosingDays} day${nextClosingDays === 1 ? '' : 's'}`}
+              </span>
             </div>
-            <span data-testid="text-dashboard-next-closing-countdown" className="text-sm font-bold text-[#301D5D]">
-              {nextClosingDays === null
-                ? 'No upcoming closings'
-                : nextClosingDays === 0
-                  ? 'Next closing is today'
-                  : `${nextClosingDays} day${nextClosingDays === 1 ? '' : 's'} to next closing`}
-            </span>
-          </div>
-          {activeDeals.length > 0 && (
-            <div className="mb-4 grid gap-3 sm:mb-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Active deal closing countdowns">
-              {activeDeals.map((deal) => (
-                <Link
-                  key={deal.id}
-                  href="/agents/closing-time"
-                  className="block border border-slate-200 bg-white p-4 transition hover:border-[#7059A8]"
-                >
-                  <span className="block truncate text-sm font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
-                  <span className="mt-1 block text-xs text-slate-600">{deal.closingDate ? formatDate(deal.closingDate) : 'Closing date not set'}</span>
-                  <span data-testid={`text-dashboard-closing-countdown-${deal.id}`} className="mt-2 block text-sm font-bold text-[#301D5D]">
-                    {closingCountdownLabel(deal.closingDate, today)}
+            <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
+              {radarItems.length === 0 ? (
+                <p className="py-5 text-sm text-slate-600">
+                  {overviewDealCount === 0 ? 'No active transactions yet.' : 'No upcoming items or recent overdue deadlines.'}
+                </p>
+              ) : radarItems.slice(0, 5).map((item) => (
+                <div key={item.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                    <p className="text-xs text-slate-500">{item.dealTitle}</p>
+                  </div>
+                  <span className={`text-xs font-bold ${item.overdue ? 'text-[#9A3D2B]' : 'text-[#301D5D]'}`}>
+                    {item.overdue ? 'Overdue' : item.date === today ? 'Due today' : formatDate(item.date)}
                   </span>
-                </Link>
+                </div>
               ))}
             </div>
-          )}
-          <div className="grid items-stretch gap-3 bg-transparent sm:gap-5 sm:border sm:border-[#D9D0BF] sm:bg-[#FFFDF8] sm:p-5 lg:grid-cols-3 lg:p-6">
-            <div className="order-1 h-full border border-slate-200 bg-white p-4 sm:p-6">
-              <div className="flex items-start gap-3">
-                <Bell className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
-                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Pressing Deadlines</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Next {radarWindowDays} days</h2></div>
-              </div>
-              <div className="mt-5 space-y-2">
-                {!radarItems.length ? <div className="border border-dashed border-slate-300 bg-white p-5 text-sm leading-6 text-slate-600">Add a transaction, signed contract effective date, and closing date to see pressing deadlines.</div> : radarItems.map((item) => (
-                  <button type="button" key={item.id} onClick={() => focusDeal(item.dealId)} className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 border border-slate-200 bg-white p-3 text-left transition hover:border-[#7059A8] sm:flex-nowrap">
-                    <span className={`h-2.5 w-2.5 shrink-0 rounded-md ${item.overdue ? 'bg-[#B6402C]' : item.kind === 'deadline' ? 'bg-[#7059A8]' : 'bg-[#C88A14]'}`} />
-                    <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-slate-900">{item.label}</span><span className="mt-0.5 block truncate text-xs text-slate-500">{item.dealTitle}</span></span>
-                    <span className={`w-full pl-[22px] text-left text-xs font-bold sm:w-auto sm:pl-0 sm:text-right ${item.overdue ? 'text-[#B6402C]' : 'text-slate-700'}`}>{item.overdue ? 'Overdue' : formatDate(item.date)}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="order-2 h-full border border-slate-200 bg-white p-4 sm:p-6">
-              <div className="flex items-start gap-3">
-                <CalendarDays className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
-                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calendar Exports</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Take Your Deadlines with You</h2></div>
-              </div>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Download calendar files for the active deal or every active transaction. Each export includes calculated contract dates, closing dates, open reminders, and open tasks.</p>
-              <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
-                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"><Download className="rnn-inline-icon" aria-hidden="true" />Export This Deal</button>
-                <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Export Active Deals</button>
-              </div>
-            </div>
-            <div className="order-3 h-full border border-slate-200 bg-white p-4 sm:p-6">
-              <div className="flex items-start gap-3">
-                <Bell className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
-                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Deadline Alerts</p><h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Choose How You Are Notified</h2></div>
-              </div>
-              <div className="mt-4 space-y-3">
-                <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Mail className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />Send Deadline Alerts By Email</label>
-                <div className="flex flex-wrap items-center gap-3"><label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={notificationPreferences.pushEnabled} onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" /><Smartphone className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />Send Browser Push Alerts</label><PushOptInButton realtorId={realtorId} label="Connect This Device" className="inline-flex min-h-[36px] items-center rounded-md border border-[#7059A8] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]" /></div>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-slate-100 pt-3 sm:flex sm:flex-wrap sm:gap-x-4">
-                  {([[7, '7 Days Before'], [3, '3 Days Before'], [1, '1 Day Before'], [0, 'Due Today']] as const).map(([offset, label]) => <label key={offset} className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600"><input type="checkbox" checked={notificationPreferences.reminderOffsets.includes(offset)} disabled={notificationPreferences.reminderOffsets.length === 1 && notificationPreferences.reminderOffsets[0] === offset} onChange={() => toggleReminderOffset(offset)} className="h-3.5 w-3.5 accent-[#301D5D]" />{label}</label>)}
-                </div>
-              </div>
-              <p className="mt-4 text-xs leading-5 text-slate-500">Alerts are opt-in and send only for active transactions. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
-            </div>
+            <Link href="/agents/closing-time" className="mt-4 inline-flex min-h-[44px] items-center bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
+              Open Closing Time Workspace <ChevronRight className="ml-2 h-4 w-4" aria-hidden="true" />
+            </Link>
           </div>
         </div>
       </section>
@@ -1937,6 +1891,44 @@ export default function ClosingTime({
             <span className="font-semibold text-slate-900">{ready ? syncMessage : 'Loading your secure workspace.'}</span>
           </p>
         </div>
+
+        {workspacePage === 2 && (
+          <section className="mt-5 grid gap-5 border border-slate-200 bg-white p-5 sm:p-6 lg:grid-cols-2" aria-label="Alerts and calendar">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-950">Deadline Alerts</h3>
+              <div className="mt-4 space-y-3">
+                <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
+                  <input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" />
+                  <Mail className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" /> Send Deadline Alerts By Email
+                </label>
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
+                    <input type="checkbox" checked={notificationPreferences.pushEnabled} onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" />
+                    <Smartphone className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" /> Send Browser Push Alerts
+                  </label>
+                  <PushOptInButton realtorId={realtorId} label="Connect This Device" className="inline-flex min-h-[36px] items-center rounded-md border border-[#7059A8] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]" />
+                </div>
+                <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 sm:flex sm:flex-wrap sm:gap-4">
+                  {([[7, '7 Days Before'], [3, '3 Days Before'], [1, '1 Day Before'], [0, 'Due Today']] as const).map(([offset, label]) => (
+                    <label key={offset} className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600">
+                      <input type="checkbox" checked={notificationPreferences.reminderOffsets.includes(offset)} disabled={notificationPreferences.reminderOffsets.length === 1 && notificationPreferences.reminderOffsets[0] === offset} onChange={() => toggleReminderOffset(offset)} className="h-3.5 w-3.5 accent-[#301D5D]" />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active transactions. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
+            </div>
+            <div className="border-t border-slate-100 pt-5 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+              <h3 className="text-lg font-semibold text-slate-950">Calendar Exports</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">Download dates for this deal or every active transaction, including deadlines, reminders, and tasks.</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex min-h-[42px] items-center gap-2 bg-[#301D5D] px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"><Download className="rnn-inline-icon" aria-hidden="true" />Export This Deal</button>
+                <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex min-h-[42px] items-center gap-2 border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Export Active Deals</button>
+              </div>
+            </div>
+          </section>
+        )}
 
         {workspacePage === 1 && (
         <nav aria-label="Closing Time pages" className="mt-5 border border-slate-200 bg-white p-4">
