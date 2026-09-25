@@ -1155,3 +1155,16 @@ input[type='date']::-webkit-calendar-picker-indicator {
 .caxton-article-prose a { text-underline-offset: 2px; }
 .caxton-article-prose img { margin: 1.5rem 0; border-radius: 4px; }
 .caxton-article-prose blockquote { color: #4b5563; }
+
+/* Collapsible cards (Closing Time / Agent Desk) */
+[data-collapsible][data-collapsed='closed'] > :not(:first-child) {
+  display: none !important;
+}
+[data-collapsible][data-collapsed='closed'] > :first-child {
+  margin-bottom: 0;
+}
+@media (max-width: 767px) {
+  [data-collapsible][data-collapsed='auto'] > :not(:first-child) {
+    display: none !important;
+  }
+}

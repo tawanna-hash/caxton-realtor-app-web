@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import PushOptInButton from '@/components/PushOptInButton';
 import TrecPdfPagePreview from './TrecPdfPagePreview';
-import CollapseToggle from './CollapseToggle';
+import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 import { trackEvent } from '@/app/posthog-provider';
 import {
   agentCommandCenterWorkspaceSchema,
@@ -323,14 +323,16 @@ function ReadinessChecklist({
     );
   };
 
+  const { section: collapsible, toggleProps } = useCollapsibles();
   return (
-    <div className="border border-slate-200 bg-white p-5 sm:p-6">
+    <div {...collapsible('readiness')} className="border border-slate-200 bg-white p-5 sm:p-6">
       <div className="flex items-center gap-3">
         <FileText className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Readiness check</p>
           <Heading className="mt-1 text-xl font-semibold text-slate-950">Transaction readiness checklist</Heading>
         </div>
+        <CollapseToggle {...toggleProps('readiness', 'readiness checklist')} className="ml-auto" />
       </div>
 
       <div className="mt-5 space-y-5">
@@ -955,7 +957,7 @@ export default function ClosingTime({
   );
   const [activeDealId, setActiveDealId] = useState<string | null>(null);
   const [today, setToday] = useState(chicagoToday);
-  const [attentionOpen, setAttentionOpen] = useState(true);
+  const { section: collapsible, toggleProps } = useCollapsibles();
   const [ready, setReady] = useState(false);
   const [syncState, setSyncState] = useState<SyncState>('loading');
   const [taskTitle, setTaskTitle] = useState('');
@@ -1828,7 +1830,7 @@ export default function ClosingTime({
     return (
       <section id="agent-deal-tools" className="bg-[#F7F5F1]">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8 lg:py-10">
-          <div className="border border-slate-200 bg-white p-4 sm:p-6">
+          <div {...collapsible('attention')} className="border border-slate-200 bg-white p-4 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">
@@ -1843,9 +1845,9 @@ export default function ClosingTime({
                     ? 'Next closing today'
                     : `Next closing · ${nextClosingDays} day${nextClosingDays === 1 ? '' : 's'}`}
               </span>
-              <CollapseToggle open={attentionOpen} onToggle={() => setAttentionOpen((o) => !o)} label="what needs attention" controls="attention-list" />
+              <CollapseToggle {...toggleProps('attention', 'what needs attention')} />
             </div>
-            <div id="attention-list" hidden={!attentionOpen} className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
+            <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
               {radarItems.length === 0 ? (
                 <p className="py-5 text-sm text-slate-600">
                   {overviewDealCount === 0 ? 'No active transactions yet.' : 'No upcoming items or recent overdue deadlines.'}
@@ -1897,8 +1899,11 @@ export default function ClosingTime({
 
         {workspacePage === 2 && (
           <section className="mt-5 grid gap-5 border border-slate-200 bg-white p-5 sm:p-6 lg:grid-cols-2" aria-label="Alerts and calendar">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-950">Deadline Alerts</h3>
+            <div {...collapsible('alerts')}>
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-lg font-semibold text-slate-950">Deadline Alerts</h3>
+                <CollapseToggle {...toggleProps('alerts', 'deadline alerts')} />
+              </div>
               <div className="mt-4 space-y-3">
                 <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
                   <input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" />
@@ -1922,8 +1927,11 @@ export default function ClosingTime({
               </div>
               <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active transactions. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
             </div>
-            <div className="border-t border-slate-100 pt-5 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-              <h3 className="text-lg font-semibold text-slate-950">Calendar Exports</h3>
+            <div {...collapsible('calendar')} className="border-t border-slate-100 pt-5 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-lg font-semibold text-slate-950">Calendar Exports</h3>
+                <CollapseToggle {...toggleProps('calendar', 'calendar exports')} />
+              </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">Download dates for this deal or every active transaction, including deadlines, reminders, and tasks.</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex min-h-[42px] items-center gap-2 bg-[#301D5D] px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"><Download className="rnn-inline-icon" aria-hidden="true" />Export This Deal</button>
@@ -1985,10 +1993,10 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && (
-          <div id="current-transaction" className="scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-7">
+          <div id="current-transaction" {...collapsible('current', { mobileOpen: true })} className="scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-7">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Current transaction</p>
+                <p className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Current transaction<CollapseToggle {...toggleProps('current', 'current transaction', { mobileOpen: true })} /></p>
                 <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">
                   {activeDeal?.propertyAddress || activeDeal?.title || 'Start a transaction'}
                 </h3>
@@ -2208,11 +2216,11 @@ export default function ClosingTime({
                   </div>
                 </div>
 
-                <section id="trec-form-workspace" className="mt-7 scroll-mt-24 border border-[#D9D0BF] bg-white" aria-labelledby="official-trec-fields-title">
+                <section id="trec-form-workspace" {...collapsible('trec-forms')} className="mt-7 scroll-mt-24 border border-[#D9D0BF] bg-white" aria-labelledby="official-trec-fields-title">
                   <div className="border-b border-[#D9D0BF] bg-[#F7F3EB] px-5 py-4 sm:px-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                       <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Transaction Forms</p>
+                      <p className="flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Transaction Forms<CollapseToggle {...toggleProps('trec-forms', 'transaction forms')} /></p>
                       <h4 id="official-trec-fields-title" className="mt-1 text-lg font-semibold text-slate-950">
                           TREC {currentTrecFormVersion.formNumber} · {currentTrecFormVersion.title}
                       </h4>
@@ -2477,13 +2485,14 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && activeDeals.length > 0 && (
-          <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
+          <section {...collapsible('active')} className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex items-center gap-3">
               <Building2 className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Active Deals</p>
                 <h3 className="mt-1 text-xl font-semibold text-slate-950">{activeDeals.length} Transaction{activeDeals.length === 1 ? '' : 's'} In Progress</h3>
               </div>
+              <CollapseToggle {...toggleProps('active', 'active deals')} className="ml-auto" />
             </div>
             {/* Mobile cards */}
             <div className="mt-5 divide-y divide-slate-100 md:hidden">
@@ -2645,13 +2654,14 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && closedDeals.length > 0 && (
-          <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
+          <section {...collapsible('closed')} className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex items-center gap-3">
               <Lock className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closed & Audit</p>
                 <h3 className="mt-1 text-xl font-semibold text-slate-950">{closedDeals.length} Closed Transaction{closedDeals.length === 1 ? '' : 's'}</h3>
               </div>
+              <CollapseToggle {...toggleProps('closed', 'closed transactions')} className="ml-auto" />
             </div>
             {/* Mobile cards */}
             <div className="mt-5 divide-y divide-slate-100 md:hidden">
@@ -2898,13 +2908,14 @@ export default function ClosingTime({
         {workspacePage === 2 && activeDeal && (
           <>
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <div className="border border-slate-200 bg-white p-5 sm:p-6">
+            <div {...collapsible('tasks')} className="border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center gap-3">
                 <ListTodo className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Action list</p>
                   <h3 className="mt-1 text-xl font-semibold text-slate-950">Tasks and Reminders</h3>
                 </div>
+                <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
               </div>
               <div className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2">
                 <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a transaction task" />
@@ -2939,7 +2950,7 @@ export default function ClosingTime({
               documentUploadError={documentUploadError}
             />
           </div>
-          <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
+          <section {...collapsible('audit')} className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 {isDealLocked(activeDeal) ? <Lock className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" /> : <History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />}
@@ -2949,6 +2960,7 @@ export default function ClosingTime({
                     {isDealLocked(activeDeal) ? `${activeDeal.propertyAddress || activeDeal.title}, Closed & Audit` : 'Transaction History, Audit and Closeout'}
                   </h3>
                 </div>
+                <CollapseToggle {...toggleProps('audit', 'audit')} className="ml-auto" />
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => exportAuditPdf(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download PDF</button>

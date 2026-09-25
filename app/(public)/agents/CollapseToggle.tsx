@@ -1,19 +1,82 @@
 'use client';
 
+import { useCallback, useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+
+const MOBILE_QUERY = '(max-width: 767px)';
+
+type CollapseState = 'open' | 'closed';
+
+/**
+ * Collapsible cards. Put `{...section(id)}` on the card; its first child is the
+ * header and stays visible, every later child hides while collapsed.
+ * Unset cards default to closed on mobile and open on desktop (handled in CSS,
+ * so there is no flash on load). Pass `{ mobileOpen: true }` to keep a card open on mobile.
+ */
+export function useCollapsibles() {
+  const [states, setStates] = useState<Record<string, CollapseState>>({});
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_QUERY);
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  const isOpen = useCallback(
+    (id: string, mobileOpen = false) => {
+      const state = states[id];
+      if (state) return state === 'open';
+      return mobileOpen || !isMobile;
+    },
+    [states, isMobile],
+  );
+
+  const toggle = useCallback(
+    (id: string, mobileOpen = false) => {
+      setStates((current) => {
+        const mobileNow = window.matchMedia(MOBILE_QUERY).matches;
+        const openNow = current[id] ? current[id] === 'open' : mobileOpen || !mobileNow;
+        return { ...current, [id]: openNow ? 'closed' : 'open' };
+      });
+    },
+    [],
+  );
+
+  const section = useCallback(
+    (id: string, options: { mobileOpen?: boolean } = {}) => ({
+      'data-collapsible': '',
+      'data-collapsed': states[id] ?? (options.mobileOpen ? 'open' : 'auto'),
+    }),
+    [states],
+  );
+
+  const toggleProps = useCallback(
+    (id: string, label: string, options: { mobileOpen?: boolean } = {}) => ({
+      open: isOpen(id, options.mobileOpen),
+      onToggle: () => toggle(id, options.mobileOpen),
+      label,
+    }),
+    [isOpen, toggle],
+  );
+
+  return { section, toggleProps };
+}
 
 export default function CollapseToggle({
   open,
   onToggle,
   label,
   tone = 'dark',
-  controls,
+  className = '',
 }: {
   open: boolean;
   onToggle: () => void;
   label: string;
   tone?: 'dark' | 'light';
-  controls?: string;
+  className?: string;
 }) {
   const styles =
     tone === 'light'
@@ -24,9 +87,8 @@ export default function CollapseToggle({
       type="button"
       onClick={onToggle}
       aria-expanded={open}
-      aria-controls={controls}
       aria-label={`${open ? 'Collapse' : 'Expand'} ${label}`}
-      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition ${styles}`}
+      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition ${styles} ${className}`}
     >
       <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
     </button>

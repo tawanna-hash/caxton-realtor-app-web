@@ -21,7 +21,7 @@ import type { AgentCommandCenterWorkspace } from '@/lib/agent-command-center-wor
 import type { TrecFormVersion } from '@/lib/trec-form-versions';
 import { trackEvent } from '@/app/posthog-provider';
 import ClosingTime from './ClosingTime';
-import CollapseToggle from './CollapseToggle';
+import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 
 export type ReferralProvider = {
   id: number;
@@ -134,9 +134,7 @@ export default function AgentCommandCenterClient({
   const [quickCheckOpen, setQuickCheckOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [providerRotation, setProviderRotation] = useState(0);
-  const [deskOpen, setDeskOpen] = useState(true);
-  const [toolsOpen, setToolsOpen] = useState(true);
-  const [referralOpen, setReferralOpen] = useState(true);
+  const { section: collapsible, toggleProps } = useCollapsibles();
 
   const selectedCategoryRecord = REFERRAL_CATEGORIES.find((category) => category.id === selectedCategory)
     ?? REFERRAL_CATEGORIES[0];
@@ -212,12 +210,12 @@ export default function AgentCommandCenterClient({
             </div>
           </div>
 
-          <aside className="border border-white/15 bg-white/[0.08] p-4 shadow-2xl shadow-[#140A29]/20 sm:p-6">
+          <aside {...collapsible('desk')} className="border border-white/15 bg-white/[0.08] p-4 shadow-2xl shadow-[#140A29]/20 sm:p-6">
             <div className="flex items-center justify-between gap-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">Today&apos;s agent desk</p>
-              <CollapseToggle open={deskOpen} onToggle={() => setDeskOpen((o) => !o)} label="Today's agent desk" tone="light" controls="agent-desk-list" />
+              <CollapseToggle {...toggleProps('desk', "Today's agent desk")} tone="light" />
             </div>
-            <div id="agent-desk-list" hidden={!deskOpen} className="mt-5 space-y-4">
+            <div className="mt-5 space-y-4">
               {[
                 ['01', 'Map Key TREC Dates', 'Bring the effective date and period terms.'],
                 ['02', 'Prepare The Numbers', 'Run the seller net sheet or commission split.'],
@@ -310,7 +308,7 @@ export default function AgentCommandCenterClient({
       />
 
       <section className="border-y border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-12 lg:py-16">
+        <div {...collapsible('tools')} className="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-12 lg:py-16">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Work faster</p>
@@ -320,9 +318,9 @@ export default function AgentCommandCenterClient({
               See Every Agent Tool
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
-            <CollapseToggle open={toolsOpen} onToggle={() => setToolsOpen((o) => !o)} label="client-ready tools" controls="client-tools-grid" />
+            <CollapseToggle {...toggleProps('tools', 'client-ready tools')} />
           </div>
-          <div id="client-tools-grid" hidden={!toolsOpen} className="mt-6 grid gap-4 sm:mt-8 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-4 sm:mt-8 md:grid-cols-2 lg:grid-cols-4">
             {QUICK_TOOLS.map((tool) => {
               const Icon = tool.icon;
               return (
@@ -350,13 +348,13 @@ export default function AgentCommandCenterClient({
 
       <section id="referral-network" className="scroll-mt-20">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-12 lg:py-16">
-          <div className={`grid gap-5 sm:gap-8 ${referralOpen ? 'lg:grid-cols-[0.78fr_1.22fr]' : ''}`}>
+          <div {...collapsible('referral')} className="grid gap-5 sm:gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:[&[data-collapsed=closed]]:grid-cols-1">
             <div className="bg-[#301D5D] p-5 text-white sm:p-9">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-[#F4D06F]">
                   <Handshake className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <CollapseToggle open={referralOpen} onToggle={() => setReferralOpen((o) => !o)} label="referral network" tone="light" controls="referral-finder" />
+                <CollapseToggle {...toggleProps('referral', 'referral network')} tone="light" />
               </div>
               <p className="mt-7 text-xs font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">Referral network</p>
               <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Your Call List, Built for the Next Deal.</h2>
@@ -365,7 +363,7 @@ export default function AgentCommandCenterClient({
               </p>
             </div>
 
-            <div id="referral-finder" hidden={!referralOpen} className="border border-slate-200 bg-white p-4 sm:p-8">
+            <div className="border border-slate-200 bg-white p-4 sm:p-8">
               <div className="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Find a service</p>
