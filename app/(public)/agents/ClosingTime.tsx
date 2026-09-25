@@ -1835,6 +1835,38 @@ export default function ClosingTime({
     return (
       <section id="agent-deal-tools" className="bg-[#F7F5F1]">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8 lg:py-10">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border border-[#D9D0BF] bg-[#FFFDF8] p-4 sm:mb-5 sm:p-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closing Time · All Transactions</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                {activeDeals.length} active deal{activeDeals.length === 1 ? '' : 's'}
+              </p>
+            </div>
+            <span data-testid="text-dashboard-next-closing-countdown" className="text-sm font-bold text-[#301D5D]">
+              {nextClosingDays === null
+                ? 'No upcoming closings'
+                : nextClosingDays === 0
+                  ? 'Next closing is today'
+                  : `${nextClosingDays} day${nextClosingDays === 1 ? '' : 's'} to next closing`}
+            </span>
+          </div>
+          {activeDeals.length > 0 && (
+            <div className="mb-4 grid gap-3 sm:mb-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Active deal closing countdowns">
+              {activeDeals.map((deal) => (
+                <Link
+                  key={deal.id}
+                  href="/agents/closing-time"
+                  className="block border border-slate-200 bg-white p-4 transition hover:border-[#7059A8]"
+                >
+                  <span className="block truncate text-sm font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
+                  <span className="mt-1 block text-xs text-slate-600">{deal.closingDate ? formatDate(deal.closingDate) : 'Closing date not set'}</span>
+                  <span data-testid={`text-dashboard-closing-countdown-${deal.id}`} className="mt-2 block text-sm font-bold text-[#301D5D]">
+                    {closingCountdownLabel(deal.closingDate, today)}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
           <div className="grid items-stretch gap-3 bg-transparent sm:gap-5 sm:border sm:border-[#D9D0BF] sm:bg-[#FFFDF8] sm:p-5 lg:grid-cols-3 lg:p-6">
             <div className="order-1 h-full border border-slate-200 bg-white p-4 sm:p-6">
               <div className="flex items-start gap-3">
