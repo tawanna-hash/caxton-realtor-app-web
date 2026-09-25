@@ -1993,7 +1993,7 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && (
-          <div id="current-transaction" {...collapsible('current', { mobileOpen: true })} className="scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-7">
+          <div id="current-transaction" {...collapsible('current', { mobileOpen: true })} className="mt-5 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-7">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Current transaction<CollapseToggle {...toggleProps('current', 'current transaction', { mobileOpen: true })} /></p>
