@@ -470,6 +470,22 @@ function addDays(value: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
+function daysUntilClosing(closingDate: string, today: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(closingDate)) return null;
+  const closingTime = Date.parse(`${closingDate}T12:00:00Z`);
+  const todayTime = Date.parse(`${today}T12:00:00Z`);
+  if (!Number.isFinite(closingTime) || !Number.isFinite(todayTime)) return null;
+  return Math.round((closingTime - todayTime) / 86_400_000);
+}
+
+function closingCountdownLabel(closingDate: string, today: string): string {
+  const days = daysUntilClosing(closingDate, today);
+  if (days === null) return 'Closing date not set';
+  if (days === 0) return 'Closing today';
+  if (days < 0) return `${Math.abs(days)} day${days === -1 ? '' : 's'} past closing`;
+  return `${days} day${days === 1 ? '' : 's'} until closing`;
+}
+
 function sentenceCaseKey(value: string): string {
   return value
     .replace(/([A-Z])/g, ' $1')
@@ -938,6 +954,7 @@ export default function ClosingTime({
     defaultAgentNotificationPreferences,
   );
   const [activeDealId, setActiveDealId] = useState<string | null>(null);
+  const [today, setToday] = useState(chicagoToday);
   const [ready, setReady] = useState(false);
   const [syncState, setSyncState] = useState<SyncState>('loading');
   const [taskTitle, setTaskTitle] = useState('');
@@ -985,6 +1002,20 @@ export default function ClosingTime({
   useEffect(() => {
     notificationPreferencesRef.current = notificationPreferences;
   }, [notificationPreferences]);
+  useEffect(() => {
+    const refreshToday = () => {
+      const currentDate = chicagoToday();
+      setToday((previous) => previous === currentDate ? previous : currentDate);
+    };
+    const timer = window.setInterval(refreshToday, 60_000);
+    window.addEventListener('focus', refreshToday);
+    document.addEventListener('visibilitychange', refreshToday);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refreshToday);
+      document.removeEventListener('visibilitychange', refreshToday);
+    };
+  }, []);
 
   const clearContractPreview = useCallback(() => {
     if (contractPreviewUrlRef.current) URL.revokeObjectURL(contractPreviewUrlRef.current);
@@ -1206,6 +1237,11 @@ export default function ClosingTime({
   const isDealClosedAndComplete = (deal: AgentDeal) => deal.auditLocked || (Boolean(deal.closeoutOutcome) && isDealFullyComplete(deal));
   const activeDeals = deals.filter((deal) => !isDealClosedAndComplete(deal));
   const closedDeals = deals.filter((deal) => isDealClosedAndComplete(deal));
+  const upcomingClosingDays = activeDeals.flatMap((deal) => {
+    const days = daysUntilClosing(deal.closingDate, today);
+    return deal.status !== 'completed' && days !== null && days >= 0 ? [days] : [];
+  });
+  const nextClosingDays = upcomingClosingDays.length > 0 ? Math.min(...upcomingClosingDays) : null;
   const isDealLocked = (deal: AgentDeal) =>
     deal.auditLocked || (Boolean(deal.closeoutOutcome && deal.closeoutDate) && isDealFullyComplete(deal));
   const activePacketForms = trecFormVersions.filter((version) => version.isActive);
@@ -1242,7 +1278,6 @@ export default function ClosingTime({
     error: 'Cloud sync needs attention. Keep this page open and refresh before leaving.',
   }[syncState];
   const activeDeadlines = activeDeal ? dealDeadlines(activeDeal) : [];
-  const today = chicagoToday();
   const radarWindowDays = (() => {
     if (!activeDeal?.closingDate || activeDeal.closingDate < today) return 14;
     const start = new Date(`${today}T12:00:00Z`).getTime();
@@ -1850,10 +1885,17 @@ export default function ClosingTime({
   return (
     <main id="agent-desk" className="min-h-screen bg-[#F7F5F1]">
       <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
-        <div>
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Closing Time Workspace</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">It&apos;s Almost Closing Time!</h2>
+          </div>
+          <div data-testid="text-next-closing-countdown" className="border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-2 text-sm font-semibold text-[#301D5D]">
+            {nextClosingDays === null
+              ? 'No upcoming closings'
+              : nextClosingDays === 0
+                ? 'Next closing is today'
+                : `${nextClosingDays} day${nextClosingDays === 1 ? '' : 's'} to next closing`}
           </div>
         </div>
 
@@ -2454,6 +2496,9 @@ export default function ClosingTime({
                       <div>
                         <div className="text-slate-400">Closing Date</div>
                         <div className="text-slate-700">{deal.closingDate ? formatDate(deal.closingDate) : '—'}</div>
+                        <div data-testid={`text-closing-countdown-${deal.id}`} className="mt-0.5 font-bold text-[#301D5D]">
+                          {closingCountdownLabel(deal.closingDate, today)}
+                        </div>
                       </div>
                     </div>
                     <div className="mt-2.5 flex flex-wrap gap-2">
@@ -2517,7 +2562,12 @@ export default function ClosingTime({
                         <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span>
                       </td>
                       <td className="py-3 pr-4 text-slate-700">{deal.effectiveDate ? formatDate(deal.effectiveDate) : '—'}</td>
-                      <td className="py-3 pr-4 text-slate-700">{deal.closingDate ? formatDate(deal.closingDate) : '—'}</td>
+                      <td className="py-3 pr-4 text-slate-700">
+                        {deal.closingDate ? formatDate(deal.closingDate) : '—'}
+                        <span data-testid={`text-closing-countdown-${deal.id}`} className="block text-xs font-bold text-[#301D5D]">
+                          {closingCountdownLabel(deal.closingDate, today)}
+                        </span>
+                      </td>
                       <td className="py-3 pr-4">
                         {(() => {
                           const dealFormVersions = activePacketForms.filter((version) => deal.selectedFormFamilies[version.formFamily]);
