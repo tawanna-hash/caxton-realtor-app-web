@@ -6,6 +6,47 @@ import { useEffect, useRef, useState } from 'react';
 type Invitation = { name: string; page: number; position: number; total: number };
 type Method = 'type' | 'draw' | 'upload';
 
+function ContractPdfPreview({ url }: { url: string }) {
+  const container = useRef<HTMLDivElement>(null);
+  const [previewError, setPreviewError] = useState('');
+  useEffect(() => {
+    let cancelled = false;
+    const parent = container.current;
+    if (!parent) return;
+    parent.replaceChildren();
+    void (async () => {
+      const pdfjs = await import('pdfjs-dist');
+      pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+      const response = await fetch(`${url}?pdf=1`, { cache: 'no-store' });
+      if (!response.ok) throw new Error('The contract preview is unavailable.');
+      const document = await pdfjs.getDocument({ data: await response.arrayBuffer() }).promise;
+      for (let number = 1; number <= document.numPages && !cancelled; number++) {
+        const page = await document.getPage(number);
+        const viewport = page.getViewport({ scale: 1 });
+        const scale = Math.min(1.5, 760 / viewport.width);
+        const view = page.getViewport({ scale });
+        const canvas = window.document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('The contract preview is unavailable.');
+        canvas.width = Math.ceil(view.width);
+        canvas.height = Math.ceil(view.height);
+        canvas.className = 'mx-auto mb-4 h-auto max-w-full border border-slate-300 bg-white';
+        canvas.setAttribute('aria-label', `Contract page ${number} of ${document.numPages}`);
+        await page.render({ canvasContext: context, viewport: view }).promise;
+        if (!cancelled) parent.append(canvas);
+      }
+      if (!cancelled) setPreviewError('');
+    })().catch(() => { if (!cancelled) setPreviewError('Could not preview the PDF. Open the full PDF before signing.'); });
+    return () => { cancelled = true; parent.replaceChildren(); };
+  }, [url]);
+  return (
+    <div className="mt-4 max-h-[60vh] overflow-auto border border-slate-300 bg-slate-100 p-3" aria-label="Full contract PDF to review">
+      <div ref={container} />
+      {previewError && <p role="alert" className="text-sm text-red-800">{previewError}</p>}
+    </div>
+  );
+}
+
 export default function ClosingSigner({ token }: { token: string }) {
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [error, setError] = useState('');
@@ -62,7 +103,7 @@ export default function ClosingSigner({ token }: { token: string }) {
         <>
           <p className="mt-2 text-sm text-slate-600">Invitation for {invitation.name}. Signer {invitation.position} of {invitation.total}. Your signature will appear on page {invitation.page}.</p>
           <p className="mt-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm">Review every page before signing. This invitation is private; do not forward it.</p>
-          <iframe title="Full contract PDF to review" src={`${url}?pdf=1`} className="mt-4 h-[60vh] w-full border border-slate-300" />
+          <ContractPdfPreview url={url} />
           <a href={`${url}?pdf=1`} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm text-[#301D5D] underline">Open or save full PDF before signing</a>
           <section className="mt-6 rounded border border-slate-300 p-5">
             <h2 className="text-lg font-bold">Your electronic signature</h2>
