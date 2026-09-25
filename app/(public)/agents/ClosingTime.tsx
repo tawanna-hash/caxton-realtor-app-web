@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import PushOptInButton from '@/components/PushOptInButton';
 import TrecPdfPagePreview from './TrecPdfPagePreview';
+import ClosingSigningSetup from './ClosingSigningSetup';
 import { trackEvent } from '@/app/posthog-provider';
 import {
   agentCommandCenterWorkspaceSchema,
@@ -957,6 +958,11 @@ export default function ClosingTime({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const [contractPreviewUrl, setContractPreviewUrl] = useState('');
+  const [originalSaved, setOriginalSaved] = useState(false);
+  const [showSavedOriginal, setShowSavedOriginal] = useState(false);
+  const [originalContract, setOriginalContract] = useState<{ dealId: string; id: string } | null>(null);
+  const [originalSaveBusy, setOriginalSaveBusy] = useState(false);
+  const [isPdfSource, setIsPdfSource] = useState(false);
   const [activeTrecFormFamily, setActiveTrecFormFamily] = useState('20');
   const [activeTrecPage, setActiveTrecPage] = useState(1);
   const [formsStatusDealId, setFormsStatusDealId] = useState<string | null>(null);
@@ -970,6 +976,7 @@ export default function ClosingTime({
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const contractPreviewUrlRef = useRef('');
+  const contractFileRef = useRef<File | null>(null);
   const formDeepLinkHandledRef = useRef(false);
   const dealsRef = useRef(deals);
   const notificationPreferencesRef = useRef(notificationPreferences);
@@ -983,8 +990,24 @@ export default function ClosingTime({
   const clearContractPreview = useCallback(() => {
     if (contractPreviewUrlRef.current) URL.revokeObjectURL(contractPreviewUrlRef.current);
     contractPreviewUrlRef.current = '';
+    contractFileRef.current = null;
     setContractPreviewUrl('');
+    setIsPdfSource(false);
   }, []);
+  useEffect(() => {
+    if (!activeDealId) return;
+    let cancelled = false;
+    void fetch(`/api/agent-command-center/contracts/original?dealId=${encodeURIComponent(activeDealId)}`, { cache: 'no-store' })
+      .then(async response => response.ok ? response.json() as Promise<{ id?: string }> : null)
+      .then(record => {
+        if (!cancelled) {
+          setOriginalContract(record?.id ? { dealId: activeDealId, id: record.id } : null);
+          setShowSavedOriginal(false);
+        }
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [activeDealId]);
 
   const saveToCloud = useCallback(async function saveToCloud(workspace: AgentCommandCenterWorkspace) {
     if (saveInFlightRef.current) {
@@ -1310,9 +1333,51 @@ export default function ClosingTime({
     persistDeals(nextDeals);
   };
 
+  const saveOriginalPdf = async (file: File, dealId: string): Promise<string | null> => {
+    setOriginalSaveBusy(true);
+    setDocumentUploadError('');
+    try {
+      if (file.type !== 'application/pdf' || file.size > 15 * 1024 * 1024) {
+        throw new Error('Choose a PDF smaller than 15 MB.');
+      }
+      const { upload } = await import('@vercel/blob/client');
+      const id = crypto.randomUUID();
+      const pathname = `closing-time/originals/${realtorId}/${id}.pdf`;
+      const blob = await upload(pathname, file, {
+        access: 'private',
+        contentType: 'application/pdf',
+        handleUploadUrl: '/api/agent-command-center/contracts/original',
+        clientPayload: dealId,
+      });
+      const response = await fetch('/api/agent-command-center/contracts/original', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'finalize', dealId, pathname: blob.pathname, filename: file.name }),
+      });
+      const data = await response.json() as { id?: string; error?: string };
+      if (!response.ok || !data.id) throw new Error(data.error || 'Could not keep the original PDF.');
+      if (contractFileRef.current === file) {
+        setOriginalContract({ dealId, id: data.id });
+        setOriginalSaved(true);
+      }
+      return data.id;
+    } catch (error) {
+      if (contractFileRef.current === file) {
+        setDocumentUploadError(error instanceof Error ? error.message : 'Could not keep the original PDF.');
+      }
+      return null;
+    } finally {
+      if (contractFileRef.current === file) setOriginalSaveBusy(false);
+    }
+  };
+
   const extractContract = async (file: File | undefined) => {
     if (!file || !activeDeal) return;
     clearContractPreview();
+    contractFileRef.current = file;
+    setIsPdfSource(file.type === 'application/pdf');
+    setOriginalSaved(false);
+    const dealId = activeDeal.id;
     const previewUrl = URL.createObjectURL(file);
     contractPreviewUrlRef.current = previewUrl;
     setContractPreviewUrl(previewUrl);
@@ -1320,13 +1385,19 @@ export default function ClosingTime({
     setExtractionError('');
     setExtractionWarnings([]);
     try {
+      const originalId = file.type === 'application/pdf' ? await saveOriginalPdf(file, dealId) : null;
+      if (file.type === 'application/pdf' && !originalId) {
+        throw new Error('The original PDF could not be saved. Try uploading it again.');
+      }
       const formData = new FormData();
-      formData.append('contract', file);
+      if (!originalId) formData.append('contract', file);
       formData.append('trecFormVersionId', currentTrecFormVersion.id);
       const response = await fetch('/api/agent-command-center/extract-contract', {
         method: 'POST',
         credentials: 'same-origin',
-        body: formData,
+        ...(originalId
+          ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ originalId, trecFormVersionId: currentTrecFormVersion.id }) }
+          : { body: formData }),
       });
       const data: unknown = await response.json().catch(() => null);
       if (response.status === 401) {
@@ -1345,20 +1416,30 @@ export default function ClosingTime({
       if (!record.worksheet || typeof record.worksheet !== 'object' || !record.addenda || typeof record.addenda !== 'object') {
         throw new Error('Contract suggestions were not in the expected format.');
       }
+      const importedFields = record.formFields && typeof record.formFields === 'object'
+        ? Object.entries(record.formFields).filter(([, value]) => typeof value === 'string')
+        : [];
+      const signatureFields = importedFields.filter(([id]) => {
+        const field = currentTrecFormVersion.fields.find((candidate) => candidate.id === id);
+        return /signatur|initial/i.test(`${field?.pdfFieldName ?? ''} ${field?.label ?? ''}`);
+      });
       setExtractionDraft({
         title: typeof record.title === 'string' ? record.title : undefined,
         worksheet: Object.fromEntries(Object.entries(record.worksheet).filter(([, value]) => typeof value === 'string')) as Record<string, string>,
-        formFields: record.formFields && typeof record.formFields === 'object'
-          ? Object.fromEntries(Object.entries(record.formFields).filter(([, value]) => typeof value === 'string')) as Record<string, string>
-          : {},
+        formFields: Object.fromEntries(importedFields.filter(([id]) => !signatureFields.some(([signatureId]) => signatureId === id))) as Record<string, string>,
         addenda: Object.fromEntries(Object.entries(record.addenda).filter(([, value]) => typeof value === 'boolean')) as Record<string, boolean>,
         warnings: Array.isArray(record.warnings) ? record.warnings.filter((warning): warning is string => typeof warning === 'string') : [],
       });
-      setExtractionWarnings(Array.isArray(record.warnings) ? record.warnings.filter((warning): warning is string => typeof warning === 'string') : []);
+      setExtractionWarnings([
+        ...(Array.isArray(record.warnings) ? record.warnings.filter((warning): warning is string => typeof warning === 'string') : []),
+        ...(signatureFields.length ? ['Existing signatures and initials stay only on the original uploaded document. They are never copied into a blank template.'] : []),
+      ]);
       setExtractionState('ready');
       trackEvent('closing_time_contract_extracted');
     } catch (error) {
-      clearContractPreview();
+      if (contractPreviewUrlRef.current) URL.revokeObjectURL(contractPreviewUrlRef.current);
+      contractPreviewUrlRef.current = '';
+      setContractPreviewUrl('');
       setExtractionError(error instanceof Error ? error.message : 'Could not read this contract.');
       setExtractionState('error');
     }
@@ -1975,8 +2056,14 @@ export default function ClosingTime({
                           </div>
                         </div>
                       </div>
-                      <p className="mt-3 text-xs leading-5 text-emerald-800">The preview exists only in this browser tab while you review it. The source contract is not added to your cloud workspace; only values you approve are saved.</p>
+                      <p className="mt-3 text-xs leading-5 text-emerald-800">Existing signatures stay on the unchanged uploaded PDF. Extracted values never transfer signatures to a blank form.</p>
                     </section>
+                  )}
+                  {isPdfSource && (originalSaveBusy || originalSaved || documentUploadError) && (
+                    <p role="status" className="mt-3 text-xs font-semibold text-slate-700">
+                      {originalSaveBusy ? 'Saving original PDF privately…' : originalSaved ? 'Original PDF saved privately, with existing signatures unchanged.' : ''}
+                      {documentUploadError && <span role="alert" className="text-red-800">{documentUploadError}</span>}
+                    </p>
                   )}
                   {extractionState === 'error' && (
                     <p role="alert" className="mt-4 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
@@ -2150,7 +2237,7 @@ export default function ClosingTime({
                               Take a Photo
                             </button>
                             <p className="border-t border-slate-100 px-3 pt-2.5 text-xs leading-5 text-slate-500">
-                              PDF, PNG, JPG, or WEBP · 15 MB maximum. Your file is read securely, then discarded.
+                              PDF, PNG, JPG, or WEBP · 15 MB maximum. PDFs are kept privately with the deal; images are used for extraction only.
                             </p>
                           </div>
                         )}
@@ -2284,6 +2371,23 @@ export default function ClosingTime({
                       </button>
                     </div>
                     <div className="mt-7 rounded-md border border-slate-200 bg-slate-100 p-6 sm:p-10 lg:p-14">
+                      {originalContract?.dealId === activeDeal.id && (
+                        <div className="mx-auto mb-4 max-w-[1020px] border border-slate-300 bg-white p-3">
+                          <button type="button" onClick={() => setShowSavedOriginal((value) => !value)}
+                            aria-expanded={showSavedOriginal}
+                            className="text-sm font-bold text-[#301D5D] underline">
+                            {showSavedOriginal ? 'Hide original contract' : 'View original uploaded contract (signatures in place)'}
+                          </button>
+                          {showSavedOriginal && <iframe
+                            title="Original uploaded contract, signatures unchanged"
+                            src={`/api/agent-command-center/contracts/original?id=${encodeURIComponent(originalContract.id)}`}
+                            className="mt-3 h-[70vh] w-full border border-slate-200"
+                          />}
+                        </div>
+                      )}
+                      {originalContract?.dealId === activeDeal.id && (
+                        <ClosingSigningSetup key={originalContract.id} originalId={originalContract.id} />
+                      )}
                       <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-white shadow-sm">
                         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2">
                           <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">Official TREC {currentTrecFormVersion.formNumber} · Page {currentTrecPage}</p>
