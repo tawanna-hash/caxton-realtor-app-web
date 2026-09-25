@@ -1860,7 +1860,7 @@ export default function ClosingTime({
               ))}
             </div>
             <Link href="/agents/closing-time" className="mt-4 inline-flex min-h-[44px] items-center bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
-              Open Closing Time Workspace <ChevronRight className="ml-2 h-4 w-4" aria-hidden="true" />
+              Open Agent Desk <ChevronRight className="ml-2 h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </div>
@@ -1873,7 +1873,7 @@ export default function ClosingTime({
       <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Closing Time Workspace</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Agent Desk</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">It&apos;s Almost Closing Time!</h2>
           </div>
           <div data-testid="text-next-closing-countdown" className="border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-2 text-sm font-semibold text-[#301D5D]">
