@@ -18,7 +18,7 @@ import AgentCommandCenterClient, {
 import ComingSoon from './ComingSoon';
 
 export const metadata: Metadata = {
-  title: 'Closing Time | Realty News Now',
+  title: "It's Almost Closing Time! | Realty News Now",
   description:
     'A practical real estate workspace for Texas contract timing, field tools, and local partner connections.',
 };

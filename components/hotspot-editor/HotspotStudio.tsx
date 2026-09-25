@@ -18,6 +18,7 @@ const button = 'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-
 const primary = `${button} !border-[#301D5D] !bg-[#301D5D] !text-white hover:!bg-[#483074]`;
 const input = 'min-h-9 rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-900';
 const icon = 'h-4 w-4';
+const zoomLevels = [.6, .8, 1, 1.25, 1.5, 2, 3];
 
 /** Full row snapshots for history, but never overwrite detection provenance or server versions. */
 function editable(h: Hotspot): Partial<Hotspot> {
@@ -40,9 +41,17 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
   const [filter, setFilter] = useState(() => initialHotspots.some(h => !h.is_deleted && reviewStatus(h) === 'pending') ? 'attention' : 'approved');
   const [search, setSearch] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLElement>(null);
+  const canvasHovered = useRef(false);
   const [openPages, setOpenPages] = useState<number[]>([initialHotspots.find(h => !h.is_deleted && reviewStatus(h) !== 'rejected')?.page_idx ?? 0]);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const stepZoom = useCallback((direction: -1 | 1) => {
+    setZoom(current => {
+      if (direction === 1) return zoomLevels.find(value => value > current) ?? zoomLevels.at(-1)!;
+      return [...zoomLevels].reverse().find(value => value < current) ?? zoomLevels[0];
+    });
+  }, []);
   const [preview, setPreview] = useState(false);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
@@ -194,12 +203,23 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (editing || blocked || preview) return;
       const command = e.metaKey || e.ctrlKey;
+      const target = e.target as HTMLElement;
+      const inCanvas = canvasHovered.current || !!canvasRef.current?.contains(target);
+      if (!editing && command && !e.altKey && inCanvas && !target.closest('input,textarea,select,[contenteditable=true]')) {
+        if (['+', '=', 'Add'].includes(e.key) || e.code === 'NumpadAdd') {
+          e.preventDefault(); stepZoom(1); return;
+        }
+        if (['-', '_', 'Subtract'].includes(e.key) || e.code === 'NumpadSubtract') {
+          e.preventDefault(); stepZoom(-1); return;
+        }
+        if (e.key === '0') { e.preventDefault(); setZoom(1); return; }
+      }
+      if (editing || blocked || preview) return;
       if (command && !e.altKey && e.key.toLowerCase() === 'k') {
         e.preventDefault(); searchRef.current?.focus(); searchRef.current?.select(); return;
       }
-      if ((e.target as HTMLElement).closest('input,textarea,select,[contenteditable=true]')) return;
+      if (target.closest('input,textarea,select,[contenteditable=true]')) return;
       if (command && e.key.toLowerCase() === 'z') { e.preventDefault(); void undo(e.shiftKey); return; }
       if (command && e.shiftKey && ['ArrowDown', 'ArrowUp'].includes(e.key) && listed.length) {
         e.preventDefault();
@@ -209,7 +229,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
       }
       if (command && e.key === 'Enter' && focused) { e.preventDefault(); setEditing(focused); return; }
       if (e.key === 'Escape') { setSelected(null); setChecked([]); return; }
-      if ((e.target as HTMLElement).closest('button')) return;
+      if (command || target.closest('button')) return;
       if (!focused || focused.editor_locked || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
       e.preventDefault();
       const el = document.querySelector(`[data-hotspot-page="${focused.page_idx}"]`);
@@ -223,7 +243,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [blocked, editing, preview, focused, listed, selected, jump, mutate, undo]);
+  }, [blocked, editing, preview, focused, listed, selected, jump, mutate, undo, stepZoom]);
 
   const create = async (pageIdx: number) => {
     if (busyRef.current) return;
@@ -371,14 +391,18 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
         <label className="text-sm">Page <select aria-label="Page" value={pageIdx} onChange={e => go(Number(e.target.value))} className={input}>{Array.from({ length: magazine.page_count }, (_, p) => <option key={p} value={p}>{p + 1}</option>)}</select> of {magazine.page_count}</label>
         <button className={button} disabled={pages.at(-1)! >= magazine.page_count - 1} onClick={() => go(pages.at(-1)! + 1)}>Next</button>
         <select aria-label="Page layout" className={input} value={view} onChange={e => { setView(e.target.value as 'single' | 'spread'); setChecked([]); }}><option value="single">Single Page</option><option value="spread">Spread</option></select>
-        <select aria-label="Zoom" className={input} value={zoom} onChange={e => setZoom(Number(e.target.value))}>{[.6, .8, 1, 1.25, 1.5, 2, 3].map(z => <option key={z} value={z}>{Math.round(z * 100)}%</option>)}</select>
+        <div className="inline-flex items-center gap-1" aria-label="Magazine page zoom">
+          <button className={button} type="button" aria-label="Zoom out magazine page" disabled={zoom <= zoomLevels[0]} onClick={() => stepZoom(-1)}>−</button>
+          <select aria-label="Magazine page zoom level" className={input} value={zoom} onChange={e => setZoom(Number(e.target.value))}>{zoomLevels.map(z => <option key={z} value={z}>{Math.round(z * 100)}%</option>)}</select>
+          <button className={button} type="button" aria-label="Zoom in magazine page" disabled={zoom >= zoomLevels.at(-1)!} onClick={() => stepZoom(1)}>+</button>
+        </div>
         <button className={button} disabled={blocked} onClick={() => void scan(pageIdx)}>Rescan Page {pageIdx + 1}</button>
         {!preview && <button className={button} disabled={blocked} onClick={() => void create(pageIdx)}><Plus className={icon} />Add Hotspot</button>}
-        <span className="text-xs text-gray-500">{preview ? 'Approved + published hotspots. Hidden editor layers remain clickable. Test clicks are not tracked.' : 'Select, then drag. Double-click to edit. Arrow keys nudge; Shift moves 10px. Alt-click cycles overlaps.'}</span>
+        <span className="text-xs text-gray-500">{preview ? 'Approved + published hotspots. Hidden editor layers remain clickable. Test clicks are not tracked.' : 'Select, then drag. Double-click to edit. Arrow keys nudge; Shift moves 10px. Alt-click cycles overlaps.'} Point at the page and use ⌘+/⌘− to zoom the page only; ⌘0 resets it.</span>
       </div>
 
       <div className={`grid items-start ${preview ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px]'}`}>
-        <section aria-label="Magazine canvas" className="min-w-0 overflow-auto p-8" style={{ maxHeight: 'calc(100vh - 190px)' }}>
+        <section ref={canvasRef} aria-label="Magazine canvas" className="min-w-0 overflow-auto p-8" style={{ maxHeight: 'calc(100vh - 190px)' }} onMouseEnter={() => { canvasHovered.current = true; }} onMouseLeave={() => { canvasHovered.current = false; }}>
           <div className="flex min-w-max justify-center gap-4">
             {pages.map(p => <HotspotCanvas key={p} pageIdx={p} pageUrl={magazine.page_urls?.[p]} hotspots={pageRows.filter(h => h.page_idx === p)}
               selectedId={selected} numbers={numbers} preview={preview} zoom={zoom} busy={blocked} onSelect={select} onEdit={h => { if (!blocked) setEditing(h); }}
@@ -399,7 +423,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
             </div>
             <input ref={searchRef} className={`${input} w-full`} aria-label="Search hotspots" placeholder="Search label, partner, or destination" value={search} onChange={e => setSearch(e.target.value)} />
             <details className="text-xs text-gray-600"><summary className="cursor-pointer">Keyboard shortcuts</summary>
-              <p className="mt-1">⌘K search · ⌘⇧↓/↑ next/previous · ⌘↵ review · ⌘Z undo · ⌘⇧Z redo</p>
+              <p className="mt-1">Point at page: ⌘+/⌘− zoom page, ⌘0 reset · ⌘K search · ⌘⇧↓/↑ next/previous · ⌘↵ review · ⌘Z undo · ⌘⇧Z redo</p>
             </details>
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-gray-600">{listed.length} matching · {groups.length} pages</span>

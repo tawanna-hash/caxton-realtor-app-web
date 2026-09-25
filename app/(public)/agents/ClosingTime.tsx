@@ -1773,19 +1773,14 @@ export default function ClosingTime({
         <div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Closing Time Workspace</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">Closing Time</h2>
-            <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-              <span className="font-semibold text-slate-900">Closing Time Keeps Your Deals Moving.</span>{' '}
-              Never Miss A Critical Contract Deadline, Run Instant Financial Calculations, And Connect Clients With Trusted Service Partners When Help Is Needed.
-            </p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">It&apos;s Almost Closing Time!</h2>
           </div>
         </div>
 
         <div className="mt-5 flex items-start gap-3 border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-3 text-sm leading-6 text-slate-600">
           <Save className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
           <p>
-            <span className="font-semibold text-slate-900">{ready ? syncMessage : 'Loading your secure workspace.'}</span>{' '}
-            Verify all dates against the signed contract and your broker&apos;s process.
+            <span className="font-semibold text-slate-900">{ready ? syncMessage : 'Loading your secure workspace.'}</span>
           </p>
         </div>
 

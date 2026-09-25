@@ -11,7 +11,7 @@ import ComingSoon from '../ComingSoon';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Closing Time | Realty News Now',
+  title: "It's Almost Closing Time! | Realty News Now",
   description: 'Securely prepare transaction dates, tasks, documents, and TREC contract details.',
 };
 
