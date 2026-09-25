@@ -1163,8 +1163,6 @@ input[type='date']::-webkit-calendar-picker-indicator {
 [data-collapsible][data-collapsed='closed'] > :first-child {
   margin-bottom: 0;
 }
-@media (max-width: 767px) {
-  [data-collapsible][data-collapsed='auto'] > :not(:first-child) {
-    display: none !important;
-  }
+[data-collapsible][data-collapsed='auto'] > :not(:first-child) {
+  display: none !important;
 }

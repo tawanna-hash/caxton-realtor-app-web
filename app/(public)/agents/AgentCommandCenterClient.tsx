@@ -348,7 +348,7 @@ export default function AgentCommandCenterClient({
 
       <section id="referral-network" className="scroll-mt-20">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-12 lg:py-16">
-          <div {...collapsible('referral')} className="grid gap-5 sm:gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:[&[data-collapsed=closed]]:grid-cols-1">
+          <div {...collapsible('referral')} className="grid gap-5 sm:gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:[&[data-collapsed=closed]]:grid-cols-1 lg:[&[data-collapsed=auto]]:grid-cols-1">
             <div className="bg-[#301D5D] p-5 text-white sm:p-9">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-[#F4D06F]">

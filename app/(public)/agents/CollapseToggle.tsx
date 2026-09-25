@@ -10,8 +10,8 @@ type CollapseState = 'open' | 'closed';
 /**
  * Collapsible cards. Put `{...section(id)}` on the card; its first child is the
  * header and stays visible, every later child hides while collapsed.
- * Unset cards default to closed on mobile and open on desktop (handled in CSS,
- * so there is no flash on load). Pass `{ mobileOpen: true }` to keep a card open on mobile.
+ * Unset cards default to closed on every screen size (handled in CSS, so there
+ * is no flash on load). Pass `{ mobileOpen: true }` to start a card open.
  */
 export function useCollapsibles() {
   const [states, setStates] = useState<Record<string, CollapseState>>({});
@@ -29,7 +29,7 @@ export function useCollapsibles() {
     (id: string, mobileOpen = false) => {
       const state = states[id];
       if (state) return state === 'open';
-      return mobileOpen || !isMobile;
+      return mobileOpen;
     },
     [states, isMobile],
   );
@@ -37,8 +37,7 @@ export function useCollapsibles() {
   const toggle = useCallback(
     (id: string, mobileOpen = false) => {
       setStates((current) => {
-        const mobileNow = window.matchMedia(MOBILE_QUERY).matches;
-        const openNow = current[id] ? current[id] === 'open' : mobileOpen || !mobileNow;
+        const openNow = current[id] ? current[id] === 'open' : mobileOpen;
         return { ...current, [id]: openNow ? 'closed' : 'open' };
       });
     },
