@@ -195,7 +195,7 @@ export default function AgentCommandCenterClient({
                 onClick={() => trackEvent('closing_time_opened')}
                 className="inline-flex h-[46px] items-center justify-center gap-2 rounded-md bg-[#F4D06F] px-5 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
               >
-                Open Closing Time
+                Open Agent Desk
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
               <a
