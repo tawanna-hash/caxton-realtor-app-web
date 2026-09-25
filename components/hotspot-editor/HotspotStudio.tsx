@@ -398,7 +398,9 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
                 }}>{title}</button>)}
             </div>
             <input ref={searchRef} className={`${input} w-full`} aria-label="Search hotspots" placeholder="Search label, partner, or destination" value={search} onChange={e => setSearch(e.target.value)} />
-            <p className="text-xs text-gray-600">⌘K search · ⌘⇧↓/↑ next/previous · ⌘↵ review · ⌘Z undo · ⌘⇧Z redo</p>
+            <details className="text-xs text-gray-600"><summary className="cursor-pointer">Keyboard shortcuts</summary>
+              <p className="mt-1">⌘K search · ⌘⇧↓/↑ next/previous · ⌘↵ review · ⌘Z undo · ⌘⇧Z redo</p>
+            </details>
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-gray-600">{listed.length} matching · {groups.length} pages</span>
               <button className="text-xs font-medium text-[#301D5D] underline" onClick={() => setBulkOpen(!bulkOpen)} aria-expanded={bulkOpen}>{bulkOpen ? 'Close bulk actions' : 'Bulk actions'}</button>
@@ -423,7 +425,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
                 <span>Page {group.pageIndex + 1}</span><span className="text-xs font-normal text-gray-600">{group.count} hotspots {openPages.includes(group.pageIndex) ? '−' : '+'}</span>
               </button>
               {openPages.includes(group.pageIndex) && group.partners.map(partner => <div key={partner.name}>
-              <h3 className="bg-gray-50 px-4 py-1.5 text-xs font-semibold text-gray-700">{partner.name}</h3>
+              {(group.partners.length > 1 || partner.name !== 'Unassigned') && <h3 className="bg-gray-50 px-4 py-1.5 text-xs font-semibold text-gray-700">{partner.name === 'Unassigned' ? 'Other links' : partner.name}</h3>}
               {partner.rows.map(h => <div key={h.id} data-layer-id={h.id}
                 className={`border-b border-gray-100 px-3 py-3 ${selected === h.id ? 'bg-[#f2eef9] ring-1 ring-inset ring-[#7059A8]' : 'bg-white'}`}>
                 <div className="flex items-start gap-2">
