@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Eye, EyeOff, LockKeyhole, UnlockKeyhole, GripVertical, Undo2, Redo2, ScanLine, Layers, Plus, Check, X, Pencil, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, LockKeyhole, UnlockKeyhole, Undo2, Redo2, ScanLine, Layers, Plus, Check, X, Pencil } from 'lucide-react';
 import type { Hotspot, HotspotConfig } from '@/lib/hotspots';
 import type { Magazine } from '@/lib/magazines';
 import { clampRect, computeZMove, DEFAULT_NEW_RECT, TYPE_LABELS, type ZMove } from '@/lib/hotspot-editor-helpers';
@@ -37,9 +37,11 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState<number[]>([]);
   const [editing, setEditing] = useState<Hotspot | null>(null);
-  const [filter, setFilter] = useState('attention');
+  const [filter, setFilter] = useState(() => initialHotspots.some(h => !h.is_deleted && reviewStatus(h) === 'pending') ? 'attention' : 'approved');
   const [search, setSearch] = useState('');
-  const [grouped, setGrouped] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [openPages, setOpenPages] = useState<number[]>([initialHotspots.find(h => !h.is_deleted && reviewStatus(h) !== 'rejected')?.page_idx ?? 0]);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [preview, setPreview] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -53,7 +55,6 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
   const [future, setFuture] = useState<History[]>([]);
   const [copyId, setCopyId] = useState('');
   const [checklistOpen, setChecklistOpen] = useState(false);
-  const [dragId, setDragId] = useState<number | null>(null);
   const [cleanupResult, setCleanupResult] = useState('');
   const pageIdx = Math.max(0, Math.min(page, magazine.page_count - 1));
   const pages = view === 'single' || pageIdx === 0 ? [pageIdx] :
@@ -80,7 +81,12 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
     fetch(`${base}/hotspot-workspace`, { cache: 'no-store' }).then(async response => {
       if (!response.ok) throw new Error('Could not load saved hotspots');
       const data = await response.json();
-      if (!cancelled) { replaceRows(data.hotspots); setScans(data.scans || []); }
+      if (!cancelled) {
+        replaceRows(data.hotspots); setScans(data.scans || []);
+        const saved = data.hotspots as Hotspot[];
+        if (!saved.some(h => !h.is_deleted && reviewStatus(h) === 'pending')) setFilter('approved');
+        setOpenPages([saved.find(h => !h.is_deleted && reviewStatus(h) !== 'rejected')?.page_idx ?? 0]);
+      }
     }).catch(e => { if (!cancelled) setError(e.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -159,15 +165,22 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
   const queue = filter === 'attention' ? attention : filter === 'ready' ? ready : filter === 'approved' ? active.filter(h => reviewStatus(h) === 'approved') : filter === 'rejected' ? hotspots.filter(h => h.is_deleted || reviewStatus(h) === 'rejected') : active;
   const listed = queue.filter(h => `${h.label} ${h.advertiser_name} ${hotspotDestination(h.config)} ${h.detection?.evidence || ''}`.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => a.page_idx - b.page_idx || (b.z_index || 0) - (a.z_index || 0) || b.id - a.id);
-  const groups = grouped ? Array.from(new Set(listed.map(h => `P${h.page_idx + 1} · ${h.advertiser_name || 'Unassigned'}`))).map(name => ({ name, rows: listed.filter(h => `P${h.page_idx + 1} · ${h.advertiser_name || 'Unassigned'}` === name) })) : [{ name: '', rows: listed }];
+  const groups = Array.from(new Set(listed.map(h => h.page_idx))).map(pageIndex => ({
+    pageIndex,
+    partners: Array.from(new Set(listed.filter(h => h.page_idx === pageIndex).map(h => h.advertiser_name || 'Unassigned'))).map(name => ({
+      name, rows: listed.filter(h => h.page_idx === pageIndex && (h.advertiser_name || 'Unassigned') === name),
+    })),
+    count: listed.filter(h => h.page_idx === pageIndex).length,
+  }));
   const selection = checked.length ? hotspots.filter(h => checked.includes(h.id)) : focused ? [focused] : [];
   const selectable = selection.filter(h => !h.is_deleted && reviewStatus(h) !== 'rejected');
   const approvable = selectable.filter(h => !needsAttention(h));
-  const go = (p: number) => { setPage(p); setSelected(null); setChecked([]); };
-  const jump = (h: Hotspot) => {
-    if (!pages.includes(h.page_idx)) setPage(h.page_idx);
+  const go = (p: number) => { setPage(p); setOpenPages(current => current.includes(p) ? current : [...current, p]); setSelected(null); setChecked([]); };
+  const jump = useCallback((h: Hotspot) => {
+    setPage(h.page_idx);
+    setOpenPages(current => current.includes(h.page_idx) ? current : [...current, h.page_idx]);
     setSelected(h.id);
-  };
+  }, [setPage]);
   const select = (id: number | null) => {
     setSelected(id);
     const row = rowsRef.current.find(h => h.id === id);
@@ -178,18 +191,25 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
     const next = computeZMove(active.filter(r => r.page_idx === h.page_idx), h.id, move);
     if (next !== null) act([{ id: h.id, values: { z_index: next } }], 'Layer order');
   };
-  const reorder = (source: number, target: Hotspot) => {
-    const h = hotspots.find(r => r.id === source);
-    if (!h || h.page_idx !== target.page_idx || source === target.id) return;
-    const ordered = sorted.filter(r => r.page_idx === target.page_idx && r.id !== source && !r.is_deleted && reviewStatus(r) !== 'rejected');
-    ordered.splice(ordered.findIndex(r => r.id === target.id), 0, h);
-    act(ordered.map((r, i) => ({ id: r.id, values: { z_index: ordered.length - i } })), 'Reorder layers');
-  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (editing || blocked || preview || (e.target as HTMLElement).closest('input,textarea,select,button,[contenteditable=true]')) return;
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); void undo(e.shiftKey); return; }
+      if (editing || blocked || preview) return;
+      const command = e.metaKey || e.ctrlKey;
+      if (command && !e.altKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault(); searchRef.current?.focus(); searchRef.current?.select(); return;
+      }
+      if ((e.target as HTMLElement).closest('input,textarea,select,[contenteditable=true]')) return;
+      if (command && e.key.toLowerCase() === 'z') { e.preventDefault(); void undo(e.shiftKey); return; }
+      if (command && e.shiftKey && ['ArrowDown', 'ArrowUp'].includes(e.key) && listed.length) {
+        e.preventDefault();
+        const current = listed.findIndex(h => h.id === selected);
+        const next = e.key === 'ArrowDown' ? (current + 1) % listed.length : (current < 0 ? listed.length - 1 : (current - 1 + listed.length) % listed.length);
+        jump(listed[next]); return;
+      }
+      if (command && e.key === 'Enter' && focused) { e.preventDefault(); setEditing(focused); return; }
+      if (e.key === 'Escape') { setSelected(null); setChecked([]); return; }
+      if ((e.target as HTMLElement).closest('button')) return;
       if (!focused || focused.editor_locked || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
       e.preventDefault();
       const el = document.querySelector(`[data-hotspot-page="${focused.page_idx}"]`);
@@ -203,7 +223,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [blocked, editing, preview, focused, mutate, undo]);
+  }, [blocked, editing, preview, focused, listed, selected, jump, mutate, undo]);
 
   const create = async (pageIdx: number) => {
     if (busyRef.current) return;
@@ -227,12 +247,16 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
     busyRef.current = true; setScanning(true); setError(''); setMessage('Preparing detection…'); setCleanupResult('');
     try {
       if (pageIdx !== undefined) {
+        const oldIds = new Set(rowsRef.current.map(h => h.id));
         const res = await fetch(`${base}/extract-page`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page_idx: pageIdx }) });
         const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Page scan failed');
         replaceRows(data.hotspots); setScans(data.scans || []);
+        const created = (data.hotspots as Hotspot[]).filter(h => !oldIds.has(h.id));
+        if (created.length) { setFilter(created.some(h => reviewProblem(h)) ? 'attention' : 'ready'); setOpenPages([pageIdx]); }
         setMessage(`Page ${pageIdx + 1}: ${data.diagnostics.inserted} new drafts; ${data.diagnostics.skipped_duplicates || 0} existing/duplicate links skipped. Existing edits preserved.`);
         if (data.diagnostics.warnings?.length) setError(data.diagnostics.warnings.join(' · '));
       } else {
+        const oldIds = new Set(rowsRef.current.map(h => h.id));
         const res = await fetch(`${base}/extract-all`, { method: 'POST' });
         if (!res.ok || !res.body) throw new Error('Could not start detection');
         const reader = res.body.getReader(), decoder = new TextDecoder();
@@ -244,6 +268,12 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
           if (event.type === 'page') setMessage(`Detecting: ${event.completed}/${event.total} pages reviewed by scanner…`);
           if (event.type === 'done') {
             done = true; replaceRows(event.hotspots); setScans(event.scans || []);
+            const created = (event.hotspots as Hotspot[]).filter(h => !oldIds.has(h.id));
+            if (created.length) {
+              const firstProblem = created.find(h => reviewProblem(h));
+              setFilter(firstProblem ? 'attention' : 'ready');
+              setOpenPages([firstProblem?.page_idx ?? created[0].page_idx]);
+            }
             setMessage(`Detection complete: ${event.diagnostics.inserted} new drafts; ${event.diagnostics.skipped_duplicates || 0} existing/duplicate links skipped. Review before publishing.`);
             if (event.errors?.length) setError(event.errors.join(' · '));
           }
@@ -358,17 +388,22 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
 
         {!preview && <aside className="min-w-0 border-l border-gray-200 bg-white xl:sticky xl:top-0">
           <div className="space-y-3 border-b border-gray-200 p-4">
-            <h2 className="text-base font-semibold">Review Queue <span className="text-xs font-normal text-gray-500">Jump to any page</span></h2>
+            <h2 className="text-base font-semibold">Review by page</h2>
             <div className="flex flex-wrap gap-1" role="group" aria-label="Review queue">
-              {([['attention', `Needs attention (${attention.length})`], ['ready', `Ready (${ready.length})`], ['approved', 'Approved'], ['all', 'All active']] as const).map(([value, title]) =>
-                <button key={value} className={filter === value ? primary : button} aria-pressed={filter === value} onClick={() => { setFilter(value); setChecked([]); }}>{title}</button>)}
+              {([['attention', `Attention ${attention.length}`], ['ready', `Ready ${ready.length}`], ['approved', `Approved ${active.filter(h => reviewStatus(h) === 'approved').length}`], ['all', 'All'], ['rejected', 'Removed']] as const).map(([value, title]) =>
+                <button key={value} className={`${filter === value ? primary : button} !min-h-8 !px-2 !text-xs`} aria-pressed={filter === value} onClick={() => {
+                  setFilter(value); setChecked([]);
+                  const first = value === 'attention' ? attention[0] : value === 'ready' ? ready[0] : value === 'rejected' ? hotspots.find(h => h.is_deleted || reviewStatus(h) === 'rejected') : value === 'approved' ? active.find(h => reviewStatus(h) === 'approved') : active[0];
+                  setOpenPages([first?.page_idx ?? pageIdx]);
+                }}>{title}</button>)}
             </div>
-            <button className={button} disabled={!listed.length} onClick={() => jump(listed[(listed.findIndex(h => h.id === selected) + 1) % listed.length])}>Next in queue</button>
-            <input className={`${input} w-full`} aria-label="Search hotspots" placeholder="Search label, partner, or destination" value={search} onChange={e => setSearch(e.target.value)} />
-            <div className="flex gap-2"><select aria-label="Review filter" className={`${input} min-w-0 flex-1`} value={filter} onChange={e => { setFilter(e.target.value); setChecked([]); }}>
-              <option value="attention">Needs Attention</option><option value="ready">Ready To Review</option><option value="approved">Approved</option><option value="all">All Active</option><option value="rejected">Rejected / Deleted</option>
-            </select><label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={grouped} onChange={e => setGrouped(e.target.checked)} />By Page / Partner</label></div>
-            <div className="flex flex-wrap items-center gap-2">
+            <input ref={searchRef} className={`${input} w-full`} aria-label="Search hotspots" placeholder="Search label, partner, or destination" value={search} onChange={e => setSearch(e.target.value)} />
+            <p className="text-xs text-gray-600">⌘K search · ⌘⇧↓/↑ next/previous · ⌘↵ review · ⌘Z undo · ⌘⇧Z redo</p>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-gray-600">{listed.length} matching · {groups.length} pages</span>
+              <button className="text-xs font-medium text-[#301D5D] underline" onClick={() => setBulkOpen(!bulkOpen)} aria-expanded={bulkOpen}>{bulkOpen ? 'Close bulk actions' : 'Bulk actions'}</button>
+            </div>
+            {bulkOpen && <div className="flex flex-wrap items-center gap-2 rounded-md bg-gray-50 p-2">
               <label className="flex items-center gap-1 text-xs"><input type="checkbox" aria-label="Select all listed hotspots" checked={listed.length > 0 && listed.every(h => checked.includes(h.id))} onChange={e => setChecked(e.target.checked ? listed.map(h => h.id) : [])} />Select All</label>
               <span className="text-xs text-gray-500">{selection.length} selected</span>
               <button className={button} disabled={blocked || !approvable.length} onClick={() => act(approvable.map(h => ({ id: h.id, values: { review_status: 'approved' } })), 'Approve selected')}><Check className={icon} />Approve {approvable.length || ''}</button>
@@ -377,48 +412,60 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
                 act(selectable.map(h => ({ id: h.id, values: { review_status: 'rejected', is_published: false } })), 'Reject selected');
               }}><X className={icon} />Reject</button>
               {filter === 'rejected' && <button className={button} disabled={blocked || !selection.length} onClick={() => act(selection.map(h => ({ id: h.id, values: { is_deleted: false, review_status: 'pending', is_published: false } })), 'Restore drafts')}>Restore Selected</button>}
-            </div>
+            </div>}
           </div>
 
           <div className="max-h-[52vh] overflow-y-auto">
-            {!listed.length && <p className="p-5 text-sm text-gray-500">{filter === 'attention' ? 'Nothing needs attention. Check Ready for Review to approve verified links.' : 'No hotspots match this view. Change the queue or search.'}</p>}
-            {groups.map(group => <div key={group.name}>
-              {group.name && <h3 className="bg-gray-50 px-4 py-2 text-xs font-semibold">{group.name}</h3>}
-              {group.rows.map(h => <div key={h.id} data-layer-id={h.id}
-                draggable={!blocked} onDragStart={e => { setDragId(h.id); e.dataTransfer.setData('text/plain', String(h.id)); }}
-                onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); if (!blocked) reorder(Number(e.dataTransfer.getData('text/plain')) || dragId!, h); setDragId(null); }}
+            {!listed.length && <p className="p-5 text-sm text-gray-500">{filter === 'attention' ? 'Nothing needs attention. Choose Approved to inspect published links.' : 'No hotspots match this view. Try another tab or search.'}</p>}
+            {groups.map(group => <div key={group.pageIndex}>
+              <button className="flex w-full items-center justify-between bg-gray-100 px-4 py-2 text-left text-sm font-semibold hover:bg-gray-200" aria-expanded={openPages.includes(group.pageIndex)}
+                onClick={() => { setPage(group.pageIndex); setSelected(null); setChecked([]); setOpenPages(current => current.includes(group.pageIndex) ? current.filter(p => p !== group.pageIndex) : [...current, group.pageIndex]); }}>
+                <span>Page {group.pageIndex + 1}</span><span className="text-xs font-normal text-gray-600">{group.count} hotspots {openPages.includes(group.pageIndex) ? '−' : '+'}</span>
+              </button>
+              {openPages.includes(group.pageIndex) && group.partners.map(partner => <div key={partner.name}>
+              <h3 className="bg-gray-50 px-4 py-1.5 text-xs font-semibold text-gray-700">{partner.name}</h3>
+              {partner.rows.map(h => <div key={h.id} data-layer-id={h.id}
                 className={`border-b border-gray-100 px-3 py-3 ${selected === h.id ? 'bg-[#f2eef9] ring-1 ring-inset ring-[#7059A8]' : 'bg-white'}`}>
                 <div className="flex items-start gap-2">
-                  <GripVertical className="mt-1 h-4 w-4 shrink-0 cursor-grab text-gray-400" aria-label="Drag to reorder" />
-                  <input type="checkbox" className="mt-1.5" aria-label={`Select ${h.label || `hotspot ${h.id}`}`} checked={checked.includes(h.id)} onChange={e => setChecked(ids => e.target.checked ? [...ids, h.id] : ids.filter(id => id !== h.id))} />
+                  {bulkOpen && <input type="checkbox" className="mt-1.5" aria-label={`Select ${h.label || `hotspot ${h.id}`}`} checked={checked.includes(h.id)} onChange={e => setChecked(ids => e.target.checked ? [...ids, h.id] : ids.filter(id => id !== h.id))} />}
                   <button className="min-w-0 flex-1 text-left" onClick={() => jump(h)} onDoubleClick={() => { if (!blocked) setEditing(h); }}>
                     <span className="block truncate text-sm font-medium">{numbers.get(h.id) ? `${numbers.get(h.id)}. ` : ''}{h.label || TYPE_LABELS[h.type]}</span>
                     <span className="mt-0.5 block truncate text-xs text-gray-600">{hotspotDestination(h.config) || 'Needs Destination'}</span>
                     <span className="mt-1 block text-xs text-gray-600">P{h.page_idx + 1} · {h.is_deleted ? 'Deleted' : h.is_published ? 'Published' : reviewStatus(h) === 'approved' ? 'Approved Draft' : reviewStatus(h) === 'rejected' ? 'Rejected' : 'Needs Review'}{h.editor_hidden ? ' · Hidden In Editor' : ''}</span>
-                    {h.detection && <span className="mt-1 block text-xs text-gray-500">{h.detection.origin.replace(/_/g, ' ')} · {h.detection.confidence === 'exact' ? 'Direct extraction' : 'Verify detection'}</span>}
-                    {(reviewProblem(h) || reviewStatus(h) === 'pending' && h.detection?.needs_match && !h.advertiser_id) && <span className="mt-1 block text-xs text-amber-800">{reviewProblem(h) || 'Verify Partner Match'}</span>}
+                    {reviewProblem(h) && <span className="mt-1 block text-xs text-amber-800">{reviewProblem(h)}</span>}
                     {conflictIds.has(h.id) && <span className="mt-1 block text-xs text-amber-800">Conflicting destination in this area</span>}
-                    {overlapIds.has(h.id) && <span className="mt-1 block text-xs text-amber-800">Overlapping click area</span>}
                   </button>
-                  <div className="flex flex-col gap-1">
-                    <button className="rounded p-1.5 hover:bg-gray-100 disabled:opacity-40" disabled={blocked} aria-label={`${h.editor_hidden ? 'Show' : 'Hide'} layer ${h.id}`} onClick={() => act([{ id: h.id, values: { editor_hidden: !h.editor_hidden } }], 'Editor visibility')}>{h.editor_hidden ? <EyeOff className={icon} /> : <Eye className={icon} />}</button>
-                    <button className="rounded p-1.5 hover:bg-gray-100 disabled:opacity-40" disabled={blocked} aria-label={`${h.editor_locked ? 'Unlock' : 'Lock'} layer ${h.id}`} onClick={() => act([{ id: h.id, values: { editor_locked: !h.editor_locked } }], 'Position lock')}>{h.editor_locked ? <LockKeyhole className={icon} /> : <UnlockKeyhole className={icon} />}</button>
-                  </div>
                 </div>
+                <div className="mt-2 flex flex-wrap gap-2 pl-1 text-xs">
+                  <button className="font-medium text-[#301D5D] underline" disabled={blocked} onClick={() => { jump(h); setEditing(h); }}>Review</button>
+                  {filter === 'rejected' ? <button className="font-medium text-[#301D5D] underline" disabled={blocked} onClick={() => act([{ id: h.id, values: { is_deleted: false, review_status: 'pending', is_published: false } }], 'Restore draft')}>Restore</button> :
+                    <>
+                      {reviewStatus(h) === 'pending' && !needsAttention(h) && <button className="font-medium text-[#301D5D] underline" disabled={blocked} onClick={() => act([{ id: h.id, values: { review_status: 'approved' } }], 'Approve hotspot')}>Approve</button>}
+                      <button className="font-medium text-gray-600 underline" disabled={blocked} onClick={() => {
+                        if (h.is_published && !window.confirm('Remove this published hotspot from the reader? You can undo this change.')) return;
+                        act([{ id: h.id, values: { review_status: 'rejected', is_published: false } }], 'Remove hotspot');
+                      }}>Remove</button>
+                    </>}
+                </div>
+              </div>)}
               </div>)}
             </div>)}
           </div>
           {focused && <section className="space-y-3 border-t border-gray-200 p-4">
-            <div className="flex gap-2"><button className={button} disabled={blocked} onClick={() => setEditing(focused)}><Pencil className={icon} />Edit Details</button>
-              <button className={button} disabled={blocked} onClick={() => {
-                if (confirm('Delete this hotspot? You can undo or restore it from Rejected / Deleted.')) act([{ id: focused.id, values: { is_deleted: true, is_published: false } }], 'Delete hotspot');
-              }}><Trash2 className={icon} />Delete</button></div>
-            <div className="flex flex-wrap gap-1">{(['back', 'backward', 'forward', 'front'] as ZMove[]).map(move => <button key={move} className={button} disabled={blocked} onClick={() => moveLayer(focused, move)}>{move === 'back' ? 'To Back' : move === 'front' ? 'To Front' : move === 'forward' ? 'Forward' : 'Backward'}</button>)}</div>
-            <div className="grid grid-cols-4 gap-2">{(['x_frac', 'y_frac', 'w_frac', 'h_frac'] as const).map((key, i) => <label key={`${focused.id}-${key}-${focused[key]}`} className="text-xs text-gray-600">{['X %', 'Y %', 'W %', 'H %'][i]}
+            <button className={button} disabled={blocked} onClick={() => setEditing(focused)}><Pencil className={icon} />Review selected hotspot</button>
+            <details className="rounded-md border border-gray-200 p-3 text-sm">
+              <summary className="cursor-pointer font-medium">Advanced: layers and placement</summary>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button className={button} disabled={blocked} onClick={() => act([{ id: focused.id, values: { editor_hidden: !focused.editor_hidden } }], 'Editor visibility')}>{focused.editor_hidden ? <EyeOff className={icon} /> : <Eye className={icon} />}{focused.editor_hidden ? 'Show' : 'Hide'} layer</button>
+                <button className={button} disabled={blocked} onClick={() => act([{ id: focused.id, values: { editor_locked: !focused.editor_locked } }], 'Position lock')}>{focused.editor_locked ? <LockKeyhole className={icon} /> : <UnlockKeyhole className={icon} />}{focused.editor_locked ? 'Unlock' : 'Lock'} position</button>
+                {(['back', 'backward', 'forward', 'front'] as ZMove[]).map(move => <button key={move} className={button} disabled={blocked} onClick={() => moveLayer(focused, move)}>{move === 'back' ? 'To Back' : move === 'front' ? 'To Front' : move === 'forward' ? 'Forward' : 'Backward'}</button>)}
+              </div>
+              <div className="mt-3 grid grid-cols-4 gap-2">{(['x_frac', 'y_frac', 'w_frac', 'h_frac'] as const).map((key, i) => <label key={`${focused.id}-${key}-${focused[key]}`} className="text-xs text-gray-600">{['X %', 'Y %', 'W %', 'H %'][i]}
               <input className={`${input} mt-1 w-full`} type="number" step=".1" min="0" max="100" disabled={blocked || focused.editor_locked} defaultValue={Number((focused[key] * 100).toFixed(2))}
                 onBlur={e => { const value = Number(e.target.value) / 100; if (Number.isFinite(value) && value !== focused[key]) act([{ id: focused.id, values: clampRect({ ...focused, [key]: value }) }], 'Precise position'); }} /></label>)}</div>
-            {focused.detection && <p className="break-words text-xs leading-5 text-gray-600">{focused.detection.evidence}</p>}
-            <p className="text-xs text-gray-500">Hiding and locking affect editing only, not publication.</p>
+              {focused.detection && <p className="mt-3 break-words text-xs leading-5 text-gray-600">{focused.detection.evidence}</p>}
+              <p className="mt-2 text-xs text-gray-500">Hiding and locking affect editing only, not publication.</p>
+            </details>
           </section>}
         </aside>}
       </div>
