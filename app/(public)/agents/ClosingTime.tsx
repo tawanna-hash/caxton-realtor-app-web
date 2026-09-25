@@ -1898,8 +1898,8 @@ export default function ClosingTime({
         </div>
 
         {workspacePage === 2 && (
-          <section className="mt-5 grid gap-5 border border-slate-200 bg-white p-5 sm:p-6 lg:grid-cols-2" aria-label="Alerts and calendar">
-            <div {...collapsible('alerts')}>
+          <section className="mt-5 grid gap-5 lg:grid-cols-2" aria-label="Alerts and calendar">
+            <div {...collapsible('alerts')} className="border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-slate-950">Deadline Alerts</h3>
                 <CollapseToggle {...toggleProps('alerts', 'deadline alerts')} />
@@ -1927,7 +1927,7 @@ export default function ClosingTime({
               </div>
               <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active transactions. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
             </div>
-            <div {...collapsible('calendar')} className="border-t border-slate-100 pt-5 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+            <div {...collapsible('calendar')} className="border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-slate-950">Calendar Exports</h3>
                 <CollapseToggle {...toggleProps('calendar', 'calendar exports')} />
