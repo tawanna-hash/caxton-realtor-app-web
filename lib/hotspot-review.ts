@@ -119,27 +119,6 @@ export function sameDetectedAction(a: DetectedAction, b: DetectedAction): boolea
   return occurrenceCoverage(a, b) >= 0.5;
 }
 
-/** An image OCR typo must not create a second action over an exact PDF contact.
- * Only a 1-character difference in the same lengthy printed target qualifies.
- */
-export function nearOcrDuplicate(exact: DetectedAction, vision: DetectedAction): boolean {
-  if (exact.page_idx !== vision.page_idx || exact.type !== vision.type ||
-      !['link', 'email', 'phone'].includes(exact.type) || occurrenceCoverage(exact, vision) < 0.5) return false;
-  const a = destinationIdentity(exact.config as HotspotConfig).replace(/[^a-z0-9]/gi, '').toLowerCase();
-  const b = destinationIdentity(vision.config as HotspotConfig).replace(/[^a-z0-9]/gi, '').toLowerCase();
-  if (Math.min(a.length, b.length) < 10 || Math.abs(a.length - b.length) > 1) return false;
-  if (a === b) return true;
-  let i = 0, j = 0, edits = 0;
-  while (i < a.length && j < b.length) {
-    if (a[i] === b[j]) { i++; j++; continue; }
-    if (++edits > 1) return false;
-    if (a.length > b.length) i++;
-    else if (b.length > a.length) j++;
-    else { i++; j++; }
-  }
-  return edits + (a.length - i) + (b.length - j) <= 1;
-}
-
 /** Never remove different destinations or non-overlapping placements. */
 export function overlappingDuplicates(rows: Hotspot[]): Hotspot[] {
   const kept: Hotspot[] = [], duplicates: Hotspot[] = [];

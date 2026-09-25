@@ -8,7 +8,7 @@ import { ensureHotspotWorkspace } from '../../lib/server/hotspot-workspace';
 import { POST, GET } from '../../app/api/admin/magazines/[id]/hotspot-workspace/route';
 import { insertExtracted, extractQrCodes, extractPdfLinkAnnotations, extractPdfTextContacts } from '../../lib/server/hotspot-extractors';
 import { extractVisualHotspots } from '../../lib/server/hotspot-vision';
-import { destinationIdentity, nearOcrDuplicate, overlappingDuplicates, safeTestDestination, sameDetectedAction, samePlacement } from '../../lib/hotspot-review';
+import { destinationIdentity, overlappingDuplicates, safeTestDestination, sameDetectedAction, samePlacement } from '../../lib/hotspot-review';
 const db=new PGlite();
 await db.exec(`CREATE TABLE magazines(id BIGINT PRIMARY KEY,page_count INT); INSERT INTO magazines VALUES(1,3);
 CREATE TABLE magazine_hotspots(id BIGSERIAL PRIMARY KEY,magazine_id BIGINT REFERENCES magazines(id),page_idx INT,
@@ -95,14 +95,6 @@ const coverRows=await extractVisualHotspots('test-image',2,[{id:12,name:'Capital
 assert.equal(coverRows.length,3);
 assert.equal(sameDetectedAction(coverRows[0],coverRows[1]),true);
 assert.equal(sameDetectedAction(coverRows[0],coverRows[2]),false);
-assert.equal(nearOcrDuplicate(
- {...row,config:{type:'link',url:'https://NEWSLINESA.COM'}},
- {...row,config:{type:'link',url:'https://NEWLINESA.COM'},x_frac:.15},
-),true);
-assert.equal(nearOcrDuplicate(
- {...row,config:{type:'link',url:'https://NEWSLINESA.COM'}},
- {...row,config:{type:'link',url:'https://UNRELATED.COM'}},
-),false);
 const coverResult=await insertExtracted(sql as any,coverRows as any,{magazineId:1,adminEmail:null,advertisers:[],pageCount:3,wipeImports:false});
 assert.equal(coverResult.inserted,2);assert.equal(coverResult.skipped_duplicates,1);
 const coverDrafts=coverRows.map((r,i)=>({...r,id:400+i,magazine_id:1,review_status:'pending',is_deleted:false,is_published:false,source:'pdf_import'}));
