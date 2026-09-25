@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import PushOptInButton from '@/components/PushOptInButton';
 import TrecPdfPagePreview from './TrecPdfPagePreview';
+import CollapseToggle from './CollapseToggle';
 import { trackEvent } from '@/app/posthog-provider';
 import {
   agentCommandCenterWorkspaceSchema,
@@ -954,6 +955,7 @@ export default function ClosingTime({
   );
   const [activeDealId, setActiveDealId] = useState<string | null>(null);
   const [today, setToday] = useState(chicagoToday);
+  const [attentionOpen, setAttentionOpen] = useState(true);
   const [ready, setReady] = useState(false);
   const [syncState, setSyncState] = useState<SyncState>('loading');
   const [taskTitle, setTaskTitle] = useState('');
@@ -1841,8 +1843,9 @@ export default function ClosingTime({
                     ? 'Next closing today'
                     : `Next closing · ${nextClosingDays} day${nextClosingDays === 1 ? '' : 's'}`}
               </span>
+              <CollapseToggle open={attentionOpen} onToggle={() => setAttentionOpen((o) => !o)} label="what needs attention" controls="attention-list" />
             </div>
-            <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
+            <div id="attention-list" hidden={!attentionOpen} className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
               {radarItems.length === 0 ? (
                 <p className="py-5 text-sm text-slate-600">
                   {overviewDealCount === 0 ? 'No active transactions yet.' : 'No upcoming items or recent overdue deadlines.'}
