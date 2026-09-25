@@ -34,8 +34,7 @@ export default function MarketOnboardingPicker() {
     if (typeof window === 'undefined') return;
     // The shareable product tour must open cleanly for prospects and partners.
     // It demonstrates all markets and does not need a persisted publication.
-    if (window.location.pathname === '/product-tour'
-      || window.location.pathname.startsWith('/closing-sign/')) return;
+    if (window.location.pathname === '/product-tour') return;
     // Dashboard owns its sign-in and publication flow. Showing this global
     // picker there created two stacked market-selection screens and hid the
     // account actions underneath.

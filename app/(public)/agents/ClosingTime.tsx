@@ -32,7 +32,6 @@ import {
 } from 'lucide-react';
 import PushOptInButton from '@/components/PushOptInButton';
 import TrecPdfPagePreview from './TrecPdfPagePreview';
-import ClosingSigningSetup from './ClosingSigningSetup';
 import { trackEvent } from '@/app/posthog-provider';
 import {
   agentCommandCenterWorkspaceSchema,
@@ -2384,9 +2383,6 @@ export default function ClosingTime({
                             className="mt-3 h-[70vh] w-full border border-slate-200"
                           />}
                         </div>
-                      )}
-                      {originalContract?.dealId === activeDeal.id && (
-                        <ClosingSigningSetup key={originalContract.id} originalId={originalContract.id} />
                       )}
                       <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-white shadow-sm">
                         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2">
