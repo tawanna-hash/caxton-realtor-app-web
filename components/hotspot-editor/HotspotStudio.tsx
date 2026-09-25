@@ -5,7 +5,7 @@ import { Eye, EyeOff, LockKeyhole, UnlockKeyhole, GripVertical, Undo2, Redo2, Sc
 import type { Hotspot, HotspotConfig } from '@/lib/hotspots';
 import type { Magazine } from '@/lib/magazines';
 import { clampRect, computeZMove, DEFAULT_NEW_RECT, TYPE_LABELS, type ZMove } from '@/lib/hotspot-editor-helpers';
-import { hotspotDestination, overlappingDuplicates, overlapRatio, reviewProblem, reviewStatus } from '@/lib/hotspot-review';
+import { destinationIdentity, hotspotDestination, overlappingDuplicates, overlapRatio, reviewProblem, reviewStatus, sameDetectedAction } from '@/lib/hotspot-review';
 import { useUrlNumber, useUrlString } from '@/lib/use-url-state';
 import HotspotConfigModal from './HotspotConfigModal';
 import HotspotCanvas from './HotspotCanvas';
@@ -37,7 +37,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState<number[]>([]);
   const [editing, setEditing] = useState<Hotspot | null>(null);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('attention');
   const [search, setSearch] = useState('');
   const [grouped, setGrouped] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -131,17 +131,6 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
   const pageRows = hotspots.filter(h => pages.includes(h.page_idx));
   const sorted = [...pageRows].sort((a, b) => a.page_idx - b.page_idx || (b.z_index || 0) - (a.z_index || 0) || b.id - a.id);
   const numbers = new Map(sorted.filter(h => !h.is_deleted && reviewStatus(h) !== 'rejected').map((h, i) => [h.id, i + 1]));
-  const listed = sorted.filter(h => {
-    const rejected = h.is_deleted || reviewStatus(h) === 'rejected';
-    if (filter === 'rejected' ? !rejected : rejected) return false;
-    if (filter === 'pending' && reviewStatus(h) !== 'pending') return false;
-    if (filter === 'approved' && reviewStatus(h) !== 'approved') return false;
-    if (filter === 'issues' && !reviewProblem(h) && !(reviewStatus(h) === 'pending' && h.detection?.needs_match && !h.advertiser_id)) return false;
-    return `${h.label} ${h.advertiser_name} ${hotspotDestination(h.config)} ${h.detection?.evidence || ''}`.toLowerCase().includes(search.toLowerCase());
-  });
-  const groups = grouped ? Array.from(new Set(listed.map(h => h.advertiser_name || 'Unassigned'))).map(name => ({ name, rows: listed.filter(h => (h.advertiser_name || 'Unassigned') === name) })) : [{ name: '', rows: listed }];
-  const selection = checked.length ? pageRows.filter(h => checked.includes(h.id)) : focused ? [focused] : [];
-  const selectable = selection.filter(h => !h.is_deleted && reviewStatus(h) !== 'rejected');
   const overlapIds = useMemo(() => {
     const ids = new Set<number>();
     const current = hotspots.filter(h => !h.is_deleted && reviewStatus(h) !== 'rejected');
@@ -151,7 +140,34 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
     }
     return ids;
   }, [hotspots]);
+  // Only overlapping actions with different destinations require a decision.
+  // Nested phone/email regions and the containing ad link are intentional.
+  const conflictIds = useMemo(() => {
+    const ids = new Set<number>();
+    const current = hotspots.filter(h => !h.is_deleted && reviewStatus(h) !== 'rejected');
+    for (let i = 0; i < current.length; i++) for (let j = i + 1; j < current.length; j++) {
+      const a = current[i], b = current[j];
+      if (a.page_idx !== b.page_idx || a.type !== b.type || overlapRatio(a, b) < .35 || sameDetectedAction(a, b)) continue;
+      const aTarget = destinationIdentity(a.config), bTarget = destinationIdentity(b.config);
+      if (aTarget && bTarget && aTarget !== bTarget) { ids.add(a.id); ids.add(b.id); }
+    }
+    return ids;
+  }, [hotspots]);
+  const needsAttention = (h: Hotspot) => !!reviewProblem(h) || conflictIds.has(h.id);
+  const attention = pending.filter(needsAttention);
+  const ready = pending.filter(h => !needsAttention(h));
+  const queue = filter === 'attention' ? attention : filter === 'ready' ? ready : filter === 'approved' ? active.filter(h => reviewStatus(h) === 'approved') : filter === 'rejected' ? hotspots.filter(h => h.is_deleted || reviewStatus(h) === 'rejected') : active;
+  const listed = queue.filter(h => `${h.label} ${h.advertiser_name} ${hotspotDestination(h.config)} ${h.detection?.evidence || ''}`.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => a.page_idx - b.page_idx || (b.z_index || 0) - (a.z_index || 0) || b.id - a.id);
+  const groups = grouped ? Array.from(new Set(listed.map(h => `P${h.page_idx + 1} · ${h.advertiser_name || 'Unassigned'}`))).map(name => ({ name, rows: listed.filter(h => `P${h.page_idx + 1} · ${h.advertiser_name || 'Unassigned'}` === name) })) : [{ name: '', rows: listed }];
+  const selection = checked.length ? hotspots.filter(h => checked.includes(h.id)) : focused ? [focused] : [];
+  const selectable = selection.filter(h => !h.is_deleted && reviewStatus(h) !== 'rejected');
+  const approvable = selectable.filter(h => !needsAttention(h));
   const go = (p: number) => { setPage(p); setSelected(null); setChecked([]); };
+  const jump = (h: Hotspot) => {
+    if (!pages.includes(h.page_idx)) setPage(h.page_idx);
+    setSelected(h.id);
+  };
   const select = (id: number | null) => {
     setSelected(id);
     const row = rowsRef.current.find(h => h.id === id);
@@ -298,7 +314,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-gray-100 pt-3 text-sm">
-          <span>{active.length} Hotspots</span><span className="text-amber-800">{pending.length} Need Review</span><span>{active.filter(h => h.is_published).length} Published</span>
+          <span>{active.length} Hotspots</span><span className="text-amber-800">{attention.length} Need Attention</span><span>{ready.length} Ready To Review</span><span>{active.filter(h => h.is_published).length} Published</span>
           <button className="font-medium text-[#301D5D] underline" onClick={() => setChecklistOpen(!checklistOpen)}>Page Review Checklist</button>
           <span role="status" className="ml-auto text-xs text-gray-600">{message || 'Ready'}</span>
         </div>
@@ -342,15 +358,20 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
 
         {!preview && <aside className="min-w-0 border-l border-gray-200 bg-white xl:sticky xl:top-0">
           <div className="space-y-3 border-b border-gray-200 p-4">
-            <h2 className="text-base font-semibold">Layers <span className="text-xs font-normal text-gray-500">Topmost first</span></h2>
+            <h2 className="text-base font-semibold">Review Queue <span className="text-xs font-normal text-gray-500">Jump to any page</span></h2>
+            <div className="flex flex-wrap gap-1" role="group" aria-label="Review queue">
+              {([['attention', `Needs attention (${attention.length})`], ['ready', `Ready (${ready.length})`], ['approved', 'Approved'], ['all', 'All active']] as const).map(([value, title]) =>
+                <button key={value} className={filter === value ? primary : button} aria-pressed={filter === value} onClick={() => { setFilter(value); setChecked([]); }}>{title}</button>)}
+            </div>
+            <button className={button} disabled={!listed.length} onClick={() => jump(listed[(listed.findIndex(h => h.id === selected) + 1) % listed.length])}>Next in queue</button>
             <input className={`${input} w-full`} aria-label="Search hotspots" placeholder="Search label, partner, or destination" value={search} onChange={e => setSearch(e.target.value)} />
             <div className="flex gap-2"><select aria-label="Review filter" className={`${input} min-w-0 flex-1`} value={filter} onChange={e => { setFilter(e.target.value); setChecked([]); }}>
-              <option value="all">All Active</option><option value="pending">Needs Review</option><option value="approved">Approved</option><option value="issues">Needs Destination / Match</option><option value="rejected">Rejected / Deleted</option>
-            </select><label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={grouped} onChange={e => setGrouped(e.target.checked)} />By Partner</label></div>
+              <option value="attention">Needs Attention</option><option value="ready">Ready To Review</option><option value="approved">Approved</option><option value="all">All Active</option><option value="rejected">Rejected / Deleted</option>
+            </select><label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={grouped} onChange={e => setGrouped(e.target.checked)} />By Page / Partner</label></div>
             <div className="flex flex-wrap items-center gap-2">
               <label className="flex items-center gap-1 text-xs"><input type="checkbox" aria-label="Select all listed hotspots" checked={listed.length > 0 && listed.every(h => checked.includes(h.id))} onChange={e => setChecked(e.target.checked ? listed.map(h => h.id) : [])} />Select All</label>
               <span className="text-xs text-gray-500">{selection.length} selected</span>
-              <button className={button} disabled={blocked || !selectable.length} onClick={() => act(selectable.map(h => ({ id: h.id, values: { review_status: 'approved' } })), 'Approve selected')}><Check className={icon} />Approve</button>
+              <button className={button} disabled={blocked || !approvable.length} onClick={() => act(approvable.map(h => ({ id: h.id, values: { review_status: 'approved' } })), 'Approve selected')}><Check className={icon} />Approve {approvable.length || ''}</button>
               <button className={button} disabled={blocked || !selectable.length} onClick={() => {
                 if (selectable.some(h => h.is_published) && !confirm('Rejecting published hotspots removes them from the reader. Continue?')) return;
                 act(selectable.map(h => ({ id: h.id, values: { review_status: 'rejected', is_published: false } })), 'Reject selected');
@@ -360,7 +381,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
           </div>
 
           <div className="max-h-[52vh] overflow-y-auto">
-            {!listed.length && <p className="p-5 text-sm text-gray-500">No hotspots match this view. Add one or detect links on this page.</p>}
+            {!listed.length && <p className="p-5 text-sm text-gray-500">{filter === 'attention' ? 'Nothing needs attention. Check Ready for Review to approve verified links.' : 'No hotspots match this view. Change the queue or search.'}</p>}
             {groups.map(group => <div key={group.name}>
               {group.name && <h3 className="bg-gray-50 px-4 py-2 text-xs font-semibold">{group.name}</h3>}
               {group.rows.map(h => <div key={h.id} data-layer-id={h.id}
@@ -370,12 +391,13 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
                 <div className="flex items-start gap-2">
                   <GripVertical className="mt-1 h-4 w-4 shrink-0 cursor-grab text-gray-400" aria-label="Drag to reorder" />
                   <input type="checkbox" className="mt-1.5" aria-label={`Select ${h.label || `hotspot ${h.id}`}`} checked={checked.includes(h.id)} onChange={e => setChecked(ids => e.target.checked ? [...ids, h.id] : ids.filter(id => id !== h.id))} />
-                  <button className="min-w-0 flex-1 text-left" onClick={() => { select(h.id); }} onDoubleClick={() => { if (!blocked) setEditing(h); }}>
+                  <button className="min-w-0 flex-1 text-left" onClick={() => jump(h)} onDoubleClick={() => { if (!blocked) setEditing(h); }}>
                     <span className="block truncate text-sm font-medium">{numbers.get(h.id) ? `${numbers.get(h.id)}. ` : ''}{h.label || TYPE_LABELS[h.type]}</span>
                     <span className="mt-0.5 block truncate text-xs text-gray-600">{hotspotDestination(h.config) || 'Needs Destination'}</span>
                     <span className="mt-1 block text-xs text-gray-600">P{h.page_idx + 1} · {h.is_deleted ? 'Deleted' : h.is_published ? 'Published' : reviewStatus(h) === 'approved' ? 'Approved Draft' : reviewStatus(h) === 'rejected' ? 'Rejected' : 'Needs Review'}{h.editor_hidden ? ' · Hidden In Editor' : ''}</span>
                     {h.detection && <span className="mt-1 block text-xs text-gray-500">{h.detection.origin.replace(/_/g, ' ')} · {h.detection.confidence === 'exact' ? 'Direct extraction' : 'Verify detection'}</span>}
                     {(reviewProblem(h) || reviewStatus(h) === 'pending' && h.detection?.needs_match && !h.advertiser_id) && <span className="mt-1 block text-xs text-amber-800">{reviewProblem(h) || 'Verify Partner Match'}</span>}
+                    {conflictIds.has(h.id) && <span className="mt-1 block text-xs text-amber-800">Conflicting destination in this area</span>}
                     {overlapIds.has(h.id) && <span className="mt-1 block text-xs text-amber-800">Overlapping click area</span>}
                   </button>
                   <div className="flex flex-col gap-1">

@@ -32,6 +32,7 @@ type PickerAdvertiser = {
   id: number;
   name: string;
   slug: string;
+  website?: string | null;
   publication: PublicationScope;
 };
 
@@ -59,6 +60,7 @@ export default function HotspotConfigModal({
   const [label, setLabel] = useState(hotspot.label ?? '');
   const [advertiserId, setAdvertiserId] = useState<number | null>(hotspot.advertiser_id ?? null);
   const [advertiserName, setAdvertiserName] = useState(hotspot.advertiser_name ?? '');
+  const [advertiserWebsite, setAdvertiserWebsite] = useState<string | null>(null);
   const [isPublished, setIsPublished] = useState(hotspot.is_published);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,8 +137,10 @@ export default function HotspotConfigModal({
     if (adv) {
       setAdvertiserId(adv.id);
       setAdvertiserName(adv.name);
+      setAdvertiserWebsite(adv.website || null);
     } else {
       setAdvertiserId(null);
+      setAdvertiserWebsite(null);
     }
   }, []);
 
@@ -296,8 +300,18 @@ export default function HotspotConfigModal({
               legacyName={advertiserName}
               defaultPublication={defaultPublication}
               onChange={handleAdvertiserChange}
+              onWebsiteLoaded={setAdvertiserWebsite}
               onError={setError}
             />
+            {type === 'link' && advertiserWebsite && <button type="button"
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-purple-900 hover:bg-gray-50"
+              onClick={() => {
+                const url = /^https?:\/\//i.test(advertiserWebsite) ? advertiserWebsite : `https://${advertiserWebsite}`;
+                try {
+                  if (!['https:', 'http:'].includes(new URL(url).protocol)) throw new Error();
+                  setConfig({ type: 'link', url, open_in: 'new_tab' });
+                } catch { setError('The saved advertiser website is invalid. Edit it in the advertiser record first.'); }
+              }}>Use partner website: {advertiserWebsite}</button>}
 
             <label className="flex items-center gap-2 pt-2">
               <input
@@ -355,12 +369,13 @@ export default function HotspotConfigModal({
 // inline "+ New advertiser…" form. Phase 6.
 // ============================================================
 function AdvertiserPicker({
-  selectedId, legacyName, defaultPublication, onChange, onError,
+  selectedId, legacyName, defaultPublication, onChange, onWebsiteLoaded, onError,
 }: {
   selectedId: number | null;
   legacyName: string;
   defaultPublication: PublicationScope;
   onChange: (adv: PickerAdvertiser | null) => void;
+  onWebsiteLoaded: (website: string | null) => void;
   onError: (err: string | null) => void;
 }) {
   const [advertisers, setAdvertisers] = useState<PickerAdvertiser[]>([]);
@@ -378,7 +393,10 @@ function AdvertiserPicker({
         const res = await fetch('/api/admin/advertisers/picker', { credentials: 'include' });
         if (!res.ok) throw new Error('Failed to load partners');
         const data = await res.json() as { advertisers: PickerAdvertiser[] };
-        if (!cancelled) setAdvertisers(data.advertisers ?? []);
+        if (!cancelled) {
+          setAdvertisers(data.advertisers ?? []);
+          onWebsiteLoaded(data.advertisers?.find(a => a.id === selectedId)?.website || null);
+        }
       } catch (err) {
         if (!cancelled) onError(err instanceof Error ? err.message : 'Failed to load partners');
       } finally {

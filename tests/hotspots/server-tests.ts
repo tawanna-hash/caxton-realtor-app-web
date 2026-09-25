@@ -83,6 +83,10 @@ const visual=[{kind:'logo',text:'Unknown',target:'https://invented.invalid',adve
 globalThis.fetch=async(url:any)=>String(url).includes('googleapis')?new Response(JSON.stringify({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify(visual)}]}}]})):new Response(qrPage as any);
 const detected=await extractVisualHotspots('test-image',0,[{id:12,name:'Known Partner',slug:'known',website:'https://known.example.org',avatar_url:null}]);
 assert.equal(detected.length,6);assert.equal(detected[0].config.url,'');assert.equal(detected[0].advertiser_id,null);assert.equal(detected[1].config.url,'https://known.example.org');assert.equal(detected[5].config.url,'');ok('visual extraction handles every kind and never invents unknown logo/QR destinations');
+const badBrand=[{kind:'logo',text:'Other Builder',advertiser_id:12,box_2d:[20,20,60,180]}];
+globalThis.fetch=async(url:any)=>String(url).includes('googleapis')?new Response(JSON.stringify({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify(badBrand)}]}}]})):new Response(qrPage as any);
+const unmatched=await extractVisualHotspots('test-image',0,[{id:12,name:'Known Partner',slug:'known',website:'https://known.example.org',avatar_url:null}]);
+assert.equal(unmatched[0].advertiser_id,null);assert.equal(unmatched[0].config.url,'');ok('incorrect vision partner IDs never prefill a website');
 const cover=[
  {kind:'logo',text:'Capital Title',advertiser_id:12,box_2d:[200,200,245,350]},
  {kind:'partner',text:'Capital Title',advertiser_id:12,box_2d:[210,210,235,340]},

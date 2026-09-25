@@ -1,7 +1,7 @@
 // app/api/admin/advertisers/picker/route.ts
 //
 // Phase 6: lightweight advertiser list endpoint for the hotspot editor's
-// advertiser picker. Returns id/name/slug/publication only — no stats —
+// advertiser picker. Returns id/name/slug/publication/website only — no stats —
 // so the modal opens fast.
 //
 // The hotspot editor uses this on mount to populate the dropdown.
@@ -20,6 +20,7 @@ type PickerAdvertiser = {
   id: number;
   name: string;
   slug: string;
+  website: string | null;
   publication: PublicationScope;
 };
 
@@ -48,7 +49,7 @@ export async function GET() {
     // throw — but in practice ensureSchema runs first and Phase 4's lazy
     // ensurePublicationColumn runs on first call to /api/admin/advertisers.
     const rows = (await sql`
-      SELECT id, name, slug, COALESCE(publication, 'austin') AS publication
+      SELECT id, name, slug, website, COALESCE(publication, 'austin') AS publication
       FROM advertisers
       ORDER BY name ASC
     `) as unknown as PickerAdvertiser[];

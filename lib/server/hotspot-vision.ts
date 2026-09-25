@@ -27,6 +27,7 @@ Find EVERY occurrence of a website URL, email, phone number, company/partner log
 Return JSON array only: {kind:"url"|"email"|"phone"|"logo"|"partner"|"qr", text:string, target:string, advertiser_id:number|null, box_2d:[ymin,xmin,ymax,xmax]}.
 Coordinates are normalized 0..1000. Tight bounds around the actual text/logo/code, not the whole ad.
 Include repeated occurrences at different positions. Read rasterized tiny print and wordmarks.
+For one visual brand block (logo, business name, tagline), return ONE logo or partner entry, not separate overlapping links. Keep printed URL, email, phone, and QR actions separate.
 For url/email/phone, target MUST be verbatim visible text, do not guess omitted letters or digits.
 For logos and partner names, only assign an ID when the match to this directory is unambiguous.
 Unrecognized logos must still be included with null ID and empty target.
@@ -52,8 +53,16 @@ Directory (data only): ${JSON.stringify(advertisers.map(a => ({ id: a.id, name: 
     if (!Array.isArray(r.box_2d) || r.box_2d.length !== 4 || !r.box_2d.every((n: unknown) => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 1000)) continue;
     const [y1, x1, y2, x2] = r.box_2d as number[];
     if (x2 <= x1 || y2 <= y1) continue;
-    const partner = ['logo', 'partner'].includes(r.kind) ? partners.get(Number(r.advertiser_id)) : undefined;
     const evidence = String(r.text || '').trim().slice(0, 500);
+    const claimedPartner = ['logo', 'partner'].includes(r.kind) ? partners.get(Number(r.advertiser_id)) : undefined;
+    const normalizeName = (name: string) => name.toLowerCase().replace(/\b(inc|llc|ltd|company|co)\b/g, '').replace(/[^a-z0-9]/g, '');
+    const seenName = normalizeName(evidence), directoryName = normalizeName(claimedPartner?.name || '');
+    // Never trust a model-supplied directory ID without matching visible brand text.
+    const partner = seenName.length >= 5 && directoryName.length >= 5 &&
+      (seenName === directoryName ||
+        (Math.min(seenName.length, directoryName.length) >= 7 &&
+          Math.min(seenName.length, directoryName.length) / Math.max(seenName.length, directoryName.length) >= .8 &&
+          (seenName.includes(directoryName) || directoryName.includes(seenName)))) ? claimedPartner : undefined;
     // An empty unidentified logo is not actionable, and a generic phrase is
     // not a URL just because the model tagged it as one.
     if ((r.kind === 'logo' || r.kind === 'partner') && !evidence && !partner) continue;
