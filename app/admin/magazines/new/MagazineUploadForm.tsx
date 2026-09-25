@@ -256,9 +256,7 @@ export default function MagazineUploadForm() {
       // codes in one server call. Best-effort — a failure just leaves the
       // magazine with no imported hotspots and the admin can re-run from
       // the hotspot editor toolbar.
-      ...(pdfFile ? [
-        { label: 'Extract hotspots (PDF links + text + QR + logo matches)', status: 'pending' as StepStatus },
-      ] : []),
+      { label: 'Detect hotspot drafts (links, contacts, QR codes and partners)', status: 'pending' as StepStatus },
     ];
     setSteps(stepList);
     let stepIdx = 0;
@@ -429,7 +427,7 @@ export default function MagazineUploadForm() {
     // Auto-populate hotspots via the unified extract-all endpoint. Failures
     // here are non-fatal — the magazine row has already been created and
     // the admin can re-run from the hotspot editor toolbar.
-    if (pdfFile) {
+    {
       stepIdx++;
       updateStep(stepIdx, { status: 'running' });
       try {
@@ -437,14 +435,28 @@ export default function MagazineUploadForm() {
           method: 'POST',
         });
         if (!r.ok) throw new Error(await r.text());
-        const body = await r.json();
-        const d = body?.diagnostics ?? {};
-        const findings = d.findings ?? {};
+        if (!r.body) throw new Error('Scan stream unavailable');
+        const reader = r.body.getReader(), decoder = new TextDecoder();
+        let buffer = '', completed = false, inserted = 0;
+        const consume = (line: string) => {
+          if (!line.trim()) return;
+          const event = JSON.parse(line);
+          if (event.type === 'error') throw new Error(event.message);
+          if (event.type === 'page') updateStep(stepIdx, { status: 'running', detail: `${event.completed}/${event.total} pages scanned` });
+          if (event.type === 'done') { completed = true; inserted = event.diagnostics?.inserted || 0; }
+        };
+        while (true) {
+          const chunk = await reader.read();
+          if (chunk.done) break;
+          buffer += decoder.decode(chunk.value, { stream: true });
+          const lines = buffer.split('\n'); buffer = lines.pop() || '';
+          lines.forEach(consume);
+        }
+        consume(buffer + decoder.decode());
+        if (!completed) throw new Error('Scan interrupted; completed pages saved');
         updateStep(stepIdx, {
           status: 'done',
-          detail:
-            `${d.inserted ?? 0} hotspot(s) added ` +
-            `(${findings.pdf_links ?? 0} embedded, ${findings.text_scan ?? 0} text, ${findings.qr_codes ?? 0} QR, ${findings.logo_matches ?? 0} logo)`,
+          detail: `${inserted} drafts added. Review detections and scan warnings in Hotspot Studio.`,
         });
       } catch (err: unknown) {
         // Non-fatal.
@@ -455,15 +467,10 @@ export default function MagazineUploadForm() {
       }
     }
 
-    // After a PDF upload we auto-populate hotspots, so route the admin
-    // straight to the hotspot editor to review the drafts. Non-PDF uploads
-    // (image-only pages) still go to the list — nothing to review.
+    // Both PDF and image-only issues open the review workspace. Partial scan
+    // failures remain visible in its page checklist.
     setTimeout(() => {
-      if (pdfFile) {
-        router.push(`/admin/magazines/${createdId}/hotspots`);
-      } else {
-        router.push('/admin/magazines');
-      }
+      router.push(`/admin/magazines/${createdId}/hotspots`);
     }, 800);
   }
 

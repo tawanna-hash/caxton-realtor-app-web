@@ -8,6 +8,8 @@ import { getSql, ensureSchema } from '@/lib/db';
 import type { Hotspot } from '@/lib/hotspots';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { ensureHotspotWorkspace } from '@/lib/server/hotspot-workspace';
+import { reviewProblem } from '@/lib/hotspot-review';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,14 +50,22 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
 
   try {
     await ensureSchema();
+    await ensureHotspotWorkspace();
     const sql = getSql();
+    const candidates = await sql`SELECT * FROM magazine_hotspots WHERE magazine_id = ${idNum}
+      AND review_status = 'approved' AND is_deleted = false AND is_published = false` as unknown as Hotspot[];
+    if (candidates.some(h => reviewProblem(h))) return NextResponse.json({ error: 'Review invalid destinations in Hotspot Studio before publishing.' }, { status: 400 });
+    const versions = candidates.map(h => ({ id: h.id, version: h.editor_version || 0 }));
 
     await sql`
-      UPDATE magazine_hotspots
+      UPDATE magazine_hotspots h
       SET is_published = true,
+          editor_version = h.editor_version + 1,
           updated_by = ${adminEmail},
           updated_at = NOW()
-      WHERE magazine_id = ${idNum} AND is_published = false
+      FROM jsonb_to_recordset(${JSON.stringify(versions)}::jsonb) AS v(id BIGINT, version INTEGER)
+      WHERE h.id = v.id AND h.editor_version = v.version AND h.magazine_id = ${idNum}
+        AND h.review_status = 'approved' AND h.is_deleted = false AND h.is_published = false
     `;
 
     const all = (await sql`

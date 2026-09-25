@@ -17,6 +17,8 @@ import { getSql, ensureSchema } from '@/lib/db';
 import type { Hotspot } from '@/lib/hotspots';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { ensureHotspotWorkspace } from '@/lib/server/hotspot-workspace';
+import { destinationIdentity, samePlacement } from '@/lib/hotspot-review';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -40,27 +42,8 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
 }
 
-function normalizeIdentityUrl(url: string): string {
-  return url.replace(/^https?:\/\//i, '').replace(/\/$/, '').toLowerCase();
-}
-function normalizeIdentityPhone(phone: string): string {
-  return phone.replace(/[^0-9]/g, '').replace(/^1/, '');
-}
-
 function identityFor(type: string, config: Record<string, unknown>): string | null {
-  if (type === 'link' || type === 'mls') {
-    const url = typeof config.url === 'string' ? config.url : '';
-    return url ? normalizeIdentityUrl(url) : null;
-  }
-  if (type === 'email') {
-    const addr = typeof config.address === 'string' ? config.address : '';
-    return addr ? addr.toLowerCase() : null;
-  }
-  if (type === 'phone') {
-    const raw = typeof config.number === 'string' ? config.number : '';
-    return raw ? normalizeIdentityPhone(raw) : null;
-  }
-  return null;
+  return ['link', 'mls', 'email', 'phone'].includes(type) ? destinationIdentity(config as Hotspot['config']) || null : null;
 }
 
 interface HotspotRow {
@@ -73,6 +56,9 @@ interface HotspotRow {
   was_imported: boolean;
   w_frac: number;
   h_frac: number;
+  x_frac: number;
+  y_frac: number;
+  editor_version: number;
   created_at: string;
   updated_at: string;
 }
@@ -102,13 +88,15 @@ export const POST = withAdminTracking(async function POST(_req: NextRequest, ctx
 
   try {
     await ensureSchema();
+    await ensureHotspotWorkspace();
     const sql = getSql();
 
     const rows = (await sql`
       SELECT id, page_idx, type, config, is_published, source, was_imported,
-             w_frac, h_frac, created_at, updated_at
+             x_frac, y_frac, w_frac, h_frac, created_at, updated_at, editor_version
       FROM magazine_hotspots
       WHERE magazine_id = ${idNum}
+        AND is_deleted = false AND COALESCE(review_status, 'pending') != 'rejected'
     `) as unknown as HotspotRow[];
 
     // Group by (page_idx, type, identity).
@@ -132,12 +120,19 @@ export const POST = withAdminTracking(async function POST(_req: NextRequest, ctx
         if (sb !== 0) return sb;
         return a.id - b.id; // oldest id wins ties
       });
-      // keep list[0], delete the rest
-      for (let i = 1; i < list.length; i++) toDelete.push(list[i].id);
+      const kept: HotspotRow[] = [];
+      for (const row of list) {
+        if (kept.some(keeper => samePlacement(keeper, row))) toDelete.push(row.id);
+        else kept.push(row);
+      }
     }
 
     if (toDelete.length > 0) {
-      await sql`DELETE FROM magazine_hotspots WHERE id = ANY(${toDelete})`;
+      const versions = rows.filter(r => toDelete.includes(r.id)).map(r => ({ id: r.id, version: r.editor_version }));
+      await sql`UPDATE magazine_hotspots h SET is_deleted = true, is_published = false,
+        editor_version = h.editor_version + 1, updated_by = ${adminEmail}, updated_at = NOW()
+        FROM jsonb_to_recordset(${JSON.stringify(versions)}::jsonb) AS v(id BIGINT, version INTEGER)
+        WHERE h.id = v.id AND h.editor_version = v.version AND h.magazine_id = ${idNum}`;
     }
 
     const all = (await sql`
@@ -148,6 +143,7 @@ export const POST = withAdminTracking(async function POST(_req: NextRequest, ctx
              created_by, created_at, updated_by, updated_at
       FROM magazine_hotspots
       WHERE magazine_id = ${idNum}
+        AND is_deleted = false
       ORDER BY page_idx, z_index, id
     `) as unknown as Hotspot[];
 

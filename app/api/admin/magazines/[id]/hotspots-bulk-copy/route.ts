@@ -10,6 +10,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import type { Hotspot } from '@/lib/hotspots';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { ensureHotspotWorkspace } from '@/lib/server/hotspot-workspace';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -63,6 +64,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
 
   try {
     await ensureSchema();
+    await ensureHotspotWorkspace();
     const sql = getSql();
 
     // Verify both magazines exist.
@@ -80,16 +82,17 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       INSERT INTO magazine_hotspots (
         magazine_id, page_idx,
         x_frac, y_frac, w_frac, h_frac,
-        type, config, label, advertiser_name,
+        type, config, label, advertiser_name, advertiser_id, z_index, review_status,
         is_published, created_by, updated_by
       )
       SELECT
         ${destId}, page_idx,
         x_frac, y_frac, w_frac, h_frac,
-        type, config, label, advertiser_name,
+        type, config, label, advertiser_name, advertiser_id, z_index, 'pending',
         false, ${adminEmail}, ${adminEmail}
       FROM magazine_hotspots
       WHERE magazine_id = ${sourceId}
+        AND is_deleted = false AND COALESCE(review_status, 'pending') != 'rejected'
         AND (${publishedOnly}::boolean = false OR is_published = true)
         AND (${destPageCount}::int = 0 OR page_idx < ${destPageCount}::int)
       RETURNING id

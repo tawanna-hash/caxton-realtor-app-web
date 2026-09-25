@@ -19,6 +19,7 @@ import {
 } from '@/lib/hotspots';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { ensureHotspotWorkspace } from '@/lib/server/hotspot-workspace';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -58,6 +59,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
   }
   try {
     await ensureSchema();
+    await ensureHotspotWorkspace();
     const sql = getSql();
     const rows = (await sql`
       SELECT id, magazine_id, page_idx,
@@ -138,10 +140,12 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     if (typeof v !== 'number' || !Number.isInteger(v) || v < 1) return null;
     return v;
   })();
-  const isPublished = body.is_published === true;
+  // New regions always enter the review queue. Publishing is a separate action.
+  const isPublished = false;
 
   try {
     await ensureSchema();
+    await ensureHotspotWorkspace();
     const sql = getSql();
     // Confirm magazine exists before creating the hotspot.
     const mag = await sql`SELECT id, page_count FROM magazines WHERE id = ${magazineId}`;
@@ -164,11 +168,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
         ${label}, ${advertiserName}, ${advertiserId}, ${isPublished},
         ${adminEmail}, ${adminEmail}
       )
-      RETURNING id, magazine_id, page_idx,
-                x_frac, y_frac, w_frac, h_frac,
-                type, config, label, advertiser_name, advertiser_id,
-                is_published, z_index, source, was_imported,
-                created_by, created_at, updated_by, updated_at
+      RETURNING *
     `) as unknown as Hotspot[];
     return NextResponse.json({ hotspot: rows[0] }, { status: 201 });
   } catch (err: unknown) {

@@ -34,9 +34,11 @@ import { PDFDocument, PDFDict, PDFArray, PDFName, PDFString, PDFNumber, PDFRef }
 import sharp from 'sharp';
 import jsQR from 'jsqr';
 import { isShortenerUrl, resolveUrl } from '@/lib/url-resolver';
-import type { HotspotType } from '@/lib/hotspots';
+import type { HotspotType, HotspotConfig } from '@/lib/hotspots';
 import type { NeonQueryFunction } from '@neondatabase/serverless';
 import { logger } from './logger';
+import { ensureHotspotWorkspace } from './hotspot-workspace';
+import { destinationIdentity, samePlacement } from '@/lib/hotspot-review';
 
 // ============================================================
 // Advertiser matching (shared across all three passes)
@@ -135,6 +137,8 @@ export interface ExtractedHotspot {
   /** Set later by the inserter after advertiser matching. */
   advertiser_id?: number | null;
   advertiser_name?: string | null;
+  evidence?: string;
+  needs_match?: boolean;
 }
 
 // ============================================================
@@ -755,94 +759,6 @@ export async function extractPdfTextContacts(pdfBuffer: ArrayBuffer): Promise<Ex
 //
 // A QR that decodes in ANY of these attempts wins.
 
-interface JsQrLocation {
-  topLeftCorner: { x: number; y: number };
-  topRightCorner: { x: number; y: number };
-  bottomLeftCorner: { x: number; y: number };
-  bottomRightCorner: { x: number; y: number };
-}
-
-interface QrHit {
-  data: string;
-  loc: JsQrLocation;
-  /** Width/height of the raster the location refers to. */
-  rasterW: number;
-  rasterH: number;
-  /** Which pass produced the hit (for logs). */
-  attempt: 'original' | 'inverted' | 'rotated';
-}
-
-async function tryDecodeBuffer(
-  pixels: Uint8Array,
-  info: { width: number; height: number },
-  attempt: QrHit['attempt'],
-): Promise<QrHit | null> {
-  const clamped = new Uint8ClampedArray(pixels.buffer, pixels.byteOffset, pixels.byteLength);
-  const res = jsQR(clamped, info.width, info.height, { inversionAttempts: 'attemptBoth' });
-  if (!res || !res.data) return null;
-  return { data: res.data, loc: res.location, rasterW: info.width, rasterH: info.height, attempt };
-}
-
-async function decodeQrForPage(url: string, pageIdx: number): Promise<ExtractedHotspot | null> {
-  try {
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) return null;
-    const buf = Buffer.from(await res.arrayBuffer());
-
-    const meta = await sharp(buf).metadata();
-    if ((meta.width ?? 0) < 50 || (meta.height ?? 0) < 50) return null;
-
-    const targetW = 1200;
-    // Attempt 1: normal
-    const base = await sharp(buf).rotate()
-      .resize({ width: targetW, withoutEnlargement: true })
-      .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-    let hit = await tryDecodeBuffer(base.data, base.info, 'original');
-
-    // Attempt 2: 90-degree rotation (sideways-printed QRs)
-    if (!hit) {
-      const rot = await sharp(buf).rotate(90)
-        .resize({ width: targetW, withoutEnlargement: true })
-        .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-      hit = await tryDecodeBuffer(rot.data, rot.info, 'rotated');
-    }
-
-    if (!hit) return null;
-
-    // The location comes from the raster at the resolution jsQR saw. When
-    // the raster was rotated we can't map back to the original page image
-    // orientation without inverting the rotation on the corner coordinates.
-    // For our purposes (placing a hotspot roughly where the QR is), fall
-    // back to the CENTER of the raster with a generous default size if the
-    // raster was rotated. This is rare enough that a rough placement is fine.
-    let x_frac: number, y_frac: number, w_frac: number, h_frac: number;
-    if (hit.attempt === 'rotated') {
-      // Use the center of the ORIGINAL image with a reasonable size.
-      x_frac = 0.35;
-      y_frac = 0.35;
-      w_frac = 0.15;
-      h_frac = 0.15;
-    } else {
-      const xs = [hit.loc.topLeftCorner.x, hit.loc.topRightCorner.x, hit.loc.bottomLeftCorner.x, hit.loc.bottomRightCorner.x];
-      const ys = [hit.loc.topLeftCorner.y, hit.loc.topRightCorner.y, hit.loc.bottomLeftCorner.y, hit.loc.bottomRightCorner.y];
-      const minX = Math.max(0, Math.min(...xs));
-      const maxX = Math.min(hit.rasterW, Math.max(...xs));
-      const minY = Math.max(0, Math.min(...ys));
-      const maxY = Math.min(hit.rasterH, Math.max(...ys));
-      x_frac = minX / hit.rasterW;
-      y_frac = minY / hit.rasterH;
-      w_frac = (maxX - minX) / hit.rasterW;
-      h_frac = (maxY - minY) / hit.rasterH;
-      if (w_frac < 0.01 || h_frac < 0.01) return null;
-    }
-
-    const value = hit.data.trim();
-    return qrValueToExtracted(value, pageIdx, x_frac, y_frac, w_frac, h_frac);
-  } catch {
-    return null;
-  }
-}
-
 function qrValueToExtracted(
   value: string, pageIdx: number,
   x_frac: number, y_frac: number, w_frac: number, h_frac: number,
@@ -884,9 +800,48 @@ export async function extractQrCodes(pageImageUrls: string[]): Promise<Extracted
   for (let i = 0; i < pageImageUrls.length; i += CONCURRENCY) {
     const batch = pageImageUrls.slice(i, i + CONCURRENCY);
     const decoded = await Promise.all(
-      batch.map((url, offset) => decodeQrForPage(url, i + offset)),
+      batch.map((url, offset) => url ? decodeAllQrForPage(url, i + offset) : Promise.resolve([])),
     );
-    for (const qr of decoded) if (qr) out.push(qr);
+    for (const qr of decoded) out.push(...qr);
+  }
+  return out;
+}
+
+/** Decode every QR occurrence, masking each decoded region before searching again. */
+async function decodeAllQrForPage(url: string, pageIdx: number): Promise<ExtractedHotspot[]> {
+  const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  if (!res.ok) throw new Error(`QR page image unavailable (${res.status})`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  const out: ExtractedHotspot[] = [];
+  for (const angle of [0, 90]) {
+    const { data, info } = await sharp(buf).rotate(angle)
+      .resize({ width: 2400, height: 2400, fit: 'inside', withoutEnlargement: true })
+      .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const pixels = new Uint8ClampedArray(data);
+    for (let count = 0; count < 40; count++) {
+      const hit = jsQR(pixels, info.width, info.height, { inversionAttempts: 'attemptBoth' });
+      if (!hit) break;
+      const points = [hit.location.topLeftCorner, hit.location.topRightCorner, hit.location.bottomLeftCorner, hit.location.bottomRightCorner];
+      const left = Math.max(0, Math.floor(Math.min(...points.map(p => p.x))));
+      const right = Math.min(info.width, Math.ceil(Math.max(...points.map(p => p.x))));
+      const top = Math.max(0, Math.floor(Math.min(...points.map(p => p.y))));
+      const bottom = Math.min(info.height, Math.ceil(Math.max(...points.map(p => p.y))));
+      const normalized = points.map(p => angle === 90
+        ? { x: p.y / info.height, y: 1 - p.x / info.width }
+        : { x: p.x / info.width, y: p.y / info.height });
+      const x = Math.max(0, Math.min(...normalized.map(p => p.x)));
+      const y = Math.max(0, Math.min(...normalized.map(p => p.y)));
+      const w = Math.min(1 - x, Math.max(...normalized.map(p => p.x)) - x);
+      const h = Math.min(1 - y, Math.max(...normalized.map(p => p.y)) - y);
+      if (hit.data && w > 0 && h > 0) {
+        const row = qrValueToExtracted(hit.data.trim(), pageIdx, x, y, w, h);
+        row.evidence = `Decoded QR content: ${hit.data.slice(0, 500)}`;
+        if (!out.some(e => samePlacement(e, row))) out.push(row);
+      }
+      for (let yy = top; yy < bottom; yy++) {
+        for (let xx = left; xx < right; xx++) pixels.fill(255, (yy * info.width + xx) * 4, (yy * info.width + xx) * 4 + 4);
+      }
+    }
   }
   return out;
 }
@@ -1238,14 +1193,9 @@ export interface InsertOptions {
   adminEmail: string | null;
   advertisers: AdvertiserLite[];
   pageCount: number;
-  /** If true, DELETE existing source='pdf_import' rows first. Used by the
-   *  full "extract all" flow so that re-runs replace rather than accumulate.
-   *  Manual rows are never touched. Mutually exclusive with
-   *  `wipeImportsForPages` — that one wins if both are set. */
+  /** Legacy compatibility only. Imports are never wiped by a scan. */
   wipeImports: boolean;
-  /** If set, restrict the wipe to just these page_idx values. Used by the
-   *  per-page and streaming Extract-all flows so a partial run only
-   *  replaces rows on the pages it processed. Empty array = no wipe. */
+  /** Legacy compatibility only; ignored by the non-destructive merge. */
   wipeImportsForPages?: number[];
 }
 
@@ -1263,23 +1213,9 @@ export async function insertExtracted(
   rows: ExtractedHotspot[],
   opts: InsertOptions,
 ): Promise<InsertResult> {
-  // 1. Optionally wipe. Only source='pdf_import' — manual rows and
-  //    edited-imports (source='manual', was_imported=true) both survive.
-  //    Page-scoped wipe wins over the magazine-wide flag when both are set.
-  if (opts.wipeImportsForPages && opts.wipeImportsForPages.length > 0) {
-    const pages = opts.wipeImportsForPages;
-    await sql`
-      DELETE FROM magazine_hotspots
-      WHERE magazine_id = ${opts.magazineId}
-        AND source = 'pdf_import'
-        AND page_idx = ANY(${pages}::int[])
-    `;
-  } else if (opts.wipeImports) {
-    await sql`
-      DELETE FROM magazine_hotspots
-      WHERE magazine_id = ${opts.magazineId} AND source = 'pdf_import'
-    `;
-  }
+  // Non-destructive merge: retained rejected/deleted rows are tombstones, and
+  // original detection rectangles protect moved/corrected regions on re-scan.
+  await ensureHotspotWorkspace();
 
   // 2. Resolve any known shorteners so identity dedupe works on the real
   //    destination URL (bit.ly, tinyurl, etc.). Parallel with a bounded
@@ -1319,7 +1255,7 @@ export async function insertExtracted(
     const tracking = String((row.config as { tracking_url?: string }).tracking_url ?? '');
     const matched = matchAdvertiser(url, opts.advertisers) ||
       (tracking ? matchAdvertiser(tracking, opts.advertisers) : null);
-    if (matched) {
+    if (matched && !row.advertiser_id) {
       row.advertiser_id = matched.id;
       row.advertiser_name = matched.name;
     }
@@ -1327,20 +1263,14 @@ export async function insertExtracted(
 
   // 5. Existing hotspots on this magazine → dedupe set.
   const existing = await sql`
-    SELECT page_idx, type, config
+    SELECT page_idx, type, config, x_frac, y_frac, w_frac, h_frac, detection
     FROM magazine_hotspots
     WHERE magazine_id = ${opts.magazineId}
-  ` as Array<{ page_idx: number; type: HotspotType; config: Record<string, unknown> }>;
-
-  const existingKeys = new Set<string>();
-  for (const row of existing) {
-    const key = configIdentity(row.type, row.config);
-    if (key) existingKeys.add(`${row.page_idx}:${row.type}:${key}`);
-  }
+  ` as Array<ExtractedHotspot & { detection?: { identity?: string; rect?: Pick<ExtractedHotspot, 'x_frac' | 'y_frac' | 'w_frac' | 'h_frac'> } }>;
 
   // 6. Insert with within-batch dedupe (same email/phone can appear on the
   //    same page in multiple text items — keep the first, drop the rest).
-  const batchKeys = new Set<string>();
+  const accepted: ExtractedHotspot[] = [];
   const result: InsertResult = {
     inserted: 0,
     skipped_duplicates: 0,
@@ -1349,39 +1279,48 @@ export async function insertExtracted(
   };
 
   for (const row of inRange) {
-    const composite = `${row.page_idx}:${row.type}:${row.identity}`;
-    if (existingKeys.has(composite) || batchKeys.has(composite)) {
+    const identity = configIdentity(row.type, row.config) || row.identity;
+    const duplicate = existing.some(e => (
+      (configIdentity(e.type, e.config) === identity && e.type === row.type && samePlacement(e, row)) ||
+      (e.detection?.identity === row.identity && samePlacement({ ...e, ...e.detection.rect }, row))
+    )) || accepted.some(e => e.type === row.type &&
+      (configIdentity(e.type, e.config) || e.identity) === identity && samePlacement(e, row));
+    if (duplicate) {
       result.skipped_duplicates++;
       continue;
     }
-    batchKeys.add(composite);
+    accepted.push(row);
 
-    const configJson = JSON.stringify(row.config);
-    // Auto-publish logo matches only — the phash matcher already tied
-    // them to a specific advertiser, so clicks route correctly on day
-    // one. Text/QR/link imports stay as drafts because they still need
-    // admin review to pick the right advertiser and pointer target.
-    const isPublished = row.origin === 'logo_match';
-    // z_index = -100 → imports naturally stack below any manual hotspot
-    // (which defaults to 0) so the human's work always reads on top.
-    // was_imported=true marks this row as coming from the extractor forever,
-    // even after a human edit later promotes source → 'manual'. The admin
-    // editor uses this to render an 'Edited' chip that distinguishes
-    // edited-imports from truly hand-drawn hotspots.
+  }
+  if (accepted.length) {
+    const payload = accepted.map(row => ({ ...row, detection: {
+      origin: row.origin,
+      evidence: row.evidence || row.label,
+      confidence: row.origin === 'pdf_link' || row.origin === 'qr_code' ? 'exact' : 'needs_review',
+      needs_match: !!row.needs_match,
+      identity: row.identity,
+      rect: { x_frac: row.x_frac, y_frac: row.y_frac, w_frac: row.w_frac, h_frac: row.h_frac },
+    } }));
+    // One atomic page insert, not a network round trip per detection.
     await sql`
       INSERT INTO magazine_hotspots (
         magazine_id, page_idx,
         x_frac, y_frac, w_frac, h_frac,
         type, config, label, advertiser_name, advertiser_id,
-        is_published, source, was_imported, z_index, created_by, updated_by
-      ) VALUES (
-        ${opts.magazineId}, ${row.page_idx},
-        ${row.x_frac}, ${row.y_frac}, ${row.w_frac}, ${row.h_frac},
-        ${row.type}, ${configJson}::jsonb,
-        ${row.label}, ${row.advertiser_name ?? null}, ${row.advertiser_id ?? null},
-        ${isPublished}, 'pdf_import', TRUE, -100, ${opts.adminEmail}, ${opts.adminEmail}
+        is_published, source, was_imported, z_index, created_by, updated_by, review_status, detection
+      ) SELECT ${opts.magazineId}, r.page_idx,
+        r.x_frac, r.y_frac, r.w_frac, r.h_frac, r.type, r.config,
+        r.label, r.advertiser_name, r.advertiser_id,
+        FALSE, 'pdf_import', TRUE, -100, ${opts.adminEmail}, ${opts.adminEmail},
+        'pending', r.detection
+      FROM jsonb_to_recordset(${JSON.stringify(payload)}::jsonb) AS r(
+        page_idx INTEGER, x_frac DOUBLE PRECISION, y_frac DOUBLE PRECISION,
+        w_frac DOUBLE PRECISION, h_frac DOUBLE PRECISION, type TEXT, config JSONB,
+        label TEXT, advertiser_name TEXT, advertiser_id BIGINT, detection JSONB
       )
     `;
+  }
+  for (const row of accepted) {
     result.inserted++;
     result.by_origin[row.origin]++;
     if (row.advertiser_id) result.auto_linked_advertisers++;
@@ -1391,17 +1330,6 @@ export async function insertExtracted(
 }
 
 function configIdentity(type: HotspotType, config: Record<string, unknown>): string | null {
-  if (type === 'link' || type === 'mls') {
-    const url = typeof config.url === 'string' ? config.url : '';
-    return url ? normalizeIdentityUrl(url) : null;
-  }
-  if (type === 'email') {
-    const addr = typeof config.address === 'string' ? config.address : '';
-    return addr ? addr.toLowerCase() : null;
-  }
-  if (type === 'phone') {
-    const raw = typeof config.number === 'string' ? config.number : '';
-    return raw ? normalizeIdentityPhone(raw) : null;
-  }
-  return null;
+  return ['link', 'mls', 'email', 'phone'].includes(type)
+    ? destinationIdentity({ ...config, type } as HotspotConfig) || null : null;
 }

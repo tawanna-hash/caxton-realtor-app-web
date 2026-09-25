@@ -62,6 +62,19 @@ export interface Hotspot {
    *  pipeline, even after edits promoted `source` to 'manual'. Used by the
    *  admin editor to render an 'Edited' chip for edited-imports. */
   was_imported?: boolean;
+  review_status?: 'pending' | 'approved' | 'rejected';
+  editor_locked?: boolean;
+  editor_hidden?: boolean;
+  is_deleted?: boolean;
+  editor_version?: number;
+  detection?: {
+    origin: string;
+    evidence: string;
+    confidence: 'exact' | 'suggested' | 'needs_review';
+    needs_match?: boolean;
+    identity?: string;
+    rect?: { x_frac: number; y_frac: number; w_frac: number; h_frac: number };
+  } | null;
 }
 
 /** Lighter shape returned to the public reader. No admin / tracking metadata. */

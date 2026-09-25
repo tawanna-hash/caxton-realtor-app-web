@@ -18,6 +18,8 @@ import {
 } from '@/lib/hotspots';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { ensureHotspotWorkspace } from '@/lib/server/hotspot-workspace';
+import { reviewProblem, reviewStatus } from '@/lib/hotspot-review';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -77,18 +79,19 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
 
   try {
     await ensureSchema();
+    await ensureHotspotWorkspace();
     const sql = getSql();
 
     // Load current row to merge against.
     const existing = (await sql`
-      SELECT id, magazine_id, page_idx, x_frac, y_frac, w_frac, h_frac,
-             type, config, label, advertiser_name, advertiser_id, is_published, z_index
+      SELECT *
       FROM magazine_hotspots WHERE id = ${idNum}
     `) as unknown as Hotspot[];
     if (existing.length === 0) {
       return NextResponse.json({ error: 'hotspot not found' }, { status: 404 });
     }
     const cur = existing[0];
+    if (cur.is_deleted || reviewStatus(cur) === 'rejected') return NextResponse.json({ error: 'Restore this hotspot in Hotspot Studio before editing.' }, { status: 409 });
 
     // Resolve incoming-or-current values, validating any that change.
     const nextType: HotspotType = body.type !== undefined
@@ -139,6 +142,10 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
               ? body.advertiser_id
               : null));
     const nextPublished = body.is_published === undefined ? cur.is_published : !!body.is_published;
+    if (nextPublished) {
+      const problem = reviewProblem({ ...cur, type: nextType, config: nextConfig as Hotspot['config'] });
+      if (problem) return NextResponse.json({ error: problem }, { status: 400 });
+    }
     const nextPageIdx = body.page_idx === undefined
       ? cur.page_idx
       : (Number.isInteger(body.page_idx) && (body.page_idx as number) >= 0
@@ -163,17 +170,20 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
         advertiser_name = ${nextAdv},
         advertiser_id = ${nextAdvId},
         is_published = ${nextPublished},
+        review_status = ${nextPublished ? 'approved' : body.config ? 'pending' : reviewStatus(cur)},
+        editor_version = editor_version + 1,
         z_index = ${nextZ},
         source = 'manual',
         updated_by = ${adminEmail},
         updated_at = NOW()
-      WHERE id = ${idNum}
+      WHERE id = ${idNum} AND editor_version = ${cur.editor_version || 0}
       RETURNING id, magazine_id, page_idx,
                 x_frac, y_frac, w_frac, h_frac,
                 type, config, label, advertiser_name, advertiser_id,
                 is_published, z_index, source, was_imported,
                 created_by, created_at, updated_by, updated_at
     `) as unknown as Hotspot[];
+    if (!rows.length) return NextResponse.json({ error: 'Another edit was saved. Reload before continuing.' }, { status: 409 });
     return NextResponse.json({ hotspot: rows[0] });
   } catch (err: unknown) {
     console.error('[admin/hotspots PATCH] failed:', errMessage(err));
@@ -192,9 +202,12 @@ export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, 
   }
   try {
     await ensureSchema();
+    await ensureHotspotWorkspace();
     const sql = getSql();
     const result = (await sql`
-      DELETE FROM magazine_hotspots WHERE id = ${idNum} RETURNING id
+      UPDATE magazine_hotspots SET is_deleted = true, is_published = false,
+        editor_version = editor_version + 1, updated_at = NOW()
+      WHERE id = ${idNum} RETURNING id
     `) as unknown as Array<{ id: number }>;
     if (result.length === 0) {
       return NextResponse.json({ error: 'hotspot not found' }, { status: 404 });

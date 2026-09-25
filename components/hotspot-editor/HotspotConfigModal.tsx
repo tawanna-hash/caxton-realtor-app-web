@@ -21,6 +21,7 @@ import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouse
 import { upload } from '@vercel/blob/client';
 import type { Hotspot, HotspotType, HotspotConfig } from '@/lib/hotspots';
 import { defaultConfigForType, TYPE_LABELS } from '@/lib/hotspot-editor-helpers';
+import { hotspotDestination, safeTestDestination, reviewProblem } from '@/lib/hotspot-review';
 import {
   PUBLICATIONS,
   PUBLICATION_LABELS_WITH_BOTH,
@@ -61,6 +62,9 @@ export default function HotspotConfigModal({
   const [isPublished, setIsPublished] = useState(hotspot.is_published);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const savingRef = useRef(false);
+  const destination = safeTestDestination(config);
+  const problem = reviewProblem({ ...hotspot, type, config, advertiser_id: advertiserId });
 
   // When type changes, reset config to default for new type.
   const changeType = (newType: HotspotType) => {
@@ -82,7 +86,14 @@ export default function HotspotConfigModal({
     const prevFocus = document.activeElement as HTMLElement | null;
     dialogRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCloseRef.current();
+      if (e.key === 'Escape' && !savingRef.current) onCloseRef.current();
+      if (e.key === 'Tab') {
+        const nodes = dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled)');
+        if (!nodes?.length) return;
+        const first = nodes[0], last = nodes[nodes.length - 1];
+        if (e.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
     };
     document.addEventListener('keydown', onKey);
     return () => {
@@ -92,23 +103,27 @@ export default function HotspotConfigModal({
   }, []);
 
   const handleSave = async () => {
+    if (savingRef.current) return;
+    if (isPublished && problem) { setError(problem); return; }
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
       await onSave({
         type,
         config,
-        label: label.trim() || undefined,
+        label: label.trim(),
         // advertiser_name stays in sync with the selected advertiser's display
         // name when one is linked. When not linked, we still pass whatever's
         // in the state field — preserves legacy PDF-imported strings.
-        advertiser_name: advertiserName.trim() || undefined,
+        advertiser_name: advertiserName.trim(),
         advertiser_id: advertiserId,
         is_published: isPublished,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
       setSaving(false);
+      savingRef.current = false;
     }
   };
 
@@ -135,7 +150,7 @@ export default function HotspotConfigModal({
     backdropMouseDownRef.current = e.target === e.currentTarget;
   }, []);
   const handleBackdropMouseUp = useCallback((e: ReactMouseEvent) => {
-    if (backdropMouseDownRef.current && e.target === e.currentTarget) {
+    if (!savingRef.current && backdropMouseDownRef.current && e.target === e.currentTarget) {
       onClose();
     }
     backdropMouseDownRef.current = false;
@@ -215,7 +230,7 @@ export default function HotspotConfigModal({
           onPointerCancel={handleHeaderPointerUp}
         >
           <h2 className="text-lg font-semibold text-gray-900">Configure Hotspot</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button type="button" disabled={saving} onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <span className="sr-only">Close</span>
             <svg width={20} height={20} viewBox="0 0 20 20" fill="currentColor"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg>
           </button>
@@ -223,6 +238,12 @@ export default function HotspotConfigModal({
 
         {/* Body */}
         <div className="px-6 py-4 space-y-5 max-h-[70vh] overflow-y-auto">
+          {hotspot.detection && <section className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm">
+            <h3 className="font-medium">Detection Evidence</h3>
+            <p className="mt-1 break-words text-gray-700">{hotspot.detection.evidence}</p>
+            <p className="mt-1 text-xs text-gray-600">{hotspot.detection.origin.replace(/_/g, ' ')} · {hotspot.detection.confidence === 'exact' ? 'Direct extraction; verify the destination.' : 'Suggested detection; confirm its match and position.'}</p>
+            {hotspot.detection.needs_match && <p className="mt-1 text-xs text-amber-800">Originally unmatched. Choose a partner and verify its destination, or enter a confirmed destination yourself.</p>}
+          </section>}
           {/* Type picker */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
@@ -244,12 +265,20 @@ export default function HotspotConfigModal({
           <div className="border-t border-gray-100 pt-4">
             <TypeSpecificForm type={type} config={config} onChange={setConfig} onError={setError} />
           </div>
+          <section className="rounded-md border border-gray-200 p-3 text-sm">
+            <h3 className="font-medium">Destination Preview</h3>
+            <p className="mt-1 break-all text-gray-600">{hotspotDestination(config) || 'No destination yet'}</p>
+            {problem && <p className="mt-1 text-xs text-amber-800">{problem}</p>}
+            {destination && !problem && <a href={destination} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block font-medium text-purple-900 underline">Test Link</a>}
+            <p className="mt-1 text-xs text-gray-500">Tests do not record clicks. Email and phone tests open your device’s app.</p>
+          </section>
 
           {/* Common fields */}
           <div className="border-t border-gray-100 pt-4 space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Label (optional)</label>
+              <label htmlFor="hotspot-label" className="block text-sm font-medium text-gray-700 mb-1">Label (optional)</label>
               <input
+                id="hotspot-label"
                 type="text"
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
@@ -276,7 +305,7 @@ export default function HotspotConfigModal({
                 checked={isPublished}
                 onChange={(e) => setIsPublished(e.target.checked)}
               />
-              <span className="text-sm text-gray-700"><strong>Publish</strong> — show to public readers</span>
+              <span className="text-sm text-gray-700"><strong>Approve and publish</strong>: I verified this hotspot for readers</span>
             </label>
           </div>
 
@@ -292,6 +321,7 @@ export default function HotspotConfigModal({
           <button
             type="button"
             onClick={onRequestDelete}
+            disabled={saving}
             className="px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 rounded-md"
           >
             Delete hotspot
@@ -300,6 +330,7 @@ export default function HotspotConfigModal({
             <button
               type="button"
               onClick={onClose}
+              disabled={saving}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel

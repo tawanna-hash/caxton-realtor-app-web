@@ -104,6 +104,8 @@ interface HotspotLayerProps {
    * Phase 2 will set this to true; the consumer reader defaults to false.
    */
   showHints?: boolean;
+  /** Admin tests must never record reader or advertiser analytics. */
+  preview?: boolean;
 }
 
 export default function HotspotLayer({
@@ -111,9 +113,11 @@ export default function HotspotLayer({
   displayWidth,
   displayHeight,
   showHints = false,
+  preview = false,
 }: HotspotLayerProps) {
   // For Phase 1 fallback lightbox (video/image/audio/form/reveal).
   const [comingSoon, setComingSoon] = useState<{ id: number; type: HotspotType; label: string | null } | null>(null);
+  const recordClick = (id: number) => { if (!preview) trackClick(id); };
 
   if (!hotspots.length) return null;
   if (displayWidth <= 0 || displayHeight <= 0) return null;
@@ -145,19 +149,19 @@ export default function HotspotLayer({
             <a
               key={h.id}
               href={cfg.url}
-              target={cfg.open_in === 'same_tab' ? '_self' : '_blank'}
+              target={!preview && cfg.open_in === 'same_tab' ? '_self' : '_blank'}
               rel="noopener noreferrer"
               className={`${baseClass} hover:bg-blue-400/30 focus:bg-blue-400/40`}
               style={style}
               aria-label={ariaLabel}
               onPointerDown={() => {
-                trackClick(h.id);
-                if (cfg.tracking_url) fireTrackingPixel(cfg.tracking_url);
+                recordClick(h.id);
+                if (!preview && cfg.tracking_url) fireTrackingPixel(cfg.tracking_url);
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  trackClick(h.id);
-                  if (cfg.tracking_url) fireTrackingPixel(cfg.tracking_url);
+                  recordClick(h.id);
+                  if (!preview && cfg.tracking_url) fireTrackingPixel(cfg.tracking_url);
                 }
               }}
             />
@@ -173,8 +177,8 @@ export default function HotspotLayer({
               className={`${baseClass} hover:bg-indigo-400/30 focus:bg-indigo-400/40`}
               style={style}
               aria-label={ariaLabel}
-              onPointerDown={() => trackClick(h.id)}
-              onKeyDown={(e) => { if (e.key === 'Enter') trackClick(h.id); }}
+              onPointerDown={() => recordClick(h.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter') recordClick(h.id); }}
             />
           );
         }
@@ -186,8 +190,8 @@ export default function HotspotLayer({
               className={`${baseClass} hover:bg-green-400/30 focus:bg-green-400/40`}
               style={style}
               aria-label={ariaLabel}
-              onPointerDown={() => trackClick(h.id)}
-              onKeyDown={(e) => { if (e.key === 'Enter') trackClick(h.id); }}
+              onPointerDown={() => recordClick(h.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter') recordClick(h.id); }}
             />
           );
         }
@@ -228,8 +232,8 @@ export default function HotspotLayer({
               className={`${baseClass} hover:bg-amber-400/30 focus:bg-amber-400/40`}
               style={style}
               aria-label={ariaLabel}
-              onPointerDown={() => trackClick(h.id)}
-              onKeyDown={(e) => { if (e.key === 'Enter') trackClick(h.id); }}
+              onPointerDown={() => recordClick(h.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter') recordClick(h.id); }}
             />
           );
         }
@@ -245,7 +249,7 @@ export default function HotspotLayer({
             style={style}
             aria-label={ariaLabel}
             onClick={() => {
-              trackClick(h.id);
+              recordClick(h.id);
               setComingSoon({ id: h.id, type: h.type, label: h.label });
             }}
           />

@@ -11,7 +11,8 @@ import { redirect, notFound } from 'next/navigation';
 import { getSql, ensureSchema } from '@/lib/db';
 import type { Magazine } from '@/lib/magazines';
 import type { Hotspot } from '@/lib/hotspots';
-import HotspotsAdminClient from './HotspotsAdminClient';
+import HotspotStudio from '@/components/hotspot-editor/HotspotStudio';
+import { ensureHotspotWorkspace } from '@/lib/server/hotspot-workspace';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const dynamic = 'force-dynamic';
@@ -42,6 +43,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   }
 
   await ensureSchema();
+  await ensureHotspotWorkspace();
   const sql = getSql();
 
   // 1. Fetch the magazine and its hotspots (drafts + published) in
@@ -56,10 +58,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     WHERE id = ${idNum}
   `,
     sql`
-    SELECT id, magazine_id, page_idx,
-           x_frac, y_frac, w_frac, h_frac,
-           type, config, label, advertiser_name,
-           is_published, source, created_by, created_at, updated_by, updated_at
+    SELECT *
     FROM magazine_hotspots
     WHERE magazine_id = ${idNum}
     ORDER BY page_idx, z_index, id
@@ -74,7 +73,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     SELECT m.id, m.publication, m.issue_label,
            COUNT(h.id)::int AS hotspot_count
     FROM magazines m
-    LEFT JOIN magazine_hotspots h ON h.magazine_id = m.id
+    LEFT JOIN magazine_hotspots h ON h.magazine_id = m.id AND h.is_deleted = false AND h.is_published = true
     WHERE m.publication = ${magazine.publication}
       AND m.id != ${idNum}
     GROUP BY m.id, m.publication, m.issue_label, m.sort_date
@@ -84,7 +83,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   `) as unknown as PrevIssue[];
 
   return (
-    <HotspotsAdminClient
+    <HotspotStudio
       magazine={magazine}
       initialHotspots={hotspots}
       prevIssues={prevIssues}
