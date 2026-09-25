@@ -22,7 +22,7 @@ export const POST = withAdminTracking(async (_req: NextRequest, ctx: { params: P
         send({ type: 'preparing' });
         const scan = await prepareHotspotScan(id);
         send({ type: 'start', page_count: scan.pageCount });
-        let cursor = 0, completed = 0, inserted = 0;
+        let cursor = 0, completed = 0, inserted = 0, skipped_duplicates = 0;
         const errors: string[] = [];
         // Bounded workers commit each page independently. Failed and unfinished
         // pages remain visible in the review checklist and can be retried.
@@ -31,7 +31,7 @@ export const POST = withAdminTracking(async (_req: NextRequest, ctx: { params: P
             const page = cursor++;
             try {
               const result = await scanHotspotPage(scan, page, admin.email);
-              inserted += result.inserted; completed++;
+              inserted += result.inserted; skipped_duplicates += result.skipped_duplicates; completed++;
               send({ type: 'page', ...result, completed, total: scan.pageCount });
             } catch (err) {
               const message = err instanceof Error ? err.message : 'Scan failed';
@@ -46,7 +46,7 @@ export const POST = withAdminTracking(async (_req: NextRequest, ctx: { params: P
           sql`SELECT * FROM magazine_hotspots WHERE magazine_id = ${id} ORDER BY page_idx, z_index, id`,
           sql`SELECT * FROM magazine_hotspot_scans WHERE magazine_id = ${id} ORDER BY page_idx`,
         ]);
-        send({ type: 'done', hotspots, scans, errors, diagnostics: { inserted } });
+        send({ type: 'done', hotspots, scans, errors, diagnostics: { inserted, skipped_duplicates } });
       } catch (err) {
         send({ type: 'error', message: err instanceof Error ? err.message : 'Scan failed' });
       } finally { if (connected) controller.close(); }

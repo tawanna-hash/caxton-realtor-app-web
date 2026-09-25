@@ -59,10 +59,34 @@ export function destinationIdentity(config: HotspotConfig): string {
   try {
     const u = new URL(target);
     // Paths and query strings are case-sensitive. Do not lower-case them.
-    return `${u.hostname.toLowerCase()}${u.pathname.replace(/\/$/, '')}${u.search}${u.hash}`;
+    // Tracking variants and www do not make a second reader destination.
+    for (const key of [...u.searchParams.keys()]) {
+      if (/^utm_/i.test(key) || /^(gclid|fbclid|msclkid)$/i.test(key)) u.searchParams.delete(key);
+    }
+    return `${u.hostname.toLowerCase().replace(/^www\./, '')}${u.port ? `:${u.port}` : ''}${u.pathname.replace(/\/$/, '')}${u.search}${u.hash}`;
   } catch { return target.trim(); }
 }
 
 export function samePlacement(a: Rect & { page_idx: number }, b: Rect & { page_idx: number }): boolean {
-  return a.page_idx === b.page_idx && overlapRatio(a, b) >= 0.55;
+  if (a.page_idx !== b.page_idx) return false;
+  if (overlapRatio(a, b) >= 0.55) return true;
+  const w = Math.max(0, Math.min(a.x_frac + a.w_frac, b.x_frac + b.w_frac) - Math.max(a.x_frac, b.x_frac));
+  const h = Math.max(0, Math.min(a.y_frac + a.h_frac, b.y_frac + b.h_frac) - Math.max(a.y_frac, b.y_frac));
+  // OCR often boxes just the letters inside a larger embedded PDF link.
+  // Callers must also compare destinations; containment alone is not a duplicate.
+  return w * h / Math.max(0.000001, Math.min(a.w_frac * a.h_frac, b.w_frac * b.h_frac)) >= 0.8;
+}
+
+/** Never remove different destinations or non-overlapping placements. */
+export function overlappingDuplicates(rows: Hotspot[]): Hotspot[] {
+  const kept: Hotspot[] = [], duplicates: Hotspot[] = [];
+  const ranked = rows.filter(h => !h.is_deleted && reviewStatus(h) !== 'rejected').sort((a, b) =>
+    Number(b.is_published) - Number(a.is_published) ||
+    Number(b.source === 'manual') - Number(a.source === 'manual') || Number(a.id) - Number(b.id));
+  for (const row of ranked) {
+    const identity = destinationIdentity(row.config);
+    if (identity && kept.some(h => h.type === row.type && destinationIdentity(h.config) === identity && samePlacement(h, row))) duplicates.push(row);
+    else kept.push(row);
+  }
+  return duplicates;
 }

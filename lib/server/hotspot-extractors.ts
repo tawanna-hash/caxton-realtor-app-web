@@ -1263,13 +1263,14 @@ export async function insertExtracted(
 
   // 5. Existing hotspots on this magazine → dedupe set.
   const existing = await sql`
-    SELECT page_idx, type, config, x_frac, y_frac, w_frac, h_frac, detection
+    SELECT page_idx, type, config, x_frac, y_frac, w_frac, h_frac, detection, advertiser_id
     FROM magazine_hotspots
     WHERE magazine_id = ${opts.magazineId}
   ` as Array<ExtractedHotspot & { detection?: { identity?: string; rect?: Pick<ExtractedHotspot, 'x_frac' | 'y_frac' | 'w_frac' | 'h_frac'> } }>;
 
-  // 6. Insert with within-batch dedupe (same email/phone can appear on the
-  //    same page in multiple text items — keep the first, drop the rest).
+  // A rescan must not add another instance of an already-recorded page link,
+  // even when vision changes its box. This includes tombstones and corrected
+  // detections. Within a first scan, distinct placements can still be detected.
   const accepted: ExtractedHotspot[] = [];
   const result: InsertResult = {
     inserted: 0,
@@ -1280,10 +1281,21 @@ export async function insertExtracted(
 
   for (const row of inRange) {
     const identity = configIdentity(row.type, row.config) || row.identity;
-    const duplicate = existing.some(e => (
-      (configIdentity(e.type, e.config) === identity && e.type === row.type && samePlacement(e, row)) ||
-      (e.detection?.identity === row.identity && samePlacement({ ...e, ...e.detection.rect }, row))
-    )) || accepted.some(e => e.type === row.type &&
+    const duplicate = existing.some(e => {
+      if (e.page_idx !== row.page_idx) return false;
+      const oldIdentity = configIdentity(e.type, e.config);
+      if (identity && e.type === row.type && oldIdentity === identity) return true;
+      const originalIdentity = e.detection?.identity;
+      // Empty labels ("logo:", "qr:") are not page-wide identities.
+      if (originalIdentity && originalIdentity === row.identity &&
+        (!/^(logo|partner|qr):/i.test(originalIdentity) || !!originalIdentity.split(':').slice(1).join(':').trim())) return true;
+      if (row.origin === 'logo_match' && row.advertiser_id && e.advertiser_id === row.advertiser_id) return true;
+      const original = { ...e, ...e.detection?.rect };
+      return samePlacement(original, row) && (
+        originalIdentity === row.identity ||
+        (e.type === row.type && row.needs_match === true && !configIdentity(row.type, row.config))
+      );
+    }) || accepted.some(e => e.type === row.type &&
       (configIdentity(e.type, e.config) || e.identity) === identity && samePlacement(e, row));
     if (duplicate) {
       result.skipped_duplicates++;

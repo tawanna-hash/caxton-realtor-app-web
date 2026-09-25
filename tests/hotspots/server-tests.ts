@@ -8,7 +8,7 @@ import { ensureHotspotWorkspace } from '../../lib/server/hotspot-workspace';
 import { POST, GET } from '../../app/api/admin/magazines/[id]/hotspot-workspace/route';
 import { insertExtracted, extractQrCodes, extractPdfLinkAnnotations, extractPdfTextContacts } from '../../lib/server/hotspot-extractors';
 import { extractVisualHotspots } from '../../lib/server/hotspot-vision';
-import { destinationIdentity, safeTestDestination, samePlacement } from '../../lib/hotspot-review';
+import { destinationIdentity, overlappingDuplicates, safeTestDestination, samePlacement } from '../../lib/hotspot-review';
 const db=new PGlite();
 await db.exec(`CREATE TABLE magazines(id BIGINT PRIMARY KEY,page_count INT); INSERT INTO magazines VALUES(1,3);
 CREATE TABLE magazine_hotspots(id BIGSERIAL PRIMARY KEY,magazine_id BIGINT REFERENCES magazines(id),page_idx INT,
@@ -83,5 +83,57 @@ const visual=[{kind:'logo',text:'Unknown',target:'https://invented.invalid',adve
 globalThis.fetch=async(url:any)=>String(url).includes('googleapis')?new Response(JSON.stringify({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify(visual)}]}}]})):new Response(qrPage as any);
 const detected=await extractVisualHotspots('test-image',0,[{id:12,name:'Known Partner',slug:'known',website:'https://known.example.org',avatar_url:null}]);
 assert.equal(detected.length,6);assert.equal(detected[0].config.url,'');assert.equal(detected[0].advertiser_id,null);assert.equal(detected[1].config.url,'https://known.example.org');assert.equal(detected[5].config.url,'');ok('visual extraction handles every kind and never invents unknown logo/QR destinations');
-globalThis.fetch=realFetch;await db.close();
+globalThis.fetch=realFetch;
+
+// Rescan regressions: existing page links are authoritative even when a model
+// shifts, enlarges, or detects a different printed instance of the same target.
+const opts={magazineId:1,adminEmail:null,advertisers:[],pageCount:3,wipeImports:false};
+const known={...row,page_idx:1,identity:'known.example.org',config:{type:'link',url:'https://known.example.org',open_in:'new_tab'}};
+assert.equal((await insertExtracted(sql as any,[known] as any,opts)).inserted,1);
+await sql`UPDATE magazine_hotspots SET detection = NULL, is_published = true, review_status = 'approved' WHERE page_idx = 1`;
+result=await insertExtracted(sql as any,[
+  {...known,x_frac:.65,y_frac:.8,w_frac:.05,h_frac:.01,config:{type:'link',url:'https://www.known.example.org/?utm_source=scan',open_in:'new_tab'}},
+  {...known,identity:'new.example.org',config:{type:'link',url:'https://new.example.org',open_in:'new_tab'}},
+  {...known,page_idx:2},
+] as any,opts);
+assert.equal(result.inserted,2);assert.equal(result.skipped_duplicates,1);ok('rescan skips shifted legacy page links and tracking/www variants but adds new targets and other pages');
+const once=await sql`SELECT COUNT(*)::int AS count FROM magazine_hotspots`;
+assert.equal((await insertExtracted(sql as any,[{...known,x_frac:.4,y_frac:.5}] as any,opts)).inserted,0);
+assert.equal((await sql`SELECT COUNT(*)::int AS count FROM magazine_hotspots`)[0].count,once[0].count);ok('repeated rescans do not grow existing page link counts');
+result=await insertExtracted(sql as any,[{...row,x_frac:.8,y_frac:.8,w_frac:.05,h_frac:.05}] as any,opts);
+assert.equal(result.inserted,0);ok('rescans cannot recreate corrected or deleted detections at a shifted position');
+
+const partner={...known,page_idx:2,identity:'partner:77',advertiser_id:77,origin:'logo_match'};
+await sql`UPDATE magazine_hotspots SET advertiser_id=77, config='{"type":"link","url":"https://human-corrected.example.org"}'::jsonb WHERE page_idx=2`;
+assert.equal((await insertExtracted(sql as any,[{...partner,x_frac:.7}] as any,opts)).inserted,0);ok('rescan preserves the existing matched partner instead of adding another logo link');
+
+const fixture={...rectangle,id:100,type:'link',config:{type:'link',url:'https://example.org/Case'},is_published:true,source:'manual',review_status:'approved'};
+const nested={...fixture,id:101,source:'pdf_import',is_published:false,x_frac:.13,y_frac:.22,w_frac:.05,h_frac:.02};
+assert.equal(samePlacement(fixture,nested),true);
+const duplicateRows=overlappingDuplicates([
+  {...fixture,id:'100'}, {...nested,id:'101'},
+  {...nested,id:'102',x_frac:.65}, // distinct placement stays
+  {...nested,id:'103',config:{type:'link',url:'https://different.example.org'}},
+  {...nested,id:'104',type:'phone',config:{type:'phone',number:'+15125550100'}},
+  {...nested,id:'105',is_deleted:true},
+] as any);
+assert.deepEqual(duplicateRows.map(h=>h.id),['101']);ok('cleanup catches nested duplicate boxes with production string IDs while preserving distinct links and placements');
+
+// Invalid already-published legacy data must still be removable, never used as
+// a loophole to publish or change destination/position without validation.
+await sql`INSERT INTO magazine_hotspots(magazine_id,page_idx,x_frac,y_frac,w_frac,h_frac,type,config,is_published,review_status,z_index)
+  VALUES(1,0,.9,.2,.2,.1,'link','{"type":"link","url":"https://example.com"}',true,'approved',0)`;
+const [legacy]=await sql`SELECT * FROM magazine_hotspots ORDER BY id DESC LIMIT 1`;
+response=await post([{id:String(legacy.id),version:0,values:{is_deleted:true,is_published:false}}]);
+assert.equal(response.status,200);
+const [removed]=await sql`SELECT * FROM magazine_hotspots WHERE id=${legacy.id}`;
+assert.equal(removed.is_deleted,true);assert.equal(removed.is_published,false);
+assert.equal(removed.x_frac,legacy.x_frac);assert.deepEqual(removed.config,legacy.config);ok('cleanup removes invalid legacy published rows without requiring destination or geometry repair');
+response=await post([{id:String(legacy.id),version:1,values:{is_deleted:true,config:{type:'link',url:'javascript:alert(1)'}}}]);
+assert.equal(response.status,400);
+response=await post([{id:String(legacy.id),version:1,values:{is_deleted:false,is_published:true}}]);
+assert.equal(response.status,400);ok('removal exemption cannot modify invalid content or restore it to publication');
+assert.notEqual(destinationIdentity({type:'link',url:'https://example.org/?item=1'} as any),destinationIdentity({type:'link',url:'https://example.org/?item=2'} as any));
+assert.notEqual(destinationIdentity({type:'link',url:'https://example.org:8443/path'} as any),destinationIdentity({type:'link',url:'https://example.org/path'} as any));ok('dedupe preserves meaningful queries, URL path case, and ports');
+await db.close();
 console.log(`${tests} server regression checks passed`);

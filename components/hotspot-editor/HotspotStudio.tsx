@@ -5,7 +5,7 @@ import { Eye, EyeOff, LockKeyhole, UnlockKeyhole, GripVertical, Undo2, Redo2, Sc
 import type { Hotspot, HotspotConfig } from '@/lib/hotspots';
 import type { Magazine } from '@/lib/magazines';
 import { clampRect, computeZMove, DEFAULT_NEW_RECT, TYPE_LABELS, type ZMove } from '@/lib/hotspot-editor-helpers';
-import { destinationIdentity, hotspotDestination, overlapRatio, reviewProblem, reviewStatus } from '@/lib/hotspot-review';
+import { hotspotDestination, overlappingDuplicates, overlapRatio, reviewProblem, reviewStatus } from '@/lib/hotspot-review';
 import { useUrlNumber, useUrlString } from '@/lib/use-url-state';
 import HotspotConfigModal from './HotspotConfigModal';
 import HotspotCanvas from './HotspotCanvas';
@@ -54,6 +54,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
   const [copyId, setCopyId] = useState('');
   const [checklistOpen, setChecklistOpen] = useState(false);
   const [dragId, setDragId] = useState<number | null>(null);
+  const [cleanupResult, setCleanupResult] = useState('');
   const pageIdx = Math.max(0, Math.min(page, magazine.page_count - 1));
   const pages = view === 'single' || pageIdx === 0 ? [pageIdx] :
     [pageIdx % 2 ? pageIdx : pageIdx - 1, pageIdx % 2 ? pageIdx + 1 : pageIdx].filter(p => p < magazine.page_count);
@@ -93,7 +94,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
   const mutate = useCallback(async (changes: Change[], label: string, record = true) => {
     if (!changes.length) return [];
     if (busyRef.current) throw new Error('Wait for the current save to finish');
-    busyRef.current = true; setBusy(true); setError(''); setMessage('Saving…');
+    busyRef.current = true; setBusy(true); setError(''); setMessage('Saving…'); setCleanupResult('');
     const before = changes.map(c => rowsRef.current.find(h => h.id === c.id)!);
     try {
       const res = await fetch(`${base}/hotspot-workspace`, {
@@ -207,13 +208,13 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
 
   const scan = async (pageIdx?: number) => {
     if (busyRef.current || scanning) return;
-    busyRef.current = true; setScanning(true); setError(''); setMessage('Preparing detection…');
+    busyRef.current = true; setScanning(true); setError(''); setMessage('Preparing detection…'); setCleanupResult('');
     try {
       if (pageIdx !== undefined) {
         const res = await fetch(`${base}/extract-page`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page_idx: pageIdx }) });
         const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Page scan failed');
         replaceRows(data.hotspots); setScans(data.scans || []);
-        setMessage(`Page ${pageIdx + 1}: ${data.diagnostics.inserted} new drafts. Existing edits preserved.`);
+        setMessage(`Page ${pageIdx + 1}: ${data.diagnostics.inserted} new drafts; ${data.diagnostics.skipped_duplicates || 0} existing/duplicate links skipped. Existing edits preserved.`);
         if (data.diagnostics.warnings?.length) setError(data.diagnostics.warnings.join(' · '));
       } else {
         const res = await fetch(`${base}/extract-all`, { method: 'POST' });
@@ -227,7 +228,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
           if (event.type === 'page') setMessage(`Detecting: ${event.completed}/${event.total} pages reviewed by scanner…`);
           if (event.type === 'done') {
             done = true; replaceRows(event.hotspots); setScans(event.scans || []);
-            setMessage(`Detection complete: ${event.diagnostics.inserted} new drafts. Review before publishing.`);
+            setMessage(`Detection complete: ${event.diagnostics.inserted} new drafts; ${event.diagnostics.skipped_duplicates || 0} existing/duplicate links skipped. Review before publishing.`);
             if (event.errors?.length) setError(event.errors.join(' · '));
           }
         };
@@ -246,17 +247,20 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
     } finally { busyRef.current = false; setScanning(false); }
   };
 
-  const duplicateCleanup = () => {
-    const seen: Hotspot[] = [], duplicates: Hotspot[] = [];
-    const ranked = [...active].sort((a, b) => Number(b.is_published) - Number(a.is_published) || Number(b.source === 'manual') - Number(a.source === 'manual') || a.id - b.id);
-    for (const h of ranked) {
-      const identity = destinationIdentity(h.config);
-      if (identity && seen.some(a => a.page_idx === h.page_idx && a.type === h.type && destinationIdentity(a.config) === identity && overlapRatio(a, h) >= .55)) duplicates.push(h);
-      else seen.push(h);
+  const duplicateCleanup = async () => {
+    const duplicates = overlappingDuplicates(rowsRef.current);
+    if (!duplicates.length) {
+      const result = 'No overlapping duplicates found. Separate placements and different destinations are preserved.';
+      setMessage(result); setCleanupResult(result); return;
     }
-    if (!duplicates.length) { setMessage('No overlapping duplicates found. Separate placements are preserved.'); return; }
     if (!window.confirm(`Remove ${duplicates.length} overlapping duplicate hotspot(s)? Separate placements stay. Undo is available.`)) return;
-    act(duplicates.map(h => ({ id: h.id, values: { is_deleted: true, is_published: false } })), 'Remove overlapping duplicates');
+    setCleanupResult('Removing overlapping duplicates…');
+    try {
+      await mutate(duplicates.map(h => ({ id: h.id, values: { is_deleted: true, is_published: false } })), 'Remove overlapping duplicates');
+      setCleanupResult(`Removed ${duplicates.length} overlapping duplicate hotspot(s). Undo is available.`);
+    } catch (err) {
+      setCleanupResult(`Not removed: ${err instanceof Error ? err.message : 'Save failed'}`);
+    }
   };
 
   const copyPrevious = async () => {
@@ -397,7 +401,8 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
         </aside>}
       </div>
       <footer className="flex flex-wrap items-center gap-2 border-t border-gray-200 bg-white p-4">
-        <button className={button} disabled={blocked} onClick={duplicateCleanup}>Remove Overlapping Duplicates</button>
+        <button className={button} disabled={blocked} onClick={() => void duplicateCleanup()}>Remove Overlapping Duplicates</button>
+        {cleanupResult && <p role="status" aria-label="Duplicate cleanup result" className="w-full text-sm text-gray-700">{cleanupResult}</p>}
         {prevIssues.length > 0 && <><select aria-label="Previous issue" className={`${input} max-w-64`} value={copyId} onChange={e => setCopyId(e.target.value)}><option value="">Copy From Previous Issue</option>{prevIssues.map(p => <option key={p.id} value={p.id}>{p.issue_label} ({p.hotspot_count})</option>)}</select><button className={button} disabled={blocked || !copyId} onClick={() => void copyPrevious()}>Copy As Drafts</button></>}
         <p className="text-xs text-gray-500">Undo/redo covers this editing session. Rejected detections and manual corrections survive re-scanning.</p>
       </footer>

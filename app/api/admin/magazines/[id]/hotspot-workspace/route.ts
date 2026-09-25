@@ -48,6 +48,21 @@ export const POST = withAdminTracking(async (req: NextRequest, ctx: Ctx) => {
       if (!Number.isInteger(change.version) || change.version !== (cur.editor_version || 0)) throw new Error('Conflict: another edit was saved. Reload before continuing.');
       const v = change.values;
       if (!v || typeof v !== 'object') throw new Error('Missing hotspot values');
+      // Removing a legacy/invalid hotspot must never require repairing its
+      // destination or geometry first. Only this narrowly-scoped removal can
+      // bypass content validation; versions and atomic batch checks still apply.
+      const removalOnly = v.is_deleted === true &&
+        Object.keys(v).every(key => key === 'is_deleted' || key === 'is_published') &&
+        (v.is_published === undefined || v.is_published === false);
+      if (removalOnly) return {
+        id: Number(cur.id), version: change.version,
+        page_idx: cur.page_idx, x: cur.x_frac, y: cur.y_frac, w: cur.w_frac, h: cur.h_frac,
+        type: cur.type, config: cur.config, label: cur.label,
+        advertiser_id: cur.advertiser_id, advertiser_name: cur.advertiser_name,
+        z_index: cur.z_index, review_status: reviewStatus(cur),
+        editor_locked: !!cur.editor_locked, editor_hidden: !!cur.editor_hidden,
+        is_deleted: true, is_published: false,
+      };
       const next = { ...cur, ...v };
       if (!isHotspotType(next.type)) throw new Error('Invalid action');
       const pos = validatePosition(next.x_frac, next.y_frac, next.w_frac, next.h_frac);
