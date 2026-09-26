@@ -90,7 +90,7 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
           <p className="text-xs text-slate-500">Library checked against TREC September 15, 2026</p>
         </div>
 
-        <div className={`mt-4 grid gap-3 ${embedded ? '' : 'md:grid-cols-2'}`}>
+        <div className={`mt-4 grid gap-3 ${embedded ? 'max-h-[340px] overflow-y-auto overscroll-contain pr-1' : 'md:grid-cols-2'}`}>
           {pagedForms.map((form) => (
             <article key={form.formFamily} className={`flex min-w-0 flex-col justify-between gap-5 border border-slate-200 p-5 ${embedded ? 'bg-[#FCFBF9]' : 'bg-white'}`}>
               <div className="flex min-w-0 items-start gap-3">
