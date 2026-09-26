@@ -14,16 +14,19 @@ import {
   ChevronRight,
   Circle,
   ClipboardCheck,
+  Copy,
   Download,
   FileText,
   FileUp,
   FolderDown,
   History,
   ListTodo,
+  Link2,
   LoaderCircle,
   Lock,
   Mail,
   Plus,
+  RefreshCw,
   Save,
   Smartphone,
   Trash2,
@@ -32,6 +35,12 @@ import {
 import PushOptInButton from '@/components/PushOptInButton';
 import TrecPdfPagePreview from './TrecPdfPagePreview';
 import TrecFormsLibrary from './TrecFormsLibrary';
+import {
+  buildClosingTimeIcs,
+  calendarEventsForActiveDeals,
+  calendarEventsForDeal,
+  type ClosingTimeCalendarEvent,
+} from '@/lib/closing-time-calendar';
 import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 import { trackEvent } from '@/app/posthog-provider';
 import {
@@ -572,13 +581,6 @@ function dealDeadlines(deal: AgentDeal): TrecDeadline[] {
   });
 }
 
-type CalendarEvent = {
-  id: string;
-  date: string;
-  summary: string;
-  description: string;
-};
-
 type ExtractionState = 'idle' | 'extracting' | 'ready' | 'error';
 type ExtractionDraft = {
   title?: string;
@@ -587,18 +589,6 @@ type ExtractionDraft = {
   addenda: Record<string, boolean>;
   warnings: string[];
 };
-
-function escapeIcs(value: string): string {
-  return value
-    .replaceAll('\\', '\\\\')
-    .replaceAll(';', '\\;')
-    .replaceAll(',', '\\,')
-    .replace(/\r?\n/g, '\\n');
-}
-
-function isIsoDate(value: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value);
-}
 
 function formatTimestamp(value: string): string {
   return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
@@ -849,63 +839,9 @@ async function downloadAuditPdf(deal: AgentDeal, selectedVersions: TrecFormVersi
   return { filename, blob };
 }
 
-function calendarEventsForDeal(deal: AgentDeal): CalendarEvent[] {
-  const transaction = deal.propertyAddress || deal.title;
-  const description = `Closing Time deadline for ${transaction}. Verify against the signed contract and your broker's process.`;
-  const deadlineEvents = dealDeadlines(deal).map((deadline) => ({
-    id: `deadline-${deadline.id}`,
-    date: deadline.date,
-    summary: `${deadline.label}: ${transaction}`,
-    description,
-  }));
-  const closingEvent = deal.closingDate ? [{
-    id: 'closing-date',
-    date: deal.closingDate,
-    summary: `Closing date: ${transaction}`,
-    description,
-  }] : [];
-  const reminderEvents = deal.reminders
-    .filter((reminder) => !reminder.complete && isIsoDate(reminder.reminderDate))
-    .map((reminder) => ({
-      id: `reminder-${reminder.id}`,
-      date: reminder.reminderDate,
-      summary: `Reminder: ${reminder.label} — ${transaction}`,
-      description,
-    }));
-  const taskEvents = deal.tasks
-    .filter((task) => !task.complete && isIsoDate(task.dueDate))
-    .map((task) => ({
-      id: `task-${task.id}`,
-      date: task.dueDate,
-      summary: `Task: ${task.title} — ${transaction}`,
-      description,
-    }));
-  return [...deadlineEvents, ...closingEvent, ...reminderEvents, ...taskEvents]
-    .filter((event) => isIsoDate(event.date));
-}
-
-function downloadCalendar(events: CalendarEvent[], filename: string): void {
+function downloadCalendar(events: ClosingTimeCalendarEvent[], filename: string): void {
   if (!events.length) return;
-  const stamp = new Date().toISOString().replaceAll(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
-  const content = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Realty News Now//Closing Time//EN',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    ...events.flatMap((event) => [
-      'BEGIN:VEVENT',
-      `UID:${escapeIcs(event.id)}-${Date.now()}@realtynewsnow.app`,
-      `DTSTAMP:${stamp}`,
-      `DTSTART;VALUE=DATE:${event.date.replaceAll('-', '')}`,
-      `DTEND;VALUE=DATE:${addDays(event.date, 1).replaceAll('-', '')}`,
-      `SUMMARY:${escapeIcs(event.summary)}`,
-      `DESCRIPTION:${escapeIcs(event.description)}`,
-      'END:VEVENT',
-    ]),
-    'END:VCALENDAR',
-    '',
-  ].join('\r\n');
+  const content = buildClosingTimeIcs(events);
   const url = URL.createObjectURL(new Blob([content], { type: 'text/calendar;charset=utf-8' }));
   const link = document.createElement('a');
   link.href = url;
@@ -1713,6 +1649,37 @@ export default function ClosingTime({
     updateNotificationPreferences({ reminderOffsets: nextOffsets });
   };
 
+  const [calendarFeed, setCalendarFeed] = useState<{ url: string; webcalUrl: string } | null>(null);
+  const [calendarFeedState, setCalendarFeedState] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [calendarFeedCopied, setCalendarFeedCopied] = useState(false);
+
+  const loadCalendarFeed = async (reset = false) => {
+    if (reset && !window.confirm('Reset your calendar link? Calendars subscribed with the old link will stop updating until you subscribe again.')) return;
+    setCalendarFeedState('loading');
+    try {
+      const response = await fetch('/api/agent-command-center/calendar-feed', { method: reset ? 'POST' : 'GET', cache: 'no-store' });
+      if (!response.ok) throw new Error('Calendar link unavailable');
+      const body = await response.json() as { url: string; webcalUrl: string };
+      setCalendarFeed(body);
+      setCalendarFeedState('idle');
+      setCalendarFeedCopied(false);
+      trackEvent(reset ? 'closing_time_calendar_feed_reset' : 'closing_time_calendar_feed_opened', {});
+    } catch {
+      setCalendarFeedState('error');
+    }
+  };
+
+  const copyCalendarFeed = async () => {
+    if (!calendarFeed) return;
+    try {
+      await navigator.clipboard.writeText(calendarFeed.url);
+      setCalendarFeedCopied(true);
+      window.setTimeout(() => setCalendarFeedCopied(false), 2_000);
+    } catch {
+      window.prompt('Copy your private calendar link:', calendarFeed.url);
+    }
+  };
+
   const exportActiveDealCalendar = () => {
     if (!activeDeal) return;
     downloadCalendar(calendarEventsForDeal(activeDeal), 'realty-news-now-deal-dates.ics');
@@ -1720,9 +1687,7 @@ export default function ClosingTime({
   };
 
   const exportAllDealsCalendar = () => {
-    const events = deals
-      .filter((deal) => deal.status !== 'completed')
-      .flatMap(calendarEventsForDeal);
+    const events = calendarEventsForActiveDeals(deals);
     downloadCalendar(events, 'realty-news-now-active-deal-dates.ics');
     trackEvent('closing_time_calendar_exported', { scope: 'all_active_deals' });
   };
@@ -1938,10 +1903,31 @@ export default function ClosingTime({
                 <h3 className="text-lg font-semibold text-slate-950">Calendar Exports</h3>
                 <CollapseToggle {...toggleProps('calendar', 'calendar exports')} />
               </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">Download dates for this deal or every active transaction, including deadlines, reminders, and tasks.</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"><Download className="rnn-inline-icon" aria-hidden="true" />Export This Deal</button>
-                <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Export Active Deals</button>
+              <p className="mt-3 text-sm leading-6 text-slate-600">Subscribe once and your calendar stays current with deadlines, closing dates, reminders, and open tasks for every active transaction.</p>
+              {!calendarFeed ? (
+                <button type="button" onClick={() => void loadCalendarFeed()} disabled={calendarFeedState === 'loading'} className="mt-4 inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45">
+                  {calendarFeedState === 'loading' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Link2 className="rnn-inline-icon" aria-hidden="true" />}
+                  Subscribe To Calendar
+                </button>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <a href={`https://calendar.google.com/calendar/render?cid=${encodeURIComponent(calendarFeed.webcalUrl)}`} target="_blank" rel="noreferrer" onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'google' })} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c]"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Google</a>
+                    <a href={calendarFeed.webcalUrl} onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'apple' })} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Apple</a>
+                    <a href={`https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(calendarFeed.url)}&name=${encodeURIComponent('Closing Time Deadlines')}`} target="_blank" rel="noreferrer" onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'outlook' })} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Outlook</a>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => void copyCalendarFeed()} className="inline-flex min-h-[36px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF]">{calendarFeedCopied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}{calendarFeedCopied ? 'Copied' : 'Copy Link'}</button>
+                    <button type="button" onClick={() => void loadCalendarFeed(true)} disabled={calendarFeedState === 'loading'} className="inline-flex min-h-[36px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#9A3D2B] hover:text-[#9A3D2B] disabled:opacity-45"><RefreshCw className="h-4 w-4" aria-hidden="true" />Reset Link</button>
+                  </div>
+                  <p className="text-xs leading-5 text-slate-500">This link is private to you. Anyone with it can view your deal dates, so reset it if it&apos;s shared by mistake. Google Calendar may take several hours to show changes; Deadline Alerts cover anything urgent.</p>
+                </div>
+              )}
+              {calendarFeedState === 'error' && <p className="mt-2 text-xs font-semibold text-[#9A3D2B]">We couldn&apos;t load your calendar link. Please try again.</p>}
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-100 pt-3 text-xs font-bold text-[#301D5D]">
+                <span className="font-semibold text-slate-500">One-time download:</span>
+                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex items-center gap-1 underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-45"><Download className="h-3.5 w-3.5" aria-hidden="true" />This Deal (.ics)</button>
+                <button type="button" onClick={exportAllDealsCalendar} disabled={!calendarEventsForActiveDeals(deals).length} className="inline-flex items-center gap-1 underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-45"><Download className="h-3.5 w-3.5" aria-hidden="true" />Active Deals (.ics)</button>
               </div>
             </div>
             <div id="trec-forms" {...collapsible('trec-library')} className="min-w-0 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">

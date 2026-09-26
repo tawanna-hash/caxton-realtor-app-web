@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Download, FileText, PencilLine, Search } from 'lucide-react';
 import {
   TREC_FORM_LIBRARY,
@@ -48,7 +48,6 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
       && (!normalizedQuery || `${form.formNumber} ${form.title}`.toLowerCase().includes(normalizedQuery))
     ));
   }, [category, forms, query]);
-  useEffect(() => setPage(1), [category, query]);
   const pageCount = Math.max(1, Math.ceil(visibleForms.length / FORMS_PER_PAGE));
   const currentPage = Math.min(page, pageCount);
   const pagedForms = visibleForms.slice((currentPage - 1) * FORMS_PER_PAGE, currentPage * FORMS_PER_PAGE);
@@ -62,7 +61,7 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
             <input
               type="search"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => { setQuery(event.target.value); setPage(1); }}
               placeholder="Search by form name or number"
               className="h-[46px] w-full rounded-md border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]"
             />
@@ -72,7 +71,7 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
               <button
                 key={option}
                 type="button"
-                onClick={() => setCategory(option)}
+                onClick={() => { setCategory(option); setPage(1); }}
                 className={`rounded-md border font-bold transition h-[46px] px-4 text-sm ${
                   category === option
                     ? 'border-[#301D5D] bg-[#301D5D] text-white'
