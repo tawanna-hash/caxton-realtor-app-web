@@ -984,6 +984,7 @@ export default function ClosingTime({
   const [isPdfSource, setIsPdfSource] = useState(false);
   const [activeTrecFormFamily, setActiveTrecFormFamily] = useState('20');
   const [activeTrecPage, setActiveTrecPage] = useState(1);
+  const [formListPage, setFormListPage] = useState(1);
   const [formsStatusDealId, setFormsStatusDealId] = useState<string | null>(null);
   const [workspacePage, setWorkspacePage] = useState<1 | 2>(2);
   const versionRef = useRef<number | null>(initialWorkspaceVersion);
@@ -1248,6 +1249,10 @@ export default function ClosingTime({
   const isDealLocked = (deal: AgentDeal) =>
     deal.auditLocked || (Boolean(deal.closeoutOutcome && deal.closeoutDate) && isDealFullyComplete(deal));
   const activePacketForms = trecFormVersions.filter((version) => version.isActive);
+  const FORM_LIST_PAGE_SIZE = 6;
+  const formListPageCount = Math.max(1, Math.ceil(activePacketForms.length / FORM_LIST_PAGE_SIZE));
+  const currentFormListPage = Math.min(formListPage, formListPageCount);
+  const pagedPacketForms = activePacketForms.slice((currentFormListPage - 1) * FORM_LIST_PAGE_SIZE, currentFormListPage * FORM_LIST_PAGE_SIZE);
   const selectedFormVersions = activeDeal
     ? activePacketForms.filter((version) => activeDeal.selectedFormFamilies[version.formFamily])
     : [];
@@ -2357,8 +2362,8 @@ export default function ClosingTime({
                     <div className="mb-4">
                       <span className="mb-1.5 block text-sm font-bold text-slate-900">Select A TREC Contract Or Form</span>
                       <p className="mb-2 text-xs text-slate-500">Check the forms needed; click a name to fill it in.</p>
-                      <div className="max-h-[172px] divide-y divide-slate-100 overflow-y-auto rounded-md border border-slate-300 bg-white">
-                        {activePacketForms.map((version) => {
+                      <div className="divide-y divide-slate-100 rounded-md border border-slate-300 bg-white">
+                        {pagedPacketForms.map((version) => {
                           const isSelected = activeDeal.selectedFormFamilies[version.formFamily] ?? false;
                           const isViewing = version.formFamily === currentTrecFormVersion.formFamily;
                           return (
@@ -2397,6 +2402,29 @@ export default function ClosingTime({
                           );
                         })}
                       </div>
+                      {formListPageCount > 1 && (
+                        <nav aria-label="TREC forms pages" className="mt-2 flex items-center justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setFormListPage(Math.max(1, currentFormListPage - 1))}
+                            disabled={currentFormListPage === 1}
+                            className="inline-flex min-h-[36px] items-center gap-1 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
+                          </button>
+                          <p className="text-xs font-semibold text-slate-600">
+                            Page {currentFormListPage} of {formListPageCount} · {activePacketForms.length} forms
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setFormListPage(Math.min(formListPageCount, currentFormListPage + 1))}
+                            disabled={currentFormListPage === formListPageCount}
+                            className="inline-flex min-h-[36px] items-center gap-1 rounded-md bg-[#301D5D] px-3 text-xs font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            Next <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        </nav>
+                      )}
                     </div>
                     {selectedFormVersions.length > 0 && (
                       <div className="mb-4">
