@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import PushOptInButton from '@/components/PushOptInButton';
 import TrecPdfPagePreview from './TrecPdfPagePreview';
+import TrecFormsLibrary from './TrecFormsLibrary';
 import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 import { trackEvent } from '@/app/posthog-provider';
 import {
@@ -1939,9 +1940,23 @@ export default function ClosingTime({
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">Download dates for this deal or every active transaction, including deadlines, reminders, and tasks.</p>
               <div className="mt-4 flex flex-wrap gap-2">
-                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex min-h-[42px] items-center gap-2 bg-[#301D5D] px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"><Download className="rnn-inline-icon" aria-hidden="true" />Export This Deal</button>
-                <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex min-h-[42px] items-center gap-2 border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Export Active Deals</button>
+                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"><Download className="rnn-inline-icon" aria-hidden="true" />Export This Deal</button>
+                <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Export Active Deals</button>
               </div>
+            </div>
+            <div id="trec-forms" {...collapsible('trec-library')} className="scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Official form library</p>
+                  <h3 className="mt-1 text-lg font-semibold text-slate-950">TREC Contracts And Forms</h3>
+                  <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Search and download all current forms listed in the Texas Real Estate Commission contract library. Always confirm the revision and effective date before use.</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-md border border-[#301D5D] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white sm:inline-flex">Verify on TREC</a>
+                  <CollapseToggle {...toggleProps('trec-library', 'TREC contracts and forms')} />
+                </div>
+              </div>
+              <TrecFormsLibrary versions={trecFormVersions} embedded />
             </div>
           </section>
         )}

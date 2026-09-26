@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Download, FileText, PencilLine, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight, Download, FileText, PencilLine, Search } from 'lucide-react';
 import {
   TREC_FORM_LIBRARY,
   TREC_FORM_LIBRARY_CATEGORIES,
@@ -18,8 +18,11 @@ function formatEffectiveDate(value: string): string {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-export default function TrecFormsLibrary({ versions }: { versions: TrecFormVersion[] }) {
+const FORMS_PER_PAGE = 10;
+
+export default function TrecFormsLibrary({ versions, embedded = false }: { versions: TrecFormVersion[]; embedded?: boolean }) {
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
   const [category, setCategory] = useState<'All Forms' | TrecFormLibraryCategory>('All Forms');
   const activeByFamily = useMemo(
     () => new Map(versions.filter((version) => version.isActive).map((version) => [version.formFamily, version])),
@@ -45,29 +48,14 @@ export default function TrecFormsLibrary({ versions }: { versions: TrecFormVersi
       && (!normalizedQuery || `${form.formNumber} ${form.title}`.toLowerCase().includes(normalizedQuery))
     ));
   }, [category, forms, query]);
+  useEffect(() => setPage(1), [category, query]);
+  const pageCount = Math.max(1, Math.ceil(visibleForms.length / FORMS_PER_PAGE));
+  const currentPage = Math.min(page, pageCount);
+  const pagedForms = visibleForms.slice((currentPage - 1) * FORMS_PER_PAGE, currentPage * FORMS_PER_PAGE);
 
-  return (
-    <section id="trec-forms" className="border-y border-slate-200 bg-[#F7F5F1]">
-      <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Official form library</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">TREC Contracts and Forms</h2>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-              Search and download all current forms listed in the Texas Real Estate Commission contract library. Always confirm the revision and effective date before use.
-            </p>
-          </div>
-          <a
-            href="https://www.trec.texas.gov/agency-information/contracts"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex h-[44px] shrink-0 items-center justify-center rounded-md border border-[#301D5D] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white"
-          >
-            Verify on TREC
-          </a>
-        </div>
-
-        <div className="mt-7 grid gap-3 lg:grid-cols-[minmax(260px,0.8fr)_1.2fr]">
+  const libraryBody = (
+    <>
+        <div className={`${embedded ? 'mt-4' : 'mt-7'} grid gap-3 lg:grid-cols-[minmax(260px,0.8fr)_1.2fr]`}>
           <label className="relative block">
             <span className="sr-only">Search TREC forms</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
@@ -103,8 +91,8 @@ export default function TrecFormsLibrary({ versions }: { versions: TrecFormVersi
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {visibleForms.map((form) => (
-            <article key={form.formFamily} className="flex min-w-0 flex-col justify-between gap-5 border border-slate-200 bg-white p-5">
+          {pagedForms.map((form) => (
+            <article key={form.formFamily} className={`flex min-w-0 flex-col justify-between gap-5 border border-slate-200 p-5 ${embedded ? 'bg-[#FCFBF9]' : 'bg-white'}`}>
               <div className="flex min-w-0 items-start gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEE8F9] text-[#5B438C]">
                   <FileText className="h-5 w-5" aria-hidden="true" />
@@ -146,6 +134,55 @@ export default function TrecFormsLibrary({ versions }: { versions: TrecFormVersi
             No TREC forms match that search.
           </div>
         )}
+
+        {pageCount > 1 && (
+          <nav aria-label="TREC forms pages" className="mt-4 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => setPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
+            </button>
+            <p className="text-sm font-semibold text-slate-700">Page {currentPage} of {pageCount}</p>
+            <button
+              type="button"
+              onClick={() => setPage(Math.min(pageCount, currentPage + 1))}
+              disabled={currentPage === pageCount}
+              className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </nav>
+        )}
+    </>
+  );
+
+  if (embedded) return <div>{libraryBody}</div>;
+
+  return (
+    <section id="trec-forms" className="border-y border-slate-200 bg-[#F7F5F1]">
+      <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Official form library</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">TREC Contracts and Forms</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+              Search and download all current forms listed in the Texas Real Estate Commission contract library. Always confirm the revision and effective date before use.
+            </p>
+          </div>
+          <a
+            href="https://www.trec.texas.gov/agency-information/contracts"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-[44px] shrink-0 items-center justify-center rounded-md border border-[#301D5D] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white"
+          >
+            Verify on TREC
+          </a>
+        </div>
+
+        {libraryBody}
       </div>
     </section>
   );
