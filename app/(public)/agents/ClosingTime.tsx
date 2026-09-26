@@ -1904,7 +1904,7 @@ export default function ClosingTime({
         </div>
 
         {workspacePage === 2 && (
-          <section className="mt-5 grid gap-5 lg:grid-cols-3" aria-label="Alerts and calendar">
+          <section className="mt-5 grid gap-5 lg:grid-cols-2" aria-label="Alerts and calendar">
             <div {...collapsible('alerts')} className="border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-slate-950">Deadline Alerts</h3>
@@ -1944,7 +1944,7 @@ export default function ClosingTime({
                 <button type="button" onClick={exportAllDealsCalendar} disabled={!deals.some((deal) => deal.status !== 'completed' && calendarEventsForDeal(deal).length)} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] disabled:cursor-not-allowed disabled:opacity-45"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Export Active Deals</button>
               </div>
             </div>
-            <div id="trec-forms" {...collapsible('trec-library')} className="min-w-0 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6">
+            <div id="trec-forms" {...collapsible('trec-library')} className="min-w-0 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <h3 className="text-lg font-semibold text-slate-950">TREC Contracts And Forms</h3>

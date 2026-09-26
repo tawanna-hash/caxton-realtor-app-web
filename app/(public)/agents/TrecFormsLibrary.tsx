@@ -55,7 +55,7 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
 
   const libraryBody = (
     <>
-        <div className={`grid gap-3 ${embedded ? 'mt-4' : 'mt-7 lg:grid-cols-[minmax(260px,0.8fr)_1.2fr]'}`}>
+        <div className={`${embedded ? 'mt-4' : 'mt-7'} grid gap-3 lg:grid-cols-[minmax(260px,0.8fr)_1.2fr]`}>
           <label className="relative block">
             <span className="sr-only">Search TREC forms</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
@@ -73,7 +73,7 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
                 key={option}
                 type="button"
                 onClick={() => setCategory(option)}
-                className={`rounded-md border font-bold transition ${embedded ? 'h-[36px] px-3 text-xs' : 'h-[46px] px-4 text-sm'} ${
+                className={`rounded-md border font-bold transition h-[46px] px-4 text-sm ${
                   category === option
                     ? 'border-[#301D5D] bg-[#301D5D] text-white'
                     : 'border-slate-300 bg-white text-slate-700 hover:border-[#7059A8] hover:bg-[#F8F5FF]'
@@ -90,7 +90,7 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
           <p className="text-xs text-slate-500">Library checked against TREC September 15, 2026</p>
         </div>
 
-        <div className={`mt-4 grid gap-3 ${embedded ? 'max-h-[340px] overflow-y-auto overscroll-contain pr-1' : 'md:grid-cols-2'}`}>
+        <div className={`mt-4 grid gap-3 md:grid-cols-2 ${embedded ? 'max-h-[340px] overflow-y-auto overscroll-contain pr-1' : ''}`}>
           {pagedForms.map((form) => (
             <article key={form.formFamily} className={`flex min-w-0 flex-col justify-between gap-5 border border-slate-200 p-5 ${embedded ? 'bg-[#FCFBF9]' : 'bg-white'}`}>
               <div className="flex min-w-0 items-start gap-3">
