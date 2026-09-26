@@ -1945,11 +1945,9 @@ export default function ClosingTime({
               </div>
             </div>
             <div id="trec-forms" {...collapsible('trec-library')} className="min-w-0 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Official form library</p>
-                  <h3 className="mt-1 text-lg font-semibold text-slate-950">TREC Contracts And Forms</h3>
-                  <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Search and download all current forms listed in the Texas Real Estate Commission contract library. Always confirm the revision and effective date before use.</p>
+                  <h3 className="text-lg font-semibold text-slate-950">TREC Contracts And Forms</h3>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-md border border-[#301D5D] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white sm:inline-flex">Verify on TREC</a>
