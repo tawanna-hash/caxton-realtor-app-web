@@ -210,11 +210,8 @@ export default function AgentCommandCenterClient({
             </div>
           </div>
 
-          <aside {...collapsible('desk')} className="border border-white/15 bg-white/[0.08] p-4 shadow-2xl shadow-[#140A29]/20 sm:p-6">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">Today&apos;s agent desk</p>
-              <CollapseToggle {...toggleProps('desk', "Today's agent desk")} tone="light" />
-            </div>
+          <aside className="border border-white/15 bg-white/[0.08] p-4 shadow-2xl shadow-[#140A29]/20 sm:p-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">Today&apos;s agent desk</p>
             <div className="mt-5 space-y-4">
               {[
                 ['01', 'Map Key TREC Dates', 'Bring the effective date and period terms.'],
