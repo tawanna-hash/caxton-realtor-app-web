@@ -313,7 +313,7 @@ export default function AgentCommandCenterClient({
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Work faster</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:mt-3 sm:text-4xl">Client-Ready Tools, One Click Away</h2>
+              <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Client-Ready Tools, One Click Away</h2>
             </div>
             <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
               See Every Agent Tool
