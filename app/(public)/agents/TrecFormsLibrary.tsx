@@ -50,7 +50,7 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
   }, [category, forms, query]);
   const pageCount = Math.max(1, Math.ceil(visibleForms.length / FORMS_PER_PAGE));
   const currentPage = Math.min(page, pageCount);
-  const pagedForms = visibleForms.slice((currentPage - 1) * FORMS_PER_PAGE, currentPage * FORMS_PER_PAGE);
+  const pagedForms = embedded ? visibleForms : visibleForms.slice((currentPage - 1) * FORMS_PER_PAGE, currentPage * FORMS_PER_PAGE);
 
   const libraryBody = (
     <>
@@ -134,7 +134,7 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
           </div>
         )}
 
-        {pageCount > 1 && (
+        {!embedded && pageCount > 1 && (
           <nav aria-label="TREC forms pages" className="mt-4 flex items-center justify-between gap-3">
             <button
               type="button"
