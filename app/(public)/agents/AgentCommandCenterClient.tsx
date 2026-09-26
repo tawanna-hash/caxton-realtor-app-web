@@ -235,7 +235,7 @@ export default function AgentCommandCenterClient({
       </section>
 
       <section id="deadline-planner" className="scroll-mt-20">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8 lg:py-10">
+        <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-8 sm:pt-8 lg:pt-10">
           <div className="border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(40,25,77,0.05)] sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="flex items-start gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F2EEE7] text-[#301D5D]">
@@ -307,8 +307,9 @@ export default function AgentCommandCenterClient({
         trecFormVersions={trecFormVersions}
       />
 
-      <section className="border-y border-slate-200 bg-white">
-        <div {...collapsible('tools')} className="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-12 lg:py-16">
+      <section>
+        <div className="mx-auto max-w-7xl px-4 pt-5 sm:px-8">
+        <div {...collapsible('tools')} className="border border-slate-200 bg-white p-5 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Work faster</p>
@@ -344,11 +345,12 @@ export default function AgentCommandCenterClient({
             })}
           </div>
         </div>
+        </div>
       </section>
 
       <section id="referral-network" className="scroll-mt-20">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-12 lg:py-16">
-          <div {...collapsible('referral')} className="grid gap-5 sm:gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:[&[data-collapsed=closed]]:grid-cols-1 lg:[&[data-collapsed=auto]]:grid-cols-1">
+        <div className="mx-auto max-w-7xl px-4 pt-5 sm:px-8">
+          <div {...collapsible('referral')} className="grid gap-5 lg:grid-cols-[0.78fr_1.22fr] lg:[&[data-collapsed=closed]]:grid-cols-1 lg:[&[data-collapsed=auto]]:grid-cols-1">
             <div className="bg-[#301D5D] p-5 text-white sm:p-9">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-[#F4D06F]">
