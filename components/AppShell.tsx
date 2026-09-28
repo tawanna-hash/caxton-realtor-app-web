@@ -472,8 +472,8 @@ export default function AppShell({
       </div>
       {!isAdmin ? (
         <>
-          {/* Inline newsletter signup — shown on every public page above the footer. */}
-          <NewsletterCTA source="public_footer" variant="flush" />
+          {/* The dashboard feed already includes its own signup form. */}
+          {pathname !== '/dashboard' && <NewsletterCTA source="public_footer" variant="flush" />}
           {/* Inline footer banner (paid placement) — scrolls with the page,
               sits above the site footer. Previously fixed at bottom-16, but
               overlapped sticky page UI (calc floater, etc). */}
