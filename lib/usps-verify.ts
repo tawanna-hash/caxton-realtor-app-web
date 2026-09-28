@@ -3,8 +3,8 @@
 // USPS Address API v3 (OAuth2 client_credentials).
 //
 //   Env:
-//     USPS_CLIENT_ID
-//     USPS_CLIENT_SECRET
+//     USPS_CONSUMER_KEY / USPS_CONSUMER_SECRET (production)
+//     USPS_CLIENT_ID / USPS_CLIENT_SECRET (legacy fallback)
 //
 // Endpoints (US production):
 //   POST https://apis.usps.com/oauth2/v3/token
@@ -32,10 +32,10 @@ interface CachedToken {
 let cachedToken: CachedToken | null = null;
 
 async function getAccessToken(): Promise<string> {
-  const id     = process.env.USPS_CLIENT_ID;
-  const secret = process.env.USPS_CLIENT_SECRET;
+  const id     = process.env.USPS_CONSUMER_KEY || process.env.USPS_CLIENT_ID;
+  const secret = process.env.USPS_CONSUMER_SECRET || process.env.USPS_CLIENT_SECRET;
   if (!id || !secret) {
-    throw new Error('USPS_CLIENT_ID / USPS_CLIENT_SECRET not set');
+    throw new Error('USPS credentials are not configured');
   }
 
   // Reuse cached token if it has >60s of life left
@@ -44,18 +44,17 @@ async function getAccessToken(): Promise<string> {
     return cachedToken.access_token;
   }
 
-  const credentials = Buffer.from(`${id}:${secret}`).toString('base64');
-
   const res = await fetch(OAUTH_URL, {
     method: 'POST',
     headers: {
-      Authorization: `Basic ${credentials}`,
       'Content-Type': 'application/x-www-form-urlencoded',
       Accept: 'application/json',
     },
     body: new URLSearchParams({
       grant_type: 'client_credentials',
-    }).toString(),
+      client_id: id,
+      client_secret: secret,
+    }),
   });
 
   if (!res.ok) {
