@@ -6,6 +6,7 @@ import { formatCents } from '@/lib/invoices';
 import type { DepositPaymentRow } from '@/lib/server/deposit-reports';
 import { shortDate } from '@/app/admin/billing/_components/helpers';
 import { isNative } from '@/lib/native/runtime';
+import { printCurrentPage } from '@/lib/native/print';
 
 const CONTROL =
   'rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500';
@@ -60,7 +61,7 @@ export default function DepositDetailClient({
     }
     const url = `/api/admin/reports/deposits/pdf?${new URLSearchParams({ from, to, kind: 'detail' })}`;
     if (!isNative()) {
-      window.open(url, '_blank', 'noopener,noreferrer');
+      window.location.assign(url);
       return;
     }
     try {
@@ -72,15 +73,14 @@ export default function DepositDetailClient({
         await navigator.share({ files: [file], title: 'Deposit Detail' });
         return;
       }
-      const href = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = href;
-      link.download = file.name;
-      link.click();
-      window.setTimeout(() => URL.revokeObjectURL(href), 60_000);
-      setPrintStatus('PDF downloaded. Open it to print or share.');
-    } catch {
-      setPrintStatus('Could not open the PDF. Please try again.');
+      await printCurrentPage({ url: window.location.href });
+      setPrintStatus('If no print sheet appeared, try opening this report in a browser.');
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      await printCurrentPage({ url: window.location.href });
+      setPrintStatus(error instanceof Error
+        ? `${error.message} Tried the device print option instead.`
+        : 'PDF unavailable. Tried the device print option instead.');
     }
   };
 

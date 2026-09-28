@@ -15,6 +15,7 @@ import { PUBLICATION_OPTIONS } from '@/lib/publication-theme';
 import type { DepositPaymentRow } from '@/lib/server/deposit-reports';
 import { shortDate } from '@/app/admin/billing/_components/helpers';
 import { isNative } from '@/lib/native/runtime';
+import { printCurrentPage } from '@/lib/native/print';
 
 export type { DepositPaymentRow } from '@/lib/server/deposit-reports';
 
@@ -107,9 +108,9 @@ export default function DepositReportClient({
       return;
     }
     if (!isNative()) {
-      // Opening an authenticated PDF directly from the tap preserves Safari's
-      // user activation; its Share menu offers Print and Save to Files.
-      window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+      // A same-tab navigation is not subject to mobile popup blocking and
+      // retains the admin session when opening the authenticated PDF.
+      window.location.assign(pdfUrl);
       return;
     }
     try {
@@ -121,15 +122,14 @@ export default function DepositReportClient({
         await navigator.share({ files: [file], title: 'Deposit Slip' });
         return;
       }
-      const href = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = href;
-      link.download = file.name;
-      link.click();
-      window.setTimeout(() => URL.revokeObjectURL(href), 60_000);
-      setEmailStatus('PDF downloaded. Open it to print or share.');
-    } catch {
-      setEmailStatus('Could not open the PDF. Try again or email the slip.');
+      await printCurrentPage({ url: window.location.href });
+      setEmailStatus('If no print sheet appeared, use Email deposit slip to receive the PDF.');
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      await printCurrentPage({ url: window.location.href });
+      setEmailStatus(error instanceof Error
+        ? `${error.message} Tried the device print option instead.`
+        : 'PDF unavailable. Tried the device print option instead.');
     }
   };
 

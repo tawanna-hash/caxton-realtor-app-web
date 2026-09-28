@@ -26,6 +26,7 @@ import {
 } from '@/app/admin/ar/PaymentActionDrawers';
 import PageTitle from '@/components/ui/PageTitle';
 import { toISODateString } from '@/app/admin/billing/_components/helpers';
+import { isNative } from '@/lib/native/runtime';
 
 export type SalesTransactionsClientProps = {
   initialInvoices: InvoiceWithAdvertiser[];
@@ -886,7 +887,14 @@ export function SalesTransactionsClient({
 
   const printInvoice = (invoice: InvoiceWithAdvertiser, packingSlip = false) => {
     const suffix = packingSlip ? '?packing=1' : '';
-    window.open(`/admin/invoices/${invoice.id}/preview${suffix}`, '_blank', 'noopener,noreferrer');
+    const url = `/admin/invoices/${invoice.id}/preview${suffix}`;
+    // Mobile Safari blocks new tabs in some embedded contexts. Keep the
+    // authenticated preview in the same tab/WebView on mobile and native.
+    if (isNative() || window.matchMedia('(max-width: 767px)').matches) {
+      window.location.assign(url);
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const runBatch = async (action: BatchAction | '') => {
