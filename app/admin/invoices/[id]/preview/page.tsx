@@ -105,8 +105,8 @@ export default async function InvoicePreviewPage({
         <PrintInvoiceButton />
       </div>
 
-      <article className="bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-10">
-        <header className="grid grid-cols-[1fr_auto] gap-8 border-b border-neutral-300 pb-5">
+      <article className="min-w-0 bg-white px-4 py-6 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-10 sm:py-8">
+        <header className="grid gap-3 border-b border-neutral-300 pb-5 sm:grid-cols-[1fr_auto] sm:gap-8">
           <Image
             src="/brand/caxton-logo.jpg"
             alt="Caxton Publications Inc."
@@ -115,7 +115,7 @@ export default async function InvoicePreviewPage({
             className="h-auto w-28 object-contain"
             priority
           />
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <div className="text-2xl tracking-wide text-neutral-900">INVOICE</div>
             <div className="mt-1 font-semibold">Caxton Publications, Inc.</div>
             <div>PO Box 81366</div>
@@ -125,14 +125,14 @@ export default async function InvoicePreviewPage({
           </div>
         </header>
 
-        <section className="grid grid-cols-2 gap-8 py-5">
+        <section className="grid gap-4 py-5 sm:grid-cols-2 sm:gap-8">
           <div>
             <div className="mb-1 text-[10px] uppercase tracking-wider text-neutral-500">Bill to</div>
             <div className="font-semibold">{invoice.bill_to_name ?? invoice.advertiser_name ?? 'Customer'}</div>
             {invoice.bill_to_address && <div className="mt-1 whitespace-pre-line">{invoice.bill_to_address}</div>}
             {invoice.bill_to_email && <div>{invoice.bill_to_email}</div>}
           </div>
-          <dl className="ml-auto grid grid-cols-[auto_auto] gap-x-3 text-right">
+          <dl className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-3 text-right sm:ml-auto">
             <dt className="font-semibold">Invoice Number:</dt><dd>{invoice.number ?? 'Draft'}</dd>
             <dt className="font-semibold">Invoice Date:</dt><dd>{date(invoice.issued_at)}</dd>
             <dt className="font-semibold">Payment Due:</dt><dd>{date(invoice.due_date)}</dd>
@@ -143,7 +143,7 @@ export default async function InvoicePreviewPage({
 
         <section className="mb-5">
           <div className="border-b border-neutral-300 pb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-600">Account summary</div>
-          <div className="grid grid-cols-[90px_1fr_auto] gap-x-3 border-b border-neutral-200 py-1.5">
+          <div className="grid grid-cols-[60px_minmax(0,1fr)_auto] gap-x-1 border-b border-neutral-200 py-1.5 sm:grid-cols-[90px_1fr_auto] sm:gap-x-3">
             <div>{date(invoice.issued_at)}</div>
             <div>Balance Forward</div>
             <div className="text-right">{money(balanceForwardCents)}</div>
@@ -160,12 +160,12 @@ export default async function InvoicePreviewPage({
         </section>
 
         <section>
-          <div className="grid grid-cols-[1fr_70px_85px_90px] bg-neutral-900 px-3 py-2 font-semibold text-white">
+          <div className="grid grid-cols-[minmax(0,1fr)_34px_60px_70px] gap-1 bg-neutral-900 px-2 py-2 font-semibold text-white sm:grid-cols-[1fr_70px_85px_90px] sm:gap-0 sm:px-3">
             <div>Services</div><div className="text-center">Quantity</div><div className="text-right">Rate</div><div className="text-right">Amount</div>
           </div>
           {invoice.line_items?.length ? invoice.line_items.map((item, index) => (
-            <div key={index} className="grid grid-cols-[1fr_70px_85px_90px] border-b border-neutral-200 px-3 py-3">
-              <div>{item.description}</div>
+            <div key={index} className="grid grid-cols-[minmax(0,1fr)_34px_60px_70px] gap-1 border-b border-neutral-200 px-2 py-3 sm:grid-cols-[1fr_70px_85px_90px] sm:gap-0 sm:px-3">
+              <div className="min-w-0 break-words">{item.description}</div>
               <div className="text-center">{item.qty}</div>
               <div className="text-right">{money(item.unit_cents)}</div>
               <div className="text-right">{money(item.unit_cents * item.qty)}</div>
@@ -175,7 +175,7 @@ export default async function InvoicePreviewPage({
           )}
         </section>
 
-        <section className="ml-auto mt-3 w-64">
+        <section className="ml-auto mt-3 w-full max-w-64">
           <div className="flex justify-between border-b border-neutral-200 py-1"><span>Total:</span><span>{money(invoice.amount_cents)}</span></div>
           {invoice.tax_cents > 0 && <div className="flex justify-between border-b border-neutral-200 py-1"><span>Tax:</span><span>{money(invoice.tax_cents)}</span></div>}
           <div className="flex justify-between py-2 font-semibold"><span>Amount Due (USD):</span><span>{paid ? '$0.00' : money(invoice.total_cents)}</span></div>

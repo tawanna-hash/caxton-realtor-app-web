@@ -14,6 +14,7 @@ import { formatCents } from '@/lib/invoices';
 import { PUBLICATION_OPTIONS } from '@/lib/publication-theme';
 import type { DepositPaymentRow } from '@/lib/server/deposit-reports';
 import { shortDate } from '@/app/admin/billing/_components/helpers';
+import { isNative } from '@/lib/native/runtime';
 
 export type { DepositPaymentRow } from '@/lib/server/deposit-reports';
 
@@ -69,6 +70,10 @@ export default function DepositReportClient({
   const router = useRouter();
   const [fromDate, setFromDate] = useState(from);
   const [toDate, setToDate] = useState(to);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [recipient, setRecipient] = useState(preparedBy ?? '');
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailStatus, setEmailStatus] = useState('');
   const rows = payments;
 
   const totalCents = useMemo(
@@ -94,9 +99,64 @@ export default function DepositReportClient({
   };
 
   const rangeLabel = `${shortDate(from)} – ${shortDate(to)}`;
+  const pdfUrl = `/api/admin/reports/deposits/pdf?${new URLSearchParams({ from, to }).toString()}`;
+
+  const printSlip = async () => {
+    if (window.matchMedia('(min-width: 768px)').matches && !isNative()) {
+      window.print();
+      return;
+    }
+    if (!isNative()) {
+      // Opening an authenticated PDF directly from the tap preserves Safari's
+      // user activation; its Share menu offers Print and Save to Files.
+      window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    try {
+      const response = await fetch(pdfUrl, { credentials: 'same-origin', cache: 'no-store' });
+      if (!response.ok) throw new Error('Could not prepare the deposit slip.');
+      const blob = await response.blob();
+      const file = new File([blob], `deposit-slip-${from}-${to}.pdf`, { type: 'application/pdf' });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Deposit Slip' });
+        return;
+      }
+      const href = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = href;
+      link.download = file.name;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(href), 60_000);
+      setEmailStatus('PDF downloaded. Open it to print or share.');
+    } catch {
+      setEmailStatus('Could not open the PDF. Try again or email the slip.');
+    }
+  };
+
+  const emailSlip = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setEmailSending(true);
+    setEmailStatus('');
+    try {
+      const response = await fetch('/api/admin/reports/deposits/email', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipient: recipient.trim(), from, to }),
+      });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error || 'Email could not be sent.');
+      setEmailOpen(false);
+      setEmailStatus(`Deposit slip sent to ${recipient.trim()}.`);
+    } catch (error) {
+      setEmailStatus(error instanceof Error ? error.message : 'Email could not be sent.');
+    } finally {
+      setEmailSending(false);
+    }
+  };
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-6 print:max-w-none print:px-0 print:py-0">
+    <div className="mx-auto max-w-7xl min-w-0 px-4 py-5 sm:px-6 sm:py-6 print:max-w-none print:px-0 print:py-0">
       {/* Screen-only controls */}
       <div className="no-print mb-6 flex flex-wrap items-end justify-between gap-4 print:hidden">
         <div>
@@ -105,31 +165,47 @@ export default function DepositReportClient({
             Every check recorded against an invoice in the selected range, totalled for the bank deposit slip.
           </p>
         </div>
-        <div className="flex flex-wrap items-end gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-end">
           <label className="block">
             <span className="mb-1 block text-xs text-gray-600">From</span>
-            <input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} className={CONTROL} />
+            <input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} className={`${CONTROL} min-h-11 w-full min-w-0`} />
           </label>
           <label className="block">
             <span className="mb-1 block text-xs text-gray-600">To</span>
-            <input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} className={CONTROL} />
+            <input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} className={`${CONTROL} min-h-11 w-full min-w-0`} />
           </label>
           <button
             type="button"
             onClick={applyRange}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="min-h-11 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Update range
           </button>
           <button
             type="button"
-            onClick={() => window.print()}
-            className="rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+            onClick={() => { void printSlip(); }}
+            className="min-h-11 rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
           >
-            Print deposit slip
+            Print / Save PDF
+          </button>
+          <button type="button" onClick={() => { setEmailOpen((open) => !open); setEmailStatus(''); }} className="col-span-2 min-h-11 rounded-md border border-orange-600 px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-50">
+            {emailOpen ? 'Cancel email' : 'Email deposit slip'}
           </button>
         </div>
       </div>
+      {emailOpen && (
+        <form onSubmit={(event) => { void emailSlip(event); }} className="no-print mb-4 rounded-md border border-gray-200 bg-white p-4 print:hidden">
+          <label className="block max-w-lg text-sm font-medium text-gray-800">
+            Recipient email
+            <input type="email" required value={recipient} onChange={(event) => setRecipient(event.target.value)} className={`${CONTROL} mt-1 min-h-11 w-full min-w-0`} />
+          </label>
+          <p className="mt-3 text-sm text-gray-600">Send the PDF for {rangeLabel}: {rows.length} checks, {formatCents(totalCents)}. Only recorded check payments are included.</p>
+          <button type="submit" disabled={emailSending} className="mt-3 min-h-11 rounded-md bg-orange-600 px-4 text-sm font-semibold text-white disabled:opacity-50">
+            {emailSending ? 'Sending…' : `Send to ${recipient.trim() || 'recipient'}`}
+          </button>
+        </form>
+      )}
+      {emailStatus && <p role="status" className="no-print mb-4 text-sm font-medium text-gray-800 print:hidden">{emailStatus}</p>}
 
       {/* Printed report */}
       <div className="rounded border border-gray-200 bg-white p-6 shadow-sm print:rounded-none print:border-0 print:p-0 print:shadow-none">
@@ -144,8 +220,8 @@ export default function DepositReportClient({
           </div>
         </div>
 
-        <div className="mb-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 print:bg-white">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="col-span-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 sm:col-span-1 print:bg-white">
             <div className="text-xs text-emerald-800">Total deposit</div>
             <div className="mt-0.5 text-2xl font-semibold tabular-nums text-emerald-900">{formatCents(totalCents)}</div>
           </div>
@@ -191,7 +267,24 @@ export default function DepositReportClient({
               </div>
             </div>
 
-            <div className="overflow-x-auto rounded-md border border-gray-200 print:overflow-visible">
+            <div className="md:hidden print:hidden" aria-label="Check detail">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-600">Check detail</h3>
+              <div className="space-y-2">
+                {rows.map((payment) => (
+                  <article key={payment.id} className="rounded-md border border-gray-200 p-3 text-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="break-words font-semibold text-gray-900">{payment.partner_name ?? '—'}</p>
+                        <p className="text-xs text-gray-600">{shortDate(payment.payment_date)} · Check {payment.reference?.trim() || '—'}</p>
+                      </div>
+                      <strong className="shrink-0 tabular-nums text-gray-900">{formatCents(payment.amount_cents)}</strong>
+                    </div>
+                    <p className="mt-2 break-words text-xs text-gray-700">Invoice {payment.invoice_number ?? 'Draft'}{payment.memo?.trim() ? ` · ${payment.memo.trim()}` : ''}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+            <div className="hidden overflow-x-auto rounded-md border border-gray-200 md:block print:block print:overflow-visible">
               <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-600 print:bg-white">
                 Check detail
               </div>

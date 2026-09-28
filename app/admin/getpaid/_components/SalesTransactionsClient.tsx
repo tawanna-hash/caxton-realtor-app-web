@@ -69,9 +69,9 @@ type InvoiceSender =
 type InvoiceSenderChoice = InvoiceSender | 'auto';
 
 const CONTROL =
-  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100';
+  'min-h-11 sm:h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100';
 const ORANGE_BUTTON =
-  'inline-flex h-9 items-center justify-center gap-2 rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex min-h-11 items-center justify-center gap-2 rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:cursor-not-allowed disabled:opacity-50';
 
 function isSafeHttpUrl(value: unknown): value is string {
   if (typeof value !== 'string' || !value) return false;
@@ -333,7 +333,7 @@ function TransactionCard({
           {!invoiceWorkspace && memo && <div className="mt-1 truncate text-xs text-gray-500" title={memo}>{memo}</div>}
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
+      <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 sm:grid-cols-3">
         <div>
           <div className="text-gray-400">Date</div>
           <div>{formatTransactionDate(transactionDate(invoice))}</div>
@@ -349,15 +349,15 @@ function TransactionCard({
       </div>
       <div><StatusCell invoice={invoice} referenceTime={referenceTime} /></div>
       <div className="relative flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
-        <button type="button" disabled={busy} className="font-medium text-orange-700 hover:underline disabled:opacity-50" onClick={onView}>
+        <button type="button" disabled={busy} className="min-h-11 font-medium text-orange-700 hover:underline disabled:opacity-50" onClick={onView}>
           View/Edit
         </button>
         {canReceivePayment ? (
-          <button type="button" disabled={busy} className="font-medium text-orange-700 hover:underline disabled:opacity-50" onClick={onReceivePayment}>
+          <button type="button" disabled={busy} className="min-h-11 font-medium text-orange-700 hover:underline disabled:opacity-50" onClick={onReceivePayment}>
             Receive payment
           </button>
         ) : (
-          <button type="button" className="font-medium text-orange-700 hover:underline" onClick={onPrint}>
+          <button type="button" className="min-h-11 font-medium text-orange-700 hover:underline" onClick={onPrint}>
             <span className="inline-flex items-center gap-1"><Printer className="h-3.5 w-3.5" aria-hidden="true" />Print</span>
           </button>
         )}
@@ -365,7 +365,7 @@ function TransactionCard({
           type="button"
           aria-label={`More actions for ${invoice.number ?? 'transaction'}`}
           disabled={busy}
-          className="ml-auto inline-flex rounded p-1 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
+          className="ml-auto inline-flex min-h-11 min-w-11 items-center justify-center rounded p-1 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
           onClick={onToggleMenu}
         >
           <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
@@ -979,7 +979,7 @@ export function SalesTransactionsClient({
   };
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] min-w-0 space-y-5 px-4 py-5 sm:px-5 sm:py-7 lg:px-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
@@ -1047,7 +1047,7 @@ export function SalesTransactionsClient({
       )}
 
       <section aria-label={invoiceWorkspace ? 'Invoice filters' : 'Transaction filters'} className="space-y-2">
-        <div className="flex flex-wrap items-end gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end">
           {!invoiceWorkspace && <label className="space-y-1">
             <span className="block text-xs text-transparent" aria-hidden="true">Actions</span>
             <select
@@ -1068,18 +1068,18 @@ export function SalesTransactionsClient({
               <option value="delete">Delete drafts</option>
             </select>
           </label>}
-          <label className="space-y-1">
+          <label className="min-w-0 space-y-1">
             <span className="block text-xs text-gray-500">Type</span>
-            <select className={`${CONTROL} min-w-36`} value={type} onChange={(event) => updateFilter(() => setType(event.target.value as TypeFilter))}>
+            <select className={`${CONTROL} w-full min-w-0 sm:min-w-36`} value={type} onChange={(event) => updateFilter(() => setType(event.target.value as TypeFilter))}>
               <option value="all">All transactions</option>
               <option value="invoice">Invoices</option>
               <option value="receipt">Sales receipts</option>
             </select>
           </label>
           {invoiceWorkspace && (
-            <label className="space-y-1">
+            <label className="min-w-0 space-y-1">
               <span className="block text-xs text-gray-500">Status</span>
-              <select className={`${CONTROL} min-w-36`} value={status} onChange={(event) => updateFilter(() => setStatus(event.target.value as StatusFilter))}>
+              <select className={`${CONTROL} w-full min-w-0 sm:min-w-36`} value={status} onChange={(event) => updateFilter(() => setStatus(event.target.value as StatusFilter))}>
                 <option value="all">All statuses</option>
                 <option value="draft">Draft</option>
                 <option value="open">Open</option>
@@ -1089,16 +1089,16 @@ export function SalesTransactionsClient({
               </select>
             </label>
           )}
-          <label className="space-y-1">
+          <label className="min-w-0 space-y-1">
             <span className="block text-xs text-gray-500">Date</span>
-            <select className={`${CONTROL} min-w-36`} value={dateFilter} onChange={(event) => updateFilter(() => setDateFilter(event.target.value as DateFilter))}>
+            <select className={`${CONTROL} w-full min-w-0 sm:min-w-36`} value={dateFilter} onChange={(event) => updateFilter(() => setDateFilter(event.target.value as DateFilter))}>
               <option value="30-days">Last 30 days</option>
               <option value="3-months">Last 3 months</option>
               <option value="12-months">Last 12 months</option>
               <option value="all">All dates</option>
             </select>
           </label>
-          <label className="min-w-60 flex-1 space-y-1">
+          <label className="col-span-2 min-w-0 flex-1 space-y-1 sm:min-w-60">
             <span className="block text-xs text-gray-500">{invoiceWorkspace ? 'Search' : 'Client'}</span>
             <span className="relative block">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
@@ -1112,9 +1112,9 @@ export function SalesTransactionsClient({
               />
             </span>
           </label>
-          <div className="relative ml-auto flex">
+          <div className="relative col-span-2 flex min-w-0 sm:ml-auto">
             {invoiceWorkspace ? (
-              <button type="button" className={`${ORANGE_BUTTON} rounded-r-none`} onClick={() => setCreatingInvoice(true)}>
+              <button type="button" className={`${ORANGE_BUTTON} min-w-0 flex-1 rounded-r-none sm:flex-none`} onClick={() => setCreatingInvoice(true)}>
                 <Sparkles className="h-4 w-4" aria-hidden="true" />
                 Create invoice
               </button>

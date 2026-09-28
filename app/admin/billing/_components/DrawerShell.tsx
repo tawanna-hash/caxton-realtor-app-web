@@ -19,16 +19,16 @@ export function DrawerShell({
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-black/30" onClick={onClose} />
-      <div className={`flex h-dvh w-full flex-col bg-white shadow-xl ${wide ? 'max-w-[min(1180px,calc(100vw-48px))]' : 'max-w-xl'}`}>
-        <div className="z-10 flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
-          <div>
+      <div className={`flex h-dvh w-full min-w-0 flex-col bg-white shadow-xl ${wide ? 'max-w-full sm:max-w-[min(1180px,calc(100vw-48px))]' : 'max-w-xl'}`}>
+        <div className="z-10 flex shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-3 sm:px-6">
+          <div className="min-w-0">
             <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Billing</div>
             <h2 className="text-xl text-gray-900">{title}</h2>
             {subtitle && <div className="text-xs text-gray-500 mt-0.5 truncate">{subtitle}</div>}
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
+          <button type="button" onClick={onClose} aria-label="Close drawer" className="flex h-11 w-11 shrink-0 items-center justify-center text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
         </div>
-        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">{children}</div>
+        <div className="min-w-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto px-4 py-4 sm:px-6">{children}</div>
       </div>
     </div>
   );
@@ -48,9 +48,9 @@ export function DrawerFooter({
     : 'bg-blue-600 hover:bg-blue-700';
 
   return (
-    <div className="sticky bottom-0 -mx-6 px-6 py-4 bg-white border-t border-gray-200 flex items-center justify-end gap-2">
-      <button onClick={onCancel} className="px-4 py-2 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap">Cancel</button>
-      <button onClick={onSubmit} disabled={saving} className={`px-4 py-2 rounded-md text-white text-sm disabled:opacity-50 whitespace-nowrap ${submitColor}`}>
+    <div className="sticky bottom-0 -mx-4 flex items-center justify-end gap-2 border-t border-gray-200 bg-white px-4 py-4 sm:-mx-6 sm:px-6">
+      <button onClick={onCancel} className="min-h-11 rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap">Cancel</button>
+      <button onClick={onSubmit} disabled={saving} className={`min-h-11 rounded-md px-4 py-2 text-sm text-white disabled:opacity-50 whitespace-nowrap ${submitColor}`}>
         {saving ? 'Saving…' : submitLabel}
       </button>
     </div>

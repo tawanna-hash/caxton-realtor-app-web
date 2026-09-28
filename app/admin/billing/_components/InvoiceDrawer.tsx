@@ -416,7 +416,7 @@ export function InvoiceDrawer({
     >
       <div className="grid gap-4 xl:grid-cols-2">
       <Section title="Linkage">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Partner">
             <select
               value={form.advertiser_id ?? ''}
@@ -462,9 +462,9 @@ export function InvoiceDrawer({
       <Section title="Line items" className="xl:col-span-2">
         {form.line_items.length === 0 && <div className="text-xs text-gray-500">No line items — invoice will use the manual amount below.</div>}
         {form.line_items.map((li, i) => (
-          <div key={i} className="grid grid-cols-12 gap-2 items-center">
+          <div key={i} className="grid min-w-0 grid-cols-2 items-center gap-2 border-b border-gray-100 pb-3 sm:grid-cols-12 sm:border-0 sm:pb-0">
             <ProductServiceSearch
-              className="col-span-6"
+              className="col-span-2 min-w-0 sm:col-span-6"
               value={li.description}
               onChange={(value) => updateLineItem(i, 'description', value)}
               onSelect={(item) => updateLineItems(form.line_items.map((line, index) => index === i ? {
@@ -473,16 +473,16 @@ export function InvoiceDrawer({
                 unit_cents: item.price_cents ?? 0,
               } : line))}
             />
-            <input className={`${INPUT} col-span-2`} value={li.qty} type="number" min={1} onChange={(e) => updateLineItem(i, 'qty', e.target.value)} />
-            <input className={`${INPUT} col-span-3`} value={li.unit_cents / 100} type="number" step="0.01" onChange={(e) => updateLineItem(i, 'unit_cents', Math.round(parseFloat(e.target.value || '0') * 100))} placeholder="Unit $" />
-            <button type="button" onClick={() => removeLineItem(i)} className="col-span-1 text-xs text-rose-600 hover:underline">×</button>
+            <label className="min-w-0 text-xs text-gray-600 sm:col-span-2"><span className="sm:sr-only">Quantity</span><input aria-label="Quantity" className={`${INPUT} mt-1 min-w-0 sm:mt-0`} value={li.qty} type="number" min={1} onChange={(e) => updateLineItem(i, 'qty', e.target.value)} /></label>
+            <label className="min-w-0 text-xs text-gray-600 sm:col-span-3"><span className="sm:sr-only">Unit price</span><input aria-label="Unit price" className={`${INPUT} mt-1 min-w-0 sm:mt-0`} value={li.unit_cents / 100} type="number" step="0.01" onChange={(e) => updateLineItem(i, 'unit_cents', Math.round(parseFloat(e.target.value || '0') * 100))} placeholder="Unit $" /></label>
+            <button type="button" onClick={() => removeLineItem(i)} aria-label="Remove line item" className="col-span-2 min-h-11 text-left text-xs text-rose-600 hover:underline sm:col-span-1 sm:text-center">Remove</button>
           </div>
         ))}
         <button type="button" onClick={addLineItem} className="text-xs text-orange-600 hover:underline">+ Add line item</button>
       </Section>
 
       <Section title="Amount &amp; status">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Invoice number">
             <input value={form.number} onChange={(e) => update('number', e.target.value)} className={INPUT} />
           </Field>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { formatCents } from '@/lib/invoices';
 import type { DepositPaymentRow } from '@/lib/server/deposit-reports';
 import { shortDate } from '@/app/admin/billing/_components/helpers';
+import { isNative } from '@/lib/native/runtime';
 
 const CONTROL =
   'rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500';
@@ -51,9 +52,40 @@ export default function DepositDetailClient({
     const query = new URLSearchParams({ from: fromDate, to: toDate });
     router.push(`/admin/reports/detail?${query.toString()}`);
   };
+  const [printStatus, setPrintStatus] = useState('');
+  const printReport = async () => {
+    if (window.matchMedia('(min-width: 768px)').matches && !isNative()) {
+      window.print();
+      return;
+    }
+    const url = `/api/admin/reports/deposits/pdf?${new URLSearchParams({ from, to, kind: 'detail' })}`;
+    if (!isNative()) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    try {
+      const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+      if (!response.ok) throw new Error('Could not prepare the PDF.');
+      const blob = await response.blob();
+      const file = new File([blob], `deposit-detail-${from}-${to}.pdf`, { type: 'application/pdf' });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Deposit Detail' });
+        return;
+      }
+      const href = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = href;
+      link.download = file.name;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(href), 60_000);
+      setPrintStatus('PDF downloaded. Open it to print or share.');
+    } catch {
+      setPrintStatus('Could not open the PDF. Please try again.');
+    }
+  };
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-6 print:max-w-none print:px-0 print:py-0">
+    <div className="mx-auto max-w-7xl min-w-0 px-4 py-5 sm:px-6 sm:py-6 print:max-w-none print:px-0 print:py-0">
       <div className="no-print mb-6 flex flex-wrap items-end justify-between gap-4 print:hidden">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Deposit Detail</h1>
@@ -61,31 +93,32 @@ export default function DepositDetailClient({
             Transaction-level check detail from recorded invoice payments.
           </p>
         </div>
-        <div className="flex flex-wrap items-end gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-end">
           <label className="block">
             <span className="mb-1 block text-xs text-gray-600">From</span>
-            <input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} className={CONTROL} />
+            <input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} className={`${CONTROL} min-h-11 w-full min-w-0`} />
           </label>
           <label className="block">
             <span className="mb-1 block text-xs text-gray-600">To</span>
-            <input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} className={CONTROL} />
+            <input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} className={`${CONTROL} min-h-11 w-full min-w-0`} />
           </label>
           <button
             type="button"
             onClick={applyRange}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="min-h-11 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Update range
           </button>
           <button
             type="button"
-            onClick={() => window.print()}
-            className="rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+            onClick={() => { void printReport(); }}
+            className="min-h-11 rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
           >
-            Print report
+            Print / Save PDF
           </button>
         </div>
       </div>
+      {printStatus && <p role="status" className="no-print mb-4 text-sm text-gray-700 print:hidden">{printStatus}</p>}
 
       <div className="rounded border border-gray-200 bg-white p-6 shadow-sm print:rounded-none print:border-0 print:p-0 print:shadow-none">
         <div className="mb-6 border-b border-gray-200 pb-4 text-center">
@@ -104,7 +137,20 @@ export default function DepositDetailClient({
             No check payments were recorded between {shortDate(from)} and {shortDate(to)}.
           </div>
         ) : (
-          <div className="overflow-x-auto border-y border-gray-200 print:overflow-visible">
+          <>
+          <div className="divide-y divide-gray-100 border-y border-gray-200 md:hidden print:hidden">
+            {payments.map((payment) => (
+              <article key={payment.id} className="space-y-1 py-3 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <strong className="min-w-0 break-words text-gray-900">{payment.partner_name ?? '—'}</strong>
+                  <strong className="shrink-0 tabular-nums">{formatCents(payment.amount_cents)}</strong>
+                </div>
+                <p className="text-xs text-gray-600">{shortDate(payment.payment_date)} · Check {payment.reference?.trim() || '—'} · Invoice {payment.invoice_number ?? 'Draft'}</p>
+                <p className="break-words text-xs text-gray-700">{payment.memo?.trim() || 'Payment received'}</p>
+              </article>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto border-y border-gray-200 md:block print:block print:overflow-visible">
             <table className="deposit-ledger-table w-full min-w-[1100px] text-left text-xs print:min-w-0">
               <thead className="border-b border-gray-300 text-gray-700">
                 <tr>
@@ -152,6 +198,7 @@ export default function DepositDetailClient({
               </tfoot>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>
