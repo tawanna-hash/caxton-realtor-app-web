@@ -153,6 +153,13 @@ export async function verifyAddressUsps(input: UspsVerifyInput): Promise<UspsVer
     return { ok: true, status: 'Invalid', detail };
   }
 
+  if (res.status === 403) {
+    return {
+      ok: false,
+      error: 'USPS Addresses API access is not authorized for these credentials (403). Complete the Addresses API license setup in the USPS Business Portal, link these credentials, refresh claims, and then retry.',
+    };
+  }
+
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     return { ok: false, error: `USPS ${res.status}: ${text.slice(0, 200)}` };

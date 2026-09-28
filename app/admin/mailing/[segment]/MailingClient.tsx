@@ -412,6 +412,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
     let valid = 0;
     let invalid = 0;
     let errors = 0;
+    let blockingError: string | null = null;
     for (let i = 0; i < candidates.length; i++) {
       const r = candidates[i];
       setBusy(`Verifying ${i + 1}/${candidates.length}\u2026`);
@@ -426,6 +427,10 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         if (!res.ok) {
           errors++;
           console.error('[verify-address]', r.id, j?.detail || j?.error || res.status);
+          if (j?.code === 'USPS_UPSTREAM_ERROR' && String(j?.detail ?? '').includes('USPS Addresses API access is not authorized')) {
+            blockingError = j.detail;
+            break;
+          }
         } else if (j.verdict === 'Valid') {
           valid++;
         } else if (j.verdict === 'Invalid') {
@@ -439,7 +444,9 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       await new Promise((res) => setTimeout(res, 200));
     }
     setBusy(null);
-    alert(`USPS verify complete \u2014 Valid ${valid}, Invalid ${invalid}, Errors ${errors}.`);
+    alert(blockingError
+      ? `${blockingError}\n\nStopped after the first authorization failure. No remaining contacts were checked.`
+      : `USPS verify complete \u2014 Valid ${valid}, Invalid ${invalid}, Errors ${errors}.`);
     await reload();
   }
 
