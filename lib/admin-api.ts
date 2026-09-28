@@ -95,8 +95,7 @@ export const adminApi = {
     adminFetch(`/admin/events/${id}/hide`, { method: 'POST' }),
   unhideEvent: (id: number) =>
     adminFetch(`/admin/events/${id}/unhide`, { method: 'POST' }),
-  // Permanently delete events whose end date (or start date when no end exists) is past.
-  // Returns { deletedCount: number }.
+  // Delete expired manual events and hide expired scraped events.
   deleteExpiredEvents: () =>
     adminFetch('/admin/events/delete-expired', { method: 'POST' }),
 

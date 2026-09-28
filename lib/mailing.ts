@@ -24,6 +24,7 @@ export * from './server/mailing/import-fields';
 export * from './server/mailing/queries';
 export * from './server/mailing/mutations';
 export * from './server/mailing/advertiser-sync';
+export * from './server/mailing/partner-roster-sync';
 export * from './server/mailing/holding';
 export * from './server/mailing/external-upsert';
 export * from './server/mailing/verification';

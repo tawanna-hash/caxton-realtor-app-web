@@ -12,6 +12,7 @@ import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import {
   listAllEventsForAdmin,
+  countExpiredEvents,
   createManualEvent,
   type Publication,
 } from '@/lib/server/events-store';
@@ -31,7 +32,8 @@ export const GET = withAdminTracking(async (req: Request) => {
     ? (publicationSchema.parse(pubParam) as Publication)
     : undefined;
   const events = await listAllEventsForAdmin(publication);
-  return NextResponse.json({ events });
+  const expired = await countExpiredEvents();
+  return NextResponse.json({ events, expired });
 });
 
 export const POST = withAdminTracking(async (req: Request) => {

@@ -7,7 +7,7 @@
 import { NextResponse } from 'next/server';
 import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
-import { syncAdvertisersFromAdvertisers } from '@/lib/mailing';
+import { syncPartnerRoster } from '@/lib/mailing';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
@@ -20,7 +20,7 @@ export const POST = withAdminTracking(async function POST() {
   try {
     await ensureSchema();
     const started = Date.now();
-    const result = await syncAdvertisersFromAdvertisers();
+    const result = await syncPartnerRoster();
     const durationMs = Date.now() - started;
     return NextResponse.json({ ok: true, durationMs, ...result });
   } catch (err) {

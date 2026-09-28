@@ -11,7 +11,7 @@
 
 import { NextResponse } from 'next/server';
 // removed: ensureSchema import
-import { syncAdvertisersFromAdvertisers } from '@/lib/mailing';
+import { syncPartnerRoster } from '@/lib/mailing';
 import { withScraperRun } from '@/lib/with-scraper-run';
 
 export const runtime = 'nodejs';
@@ -40,7 +40,7 @@ async function _GET(req: Request) {
   const started = Date.now();
   try {
     // removed: ensureSchema() — crons should not run DDL
-    const result = await syncAdvertisersFromAdvertisers();
+    const result = await syncPartnerRoster();
     return NextResponse.json({ ok: true, durationMs: Date.now() - started, ...result });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

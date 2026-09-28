@@ -6,6 +6,7 @@ import { EventsList } from '@/components/events/EventsList';
 import type { CalendarEvent } from '@/lib/events-store';
 import { usePublication } from '@/lib/use-publication';
 import { usePtrRefresh } from '@/hooks/use-ptr-refresh';
+import { eventsForCalendarDays } from '@/lib/events/calendar-days';
 
 type View = 'month' | 'upcoming';
 
@@ -37,21 +38,11 @@ export default function CalendarClient() {
   const [displayMonth, setDisplayMonth] = useState<Date>(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
-  // Group events by ISO date string for fast lookup in the grid
+  // Populate every occupied day, including existing multi-day events and
+  // spans that began in a previous month.
   const eventsByDate = useMemo(() => {
-    const map = new Map<string, CalendarEvent[]>();
-    if (!events) return map;
-    for (const ev of events) {
-      if (!ev.startDate) continue;
-      const d = new Date(ev.startDate);
-      if (isNaN(d.getTime())) continue;
-      const key = isoDateKey(d);
-      const arr = map.get(key) ?? [];
-      arr.push(ev);
-      map.set(key, arr);
-    }
-    return map;
-  }, [events]);
+    return eventsForCalendarDays(events ?? [], displayMonth);
+  }, [events, displayMonth]);
 
   // Default-select today if there are events on today, otherwise no selection.
   // queueMicrotask wrap to satisfy react-hooks/set-state-in-effect.

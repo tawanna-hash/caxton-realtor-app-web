@@ -70,11 +70,12 @@ export default function EventsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
-  // "Expired" = end_date is in the past, or start_date when no end exists.
-  // Mirrors the server-side criterion in POST /admin/events/delete-expired. Stored as state and
-  // computed in the loader (see `reload`) so Date.now() never runs
-  // during render — keeps react-hooks/purity happy.
-  const [expiredVisibleCount, setExpiredVisibleCount] = useState(0);
+  // The server supplies one global Central-time count for all publications.
+  // Hidden scraped events remain in the archive but need no further action.
+  const [expiredSummary, setExpiredSummary] = useState({
+    total: 0, manual: 0, visibleScraped: 0, hiddenScraped: 0,
+  });
+  const expiredActionCount = expiredSummary.manual + expiredSummary.visibleScraped;
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -112,13 +113,9 @@ export default function EventsPage() {
       .then((data) => {
         const events: AdminEvent[] = data?.events || [];
         setItems(events);
-        const now = Date.now();
-        const expired = events.reduce((n, ev) => {
-          const expiration = ev.endDate ?? ev.startDate;
-          if (!expiration) return n;
-          return new Date(expiration).getTime() < now ? n + 1 : n;
-        }, 0);
-        setExpiredVisibleCount(expired);
+        setExpiredSummary(data?.expired ?? {
+          total: 0, manual: 0, visibleScraped: 0, hiddenScraped: 0,
+        });
         setLoading(false);
       })
       .catch((err) => {
@@ -165,20 +162,22 @@ export default function EventsPage() {
   };
 
   const handleDeleteExpired = async () => {
-    if (expiredVisibleCount === 0) {
-      alert('No expired events to delete.');
+    if (expiredActionCount === 0) {
+      alert('No expired events need clearing.');
       return;
     }
     const msg =
-      `Permanently delete ${expiredVisibleCount} expired event${expiredVisibleCount === 1 ? '' : 's'}? ` +
-      `This includes hidden events and cannot be undone.`;
+      `Clear ${expiredActionCount} expired event${expiredActionCount === 1 ? '' : 's'}? ` +
+      `${expiredSummary.manual} manual event${expiredSummary.manual === 1 ? '' : 's'} will be permanently deleted; ` +
+      `${expiredSummary.visibleScraped} scraped event${expiredSummary.visibleScraped === 1 ? '' : 's'} will be hidden.`;
     if (!window.confirm(msg)) return;
     setBulkBusy(true);
     try {
       const res = await adminApi.deleteExpiredEvents();
-      const n = res?.deletedCount ?? 0;
+      const deleted = res?.deletedCount ?? 0;
+      const hidden = res?.hiddenCount ?? 0;
       reload();
-      alert(`Deleted ${n} expired event${n === 1 ? '' : 's'}.`);
+      alert(`Deleted ${deleted} manual event${deleted === 1 ? '' : 's'} and hid ${hidden} scraped event${hidden === 1 ? '' : 's'}.`);
     } catch (err) {
       alert(err instanceof Error ? err.message : String(err));
     } finally {
@@ -217,17 +216,17 @@ export default function EventsPage() {
           <button
             type="button"
             onClick={handleDeleteExpired}
-            disabled={bulkBusy || expiredVisibleCount === 0}
+            disabled={bulkBusy || expiredActionCount === 0}
             title={
-              expiredVisibleCount === 0
-                ? 'No expired events to delete'
-                : `Permanently delete ${expiredVisibleCount} expired event${expiredVisibleCount === 1 ? '' : 's'}`
+              expiredActionCount === 0
+                ? 'No expired events need clearing'
+                : `Delete ${expiredSummary.manual} manual and hide ${expiredSummary.visibleScraped} scraped expired events`
             }
             className="px-4 py-2 bg-white text-red-700 text-sm font-medium rounded-md border border-red-300 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {bulkBusy
-              ? 'Deleting\u2026'
-              : `Delete expired${expiredVisibleCount > 0 ? ` (${expiredVisibleCount})` : ''}`}
+              ? 'Clearing\u2026'
+              : `Clear expired${expiredActionCount > 0 ? ` (${expiredActionCount})` : ''}`}
           </button>
           <Link
             href="/admin/events/new"
@@ -242,7 +241,7 @@ export default function EventsPage() {
         <div><strong>{items.length.toLocaleString()}</strong><span>Total events</span></div>
         <div><strong>{items.filter((event) => !event.hidden).length.toLocaleString()}</strong><span>Visible</span></div>
         <div><strong>{items.filter((event) => event.hidden).length.toLocaleString()}</strong><span>Hidden</span></div>
-        <div><strong>{expiredVisibleCount.toLocaleString()}</strong><span>Expired</span></div>
+        <div title={`${expiredSummary.hiddenScraped} already-hidden scraped events retained`}><strong>{expiredSummary.total.toLocaleString()}</strong><span>Expired (all)</span></div>
       </section>
 
       <div className="flex items-center justify-between gap-2 mb-4">

@@ -1,7 +1,7 @@
 /**
  * POST /api/admin/events/delete-expired
- * Permanently delete every event whose end date, or start date when no end
- * date exists, is already in the past.
+ * Delete expired manual events and hide expired scraped events so they
+ * cannot be reintroduced by the next scraper run.
  */
 
 import { NextResponse } from 'next/server';
@@ -14,13 +14,13 @@ export const runtime = 'nodejs';
 
 export const POST = withAdminTracking(async () => {
   const admin = await requireAdmin();
-  const deletedCount = await deleteExpired();
+  const result = await deleteExpired();
   await logEventAudit({
     adminId: admin.adminId,
     action: 'event.delete_expired',
     eventId: null,
-    payload: { deletedCount },
+    payload: result,
     ipAddress: await getRequestIp(),
   });
-  return NextResponse.json({ deletedCount });
+  return NextResponse.json(result);
 });

@@ -870,20 +870,60 @@ export async function setHidden(
   return rows[0] ? rowToAdminEvent(rows[0]) : null;
 }
 
+/** An event expires after its final calendar day in Central time. */
+const EXPIRED_EVENT_WHERE = `
+  COALESCE(end_date, start_date) IS NOT NULL
+  AND (COALESCE(end_date, start_date) AT TIME ZONE 'America/Chicago')::date
+      < (NOW() AT TIME ZONE 'America/Chicago')::date
+`;
+
+export type ExpiredEventSummary = {
+  total: number;
+  manual: number;
+  visibleScraped: number;
+  hiddenScraped: number;
+};
+
+/** Count all past events, while distinguishing rows that still need action. */
+export async function countExpiredEvents(): Promise<ExpiredEventSummary> {
+  const rows = await query<{
+    total: number;
+    manual: number;
+    visible_scraped: number;
+    hidden_scraped: number;
+  }>(
+    `SELECT COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE external_source = 'manual')::int AS manual,
+            COUNT(*) FILTER (WHERE external_source <> 'manual' AND hidden = false)::int AS visible_scraped,
+            COUNT(*) FILTER (WHERE external_source <> 'manual' AND hidden = true)::int AS hidden_scraped
+       FROM events WHERE ${EXPIRED_EVENT_WHERE}`,
+  );
+  const row = rows[0];
+  return {
+    total: row?.total ?? 0,
+    manual: row?.manual ?? 0,
+    visibleScraped: row?.visible_scraped ?? 0,
+    hiddenScraped: row?.hidden_scraped ?? 0,
+  };
+}
+
 /**
- * Admin: permanently delete expired events from every source.
- *
- * An event expires after its end_date when present, otherwise after its
- * start_date. This preserves multi-day events until their actual end.
+ * Delete expired manual events; hide scraped events so the next scraper
+ * cannot recreate them as visible. Already-hidden scraped events stay put.
  */
-export async function deleteExpired(): Promise<number> {
-  const result = await query<{ id: number }>(
+export async function deleteExpired(): Promise<{ deletedCount: number; hiddenCount: number }> {
+  const deleted = await query<{ id: number }>(
     `DELETE FROM events
-     WHERE COALESCE(end_date, start_date) IS NOT NULL
-       AND COALESCE(end_date, start_date) < NOW()
+     WHERE external_source = 'manual' AND ${EXPIRED_EVENT_WHERE}
      RETURNING id`,
   );
-  return result.length;
+  const hidden = await query<{ id: number }>(
+    `UPDATE events SET hidden = true
+     WHERE external_source <> 'manual' AND hidden = false
+       AND ${EXPIRED_EVENT_WHERE}
+     RETURNING id`,
+  );
+  return { deletedCount: deleted.length, hiddenCount: hidden.length };
 }
 
 /**

@@ -187,7 +187,9 @@ export async function listEvents(publication: Publication): Promise<CalendarEven
       FROM events
      WHERE publication = ${publication}
        AND hidden = false
-       AND (end_date IS NULL OR end_date >= NOW() - INTERVAL '1 day')
+       AND COALESCE(end_date, start_date) >=
+           date_trunc('day', NOW() AT TIME ZONE 'America/Chicago')
+             AT TIME ZONE 'America/Chicago'
      ORDER BY (start_date IS NULL), start_date ASC, id ASC
   `) as unknown as EventRow[];
   return rows.map(rowToEvent);
@@ -209,7 +211,9 @@ export async function listUpcomingEventsByAdvertiser(
       JOIN event_advertisers ea ON ea.event_id = e.id
      WHERE ea.advertiser_id = ${advertiserId}
        AND e.hidden = false
-       AND (e.end_date IS NULL OR e.end_date >= NOW() - INTERVAL '1 day')
+       AND COALESCE(e.end_date, e.start_date) >=
+           date_trunc('day', NOW() AT TIME ZONE 'America/Chicago')
+             AT TIME ZONE 'America/Chicago'
      ORDER BY (e.start_date IS NULL), e.start_date ASC, e.id ASC
   `) as unknown as EventRow[];
   return rows.map(rowToEvent);
