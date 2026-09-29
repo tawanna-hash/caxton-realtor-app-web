@@ -152,6 +152,7 @@ async function readDocumentPages(
   files: File[],
   onPage: (file: File, page: number) => Promise<void>,
   onProgress: (progress: string) => void,
+  maxPages = MAX_DOCUMENT_PAGES,
 ): Promise<number> {
   type PdfDocument = import('pdfjs-dist').PDFDocumentProxy;
   type PageSource =
@@ -170,7 +171,7 @@ async function readDocumentPages(
         pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
         const pdfDocument = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
         documents.push(pdfDocument);
-        for (let page = 1; page <= pdfDocument.numPages; page++) {
+        for (let page = 1; page <= Math.min(pdfDocument.numPages, maxPages); page++) {
           sources.push({ kind: 'pdf', document: pdfDocument, page });
         }
       } else if (['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
@@ -178,7 +179,7 @@ async function readDocumentPages(
       } else {
         throw new Error('Use a PDF, JPG, PNG, or WebP document.');
       }
-      if (sources.length > MAX_DOCUMENT_PAGES) {
+      if (sources.length > maxPages) {
         throw new Error('Upload no more than 10 pages in total.');
       }
     }
@@ -392,17 +393,28 @@ export function EventForm({
     if (!file || autoCapturing) return;
     setError(null);
     setAutoCaptureNotice(null);
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setError('Flyer must be a JPG, PNG, or WebP image');
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Flyer must be a PDF, JPG, PNG, or WebP file');
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      setError('Flyer image must be 10 MB or smaller');
+    if (file.size > (isPdf ? MAX_DOCUMENT_SOURCE_BYTES : 10 * 1024 * 1024)) {
+      setError(isPdf ? 'Flyer PDF must be 20 MB or smaller' : 'Flyer image must be 10 MB or smaller');
       return;
     }
 
     setAutoCapturing(true);
     try {
+      if (isPdf) {
+        // Render the PDF's first page to a JPEG so the existing image
+        // extraction and flyer-upload routes can handle it unchanged.
+        const rendered: { page?: File } = {};
+        await readDocumentPages([file], async (pageFile, page) => {
+          if (page === 1) rendered.page = pageFile;
+        }, () => {}, 1);
+        if (!rendered.page) throw new Error('Could not read that PDF. Try exporting it as an image.');
+        file = rendered.page;
+      }
       const extractFormData = new FormData();
       extractFormData.append('image', file);
       const uploadFormData = new FormData();
@@ -752,7 +764,7 @@ export function EventForm({
                 {mode === 'public' ? 'Upload a flyer to fill out this form' : 'Auto-fill from flyer'}
               </p>
               <p className="mt-0.5 text-xs text-gray-600">
-                Drop a photo or screenshot of an event flyer. We&apos;ll fill in what we can;
+                Drop a PDF, photo, or screenshot of an event flyer. We&apos;ll fill in what we can;
                 review and edit the details before {mode === 'public' ? 'submitting' : 'saving'}.
               </p>
               {(!data.imageUrl || mode !== 'public') && <div
@@ -798,7 +810,7 @@ export function EventForm({
                 <p className="text-sm font-medium text-gray-900">
                   {autoCapturing ? 'Reading flyer...' : 'Drop your flyer here or click to browse'}
                 </p>
-                <p className="mt-1 text-xs text-gray-500">JPG, PNG, or WebP up to 10 MB</p>
+                <p className="mt-1 text-xs text-gray-500">PDF (first page), JPG, PNG, or WebP</p>
               </div>}
               {autoCaptureNotice && (
                 <p role="status" className="mt-2 text-xs text-gray-600">{autoCaptureNotice}</p>
@@ -838,7 +850,7 @@ export function EventForm({
               <input
                 ref={autoCaptureInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="application/pdf,.pdf,image/jpeg,image/png,image/webp"
                 className="sr-only"
                 aria-label="Choose event flyer image"
                 onChange={(event) => void autoCaptureFlyer(event.target.files?.[0])}
