@@ -56,7 +56,6 @@ export async function verifyAddressGoogle(input: AddressInput): Promise<AddressR
     return { ok: false, error: `Google Address Validation could not be reached: ${error instanceof Error ? error.message : 'network error'}` };
   }
   if (!response.ok) {
-    // Never echo upstream response text: Google errors may contain key or input data.
     return { ok: false, error: `Google Address Validation returned HTTP ${response.status}. Check that the API is enabled and the key permits this server-side API.` };
   }
 
@@ -85,12 +84,18 @@ export async function verifyAddressGoogle(input: AddressInput): Promise<AddressR
   } catch {
     return { ok: false, error: 'Google Address Validation returned unreadable data.' };
   }
+
   const verdict = body.result?.verdict;
   const postal = body.result?.address?.postalAddress;
   if (!verdict || !postal) return { ok: false, error: 'Google Address Validation returned an incomplete response.' };
 
   const dpv = body.result?.uspsData?.dpvConfirmation || '';
   const action = verdict.possibleNextAction || '';
+  const lines = postal.addressLines || [];
+  const zipMatch = (postal.postalCode || '').match(/^(\d{5})(?:-?(\d{4}))?$/);
+  const hasCompleteStandardAddress = Boolean(
+    lines[0] && postal.locality && postal.administrativeArea && zipMatch,
+  );
   const evidence = {
     source: 'google-address-validation',
     action,
@@ -106,15 +111,28 @@ export async function verifyAddressGoogle(input: AddressInput): Promise<AddressR
   if (action === 'CONFIRM_ADD_SUBPREMISES' || dpv === 'D' || dpv === 'S') {
     return { ok: true, status: 'Pending', detail: 'Confirm the apartment or suite number before mailing.', evidence };
   }
+  if (!hasCompleteStandardAddress) {
+    return { ok: true, status: 'Pending', detail: 'Google did not return a complete standardized mailing address.', evidence };
+  }
+  if (dpv === 'Y') {
+    return {
+      ok: true,
+      status: 'Valid',
+      detail: 'Validated by Google Address Validation and USPS DPV.',
+      normalized: {
+        streetAddress: lines[0],
+        secondaryAddress: lines.slice(1).join(', ') || null,
+        city: postal.locality!,
+        state: postal.administrativeArea!,
+        zip5: zipMatch![1],
+        zip4: zipMatch![2] || null,
+      },
+      evidence,
+    };
+  }
   if (action === 'CONFIRM' || verdict.hasUnconfirmedComponents || verdict.addressComplete !== true ||
       !['PREMISE', 'SUB_PREMISE'].includes(verdict.validationGranularity || '')) {
     return { ok: true, status: 'Pending', detail: 'Google found a possible address, but it needs review before mailing.', evidence };
-  }
-
-  const lines = postal.addressLines || [];
-  const zipMatch = (postal.postalCode || '').match(/^(\d{5})(?:-?(\d{4}))?$/);
-  if (!lines[0] || !postal.locality || !postal.administrativeArea || !zipMatch) {
-    return { ok: true, status: 'Pending', detail: 'Google did not return a complete standardized mailing address.', evidence };
   }
   if (action && action !== 'ACCEPT') {
     return { ok: true, status: 'Pending', detail: 'Google recommends reviewing this address before mailing.', evidence };
@@ -126,10 +144,10 @@ export async function verifyAddressGoogle(input: AddressInput): Promise<AddressR
     normalized: {
       streetAddress: lines[0],
       secondaryAddress: lines.slice(1).join(', ') || null,
-      city: postal.locality,
-      state: postal.administrativeArea,
-      zip5: zipMatch[1],
-      zip4: zipMatch[2] || null,
+      city: postal.locality!,
+      state: postal.administrativeArea!,
+      zip5: zipMatch![1],
+      zip4: zipMatch![2] || null,
     },
     evidence,
   };
