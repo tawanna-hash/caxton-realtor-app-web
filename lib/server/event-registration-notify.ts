@@ -16,6 +16,9 @@ type RegistrationNotice = {
 
 function siteOrigin(): string {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  // Production emails must link to the real domain: VERCEL_URL is the
+  // per-deployment host, which is behind Vercel protection and has no admin session.
+  if (process.env.VERCEL_ENV === 'production') return 'https://realtynewsnow.app';
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return 'https://realtynewsnow.app';
 }
