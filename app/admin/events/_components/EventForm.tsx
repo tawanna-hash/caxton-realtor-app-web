@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, ImagePlus, Loader2, Sparkles, UploadCloud, X } from 'lucide-react';
+import { ChevronDown, Loader2, Sparkles, UploadCloud, X } from 'lucide-react';
 import { adminApi } from '@/lib/admin-api';
 import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
@@ -332,9 +332,6 @@ export function EventForm({
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [hp, setHp] = useState('');
-  const [dragActive, setDragActive] = useState(false);
-  const [uploadingFlyer, setUploadingFlyer] = useState(false);
-  const flyerInputRef = useRef<HTMLInputElement>(null);
   const [autoCapturing, setAutoCapturing] = useState(false);
   const [autoCaptureNotice, setAutoCaptureNotice] = useState<string | null>(null);
   const [autoCaptureDragActive, setAutoCaptureDragActive] = useState(false);
@@ -391,48 +388,8 @@ export function EventForm({
       });
     };
 
-  const uploadFlyer = async (file: File | undefined) => {
-    if (!file) return;
-    setError(null);
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setError('Flyer must be a JPG, PNG, or WebP image');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setError('Flyer image must be 10 MB or smaller');
-      return;
-    }
-
-    setUploadingFlyer(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await fetch('/api/events/upload-flyer', {
-        method: 'POST',
-        body: formData,
-      });
-      const result = (await response.json().catch(() => ({}))) as {
-        url?: string;
-        error?: string;
-      };
-      if (!response.ok || !result.url) {
-        throw new Error(result.error ?? `Upload failed (${response.status})`);
-      }
-      setData((current) => ({
-        ...current,
-        imageUrl: result.url ?? '',
-        imageThumb: result.url ?? '',
-      }));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Flyer upload failed');
-    } finally {
-      setUploadingFlyer(false);
-      if (flyerInputRef.current) flyerInputRef.current.value = '';
-    }
-  };
-
   const autoCaptureFlyer = async (file: File | undefined) => {
-    if (!file) return;
+    if (!file || autoCapturing) return;
     setError(null);
     setAutoCaptureNotice(null);
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
@@ -452,7 +409,10 @@ export function EventForm({
       uploadFormData.append('file', file);
 
       const [extractResponse, uploadResponse] = await Promise.all([
-        fetch('/api/admin/events/extract-flyer', { method: 'POST', body: extractFormData }),
+        fetch(mode === 'public' ? '/api/events/extract-flyer' : '/api/admin/events/extract-flyer', {
+          method: 'POST',
+          body: extractFormData,
+        }),
         fetch('/api/events/upload-flyer', { method: 'POST', body: uploadFormData }),
       ]);
 
@@ -485,32 +445,42 @@ export function EventForm({
         error?: string;
       };
 
+      const flyerUrl = uploadResponse.ok ? uploadResult.url ?? null : null;
+      if (flyerUrl) {
+        setData((current) => ({ ...current, imageUrl: flyerUrl, imageThumb: flyerUrl }));
+      }
       if (!extractResponse.ok || !result.ok || !result.extracted) {
-        throw new Error(result.error ?? `Auto-capture failed (${extractResponse.status})`);
+        setAutoCaptureNotice(
+          flyerUrl
+            ? `${result.error ?? 'Could not read event details.'} The flyer is attached; please enter the event details below.`
+            : result.error ?? 'Could not read the flyer. Please enter the event details below.',
+        );
+        if (!flyerUrl) setError(uploadResult.error ?? 'Flyer upload failed. Please try again.');
+        return;
       }
 
-      const flyerUrl = uploadResponse.ok ? uploadResult.url ?? null : null;
       const ex = result.extracted;
       const noDetailsFound = !ex.title && ex.confidence === 0;
 
       setData((current) => ({
         ...current,
-        title: ex.title ? toTitleCase(ex.title) : current.title,
-        description: ex.description ?? current.description,
-        startDate: ex.startDate ?? current.startDate,
-        endDate: ex.endDate ?? current.endDate,
-        location: ex.location ? toTitleCase(ex.location) : current.location,
-        organizer: ex.organizer ? toTitleCase(ex.organizer) : current.organizer,
-        organizerEmail: ex.organizerEmail ?? current.organizerEmail,
-        website: ex.website ? normalizeUrlInput(ex.website) : current.website,
-        format: ex.format ?? current.format,
-        courseNumber: ex.courseNumber ?? current.courseNumber,
-        memberPrice: ex.memberPrice ?? current.memberPrice,
-        nonmemberPrice: ex.nonmemberPrice ?? current.nonmemberPrice,
-        instructorName: ex.instructorName ? toTitleCase(ex.instructorName) : current.instructorName,
-        instructorBio: ex.instructorBio ?? current.instructorBio,
+        title: ex.title && (mode !== 'public' || !current.title) ? toTitleCase(ex.title) : current.title,
+        description: ex.description && (mode !== 'public' || !current.description) ? ex.description : current.description,
+        startDate: ex.startDate && (mode !== 'public' || !current.startDate) ? ex.startDate : current.startDate,
+        endDate: ex.endDate && (mode !== 'public' || !current.endDate) ? ex.endDate : current.endDate,
+        location: ex.location && (mode !== 'public' || !current.location) ? toTitleCase(ex.location) : current.location,
+        organizer: ex.organizer && (mode !== 'public' || !current.organizer) ? toTitleCase(ex.organizer) : current.organizer,
+        organizerEmail: ex.organizerEmail && (mode !== 'public' || !current.organizerEmail) ? ex.organizerEmail : current.organizerEmail,
+        link: mode === 'public' && ex.website && !current.link ? normalizeUrlInput(ex.website) : current.link,
+        website: ex.website && (mode !== 'public' || !current.website) ? normalizeUrlInput(ex.website) : current.website,
+        format: ex.format && (mode !== 'public' || !current.format) ? ex.format : current.format,
+        courseNumber: ex.courseNumber && (mode !== 'public' || !current.courseNumber) ? ex.courseNumber : current.courseNumber,
+        memberPrice: ex.memberPrice && (mode !== 'public' || !current.memberPrice) ? ex.memberPrice : current.memberPrice,
+        nonmemberPrice: ex.nonmemberPrice && (mode !== 'public' || !current.nonmemberPrice) ? ex.nonmemberPrice : current.nonmemberPrice,
+        instructorName: ex.instructorName && (mode !== 'public' || !current.instructorName) ? toTitleCase(ex.instructorName) : current.instructorName,
+        instructorBio: ex.instructorBio && (mode !== 'public' || !current.instructorBio) ? ex.instructorBio : current.instructorBio,
         schedule: ex.schedule?.length
-          ? ex.schedule.map((item) => ({
+          && (mode !== 'public' || current.schedule.length === 0) ? ex.schedule.map((item) => ({
               time: item.time,
               title: toTitleCase(item.title),
               details: item.details,
@@ -528,13 +498,13 @@ export function EventForm({
         );
       } else if (!ex.startDate && ex.rawDate) {
         setAutoCaptureNotice(
-          `Filled in what I could read and attached the flyer image. Couldn't auto-parse the date "${ex.rawDate}${ex.rawTime ? ` ${ex.rawTime}` : ''}" — please set it manually.`,
+          `Filled in what I could read. Couldn't auto-parse the date "${ex.rawDate}${ex.rawTime ? ` ${ex.rawTime}` : ''}" — please set it manually.`,
         );
       } else {
         setAutoCaptureNotice(
           flyerUrl
-            ? 'Fields filled in and flyer attached as the event image — please review before saving.'
-            : 'Fields filled in from the flyer — please review before saving.',
+            ? `Fields filled in and flyer attached as the event image — please review before ${mode === 'public' ? 'submitting' : 'saving'}.`
+            : `Fields filled in from the flyer — please review before ${mode === 'public' ? 'submitting' : 'saving'}.`,
         );
       }
     } catch (err) {
@@ -773,17 +743,19 @@ export function EventForm({
         </div>
       )}
 
-      {(mode === 'create' || mode === 'edit') && (
+      {(mode === 'create' || mode === 'edit' || mode === 'public') && (
         <div className="rounded-md border border-brand-700/40 bg-brand-50/40 p-5">
           <div className="flex items-start gap-3">
             <Sparkles size={18} className="mt-0.5 shrink-0 text-brand-700" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900">Auto-fill from flyer</p>
-              <p className="mt-0.5 text-xs text-gray-600">
-                Drop a photo or screenshot of an event flyer below and the fields will be filled in
-                automatically. Review everything before saving.
+              <p className="text-sm font-semibold text-gray-900">
+                {mode === 'public' ? 'Upload a flyer to fill out this form' : 'Auto-fill from flyer'}
               </p>
-              <div
+              <p className="mt-0.5 text-xs text-gray-600">
+                Drop a photo or screenshot of an event flyer. We&apos;ll fill in what we can;
+                review and edit the details before {mode === 'public' ? 'submitting' : 'saving'}.
+              </p>
+              {(!data.imageUrl || mode !== 'public') && <div
                 role="button"
                 tabIndex={0}
                 onClick={() => !autoCapturing && autoCaptureInputRef.current?.click()}
@@ -810,7 +782,7 @@ export function EventForm({
                 onDrop={(event) => {
                   event.preventDefault();
                   setAutoCaptureDragActive(false);
-                  void autoCaptureFlyer(event.dataTransfer.files[0]);
+                  if (!autoCapturing) void autoCaptureFlyer(event.dataTransfer.files[0]);
                 }}
                 className={`mt-3 flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-6 text-center transition-colors ${
                   autoCaptureDragActive
@@ -827,9 +799,9 @@ export function EventForm({
                   {autoCapturing ? 'Reading flyer...' : 'Drop your flyer here or click to browse'}
                 </p>
                 <p className="mt-1 text-xs text-gray-500">JPG, PNG, or WebP up to 10 MB</p>
-              </div>
+              </div>}
               {autoCaptureNotice && (
-                <p className="mt-2 text-xs text-gray-600">{autoCaptureNotice}</p>
+                <p role="status" className="mt-2 text-xs text-gray-600">{autoCaptureNotice}</p>
               )}
               {data.imageUrl && (
                 <div className="mt-3 flex items-center gap-3 rounded-md border border-gray-200 bg-white p-2">
@@ -842,9 +814,25 @@ export function EventForm({
                       className="object-cover"
                     />
                   </div>
-                  <p className="text-xs text-gray-600">
-                    Flyer attached as the event image — it will show on the public listing.
+                  <p className="flex-1 text-xs text-gray-600">
+                    Flyer attached
                   </p>
+                  {mode === 'public' && (
+                    <button type="button" onClick={(event) => {
+                      event.stopPropagation();
+                      if (!autoCapturing) autoCaptureInputRef.current?.click();
+                    }}
+                      className="text-xs font-medium text-brand-700 hover:underline">Replace</button>
+                  )}
+                  {mode === 'public' && (
+                    <button type="button" onClick={(event) => {
+                      event.stopPropagation();
+                      setData((current) => ({ ...current, imageUrl: '', imageThumb: '' }));
+                      setAutoCaptureNotice(null);
+                    }} className="inline-flex items-center gap-1 text-xs font-medium text-red-700 hover:underline">
+                      <X size={14} /> Remove
+                    </button>
+                  )}
                 </div>
               )}
               <input
@@ -852,6 +840,7 @@ export function EventForm({
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 className="sr-only"
+                aria-label="Choose event flyer image"
                 onChange={(event) => void autoCaptureFlyer(event.target.files?.[0])}
               />
             </div>
@@ -1355,103 +1344,6 @@ export function EventForm({
       {/* Media + tags */}
       <div className={sectionClass}>
         <div className={sectionTitleClass}>Media & Tags</div>
-        {mode === 'public' && (
-          <div className="mb-5">
-            <label className={labelClass}>Event Flyer or Image</label>
-            {data.imageUrl ? (
-              <div className="overflow-hidden rounded-md border border-gray-200 bg-gray-50">
-                <div className="relative aspect-[16/9] w-full max-w-xl bg-gray-100">
-                  <Image
-                    src={data.imageUrl}
-                    alt="Uploaded event flyer preview"
-                    fill
-                    unoptimized
-                    className="object-contain"
-                  />
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-4 py-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <ImagePlus size={16} />
-                    Flyer uploaded
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => flyerInputRef.current?.click()}
-                      className="text-sm font-medium text-brand-700 hover:text-brand-800"
-                    >
-                      Replace
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        update('imageUrl', '');
-                        update('imageThumb', '');
-                      }}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700"
-                    >
-                      <X size={15} />
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => !uploadingFlyer && flyerInputRef.current?.click()}
-                onKeyDown={(event) => {
-                  if ((event.key === 'Enter' || event.key === ' ') && !uploadingFlyer) {
-                    event.preventDefault();
-                    flyerInputRef.current?.click();
-                  }
-                }}
-                onDragEnter={(event) => {
-                  event.preventDefault();
-                  setDragActive(true);
-                }}
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  setDragActive(true);
-                }}
-                onDragLeave={(event) => {
-                  event.preventDefault();
-                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                    setDragActive(false);
-                  }
-                }}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  setDragActive(false);
-                  void uploadFlyer(event.dataTransfer.files[0]);
-                }}
-                className={`flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-8 text-center transition-colors ${
-                  dragActive
-                    ? 'border-brand-700 bg-brand-50'
-                    : 'border-gray-300 bg-gray-50 hover:border-brand-700 hover:bg-brand-50/50'
-                }`}
-              >
-                {uploadingFlyer ? (
-                  <Loader2 className="mb-3 animate-spin text-brand-700" size={28} />
-                ) : (
-                  <UploadCloud className="mb-3 text-brand-700" size={30} />
-                )}
-                <p className="text-sm font-medium text-gray-900">
-                  {uploadingFlyer ? 'Uploading flyer...' : 'Drop your flyer here or click to browse'}
-                </p>
-                <p className="mt-1 text-xs text-gray-500">JPG, PNG, or WebP up to 10 MB</p>
-              </div>
-            )}
-            <input
-              ref={flyerInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="sr-only"
-              onChange={(event) => void uploadFlyer(event.target.files?.[0])}
-            />
-          </div>
-        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Image URL</label>
