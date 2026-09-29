@@ -1,7 +1,7 @@
 import { type PubKey } from '@/lib/pub-meta';
 
 // Phase 2 — Print subscription POST handler
-// Receives form data from /subscribe, validates the address against USPS,
+// Receives form data from /subscribe, validates the address with Google,
 // stores the subscriber on Neon, sends a notification to the publisher
 // and a confirmation to the subscriber.
 
@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getEmailProvider } from '@/lib/server/email';
 import { escapeHtml } from '@/lib/server/email/html';
+import { verifyAddressGoogle } from '@/lib/address-validation';
 
 export const runtime = 'nodejs';
 
@@ -36,7 +37,7 @@ type SubscribePayload = {
   birthdayDay: string;
 };
 
-type UspsVerifyResult = {
+type AddressCheckResult = {
   ok: boolean;
   normalized?: {
     streetAddress: string;
@@ -118,87 +119,33 @@ function validatePayload(body: unknown): { ok: true; data: SubscribePayload } | 
 }
 
 // ----------------------------------------------------------------------------
-// USPS — OAuth token + Addresses v3 verify
+// Google Address Validation — non-blocking for print subscriptions.
 // ----------------------------------------------------------------------------
 
-// Tokens last ~8 hours per USPS docs. Cache in module memory so warm functions
-// reuse it. Cold starts fetch a new token.
-let cachedUspsToken: { token: string; expiresAt: number } | null = null;
-
-async function getUspsToken(): Promise<string | null> {
-  const now = Date.now();
-  if (cachedUspsToken && cachedUspsToken.expiresAt > now + 60_000) {
-    return cachedUspsToken.token;
-  }
-
-  const consumerKey = process.env.USPS_CONSUMER_KEY;
-  const consumerSecret = process.env.USPS_CONSUMER_SECRET;
-  if (!consumerKey || !consumerSecret) {
-    console.warn('[USPS] Consumer key/secret not set; skipping address verification');
-    return null;
-  }
-
-  try {
-    const resp = await fetch('https://apis.usps.com/oauth2/v3/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: consumerKey,
-        client_secret: consumerSecret,
-      }),
-    });
-    if (!resp.ok) {
-      const text = await resp.text();
-      console.error('[USPS] OAuth token request failed:', resp.status, text);
-      return null;
-    }
-    const data = (await resp.json()) as { access_token?: string; expires_in?: number };
-    if (!data.access_token) {
-      console.error('[USPS] OAuth response missing access_token');
-      return null;
-    }
-    cachedUspsToken = {
-      token: data.access_token,
-      expiresAt: now + (data.expires_in ?? 28_800) * 1_000,
-    };
-    return cachedUspsToken.token;
-  } catch (err) {
-    console.error('[USPS] OAuth token fetch error:', err);
-    return null;
-  }
-}
-
-async function verifyAddressWithUsps(p: SubscribePayload): Promise<UspsVerifyResult> {
-  const token = await getUspsToken();
-  if (!token) {
-    return { ok: false, error: 'USPS not configured' };
-  }
-
-  const params = new URLSearchParams({
+async function verifyAddressWithGoogle(p: SubscribePayload): Promise<AddressCheckResult> {
+  const result = await verifyAddressGoogle({
     streetAddress: p.street,
+    secondaryAddress: p.address2,
     city: p.city,
     state: p.state,
-    ZIPCode: p.zip.split('-')[0],
+    zip: p.zip,
   });
-  if (p.address2) params.set('secondaryAddress', p.address2);
-
-  try {
-    const resp = await fetch(`https://apis.usps.com/addresses/v3/address?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const raw = await resp.json().catch(() => null);
-    if (!resp.ok) {
-      return { ok: false, rawResponse: raw, error: `USPS HTTP ${resp.status}` };
-    }
-    if (!raw || typeof raw !== 'object' || !('address' in raw)) {
-      return { ok: false, rawResponse: raw, error: 'USPS response missing address' };
-    }
-    const addr = (raw as { address: UspsVerifyResult['normalized'] }).address;
-    return { ok: true, normalized: addr, rawResponse: raw };
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : 'unknown' };
+  if (!result.ok) return { ok: false, error: result.error };
+  if (result.status !== 'Valid') {
+    return { ok: false, rawResponse: result.evidence, error: result.detail };
   }
+  return {
+    ok: true,
+    rawResponse: result.evidence,
+    normalized: {
+      streetAddress: result.normalized.streetAddress,
+      secondaryAddress: result.normalized.secondaryAddress || undefined,
+      city: result.normalized.city,
+      state: result.normalized.state,
+      ZIPCode: result.normalized.zip5,
+      ZIPPlus4: result.normalized.zip4 || undefined,
+    },
+  };
 }
 
 // ----------------------------------------------------------------------------
@@ -234,6 +181,8 @@ async function ensurePrintSubscribersTable() {
       birthday_day    INT NOT NULL,
       usps_verified   BOOLEAN NOT NULL DEFAULT FALSE,
       usps_response   JSONB,
+      address_verified BOOLEAN NOT NULL DEFAULT FALSE,
+      address_validation_response JSONB,
       status          TEXT NOT NULL DEFAULT 'pending'
                       CHECK (status IN ('pending','active','cancelled')),
       source_ip       TEXT,
@@ -244,6 +193,8 @@ async function ensurePrintSubscribersTable() {
   // first_name / last_name added as nullable. New inserts populate all three.
   await sql`ALTER TABLE print_subscribers ADD COLUMN IF NOT EXISTS first_name TEXT`;
   await sql`ALTER TABLE print_subscribers ADD COLUMN IF NOT EXISTS last_name  TEXT`;
+  await sql`ALTER TABLE print_subscribers ADD COLUMN IF NOT EXISTS address_verified BOOLEAN NOT NULL DEFAULT FALSE`;
+  await sql`ALTER TABLE print_subscribers ADD COLUMN IF NOT EXISTS address_validation_response JSONB`;
   await sql`CREATE INDEX IF NOT EXISTS idx_print_subscribers_email ON print_subscribers (email)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_print_subscribers_pub_status ON print_subscribers (publication, status)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_print_subscribers_created ON print_subscribers (created_at DESC)`;
@@ -290,7 +241,7 @@ function pubLabel(pub: PubKey): string {
 
 
 
-function notificationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): string {
+function notificationEmailHtml(p: SubscribePayload, usps: AddressCheckResult): string {
   const norm = usps.normalized;
   return `
 <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
@@ -311,7 +262,7 @@ function notificationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): str
       ${escapeHtml(p.street)}${p.address2 ? '<br/>' + escapeHtml(p.address2) : ''}<br/>
       ${escapeHtml(p.city)}, ${escapeHtml(p.state)} ${escapeHtml(p.zip)}
     </td></tr>
-    <tr><td style="padding: 6px 12px 6px 0; color: #6b7280; vertical-align: top;">USPS check</td><td style="padding: 6px 0;">
+    <tr><td style="padding: 6px 12px 6px 0; color: #6b7280; vertical-align: top;">Address check (Google)</td><td style="padding: 6px 0;">
       ${usps.ok
         ? `<span style="color: #c2410c;">✓ Verified</span>${norm ? `<br/><small style="color: #6b7280;">Normalized: ${escapeHtml(norm.streetAddress)}, ${escapeHtml(norm.city)}, ${escapeHtml(norm.state)} ${escapeHtml(norm.ZIPCode)}${norm.ZIPPlus4 ? '-' + escapeHtml(norm.ZIPPlus4) : ''}</small>` : ''}`
         : `<span style="color: #b91c1c;">⚠ ${escapeHtml(usps.error || 'Could not verify')}</span><br/><small style="color: #6b7280;">Review address before mailing.</small>`
@@ -324,7 +275,7 @@ function notificationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): str
 </div>`.trim();
 }
 
-function confirmationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): string {
+function confirmationEmailHtml(p: SubscribePayload, usps: AddressCheckResult): string {
   const accent = p.publication === 'realtyline' ? '#301D5D' : '#301D5D';
   const norm = usps.normalized;
   return `
@@ -373,9 +324,9 @@ export async function POST(req: NextRequest) {
   }
   const payload = validation.data;
 
-  // USPS verification (non-blocking — if USPS fails, we still accept the
+  // Address validation (non-blocking — if Google fails, we still accept the
   // submission and flag for manual review)
-  const uspsResult = await verifyAddressWithUsps(payload);
+  const addressResult = await verifyAddressWithGoogle(payload);
 
   // DB insert
   try {
@@ -395,6 +346,7 @@ export async function POST(req: NextRequest) {
         street, address2, city, state, zip,
         birthday_month, birthday_day,
         usps_verified, usps_response,
+        address_verified, address_validation_response,
         source_ip, user_agent
       ) VALUES (
         ${payload.publication}, ${payload.firstName}, ${payload.lastName}, ${payload.name},
@@ -403,7 +355,8 @@ export async function POST(req: NextRequest) {
         ${payload.street}, ${payload.address2 || null}, ${payload.city},
         ${payload.state}, ${payload.zip},
         ${parseInt(payload.birthdayMonth, 10)}, ${parseInt(payload.birthdayDay, 10)},
-        ${uspsResult.ok}, ${JSON.stringify(uspsResult.rawResponse || uspsResult.error || null)}::jsonb,
+        FALSE, NULL,
+        ${addressResult.ok}, ${JSON.stringify(addressResult.rawResponse || addressResult.error || null)}::jsonb,
         ${sourceIp}, ${userAgent}
       )
     `;
@@ -422,14 +375,14 @@ export async function POST(req: NextRequest) {
     sendEmail({
       to: notifyTo,
       subject: `New ${pubLabel(payload.publication)} subscriber: ${payload.name}`,
-      html: notificationEmailHtml(payload, uspsResult),
+      html: notificationEmailHtml(payload, addressResult),
       replyTo: payload.email,
       emailType: 'print_subscribe_notification',
     }),
     sendEmail({
       to: payload.email,
       subject: `You're subscribed to ${pubLabel(payload.publication)}`,
-      html: confirmationEmailHtml(payload, uspsResult),
+      html: confirmationEmailHtml(payload, addressResult),
       emailType: 'print_subscribe_confirmation',
     }),
   ]);
@@ -439,7 +392,8 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    uspsVerified: uspsResult.ok,
+    uspsVerified: false,
+    addressVerified: addressResult.ok,
     emailsSent: {
       notification: notifyResult.ok,
       confirmation: confirmResult.ok,

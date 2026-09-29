@@ -11,7 +11,7 @@
 //     advertiser-location address.
 //
 // Used by the "Refresh addresses from advertisers" button on the
-// Active Advertisers mailing pages so USPS verify has real addresses
+// Active Advertisers mailing pages so address validation has real addresses
 // to validate against.
 
 import { NextRequest, NextResponse } from 'next/server';

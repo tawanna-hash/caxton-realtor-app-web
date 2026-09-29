@@ -11,7 +11,7 @@
 //   - Sortable columns
 //   - Row click → side drawer with every editable field
 //   - Real verify buttons:
-//       Address → USPS Address API v3   → persists Valid/Invalid + normalized
+//       Address → Google Address Validation → persists verdict + normalized
 //                                           string + geocode + distances
 //       Email   → MX + SMTP RCPT TO probe → persists Valid/Invalid (Pending
 //                                           soft failures keep status alone)
@@ -552,7 +552,7 @@ export default function SaborMembersClient() {
           <p className="mt-2 text-sm text-gray-600 max-w-2xl">
             San Antonio Board of REALTORS members mirrored from ramco.sabor.com.
             Click any row to edit details, verify the mailing address through
-            USPS, or verify the email. Verified members can be promoted to the
+            Google Address Validation, or verify the email. Verified members can be promoted to the
             active mailing list.
           </p>
         </div>
@@ -878,7 +878,7 @@ export default function SaborMembersClient() {
                     hasData={hasAddr}
                     busy={busy === `addr-${r.id}`}
                     onVerify={() => verifyAddress(r.id)}
-                    label="USPS"
+                    label="Address"
                   />
                   <div className="flex flex-col gap-1">
                     <VerifyCell
@@ -973,7 +973,7 @@ export default function SaborMembersClient() {
                       hasData={hasAddr}
                       busy={busy === `addr-${r.id}`}
                       onVerify={() => verifyAddress(r.id)}
-                      label="USPS"
+                      label="Address"
                     />
                   </td>
                   <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
@@ -1384,7 +1384,7 @@ function EditDrawer({
               </div>
               <div className="text-sm">
                 {row.addr_status === 'Valid' && (
-                  <span className="text-green-700 font-medium">✓ Valid (USPS)</span>
+                  <span className="text-green-700 font-medium">✓ Valid address</span>
                 )}
                 {row.addr_status === 'Invalid' && (
                   <span className="text-red-700 font-medium">✗ Invalid</span>
@@ -1395,7 +1395,7 @@ function EditDrawer({
               </div>
               {row.addr_usps_normalized && (
                 <div className="text-[11px] text-gray-500 leading-tight">
-                  USPS: {row.addr_usps_normalized}
+                  Standardized: {row.addr_usps_normalized}
                 </div>
               )}
               {row.distance_sabor_mi !== null && row.distance_sabor_mi !== undefined && (
@@ -1409,7 +1409,7 @@ function EditDrawer({
                 onClick={onVerifyAddress}
                 className="text-xs px-2.5 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
               >
-                {addrBusy ? 'Verifying…' : 'Verify with USPS'}
+                {addrBusy ? 'Verifying…' : 'Verify address'}
               </button>
             </div>
 

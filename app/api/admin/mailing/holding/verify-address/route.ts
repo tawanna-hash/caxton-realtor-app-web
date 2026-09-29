@@ -2,8 +2,8 @@
 //
 // POST /api/admin/mailing/holding/verify-address
 //   Body: { id: string }
-//   Runs the row's mailing address through USPS Address API v3, persists
-//   the result (Valid / Invalid) and the USPS-normalized one-line
+//   Runs the row's mailing address through Google Address Validation, persists
+//   the verdict and the standardized one-line
 //   address. On Valid, also runs a Census geocode in the background
 //   and stores lat/lon + distances to ABoR & Five Points.
 
@@ -16,10 +16,7 @@ import {
   persistUspsCanonicalAddress,
   type MailingContactRow,
 } from '@/lib/mailing';
-import {
-  verifyAddressUsps,
-  formatUspsAddress,
-} from '@/lib/usps-verify';
+import { verifyAddressGoogle, formatValidatedAddress } from '@/lib/address-validation';
 import { geocodeAddress } from '@/lib/geocode';
 import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
@@ -51,7 +48,7 @@ export const POST = withAdminTracking(async (req: Request) => {
     });
   }
 
-  const result = await verifyAddressUsps({
+  const result = await verifyAddressGoogle({
     streetAddress:    row.address,
     secondaryAddress: row.address_2,
     city:             row.city,
@@ -60,30 +57,42 @@ export const POST = withAdminTracking(async (req: Request) => {
   });
 
   if (!result.ok) {
-    throw new ApiError(502, 'usps error', { detail: result.error });
+    throw new ApiError(502, 'address validation error', { detail: result.error });
   }
 
-  if (result.status === 'Invalid') {
-    const updated = await persistAddressVerification(id, 'Invalid', null);
+  if (result.status !== 'Valid') {
+    const updated = await persistAddressVerification(id, result.status, null);
+    await sql`
+      UPDATE mailing_contacts
+         SET addr_verification_error = ${result.detail},
+             addr_verification_raw = ${JSON.stringify(result.evidence)}::jsonb
+       WHERE id = ${id}
+    `;
     return NextResponse.json({
       ok: true,
-      verdict: 'Invalid',
+      verdict: result.status,
       detail: result.detail,
       row: updated,
     });
   }
 
-  // Valid — overwrite the row's address fields with the USPS-canonical
+  // Valid — overwrite the row's address fields with the Google-standardized
   // version (so the drawer + the rest of the app sees the standardized
   // form rather than the user's raw input), then geocode for distance.
-  const normalized = formatUspsAddress(result.normalized);
+  const normalized = formatValidatedAddress(result.normalized);
   let updated = await persistUspsCanonicalAddress(
     id,
     result.normalized,
     normalized,
   );
+  await sql`
+    UPDATE mailing_contacts
+       SET addr_verification_error = NULL,
+           addr_verification_raw = ${JSON.stringify(result.evidence)}::jsonb
+     WHERE id = ${id}
+  `;
 
-  // Geocode using USPS-normalized parts (more reliable than raw input)
+  // Geocode using standardized parts (more reliable than raw input)
   const geo = await geocodeAddress({
     address: result.normalized.streetAddress,
     city:    result.normalized.city,

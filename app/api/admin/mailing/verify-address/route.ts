@@ -7,7 +7,7 @@ import {
   persistUspsCanonicalAddressAnyStage,
   type MailingContactRow,
 } from '@/lib/mailing';
-import { verifyAddressUsps, formatUspsAddress } from '@/lib/usps-verify';
+import { verifyAddressGoogle, formatValidatedAddress } from '@/lib/address-validation';
 import { geocodeAddress } from '@/lib/geocode';
 import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
@@ -46,7 +46,7 @@ export const POST = withAdminTracking(async (req: Request) => {
     });
   }
 
-  const result = await verifyAddressUsps({
+  const result = await verifyAddressGoogle({
     streetAddress: row.address,
     secondaryAddress: row.address_2,
     city: row.city,
@@ -65,7 +65,7 @@ export const POST = withAdminTracking(async (req: Request) => {
         addr_usps_normalized = NULL,
         addr_verification_error = ${safeError},
         addr_verification_raw = ${JSON.stringify({
-          source: 'usps-address-api-v3',
+          source: 'google-address-validation',
           error: safeError,
           at: new Date().toISOString(),
         })}::jsonb,
@@ -78,7 +78,7 @@ export const POST = withAdminTracking(async (req: Request) => {
       {
         ok: false,
         verdict: 'Error',
-        code: 'USPS_UPSTREAM_ERROR',
+        code: 'ADDRESS_VALIDATION_UPSTREAM_ERROR',
         detail: safeError,
         row: failedRows[0] ?? null,
       },
@@ -86,27 +86,27 @@ export const POST = withAdminTracking(async (req: Request) => {
     );
   }
 
-  if (result.status === 'Invalid') {
-    const updated = await persistAddressVerificationAnyStage(id, 'Invalid', null);
+  if (result.status !== 'Valid') {
+    const updated = await persistAddressVerificationAnyStage(id, result.status, null);
 
     await sql`
       UPDATE mailing_contacts
       SET
-        addr_verification_error = NULL,
-        addr_verification_raw = NULL,
+        addr_verification_error = ${result.detail},
+        addr_verification_raw = ${JSON.stringify(result.evidence)}::jsonb,
         updated_at = NOW()
       WHERE id = ${id}
     `;
 
     return NextResponse.json({
       ok: true,
-      verdict: 'Invalid',
+      verdict: result.status,
       detail: result.detail,
       row: updated,
     });
   }
 
-  const normalized = formatUspsAddress(result.normalized);
+  const normalized = formatValidatedAddress(result.normalized);
 
   let updated = await persistUspsCanonicalAddressAnyStage(
     id,
@@ -118,7 +118,7 @@ export const POST = withAdminTracking(async (req: Request) => {
     UPDATE mailing_contacts
     SET
       addr_verification_error = NULL,
-      addr_verification_raw = NULL,
+      addr_verification_raw = ${JSON.stringify(result.evidence)}::jsonb,
       updated_at = NOW()
     WHERE id = ${id}
   `;

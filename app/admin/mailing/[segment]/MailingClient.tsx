@@ -9,9 +9,9 @@
 //   - Sortable columns + Proximity / Address / Email verify columns
 //   - Row click -> side drawer with every editable field + verify buttons
 //   - Real per-row verify buttons:
-//       Address -> /api/admin/mailing/verify-address (stage-agnostic USPS)
+//       Address -> /api/admin/mailing/verify-address (Google Address Validation)
 //       Email   -> /api/admin/mailing/verify-email   (stage-agnostic SMTP)
-//   - Bulk "Verify USPS (N)" over selected rows / current page
+//   - Bulk "Verify Addresses (N)" over selected rows / current page
 //   - Secondary actions row: Add / Import / Export / Dedupe / Delete-all
 //
 // Promote / Reject and the verify-all-Pending drain are holding-only
@@ -85,7 +85,7 @@ const COLUMNS: ColumnDef[] = [
   { id: 'company',      label: 'Company' },
   { id: 'city',         label: 'City' },
   { id: 'proximity',    label: 'Proximity' },
-  { id: 'address',      label: 'Address (USPS)' },
+  { id: 'address',      label: 'Address' },
   { id: 'email_verify', label: 'Email (SMTP)' },
 ];
 
@@ -393,8 +393,8 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   };
 
   // ------------------------------------------------------------------
-  // Bulk USPS verify — selected rows, or all rows on the current page
-  // if nothing is selected. USPS v3 is single-address per request, so
+  // Bulk Google Address Validation — selected rows or the current page.
+  // The API validates one address per request, so
   // we loop, throttled to ~5/sec.
   // ------------------------------------------------------------------
   async function handleVerifyAddresses() {
@@ -407,7 +407,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       return;
     }
     const scope = selectedIds.size > 0 ? `${candidates.length} selected` : `${candidates.length} on this page`;
-    if (!confirm(`Run USPS address verification on ${scope}? Valid rows will be overwritten with the USPS-standardized form.`)) return;
+    if (!confirm(`Run Google Address Validation on ${scope}? Only confidently validated rows will be overwritten with a standardized address.`)) return;
 
     let valid = 0;
     let invalid = 0;
@@ -427,8 +427,8 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         if (!res.ok) {
           errors++;
           console.error('[verify-address]', r.id, j?.detail || j?.error || res.status);
-          if (j?.code === 'USPS_UPSTREAM_ERROR' && String(j?.detail ?? '').includes('USPS Addresses API access is not authorized')) {
-            blockingError = j.detail;
+          if (j?.code === 'ADDRESS_VALIDATION_UPSTREAM_ERROR') {
+            blockingError = j?.detail || 'Google Address Validation is unavailable.';
             break;
           }
         } else if (j.verdict === 'Valid') {
@@ -440,13 +440,13 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         errors++;
         console.error('[verify-address]', r.id, err);
       }
-      // Throttle to ~5 req/sec to stay friendly to USPS API.
+      // Throttle requests so bulk checks do not spike API usage.
       await new Promise((res) => setTimeout(res, 200));
     }
     setBusy(null);
     alert(blockingError
       ? `${blockingError}\n\nStopped after the first authorization failure. No remaining contacts were checked.`
-      : `USPS verify complete \u2014 Valid ${valid}, Invalid ${invalid}, Errors ${errors}.`);
+      : `Address validation complete \u2014 Valid ${valid}, Invalid ${invalid}, Errors ${errors}.`);
     await reload();
   }
 
@@ -714,7 +714,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             <PageTitle size="md">{label}</PageTitle>
             <p className="mt-2 text-sm text-gray-600 max-w-2xl">
               Click any row to edit details, verify the mailing address through
-              USPS, or verify the email. Use the filters below to focus on
+              Google Address Validation, or verify the email. Use the filters below to focus on
               verified or pending contacts.
             </p>
           </div>
@@ -732,9 +732,9 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               onClick={handleVerifyAddresses}
               disabled={busy !== null}
               className="mailing-primary-action"
-              title="Run USPS Address API on selected rows (or this page if none selected)"
+              title="Run Google Address Validation on selected rows (or this page if none selected)"
             >
-              Verify USPS{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
+              Verify Addresses{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
             </button>
           </div>
         </div>
@@ -1134,7 +1134,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                         hasData={hasAddr}
                         busy={busy === `addr-${r.id}`}
                         onVerify={() => verifyAddress(r.id)}
-                        label="USPS"
+                        label="Address"
                       />
                     )}
                     {isVisible('email_verify') && (
@@ -1255,7 +1255,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                         hasData={hasAddr}
                         busy={busy === `addr-${r.id}`}
                         onVerify={() => verifyAddress(r.id)}
-                        label="USPS"
+                        label="Address"
                       />
                     </td>
                   )}
@@ -1931,7 +1931,7 @@ function EditDrawer({
               </div>
               <div className="text-sm">
                 {row.addr_status === 'Valid' && (
-                  <span className="text-green-700 font-medium">✓ Valid (USPS)</span>
+                  <span className="text-green-700 font-medium">✓ Valid address</span>
                 )}
                 {row.addr_status === 'Invalid' && (
                   <span className="text-red-700 font-medium">✗ Invalid</span>
@@ -1942,7 +1942,7 @@ function EditDrawer({
               </div>
               {row.addr_usps_normalized && (
                 <div className="text-[11px] text-gray-500 leading-tight">
-                  USPS: {row.addr_usps_normalized}
+                  Standardized: {row.addr_usps_normalized}
                 </div>
               )}
               {isSaborSegment(segment)
@@ -1964,7 +1964,7 @@ function EditDrawer({
                 onClick={onVerifyAddress}
                 className="text-xs px-2.5 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
               >
-                {addrBusy ? 'Verifying…' : 'Verify with USPS'}
+                {addrBusy ? 'Verifying…' : 'Verify address'}
               </button>
             </div>
 
