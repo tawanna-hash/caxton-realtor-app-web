@@ -116,6 +116,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Engagement Metrics', href: '/admin/metrics',   description: 'In-app click events & surface engagement' },
       { label: 'Client Reports',     href: '/admin/reports',   description: 'Shareable article, event & advertiser recaps' },
       { label: 'Site Analytics',     href: '/admin/analytics', description: 'PostHog traffic & user behavior' },
+      { label: 'Marketing Performance', href: '/admin/marketing-performance', description: 'Channel attribution, funnel, CAC & ROAS' },
       { label: 'URL Analytics',      href: '/admin/analytics/urls', description: 'Clicks grouped by destination URL' },
     ],
   },
