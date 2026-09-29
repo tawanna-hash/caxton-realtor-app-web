@@ -124,6 +124,30 @@ export function normalizeUrlInput(value: string): string {
   return `https://${v}`;
 }
 
+const FIELD_LABELS: Record<string, string> = {
+  title: 'Title', link: 'Registration / Detail Link', startDate: 'Start', endDate: 'End',
+  location: 'Location / Venue', organizer: 'Organizer', organizerEmail: 'Organizer Email',
+  website: 'Organizer Website', imageUrl: 'Image URL', imageThumb: 'Thumbnail URL',
+  additionalHosts: 'Additional Event Hosts', additionalInstructors: 'Additional Instructors',
+  schedule: 'Event Schedule', speakers: 'Speakers', format: 'Format',
+};
+
+/** Pull a single valid-looking email out of flyer text like "RSVP: a@b.com". */
+function cleanEmail(value: string | null | undefined): string {
+  return value?.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? '';
+}
+
+/** Normalize a flyer URL, dropping anything that still isn't a valid URL. */
+function cleanUrl(value: string | null | undefined): string {
+  if (!value?.trim() || /\s/.test(value.trim())) return '';
+  const url = normalizeUrlInput(value);
+  try {
+    return new URL(url).hostname.includes('.') ? url : '';
+  } catch {
+    return '';
+  }
+}
+
 const MAX_DOCUMENT_PAGES = 10;
 const MAX_DOCUMENT_SOURCE_BYTES = 20 * 1024 * 1024;
 const MAX_DOCUMENT_PAGE_BYTES = 3 * 1024 * 1024;
@@ -348,6 +372,7 @@ export function EventForm({
   const [speakerNotice, setSpeakerNotice] = useState<string | null>(null);
   const speakerInputRef = useRef<HTMLInputElement>(null);
   const [partners, setPartners] = useState<PickerAdvertiser[]>([]);
+  const invalidReportedRef = useRef(false);
 
   useEffect(() => {
     if (mode === 'public') return; // public submitters don't tag partners
@@ -482,9 +507,9 @@ export function EventForm({
         endDate: ex.endDate && (mode !== 'public' || !current.endDate) ? ex.endDate : current.endDate,
         location: ex.location && (mode !== 'public' || !current.location) ? toTitleCase(ex.location) : current.location,
         organizer: ex.organizer && (mode !== 'public' || !current.organizer) ? toTitleCase(ex.organizer) : current.organizer,
-        organizerEmail: ex.organizerEmail && (mode !== 'public' || !current.organizerEmail) ? ex.organizerEmail : current.organizerEmail,
-        link: mode === 'public' && ex.website && !current.link ? normalizeUrlInput(ex.website) : current.link,
-        website: ex.website && (mode !== 'public' || !current.website) ? normalizeUrlInput(ex.website) : current.website,
+        organizerEmail: cleanEmail(ex.organizerEmail) && (mode !== 'public' || !current.organizerEmail) ? cleanEmail(ex.organizerEmail) : current.organizerEmail,
+        link: mode === 'public' && cleanUrl(ex.website) && !current.link ? cleanUrl(ex.website) : current.link,
+        website: cleanUrl(ex.website) && (mode !== 'public' || !current.website) ? cleanUrl(ex.website) : current.website,
         format: ex.format && (mode !== 'public' || !current.format) ? ex.format : current.format,
         courseNumber: ex.courseNumber && (mode !== 'public' || !current.courseNumber) ? ex.courseNumber : current.courseNumber,
         memberPrice: ex.memberPrice && (mode !== 'public' || !current.memberPrice) ? ex.memberPrice : current.memberPrice,
@@ -686,9 +711,17 @@ export function EventForm({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...payload, hp }),
         });
-        const result = (await response.json().catch(() => ({}))) as { error?: string };
+        const result = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          details?: Record<string, string[] | undefined>;
+        };
         if (!response.ok) {
-          throw new Error(result.error ?? `Submission failed (${response.status})`);
+          const fields = Object.keys(result.details ?? {}).map((key) => FIELD_LABELS[key] ?? key);
+          throw new Error(
+            fields.length
+              ? `Please check these fields: ${fields.join(', ')}.`
+              : result.error ?? `Submission failed (${response.status})`,
+          );
         }
         setSubmitted(true);
         setSubmitting(false);
@@ -748,7 +781,21 @@ export function EventForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
+    <form
+      onSubmit={handleSubmit}
+      onInvalidCapture={(event) => {
+        // Native validation silently blocks submit when the bad field is offscreen
+        // (common on mobile). Name the field and bring it into view.
+        const target = event.target as HTMLInputElement;
+        if (invalidReportedRef.current) return;
+        invalidReportedRef.current = true;
+        window.setTimeout(() => { invalidReportedRef.current = false; }, 0);
+        const label = target.closest('div')?.querySelector('label')?.textContent?.replace('*', '').trim();
+        setError(`${label ? `${label}: ` : ''}${target.validationMessage || 'Please complete this field.'}`);
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }}
+      className="space-y-6 max-w-4xl"
+    >
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md">
           {error}
@@ -1419,6 +1466,11 @@ export function EventForm({
       )}
 
       {/* Actions */}
+      {error && (
+        <div role="alert" className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md">
+          {error}
+        </div>
+      )}
       <div className="flex items-center justify-between gap-4 pt-2">
         <button
           type="button"
