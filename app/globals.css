@@ -1037,6 +1037,46 @@ input[type='date']::-webkit-calendar-picker-indicator {
   }
 }
 
+/* Mobile form ergonomics (all pages).
+   - iOS Safari zooms the whole page when a focused field's text is under
+     16px, which makes forms feel broken on phones. Keep fields at 16px on
+     small screens; desktop keeps each component's own size.
+   - datetime-local / time / month inputs have an intrinsic min-width on iOS
+     that overflows grid/flex columns and can render as a collapsed box.
+     Give them the same full-width, fixed-height box as the date control. */
+@media (max-width: 639px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='date']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* In the base layer so a component's own width utility (e.g. w-32) still wins. */
+@layer base {
+  input[type='datetime-local'],
+  input[type='time'],
+  input[type='month'] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    -webkit-min-logical-width: 0;
+    min-height: 46px;
+    background-color: #fff;
+    text-align: left;
+  }
+
+  input[type='datetime-local']::-webkit-date-and-time-value,
+  input[type='time']::-webkit-date-and-time-value,
+  input[type='month']::-webkit-date-and-time-value {
+    text-align: left;
+  }
+}
+
 /* The visual article editor and reader render the same semantic HTML.
    Tailwind's reset removes native paragraph, heading and list formatting. */
 .article-body-rich,

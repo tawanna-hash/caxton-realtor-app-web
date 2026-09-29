@@ -742,7 +742,7 @@ export function EventForm({
   const fieldClass =
     'w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700';
   const labelClass = 'block text-xs font-medium text-gray-700 mb-1';
-  const sectionClass = 'bg-white border border-gray-200 rounded-md p-6';
+  const sectionClass = 'bg-white border border-gray-200 rounded-md p-4 sm:p-6';
   const sectionTitleClass = 'text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide';
 
   if (submitted) {
@@ -803,10 +803,10 @@ export function EventForm({
       )}
 
       {(mode === 'create' || mode === 'edit' || mode === 'public') && (
-        <div className="rounded-md border border-brand-700/40 bg-brand-50/40 p-5">
+        <div className="rounded-md border border-brand-700/40 bg-brand-50/40 p-4 sm:p-5">
           <div className="flex items-start gap-3">
-            <Sparkles size={18} className="mt-0.5 shrink-0 text-brand-700" />
-            <div className="flex-1">
+            <Sparkles size={18} className="mt-0.5 hidden shrink-0 text-brand-700 sm:block" />
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-gray-900">
                 {mode === 'public' ? 'Upload a flyer to fill out this form' : 'Auto-fill from flyer'}
               </p>
@@ -843,7 +843,7 @@ export function EventForm({
                   setAutoCaptureDragActive(false);
                   if (!autoCapturing) void autoCaptureFlyer(event.dataTransfer.files[0]);
                 }}
-                className={`mt-3 flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-6 text-center transition-colors ${
+                className={`mt-3 flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-4 py-6 text-center sm:px-6 transition-colors ${
                   autoCaptureDragActive
                     ? 'border-brand-700 bg-brand-100/60'
                     : 'border-brand-700/40 bg-white hover:border-brand-700 hover:bg-brand-50/60'
