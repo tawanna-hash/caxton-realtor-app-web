@@ -25,6 +25,8 @@
 // Months are bucketed in America/Chicago.
 
 import { query } from '@/lib/server/db/neon';
+import { fetchGa4Monthly, getGa4Connection, isGa4OAuthConfigured } from '@/lib/server/ga4-client';
+import { fetchMailchimpSummary, isMailchimpConfigured, type MailchimpMonth } from '@/lib/server/mailchimp';
 
 export const CHANNELS = ['organic', 'paid', 'social', 'email', 'direct'] as const;
 export type Channel = (typeof CHANNELS)[number];
@@ -43,6 +45,20 @@ export interface ChannelMonthRow {
   conversions: number;
   revenue_cents: number;
   spend_cents: number;
+  /** PostHog pageviews (already included in impressions). */
+  pageviews: number;
+  /** GA4 sessions / pageviews / key events for the same month × channel. */
+  ga4_sessions: number;
+  ga4_pageviews: number;
+  ga4_key_events: number;
+  /** Mailchimp delivered emails (already included in Email impressions). */
+  mc_delivered: number;
+}
+
+export interface SourceStatus {
+  posthog: { connected: boolean };
+  ga4: { configured: boolean; connected: boolean; email: string | null; propertyId: string | null; propertyName: string | null; error: string | null };
+  mailchimp: { configured: boolean; connected: boolean; accountName: string | null; error: string | null };
 }
 
 export interface SpendEntry {
@@ -60,6 +76,9 @@ export interface MarketingPerformance {
   rows: ChannelMonthRow[];
   spend: SpendEntry[];
   firstTrafficMonth: string | null;
+  firstGa4Month: string | null;
+  mailchimp: MailchimpMonth[];
+  sources: SourceStatus;
   warnings: string[];
 }
 
@@ -100,10 +119,10 @@ export function ensureMarketingSpendSchema(): Promise<void> {
 /** PostHog `session.$channel_type` → dashboard channel. */
 export function channelFromPosthog(type: string | null | undefined): Channel {
   const t = (type ?? '').toLowerCase();
-  if (!t || t === 'direct' || t === 'unknown' || t === 'push' || t === 'sms') return 'direct';
+  if (!t || t === 'direct' || t === 'unknown' || t === 'unassigned' || t === 'push' || t === 'sms' || t === 'mobile push notifications') return 'direct';
   if (t === 'email') return 'email';
   if (t === 'organic social') return 'social';
-  if (t.startsWith('paid') || t === 'display' || t === 'cross network' || t === 'affiliate') return 'paid';
+  if (t.startsWith('paid') || t === 'display' || t === 'cross network' || t === 'cross-network' || t === 'affiliate' || t === 'affiliates' || t === 'audio') return 'paid';
   // Organic Search / Video / Shopping, Referral, AI
   return 'organic';
 }
@@ -322,6 +341,7 @@ export async function buildMarketingPerformance(): Promise<MarketingPerformance>
     for (const channel of CHANNELS) {
       grid.set(`${month}|${channel}`, {
         month, channel, impressions: 0, sessions: 0, mqls: 0, sqls: 0, conversions: 0, revenue_cents: 0, spend_cents: 0,
+        pageviews: 0, ga4_sessions: 0, ga4_pageviews: 0, ga4_key_events: 0, mc_delivered: 0,
       });
     }
   }
@@ -334,6 +354,38 @@ export async function buildMarketingPerformance(): Promise<MarketingPerformance>
       return fallback;
     }
   };
+
+  const sources: SourceStatus = {
+    posthog: { connected: Boolean(process.env.POSTHOG_PERSONAL_API_KEY) },
+    ga4: { configured: isGa4OAuthConfigured(), connected: false, email: null, propertyId: null, propertyName: null, error: null },
+    mailchimp: { configured: isMailchimpConfigured(), connected: false, accountName: null, error: null },
+  };
+
+  const ga4Promise = (async () => {
+    try {
+      const conn = await getGa4Connection();
+      if (!conn) return null;
+      sources.ga4 = { ...sources.ga4, connected: true, email: conn.emailAddress, propertyId: conn.propertyId, propertyName: conn.propertyName };
+      if (!conn.propertyId) return null;
+      return await fetchGa4Monthly(since);
+    } catch (err) {
+      sources.ga4.error = err instanceof Error ? err.message : String(err);
+      return null;
+    }
+  })();
+  const mcPromise = (async () => {
+    if (!sources.mailchimp.configured) return null;
+    try {
+      const summary = await fetchMailchimpSummary(`${since}T00:00:00+00:00`);
+      sources.mailchimp = { ...sources.mailchimp, connected: true, accountName: summary.accountName };
+      return summary;
+    } catch (err) {
+      sources.mailchimp.error = err instanceof Error ? err.message : String(err);
+      return null;
+    }
+  })();
+
+  const [ga4, mailchimp] = await Promise.all([ga4Promise, mcPromise]);
 
   const [traffic, inquiries, qualified, signed, revenue, delivered, spend] = await Promise.all([
     settle('PostHog traffic', fetchTraffic(), []),
@@ -351,11 +403,27 @@ export async function buildMarketingPerformance(): Promise<MarketingPerformance>
     if (!c) continue;
     c.sessions += t.sessions;
     c.impressions += t.pageviews;
+    c.pageviews += t.pageviews;
     if (t.sessions > 0 && (!firstTrafficMonth || t.month < firstTrafficMonth)) firstTrafficMonth = t.month;
   }
   for (const d of delivered) {
     const c = cell(d.month, 'email');
     if (c) c.impressions += Number(d.delivered) || 0;
+  }
+  let firstGa4Month: string | null = null;
+  for (const g of ga4?.rows ?? []) {
+    const c = cell(g.month, channelFromPosthog(g.channelGroup));
+    if (!c) continue;
+    c.ga4_sessions += g.sessions;
+    c.ga4_pageviews += g.pageviews;
+    c.ga4_key_events += g.keyEvents;
+    if (g.sessions > 0 && (!firstGa4Month || g.month < firstGa4Month)) firstGa4Month = g.month;
+  }
+  for (const m of mailchimp?.months ?? []) {
+    const c = cell(m.month, 'email');
+    if (!c) continue;
+    c.mc_delivered += m.delivered;
+    c.impressions += m.delivered;
   }
   for (const r of inquiries) { const c = cell(r.month, attribute(r)); if (c) c.mqls += 1; }
   for (const r of qualified) { const c = cell(r.month, attribute(r)); if (c) c.sqls += 1; }
@@ -375,6 +443,9 @@ export async function buildMarketingPerformance(): Promise<MarketingPerformance>
     rows: Array.from(grid.values()),
     spend,
     firstTrafficMonth,
+    firstGa4Month,
+    mailchimp: (mailchimp?.months ?? []).filter((m) => months.includes(m.month)),
+    sources,
     warnings,
   };
 }

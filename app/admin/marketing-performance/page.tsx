@@ -34,6 +34,17 @@ interface ChannelMonthRow {
   conversions: number;
   revenue_cents: number;
   spend_cents: number;
+  pageviews: number;
+  ga4_sessions: number;
+  ga4_pageviews: number;
+  ga4_key_events: number;
+  mc_delivered: number;
+}
+interface MailchimpMonth { month: string; campaigns: number; sent: number; delivered: number; uniqueOpens: number; uniqueClicks: number; unsubscribes: number }
+interface SourceStatus {
+  posthog: { connected: boolean };
+  ga4: { configured: boolean; connected: boolean; email: string | null; propertyId: string | null; propertyName: string | null; error: string | null };
+  mailchimp: { configured: boolean; connected: boolean; accountName: string | null; error: string | null };
 }
 interface SpendEntry { id: string; month: string; channel: Channel; amount_cents: number; notes: string | null; updated_at: string }
 interface MarketingPerformance {
@@ -42,6 +53,9 @@ interface MarketingPerformance {
   rows: ChannelMonthRow[];
   spend: SpendEntry[];
   firstTrafficMonth: string | null;
+  firstGa4Month: string | null;
+  mailchimp: MailchimpMonth[];
+  sources: SourceStatus;
   warnings: string[];
 }
 
@@ -166,6 +180,9 @@ export default function MarketingPerformancePage() {
   const [effMetric, setEffMetric] = useState<'roas' | 'cac' | 'cpl'>('roas');
   const [trendMetric, setTrendMetric] = useState<Metric>('sessions');
   const [trendMode, setTrendMode] = useState<'channel' | 'total'>('channel');
+  const [trafficSource, setTrafficSource] = useState<'posthog' | 'ga4'>('posthog');
+  const ga4Ready = Boolean(data?.sources.ga4.propertyId && data.firstGa4Month);
+  const src = trafficSource === 'ga4' && ga4Ready ? 'ga4' : 'posthog';
 
   useEffect(() => {
     let cancelled = false;
@@ -194,7 +211,8 @@ export default function MarketingPerformancePage() {
     if (!data) return null;
     const months = data.months;
     const last = months.length - 1;
-    const firstData = data.firstTrafficMonth ? Math.max(0, months.indexOf(data.firstTrafficMonth)) : 0;
+    const firstMonth = src === 'ga4' ? data.firstGa4Month : data.firstTrafficMonth;
+    const firstData = firstMonth ? Math.max(0, months.indexOf(firstMonth)) : 0;
     let start = last - 5;
     let end = last;
     if (range === '3' || range === '6' || range === '12') start = last - Number(range) + 1;
@@ -215,7 +233,9 @@ export default function MarketingPerformancePage() {
     const byMonth = new Map<string, Map<Channel, ChannelMonthRow>>();
     for (const r of data.rows) {
       if (!byMonth.has(r.month)) byMonth.set(r.month, new Map());
-      byMonth.get(r.month)!.set(r.channel, r);
+      byMonth.get(r.month)!.set(r.channel, src === 'ga4'
+        ? { ...r, sessions: r.ga4_sessions, impressions: r.impressions - r.pageviews + r.ga4_pageviews }
+        : r);
     }
     const sum = (from: number, to: number, chans: Channel[]): Totals => {
       const t = zero();
@@ -241,7 +261,7 @@ export default function MarketingPerformancePage() {
     };
     const perChannel = sel.map((c) => ({ c, t: sum(start, end, [c]), months: perMonth([c]) }));
     return { months, start, end, len, cur, prev, prevAvailable, monthsSel, sel, perChannel, perMonth, pStart, pEnd, sum };
-  }, [data, range, customFrom, customTo, channels]);
+  }, [data, range, customFrom, customTo, channels, src]);
 
   const toggleChannel = (id: Channel | 'all') => {
     setChannels((prev) => {
@@ -265,7 +285,7 @@ export default function MarketingPerformancePage() {
           </p>
         </div>
         <nav className="flex flex-wrap gap-1 text-sm" aria-label="Sections">
-          {[['attribution', 'Attribution'], ['funnel', 'Funnel'], ['efficiency', 'Efficiency'], ['trends', 'Trends'], ['spend', 'Spend']].map(([id, l]) => (
+          {[['attribution', 'Attribution'], ['funnel', 'Funnel'], ['efficiency', 'Efficiency'], ['trends', 'Trends'], ['connections', 'Connections'], ['spend', 'Spend']].map(([id, l]) => (
             <a key={id} href={`#${id}`} className="rounded px-2.5 py-1 font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">{l}</a>
           ))}
         </nav>
@@ -336,6 +356,14 @@ export default function MarketingPerformancePage() {
                 </button>
               </div>
             </div>
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Traffic source</p>
+              {ga4Ready ? (
+                <Seg label="Traffic source" value={src} onChange={setTrafficSource} options={[{ v: 'posthog', l: 'PostHog' }, { v: 'ga4', l: 'GA4' }]} />
+              ) : (
+                <p className="py-1 text-xs text-gray-500">PostHog · <a href="#connections" className="font-medium text-[#301D5D] underline">Connect GA4</a></p>
+              )}
+            </div>
             <div className="ml-auto text-right text-xs text-gray-500">
               <p>{monthLabel(data.months[view.start], true)} – {monthLabel(data.months[view.end], true)}</p>
               <p className="text-gray-400">
@@ -350,9 +378,12 @@ export default function MarketingPerformancePage() {
               {data.warnings.map((w) => <p key={w}>{w}</p>)}
             </div>
           )}
-          {data.firstTrafficMonth && view.start < data.months.indexOf(data.firstTrafficMonth) && (
-            <p className="text-xs text-gray-500">Traffic tracking starts {monthLabel(data.firstTrafficMonth, true)}; earlier months show leads and revenue only.</p>
-          )}
+          {(() => {
+            const first = src === 'ga4' ? data.firstGa4Month : data.firstTrafficMonth;
+            return first && view.start < data.months.indexOf(first) ? (
+              <p className="text-xs text-gray-500">{src === 'ga4' ? 'GA4' : 'PostHog'} traffic starts {monthLabel(first, true)}; earlier months show leads and revenue only.</p>
+            ) : null;
+          })()}
 
           {/* KPIs */}
           <section aria-label="Key metrics" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
@@ -535,14 +566,17 @@ export default function MarketingPerformancePage() {
             </Card>
           </section>
 
+          {/* Connections */}
+          <Connections sources={data.sources} mailchimp={data.mailchimp.filter((m) => view.monthsSel.includes(m.month))} onChanged={reload} />
+
           {/* Spend */}
           <SpendPanel months={data.months} entries={data.spend} onSaved={reload} />
 
           <details className="rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
             <summary className="cursor-pointer font-medium text-gray-900">How these numbers are calculated</summary>
             <ul className="mt-2 list-disc space-y-1 pl-5">
-              <li><b>Impressions</b>: public-site pageviews (PostHog) plus delivered campaign emails on the Email channel.</li>
-              <li><b>Sessions</b>: unique PostHog sessions, grouped by PostHog channel type (Organic = search, referral, AI; Social = organic social; Paid = paid search/social/display).</li>
+              <li><b>Impressions</b>: public-site pageviews (PostHog or GA4, per the Traffic source toggle) plus delivered campaign emails (in-app composer and Mailchimp) on the Email channel.</li>
+              <li><b>Sessions</b>: PostHog sessions by channel type, or GA4 sessions by default channel group (Organic = search, referral, AI; Social = organic social; Paid = paid search/social/display).</li>
               <li><b>MQLs</b>: advertiser inquiries. <b>SQLs</b>: agreements that reached proposal sent or later. <b>Conversions</b>: signed agreements.</li>
               <li><b>Revenue</b>: invoices marked paid, by paid date.</li>
               <li><b>Attribution</b>: Email when the advertiser clicked a campaign email in the prior 90 days; otherwise the inquiry&apos;s UTM tags; otherwise Direct.</li>
@@ -714,6 +748,162 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
           )}
         </Card>
       </div>
+    </section>
+  );
+}
+
+function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus; mailchimp: MailchimpMonth[]; onChanged: () => void }) {
+  const [props, setProps] = useState<Array<{ id: string; name: string; account: string }> | null>(null);
+  const [propError, setPropError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [notice] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const p = new URLSearchParams(window.location.search);
+    const g = p.get('ga4');
+    if (g === 'connected') return 'Google Analytics connected. Tick the properties to include below.';
+    if (g === 'error') return `Google Analytics connection failed (${p.get('reason') ?? 'unknown'}).`;
+    return null;
+  });
+
+  useEffect(() => {
+    if (!sources.ga4.connected) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/ga4-auth/properties', { credentials: 'include', cache: 'no-store' });
+        const body = (await res.json().catch(() => null)) as { properties?: Array<{ id: string; name: string; account: string }>; error?: string | null } | null;
+        if (cancelled) return;
+        setProps(body?.properties ?? []);
+        setPropError(body?.error ?? (res.ok ? null : `Failed (${res.status})`));
+      } catch (err) {
+        if (!cancelled) setPropError(err instanceof Error ? err.message : 'Network error');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [sources.ga4.connected]);
+
+  const selectedIds = (sources.ga4.propertyId ?? '').split(',').filter(Boolean);
+  const toggle = async (id: string) => {
+    const next = selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id];
+    const chosen = (props ?? []).filter((p) => next.includes(p.id)).map((p) => ({ id: p.id, name: p.name }));
+    setBusy(true);
+    try {
+      const res = await fetch('/api/admin/ga4-auth/properties', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ properties: chosen }),
+      });
+      if (!res.ok) throw new Error(`Save failed (${res.status})`);
+      onChanged();
+    } catch (err) { setPropError(err instanceof Error ? err.message : 'Save failed'); } finally { setBusy(false); }
+  };
+
+  const disconnect = async () => {
+    if (!window.confirm('Disconnect Google Analytics?')) return;
+    setBusy(true);
+    try {
+      await fetch('/api/admin/ga4-auth/properties', { method: 'DELETE', credentials: 'include' });
+      setProps(null);
+      onChanged();
+    } finally { setBusy(false); }
+  };
+
+  const status = (ok: boolean, label: string) => (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${ok ? 'bg-green-50 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${ok ? 'bg-green-600' : 'bg-gray-400'}`} />{label}
+    </span>
+  );
+
+  const mcTotals = mailchimp.reduce((a, m) => ({ sent: a.sent + m.sent, delivered: a.delivered + m.delivered, opens: a.opens + m.uniqueOpens, clicks: a.clicks + m.uniqueClicks, campaigns: a.campaigns + m.campaigns }), { sent: 0, delivered: 0, opens: 0, clicks: 0, campaigns: 0 });
+
+  return (
+    <section>
+      <SectionHead id="connections" title="Data connections" sub="PostHog, Google Analytics 4, and Mailchimp" />
+      {notice && <p className="mb-3 rounded border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700">{notice}</p>}
+      <div className="grid gap-3 lg:grid-cols-3">
+        <Card title="PostHog" right={status(sources.posthog.connected, sources.posthog.connected ? 'Connected' : 'Not configured')}>
+          <p className="text-sm text-gray-600">Sessions, pageviews, and channel types from the public app.</p>
+        </Card>
+
+        <Card title="Google Analytics 4" right={status(Boolean(sources.ga4.propertyId && !sources.ga4.error), sources.ga4.propertyId ? (sources.ga4.error ? 'Error' : 'Connected') : sources.ga4.connected ? 'Pick properties' : 'Not connected')}>
+          {!sources.ga4.configured ? (
+            <p className="text-sm text-gray-600">Google OAuth client is not configured on this deployment.</p>
+          ) : !sources.ga4.connected ? (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600">Read-only access to GA4 sessions, pageviews, and key events by channel.</p>
+              <a href="/api/admin/ga4-auth/start" className="inline-block rounded-md bg-[#301D5D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#241548]">Connect Google Analytics</a>
+            </div>
+          ) : (
+            <div className="space-y-2 text-sm">
+              <p className="text-gray-600">Signed in as <b className="font-medium text-gray-900">{sources.ga4.email}</b></p>
+              <fieldset>
+                <legend className="text-xs font-medium text-gray-500">Properties (summed)</legend>
+                {!props ? <p className="mt-1 text-xs text-gray-400">Loading…</p> : props.length === 0 ? <p className="mt-1 text-xs text-gray-500">No properties found for this account.</p> : (
+                  <ul className="mt-1 space-y-1">
+                    {props.map((p) => (
+                      <li key={p.id}>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" disabled={busy} checked={selectedIds.includes(p.id)} onChange={() => void toggle(p.id)} className="h-4 w-4 accent-[#301D5D]" />
+                          <span>{p.name} <span className="text-xs text-gray-400">({p.id})</span></span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </fieldset>
+              {(propError || sources.ga4.error) && <p className="text-xs text-red-700">{propError || sources.ga4.error}</p>}
+              <button type="button" onClick={() => void disconnect()} disabled={busy} className="text-xs font-medium text-red-700 hover:underline">Disconnect</button>
+            </div>
+          )}
+        </Card>
+
+        <Card title="Mailchimp" right={status(sources.mailchimp.connected, sources.mailchimp.connected ? 'Connected' : sources.mailchimp.error ? 'Error' : 'Not connected')}>
+          {sources.mailchimp.connected ? (
+            <div className="space-y-2 text-sm">
+              {sources.mailchimp.accountName && <p className="text-gray-600">Account <b className="font-medium text-gray-900">{sources.mailchimp.accountName}</b></p>}
+              <div className="grid grid-cols-2 gap-2 tabular-nums">
+                <div><p className="text-xs text-gray-500">Campaigns</p><p className="font-semibold">{fmtInt(mcTotals.campaigns)}</p></div>
+                <div><p className="text-xs text-gray-500">Delivered</p><p className="font-semibold">{fmtInt(mcTotals.delivered)}</p></div>
+                <div><p className="text-xs text-gray-500">Open rate</p><p className="font-semibold">{fmtPct(div(mcTotals.opens, mcTotals.delivered))}</p></div>
+                <div><p className="text-xs text-gray-500">Click rate</p><p className="font-semibold">{fmtPct(div(mcTotals.clicks, mcTotals.delivered))}</p></div>
+              </div>
+              <p className="text-xs text-gray-400">Selected range · delivered emails count toward Email impressions.</p>
+            </div>
+          ) : (
+            <div className="space-y-1 text-sm text-gray-600">
+              <p>Add <code className="rounded bg-gray-100 px-1 text-xs">MAILCHIMP_API_KEY</code> to the Vercel project (Production), then redeploy.</p>
+              {sources.mailchimp.error && <p className="text-xs text-red-700">{sources.mailchimp.error}</p>}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {sources.mailchimp.connected && mailchimp.length > 0 && (
+        <div className="mt-3 overflow-x-auto rounded-md border border-gray-200 bg-white shadow-sm">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                <th className="px-4 py-2.5">Mailchimp month</th>
+                {['Campaigns', 'Sent', 'Delivered', 'Unique opens', 'Open rate', 'Unique clicks', 'Click rate', 'Unsubs'].map((h) => <th key={h} className="px-4 py-2.5 text-right">{h}</th>)}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 tabular-nums">
+              {[...mailchimp].reverse().map((m) => (
+                <tr key={m.month}>
+                  <td className="px-4 py-2.5 font-medium text-gray-900">{monthLabel(m.month, true)}</td>
+                  <td className="px-4 py-2.5 text-right">{fmtInt(m.campaigns)}</td>
+                  <td className="px-4 py-2.5 text-right">{fmtInt(m.sent)}</td>
+                  <td className="px-4 py-2.5 text-right">{fmtInt(m.delivered)}</td>
+                  <td className="px-4 py-2.5 text-right">{fmtInt(m.uniqueOpens)}</td>
+                  <td className="px-4 py-2.5 text-right">{fmtPct(div(m.uniqueOpens, m.delivered))}</td>
+                  <td className="px-4 py-2.5 text-right">{fmtInt(m.uniqueClicks)}</td>
+                  <td className="px-4 py-2.5 text-right">{fmtPct(div(m.uniqueClicks, m.delivered))}</td>
+                  <td className="px-4 py-2.5 text-right">{fmtInt(m.unsubscribes)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }
