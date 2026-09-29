@@ -33,6 +33,7 @@ import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email';
 import { ensureBuilderInventorySchema } from '@/lib/builder-inventory';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -223,7 +224,7 @@ export async function GET(req: Request) {
   const subject = `${recent.length} promotion${recent.length === 1 ? '' : 's'} auto-expired \u2014 RealtyLine`;
 
   const emailResult = await sendEmail({
-    to: 'tawanna@realtynewsnow.app',
+    to: ADMIN_INBOX,
     subject,
     html,
   });

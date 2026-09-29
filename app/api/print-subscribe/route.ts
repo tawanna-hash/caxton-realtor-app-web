@@ -10,6 +10,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { getEmailProvider } from '@/lib/server/email';
 import { escapeHtml } from '@/lib/server/email/html';
 import { verifyAddressGoogle } from '@/lib/address-validation';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
 export const runtime = 'nodejs';
 
@@ -369,7 +370,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Send emails (best-effort — log failures but don't fail the request)
-  const notifyTo = process.env.SUBSCRIBE_NOTIFY_TO || 'subscribe@myrealtyline.com';
+  const notifyTo = ADMIN_INBOX;
 
   const [notifyResult, confirmResult] = await Promise.all([
     sendEmail({

@@ -29,6 +29,7 @@ import { NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -306,9 +307,7 @@ export async function GET(req: Request) {
   }
 
   const adminEmail =
-    process.env.RENEWAL_ADMIN_EMAIL ??
-    process.env.EMAIL_FROM_ADMIN ??
-    'tawanna@realtynewsnow.app';
+    ADMIN_INBOX;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
 
   // Sort within each section: expired first by how recently they expired,

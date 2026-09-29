@@ -27,6 +27,7 @@ import {
   noticeBlock,
   BRAND,
 } from '@/lib/server/email/html';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
 export const runtime = 'nodejs';
 
@@ -177,7 +178,7 @@ export async function POST(req: NextRequest) {
     </div>
   `;
 
-  const recipient = process.env.ADS_INQUIRY_TO ?? 'info@myrealtyline.com';
+  const recipient = ADMIN_INBOX;
   const result = await sendEmail({
     to: recipient,
     subject,

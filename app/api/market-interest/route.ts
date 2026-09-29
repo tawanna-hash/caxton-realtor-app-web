@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { getSql, ensureSchema } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { escapeHtml, wrapEmail, infoCard } from '@/lib/server/email/html';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
 export const runtime = 'nodejs';
 
@@ -35,9 +36,7 @@ const schema = z.object({
 });
 
 const ADMIN_EMAIL =
-  process.env.MARKET_INTEREST_ADMIN_EMAIL ||
-  process.env.RENEWAL_ADMIN_EMAIL ||
-  'tawanna@realtynewsnow.app';
+  ADMIN_INBOX;
 
 export async function POST(req: NextRequest) {
   let body: unknown;

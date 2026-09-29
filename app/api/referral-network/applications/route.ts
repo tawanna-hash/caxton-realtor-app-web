@@ -6,6 +6,7 @@ import {
   REFERRAL_PROVIDER_CATEGORIES,
   type ReferralProviderCategory,
 } from '@/lib/server/referral-network-applications';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
 export const runtime = 'nodejs';
 
@@ -86,9 +87,7 @@ export async function POST(req: NextRequest) {
     });
     submittedIps.set(ip, now);
 
-    const recipient = process.env.REFERRAL_NETWORK_TO
-      ?? process.env.ADS_INQUIRY_TO
-      ?? 'info@myrealtyline.com';
+    const recipient = ADMIN_INBOX;
     const notification = await sendEmail({
       to: recipient,
       subject: `[Referral Network] Application from ${data.companyName}`,

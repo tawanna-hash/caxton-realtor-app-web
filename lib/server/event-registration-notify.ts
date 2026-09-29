@@ -1,5 +1,6 @@
 import { sendEmail } from '@/lib/email';
 import { escapeHtml } from '@/lib/server/email/html';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
 type RegistrationNotice = {
   registrationId: number;
@@ -25,9 +26,7 @@ function siteOrigin(): string {
 
 function notificationAddress(): string {
   return (
-    process.env.EVENT_REGISTRATION_NOTIFICATION_EMAIL ||
-    process.env.ADMIN_NOTIFICATION_EMAIL ||
-    'tawanna@myrealtyline.com'
+    ADMIN_INBOX
   );
 }
 

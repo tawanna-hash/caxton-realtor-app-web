@@ -8,8 +8,9 @@
 import { exec, query } from '@/lib/server/db/neon';
 import { sendEmail } from '@/lib/email';
 import { logger } from '@/lib/server/logger';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
-const ALERT_TO = process.env.BOUNCE_ALERT_TO ?? 'tawanna@realtynewsnow.app';
+const ALERT_TO = ADMIN_INBOX;
 
 export async function handleBounceAlert(params: {
   emailId: string;

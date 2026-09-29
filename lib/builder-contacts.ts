@@ -9,8 +9,9 @@
 // Add/verify entries as sales-team emails are confirmed. Keys are matched
 // case-insensitively against inventory row.builderName.
 
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 export const DEFAULT_INQUIRY_TO =
-  process.env.LISTING_INQUIRY_TO ?? 'tawanna@realtynewsnow.app';
+  ADMIN_INBOX;
 
 // builderName -> sales-team email. Leave an entry out (or null) to use the
 // default inbox. Populate as emails are confirmed.

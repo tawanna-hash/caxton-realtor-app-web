@@ -19,6 +19,7 @@ import {
 } from '@/lib/builder-inventory';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getEmailProvider } from '@/lib/server/email';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
 const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL || '');
 
@@ -26,7 +27,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30; // seconds — covers the PDF upload + DB inserts
 
-const NOTIFY_TO = process.env.INVENTORY_NOTIFY_TO || 'tawanna@realtynewsnow.app';
+const NOTIFY_TO = ADMIN_INBOX;
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 const MAX_IMG_BYTES = 10 * 1024 * 1024;
 const ADMIN_EMAIL = 'admin:tawanna@realtynewsnow.app';

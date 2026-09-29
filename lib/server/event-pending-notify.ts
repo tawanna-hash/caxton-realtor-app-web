@@ -15,6 +15,7 @@
 
 import { sendEmail } from '@/lib/email';
 import { escapeHtml } from '@/lib/server/email/html';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
 interface Args {
   eventId: number;
@@ -37,9 +38,7 @@ function originForLink(): string {
 
 function pickAdminAddress(): string {
   return (
-    process.env.ADMIN_NOTIFICATION_EMAIL ||
-    process.env.EMAIL_REPLY_TO ||
-    'tawanna@realtynewsnow.app'
+    ADMIN_INBOX
   );
 }
 

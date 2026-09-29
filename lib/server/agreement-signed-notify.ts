@@ -16,6 +16,7 @@
 import { sendEmail } from '@/lib/email';
 import { escapeHtml } from '@/lib/server/email/html';
 import type { Agreement } from '@/lib/agreements';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
 function originForLink(): string {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
@@ -29,9 +30,7 @@ function originForLink(): string {
 function pickRecipient(): string {
   return (
     process.env.AGREEMENT_SIGNED_NOTIFICATION_EMAIL ||
-    process.env.ADMIN_NOTIFICATION_EMAIL ||
-    process.env.EMAIL_REPLY_TO ||
-    'tawanna@realtynewsnow.app'
+    ADMIN_INBOX
   );
 }
 

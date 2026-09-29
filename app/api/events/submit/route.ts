@@ -4,6 +4,7 @@ import { ApiError, withErrorHandling } from '@/lib/server/error';
 import { manualEventInputSchema } from '@/lib/server/schemas/events';
 import { createSubmittedEvent } from '@/lib/server/events-store';
 import { notifyAdminsPendingEvent } from '@/lib/server/event-pending-notify';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,8 +20,7 @@ const recentSubmissions = new Map<string, number[]>();
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 4;
 const APPROVAL_RECIPIENTS = [
-  'tawanna@myrealtyline.com',
-  'tawanna@realtynewsnow.app',
+  ADMIN_INBOX,
   'caroline@myrealtyline.com',
 ];
 

@@ -14,6 +14,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/email';
 import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ADMIN_INBOX } from '@/lib/admin-inbox';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,7 @@ export const dynamic = 'force-dynamic';
 // Empty string disables alerts entirely. Falsy check below already handles
 // undefined/null. We default to tawanna@realtynewsnow.app — newslinesa.com
 // is the publication domain but mail goes through myrealtyline.com.
-const ALERT_RECIPIENT = process.env.ACTIVITY_ALERT_TO ?? 'tawanna@realtynewsnow.app';
+const ALERT_RECIPIENT = ADMIN_INBOX;
 
 const AlertSchema = z.object({
   kind: z.enum(['form_submit', 'client_error']),
