@@ -6,7 +6,6 @@
 import { getSql } from '@/lib/db';
 import type { MailingSegment } from './segments';
 import { splitFullName } from './import-fields';
-import type { Sql } from './_internal';
 import { parsePublications } from '@/lib/publication-theme';
 import { sweepEmailOnlyRouting } from './email-only-routing';
 import { isSuppressed, suppressedSubset } from '@/lib/server/email-suppressions';
@@ -59,19 +58,6 @@ type AdvertiserSyncRow = {
   additional_contacts: unknown;
 };
 
-type AdditionalContact = {
-  first_name?: string | null;
-  last_name?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  title?: string | null;
-  address?: string | null;
-  address_2?: string | null;
-  city?: string | null;
-  state?: string | null;
-  zip?: string | null;
-};
-
 type MailingSourceRow = {
   first_name: string;
   last_name: string | null;
@@ -87,10 +73,6 @@ type MailingSourceRow = {
   zip: string | null;
   website: string | null;
 };
-
-function digits(v: string | null | undefined): string {
-  return (v ?? '').replace(/[^\d]/g, '');
-}
 
 function deriveFirstLast(adv: AdvertiserSyncRow): { first_name: string; last_name: string | null } {
   // Prefer first_name/last_name when present; fall back to splitting name.
@@ -185,79 +167,6 @@ function advertiserToSource(adv: AdvertiserSyncRow): MailingSourceRow | null {
   };
 }
 
-function additionalToSource(ac: AdditionalContact, parent: { company: string | null }): MailingSourceRow | null {
-  const first = (ac.first_name ?? '').trim();
-  const email = (ac.email ?? '').trim();
-  if (!first && !email) return null;
-  return {
-    first_name:     first || email,
-    last_name:      ac.last_name || null,
-    email:          email || null,
-    phone:          ac.phone || null,
-    company:        parent.company,
-    title:          ac.title || null,
-    license_number: null,
-    address:        ac.address   || null,
-    address_2:      ac.address_2 || null,
-    city:           ac.city      || null,
-    state:          ac.state     || null,
-    zip:            ac.zip       || null,
-    website:        null,
-  };
-}
-
-/** Find an existing Advertisers-segment row matching this source. */
-async function findAdvertiserMailingId(
-  sql: Sql,
-  src: MailingSourceRow,
-  advertiserId?: number | null,
-): Promise<string | null> {
-  // The legacy 'manual-newsline' bucket was merged into 'newsline-sa-print'
-  // on 2026-06-21. Match in either segment so re-runs after the merge
-  // still dedupe against pre-merge rows.
-  const email = (src.email ?? '').trim().toLowerCase();
-  if (email) {
-    const rows = (await sql`
-      SELECT id FROM mailing_contacts
-       WHERE segment IN ('newsline-sa-print','manual-newsline')
-         AND LOWER(COALESCE(email, '')) = ${email}
-       LIMIT 1
-    `) as unknown as Array<{ id: string }>;
-    if (rows[0]) return rows[0].id;
-    return null;
-  }
-  const phoneDigits = digits(src.phone);
-  if (phoneDigits) {
-    const first = (src.first_name ?? '').toLowerCase();
-    const last  = (src.last_name  ?? '').toLowerCase();
-    const rows = (await sql`
-      SELECT id FROM mailing_contacts
-       WHERE segment IN ('newsline-sa-print','manual-newsline')
-         AND LOWER(COALESCE(first_name, '')) = ${first}
-         AND LOWER(COALESCE(last_name, ''))  = ${last}
-         AND REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') = ${phoneDigits}
-       LIMIT 1
-    `) as unknown as Array<{ id: string }>;
-    if (rows[0]) return rows[0].id;
-  }
-  // Last-resort dedupe for no-email / no-phone advertiser rows: match by
-  // advertiser_id + first_name. Without this, every sync run inserts a
-  // fresh duplicate for advertisers whose email is null.
-  if (advertiserId != null) {
-    const first = (src.first_name ?? '').toLowerCase();
-    const rows = (await sql`
-      SELECT id FROM mailing_contacts
-       WHERE segment IN ('newsline-sa-print','manual-newsline')
-         AND advertiser_id = ${advertiserId}
-         AND LOWER(COALESCE(first_name, '')) = ${first}
-       LIMIT 1
-    `) as unknown as Array<{ id: string }>;
-    if (rows[0]) return rows[0].id;
-  }
-  return null;
-}
-
-
 // Build the tags JSON for an insert based on the destination segment.
 // Merged-print segments (realtyline-atx-print, newsline-sa-print) get an
 // 'active-advertiser' tag so the combined list can filter by audience
@@ -269,115 +178,6 @@ function buildAdvertiserTagsJson(segment: MailingSegment, opts: { staff?: boolea
     tags.push('active-advertiser');
   }
   return JSON.stringify(tags);
-}
-
-async function insertAdvertiserMailing(
-  sql: Sql,
-  src: MailingSourceRow,
-  advertiser_id: number | null,
-  source_tag: string,
-): Promise<void> {
-  // Suppression gate: if this email was permanently deleted from the
-  // Mailing Hub, refuse to re-insert it. The admin must explicitly lift
-  // the suppression to bring it back.
-  if (await isSuppressed(src.email)) return;
-  // Legacy sync path now writes into the merged 'newsline-sa-print'
-  // segment with the active-advertiser tag, mirroring the SA-side merge.
-  await sql`
-    INSERT INTO mailing_contacts
-      (segment, first_name, last_name, email, phone, company, title, license_number,
-       address, address_2, city, state, zip, website, source, advertiser_id, tags)
-    VALUES
-      ('newsline-sa-print',
-       ${src.first_name || (src.email ?? '(no name)')},
-       ${src.last_name},
-       ${src.email},
-       ${src.phone},
-       ${src.company},
-       ${src.title},
-       ${src.license_number},
-       ${src.address},
-       ${src.address_2},
-       ${src.city},
-       ${src.state},
-       ${src.zip},
-       ${src.website},
-       ${source_tag},
-       ${advertiser_id},
-       ${buildAdvertiserTagsJson('newsline-sa-print')}::jsonb)
-  `;
-}
-
-/**
- * Walk active advertisers and insert any missing Advertisers-segment
- * mailing rows. Add-only: never updates an existing row (so manual
- * mailing-list edits are preserved). Returns counts for logging.
- */
-export async function syncAdvertisersFromAdvertisers(): Promise<{
-  added: number;
-  skipped: number;
-  errors: number;
-}> {
-  const sql = getSql();
-  const advertisers = (await sql`
-    SELECT id, first_name, last_name, name, contact_email, portal_email,
-           phone, office_phone, company, title, license_number,
-           address, address_2, city, state, zip, website,
-           additional_contacts
-      FROM advertisers
-     WHERE COALESCE(status, 'prospect') = 'advertiser'
-  `) as unknown as AdvertiserSyncRow[];
-
-  let added = 0;
-  let skipped = 0;
-  let errors = 0;
-
-  for (const adv of advertisers) {
-    const primaryBase = advertiserToSource(adv);
-    if (primaryBase) {
-      try {
-        const fallback = await loadLocationAddressForAdvertiser(adv.id);
-        const merged = mergeAddresses(primaryBase, fallback);
-        const primary = { ...primaryBase, ...merged };
-        const existingId = await findAdvertiserMailingId(sql, primary, adv.id);
-        if (existingId) {
-          skipped += 1;
-        } else {
-          await insertAdvertiserMailing(sql, primary, adv.id, 'sync:advertisers');
-          added += 1;
-        }
-      } catch (err) {
-        errors += 1;
-        console.error('[mailing sync] primary failed for advertiser', adv.id, err);
-      }
-    }
-
-    const acs: AdditionalContact[] = Array.isArray(adv.additional_contacts)
-      ? (adv.additional_contacts as AdditionalContact[])
-      : [];
-    for (const ac of acs) {
-      const src = additionalToSource(ac, { company: adv.company });
-      if (!src) continue;
-      try {
-        const existingId = await findAdvertiserMailingId(sql, src, adv.id);
-        if (existingId) {
-          skipped += 1;
-        } else {
-          await insertAdvertiserMailing(sql, src, adv.id, 'sync:advertisers:additional');
-          added += 1;
-        }
-      } catch (err) {
-        errors += 1;
-        console.error('[mailing sync] additional failed for advertiser', adv.id, err);
-      }
-    }
-  }
-
-  // Sweep email-only routing across mailing-stage rows so any rows this
-  // sync just inserted without an address land in the right segment.
-  await sweepEmailOnlyRouting();
-
-  return { added, skipped, errors };
 }
 
 /**

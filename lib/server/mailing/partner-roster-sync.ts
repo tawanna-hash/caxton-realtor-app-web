@@ -14,6 +14,57 @@ type AuditRow = {
   legacy_misrouted: number;
 };
 
+// A partner belongs on the Newsline SA list only when its publication
+// includes San Antonio, and on the RealtyLine ATX list only when it
+// includes Austin (or a RealtyLine market / no market). Same rules as the
+// insert targets below.
+const PUBS_SQL = `lower(replace(coalesce(a.publication, 'austin'), ' ', ''))`;
+const SA_OK = `(${PUBS_SQL} ~ '(^|,)(san_antonio|both)(,|$)')`;
+const ATX_OK = `(${PUBS_SQL} = '' OR ${PUBS_SQL} ~ '(^|,)(austin|houston|dallas|both)(,|$)'
+  OR ${PUBS_SQL} !~ '(^|,)(austin|san_antonio|houston|dallas|both)(,|$)')`;
+
+/**
+ * Move partner-linked contacts that sit on the wrong publication list.
+ * If the person is already on the correct list, the stray copy is removed
+ * (plain delete, NOT a Mailing Hub delete, so the email is not suppressed).
+ * Otherwise the row is moved to the correct list, keeping its history.
+ */
+export async function reroutePartnerContacts(): Promise<{ moved: number; removed: number }> {
+  const sql = getSql();
+  const misrouted = `
+    SELECT m.id, m.email, m.first_name, m.address, m.advertiser_id,
+           CASE WHEN m.segment = 'newsline-sa-print'
+                THEN 'realtyline-atx-print' ELSE 'newsline-sa-print' END AS target
+      FROM mailing_contacts m
+      JOIN advertisers a ON a.id = m.advertiser_id
+     WHERE (m.segment = 'newsline-sa-print' AND NOT ${SA_OK} AND ${ATX_OK})
+        OR (m.segment = 'realtyline-atx-print' AND NOT ${ATX_OK} AND ${SA_OK})`;
+  const dupeInTarget = `
+    EXISTS (
+      SELECT 1 FROM mailing_contacts t
+       WHERE t.segment = x.target AND t.id <> x.id
+         AND (
+           (nullif(trim(x.email), '') IS NOT NULL
+            AND lower(trim(t.email)) = lower(trim(x.email)))
+           OR (nullif(trim(x.email), '') IS NULL
+            AND t.advertiser_id = x.advertiser_id
+            AND lower(trim(coalesce(t.first_name, ''))) = lower(trim(coalesce(x.first_name, '')))
+            AND lower(trim(coalesce(t.address, ''))) = lower(trim(coalesce(x.address, ''))))
+         ))`;
+  const removed = (await sql.query(`
+    WITH x AS (${misrouted})
+    DELETE FROM mailing_contacts m USING x
+     WHERE m.id = x.id AND ${dupeInTarget}
+    RETURNING m.id`)) as unknown as Array<{ id: string }>;
+  const moved = (await sql.query(`
+    WITH x AS (${misrouted})
+    UPDATE mailing_contacts m SET segment = x.target, updated_at = now()
+      FROM x
+     WHERE m.id = x.id
+    RETURNING m.id`)) as unknown as Array<{ id: string }>;
+  return { moved: moved.length, removed: removed.length };
+}
+
 /**
  * Reconcile active partner offices and people into the two print-mail segments.
  * Keep source identities stable so an hourly run never creates another copy.
@@ -28,8 +79,11 @@ export async function syncPartnerRoster(): Promise<{
   duplicatePeople: number;
   duplicateOffices: number;
   legacyMisrouted: number;
+  reroutedMoved: number;
+  reroutedRemoved: number;
 }> {
   const sql = getSql();
+  const rerouted = await reroutePartnerContacts();
   const rows = (await sql.query(`
     WITH partners AS (
       SELECT a.*,
@@ -288,5 +342,7 @@ export async function syncPartnerRoster(): Promise<{
     duplicatePeople: duplicates.duplicate_people,
     duplicateOffices: duplicates.duplicate_offices,
     legacyMisrouted: duplicates.legacy_misrouted,
+    reroutedMoved: rerouted.moved,
+    reroutedRemoved: rerouted.removed,
   };
 }
