@@ -46,6 +46,26 @@ const SOURCE_LABELS: Record<string, string> = {
   gmail: 'Gmail',
 };
 
+/** Calendar day (YYYY-MM-DD) in Central time. */
+function centralDay(d: Date): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(d);
+}
+
+/**
+ * Same rule as the public calendar: an event is past once its final
+ * calendar day (end date, else start date) is before today in Central time.
+ * Undated events are never treated as past.
+ */
+function isPastEvent(ev: { startDate: string | null; endDate: string | null }, today: string): boolean {
+  const ref = ev.endDate ?? ev.startDate;
+  if (!ref) return false;
+  const d = new Date(ref);
+  if (Number.isNaN(d.getTime())) return false;
+  return centralDay(d) < today;
+}
+
 function formatDateTime(s: string | null) {
   if (!s) return '-';
   return new Date(s).toLocaleString('en-US', {
@@ -69,6 +89,8 @@ export default function EventsPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  // Past events stay in the archive but are hidden from the list by default.
+  const [showPast, setShowPast] = useState(false);
 
   // The server supplies one global Central-time count for all publications.
   // Hidden scraped events remain in the archive but need no further action.
@@ -86,7 +108,11 @@ export default function EventsPage() {
     }
   };
 
-  const sorted = [...items].sort((a, b) => {
+  const today = centralDay(new Date());
+  const pastCount = items.filter((ev) => isPastEvent(ev, today)).length;
+  const listed = showPast ? items : items.filter((ev) => !isPastEvent(ev, today));
+
+  const sorted = [...listed].sort((a, b) => {
     const dir = sortDir === 'asc' ? 1 : -1;
     switch (sortKey) {
       case 'title': return a.title.localeCompare(b.title) * dir;
@@ -241,7 +267,7 @@ export default function EventsPage() {
         <div><strong>{items.length.toLocaleString()}</strong><span>Total events</span></div>
         <div><strong>{items.filter((event) => !event.hidden).length.toLocaleString()}</strong><span>Visible</span></div>
         <div><strong>{items.filter((event) => event.hidden).length.toLocaleString()}</strong><span>Hidden</span></div>
-        <div title={`${expiredSummary.hiddenScraped} already-hidden scraped events retained`}><strong>{expiredSummary.total.toLocaleString()}</strong><span>Expired (all)</span></div>
+        <div title="Events whose last day is before today (Central time). Kept in the archive; use Show past events to see them."><strong>{pastCount.toLocaleString()}</strong><span>Past events</span></div>
       </section>
 
       <div className="flex items-center justify-between gap-2 mb-4">
@@ -254,6 +280,14 @@ export default function EventsPage() {
         {/* BUG-29: surface counts so admins can see at a glance how many events are loaded + how many are hidden */}
         {!loading && items.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+            <button
+              type="button"
+              onClick={() => { setShowPast((v) => !v); setPage(1); }}
+              aria-pressed={showPast}
+              className={`inline-flex items-center px-2 py-1 rounded-full border font-medium ${showPast ? 'bg-brand-50 border-brand-300 text-brand-800' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+            >
+              {showPast ? 'Hide past events' : `Show past events (${pastCount})`}
+            </button>
             <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 border border-gray-200 font-medium">
               {items.length} total
             </span>
