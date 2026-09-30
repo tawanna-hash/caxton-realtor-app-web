@@ -11,6 +11,7 @@
 // Server component. Aggregates rows via summarizeBuilders() so the list is
 // always in sync with /api/builders and the native iOS Builders screen.
 
+import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Building2, ChevronRight } from 'lucide-react';
@@ -30,7 +31,7 @@ export const metadata = {
     'New home communities, move-in ready homes, and promotions from local builders and developers.',
 };
 
-export default async function BuildersHubPage() {
+async function BuildersContent() {
   // Each market is standalone — scope to the active publication only.
   const pub = await getServerPub();
   const rows = await listBuilderInventoryCached({
@@ -112,6 +113,30 @@ export default async function BuildersHubPage() {
     );
 
   return (
+    <>
+        {developers.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-3">
+              Developers
+            </h2>
+            {renderList(developers)}
+          </section>
+        )}
+
+        {buildersOnly.length > 0 && (
+          <section>
+            <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-3">
+              Builders
+            </h2>
+            {renderList(buildersOnly)}
+          </section>
+        )}
+    </>
+  );
+}
+
+export default function BuildersHubPage() {
+  return (
     <main className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
         <header className="mb-8">
@@ -130,23 +155,23 @@ export default async function BuildersHubPage() {
 
         <AdSlot slug="featured_builder_strip" className="mb-6" />
 
-        {developers.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-3">
-              Developers
-            </h2>
-            {renderList(developers)}
-          </section>
-        )}
-
-        {buildersOnly.length > 0 && (
-          <section>
-            <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-3">
-              Builders
-            </h2>
-            {renderList(buildersOnly)}
-          </section>
-        )}
+        <Suspense
+          fallback={
+            <div className="animate-pulse space-y-3" aria-busy="true" aria-label="Loading builders">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 py-3 border-b border-gray-100">
+                  <div className="w-12 h-12 rounded-md bg-gray-100 flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-1/2 rounded bg-gray-200" />
+                    <div className="h-3 w-1/3 rounded bg-gray-100" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          }
+        >
+          <BuildersContent />
+        </Suspense>
       </div>
       <BuilderDeveloperFloater
         downloadHref="/api/inventory/pdf"

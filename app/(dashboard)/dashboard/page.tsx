@@ -4,14 +4,15 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { trackEvent, identifyUser } from "../../posthog-provider";
 import { useSwipeBack } from '@/hooks/use-swipe-back';
-import ProfilePanel from '@/components/ProfilePanel';
+const ProfilePanel = dynamic(() => import('@/components/ProfilePanel'));
 import { getApiBase } from '@/lib/api-base';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import SaborReportCard from '@/components/SaborReportCard';
-import DallasPreviewHome from '@/components/DallasPreviewHome';
+const DallasPreviewHome = dynamic(() => import('@/components/DallasPreviewHome'));
 import RealtyLineReportCard from '@/components/RealtyLineReportCard';
 import { SW } from '@/lib/style-constants';
 import { PUB_META, type PubKey, isPreLaunchPub, isPubKey } from '@/lib/pub-meta';
@@ -22,7 +23,7 @@ import { share as nativeShare } from '@/lib/native/share';
 import { haptics } from '@/lib/native/haptics';
 import { openExternal } from '@/lib/native/external-link';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
-import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
+const MarketSwitcherSheet = dynamic(() => import('@/components/MarketSwitcherSheet'));
 import TrendingTicker from '@/components/feed/TrendingTicker';
 import ArticleFeedCardBody from '@/components/ArticleFeedCardBody';
 import { normalizeArticleHtml } from '@/lib/article-html';
