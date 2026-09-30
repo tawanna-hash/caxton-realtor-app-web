@@ -158,9 +158,10 @@ function onError(message: string, source?: string, lineno?: number, colno?: numb
   // 18+ dropped the sentinel in some cases and fires window.onerror
   // with message=''). Match both shapes so we can tag consistently.
   const trimmedMessage = String(message ?? '').trim();
+  // Safari reports lineno/colno as 0 (not undefined) for masked errors.
   const isMasked =
     !source &&
-    lineno === undefined &&
+    !lineno &&
     !errorObj &&
     (trimmedMessage === 'Script error.' || trimmedMessage === '');
 
@@ -191,7 +192,10 @@ function onError(message: string, source?: string, lineno?: number, colno?: numb
     page_url: typeof window !== 'undefined' ? window.location.href : undefined,
     user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
   });
-  if (skipEmailAlert) return; // telemetry-only; don't email garbage 'undefined' errors
+  // Masked cross-origin errors carry no message, file or stack, and nothing
+  // in the app loads third-party scripts on these pages (they come from
+  // extensions, content blockers or in-app browsers) — telemetry only.
+  if (skipEmailAlert || isMasked) return; // telemetry-only; don't email non-actionable errors
   sendAlert({
     kind: 'client_error',
     title: isMasked
