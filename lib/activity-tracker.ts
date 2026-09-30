@@ -88,6 +88,17 @@ const NOISE_PATTERNS: RegExp[] = [
   /safari-extension:\/\//i,
 ];
 
+// Next.js/React streaming race: the inline $RS/$RC/$RX scripts that swap
+// streamed Suspense content into place throw "Cannot read properties of null
+// (reading 'parentNode')" when React has already rendered that boundary on
+// the client (common in background tabs opened from email links). The page
+// is unaffected, so keep it in PostHog but don't email an alert.
+function isStreamingSwapRace(message: string, errorObj?: unknown): boolean {
+  if (!/reading 'parentNode'|parentNode/i.test(String(message ?? ''))) return false;
+  const stack = errorObj instanceof Error ? String(errorObj.stack ?? '') : '';
+  return /at \$R[SCX]\b|\$R[SCX] \(/.test(stack) || /at \$R[SCX]\b/.test(String(message ?? ''));
+}
+
 function isNoiseError(message: string, source?: string): boolean {
   const combined = `${message} ${source || ''}`;
   return NOISE_PATTERNS.some((rx) => rx.test(combined));
@@ -139,7 +150,7 @@ function onError(message: string, source?: string, lineno?: number, colno?: numb
   // Guard against the 'undefined'/'null'/empty alert spam pattern. We still
   // ship to PostHog (telemetry dashboard) but skip the inbox alert so
   // Tawanna's mailbox doesn't drown in non-actionable noise.
-  const skipEmailAlert = !hasMeaningfulMessage(message);
+  const skipEmailAlert = !hasMeaningfulMessage(message) || isStreamingSwapRace(message, errorObj);
 
   // Cross-origin script errors are masked by the browser: no source,
   // no lineno, no errorObj, and either the classic 'Script error.'
