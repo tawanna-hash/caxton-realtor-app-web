@@ -44,6 +44,7 @@ const SOURCE_LABELS: Record<string, string> = {
   hba: 'HBA Austin',
   realtyline: 'RealtyLine',
   gmail: 'Gmail',
+  metrotex: 'MetroTex',
 };
 
 /** Calendar day (YYYY-MM-DD) in Central time. */

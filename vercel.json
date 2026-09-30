@@ -37,6 +37,10 @@
       "schedule": "30 13 * * *"
     },
     {
+      "path": "/api/cron/scrape-metrotex",
+      "schedule": "40 13 * * *"
+    },
+    {
       "path": "/api/cron/scrape-sabuilders",
       "schedule": "45 13 * * *"
     },

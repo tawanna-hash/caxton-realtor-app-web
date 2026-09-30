@@ -14,6 +14,7 @@ export type EventSource =
   | 'fpr'
   | 'hba'
   | 'sabor'
+  | 'metrotex'
   | 'sabuilders'
   | 'tmbsa'
   | 'nahrep'
