@@ -37,6 +37,11 @@ const COMMUNITY_MAPS: Record<
     pdfUrl: '/partners/kb-home/kb-home-austin-community-map.pdf',
     previewImageUrl: '/partners/kb-home/kb-home-austin-community-map-preview.png',
   },
+  'mi-homes': {
+    title: 'M/I Homes Communities in the Austin Area',
+    pdfUrl: '/partners/mi-homes/mi-homes-austin-community-map.pdf',
+    previewImageUrl: '/partners/mi-homes/mi-homes-austin-community-map-preview.png',
+  },
 };
 
 // Pre-render the active advertiser slugs at build time. This makes the very
