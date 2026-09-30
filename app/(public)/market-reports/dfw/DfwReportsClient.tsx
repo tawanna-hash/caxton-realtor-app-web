@@ -34,7 +34,7 @@ function Stat({ label, value, delta, note }: { label: string; value?: string | n
 
 function Metrics({ m, board }: { m: DfwMetrics; board: DfwBoard }) {
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+    <div className="grid grid-cols-2 content-start items-start gap-3 self-start md:grid-cols-3">
       <Stat label="Median price" value={m.medianPrice} delta={m.medianPriceYoY} />
       <Stat label="Closed sales" value={m.closedSales} delta={m.closedSalesYoY} />
       <Stat label="Active listings" value={m.activeListings} delta={m.activeListingsYoY} />
