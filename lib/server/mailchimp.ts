@@ -114,3 +114,74 @@ export async function fetchMailchimpSummary(sinceIso: string): Promise<Mailchimp
   cache = { key: sinceIso, at: Date.now(), value };
   return value;
 }
+
+// ── UTM auto-tagging ─────────────────────────────────────────────────────────
+//
+// Mailchimp has no account-wide default for Google Analytics link tracking, so
+// /api/cron/mailchimp-utm turns it on for every unsent campaign that lacks it.
+// That makes Mailchimp append utm_source / utm_medium=email / utm_campaign to
+// every link at send time. Scheduled campaigns must be unscheduled to edit;
+// they are rescheduled at the exact same time. Campaigns sending within the
+// next 10 minutes are left alone to avoid racing the send.
+
+export function utmTagFromTitle(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 50) || 'campaign';
+}
+
+async function mcWrite(method: 'PATCH' | 'POST', path: string, body?: unknown): Promise<void> {
+  const { url, auth } = base();
+  const res = await fetch(`${url}${path}`, {
+    method,
+    headers: { Authorization: auth, 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    cache: 'no-store',
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Mailchimp ${method} ${path} ${res.status}: ${text.slice(0, 200)}`);
+  }
+}
+
+interface UnsentCampaign {
+  id: string;
+  type: string;
+  status: string;
+  send_time: string;
+  settings?: { title?: string };
+  tracking?: { google_analytics?: string; text_clicks?: boolean };
+}
+
+export interface UtmResult { id: string; title: string; status: string; tag?: string; action: 'tagged' | 'skipped' | 'error'; detail?: string }
+
+export async function ensureUtmTracking(): Promise<UtmResult[]> {
+  const fields = 'campaigns.id,campaigns.type,campaigns.status,campaigns.send_time,campaigns.settings.title,campaigns.tracking';
+  const lists = await Promise.all(['save', 'paused', 'schedule'].map((status) =>
+    mc<{ campaigns: UnsentCampaign[] }>(`/campaigns?status=${status}&count=1000&fields=${fields}`)));
+  const results: UtmResult[] = [];
+  for (const c of lists.flatMap((l) => l.campaigns ?? [])) {
+    const title = c.settings?.title ?? c.id;
+    if (c.tracking?.google_analytics) continue;
+    if (c.type === 'rss' || c.type === 'automation') { results.push({ id: c.id, title, status: c.status, action: 'skipped', detail: c.type }); continue; }
+    const scheduled = c.status === 'schedule';
+    if (scheduled && (!c.send_time || new Date(c.send_time).getTime() - Date.now() < 10 * 60_000)) {
+      results.push({ id: c.id, title, status: c.status, action: 'skipped', detail: 'sends within 10 minutes' });
+      continue;
+    }
+    const tag = utmTagFromTitle(title);
+    const tracking: Record<string, unknown> = { google_analytics: tag };
+    if (c.type === 'variate') tracking.text_clicks = true; // required by Mailchimp for A/B campaigns
+    try {
+      if (scheduled) await mcWrite('POST', `/campaigns/${c.id}/actions/unschedule`);
+      try {
+        await mcWrite('PATCH', `/campaigns/${c.id}`, { tracking });
+      } finally {
+        if (scheduled) await mcWrite('POST', `/campaigns/${c.id}/actions/schedule`, { schedule_time: c.send_time });
+      }
+      results.push({ id: c.id, title, status: c.status, tag, action: 'tagged' });
+    } catch (err) {
+      results.push({ id: c.id, title, status: c.status, tag, action: 'error', detail: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  return results;
+}
