@@ -88,6 +88,7 @@ const GROUPS: ScraperGroup[] = [
       { name: 'UnlockMLS',         path: 'scrape-unlockmls',    schedule: '6:00 AM CDT',  description: 'MLS listings data' },
       { name: 'SABOR',             path: 'scrape-sabor',         schedule: '8:30 AM CDT',  description: 'San Antonio MLS' },
       { name: 'MetroTex',          path: 'scrape-metrotex',      schedule: '8:40 AM CDT',  description: 'Dallas/Ft. Worth calendar' },
+      { name: 'Greater Ft. Worth', path: 'scrape-gfwar',         schedule: '8:50 AM CDT',  description: 'Dallas/Ft. Worth calendar' },
       { name: 'SA Builders',       path: 'scrape-sabuilders',    schedule: '8:45 AM CDT',  description: 'San Antonio builders list' },
       { name: 'ABoR Realtors',     path: 'scrape-abor-realtors', schedule: '10:00 PM CDT', description: 'Austin realtor roster' },
       { name: 'Giddens Realtors',  path: 'scrape-giddens-realtors', schedule: '2:00 PM CDT', description: 'Realtor sync' },

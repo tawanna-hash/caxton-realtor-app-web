@@ -17,6 +17,8 @@ const FEED_URL = 'https://api.tangilla.com/event/v1/feed/7985/live';
 const SOURCE = 'metrotex' as const;
 const PUBLICATION = 'dallas' as const;
 const FETCH_TIMEOUT_MS = 30_000;
+// Calendar titles read "MetroTex: <event title>".
+const TITLE_PREFIX = 'MetroTex: ';
 
 interface TangillaEvent {
   event_id: string;
@@ -67,7 +69,7 @@ function centralOffset(y: number, mo: number, d: number, h: number, mi: number):
   return '-06:00';
 }
 
-function centralIso(date: string | null, time: string | null): string | null {
+export function centralIso(date: string | null, time: string | null): string | null {
   if (!date) return null;
   const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
   if (!dm) return null;
@@ -77,7 +79,7 @@ function centralIso(date: string | null, time: string | null): string | null {
   return `${dm[1]}-${dm[2]}-${dm[3]}T${tm[1]}:${tm[2]}:00${centralOffset(y, mo, d, h, mi)}`;
 }
 
-function htmlToText(html: string | null | undefined): string {
+export function htmlToText(html: string | null | undefined): string {
   if (!html) return '';
   return html
     .replace(/<\s*br\s*\/?\s*>/gi, '\n')
@@ -153,7 +155,7 @@ function normalize(ev: TangillaEvent): EventInput | null {
     externalSource: SOURCE,
     externalId: ev.event_id,
     publication: PUBLICATION,
-    title,
+    title: `${TITLE_PREFIX}${title}`,
     description,
     link: clean(ev.registration_link),
     startDate,

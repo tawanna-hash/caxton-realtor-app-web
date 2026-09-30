@@ -41,6 +41,10 @@
       "schedule": "40 13 * * *"
     },
     {
+      "path": "/api/cron/scrape-gfwar",
+      "schedule": "50 13 * * *"
+    },
+    {
       "path": "/api/cron/scrape-sabuilders",
       "schedule": "45 13 * * *"
     },

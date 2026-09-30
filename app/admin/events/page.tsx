@@ -45,6 +45,7 @@ const SOURCE_LABELS: Record<string, string> = {
   realtyline: 'RealtyLine',
   gmail: 'Gmail',
   metrotex: 'MetroTex',
+  gfwar: 'Greater Ft. Worth',
 };
 
 /** Calendar day (YYYY-MM-DD) in Central time. */
