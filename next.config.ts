@@ -188,6 +188,18 @@ const nextConfig: NextConfig = {
     ];
   },
   // Security headers applied to every response.
+  // Same-origin path for magazine PDFs on the blob host so the browser can
+  // read Accept-Ranges/Content-Range and pdfjs can fetch only the pages
+  // being viewed instead of the whole file.
+  async rewrites() {
+    return [
+      {
+        source: '/magazine-pdf/:path*',
+        destination: 'https://b2lqsyyhvbkewrwf.public.blob.vercel-storage.com/:path*',
+      },
+    ];
+  },
+
   async headers() {
     return [
       {

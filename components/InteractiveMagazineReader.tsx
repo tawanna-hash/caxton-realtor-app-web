@@ -212,6 +212,7 @@ interface PdfJsLib {
     cMapUrl?: string;
     cMapPacked?: boolean;
     standardFontDataUrl?: string;
+    disableAutoFetch?: boolean;
   }) => { promise: Promise<PdfJsDoc> };
   GlobalWorkerOptions: { workerSrc: string };
   version: string;
@@ -220,6 +221,20 @@ interface PdfJsLib {
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFJS_VERSION: string = require('pdfjs-dist/package.json').version;
 const PDFJS_CDN = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}`;
+
+// Maps the Vercel Blob PDF host to the same-origin /magazine-pdf rewrite
+// (see next.config.ts). Returns null for any other host.
+const BLOB_PDF_HOST = 'b2lqsyyhvbkewrwf.public.blob.vercel-storage.com';
+function toSameOriginPdfUrl(url: string): string | null {
+  try {
+    if (typeof window === 'undefined' || !/^https?:$/.test(window.location.protocol)) return null;
+    const u = new URL(url);
+    if (u.protocol !== 'https:' || u.hostname !== BLOB_PDF_HOST) return null;
+    return `/magazine-pdf${u.pathname}${u.search}`;
+  } catch {
+    return null;
+  }
+}
 
 let _pdfjsCache: PdfJsLib | null = null;
 async function loadPdfJs(): Promise<PdfJsLib> {
@@ -460,14 +475,32 @@ export default function InteractiveMagazineReader({
         const pdfjs = await loadPdfJs();
         if (cancelled) return;
         setLoadProgress('Fetching magazine…');
-        const task = pdfjs.getDocument({
-          url: magazine.reader_url,
-          wasmUrl: `${PDFJS_CDN}/wasm/`,
-          cMapUrl: `${PDFJS_CDN}/cmaps/`,
-          cMapPacked: true,
-          standardFontDataUrl: `${PDFJS_CDN}/standard_fonts/`,
-        });
-        const loaded = await task.promise;
+        // The blob host does not expose Accept-Ranges/Content-Range to
+        // cross-origin pages, so pdfjs could not use range requests and had
+        // to stream the whole PDF (often 60 MB+). Loading through the
+        // same-origin /magazine-pdf rewrite exposes those headers, so only
+        // the pages being viewed are fetched. Falls back to the direct URL.
+        const open = (url: string, ranged: boolean) =>
+          pdfjs.getDocument({
+            url,
+            ...(ranged ? { disableAutoFetch: true } : {}),
+            wasmUrl: `${PDFJS_CDN}/wasm/`,
+            cMapUrl: `${PDFJS_CDN}/cmaps/`,
+            cMapPacked: true,
+            standardFontDataUrl: `${PDFJS_CDN}/standard_fonts/`,
+          }).promise;
+        const proxied = toSameOriginPdfUrl(magazine.reader_url);
+        let loaded: PdfJsDoc;
+        if (proxied) {
+          try {
+            loaded = await open(proxied, true);
+          } catch {
+            if (cancelled) return;
+            loaded = await open(magazine.reader_url, false);
+          }
+        } else {
+          loaded = await open(magazine.reader_url, false);
+        }
         if (cancelled) return;
         setDoc(loaded);
         trackEvent('flipbook_opened', {
@@ -1221,7 +1254,18 @@ export default function InteractiveMagazineReader({
         }}
       >
         {!doc ? (
-          <p className="text-white/40 text-sm">{loadProgress}</p>
+          <div className="flex flex-col items-center gap-3">
+            {magazine.cover_url ? (
+              // eslint-disable-next-line @next/next/no-img-element -- poster shown while the PDF loads
+              <img
+                src={magazine.cover_url}
+                alt=""
+                className="max-h-[70vh] max-w-[85vw] object-contain rounded-sm shadow-lg"
+                fetchPriority="high"
+              />
+            ) : null}
+            <p className="text-white/40 text-sm">{loadProgress}</p>
+          </div>
         ) : (
           <div
             ref={stageRef}
