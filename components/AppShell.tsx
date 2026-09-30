@@ -21,6 +21,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getApiBase } from '@/lib/api-base';
+import { refreshDallasPreview } from '@/lib/market-preview';
 import { Footer } from '@/components/footer';
 import NavDrawer from '@/components/NavDrawer';
 import BottomNav from '@/components/BottomNav';
@@ -190,6 +191,28 @@ export default function AppShell({
     } catch {}
 
     // PRIORITY 2: server confirmation
+    // Private Dallas/Ft. Worth preview: refresh the display cookie after the
+    // session is known. Accounts not on the list are moved off Dallas.
+    const syncDallasPreview = () => {
+      void refreshDallasPreview().then((allowed) => {
+        if (cancelled) return;
+        try {
+          const m = document.cookie.match(/(?:^|;\s*)caxton_pub=([^;]+)/);
+          const current = m ? decodeURIComponent(m[1]) : localStorage.getItem('caxton_pub');
+          if (current !== 'realtyline-dallas') return;
+          if (allowed) {
+            setPub('realtyline-dallas');
+          } else {
+            const maxAge = 60 * 60 * 24 * 365;
+            document.cookie = `caxton_pub=realtyline; path=/; max-age=${maxAge}; SameSite=Lax`;
+            localStorage.setItem('caxton_pub', 'realtyline');
+            setPub('realtyline');
+            window.dispatchEvent(new Event('savedPubChange'));
+          }
+        } catch {}
+      });
+    };
+
     const probe = () => {
       fetch(`${API}/auth/me`, { credentials: 'include' })
         .then((r) => (r.ok ? r.json() : null))
@@ -218,7 +241,8 @@ export default function AppShell({
         })
         .catch(() => {
           // Network error — don't touch state, keep localStorage snapshot.
-        });
+        })
+        .finally(syncDallasPreview);
     };
     probe();
 

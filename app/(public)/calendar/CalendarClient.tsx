@@ -40,7 +40,9 @@ export default function CalendarClient() {
       cancelled = true;
     };
   }, []);
-  const viewPub = dallasAllowed && showDallas ? 'realtyline-dallas' : pub;
+  // When Dallas/Ft. Worth is the selected market, show it directly.
+  const pubIsDallas = pub === 'realtyline-dallas';
+  const viewPub = pubIsDallas || (dallasAllowed && showDallas) ? 'realtyline-dallas' : pub;
 
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,7 +134,7 @@ export default function CalendarClient() {
       // Publication switching lives in the global header. The only banner
       // here is the private Dallas/Ft. Worth preview toggle.
       topBanner={
-        dallasAllowed ? (
+        dallasAllowed && !pubIsDallas ? (
           <div className="max-w-3xl mx-auto px-4 mb-4">
             <div role="group" aria-label="Calendar market" className="inline-flex rounded-full border border-gray-200 p-1 text-sm">
               <button

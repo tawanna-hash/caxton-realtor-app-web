@@ -11,6 +11,7 @@ import { getApiBase } from '@/lib/api-base';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import SaborReportCard from '@/components/SaborReportCard';
+import DallasPreviewHome from '@/components/DallasPreviewHome';
 import RealtyLineReportCard from '@/components/RealtyLineReportCard';
 import { SW } from '@/lib/style-constants';
 import { PUB_META, type PubKey, isPreLaunchPub, isPubKey } from '@/lib/pub-meta';
@@ -1467,6 +1468,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
   // empty state (Phase 2 PR C). They still get the branded header above
   // and the bottom nav below — only the tab body is replaced.
   const showPreLaunch = isPubKey(pub) && isPreLaunchPub(pub);
+  // Private Dallas/Ft. Worth preview (AppShell only lets allowlisted accounts
+  // select it). No Dallas article feed yet, so it gets its own home.
+  const isDallasPreview = pub === 'realtyline-dallas';
   const pubKey: PubKey | null = isPubKey(pub) ? pub : null;
   const [liveNews, setLiveNews] = useState<any[] | null>(null);
   // caxton-article-reader-b2a-fix (dispatcher)
@@ -1710,7 +1714,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
       {tab === 'n' && showPreLaunch && pubKey && (
         <PreLaunchEmptyState pub={pubKey} surface="news" />
       )}
-      {tab === 'n' && !showPreLaunch && (
+      {tab === 'n' && isDallasPreview && <DallasPreviewHome surface="news" />}
+      {tab === 'n' && !showPreLaunch && !isDallasPreview && (
         <div>
           <FeedTopBanner pub={pub} />
           <TrendingTicker market={pub as PubKey} className="mx-4 mt-3" />
@@ -1784,7 +1789,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
       {tab === 'e' && showPreLaunch && pubKey && (
         <PreLaunchEmptyState pub={pubKey} surface="events" />
       )}
-      {tab === 'e' && !showPreLaunch && (
+      {tab === 'e' && isDallasPreview && <DallasPreviewHome surface="events" />}
+      {tab === 'e' && !showPreLaunch && !isDallasPreview && (
         <div>
           <div className="px-4 py-4 border-b border-gray-200">
             <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium">Upcoming in {info.city}</p>

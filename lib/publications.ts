@@ -218,8 +218,32 @@ export const PUBLIC_PUB_COMING_SOON: ComingSoonPub[] = PUB_ACTIVE
   )
   .map((publication) => ({ ...publication }));
 
+function dallasPreviewCookie(): boolean {
+  if (typeof document === 'undefined') return false;
+  return /(?:^|;\s*)caxton_dallas_preview=1(?:;|$)/.test(document.cookie);
+}
+
+/**
+ * Publications the public app lets this viewer pick. Dallas/Ft. Worth is
+ * included only for accounts on the private preview list (see
+ * lib/market-preview.ts); everyone else still sees Austin and San Antonio.
+ */
+export function publicActivePubs(dallasPreview: boolean): PubMeta[] {
+  if (!dallasPreview) return PUBLIC_PUB_ACTIVE;
+  return PUB_ACTIVE.filter(
+    (p) => p.id === 'realtyline' || p.id === 'newsline' || p.id === 'realtyline-dallas',
+  );
+}
+
+export function publicComingSoonPubs(dallasPreview: boolean): ComingSoonPub[] {
+  return dallasPreview
+    ? PUBLIC_PUB_COMING_SOON.filter((p) => p.id !== 'realtyline-dallas')
+    : PUBLIC_PUB_COMING_SOON;
+}
+
 export function isPublicActivePubId(value: unknown): value is PubId {
-  return value === 'realtyline' || value === 'newsline';
+  if (value === 'realtyline' || value === 'newsline') return true;
+  return value === 'realtyline-dallas' && dallasPreviewCookie();
 }
 
 /** Resolve a PubMeta by id. Returns null for coming-soon or unknown ids. */
@@ -231,7 +255,7 @@ export function getActivePub(id: string | null | undefined): PubMeta | null {
 /** Resolve only publications currently selectable in the public app. */
 export function getPublicActivePub(id: string | null | undefined): PubMeta | null {
   if (!id) return null;
-  return PUBLIC_PUB_ACTIVE.find((p) => p.id === id) ?? null;
+  return publicActivePubs(dallasPreviewCookie()).find((p) => p.id === id) ?? null;
 }
 
 /** Persist the chosen publication and notify all listeners.

@@ -16,12 +16,13 @@
 
 import { useEffect } from 'react';
 import {
-  PUBLIC_PUB_ACTIVE,
-  PUBLIC_PUB_COMING_SOON,
+  publicActivePubs,
+  publicComingSoonPubs,
   persistPub,
   type PubId,
 } from '@/lib/publications';
 import { haptics } from '@/lib/native/haptics';
+import { useDallasPreview } from '@/lib/market-preview';
 
 type Props = {
   open: boolean;
@@ -31,6 +32,10 @@ type Props = {
 };
 
 export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props) {
+  // Dallas/Ft. Worth appears only for private-preview accounts.
+  const dallasPreview = useDallasPreview();
+  const PUBLIC_PUB_ACTIVE = publicActivePubs(dallasPreview);
+  const PUBLIC_PUB_COMING_SOON = publicComingSoonPubs(dallasPreview);
   // Lock body scroll while open so the underlying page doesn't bleed through.
   useEffect(() => {
     if (!open) return;

@@ -39,12 +39,23 @@ function uploadFolders(month: string): string[] {
 }
 
 async function exists(url: string): Promise<boolean> {
-  try {
-    const r = await fetch(url, { method: 'HEAD', headers: { 'User-Agent': UA }, cache: 'no-store' });
-    return r.ok && (r.headers.get('content-type') ?? '').startsWith('image/');
-  } catch {
-    return false;
+  // MetroTex sits behind Cloudflare, which intermittently refuses bursts of
+  // requests from server IPs. Retry (HEAD, then a 1-byte GET) with backoff.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await fetch(url, {
+        method: attempt === 0 ? 'HEAD' : 'GET',
+        headers: attempt === 0 ? { 'User-Agent': UA } : { 'User-Agent': UA, Range: 'bytes=0-0' },
+        cache: 'no-store',
+      });
+      if (r.status === 404) return false;
+      if (r.ok && (r.headers.get('content-type') ?? '').startsWith('image/')) return true;
+    } catch {
+      // fall through to retry
+    }
+    await new Promise((res) => setTimeout(res, 800 * (attempt + 1)));
   }
+  return false;
 }
 
 /** Find the English (and Spanish, when published) graphic URLs for an area/month. */
@@ -79,7 +90,13 @@ export async function extractMetroTexGraphic(imageUrl: string): Promise<(DfwMetr
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ inline_data: { mime_type: 'image/png', data: b64 } }, { text: PROMPT }] }],
-      generation_config: { temperature: 0, response_mime_type: 'application/json', max_output_tokens: 1024 },
+      generation_config: {
+        temperature: 0,
+        response_mime_type: 'application/json',
+        max_output_tokens: 4096,
+        // Small structured read; thinking tokens only risk truncating the JSON.
+        thinking_config: { thinking_budget: 0 },
+      },
     }),
     signal: AbortSignal.timeout(45_000),
   });
@@ -110,14 +127,15 @@ export async function importMetroTexMonth(
   const failed: string[] = [];
   const todo = METROTEX_AREAS.filter((a) => opts.force || !skip.has(`${a.areaKey}|${month}`));
   // Small parallel batches keep us well inside Gemini rate limits.
-  for (let i = 0; i < todo.length; i += 4) {
+  for (let i = 0; i < todo.length; i += 3) {
     if (opts.deadline && Date.now() > opts.deadline) break;
     await Promise.all(
-      todo.slice(i, i + 4).map(async (area) => {
+      todo.slice(i, i + 3).map(async (area) => {
         const g = await findMetroTexGraphic(area, month);
         if (!g) { missing.push(area.areaLabel); return; }
         try {
-          const m = await extractMetroTexGraphic(g.en);
+          let m = await extractMetroTexGraphic(g.en);
+          if (!m || !m.medianPrice) m = await extractMetroTexGraphic(g.en);
           if (!m || !m.medianPrice) { failed.push(area.areaLabel); return; }
           const { reportMonth: _rm, areaName: _an, ...metrics } = m;
           void _rm; void _an;

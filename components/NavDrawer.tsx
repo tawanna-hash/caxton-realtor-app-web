@@ -19,9 +19,10 @@ import BillingAlertsBadge from '@/components/BillingAlertsBadge';
 import PendingGmailBadge from '@/components/PendingGmailBadge';
 import PushOptInButton from '@/components/PushOptInButton';
 import { isNative } from '@/lib/native/runtime';
+import { useDallasPreview } from '@/lib/market-preview';
 import {
-  PUBLIC_PUB_ACTIVE as SHARED_PUB_ACTIVE,
-  PUBLIC_PUB_COMING_SOON as SHARED_PUB_COMING_SOON,
+  publicActivePubs,
+  publicComingSoonPubs,
 } from '@/lib/publications';
 
 // Push notifications work in: the native iOS app (Capacitor + APNs) and any
@@ -64,10 +65,6 @@ interface NavSection {
   groups?: { label: string; links: NavItem[] }[];
 }
 
-// Re-export the shared catalog under the original names so the JSX below
-// keeps reading PUB_ACTIVE / PUB_COMING_SOON without a deeper refactor.
-const PUB_ACTIVE = SHARED_PUB_ACTIVE;
-const PUB_COMING_SOON = SHARED_PUB_COMING_SOON;
 
 // Admin nav is defined in lib/admin-nav.ts so this drawer and the
 // desktop top-bar in AppShell.tsx always render the same groups.
@@ -179,6 +176,10 @@ export default function NavDrawer({
   const pathname = usePathname();
   const router = useRouter();
   const pushSupported = usePushSupported();
+  // Dallas/Ft. Worth appears only for private-preview accounts.
+  const dallasPreview = useDallasPreview();
+  const PUB_ACTIVE = publicActivePubs(dallasPreview);
+  const PUB_COMING_SOON = publicComingSoonPubs(dallasPreview);
 
   // Collapsible parent state. Auto-open any parent whose subitem matches the
   // current pathname so users see where they are without a manual click.
