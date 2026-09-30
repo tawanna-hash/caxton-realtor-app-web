@@ -7,68 +7,11 @@
 // account is on the Dallas preview list.
 
 import { useEffect, useMemo, useState } from 'react';
-import { DFW_BOARDS, monthLabel, type DfwBoard, type DfwMarketReport, type DfwMetrics } from '@/lib/dfw-markets';
+import DfwReportCard from '@/components/DfwReportCard';
+import { DFW_BOARDS, monthLabel, type DfwBoard, type DfwMarketReport } from '@/lib/dfw-markets';
 
 interface Payload { months: Record<DfwBoard, string | null>; reports: DfwMarketReport[] }
 
-const BRAND = '#301D5D';
-
-function Stat({ label, value, delta, note }: { label: string; value?: string | null; delta?: string | null; note?: string | null }) {
-  if (!value) return null;
-  const neg = delta?.trim().startsWith('-');
-  const flat = delta ? /^[+-]?0(\.0+)?%$/.test(delta.trim()) : false;
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="mt-1 text-2xl font-semibold tabular-nums text-gray-900">{value}</div>
-      {delta ? (
-        <div className={`mt-1 text-sm tabular-nums ${flat ? 'text-gray-600' : neg ? 'text-red-700' : 'text-green-700'}`}>
-          {flat ? '' : neg ? '▼ ' : '▲ '}
-          {delta.replace(/^[+-]/, '')} vs. last year
-        </div>
-      ) : null}
-      {note ? <div className="mt-1 text-sm text-gray-600">{note}</div> : null}
-    </div>
-  );
-}
-
-function Metrics({ m, board }: { m: DfwMetrics; board: DfwBoard }) {
-  return (
-    <div className="grid grid-cols-2 content-start items-start gap-3 self-start md:grid-cols-3">
-      <Stat label="Median price" value={m.medianPrice} delta={m.medianPriceYoY} />
-      <Stat label="Closed sales" value={m.closedSales} delta={m.closedSalesYoY} />
-      <Stat label="Active listings" value={m.activeListings} delta={m.activeListingsYoY} />
-      <Stat
-        label="Months of inventory"
-        value={m.monthsInventory}
-        note={m.monthsInventoryPrior ? `${m.monthsInventoryPrior} a year ago` : null}
-      />
-      <Stat
-        label="Days on market"
-        value={m.daysOnMarket}
-        note={
-          board === 'metrotex'
-            ? [m.daysToClose ? `${m.daysToClose} days to close` : null, m.daysTotal ? `${m.daysTotal} total` : null]
-                .filter(Boolean)
-                .join(' · ') || m.daysNote || null
-            : null
-        }
-      />
-      {board === 'metrotex' ? (
-        <Stat label="Top price range share" value={m.marketSharePct} note={m.marketShareBand} />
-      ) : (
-        <>
-          <Stat label="Average price" value={m.averagePrice} delta={m.averagePriceYoY} />
-          <Stat label="Price per sq. ft." value={m.pricePerSqft} delta={m.pricePerSqftYoY} />
-          <Stat label="New listings" value={m.newListings} />
-          <Stat label="Pending sales" value={m.pendingSales} />
-          <Stat label="Close to original list" value={m.closeToListPrice} />
-          <Stat label="Dollar volume" value={m.dollarVolume} delta={m.dollarVolumeYoY} />
-        </>
-      )}
-    </div>
-  );
-}
 
 export default function DfwReportsClient() {
   const [data, setData] = useState<Payload | null>(null);
@@ -110,17 +53,20 @@ export default function DfwReportsClient() {
       <h1 className="text-2xl font-semibold text-gray-900">Dallas/Ft. Worth Market Reports (Preview)</h1>
       <p className="mt-1 text-sm text-gray-600">Monthly housing numbers by board, county and zip code.</p>
 
-      <div role="group" aria-label="Board" className="mt-5 inline-flex rounded-full border border-gray-200 p-1 text-sm">
+      <div role="group" aria-label="Board" className="mt-5 flex gap-2">
         {(['metrotex', 'gfwar'] as DfwBoard[]).map((b) => (
           <button
             key={b}
             type="button"
             onClick={() => setBoard(b)}
             aria-pressed={board === b}
-            className={`rounded-full px-4 py-1.5 ${board === b ? 'text-white' : 'text-gray-700'}`}
-            style={board === b ? { backgroundColor: BRAND } : undefined}
+            className={
+              board === b
+                ? 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
+                : 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
+            }
           >
-            {DFW_BOARDS[b].area}
+            {DFW_BOARDS[b].area} ({b === 'metrotex' ? 'MetroTex' : 'GFWAR'})
           </button>
         ))}
       </div>
@@ -166,8 +112,8 @@ export default function DfwReportsClient() {
           </div>
 
           {current ? (
-            <div className="mt-5">
-              <Metrics m={current.metrics} board={board} />
+            <div className="mt-4 -mx-3 max-w-3xl">
+              <DfwReportCard key={`${current.board}-${current.areaKey}-${current.month}`} report={current} />
             </div>
           ) : null}
 
