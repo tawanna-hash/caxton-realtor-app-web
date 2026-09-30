@@ -75,7 +75,6 @@ export default function DfwReportsClient() {
   const [state, setState] = useState<'loading' | 'ok' | 'forbidden' | 'error'>('loading');
   const [board, setBoard] = useState<DfwBoard>('metrotex');
   const [areaKey, setAreaKey] = useState<string>('');
-  const [spanish, setSpanish] = useState(false);
 
   useEffect(() => {
     fetch('/api/dfw-market-reports', { credentials: 'include', cache: 'no-store' })
@@ -116,10 +115,7 @@ export default function DfwReportsClient() {
           <button
             key={b}
             type="button"
-            onClick={() => {
-              setBoard(b);
-              setSpanish(false);
-            }}
+            onClick={() => setBoard(b)}
             aria-pressed={board === b}
             className={`rounded-full px-4 py-1.5 ${board === b ? 'text-white' : 'text-gray-700'}`}
             style={board === b ? { backgroundColor: BRAND } : undefined}
@@ -170,35 +166,8 @@ export default function DfwReportsClient() {
           </div>
 
           {current ? (
-            <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_22rem]">
+            <div className="mt-5">
               <Metrics m={current.metrics} board={board} />
-              {current.imageUrl ? (
-                <figure className="lg:sticky lg:top-20 lg:self-start">
-                  {current.imageUrlEs ? (
-                    <div className="mb-2 inline-flex rounded-full border border-gray-200 p-0.5 text-xs">
-                      {[false, true].map((es) => (
-                        <button
-                          key={String(es)}
-                          type="button"
-                          onClick={() => setSpanish(es)}
-                          aria-pressed={spanish === es}
-                          className={`rounded-full px-3 py-1 ${spanish === es ? 'text-white' : 'text-gray-700'}`}
-                          style={spanish === es ? { backgroundColor: BRAND } : undefined}
-                        >
-                          {es ? 'Español' : 'English'}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={(spanish && current.imageUrlEs) || current.imageUrl}
-                    alt={`${current.areaLabel} housing report, ${monthLabel(current.month)}`}
-                    className="mx-auto h-auto max-h-[calc(100vh-11rem)] w-auto max-w-full rounded-xl border border-gray-200 object-contain"
-                    loading="lazy"
-                  />
-                </figure>
-              ) : null}
             </div>
           ) : null}
 

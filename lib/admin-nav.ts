@@ -99,6 +99,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'FastEmail Realtor Review', href: '/admin/content/fastemail-realtors', description: 'Review contacts scanned from FastEmail flyers', section: 'Tools' },
       { label: 'SABOR Report', href: '/admin/content/saborreport', description: 'San Antonio MLS monthly report card', section: 'Tools' },
       { label: 'ABOR Report', href: '/admin/content/realtylinereport', description: 'Austin MLS monthly report card', section: 'Tools' },
+      { label: 'DFW Reports', href: '/admin/content/dfwreport', description: 'MetroTex + GFWAR monthly reports (preview)', section: 'Tools' },
       { label: 'Notifications', href: '/admin/notifications', description: 'Web push to subscribers', section: 'Tools' },
     ],
   },

@@ -79,17 +79,25 @@ export async function findMetroTexGraphic(area: MetroTexArea, month: string): Pr
 const PROMPT = `This is a MetroTex Association of REALTORS monthly housing report infographic. Return ONLY a JSON object with these string fields (use null when not shown; keep "$", "%" and commas exactly as printed; give YoY/percent changes a leading "-" when the arrow points down or text says less/decrease, "+" when up):
 {"medianPrice":"$365,000","medianPriceYoY":"0.0%","marketSharePct":"24.1%","marketShareBand":"$300,000 - $399,999","activeListings":"7,454","activeListingsYoY":"-6.1%","closedSales":"1,626","closedSalesYoY":"-6.3%","daysOnMarket":"52","daysToClose":"29","daysTotal":"81","daysNote":"2 days less than August 2025","monthsInventory":"4.5","monthsInventoryPrior":"4.7","reportMonth":"August 2026","areaName":"Dallas County"}`;
 
-export async function extractMetroTexGraphic(imageUrl: string): Promise<(DfwMetrics & { reportMonth?: string; areaName?: string }) | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY not set');
+export type ExtractedGraphic = DfwMetrics & { reportMonth?: string; areaName?: string };
+
+export async function extractMetroTexGraphic(imageUrl: string): Promise<ExtractedGraphic | null> {
   const img = await fetch(imageUrl, { headers: { 'User-Agent': UA }, cache: 'no-store' });
   if (!img.ok) return null;
-  const b64 = Buffer.from(await img.arrayBuffer()).toString('base64');
+  const mime = (img.headers.get('content-type') ?? 'image/png').split(';')[0];
+  return extractGraphicBytes(Buffer.from(await img.arrayBuffer()), mime);
+}
+
+/** Read a housing-report graphic (PNG/JPEG/WEBP or PDF) into report fields. */
+export async function extractGraphicBytes(bytes: Buffer, mimeType: string): Promise<ExtractedGraphic | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY not set');
+  const b64 = bytes.toString('base64');
   const res = await fetch(`${ENDPOINT}?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ inline_data: { mime_type: 'image/png', data: b64 } }, { text: PROMPT }] }],
+      contents: [{ role: 'user', parts: [{ inline_data: { mime_type: mimeType, data: b64 } }, { text: PROMPT }] }],
       generation_config: {
         temperature: 0,
         response_mime_type: 'application/json',
@@ -107,7 +115,7 @@ export async function extractMetroTexGraphic(imageUrl: string): Promise<(DfwMetr
     const obj = JSON.parse(text.replace(/^```json\s*|```$/g, '')) as Record<string, unknown>;
     const out: Record<string, string | null> = {};
     for (const [k, v] of Object.entries(obj)) out[k] = v == null || v === '' ? null : String(v);
-    return out as DfwMetrics & { reportMonth?: string; areaName?: string };
+    return out as ExtractedGraphic;
   } catch {
     return null;
   }

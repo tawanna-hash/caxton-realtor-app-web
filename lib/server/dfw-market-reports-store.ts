@@ -27,6 +27,7 @@ export function ensureDfwReportsSchema(): Promise<void> {
           UNIQUE (board, area_type, area_key, month)
         )
       `;
+      await sql`ALTER TABLE dfw_market_reports ADD COLUMN IF NOT EXISTS admin_edited BOOLEAN NOT NULL DEFAULT FALSE`;
       await sql`CREATE INDEX IF NOT EXISTS dfw_market_reports_board_month ON dfw_market_reports (board, month DESC)`;
     })().catch((e) => {
       schemaReady = null;
@@ -36,23 +37,30 @@ export function ensureDfwReportsSchema(): Promise<void> {
   return schemaReady;
 }
 
-export async function upsertDfwReports(rows: DfwMarketReport[]): Promise<number> {
+/**
+ * Save reports. Imports (default) never overwrite a row an admin has edited;
+ * admin saves (`fromAdmin`) always write and mark the row as edited.
+ */
+export async function upsertDfwReports(rows: DfwMarketReport[], opts: { fromAdmin?: boolean } = {}): Promise<number> {
+  const fromAdmin = !!opts.fromAdmin;
   if (rows.length === 0) return 0;
   await ensureDfwReportsSchema();
   const sql = getSql();
   let n = 0;
   for (const r of rows) {
     await sql`
-      INSERT INTO dfw_market_reports (board, area_type, area_key, area_label, month, metrics, source_url, image_url, image_url_es)
+      INSERT INTO dfw_market_reports (board, area_type, area_key, area_label, month, metrics, source_url, image_url, image_url_es, admin_edited)
       VALUES (${r.board}, ${r.areaType}, ${r.areaKey}, ${r.areaLabel}, ${r.month}, ${JSON.stringify(r.metrics)}::jsonb,
-              ${r.sourceUrl}, ${r.imageUrl ?? null}, ${r.imageUrlEs ?? null})
+              ${r.sourceUrl}, ${r.imageUrl ?? null}, ${r.imageUrlEs ?? null}, ${fromAdmin})
       ON CONFLICT (board, area_type, area_key, month) DO UPDATE SET
         area_label   = EXCLUDED.area_label,
         metrics      = EXCLUDED.metrics,
         source_url   = EXCLUDED.source_url,
         image_url    = COALESCE(EXCLUDED.image_url, dfw_market_reports.image_url),
         image_url_es = COALESCE(EXCLUDED.image_url_es, dfw_market_reports.image_url_es),
+        admin_edited = dfw_market_reports.admin_edited OR EXCLUDED.admin_edited,
         updated_at   = NOW()
+      WHERE ${fromAdmin} OR dfw_market_reports.admin_edited = FALSE
     `;
     n++;
   }
@@ -93,4 +101,20 @@ export async function listLatestDfwReports(): Promise<{ months: Record<DfwBoard,
     };
   });
   return { months, reports };
+}
+
+export interface DfwAdminRow extends DfwMarketReport { adminEdited: boolean }
+
+/** Admin: every stored row for a board, newest month first. */
+export async function listDfwReportsForAdmin(board: DfwBoard): Promise<DfwAdminRow[]> {
+  await ensureDfwReportsSchema();
+  const rows = (await getSql()`
+    SELECT * FROM dfw_market_reports WHERE board = ${board}
+    ORDER BY month DESC, area_type, area_label
+  `) as Array<Row & { admin_edited: boolean }>;
+  return rows.map((r) => ({
+    board: r.board, areaType: r.area_type, areaKey: r.area_key, areaLabel: r.area_label, month: r.month,
+    metrics: r.metrics ?? {}, sourceUrl: r.source_url, imageUrl: r.image_url, imageUrlEs: r.image_url_es,
+    updatedAt: r.updated_at, adminEdited: !!r.admin_edited,
+  }));
 }
