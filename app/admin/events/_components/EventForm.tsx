@@ -7,6 +7,22 @@ import { ChevronDown, Loader2, Sparkles, UploadCloud, X } from 'lucide-react';
 import { adminApi } from '@/lib/admin-api';
 import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
+type VenueMatch = { name: string; address: string; lat: number | null; lng: number | null };
+
+/** "Venue, 123 Street, City" → venue + address (split at the first ", <digit>"). */
+function splitLocation(location: string): { venue: string; address: string } {
+  const v = (location ?? '').trim();
+  if (!v) return { venue: '', address: '' };
+  if (/^\d/.test(v)) return { venue: '', address: v };
+  const m = v.match(/^(.*?),\s*(\d.*)$/);
+  if (m) return { venue: m[1].trim(), address: m[2].trim() };
+  return { venue: v, address: '' };
+}
+
+function composeLocation(p: { venue: string; address: string }): string {
+  return [p.venue.trim(), p.address.trim()].filter(Boolean).join(', ');
+}
+
 export type EventPersonForm = {
   name: string;
   email: string;
@@ -395,6 +411,59 @@ export function EventForm({
   };
 
   /** On blur, Title Case a name/place text field (Title, Location, Organizer, Instructor Name, ...). */
+  // Location is stored as one string ("Venue, Address"); the form edits
+  // the two parts separately and recomposes on every change.
+  const [localVenueParts, setVenueParts] = useState(() => splitLocation(initial.location));
+  // If location was set elsewhere (flyer auto-capture, reset), derive the
+  // parts from it; otherwise keep the admin's in-progress split.
+  const venueParts = composeLocation(localVenueParts) === data.location
+    ? localVenueParts
+    : splitLocation(data.location);
+  const setVenue = (parts: { venue: string; address: string }) => {
+    setVenueParts(parts);
+    update('location', composeLocation(parts));
+  };
+  const [lookingUp, setLookingUp] = useState(false);
+  const [lookupNotice, setLookupNotice] = useState<string | null>(null);
+  const [lookupResults, setLookupResults] = useState<VenueMatch[]>([]);
+  const applyLookup = (r: VenueMatch) => {
+    const parts = { venue: venueParts.venue.trim() || r.name, address: r.address };
+    setVenueParts(parts);
+    setData((d) => ({
+      ...d,
+      location: composeLocation(parts),
+      lat: r.lat != null ? String(r.lat) : d.lat,
+      lng: r.lng != null ? String(r.lng) : d.lng,
+    }));
+    setLookupResults([]);
+    setLookupNotice(`Filled from Google: ${r.name}`);
+  };
+  const lookupVenue = async () => {
+    const query = [venueParts.venue, venueParts.address].map((v) => v.trim()).filter(Boolean).join(', ');
+    if (!query) return;
+    setLookingUp(true);
+    setLookupNotice(null);
+    setLookupResults([]);
+    try {
+      const res = await fetch('/api/admin/events/lookup-venue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ query, publication: data.publication }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { results?: VenueMatch[]; error?: string };
+      if (!res.ok) throw new Error(j.error || `HTTP ${res.status}`);
+      const results = j.results ?? [];
+      if (results.length === 0) setLookupNotice('No match found. Check the venue name or enter the address.');
+      else if (results.length === 1) applyLookup(results[0]);
+      else { setLookupResults(results); setLookupNotice('Pick the matching venue:'); }
+    } catch (err) {
+      setLookupNotice(err instanceof Error ? err.message : 'Lookup failed');
+    } finally {
+      setLookingUp(false);
+    }
+  };
+
   const titleCaseOnBlur =
     (key: Extract<keyof EventFormData, string>) => () => {
       setData((d) => {
@@ -1141,14 +1210,55 @@ export function EventForm({
         <div className={sectionTitleClass}>Where</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className={labelClass}>Location / Venue</label>
+            <label className={labelClass}>Venue Name</label>
             <input
               type="text"
-              value={data.location}
-              onChange={(e) => update('location', e.target.value)}
-              onBlur={titleCaseOnBlur('location')}
+              value={venueParts.venue}
+              onChange={(e) => setVenue({ ...venueParts, venue: e.target.value })}
+              onBlur={() => { if (venueParts.venue.trim()) setVenue({ ...venueParts, venue: toTitleCase(venueParts.venue) }); }}
+              placeholder="e.g. The McKennan at Hilltop Ranch"
               className={fieldClass}
             />
+          </div>
+          <div className="md:col-span-2">
+            <label className={labelClass}>Address</label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                type="text"
+                value={venueParts.address}
+                onChange={(e) => setVenue({ ...venueParts, address: e.target.value })}
+                placeholder="Street, City, TX ZIP"
+                className={`${fieldClass} sm:flex-1`}
+              />
+              {mode !== 'public' && (
+                <button
+                  type="button"
+                  onClick={lookupVenue}
+                  disabled={lookingUp || (!venueParts.venue.trim() && !venueParts.address.trim())}
+                  className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {lookingUp && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+                  Look up address
+                </button>
+              )}
+            </div>
+            {lookupNotice && <p className="mt-1 text-xs text-gray-600">{lookupNotice}</p>}
+            {lookupResults.length > 1 && (
+              <ul className="mt-2 divide-y divide-gray-100 rounded-md border border-gray-200">
+                {lookupResults.map((r, i) => (
+                  <li key={`${r.address}-${i}`}>
+                    <button
+                      type="button"
+                      onClick={() => applyLookup(r)}
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                    >
+                      <span className="font-medium text-gray-900">{r.name}</span>
+                      <span className="block text-xs text-gray-600">{r.address}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div>
             <label className={labelClass}>Latitude</label>
