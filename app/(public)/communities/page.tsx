@@ -26,6 +26,7 @@ import BuildersBreadcrumb from '@/components/BuildersBreadcrumb';
 import PageTitle from '@/components/ui/PageTitle';
 import { AdSlot } from '@/components/ads/AdSlot';
 import BuilderDeveloperFloater from '@/components/builders/BuilderDeveloperFloater';
+import { canOptimizeImage } from '@/lib/optimizable-image-hosts';
 
 export const dynamic = 'force-dynamic';
 
@@ -169,7 +170,7 @@ export default async function Page({ searchParams }: PageProps) {
                               fill
                               sizes="56px"
                               className="object-cover"
-                              unoptimized
+                              unoptimized={!canOptimizeImage(b.thumbnailUrl)}
                             />
                           ) : (
                             <Building2

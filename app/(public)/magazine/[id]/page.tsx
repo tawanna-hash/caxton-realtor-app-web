@@ -6,6 +6,7 @@
 // issue. The page's <title> reflects the magazine for nicer link previews.
 
 import { notFound } from 'next/navigation';
+import { preconnect, preload } from 'react-dom';
 import { getSql } from '@/lib/db';
 import type { Magazine } from '@/lib/magazines';
 import MagazineClient from '../MagazineClient';
@@ -70,6 +71,14 @@ export default async function MagazineByIdPage({ params }: PageProps) {
   // reader fires page_view + page_flip events into the right property.
   const pubKey: PublicationKey = mag.publication === 'san_antonio' ? 'san_antonio' : 'austin';
   const measurementId = await getMeasurementId(pubKey);
+  // Resource hints: warm the connections the reader needs (pdfjs assets on
+  // unpkg, the PDF host) and preload the cover so first paint isn't waiting
+  // on the lazy-loaded reader.
+  preconnect('https://unpkg.com');
+  try {
+    if (mag.reader_url) preconnect(new URL(mag.reader_url).origin);
+  } catch {}
+  if (mag.cover_url) preload(mag.cover_url, { as: 'image' });
   return (
     <>
       <MagazineGA measurementId={measurementId} />

@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { OPTIMIZABLE_IMAGE_HOSTS } from './lib/optimizable-image-hosts';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Security headers (F-03 from prod audit)
@@ -97,6 +98,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 2592000,
+    remotePatterns: OPTIMIZABLE_IMAGE_HOSTS.map((hostname) => ({ protocol: 'https' as const, hostname })),
+  },
+
   experimental: {
     // Client Router Cache staleTimes: how long a page segment can be reused
     // without triggering a fresh server request when revisited via <Link>.

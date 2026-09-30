@@ -23,6 +23,7 @@ import {
   formatBedBathSqft,
   formatDate,
 } from '@/lib/builder-format';
+import { canOptimizeImage } from '@/lib/optimizable-image-hosts';
 
 type Variant = 'community' | 'listing' | 'promotion';
 
@@ -118,7 +119,7 @@ export default function BuilderInventoryRowCard({
             fill
             sizes="96px"
             className="object-cover"
-            unoptimized
+            unoptimized={!canOptimizeImage(row.thumbnailUrl)}
           />
         ) : (
           <Icon strokeWidth={1.5} size={22} className="text-gray-400" />

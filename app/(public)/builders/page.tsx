@@ -20,6 +20,7 @@ import { listBuilderInventoryCached } from '@/lib/builder-inventory';
 import { summarizeBuilders } from '@/lib/builder-summary';
 import { getServerPub } from '@/lib/publication';
 import BuilderDeveloperFloater from '@/components/builders/BuilderDeveloperFloater';
+import { canOptimizeImage } from '@/lib/optimizable-image-hosts';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +78,7 @@ export default async function BuildersHubPage() {
                       fill
                       sizes="56px"
                       className="object-cover"
-                      unoptimized
+                      unoptimized={!canOptimizeImage(b.thumbnailUrl)}
                     />
                   ) : (
                     <Building2 strokeWidth={1.5} size={20} className="text-gray-400" />
