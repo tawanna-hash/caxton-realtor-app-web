@@ -2,13 +2,15 @@
 //
 // La Cima (developer) — builder promotions/incentives scraper.
 //
-// Source: https://lacimatx.com/builder-promotions/
+// Source: Pipsy inventory feed https://public1.pipsy.io/processProperty/30-1
+// (the widget embedded on https://lacimatx.com/find-your-dream-home/).
 //
-// The page is a static WP Bakery / Salient grid. Each promo is a column
-// (.vc_col-sm-3.wpb_column) containing:
-//   - <a href="<flyer_url>"> — usually a JPG image, occasionally a PDF
-//   - <img src="<flyer_image>"> — promo flyer (always a JPG/PNG)
-//   - <h2 class="vc_custom_heading">Builder Name</h2>
+// La Cima's June 2026 site redesign removed /builder-promotions/ (404). The
+// builder promotions now ship inside the Pipsy feed: every home in
+// `available[]` and `models[]` carries an `incentive[]` array of
+//   { incentive: <headline>, pdf: <flyer PDF>, thumbnail: <flyer JPG>, url }
+// We de-duplicate by flyer across all homes and emit one row per builder
+// incentive.
 //
 // We attribute every row to builder_name='La Cima' (the master-planned
 // developer). The actual builder is preserved in title + description so
@@ -16,9 +18,8 @@
 //
 // Attempt to extract an expiration date from the file name when present.
 // File names follow patterns like:
-//   v2_Highland-Promo-Expiration-5-31-2026.jpg
-//   v2_David-Weekley-Promo-Expiration-Range-3-20-2026-through-3-60-2026.pdf
-//   Newmark-LaCima_May-BTO-Incentive-Expiration-5-31-2026.jpg
+//   Incentive-879-Perry-Promo-EX-12-31-2026.pdf
+//   Incentive-727-Pulte-Promo-La-Cima-FHA-4.75percent-21-Buydown-EX-9-30-2026.pdf
 //
 // We pull the LAST date in the file name as the expiration date.
 //
@@ -27,12 +28,11 @@
 // rows to status='active' so they're immediately public. Existing rows
 // keep their human-set status.
 
-import * as cheerio from 'cheerio';
-import type { Element as DomElement } from 'domhandler';
 import type { UpsertScrapedInput } from '../builder-inventory';
 import { isPromotionExpired } from './promotion-utils';
 
-const PROMOTIONS_URL = 'https://lacimatx.com/builder-promotions/';
+const PIPSY_API_URL = 'https://public1.pipsy.io/processProperty/30-1';
+const PROMOTIONS_URL = 'https://lacimatx.com/find-your-dream-home/';
 const LA_CIMA_CITY = 'San Marcos';
 const LA_CIMA_STATE = 'TX';
 
@@ -43,9 +43,15 @@ const USER_AGENT =
 
 const COMMON_HEADERS = {
   'User-Agent': USER_AGENT,
-  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  Accept: 'application/json, text/plain, */*',
   'Accept-Language': 'en-US,en;q=0.9',
+  Origin: 'https://lacimatx.com',
+  Referer: PROMOTIONS_URL,
 } as const;
+
+type PipsyIncentive = { incentive?: string | null; pdf?: string | null; thumbnail?: string | null; url?: string | null };
+type PipsyHome = { builder?: string | null; builder_marketing_name?: string | null; incentive?: PipsyIncentive[] | null };
+type PipsyFeed = { available?: PipsyHome[]; models?: PipsyHome[] };
 
 export type LaCimaPromoScrapeResult = {
   rows: UpsertScrapedInput[];
@@ -53,34 +59,25 @@ export type LaCimaPromoScrapeResult = {
   skipped: { reason: string; builder?: string }[];
 };
 
-async function fetchHtml(url: string): Promise<string> {
-  const res = await fetch(url, {
+async function fetchFeed(): Promise<PipsyFeed> {
+  const res = await fetch(PIPSY_API_URL, {
     method: 'GET',
     headers: COMMON_HEADERS,
     redirect: 'follow',
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(45_000),
     cache: 'no-store',
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
-  const html = await res.text();
-  if (!html || html.length < 1000) {
-    throw new Error(`Body suspiciously small from ${url}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status} from ${PIPSY_API_URL}`);
+  const json = (await res.json()) as PipsyFeed;
+  if (!json || (!Array.isArray(json.available) && !Array.isArray(json.models))) {
+    throw new Error(`Unexpected Pipsy response shape from ${PIPSY_API_URL}`);
   }
-  return html;
+  return json;
 }
 
-function pickImageUrl($img: cheerio.Cheerio<DomElement>): string | null {
-  const cands = [
-    $img.attr('src'),
-    $img.attr('data-src'),
-    $img.attr('nitro-lazy-src'),
-  ];
-  for (const c of cands) {
-    if (!c) continue;
-    if (c.startsWith('data:')) continue;
-    return c;
-  }
-  return null;
+function cleanUrl(u?: string | null): string | null {
+  const t = (u ?? '').trim();
+  return /^https?:\/\//i.test(t) ? t : null;
 }
 
 function slugify(s: string): string {
@@ -127,59 +124,36 @@ export async function fetchLaCimaPromotions(): Promise<LaCimaPromoScrapeResult> 
   const rows: UpsertScrapedInput[] = [];
   const skipped: { reason: string; builder?: string }[] = [];
 
-  let html: string;
+  let feed: PipsyFeed;
   try {
-    html = await fetchHtml(PROMOTIONS_URL);
+    feed = await fetchFeed();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     throw new Error(`La Cima promotions fetch failed: ${msg}`);
   }
 
-  const $ = cheerio.load(html);
-
-  // Each promo card is a .vc_col-sm-3.wpb_column with a flyer image and
-  // a builder heading. We accept any column that has both an <img> and
-  // an <h2.vc_custom_heading>.
   type Candidate = {
     builderName: string;
+    headline: string | null;
     imgUrl: string | null;
     flyerUrl: string | null;
   };
   const candidates: Candidate[] = [];
-
-  $('.vc_col-sm-3.wpb_column').each((_, el) => {
-    const $card = $(el);
-    const $h2 = $card.find('h2.vc_custom_heading').first();
-    if (!$h2.length) return;
-
-    const builderName = $h2
-      .html()
-      ?.replace(/<br\s*\/?>/gi, ' ')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    if (!builderName) return;
-
-    // Skip the page hero column (which contains the La Cima logo, no h2 of
-    // a builder name). We've already filtered to columns with an h2, but
-    // the page title h2 says "La Cima Builder Promotions" — exclude that.
-    if (/\bbuilder\s+promotions\b/i.test(builderName)) return;
-
-    const $img = $card.find('img').first();
-    const imgUrl = $img.length ? pickImageUrl($img) : null;
-    if (!imgUrl) return;
-
-    // Skip the brand logo header card (matches by image filename).
-    if (/LaCima.*Refresh|Refresh.*LaCima/i.test(imgUrl)) return;
-
-    const $a = $card.find('a').first();
-    const href = $a.attr('href');
-    const flyerUrl = href && href.startsWith('http') ? href : imgUrl;
-
-    candidates.push({ builderName, imgUrl, flyerUrl });
-  });
+  const seen = new Set<string>();
+  for (const home of [...(feed.available ?? []), ...(feed.models ?? [])]) {
+    const builderName = (home.builder_marketing_name || home.builder || '').trim();
+    for (const inc of home.incentive ?? []) {
+      const pdf = cleanUrl(inc.pdf);
+      const img = cleanUrl(inc.thumbnail);
+      const link = cleanUrl(inc.url);
+      const flyerUrl = pdf ?? link ?? img;
+      const headline = (inc.incentive ?? '').replace(/\s+/g, ' ').trim() || null;
+      const key = `${builderName}|${flyerUrl ?? headline ?? ''}`;
+      if (!builderName || (!flyerUrl && !headline) || seen.has(key)) continue;
+      seen.add(key);
+      candidates.push({ builderName, headline, imgUrl: img, flyerUrl });
+    }
+  }
 
   const rawCount = candidates.length;
 
@@ -200,7 +174,7 @@ export async function fetchLaCimaPromotions(): Promise<LaCimaPromoScrapeResult> 
     const flyerSlug = c.flyerUrl ? slugify(c.flyerUrl.split('/').pop() ?? '') : `index-${n}`;
     const externalId = `lacima-promotion/${builderSlug}/${flyerSlug || `index-${n}`}`;
 
-    const expiresAt = expirationDateFromFilename(c.flyerUrl);
+    const expiresAt = expirationDateFromFilename(c.flyerUrl) ?? expirationDateFromFilename(c.imgUrl);
 
     rows.push({
       externalId,
@@ -209,10 +183,12 @@ export async function fetchLaCimaPromotions(): Promise<LaCimaPromoScrapeResult> 
       submittedByName: 'La Cima Promotions Auto-Importer',
       submittedByEmail: 'scraper-la-cima-promotions@harmonyone.system',
       builderName: c.builderName,
-      title: `${c.builderName} incentive at La Cima`,
+      title: c.headline ? `${c.builderName}: ${c.headline}`.slice(0, 200) : `${c.builderName} incentive at La Cima`,
       city: LA_CIMA_CITY,
       state: LA_CIMA_STATE,
-      description: `Builder incentive from ${c.builderName} at La Cima.`,
+      description: c.headline
+        ? `${c.headline} Builder incentive from ${c.builderName} at La Cima.`
+        : `Builder incentive from ${c.builderName} at La Cima.`,
       bedsMin: null,
       bedsMax: null,
       bathsMin: null,

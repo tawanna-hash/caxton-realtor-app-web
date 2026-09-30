@@ -47,7 +47,8 @@ import type { UpsertScrapedInput } from '../builder-inventory';
 
 const PIPSY_PROPERTY_ID = '30-1';
 const PIPSY_API_URL = `https://public1.pipsy.io/processProperty/${PIPSY_PROPERTY_ID}`;
-const SHOP_HOMES_URL = 'https://lacimatx.com/shop-homes/';
+// June 2026 redesign moved the Pipsy widget from /shop-homes/ to /find-your-dream-home/.
+const SHOP_HOMES_URL = 'https://lacimatx.com/find-your-dream-home/';
 
 const LA_CIMA_CITY = 'San Marcos';
 const LA_CIMA_STATE = 'TX';
@@ -62,7 +63,7 @@ const REQ_HEADERS = {
   Accept: 'application/json, text/plain, */*',
   'Accept-Language': 'en-US,en;q=0.9',
   Origin: 'https://lacimatx.com',
-  Referer: 'https://lacimatx.com/shop-homes/',
+  Referer: 'https://lacimatx.com/find-your-dream-home/',
 } as const;
 
 // Cap stored image arrays — homes ship with up to 50+ photos and we
