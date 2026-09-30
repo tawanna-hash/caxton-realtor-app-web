@@ -71,7 +71,7 @@ function configFor(pub: Pub) {
       newsletterPub: 'realtyline-houston',
     },
     'realtyline-dallas': {
-      segments: [],
+      segments: ['dallas-trec', 'fortworth-trec'],
       market: 'dallas',
       holdingSource: '__none__',
       holdingLabel: 'dallas-ft-worth',

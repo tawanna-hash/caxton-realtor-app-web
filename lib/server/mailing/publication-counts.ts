@@ -61,7 +61,7 @@ function configFor(pub: Pub): Cfg {
       newsletterPub: 'realtyline-houston',
     },
     'realtyline-dallas': {
-      segments: [],
+      segments: ['dallas-trec', 'fortworth-trec'],
       market: 'dallas',
       holdingSource: '__none__',
       newsletterPub: 'realtyline-dallas',
