@@ -32,9 +32,13 @@ function base(): { url: string; auth: string } {
   return { url: `https://${dc}.api.mailchimp.com/3.0`, auth: `Basic ${Buffer.from(`rnn:${key}`).toString('base64')}` };
 }
 
-async function mc<T>(path: string): Promise<T> {
+async function mc<T>(path: string, timeoutMs = 12_000): Promise<T> {
   const { url, auth } = base();
-  const res = await fetch(`${url}${path}`, { headers: { Authorization: auth }, cache: 'no-store' });
+  const res = await fetch(`${url}${path}`, {
+    headers: { Authorization: auth },
+    cache: 'no-store',
+    signal: AbortSignal.timeout(timeoutMs),
+  });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Mailchimp ${res.status}: ${text.slice(0, 160)}`);
@@ -60,16 +64,34 @@ interface ReportsResponse {
   total_items: number;
 }
 
+// Only the fields the dashboard uses — full report objects are large and slow.
+const REPORT_FIELDS = [
+  'total_items',
+  'reports.send_time',
+  'reports.emails_sent',
+  'reports.bounces',
+  'reports.opens.unique_opens',
+  'reports.clicks.unique_subscriber_clicks',
+  'reports.unsubscribed',
+].join(',');
+const PAGE = 200;
+const CACHE_MS = 15 * 60_000;
+let cache: { key: string; at: number; value: MailchimpSummary } | null = null;
+
 export async function fetchMailchimpSummary(sinceIso: string): Promise<MailchimpSummary> {
+  if (cache && cache.key === sinceIso && Date.now() - cache.at < CACHE_MS) return cache.value;
+
+  const page = (offset: number) => mc<ReportsResponse>(
+    `/reports?count=${PAGE}&offset=${offset}&since_send_time=${encodeURIComponent(sinceIso)}&fields=${REPORT_FIELDS}`,
+  );
   const [account, first] = await Promise.all([
-    mc<{ account_name?: string }>('/?fields=account_name').catch(() => ({ account_name: undefined })),
-    mc<ReportsResponse>(`/reports?count=1000&offset=0&since_send_time=${encodeURIComponent(sinceIso)}`),
+    mc<{ account_name?: string }>('/?fields=account_name', 5_000).catch(() => ({ account_name: undefined })),
+    page(0),
   ]);
-  const reports = [...first.reports];
-  for (let offset = 1000; offset < first.total_items; offset += 1000) {
-    const page = await mc<ReportsResponse>(`/reports?count=1000&offset=${offset}&since_send_time=${encodeURIComponent(sinceIso)}`);
-    reports.push(...page.reports);
-  }
+  const offsets: number[] = [];
+  for (let o = PAGE; o < first.total_items; o += PAGE) offsets.push(o);
+  const rest = await Promise.all(offsets.map(page));
+  const reports = [first, ...rest].flatMap((r) => r.reports ?? []);
 
   const byMonth = new Map<string, MailchimpMonth>();
   for (const r of reports) {
@@ -85,8 +107,10 @@ export async function fetchMailchimpSummary(sinceIso: string): Promise<Mailchimp
     m.unsubscribes += r.unsubscribed ?? 0;
     byMonth.set(month, m);
   }
-  return {
+  const value: MailchimpSummary = {
     accountName: account.account_name ?? null,
     months: Array.from(byMonth.values()).sort((a, b) => a.month.localeCompare(b.month)),
   };
+  cache = { key: sinceIso, at: Date.now(), value };
+  return value;
 }

@@ -385,9 +385,16 @@ export async function buildMarketingPerformance(): Promise<MarketingPerformance>
     }
   })();
 
-  const [ga4, mailchimp] = await Promise.all([ga4Promise, mcPromise]);
+  // External sources run alongside the database/PostHog queries and are
+  // capped so a slow third party can't time out the whole dashboard.
+  const capped = <T,>(p: Promise<T | null>, ms: number, onTimeout: () => void): Promise<T | null> =>
+    Promise.race([p, new Promise<null>((resolve) => setTimeout(() => { onTimeout(); resolve(null); }, ms))]);
+  const externals = Promise.all([
+    capped(ga4Promise, 15_000, () => { sources.ga4.error ??= 'Google Analytics took too long to respond.'; }),
+    capped(mcPromise, 15_000, () => { if (!sources.mailchimp.connected) sources.mailchimp.error ??= 'Mailchimp took too long to respond; try Refresh in a minute.'; }),
+  ]);
 
-  const [traffic, inquiries, qualified, signed, revenue, delivered, spend] = await Promise.all([
+  const [[ga4, mailchimp], [traffic, inquiries, qualified, signed, revenue, delivered, spend]] = await Promise.all([externals, Promise.all([
     settle('PostHog traffic', fetchTraffic(), []),
     settle('Ad inquiries', fetchInquiries(since), []),
     settle('Agreements (qualified)', fetchQualified(since), []),
@@ -395,7 +402,7 @@ export async function buildMarketingPerformance(): Promise<MarketingPerformance>
     settle('Paid invoices', fetchRevenue(since), []),
     settle('Email deliveries', fetchEmailDelivered(since), []),
     settle('Marketing spend', fetchSpendEntries(since), [] as SpendEntry[]),
-  ]);
+  ])]);
 
   let firstTrafficMonth: string | null = null;
   for (const t of traffic) {
