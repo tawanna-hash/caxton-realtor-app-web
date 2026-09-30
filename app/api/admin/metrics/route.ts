@@ -38,7 +38,7 @@ async function runHogQL(query: string): Promise<unknown[]> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        query: { kind: 'HogQLQuery', query },
+        query: { kind: 'HogQLQuery', query, modifiers: { convertToProjectTimezone: false } },
       }),
       cache: 'no-store',
     },

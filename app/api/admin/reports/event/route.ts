@@ -36,7 +36,7 @@ async function runHogQL(query: string): Promise<unknown[]> {
         Authorization: `Bearer ${POSTHOG_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query: { kind: 'HogQLQuery', query } }),
+      body: JSON.stringify({ query: { kind: 'HogQLQuery', query, modifiers: { convertToProjectTimezone: false } } }),
       cache: 'no-store',
     },
   );

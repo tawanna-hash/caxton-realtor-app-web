@@ -153,7 +153,7 @@ async function runHogQL(name: string, sql: string): Promise<PostHogQueryResult> 
       Authorization: `Bearer ${key}`,
     },
     body: JSON.stringify({
-      query: { kind: 'HogQLQuery', query: sql },
+      query: { kind: 'HogQLQuery', query: sql, modifiers: { convertToProjectTimezone: false } },
       name,
     }),
   });

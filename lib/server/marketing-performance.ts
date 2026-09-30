@@ -169,7 +169,7 @@ async function runHogQL(name: string, sql: string): Promise<Array<Array<string |
   const res = await fetch(`${POSTHOG_HOST}/api/projects/${projectId}/query/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ query: { kind: 'HogQLQuery', query: sql }, name }),
+    body: JSON.stringify({ query: { kind: 'HogQLQuery', query: sql, modifiers: { convertToProjectTimezone: false } }, name }),
     cache: 'no-store',
   });
   if (!res.ok) {
