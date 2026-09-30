@@ -1,8 +1,8 @@
 // Greater Fort Worth Association of REALTORS® (GFWAR) events importer for
 // the Dallas/Ft. Worth calendar.
 //
-// Source: the public Events list https://gfwar.org/events/annual-events/?class_yn=N
-// (WordPress). The list gives title, detail link, image and registration
+// Sources: the public Events list https://gfwar.org/events/annual-events/?class_yn=N
+// and Classes list https://gfwar.org/events/classes/?class_yn=Y (WordPress). The list gives title, detail link, image and registration
 // link; each detail page's right column gives the full date (with year),
 // time range, location and price. Rows are upserted with publication =
 // 'dallas', external_source = 'gfwar', external_id = detail-page slug, and
@@ -11,7 +11,10 @@
 import type { EventInput } from './events-store';
 import { centralIso, htmlToText } from './metrotex-scraper';
 
-const LIST_URL = 'https://gfwar.org/events/annual-events/?class_yn=N';
+const LISTS = [
+  { url: 'https://gfwar.org/events/annual-events/?class_yn=N', tag: 'event' },
+  { url: 'https://gfwar.org/events/classes/?class_yn=Y', tag: 'class' },
+] as const;
 const SOURCE = 'gfwar' as const;
 const PUBLICATION = 'dallas' as const;
 const TITLE_PREFIX = 'Greater Ft. Worth: ';
@@ -49,9 +52,9 @@ function to24(t: string): string | null {
   return `${String(h).padStart(2, '0')}:${m[2] ?? '00'}:00`;
 }
 
-interface ListItem { slug: string; url: string; title: string; image: string | null; registration: string | null }
+interface ListItem { slug: string; url: string; title: string; image: string | null; registration: string | null; tag: string }
 
-function parseList(html: string): ListItem[] {
+function parseList(html: string, tag: string): ListItem[] {
   const out: ListItem[] = [];
   const seen = new Set<string>();
   for (const block of html.split("<table class='tblEventList'>").slice(1)) {
@@ -67,6 +70,7 @@ function parseList(html: string): ListItem[] {
       title: decode(title[1]),
       image: img ? img[1] : null,
       registration: reg ? reg[1].replace(/&amp;|&#0?38;/g, '&') : null,
+      tag,
     });
   }
   return out;
@@ -100,7 +104,7 @@ function parseDetail(html: string): Detail {
       if (!location && lp[1]) location = lp[1];
       continue;
     }
-    if (!location) location = l;
+    if (!location) location = l.replace(/\s*\$\s*$/, '') || null;
   }
   const left = /<div class='left-col'>([\s\S]*?)<\/div><div class='right-col'>/.exec(html)?.[1] ?? '';
   const description = htmlToText(left) || null;
@@ -108,9 +112,17 @@ function parseDetail(html: string): Detail {
 }
 
 export async function scrapeGfwar(): Promise<EventInput[]> {
-  const items = parseList(await getHtml(LIST_URL));
+  const items: ListItem[] = [];
+  const seen = new Set<string>();
+  for (const list of LISTS) {
+    for (const it of parseList(await getHtml(list.url), list.tag)) {
+      if (seen.has(it.slug)) continue;
+      seen.add(it.slug);
+      items.push(it);
+    }
+  }
   const out: EventInput[] = [];
-  // Small list (~10); fetch detail pages 3 at a time.
+  // Small lists (~15 total); fetch detail pages 3 at a time.
   for (let i = 0; i < items.length; i += 3) {
     const batch = items.slice(i, i + 3);
     const details = await Promise.all(batch.map((it) => getHtml(it.url).then(parseDetail).catch(() => null)));
@@ -133,7 +145,7 @@ export async function scrapeGfwar(): Promise<EventInput[]> {
         organizer: ORGANIZER,
         organizerEmail: null,
         website: it.url,
-        tags: 'event',
+        tags: it.tag,
         format: virtual ? 'Virtual' : 'In-Person',
         courseNumber: null,
         memberPrice: d.price,
