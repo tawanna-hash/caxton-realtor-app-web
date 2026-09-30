@@ -48,6 +48,14 @@ function dirColor(d: Dir): string {
   return '#6b7280';
 }
 
+// "$900,962,309" -> "$900.96M", "$1,402,000,000" -> "$1.40B" (ABOR card style).
+function compactMoney(v?: string | null): string | null | undefined {
+  if (!v) return v;
+  const n = Number(v.replace(/[$,\s]/g, ''));
+  if (!Number.isFinite(n) || n < 10_000_000) return v;
+  return n >= 1e9 ? `$${(n / 1e9).toFixed(2)}B` : `$${(n / 1e6).toFixed(2)}M`;
+}
+
 function bare(delta?: string | null): string {
   return (delta ?? '').trim().replace(/^[+-]/, '');
 }
@@ -87,7 +95,7 @@ export default function DfwReportCard({ report, id }: { report: DfwMarketReport;
   const isMetro = report.board === 'metrotex';
   const es = lang === 'es';
 
-  const heroValue = isMetro ? m.medianPrice : m.dollarVolume ?? m.medianPrice;
+  const heroValue = isMetro ? m.medianPrice : compactMoney(m.dollarVolume) ?? m.medianPrice;
   const heroDelta = isMetro ? m.medianPriceYoY : m.dollarVolume ? m.dollarVolumeYoY : m.medianPriceYoY;
   const heroDir = dirOf(heroDelta);
   const heroLabel = isMetro
