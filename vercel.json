@@ -190,7 +190,7 @@
     },
     {
       "path": "/api/cron/mailchimp-utm",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 10 * * *"
     }
   ]
 }

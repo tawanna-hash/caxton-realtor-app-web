@@ -1,6 +1,6 @@
 // app/api/cron/mailchimp-utm/route.ts
 //
-// Every 15 minutes: turn on Mailchimp Google Analytics link tracking (UTM tags)
+// Daily at 10:00 UTC (5 AM CDT / 4 AM CST): turn on Mailchimp Google Analytics link tracking (UTM tags)
 // for any draft, paused, or scheduled campaign that doesn't have it yet.
 // See ensureUtmTracking() in lib/server/mailchimp.ts.
 //
