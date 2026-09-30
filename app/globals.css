@@ -1206,3 +1206,17 @@ input[type='date']::-webkit-calendar-picker-indicator {
 [data-collapsible][data-collapsed='auto'] > :not(:first-child) {
   display: none !important;
 }
+
+
+/* Subtle route-content fade-in on navigation (public + dashboard chrome).
+   Respects prefers-reduced-motion; admin is excluded (data-admin-ui gate
+   keeps this scoped to public/dashboard <main> only). */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes route-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  main:not([data-admin-ui='true']) .route-fade-in {
+    animation: route-fade-in 180ms ease-out;
+  }
+}

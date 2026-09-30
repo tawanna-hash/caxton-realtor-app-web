@@ -16,7 +16,7 @@ import Image from 'next/image';
 import { Building2, ChevronRight } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 import { AdSlot } from '@/components/ads/AdSlot';
-import { listBuilderInventory } from '@/lib/builder-inventory';
+import { listBuilderInventoryCached } from '@/lib/builder-inventory';
 import { summarizeBuilders } from '@/lib/builder-summary';
 import { getServerPub } from '@/lib/publication';
 import BuilderDeveloperFloater from '@/components/builders/BuilderDeveloperFloater';
@@ -32,7 +32,7 @@ export const metadata = {
 export default async function BuildersHubPage() {
   // Each market is standalone — scope to the active publication only.
   const pub = await getServerPub();
-  const rows = await listBuilderInventory({
+  const rows = await listBuilderInventoryCached({
     status: 'active',
     publication: pub,
     limit: 5000,

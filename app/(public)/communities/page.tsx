@@ -18,7 +18,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Building2, ChevronRight } from 'lucide-react';
-import { listBuilderInventory } from '@/lib/builder-inventory';
+import { listBuilderInventoryCached } from '@/lib/builder-inventory';
 import { summarizeBuilders } from '@/lib/builder-summary';
 import { getServerPub } from '@/lib/publication';
 import BuilderInventoryRowCard from '@/components/builders/BuilderInventoryRowCard';
@@ -45,7 +45,7 @@ export default async function Page({ searchParams }: PageProps) {
 
   // Single-builder mode: show that builder's active communities.
   if (builder) {
-    const rows = await listBuilderInventory({
+    const rows = await listBuilderInventoryCached({
       status: 'active',
       homeType: 'community',
       publication: pub,
@@ -103,7 +103,7 @@ export default async function Page({ searchParams }: PageProps) {
   }
 
   // Directory mode: list every builder, each linking to its communities.
-  const rows = await listBuilderInventory({
+  const rows = await listBuilderInventoryCached({
     status: 'active',
     publication: pub,
     limit: 5000,

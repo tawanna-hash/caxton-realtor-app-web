@@ -16,6 +16,7 @@
 
 import type { CommunityData } from './scrapers/david-weekley';
 import { getSql } from './db';
+import { unstable_cache } from 'next/cache';
 
 // Lazy SQL client. Building on Vercel occasionally runs page-data collection
 // in a subprocess without DATABASE_URL, which crashes an eager neon() call
@@ -632,6 +633,7 @@ ${input.homeType ?? null},
     RETURNING *
   `) as Record<string, unknown>[];
 
+  await invalidateBuilderInventoryCache();
   return rowToBuilderInventoryRow(rows[0]);
 }
 
@@ -660,6 +662,31 @@ export type ListBuilderInventoryFilters = {
   // (developer entries only). When false, only builder rows (NULL).
   isDeveloper?: boolean;
 };
+
+/**
+ * Trim a row for the public list pages (/inventory, /promotions). The
+ * client browser only needs card + filter fields; the heavy structured
+ * data (gallery, plans, community data) and private submitter/request
+ * metadata stay on the server. Detail pages keep using the full row.
+ */
+export function toBrowserRow(r: BuilderInventoryRow): BuilderInventoryRow {
+  return {
+    ...r,
+    submittedByName: '',
+    submittedByEmail: '',
+    submittedByPhone: null,
+    description: null,
+    sourceIp: null,
+    userAgent: null,
+    reviewedBy: null,
+    externalId: null,
+    address: null,
+    tags: null,
+    galleryUrls: null,
+    communityData: null,
+    extraDetails: null,
+  };
+}
 
 export async function listBuilderInventory(
   filters: ListBuilderInventoryFilters = {},
@@ -716,6 +743,34 @@ export async function listBuilderInventory(
   return rows.map(rowToBuilderInventoryRow);
 }
 
+/**
+ * Cached variant of listBuilderInventory for public server pages (builders,
+ * communities, inventory, promotions, builders/[slug]). Revalidates every
+ * 120s and can be force-refreshed via revalidateTag('builder-inventory')
+ * from the CRUD mutators below. Admin routes must keep using the uncached
+ * listBuilderInventory directly so moderation actions reflect immediately.
+ */
+export const listBuilderInventoryCached = unstable_cache(
+  (filters: ListBuilderInventoryFilters = {}) => listBuilderInventory(filters),
+  ['builder-inventory', 'list'],
+  { revalidate: 120, tags: ['builder-inventory'] },
+);
+
+/**
+ * Best-effort cache invalidation for the public builder-inventory listings.
+ * Wrapped in try/catch: revalidateTag throws when called outside a request
+ * context (e.g. from a cron/script), and a cache bust failing should never
+ * fail the underlying mutation.
+ */
+async function invalidateBuilderInventoryCache(): Promise<void> {
+  try {
+    const { revalidateTag } = await import('next/cache');
+    revalidateTag('builder-inventory', 'max');
+  } catch (err) {
+    console.warn('[builder-inventory] revalidateTag failed (likely outside request context)', err);
+  }
+}
+
 export async function getBuilderInventoryById(
   id: number,
   includeDisabledBuilders = false,
@@ -750,6 +805,7 @@ export async function bulkApprovePendingBuilderInventory(
     WHERE status = 'pending'
     RETURNING id
   `) as Record<string, unknown>[];
+  await invalidateBuilderInventoryCache();
   return rows.length;
 }
 
@@ -863,6 +919,7 @@ export async function updateBuilderInventory(
     RETURNING *
   `) as Record<string, unknown>[];
 
+  await invalidateBuilderInventoryCache();
   return rows[0] ? rowToBuilderInventoryRow(rows[0]) : null;
 }
 
@@ -871,6 +928,7 @@ export async function deleteBuilderInventory(id: number): Promise<boolean> {
   const rows = (await sql`
     DELETE FROM builder_inventory WHERE id = ${id} RETURNING id
   `) as Record<string, unknown>[];
+  await invalidateBuilderInventoryCache();
   return rows.length > 0;
 }
 

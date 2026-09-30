@@ -91,6 +91,9 @@ export default function SwipeBackShell({ area, children }: Props) {
   // The ref must attach to the element receiving the touch + transform.
   // We wrap children in a div that fills the viewport so the gesture
   // catches anywhere on the page (not just the immediate content area).
+  // Subtle fade-in on route change (public + dashboard only — admin is
+  // excluded by the `main:not([data-admin-ui='true'])` CSS selector).
+  // Keying on pathname re-triggers the CSS animation on every navigation.
   return (
     <div
       ref={ref as React.Ref<HTMLDivElement>}
@@ -98,7 +101,9 @@ export default function SwipeBackShell({ area, children }: Props) {
       // h-full + relative so transform doesn't break sticky descendants
       className="min-h-screen w-full relative"
     >
-      {children}
+      <div key={pathname} className="route-fade-in">
+        {children}
+      </div>
     </div>
   );
 }

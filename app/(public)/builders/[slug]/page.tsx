@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
-import { listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
+import { listBuilderInventoryCached, type BuilderInventoryRow } from '@/lib/builder-inventory';
 import { summarizeBuilders } from '@/lib/builder-summary';
 import { slugToBuilderName } from '@/lib/builder-slug-server';
 import { getServerPub } from '@/lib/publication';
@@ -116,13 +116,13 @@ export default async function Page({ params }: PageProps) {
   // builder as its own developer made the first query non-empty and silently
   // swallowed the builder's whole move-in ready list.
   const [developerRows, builderRows] = await Promise.all([
-    listBuilderInventory({
+    listBuilderInventoryCached({
       status: 'active',
       developerName: builderName,
       publication: pub,
       limit: 500,
     }),
-    listBuilderInventory({
+    listBuilderInventoryCached({
       status: 'active',
       builderName,
       publication: pub,

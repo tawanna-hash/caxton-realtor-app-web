@@ -43,10 +43,10 @@ export const GET = withErrorHandling(async (_req: Request, ctx: Ctx) => {
     {
       headers: {
         // The WordPress portion is already protected by unstable_cache in
-        // getNews(). Do not cache this merged response: admin overrides
-        // (featured images, headlines, body edits, visibility) must be
-        // reflected immediately instead of waiting on a browser/CDN copy.
-        'Cache-Control': 'no-store, max-age=0',
+        // getNews(). Admin overrides (featured images, headlines, body
+        // edits, visibility) appearing within ~1 minute at the CDN edge is
+        // an acceptable tradeoff for a short public cache.
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       },
     },
   );

@@ -97,6 +97,15 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Client Router Cache staleTimes: how long a page segment can be reused
+    // without triggering a fresh server request when revisited via <Link>.
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+  },
+
   // Keep `sharp` (libvips native bindings) and `unpdf` (bundles pdfjs-dist,
   // which references browser-only globals) out of the serverless bundle.
   // When bundled, the native .node binaries / browser globals are not

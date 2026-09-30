@@ -20,7 +20,7 @@
 // properties.filter) picks it up. A mount-time `inventory_page_viewed`
 // event with { surface, kind } tracks dedicated-page traffic.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { BuilderInventoryRow, PromoType } from '@/lib/builder-inventory';
 import {
   activeFilterCount,
@@ -81,6 +81,8 @@ interface Props {
   hideHeader?: boolean;
 }
 
+const PAGE_SIZE = 24;
+
 export default function InventoryBrowser({
   rows,
   initialFilters = DEFAULT_FILTERS,
@@ -113,6 +115,30 @@ export default function InventoryBrowser({
     () => sortRows(rows.filter((r) => matchesFilter(r, filters)), sort),
     [rows, filters, sort],
   );
+
+  // Render the first PAGE_SIZE cards, then add more as the reader scrolls
+  // (or taps Show more). Filtering still runs over every row. A new filter
+  // or sort starts back at the first page.
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [prevFilterKey, setPrevFilterKey] = useState('');
+  const filterKey = JSON.stringify([filters, sort]);
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
+    setVisibleCount(PAGE_SIZE);
+  }
+  const moreRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = moreRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) setVisibleCount((n) => n + PAGE_SIZE);
+      },
+      { rootMargin: '600px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [visibleCount, filtered.length]);
 
   const count = activeFilterCount(filters);
 
@@ -285,7 +311,7 @@ export default function InventoryBrowser({
         <EmptyState hasFilters={count > 0} onClear={clearAll} />
       ) : (
         <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
-          {filtered.map((r) => (
+          {filtered.slice(0, visibleCount).map((r) => (
             <li key={r.id}>
               <BuilderInventoryRowCard
                 row={r}
@@ -294,6 +320,17 @@ export default function InventoryBrowser({
             </li>
           ))}
         </ul>
+      )}
+      {filtered.length > visibleCount && (
+        <div ref={moreRef} className="flex justify-center py-6">
+          <button
+            type="button"
+            onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Show more ({filtered.length - visibleCount} more)
+          </button>
+        </div>
       )}
     </div>
   );

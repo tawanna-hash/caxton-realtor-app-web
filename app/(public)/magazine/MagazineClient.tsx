@@ -4,10 +4,17 @@ import { type PubKey } from '@/lib/pub-meta';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import MagazineCarousel from '@/components/MagazineCarousel';
-import MagazineReaderRouter from '@/components/MagazineReaderRouter';
 import MagazineFeatured from '@/components/MagazineFeatured';
 import type { Magazine } from '@/lib/magazines';
+
+// The reader (legacy JPEG flipbook + pdfjs-based interactive reader) is only
+// needed once the user opens an issue, never for first paint/SEO, so it's
+// lazy-loaded client-side only.
+const MagazineReaderRouter = dynamic(() => import('@/components/MagazineReaderRouter'), {
+  ssr: false,
+});
 
 // Local pub type mirrors CalendarClient. Values are the dashboard SPA's
 // 'realtyline' | 'newsline' stored in caxton_pub localStorage. The magazines

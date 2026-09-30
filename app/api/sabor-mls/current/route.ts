@@ -22,8 +22,8 @@ import {
   type PriceBand,
 } from '@/lib/sabor-mls';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Response Cache-Control header (set below) drives CDN caching now that the
+// success response is a short public s-maxage; no per-request forcing needed.
 
 interface LegacyMiniStatRow { value: string; label: string }
 
@@ -144,7 +144,7 @@ export async function GET() {
 
     return NextResponse.json(
       { ok: true, report: rowToReport(rows[0]) },
-      { headers: { 'Cache-Control': 'no-store' } },
+      { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' } },
     );
   } catch (err) {
     console.error('[sabor-mls/current]', err);

@@ -5,8 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Response Cache-Control header (set below) drives CDN caching now that the
+// success response is a short public s-maxage; no per-request forcing needed.
 
 export async function GET(req: NextRequest) {
   const raw = req.nextUrl.searchParams.get('publication') || 'austin';
@@ -34,7 +34,9 @@ export async function GET(req: NextRequest) {
       ORDER BY sort_date DESC
       LIMIT 200
     `;
-    return NextResponse.json(rows);
+    return NextResponse.json(rows, {
+      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[api/magazines] query failed:', message);

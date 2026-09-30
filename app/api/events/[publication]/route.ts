@@ -8,7 +8,9 @@ import { isPublicationId } from '@/lib/publications';
 import { canViewDallasPreview, dallasForbidden } from '@/lib/server/dallas-preview';
 import { ensureRealtyLineCalendarInitialized } from '@/lib/realtyline-calendar-scraper';
 
-// Always serve a fresh DB read; dashboard does its own client-side caching.
+// Dallas reads a session cookie for the preview gate, so this route stays
+// dynamic per-request; the explicit Cache-Control header above still lets
+// the CDN cache non-Dallas responses for a short window.
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -34,14 +36,18 @@ export async function GET(
       });
     }
     const events = await listEvents(publication);
+    const isDallas = publication === 'dallas';
     return Response.json(
       { events },
       {
         status: 200,
         headers: {
-          // No public caching: data is small (~60 rows), cron updates daily,
-          // and stale cache made debugging painful. Each request hits the DB.
-          'Cache-Control': 'private, no-store, max-age=0, must-revalidate',
+          // Dallas is gated by canViewDallasPreview() — never cache publicly.
+          // Other publications are safe for a short CDN cache since the cron
+          // updates daily and a 60s edge cache + 5min SWR is imperceptible.
+          'Cache-Control': isDallas
+            ? 'private, no-store, max-age=0, must-revalidate'
+            : 'public, s-maxage=60, stale-while-revalidate=300',
         },
       },
     );

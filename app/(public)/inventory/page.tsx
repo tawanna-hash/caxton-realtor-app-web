@@ -19,7 +19,7 @@
 // Server component. Inventory submission/detail flows remain at
 // /inventory/submit and /inventory/[id]; those routes are untouched.
 
-import { listBuilderInventory } from '@/lib/builder-inventory';
+import { listBuilderInventoryCached, toBrowserRow } from '@/lib/builder-inventory';
 import { getServerPub } from '@/lib/publication';
 import { parseFilters } from '@/lib/inventory-filters';
 import InventoryBrowser from '@/components/inventory/InventoryBrowser';
@@ -51,7 +51,7 @@ export default async function Page({ searchParams }: PageProps) {
   // Fetch BOTH kinds (listings + promotions) for the active market. The
   // client browser filters everything — including builder — so we don't
   // server-scope by ?builder= here; ?builder= just seeds the dropdown.
-  const rows = await listBuilderInventory({
+  const rows = await listBuilderInventoryCached({
     status: 'active',
     publication: pub,
     limit: 1000,
@@ -64,7 +64,7 @@ export default async function Page({ searchParams }: PageProps) {
         <div className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
           <AdSlot slug="featured_builder_strip" className="mb-4" />
           <InventoryBrowser
-            rows={rows}
+            rows={rows.map(toBrowserRow)}
             initialFilters={initialFilters}
             initialSort={initialSort}
             surface="inventory"
