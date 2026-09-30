@@ -25,6 +25,7 @@
 // Months are bucketed in America/Chicago.
 
 import { query } from '@/lib/server/db/neon';
+import { logger } from '@/lib/server/logger';
 import { fetchGa4Monthly, getGa4Connection, isGa4OAuthConfigured } from '@/lib/server/ga4-client';
 import { fetchMailchimpSummary, isMailchimpConfigured, type MailchimpMonth } from '@/lib/server/mailchimp';
 
@@ -180,6 +181,42 @@ async function runHogQL(name: string, sql: string): Promise<Array<Array<string |
 }
 
 async function fetchTraffic(): Promise<Array<{ month: string; type: string; sessions: number; pageviews: number }>> {
+  try {
+    return await fetchTrafficFromEvents();
+  } catch (err) {
+    // PostHog's events table can fail server-side (e.g. "decimal_overflow")
+    // while the sessions table still works. Fall back to session-level
+    // counts; sessions that start in /admin are excluded.
+    logger.warn({ err: err instanceof Error ? err.message : String(err) }, '[marketing-performance] events query failed; using sessions table');
+    return fetchTrafficFromSessions();
+  }
+}
+
+async function fetchTrafficFromSessions(): Promise<Array<{ month: string; type: string; sessions: number; pageviews: number }>> {
+  const rows = await runHogQL(
+    'marketing_performance.traffic_sessions',
+    `
+    SELECT
+      formatDateTime(toStartOfMonth(toTimeZone($start_timestamp, '${TZ}')), '%Y-%m') AS month,
+      $channel_type AS channel_type,
+      count() AS sessions,
+      sum($pageview_count) AS pageviews
+    FROM sessions
+    WHERE $start_timestamp >= now() - INTERVAL ${MONTHS_BACK} MONTH
+      AND ($entry_pathname IS NULL OR NOT startsWith($entry_pathname, '/admin'))
+    GROUP BY month, channel_type
+    ORDER BY month
+    `,
+  );
+  return rows.map((r) => ({
+    month: String(r[0]),
+    type: String(r[1] ?? ''),
+    sessions: Number(r[2]) || 0,
+    pageviews: Number(r[3]) || 0,
+  }));
+}
+
+async function fetchTrafficFromEvents(): Promise<Array<{ month: string; type: string; sessions: number; pageviews: number }>> {
   const rows = await runHogQL(
     'marketing_performance.traffic',
     `
