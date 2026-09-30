@@ -101,7 +101,7 @@ function parseDetail(html: string): Detail {
     const lp = /^(.*?)\s*(\$\s?\d[\d.,]*)$/.exec(l);
     if (lp) {
       price = price ?? lp[2].replace(/\s+/g, '');
-      if (!location && lp[1]) location = lp[1];
+      if (!location && lp[1]) location = lp[1].replace(/\s*\$\s*$/, '') || null;
       continue;
     }
     if (!location) location = l.replace(/\s*\$\s*$/, '') || null;
