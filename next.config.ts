@@ -194,6 +194,18 @@ const nextConfig: NextConfig = {
         source: '/:path*',
         headers: securityHeaders,
       },
+      // Repo-hosted static assets (logos, maps, hero art). Cache for a day in
+      // browsers and a week in the CDN, revalidating in the background, so
+      // repeat visits skip the re-check without stranding replaced files.
+      ...['partners', 'brand', 'hero', 'ads', 'product-tour'].map((dir) => ({
+        source: `/${dir}/:path*`,
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
+          },
+        ],
+      })),
     ];
   },
 };
