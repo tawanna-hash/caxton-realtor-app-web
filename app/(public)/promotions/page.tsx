@@ -12,10 +12,12 @@
 // Each market is standalone — scoped to the active publication (cookie
 // `caxton_pub`). Austin and San Antonio are separate products.
 
+import { Suspense } from 'react';
 import { listBuilderInventoryCached, toBrowserRow } from '@/lib/builder-inventory';
 import { getServerPub } from '@/lib/publication';
 import { parseFilters } from '@/lib/inventory-filters';
 import InventoryBrowser from '@/components/inventory/InventoryBrowser';
+import InventoryListSkeleton from '@/components/inventory/InventoryListSkeleton';
 import BuildersBreadcrumb from '@/components/BuildersBreadcrumb';
 import { AdSlot } from '@/components/ads/AdSlot';
 import BuilderDeveloperFloater from '@/components/builders/BuilderDeveloperFloater';
@@ -32,22 +34,32 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function Page({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const { filters: parsed, sort: initialSort } = parseFilters(params);
-  // /promotions is the dedicated Promotions page — force kind=promotion
-  // server-side so the page is always scoped to promotions (the ?kind=
-  // deep link is normalized away on mount by InventoryBrowser).
-  const initialFilters = { ...parsed, kind: 'promotion' as const };
-  const pub = await getServerPub();
+type Filters = ReturnType<typeof parseFilters>;
 
+// Streams in after the page shell (breadcrumb, ad, floater) has painted.
+async function HomesList({ filters, sort }: { filters: Filters['filters']; sort: Filters['sort'] }) {
+  const initialFilters = { ...filters, kind: 'promotion' as const };
+  const pub = await getServerPub();
   // Fetch BOTH kinds (listings + promotions) for the active market. The
-  // client browser filters to promotions (kind) + every other dimension.
+  // client browser filters by kind and every other dimension.
   const rows = await listBuilderInventoryCached({
     status: 'active',
     publication: pub,
     limit: 1000,
   });
+  return (
+    <InventoryBrowser
+      rows={rows.map(toBrowserRow)}
+      initialFilters={initialFilters}
+      initialSort={sort}
+      surface="promotions"
+    />
+  );
+}
+
+export default async function Page({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const { filters: parsed, sort: initialSort } = parseFilters(params);
 
   return (
     <>
@@ -55,12 +67,9 @@ export default async function Page({ searchParams }: PageProps) {
       <main className="min-h-screen bg-white">
         <div className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
           <AdSlot slug="featured_builder_strip" className="mb-4" />
-          <InventoryBrowser
-            rows={rows.map(toBrowserRow)}
-            initialFilters={initialFilters}
-            initialSort={initialSort}
-            surface="promotions"
-          />
+          <Suspense fallback={<InventoryListSkeleton />}>
+            <HomesList filters={parsed} sort={initialSort} />
+          </Suspense>
         </div>
         <BuilderDeveloperFloater
           downloadHref="/api/inventory/pdf"
