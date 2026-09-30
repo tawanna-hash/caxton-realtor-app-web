@@ -8,6 +8,7 @@
 
 import { listEvents, type Publication, type CalendarEvent } from '@/lib/events-store';
 import { PUBLICATION_IDS, PUBLICATION_LABELS } from '@/lib/publications';
+import { canViewDallasPreview, dallasForbidden } from '@/lib/server/dallas-preview';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -102,6 +103,7 @@ export async function GET(
   if (!VALID.includes(publication as Publication)) {
     return new Response('Invalid publication', { status: 400 });
   }
+  if (publication === 'dallas' && !(await canViewDallasPreview())) return dallasForbidden();
 
   const url = new URL(req.url);
   const host = url.host;

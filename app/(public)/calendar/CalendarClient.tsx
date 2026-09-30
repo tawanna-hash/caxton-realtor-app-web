@@ -20,6 +20,23 @@ function isoDateKey(d: Date): string {
 export default function CalendarClient() {
   const router = useRouter();
   const { pub } = usePublication();
+  // Dallas/Ft. Worth is pre-launch. The server only answers
+  // /api/events/dallas for allowlisted accounts (lib/server/dallas-preview),
+  // so a 200 here means this signed-in user may preview it.
+  const [dallasAllowed, setDallasAllowed] = useState(false);
+  const [showDallas, setShowDallas] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/events/dallas', { credentials: 'include' })
+      .then((r) => {
+        if (!cancelled && r.ok) setDallasAllowed(true);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const viewPub = dallasAllowed && showDallas ? 'realtyline-dallas' : pub;
 
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,8 +77,9 @@ export default function CalendarClient() {
       setLoading(true);
       setError(false);
     });
-    const market = pub === 'realtyline' ? 'austin' : 'san_antonio';
-    fetch(`/api/events/${market}`)
+    const market =
+      viewPub === 'realtyline-dallas' ? 'dallas' : viewPub === 'realtyline' ? 'austin' : 'san_antonio';
+    fetch(`/api/events/${market}`, { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((data) => {
         if (cancelled) return;
@@ -79,7 +97,7 @@ export default function CalendarClient() {
       cancelled = true;
     };
     // ptrNonce intentionally retriggers the fetch on pull-to-refresh.
-  }, [pub, ptrNonce]);
+  }, [viewPub, ptrNonce]);
 
   function handlePrevMonth() {
     setDisplayMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1));
@@ -93,7 +111,7 @@ export default function CalendarClient() {
 
   return (
     <EventsList
-      pub={pub}
+      pub={viewPub}
       events={events}
       loading={loading}
       error={error}
@@ -107,10 +125,32 @@ export default function CalendarClient() {
       onSelectDay={setSelectedDay}
       onPrevMonth={handlePrevMonth}
       onNextMonth={handleNextMonth}
-      // Publication switching now lives in the global header (iOS HIG
-      // title-as-switcher pattern). The dedicated PubSwitcher pill-pair
-      // banner is removed — the same control is one tap away in the title.
-      topBanner={null}
+      // Publication switching lives in the global header. The only banner
+      // here is the private Dallas/Ft. Worth preview toggle.
+      topBanner={
+        dallasAllowed ? (
+          <div className="max-w-3xl mx-auto px-4 mb-4">
+            <div role="group" aria-label="Calendar market" className="inline-flex rounded-full border border-gray-200 p-1 text-sm">
+              <button
+                type="button"
+                onClick={() => { setShowDallas(false); setSelectedDay(null); }}
+                aria-pressed={!showDallas}
+                className={`rounded-full px-4 py-1.5 ${!showDallas ? 'bg-[#301D5D] text-white' : 'text-gray-700'}`}
+              >
+                {pub === 'newsline' ? 'San Antonio' : 'Austin'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowDallas(true); setSelectedDay(null); }}
+                aria-pressed={showDallas}
+                className={`rounded-full px-4 py-1.5 ${showDallas ? 'bg-[#301D5D] text-white' : 'text-gray-700'}`}
+              >
+                Dallas/Ft. Worth (Preview)
+              </button>
+            </div>
+          </div>
+        ) : null
+      }
     />
   );
 }

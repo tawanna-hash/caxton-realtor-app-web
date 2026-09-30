@@ -5,6 +5,7 @@
 
 import { getEventById } from '@/lib/events-store';
 import { isPublicationId } from '@/lib/publications';
+import { canViewDallasPreview, dallasForbidden } from '@/lib/server/dallas-preview';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -23,6 +24,7 @@ export async function GET(
       { status: 400 },
     );
   }
+  if (publication === 'dallas' && !(await canViewDallasPreview())) return dallasForbidden();
   const id = Number(idParam);
   if (!Number.isFinite(id) || id <= 0) {
     return Response.json(

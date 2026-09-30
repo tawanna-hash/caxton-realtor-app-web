@@ -5,6 +5,7 @@
 
 import { listEvents } from '@/lib/events-store';
 import { isPublicationId } from '@/lib/publications';
+import { canViewDallasPreview, dallasForbidden } from '@/lib/server/dallas-preview';
 import { ensureRealtyLineCalendarInitialized } from '@/lib/realtyline-calendar-scraper';
 
 // Always serve a fresh DB read; dashboard does its own client-side caching.
@@ -25,6 +26,7 @@ export async function GET(
       { status: 400 },
     );
   }
+  if (publication === 'dallas' && !(await canViewDallasPreview())) return dallasForbidden();
   try {
     if (publication === 'austin') {
       await ensureRealtyLineCalendarInitialized().catch((error) => {
