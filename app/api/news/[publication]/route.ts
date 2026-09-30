@@ -15,7 +15,7 @@ const VALID: Publication[] = ['austin', 'san_antonio'];
 
 type Ctx = { params: Promise<{ publication: string }> };
 
-export const GET = withErrorHandling(async (_req: Request, ctx: Ctx) => {
+export const GET = withErrorHandling(async (req: Request, ctx: Ctx) => {
   const { publication } = await ctx.params;
   if (!VALID.includes(publication as Publication)) {
     throw new ApiError(400, 'Invalid publication. Must be "austin" or "san_antonio".');
@@ -33,12 +33,20 @@ export const GET = withErrorHandling(async (_req: Request, ctx: Ctx) => {
     );
   }
 
+  // ?fields=list drops the full article bodies (~80% of the payload). Feed
+  // cards only need headline/summary/image; the article view fetches the
+  // full payload when an article is opened.
+  const listOnly = new URL(req.url).searchParams.get('fields') === 'list';
+  const outArticles = listOnly
+    ? articles.map((a) => ({ ...a, contentHtml: '' }))
+    : articles;
+
   return NextResponse.json(
     {
       publication,
       cacheStatus: 'fresh',
-      count: articles.length,
-      articles,
+      count: outArticles.length,
+      articles: outArticles,
     },
     {
       headers: {

@@ -1492,7 +1492,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
     const market = pub === 'realtyline' ? 'austin' : 'san_antonio';
     // Always request the latest merged article payload. WordPress itself is
     // cached server-side, while local admin overrides must appear immediately.
-    fetch(`${API}/news/${market}`, { cache: 'no-store' })
+    fetch(`${API}/news/${market}?fields=list`, { cache: 'no-store' })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -2528,7 +2528,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
   const headline = decodeHtmlEntities(article.head || article.title || '');
   const author = article.author;
   const dateLong = formatArticleDate(article.dateIso || article.publishedAt);
-  const cleanedHtml = cleanArticleHtml(article.contentHtml || article.content || "");
+  const cleanedHtml = cleanArticleHtml(article.contentHtml || article.content || (article.excerpt ? `<p>${article.excerpt}</p>` : ""));
   const articleId = String(article.id || '');
 
   // Split body into 3 chunks for two mid-article rectangle ad slots.
