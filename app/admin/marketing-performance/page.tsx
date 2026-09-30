@@ -782,10 +782,16 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
     return () => { cancelled = true; };
   }, [sources.ga4.connected]);
 
-  const selectedIds = (sources.ga4.propertyId ?? '').split(',').filter(Boolean);
+  // Local selection so ticks respond immediately; re-synced when the
+  // dashboard reload brings back the saved value.
+  const savedIds = sources.ga4.propertyId ?? '';
+  const [selectedIds, setSelectedIds] = useState<string[]>(() => savedIds.split(',').filter(Boolean));
+  useEffect(() => { setSelectedIds(savedIds.split(',').filter(Boolean)); }, [savedIds]);
   const toggle = async (id: string) => {
     const next = selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id];
     const chosen = (props ?? []).filter((p) => next.includes(p.id)).map((p) => ({ id: p.id, name: p.name }));
+    setSelectedIds(next);
+    setPropError(null);
     setBusy(true);
     try {
       const res = await fetch('/api/admin/ga4-auth/properties', {
@@ -794,7 +800,10 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
       });
       if (!res.ok) throw new Error(`Save failed (${res.status})`);
       onChanged();
-    } catch (err) { setPropError(err instanceof Error ? err.message : 'Save failed'); } finally { setBusy(false); }
+    } catch (err) {
+      setSelectedIds(savedIds.split(',').filter(Boolean));
+      setPropError(err instanceof Error ? err.message : 'Save failed');
+    } finally { setBusy(false); }
   };
 
   const disconnect = async () => {
