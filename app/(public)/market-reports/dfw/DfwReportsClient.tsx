@@ -173,7 +173,7 @@ export default function DfwReportsClient() {
             <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_22rem]">
               <Metrics m={current.metrics} board={board} />
               {current.imageUrl ? (
-                <figure>
+                <figure className="lg:sticky lg:top-20 lg:self-start">
                   {current.imageUrlEs ? (
                     <div className="mb-2 inline-flex rounded-full border border-gray-200 p-0.5 text-xs">
                       {[false, true].map((es) => (
@@ -194,7 +194,7 @@ export default function DfwReportsClient() {
                   <img
                     src={(spanish && current.imageUrlEs) || current.imageUrl}
                     alt={`${current.areaLabel} housing report, ${monthLabel(current.month)}`}
-                    className="w-full rounded-xl border border-gray-200"
+                    className="mx-auto h-auto max-h-[calc(100vh-11rem)] w-auto max-w-full rounded-xl border border-gray-200 object-contain"
                     loading="lazy"
                   />
                 </figure>
