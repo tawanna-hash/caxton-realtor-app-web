@@ -177,6 +177,8 @@ export async function countBySegment(): Promise<Record<MailingSegment | 'total',
     'non-advertiser-sa':     0,
     'email-only-atx':        0,
     'email-only-sa':         0,
+    'dallas-trec':           0,
+    'fortworth-trec':        0,
   };
   for (const r of rows) {
     if (isMailingSegment(r.segment)) {

@@ -172,7 +172,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     // mailable contacts. The classification rule is duplicated from
     // lib/server/mailing/email-only-routing.ts to keep this a single SQL.
     let reclassified = 0;
-    if (inserted > 0) {
+    if (inserted > 0 && marketForSegment(segment) !== 'dallas') {
       const market = marketForSegment(segment);
       const target = market === 'san_antonio' ? 'email-only-sa' : 'email-only-atx';
       if (target !== segment) {

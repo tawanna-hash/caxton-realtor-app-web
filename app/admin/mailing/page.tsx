@@ -244,6 +244,7 @@ export default async function MailingHubPage() {
         // (manual Newsline contacts, SA advertisers, SA non-advertisers).
         const austinSegments  = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'abor');
         const sanAntonioSegments = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'sabor');
+        const dfwSegments = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'dfw');
 
         const renderTile = (s: typeof SEGMENTS[number]) => {
           const c = counts[s.segment];
@@ -294,6 +295,15 @@ export default async function MailingHubPage() {
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {sanAntonioSegments.map(renderTile)}
+              </div>
+            </div>
+            <div>
+              <div className="mb-2 flex items-baseline gap-3">
+                <h2 className="text-sm font-semibold text-gray-900">Dallas / Ft. Worth</h2>
+                <span className="text-xs uppercase tracking-[0.15em] text-gray-500">TREC license-holder lists</span>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {dfwSegments.map(renderTile)}
               </div>
             </div>
           </div>

@@ -14,7 +14,9 @@ export type MailingSegment =
   | 'non-advertiser-atx'
   | 'non-advertiser-sa'
   | 'email-only-atx'
-  | 'email-only-sa';
+  | 'email-only-sa'
+  | 'dallas-trec'
+  | 'fortworth-trec';
 
 export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; caption: string; accent: string }[] = [
   {
@@ -44,6 +46,20 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
     label:   'Email-Only — Newsline San Antonio',
     caption: 'San Antonio contacts with a valid email but no mailing address. Auto-routed here on save + sync.',
     accent:  '#0891b2',
+  },
+  {
+    segment: 'dallas-trec',
+    slug:    'dallas-trec-agents',
+    label:   'Dallas — TREC Agents',
+    caption: 'Active TREC sales agents + brokers in the MetroTex counties (Denton under Dallas). Imported from the TREC license-holder file.',
+    accent:  '#1d4ed8',
+  },
+  {
+    segment: 'fortworth-trec',
+    slug:    'ft-worth-trec-agents',
+    label:   'Ft. Worth — TREC Agents',
+    caption: 'Active TREC sales agents + brokers in Tarrant, Parker and Johnson counties. Imported from the TREC license-holder file.',
+    accent:  '#15803d',
   },
 ];
 
@@ -95,7 +111,9 @@ export function isMailingSegment(v: unknown): v is MailingSegment {
     v === 'non-advertiser-atx' ||
     v === 'non-advertiser-sa' ||
     v === 'email-only-atx' ||
-    v === 'email-only-sa'
+    v === 'email-only-sa' ||
+    v === 'dallas-trec' ||
+    v === 'fortworth-trec'
   );
 }
 
@@ -110,7 +128,7 @@ export function isMailingSegment(v: unknown): v is MailingSegment {
 // ABoR/Five Points anchors as the default Austin-centric view.
 // ============================================================
 
-export type SegmentAnchor = 'sabor' | 'abor';
+export type SegmentAnchor = 'sabor' | 'abor' | 'dfw';
 
 export function anchorForSegment(seg: MailingSegment): SegmentAnchor {
   switch (seg) {
@@ -126,6 +144,9 @@ export function anchorForSegment(seg: MailingSegment): SegmentAnchor {
     case 'realtyline-atx-print':
     case 'email-only-atx':
       return 'abor';
+    case 'dallas-trec':
+    case 'fortworth-trec':
+      return 'dfw';
   }
 }
 

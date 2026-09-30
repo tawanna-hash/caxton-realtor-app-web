@@ -84,6 +84,9 @@ export function marketForSegment(seg: MailingSegment): Market {
     case 'realtyline-atx-print':
     case 'email-only-atx':
       return 'austin';
+    case 'dallas-trec':
+    case 'fortworth-trec':
+      return 'dallas';
   }
 }
 
@@ -105,6 +108,8 @@ export function marketForSegment(seg: MailingSegment): Market {
 export function classifyTargetSegment(input: RoutingInput): MailingSegment {
   const emailOnly = isEmailOnly(input);
   const market = marketForSegment(input.current_segment);
+  // DFW TREC lists have no email-only pool; rows stay on their list.
+  if (market === 'dallas') return input.current_segment;
 
   if (emailOnly) {
     return market === 'san_antonio' ? 'email-only-sa' : 'email-only-atx';
@@ -139,7 +144,7 @@ export async function sweepEmailOnlyRouting(): Promise<{ to_email_only: number; 
          ELSE 'email-only-atx'
        END
      WHERE stage = 'mailing'
-       AND segment NOT IN ('email-only-sa','email-only-atx')
+       AND segment NOT IN ('email-only-sa','email-only-atx','dallas-trec','fortworth-trec')
        AND email IS NOT NULL
        AND length(trim(email)) > 0
        AND lower(trim(email)) ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'
