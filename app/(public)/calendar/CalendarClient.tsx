@@ -29,7 +29,11 @@ export default function CalendarClient() {
     let cancelled = false;
     fetch('/api/events/dallas', { credentials: 'include' })
       .then((r) => {
-        if (!cancelled && r.ok) setDallasAllowed(true);
+        if (cancelled || !r.ok) return;
+        setDallasAllowed(true);
+        try {
+          if (sessionStorage.getItem('calendar_dallas_preview') === '1') setShowDallas(true);
+        } catch {}
       })
       .catch(() => {});
     return () => {
@@ -133,7 +137,7 @@ export default function CalendarClient() {
             <div role="group" aria-label="Calendar market" className="inline-flex rounded-full border border-gray-200 p-1 text-sm">
               <button
                 type="button"
-                onClick={() => { setShowDallas(false); setSelectedDay(null); }}
+                onClick={() => { setShowDallas(false); setSelectedDay(null); try { sessionStorage.removeItem('calendar_dallas_preview'); } catch {} }}
                 aria-pressed={!showDallas}
                 className={`rounded-full px-4 py-1.5 ${!showDallas ? 'bg-[#301D5D] text-white' : 'text-gray-700'}`}
               >
@@ -141,7 +145,7 @@ export default function CalendarClient() {
               </button>
               <button
                 type="button"
-                onClick={() => { setShowDallas(true); setSelectedDay(null); }}
+                onClick={() => { setShowDallas(true); setSelectedDay(null); try { sessionStorage.setItem('calendar_dallas_preview', '1'); } catch {} }}
                 aria-pressed={showDallas}
                 className={`rounded-full px-4 py-1.5 ${showDallas ? 'bg-[#301D5D] text-white' : 'text-gray-700'}`}
               >

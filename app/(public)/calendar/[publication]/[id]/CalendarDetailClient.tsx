@@ -9,6 +9,7 @@ import type { CalendarEvent } from '@/lib/events-store';
 type Pub = PubKey;
 
 function pubFromMarket(market: string): Pub {
+  if (market === 'dallas') return 'realtyline-dallas';
   return market === 'san_antonio' ? 'newsline' : 'realtyline';
 }
 
@@ -24,7 +25,7 @@ export default function CalendarDetailClient() {
 
   useEffect(() => {
     if (
-      (publication !== 'austin' && publication !== 'san_antonio') ||
+      (publication !== 'austin' && publication !== 'san_antonio' && publication !== 'dallas') ||
       !Number.isFinite(id) ||
       id <= 0
     ) {
@@ -37,7 +38,7 @@ export default function CalendarDetailClient() {
     let cancelled = false;
     fetch(`/api/events/${publication}/${id}`)
       .then((r) => {
-        if (r.status === 404) return { event: null, notFound: true };
+        if (r.status === 404 || r.status === 403) return { event: null, notFound: true };
         if (!r.ok) return Promise.reject(new Error(`HTTP ${r.status}`));
         return r.json();
       })
