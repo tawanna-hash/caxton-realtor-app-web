@@ -4,10 +4,10 @@ import { useState } from 'react';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import type { PubKey } from '@/lib/pub-meta';
 
-const EDITIONS: { id: PubKey; label: string; sub: string }[] = [
-  { id: 'realtyline', label: 'RealtyLine', sub: 'Austin' },
-  { id: 'newsline', label: 'Newsline San Antonio', sub: 'San Antonio' },
-  { id: 'realtyline-dallas', label: 'RealtyLine Dallas/Ft. Worth', sub: 'Dallas / Ft. Worth' },
+const EDITIONS: { id: PubKey; label: string; city: string }[] = [
+  { id: 'realtyline', label: 'RealtyLine', city: 'Austin' },
+  { id: 'newsline', label: 'Newsline San Antonio', city: 'San Antonio' },
+  { id: 'realtyline-dallas', label: 'RealtyLine Dallas/Ft. Worth', city: 'Dallas / Ft. Worth' },
 ];
 
 export default function EditionSignup() {
@@ -32,9 +32,8 @@ export default function EditionSignup() {
               }}
             >
               <p className="text-base font-semibold" style={{ color: selected ? '#301D5D' : '#111827' }}>
-                {e.label}
+                {e.city}
               </p>
-              <p className="text-xs text-gray-500 mt-0.5 font-light">{e.sub}</p>
             </button>
           );
         })}
