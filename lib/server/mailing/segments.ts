@@ -51,15 +51,15 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
   {
     segment: 'dallas-trec',
     slug:    'dallas-trec-agents',
-    label:   'Dallas — TREC Agents',
-    caption: 'Active TREC sales agents + brokers in the MetroTex counties (Denton under Dallas). Imported from the TREC license-holder file.',
+    label:   'Dallas — MetroTex',
+    caption: 'MetroTex directory contacts (Members, Affiliates, MLS Only, Offices) in the Dallas-area MetroTex counties.',
     accent:  '#1d4ed8',
   },
   {
     segment: 'fortworth-trec',
     slug:    'ft-worth-trec-agents',
-    label:   'Ft. Worth — TREC Agents',
-    caption: 'Active TREC sales agents + brokers in Tarrant, Parker and Johnson counties. Imported from the TREC license-holder file.',
+    label:   'Ft. Worth — MetroTex',
+    caption: 'MetroTex directory contacts (Members, Affiliates, MLS Only, Offices) in Tarrant, Parker and Johnson counties.',
     accent:  '#15803d',
   },
   {
