@@ -22,7 +22,7 @@ import { logger } from '@/lib/server/logger';
 export const runtime = 'nodejs';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ALLOWED_PUBS = new Set(['realtyline', 'newsline']);
+const ALLOWED_PUBS = new Set(['realtyline', 'newsline', 'realtyline-dallas']);
 
 export const POST = withErrorHandling(async (req: NextRequest) => {
   const body = (await req.json().catch(() => null)) as
@@ -89,7 +89,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
       const manageUrl = `${base}/newsletter`;
 
       const template = renderNewsletterConfirmationEmail({
-        publication: publication as 'realtyline' | 'newsline',
+        publication: publication as 'realtyline' | 'newsline' | 'realtyline-dallas',
         manageUrl,
       });
 

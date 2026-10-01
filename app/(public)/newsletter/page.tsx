@@ -6,11 +6,11 @@
 // "All Newsletters" link.
 
 import PageTitle from '@/components/ui/PageTitle';
-import NewsletterCTA from '@/components/NewsletterCTA';
+import EditionSignup from './EditionSignup';
 import TrackPageView from '@/components/analytics/TrackPageView';
 
 export const metadata = {
-  title: 'Weekly Email — RealtyLine & Newsline San Antonio',
+  title: 'Weekly Email — RealtyLine, Newsline San Antonio & Dallas/Ft. Worth',
   description: 'Sign up for our free weekly email. Stay current on new builders, communities, inventory, giveaways, and events.',
 };
 
@@ -29,7 +29,7 @@ export default function NewsletterLandingPage() {
       </p>
 
       <div className="mb-12">
-        <NewsletterCTA source="newsletter_landing" variant="card" />
+        <EditionSignup />
       </div>
 
       <section className="mb-12">
@@ -69,7 +69,7 @@ export default function NewsletterLandingPage() {
       <section className="mb-12 border-t border-gray-200 pt-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Choose Your Edition</h2>
         <p className="text-base text-gray-700 font-light leading-relaxed mb-4">
-          We publish two weekly emails. Pick the one for your market &mdash; or
+          We publish three weekly emails. Pick the one for your market &mdash; or
           switch publications from the nav drawer to subscribe to both.
         </p>
         <ul className="space-y-2 text-sm text-gray-700">
@@ -78,6 +78,9 @@ export default function NewsletterLandingPage() {
           </li>
           <li>
             <strong className="font-medium text-gray-900">Newsline San Antonio</strong> &mdash; San Antonio metro
+          </li>
+          <li>
+            <strong className="font-medium text-gray-900">RealtyLine Dallas/Ft. Worth</strong> &mdash; Dallas / Ft. Worth metro
           </li>
         </ul>
       </section>

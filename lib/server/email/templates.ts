@@ -113,7 +113,11 @@ export function renderNewsletterConfirmationEmail(opts: {
   manageUrl: string;
 }): MagicLinkTemplate {
   const pubLabel =
-    opts.publication === 'newsline' ? 'Newsline San Antonio' : 'RealtyLine Austin';
+    opts.publication === 'newsline'
+      ? 'Newsline San Antonio'
+      : opts.publication === 'realtyline-dallas'
+        ? 'RealtyLine Dallas/Ft. Worth'
+        : 'RealtyLine Austin';
   const subject = `You\u2019re subscribed to ${pubLabel}`;
   const text = `Welcome to ${pubLabel}.
 
