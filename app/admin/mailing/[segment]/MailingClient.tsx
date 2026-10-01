@@ -59,10 +59,7 @@ type Props = {
 
 const DEFAULT_PAGE_SIZE = 100;
 const NEAR_RADIUS_MI = 60;
-const SORTABLE: MailingColumnId[] = [
-  'first_name', 'last_name', 'email', 'phone', 'company', 'city', 'state', 'created_at',
-  ...GENERIC_COLS.map((c) => c.field),
-];
+
 
 // ---------------------------------------------------------------------------
 // Column visibility registry
@@ -110,6 +107,11 @@ function genericValue(r: MailingContactRow, c: GenericCol): string {
   if (c.field === 'member_type') return memberTypeLabel(v);
   return v;
 }
+
+const SORTABLE: MailingColumnId[] = [
+  'first_name', 'last_name', 'email', 'phone', 'company', 'city', 'state', 'created_at',
+  ...GENERIC_COLS.map((c) => c.field),
+];
 
 // Dropdown filters shown above the table (exact match, server-side).
 // A dropdown only renders when the segment has values for that column.
