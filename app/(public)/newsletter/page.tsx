@@ -23,9 +23,10 @@ export default function NewsletterLandingPage() {
       </p>
       <PageTitle size="md">The Weekly Email</PageTitle>
       <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mb-10">
-        Every Friday. One Email. Everything we published that week —
-        new builders, communities, inventory drops, giveaways, and events —
-        in one place.
+        Every Friday. One Email. Everything we published that week &mdash;
+        local news, market reports, new magazine issues, events, builder and
+        community updates, move-in ready homes, promotions, and giveaways
+        &mdash; in one place.
       </p>
 
       <div className="mb-12">
