@@ -117,7 +117,9 @@ export function renderNewsletterConfirmationEmail(opts: {
       ? 'Newsline San Antonio'
       : opts.publication === 'realtyline-dallas'
         ? 'RealtyLine Dallas/Ft. Worth'
-        : 'RealtyLine Austin';
+        : opts.publication === 'realtyline-houston'
+          ? 'RealtyLine Houston'
+          : 'RealtyLine Austin';
   const subject = `You\u2019re subscribed to ${pubLabel}`;
   const text = `Welcome to ${pubLabel}.
 

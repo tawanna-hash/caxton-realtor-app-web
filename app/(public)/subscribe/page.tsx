@@ -4,21 +4,25 @@ import { useState, useEffect, useRef, FormEvent } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import { haptics } from '@/lib/native/haptics';
+import { useDallasPreview } from '@/lib/market-preview';
 import { trackEvent } from '@/app/posthog-provider';
 
-type Market = 'realtyline' | 'newslinesa' | 'dallas';
+type Market = 'realtyline' | 'newslinesa' | 'houston' | 'dallas';
 type Mode = 'print' | 'email';
 
-const MARKETS: { id: Market; city: string; hasPrint: boolean }[] = [
+const MARKETS: { id: Market; city: string; hasPrint: boolean; prelaunch?: boolean }[] = [
   { id: 'realtyline', city: 'Austin', hasPrint: true },
   { id: 'newslinesa', city: 'San Antonio', hasPrint: true },
-  { id: 'dallas', city: 'Dallas / Ft. Worth', hasPrint: false },
+  { id: 'houston', city: 'Houston', hasPrint: false, prelaunch: true },
+  { id: 'dallas', city: 'Dallas / Ft. Worth', hasPrint: false, prelaunch: true },
 ];
 
 export default function SubscribePage() {
   const [market, setMarket] = useState<Market | null>(null);
   const [mode, setMode] = useState<Mode>('print');
   const formsRef = useRef<HTMLDivElement>(null);
+  // Houston and Dallas / Ft. Worth are pre-launch: live only for the preview account.
+  const preview = useDallasPreview();
 
   useEffect(() => {
     trackEvent('subscribe_page_viewed');
@@ -47,7 +51,7 @@ export default function SubscribePage() {
         </PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           Pick your market. Austin and San Antonio offer the print magazine and
-          the weekly email. Dallas / Ft. Worth is email only.
+          the weekly email. Houston and Dallas / Ft. Worth are coming soon.
         </p>
       </header>
 
@@ -56,17 +60,21 @@ export default function SubscribePage() {
         <p className="text-sm font-semibold text-gray-900 mb-4">
           Which market?
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {MARKETS.map((m) => (
-            <PickerButton
-              key={m.id}
-              label={m.city}
-              sublabel={m.hasPrint ? 'Print + Email' : 'Email'}
-              selected={market === m.id}
-              activeColor="#301D5D"
-              onClick={() => setMarket(m.id)}
-            />
-          ))}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {MARKETS.map((m) => {
+            const locked = !!m.prelaunch && !preview;
+            return (
+              <PickerButton
+                key={m.id}
+                label={m.city}
+                sublabel={m.prelaunch ? (locked ? 'Coming soon' : 'Email \u00b7 Coming soon') : m.hasPrint ? 'Print + Email' : 'Email'}
+                selected={market === m.id}
+                activeColor="#301D5D"
+                disabled={locked}
+                onClick={() => setMarket(m.id)}
+              />
+            );
+          })}
         </div>
         {market === null ? (
           <div className="mt-4 flex items-start gap-2 text-sm text-gray-600">
@@ -133,7 +141,9 @@ export default function SubscribePage() {
                 ? 'realtyline'
                 : current.id === 'newslinesa'
                   ? 'newsline'
-                  : 'realtyline-dallas'
+                  : current.id === 'houston'
+                    ? 'realtyline-houston'
+                    : 'realtyline-dallas'
             }
             source={`subscribe_page_${current.id}`}
             headline={`Get the ${current.city} Weekly Email`}
@@ -166,27 +176,31 @@ function PickerButton({
   sublabel,
   selected,
   activeColor,
+  disabled = false,
   onClick,
 }: {
   label: string;
   sublabel: string;
   selected: boolean;
   activeColor: string;
+  disabled?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="text-left border-2 px-5 py-4 transition-all rounded-md"
+      disabled={disabled}
+      aria-disabled={disabled}
+      className="text-left border-2 px-5 py-4 transition-all rounded-md disabled:cursor-not-allowed"
       style={{
-        borderColor: selected ? activeColor : '#d1d5db',
-        backgroundColor: selected ? `${activeColor}10` : '#ffffff',
+        borderColor: selected ? activeColor : disabled ? '#e5e7eb' : '#d1d5db',
+        backgroundColor: selected ? `${activeColor}10` : disabled ? '#f9fafb' : '#ffffff',
       }}
     >
       <p
         className="text-base font-semibold"
-        style={{ color: selected ? activeColor : '#111827' }}
+        style={{ color: selected ? activeColor : disabled ? '#9ca3af' : '#111827' }}
       >
         {label}
       </p>

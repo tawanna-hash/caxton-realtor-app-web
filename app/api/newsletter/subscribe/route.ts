@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { getSql } from '@/lib/db';
+import { canViewDallasPreview, dallasForbidden } from '@/lib/server/dallas-preview';
 import { withErrorHandling } from '@/lib/server/error';
 import { getEmailProvider } from '@/lib/server/email';
 import { renderNewsletterConfirmationEmail } from '@/lib/server/email/templates';
@@ -22,7 +23,9 @@ import { logger } from '@/lib/server/logger';
 export const runtime = 'nodejs';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ALLOWED_PUBS = new Set(['realtyline', 'newsline', 'realtyline-dallas']);
+const ALLOWED_PUBS = new Set(['realtyline', 'newsline', 'realtyline-dallas', 'realtyline-houston']);
+// Pre-launch markets: only the preview account may sign up until launch.
+const PRELAUNCH_PUBS = new Set(['realtyline-dallas', 'realtyline-houston']);
 
 export const POST = withErrorHandling(async (req: NextRequest) => {
   const body = (await req.json().catch(() => null)) as
@@ -39,6 +42,10 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
 
   const pubInput = typeof body?.publication === 'string' ? body.publication : 'realtyline';
   const publication = ALLOWED_PUBS.has(pubInput) ? pubInput : 'realtyline';
+
+  if (PRELAUNCH_PUBS.has(publication) && !(await canViewDallasPreview())) {
+    return dallasForbidden();
+  }
 
   const sourceInput = typeof body?.source === 'string' ? body.source : 'feed_inline';
   const source = sourceInput.slice(0, 64);
@@ -89,7 +96,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
       const manageUrl = `${base}/newsletter`;
 
       const template = renderNewsletterConfirmationEmail({
-        publication: publication as 'realtyline' | 'newsline' | 'realtyline-dallas',
+        publication: publication as 'realtyline' | 'newsline' | 'realtyline-dallas' | 'realtyline-houston',
         manageUrl,
       });
 
