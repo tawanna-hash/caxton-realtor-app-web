@@ -1219,6 +1219,30 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       ADD COLUMN IF NOT EXISTS email_override_reason text
   `);
 
+  // Directory-detail columns (MetroTex Members / Affiliates / MLS Only /
+  // Offices). Keep in sync with lib/server/mailing/extra-fields.ts.
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS license_type text,
+      ADD COLUMN IF NOT EXISTS member_type text,
+      ADD COLUMN IF NOT EXISTS role_code text,
+      ADD COLUMN IF NOT EXISTS nrds_id text,
+      ADD COLUMN IF NOT EXISTS office_nrds_id text,
+      ADD COLUMN IF NOT EXISTS license_state text,
+      ADD COLUMN IF NOT EXISTS preferred_name text,
+      ADD COLUMN IF NOT EXISTS home_city text,
+      ADD COLUMN IF NOT EXISTS office_phone text,
+      ADD COLUMN IF NOT EXISTS fax_phone text,
+      ADD COLUMN IF NOT EXISTS office_type text,
+      ADD COLUMN IF NOT EXISTS designated_realtor text,
+      ADD COLUMN IF NOT EXISTS mail_address text,
+      ADD COLUMN IF NOT EXISTS mail_city text,
+      ADD COLUMN IF NOT EXISTS mail_state text,
+      ADD COLUMN IF NOT EXISTS mail_zip text,
+      ADD COLUMN IF NOT EXISTS county text,
+      ADD COLUMN IF NOT EXISTS source_file text
+  `);
+
   // ───────────────────────────────────────────────────────────────────
   // verify_jobs — background queue-drain runs.
   //

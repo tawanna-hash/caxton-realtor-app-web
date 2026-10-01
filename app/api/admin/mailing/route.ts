@@ -15,6 +15,8 @@ import {
   createMailingContact,
   isMailingSegment,
   isSortableColumn,
+  isFilterableField,
+  EXTRA_FIELD_IDS,
   listMailingContacts,
   segmentFromSlug,
   type MailingSegment,
@@ -76,7 +78,24 @@ const createContactSchema = z.object({
   source:         z.string().max(100).optional(),
   advertiser_id:  z.number().int().positive().nullable().optional(),
   tags:           z.array(z.string().max(100)).max(50).optional(),
+  ...Object.fromEntries(EXTRA_FIELD_IDS.map((f) => [f, z.string().max(500).nullable().optional()])),
 });
+
+// `f_<column>=value` query params → exact-match column filters. Columns are
+// allow-listed in extra-fields.ts (FILTERABLE_FIELDS); anything else is
+// ignored. `__blank__` matches empty values.
+function parseFieldFilters(req: Request): Record<string, string> {
+  const out: Record<string, string> = {};
+  const url = new URL(req.url);
+  for (const [k, v] of url.searchParams.entries()) {
+    if (!k.startsWith('f_')) continue;
+    const col = k.slice(2);
+    const val = v.trim();
+    if (!val || val.length > 300 || !isFilterableField(col)) continue;
+    out[col] = val;
+  }
+  return out;
+}
 
 // ---------------------------------------------------------------------------
 // Handlers
@@ -97,6 +116,7 @@ export const GET = withAdminTracking(async (req: Request) => {
     search,
     filter,
     tagFilter: tag,
+    fieldFilters: parseFieldFilters(req),
     sort: safeSort,
     dir,
     limit,
@@ -133,6 +153,7 @@ export const POST = withAdminTracking(async (req: Request) => {
       source:         input.source         ?? 'manual',
       advertiser_id:  input.advertiser_id  ?? null,
       tags:           input.tags,
+      ...Object.fromEntries(EXTRA_FIELD_IDS.map((f) => [f, (input as Record<string, unknown>)[f] ?? null])),
     });
     return NextResponse.json({ row });
   } catch (err) {

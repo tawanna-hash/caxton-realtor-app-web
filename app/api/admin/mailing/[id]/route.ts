@@ -14,6 +14,7 @@ import {
   type MailingContactInput,
   type MailingSegment,
 } from '@/lib/mailing';
+import { EXTRA_FIELD_IDS } from '@/lib/server/mailing/extra-fields';
 import { suppressEmail } from '@/lib/server/email-suppressions';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 
@@ -56,6 +57,7 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
     const stringFields: (keyof MailingContactInput)[] = [
       'first_name', 'last_name', 'email', 'phone', 'company', 'title', 'license_number',
       'address', 'address_2', 'city', 'state', 'zip', 'website', 'notes', 'source',
+      ...EXTRA_FIELD_IDS,
     ];
     for (const f of stringFields) {
       if (f in body) {

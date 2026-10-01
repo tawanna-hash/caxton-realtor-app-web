@@ -20,13 +20,17 @@
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useUrlNumber, useUrlState, useUrlString } from '@/lib/use-url-state';
 import {
   isSaborSegment,
   guessField,
   splitFullName,
   SEGMENTS,
+  EXTRA_FIELDS,
+  licenseTypeLabel,
+  memberTypeLabel,
+  type ExtraFieldId,
   type MailingColumnId,
   type MailingContactRow,
   type MailingSegment,
@@ -56,7 +60,8 @@ type Props = {
 const DEFAULT_PAGE_SIZE = 100;
 const NEAR_RADIUS_MI = 60;
 const SORTABLE: MailingColumnId[] = [
-  'first_name', 'last_name', 'email', 'company', 'city', 'state', 'created_at',
+  'first_name', 'last_name', 'email', 'phone', 'company', 'city', 'state', 'created_at',
+  ...GENERIC_COLS.map((c) => c.field),
 ];
 
 // ---------------------------------------------------------------------------
@@ -73,9 +78,52 @@ type ColumnId =
   | 'proximity'
   | 'address'
   | 'email_verify'
-  | 'tag';
+  | 'tag'
+  | 'actions'
+  | GenericColId;
 
 type ColumnDef = { id: ColumnId; label: string; alwaysOn?: boolean };
+
+// Plain-text detail columns (core fields + MetroTex directory fields).
+// Each is sortable and rendered generically. `field` is the DB column;
+// `id` is the column-picker id ('street' because 'address' is the
+// USPS verify column).
+type GenericColId =
+  | 'title' | 'license_number' | 'street' | 'address_2' | 'state' | 'zip'
+  | 'website' | 'notes' | ExtraFieldId;
+type GenericCol = { id: GenericColId; label: string; field: MailingColumnId };
+const GENERIC_COLS: GenericCol[] = [
+  { id: 'title',          label: 'Title',          field: 'title' },
+  { id: 'license_number', label: 'License #',      field: 'license_number' },
+  { id: 'street',         label: 'Street Address', field: 'address' },
+  { id: 'address_2',      label: 'Address 2',      field: 'address_2' },
+  { id: 'state',          label: 'State',          field: 'state' },
+  { id: 'zip',            label: 'ZIP',            field: 'zip' },
+  { id: 'website',        label: 'Website',        field: 'website' },
+  { id: 'notes',          label: 'Notes',          field: 'notes' },
+  ...EXTRA_FIELDS.map((f) => ({ id: f.id as GenericColId, label: f.label, field: f.id as MailingColumnId })),
+];
+function genericValue(r: MailingContactRow, c: GenericCol): string {
+  const raw = (r as unknown as Record<string, unknown>)[c.field];
+  const v = raw === null || raw === undefined ? '' : String(raw);
+  if (c.field === 'license_type') return licenseTypeLabel(v);
+  if (c.field === 'member_type') return memberTypeLabel(v);
+  return v;
+}
+
+// Dropdown filters shown above the table (exact match, server-side).
+// A dropdown only renders when the segment has values for that column.
+const FILTER_FIELDS: { field: string; label: string }[] = [
+  { field: 'license_type', label: 'License Type' },
+  { field: 'member_type',  label: 'Member Type' },
+  { field: 'role_code',    label: 'Role Code' },
+  { field: 'source_file',  label: 'Source File' },
+  { field: 'county',       label: 'County' },
+  { field: 'city',         label: 'City' },
+  { field: 'state',        label: 'State' },
+  { field: 'title',        label: 'Title' },
+  { field: 'office_type',  label: 'Office Type' },
+];
 
 const COLUMNS: ColumnDef[] = [
   { id: 'name',         label: 'Name',      alwaysOn: true },
@@ -87,14 +135,18 @@ const COLUMNS: ColumnDef[] = [
   { id: 'proximity',    label: 'Proximity' },
   { id: 'address',      label: 'Address' },
   { id: 'email_verify', label: 'Email (SMTP)' },
+  ...GENERIC_COLS.map((c) => ({ id: c.id as ColumnId, label: c.label })),
+  { id: 'actions',      label: 'Actions', alwaysOn: true },
 ];
 
 const DEFAULT_VISIBLE: Record<ColumnId, boolean> = {
   name: true, tag: true, email: true, phone: true, company: true, city: true,
-  proximity: true, address: true, email_verify: true,
+  proximity: true, address: true, email_verify: true, actions: true,
+  ...(Object.fromEntries(GENERIC_COLS.map((c) => [c.id, true])) as Record<GenericColId, boolean>),
 };
 
-const COLUMNS_LS_KEY = 'mailing.columns.v1';
+// v2: adds the detail columns (all visible by default).
+const COLUMNS_LS_KEY = 'mailing.columns.v2';
 
 function loadColumnVisibility(): Record<ColumnId, boolean> {
   if (typeof window === 'undefined') return DEFAULT_VISIBLE;
@@ -136,6 +188,21 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   // Ignored on every other segment.
   const [tagFilter, setTagFilter] = useUrlString<'all' | 'active-advertiser' | 'non-advertiser' | 'manual' | 'REALTOR' | 'Loan Officer' | 'Business Development'>('tag', 'all');
   const [sort, setSort] = useUrlString<MailingColumnId>('sort', 'created_at');
+  // Column dropdown filters (exact match). Keyed by DB column.
+  const [fieldFilters, setFieldFilters] = useState<Record<string, string>>({});
+  const [facets, setFacets] = useState<Record<string, Array<{ value: string; count: number }>>>({});
+  const hasFieldFilters = Object.keys(fieldFilters).length > 0;
+  useEffect(() => {
+    let cancelled = false;
+    const fields = FILTER_FIELDS.map((f) => f.field).join(',');
+    fetch(`/api/admin/mailing/facets?segment=${encodeURIComponent(segment)}&fields=${fields}`, { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : { facets: {} }))
+      .then((j: { facets?: Record<string, Array<{ value: string; count: number }>> }) => {
+        if (!cancelled) setFacets(j.facets ?? {});
+      })
+      .catch(() => { /* filters are optional */ });
+    return () => { cancelled = true; };
+  }, [segment]);
   const [dir, setDir] = useUrlString<'asc' | 'desc'>('dir', 'desc');
   const [offset, setOffset] = useUrlNumber('offset', 0);
   const [pageSize, setPageSize] = useUrlNumber('pageSize', DEFAULT_PAGE_SIZE);
@@ -213,6 +280,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       if (isHubTagged && tagFilter !== 'all') {
         params.set('tag', tagFilter);
       }
+      for (const [k, v] of Object.entries(fieldFilters)) params.set(`f_${k}`, v);
       const res = await fetch(`/api/admin/mailing?${params.toString()}`, { credentials: 'include' });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
@@ -230,7 +298,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [segment, filter, sort, dir, offset, search, pageSize, tagFilter]);
+  }, [segment, filter, sort, dir, offset, search, pageSize, tagFilter, fieldFilters]);
 
   useEffect(() => { queueMicrotask(() => { void reload(); }); }, [reload]);
   useEffect(() => { queueMicrotask(() => setMounted(true)); }, []);
@@ -482,6 +550,22 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       alert(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(null);
+    }
+  }
+
+  async function handleDeleteOne(r: MailingContactRow) {
+    const name = [r.first_name, r.last_name].filter(Boolean).join(' ') || r.email || 'this contact';
+    if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/admin/mailing/${r.id}`, { method: 'DELETE', credentials: 'include' });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+      setEditing((prev) => (prev && prev.id === r.id ? null : prev));
+      setSelectedIds((prev) => { const n = new Set(prev); n.delete(r.id); return n; });
+      showToast(`Deleted ${name}.`);
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -927,6 +1011,46 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         />
       </div>
 
+      {/* Column filters — exact-match dropdowns built from this list's data */}
+      {FILTER_FIELDS.some((f) => (facets[f.field]?.length ?? 0) > 0) && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Filter</span>
+          {FILTER_FIELDS.filter((f) => (facets[f.field]?.length ?? 0) > 0).map((f) => (
+            <select
+              key={f.field}
+              aria-label={`Filter by ${f.label}`}
+              value={fieldFilters[f.field] ?? ''}
+              onChange={(e) => {
+                const v = e.target.value;
+                setFieldFilters((prev) => {
+                  const next = { ...prev };
+                  if (v) next[f.field] = v; else delete next[f.field];
+                  return next;
+                });
+                setOffset(0); setSelectedIds(new Set()); setFilterAll(false);
+              }}
+              className={`px-2 py-1.5 rounded-md border text-xs max-w-[14rem] ${fieldFilters[f.field] ? 'border-brand-700 bg-brand-700/5 text-brand-700 font-medium' : 'border-gray-300 text-gray-700'}`}
+            >
+              <option value="">{f.label}: All</option>
+              {facets[f.field].map((o) => (
+                <option key={o.value} value={o.value}>
+                  {f.field === 'license_type' ? licenseTypeLabel(o.value) : f.field === 'member_type' ? memberTypeLabel(o.value) : o.value} ({o.count.toLocaleString()})
+                </option>
+              ))}
+            </select>
+          ))}
+          {hasFieldFilters && (
+            <button
+              type="button"
+              onClick={() => { setFieldFilters({}); setOffset(0); setSelectedIds(new Set()); }}
+              className="px-2 py-1.5 text-xs text-gray-600 hover:text-gray-900 underline underline-offset-2"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
+
       {mounted && filterAll && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-md bg-indigo-50 border border-indigo-200">
           <span className="text-sm text-indigo-900 font-medium">All {total.toLocaleString()} matching this filter selected.</span>
@@ -955,7 +1079,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         </div>
       )}
 
-      {mounted && !filterAll && selectedIds.size > 0 && allSelected && total > rows.length && (
+      {mounted && !filterAll && !hasFieldFilters && selectedIds.size > 0 && allSelected && total > rows.length && (
         <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-50 border border-indigo-100 text-sm">
           <span className="text-indigo-900">All {selectedIds.size} on this page selected.</span>
           <button
@@ -1126,6 +1250,22 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                 {isVisible('proximity') && (
                   <div><ProximityBadges row={r} segment={segment} /></div>
                 )}
+                {GENERIC_COLS.some((c) => isVisible(c.id) && genericValue(r, c)) && (
+                  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                    {GENERIC_COLS.filter((c) => isVisible(c.id) && genericValue(r, c)).map((c) => (
+                      <Fragment key={c.id}>
+                        <dt className="text-gray-500 uppercase tracking-wider">{c.label}</dt>
+                        <dd className="text-gray-800 text-right break-words">{genericValue(r, c)}</dd>
+                      </Fragment>
+                    ))}
+                  </dl>
+                )}
+                <div className="flex items-center gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+                  <button type="button" onClick={() => setEditing(r)}
+                    className="px-2 py-1 rounded border border-gray-300 text-[11px] font-medium text-gray-700">Edit</button>
+                  <button type="button" onClick={() => void handleDeleteOne(r)}
+                    className="px-2 py-1 rounded border border-red-300 text-[11px] font-medium text-red-700">Delete</button>
+                </div>
                 {(isVisible('address') || isVisible('email_verify')) && (
                   <div className="pt-1 flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     {isVisible('address') && (
@@ -1171,7 +1311,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               {isVisible('name')  && <SortHeader col="first_name" label="Name"    sort={sort} dir={dir} onSort={handleSort} />}
               {isVisible('tag')   && <th className="px-3 py-3 text-left font-semibold">Tag</th>}
               {isVisible('email') && <SortHeader col="email"      label="Email"   sort={sort} dir={dir} onSort={handleSort} />}
-              {isVisible('phone') && <th className="px-3 py-3 text-left font-semibold">Phone</th>}
+              {isVisible('phone') && <SortHeader col="phone" label="Phone" sort={sort} dir={dir} onSort={handleSort} />}
               {isVisible('company') && <SortHeader col="company" label="Company" sort={sort} dir={dir} onSort={handleSort} />}
               {isVisible('city')    && <SortHeader col="city"    label="City"    sort={sort} dir={dir} onSort={handleSort} />}
               {isVisible('proximity')    && <th className="px-3 py-3 text-left font-semibold">Proximity</th>}
@@ -1180,6 +1320,10 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                   Match the column-picker label so the SMTP verify column is
                   visually distinct from the raw email column. */}
               {isVisible('email_verify') && <th className="px-3 py-3 text-left font-semibold">Email (SMTP)</th>}
+              {GENERIC_COLS.filter((c) => isVisible(c.id)).map((c) => (
+                <SortHeader key={c.id} col={c.field} label={c.label} sort={sort} dir={dir} onSort={handleSort} />
+              ))}
+              <th className="px-3 py-3 text-left font-semibold sticky right-0 bg-gray-50">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -1273,6 +1417,29 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                       </div>
                     </td>
                   )}
+                  {GENERIC_COLS.filter((c) => isVisible(c.id)).map((c) => (
+                    <td key={c.id} className="px-3 py-2 text-gray-700 text-xs whitespace-nowrap max-w-[18rem] truncate" title={genericValue(r, c)}>
+                      {genericValue(r, c)}
+                    </td>
+                  ))}
+                  <td className="px-3 py-2 sticky right-0 bg-white" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(r)}
+                        className="px-2 py-1 rounded border border-gray-300 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleDeleteOne(r)}
+                        className="px-2 py-1 rounded border border-red-300 text-[11px] font-medium text-red-700 hover:bg-red-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
@@ -1297,6 +1464,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         <EditDrawer
           row={editing}
           segment={segment}
+          onDelete={() => void handleDeleteOne(editing)}
           onClose={() => setEditing(null)}
           onSaved={(row) => { mergeRow(row); showToast('Saved.'); }}
           onVerifyAddress={() => verifyAddress(editing.id)}
@@ -1756,9 +1924,17 @@ function ProximityBadges({
 // Edit drawer
 // ============================================================
 
+function extraFormValues(row: MailingContactRow): Record<ExtraFieldId, string> {
+  const rec = row as unknown as Record<string, unknown>;
+  return Object.fromEntries(
+    EXTRA_FIELDS.map((f) => [f.id, typeof rec[f.id] === 'string' ? (rec[f.id] as string) : '']),
+  ) as Record<ExtraFieldId, string>;
+}
+
 function EditDrawer({
-  row, segment, onClose, onSaved, onVerifyAddress, onVerifyEmail, onEmailOverride, busy,
+  row, segment, onClose, onSaved, onVerifyAddress, onVerifyEmail, onEmailOverride, busy, onDelete,
 }: {
+  onDelete: () => void;
   row: MailingContactRow;
   segment: MailingSegment;
   onClose: () => void;
@@ -1787,6 +1963,7 @@ function EditDrawer({
     phone:          formatPhone(row.phone),
     mobile_phone:   formatPhone(row.mobile_phone),
     email_notes:    row.email_notes ?? '',
+    ...extraFormValues(row),
   });
   // Tags are managed separately from `form` because they're an array, not
   // a string. The editor keeps the canonical tag order from the DB and
@@ -1816,6 +1993,7 @@ function EditDrawer({
         phone:          formatPhone(row.phone),
         mobile_phone:   formatPhone(row.mobile_phone),
         email_notes:    row.email_notes ?? '',
+        ...extraFormValues(row),
       });
       setTags(Array.isArray(row.tags) ? row.tags : []);
     });
@@ -1846,6 +2024,7 @@ function EditDrawer({
             // stored phone number unless that control was intentionally edited.
             phone: formatPhone(row.phone), mobile_phone: formatPhone(row.mobile_phone),
             email_notes: row.email_notes ?? '', tags: Array.isArray(row.tags) ? row.tags : [],
+            ...extraFormValues(row),
           },
         )),
       });
@@ -2092,6 +2271,24 @@ function EditDrawer({
             <DrawerField label="Mobile / Cell" value={form.mobile_phone}  onChange={(v) => setField('mobile_phone', v)} type="tel" />
           </div>
 
+          {/* Directory details (MetroTex Members / Affiliates / MLS Only / Offices) */}
+          <div>
+            <span className="block text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-2">
+              Directory Details
+            </span>
+            <div className="grid grid-cols-2 gap-3">
+              {EXTRA_FIELDS.map((f) => (
+                <DrawerField
+                  key={f.id}
+                  label={f.id === 'license_type' ? 'License Type (Salesperson / Broker)' : f.label}
+                  value={form[f.id]}
+                  onChange={(v) => setField(f.id, v)}
+                  className={f.id === 'mail_address' || f.id === 'designated_realtor' ? 'col-span-2' : undefined}
+                />
+              ))}
+            </div>
+          </div>
+
           {/* Tags editor — add from the library catalog or type a custom
               tag. Removing a tag here only affects this contact; use the
               global Tag Library (/admin/mailing/tags) to rename or delete
@@ -2133,6 +2330,13 @@ function EditDrawer({
         </div>
 
         <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-3 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onDelete}
+            className="mr-auto px-3 py-1.5 rounded-md border border-red-300 text-sm text-red-700 hover:bg-red-50"
+          >
+            Delete
+          </button>
           <button
             type="button"
             onClick={onClose}

@@ -14,6 +14,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { isMailingSegment, segmentFromSlug, splitFullName } from '@/lib/mailing';
+import { EXTRA_FIELD_IDS } from '@/lib/server/mailing/extra-fields';
+import { writeExtraFields } from '@/lib/server/mailing/mutations';
 import { marketForSegment } from '@/lib/server/mailing/email-only-routing';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 
@@ -97,6 +99,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
         zip: string | null;
         website: string | null;
         notes: string | null;
+        extras: Record<string, string | null>;
       }> = [];
 
       for (const raw of slice) {
@@ -131,6 +134,11 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
           zip:            s(raw.zip),
           website:        s(raw.website),
           notes:          s(raw.notes),
+          extras: Object.fromEntries(
+            EXTRA_FIELD_IDS
+              .filter((f) => f in (raw as Record<string, unknown>))
+              .map((f) => [f, s((raw as Record<string, unknown>)[f])]),
+          ),
         });
       }
 
@@ -139,7 +147,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       // Multi-row INSERT one row at a time (parameter binding limit safety).
       // Neon serverless handles ~200 parameterized inserts/batch fine.
       for (const v of values) {
-        await sql`
+        const ins = (await sql`
           INSERT INTO mailing_contacts
             (segment, first_name, last_name, email, phone, company, title, license_number,
              address, address_2, city, state, zip, website, notes, source, tags)
@@ -161,7 +169,11 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
              ${v.notes},
              'import',
              ${JSON.stringify([segment])}::jsonb)
-        `;
+          RETURNING id
+        `) as unknown as Array<{ id: string }>;
+        if (ins[0] && Object.keys(v.extras).length > 0) {
+          await writeExtraFields(ins[0].id, v.extras);
+        }
         inserted += 1;
       }
     }
