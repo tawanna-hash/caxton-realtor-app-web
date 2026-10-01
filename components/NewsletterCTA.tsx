@@ -61,7 +61,7 @@ export default function NewsletterCTA({
     if (publication) return;
     try {
       const v = localStorage.getItem('caxton_pub');
-      if (v === 'realtyline' || v === 'newsline') {
+      if (v === 'realtyline' || v === 'newsline' || v === 'realtyline-dallas') {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setResolvedPub(v);
       }
