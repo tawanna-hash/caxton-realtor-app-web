@@ -22,6 +22,7 @@ import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { getSql } from '@/lib/db';
 import { suppressedSubset } from '@/lib/server/email-suppressions';
 import { PUB_ACTIVE, type PubId } from '@/lib/publications';
+import { EXTRA_FIELD_IDS } from '@/lib/server/mailing/extra-fields';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,7 +40,28 @@ type Row = {
   source_segment: string;
   status: string;
   verification_status: string;
+  // Mailing-contact id + detail columns (only for mailing_contacts rows).
+  // Used by the paged browse view (format=page); stripped from the legacy
+  // json/csv outputs so their shape is unchanged.
+  id?: string | null;
+  d?: Record<string, string | null> | null;
 };
+
+// Detail columns returned for mailing_contacts rows in the browse view.
+const DETAIL_COLS = [
+  'phone', 'mobile_phone', 'company', 'title', 'license_number', 'address', 'address_2',
+  'city', 'state', 'zip', 'website', 'notes', ...EXTRA_FIELD_IDS,
+] as const;
+const DETAIL_SELECT = DETAIL_COLS.map((c) => `${c}::text AS ${c}`).join(', ');
+
+function pickDetails(r: Record<string, unknown>): Record<string, string | null> {
+  const out: Record<string, string | null> = {};
+  for (const c of DETAIL_COLS) {
+    const v = r[c];
+    out[c] = typeof v === 'string' && v.trim() ? v : null;
+  }
+  return out;
+}
 
 function configFor(pub: Pub) {
   const configs: Record<Pub, {
@@ -104,7 +126,7 @@ async function buildList(pub: Pub): Promise<{ rows: Row[]; stats: Record<string,
   // email_status / email_override_status. We compute a derived status here
   // so the dedupe layer can apply uniform drop rules.
   const mailingRows = (await sql.query(
-    `SELECT email, COALESCE(first_name,'') AS first_name,
+    `SELECT id::text AS id, ${DETAIL_SELECT}, email, COALESCE(first_name,'') AS first_name,
             COALESCE(last_name,'') AS last_name, segment,
             CASE
               WHEN unsubscribed_at IS NOT NULL THEN 'unsubscribed'
@@ -116,10 +138,10 @@ async function buildList(pub: Pub): Promise<{ rows: Row[]; stats: Record<string,
         AND segment = ANY($1::text[])
         AND email IS NOT NULL AND length(trim(email)) > 0`,
     [cfg.segments],
-  )) as Array<{ email: string; first_name: string; last_name: string; segment: string; status: string }>;
+  )) as Array<{ id: string; email: string; first_name: string; last_name: string; segment: string; status: string } & Record<string, unknown>>;
 
   const holdingRows = (await sql.query(
-    `SELECT email, COALESCE(first_name,'') AS first_name,
+    `SELECT id::text AS id, ${DETAIL_SELECT}, email, COALESCE(first_name,'') AS first_name,
             COALESCE(last_name,'') AS last_name,
             CASE
               WHEN unsubscribed_at IS NOT NULL THEN 'unsubscribed'
@@ -131,7 +153,7 @@ async function buildList(pub: Pub): Promise<{ rows: Row[]; stats: Record<string,
         AND external_source = $1
         AND email IS NOT NULL AND length(trim(email)) > 0`,
     [cfg.holdingSource],
-  )) as Array<{ email: string; first_name: string; last_name: string; status: string }>;
+  )) as Array<{ id: string; email: string; first_name: string; last_name: string; status: string } & Record<string, unknown>>;
 
   const realtorRows = (await sql.query(
     `SELECT email, COALESCE(first_name,'') AS first_name,
@@ -157,14 +179,14 @@ async function buildList(pub: Pub): Promise<{ rows: Row[]; stats: Record<string,
     raw.push({
       email: r.email, first_name: r.first_name, last_name: r.last_name,
       source_table: 'mailing_contacts', source_segment: r.segment, status: r.status,
-      verification_status: 'unverified',
+      verification_status: 'unverified', id: r.id, d: pickDetails(r),
     });
   }
   for (const r of holdingRows) {
     raw.push({
       email: r.email, first_name: r.first_name, last_name: r.last_name,
       source_table: 'mailing_contacts', source_segment: cfg.holdingLabel, status: r.status,
-      verification_status: 'unverified',
+      verification_status: 'unverified', id: r.id, d: pickDetails(r),
     });
   }
   for (const r of realtorRows) {
@@ -198,6 +220,7 @@ async function buildList(pub: Pub): Promise<{ rows: Row[]; stats: Record<string,
       collapsed++;
       if (!existing.first_name && r.first_name) existing.first_name = r.first_name;
       if (!existing.last_name && r.last_name) existing.last_name = r.last_name;
+      if (!existing.id && r.id) { existing.id = r.id; existing.d = r.d; }
       if (!existing.source_segment.includes(r.source_segment)) {
         existing.source_segment = `${existing.source_segment}|${r.source_segment}`;
       }
@@ -246,6 +269,91 @@ async function buildList(pub: Pub): Promise<{ rows: Row[]; stats: Record<string,
   };
 }
 
+// ---------------------------------------------------------------------------
+// Browse view (format=page): server-side search / filter / sort / paging so
+// the admin table can show every detail column without shipping the whole
+// list to the browser.
+// ---------------------------------------------------------------------------
+const PAGE_FILTER_FIELDS = [
+  'license_type', 'member_type', 'role_code', 'source_file', 'county', 'city',
+  'state', 'title', 'office_type',
+];
+const SEARCH_DETAIL = [
+  'company', 'license_number', 'city', 'zip', 'nrds_id', 'office_nrds_id', 'county',
+  'phone', 'notes', 'title', 'address', 'designated_realtor',
+];
+
+function sortValue(r: Row, key: string): string {
+  switch (key) {
+    case 'email': return r.email;
+    case 'name': return `${r.first_name} ${r.last_name}`.trim().toLowerCase();
+    case 'source': return r.source_table;
+    case 'segment': return r.source_segment;
+    case 'verification': return r.verification_status;
+    default: return (r.d?.[key] ?? '').toLowerCase();
+  }
+}
+
+function pageView(all: Row[], url: URL) {
+  const sp = url.searchParams;
+  const page = Math.max(1, parseInt(sp.get('page') || '1', 10) || 1);
+  const pageSize = Math.min(500, Math.max(1, parseInt(sp.get('pageSize') || '50', 10) || 50));
+  const q = (sp.get('q') || '').trim().toLowerCase();
+  const verif = sp.get('verif') || 'all';
+  const source = sp.get('source') || 'all';
+  const sort = sp.get('sort') || 'email';
+  const dir = sp.get('dir') === 'desc' ? -1 : 1;
+  const ff: Record<string, string> = {};
+  for (const [k, v] of sp.entries()) {
+    if (k.startsWith('f_') && PAGE_FILTER_FIELDS.includes(k.slice(2)) && v) ff[k.slice(2)] = v;
+  }
+
+  const base = all.filter((r) => {
+    if (verif !== 'all' && r.verification_status !== verif) return false;
+    if (source !== 'all' && r.source_table !== source) return false;
+    if (q) {
+      const hay = [r.email, r.first_name, r.last_name, r.source_segment,
+        ...SEARCH_DETAIL.map((c) => r.d?.[c] ?? '')].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // Facets reflect search + verification + source, before column filters.
+  const facets: Record<string, Array<{ value: string; count: number }>> = {};
+  for (const f of PAGE_FILTER_FIELDS) {
+    const m = new Map<string, number>();
+    for (const r of base) {
+      const v = r.d?.[f];
+      if (v) m.set(v, (m.get(v) ?? 0) + 1);
+    }
+    facets[f] = Array.from(m, ([value, count]) => ({ value, count }))
+      .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value))
+      .slice(0, 300);
+  }
+
+  const filtered = Object.keys(ff).length
+    ? base.filter((r) => Object.entries(ff).every(([k, v]) => (r.d?.[k] ?? '') === v))
+    : base;
+
+  const sorted = filtered.slice().sort((a, b) => {
+    const av = sortValue(a, sort);
+    const bv = sortValue(b, sort);
+    if (!av && bv) return 1;   // blanks last
+    if (av && !bv) return -1;
+    return av.localeCompare(bv) * dir || a.email.localeCompare(b.email);
+  });
+
+  return {
+    total: filtered.length,
+    unfiltered: all.length,
+    page,
+    pageSize,
+    facets,
+    rows: sorted.slice((page - 1) * pageSize, page * pageSize),
+  };
+}
+
 export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const url = new URL(req.url);
@@ -257,6 +365,13 @@ export const GET = withAdminTracking(async (req: Request) => {
   const format = (url.searchParams.get('format') || 'csv').toLowerCase();
 
   const { rows, stats } = await buildList(pub);
+
+  if (format === 'page') {
+    return NextResponse.json({ publication: pub, ...stats, ...pageView(rows, url) });
+  }
+
+  // Legacy shapes: strip the browse-only id/detail fields.
+  for (const r of rows) { delete r.id; delete r.d; }
 
   if (format === 'json') {
     return NextResponse.json({ publication: pub, ...stats, rows });
