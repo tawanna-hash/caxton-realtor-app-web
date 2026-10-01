@@ -7,8 +7,9 @@ import type { PubKey } from '@/lib/pub-meta';
 const EDITIONS: { id: PubKey; label: string; city: string }[] = [
   { id: 'realtyline', label: 'RealtyLine', city: 'Austin' },
   { id: 'newsline', label: 'Newsline San Antonio', city: 'San Antonio' },
-  { id: 'realtyline-dallas', label: 'RealtyLine Dallas/Ft. Worth', city: 'Dallas / Ft. Worth' },
 ];
+
+const COMING_SOON = ['Houston', 'Dallas / Ft. Worth'];
 
 export default function EditionSignup() {
   const [pub, setPub] = useState<PubKey>('realtyline');
@@ -37,6 +38,20 @@ export default function EditionSignup() {
             </button>
           );
         })}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 -mt-3" aria-label="Coming soon">
+        {COMING_SOON.map((city) => (
+          <div
+            key={city}
+            aria-disabled="true"
+            className="border-2 border-dashed border-gray-200 px-4 py-3 rounded-md bg-gray-50 flex items-center justify-between gap-2"
+          >
+            <p className="text-base font-semibold text-gray-400">{city}</p>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 border border-gray-300 rounded-full px-2 py-0.5 whitespace-nowrap">
+              Coming soon
+            </span>
+          </div>
+        ))}
       </div>
       <NewsletterCTA
         key={pub}

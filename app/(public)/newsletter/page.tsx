@@ -10,7 +10,7 @@ import EditionSignup from './EditionSignup';
 import TrackPageView from '@/components/analytics/TrackPageView';
 
 export const metadata = {
-  title: 'Weekly Email — RealtyLine, Newsline San Antonio & Dallas/Ft. Worth',
+  title: 'Weekly Email — RealtyLine & Newsline San Antonio',
   description: 'Sign up for our free weekly email. Stay current on new builders, communities, inventory, giveaways, and events.',
 };
 
@@ -91,7 +91,7 @@ export default function NewsletterLandingPage() {
       <section className="mb-12 border-t border-gray-200 pt-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Choose Your Edition</h2>
         <p className="text-base text-gray-700 font-light leading-relaxed mb-4">
-          We publish three weekly emails. Pick the one for your market &mdash; or
+          We publish two weekly emails. Pick the one for your market &mdash; or
           switch publications from the nav drawer to subscribe to both.
         </p>
         <ul className="space-y-2 text-sm text-gray-700">
@@ -102,7 +102,10 @@ export default function NewsletterLandingPage() {
             <strong className="font-medium text-gray-900">Newsline San Antonio</strong> &mdash; San Antonio metro
           </li>
           <li>
-            <strong className="font-medium text-gray-900">RealtyLine Dallas/Ft. Worth</strong> &mdash; Dallas / Ft. Worth metro
+            <strong className="font-medium text-gray-900">Houston</strong> &mdash; coming soon
+          </li>
+          <li>
+            <strong className="font-medium text-gray-900">Dallas / Ft. Worth</strong> &mdash; coming soon
           </li>
         </ul>
       </section>
