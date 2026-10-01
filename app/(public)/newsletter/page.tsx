@@ -39,22 +39,43 @@ export default function NewsletterLandingPage() {
           <li className="flex gap-3">
             <span className="text-gray-400">&bull;</span>
             <span>
-              <strong className="font-medium text-gray-900">New builders &amp; communities.</strong>{' '}
-              First look at every fresh master-plan and builder that joins the directory.
+              <strong className="font-medium text-gray-900">Local news.</strong>{' '}
+              The week&rsquo;s top stories for your market, in one scan.
             </span>
           </li>
           <li className="flex gap-3">
             <span className="text-gray-400">&bull;</span>
             <span>
-              <strong className="font-medium text-gray-900">Inventory drops.</strong>{' '}
-              Move-in-ready homes added that week, with prices, square footage, and addresses.
+              <strong className="font-medium text-gray-900">Market reports.</strong>{' '}
+              Monthly housing and market-stats reports, with the numbers that matter.
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="text-gray-400">&bull;</span>
+            <span>
+              <strong className="font-medium text-gray-900">New magazine issues.</strong>{' '}
+              A direct link to the latest digital issue the day it publishes.
             </span>
           </li>
           <li className="flex gap-3">
             <span className="text-gray-400">&bull;</span>
             <span>
               <strong className="font-medium text-gray-900">Events.</strong>{' '}
-              Realtor mixers, lunch &amp; learns, builder open houses on the calendar.
+              Realtor mixers, lunch &amp; learns, and builder open houses on the calendar.
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="text-gray-400">&bull;</span>
+            <span>
+              <strong className="font-medium text-gray-900">Builders &amp; communities.</strong>{' '}
+              First look at every fresh master-plan and builder that joins the directory.
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="text-gray-400">&bull;</span>
+            <span>
+              <strong className="font-medium text-gray-900">Move-in ready homes &amp; promotions.</strong>{' '}
+              New inventory and current builder incentives, with prices, square footage, and addresses.
             </span>
           </li>
           <li className="flex gap-3">
