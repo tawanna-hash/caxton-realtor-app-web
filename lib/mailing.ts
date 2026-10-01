@@ -20,6 +20,7 @@
 export * from './server/mailing/segments';
 export * from './server/mailing/types';
 export * from './server/mailing/columns';
+export * from './server/mailing/extra-fields';
 export * from './server/mailing/import-fields';
 export * from './server/mailing/queries';
 export * from './server/mailing/mutations';

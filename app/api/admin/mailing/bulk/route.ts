@@ -16,6 +16,7 @@ import {
   updateMailingContact,
   type MailingContactInput,
 } from '@/lib/mailing';
+import { EXTRA_FIELD_IDS } from '@/lib/server/mailing/extra-fields';
 import { suppressEmailsBatch } from '@/lib/server/email-suppressions';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 
@@ -90,6 +91,45 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, removed, suppressed });
     }
 
+    if (action === 'patch-many') {
+      // Per-row update: body.rows = [{ id, <field>: value, ... }]. Only
+      // allow-listed text columns are written; one SQL statement per call.
+      const rowsIn = Array.isArray(body.rows) ? (body.rows as unknown[]) : [];
+      const allowed = new Set<string>([
+        'title', 'license_number', 'company', 'phone', 'website', ...EXTRA_FIELD_IDS,
+      ]);
+      const clean: Array<Record<string, string | null>> = [];
+      const used = new Set<string>();
+      for (const r of rowsIn) {
+        if (!r || typeof r !== 'object') continue;
+        const o = r as Record<string, unknown>;
+        if (typeof o.id !== 'string' || !UUID_RE.test(o.id)) continue;
+        const rec: Record<string, string | null> = { id: o.id };
+        for (const [k, v] of Object.entries(o)) {
+          if (k === 'id' || !allowed.has(k)) continue;
+          if (v !== null && typeof v !== 'string') continue;
+          const t = typeof v === 'string' ? v.trim().slice(0, 1000) : null;
+          rec[k] = t ? t : null;
+          used.add(k);
+        }
+        clean.push(rec);
+      }
+      if (clean.length === 0) return NextResponse.json({ error: 'no valid rows' }, { status: 400 });
+      if (clean.length > 1000) return NextResponse.json({ error: 'max 1000 rows per call' }, { status: 413 });
+      const cols = Array.from(used);
+      if (cols.length === 0) return NextResponse.json({ ok: true, updated: 0 });
+      const sets = cols.map((c) => `${c} = CASE WHEN r.j ? '${c}' THEN r.j->>'${c}' ELSE m.${c} END`).join(', ');
+      const sql = getSql();
+      const res = (await sql.query(
+        `UPDATE mailing_contacts m SET ${sets}
+           FROM (SELECT (e->>'id')::uuid AS id, e AS j FROM jsonb_array_elements($1::jsonb) e) r
+          WHERE m.id = r.id
+          RETURNING m.id`,
+        [JSON.stringify(clean)],
+      )) as unknown as Array<{ id: string }>;
+      return NextResponse.json({ ok: true, updated: res.length });
+    }
+
     if (action === 'patch') {
       // Bulk edit: apply the same partial update to every selected row.
       // Only fields present in `body.patch` are updated; everything else
@@ -110,6 +150,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       const stringFields: (keyof MailingContactInput)[] = [
         'first_name', 'last_name', 'email', 'phone', 'company', 'title', 'license_number',
         'address', 'address_2', 'city', 'state', 'zip', 'website', 'notes', 'source',
+        ...EXTRA_FIELD_IDS,
       ];
       const input: MailingContactInput = {};
       for (const f of stringFields) {

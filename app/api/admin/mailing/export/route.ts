@@ -18,6 +18,8 @@ import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseQuery } from '@/lib/server/schemas/_common';
 
+import { EXTRA_FIELD_IDS } from '@/lib/server/mailing/extra-fields';
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +38,7 @@ const HEADERS = [
   'zip',
   'website',
   'notes',
+  ...EXTRA_FIELD_IDS,
   'tag',
   'created_at',
 ] as const;

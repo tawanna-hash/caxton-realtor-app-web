@@ -7,6 +7,7 @@ import { isMailingSegment, type MailingSegment } from './segments';
 import type { MailingContactRow, MailingContactInput } from './types';
 import { normString } from './_internal';
 import { classifyTargetSegment } from './email-only-routing';
+import { EXTRA_FIELD_IDS, isExtraField } from './extra-fields';
 
 // Auto-route the row to the email-only segment for its market if it has
 // an email but no address (or back out of email-only when an address is
@@ -78,15 +79,35 @@ export async function createMailingContact(input: MailingContactInput): Promise<
     RETURNING *
   `) as unknown as MailingContactRow[];
   const created = rows[0];
+  await writeExtraFields(created.id, input);
   // Auto-route to email-only segment if the new row has email but no address.
   await reclassifySegment(created.id);
   const after = (await sql`SELECT * FROM mailing_contacts WHERE id = ${created.id}`) as unknown as MailingContactRow[];
   return after[0] ?? created;
 }
 
+/** Write any directory-detail columns present on `input` to one row. */
+export async function writeExtraFields(id: string, input: Record<string, unknown>): Promise<void> {
+  const cols: string[] = [];
+  const vals: unknown[] = [];
+  for (const f of EXTRA_FIELD_IDS) {
+    if (!(f in input)) continue;
+    const raw = input[f];
+    const v = raw === null || raw === undefined ? null : normString(raw);
+    if (v === null && raw === undefined) continue;
+    vals.push(v);
+    cols.push(`${f} = $${vals.length}`);
+  }
+  if (cols.length === 0) return;
+  vals.push(id);
+  const sql = getSql();
+  await sql.query(`UPDATE mailing_contacts SET ${cols.join(', ')} WHERE id = $${vals.length}`, vals);
+}
+
 const PATCHABLE_FIELDS: (keyof MailingContactInput)[] = [
   'segment', 'first_name', 'last_name', 'email', 'phone', 'company', 'title', 'license_number',
   'address', 'address_2', 'city', 'state', 'zip', 'website', 'notes', 'source', 'advertiser_id', 'tags',
+  ...EXTRA_FIELD_IDS,
 ];
 
 export async function updateMailingContact(id: string, input: MailingContactInput): Promise<MailingContactRow | null> {
@@ -141,6 +162,12 @@ export async function updateMailingContact(id: string, input: MailingContactInpu
     }
 
     const value = raw === null ? null : normString(raw);
+
+    if (isExtraField(field)) {
+      // Column name comes from the extra-fields allow-list.
+      await sql.query(`UPDATE mailing_contacts SET ${field} = $1 WHERE id = $2`, [value, id]);
+      continue;
+    }
 
     switch (field) {
       case 'last_name':

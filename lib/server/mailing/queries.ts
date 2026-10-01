@@ -7,154 +7,123 @@ import { getSql } from '@/lib/db';
 import { isMailingSegment, type MailingSegment } from './segments';
 import { isSortableColumn, type MailingColumnId } from './columns';
 import type { MailingContactRow } from './types';
+import { isFilterableField } from './extra-fields';
 
 // ============================================================
 
 /**
  * List mailing contacts for one segment, with optional search + sort +
- * pagination. Search hits across name, email, company, city, state, phone.
+ * per-column exact-match filters + pagination. Search hits across name,
+ * email, company, city, state, phone, license, ZIP, notes and the
+ * directory-detail columns.
+ *
+ * Column names in ORDER BY / filters only ever come from the allow-lists
+ * in columns.ts / extra-fields.ts, so building the SQL text is safe;
+ * every value is a bound parameter.
  */
+const SEARCH_COLS = [
+  'first_name', 'last_name', 'email', 'company', 'city', 'state', 'zip',
+  'license_number', 'title', 'address', 'notes', 'nrds_id', 'office_nrds_id',
+  'county', 'preferred_name', 'designated_realtor', 'mail_city',
+];
+
 export async function listMailingContacts(opts: {
   segment: MailingSegment;
   search?: string;
   filter?: 'all' | 'verified' | 'pending';
   tagFilter?: string | null;
+  fieldFilters?: Record<string, string>;
   sort?: MailingColumnId;
   dir?: 'asc' | 'desc';
   limit?: number;
   offset?: number;
 }): Promise<{ rows: MailingContactRow[]; total: number }> {
   const sql = getSql();
-  const segment = opts.segment;
   const search  = (opts.search ?? '').trim();
   const filter  = opts.filter ?? 'all';
   const tagFilter = (opts.tagFilter ?? '').trim() || null;
   const sort    = opts.sort && isSortableColumn(opts.sort) ? opts.sort : 'created_at';
-  const dir     = opts.dir === 'asc' ? 'asc' : 'desc';
+  const dir     = opts.dir === 'asc' ? 'ASC' : 'DESC';
   const limit   = Math.min(Math.max(opts.limit ?? 100, 1), 500);
   const offset  = Math.max(opts.offset ?? 0, 0);
 
-  // Neon driver doesn't allow dynamic ORDER BY column names, so we
-  // expand the small allow-listed set into a switch.
-  const search_like = search ? `%${search.toLowerCase()}%` : null;
+  const params: unknown[] = [opts.segment];
+  const where: string[] = [`segment = $1`, `stage = 'mailing'`];
+  if (filter === 'verified') {
+    where.push(`(addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid')`);
+  } else if (filter === 'pending') {
+    where.push(`(addr_status IS NULL OR addr_status <> 'Valid')
+      AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid')`);
+  }
+  if (tagFilter) {
+    params.push(tagFilter);
+    where.push(`tags @> jsonb_build_array($${params.length}::text)`);
+  }
+  for (const [col, val] of Object.entries(opts.fieldFilters ?? {})) {
+    if (!isFilterableField(col)) continue;
+    if (val === '__blank__') {
+      where.push(`NULLIF(TRIM(${col}), '') IS NULL`);
+    } else {
+      params.push(val);
+      where.push(`${col} = $${params.length}`);
+    }
+  }
+  if (search) {
+    params.push(`%${search.toLowerCase()}%`);
+    const p = `$${params.length}`;
+    const ors = SEARCH_COLS.map((c) => `LOWER(COALESCE(${c}, '')) LIKE ${p}`);
+    const digits = search.replace(/[^0-9]/g, '');
+    if (digits.length >= 3) {
+      params.push(`%${digits}%`);
+      ors.push(`REGEXP_REPLACE(COALESCE(phone, '') || ' ' || COALESCE(mobile_phone, '') || ' ' || COALESCE(office_phone, ''), '[^0-9]', '', 'g') LIKE $${params.length}`);
+    }
+    where.push(`(${ors.join(' OR ')})`);
+  }
+  const whereSql = where.join(' AND ');
 
-  const rows = search_like
-    ? (await sql`
-        SELECT * FROM mailing_contacts
-         WHERE segment = ${segment}
-           AND stage = 'mailing'
-           AND (
-             ${filter} = 'all'
-             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
-             OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                        AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
-           )
-           AND (
-             ${tagFilter}::text IS NULL
-             OR tags @> jsonb_build_array(${tagFilter}::text)
-           )
-           AND (
-             LOWER(COALESCE(first_name, '')) LIKE ${search_like}
-             OR LOWER(COALESCE(last_name, '')) LIKE ${search_like}
-             OR LOWER(COALESCE(email, ''))     LIKE ${search_like}
-             OR LOWER(COALESCE(company, ''))   LIKE ${search_like}
-             OR LOWER(COALESCE(city, ''))      LIKE ${search_like}
-             OR LOWER(COALESCE(state, ''))     LIKE ${search_like}
-             OR REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') LIKE ${search_like}
-           )
-         ORDER BY
-           CASE WHEN ${sort} = 'first_name'  AND ${dir} = 'asc'  THEN LOWER(COALESCE(first_name, ''))  END ASC  NULLS LAST,
-           CASE WHEN ${sort} = 'first_name'  AND ${dir} = 'desc' THEN LOWER(COALESCE(first_name, ''))  END DESC NULLS LAST,
-           CASE WHEN ${sort} = 'last_name'   AND ${dir} = 'asc'  THEN LOWER(COALESCE(last_name, ''))   END ASC  NULLS LAST,
-           CASE WHEN ${sort} = 'last_name'   AND ${dir} = 'desc' THEN LOWER(COALESCE(last_name, ''))   END DESC NULLS LAST,
-           CASE WHEN ${sort} = 'email'       AND ${dir} = 'asc'  THEN LOWER(COALESCE(email, ''))       END ASC  NULLS LAST,
-           CASE WHEN ${sort} = 'email'       AND ${dir} = 'desc' THEN LOWER(COALESCE(email, ''))       END DESC NULLS LAST,
-           CASE WHEN ${sort} = 'company'     AND ${dir} = 'asc'  THEN LOWER(COALESCE(company, ''))     END ASC  NULLS LAST,
-           CASE WHEN ${sort} = 'company'     AND ${dir} = 'desc' THEN LOWER(COALESCE(company, ''))     END DESC NULLS LAST,
-           CASE WHEN ${sort} = 'city'        AND ${dir} = 'asc'  THEN LOWER(COALESCE(city, ''))        END ASC  NULLS LAST,
-           CASE WHEN ${sort} = 'city'        AND ${dir} = 'desc' THEN LOWER(COALESCE(city, ''))        END DESC NULLS LAST,
-           CASE WHEN ${sort} = 'state'       AND ${dir} = 'asc'  THEN LOWER(COALESCE(state, ''))       END ASC  NULLS LAST,
-           CASE WHEN ${sort} = 'state'       AND ${dir} = 'desc' THEN LOWER(COALESCE(state, ''))       END DESC NULLS LAST,
-           CASE WHEN ${sort} = 'created_at'  AND ${dir} = 'asc'  THEN created_at                        END ASC,
-           CASE WHEN ${sort} = 'created_at'  AND ${dir} = 'desc' THEN created_at                        END DESC,
-           created_at DESC
-         LIMIT ${limit} OFFSET ${offset}
-      `) as unknown as MailingContactRow[]
-    : (await sql`
-        SELECT * FROM mailing_contacts
-         WHERE segment = ${segment}
-           AND stage = 'mailing'
-           AND (
-             ${filter} = 'all'
-             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
-             OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                        AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
-           )
-           AND (
-             ${tagFilter}::text IS NULL
-             OR tags @> jsonb_build_array(${tagFilter}::text)
-           )
-         ORDER BY
-           CASE WHEN ${sort} = 'first_name'  AND ${dir} = 'asc'  THEN LOWER(COALESCE(first_name, ''))  END ASC  NULLS LAST,
-           CASE WHEN ${sort} = 'first_name'  AND ${dir} = 'desc' THEN LOWER(COALESCE(first_name, ''))  END DESC NULLS LAST,
-           CASE WHEN ${sort} = 'last_name'   AND ${dir} = 'asc'  THEN LOWER(COALESCE(last_name, ''))   END ASC  NULLS LAST,
-           CASE WHEN ${sort} = 'last_name'   AND ${dir} = 'desc' THEN LOWER(COALESCE(last_name, ''))   END DESC NULLS LAST,
-           CASE WHEN ${sort} = 'email'       AND ${dir} = 'asc'  THEN LOWER(COALESCE(email, ''))       END ASC  NULLS LAST,
-           CASE WHEN ${sort} = 'email'       AND ${dir} = 'desc' THEN LOWER(COALESCE(email, ''))       END DESC NULLS LAST,
-           CASE WHEN ${sort} = 'company'     AND ${dir} = 'asc'  THEN LOWER(COALESCE(company, ''))     END ASC  NULLS LAST,
-           CASE WHEN ${sort} = 'company'     AND ${dir} = 'desc' THEN LOWER(COALESCE(company, ''))     END DESC NULLS LAST,
-           CASE WHEN ${sort} = 'city'        AND ${dir} = 'asc'  THEN LOWER(COALESCE(city, ''))        END ASC  NULLS LAST,
-           CASE WHEN ${sort} = 'city'        AND ${dir} = 'desc' THEN LOWER(COALESCE(city, ''))        END DESC NULLS LAST,
-           CASE WHEN ${sort} = 'state'       AND ${dir} = 'asc'  THEN LOWER(COALESCE(state, ''))       END ASC  NULLS LAST,
-           CASE WHEN ${sort} = 'state'       AND ${dir} = 'desc' THEN LOWER(COALESCE(state, ''))       END DESC NULLS LAST,
-           CASE WHEN ${sort} = 'created_at'  AND ${dir} = 'asc'  THEN created_at                        END ASC,
-           CASE WHEN ${sort} = 'created_at'  AND ${dir} = 'desc' THEN created_at                        END DESC,
-           created_at DESC
-         LIMIT ${limit} OFFSET ${offset}
-      `) as unknown as MailingContactRow[];
+  const orderExpr = sort === 'created_at' ? 'created_at' : `LOWER(COALESCE(${sort}::text, ''))`;
+  // Empty values sort last in both directions; id is a stable tiebreaker
+  // so pagination never repeats or skips rows.
+  const orderSql = sort === 'created_at'
+    ? `created_at ${dir}, id ${dir}`
+    : `(NULLIF(TRIM(${sort}::text), '') IS NULL) ASC, ${orderExpr} ${dir}, id ASC`;
 
-  const totalRow = search_like
-    ? (await sql`
-        SELECT COUNT(*)::int AS c FROM mailing_contacts
-         WHERE segment = ${segment}
-           AND stage = 'mailing'
-           AND (
-             ${filter} = 'all'
-             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
-             OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                        AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
-           )
-           AND (
-             ${tagFilter}::text IS NULL
-             OR tags @> jsonb_build_array(${tagFilter}::text)
-           )
-           AND (
-             LOWER(COALESCE(first_name, '')) LIKE ${search_like}
-             OR LOWER(COALESCE(last_name, '')) LIKE ${search_like}
-             OR LOWER(COALESCE(email, ''))     LIKE ${search_like}
-             OR LOWER(COALESCE(company, ''))   LIKE ${search_like}
-             OR LOWER(COALESCE(city, ''))      LIKE ${search_like}
-             OR LOWER(COALESCE(state, ''))     LIKE ${search_like}
-             OR REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') LIKE ${search_like}
-           )
-      `) as unknown as Array<{ c: number }>
-    : (await sql`
-        SELECT COUNT(*)::int AS c FROM mailing_contacts
-         WHERE segment = ${segment}
-           AND stage = 'mailing'
-           AND (
-             ${filter} = 'all'
-             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
-             OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                        AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
-           )
-           AND (
-             ${tagFilter}::text IS NULL
-             OR tags @> jsonb_build_array(${tagFilter}::text)
-           )
-      `) as unknown as Array<{ c: number }>;
+  const rows = (await sql.query(
+    `SELECT * FROM mailing_contacts WHERE ${whereSql} ORDER BY ${orderSql} LIMIT ${limit} OFFSET ${offset}`,
+    params,
+  )) as unknown as MailingContactRow[];
+  const totalRow = (await sql.query(
+    `SELECT COUNT(*)::int AS c FROM mailing_contacts WHERE ${whereSql}`,
+    params,
+  )) as unknown as Array<{ c: number }>;
 
   return { rows, total: totalRow[0]?.c ?? 0 };
+}
+
+/**
+ * Distinct values (with counts) for filterable columns within one segment.
+ * Powers the filter dropdowns on the Mailing Hub list pages.
+ */
+export async function mailingFacets(
+  segment: MailingSegment,
+  fields: string[],
+): Promise<Record<string, Array<{ value: string; count: number }>>> {
+  const sql = getSql();
+  const out: Record<string, Array<{ value: string; count: number }>> = {};
+  for (const col of fields) {
+    if (!isFilterableField(col)) continue;
+    const rows = (await sql.query(
+      `SELECT ${col} AS value, COUNT(*)::int AS count
+         FROM mailing_contacts
+        WHERE segment = $1 AND stage = 'mailing' AND NULLIF(TRIM(${col}), '') IS NOT NULL
+        GROUP BY ${col}
+        ORDER BY count DESC, ${col} ASC
+        LIMIT 300`,
+      [segment],
+    )) as unknown as Array<{ value: string; count: number }>;
+    out[col] = rows;
+  }
+  return out;
 }
 
 export async function countBySegment(): Promise<Record<MailingSegment | 'total', number>> {
