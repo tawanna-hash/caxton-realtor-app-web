@@ -15,6 +15,13 @@ import EmailBadge, { type EmailBadgeStatus } from '@/app/admin/_components/Email
 import { PAGE_SIZE_OPTIONS } from '@/app/admin/_components/Pager';
 import type { PublicationCount } from '@/lib/server/mailing/publication-counts';
 import type { PubId } from '@/lib/publications';
+import { SEGMENTS } from '@/lib/server/mailing/segments';
+
+// Show the human-readable list name (e.g. 'Dallas — MetroTex') instead of
+// the internal segment id when the source is a mailing segment.
+function segmentLabel(id: string): string {
+  return SEGMENTS.find((s) => s.segment === id)?.label ?? id;
+}
 
 type Pub = PubId;
 
@@ -116,7 +123,8 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
         r.email.toLowerCase().includes(q) ||
         r.first_name.toLowerCase().includes(q) ||
         r.last_name.toLowerCase().includes(q) ||
-        r.source_segment.toLowerCase().includes(q)
+        r.source_segment.toLowerCase().includes(q) ||
+        segmentLabel(r.source_segment).toLowerCase().includes(q)
       );
     });
   }, [rows, query, verifFilter, sourceFilter]);
@@ -265,7 +273,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
                 <dt className="text-gray-500 uppercase tracking-wider">Source</dt>
                 <dd className="text-gray-800 text-right break-words">{prettySource(r.source_table)}</dd>
                 <dt className="text-gray-500 uppercase tracking-wider">Segment</dt>
-                <dd className="text-gray-800 text-right break-words">{r.source_segment}</dd>
+                <dd className="text-gray-800 text-right break-words">{segmentLabel(r.source_segment)}</dd>
               </dl>
               <div className="pt-0.5"><EmailBadge status={badgeStatus} /></div>
             </div>
@@ -308,7 +316,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
                   <td className="px-3 py-2 font-mono text-[13px] text-gray-900 break-all">{r.email}</td>
                   <td className="px-3 py-2 text-gray-700">{name}</td>
                   <td className="px-3 py-2 text-gray-700">{prettySource(r.source_table)}</td>
-                  <td className="px-3 py-2 text-gray-700">{r.source_segment}</td>
+                  <td className="px-3 py-2 text-gray-700">{segmentLabel(r.source_segment)}</td>
                   <td className="px-3 py-2">
                     <EmailBadge status={badgeStatus} />
                   </td>

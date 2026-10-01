@@ -16,7 +16,8 @@ export type MailingSegment =
   | 'email-only-atx'
   | 'email-only-sa'
   | 'dallas-trec'
-  | 'fortworth-trec';
+  | 'fortworth-trec'
+  | 'houston-mailing';
 
 export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; caption: string; accent: string }[] = [
   {
@@ -50,16 +51,23 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
   {
     segment: 'dallas-trec',
     slug:    'dallas-trec-agents',
-    label:   'Dallas — TREC Agents',
-    caption: 'Active TREC sales agents + brokers in the MetroTex counties (Denton under Dallas). Imported from the TREC license-holder file.',
+    label:   'Dallas — MetroTex',
+    caption: 'MetroTex directory contacts (Members, Affiliates, MLS Only, Offices) in the Dallas-area MetroTex counties.',
     accent:  '#1d4ed8',
   },
   {
     segment: 'fortworth-trec',
     slug:    'ft-worth-trec-agents',
-    label:   'Ft. Worth — TREC Agents',
-    caption: 'Active TREC sales agents + brokers in Tarrant, Parker and Johnson counties. Imported from the TREC license-holder file.',
+    label:   'Ft. Worth — MetroTex',
+    caption: 'MetroTex directory contacts (Members, Affiliates, MLS Only, Offices) in Tarrant, Parker and Johnson counties.',
     accent:  '#15803d',
+  },
+  {
+    segment: 'houston-mailing',
+    slug:    'realtyline-houston-mailing',
+    label:   'RealtyLine Houston Mailing',
+    caption: 'Contacts in the Greater Houston counties (Harris, Fort Bend, Montgomery, Brazoria, Galveston, Liberty, Waller, Chambers, Austin).',
+    accent:  '#7c3aed',
   },
 ];
 
@@ -113,7 +121,8 @@ export function isMailingSegment(v: unknown): v is MailingSegment {
     v === 'email-only-atx' ||
     v === 'email-only-sa' ||
     v === 'dallas-trec' ||
-    v === 'fortworth-trec'
+    v === 'fortworth-trec' ||
+    v === 'houston-mailing'
   );
 }
 
@@ -128,7 +137,7 @@ export function isMailingSegment(v: unknown): v is MailingSegment {
 // ABoR/Five Points anchors as the default Austin-centric view.
 // ============================================================
 
-export type SegmentAnchor = 'sabor' | 'abor' | 'dfw';
+export type SegmentAnchor = 'sabor' | 'abor' | 'dfw' | 'houston';
 
 export function anchorForSegment(seg: MailingSegment): SegmentAnchor {
   switch (seg) {
@@ -147,6 +156,8 @@ export function anchorForSegment(seg: MailingSegment): SegmentAnchor {
     case 'dallas-trec':
     case 'fortworth-trec':
       return 'dfw';
+    case 'houston-mailing':
+      return 'houston';
   }
 }
 

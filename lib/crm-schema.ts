@@ -926,7 +926,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
     CREATE TABLE IF NOT EXISTS mailing_contacts (
       id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
       segment         text        NOT NULL DEFAULT 'non-advertiser-atx'
-                                   CHECK (segment IN ('manual-newsline','realtor','active-advertiser-atx','active-advertiser-sa','non-advertiser-atx','non-advertiser-sa','email-only-atx','email-only-sa','dallas-trec','fortworth-trec')),
+                                   CHECK (segment IN ('manual-newsline','realtor','active-advertiser-atx','active-advertiser-sa','non-advertiser-atx','non-advertiser-sa','email-only-atx','email-only-sa','dallas-trec','fortworth-trec','houston-mailing')),
       first_name      text        NOT NULL,
       last_name       text,
       email           text,
@@ -1017,7 +1017,8 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
         'email-only-atx',
         'email-only-sa',
         'dallas-trec',
-        'fortworth-trec'
+        'fortworth-trec',
+        'houston-mailing'
       )
     )
   `);
