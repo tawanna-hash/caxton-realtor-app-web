@@ -52,7 +52,7 @@ function buildSignatureHtml(): string {
             </a>
           </td>
           <td valign="middle" style="padding:0 11px 0 0;">
-            <a href="https://play.google.com/store/apps/details?id=app.realtynewsnow" target="_blank" style="text-decoration:none;">
+            <a href="https://play.google.com/store/apps/details?id=com.realtynewsnow.myapp" target="_blank" style="text-decoration:none;">
               <img src="${GOOGLE_PLAY_BADGE_URL}" width="121" alt="Get Realty News Now on Google Play" style="display:block;width:121px;height:auto;border:0;outline:none;text-decoration:none;">
             </a>
           </td>
