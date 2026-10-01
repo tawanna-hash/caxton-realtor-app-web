@@ -55,7 +55,7 @@ function configFor(pub: Pub): Cfg {
         newsletterPub: 'newsline',
     },
     'realtyline-houston': {
-      segments: [],
+      segments: ['houston-mailing'],
       market: 'houston',
       holdingSource: '__none__',
       newsletterPub: 'realtyline-houston',

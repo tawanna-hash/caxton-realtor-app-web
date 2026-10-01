@@ -64,7 +64,7 @@ function configFor(pub: Pub) {
         newsletterPub: 'newsline',
     },
     'realtyline-houston': {
-      segments: [],
+      segments: ['houston-mailing'],
       market: 'houston',
       holdingSource: '__none__',
       holdingLabel: 'houston',

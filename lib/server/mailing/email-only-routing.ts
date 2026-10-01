@@ -87,6 +87,8 @@ export function marketForSegment(seg: MailingSegment): Market {
     case 'dallas-trec':
     case 'fortworth-trec':
       return 'dallas';
+    case 'houston-mailing':
+      return 'houston';
   }
 }
 
@@ -109,7 +111,8 @@ export function classifyTargetSegment(input: RoutingInput): MailingSegment {
   const emailOnly = isEmailOnly(input);
   const market = marketForSegment(input.current_segment);
   // DFW TREC lists have no email-only pool; rows stay on their list.
-  if (market === 'dallas') return input.current_segment;
+  // Houston has no email-only pool either.
+  if (market === 'dallas' || market === 'houston') return input.current_segment;
 
   if (emailOnly) {
     return market === 'san_antonio' ? 'email-only-sa' : 'email-only-atx';
@@ -144,7 +147,7 @@ export async function sweepEmailOnlyRouting(): Promise<{ to_email_only: number; 
          ELSE 'email-only-atx'
        END
      WHERE stage = 'mailing'
-       AND segment NOT IN ('email-only-sa','email-only-atx','dallas-trec','fortworth-trec')
+       AND segment NOT IN ('email-only-sa','email-only-atx','dallas-trec','fortworth-trec','houston-mailing')
        AND email IS NOT NULL
        AND length(trim(email)) > 0
        AND lower(trim(email)) ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'
