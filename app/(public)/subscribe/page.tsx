@@ -2,88 +2,107 @@
 
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
+import NewsletterCTA from '@/components/NewsletterCTA';
 import { haptics } from '@/lib/native/haptics';
 import { trackEvent } from '@/app/posthog-provider';
 
-type Selection = 'realtyline' | 'newslinesa' | 'both' | null;
+type Market = 'realtyline' | 'newslinesa' | 'dallas';
+type Mode = 'print' | 'email';
+
+const MARKETS: { id: Market; city: string; hasPrint: boolean }[] = [
+  { id: 'realtyline', city: 'Austin', hasPrint: true },
+  { id: 'newslinesa', city: 'San Antonio', hasPrint: true },
+  { id: 'dallas', city: 'Dallas / Ft. Worth', hasPrint: false },
+];
 
 export default function SubscribePage() {
-  const [selection, setSelection] = useState<Selection>(null);
+  const [market, setMarket] = useState<Market | null>(null);
+  const [mode, setMode] = useState<Mode>('print');
   const formsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     trackEvent('subscribe_page_viewed');
   }, []);
 
-  const realtylineActive = selection === 'realtyline' || selection === 'both';
-  const newslineActive = selection === 'newslinesa' || selection === 'both';
+  const current = MARKETS.find((m) => m.id === market) ?? null;
+  // Dallas / Ft. Worth has no print edition, so it is always email.
+  const activeMode: Mode = current && !current.hasPrint ? 'email' : mode;
 
   // When user makes a selection, smooth-scroll to the form section
   useEffect(() => {
-    if (selection !== null && formsRef.current) {
+    if (market !== null && formsRef.current) {
       formsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [selection]);
+  }, [market]);
 
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-          Subscribe to Print
+          Subscribe
         </p>
         <PageTitle size="md">
-          Subscribe to Print. It&apos;s free!
+          Subscribe. It&apos;s free!
         </PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
-          Pick your publication and we&apos;ll mail you every issue, no charge.
+          Pick your market. Austin and San Antonio offer the print magazine and
+          the weekly email. Dallas / Ft. Worth is email only.
         </p>
       </header>
 
       {/* Picker */}
       <section className="mb-10">
         <p className="text-sm font-semibold text-gray-900 mb-4">
-          Which publication?
+          Which market?
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <PickerButton
-            label="RealtyLine"
-            sublabel="Austin"
-            selected={selection === 'realtyline'}
-            activeColor="#301D5D"
-            onClick={() => setSelection('realtyline')}
-          />
-          <PickerButton
-            label="Newsline San Antonio"
-            sublabel="San Antonio"
-            selected={selection === 'newslinesa'}
-            activeColor="#301D5D"
-            onClick={() => setSelection('newslinesa')}
-          />
-          <PickerButton
-            label="Both"
-            sublabel="Austin + San Antonio"
-            selected={selection === 'both'}
-            activeColor="#374151"
-            onClick={() => setSelection('both')}
-          />
+          {MARKETS.map((m) => (
+            <PickerButton
+              key={m.id}
+              label={m.city}
+              sublabel={m.hasPrint ? 'Print + Email' : 'Email'}
+              selected={market === m.id}
+              activeColor="#301D5D"
+              onClick={() => setMarket(m.id)}
+            />
+          ))}
         </div>
-        {selection === null ? (
+        {market === null ? (
           <div className="mt-4 flex items-start gap-2 text-sm text-gray-600">
             <span aria-hidden className="mt-0.5">{'\u2193'}</span>
-            <p>
-              Pick a publication above to reveal the print subscription form.
-            </p>
+            <p>Pick a market above to see your subscription options.</p>
           </div>
-        ) : (
-          <p className="text-xs text-gray-500 mt-3 font-light">
-            Fill out the form below to start your free print subscription.
-          </p>
-        )}
+        ) : null}
       </section>
 
       <div ref={formsRef} className="scroll-mt-8">
-        {realtylineActive && (
+        {current && current.hasPrint && (
+          <div className="flex gap-2 mb-8" role="tablist" aria-label="Subscription type">
+            {(['print', 'email'] as Mode[]).map((m) => {
+              const selected = activeMode === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => setMode(m)}
+                  className="px-5 py-2 rounded-full border text-sm font-medium transition-colors"
+                  style={{
+                    borderColor: selected ? '#301D5D' : '#d1d5db',
+                    backgroundColor: selected ? '#301D5D' : '#ffffff',
+                    color: selected ? '#ffffff' : '#374151',
+                  }}
+                >
+                  {m === 'print' ? 'Print Magazine' : 'Weekly Email'}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {current && activeMode === 'print' && current.id === 'realtyline' && (
           <SubscribeForm
             publication="RealtyLine"
             market="Austin"
@@ -94,11 +113,7 @@ export default function SubscribePage() {
           />
         )}
 
-        {realtylineActive && newslineActive && (
-          <hr className="border-gray-200 my-12" />
-        )}
-
-        {newslineActive && (
+        {current && activeMode === 'print' && current.id === 'newslinesa' && (
           <SubscribeForm
             publication="Newsline San Antonio"
             market="San Antonio"
@@ -106,6 +121,22 @@ export default function SubscribePage() {
             formId="newslinesa"
             active={true}
             onActivate={() => {}}
+          />
+        )}
+
+        {current && activeMode === 'email' && (
+          <NewsletterCTA
+            key={current.id}
+            variant="card"
+            publication={
+              current.id === 'realtyline'
+                ? 'realtyline'
+                : current.id === 'newslinesa'
+                  ? 'newsline'
+                  : 'realtyline-dallas'
+            }
+            source={`subscribe_page_${current.id}`}
+            headline={`Get the ${current.city} Weekly Email`}
           />
         )}
       </div>
