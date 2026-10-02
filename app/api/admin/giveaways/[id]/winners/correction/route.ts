@@ -24,7 +24,7 @@ export const POST = withAdminTracking(async (req: Request, ctx: Ctx) => {
   const p = getEmailProvider();
   const send = async (email: string, name: string, first: string, prefix: string) => {
     const t = renderGiveawayCorrectionEmail({ firstName: first, giveawayTitle: g.title, prize: g.prize, publication: g.publication });
-    const r = await p.send({ from: senderFor(g.publication), to: { email, name }, subject: `${prefix}${t.subject}`, text: t.text, html: t.html, emailType: 'giveaway_correction', tags: ['giveaway_correction'] });
+    const r = await p.send({ from: senderFor(g.publication), replyTo: ADMIN_NOTICE_EMAIL, to: { email, name }, subject: `${prefix}${t.subject}`, text: t.text, html: t.html, emailType: 'giveaway_correction', tags: ['giveaway_correction'] });
     return !!r.success;
   };
   if (test) {
