@@ -1,97 +1,45 @@
 /**
  * /api/admin/giveaways/:id/draw
- *   POST — randomly pick a winner (weighted by ticket count) and notify by email.
- *
- * Winner selection happens inside a DB transaction (FOR UPDATE on the
- * giveaway row) to make sure two admins clicking Draw at the same time
- * can't both succeed. The winner email is best-effort — failures are
- * logged but don't break the response, so a flaky email provider can't
- * roll back a successful draw.
+ *   POST { count?: 1-20, additional?: boolean } - draw winner(s) weighted by
+ *   ticket count, email each winner, record send status, and send an
+ *   internal summary to the admin notice address.
  */
-
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
 import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
-import { drawGiveawayWinner } from '@/lib/server/giveaways-store';
 import { logAudit } from '@/lib/server/audit';
-import { getEmailProvider } from '@/lib/server/email';
-import { renderGiveawayWinnerEmail } from '@/lib/server/email/templates';
-import { logger } from '@/lib/server/logger';
 import { giveawayIdParamSchema } from '@/lib/server/schemas/giveaways';
+import { drawWinners, sendWinnerEmail, notifyAdminOfWinners, listWinners } from '@/lib/server/giveaway-winners';
 
 export const runtime = 'nodejs';
+export const maxDuration = 120;
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const POST = withAdminTracking(async (_req: Request, ctx: Ctx) => {
+export const POST = withAdminTracking(async (req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const { id } = giveawayIdParamSchema.parse(await ctx.params);
+  let body: { count?: number; additional?: boolean } = {};
+  try { body = await req.json(); } catch { /* no body = single draw */ }
+  const count = Math.min(20, Math.max(1, Math.floor(Number(body.count) || 1)));
 
-  const drawn = await drawGiveawayWinner(id, admin.adminId);
+  const drawn = await drawWinners(id, admin.adminId, count, !!body.additional);
   if (!drawn.ok) {
-    switch (drawn.error.kind) {
-      case 'not_found':
-        throw new ApiError(404, 'Giveaway not found');
-      case 'already_drawn':
-        throw new ApiError(400, 'A winner has already been drawn for this giveaway');
-      case 'not_ended':
-        throw new ApiError(400, 'Cannot draw a winner before the giveaway ends');
-      case 'no_entries':
-        throw new ApiError(400, 'No entries to draw from');
+    switch (drawn.error) {
+      case 'not_found': throw new ApiError(404, 'Giveaway not found');
+      case 'already_drawn': throw new ApiError(400, 'A winner has already been drawn for this giveaway');
+      case 'not_ended': throw new ApiError(400, 'Cannot draw a winner before the giveaway ends');
+      case 'no_entries': throw new ApiError(400, 'No remaining entries to draw from');
     }
   }
-
-  const { winner, giveaway } = drawn.result;
-
   await logAudit({
-    adminId: admin.adminId,
-    action: 'giveaway.draw',
-    entityType: 'giveaway',
-    entityId: id,
-    afterState: { winnerRealtorId: winner.id },
+    adminId: admin.adminId, action: 'giveaway.draw', entityType: 'giveaway', entityId: id,
+    afterState: { winnerRealtorIds: drawn.winners, additional: !!body.additional },
     ipAddress: await getRequestIp(),
   });
-
-  // Send winner notification email — non-blocking. A flaky email provider
-  // shouldn't undo a successful draw.
-  try {
-    const template = renderGiveawayWinnerEmail({
-      firstName: winner.first_name,
-      giveawayTitle: giveaway.title,
-      prize: giveaway.prize,
-      publication: giveaway.publication,
-    });
-    const emailResult = await getEmailProvider().send({
-      to: { email: winner.email, name: winner.first_name },
-      subject: template.subject,
-      text: template.text,
-      html: template.html,
-      emailType: 'giveaway_winner',
-      tags: ['giveaway_winner'],
-    });
-    if (emailResult.success) {
-      logger.info(
-        { email: winner.email, giveawayId: id, messageId: emailResult.messageId },
-        'Giveaway winner email sent',
-      );
-    } else {
-      logger.warn(
-        { email: winner.email, giveawayId: id, error: emailResult.error },
-        'Giveaway winner email failed',
-      );
-    }
-  } catch (err) {
-    logger.warn({ err, giveawayId: id }, 'Giveaway winner email crashed');
-  }
-
-  return NextResponse.json({
-    success: true,
-    winner: {
-      id: winner.id,
-      email: winner.email,
-      firstName: winner.first_name,
-      lastName: winner.last_name,
-    },
-  });
+  for (const rid of drawn.winners) await sendWinnerEmail(id, rid);
+  await notifyAdminOfWinners(id, drawn.winners);
+  const winners = await listWinners(id);
+  return NextResponse.json({ success: true, drawn: drawn.winners.length, requested: count, winners });
 });

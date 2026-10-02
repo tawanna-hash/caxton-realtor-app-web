@@ -8,6 +8,7 @@ import { adminApi } from '@/lib/admin-api';
 import { PUBLICATIONS } from '@/lib/publications';
 
 import PageTitle from '@/components/ui/PageTitle';
+import WinnersSection from './WinnersSection';
 const RULE_ACTIONS = [
   { value: 'signup', label: 'Sign Up' },
   { value: 'follow_facebook', label: 'Follow on Facebook' },
@@ -208,6 +209,8 @@ export default function GiveawayDetailPage() {
       {error && (
         <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3 rounded-md">{error}</div>
       )}
+
+      <WinnersSection giveawayId={id} endsAtPassed={endsAtPassed} onChange={loadGiveaway} />
 
       <section className="bg-white border border-gray-200 p-6 rounded-md">
         <h2 className="text-sm uppercase tracking-wider text-gray-500 mb-5">Details</h2>
