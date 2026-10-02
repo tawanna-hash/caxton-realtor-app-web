@@ -29,6 +29,9 @@ const FILTER_SCHEMA = z.object({
   city: z.string().optional(),
   search: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
+  // Masked cross-origin script errors and known framework races are hidden from
+  // the error bucket by default; pass includeNoise=1 to see them.
+  includeNoise: z.coerce.boolean().default(false),
 });
 
 // Map UI bucket -> HogQL WHERE fragment on event/properties.
@@ -76,9 +79,10 @@ export const GET = withAdminTracking(async (req: Request) => {
     city: url.searchParams.get('city') ?? undefined,
     search: url.searchParams.get('search') ?? undefined,
     limit: url.searchParams.get('limit') ?? undefined,
+    includeNoise: url.searchParams.get('includeNoise') === '1' ? '1' : undefined,
   });
   if (!parsed.success) throw new ApiError(400, 'Invalid query params');
-  const { bucket, minutes, path, city, search, limit } = parsed.data;
+  const { bucket, minutes, path, city, search, limit, includeNoise } = parsed.data;
 
   const conditions: string[] = [
     `timestamp >= now() - INTERVAL ${minutes} MINUTE`,
@@ -87,6 +91,12 @@ export const GET = withAdminTracking(async (req: Request) => {
     `properties.$pathname NOT LIKE '/api/admin%'`,
     BUCKET_FILTER[bucket],
   ];
+  if (bucket === 'error' && !includeNoise) {
+    const msg = `coalesce(properties.$exception_message, properties.$exception_list.1.value, '')`;
+    conditions.push(`${msg} NOT LIKE 'Script error%'`);
+    conditions.push(`trim(${msg}) NOT IN ('', 'Uncaught')`);
+    conditions.push(`${msg} NOT LIKE '%reading ''parentNode''%'`);
+  }
   if (path) {
     // Safe: HogQL escapes via parameter substitution? Be defensive with a regex.
     const safePath = path.replace(/[^a-zA-Z0-9/_-]/g, '');
