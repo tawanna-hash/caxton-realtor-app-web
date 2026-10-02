@@ -12,7 +12,7 @@ const SENDER_NAMES: Record<string, string> = {
   san_antonio: 'Newsline San Antonio',
   both: 'RealtyLine Austin / Newsline San Antonio',
 };
-function senderFor(publication: string): { email: string; name: string } | undefined {
+export function senderFor(publication: string): { email: string; name: string } | undefined {
   const email = process.env.EMAIL_FROM_ADDRESS;
   return email ? { email, name: SENDER_NAMES[publication] ?? SENDER_NAMES.both! } : undefined;
 }
