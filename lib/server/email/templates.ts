@@ -422,3 +422,42 @@ ${brand.tagline}`;
 </html>`;
   return { subject, text, html };
 }
+
+
+export function renderGiveawayCorrectionEmail(input: {
+  firstName: string;
+  giveawayTitle: string;
+  prize: string;
+  publication: string;
+}): { subject: string; text: string; html: string } {
+  const brand = PUBLICATION_BRANDS[input.publication] || PUBLICATION_BRANDS.both!;
+  const esc = (s: string): string =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const multi = /^[A-Za-z]+\s*\((\d+)\)\s*(.+)$/.exec(input.prize.trim());
+  const prizeShort = multi ? `1 of ${multi[1]} ${multi[2]}` : `the ${input.prize}`;
+  const subject = `Correction: you won ${prizeShort} from ${brand.name}`;
+  const text = `Hi ${input.firstName},
+
+This is a correction to the winner email you received earlier. It listed the prize incorrectly and came from the wrong sender name.
+
+The correct details: you are one of the winners of the ${input.giveawayTitle}, and you will receive ${prizeShort}.
+
+We'll be in touch within the next few business days to coordinate getting your prize to you. We apologize for the confusion.
+
+${brand.name}
+${brand.tagline}`.trim();
+  const html = `<!doctype html>
+<html>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background: #fff; color: #301D5D;">
+  <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.25em; color: #888; margin: 0 0 8px 0;">${esc(brand.name)}</p>
+  <h1 style="font-size: 26px; font-weight: 600; color: #301D5D; margin: 0 0 24px 0; line-height: 1.2;">Correction to your winner email</h1>
+  <p style="font-size: 16px; line-height: 1.5; color: #333;">Hi ${esc(input.firstName)},</p>
+  <p style="font-size: 16px; line-height: 1.5; color: #333;">This is a correction to the winner email you received earlier. It listed the prize incorrectly and came from the wrong sender name.</p>
+  <p style="font-size: 16px; line-height: 1.5; color: #333;">The correct details: you are one of the winners of the <strong>${esc(input.giveawayTitle)}</strong>, and you will receive:</p>
+  <p style="font-size: 22px; font-weight: 600; color: #301D5D; padding: 20px; background: #f9fafb; border-left: 4px solid #fb923c; margin: 24px 0;">${esc(prizeShort.charAt(0).toUpperCase() + prizeShort.slice(1))}</p>
+  <p style="font-size: 16px; line-height: 1.5; color: #333;">We'll be in touch within the next few business days to coordinate getting your prize to you. We apologize for the confusion.</p>
+  <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">${esc(brand.name)}</p>
+</body>
+</html>`;
+  return { subject, text, html };
+}
