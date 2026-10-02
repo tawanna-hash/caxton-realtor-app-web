@@ -46,6 +46,11 @@ const SOURCE_LABELS: Record<string, string> = {
   gmail: 'Gmail',
   metrotex: 'MetroTex',
   gfwar: 'Greater Ft. Worth',
+  arbor: 'Arlington',
+  gdwcar: 'Greater Denton/Wise',
+  granbury: 'Granbury',
+  texoma: 'Greater Texoma',
+  gmwar: 'Greater Metro West',
 };
 
 /** Calendar day (YYYY-MM-DD) in Central time. */

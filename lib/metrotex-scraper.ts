@@ -20,7 +20,7 @@ const FETCH_TIMEOUT_MS = 30_000;
 // Calendar titles read "MetroTex: <event title>".
 const TITLE_PREFIX = 'MetroTex: ';
 
-interface TangillaEvent {
+export interface TangillaEvent {
   event_id: string;
   event_type: string | null; // 'class' | 'event'
   event_title: string | null;
@@ -130,7 +130,20 @@ function tagsFor(ev: TangillaEvent): string | null {
   return out.size ? Array.from(out).join(',') : null;
 }
 
-function normalize(ev: TangillaEvent): EventInput | null {
+export interface TangillaConfig {
+  source: EventInput['externalSource'];
+  titlePrefix: string;
+  organizer: string;
+  membersOnlyLabel: string;
+}
+const METROTEX_CFG: TangillaConfig = {
+  source: SOURCE,
+  titlePrefix: TITLE_PREFIX,
+  organizer: 'MetroTex Association of REALTORS®',
+  membersOnlyLabel: 'MetroTex members only.',
+};
+
+export function normalizeTangilla(ev: TangillaEvent, cfg: TangillaConfig): EventInput | null {
   const title = clean(ev.event_title);
   const startDate = centralIso(ev.event_date, ev.start_time);
   if (!ev.event_id || !title || !startDate) return null;
@@ -144,7 +157,7 @@ function normalize(ev: TangillaEvent): EventInput | null {
   const extra = [
     ceLine(ev),
     ev.provider_name ? `Provider: ${ev.provider_name}` : null,
-    ev.member_only ? 'MetroTex members only.' : null,
+    ev.member_only ? cfg.membersOnlyLabel : null,
   ].filter(Boolean).join('\n');
   const body = htmlToText(ev.event_description);
   const description = [body, extra].filter(Boolean).join('\n\n') || null;
@@ -152,16 +165,16 @@ function normalize(ev: TangillaEvent): EventInput | null {
   const instructors = [clean(ev.instructor_name), clean(ev.instructor2_name)].filter(Boolean).join(' & ');
 
   return {
-    externalSource: SOURCE,
+    externalSource: cfg.source,
     externalId: ev.event_id,
     publication: PUBLICATION,
-    title: `${TITLE_PREFIX}${title}`,
+    title: `${cfg.titlePrefix}${title}`,
     description,
     link: clean(ev.registration_link),
     startDate,
     endDate,
     location,
-    organizer: clean(ev.provider_name) ?? 'MetroTex Association of REALTORS®',
+    organizer: cfg.organizer,
     organizerEmail: null,
     website: clean(ev.registration_link),
     tags: tagsFor(ev),
@@ -197,7 +210,7 @@ export async function scrapeMetroTex(): Promise<EventInput[]> {
   if (!Array.isArray(raw)) throw new Error('MetroTex feed: expected an array');
   const out: EventInput[] = [];
   for (const item of raw as TangillaEvent[]) {
-    const ev = normalize(item);
+    const ev = normalizeTangilla(item, METROTEX_CFG);
     if (ev) out.push(ev);
   }
   return out;

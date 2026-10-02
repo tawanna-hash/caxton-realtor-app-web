@@ -45,6 +45,10 @@
       "schedule": "50 13 * * *"
     },
     {
+      "path": "/api/cron/scrape-dfw-associations",
+      "schedule": "55 13 * * *"
+    },
+    {
       "path": "/api/cron/sync-dfw-market-reports",
       "schedule": "0 14 * * *"
     },
