@@ -70,7 +70,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       // /admin/mailing.
       { label: 'Mailing List HUB', href: '/admin/mailing',       description: 'All audience lists in one place' },
       { label: 'Email Subscribers', href: '/admin/newsletter',   description: 'Subscriber email stats & queue' },
-      { label: 'Verify Emails',    href: '/admin/email-verify',  description: 'Ad-hoc single / bulk verifier (no DB writes)' },
+      { label: 'Verify Emails',    href: '/admin/email-verify',  description: 'Bulk email verifier (MillionVerifier)' },
     ],
   },
   {
