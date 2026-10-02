@@ -5,7 +5,7 @@ import { withErrorHandling } from '@/lib/server/error';
 import { dealRisks, extensionDraft } from '@/lib/closing-time-risks';
 import {
   FOLLOWUP_KINDS, PARTY_ROLES, addParty, approveFollowUp, dismissFollowUp, draftFollowUp, editFollowUp,
-  getOrCreatePortalToken, listAssist, removeParty, removePortal, requireDeal, saveChecklist, saveExtensionDraft,
+  getOrCreatePortalToken, listAssist, removeParty, removePortal, requireDeal, saveChecklist, saveExtensionDraft, markUploadReviewed, setAutoIntro,
 } from '@/lib/server/closing-time-assist';
 import { query } from '@/lib/server/db/neon';
 
@@ -23,6 +23,8 @@ const action = z.discriminatedUnion('action', [
   z.object({ action: z.literal('approve'), id: z.string().uuid() }),
   z.object({ action: z.literal('dismiss'), id: z.string().uuid() }),
   z.object({ action: z.literal('portal'), dealId, reset: z.boolean().optional(), disable: z.boolean().optional() }),
+  z.object({ action: z.literal('upload_reviewed'), id: z.string().uuid() }),
+  z.object({ action: z.literal('auto_intro'), on: z.boolean() }),
   z.object({ action: z.literal('save_checklist'), steps: z.array(step).min(1).max(60) }),
 ]);
 
@@ -62,6 +64,8 @@ export const POST = withErrorHandling(async (req: Request): Promise<Response> =>
       if (input.disable) { await removePortal(user.realtorId, input.dealId); return priv({ ok: true, token: null }); }
       return priv({ ok: true, token: await getOrCreatePortalToken(user.realtorId, input.dealId, input.reset) });
     }
+    case 'upload_reviewed': await markUploadReviewed(user.realtorId, input.id); return priv({ ok: true });
+    case 'auto_intro': await setAutoIntro(user.realtorId, input.on); return priv({ ok: true });
     case 'save_checklist': await saveChecklist(user.realtorId, input.steps); return priv({ ok: true });
   }
 });

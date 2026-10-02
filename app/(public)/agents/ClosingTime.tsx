@@ -1934,6 +1934,12 @@ export default function ClosingTime({
             {activeDeal && (
               <ClosingTimeAssist
                 deal={activeDeal}
+                onMarkReceived={(docId, fileName) => {
+                  const now = new Date().toISOString();
+                  applyActiveAction('Marked a client-uploaded document received', {
+                    documents: activeDeal.documents.map((d) => d.id === docId ? { ...d, status: 'received' as const, complete: true, updatedAt: now, fileName: fileName.slice(0, 280), fileUploadedAt: now } : d),
+                  });
+                }}
                 onApplyChecklist={(steps) => {
                   const base = (anchorKind: 'effective' | 'closing') => anchorKind === 'closing' ? activeDeal.closingDate : activeDeal.effectiveDate;
                   const existing = new Set(activeDeal.tasks.map((t) => t.title));

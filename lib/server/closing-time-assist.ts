@@ -46,6 +46,14 @@ export function ensureAssistSchema(): Promise<void> {
     await query(`CREATE TABLE IF NOT EXISTS closing_time_checklists (
       realtor_id UUID PRIMARY KEY REFERENCES realtors(id) ON DELETE CASCADE, steps JSONB NOT NULL DEFAULT '[]'::jsonb,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+    await query(`CREATE TABLE IF NOT EXISTS closing_time_settings (
+      realtor_id UUID PRIMARY KEY REFERENCES realtors(id) ON DELETE CASCADE, auto_intro BOOLEAN NOT NULL DEFAULT FALSE,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+    await query(`CREATE TABLE IF NOT EXISTS closing_time_portal_uploads (
+      id UUID PRIMARY KEY, realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE,
+      deal_id TEXT NOT NULL, doc_id TEXT NOT NULL, filename TEXT NOT NULL, content_type TEXT NOT NULL,
+      size_bytes INTEGER NOT NULL, data_b64 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), reviewed BOOLEAN NOT NULL DEFAULT FALSE)`);
+    await query(`CREATE INDEX IF NOT EXISTS closing_time_portal_uploads_deal_idx ON closing_time_portal_uploads (realtor_id, deal_id, created_at DESC)`);
     await query(`CREATE TABLE IF NOT EXISTS closing_time_daily_summaries (
       realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE, summary_date DATE NOT NULL,
       sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY (realtor_id, summary_date))`);
@@ -80,11 +88,14 @@ const iso = (v: Date | string) => (typeof v === 'string' ? v : v.toISOString());
 
 export async function listAssist(realtorId: string, dealId: string) {
   await ensureAssistSchema();
-  const [parties, follows, portal, checklist] = await Promise.all([
+  const [parties, follows, portal, checklist, uploads, settings] = await Promise.all([
     query<PartyRow>(`SELECT id, deal_id, role, name, email FROM closing_time_parties WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at`, [realtorId, dealId]),
     query<FollowRow>(`SELECT id, deal_id, kind, to_name, to_email, subject, body, status, created_at, sent_at FROM closing_time_followups WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 50`, [realtorId, dealId]),
     query<{ token: string }>(`SELECT token FROM closing_time_portals WHERE realtor_id=$1 AND deal_id=$2`, [realtorId, dealId]),
     query<{ steps: ChecklistStep[] }>(`SELECT steps FROM closing_time_checklists WHERE realtor_id=$1`, [realtorId]),
+    query<{ id: string; doc_id: string; filename: string; size_bytes: number; created_at: Date | string; reviewed: boolean }>(
+      `SELECT id, doc_id, filename, size_bytes, created_at, reviewed FROM closing_time_portal_uploads WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 50`, [realtorId, dealId]),
+    query<{ auto_intro: boolean }>(`SELECT auto_intro FROM closing_time_settings WHERE realtor_id=$1`, [realtorId]),
   ]);
   return {
     parties: parties.map((p): Party => ({ id: p.id, dealId: p.deal_id, role: p.role as PartyRole, name: p.name, email: p.email })),
@@ -95,6 +106,8 @@ export async function listAssist(realtorId: string, dealId: string) {
     portalToken: portal[0]?.token ?? null,
     checklist: checklist[0]?.steps?.length ? checklist[0].steps : DEFAULT_CHECKLIST,
     customChecklist: Boolean(checklist[0]?.steps?.length),
+    uploads: uploads.map((u) => ({ id: u.id, docId: u.doc_id, filename: u.filename, sizeBytes: u.size_bytes, createdAt: iso(u.created_at), reviewed: u.reviewed })),
+    autoIntro: settings[0]?.auto_intro ?? false,
   };
 }
 
@@ -133,7 +146,7 @@ export async function removePortal(realtorId: string, dealId: string) {
 export type PortalView = {
   property: string; stage: string; closingDate: string; agentName: string; agentEmail: string;
   timeline: { label: string; date: string; done: boolean }[];
-  documents: { label: string; status: string }[];
+  documents: { id: string; label: string; status: string }[];
   todos: { title: string; dueDate: string }[];
 };
 
@@ -156,7 +169,7 @@ export async function getPortalView(token: string): Promise<PortalView | null> {
     agentName: [row.first_name, row.last_name].filter(Boolean).join(' '),
     agentEmail: row.email,
     timeline: dealTimeline(deal).map((i) => ({ label: i.label, date: i.date, done: i.date < today })),
-    documents: deal.documents.filter((d) => d.status !== 'not_needed').map((d) => ({ label: d.label, status: d.status })),
+    documents: deal.documents.filter((d) => d.status !== 'not_needed').map((d) => ({ id: d.id, label: d.label, status: d.status })),
     todos: deal.tasks.filter((t) => !t.complete).slice(0, 20).map((t) => ({ title: t.title, dueDate: t.dueDate })),
   };
 }
@@ -273,4 +286,89 @@ export async function runDailySummaries(today: string): Promise<{ sent: number; 
     }
   }
   return out;
+}
+
+
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+const UPLOAD_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/webp']);
+
+/** Client upload through the portal link. Only attaches to a document the agent already requested. */
+export async function savePortalUpload(token: string, docId: string, file: { name: string; type: string; bytes: Buffer }): Promise<{ ok: boolean; error?: string }> {
+  if (!/^[A-Za-z0-9_-]{40,64}$/.test(token)) return { ok: false, error: 'Invalid link' };
+  if (!UPLOAD_TYPES.has(file.type)) return { ok: false, error: 'Upload a PDF or a photo (JPG, PNG, HEIC, WebP).' };
+  if (file.bytes.length === 0 || file.bytes.length > MAX_UPLOAD_BYTES) return { ok: false, error: 'File must be under 4 MB.' };
+  await ensureAssistSchema();
+  const rows = await query<{ realtor_id: string; deal_id: string }>(`SELECT realtor_id, deal_id FROM closing_time_portals WHERE token=$1`, [token]);
+  const row = rows[0];
+  if (!row) return { ok: false, error: 'Invalid link' };
+  const deal = await loadDeal(row.realtor_id, row.deal_id);
+  const doc = deal?.documents.find((d) => d.id === docId && d.status !== 'not_needed');
+  if (!doc) return { ok: false, error: 'That document is not requested.' };
+  const count = await query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM closing_time_portal_uploads WHERE realtor_id=$1 AND deal_id=$2 AND created_at > NOW() - INTERVAL '1 day'`, [row.realtor_id, row.deal_id]);
+  if ((count[0]?.n ?? 0) >= 25) return { ok: false, error: 'Upload limit reached for today. Contact your agent.' };
+  await query(`INSERT INTO closing_time_portal_uploads (id, realtor_id, deal_id, doc_id, filename, content_type, size_bytes, data_b64) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+    [randomUUID(), row.realtor_id, row.deal_id, docId, file.name.replace(/[^\w.\- ]+/g, '_').slice(0, 200) || 'upload', file.type, file.bytes.length, file.bytes.toString('base64')]);
+  const agent = await query<{ email: string }>(`SELECT email FROM realtors WHERE id=$1`, [row.realtor_id]);
+  if (agent[0]?.email) {
+    void sendEmail({ to: agent[0].email, subject: `New upload: ${doc.label} - ${deal?.propertyAddress || deal?.title || 'your deal'}`,
+      html: htmlBody(`Your client uploaded a file for "${doc.label}".\n\nOpen Closing Time to review it and mark it received.`) });
+  }
+  return { ok: true };
+}
+
+export async function getUpload(realtorId: string, id: string) {
+  await ensureAssistSchema();
+  const r = await query<{ filename: string; content_type: string; data_b64: string }>(`SELECT filename, content_type, data_b64 FROM closing_time_portal_uploads WHERE id=$1 AND realtor_id=$2`, [id, realtorId]);
+  return r[0] ? { filename: r[0].filename, contentType: r[0].content_type, bytes: Buffer.from(r[0].data_b64, 'base64') } : null;
+}
+export async function markUploadReviewed(realtorId: string, id: string) {
+  await ensureAssistSchema();
+  await query(`UPDATE closing_time_portal_uploads SET reviewed=TRUE WHERE id=$1 AND realtor_id=$2`, [id, realtorId]);
+}
+
+export async function setAutoIntro(realtorId: string, on: boolean) {
+  await ensureAssistSchema();
+  await query(`INSERT INTO closing_time_settings (realtor_id, auto_intro) VALUES ($1,$2) ON CONFLICT (realtor_id) DO UPDATE SET auto_intro=EXCLUDED.auto_intro, updated_at=NOW()`, [realtorId, on]);
+}
+
+/**
+ * Opt-in only. Sends the standard introduction (no price or terms) once to each
+ * lender, title, and co-op agent contact on active deals. The agent is copied.
+ */
+export async function runAutoIntros(): Promise<{ sent: number; errors: string[] }> {
+  await ensureAssistSchema();
+  const out = { sent: 0, errors: [] as string[] };
+  const agents = await query<{ realtor_id: string; workspace: unknown }>(
+    `SELECT s.realtor_id, w.workspace FROM closing_time_settings s JOIN agent_command_center_workspaces w ON w.realtor_id=s.realtor_id WHERE s.auto_intro`);
+  for (const a of agents) {
+    const parsed = agentCommandCenterWorkspaceSchema.safeParse(a.workspace);
+    if (!parsed.success) continue;
+    for (const deal of parsed.data.deals) {
+      if (deal.status === 'completed' || !deal.effectiveDate) continue;
+      const parties = await query<PartyRow>(`SELECT id, deal_id, role, name, email FROM closing_time_parties WHERE realtor_id=$1 AND deal_id=$2 AND role IN ('lender','title','coop_agent') AND email <> ''`, [a.realtor_id, deal.id]);
+      for (const party of parties) {
+        const done = await query<{ id: string }>(`SELECT id FROM closing_time_followups WHERE realtor_id=$1 AND deal_id=$2 AND kind='intro' AND LOWER(to_email)=LOWER($3) AND status IN ('sent','dismissed') LIMIT 1`, [a.realtor_id, deal.id, party.email]);
+        if (done[0]) continue;
+        await query(`DELETE FROM closing_time_followups WHERE realtor_id=$1 AND deal_id=$2 AND kind='intro' AND LOWER(to_email)=LOWER($3) AND status='draft'`, [a.realtor_id, deal.id, party.email]);
+        await draftFollowUp(a.realtor_id, deal.id, { kind: 'intro', partyId: party.id });
+        const draft = await query<{ id: string }>(`SELECT id FROM closing_time_followups WHERE realtor_id=$1 AND deal_id=$2 AND kind='intro' AND LOWER(to_email)=LOWER($3) AND status='draft' ORDER BY created_at DESC LIMIT 1`, [a.realtor_id, deal.id, party.email]);
+        if (!draft[0]) continue;
+        const r = await approveFollowUp(a.realtor_id, draft[0].id);
+        if (r.ok) out.sent += 1; else out.errors.push(`${deal.id}/${party.email}: ${r.error}`);
+      }
+    }
+  }
+  return out;
+}
+
+export async function auditCsv(realtorId: string, dealId: string): Promise<string> {
+  const deal = await requireDeal(realtorId, dealId);
+  const data = await listAssist(realtorId, dealId);
+  const q = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const rows: string[][] = [['When', 'Type', 'Detail']];
+  deal.activity.forEach((a) => rows.push([a.createdAt, 'activity', a.message]));
+  data.followUps.forEach((f) => rows.push([f.sentAt ?? f.createdAt, `follow-up (${f.status})`, `${f.toEmail}: ${f.subject}`]));
+  data.uploads.forEach((u) => rows.push([u.createdAt, 'client upload', `${u.filename} (${u.reviewed ? 'reviewed' : 'new'})`]));
+  rows.sort((x, y) => (x[0] === 'When' ? -1 : y[0] === 'When' ? 1 : x[0].localeCompare(y[0])));
+  return rows.map((r) => r.map(q).join(',')).join('\n');
 }

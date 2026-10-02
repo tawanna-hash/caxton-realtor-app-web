@@ -3,7 +3,7 @@ import {
   isAgentDeadlineDeliveryWindow,
   runAgentDeadlineNotifications,
 } from '@/lib/server/agent-deadline-notifications';
-import { runDailySummaries } from '@/lib/server/closing-time-assist';
+import { runAutoIntros, runDailySummaries } from '@/lib/server/closing-time-assist';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,15 +15,28 @@ function authorized(req: Request): boolean {
   return req.headers.get('x-vercel-cron') === '1';
 }
 
+function chicagoNow(): { date: string; hour: number } {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date());
+  const v = (t: string) => parts.find((x) => x.type === t)?.value ?? '';
+  return { date: `${v('year')}-${v('month')}-${v('day')}`, hour: Number(v('hour')) };
+}
+
 export async function GET(req: Request) {
   if (!authorized(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
-  if (!isAgentDeadlineDeliveryWindow()) {
-    return NextResponse.json({ ok: true, skipped: 'outside Central delivery window' });
+  const { date, hour } = chicagoNow();
+  const out: Record<string, unknown> = { ok: true };
+  if (isAgentDeadlineDeliveryWindow()) {
+    Object.assign(out, await runAgentDeadlineNotifications());
+    out.autoIntros = await runAutoIntros().catch((e) => ({ sent: 0, errors: [String(e)] }));
   }
-  const notifications = await runAgentDeadlineNotifications();
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
-  const summaries = await runDailySummaries(today).catch((e) => ({ sent: 0, errors: [String(e)] }));
-  return NextResponse.json({ ok: true, ...notifications, summaries });
+  // End-of-day summary, 6 PM Central (one retry hour; the ledger prevents duplicates).
+  if (hour === 18 || hour === 19) {
+    out.summaries = await runDailySummaries(date).catch((e) => ({ sent: 0, errors: [String(e)] }));
+  }
+  if (Object.keys(out).length === 1) out.skipped = 'outside Central delivery windows';
+  return NextResponse.json(out);
 }

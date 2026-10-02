@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import UploadButton from './UploadButton';
 import { getPortalView } from '@/lib/server/closing-time-assist';
 
 export const dynamic = 'force-dynamic';
@@ -47,7 +48,9 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
           {view.documents.map((d) => (
             <li key={d.label} className="flex items-center justify-between border border-slate-200 bg-white px-4 py-3 text-sm">
               <span className="text-slate-900">{d.label}</span>
-              <span className="font-semibold text-[#301D5D]">{statusLabel[d.status] ?? d.status}</span>
+              {d.status === 'requested'
+                ? <UploadButton token={token} docId={d.id} />
+                : <span className="font-semibold text-[#301D5D]">{statusLabel[d.status] ?? d.status}</span>}
             </li>
           ))}
           {!view.documents.length && <li className="text-sm text-slate-500">No documents requested yet.</li>}

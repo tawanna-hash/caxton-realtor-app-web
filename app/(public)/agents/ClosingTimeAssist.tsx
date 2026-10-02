@@ -7,7 +7,8 @@ type Party = { id: string; role: string; name: string; email: string };
 type FollowUp = { id: string; kind: string; toName: string; toEmail: string; subject: string; body: string; status: 'draft' | 'sent' | 'dismissed'; sentAt: string | null };
 type Risk = { id: string; severity: 'high' | 'medium'; title: string; detail: string; deadlineLabel?: string };
 type Step = { title: string; offsetDays: number; anchor: 'effective' | 'closing' };
-type Data = { parties: Party[]; followUps: FollowUp[]; risks: Risk[]; portalToken: string | null; checklist: Step[]; customChecklist: boolean };
+type Upload = { id: string; docId: string; filename: string; sizeBytes: number; createdAt: string; reviewed: boolean };
+type Data = { uploads: Upload[]; autoIntro: boolean; parties: Party[]; followUps: FollowUp[]; risks: Risk[]; portalToken: string | null; checklist: Step[]; customChecklist: boolean };
 
 const ROLES: Record<string, string> = { client: 'Client', lender: 'Lender', title: 'Title company', coop_agent: 'Co-op agent', other: 'Other' };
 const btn = 'inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:opacity-45';
@@ -22,7 +23,7 @@ function textToSteps(text: string): Step[] {
   });
 }
 
-export default function ClosingTimeAssist({ deal, onApplyChecklist }: { deal: AgentDeal; onApplyChecklist: (steps: Step[]) => void }) {
+export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceived }: { deal: AgentDeal; onApplyChecklist: (steps: Step[]) => void; onMarkReceived: (docId: string, fileName: string) => void }) {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -171,6 +172,35 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist }: { deal: Ag
               </ul>
             )}
             {sent.length > 0 && <p className="mt-3 text-xs text-slate-500">Recently sent: {sent.map((f) => f.subject).join(' · ')}</p>}
+          </section>
+
+          <section aria-label="Client uploads" className="lg:col-span-2">
+            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Client Uploads</h4>
+            {data.uploads.length === 0 ? <p className="mt-2 text-sm text-slate-500">Files your client uploads through the progress link appear here. You get an email each time.</p> : (
+              <ul className="mt-2 space-y-2">
+                {data.uploads.map((u) => {
+                  const doc = deal.documents.find((d) => d.id === u.docId);
+                  return (
+                    <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 border border-slate-200 px-3 py-2 text-sm">
+                      <span className="min-w-0 truncate"><span className="font-semibold text-slate-900">{doc?.label ?? 'Document'}</span> · {u.filename} · {Math.max(1, Math.round(u.sizeBytes / 1024))} KB{u.reviewed ? '' : ' · new'}</span>
+                      <span className="flex gap-2">
+                        <a className={btn} href={`/api/closing-time/assist/upload/${u.id}`}>Download</a>
+                        {!u.reviewed && <button type="button" disabled={busy} className={btnPrimary} onClick={() => { onMarkReceived(u.docId, u.filename); void post({ action: 'upload_reviewed', id: u.id }); }}>Mark Received</button>}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+
+          <section aria-label="Automation">
+            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Automation</h4>
+            <label className="mt-2 flex items-start gap-2 text-sm text-slate-700">
+              <input type="checkbox" className="mt-1" checked={data.autoIntro} disabled={busy} onChange={(e) => void post({ action: 'auto_intro', on: e.target.checked })} />
+              <span>Automatically send the standard introduction to each lender, title, and co-op agent contact once a deal has an effective date. You are copied. Nothing about price or terms is ever sent automatically. Off by default, applies to all your deals.</span>
+            </label>
+            <a className={`${btn} mt-3`} href={`/api/closing-time/assist/export?dealId=${encodeURIComponent(deal.id)}`}>Export File History (CSV)</a>
           </section>
 
           <section aria-label="Checklist">
