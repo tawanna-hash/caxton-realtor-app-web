@@ -182,11 +182,15 @@ export function renderGiveawayWinnerEmail(input: GiveawayWinnerEmailInput): {
   const esc = (s: string): string =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-  const subject = `Congratulations - you won the ${input.prize} from ${brand.name}!`;
+  // "Four (4) $50 gift cards" -> "1 of 4 $50 gift cards"; otherwise "the <prize>".
+  const multi = /^[A-Za-z]+\s*\((\d+)\)\s*(.+)$/.exec(input.prize.trim());
+  const prizeShort = multi ? `1 of ${multi[1]} ${multi[2]}` : `the ${input.prize}`;
+  const prizeHtml = multi ? `1 of ${multi[1]} ${multi[2]}` : input.prize;
+  const subject = `Congratulations - you won ${prizeShort} from ${brand.name}!`;
 
   const text = `Hi ${input.firstName},
 
-You won! Your name was randomly drawn from the ${input.giveawayTitle} and you've been selected to receive the ${input.prize}.
+You won! Your name was randomly drawn from the ${input.giveawayTitle} and you've been selected to receive ${prizeShort}.
 
 We'll be in touch within the next few business days to coordinate getting your prize to you. Watch for an email or call from the ${brand.name} team.
 
@@ -203,7 +207,7 @@ ${brand.tagline}`;
   <h1 style="font-size: 28px; font-weight: 600; color: #301D5D; margin: 0 0 24px 0; line-height: 1.2;">Congratulations &mdash; you won!</h1>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Hi ${esc(input.firstName)},</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Your name was randomly drawn from the <strong>${esc(input.giveawayTitle)}</strong>, and you've been selected to receive:</p>
-  <p style="font-size: 22px; font-weight: 600; color: #301D5D; padding: 20px; background: #f9fafb; border-left: 4px solid #fb923c; margin: 24px 0;">${esc(input.prize)}</p>
+  <p style="font-size: 22px; font-weight: 600; color: #301D5D; padding: 20px; background: #f9fafb; border-left: 4px solid #fb923c; margin: 24px 0;">${esc(prizeHtml)}</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">We'll be in touch within the next few business days to coordinate getting your prize to you. Watch for an email or call from the ${esc(brand.name)} team.</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Thanks for being part of the ${esc(brand.name)} community.</p>
   <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
