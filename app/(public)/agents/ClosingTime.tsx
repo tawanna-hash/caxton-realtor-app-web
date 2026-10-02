@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import ClosingTimeAssist from './ClosingTimeAssist';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -1930,6 +1931,21 @@ export default function ClosingTime({
                 <button type="button" onClick={exportAllDealsCalendar} disabled={!calendarEventsForActiveDeals(deals).length} className="inline-flex items-center gap-1 underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-45"><Download className="h-3.5 w-3.5" aria-hidden="true" />Active Deals (.ics)</button>
               </div>
             </div>
+            {activeDeal && (
+              <ClosingTimeAssist
+                deal={activeDeal}
+                onApplyChecklist={(steps) => {
+                  const base = (anchorKind: 'effective' | 'closing') => anchorKind === 'closing' ? activeDeal.closingDate : activeDeal.effectiveDate;
+                  const existing = new Set(activeDeal.tasks.map((t) => t.title));
+                  const added = steps.filter((s) => base(s.anchor) && !existing.has(s.title)).map((s) => ({
+                    id: getId('task'), title: s.title, dueDate: addDays(base(s.anchor), s.offsetDays),
+                    priority: 'normal' as const, status: 'todo' as const, complete: false,
+                  }));
+                  if (!added.length) return;
+                  applyActiveAction(`Applied closing checklist (${added.length} tasks)`, { tasks: [...activeDeal.tasks, ...added].slice(0, 200) });
+                }}
+              />
+            )}
             <div id="trec-forms" {...collapsible('trec-library')} className="min-w-0 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
