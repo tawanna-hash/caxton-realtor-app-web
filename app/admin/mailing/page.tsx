@@ -220,6 +220,10 @@ export default async function MailingHubPage() {
             Manage tags →
           </Link>
           {' · '}
+          <Link href="/admin/mailing/bulk-verify" className="font-semibold text-brand-700 hover:underline">
+            Bulk email verify →
+          </Link>
+          {' · '}
           <Link href="/admin/mailing/suppressions" className="font-semibold text-brand-700 hover:underline">
             View suppression list →
           </Link>
