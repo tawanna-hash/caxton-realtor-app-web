@@ -7,6 +7,16 @@ import { getEmailProvider } from '@/lib/server/email';
 import { renderGiveawayWinnerEmail, renderGiveawayAnnouncementEmail } from '@/lib/server/email/templates';
 import { logger } from '@/lib/server/logger';
 
+const SENDER_NAMES: Record<string, string> = {
+  austin: 'RealtyLine Austin',
+  san_antonio: 'Newsline San Antonio',
+  both: 'RealtyLine Austin / Newsline San Antonio',
+};
+function senderFor(publication: string): { email: string; name: string } | undefined {
+  const email = process.env.EMAIL_FROM_ADDRESS;
+  return email ? { email, name: SENDER_NAMES[publication] ?? SENDER_NAMES.both! } : undefined;
+}
+
 export const ADMIN_NOTICE_EMAIL = 'tawanna@myrealtyline.com';
 
 export interface WinnerRow {
@@ -121,6 +131,7 @@ export async function sendWinnerEmail(giveawayId: string, realtorId: string): Pr
   try {
     const t = renderGiveawayWinnerEmail({ firstName: r.first_name, giveawayTitle: g.title, prize: g.prize, publication: g.publication });
     const res = await getEmailProvider().send({
+      from: senderFor(g.publication),
       to: { email: r.email, name: r.first_name }, subject: t.subject, text: t.text, html: t.html,
       emailType: 'giveaway_winner', tags: ['giveaway_winner'],
     });
@@ -175,6 +186,7 @@ export async function announceToEntrants(giveawayId: string): Promise<{ sent: nu
     try {
       const t = renderGiveawayAnnouncementEmail({ firstName: e.first_name, giveawayTitle: g.title, prize: g.prize, publication: g.publication, winnerNames });
       const res = await getEmailProvider().send({
+        from: senderFor(g.publication),
         to: { email: e.email, name: e.first_name }, subject: t.subject, text: t.text, html: t.html,
         emailType: 'giveaway_announcement', tags: ['giveaway_announcement'],
       });

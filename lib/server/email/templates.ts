@@ -168,9 +168,9 @@ interface GiveawayWinnerEmailInput {
 }
 
 const PUBLICATION_BRANDS: Record<string, { name: string; tagline: string }> = {
-  austin: { name: 'RealtyLine', tagline: 'Putting A Face on Real Estate since 1995' },
+  austin: { name: 'RealtyLine Austin', tagline: 'Putting A Face on Real Estate since 1995' },
   san_antonio: { name: 'Newsline San Antonio', tagline: 'Founded 1982 - Relaunched 2025' },
-  both: { name: 'Caxton Publications', tagline: 'RealtyLine - Newsline San Antonio' },
+  both: { name: 'RealtyLine Austin / Newsline San Antonio', tagline: '' },
 };
 
 export function renderGiveawayWinnerEmail(input: GiveawayWinnerEmailInput): {
@@ -197,7 +197,7 @@ We'll be in touch within the next few business days to coordinate getting your p
 Thanks for being part of the ${brand.name} community.
 
 -
-Caxton Publications, Inc.
+${brand.name}
 ${brand.tagline}`;
 
   const html = `<!doctype html>
@@ -211,7 +211,7 @@ ${brand.tagline}`;
   <p style="font-size: 16px; line-height: 1.5; color: #333;">We'll be in touch within the next few business days to coordinate getting your prize to you. Watch for an email or call from the ${esc(brand.name)} team.</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Thanks for being part of the ${esc(brand.name)} community.</p>
   <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-    Caxton Publications, Inc.<br/>
+    ${esc(brand.name)}<br/>
     <span style="font-style: italic;">${esc(brand.tagline)}</span>
   </p>
 </body>
@@ -406,7 +406,7 @@ Winners have been notified by email. We have more giveaways coming, so keep an e
 Thank you for being part of the ${brand.name} community.
 
 -
-Caxton Publications, Inc.
+${brand.name}
 ${brand.tagline}`;
   const html = `<!doctype html>
 <html>
@@ -417,7 +417,7 @@ ${brand.tagline}`;
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Thank you for entering the <strong>${esc(input.giveawayTitle)}</strong>. The drawing is complete and the winners of the ${esc(input.prize)} have been selected:</p>
   <p style="font-size: 18px; font-weight: 600; color: #301D5D; padding: 16px 20px; background: #f9fafb; border-left: 4px solid #fb923c; margin: 24px 0;">${esc(names)}</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Winners have been notified by email. We have more giveaways coming, so keep an eye on your inbox and the ${esc(brand.name)} app.</p>
-  <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">Caxton Publications, Inc.<br/><span style="font-style: italic;">${esc(brand.tagline)}</span></p>
+  <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">${esc(brand.name)}<br/><span style="font-style: italic;">${esc(brand.tagline)}</span></p>
 </body>
 </html>`;
   return { subject, text, html };
