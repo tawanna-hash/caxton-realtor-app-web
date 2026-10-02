@@ -13,6 +13,8 @@ export interface EmailSendInput {
   text: string;
   html: string;
   replyTo?: string;
+  /** Optional visible CC recipients (supported by the Resend provider). */
+  cc?: string[];
   tags?: string[];
   emailType: string;
   /**

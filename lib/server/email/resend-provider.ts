@@ -56,6 +56,8 @@ export class ResendEmailProvider implements EmailProvider {
       (payload as Record<string, unknown>).open_tracking = false;
     }
 
+    if (input.cc && input.cc.length) payload.cc = input.cc;
+
     const replyTo = input.replyTo ?? process.env.EMAIL_REPLY_TO;
     if (replyTo) payload.reply_to = replyTo;
 
