@@ -32,7 +32,7 @@ function segmentLabel(id: string): string {
   return id
     .split('|')
     .map((part) => SEGMENTS.find((s) => s.segment === part)?.label ?? part)
-    .join(', ');
+    .join(", ");
 }
 
 type Pub = PubId;
@@ -131,6 +131,27 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
   const [editing, setEditing] = useState<Row | null>(null);
+  const [verifyOverrides, setVerifyOverrides] = useState<Record<string, string>>({});
+  const [verifying, setVerifying] = useState<Record<string, boolean>>({});
+
+  async function verifyRow(email: string) {
+    setVerifying((m) => ({ ...m, [email]: true }));
+    try {
+      const res = await fetch('/api/admin/email-verify/unified', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, force: true }),
+      });
+      const j = (await res.json()) as { ok?: boolean; row?: { status: string; sub_status: string | null } };
+      if (!res.ok || !j.row) throw new Error('Verification failed');
+      setVerifyOverrides((m) => ({ ...m, [email]: j.row!.status }));
+      showToast(`${email}: ${j.row.status}${j.row.sub_status ? ` - ${j.row.sub_status}` : ''}`);
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Verification failed");
+    }
+    setVerifying((m) => ({ ...m, [email]: false }));
+  }
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query), 300);
@@ -223,8 +244,9 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
     </div>
   );
 
-  const Th = ({ k, label, className }: { k: string; label: string; className?: string }) => (
+  const renderTh = (k: string, label: string, className?: string) => (
     <th
+      key={k}
       className={`text-left font-medium px-3 py-2 whitespace-nowrap cursor-pointer select-none hover:text-gray-900 ${className ?? ''}`}
       onClick={() => onSort(k)}
     >
@@ -371,11 +393,19 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
         )}
         {!loading && rows.map((r) => {
           const name = [r.first_name, r.last_name].filter(Boolean).join(' ') || '—';
+          const vs = verifyOverrides[r.email] ?? r.verification_status;
           const badgeStatus: EmailBadgeStatus =
-            r.verification_status === 'unverified' ? null : (r.verification_status as EmailBadgeStatus);
+            vs === 'unverified' ? null : (vs as EmailBadgeStatus);
           return (
             <div key={r.email} className="px-3 py-3 space-y-1.5">
-              <div className="font-mono text-[13px] text-gray-900 break-all">{r.email}</div>
+              <div className="font-mono text-[13px] text-gray-900 break-all">{r.email}<button
+                  type="button"
+                  onClick={() => verifyRow(r.email)}
+                  disabled={!!verifying[r.email]}
+                  className="ml-2 px-2 py-0.5 text-xs font-medium border border-brand-700 text-brand-700 hover:bg-brand-50 disabled:opacity-50 align-middle"
+                >
+                  {verifying[r.email] ? 'Verifying…' : 'Verify'}
+                </button></div>
               <div className="text-sm text-gray-800">{name}</div>
               <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
                 <dt className="text-gray-500 uppercase tracking-wider">Source</dt>
@@ -407,12 +437,12 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
-              <Th k="email" label="Email" />
-              <Th k="name" label="Name" />
-              <Th k="source" label="Source" />
-              <Th k="segment" label="Segment" />
-              <Th k="verification" label="Verification" />
-              {DETAIL_COLUMNS.map((c) => <Th key={c.key} k={c.key} label={c.label} />)}
+              {renderTh("email", "Email")}
+              {renderTh("name", "Name")}
+              {renderTh("source", "Source")}
+              {renderTh("segment", "Segment")}
+              {renderTh("verification", "Verification")}
+              {DETAIL_COLUMNS.map((c) => renderTh(c.key, c.label))}
               <th className="text-left font-medium px-3 py-2 sticky right-0 bg-gray-50">Actions</th>
             </tr>
           </thead>
@@ -433,11 +463,19 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
             )}
             {!loading && rows.map((r) => {
               const name = [r.first_name, r.last_name].filter(Boolean).join(' ') || '—';
+              const vs = verifyOverrides[r.email] ?? r.verification_status;
               const badgeStatus: EmailBadgeStatus =
-                r.verification_status === 'unverified' ? null : (r.verification_status as EmailBadgeStatus);
+                vs === 'unverified' ? null : (vs as EmailBadgeStatus);
               return (
                 <tr key={r.email} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 font-mono text-[13px] text-gray-900 whitespace-nowrap">{r.email}</td>
+                  <td className="px-3 py-2 font-mono text-[13px] text-gray-900 whitespace-nowrap">{r.email}<button
+                  type="button"
+                  onClick={() => verifyRow(r.email)}
+                  disabled={!!verifying[r.email]}
+                  className="ml-2 px-2 py-0.5 text-xs font-medium border border-brand-700 text-brand-700 hover:bg-brand-50 disabled:opacity-50 align-middle"
+                >
+                  {verifying[r.email] ? 'Verifying…' : 'Verify'}
+                </button></td>
                   <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{name}</td>
                   <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{prettySource(r.source_table)}</td>
                   <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{segmentLabel(r.source_segment)}</td>

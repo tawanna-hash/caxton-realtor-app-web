@@ -376,6 +376,27 @@ function computeRisk(s: EmailVerifySignals): number {
   return Math.min(100, Math.max(0, r));
 }
 
+type MvOutcome = { kind: 'ok' | 'invalid' | 'catch_all' | 'unknown'; detail: string };
+
+async function millionVerifierCheck(email: string, key: string): Promise<MvOutcome> {
+  try {
+    const url = `https://api.millionverifier.com/api/v3/?api=${encodeURIComponent(key)}&email=${encodeURIComponent(email)}&timeout=20`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(30000), cache: 'no-store' });
+    if (!res.ok) return { kind: 'unknown', detail: `MillionVerifier request failed (${res.status}).` };
+    const j = (await res.json()) as { result?: string; subresult?: string; error?: string };
+    if (j.error) return { kind: 'unknown', detail: `MillionVerifier: ${j.error}` };
+    switch (j.result) {
+      case 'ok': return { kind: 'ok', detail: 'Mailbox confirmed.' };
+      case 'catch_all': return { kind: 'catch_all', detail: 'Catch-all domain.' };
+      case 'invalid': return { kind: 'invalid', detail: `Mailbox does not exist${j.subresult ? ` (${j.subresult.replace(/_/g, ' ')})` : ''}.` };
+      case 'disposable': return { kind: 'invalid', detail: 'Disposable / throwaway address.' };
+      default: return { kind: 'unknown', detail: 'The mail server did not give a definite answer. Try again later.' };
+    }
+  } catch (err) {
+    return { kind: 'unknown', detail: `MillionVerifier unreachable: ${err instanceof Error ? err.message : 'error'}` };
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────
 // Main entry point
 // ─────────────────────────────────────────────────────────────────
@@ -469,6 +490,27 @@ export async function verifyEmail(
   }
   signals.hasMx = true;
   mxRecords.sort((a, b) => a.priority - b.priority);
+
+  // ---- 3b. MillionVerifier (mailbox-level check) ----
+  // Direct SMTP probes from cloud IPs cannot confirm mailboxes at Google,
+  // Microsoft, or most hosts. When MILLIONVERIFIER_API_KEY is set, the
+  // service does the mailbox check; the free checks above already filtered
+  // out bad syntax, disposable domains, and domains without mail servers.
+  const mvKey = process.env.MILLIONVERIFIER_API_KEY;
+  if (mvKey) {
+    const mv = await millionVerifierCheck(normalized, mvKey);
+    const mxHost = mxRecords[0]?.exchange;
+    if (mv.kind === 'ok') {
+      return { verdict: 'Valid', detail: 'Mailbox confirmed by MillionVerifier.', risk: 5, mx: mxHost, signals: { ...signals, mailboxExists: true }, suggestion, normalized };
+    }
+    if (mv.kind === 'invalid') {
+      return { verdict: 'Invalid', detail: mv.detail, risk: 100, mx: mxHost, signals: { ...signals, mailboxExists: false }, suggestion, normalized };
+    }
+    if (mv.kind === 'catch_all') {
+      return { verdict: 'Pending', detail: 'Domain accepts all mail (catch-all); the mailbox cannot be confirmed.', risk: 50, mx: mxHost, signals: { ...signals, catchAll: true }, suggestion, normalized };
+    }
+    return { verdict: 'Pending', detail: mv.detail, risk: 60, mx: mxHost, signals, suggestion, normalized };
+  }
 
   // ---- 4. Free-provider short-circuit ----
   // Gmail/Outlook/Yahoo etc. reject SMTP probes from random IPs to
