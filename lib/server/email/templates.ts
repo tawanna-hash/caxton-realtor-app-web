@@ -442,7 +442,7 @@ This is a correction to the winner email you received earlier. It listed the pri
 
 The correct details: you are one of the winners of the ${input.giveawayTitle}, and you will receive ${prizeShort}.
 
-To arrange delivery, please reply to this email with the best mobile number to reach you. We will use it only to contact you about your prize.
+Please reply to this email with a valid mobile number so we can make contact.
 
 We apologize for the confusion.
 
@@ -457,7 +457,7 @@ ${brand.tagline}`.trim();
   <p style="font-size: 16px; line-height: 1.5; color: #333;">This is a correction to the winner email you received earlier. It listed the prize incorrectly and came from the wrong sender name.</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">The correct details: you are one of the winners of the <strong>${esc(input.giveawayTitle)}</strong>, and you will receive:</p>
   <p style="font-size: 22px; font-weight: 600; color: #301D5D; padding: 20px; background: #f9fafb; border-left: 4px solid #fb923c; margin: 24px 0;">${esc(prizeShort.charAt(0).toUpperCase() + prizeShort.slice(1))}</p>
-  <p style="font-size: 16px; line-height: 1.5; color: #333;"><strong>To arrange delivery, please reply to this email with the best mobile number to reach you.</strong> We will use it only to contact you about your prize.</p>
+  <p style="font-size: 16px; line-height: 1.5; color: #333;"><strong>Please reply to this email with a valid mobile number so we can make contact.</strong></p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">We apologize for the confusion.</p>
   <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">${esc(brand.name)}</p>
 </body>
