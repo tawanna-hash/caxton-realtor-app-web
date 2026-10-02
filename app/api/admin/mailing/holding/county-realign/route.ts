@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 const ABOR = new Set(['Bastrop','Bell','Blanco','Burnet','Caldwell','Comal','Fayette','Gillespie','Gonzales','Guadalupe','Hays','Lampasas','Lee','Llano','Milam','San Saba','Travis','Williamson']);
-const SABOR = new Set(['Bexar','Comal','Guadalupe','Kendall','Bandera','Medina','Wilson','Atascosa']);
+const SABOR = new Set(['Atascosa','Bee','Bexar','Frio','Karnes','Kendall','La Salle','Maverick','McMullen','Medina','Uvalde','Val Verde','Wilson']);
 const HOUSTON = new Set(['Angelina','Austin','Brazoria','Brazos','Burleson','Calhoun','Chambers','Cherokee','Colorado','Fort Bend','Freestone','Galveston','Grimes','Hardin','Harris','Houston','Jackson','Jasper','Jefferson','Leon','Liberty','Limestone','Madison','Matagorda','Montgomery','Nacogdoches','Newton','Orange','Polk','Robertson','Sabine','San Augustine','San Jacinto','Trinity','Tyler','Walker','Waller','Washington','Wharton','Victoria']);
 const DFW = new Set(['Collin','Dallas','Denton','Ellis','Erath','Grayson','Hood','Hopkins','Hunt','Johnson','Kaufman','McLennan','Navarro','Palo Pinto','Parker','Rockwall','Stephens','Tarrant','Van Zandt','Wise']);
 const FT_WORTH = new Set(['Tarrant', 'Parker', 'Johnson']);
@@ -33,7 +33,7 @@ const schema = z.object({
   zipCounty: z.record(z.string(), z.string()),
 });
 
-type Action = { id: string; kind: 'move' | 'tag'; segment?: string; fromTag?: string };
+type Action = { id: string; kind: 'move' | 'tag' | 'untag'; segment?: string };
 
 function targetSegment(county: string, home: 'abor' | 'sabor'): string | null {
   if (HOUSTON.has(county)) return 'houston-mailing';
@@ -85,15 +85,19 @@ export const POST = withAdminTracking(async (req: Request) => {
     const county = zipCounty[r.zip];
     if (!county) { bump(`${label}: untouched (unknown ZIP)`); continue; }
     const homeSet = home === 'abor' ? ABOR : SABOR;
-    if (homeSet.has(county)) { bump(`${label}: stays`); continue; }
+    const hasOutside = Array.isArray(r.tags) && (r.tags as unknown[]).includes(OUTSIDE_TAG);
+    if (homeSet.has(county)) {
+      if (hasOutside) { actions.push({ id: r.id, kind: 'untag' }); bump(`${label}: stays, tag removed`); }
+      else bump(`${label}: stays`);
+      continue;
+    }
     const seg = targetSegment(county, home);
     if (seg) {
       if (mailingEmails.has(r.email)) { bump(`${label}: stays (email already in a mailing list)`); continue; }
       actions.push({ id: r.id, kind: 'move', segment: seg });
       bump(`${label}: move to ${seg}`);
     } else {
-      const has = Array.isArray(r.tags) && (r.tags as unknown[]).includes(OUTSIDE_TAG);
-      if (has) { bump(`${label}: already tagged`); continue; }
+      if (hasOutside) { bump(`${label}: already tagged`); continue; }
       actions.push({ id: r.id, kind: 'tag' });
       bump(`${label}: tag ${OUTSIDE_TAG}`);
     }
@@ -118,6 +122,7 @@ export const POST = withAdminTracking(async (req: Request) => {
              segment = CASE WHEN t.kind = 'move' THEN t.seg ELSE mc.segment END,
              tags = CASE
                       WHEN t.kind = 'tag' AND NOT jsonb_exists(mc.tags, ${OUTSIDE_TAG}) THEN mc.tags || to_jsonb(${OUTSIDE_TAG}::text)
+                      WHEN t.kind IN ('untag', 'move') THEN mc.tags - ${OUTSIDE_TAG}::text
                       ELSE mc.tags END,
              updated_at = NOW()
         FROM unnest(${ids}::uuid[], ${kinds}::text[], ${segs}::text[]) AS t(id, kind, seg)

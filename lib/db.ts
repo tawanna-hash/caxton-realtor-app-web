@@ -1301,79 +1301,8 @@ async function _runEnsureSchema(): Promise<void> {
   // entries (e.g. "sign up before July 27 for a second ticket").
   await sql`ALTER TABLE giveaway_rules ADD COLUMN IF NOT EXISTS deadline_at TIMESTAMPTZ`;
 
-  // ---- Seed signup rules for the active giveaway --------------------------
-  // One-time idempotent seed: two signup rules on the giveaway
-  // 2c3b73cf-4889-4a63-b14c-093d1aa0b966 so newly-verified accounts are
-  // auto-enrolled. Rule 1 = base entry (1 ticket). Rule 2 = early-bird bonus
-  // (1 extra ticket, deadline July 27 11:59 PM CDT = 2026-07-28T04:59:00Z).
-  // Re-running is a no-op: each INSERT is guarded by NOT EXISTS on label.
-  await sql`
-    INSERT INTO giveaway_rules (giveaway_id, action_type, label, target_url, tickets, sort_order, required, deadline_at)
-    SELECT
-      '2c3b73cf-4889-4a63-b14c-093d1aa0b966',
-      'signup',
-      'Sign up for a free Realty News Now account',
-      NULL,
-      1,
-      0,
-      true,
-      NULL
-    WHERE NOT EXISTS (
-      SELECT 1 FROM giveaway_rules
-      WHERE giveaway_id = '2c3b73cf-4889-4a63-b14c-093d1aa0b966'
-        AND action_type = 'signup'
-        AND label = 'Sign up for a free Realty News Now account'
-    )
-  `;
-  await sql`
-    INSERT INTO giveaway_rules (giveaway_id, action_type, label, target_url, tickets, sort_order, required, deadline_at)
-    SELECT
-      '2c3b73cf-4889-4a63-b14c-093d1aa0b966',
-      'signup',
-      'Early bird bonus — sign up by 11:59 PM on July 27 for a second entry',
-      NULL,
-      1,
-      1,
-      false,
-      '2026-07-28T04:59:00Z'
-    WHERE NOT EXISTS (
-      SELECT 1 FROM giveaway_rules
-      WHERE giveaway_id = '2c3b73cf-4889-4a63-b14c-093d1aa0b966'
-        AND action_type = 'signup'
-        AND deadline_at IS NOT NULL
-    )
-  `;
-  // Idempotent label sync — keeps the early-bird rule text precise even
-  // if the row was seeded with an older label in a prior deploy.
-  await sql`
-    UPDATE giveaway_rules
-    SET label = 'Early bird bonus — sign up by 11:59 PM on July 27 for a second entry',
-        deadline_at = '2026-07-28T04:59:00Z',
-        tickets = 1,
-        sort_order = 1,
-        required = false
-    WHERE giveaway_id = '2c3b73cf-4889-4a63-b14c-093d1aa0b966'
-      AND action_type = 'signup'
-      AND deadline_at IS NOT NULL
-  `;
-
-  // ── One-time backfill: enroll all existing subscribers into signup-rule
-  //    giveaways.  Idempotent via ON CONFLICT — a no-op after the first run.
-  //    Matches autoEnrollSignupGiveaways logic (publication scope + deadline)
-  //    but without the active/date filters so draft giveaways are covered too.
-  try {
-    await sql`
-      INSERT INTO giveaway_entries (giveaway_id, realtor_id, rule_id)
-      SELECT gr.giveaway_id, r.id, gr.id
-      FROM giveaway_rules gr
-      JOIN giveaways g ON g.id = gr.giveaway_id
-      CROSS JOIN realtors r
-      WHERE gr.action_type = 'signup'
-        AND (gr.deadline_at IS NULL OR gr.deadline_at >= NOW())
-        AND (g.publication = r.market OR g.publication = 'both' OR r.market = 'both')
-      ON CONFLICT (giveaway_id, realtor_id, rule_id) DO NOTHING
-    `;
-  } catch (err) {
-    console.warn('[ensureSchema] giveaway signup backfill failed:', err);
-  }
+  // NOTE: the one-time signup-rule seed and the all-subscribers entry backfill
+  // that used to run here were removed. They re-ran on every cold start, which
+  // re-created rules and entries an admin had removed. New signups are still
+  // enrolled by autoEnrollSignupGiveaways().
 }
