@@ -1233,4 +1233,5 @@ input[type='date']::-webkit-calendar-picker-indicator {
 [data-desk-view='forms'] [data-section-key='trec-library'],
 [data-desk-view='tools'] [data-section-key='tools'],
 [data-desk-view='referral'] [data-section-key='referral'],
+[data-desk-view='integrations'] [data-section-key='integrations'],
 [data-desk-view='audit'] [data-section-key='audit'] { display: revert; }

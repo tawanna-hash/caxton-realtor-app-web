@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
+import IntegrationsPanel from './IntegrationsPanel';
 import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './AgentToolsPanels';
 
 const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
@@ -17,6 +18,7 @@ const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'forms', label: 'TREC Forms Library', keys: ['trec-library'] },
   { id: 'tools', label: 'Calculators', keys: [] },
   { id: 'referral', label: 'Referral Network', keys: [] },
+  { id: 'integrations', label: 'Integrations', keys: [] },
 ];
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS];
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -1956,6 +1958,7 @@ export default function ClosingTime({
               </nav>
             )}
             <div data-section-key="tools" className="min-w-0"><WorkFasterPanel /></div>
+            <div data-section-key="integrations" className="min-w-0"><IntegrationsPanel /></div>
             <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
           <section className="mt-5 grid gap-5 lg:grid-cols-2" aria-label="Alerts and calendar">
