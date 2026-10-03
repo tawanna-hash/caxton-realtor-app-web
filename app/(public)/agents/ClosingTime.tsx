@@ -951,6 +951,14 @@ export default function ClosingTime({
   useEffect(() => {
     DESK_VIEWS.find((v) => v.id === effectiveView)?.keys.forEach((key) => reveal(key));
   }, [effectiveView, reveal]);
+  useEffect(() => {
+    if (!ready) return;
+    try {
+      window.sessionStorage.setItem('closing-time-desk-position', JSON.stringify({ dealId: activeDealId, view: deskView, page: workspacePage }));
+    } catch {
+      /* storage unavailable */
+    }
+  }, [ready, activeDealId, deskView, workspacePage]);
   const versionRef = useRef<number | null>(initialWorkspaceVersion);
   const syncTimerRef = useRef<number | null>(null);
   const saveInFlightRef = useRef(false);
@@ -1096,7 +1104,18 @@ export default function ClosingTime({
       versionRef.current = initialWorkspaceVersion;
       setDeals(hydratedWorkspace.deals);
       setNotificationPreferences(hydratedWorkspace.notificationPreferences);
-      setActiveDealId(hydratedWorkspace.deals[0]?.id ?? null);
+      let restoredDealId: string | null = null;
+      try {
+        const saved = JSON.parse(window.sessionStorage.getItem('closing-time-desk-position') ?? 'null') as { dealId?: string | null; view?: string; page?: number } | null;
+        if (saved) {
+          if (saved.dealId && hydratedWorkspace.deals.some((d) => d.id === saved.dealId)) restoredDealId = saved.dealId;
+          if (typeof saved.view === 'string' && DESK_VIEWS.some((v) => v.id === saved.view)) setDeskView(saved.view);
+          if (saved.page === 1 || saved.page === 2) setWorkspacePage(saved.page);
+        }
+      } catch {
+        restoredDealId = null;
+      }
+      setActiveDealId(restoredDealId ?? hydratedWorkspace.deals[0]?.id ?? null);
       setReady(true);
       setSyncState(cloudWorkspace ? 'ready' : 'loading');
     });
