@@ -15,7 +15,7 @@ const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'overview', label: 'Dashboard Overview', keys: [] },
   { id: 'alerts', label: 'Alerts and Calendar', keys: ['alerts', 'calendar'] },
   { id: 'forms', label: 'TREC Forms Library', keys: ['trec-library'] },
-  { id: 'tools', label: 'Work Faster', keys: [] },
+  { id: 'tools', label: 'Calculators', keys: [] },
   { id: 'referral', label: 'Referral Network', keys: [] },
 ];
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS];

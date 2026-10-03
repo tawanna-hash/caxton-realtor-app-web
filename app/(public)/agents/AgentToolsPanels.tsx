@@ -96,7 +96,7 @@ export function WorkFasterPanel() {
         <div className="border border-slate-200 bg-white p-5 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Work faster</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calculators</p>
               <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Client-Ready Tools, One Click Away</h2>
             </div>
             <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
