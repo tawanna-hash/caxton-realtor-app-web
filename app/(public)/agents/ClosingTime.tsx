@@ -7,7 +7,7 @@ import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './
 
 const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'transaction', label: 'Deal and Forms', keys: ['current', 'trec-forms'] },
-  { id: 'coordinator', label: 'Coordinator', keys: ['assist'] },
+  { id: 'coordinator', label: 'Deal Settings', keys: ['assist'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
   { id: 'readiness', label: 'Readiness Check', keys: ['readiness'] },
   { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
