@@ -4,9 +4,10 @@ import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
 
 const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
-  { id: 'transaction', label: 'Deal and Forms', keys: ['current', 'trec-forms', 'readiness'] },
+  { id: 'transaction', label: 'Deal and Forms', keys: ['current', 'trec-forms'] },
   { id: 'coordinator', label: 'Coordinator', keys: ['assist'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
+  { id: 'readiness', label: 'Readiness Check', keys: ['readiness'] },
   { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
 ];
 const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
@@ -349,14 +350,14 @@ function ReadinessChecklist({
 
   const { section: collapsible, toggleProps } = useCollapsibles();
   return (
-    <div {...collapsible('readiness')} className="border border-slate-200 bg-white p-5 sm:p-6">
+    <div {...collapsible('readiness', { mobileOpen: true })} className="border border-slate-200 bg-white p-5 sm:p-6">
       <div className="flex items-center gap-3">
         <FileText className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Readiness check</p>
           <Heading className="mt-1 text-xl font-semibold text-slate-950">Transaction readiness checklist</Heading>
         </div>
-        <CollapseToggle {...toggleProps('readiness', 'readiness checklist')} className="ml-auto" />
+        <CollapseToggle {...toggleProps('readiness', 'readiness checklist', { mobileOpen: true })} className="ml-auto" />
       </div>
 
       <div className="mt-5 space-y-5">

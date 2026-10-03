@@ -1225,7 +1225,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 [data-desk-view] [data-section-key] { display: none; }
 [data-desk-view='transaction'] [data-section-key='current'],
 [data-desk-view='transaction'] [data-section-key='trec-forms'],
-[data-desk-view='transaction'] [data-section-key='readiness'],
+[data-desk-view='readiness'] [data-section-key='readiness'],
 [data-desk-view='coordinator'] [data-section-key='assist'],
 [data-desk-view='tasks'] [data-section-key='tasks'],
 [data-desk-view='alerts'] [data-section-key='alerts'],
