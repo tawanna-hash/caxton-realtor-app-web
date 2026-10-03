@@ -65,8 +65,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
     try {
       const res = await fetch('/api/closing-time/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
       const body = await res.json();
-      if (!res.ok) setError(body.error ?? 'Something went wrong.');
       await load();
+      if (!res.ok) setError(body.error ?? 'Something went wrong.');
       return res.ok ? body : null;
     } finally { setBusy(false); }
   };

@@ -40,6 +40,12 @@ export async function connectedState(realtorId: string) {
   };
 }
 
+function upstreamMessage(data: unknown): string {
+  const d = data as { error?: { message?: string } | string; message?: string } | string;
+  const m = typeof d === 'string' ? d : typeof d?.error === 'string' ? d.error : d?.error?.message ?? d?.message ?? '';
+  return String(m).slice(0, 200) || 'no details';
+}
+
 const nextDay = (d: string) => { const t = new Date(`${d}T00:00:00Z`); t.setUTCDate(t.getUTCDate() + 1); return t.toISOString().slice(0, 10); };
 
 export async function syncCalendar(realtorId: string, dealId: string): Promise<{ added: number; updated: number; unchanged: number }> {
@@ -62,7 +68,7 @@ export async function syncCalendar(realtorId: string, dealId: string): Promise<{
     const res = prior
       ? await proxyCall(realtorId, acct.id, `${base}/${encodeURIComponent(prior.event_id)}`, { method: 'PATCH', json: payload })
       : await proxyCall(realtorId, acct.id, base, { method: 'POST', json: payload });
-    if (!res.ok) throw new Error(`Your calendar rejected an event (${res.status}). Reconnect it in Integrations and try again.`);
+    if (!res.ok) throw new Error(`Your calendar rejected an event (${res.status}): ${upstreamMessage(res.data)}`);
     const id = (res.data as { id?: string })?.id ?? prior?.event_id;
     if (!id) throw new Error('Calendar did not return an event id.');
     await query(`INSERT INTO closing_time_calendar_events (realtor_id, deal_id, item_id, provider, event_id, event_date) VALUES ($1,$2,$3,$4,$5,$6)
