@@ -9,7 +9,8 @@ type Risk = { id: string; severity: 'high' | 'medium'; title: string; detail: st
 type Step = { title: string; offsetDays: number; anchor: 'effective' | 'closing' };
 type Upload = { id: string; docId: string; filename: string; sizeBytes: number; createdAt: string; reviewed: boolean };
 type Sig = { id: string; toName: string; toEmail: string; document: string; status: string; remindersSent: number; createdAt: string };
-type Data = { signatures: Sig[]; autoSignature: boolean; uploads: Upload[]; autoIntro: boolean; parties: Party[]; followUps: FollowUp[]; risks: Risk[]; portalToken: string | null; checklist: Step[]; customChecklist: boolean };
+type Connected = { calendar: string | null; mail: string | null; storage: { slug: string; name: string }[]; sendFromConnected: boolean };
+type Data = { connected?: Connected; signatures: Sig[]; autoSignature: boolean; uploads: Upload[]; autoIntro: boolean; parties: Party[]; followUps: FollowUp[]; risks: Risk[]; portalToken: string | null; checklist: Step[]; customChecklist: boolean };
 
 const ROLES: Record<string, string> = { client: 'Client', lender: 'Lender', title: 'Title company', coop_agent: 'Co-op agent', other: 'Other' };
 const btn = 'inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:opacity-45';
@@ -36,6 +37,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const [copied, setCopied] = useState(false);
   const [extDays, setExtDays] = useState(3);
   const [newClosing, setNewClosing] = useState('');
+  const [notice, setNotice] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -67,6 +69,17 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
       await load();
       return res.ok ? body : null;
     } finally { setBusy(false); }
+  };
+
+  const syncCal = async () => {
+    setNotice('');
+    const r = await post({ action: 'calendar_sync', dealId: deal.id });
+    if (r?.result) setNotice(`Calendar updated: ${r.result.added} added, ${r.result.updated} changed, ${r.result.unchanged} already there.`);
+  };
+  const saveFile = async (id: string, storage: string) => {
+    setNotice('');
+    const r = await post({ action: 'save_upload', dealId: deal.id, id, storage });
+    if (r?.message) setNotice(r.message);
   };
 
   const portalUrl = data?.portalToken ? `${window.location.origin}/deal-portal/${data.portalToken}` : '';
@@ -195,6 +208,29 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             {sent.length > 0 && <p className="mt-3 text-xs text-slate-500">Recently sent: {sent.map((f) => f.subject).join(' · ')}</p>}
           </section>
 
+          <section aria-label="Connected tools" className="lg:col-span-2">
+            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Connected Tools</h4>
+            {!data.connected || (!data.connected.calendar && !data.connected.mail && data.connected.storage.length === 0) ? (
+              <p className="mt-2 text-sm text-slate-500">Connect your calendar, email or document storage on the Integrations page to use them here.</p>
+            ) : (
+              <div className="mt-2 space-y-2 text-sm">
+                {data.connected.calendar && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 border border-slate-200 px-3 py-2">
+                    <span>Put this deal&apos;s deadlines on your {data.connected.calendar}. Changed dates update the same events.</span>
+                    <button type="button" disabled={busy} className={btnPrimary} onClick={() => void syncCal()}>Add To Calendar</button>
+                  </div>
+                )}
+                {data.connected.mail && (
+                  <label className="flex items-start gap-2 border border-slate-200 px-3 py-2">
+                    <input type="checkbox" className="mt-1" checked={data.connected.sendFromConnected} disabled={busy} onChange={(e) => void post({ action: 'send_from_connected', on: e.target.checked })} />
+                    <span>Send approved follow-ups from my own {data.connected.mail} address. If it fails, the message goes out through Realty News Now with you copied.</span>
+                  </label>
+                )}
+                {notice && <p role="status" className="font-semibold text-[#301D5D]">{notice}</p>}
+              </div>
+            )}
+          </section>
+
           <section aria-label="Client uploads" className="lg:col-span-2">
             <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Client Uploads</h4>
             {data.uploads.length === 0 ? <p className="mt-2 text-sm text-slate-500">Files your client uploads through the progress link appear here. You get an email each time.</p> : (
@@ -206,6 +242,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                       <span className="min-w-0 truncate"><span className="font-semibold text-slate-900">{doc?.label ?? 'Document'}</span> · {u.filename} · {Math.max(1, Math.round(u.sizeBytes / 1024))} KB{u.reviewed ? '' : ' · new'}</span>
                       <span className="flex gap-2">
                         <a className={btn} href={`/api/closing-time/assist/upload/${u.id}`}>Download</a>
+                        {data.connected?.storage.map((st) => <button key={st.slug} type="button" disabled={busy} className={btn} onClick={() => void saveFile(u.id, st.slug)}>Save to {st.name}</button>)}
                         {!u.reviewed && <button type="button" disabled={busy} className={btnPrimary} onClick={() => { onMarkReceived(u.docId, u.filename); void post({ action: 'upload_reviewed', id: u.id }); }}>Mark Received</button>}
                       </span>
                     </li>

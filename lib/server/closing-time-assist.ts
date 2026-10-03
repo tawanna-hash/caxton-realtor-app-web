@@ -254,6 +254,8 @@ export async function approveFollowUp(realtorId: string, id: string): Promise<{ 
     await query(`UPDATE closing_time_followups SET status='draft', sent_at=NULL WHERE id=$1`, [id]);
     return { ok: false, error: 'Add a recipient email first' };
   }
+  const own = await import('./closing-time-connected').then((m) => m.sendFromAgentMailbox(realtorId, { to: f.to_email, subject: f.subject, text: f.body })).catch(() => null);
+  if (own?.ok) return { ok: true };
   const sent = await sendEmail({ to: f.to_email, cc: agent.email || undefined, replyTo: agent.email || undefined, subject: f.subject, html: htmlBody(f.body) });
   if (!sent.ok) {
     await query(`UPDATE closing_time_followups SET status='draft', sent_at=NULL WHERE id=$1`, [id]);

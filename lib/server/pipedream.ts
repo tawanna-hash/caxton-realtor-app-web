@@ -58,3 +58,31 @@ export async function disconnectAccount(realtorId: string, accountId: string): P
   const res = await call(`/accounts/${encodeURIComponent(accountId)}`, { method: 'DELETE' });
   if (!res.ok && res.status !== 404) throw new Error(`Could not disconnect (${res.status})`);
 }
+
+export async function accountFor(realtorId: string, slugs: string[]): Promise<ConnectedAccount | null> {
+  if (!pipedreamConfigured()) return null;
+  try {
+    const all = await listAccounts(realtorId);
+    for (const slug of slugs) {
+      const hit = all.find((a) => a.appSlug === slug && a.healthy);
+      if (hit) return hit;
+    }
+  } catch { /* treated as not connected */ }
+  return null;
+}
+
+/** Calls a provider API with this agent's own connected account. */
+export async function proxyCall(realtorId: string, accountId: string, url: string, init: { method?: string; json?: unknown; body?: Buffer; headers?: Record<string, string> } = {}): Promise<{ ok: boolean; status: number; data: unknown }> {
+  const token = await accessToken();
+  const encoded = Buffer.from(url).toString('base64url');
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}`, 'x-pd-environment': environment() };
+  for (const [k, v] of Object.entries(init.headers ?? {})) headers[`x-pd-proxy-${k}`] = v;
+  let body: BodyInit | undefined;
+  if (init.json !== undefined) { headers['Content-Type'] = 'application/json'; body = JSON.stringify(init.json); }
+  else if (init.body) { headers['Content-Type'] = 'application/octet-stream'; body = new Uint8Array(init.body); }
+  const res = await fetch(`${API}/connect/${process.env.PIPEDREAM_PROJECT_ID}/proxy/${encoded}?external_user_id=${encodeURIComponent(externalUserId(realtorId))}&account_id=${encodeURIComponent(accountId)}`, { method: init.method ?? 'POST', headers, body });
+  const text = await res.text();
+  let data: unknown = text;
+  try { data = JSON.parse(text); } catch { /* keep text */ }
+  return { ok: res.ok, status: res.status, data };
+}

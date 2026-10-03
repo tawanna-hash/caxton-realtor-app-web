@@ -7,6 +7,7 @@ import {
   FOLLOWUP_KINDS, PARTY_ROLES, addParty, approveFollowUp, dismissFollowUp, draftFollowUp, editFollowUp,
   getOrCreatePortalToken, listAssist, removeParty, removePortal, requireDeal, saveChecklist, saveExtensionDraft, markUploadReviewed, setAutoIntro, setAutoSignature, addSignatureRequest, closeSignature,
 } from '@/lib/server/closing-time-assist';
+import { connectedState, saveUploadToStorage, setSendFromConnected, syncCalendar } from '@/lib/server/closing-time-connected';
 import { query } from '@/lib/server/db/neon';
 
 export const runtime = 'nodejs';
@@ -28,6 +29,9 @@ const action = z.discriminatedUnion('action', [
   z.object({ action: z.literal('auto_signature'), on: z.boolean() }),
   z.object({ action: z.literal('track_signature'), dealId, partyId: z.string().uuid(), document: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal('signature_signed'), id: z.string().uuid() }),
+  z.object({ action: z.literal('calendar_sync'), dealId }),
+  z.object({ action: z.literal('send_from_connected'), on: z.boolean() }),
+  z.object({ action: z.literal('save_upload'), dealId, id: z.string().uuid(), storage: z.enum(['google_drive', 'dropbox', 'microsoft_onedrive']) }),
   z.object({ action: z.literal('save_checklist'), steps: z.array(step).min(1).max(60) }),
 ]);
 
@@ -39,7 +43,8 @@ export const GET = withErrorHandling(async (req: Request): Promise<Response> => 
   const id = dealId.parse(new URL(req.url).searchParams.get('dealId'));
   const deal = await requireDeal(user.realtorId, id);
   const data = await listAssist(user.realtorId, id);
-  return priv({ ...data, risks: dealRisks(deal, chicagoToday()) });
+  const connected = await connectedState(user.realtorId).catch(() => ({ calendar: null, mail: null, storage: [], sendFromConnected: false }));
+  return priv({ ...data, connected, risks: dealRisks(deal, chicagoToday()) });
 });
 
 export const POST = withErrorHandling(async (req: Request): Promise<Response> => {
@@ -47,6 +52,15 @@ export const POST = withErrorHandling(async (req: Request): Promise<Response> =>
   const input = action.parse(await req.json());
   const owns = async (id: string) => { await requireDeal(user.realtorId, id); };
   switch (input.action) {
+    case 'calendar_sync': {
+      try { return priv({ ok: true, result: await syncCalendar(user.realtorId, input.dealId) }); }
+      catch (e) { return priv({ error: e instanceof Error ? e.message : 'Calendar sync failed.' }, 400); }
+    }
+    case 'send_from_connected': await setSendFromConnected(user.realtorId, input.on); return priv({ ok: true });
+    case 'save_upload': {
+      try { return priv({ ok: true, message: await saveUploadToStorage(user.realtorId, input.dealId, input.id, input.storage) }); }
+      catch (e) { return priv({ error: e instanceof Error ? e.message : 'Could not save the file.' }, 400); }
+    }
     case 'add_party': await owns(input.dealId); await addParty(user.realtorId, input.dealId, input); return priv({ ok: true });
     case 'remove_party': await removeParty(user.realtorId, input.partyId); return priv({ ok: true });
     case 'draft': await owns(input.dealId); return priv({ ok: true, created: await draftFollowUp(user.realtorId, input.dealId, input) });
