@@ -2,14 +2,13 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireUser } from '@/lib/server/auth/user';
 import { withErrorHandling, ApiError } from '@/lib/server/error';
-import { createConnectLink, disconnectAccount, listAccounts, composioConfigured } from '@/lib/server/composio';
+import { createConnectLink, disconnectAccount, listAccounts, composioConfigured, appInfo, availableApps } from '@/lib/server/composio';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const SLUGS = ['google_calendar', 'outlook', 'gmail', 'google_drive', 'dropbox', 'microsoft_onedrive', 'slack', 'dotloop'] as const;
 const body = z.discriminatedUnion('action', [
-  z.object({ action: z.literal('connect'), app: z.enum(SLUGS) }),
+  z.object({ action: z.literal('connect'), app: z.string().regex(/^[a-z0-9_]{2,40}$/).refine((v) => appInfo(v) !== null, 'Unknown integration') }),
   z.object({ action: z.literal('disconnect'), accountId: z.string().regex(/^ca_[a-zA-Z0-9_-]+$/) }),
 ]);
 
@@ -17,7 +16,8 @@ export const GET = withErrorHandling(async () => {
   const user = await requireUser();
   if (!composioConfigured()) return NextResponse.json({ configured: false, accounts: [] });
   try {
-    return NextResponse.json({ configured: true, accounts: await listAccounts(user.realtorId) }, { headers: { 'Cache-Control': 'private, no-store' } });
+    const [accounts, catalog] = await Promise.all([listAccounts(user.realtorId), availableApps().catch(() => [])]);
+    return NextResponse.json({ configured: true, accounts, catalog }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (err) {
     return NextResponse.json({ configured: true, accounts: [], error: err instanceof Error ? err.message : 'Unavailable' });
   }

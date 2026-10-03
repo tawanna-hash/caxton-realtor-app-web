@@ -1,37 +1,51 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 type Account = { id: string; appSlug: string; appName: string; healthy: boolean };
-type Catalog = { slug: string; name: string; group: string; description: string };
+type Catalog = { slug: string; name: string; group: string; logo?: string };
 
-const CATALOG: Catalog[] = [
-  { slug: 'google_calendar', name: 'Google Calendar', group: 'Calendar', description: 'Put closing deadlines on your own calendar.' },
-  { slug: 'gmail', name: 'Gmail', group: 'Email', description: 'Send deal follow-ups from your own address.' },
-  { slug: 'outlook', name: 'Outlook', group: 'Calendar and Email', description: 'Put deadlines on your Outlook calendar and send follow-ups from your Outlook address.' },
-  { slug: 'google_drive', name: 'Google Drive', group: 'Documents', description: 'Save contracts and uploads to your Drive.' },
-  { slug: 'dropbox', name: 'Dropbox', group: 'Documents', description: 'File deal documents in your Dropbox.' },
-  { slug: 'microsoft_onedrive', name: 'OneDrive', group: 'Documents', description: 'File deal documents in your OneDrive.' },
-  { slug: 'slack', name: 'Slack', group: 'Team', description: 'Get deadline alerts in your team channel.' },
-  { slug: 'dotloop', name: 'Dotloop', group: 'Transactions', description: 'Bring in transactions you already run elsewhere.' },
-];
+const BLURBS: Record<string, string> = {
+  'E-Signature': 'so signed documents can be tracked on your deals',
+  'Calendar and Scheduling': 'so closing dates and meetings can be added to your calendar',
+  Email: 'so follow-ups can go out from your own address',
+  'Documents and Storage': 'so deal documents can be saved to your own account',
+  'CRM and Leads': 'so your clients and leads stay in sync with your deals',
+  'Messaging and Calls': 'so you and your team can be reached about deadlines',
+  'Real Estate': 'so transactions you already run elsewhere can be brought in',
+  'Accounting and Payments': 'so commissions and expenses can be tracked',
+  'Tasks and Projects': 'so deal tasks can be shared with your task tools',
+  'Marketing and Social': 'so your marketing tools can work with your deals',
+};
+
+function Logo({ item, size }: { item: Catalog; size: number }) {
+  const style = { width: size, height: size };
+  if (item.logo) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={item.logo} alt="" width={size} height={size} style={style} className="shrink-0 rounded-md object-contain" />;
+  }
+  return <span style={style} className="flex shrink-0 items-center justify-center rounded-md bg-[#301D5D]/10 text-sm font-bold text-[#301D5D]" aria-hidden="true">{item.name.slice(0, 1)}</span>;
+}
 
 export default function IntegrationsPanel() {
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [catalog, setCatalog] = useState<Catalog[]>([]);
   const [configured, setConfigured] = useState(true);
   const [loaded, setLoaded] = useState(false);
   const [query, setQuery] = useState('');
   const [connectedOnly, setConnectedOnly] = useState(false);
   const [busy, setBusy] = useState('');
   const [message, setMessage] = useState('');
+  const [selected, setSelected] = useState<Catalog | null>(null);
 
   const refresh = useCallback(async () => {
     const res = await fetch('/api/agent-integrations', { credentials: 'include', cache: 'no-store' });
     if (!res.ok) return;
-    const data = (await res.json()) as { configured: boolean; accounts: Account[]; error?: string };
+    const data = (await res.json()) as { configured: boolean; accounts: Account[]; catalog?: Catalog[]; error?: string };
     setConfigured(data.configured);
     setAccounts(data.accounts);
+    if (data.catalog?.length) setCatalog(data.catalog);
     setLoaded(true);
     if (data.error) setMessage(data.error);
   }, []);
@@ -50,12 +64,13 @@ export default function IntegrationsPanel() {
     return data as { url?: string };
   };
 
-  const connect = async (slug: string) => {
-    setBusy(slug); setMessage('');
+  const connect = async (item: Catalog) => {
+    setBusy(item.slug); setMessage('');
     try {
-      const { url } = await post({ action: 'connect', app: slug });
+      const { url } = await post({ action: 'connect', app: item.slug });
       if (url) window.open(url, '_blank', 'noopener');
       setMessage('Finish signing in in the new window, then come back here.');
+      setSelected(null);
     } catch (err) { setMessage(err instanceof Error ? err.message : 'Could not connect.'); }
     setBusy('');
   };
@@ -63,17 +78,25 @@ export default function IntegrationsPanel() {
   const disconnect = async (account: Account) => {
     if (!window.confirm(`Disconnect ${account.appName || 'this app'}?`)) return;
     setBusy(account.id); setMessage('');
-    try { await post({ action: 'disconnect', accountId: account.id }); await refresh(); }
+    try { await post({ action: 'disconnect', accountId: account.id }); await refresh(); setSelected(null); }
     catch (err) { setMessage(err instanceof Error ? err.message : 'Could not disconnect.'); }
     setBusy('');
   };
 
-  const rows = useMemo(() => CATALOG.filter((item) => {
-    const connected = accounts.some((a) => a.appSlug === item.slug);
-    if (connectedOnly && !connected) return false;
+  const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return !q || `${item.name} ${item.group} ${item.description}`.toLowerCase().includes(q);
-  }), [accounts, connectedOnly, query]);
+    const out: { group: string; items: Catalog[] }[] = [];
+    for (const item of catalog) {
+      if (connectedOnly && !accounts.some((a) => a.appSlug === item.slug)) continue;
+      if (q && !`${item.name} ${item.group}`.toLowerCase().includes(q)) continue;
+      let bucket = out.find((g) => g.group === item.group);
+      if (!bucket) { bucket = { group: item.group, items: [] }; out.push(bucket); }
+      bucket.items.push(item);
+    }
+    return out;
+  }, [accounts, catalog, connectedOnly, query]);
+
+  const selectedAccount = selected ? accounts.find((a) => a.appSlug === selected.slug) : undefined;
 
   return (
     <section aria-label="Integrations" className="border border-slate-200 bg-white p-5 sm:p-6">
@@ -92,24 +115,47 @@ export default function IntegrationsPanel() {
         <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={connectedOnly} onChange={(e) => setConnectedOnly(e.target.checked)} /> Show connected only</label>
       </div>
 
-      <ul className="mt-4 divide-y divide-slate-100 border border-slate-200">
-        {rows.length === 0 && <li className="p-4 text-sm text-slate-500">No integrations match.</li>}
-        {rows.map((item) => {
-          const account = accounts.find((a) => a.appSlug === item.slug);
-          return (
-            <li key={item.slug} className="flex flex-wrap items-center justify-between gap-3 p-4">
-              <div className="min-w-0">
-                <p className="font-semibold text-slate-950">{item.name} <span className="ml-1 text-xs font-medium text-slate-500">{item.group}</span></p>
-              </div>
-              {account ? (
-                <button type="button" disabled={busy === account.id} onClick={() => void disconnect(account)} className="min-h-[40px] rounded-md border border-slate-300 px-4 text-sm font-bold text-slate-700 hover:border-[#9A3D2B] hover:text-[#9A3D2B] disabled:opacity-50">Disconnect</button>
+      {loaded && groups.length === 0 && <p className="mt-4 text-sm text-slate-500">No integrations match.</p>}
+      {groups.map((g) => (
+        <div key={g.group} className="mt-6">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{g.group}</h3>
+          <ul className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {g.items.map((item) => {
+              const connected = accounts.some((a) => a.appSlug === item.slug);
+              return (
+                <li key={item.slug}>
+                  <button type="button" onClick={() => setSelected(item)} className="flex min-h-[56px] w-full items-center gap-3 rounded-md border border-slate-200 bg-white px-3 text-left hover:border-[#301D5D]">
+                    <Logo item={item} size={28} />
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950">{item.name}</span>
+                    {connected && <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">Connected</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label={selected.name} onClick={() => setSelected(null)}>
+          <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3"><Logo item={selected} size={36} /><h3 className="truncate text-lg font-semibold text-slate-950">{selected.name}</h3></div>
+              <button type="button" onClick={() => setSelected(null)} aria-label="Close" className="flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><X className="h-5 w-5" aria-hidden="true" /></button>
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-700">Connect your {selected.name} account {BLURBS[selected.group] ?? 'so it can work with your deals'}.</p>
+            <p className="mt-3 rounded-md border border-slate-200 p-3 text-sm text-slate-600">{selectedAccount ? `Connected. You can disconnect ${selected.name} at any time.` : `Not connected yet. You will sign in with ${selected.name} in a new window.`}</p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" onClick={() => setSelected(null)} className="min-h-[40px] rounded-md border border-slate-300 px-4 text-sm font-bold text-slate-700">Cancel</button>
+              {selectedAccount ? (
+                <button type="button" disabled={busy === selectedAccount.id} onClick={() => void disconnect(selectedAccount)} className="min-h-[40px] rounded-md border border-[#9A3D2B] px-4 text-sm font-bold text-[#9A3D2B] disabled:opacity-50">Disconnect</button>
               ) : (
-                <button type="button" disabled={!configured || busy === item.slug} onClick={() => void connect(item.slug)} className="min-h-[40px] rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c] disabled:opacity-45">{busy === item.slug ? 'Opening…' : 'Connect'}</button>
+                <button type="button" disabled={!configured || busy === selected.slug} onClick={() => void connect(selected)} className="min-h-[40px] rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c] disabled:opacity-45">{busy === selected.slug ? 'Opening…' : `Connect ${selected.name}`}</button>
               )}
-            </li>
-          );
-        })}
-      </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

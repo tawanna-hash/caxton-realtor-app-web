@@ -1,3 +1,5 @@
+import { CATALOG } from './composio-catalog';
+
 const ORIGIN = 'https://backend.composio.dev';
 
 export type ConnectedAccount = { id: string; appSlug: string; appName: string; healthy: boolean };
@@ -13,7 +15,41 @@ export const APPS: Record<string, { toolkit: string; name: string }> = {
   slack: { toolkit: 'slack', name: 'Slack' },
   dotloop: { toolkit: 'dotloop', name: 'Dotloop' },
 };
-const byToolkit = (toolkit: string) => Object.entries(APPS).find(([, v]) => v.toolkit === toolkit)?.[0] ?? '';
+const byToolkit = (toolkit: string) => Object.entries(APPS).find(([, v]) => v.toolkit === toolkit)?.[0] ?? (CATALOG.some((c) => c.toolkit === toolkit) ? toolkit : '');
+
+/** Resolves an app key to its toolkit slug and display name. */
+export function appInfo(key: string): { toolkit: string; name: string } | null {
+  if (APPS[key]) return APPS[key];
+  const hit = CATALOG.find((c) => c.toolkit === key);
+  return hit ? { toolkit: hit.toolkit, name: hit.name } : null;
+}
+
+export type AvailableApp = { slug: string; name: string; group: string; logo?: string };
+let availableCache: { at: number; items: AvailableApp[] } | null = null;
+
+/** Catalog entries Composio can connect with its own sign-in, in catalog order. */
+export async function availableApps(): Promise<AvailableApp[]> {
+  if (availableCache && Date.now() - availableCache.at < 3_600_000) return availableCache.items;
+  const found = new Map<string, { managed: boolean; logo?: string }>();
+  let cursor = '';
+  for (let page = 0; page < 8; page += 1) {
+    const res = await api(`/api/v3/toolkits?limit=1000${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`);
+    if (!res.ok) break;
+    const body = (await res.json()) as { items?: { slug?: string; composio_managed_auth_schemes?: string[]; meta?: { logo?: string } }[]; next_cursor?: string | null };
+    for (const t of body.items ?? []) if (t.slug) found.set(t.slug.toLowerCase(), { managed: (t.composio_managed_auth_schemes?.length ?? 0) > 0, logo: t.meta?.logo });
+    if (!body.next_cursor) break;
+    cursor = body.next_cursor;
+  }
+  const existing = new Set(Object.values(APPS).map((a) => a.toolkit));
+  const items: AvailableApp[] = [
+    ...Object.entries(APPS).map(([slug, a]) => ({ slug, name: a.name, logo: found.get(a.toolkit)?.logo, group: ({ google_calendar: 'Calendar and Scheduling', outlook: 'Calendar and Scheduling', gmail: 'Email', google_drive: 'Documents and Storage', dropbox: 'Documents and Storage', microsoft_onedrive: 'Documents and Storage', slack: 'Messaging and Calls', dotloop: 'Real Estate' } as Record<string, string>)[slug] ?? 'Other' })),
+    ...CATALOG.filter((c) => !existing.has(c.toolkit) && found.get(c.toolkit)?.managed === true).map((c) => ({ slug: c.toolkit, name: c.name, group: c.group, logo: found.get(c.toolkit)?.logo })),
+  ];
+  const order = Array.from(new Set(CATALOG.map((c) => c.group)));
+  items.sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group));
+  if (found.size) availableCache = { at: Date.now(), items };
+  return items;
+}
 
 export function composioConfigured(): boolean {
   return Boolean(process.env.COMPOSIO_API_KEY);
@@ -46,7 +82,7 @@ async function authConfigFor(toolkit: string): Promise<string> {
 
 /** Link that opens the provider's sign-in for this agent only. */
 export async function createConnectLink(realtorId: string, appKey: string, origin: string): Promise<string> {
-  const app = APPS[appKey];
+  const app = appInfo(appKey);
   if (!app) throw new Error('Unknown integration');
   const res = await api('/api/v3.1/connected_accounts/link', {
     method: 'POST',
@@ -62,7 +98,7 @@ export async function listAccounts(realtorId: string): Promise<ConnectedAccount[
   const body = (await res.json()) as { items?: { id: string; status?: string; toolkit?: { slug?: string } }[] };
   return (body.items ?? []).filter((a) => a.status === 'ACTIVE').map((a) => {
     const key = byToolkit(a.toolkit?.slug ?? '');
-    return { id: a.id, appSlug: key, appName: APPS[key]?.name ?? '', healthy: true };
+    return { id: a.id, appSlug: key, appName: appInfo(key)?.name ?? '', healthy: true };
   }).filter((a) => a.appSlug);
 }
 
