@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
+import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './AgentToolsPanels';
 
 const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'transaction', label: 'Deal and Forms', keys: ['current', 'trec-forms'] },
@@ -14,6 +15,8 @@ const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'overview', label: 'Dashboard Overview', keys: [] },
   { id: 'alerts', label: 'Alerts and Calendar', keys: ['alerts', 'calendar'] },
   { id: 'forms', label: 'TREC Forms Library', keys: ['trec-library'] },
+  { id: 'tools', label: 'Work Faster', keys: [] },
+  { id: 'referral', label: 'Referral Network', keys: [] },
 ];
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS];
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -894,6 +897,7 @@ export default function ClosingTime({
   trecFormVersion,
   trecFormVersions,
   panelsOnly = false,
+  providers = [],
 }: {
   workspaceKey: string;
   realtorId: string;
@@ -902,6 +906,7 @@ export default function ClosingTime({
   trecFormVersion: TrecFormVersion;
   trecFormVersions: TrecFormVersion[];
   panelsOnly?: boolean;
+  providers?: ReferralProvider[];
 }) {
   const [deals, setDeals] = useState<AgentDeal[]>([]);
   const [notificationPreferences, setNotificationPreferences] = useState<AgentNotificationPreferences>(
@@ -1950,6 +1955,8 @@ export default function ClosingTime({
                 </div>
               </nav>
             )}
+            <div data-section-key="tools" className="min-w-0"><WorkFasterPanel /></div>
+            <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
           <section className="mt-5 grid gap-5 lg:grid-cols-2" aria-label="Alerts and calendar">
             <div {...collapsible('alerts')} className="border border-slate-200 bg-white p-5 sm:p-6">
