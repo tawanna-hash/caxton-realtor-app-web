@@ -1242,7 +1242,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
    thin gray rounded cards, wide-tracked gray eyebrows, serif headings,
    quiet inputs with a brand focus ring. Scoped to #agent-desk only.
    ─────────────────────────────────────────────────────────────────────── */
-#agent-desk { background-color: #ffffff; color: #111827; }
+#agent-desk { background-color: #F4F4F7; color: #17141F; }
 
 /* Cards and panels */
 #agent-desk [class~='border'][class~='bg-white'],
@@ -1281,7 +1281,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 
 /* Text colors */
 #agent-desk .text-slate-950,
-#agent-desk .text-slate-900 { color: #111827; }
+#agent-desk .text-slate-900 { color: #17141F; }
 #agent-desk .text-slate-600 { color: #4b5563; }
 #agent-desk .text-slate-500 { color: #6b7280; }
 
@@ -1304,3 +1304,25 @@ input[type='date']::-webkit-calendar-picker-indicator {
 
 /* Notice banners sit quietly */
 #agent-desk [class~='border'][class*='bg-amber-50'] { border-radius: 0.375rem; }
+
+/* Option A: Soft Gray Paper refinements */
+#agent-desk [class*='bg-[#FFFDF8]'],
+#agent-desk [class*='bg-[#FCFBF9]'] { background-color: #FAFAFC; }
+#agent-desk [class~='border'][class*='border-[#D9D0BF]'] { border-color: #E2E2E8; background-color: #ffffff; }
+#agent-desk .border-slate-200 { border-color: #E2E2E8; }
+#agent-desk .uppercase[class*='text-[#7059A8]'] { color: #6B6B78; }
+#agent-desk .rnn-heading-icon { background-color: #EFEAF8; color: #7059A8; }
+/* Left nav: selected item is lavender with a purple edge, never a solid block */
+#agent-desk aside button[aria-current='page'] {
+  background-color: #EFEAF8;
+  color: #301D5D;
+  box-shadow: inset 3px 0 0 #7059A8;
+  border-radius: 0.25rem;
+}
+#agent-desk aside button:hover { background-color: #F6F3FB; }
+#agent-desk aside li button[aria-current='true'] { background-color: #EFEAF8; box-shadow: inset 3px 0 0 #7059A8; }
+/* Collapse buttons and quiet outline buttons */
+#agent-desk button[aria-expanded] { border-color: #E2E2E8; background-color: #ffffff; border-radius: 0.375rem; }
+#agent-desk button[aria-expanded]:hover { border-color: #7059A8; }
+/* Notes and callouts */
+#agent-desk [class*='bg-[#F8F5FF]'] { background-color: #F6F3FB; }
