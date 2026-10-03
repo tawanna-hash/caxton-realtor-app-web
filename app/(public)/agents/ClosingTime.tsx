@@ -3,18 +3,16 @@
 import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
 
-const SECTION_LABELS: Record<string, string> = {
-  alerts: 'Deadline Alerts',
-  calendar: 'Calendar Exports',
-  assist: 'Transaction Coordinator',
-  'trec-library': 'TREC Forms Library',
-  current: 'Current Transaction',
-  'trec-forms': 'Form Workspace',
-  active: 'In Progress',
-  closed: 'Closed',
-  tasks: 'Tasks and Reminders',
-  audit: 'Audit Trail',
-};
+const DESK_VIEWS: { id: string; label: string; keys: string[] }[] = [
+  { id: 'overview', label: 'Overview', keys: [] },
+  { id: 'transaction', label: 'Current Transaction', keys: ['current', 'trec-forms', 'readiness'] },
+  { id: 'coordinator', label: 'Transaction Coordinator', keys: ['assist'] },
+  { id: 'deals', label: 'My Transactions', keys: ['active', 'closed'] },
+  { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
+  { id: 'alerts', label: 'Alerts and Calendar', keys: ['alerts', 'calendar'] },
+  { id: 'forms', label: 'TREC Forms', keys: ['trec-library'] },
+  { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
+];
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -55,7 +53,7 @@ import {
   calendarEventsForDeal,
   type ClosingTimeCalendarEvent,
 } from '@/lib/closing-time-calendar';
-import CollapseToggle, { SectionPills, useCollapsibles } from './CollapseToggle';
+import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 import { trackEvent } from '@/app/posthog-provider';
 import {
   agentCommandCenterWorkspaceSchema,
@@ -938,6 +936,11 @@ export default function ClosingTime({
   const [formListPage, setFormListPage] = useState(1);
   const [formsStatusDealId, setFormsStatusDealId] = useState<string | null>(null);
   const [workspacePage, setWorkspacePage] = useState<1 | 2>(2);
+  const [deskView, setDeskView] = useState('transaction');
+  const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
+  useEffect(() => {
+    DESK_VIEWS.find((v) => v.id === effectiveView)?.keys.forEach((key) => reveal(key));
+  }, [effectiveView, reveal]);
   const versionRef = useRef<number | null>(initialWorkspaceVersion);
   const syncTimerRef = useRef<number | null>(null);
   const saveInFlightRef = useRef(false);
@@ -1875,8 +1878,6 @@ export default function ClosingTime({
           </div>
         </div>
 
-        <SectionPills labels={SECTION_LABELS} reveal={reveal} />
-
         <div className="mt-5 flex items-start gap-3 border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-3 text-sm leading-6 text-slate-600">
           <Save className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
           <p>
@@ -1884,6 +1885,27 @@ export default function ClosingTime({
           </p>
         </div>
 
+        <div className="mt-5 lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start lg:gap-6">
+          <nav aria-label="Agent Desk sections" className="mb-5 lg:sticky lg:top-24 lg:mb-0">
+            <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:border lg:border-slate-200 lg:bg-white lg:p-2">
+              {DESK_VIEWS.map((view) => {
+                const active = view.id === effectiveView;
+                return (
+                  <li key={view.id} className="shrink-0">
+                    <button
+                      type="button"
+                      aria-current={active ? 'page' : undefined}
+                      onClick={() => { if (view.id === 'overview') setWorkspacePage(1); else { setWorkspacePage(2); setDeskView(view.id); } window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className={`min-h-[40px] w-full whitespace-nowrap rounded-md px-3 text-left text-sm font-semibold transition ${active ? 'bg-[#301D5D] text-white' : 'border border-slate-200 bg-white text-slate-700 hover:border-[#301D5D] lg:border-transparent'}`}
+                    >
+                      {view.label}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+          <div data-desk-view={effectiveView} className="min-w-0">
         {workspacePage === 2 && (
           <section className="mt-5 grid gap-5 lg:grid-cols-2" aria-label="Alerts and calendar">
             <div {...collapsible('alerts')} className="border border-slate-200 bg-white p-5 sm:p-6">
@@ -3075,6 +3097,9 @@ export default function ClosingTime({
           </section>
           </>
         )}
+
+          </div>
+        </div>
 
         {isCameraOpen && (
           <div

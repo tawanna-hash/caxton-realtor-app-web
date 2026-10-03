@@ -1220,3 +1220,17 @@ input[type='date']::-webkit-calendar-picker-indicator {
     animation: route-fade-in 180ms ease-out;
   }
 }
+
+/* Agent Desk dashboard: show only the cards that belong to the selected view */
+[data-desk-view] [data-section-key] { display: none; }
+[data-desk-view='transaction'] [data-section-key='current'],
+[data-desk-view='transaction'] [data-section-key='trec-forms'],
+[data-desk-view='transaction'] [data-section-key='readiness'],
+[data-desk-view='coordinator'] [data-section-key='assist'],
+[data-desk-view='deals'] [data-section-key='active'],
+[data-desk-view='deals'] [data-section-key='closed'],
+[data-desk-view='tasks'] [data-section-key='tasks'],
+[data-desk-view='alerts'] [data-section-key='alerts'],
+[data-desk-view='alerts'] [data-section-key='calendar'],
+[data-desk-view='forms'] [data-section-key='trec-library'],
+[data-desk-view='audit'] [data-section-key='audit'] { display: revert; }
