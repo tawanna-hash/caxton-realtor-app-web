@@ -8,7 +8,8 @@ type FollowUp = { id: string; kind: string; toName: string; toEmail: string; sub
 type Risk = { id: string; severity: 'high' | 'medium'; title: string; detail: string; deadlineLabel?: string };
 type Step = { title: string; offsetDays: number; anchor: 'effective' | 'closing' };
 type Upload = { id: string; docId: string; filename: string; sizeBytes: number; createdAt: string; reviewed: boolean };
-type Data = { uploads: Upload[]; autoIntro: boolean; parties: Party[]; followUps: FollowUp[]; risks: Risk[]; portalToken: string | null; checklist: Step[]; customChecklist: boolean };
+type Sig = { id: string; toName: string; toEmail: string; document: string; status: string; remindersSent: number; createdAt: string };
+type Data = { signatures: Sig[]; autoSignature: boolean; uploads: Upload[]; autoIntro: boolean; parties: Party[]; followUps: FollowUp[]; risks: Risk[]; portalToken: string | null; checklist: Step[]; customChecklist: boolean };
 
 const ROLES: Record<string, string> = { client: 'Client', lender: 'Lender', title: 'Title company', coop_agent: 'Co-op agent', other: 'Other' };
 const btn = 'inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:opacity-45';
@@ -33,6 +34,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const [checklistText, setChecklistText] = useState('');
   const [showChecklist, setShowChecklist] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [extDays, setExtDays] = useState(3);
+  const [newClosing, setNewClosing] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -80,6 +83,9 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
         <div className="mt-5 grid gap-6 lg:grid-cols-2">
           <section aria-label="Risks">
             <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Risk Alerts</h4>
+            <label className="mt-2 flex items-center gap-2 text-xs text-slate-600">Extension length
+              <input type="number" min={1} max={30} value={extDays} onChange={(e) => setExtDays(Math.min(30, Math.max(1, Number(e.target.value) || 3)))} className="min-h-[32px] w-16 rounded-md border border-slate-300 px-2 text-sm" aria-label="Extension days" /> days
+            </label>
             {data.risks.length === 0 ? <p className="mt-2 text-sm text-slate-500">No risks flagged for this deal.</p> : (
               <ul className="mt-2 space-y-2">
                 {data.risks.map((r) => (
@@ -87,12 +93,24 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                     <p className="font-semibold text-slate-950">{r.severity === 'high' ? 'Urgent: ' : ''}{r.title}</p>
                     <p className="mt-0.5 text-slate-600">{r.detail}</p>
                     {r.deadlineLabel && (
-                      <button type="button" disabled={busy} className={`${btn} mt-2`} onClick={() => void post({ action: 'draft_extension', dealId: deal.id, riskId: r.id, partyId: partyByRole('coop_agent')?.id })}>Draft Extension Request</button>
+                      <span className="mt-2 flex flex-wrap items-center gap-2">
+                        <button type="button" disabled={busy} className={btn} onClick={() => void post({ action: 'draft_extension', dealId: deal.id, riskId: r.id, partyId: partyByRole('coop_agent')?.id })}>Draft Extension Request</button>
+                        <a className={btn} href={`/api/closing-time/assist/amendment?dealId=${encodeURIComponent(deal.id)}&riskId=${encodeURIComponent(r.id)}&days=${extDays}`}>Prefilled Amendment (PDF)</a>
+                      </span>
                     )}
                   </li>
                 ))}
               </ul>
             )}
+          </section>
+
+          <section aria-label="Amendment">
+            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Amendment (TREC 39-11)</h4>
+            <p className="mt-2 text-sm text-slate-600">Pre-fills the official amendment with this property and one change. Signatures and the acceptance date stay blank. Review it, add any option fee or terms yourself, and send it for signatures. Check the new date against the contract.</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <input type="date" className={`${input} max-w-[170px]`} value={newClosing} onChange={(e) => setNewClosing(e.target.value)} aria-label="New closing date" />
+              <a className={`${btn} ${newClosing ? '' : 'pointer-events-none opacity-45'}`} href={`/api/closing-time/assist/amendment?dealId=${encodeURIComponent(deal.id)}&type=closing&newDate=${newClosing}`}>Closing Date Amendment (PDF)</a>
+            </div>
           </section>
 
           <section aria-label="Client portal">
@@ -141,7 +159,10 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <input className={`${input} max-w-xs`} placeholder="Document needing a signature" value={sigDetail} onChange={(e) => setSigDetail(e.target.value)} aria-label="Document needing signature" />
               {data.parties.filter((p) => p.email).map((p) => (
-                <button key={p.id} type="button" disabled={busy || !sigDetail.trim()} className={btn} onClick={() => void post({ action: 'draft', dealId: deal.id, kind: 'signature', partyId: p.id, detail: sigDetail.trim() })}>Signature Reminder: {p.name || ROLES[p.role]}</button>
+                <span key={p.id} className="inline-flex gap-1">
+                  <button type="button" disabled={busy || !sigDetail.trim()} className={btn} onClick={() => void post({ action: 'draft', dealId: deal.id, kind: 'signature', partyId: p.id, detail: sigDetail.trim() })}>Draft Reminder: {p.name || ROLES[p.role]}</button>
+                  <button type="button" disabled={busy || !sigDetail.trim()} className={btn} onClick={() => void post({ action: 'track_signature', dealId: deal.id, partyId: p.id, document: sigDetail.trim() })}>Track Signature</button>
+                </span>
               ))}
             </div>
             {drafts.length === 0 ? <p className="mt-3 text-sm text-slate-500">No drafts waiting.</p> : (
@@ -194,7 +215,25 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             )}
           </section>
 
+          <section aria-label="Signature tracking" className="lg:col-span-2">
+            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Signatures Being Tracked</h4>
+            {data.signatures.length === 0 ? <p className="mt-2 text-sm text-slate-500">Type a document name above and press Track Signature next to the person who owes it.</p> : (
+              <ul className="mt-2 space-y-2">
+                {data.signatures.map((g) => (
+                  <li key={g.id} className="flex flex-wrap items-center justify-between gap-2 border border-slate-200 px-3 py-2 text-sm">
+                    <span><span className="font-semibold text-slate-900">{g.document}</span> · {g.toName || g.toEmail} · {g.status === 'open' ? `${g.remindersSent} of 3 reminders sent` : g.status === 'escalated' ? 'Needs your follow-up' : g.status === 'signed' ? 'Signed' : g.status}</span>
+                    {(g.status === 'open' || g.status === 'escalated') && <button type="button" disabled={busy} className={btnPrimary} onClick={() => void post({ action: 'signature_signed', id: g.id })}>Mark Signed</button>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           <section aria-label="Automation">
+            <label className="mb-3 flex items-start gap-2 text-sm text-slate-700">
+              <input type="checkbox" className="mt-1" checked={data.autoSignature} disabled={busy} onChange={(e) => void post({ action: 'auto_signature', on: e.target.checked })} />
+              <span>Automatically remind people to sign tracked documents: gentle at 2 and 4 days, firmer at 6 days or when closing is within 3 days. You are copied. After 3 reminders you get an email to follow up yourself. Off by default.</span>
+            </label>
             <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Automation</h4>
             <label className="mt-2 flex items-start gap-2 text-sm text-slate-700">
               <input type="checkbox" className="mt-1" checked={data.autoIntro} disabled={busy} onChange={(e) => void post({ action: 'auto_intro', on: e.target.checked })} />

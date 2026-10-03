@@ -49,6 +49,13 @@ export function ensureAssistSchema(): Promise<void> {
     await query(`CREATE TABLE IF NOT EXISTS closing_time_settings (
       realtor_id UUID PRIMARY KEY REFERENCES realtors(id) ON DELETE CASCADE, auto_intro BOOLEAN NOT NULL DEFAULT FALSE,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+    await query(`ALTER TABLE closing_time_settings ADD COLUMN IF NOT EXISTS auto_signature BOOLEAN NOT NULL DEFAULT FALSE`);
+    await query(`CREATE TABLE IF NOT EXISTS closing_time_signatures (
+      id UUID PRIMARY KEY, realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE,
+      deal_id TEXT NOT NULL, to_name TEXT NOT NULL DEFAULT '', to_email TEXT NOT NULL, document TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open', reminders_sent INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), last_reminder_at TIMESTAMPTZ, closed_at TIMESTAMPTZ)`);
+    await query(`CREATE INDEX IF NOT EXISTS closing_time_signatures_open_idx ON closing_time_signatures (realtor_id, status)`);
     await query(`CREATE TABLE IF NOT EXISTS closing_time_portal_uploads (
       id UUID PRIMARY KEY, realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE,
       deal_id TEXT NOT NULL, doc_id TEXT NOT NULL, filename TEXT NOT NULL, content_type TEXT NOT NULL,
@@ -88,14 +95,16 @@ const iso = (v: Date | string) => (typeof v === 'string' ? v : v.toISOString());
 
 export async function listAssist(realtorId: string, dealId: string) {
   await ensureAssistSchema();
-  const [parties, follows, portal, checklist, uploads, settings] = await Promise.all([
+  const [parties, follows, portal, checklist, uploads, settings, sigs] = await Promise.all([
     query<PartyRow>(`SELECT id, deal_id, role, name, email FROM closing_time_parties WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at`, [realtorId, dealId]),
     query<FollowRow>(`SELECT id, deal_id, kind, to_name, to_email, subject, body, status, created_at, sent_at FROM closing_time_followups WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 50`, [realtorId, dealId]),
     query<{ token: string }>(`SELECT token FROM closing_time_portals WHERE realtor_id=$1 AND deal_id=$2`, [realtorId, dealId]),
     query<{ steps: ChecklistStep[] }>(`SELECT steps FROM closing_time_checklists WHERE realtor_id=$1`, [realtorId]),
     query<{ id: string; doc_id: string; filename: string; size_bytes: number; created_at: Date | string; reviewed: boolean }>(
       `SELECT id, doc_id, filename, size_bytes, created_at, reviewed FROM closing_time_portal_uploads WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 50`, [realtorId, dealId]),
-    query<{ auto_intro: boolean }>(`SELECT auto_intro FROM closing_time_settings WHERE realtor_id=$1`, [realtorId]),
+    query<{ auto_intro: boolean; auto_signature: boolean }>(`SELECT auto_intro, auto_signature FROM closing_time_settings WHERE realtor_id=$1`, [realtorId]),
+    query<{ id: string; to_name: string; to_email: string; document: string; status: string; reminders_sent: number; created_at: Date | string }>(
+      `SELECT id, to_name, to_email, document, status, reminders_sent, created_at FROM closing_time_signatures WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 30`, [realtorId, dealId]),
   ]);
   return {
     parties: parties.map((p): Party => ({ id: p.id, dealId: p.deal_id, role: p.role as PartyRole, name: p.name, email: p.email })),
@@ -108,6 +117,8 @@ export async function listAssist(realtorId: string, dealId: string) {
     customChecklist: Boolean(checklist[0]?.steps?.length),
     uploads: uploads.map((u) => ({ id: u.id, docId: u.doc_id, filename: u.filename, sizeBytes: u.size_bytes, createdAt: iso(u.created_at), reviewed: u.reviewed })),
     autoIntro: settings[0]?.auto_intro ?? false,
+    autoSignature: settings[0]?.auto_signature ?? false,
+    signatures: sigs.map((x) => ({ id: x.id, toName: x.to_name, toEmail: x.to_email, document: x.document, status: x.status, remindersSent: x.reminders_sent, createdAt: iso(x.created_at) })),
   };
 }
 
@@ -324,6 +335,76 @@ export async function getUpload(realtorId: string, id: string) {
 export async function markUploadReviewed(realtorId: string, id: string) {
   await ensureAssistSchema();
   await query(`UPDATE closing_time_portal_uploads SET reviewed=TRUE WHERE id=$1 AND realtor_id=$2`, [id, realtorId]);
+}
+
+export async function setAutoSignature(realtorId: string, on: boolean) {
+  await ensureAssistSchema();
+  await query(`INSERT INTO closing_time_settings (realtor_id, auto_signature) VALUES ($1,$2) ON CONFLICT (realtor_id) DO UPDATE SET auto_signature=EXCLUDED.auto_signature, updated_at=NOW()`, [realtorId, on]);
+}
+
+export async function addSignatureRequest(realtorId: string, dealId: string, partyId: string, document: string) {
+  await ensureAssistSchema();
+  await requireDeal(realtorId, dealId);
+  const p = (await query<PartyRow>(`SELECT id, deal_id, role, name, email FROM closing_time_parties WHERE id=$1 AND realtor_id=$2 AND deal_id=$3`, [partyId, realtorId, dealId]))[0];
+  if (!p?.email) throw Object.assign(new Error('Add an email to that contact first.'), { status: 400 });
+  await query(`INSERT INTO closing_time_signatures (id, realtor_id, deal_id, to_name, to_email, document) VALUES ($1,$2,$3,$4,$5,$6)`,
+    [randomUUID(), realtorId, dealId, p.name, p.email, document.trim().slice(0, 200)]);
+}
+
+export async function closeSignature(realtorId: string, id: string) {
+  await ensureAssistSchema();
+  await query(`UPDATE closing_time_signatures SET status='signed', closed_at=NOW() WHERE id=$1 AND realtor_id=$2 AND status IN ('open','escalated')`, [id, realtorId]);
+}
+
+/**
+ * Automatic signature chasing for agents who turned it on. Reminders go to the
+ * person who owes the signature (agent copied): gentle at 2 days, gentle at
+ * 4 days, firmer at 6 days or when closing is within 3 days. After the third
+ * reminder the agent is told to follow up personally and chasing stops.
+ * Messages only mention the document by name, never price or terms.
+ */
+export async function runSignatureReminders(now = new Date()): Promise<{ sent: number; escalated: number; errors: string[] }> {
+  await ensureAssistSchema();
+  const out = { sent: 0, escalated: 0, errors: [] as string[] };
+  const rows = await query<{ id: string; realtor_id: string; deal_id: string; to_name: string; to_email: string; document: string; reminders_sent: number; created_at: Date | string; last_reminder_at: Date | string | null }>(
+    `SELECT g.id, g.realtor_id, g.deal_id, g.to_name, g.to_email, g.document, g.reminders_sent, g.created_at, g.last_reminder_at
+     FROM closing_time_signatures g JOIN closing_time_settings s ON s.realtor_id=g.realtor_id AND s.auto_signature
+     WHERE g.status='open'`);
+  const DAY = 86_400_000;
+  for (const g of rows) {
+    const base = new Date(g.last_reminder_at ?? g.created_at).getTime();
+    if (now.getTime() - base < 2 * DAY - 3_600_000) continue;
+    const deal = await loadDeal(g.realtor_id, g.deal_id);
+    const agent = await agentIdentity(g.realtor_id);
+    if (!deal || deal.status === 'completed') { await query(`UPDATE closing_time_signatures SET status='cancelled', closed_at=NOW() WHERE id=$1`, [g.id]); continue; }
+    const property = deal.propertyAddress || deal.title || 'the transaction';
+    if (g.reminders_sent >= 3) {
+      await query(`UPDATE closing_time_signatures SET status='escalated' WHERE id=$1 AND status='open'`, [g.id]);
+      await sendEmail({ to: agent.email, subject: `Signature still missing: ${g.document} - ${property}`, html: htmlBody(`${g.to_name || g.to_email} has not signed "${g.document}" after 3 automatic reminders. Please follow up personally.`) });
+      out.escalated += 1;
+      continue;
+    }
+    const today = now.toISOString().slice(0, 10);
+    const closingSoon = deal.closingDate && (Date.parse(`${deal.closingDate}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / DAY <= 3;
+    const firm = g.reminders_sent >= 2 || closingSoon;
+    const first = g.to_name ? g.to_name.split(/\s+/)[0] : '';
+    const body = firm
+      ? `Hello${first ? ` ${first}` : ''},\n\nWe still need your signature on ${g.document} for ${property}. Because we are close to an important date, please sign today so we stay on schedule. Call or reply to me right away if you have a question or need help.\n\nThank you,\n${agent.name}`
+      : `Hello${first ? ` ${first}` : ''},\n\nA friendly reminder that ${g.document} for ${property} still needs your signature. Please sign when you get a chance, and let me know if anything is unclear.\n\nThank you,\n${agent.name}`;
+    const subject = `${firm ? 'Action needed: ' : 'Reminder: '}signature on ${g.document} - ${property}`;
+    const claim = await query<{ id: string }>(`UPDATE closing_time_signatures SET reminders_sent=reminders_sent+1, last_reminder_at=NOW() WHERE id=$1 AND status='open' AND reminders_sent=$2 RETURNING id`, [g.id, g.reminders_sent]);
+    if (!claim[0]) continue;
+    const sent = await sendEmail({ to: g.to_email, cc: agent.email || undefined, replyTo: agent.email || undefined, subject, html: htmlBody(body) });
+    if (sent.ok) {
+      out.sent += 1;
+      await query(`INSERT INTO closing_time_followups (id, realtor_id, deal_id, kind, to_name, to_email, subject, body, status, sent_at) VALUES ($1,$2,$3,'signature',$4,$5,$6,$7,'sent',NOW())`,
+        [randomUUID(), g.realtor_id, g.deal_id, g.to_name, g.to_email, subject, body]);
+    } else {
+      await query(`UPDATE closing_time_signatures SET reminders_sent=reminders_sent-1, last_reminder_at=$2 WHERE id=$1`, [g.id, g.last_reminder_at]);
+      out.errors.push(`${g.id}: ${sent.error ?? 'send failed'}`);
+    }
+  }
+  return out;
 }
 
 export async function setAutoIntro(realtorId: string, on: boolean) {
