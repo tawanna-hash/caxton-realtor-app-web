@@ -1237,36 +1237,57 @@ input[type='date']::-webkit-calendar-picker-indicator {
 [data-desk-view='audit'] [data-section-key='audit'] { display: revert; }
 
 /* ───────────────────────────────────────────────────────────────────────
-   Agent Desk (Closing Time) visual system.
-   Mirrors the Resources tool pages (e.g. Seller Net Sheet): white canvas,
-   thin gray rounded cards, wide-tracked gray eyebrows, serif headings,
-   quiet inputs with a brand focus ring. Scoped to #agent-desk only.
+   Agent Desk (Closing Time) design system, Option A "Soft Gray Paper".
+   One pattern everywhere: soft gray canvas, white cards with thin gray
+   borders and 6px corners, a header made of a round lavender icon, a small
+   gray tracked eyebrow and a serif title over a hairline divider.
+   Purple is reserved for icons, the active tab / nav edge and primary
+   buttons. Scoped to #agent-desk.
    ─────────────────────────────────────────────────────────────────────── */
-#agent-desk { background-color: #F4F4F7; color: #17141F; }
+#agent-desk {
+  --ct-canvas: #F4F4F7;
+  --ct-card: #FFFFFF;
+  --ct-line: #E2E2E8;
+  --ct-line-soft: #F0F0F4;
+  --ct-ink: #17141F;
+  --ct-muted: #6B6B78;
+  --ct-purple: #301D5D;
+  --ct-lav: #7059A8;
+  --ct-lav-soft: #EFEAF8;
+  --ct-lav-wash: #F6F3FB;
+  background-color: var(--ct-canvas);
+  color: var(--ct-ink);
+}
 
-/* Cards and panels */
+/* Cards, panels, tiles */
 #agent-desk [class~='border'][class~='bg-white'],
 #agent-desk [class~='border'][class*='bg-[#FCFBF9]'],
-#agent-desk [class~='border'][class*='bg-[#FFFDF8]'] {
-  border-color: #e5e7eb;
+#agent-desk [class~='border'][class*='bg-[#FFFDF8]'],
+#agent-desk [class~='border'][class*='bg-[#F7F3EB]'] {
+  background-color: var(--ct-card);
+  border-color: var(--ct-line);
   border-radius: 0.375rem;
 }
-#agent-desk [class~='border'][class*='border-[#D9D0BF]'] { border-color: #e5e7eb; }
-#agent-desk [class*='bg-[#FFFDF8]'] { background-color: #fafafa; }
-#agent-desk [class*='bg-[#FCFBF9]'] { background-color: #fafafa; }
-#agent-desk .border-slate-200 { border-color: #e5e7eb; }
-#agent-desk .border-slate-100 { border-color: #f3f4f6; }
-#agent-desk .border-slate-300 { border-color: #d1d5db; }
-#agent-desk .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #f3f4f6; }
+#agent-desk [class*='border-[#D9D0BF]'],
+#agent-desk .border-slate-200,
+#agent-desk .border-slate-300 { border-color: var(--ct-line); }
+#agent-desk .border-slate-100,
+#agent-desk .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: var(--ct-line-soft); }
+#agent-desk [class*='bg-[#F7F3EB]'],
+#agent-desk [class*='bg-[#F8F5FF]'] { background-color: var(--ct-lav-wash); }
 
-/* Eyebrows: small caps, wide tracking, quiet gray */
+/* Header pattern: icon + eyebrow + serif title, hairline divider beneath */
+#agent-desk .rnn-heading-icon { background-color: var(--ct-lav-soft); color: var(--ct-lav); }
+#agent-desk div:has(> .rnn-heading-icon:first-child) {
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--ct-line-soft);
+}
 #agent-desk .uppercase[class*='text-[#7059A8]'] {
-  color: #6b7280;
-  font-weight: 500;
+  color: var(--ct-muted);
+  font-weight: 600;
   letter-spacing: 0.2em;
 }
-
-/* Headings: serif, regular weight, near-black */
 #agent-desk :is(h2, h3, h4).text-lg,
 #agent-desk :is(h2, h3, h4).text-xl,
 #agent-desk :is(h2, h3, h4).text-2xl,
@@ -1275,75 +1296,68 @@ input[type='date']::-webkit-calendar-picker-indicator {
   font-family: Georgia, 'Times New Roman', serif;
   font-weight: 400;
   letter-spacing: -0.01em;
-  color: #111827;
+  color: var(--ct-ink);
 }
-#agent-desk h2.text-3xl { letter-spacing: -0.02em; line-height: 1.15; }
+#agent-desk h2.text-3xl { line-height: 1.15; letter-spacing: -0.02em; }
 
-/* Text colors */
+/* Text */
 #agent-desk .text-slate-950,
-#agent-desk .text-slate-900 { color: #17141F; }
-#agent-desk .text-slate-600 { color: #4b5563; }
-#agent-desk .text-slate-500 { color: #6b7280; }
+#agent-desk .text-slate-900 { color: var(--ct-ink); }
+#agent-desk .text-slate-700 { color: #3F3F4B; }
+#agent-desk .text-slate-600 { color: #4B4B58; }
+#agent-desk .text-slate-500 { color: var(--ct-muted); }
+
+/* Left navigation: deal rows and tool rows share one quiet list style */
+#agent-desk aside ul button {
+  background-color: transparent;
+  color: #3F3F4B;
+  border-radius: 0;
+  font-weight: 500;
+  box-shadow: none;
+}
+#agent-desk aside ul button:hover { background-color: var(--ct-lav-wash); }
+#agent-desk aside ul button[aria-current] {
+  background-color: var(--ct-lav-soft);
+  color: var(--ct-purple);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--ct-lav);
+}
+#agent-desk aside .ct-navicon { width: 1rem; height: 1rem; color: var(--ct-lav); flex: none; }
+
+/* Top tabs */
+#agent-desk nav[aria-label] button[aria-current='page'] { color: var(--ct-purple); border-color: var(--ct-purple); }
 
 /* Form controls */
 #agent-desk :is(input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']), select, textarea) {
-  border-color: #d1d5db;
+  border-color: #D4D4DC;
   border-radius: 0.375rem;
-  background-color: #ffffff;
-  color: #111827;
+  background-color: #FFFFFF;
+  color: var(--ct-ink);
 }
 #agent-desk :is(input, select, textarea):focus {
   outline: none;
-  border-color: var(--color-brand-700, #301d5d);
-  box-shadow: 0 0 0 1px rgb(48 29 93 / 0.3);
+  border-color: var(--ct-lav);
+  box-shadow: 0 0 0 3px rgb(112 89 168 / 0.18);
 }
+#agent-desk input[type='checkbox'], #agent-desk input[type='radio'] { accent-color: var(--ct-purple); }
 
-/* Buttons and tabs */
+/* Buttons: primary stays purple, secondary is white with a gray edge */
 #agent-desk :is(button, a)[class*='min-h-['] { border-radius: 0.375rem; }
-#agent-desk [role='tab'], #agent-desk nav button { letter-spacing: 0.01em; }
-
-/* Notice banners sit quietly */
-#agent-desk [class~='border'][class*='bg-amber-50'] { border-radius: 0.375rem; }
-
-/* Option A: Soft Gray Paper refinements */
-#agent-desk [class*='bg-[#FFFDF8]'],
-#agent-desk [class*='bg-[#FCFBF9]'] { background-color: #FAFAFC; }
-#agent-desk [class~='border'][class*='border-[#D9D0BF]'] { border-color: #E2E2E8; background-color: #ffffff; }
-#agent-desk .border-slate-200 { border-color: #E2E2E8; }
-#agent-desk .uppercase[class*='text-[#7059A8]'] { color: #6B6B78; }
-#agent-desk .rnn-heading-icon { background-color: #EFEAF8; color: #7059A8; }
-/* Left nav: selected item is lavender with a purple edge, never a solid block */
-#agent-desk aside button[aria-current='page'] {
-  background-color: #EFEAF8;
-  color: #301D5D;
-  box-shadow: inset 3px 0 0 #7059A8;
-  border-radius: 0.25rem;
-}
-#agent-desk aside button:hover { background-color: #F6F3FB; }
-#agent-desk aside li button[aria-current='true'] { background-color: #EFEAF8; box-shadow: inset 3px 0 0 #7059A8; }
-/* Collapse buttons and quiet outline buttons */
-#agent-desk button[aria-expanded] { border-color: #E2E2E8; background-color: #ffffff; border-radius: 0.375rem; }
-#agent-desk button[aria-expanded]:hover { border-color: #7059A8; }
-/* Notes and callouts */
-#agent-desk [class*='bg-[#F8F5FF]'] { background-color: #F6F3FB; }
-
-/* Deal Settings: each topic is its own card with the shared icon header */
-#agent-desk [data-section-key='assist'] section[aria-label] {
-  border: 1px solid #E2E2E8;
+#agent-desk button[aria-expanded] {
+  background-color: #FFFFFF;
+  border: 1px solid var(--ct-line);
   border-radius: 0.375rem;
-  background-color: #ffffff;
+  color: var(--ct-purple);
+}
+#agent-desk button[aria-expanded]:hover { border-color: var(--ct-lav); }
+
+/* Deal Settings topics: each is a card using the same header */
+#agent-desk [data-section-key='assist'] { background-color: transparent; border: 0; padding: 0; }
+#agent-desk [data-section-key='assist'] > div[class*='grid'] { gap: 1.25rem; }
+#agent-desk [data-section-key='assist'] section[aria-label] {
+  border: 1px solid var(--ct-line);
+  border-radius: 0.375rem;
+  background-color: var(--ct-card);
   padding: 1.25rem 1.375rem;
   min-width: 0;
 }
-#agent-desk [data-section-key='assist'] section[aria-label] > div:first-child:has(.rnn-heading-icon) {
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #F0F0F4;
-}
-#agent-desk [data-section-key='assist'] > div[class*='grid'] { gap: 1.25rem; }
-#agent-desk [data-section-key='assist'] { background-color: transparent; border: 0; padding: 0; }
-
-/* Legacy beige tones retired in favor of the soft gray / light purple palette */
-#agent-desk [class*='border-[#D9D0BF]'] { border-color: #E2E2E8; }
-#agent-desk [class*='bg-[#F7F3EB]'] { background-color: #F6F3FB; }
-#agent-desk [class*='bg-[#FFF8E7]'], #agent-desk [class*='bg-[#FBF7EE]'] { background-color: #F6F3FB; }
