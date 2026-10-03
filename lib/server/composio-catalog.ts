@@ -2,7 +2,6 @@
 export type CatalogEntry = { toolkit: string; name: string; group: string };
 
 export const CATALOG: CatalogEntry[] = [
-  { toolkit: 'docusign', name: 'Docusign', group: 'E-Signature' },
   { toolkit: 'dropbox_sign', name: 'Dropbox Sign', group: 'E-Signature' },
   { toolkit: 'pandadoc', name: 'PandaDoc', group: 'E-Signature' },
   { toolkit: 'boldsign', name: 'BoldSign', group: 'E-Signature' },

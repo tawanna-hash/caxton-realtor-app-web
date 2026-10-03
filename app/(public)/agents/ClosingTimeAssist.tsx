@@ -264,7 +264,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           <section aria-label="Send for signature" className="lg:col-span-2">
             <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Send For Signature</h4>
             {!data.signing || data.signing.providers.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-500">Connect a signing app such as DocuSign or BoldSign on the Integrations page to send documents for signature from this deal.</p>
+              <p className="mt-2 text-sm text-slate-500">Connect a signing app such as BoldSign, PandaDoc or Dropbox Sign on the Integrations page to send documents for signature from this deal.</p>
             ) : (
               <div className="mt-2 space-y-3 border border-slate-200 p-3 text-sm">
                 <div className="grid gap-2 sm:grid-cols-2">

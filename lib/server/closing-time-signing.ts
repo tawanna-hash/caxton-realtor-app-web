@@ -4,7 +4,7 @@ import { query } from '@/lib/server/db/neon';
 import { ensureAssistSchema, getUpload, requireDeal } from '@/lib/server/closing-time-assist';
 import { accountFor, appInfo, proxyCall } from '@/lib/server/composio';
 
-export const SIGN_PROVIDERS = ['docusign', 'boldsign', 'pandadoc', 'dropbox_sign'] as const;
+export const SIGN_PROVIDERS = ['boldsign', 'pandadoc', 'dropbox_sign'] as const;
 export type SignProvider = (typeof SIGN_PROVIDERS)[number];
 export type Signer = { name: string; email: string };
 const MAX_BYTES = 3 * 1024 * 1024;
@@ -59,7 +59,7 @@ async function prepareDocument(bytes: Buffer, signers: Signer[], provider: SignP
     page.drawLine({ start: { x: 72, y: top - 40 }, end: { x: 340, y: top - 40 }, thickness: 0.8, color: rgb(0.2, 0.2, 0.25) });
     page.drawText(s.name, { x: 72, y: top - 56, size: 10, font: bold, color: rgb(0.1, 0.1, 0.15) });
     page.drawText('Date: ____________________', { x: 370, y: top - 36, size: 10, font, color: rgb(0.2, 0.2, 0.25) });
-    const tag = provider === 'docusign' ? `/s${i + 1}/` : provider === 'boldsign' ? `{{sign|${i + 1}|*|Signature}}` : provider === 'pandadoc' ? `{signature*:Signer${i + 1}}` : `[sig|req|signer${i + 1}]`;
+    const tag = provider === 'boldsign' ? `{{sign|${i + 1}|*|Signature}}` : provider === 'pandadoc' ? `{signature*:Signer${i + 1}}` : `[sig|req|signer${i + 1}]`;
     page.drawText(tag, { x: 74, y: top - 36, size: 7, font, color: rgb(1, 1, 1) });
   });
   return Buffer.from(await pdf.save());
@@ -100,23 +100,7 @@ export async function sendForSignature(realtorId: string, input: SendInput): Pro
   const b64 = pdf.toString('base64');
   let externalId = '';
 
-  if (input.provider === 'docusign') {
-    let info = await proxyCall(realtorId, acct.id, 'https://account.docusign.com/oauth/userinfo', { method: 'GET' });
-    if (!info.ok) info = await proxyCall(realtorId, acct.id, 'https://account-d.docusign.com/oauth/userinfo', { method: 'GET' });
-    if (!info.ok) throw new Error(`DocuSign did not accept the connection (${info.status}): ${upstreamMessage(info.data)}`);
-    const accounts = (info.data as { accounts?: { account_id: string; is_default?: boolean; base_uri: string }[] }).accounts ?? [];
-    const account = accounts.find((a) => a.is_default) ?? accounts[0];
-    if (!account) throw new Error('DocuSign did not return an account.');
-    const res = await proxyCall(realtorId, acct.id, `${account.base_uri}/restapi/v2.1/accounts/${account.account_id}/envelopes`, {
-      json: {
-        emailSubject: subject, status: 'sent',
-        documents: [{ documentBase64: b64, name: `${docName}.pdf`, fileExtension: 'pdf', documentId: '1' }],
-        recipients: { signers: input.signers.map((s, i) => ({ email: s.email, name: s.name, recipientId: String(i + 1), routingOrder: '1', tabs: { signHereTabs: [{ anchorString: `/s${i + 1}/`, anchorUnits: 'pixels', anchorXOffset: '0', anchorYOffset: '0' }] } })) },
-      },
-    });
-    externalId = (res.data as { envelopeId?: string })?.envelopeId ?? '';
-    if (!res.ok || !externalId) throw new Error(`DocuSign rejected the document (${res.status}): ${upstreamMessage(res.data)}`);
-  } else if (input.provider === 'dropbox_sign') {
+  if (input.provider === 'dropbox_sign') {
     const parts: Parameters<typeof multipart>[0] = [
       { name: 'title', value: subject }, { name: 'subject', value: subject }, { name: 'message', value: `Please review and sign ${docName} for ${property}.` },
       { name: 'use_text_tags', value: '1' }, { name: 'hide_text_tags', value: '1' },
@@ -167,16 +151,7 @@ export async function refreshEnvelope(realtorId: string, id: string): Promise<st
   const acct = await accountFor(realtorId, [row.provider]);
   if (!acct) throw new Error('Reconnect that signing app in Integrations first.');
   let status = row.status;
-  if (row.provider === 'docusign') {
-    let info = await proxyCall(realtorId, acct.id, 'https://account.docusign.com/oauth/userinfo', { method: 'GET' });
-    if (!info.ok) info = await proxyCall(realtorId, acct.id, 'https://account-d.docusign.com/oauth/userinfo', { method: 'GET' });
-    const account = ((info.data as { accounts?: { account_id: string; is_default?: boolean; base_uri: string }[] })?.accounts ?? []).find((a) => a.is_default) ?? (info.data as { accounts?: { account_id: string; base_uri: string }[] })?.accounts?.[0];
-    if (!info.ok || !account) throw new Error('Could not reach DocuSign.');
-    const res = await proxyCall(realtorId, acct.id, `${account.base_uri}/restapi/v2.1/accounts/${account.account_id}/envelopes/${row.external_id}`, { method: 'GET' });
-    if (!res.ok) throw new Error(`DocuSign could not check this document (${res.status}).`);
-    const s = String((res.data as { status?: string }).status ?? '').toLowerCase();
-    status = s === 'completed' ? 'completed' : s === 'declined' ? 'declined' : s === 'voided' ? 'cancelled' : 'sent';
-  } else if (row.provider === 'dropbox_sign') {
+  if (row.provider === 'dropbox_sign') {
     const res = await proxyCall(realtorId, acct.id, `https://api.hellosign.com/v3/signature_request/${encodeURIComponent(row.external_id)}`, { method: 'GET' });
     if (!res.ok) throw new Error(`Dropbox Sign could not check this document (${res.status}).`);
     const r = (res.data as { signature_request?: { is_complete?: boolean; is_declined?: boolean; has_error?: boolean } }).signature_request ?? {};
