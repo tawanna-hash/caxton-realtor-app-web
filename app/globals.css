@@ -1362,3 +1362,5 @@ input[type='date']::-webkit-calendar-picker-indicator {
   padding: 1.25rem 1.375rem;
   min-width: 0;
 }
+#agent-desk aside div:has(> .rnn-heading-icon:first-child) { gap: 0.625rem; }
+#agent-desk aside div:has(> .rnn-heading-icon:first-child) p { font-size: 0.6875rem; letter-spacing: 0.1em; white-space: nowrap; }
