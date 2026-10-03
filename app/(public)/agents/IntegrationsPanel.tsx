@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { Plug, Search, X } from 'lucide-react';
+import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 
 type Account = { id: string; appSlug: string; appName: string; healthy: boolean };
 type Catalog = { slug: string; name: string; group: string; logo?: string };
@@ -96,12 +97,19 @@ export default function IntegrationsPanel() {
     return out;
   }, [accounts, catalog, connectedOnly, query]);
 
+  const { section: collapsible, toggleProps } = useCollapsibles();
   const selectedAccount = selected ? accounts.find((a) => a.appSlug === selected.slug) : undefined;
 
   return (
-    <section aria-label="Integrations" className="border border-slate-200 bg-white p-5 sm:p-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Integrations</p>
-      <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Connect The Tools You Already Use</h2>
+    <section aria-label="Integrations" {...collapsible('integrations', { mobileOpen: true })} data-section-key={undefined} className="border border-slate-200 bg-white p-5 sm:p-6">
+      <div className="flex items-center gap-3">
+        <Plug className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Integrations</p>
+          <h2 className="mt-1 text-xl font-semibold text-slate-950">Connect The Tools You Already Use</h2>
+        </div>
+        <CollapseToggle {...toggleProps('integrations', 'integrations', { mobileOpen: true })} className="ml-auto" />
+      </div>
       <p className="mt-2 text-sm leading-6 text-slate-600">Each connection is yours alone. You sign in with the provider, and you can disconnect at any time.</p>
 
       {!configured && loaded && <p className="mt-4 border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Integrations are not turned on yet. They will be available here soon.</p>}
