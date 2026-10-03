@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { SAML } from '@node-saml/node-saml';
 import { agentCommandCenterWorkspaceSchema } from '@/lib/agent-command-center-workspace';
 import { dealRisks, dealTimeline } from '@/lib/closing-time-risks';
+import { ApiError } from '@/lib/server/error';
 import { query } from '@/lib/server/db/neon';
 import { ensureAssistSchema } from '@/lib/server/closing-time-assist';
 
@@ -47,7 +48,7 @@ export async function listBrokerages() {
 export async function saveBrokerage(input: { id?: string; name: string; slug: string; emailDomains: string[]; ssoEntryPoint: string; ssoIdpIssuer: string; ssoCert: string; ssoEnabled: boolean }) {
   await ensureBrokerageSchema();
   const slug = input.slug.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
-  if (!slug) throw Object.assign(new Error('Slug is required'), { status: 400 });
+  if (!slug) throw new ApiError(400, 'Slug is required');
   const domains = input.emailDomains.map((d) => d.trim().toLowerCase().replace(/^@/, '')).filter(Boolean);
   const id = input.id ?? randomUUID();
   await query(`INSERT INTO closing_time_brokerages (id, name, slug, email_domains, sso_entry_point, sso_idp_issuer, sso_cert, sso_enabled)
@@ -61,7 +62,7 @@ export async function saveBrokerage(input: { id?: string; name: string; slug: st
 export async function addMember(brokerageId: string, email: string, role: 'agent' | 'admin') {
   await ensureBrokerageSchema();
   const r = await query<{ id: string }>(`SELECT id FROM realtors WHERE LOWER(email)=LOWER($1) LIMIT 1`, [email.trim()]);
-  if (!r[0]) throw Object.assign(new Error('No RealtyLine account with that email. The agent must sign up first.'), { status: 404 });
+  if (!r[0]) throw new ApiError(404, 'No RealtyLine account with that email. The agent must sign up first.');
   await query(`INSERT INTO closing_time_brokerage_members (brokerage_id, realtor_id, role) VALUES ($1,$2,$3) ON CONFLICT (brokerage_id, realtor_id) DO UPDATE SET role=EXCLUDED.role`, [brokerageId, r[0].id, role]);
 }
 export async function removeMember(brokerageId: string, realtorId: string) {

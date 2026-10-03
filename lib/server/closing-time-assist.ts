@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from 'crypto';
 import { agentCommandCenterWorkspaceSchema, type AgentDeal } from '@/lib/agent-command-center-workspace';
 import { dealRisks, dealTimeline } from '@/lib/closing-time-risks';
 import { sendEmail } from '@/lib/email';
+import { ApiError } from '@/lib/server/error';
 import { query } from '@/lib/server/db/neon';
 import { ensureAgentCommandCenterWorkspaceSchema, getAgentCommandCenterWorkspace } from '@/lib/server/agent-command-center-workspaces';
 
@@ -85,7 +86,7 @@ async function loadDeal(realtorId: string, dealId: string): Promise<AgentDeal | 
 
 export async function requireDeal(realtorId: string, dealId: string): Promise<AgentDeal> {
   const deal = await loadDeal(realtorId, dealId);
-  if (!deal) throw Object.assign(new Error('Deal not found. Save the transaction first.'), { status: 404 });
+  if (!deal) throw new ApiError(404, 'Deal not found. Save the transaction first.');
   return deal;
 }
 
@@ -346,7 +347,7 @@ export async function addSignatureRequest(realtorId: string, dealId: string, par
   await ensureAssistSchema();
   await requireDeal(realtorId, dealId);
   const p = (await query<PartyRow>(`SELECT id, deal_id, role, name, email FROM closing_time_parties WHERE id=$1 AND realtor_id=$2 AND deal_id=$3`, [partyId, realtorId, dealId]))[0];
-  if (!p?.email) throw Object.assign(new Error('Add an email to that contact first.'), { status: 400 });
+  if (!p?.email) throw new ApiError(400, 'Add an email to that contact first.');
   await query(`INSERT INTO closing_time_signatures (id, realtor_id, deal_id, to_name, to_email, document) VALUES ($1,$2,$3,$4,$5,$6)`,
     [randomUUID(), realtorId, dealId, p.name, p.email, document.trim().slice(0, 200)]);
 }
