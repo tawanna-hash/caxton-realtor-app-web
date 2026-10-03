@@ -10,7 +10,9 @@ type Step = { title: string; offsetDays: number; anchor: 'effective' | 'closing'
 type Upload = { id: string; docId: string; filename: string; sizeBytes: number; createdAt: string; reviewed: boolean };
 type Sig = { id: string; toName: string; toEmail: string; document: string; status: string; remindersSent: number; createdAt: string };
 type Connected = { calendar: string | null; mail: string | null; storage: { slug: string; name: string }[]; sendFromConnected: boolean };
-type Data = { connected?: Connected; signatures: Sig[]; autoSignature: boolean; uploads: Upload[]; autoIntro: boolean; parties: Party[]; followUps: FollowUp[]; risks: Risk[]; portalToken: string | null; checklist: Step[]; customChecklist: boolean };
+type Envelope = { id: string; provider: string; document: string; signers: { name: string; email: string }[]; status: string; createdAt: string };
+type Signing = { providers: { slug: string; name: string }[]; envelopes: Envelope[] };
+type Data = { connected?: Connected; signing?: Signing; signatures: Sig[]; autoSignature: boolean; uploads: Upload[]; autoIntro: boolean; parties: Party[]; followUps: FollowUp[]; risks: Risk[]; portalToken: string | null; checklist: Step[]; customChecklist: boolean };
 
 const ROLES: Record<string, string> = { client: 'Client', lender: 'Lender', title: 'Title company', coop_agent: 'Co-op agent', other: 'Other' };
 const btn = 'inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:opacity-45';
@@ -80,6 +82,34 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
     setNotice('');
     const r = await post({ action: 'save_upload', dealId: deal.id, id, storage });
     if (r?.message) setNotice(r.message);
+  };
+
+  const [sigProvider, setSigProvider] = useState('');
+  const [sigDoc, setSigDoc] = useState('');
+  const [sigFile, setSigFile] = useState<{ name: string; b64: string } | null>(null);
+  const [sigTo, setSigTo] = useState<string[]>([]);
+  const [sigSubject, setSigSubject] = useState('');
+  const pickFile = (file: File | undefined) => {
+    setSigFile(null);
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) { setError('That file is over 3 MB. Choose a smaller PDF.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => { const r = String(reader.result); setSigFile({ name: file.name, b64: r.slice(r.indexOf(',') + 1) }); setSigDoc('file'); };
+    reader.readAsDataURL(file);
+  };
+  const sendSignature = async () => {
+    setNotice('');
+    const provider = sigProvider || data?.signing?.providers[0]?.slug || '';
+    const signers = (data?.parties ?? []).filter((p) => p.email && sigTo.includes(p.id)).map((p) => ({ name: p.name || p.email, email: p.email }));
+    const doc = sigDoc === 'file' && sigFile ? { fileName: sigFile.name, fileB64: sigFile.b64 } : sigDoc ? { uploadId: sigDoc } : null;
+    if (!provider || !doc || signers.length === 0) { setError('Choose a document and at least one person to sign.'); return; }
+    const r = await post({ action: 'send_signature', dealId: deal.id, provider, subject: sigSubject || undefined, signers, ...doc });
+    if (r?.message) { setNotice(r.message); setSigTo([]); }
+  };
+  const refreshSig = async (id: string) => {
+    setNotice('');
+    const r = await post({ action: 'refresh_signature', id });
+    if (r?.status) setNotice(`Status: ${r.status}.`);
   };
 
   const portalUrl = data?.portalToken ? `${window.location.origin}/deal-portal/${data.portalToken}` : '';
@@ -228,6 +258,50 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                 )}
                 {notice && <p role="status" className="font-semibold text-[#301D5D]">{notice}</p>}
               </div>
+            )}
+          </section>
+
+          <section aria-label="Send for signature" className="lg:col-span-2">
+            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Send For Signature</h4>
+            {!data.signing || data.signing.providers.length === 0 ? (
+              <p className="mt-2 text-sm text-slate-500">Connect a signing app such as DocuSign or BoldSign on the Integrations page to send documents for signature from this deal.</p>
+            ) : (
+              <div className="mt-2 space-y-3 border border-slate-200 p-3 text-sm">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className="block"><span className="text-xs font-semibold text-slate-600">Signing app</span>
+                    <select className={input} value={sigProvider || data.signing.providers[0].slug} onChange={(e) => setSigProvider(e.target.value)}>{data.signing.providers.map((p) => <option key={p.slug} value={p.slug}>{p.name}</option>)}</select></label>
+                  <label className="block"><span className="text-xs font-semibold text-slate-600">Document</span>
+                    <select className={input} value={sigDoc} onChange={(e) => setSigDoc(e.target.value)}>
+                      <option value="">Choose a document</option>
+                      {sigFile && <option value="file">{sigFile.name}</option>}
+                      {data.uploads.map((u) => <option key={u.id} value={u.id}>{u.filename}</option>)}
+                    </select></label>
+                </div>
+                <label className="block"><span className="text-xs font-semibold text-slate-600">Or choose a PDF from your computer (3 MB max)</span>
+                  <input type="file" accept="application/pdf,.pdf" className="mt-1 block text-xs" onChange={(e) => pickFile(e.target.files?.[0])} /></label>
+                <fieldset><legend className="text-xs font-semibold text-slate-600">Who signs</legend>
+                  {data.parties.filter((p) => p.email).length === 0 ? <p className="mt-1 text-slate-500">Add a deal contact with an email above first.</p> : (
+                    <div className="mt-1 flex flex-wrap gap-3">{data.parties.filter((p) => p.email).map((p) => (
+                      <label key={p.id} className="flex items-center gap-2"><input type="checkbox" checked={sigTo.includes(p.id)} onChange={(e) => setSigTo(e.target.checked ? [...sigTo, p.id] : sigTo.filter((x) => x !== p.id))} /> {p.name || p.email} <span className="text-xs text-slate-500">{ROLES[p.role] ?? p.role}</span></label>
+                    ))}</div>
+                  )}
+                </fieldset>
+                <label className="block"><span className="text-xs font-semibold text-slate-600">Email subject (optional)</span>
+                  <input className={input} value={sigSubject} maxLength={200} onChange={(e) => setSigSubject(e.target.value)} /></label>
+                <p className="text-xs text-slate-500">A signature page is added at the end of the PDF. Nothing is sent until you press the button.</p>
+                <button type="button" disabled={busy} className={btnPrimary} onClick={() => void sendSignature()}>Send For Signature</button>
+              </div>
+            )}
+            {data.signing && data.signing.envelopes.length > 0 && (
+              <ul className="mt-2 divide-y divide-slate-100 border border-slate-200 text-sm">
+                {data.signing.envelopes.map((e) => (
+                  <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                    <span className="min-w-0"><span className="font-semibold">{e.document}</span> <span className="text-xs text-slate-500">via {e.provider} to {e.signers.map((x) => x.name).join(', ')}</span></span>
+                    <span className="flex items-center gap-2"><span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold capitalize">{e.status === 'sent' ? 'Awaiting signatures' : e.status}</span>
+                      {e.status === 'sent' && <button type="button" disabled={busy} className={btn} onClick={() => void refreshSig(e.id)}>Refresh Status</button>}</span>
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
 

@@ -40,10 +40,16 @@ export async function availableApps(): Promise<AvailableApp[]> {
     if (!body.next_cursor) break;
     cursor = body.next_cursor;
   }
+  const configured = new Set<string>();
+  const cfg = await api('/api/v3/auth_configs?limit=100').catch(() => null);
+  if (cfg?.ok) {
+    const body = (await cfg.json()) as { items?: { toolkit?: { slug?: string }; status?: string }[] };
+    for (const c of body.items ?? []) if (c.toolkit?.slug && c.status !== 'DISABLED') configured.add(c.toolkit.slug.toLowerCase());
+  }
   const existing = new Set(Object.values(APPS).map((a) => a.toolkit));
   const items: AvailableApp[] = [
     ...Object.entries(APPS).map(([slug, a]) => ({ slug, name: a.name, logo: found.get(a.toolkit)?.logo, group: ({ google_calendar: 'Calendar and Scheduling', outlook: 'Calendar and Scheduling', gmail: 'Email', google_drive: 'Documents and Storage', dropbox: 'Documents and Storage', microsoft_onedrive: 'Documents and Storage', slack: 'Messaging and Calls', dotloop: 'Real Estate' } as Record<string, string>)[slug] ?? 'Other' })),
-    ...CATALOG.filter((c) => !existing.has(c.toolkit) && found.get(c.toolkit)?.managed === true).map((c) => ({ slug: c.toolkit, name: c.name, group: c.group, logo: found.get(c.toolkit)?.logo })),
+    ...CATALOG.filter((c) => !existing.has(c.toolkit) && (found.get(c.toolkit)?.managed === true || (found.has(c.toolkit) && configured.has(c.toolkit)))).map((c) => ({ slug: c.toolkit, name: c.name, group: c.group, logo: found.get(c.toolkit)?.logo })),
   ];
   const order = Array.from(new Set(CATALOG.map((c) => c.group)));
   items.sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group));
