@@ -1893,14 +1893,14 @@ export default function ClosingTime({
           </p>
         </div>
 
-        <div className="mt-5 lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start lg:gap-6">
-          <aside aria-label="Transactions" className="mb-5 lg:sticky lg:top-24 lg:mb-0">
+        <div className="mt-5 grid grid-cols-[112px_minmax(0,1fr)] items-start gap-3 sm:grid-cols-[160px_minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
+          <aside aria-label="Transactions" className="sticky top-16 min-w-0 lg:top-24">
             <div className="border border-slate-200 bg-white">
-              <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Transactions</p>
-                <button type="button" onClick={() => { createDeal(); setWorkspacePage(2); setDeskView('transaction'); }} className="min-h-[32px] rounded-md bg-[#301D5D] px-3 text-xs font-bold text-white hover:bg-[#42277c]">New</button>
+              <div className="flex items-center justify-between gap-1 border-b border-slate-200 px-2 py-2 lg:px-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#7059A8] lg:text-xs lg:tracking-[0.16em]">Deals</p>
+                <button type="button" onClick={() => { createDeal(); setWorkspacePage(2); setDeskView('transaction'); }} className="min-h-[32px] rounded-md bg-[#301D5D] px-2 text-xs font-bold text-white hover:bg-[#42277c] lg:px-3">New</button>
               </div>
-              <ul className="max-h-[46vh] overflow-y-auto">
+              <ul className="max-h-[46vh] overflow-y-auto overflow-x-hidden">
                 {deals.length === 0 && <li className="px-3 py-4 text-sm text-slate-500">No transactions yet.</li>}
                 {[...activeDeals, ...closedDeals].map((deal) => {
                   const days = daysUntilClosing(deal.closingDate, today);
@@ -1913,19 +1913,19 @@ export default function ClosingTime({
                         type="button"
                         aria-current={selected ? 'true' : undefined}
                         onClick={() => { setActiveDealId(deal.id); setWorkspacePage(2); if (!DEAL_TABS.some((t) => t.id === deskView)) setDeskView('transaction'); setFormsStatusDealId(deal.id); }}
-                        className={`flex w-full items-start gap-3 border-b border-slate-100 px-3 py-3 text-left transition last:border-0 hover:bg-[#F8F5FF] ${selected ? 'bg-[#F8F5FF] shadow-[inset_3px_0_0_#301D5D]' : ''}`}
+                        className={`flex w-full items-start gap-2 border-b border-slate-100 px-2 py-2.5 text-left lg:gap-3 lg:px-3 lg:py-3 transition last:border-0 hover:bg-[#F8F5FF] ${selected ? 'bg-[#F8F5FF] shadow-[inset_3px_0_0_#301D5D]' : ''}`}
                       >
                         <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${tone}`} aria-hidden="true" />
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
-                          <span className="block truncate text-xs text-slate-500">{closed ? 'Closed' : days === null ? 'Closing date not set' : closingCountdownLabel(deal.closingDate, today)}</span>
+                          <span className="block break-words text-xs font-semibold leading-4 text-slate-900 lg:truncate lg:text-sm">{deal.propertyAddress || deal.title}</span>
+                          <span className="block text-[10px] leading-4 text-slate-500 lg:truncate lg:text-xs">{closed ? 'Closed' : days === null ? 'Closing date not set' : closingCountdownLabel(deal.closingDate, today)}</span>
                         </span>
                       </button>
                     </li>
                   );
                 })}
               </ul>
-              <ul className="border-t border-slate-200 p-2">
+              <ul className="border-t border-slate-200 p-1 lg:p-2">
                 {TOOL_VIEWS.map((view) => {
                   const active = view.id === effectiveView;
                   return (
@@ -1934,7 +1934,7 @@ export default function ClosingTime({
                         type="button"
                         aria-current={active ? 'page' : undefined}
                         onClick={() => { if (view.id === 'overview') setWorkspacePage(1); else { setWorkspacePage(2); setDeskView(view.id); } }}
-                        className={`min-h-[38px] w-full rounded-md px-3 text-left text-sm font-semibold transition ${active ? 'bg-[#301D5D] text-white' : 'text-slate-700 hover:bg-[#F8F5FF]'}`}
+                        className={`min-h-[38px] w-full rounded-md px-2 py-1 text-left text-xs font-semibold leading-4 transition lg:px-3 lg:text-sm ${active ? 'bg-[#301D5D] text-white' : 'text-slate-700 hover:bg-[#F8F5FF]'}`}
                       >
                         {view.label}
                       </button>
