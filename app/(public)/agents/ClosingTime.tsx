@@ -20,17 +20,9 @@ const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'integrations', label: 'Integrations', keys: ['calendar'] },
 ];
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS];
-const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug };
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
-  Bell,
-  Briefcase,
-  Calculator,
-  Handshake,
-  LayoutDashboard,
-  Plug,
-  type LucideIcon,
   Building2,
   Camera,
   CalendarDays,
@@ -1942,7 +1934,7 @@ export default function ClosingTime({
   }
 
   return (
-    <main id="agent-desk" className="min-h-screen bg-[#F4F4F7]">
+    <main id="agent-desk" className="min-h-screen bg-[#F7F5F1]">
       <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -1968,12 +1960,8 @@ export default function ClosingTime({
         <div className="mt-5 grid grid-cols-[112px_minmax(0,1fr)] items-start gap-3 sm:grid-cols-[160px_minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
           <aside aria-label="Transactions" className="sticky top-16 min-w-0 lg:top-24">
             <div className="border border-slate-200 bg-white">
-              <div className="flex items-center gap-2 border-b border-slate-200 px-2 py-3 lg:gap-3 lg:px-4">
-                <Briefcase className="rnn-heading-icon hidden text-[#7059A8] lg:block" aria-hidden="true" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7059A8] lg:text-xs lg:tracking-[0.16em]">Transactions</p>
-                  <p className="mt-0.5 text-base leading-5 text-slate-950 lg:text-lg">Deals</p>
-                </div>
+              <div className="flex items-center justify-between gap-1 border-b border-slate-200 px-2 py-2 lg:px-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#7059A8] lg:text-xs lg:tracking-[0.16em]">Deals</p>
                 <button type="button" onClick={() => { createDeal(); setWorkspacePage(2); setDeskView('transaction'); }} className="min-h-[32px] rounded-md bg-[#301D5D] px-2 text-xs font-bold text-white hover:bg-[#42277c] lg:px-3">New</button>
               </div>
               <ul className="max-h-[46vh] overflow-y-auto overflow-x-hidden">
@@ -2010,9 +1998,8 @@ export default function ClosingTime({
                         type="button"
                         aria-current={active ? 'page' : undefined}
                         onClick={() => { if (view.id === 'overview') setWorkspacePage(1); else { setWorkspacePage(2); setDeskView(view.id); } }}
-                        className="flex min-h-[40px] w-full items-center gap-2 px-2 py-1 text-left text-xs leading-4 transition lg:gap-3 lg:px-4 lg:text-sm"
+                        className={`min-h-[38px] w-full rounded-md px-2 py-1 text-left text-xs font-semibold leading-4 transition lg:px-3 lg:text-sm ${active ? 'bg-[#301D5D] text-white' : 'text-slate-700 hover:bg-[#F8F5FF]'}`}
                       >
-                        {(() => { const NavIcon = NAV_ICONS[view.id] ?? FileText; return <NavIcon className="ct-navicon" aria-hidden="true" />; })()}
                         {view.label}
                       </button>
                     </li>
@@ -2023,15 +2010,9 @@ export default function ClosingTime({
           </aside>
           <div data-desk-view={effectiveView} className="min-w-0">
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
-              <nav aria-label="Transaction sections" className="mb-5 overflow-hidden border border-slate-200 bg-white px-5 pt-5">
-                <div className="flex items-center gap-3">
-                  <Briefcase className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Selected Deal</p>
-                    <h3 className="mt-1 truncate text-xl font-semibold text-slate-950">{activeDeal ? activeDeal.propertyAddress || activeDeal.title : 'Select a transaction'}</h3>
-                  </div>
-                </div>
-                <div className="-mx-5 flex gap-1 overflow-x-auto px-5">
+              <nav aria-label="Transaction sections" className="mb-4 border-b border-slate-200">
+                <p className="mb-2 truncate text-lg font-semibold text-slate-950">{activeDeal ? activeDeal.propertyAddress || activeDeal.title : 'Select a transaction'}</p>
+                <div className="flex gap-1 overflow-x-auto">
                   {DEAL_TABS.map((tab) => (
                     <button key={tab.id} type="button" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)} className={`min-h-[40px] shrink-0 border-b-2 px-3 text-sm font-semibold ${tab.id === effectiveView ? 'border-[#301D5D] text-[#301D5D]' : 'border-transparent text-slate-600 hover:text-[#301D5D]'}`}>{tab.label}</button>
                   ))}
@@ -2128,13 +2109,11 @@ export default function ClosingTime({
               <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active transactions. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
             </div>
             <div id="trec-forms" {...collapsible('trec-library')} className="min-w-0 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <FileText className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">TREC Forms Library</p>
-                  <h3 className="mt-1 text-xl font-semibold text-slate-950">TREC Contracts And Forms</h3>
+                  <h3 className="text-lg font-semibold text-slate-950">TREC Contracts And Forms</h3>
                 </div>
-                <div className="ml-auto flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                   <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-md border border-[#301D5D] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white sm:inline-flex">Verify on TREC</a>
                   <CollapseToggle {...toggleProps('trec-library', 'TREC contracts and forms')} />
                 </div>
@@ -2197,11 +2176,10 @@ export default function ClosingTime({
 
         {workspacePage === 2 && (
           <div id="current-transaction" {...collapsible('current', { mobileOpen: true })} className="mt-5 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-7">
-            <div className="flex flex-wrap items-center gap-3">
-              <ClipboardCheck className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Current Deal</p>
-                <h3 className="mt-1 text-xl font-semibold text-slate-950">
+            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+              <div>
+                <p className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Current Deal<CollapseToggle {...toggleProps('current', 'current transaction', { mobileOpen: true })} /></p>
+                <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">
                   {activeDeal?.propertyAddress || activeDeal?.title || 'Start a transaction'}
                 </h3>
                 {selectedFormVersions.length > 0 && (
@@ -2212,7 +2190,7 @@ export default function ClosingTime({
                 )}
               </div>
               {deals.length > 0 && (
-                <div className="flex min-w-0 flex-wrap gap-2 sm:ml-auto">
+                <div className="flex min-w-0 flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -2371,7 +2349,6 @@ export default function ClosingTime({
                   )}
                 </div>
               )}
-              <CollapseToggle {...toggleProps('current', 'current transaction', { mobileOpen: true })} className={deals.length > 0 ? '' : 'ml-auto'} />
             </div>
 
             {!activeDeal ? (
@@ -2486,11 +2463,10 @@ export default function ClosingTime({
                 </div>
 
                 <div className="mt-7 rounded-md border border-slate-200 bg-[#FCFBF9] p-5 sm:p-7">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <CalendarDays className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Contract Timeline</p>
-                      <h4 className="mt-1 text-xl font-semibold text-slate-950">Pressing Deadlines</h4>
+                      <h4 className="text-lg font-semibold text-slate-950">Pressing Deadlines</h4>
                       <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates auto-populate from it using the contract terms and TREC timing rules, then sync with Calendar Exports and Deadline Alerts.</p>
                     </div>
                   </div>

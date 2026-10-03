@@ -1235,7 +1235,3 @@ input[type='date']::-webkit-calendar-picker-indicator {
 [data-desk-view='referral'] [data-section-key='referral'],
 [data-desk-view='integrations'] [data-section-key='integrations'],
 [data-desk-view='audit'] [data-section-key='audit'] { display: revert; }
-
-/* Agent Desk: clean slate, Inter only. All other styling comes from the markup. */
-#agent-desk, #agent-desk * { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
-#agent-desk .ct-navicon { width: 1rem; height: 1rem; flex: none; }
