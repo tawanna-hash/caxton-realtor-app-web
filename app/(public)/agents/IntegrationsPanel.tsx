@@ -100,7 +100,6 @@ export default function IntegrationsPanel() {
             <li key={item.slug} className="flex flex-wrap items-center justify-between gap-3 p-4">
               <div className="min-w-0">
                 <p className="font-semibold text-slate-950">{item.name} <span className="ml-1 text-xs font-medium text-slate-500">{item.group}</span></p>
-                <p className="text-sm text-slate-600">{item.description}{account && !account.healthy ? ' Needs to be reconnected.' : ''}</p>
               </div>
               {account ? (
                 <button type="button" disabled={busy === account.id} onClick={() => void disconnect(account)} className="min-h-[40px] rounded-md border border-slate-300 px-4 text-sm font-bold text-slate-700 hover:border-[#9A3D2B] hover:text-[#9A3D2B] disabled:opacity-50">Disconnect</button>
