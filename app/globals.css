@@ -1236,21 +1236,106 @@ input[type='date']::-webkit-calendar-picker-indicator {
 [data-desk-view='integrations'] [data-section-key='integrations'],
 [data-desk-view='audit'] [data-section-key='audit'] { display: revert; }
 
-/* Agent Desk: every style removed. Browser defaults + Inter only. */
-#agent-desk, #agent-desk *:not(svg):not(svg *) { all: revert; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
-#agent-desk svg { width: 1em; height: 1em; }
-#agent-desk .sr-only { display: none; }
-/* Keep only the page switching behavior */
-#agent-desk [data-desk-view] [data-section-key] { display: none; }
-#agent-desk [data-desk-view='transaction'] [data-section-key='current'],
-#agent-desk [data-desk-view='transaction'] [data-section-key='trec-forms'],
-#agent-desk [data-desk-view='readiness'] [data-section-key='readiness'],
-#agent-desk [data-desk-view='coordinator'] [data-section-key='assist'],
-#agent-desk [data-desk-view='coordinator'] [data-section-key='alerts'],
-#agent-desk [data-desk-view='integrations'] [data-section-key='calendar'],
-#agent-desk [data-desk-view='tasks'] [data-section-key='tasks'],
-#agent-desk [data-desk-view='forms'] [data-section-key='trec-library'],
-#agent-desk [data-desk-view='tools'] [data-section-key='tools'],
-#agent-desk [data-desk-view='referral'] [data-section-key='referral'],
-#agent-desk [data-desk-view='integrations'] [data-section-key='integrations'],
-#agent-desk [data-desk-view='audit'] [data-section-key='audit'] { display: revert; }
+/* ───────────────────────────────────────────────────────────────────────
+   Agent Desk (Closing Time) design system.
+   Inter only. Three colors: deep purple (#301D5D) for actions, light purple
+   (#EFEAF8 / #F6F3FB) for icons, selection and callouts, soft gray (#F4F4F7
+   canvas, #E2E2E8 lines) for everything else. White cards, 8px corners,
+   hairline borders, no shadows. Scoped to #agent-desk.
+   ─────────────────────────────────────────────────────────────────────── */
+#agent-desk {
+  --d-canvas: #F4F4F7;
+  --d-card: #FFFFFF;
+  --d-inset: #FAFAFC;
+  --d-line: #E2E2E8;
+  --d-line-soft: #F0F0F4;
+  --d-ink: #1B1726;
+  --d-text: #4A4757;
+  --d-muted: #7A7787;
+  --d-purple: #301D5D;
+  --d-purple-hover: #42277C;
+  --d-lav: #7059A8;
+  --d-lav-soft: #EFEAF8;
+  --d-lav-wash: #F6F3FB;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  background-color: var(--d-canvas);
+  color: var(--d-text);
+}
+#agent-desk *:not(svg):not(svg *) { font-family: inherit; }
+
+/* Surfaces */
+#agent-desk [class~='border'][class*='bg-white'],
+#agent-desk [class~='border'][class*='bg-[#FCFBF9]'],
+#agent-desk [class~='border'][class*='bg-[#FFFDF8]'],
+#agent-desk [class~='border'][class*='bg-[#F7F3EB]'] {
+  background-color: var(--d-card);
+  border-color: var(--d-line);
+  border-radius: 8px;
+  box-shadow: none;
+}
+/* Cards nested inside cards read as quiet inset panels */
+#agent-desk [class~='border'][class*='bg-white'] [class~='border'][class*='bg-white'],
+#agent-desk [class~='border'][class*='bg-white'] [class~='border'][class*='bg-[#FCFBF9]'] {
+  background-color: var(--d-inset);
+}
+#agent-desk [class*='border-[#D9D0BF]'],
+#agent-desk .border-slate-200,
+#agent-desk .border-slate-300 { border-color: var(--d-line); }
+#agent-desk .border-slate-100,
+#agent-desk .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: var(--d-line-soft); }
+#agent-desk [class*='bg-[#F8F5FF]'] { background-color: var(--d-lav-wash); }
+
+/* Type */
+#agent-desk :is(h1, h2, h3, h4) { color: var(--d-ink); font-weight: 600; letter-spacing: -0.015em; }
+#agent-desk .text-slate-950, #agent-desk .text-slate-900 { color: var(--d-ink); }
+#agent-desk .text-slate-700 { color: var(--d-text); }
+#agent-desk .text-slate-600 { color: var(--d-text); }
+#agent-desk .text-slate-500, #agent-desk .text-slate-400 { color: var(--d-muted); }
+#agent-desk .uppercase[class*='text-[#7059A8]'] { color: var(--d-muted); font-weight: 600; letter-spacing: 0.14em; }
+#agent-desk .rnn-heading-icon { background-color: var(--d-lav-soft); color: var(--d-lav); }
+#agent-desk a:not([class*='bg-']) { color: var(--d-purple); }
+
+/* Controls */
+#agent-desk :is(input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']), select, textarea) {
+  background-color: #FFFFFF;
+  border: 1px solid #D4D4DC;
+  border-radius: 6px;
+  color: var(--d-ink);
+}
+#agent-desk :is(input, select, textarea)::placeholder { color: #A3A0AF; }
+#agent-desk :is(input, select, textarea):focus {
+  outline: none;
+  border-color: var(--d-lav);
+  box-shadow: 0 0 0 3px rgb(112 89 168 / 0.18);
+}
+#agent-desk input[type='checkbox'], #agent-desk input[type='radio'] { accent-color: var(--d-purple); }
+#agent-desk button, #agent-desk a[class*='min-h-['] { border-radius: 6px; }
+#agent-desk button[class*='bg-[#301D5D]'], #agent-desk a[class*='bg-[#301D5D]'] {
+  background-color: var(--d-purple); border-color: var(--d-purple); color: #FFFFFF;
+}
+#agent-desk button[class*='bg-[#301D5D]']:hover:not(:disabled) { background-color: var(--d-purple-hover); }
+#agent-desk button[class*='border']:not([class*='bg-[#301D5D]']):not([class*='border-b-2']) {
+  background-color: #FFFFFF; border-color: #D4D4DC; color: var(--d-purple);
+}
+#agent-desk button[class*='border']:not([class*='bg-[#301D5D]']):not([class*='border-b-2']):hover:not(:disabled) {
+  background-color: var(--d-lav-wash); border-color: var(--d-lav);
+}
+#agent-desk button[aria-expanded] { background-color: #FFFFFF; border: 1px solid var(--d-line); color: var(--d-purple); }
+
+/* Left navigation */
+#agent-desk aside li > button { background-color: transparent; border-radius: 0; color: var(--d-text); font-weight: 500; }
+#agent-desk aside li > button:hover { background-color: var(--d-lav-wash); }
+#agent-desk aside li > button[aria-current] {
+  background-color: var(--d-lav-soft);
+  color: var(--d-purple);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--d-lav);
+}
+
+/* Top tabs */
+#agent-desk nav[aria-label] button[class*='border-b-2'] { background: transparent; color: var(--d-muted); border-radius: 0; }
+#agent-desk nav[aria-label] button[class*='border-b-2'][aria-current='page'] { color: var(--d-purple); border-bottom-color: var(--d-purple); }
+#agent-desk nav[aria-label] button[class*='border-b-2']:hover { color: var(--d-purple); }
+
+/* Callouts */
+#agent-desk [class*='bg-amber-50'] { background-color: var(--d-lav-wash); border-color: var(--d-line); color: var(--d-text); }
