@@ -50,7 +50,7 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
               <span className="text-slate-900">{d.label}</span>
               {d.status === 'requested'
                 ? <UploadButton token={token} docId={d.id} />
-                : <span className="font-semibold text-[#301D5D]">{statusLabel[d.status] ?? d.status}</span>}
+                : <span className="flex items-center gap-3"><span className="font-semibold text-[#301D5D]">{statusLabel[d.status] ?? d.status}</span>{d.status !== 'not_needed' && <UploadButton token={token} docId={d.id} label="Upload New" />}</span>}
             </li>
           ))}
           {!view.documents.length && <li className="text-sm text-slate-500">No documents requested yet.</li>}
