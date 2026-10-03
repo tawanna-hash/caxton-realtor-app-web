@@ -1235,3 +1235,22 @@ input[type='date']::-webkit-calendar-picker-indicator {
 [data-desk-view='referral'] [data-section-key='referral'],
 [data-desk-view='integrations'] [data-section-key='integrations'],
 [data-desk-view='audit'] [data-section-key='audit'] { display: revert; }
+
+/* Agent Desk: every style removed. Browser defaults + Inter only. */
+#agent-desk, #agent-desk *:not(svg):not(svg *) { all: revert; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+#agent-desk svg { width: 1em; height: 1em; }
+#agent-desk .sr-only { display: none; }
+/* Keep only the page switching behavior */
+#agent-desk [data-desk-view] [data-section-key] { display: none; }
+#agent-desk [data-desk-view='transaction'] [data-section-key='current'],
+#agent-desk [data-desk-view='transaction'] [data-section-key='trec-forms'],
+#agent-desk [data-desk-view='readiness'] [data-section-key='readiness'],
+#agent-desk [data-desk-view='coordinator'] [data-section-key='assist'],
+#agent-desk [data-desk-view='coordinator'] [data-section-key='alerts'],
+#agent-desk [data-desk-view='integrations'] [data-section-key='calendar'],
+#agent-desk [data-desk-view='tasks'] [data-section-key='tasks'],
+#agent-desk [data-desk-view='forms'] [data-section-key='trec-library'],
+#agent-desk [data-desk-view='tools'] [data-section-key='tools'],
+#agent-desk [data-desk-view='referral'] [data-section-key='referral'],
+#agent-desk [data-desk-view='integrations'] [data-section-key='integrations'],
+#agent-desk [data-desk-view='audit'] [data-section-key='audit'] { display: revert; }
