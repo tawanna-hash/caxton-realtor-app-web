@@ -3,6 +3,7 @@ import {
   isAgentDeadlineDeliveryWindow,
   runAgentDeadlineNotifications,
 } from '@/lib/server/agent-deadline-notifications';
+import { runSignReminders } from '@/lib/server/closing-time-esign';
 import { runAutoIntros, runDailySummaries, runSignatureReminders } from '@/lib/server/closing-time-assist';
 
 export const runtime = 'nodejs';
@@ -32,6 +33,7 @@ export async function GET(req: Request) {
   if (isAgentDeadlineDeliveryWindow()) {
     Object.assign(out, await runAgentDeadlineNotifications());
     out.signatureReminders = await runSignatureReminders().catch((e) => ({ sent: 0, escalated: 0, errors: [String(e)] }));
+    out.signReminders = await runSignReminders(new URL(req.url).origin).catch((e) => ({ sent: 0, errors: [String(e)] }));
     out.autoIntros = await runAutoIntros().catch((e) => ({ sent: 0, errors: [String(e)] }));
   }
   // End-of-day summary, 6 PM Central (one retry hour; the ledger prevents duplicates).

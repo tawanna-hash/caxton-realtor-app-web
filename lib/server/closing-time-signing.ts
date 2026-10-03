@@ -3,7 +3,7 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { query } from '@/lib/server/db/neon';
 import { ensureAssistSchema, getUpload, requireDeal } from '@/lib/server/closing-time-assist';
 import { accountFor, appInfo, proxyCall } from '@/lib/server/composio';
-import { createSignRequest, signRequestStatus, type SignField } from '@/lib/server/closing-time-esign';
+import { createSignRequest, getSignSettings, listSignLayouts, listSignRequests, signRequestStatus, type SignField } from '@/lib/server/closing-time-esign';
 
 export const SIGN_PROVIDERS = ['boldsign', 'pandadoc', 'dropbox_sign'] as const;
 export type SignProvider = (typeof SIGN_PROVIDERS)[number];
@@ -35,12 +35,14 @@ function upstreamMessage(data: unknown): string {
 
 export async function signingState(realtorId: string, dealId: string) {
   await ensure();
+  const [settings, layouts, requests] = await Promise.all([getSignSettings(realtorId), listSignLayouts(realtorId), listSignRequests(realtorId, dealId)]);
   const [accts, rows] = await Promise.all([
     Promise.all(SIGN_PROVIDERS.map((s) => accountFor(realtorId, [s]))),
     query<{ id: string; provider: string; document: string; signers: Signer[]; status: string; created_at: unknown }>(
       `SELECT id, provider, document, signers, status, created_at FROM closing_time_envelopes WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 20`, [realtorId, dealId]),
   ]);
   return {
+    settings, layouts, requests,
     providers: [{ slug: BUILTIN, name: 'Closing Time SecureSign' }, ...SIGN_PROVIDERS.filter((_, i) => accts[i]).map((slug) => ({ slug, name: appInfo(slug)?.name ?? slug }))],
     envelopes: rows.map((r) => ({ id: r.id, provider: r.provider === BUILTIN ? 'Closing Time SecureSign' : appInfo(r.provider)?.name ?? r.provider, document: r.document, signers: r.signers, status: r.status, createdAt: iso(r.created_at) })),
   };
@@ -79,14 +81,14 @@ function multipart(parts: { name: string; value?: string; file?: { filename: str
   return { body: Buffer.concat(chunks), contentType: `multipart/form-data; boundary=${boundary}` };
 }
 
-export type BuiltinOptions = { placement: 'page' | 'inline'; fields?: SignField[]; origin: string };
+export type BuiltinOptions = { placement: 'page' | 'inline'; fields?: SignField[]; origin: string; expireDays?: number; remindEvery?: number; maxReminders?: number };
 type SendInput = { dealId: string; provider: SignProvider | typeof BUILTIN; builtin?: BuiltinOptions; uploadId?: string; fileName?: string; fileB64?: string; signers: Signer[]; subject?: string };
 
 export async function sendForSignature(realtorId: string, input: SendInput): Promise<string> {
   await ensure();
   const deal = await requireDeal(realtorId, input.dealId);
   if (input.provider === BUILTIN) {
-    return createSignRequest(realtorId, { dealId: input.dealId, uploadId: input.uploadId, fileName: input.fileName, fileB64: input.fileB64, subject: input.subject, signers: input.signers, placement: input.builtin?.placement ?? 'page', fields: input.builtin?.fields, origin: input.builtin?.origin ?? 'https://realtynewsnow.app' });
+    return createSignRequest(realtorId, { dealId: input.dealId, uploadId: input.uploadId, fileName: input.fileName, fileB64: input.fileB64, subject: input.subject, signers: input.signers, placement: input.builtin?.placement ?? 'page', fields: input.builtin?.fields, origin: input.builtin?.origin ?? 'https://realtynewsnow.app', expireDays: input.builtin?.expireDays, remindEvery: input.builtin?.remindEvery, maxReminders: input.builtin?.maxReminders });
   }
   const provider = input.provider;
   const acct = await accountFor(realtorId, [provider]);

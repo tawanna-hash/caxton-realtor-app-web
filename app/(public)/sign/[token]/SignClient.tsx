@@ -4,8 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import SignPdfPages from '@/components/SignPdfPages';
 
 type Field = { id: string; signer: number; type: 'signature' | 'date'; page: number; x: number; y: number; w: number; h: number };
-type View = { state: 'ready' | 'waiting' | 'completed' | 'declined' | 'cancelled' | 'expired'; document: string; property: string; agentName: string; signerName: string; fields: Field[]; signedBy: number; total: number; fingerprint: string };
-type Mark = { kind: 'typed' | 'drawn'; value: string };
+type View = { methods: { draw: boolean; type: boolean; upload: boolean }; notice: string; accent: string; brandName: string; logo: string; redirectUrl: string; state: 'ready' | 'waiting' | 'completed' | 'declined' | 'cancelled' | 'expired'; document: string; property: string; agentName: string; signerName: string; fields: Field[]; signedBy: number; total: number; fingerprint: string };
+type Mark = { kind: 'typed' | 'drawn' | 'uploaded'; value: string };
+
+function SigLogo({ src, alt }: { src: string; alt: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={alt} className="mb-3 max-h-12 max-w-[200px] object-contain" />;
+}
 
 function SigImg({ src }: { src: string }) {
   // eslint-disable-next-line @next/next/no-img-element
@@ -34,13 +39,29 @@ function DrawPad({ onDone, onCancel }: { onDone: (png: string) => void; onCancel
   );
 }
 
+function fitImage(file: File, done: (png: string) => void, fail: () => void) {
+  const url = URL.createObjectURL(file);
+  const img = new window.Image();
+  img.onload = () => {
+    const scale = Math.min(1, 600 / img.width, 200 / img.height);
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * scale)); c.height = Math.max(1, Math.round(img.height * scale));
+    c.getContext('2d')?.drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    const out = c.toDataURL('image/png');
+    if (out.length > 300_000) fail(); else done(out);
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); fail(); };
+  img.src = url;
+}
+
 export default function SignClient({ token }: { token: string }) {
   const [view, setView] = useState<View | null>(null);
   const [missing, setMissing] = useState(false);
   const [consent, setConsent] = useState(false);
   const [marks, setMarks] = useState<Record<string, Mark>>({});
   const [editing, setEditing] = useState<string | null>(null);
-  const [mode, setMode] = useState<'type' | 'draw'>('type');
+  const [mode, setMode] = useState<'type' | 'draw' | 'upload'>('type');
+  const [upErr, setUpErr] = useState('');
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -98,10 +119,12 @@ export default function SignClient({ token }: { token: string }) {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Closing Time SecureSign</p>
+      {view.logo && <SigLogo src={view.logo} alt={view.brandName} />}
+      <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: view.accent }}>{view.brandName ? `${view.brandName} · ` : ''}Closing Time SecureSign</p>
       <h1 className="mt-1 text-2xl font-bold text-[#301D5D]">{view.document}</h1>
       <p className="mt-1 text-sm text-slate-600">{view.property} · sent by {view.agentName} · for {view.signerName}</p>
 
+      {view.notice && <p className="mt-4 border-l-4 bg-white p-3 text-sm text-slate-800" style={{ borderColor: view.accent }}>{view.notice}</p>}
       <section className="mt-5 border border-slate-200 bg-white p-4 text-sm text-slate-800">
         <label className="flex items-start gap-3">
           <input type="checkbox" className="mt-1 h-5 w-5" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
@@ -115,9 +138,9 @@ export default function SignClient({ token }: { token: string }) {
           if (f.type === 'date') return <div key={f.id} style={style} className="absolute flex items-center border border-dashed border-[#7059A8]/60 bg-[#F8F5FF]/70 px-1 text-xs text-slate-700">{today}</div>;
           const m = marks[f.id];
           return (
-            <button key={f.id} type="button" style={style} disabled={!consent} onClick={() => { setEditing(f.id); setMode('type'); }}
+            <button key={f.id} type="button" style={style} disabled={!consent} onClick={() => { setEditing(f.id); setMode(view.methods.type ? 'type' : view.methods.draw ? 'draw' : 'upload'); }}
               className={`absolute flex items-center justify-center overflow-hidden border-2 text-xs font-bold ${m ? 'border-emerald-600 bg-white' : 'border-[#9A3D2B] bg-[#FFF5F2] text-[#9A3D2B] animate-pulse'} disabled:animate-none disabled:opacity-60`} aria-label="Signature box">
-              {m ? (m.kind === 'drawn' ? <SigImg src={m.value} /> : <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(12px,3.2vw,22px)', color: '#0d1a59' }}>{m.value}</span>) : 'Sign here'}
+              {m ? (m.kind !== 'typed' ? <SigImg src={m.value} /> : <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(12px,3.2vw,22px)', color: '#0d1a59' }}>{m.value}</span>) : 'Sign here'}
             </button>
           );
         })} />
@@ -127,7 +150,7 @@ export default function SignClient({ token }: { token: string }) {
       {!consent && <p className="mt-3 text-sm text-slate-600">Check the box above to start signing.</p>}
 
       <div className="sticky bottom-0 mt-6 flex flex-wrap items-center gap-3 border-t border-slate-200 bg-white/95 py-3">
-        <button type="button" disabled={busy || !consent || !allSigned} className={`${btn} bg-[#301D5D] text-white`} onClick={async () => { const r = await post({ action: 'sign', consent, marks }); if (r) { setDone('signed'); window.scrollTo(0, 0); } }}>Finish And Sign</button>
+        <button type="button" disabled={busy || !consent || !allSigned} className={`${btn} text-white`} style={{ background: view.accent }} onClick={async () => { const r = await post({ action: 'sign', consent, marks }); if (r) { setDone('signed'); window.scrollTo(0, 0); if (view.redirectUrl) window.setTimeout(() => { window.location.href = view.redirectUrl; }, 2500); } }}>Finish And Sign</button>
         <button type="button" disabled={busy} className={`${btn} border border-slate-300 text-slate-700`} onClick={() => setDeclining(true)}>Decline To Sign</button>
         <span className="text-xs text-slate-500">{sigFields.filter((f) => marks[f.id]).length} of {sigFields.length} signature boxes done</span>
       </div>
@@ -137,16 +160,25 @@ export default function SignClient({ token }: { token: string }) {
           <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
             <h2 className="text-lg font-semibold text-slate-950">Add your signature</h2>
             <div className="mt-3 flex gap-2">
-              <button type="button" className={`${btn} ${mode === 'type' ? 'bg-[#301D5D] text-white' : 'border border-slate-300 text-slate-700'}`} onClick={() => setMode('type')}>Type</button>
-              <button type="button" className={`${btn} ${mode === 'draw' ? 'bg-[#301D5D] text-white' : 'border border-slate-300 text-slate-700'}`} onClick={() => setMode('draw')}>Draw</button>
+              {view.methods.type && <button type="button" className={`${btn} ${mode === 'type' ? 'bg-[#301D5D] text-white' : 'border border-slate-300 text-slate-700'}`} onClick={() => setMode('type')}>Type</button>}
+              {view.methods.draw && <button type="button" className={`${btn} ${mode === 'draw' ? 'bg-[#301D5D] text-white' : 'border border-slate-300 text-slate-700'}`} onClick={() => setMode('draw')}>Draw</button>}
+              {view.methods.upload && <button type="button" className={`${btn} ${mode === 'upload' ? 'bg-[#301D5D] text-white' : 'border border-slate-300 text-slate-700'}`} onClick={() => setMode('upload')}>Upload Image</button>}
             </div>
-            {mode === 'type' ? (
+            {mode === 'upload' && view.methods.upload ? (
+              <div className="mt-4">
+                <input type="file" accept="image/png,image/jpeg" aria-label="Signature image" className="block text-sm" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; setUpErr(''); fitImage(file, (png) => apply({ kind: 'uploaded', value: png }), () => setUpErr('That image could not be used. Try a smaller PNG or JPG.')); }} />
+                {upErr && <p className="mt-2 text-sm text-[#9A3D2B]" role="alert">{upErr}</p>}
+                <button type="button" className={`${btn} mt-3 border border-slate-300 text-slate-700`} onClick={() => setEditing(null)}>Cancel</button>
+              </div>
+            ) : (mode === 'draw' && view.methods.draw) || (!view.methods.type && view.methods.draw) ? (
+              <div className="mt-4"><DrawPad onCancel={() => setEditing(null)} onDone={(png) => apply({ kind: 'drawn', value: png })} /></div>
+            ) : (
               <div className="mt-4">
                 <input value={typed} onChange={(e) => setTyped(e.target.value)} maxLength={80} aria-label="Type your full name" className="min-h-[44px] w-full rounded-md border border-slate-300 px-3" />
                 <p className="mt-3 rounded-md border border-slate-200 p-4 text-center text-3xl text-[#0d1a59]" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>{typed || ' '}</p>
                 <div className="mt-3 flex gap-2"><button type="button" className={`${btn} border border-slate-300 text-slate-700`} onClick={() => setEditing(null)}>Cancel</button><button type="button" disabled={typed.trim().length < 2} className={`${btn} bg-[#301D5D] text-white`} onClick={() => apply({ kind: 'typed', value: typed.trim() })}>Use This Signature</button></div>
               </div>
-            ) : <div className="mt-4"><DrawPad onCancel={() => setEditing(null)} onDone={(png) => apply({ kind: 'drawn', value: png })} /></div>}
+            )}
           </div>
         </div>
       )}

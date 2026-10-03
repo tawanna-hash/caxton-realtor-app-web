@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { SecureSignRequests, SecureSignSettings, type SignLayout, type SignRequestRow, type SignSettings } from './SecureSignPanel';
 import SignaturePlacer, { type PlacedField } from './SignaturePlacer';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 
@@ -12,7 +13,7 @@ type Upload = { id: string; docId: string; filename: string; sizeBytes: number; 
 type Sig = { id: string; toName: string; toEmail: string; document: string; status: string; remindersSent: number; createdAt: string };
 type Connected = { calendar: string | null; mail: string | null; storage: { slug: string; name: string }[]; sendFromConnected: boolean };
 type Envelope = { id: string; provider: string; document: string; signers: { name: string; email: string }[]; status: string; createdAt: string };
-type Signing = { providers: { slug: string; name: string }[]; envelopes: Envelope[] };
+type Signing = { providers: { slug: string; name: string }[]; envelopes: Envelope[]; settings: SignSettings | null; requests: SignRequestRow[]; layouts: (SignLayout & { fields: PlacedField[] })[] };
 type Data = { connected?: Connected; signing?: Signing; signatures: Sig[]; autoSignature: boolean; uploads: Upload[]; autoIntro: boolean; parties: Party[]; followUps: FollowUp[]; risks: Risk[]; portalToken: string | null; checklist: Step[]; customChecklist: boolean };
 
 const ROLES: Record<string, string> = { client: 'Client', lender: 'Lender', title: 'Title company', coop_agent: 'Co-op agent', other: 'Other' };
@@ -92,6 +93,9 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const [sigSubject, setSigSubject] = useState('');
   const [sigPlacement, setSigPlacement] = useState<'page' | 'inline'>('page');
   const [sigFields, setSigFields] = useState<PlacedField[]>([]);
+  const [sigExpire, setSigExpire] = useState('');
+  const [sigRemind, setSigRemind] = useState('');
+  const [sigLayout, setSigLayout] = useState('');
   const [placer, setPlacer] = useState<Uint8Array | null>(null);
   const pickFile = (file: File | undefined) => {
     setSigFile(null);
@@ -109,7 +113,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
     const doc = sigDoc === 'file' && sigFile ? { fileName: sigFile.name, fileB64: sigFile.b64 } : sigDoc ? { uploadId: sigDoc } : null;
     if (!provider || !doc || signers.length === 0) { setError('Choose a document and at least one person to sign.'); return; }
     const inline = provider === 'builtin' && sigPlacement === 'inline';
-    const r = await post({ action: 'send_signature', dealId: deal.id, provider, subject: sigSubject || undefined, signers, ...doc, ...(provider === 'builtin' ? { placement: sigPlacement, fields: inline ? sigFields : undefined } : {}) });
+    const r = await post({ action: 'send_signature', dealId: deal.id, provider, subject: sigSubject || undefined, signers, ...doc, ...(provider === 'builtin' ? { placement: sigPlacement, fields: inline ? sigFields : undefined, expireDays: sigExpire ? Number(sigExpire) : undefined, remindEvery: sigRemind ? Number(sigRemind) : undefined } : {}) });
     if (r?.message) { setNotice(r.message); setSigTo([]); setSigFields([]); }
   };
   const openPlacer = async () => {
@@ -307,8 +311,17 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                   <fieldset className="space-y-1"><legend className="text-xs font-semibold text-slate-600">Where signatures go</legend>
                     <label className="flex items-center gap-2"><input type="radio" name="sigplace" checked={sigPlacement === 'page'} onChange={() => setSigPlacement('page')} /> Add a signature page at the end</label>
                     <label className="flex items-center gap-2"><input type="radio" name="sigplace" checked={sigPlacement === 'inline'} onChange={() => setSigPlacement('inline')} /> Place signature fields inside the contract</label>
-                    {sigPlacement === 'inline' && <div className="flex flex-wrap items-center gap-2"><button type="button" disabled={busy || !sigDoc || sigTo.length === 0} className={btn} onClick={() => void openPlacer()}>Place Fields</button><span className="text-xs text-slate-500">{sigFields.length} placed</span></div>}
+                    {sigPlacement === 'inline' && data.signing.layouts.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2"><select className={`${input} max-w-xs`} aria-label="Saved layout" value={sigLayout} onChange={(e) => { setSigLayout(e.target.value); const l = data.signing?.layouts.find((x) => x.id === e.target.value); if (l) setSigFields(l.fields); }}><option value="">Use a saved layout</option>{data.signing.layouts.map((l) => <option key={l.id} value={l.id}>{l.name} ({l.roles} signer{l.roles === 1 ? '' : 's'})</option>)}</select>
+                        {sigLayout && <button type="button" className={btn} onClick={() => void post({ action: 'delete_sign_layout', id: sigLayout }).then(() => setSigLayout(''))}>Delete Layout</button>}</div>)}
+                    {sigPlacement === 'inline' && <div className="flex flex-wrap items-center gap-2"><button type="button" disabled={busy || !sigDoc || sigTo.length === 0} className={btn} onClick={() => void openPlacer()}>Place Fields</button><span className="text-xs text-slate-500">{sigFields.length} placed</span>{sigFields.length > 0 && <button type="button" disabled={busy} className={btn} onClick={() => { const n = window.prompt('Name this layout so you can reuse it'); if (n) void post({ action: 'save_sign_layout', name: n, fields: sigFields }); }}>Save As Layout</button>}</div>}
                   </fieldset>
+                )}
+                {(sigProvider || data.signing.providers[0].slug) === 'builtin' && (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <label className="block"><span className="text-xs font-semibold text-slate-600">Expires after (days, blank = default {data.signing.settings?.expireDays ?? 30})</span><input type="number" min={1} max={365} className={input} value={sigExpire} onChange={(e) => setSigExpire(e.target.value)} /></label>
+                    <label className="block"><span className="text-xs font-semibold text-slate-600">Remind every (days, 0 = off, blank = default {data.signing.settings?.remindEvery ?? 3})</span><input type="number" min={0} max={60} className={input} value={sigRemind} onChange={(e) => setSigRemind(e.target.value)} /></label>
+                  </div>
                 )}
                 <label className="block"><span className="text-xs font-semibold text-slate-600">Email subject (optional)</span>
                   <input className={input} value={sigSubject} maxLength={200} onChange={(e) => setSigSubject(e.target.value)} /></label>
@@ -316,9 +329,9 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                 <button type="button" disabled={busy} className={btnPrimary} onClick={() => void sendSignature()}>Send For Signature</button>
               </div>
             )}
-            {data.signing && data.signing.envelopes.length > 0 && (
+            {data.signing && data.signing.envelopes.filter((e) => e.provider !== 'Closing Time SecureSign').length > 0 && (
               <ul className="mt-2 divide-y divide-slate-100 border border-slate-200 text-sm">
-                {data.signing.envelopes.map((e) => (
+                {data.signing.envelopes.filter((e) => e.provider !== 'Closing Time SecureSign').map((e) => (
                   <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
                     <span className="min-w-0"><span className="font-semibold">{e.document}</span> <span className="text-xs text-slate-500">via {e.provider} to {e.signers.map((x) => x.name).join(', ')}</span></span>
                     <span className="flex items-center gap-2"><span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold capitalize">{e.status === 'sent' ? 'Awaiting signatures' : e.status}</span>
@@ -327,6 +340,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                 ))}
               </ul>
             )}
+            {data.signing?.settings && <SecureSignSettings key={JSON.stringify(data.signing.settings)} settings={data.signing.settings} post={post} busy={busy} />}
+            {data.signing && <SecureSignRequests requests={data.signing.requests} post={post} busy={busy} />}
           </section>
 
           <section aria-label="Client uploads" className="lg:col-span-2">
