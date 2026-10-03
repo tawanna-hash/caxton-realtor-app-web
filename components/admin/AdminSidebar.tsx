@@ -21,6 +21,7 @@ import {
   Newspaper,
   BarChart3,
   ShieldCheck,
+  ClipboardCheck,
   ChevronsLeft,
   ChevronsRight,
   ChevronDown,
@@ -36,6 +37,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ size?: number; className
   'Mailing List HUB': Mail,
   'Ad Ops': Megaphone,
   Content: Newspaper,
+  'Closing Time': ClipboardCheck,
   Insights: BarChart3,
   Team: ShieldCheck,
 };

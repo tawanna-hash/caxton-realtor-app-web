@@ -104,6 +104,15 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
+    label: 'Closing Time',
+    links: [
+      { label: 'Closing Time Workspace', href: '/agents/closing-time', description: 'Agent deal workspace and transaction coordinator' },
+      { label: 'Office Dashboard', href: '/agents/closing-time/office', description: 'Brokerage-wide deals, risks and CSV export' },
+      { label: 'Brokerages & SSO', href: '/admin/brokerages', description: 'Offices, members and single sign-on' },
+      { label: 'Agent Center', href: '/admin/agent-center', description: 'Agent tools and official TREC form versions' },
+    ],
+  },
+  {
     label: 'Insights',
     // Three sibling surfaces with distinct data sources:
     //   • Engagement Metrics — in-app click events (builder/dev surfaces)
@@ -112,7 +121,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     // Labels are explicit so admins can tell them apart at a glance.
     links: [
       { label: 'Admin Dashboard', href: '/admin/dashboard', description: 'Publishing, revenue, and operational priorities' },
-      { label: 'Agent Center', href: '/admin/agent-center', description: 'Agent tools and official TREC form versions' },
       { label: 'Live Activity',      href: '/admin/activity',  description: 'Real-time public app events (last 7d)' },
       { label: 'Engagement Metrics', href: '/admin/metrics',   description: 'In-app click events & surface engagement' },
       { label: 'Client Reports',     href: '/admin/reports',   description: 'Shareable article, event & advertiser recaps' },
