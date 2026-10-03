@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
@@ -90,19 +91,22 @@ function providerMatchesCategory(provider: ReferralProvider, category: ReferralC
 
 
 export function WorkFasterPanel() {
+  const { section: collapsible, toggleProps } = useCollapsibles();
   return (
     <section>
         <div className="">
-        <div className="border border-slate-200 bg-white p-5 sm:p-6">
-          <div className="flex flex-wrap items-end justify-between gap-3">
+        <div {...collapsible('calculators', { mobileOpen: true })} data-section-key={undefined} className="border border-slate-200 bg-white p-5 sm:p-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <Calculator className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calculators</p>
-              <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Client-Ready Tools, One Click Away</h2>
+              <h2 className="mt-1 text-xl font-semibold text-slate-950">Client-Ready Tools, One Click Away</h2>
             </div>
             <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
               See Every Agent Tool
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
+            <CollapseToggle {...toggleProps('calculators', 'calculators', { mobileOpen: true })} />
           </div>
           <div className="mt-6 grid gap-4 sm:mt-8 md:grid-cols-2 lg:grid-cols-4">
             {QUICK_TOOLS.map((tool) => {
