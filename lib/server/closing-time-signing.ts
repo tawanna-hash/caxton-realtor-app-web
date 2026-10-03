@@ -4,7 +4,7 @@ import { query } from '@/lib/server/db/neon';
 import { ensureAssistSchema, getUpload, requireDeal } from '@/lib/server/closing-time-assist';
 import { accountFor, appInfo, proxyCall } from '@/lib/server/composio';
 
-export const SIGN_PROVIDERS = ['docusign', 'boldsign'] as const;
+export const SIGN_PROVIDERS = ['docusign', 'boldsign', 'pandadoc', 'dropbox_sign'] as const;
 export type SignProvider = (typeof SIGN_PROVIDERS)[number];
 export type Signer = { name: string; email: string };
 const MAX_BYTES = 3 * 1024 * 1024;
@@ -59,10 +59,22 @@ async function prepareDocument(bytes: Buffer, signers: Signer[], provider: SignP
     page.drawLine({ start: { x: 72, y: top - 40 }, end: { x: 340, y: top - 40 }, thickness: 0.8, color: rgb(0.2, 0.2, 0.25) });
     page.drawText(s.name, { x: 72, y: top - 56, size: 10, font: bold, color: rgb(0.1, 0.1, 0.15) });
     page.drawText('Date: ____________________', { x: 370, y: top - 36, size: 10, font, color: rgb(0.2, 0.2, 0.25) });
-    const tag = provider === 'docusign' ? `/s${i + 1}/` : `{{sign|${i + 1}|*|Signature}}`;
+    const tag = provider === 'docusign' ? `/s${i + 1}/` : provider === 'boldsign' ? `{{sign|${i + 1}|*|Signature}}` : provider === 'pandadoc' ? `{signature*:Signer${i + 1}}` : `[sig|req|signer${i + 1}]`;
     page.drawText(tag, { x: 74, y: top - 36, size: 7, font, color: rgb(1, 1, 1) });
   });
   return Buffer.from(await pdf.save());
+}
+
+function multipart(parts: { name: string; value?: string; file?: { filename: string; type: string; bytes: Buffer } }[]): { body: Buffer; contentType: string } {
+  const boundary = `----rnn${randomUUID().replace(/-/g, '')}`;
+  const chunks: Buffer[] = [];
+  for (const p of parts) {
+    chunks.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${p.name}"${p.file ? `; filename="${p.file.filename.replace(/"/g, '')}"` : ''}\r\n${p.file ? `Content-Type: ${p.file.type}\r\n` : ''}\r\n`));
+    chunks.push(p.file ? p.file.bytes : Buffer.from(p.value ?? ''));
+    chunks.push(Buffer.from('\r\n'));
+  }
+  chunks.push(Buffer.from(`--${boundary}--\r\n`));
+  return { body: Buffer.concat(chunks), contentType: `multipart/form-data; boundary=${boundary}` };
 }
 
 type SendInput = { dealId: string; provider: SignProvider; uploadId?: string; fileName?: string; fileB64?: string; signers: Signer[]; subject?: string };
@@ -104,6 +116,32 @@ export async function sendForSignature(realtorId: string, input: SendInput): Pro
     });
     externalId = (res.data as { envelopeId?: string })?.envelopeId ?? '';
     if (!res.ok || !externalId) throw new Error(`DocuSign rejected the document (${res.status}): ${upstreamMessage(res.data)}`);
+  } else if (input.provider === 'dropbox_sign') {
+    const parts: Parameters<typeof multipart>[0] = [
+      { name: 'title', value: subject }, { name: 'subject', value: subject }, { name: 'message', value: `Please review and sign ${docName} for ${property}.` },
+      { name: 'use_text_tags', value: '1' }, { name: 'hide_text_tags', value: '1' },
+    ];
+    input.signers.forEach((sg, i) => { parts.push({ name: `signers[${i}][email_address]`, value: sg.email }, { name: `signers[${i}][name]`, value: sg.name }); });
+    parts.push({ name: 'file[0]', file: { filename: `${docName}.pdf`, type: 'application/pdf', bytes: pdf } });
+    const mp = multipart(parts);
+    const res = await proxyCall(realtorId, acct.id, 'https://api.hellosign.com/v3/signature_request/send', { body: mp.body, headers: { 'content-type': mp.contentType } });
+    externalId = (res.data as { signature_request?: { signature_request_id?: string } })?.signature_request?.signature_request_id ?? '';
+    if (!res.ok || !externalId) throw new Error(`Dropbox Sign rejected the document (${res.status}): ${upstreamMessage(res.data)}`);
+  } else if (input.provider === 'pandadoc') {
+    const data = { name: subject, recipients: input.signers.map((sg, i) => ({ email: sg.email, first_name: sg.name.split(' ')[0] ?? sg.name, last_name: sg.name.split(' ').slice(1).join(' '), role: `Signer${i + 1}`, signing_order: 1 })) };
+    const mp = multipart([{ name: 'data', value: JSON.stringify(data) }, { name: 'file', file: { filename: `${docName}.pdf`, type: 'application/pdf', bytes: pdf } }]);
+    const made = await proxyCall(realtorId, acct.id, 'https://api.pandadoc.com/public/v1/documents', { body: mp.body, headers: { 'content-type': mp.contentType } });
+    externalId = (made.data as { id?: string })?.id ?? '';
+    if (!made.ok || !externalId) throw new Error(`PandaDoc rejected the document (${made.status}): ${upstreamMessage(made.data)}`);
+    let draft = false;
+    for (let i = 0; i < 8 && !draft; i += 1) {
+      await new Promise((r) => setTimeout(r, 1500));
+      const st = await proxyCall(realtorId, acct.id, `https://api.pandadoc.com/public/v1/documents/${externalId}`, { method: 'GET' });
+      draft = String((st.data as { status?: string })?.status ?? '') === 'document.draft';
+    }
+    if (!draft) throw new Error('PandaDoc is still preparing the document. Try again in a minute.');
+    const sent = await proxyCall(realtorId, acct.id, `https://api.pandadoc.com/public/v1/documents/${externalId}/send`, { json: { subject, message: `Please review and sign ${docName} for ${property}.`, silent: false } });
+    if (!sent.ok) throw new Error(`PandaDoc could not send the document (${sent.status}): ${upstreamMessage(sent.data)}`);
   } else {
     const res = await proxyCall(realtorId, acct.id, 'https://api.boldsign.com/v1/document/send', {
       json: {
@@ -138,6 +176,16 @@ export async function refreshEnvelope(realtorId: string, id: string): Promise<st
     if (!res.ok) throw new Error(`DocuSign could not check this document (${res.status}).`);
     const s = String((res.data as { status?: string }).status ?? '').toLowerCase();
     status = s === 'completed' ? 'completed' : s === 'declined' ? 'declined' : s === 'voided' ? 'cancelled' : 'sent';
+  } else if (row.provider === 'dropbox_sign') {
+    const res = await proxyCall(realtorId, acct.id, `https://api.hellosign.com/v3/signature_request/${encodeURIComponent(row.external_id)}`, { method: 'GET' });
+    if (!res.ok) throw new Error(`Dropbox Sign could not check this document (${res.status}).`);
+    const r = (res.data as { signature_request?: { is_complete?: boolean; is_declined?: boolean; has_error?: boolean } }).signature_request ?? {};
+    status = r.is_complete ? 'completed' : r.is_declined ? 'declined' : 'sent';
+  } else if (row.provider === 'pandadoc') {
+    const res = await proxyCall(realtorId, acct.id, `https://api.pandadoc.com/public/v1/documents/${encodeURIComponent(row.external_id)}`, { method: 'GET' });
+    if (!res.ok) throw new Error(`PandaDoc could not check this document (${res.status}).`);
+    const s = String((res.data as { status?: string }).status ?? '');
+    status = s === 'document.completed' ? 'completed' : s === 'document.declined' ? 'declined' : s === 'document.voided' || s === 'document.expired' ? 'cancelled' : 'sent';
   } else {
     const res = await proxyCall(realtorId, acct.id, `https://api.boldsign.com/v1/document/properties?documentId=${encodeURIComponent(row.external_id)}`, { method: 'GET' });
     if (!res.ok) throw new Error(`BoldSign could not check this document (${res.status}).`);

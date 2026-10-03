@@ -49,7 +49,7 @@ export async function availableApps(): Promise<AvailableApp[]> {
   const existing = new Set(Object.values(APPS).map((a) => a.toolkit));
   const items: AvailableApp[] = [
     ...Object.entries(APPS).map(([slug, a]) => ({ slug, name: a.name, logo: found.get(a.toolkit)?.logo, group: ({ google_calendar: 'Calendar and Scheduling', outlook: 'Calendar and Scheduling', gmail: 'Email', google_drive: 'Documents and Storage', dropbox: 'Documents and Storage', microsoft_onedrive: 'Documents and Storage', slack: 'Messaging and Calls', dotloop: 'Real Estate' } as Record<string, string>)[slug] ?? 'Other' })),
-    ...CATALOG.filter((c) => !existing.has(c.toolkit) && (found.get(c.toolkit)?.managed === true || (found.has(c.toolkit) && configured.has(c.toolkit)))).map((c) => ({ slug: c.toolkit, name: c.name, group: c.group, logo: found.get(c.toolkit)?.logo })),
+    ...CATALOG.filter((c) => !existing.has(c.toolkit) && (found.get(c.toolkit)?.managed === true || (found.has(c.toolkit) && API_KEY_APPS.has(c.toolkit)) || (found.has(c.toolkit) && configured.has(c.toolkit)))).map((c) => ({ slug: c.toolkit, name: c.name, group: c.group, logo: found.get(c.toolkit)?.logo })),
   ];
   const order = Array.from(new Set(CATALOG.map((c) => c.group)));
   items.sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group));
@@ -67,6 +67,8 @@ async function api(path: string, init: RequestInit = {}): Promise<Response> {
   return fetch(`${ORIGIN}${path}`, { ...init, headers: { 'x-api-key': process.env.COMPOSIO_API_KEY ?? '', 'Content-Type': 'application/json', ...(init.headers ?? {}) } });
 }
 
+/** Apps where each agent pastes their own API key into the secure connect window. */
+const API_KEY_APPS = new Set(['pandadoc', 'dropbox_sign']);
 const authConfigCache = new Map<string, string>();
 
 async function authConfigFor(toolkit: string): Promise<string> {
@@ -78,7 +80,8 @@ async function authConfigFor(toolkit: string): Promise<string> {
     const found = body.items?.find((i) => i.toolkit?.slug === toolkit && i.status !== 'DISABLED');
     if (found) { authConfigCache.set(toolkit, found.id); return found.id; }
   }
-  const made = await api('/api/v3/auth_configs', { method: 'POST', body: JSON.stringify({ toolkit: { slug: toolkit }, auth_config: { type: 'use_composio_managed_auth' } }) });
+  let made = await api('/api/v3/auth_configs', { method: 'POST', body: JSON.stringify({ toolkit: { slug: toolkit }, auth_config: { type: 'use_composio_managed_auth' } }) });
+  if (!made.ok && API_KEY_APPS.has(toolkit)) made = await api('/api/v3/auth_configs', { method: 'POST', body: JSON.stringify({ toolkit: { slug: toolkit }, auth_config: { type: 'use_custom_auth', authScheme: 'API_KEY', credentials: {} } }) });
   if (!made.ok) throw new Error(`Could not set up ${toolkit} (${made.status})`);
   const id = ((await made.json()) as { auth_config?: { id?: string } }).auth_config?.id;
   if (!id) throw new Error(`Could not set up ${toolkit}`);
