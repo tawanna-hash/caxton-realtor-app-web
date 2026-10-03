@@ -2,6 +2,19 @@
 
 import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
+
+const SECTION_LABELS: Record<string, string> = {
+  alerts: 'Deadline Alerts',
+  calendar: 'Calendar Exports',
+  assist: 'Transaction Coordinator',
+  'trec-library': 'TREC Forms Library',
+  current: 'Current Transaction',
+  'trec-forms': 'Form Workspace',
+  active: 'In Progress',
+  closed: 'Closed',
+  tasks: 'Tasks and Reminders',
+  audit: 'Audit Trail',
+};
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -42,7 +55,7 @@ import {
   calendarEventsForDeal,
   type ClosingTimeCalendarEvent,
 } from '@/lib/closing-time-calendar';
-import CollapseToggle, { useCollapsibles } from './CollapseToggle';
+import CollapseToggle, { SectionPills, useCollapsibles } from './CollapseToggle';
 import { trackEvent } from '@/app/posthog-provider';
 import {
   agentCommandCenterWorkspaceSchema,
@@ -895,7 +908,7 @@ export default function ClosingTime({
   );
   const [activeDealId, setActiveDealId] = useState<string | null>(null);
   const [today, setToday] = useState(chicagoToday);
-  const { section: collapsible, toggleProps } = useCollapsibles();
+  const { section: collapsible, toggleProps, reveal } = useCollapsibles();
   const [ready, setReady] = useState(false);
   const [syncState, setSyncState] = useState<SyncState>('loading');
   const [taskTitle, setTaskTitle] = useState('');
@@ -1861,6 +1874,8 @@ export default function ClosingTime({
                 : `${nextClosingDays} day${nextClosingDays === 1 ? '' : 's'} to next closing`}
           </div>
         </div>
+
+        <SectionPills labels={SECTION_LABELS} reveal={reveal} />
 
         <div className="mt-5 flex items-start gap-3 border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-3 text-sm leading-6 text-slate-600">
           <Save className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />

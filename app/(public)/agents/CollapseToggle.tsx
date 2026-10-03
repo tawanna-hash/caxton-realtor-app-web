@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-const MOBILE_QUERY = '(max-width: 767px)';
-
 type CollapseState = 'open' | 'closed';
 
 /**
@@ -15,15 +13,6 @@ type CollapseState = 'open' | 'closed';
  */
 export function useCollapsibles() {
   const [states, setStates] = useState<Record<string, CollapseState>>({});
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia(MOBILE_QUERY);
-    const update = () => setIsMobile(media.matches);
-    update();
-    media.addEventListener('change', update);
-    return () => media.removeEventListener('change', update);
-  }, []);
 
   const isOpen = useCallback(
     (id: string, mobileOpen = false) => {
@@ -31,7 +20,7 @@ export function useCollapsibles() {
       if (state) return state === 'open';
       return mobileOpen;
     },
-    [states, isMobile],
+    [states],
   );
 
   const toggle = useCallback(
@@ -47,6 +36,7 @@ export function useCollapsibles() {
   const section = useCallback(
     (id: string, options: { mobileOpen?: boolean } = {}) => ({
       'data-collapsible': '',
+      'data-section-key': id,
       'data-collapsed': states[id] ?? (options.mobileOpen ? 'open' : 'auto'),
     }),
     [states],
@@ -61,7 +51,9 @@ export function useCollapsibles() {
     [isOpen, toggle],
   );
 
-  return { section, toggleProps };
+  const reveal = useCallback((id: string) => setStates((current) => ({ ...current, [id]: 'open' })), []);
+
+  return { section, toggleProps, reveal };
 }
 
 export default function CollapseToggle({
@@ -91,5 +83,49 @@ export default function CollapseToggle({
     >
       <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
     </button>
+  );
+}
+
+
+/**
+ * Sticky pill bar listing every card on the page that carries a
+ * data-section-key. Tapping a pill opens that card and scrolls to it.
+ */
+export function SectionPills({ labels, reveal }: { labels: Record<string, string>; reveal: (id: string) => void }) {
+  const [keys, setKeys] = useState<string[]>([]);
+
+  useEffect(() => {
+    const scan = () => {
+      const found = Array.from(document.querySelectorAll<HTMLElement>('[data-section-key]'))
+        .map((el) => el.dataset.sectionKey ?? '')
+        .filter((key, index, all) => key && labels[key] && all.indexOf(key) === index);
+      setKeys((current) => (current.join('|') === found.join('|') ? current : found));
+    };
+    scan();
+    const observer = new MutationObserver(scan);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [labels]);
+
+  if (keys.length < 2) return null;
+  const go = (key: string) => {
+    reveal(key);
+    window.setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-section-key="${key}"]`);
+      if (!el) return;
+      el.style.scrollMarginTop = '64px';
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  };
+  return (
+    <nav aria-label="Jump to section" className="sticky top-0 z-30 -mx-5 mt-5 border-y border-slate-200 bg-[#F7F5F1]/95 px-5 py-2 backdrop-blur sm:-mx-8 sm:px-8">
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {keys.map((key) => (
+          <button key={key} type="button" onClick={() => go(key)} className="min-h-[36px] shrink-0 rounded-full border border-[#7059A8]/40 bg-white px-3 text-xs font-bold text-[#301D5D] hover:border-[#301D5D] hover:bg-[#F8F5FF]">
+            {labels[key]}
+          </button>
+        ))}
+      </div>
+    </nav>
   );
 }

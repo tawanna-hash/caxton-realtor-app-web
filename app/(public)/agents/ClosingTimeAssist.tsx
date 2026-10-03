@@ -75,7 +75,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const sent = data?.followUps.filter((f) => f.status === 'sent').slice(0, 5) ?? [];
 
   return (
-    <div className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
+    <div data-section-key="assist" className="min-w-0 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
       <h3 className="text-lg font-semibold text-slate-950">Transaction Coordinator</h3>
       <p className="mt-1 text-sm leading-6 text-slate-600">Risk alerts, follow-up drafts, a client progress link, and a closing checklist for this deal. Nothing is emailed to anyone until you approve that specific draft.</p>
       {error && <p className="mt-3 text-sm font-semibold text-[#9A3D2B]" role="alert">{error}</p>}
