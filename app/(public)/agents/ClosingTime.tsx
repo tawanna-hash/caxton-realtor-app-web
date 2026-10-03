@@ -1729,6 +1729,17 @@ export default function ClosingTime({
   };
 
   const [calendarFeed, setCalendarFeed] = useState<{ url: string; webcalUrl: string } | null>(null);
+  const [calendarConnected, setCalendarConnected] = useState(false);
+  useEffect(() => {
+    let live = true;
+    fetch('/api/agent-integrations', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { accounts?: { appSlug: string; healthy: boolean }[] } | null) => {
+        if (live && body?.accounts) setCalendarConnected(body.accounts.some((a) => (a.appSlug === 'google_calendar' || a.appSlug === 'outlook') && a.healthy));
+      })
+      .catch(() => undefined);
+    return () => { live = false; };
+  }, []);
   const [calendarFeedState, setCalendarFeedState] = useState<'idle' | 'loading' | 'error'>('idle');
   const [calendarFeedCopied, setCalendarFeedCopied] = useState(false);
 
@@ -2013,7 +2024,7 @@ export default function ClosingTime({
             <div data-section-key="integrations" className="min-w-0"><IntegrationsPanel /></div>
             <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
-          <section className="mt-5 grid gap-5 lg:grid-cols-2" aria-label="Alerts and calendar">
+          <section className={`mt-5 grid gap-5 ${calendarConnected ? '' : 'lg:grid-cols-2'}`} aria-label="Alerts and calendar">
             <div {...collapsible('alerts')} className="border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-slate-950">Deadline Alerts</h3>
@@ -2042,9 +2053,10 @@ export default function ClosingTime({
               </div>
               <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active transactions. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
             </div>
+            {!calendarConnected && (
             <div {...collapsible('calendar')} className="border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-slate-950">Calendar Exports</h3>
+                <h3 className="text-lg font-semibold text-slate-950">Calendar Exports <span className="ml-1 text-xs font-semibold text-slate-500">Other calendars</span></h3>
                 <CollapseToggle {...toggleProps('calendar', 'calendar exports')} />
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">Subscribe once and your calendar stays current with deadlines, closing dates, reminders, and open tasks for every active transaction.</p>
@@ -2074,6 +2086,7 @@ export default function ClosingTime({
                 <button type="button" onClick={exportAllDealsCalendar} disabled={!calendarEventsForActiveDeals(deals).length} className="inline-flex items-center gap-1 underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-45"><Download className="h-3.5 w-3.5" aria-hidden="true" />Active Deals (.ics)</button>
               </div>
             </div>
+            )}
             {activeDeal && (
               <ClosingTimeAssist
                 deal={activeDeal}
