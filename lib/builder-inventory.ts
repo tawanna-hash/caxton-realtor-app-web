@@ -474,6 +474,12 @@ const MIGRATIONS: Migration[] = [
                 WHERE developer_name IS NOT NULL`;
     },
   },
+  {
+    name: '2026_10_03__add_updated_at',
+    up: async () => {
+      await sql`ALTER TABLE builder_inventory ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+    },
+  },
 ];
 
 // Per-process cache: "the current MIGRATIONS array is fully applied in the DB."

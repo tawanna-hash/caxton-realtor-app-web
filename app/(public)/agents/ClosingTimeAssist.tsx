@@ -145,7 +145,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
       <div className="flex items-center gap-3">
         <SlidersHorizontal className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Coordination</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Transaction Coordination</p>
           <h3 className="mt-1 text-xl font-semibold text-slate-950">Deal Settings</h3>
         </div>
         <CollapseToggle {...toggleProps('assist', 'deal settings', { mobileOpen: true })} className="ml-auto" />
