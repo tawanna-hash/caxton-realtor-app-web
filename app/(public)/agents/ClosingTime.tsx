@@ -1972,7 +1972,7 @@ export default function ClosingTime({
                 <Briefcase className="rnn-heading-icon hidden text-[#7059A8] lg:block" aria-hidden="true" />
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7059A8] lg:text-xs lg:tracking-[0.16em]">Transactions</p>
-                  <p className="mt-0.5 font-serif text-base leading-5 text-slate-950 lg:text-lg">Deals</p>
+                  <p className="mt-0.5 text-base leading-5 text-slate-950 lg:text-lg">Deals</p>
                 </div>
                 <button type="button" onClick={() => { createDeal(); setWorkspacePage(2); setDeskView('transaction'); }} className="min-h-[32px] rounded-md bg-[#301D5D] px-2 text-xs font-bold text-white hover:bg-[#42277c] lg:px-3">New</button>
               </div>
