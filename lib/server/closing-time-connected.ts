@@ -1,10 +1,10 @@
 import { query } from '@/lib/server/db/neon';
 import { dealTimeline } from '@/lib/closing-time-risks';
 import { ensureAssistSchema, getUpload, requireDeal } from '@/lib/server/closing-time-assist';
-import { accountFor, proxyCall } from '@/lib/server/pipedream';
+import { APPS, accountFor, proxyCall } from '@/lib/server/composio';
 
-export const CALENDAR_SLUGS = ['google_calendar', 'microsoft_outlook_calendar'];
-export const MAIL_SLUGS = ['gmail', 'microsoft_outlook'];
+export const CALENDAR_SLUGS = ['google_calendar', 'outlook'];
+export const MAIL_SLUGS = ['gmail', 'outlook'];
 export const STORAGE_SLUGS = ['google_drive', 'dropbox', 'microsoft_onedrive'];
 
 let ready: Promise<void> | null = null;
@@ -33,9 +33,9 @@ export async function connectedState(realtorId: string) {
     query<{ send_from_connected: boolean }>(`SELECT send_from_connected FROM closing_time_settings WHERE realtor_id=$1`, [realtorId]),
   ]);
   return {
-    calendar: cal ? cal.appName || cal.appSlug : null,
-    mail: mail ? mail.appName || mail.appSlug : null,
-    storage: STORAGE_SLUGS.map((slug, i) => storage[i] ? { slug, name: storage[i]!.appName || slug } : null).filter((x): x is { slug: string; name: string } => Boolean(x)),
+    calendar: cal ? APPS[cal.appSlug]?.name ?? cal.appSlug : null,
+    mail: mail ? APPS[mail.appSlug]?.name ?? mail.appSlug : null,
+    storage: STORAGE_SLUGS.map((slug, i) => storage[i] ? { slug, name: APPS[slug]?.name ?? slug } : null).filter((x): x is { slug: string; name: string } => Boolean(x)),
     sendFromConnected: settings[0]?.send_from_connected ?? false,
   };
 }

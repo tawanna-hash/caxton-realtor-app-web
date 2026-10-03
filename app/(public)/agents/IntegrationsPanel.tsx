@@ -8,9 +8,8 @@ type Catalog = { slug: string; name: string; group: string; description: string 
 
 const CATALOG: Catalog[] = [
   { slug: 'google_calendar', name: 'Google Calendar', group: 'Calendar', description: 'Put closing deadlines on your own calendar.' },
-  { slug: 'microsoft_outlook_calendar', name: 'Outlook Calendar', group: 'Calendar', description: 'Keep deal dates alongside your Outlook schedule.' },
   { slug: 'gmail', name: 'Gmail', group: 'Email', description: 'Send deal follow-ups from your own address.' },
-  { slug: 'microsoft_outlook', name: 'Outlook Mail', group: 'Email', description: 'Send deal follow-ups from your Outlook account.' },
+  { slug: 'outlook', name: 'Outlook', group: 'Calendar and Email', description: 'Put deadlines on your Outlook calendar and send follow-ups from your Outlook address.' },
   { slug: 'google_drive', name: 'Google Drive', group: 'Documents', description: 'Save contracts and uploads to your Drive.' },
   { slug: 'dropbox', name: 'Dropbox', group: 'Documents', description: 'File deal documents in your Dropbox.' },
   { slug: 'microsoft_onedrive', name: 'OneDrive', group: 'Documents', description: 'File deal documents in your OneDrive.' },
