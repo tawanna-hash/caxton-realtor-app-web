@@ -9,7 +9,7 @@ type Party = { id: string; role: string; name: string; email: string };
 type FollowUp = { id: string; kind: string; toName: string; toEmail: string; subject: string; body: string; status: 'draft' | 'sent' | 'dismissed'; sentAt: string | null };
 type Risk = { id: string; severity: 'high' | 'medium'; title: string; detail: string; deadlineLabel?: string };
 type Step = { title: string; offsetDays: number; anchor: 'effective' | 'closing' };
-type Upload = { id: string; docId: string; filename: string; sizeBytes: number; createdAt: string; reviewed: boolean };
+type Upload = { id: string; docId: string; filename: string; sizeBytes: number; createdAt: string; reviewed: boolean; archived: boolean };
 type Sig = { id: string; toName: string; toEmail: string; document: string; status: string; remindersSent: number; createdAt: string };
 type Connected = { calendar: string | null; mail: string | null; storage: { slug: string; name: string }[]; sendFromConnected: boolean };
 type Envelope = { id: string; provider: string; document: string; signers: { name: string; email: string }[]; status: string; createdAt: string };
@@ -346,9 +346,9 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
 
           <section aria-label="Client uploads" className="lg:col-span-2">
             <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Client Uploads</h4>
-            {data.uploads.length === 0 ? <p className="mt-2 text-sm text-slate-500">Files your client uploads through the progress link appear here. You get an email each time.</p> : (
+            {data.uploads.filter((u) => !u.archived).length === 0 ? <p className="mt-2 text-sm text-slate-500">Files your client uploads through the progress link appear here. You get an email each time.</p> : (
               <ul className="mt-2 space-y-2">
-                {data.uploads.map((u) => {
+                {data.uploads.filter((u) => !u.archived).map((u) => {
                   const doc = deal.documents.find((d) => d.id === u.docId);
                   return (
                     <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 border border-slate-200 px-3 py-2 text-sm">
@@ -362,6 +362,19 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                   );
                 })}
               </ul>
+            )}
+            {data.uploads.some((u) => u.archived) && (
+              <details className="mt-3 text-sm">
+                <summary className="cursor-pointer font-semibold text-slate-600">Archived ({data.uploads.filter((u) => u.archived).length})</summary>
+                <ul className="mt-2 space-y-2">
+                  {data.uploads.filter((u) => u.archived).map((u) => (
+                    <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 border border-slate-200 bg-slate-50 px-3 py-2">
+                      <span className="min-w-0 truncate text-slate-600"><span className="font-semibold">{deal.documents.find((d) => d.id === u.docId)?.label ?? 'Document'}</span> · {u.filename} · {new Date(u.createdAt).toLocaleDateString('en-US')}</span>
+                      <a className={btn} href={`/api/closing-time/assist/upload/${u.id}`}>Download</a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             )}
           </section>
 

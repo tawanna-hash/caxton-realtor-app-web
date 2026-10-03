@@ -61,6 +61,7 @@ export function ensureAssistSchema(): Promise<void> {
       id UUID PRIMARY KEY, realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE,
       deal_id TEXT NOT NULL, doc_id TEXT NOT NULL, filename TEXT NOT NULL, content_type TEXT NOT NULL,
       size_bytes INTEGER NOT NULL, data_b64 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), reviewed BOOLEAN NOT NULL DEFAULT FALSE)`);
+    await query(`ALTER TABLE closing_time_portal_uploads ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE`);
     await query(`CREATE INDEX IF NOT EXISTS closing_time_portal_uploads_deal_idx ON closing_time_portal_uploads (realtor_id, deal_id, created_at DESC)`);
     await query(`CREATE TABLE IF NOT EXISTS closing_time_daily_summaries (
       realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE, summary_date DATE NOT NULL,
@@ -101,8 +102,8 @@ export async function listAssist(realtorId: string, dealId: string) {
     query<FollowRow>(`SELECT id, deal_id, kind, to_name, to_email, subject, body, status, created_at, sent_at FROM closing_time_followups WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 50`, [realtorId, dealId]),
     query<{ token: string }>(`SELECT token FROM closing_time_portals WHERE realtor_id=$1 AND deal_id=$2`, [realtorId, dealId]),
     query<{ steps: ChecklistStep[] }>(`SELECT steps FROM closing_time_checklists WHERE realtor_id=$1`, [realtorId]),
-    query<{ id: string; doc_id: string; filename: string; size_bytes: number; created_at: Date | string; reviewed: boolean }>(
-      `SELECT id, doc_id, filename, size_bytes, created_at, reviewed FROM closing_time_portal_uploads WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 50`, [realtorId, dealId]),
+    query<{ id: string; doc_id: string; filename: string; size_bytes: number; created_at: Date | string; reviewed: boolean; archived: boolean }>(
+      `SELECT id, doc_id, filename, size_bytes, created_at, reviewed, archived FROM closing_time_portal_uploads WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 50`, [realtorId, dealId]),
     query<{ auto_intro: boolean; auto_signature: boolean }>(`SELECT auto_intro, auto_signature FROM closing_time_settings WHERE realtor_id=$1`, [realtorId]),
     query<{ id: string; to_name: string; to_email: string; document: string; status: string; reminders_sent: number; created_at: Date | string }>(
       `SELECT id, to_name, to_email, document, status, reminders_sent, created_at FROM closing_time_signatures WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 30`, [realtorId, dealId]),
@@ -116,7 +117,7 @@ export async function listAssist(realtorId: string, dealId: string) {
     portalToken: portal[0]?.token ?? null,
     checklist: checklist[0]?.steps?.length ? checklist[0].steps : DEFAULT_CHECKLIST,
     customChecklist: Boolean(checklist[0]?.steps?.length),
-    uploads: uploads.map((u) => ({ id: u.id, docId: u.doc_id, filename: u.filename, sizeBytes: u.size_bytes, createdAt: iso(u.created_at), reviewed: u.reviewed })),
+    uploads: uploads.map((u) => ({ id: u.id, docId: u.doc_id, filename: u.filename, sizeBytes: u.size_bytes, createdAt: iso(u.created_at), reviewed: u.reviewed, archived: u.archived })),
     autoIntro: settings[0]?.auto_intro ?? false,
     autoSignature: settings[0]?.auto_signature ?? false,
     signatures: sigs.map((x) => ({ id: x.id, toName: x.to_name, toEmail: x.to_email, document: x.document, status: x.status, remindersSent: x.reminders_sent, createdAt: iso(x.created_at) })),
@@ -320,6 +321,7 @@ export async function savePortalUpload(token: string, docId: string, file: { nam
   if (!doc) return { ok: false, error: 'That document is not requested.' };
   const count = await query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM closing_time_portal_uploads WHERE realtor_id=$1 AND deal_id=$2 AND created_at > NOW() - INTERVAL '1 day'`, [row.realtor_id, row.deal_id]);
   if ((count[0]?.n ?? 0) >= 25) return { ok: false, error: 'Upload limit reached for today. Contact your agent.' };
+  await query(`UPDATE closing_time_portal_uploads SET archived=TRUE WHERE realtor_id=$1 AND deal_id=$2 AND doc_id=$3 AND archived=FALSE`, [row.realtor_id, row.deal_id, docId]);
   await query(`INSERT INTO closing_time_portal_uploads (id, realtor_id, deal_id, doc_id, filename, content_type, size_bytes, data_b64) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
     [randomUUID(), row.realtor_id, row.deal_id, docId, file.name.replace(/[^\w.\- ]+/g, '_').slice(0, 200) || 'upload', file.type, file.bytes.length, file.bytes.toString('base64')]);
   const agent = await query<{ email: string }>(`SELECT email FROM realtors WHERE id=$1`, [row.realtor_id]);
@@ -452,7 +454,7 @@ export async function auditCsv(realtorId: string, dealId: string): Promise<strin
   const rows: string[][] = [['When', 'Type', 'Detail']];
   deal.activity.forEach((a) => rows.push([a.createdAt, 'activity', a.message]));
   data.followUps.forEach((f) => rows.push([f.sentAt ?? f.createdAt, `follow-up (${f.status})`, `${f.toEmail}: ${f.subject}`]));
-  data.uploads.forEach((u) => rows.push([u.createdAt, 'client upload', `${u.filename} (${u.reviewed ? 'reviewed' : 'new'})`]));
+  data.uploads.forEach((u) => rows.push([u.createdAt, 'client upload', `${u.filename} (${u.archived ? 'archived' : u.reviewed ? 'reviewed' : 'new'})`]));
   rows.sort((x, y) => (x[0] === 'When' ? -1 : y[0] === 'When' ? 1 : x[0].localeCompare(y[0])));
   return rows.map((r) => r.map(q).join(',')).join('\n');
 }
