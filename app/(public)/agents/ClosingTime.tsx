@@ -7,7 +7,7 @@ import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './
 
 const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'transaction', label: 'Current Deal', keys: ['current', 'trec-forms'] },
-  { id: 'coordinator', label: 'Deal Settings', keys: ['assist', 'alerts', 'calendar'] },
+  { id: 'coordinator', label: 'Deal Settings', keys: ['assist', 'alerts'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
   { id: 'readiness', label: 'Readiness Check', keys: ['readiness'] },
   { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
@@ -17,7 +17,7 @@ const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'forms', label: 'TREC Forms Library', keys: ['trec-library'] },
   { id: 'tools', label: 'Calculators', keys: [] },
   { id: 'referral', label: 'Referral Network', keys: [] },
-  { id: 'integrations', label: 'Integrations', keys: [] },
+  { id: 'integrations', label: 'Integrations', keys: ['calendar'] },
 ];
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS];
 import { useCallback, useEffect, useRef, useState } from 'react';
