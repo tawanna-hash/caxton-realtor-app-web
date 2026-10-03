@@ -43,8 +43,8 @@ export async function signingState(realtorId: string, dealId: string) {
   ]);
   return {
     settings, layouts, requests,
-    providers: [{ slug: BUILTIN, name: 'Closing Time SecureSign' }, ...SIGN_PROVIDERS.filter((_, i) => accts[i]).map((slug) => ({ slug, name: appInfo(slug)?.name ?? slug }))],
-    envelopes: rows.map((r) => ({ id: r.id, provider: r.provider === BUILTIN ? 'Closing Time SecureSign' : appInfo(r.provider)?.name ?? r.provider, document: r.document, signers: r.signers, status: r.status, createdAt: iso(r.created_at) })),
+    providers: [{ slug: BUILTIN, name: 'Closing Time Secure Sign' }, ...SIGN_PROVIDERS.filter((_, i) => accts[i]).map((slug) => ({ slug, name: appInfo(slug)?.name ?? slug }))],
+    envelopes: rows.map((r) => ({ id: r.id, provider: r.provider === BUILTIN ? 'Closing Time Secure Sign' : appInfo(r.provider)?.name ?? r.provider, document: r.document, signers: r.signers, status: r.status, createdAt: iso(r.created_at) })),
   };
 }
 

@@ -28,7 +28,7 @@ export function cleanSettings(raw: Partial<SignSettings>): SignSettings {
     accent: /^#[0-9a-fA-F]{6}$/.test(String(raw.accent ?? '')) ? String(raw.accent) : d.accent, brandName: String(raw.brandName ?? '').trim().slice(0, 80),
   };
 }
-const mail = (text: string, link?: { href: string; label: string }, brand?: Brand) => `<div style="font-family:Arial,sans-serif;color:#1e293b;line-height:1.55;max-width:600px">${brand?.logo ? `<p style="margin:0 0 16px"><img src="${esc(brand.logo)}" alt="${esc(brand.name)}" style="max-height:48px;max-width:200px"></p>` : brand?.name ? `<p style="margin:0 0 16px;font-weight:bold;font-size:16px">${esc(brand.name)}</p>` : ''}${esc(text).replace(/\n/g, '<br>')}${link ? `<p style="margin:24px 0"><a href="${link.href}" style="background:${brand?.accent ?? '#301D5D'};color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold">${esc(link.label)}</a></p>` : ''}<p style="margin:24px 0 0;font-size:12px;color:#64748b">Sent with Closing Time SecureSign</p></div>`;
+const mail = (text: string, link?: { href: string; label: string }, brand?: Brand) => `<div style="font-family:Arial,sans-serif;color:#1e293b;line-height:1.55;max-width:600px">${brand?.logo ? `<p style="margin:0 0 16px"><img src="${esc(brand.logo)}" alt="${esc(brand.name)}" style="max-height:48px;max-width:200px"></p>` : brand?.name ? `<p style="margin:0 0 16px;font-weight:bold;font-size:16px">${esc(brand.name)}</p>` : ''}${esc(text).replace(/\n/g, '<br>')}${link ? `<p style="margin:24px 0"><a href="${link.href}" style="background:${brand?.accent ?? '#301D5D'};color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold">${esc(link.label)}</a></p>` : ''}<p style="margin:24px 0 0;font-size:12px;color:#64748b">Sent with Closing Time Secure Sign</p></div>`;
 
 function tokenFor(reqId: string, idx: number, nonce: string): string {
   const secret = process.env.JWT_SECRET;
@@ -283,7 +283,7 @@ async function finalize(reqId: string): Promise<void> {
   }
   const cert = pdf.addPage([612, 792]);
   let y = 730;
-  cert.drawText('Closing Time SecureSign - Certificate Of Electronic Signature', { x: 54, y, size: 16, font: bold, color: rgb(0.13, 0.1, 0.25) }); y -= 24;
+  cert.drawText('Closing Time Secure Sign - Certificate Of Electronic Signature', { x: 54, y, size: 16, font: bold, color: rgb(0.13, 0.1, 0.25) }); y -= 24;
   const line = (t: string, b = false, size = 9.5) => {
     const f = b ? bold : font;
     const words = t.split(' ');

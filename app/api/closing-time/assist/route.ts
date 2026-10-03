@@ -71,7 +71,7 @@ export const POST = withErrorHandling(async (req: Request): Promise<Response> =>
       catch (e) { return priv({ error: e instanceof Error ? e.message : 'Could not send for signature.' }, 400); }
     }
     case 'cancel_signature': { await cancelSignRequest(user.realtorId, input.id); return priv({ ok: true, message: 'Signature request cancelled.' }); }
-    case 'save_sign_settings': { await saveSignSettings(user.realtorId, input.settings); return priv({ ok: true, message: 'SecureSign settings saved.' }); }
+    case 'save_sign_settings': { await saveSignSettings(user.realtorId, input.settings); return priv({ ok: true, message: 'Secure Sign settings saved.' }); }
     case 'save_sign_layout': {
       try { await saveSignLayout(user.realtorId, input.name, input.fields); return priv({ ok: true, message: 'Layout saved.' }); }
       catch (e) { return priv({ error: e instanceof Error ? e.message : 'Could not save the layout.' }, 400); }

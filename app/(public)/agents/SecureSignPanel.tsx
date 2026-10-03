@@ -21,7 +21,7 @@ export function SecureSignSettings({ settings, post, busy }: { settings: SignSet
   );
   return (
     <div className="mt-3 border border-slate-200 p-3 text-sm">
-      <button type="button" className={btn} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Hide' : 'Show'} SecureSign Settings</button>
+      <button type="button" className={btn} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Hide' : 'Show'} Secure Sign Settings</button>
       {open && (
         <div className="mt-3 space-y-4">
           <div className="grid gap-2 sm:grid-cols-3">
@@ -54,7 +54,7 @@ export function SecureSignRequests({ requests, post, busy }: { requests: SignReq
   if (requests.length === 0) return null;
   return (
     <div className="mt-3">
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">SecureSign requests</p>
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Secure Sign requests</p>
       <div className="mt-1 flex flex-wrap gap-2" role="tablist">{FILTERS.map(([k, t]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`${btn} ${tab === k ? 'border-[#301D5D] bg-[#F8F5FF]' : ''}`} onClick={() => setTab(k)}>{t} {count(k)}</button>)}</div>
       {shown.length === 0 ? <p className="mt-2 text-sm text-slate-500">Nothing here.</p> : (
         <ul className="mt-2 divide-y divide-slate-100 border border-slate-200 text-sm">{shown.map((r) => (

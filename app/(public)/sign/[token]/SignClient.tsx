@@ -120,7 +120,7 @@ export default function SignClient({ token }: { token: string }) {
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       {view.logo && <SigLogo src={view.logo} alt={view.brandName} />}
-      <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: view.accent }}>{view.brandName ? `${view.brandName} · ` : ''}Closing Time SecureSign</p>
+      <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: view.accent }}>{view.brandName ? `${view.brandName} · ` : ''}Closing Time Secure Sign</p>
       <h1 className="mt-1 text-2xl font-bold text-[#301D5D]">{view.document}</h1>
       <p className="mt-1 text-sm text-slate-600">{view.property} · sent by {view.agentName} · for {view.signerName}</p>
 

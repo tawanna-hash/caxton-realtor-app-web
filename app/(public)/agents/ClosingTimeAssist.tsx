@@ -339,9 +339,9 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                 <button type="button" disabled={busy} className={btnPrimary} onClick={() => void sendSignature()}>Send For Signature</button>
               </div>
             )}
-            {data.signing && data.signing.envelopes.filter((e) => e.provider !== 'Closing Time SecureSign').length > 0 && (
+            {data.signing && data.signing.envelopes.filter((e) => e.provider !== 'Closing Time Secure Sign').length > 0 && (
               <ul className="mt-2 divide-y divide-slate-100 border border-slate-200 text-sm">
-                {data.signing.envelopes.filter((e) => e.provider !== 'Closing Time SecureSign').map((e) => (
+                {data.signing.envelopes.filter((e) => e.provider !== 'Closing Time Secure Sign').map((e) => (
                   <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
                     <span className="min-w-0"><span className="font-semibold">{e.document}</span> <span className="text-xs text-slate-500">via {e.provider} to {e.signers.map((x) => x.name).join(', ')}</span></span>
                     <span className="flex items-center gap-2"><span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold capitalize">{e.status === 'sent' ? 'Awaiting signatures' : e.status}</span>
