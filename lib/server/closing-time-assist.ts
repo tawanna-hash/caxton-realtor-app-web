@@ -62,6 +62,7 @@ export function ensureAssistSchema(): Promise<void> {
       deal_id TEXT NOT NULL, doc_id TEXT NOT NULL, filename TEXT NOT NULL, content_type TEXT NOT NULL,
       size_bytes INTEGER NOT NULL, data_b64 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), reviewed BOOLEAN NOT NULL DEFAULT FALSE)`);
     await query(`ALTER TABLE closing_time_portal_uploads ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE`);
+    await query(`UPDATE closing_time_portal_uploads o SET archived=TRUE WHERE o.archived=FALSE AND o.doc_id<>'signed' AND EXISTS (SELECT 1 FROM closing_time_portal_uploads n WHERE n.realtor_id=o.realtor_id AND n.deal_id=o.deal_id AND n.doc_id=o.doc_id AND n.created_at>o.created_at)`);
     await query(`CREATE INDEX IF NOT EXISTS closing_time_portal_uploads_deal_idx ON closing_time_portal_uploads (realtor_id, deal_id, created_at DESC)`);
     await query(`CREATE TABLE IF NOT EXISTS closing_time_daily_summaries (
       realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE, summary_date DATE NOT NULL,
