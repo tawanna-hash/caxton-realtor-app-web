@@ -8,7 +8,7 @@ import {
   getOrCreatePortalToken, listAssist, removeParty, removePortal, requireDeal, saveChecklist, saveExtensionDraft, markUploadReviewed, setAutoIntro, setAutoSignature, addSignatureRequest, closeSignature,
 } from '@/lib/server/closing-time-assist';
 import { connectedState, saveUploadToStorage, setSendFromConnected, syncCalendar } from '@/lib/server/closing-time-connected';
-import { SIGN_PROVIDERS, refreshEnvelope, sendForSignature, signingState } from '@/lib/server/closing-time-signing';
+import { BUILTIN, SIGN_PROVIDERS, refreshEnvelope, sendForSignature, signingState } from '@/lib/server/closing-time-signing';
 import { query } from '@/lib/server/db/neon';
 
 export const runtime = 'nodejs';
@@ -33,7 +33,7 @@ const action = z.discriminatedUnion('action', [
   z.object({ action: z.literal('calendar_sync'), dealId }),
   z.object({ action: z.literal('send_from_connected'), on: z.boolean() }),
   z.object({ action: z.literal('save_upload'), dealId, id: z.string().uuid(), storage: z.enum(['google_drive', 'dropbox', 'microsoft_onedrive']) }),
-  z.object({ action: z.literal('send_signature'), dealId, provider: z.enum(SIGN_PROVIDERS), uploadId: z.string().uuid().optional(), fileName: z.string().max(200).optional(), fileB64: z.string().max(4_400_000).optional(), subject: z.string().max(200).optional(), signers: z.array(z.object({ name: z.string().trim().min(1).max(120), email: z.string().trim().email().max(320) })).min(1).max(6) }),
+  z.object({ action: z.literal('send_signature'), dealId, provider: z.enum([...SIGN_PROVIDERS, BUILTIN]), placement: z.enum(['page', 'inline']).optional(), fields: z.array(z.object({ signer: z.number().int().min(0).max(5), type: z.enum(['signature', 'date']), page: z.number().int().min(0).max(400), x: z.number(), y: z.number(), w: z.number(), h: z.number(), id: z.string().max(60).optional() })).max(80).optional(), uploadId: z.string().uuid().optional(), fileName: z.string().max(200).optional(), fileB64: z.string().max(4_400_000).optional(), subject: z.string().max(200).optional(), signers: z.array(z.object({ name: z.string().trim().min(1).max(120), email: z.string().trim().email().max(320) })).min(1).max(6) }),
   z.object({ action: z.literal('refresh_signature'), id: z.string().uuid() }),
   z.object({ action: z.literal('save_checklist'), steps: z.array(step).min(1).max(60) }),
 ]);
@@ -62,7 +62,7 @@ export const POST = withErrorHandling(async (req: Request): Promise<Response> =>
     }
     case 'send_from_connected': await setSendFromConnected(user.realtorId, input.on); return priv({ ok: true });
     case 'send_signature': {
-      try { return priv({ ok: true, message: await sendForSignature(user.realtorId, input) }); }
+      try { return priv({ ok: true, message: await sendForSignature(user.realtorId, { ...input, builtin: input.provider === BUILTIN ? { placement: input.placement ?? 'page', fields: input.fields?.map((f) => ({ ...f, id: f.id ?? '' })), origin: new URL(req.url).origin } : undefined }) }); }
       catch (e) { return priv({ error: e instanceof Error ? e.message : 'Could not send for signature.' }, 400); }
     }
     case 'refresh_signature': {

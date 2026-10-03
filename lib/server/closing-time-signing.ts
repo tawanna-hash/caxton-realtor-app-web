@@ -3,10 +3,12 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { query } from '@/lib/server/db/neon';
 import { ensureAssistSchema, getUpload, requireDeal } from '@/lib/server/closing-time-assist';
 import { accountFor, appInfo, proxyCall } from '@/lib/server/composio';
+import { createSignRequest, signRequestStatus, type SignField } from '@/lib/server/closing-time-esign';
 
 export const SIGN_PROVIDERS = ['boldsign', 'pandadoc', 'dropbox_sign'] as const;
 export type SignProvider = (typeof SIGN_PROVIDERS)[number];
 export type Signer = { name: string; email: string };
+export const BUILTIN = 'builtin';
 const MAX_BYTES = 3 * 1024 * 1024;
 
 let ready: Promise<void> | null = null;
@@ -39,8 +41,8 @@ export async function signingState(realtorId: string, dealId: string) {
       `SELECT id, provider, document, signers, status, created_at FROM closing_time_envelopes WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 20`, [realtorId, dealId]),
   ]);
   return {
-    providers: SIGN_PROVIDERS.filter((_, i) => accts[i]).map((slug) => ({ slug, name: appInfo(slug)?.name ?? slug })),
-    envelopes: rows.map((r) => ({ id: r.id, provider: appInfo(r.provider)?.name ?? r.provider, document: r.document, signers: r.signers, status: r.status, createdAt: iso(r.created_at) })),
+    providers: [{ slug: BUILTIN, name: 'Realty News Now Secure Signing' }, ...SIGN_PROVIDERS.filter((_, i) => accts[i]).map((slug) => ({ slug, name: appInfo(slug)?.name ?? slug }))],
+    envelopes: rows.map((r) => ({ id: r.id, provider: r.provider === BUILTIN ? 'Realty News Now' : appInfo(r.provider)?.name ?? r.provider, document: r.document, signers: r.signers, status: r.status, createdAt: iso(r.created_at) })),
   };
 }
 
@@ -77,12 +79,17 @@ function multipart(parts: { name: string; value?: string; file?: { filename: str
   return { body: Buffer.concat(chunks), contentType: `multipart/form-data; boundary=${boundary}` };
 }
 
-type SendInput = { dealId: string; provider: SignProvider; uploadId?: string; fileName?: string; fileB64?: string; signers: Signer[]; subject?: string };
+export type BuiltinOptions = { placement: 'page' | 'inline'; fields?: SignField[]; origin: string };
+type SendInput = { dealId: string; provider: SignProvider | typeof BUILTIN; builtin?: BuiltinOptions; uploadId?: string; fileName?: string; fileB64?: string; signers: Signer[]; subject?: string };
 
 export async function sendForSignature(realtorId: string, input: SendInput): Promise<string> {
   await ensure();
   const deal = await requireDeal(realtorId, input.dealId);
-  const acct = await accountFor(realtorId, [input.provider]);
+  if (input.provider === BUILTIN) {
+    return createSignRequest(realtorId, { dealId: input.dealId, uploadId: input.uploadId, fileName: input.fileName, fileB64: input.fileB64, subject: input.subject, signers: input.signers, placement: input.builtin?.placement ?? 'page', fields: input.builtin?.fields, origin: input.builtin?.origin ?? 'https://realtynewsnow.app' });
+  }
+  const provider = input.provider;
+  const acct = await accountFor(realtorId, [provider]);
   if (!acct) throw new Error('Connect that signing app in Integrations first.');
   let raw: Buffer; let name: string;
   if (input.uploadId) {
@@ -96,11 +103,11 @@ export async function sendForSignature(realtorId: string, input: SendInput): Pro
   const property = deal.propertyAddress || deal.title || 'Deal';
   const docName = name.replace(/\.pdf$/i, '').slice(0, 120) || 'Document';
   const subject = (input.subject?.trim() || `Please sign: ${docName} - ${property}`).slice(0, 200);
-  const pdf = await prepareDocument(raw, input.signers, input.provider, `${docName} - ${property}`);
+  const pdf = await prepareDocument(raw, input.signers, provider, `${docName} - ${property}`);
   const b64 = pdf.toString('base64');
   let externalId = '';
 
-  if (input.provider === 'dropbox_sign') {
+  if (provider === 'dropbox_sign') {
     const parts: Parameters<typeof multipart>[0] = [
       { name: 'title', value: subject }, { name: 'subject', value: subject }, { name: 'message', value: `Please review and sign ${docName} for ${property}.` },
       { name: 'use_text_tags', value: '1' }, { name: 'hide_text_tags', value: '1' },
@@ -111,7 +118,7 @@ export async function sendForSignature(realtorId: string, input: SendInput): Pro
     const res = await proxyCall(realtorId, acct.id, 'https://api.hellosign.com/v3/signature_request/send', { body: mp.body, headers: { 'content-type': mp.contentType } });
     externalId = (res.data as { signature_request?: { signature_request_id?: string } })?.signature_request?.signature_request_id ?? '';
     if (!res.ok || !externalId) throw new Error(`Dropbox Sign rejected the document (${res.status}): ${upstreamMessage(res.data)}`);
-  } else if (input.provider === 'pandadoc') {
+  } else if (provider === 'pandadoc') {
     const data = { name: subject, recipients: input.signers.map((sg, i) => ({ email: sg.email, first_name: sg.name.split(' ')[0] ?? sg.name, last_name: sg.name.split(' ').slice(1).join(' '), role: `Signer${i + 1}`, signing_order: 1 })) };
     const mp = multipart([{ name: 'data', value: JSON.stringify(data) }, { name: 'file', file: { filename: `${docName}.pdf`, type: 'application/pdf', bytes: pdf } }]);
     const made = await proxyCall(realtorId, acct.id, 'https://api.pandadoc.com/public/v1/documents', { body: mp.body, headers: { 'content-type': mp.contentType } });
@@ -139,15 +146,16 @@ export async function sendForSignature(realtorId: string, input: SendInput): Pro
   }
 
   await query(`INSERT INTO closing_time_envelopes (id, realtor_id, deal_id, provider, external_id, document, signers) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb)`,
-    [randomUUID(), realtorId, input.dealId, input.provider, externalId, docName, JSON.stringify(input.signers)]);
-  return `Sent "${docName}" for signature through ${appInfo(input.provider)?.name}. ${input.signers.map((s) => s.email).join(', ')} will get an email from them.`;
+    [randomUUID(), realtorId, input.dealId, provider, externalId, docName, JSON.stringify(input.signers)]);
+  return `Sent "${docName}" for signature through ${appInfo(provider)?.name}. ${input.signers.map((s) => s.email).join(', ')} will get an email from them.`;
 }
 
 export async function refreshEnvelope(realtorId: string, id: string): Promise<string> {
   await ensure();
-  const rows = await query<{ provider: SignProvider; external_id: string; status: string }>(`SELECT provider, external_id, status FROM closing_time_envelopes WHERE id=$1 AND realtor_id=$2`, [id, realtorId]);
+  const rows = await query<{ provider: SignProvider | typeof BUILTIN; external_id: string; status: string }>(`SELECT provider, external_id, status FROM closing_time_envelopes WHERE id=$1 AND realtor_id=$2`, [id, realtorId]);
   const row = rows[0];
   if (!row) throw new Error('Not found.');
+  if ((row.provider as string) === BUILTIN) return (await signRequestStatus(realtorId, row.external_id)) ?? row.status;
   const acct = await accountFor(realtorId, [row.provider]);
   if (!acct) throw new Error('Reconnect that signing app in Integrations first.');
   let status = row.status;

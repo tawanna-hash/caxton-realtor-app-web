@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import SignaturePlacer, { type PlacedField } from './SignaturePlacer';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 
 type Party = { id: string; role: string; name: string; email: string };
@@ -89,6 +90,9 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const [sigFile, setSigFile] = useState<{ name: string; b64: string } | null>(null);
   const [sigTo, setSigTo] = useState<string[]>([]);
   const [sigSubject, setSigSubject] = useState('');
+  const [sigPlacement, setSigPlacement] = useState<'page' | 'inline'>('page');
+  const [sigFields, setSigFields] = useState<PlacedField[]>([]);
+  const [placer, setPlacer] = useState<Uint8Array | null>(null);
   const pickFile = (file: File | undefined) => {
     setSigFile(null);
     if (!file) return;
@@ -100,11 +104,23 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const sendSignature = async () => {
     setNotice('');
     const provider = sigProvider || data?.signing?.providers[0]?.slug || '';
-    const signers = (data?.parties ?? []).filter((p) => p.email && sigTo.includes(p.id)).map((p) => ({ name: p.name || p.email, email: p.email }));
+    const signerParties = (data?.parties ?? []).filter((p) => p.email && sigTo.includes(p.id));
+    const signers = signerParties.map((p) => ({ name: p.name || p.email, email: p.email }));
     const doc = sigDoc === 'file' && sigFile ? { fileName: sigFile.name, fileB64: sigFile.b64 } : sigDoc ? { uploadId: sigDoc } : null;
     if (!provider || !doc || signers.length === 0) { setError('Choose a document and at least one person to sign.'); return; }
-    const r = await post({ action: 'send_signature', dealId: deal.id, provider, subject: sigSubject || undefined, signers, ...doc });
-    if (r?.message) { setNotice(r.message); setSigTo([]); }
+    const inline = provider === 'builtin' && sigPlacement === 'inline';
+    const r = await post({ action: 'send_signature', dealId: deal.id, provider, subject: sigSubject || undefined, signers, ...doc, ...(provider === 'builtin' ? { placement: sigPlacement, fields: inline ? sigFields : undefined } : {}) });
+    if (r?.message) { setNotice(r.message); setSigTo([]); setSigFields([]); }
+  };
+  const openPlacer = async () => {
+    setError('');
+    try {
+      let bytes: ArrayBuffer | null = null;
+      if (sigDoc === 'file' && sigFile) bytes = Uint8Array.from(atob(sigFile.b64), (c) => c.charCodeAt(0)).buffer;
+      else if (sigDoc) { const res = await fetch(`/api/closing-time/assist/upload/${sigDoc}`, { credentials: 'include' }); if (res.ok) bytes = await res.arrayBuffer(); }
+      if (!bytes) { setError('Choose a PDF first.'); return; }
+      setSigFields([]); setPlacer(new Uint8Array(bytes));
+    } catch { setError('That file could not be opened.'); }
   };
   const refreshSig = async (id: string) => {
     setNotice('');
@@ -261,10 +277,11 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             )}
           </section>
 
+          {placer && <SignaturePlacer data={placer} signers={(data.parties ?? []).filter((p) => p.email && sigTo.includes(p.id)).map((p) => p.name || p.email)} fields={sigFields} onChange={setSigFields} onClose={() => setPlacer(null)} />}
           <section aria-label="Send for signature" className="lg:col-span-2">
             <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Send For Signature</h4>
             {!data.signing || data.signing.providers.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-500">Connect a signing app such as BoldSign, PandaDoc or Dropbox Sign on the Integrations page to send documents for signature from this deal.</p>
+              <p className="mt-2 text-sm text-slate-500">Send documents for signature from this deal.</p>
             ) : (
               <div className="mt-2 space-y-3 border border-slate-200 p-3 text-sm">
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -286,9 +303,16 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                     ))}</div>
                   )}
                 </fieldset>
+                {(sigProvider || data.signing.providers[0].slug) === 'builtin' && (
+                  <fieldset className="space-y-1"><legend className="text-xs font-semibold text-slate-600">Where signatures go</legend>
+                    <label className="flex items-center gap-2"><input type="radio" name="sigplace" checked={sigPlacement === 'page'} onChange={() => setSigPlacement('page')} /> Add a signature page at the end</label>
+                    <label className="flex items-center gap-2"><input type="radio" name="sigplace" checked={sigPlacement === 'inline'} onChange={() => setSigPlacement('inline')} /> Place signature fields inside the contract</label>
+                    {sigPlacement === 'inline' && <div className="flex flex-wrap items-center gap-2"><button type="button" disabled={busy || !sigDoc || sigTo.length === 0} className={btn} onClick={() => void openPlacer()}>Place Fields</button><span className="text-xs text-slate-500">{sigFields.length} placed</span></div>}
+                  </fieldset>
+                )}
                 <label className="block"><span className="text-xs font-semibold text-slate-600">Email subject (optional)</span>
                   <input className={input} value={sigSubject} maxLength={200} onChange={(e) => setSigSubject(e.target.value)} /></label>
-                <p className="text-xs text-slate-500">A signature page is added at the end of the PDF. Nothing is sent until you press the button.</p>
+                <p className="text-xs text-slate-500">Nothing is sent until you press the button.</p>
                 <button type="button" disabled={busy} className={btnPrimary} onClick={() => void sendSignature()}>Send For Signature</button>
               </div>
             )}
