@@ -7,14 +7,13 @@ import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './
 
 const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'transaction', label: 'Current Deal', keys: ['current', 'trec-forms'] },
-  { id: 'coordinator', label: 'Deal Settings', keys: ['assist'] },
+  { id: 'coordinator', label: 'Deal Settings', keys: ['assist', 'alerts', 'calendar'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
   { id: 'readiness', label: 'Readiness Check', keys: ['readiness'] },
   { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
 ];
 const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'overview', label: 'Dashboard Overview', keys: [] },
-  { id: 'alerts', label: 'Alerts and Calendar', keys: ['alerts', 'calendar'] },
   { id: 'forms', label: 'TREC Forms Library', keys: ['trec-library'] },
   { id: 'tools', label: 'Calculators', keys: [] },
   { id: 'referral', label: 'Referral Network', keys: [] },
@@ -2024,7 +2023,28 @@ export default function ClosingTime({
             <div data-section-key="integrations" className="min-w-0"><IntegrationsPanel /></div>
             <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
-          <section className={`mt-5 grid gap-5 ${calendarConnected ? '' : 'lg:grid-cols-2'}`} aria-label="Alerts and calendar">
+          <section className={`mt-5 grid gap-5 ${calendarConnected ? '' : 'lg:grid-cols-2'}`} aria-label="Deal settings, alerts and calendar">
+            {activeDeal && (
+              <ClosingTimeAssist
+                deal={activeDeal}
+                onMarkReceived={(docId, fileName) => {
+                  const now = new Date().toISOString();
+                  applyActiveAction('Marked a client-uploaded document received', {
+                    documents: activeDeal.documents.map((d) => d.id === docId ? { ...d, status: 'received' as const, complete: true, updatedAt: now, fileName: fileName.slice(0, 280), fileUploadedAt: now } : d),
+                  });
+                }}
+                onApplyChecklist={(steps) => {
+                  const base = (anchorKind: 'effective' | 'closing') => anchorKind === 'closing' ? activeDeal.closingDate : activeDeal.effectiveDate;
+                  const existing = new Set(activeDeal.tasks.map((t) => t.title));
+                  const added = steps.filter((s) => base(s.anchor) && !existing.has(s.title)).map((s) => ({
+                    id: getId('task'), title: s.title, dueDate: addDays(base(s.anchor), s.offsetDays),
+                    priority: 'normal' as const, status: 'todo' as const, complete: false,
+                  }));
+                  if (!added.length) return;
+                  applyActiveAction(`Applied closing checklist (${added.length} tasks)`, { tasks: [...activeDeal.tasks, ...added].slice(0, 200) });
+                }}
+              />
+            )}
             <div {...collapsible('alerts')} className="border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-slate-950">Deadline Alerts</h3>
@@ -2056,9 +2076,10 @@ export default function ClosingTime({
             {!calendarConnected && (
             <div {...collapsible('calendar')} className="border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-slate-950">Calendar Exports <span className="ml-1 text-xs font-semibold text-slate-500">Other calendars</span></h3>
+                <h3 className="text-lg font-semibold text-slate-950">Calendar Exports For Apple Calendar</h3>
                 <CollapseToggle {...toggleProps('calendar', 'calendar exports')} />
               </div>
+              <p className="mt-3 border-l-4 border-[#7059A8] bg-[#F8F5FF] p-3 text-sm leading-6 text-slate-700">Using Apple Calendar? Apple Calendar cannot be connected, so subscribe here instead. If you use Google Calendar or Outlook, connect it on the Integrations page and your deal dates are added for you.</p>
               <p className="mt-3 text-sm leading-6 text-slate-600">Subscribe once and your calendar stays current with deadlines, closing dates, reminders, and open tasks for every active transaction.</p>
               {!calendarFeed ? (
                 <button type="button" onClick={() => void loadCalendarFeed()} disabled={calendarFeedState === 'loading'} className="mt-4 inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45">
@@ -2086,27 +2107,6 @@ export default function ClosingTime({
                 <button type="button" onClick={exportAllDealsCalendar} disabled={!calendarEventsForActiveDeals(deals).length} className="inline-flex items-center gap-1 underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-45"><Download className="h-3.5 w-3.5" aria-hidden="true" />Active Deals (.ics)</button>
               </div>
             </div>
-            )}
-            {activeDeal && (
-              <ClosingTimeAssist
-                deal={activeDeal}
-                onMarkReceived={(docId, fileName) => {
-                  const now = new Date().toISOString();
-                  applyActiveAction('Marked a client-uploaded document received', {
-                    documents: activeDeal.documents.map((d) => d.id === docId ? { ...d, status: 'received' as const, complete: true, updatedAt: now, fileName: fileName.slice(0, 280), fileUploadedAt: now } : d),
-                  });
-                }}
-                onApplyChecklist={(steps) => {
-                  const base = (anchorKind: 'effective' | 'closing') => anchorKind === 'closing' ? activeDeal.closingDate : activeDeal.effectiveDate;
-                  const existing = new Set(activeDeal.tasks.map((t) => t.title));
-                  const added = steps.filter((s) => base(s.anchor) && !existing.has(s.title)).map((s) => ({
-                    id: getId('task'), title: s.title, dueDate: addDays(base(s.anchor), s.offsetDays),
-                    priority: 'normal' as const, status: 'todo' as const, complete: false,
-                  }));
-                  if (!added.length) return;
-                  applyActiveAction(`Applied closing checklist (${added.length} tasks)`, { tasks: [...activeDeal.tasks, ...added].slice(0, 200) });
-                }}
-              />
             )}
             <div id="trec-forms" {...collapsible('trec-library')} className="min-w-0 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
               <div className="flex items-center justify-between gap-3">
