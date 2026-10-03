@@ -284,7 +284,19 @@ async function finalize(reqId: string): Promise<void> {
   const cert = pdf.addPage([612, 792]);
   let y = 730;
   cert.drawText('Closing Time SecureSign - Certificate Of Electronic Signature', { x: 54, y, size: 16, font: bold, color: rgb(0.13, 0.1, 0.25) }); y -= 24;
-  const line = (t: string, b = false, size = 9.5) => { cert.drawText(t.slice(0, 105), { x: 54, y, size, font: b ? bold : font, color: rgb(0.15, 0.15, 0.2) }); y -= size + 6; };
+  const line = (t: string, b = false, size = 9.5) => {
+    const f = b ? bold : font;
+    const words = t.split(' ');
+    let cur = '';
+    const out: string[] = [];
+    for (const w of words) {
+      const next = cur ? `${cur} ${w}` : w;
+      if (cur && f.widthOfTextAtSize(next, size) > 504) { out.push(cur); cur = w; } else cur = next;
+    }
+    if (cur) out.push(cur);
+    for (const l of out) { cert.drawText(l, { x: 54, y, size, font: f, color: rgb(0.15, 0.15, 0.2) }); y -= size + 4; }
+    y -= 2;
+  };
   line(`Document: ${req.document}`, true, 10.5); line(`Property: ${req.property}`); line(`Sent by: ${req.agent_name}`); line(`Request ID: ${req.id}`);
   line(`Fingerprint (SHA-256) of the document before signing:`); line(req.original_sha, false, 8); y -= 6;
   line('Signers', true, 11);
