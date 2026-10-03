@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { SecureSignRequests, SecureSignSettings, type SignLayout, type SignRequestRow, type SignSettings } from './SecureSignPanel';
 import SignaturePlacer, { type PlacedField } from './SignaturePlacer';
+import { SlidersHorizontal } from 'lucide-react';
+import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 
 type Party = { id: string; role: string; name: string; email: string };
@@ -42,6 +44,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const [extDays, setExtDays] = useState(3);
   const [newClosing, setNewClosing] = useState('');
   const [notice, setNotice] = useState('');
+  const { section: collapsible, toggleProps } = useCollapsibles();
 
   const load = useCallback(async () => {
     try {
@@ -138,8 +141,15 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const sent = data?.followUps.filter((f) => f.status === 'sent').slice(0, 5) ?? [];
 
   return (
-    <div data-section-key="assist" className="min-w-0 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
-      <h3 className="text-lg font-semibold text-slate-950">Deal Settings</h3>
+    <div {...collapsible('assist', { mobileOpen: true })} className="min-w-0 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
+      <div className="flex items-center gap-3">
+        <SlidersHorizontal className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Coordination</p>
+          <h3 className="mt-1 text-xl font-semibold text-slate-950">Deal Settings</h3>
+        </div>
+        <CollapseToggle {...toggleProps('assist', 'deal settings', { mobileOpen: true })} className="ml-auto" />
+      </div>
       <p className="mt-1 text-sm leading-6 text-slate-600">Risk alerts, follow-up drafts, a client progress link, and a closing checklist for this deal. Nothing is emailed to anyone until you approve that specific draft.</p>
       {error && <p className="mt-3 text-sm font-semibold text-[#9A3D2B]" role="alert">{error}</p>}
       {!data ? <p className="mt-4 text-sm text-slate-500">{error ? '' : 'Loading.'}</p> : (

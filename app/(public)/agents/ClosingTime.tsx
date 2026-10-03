@@ -2163,10 +2163,11 @@ export default function ClosingTime({
 
         {workspacePage === 2 && (
           <div id="current-transaction" {...collapsible('current', { mobileOpen: true })} className="mt-5 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-7">
-            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
-              <div>
-                <p className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Current transaction<CollapseToggle {...toggleProps('current', 'current transaction', { mobileOpen: true })} /></p>
-                <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">
+            <div className="flex flex-wrap items-center gap-3">
+              <ClipboardCheck className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Current transaction</p>
+                <h3 className="mt-1 text-xl font-semibold text-slate-950">
                   {activeDeal?.propertyAddress || activeDeal?.title || 'Start a transaction'}
                 </h3>
                 {selectedFormVersions.length > 0 && (
@@ -2177,7 +2178,7 @@ export default function ClosingTime({
                 )}
               </div>
               {deals.length > 0 && (
-                <div className="flex min-w-0 flex-wrap gap-2">
+                <div className="flex min-w-0 flex-wrap gap-2 sm:ml-auto">
                   <button
                     type="button"
                     onClick={() => {
@@ -2336,6 +2337,7 @@ export default function ClosingTime({
                   )}
                 </div>
               )}
+              <CollapseToggle {...toggleProps('current', 'current transaction', { mobileOpen: true })} className={deals.length > 0 ? '' : 'ml-auto'} />
             </div>
 
             {!activeDeal ? (
