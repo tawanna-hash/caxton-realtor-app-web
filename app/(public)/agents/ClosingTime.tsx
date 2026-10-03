@@ -3068,7 +3068,7 @@ export default function ClosingTime({
 
         {workspacePage === 2 && activeDeal && (
           <>
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <div className="mt-6 grid gap-6">
             <div {...collapsible('tasks')} className="border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center gap-3">
                 <ListTodo className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
