@@ -98,7 +98,7 @@ export default function SignClient({ token }: { token: string }) {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Review and sign</p>
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Closing Time SecureSign</p>
       <h1 className="mt-1 text-2xl font-bold text-[#301D5D]">{view.document}</h1>
       <p className="mt-1 text-sm text-slate-600">{view.property} · sent by {view.agentName} · for {view.signerName}</p>
 

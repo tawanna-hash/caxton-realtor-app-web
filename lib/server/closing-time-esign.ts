@@ -216,7 +216,7 @@ async function finalize(reqId: string): Promise<void> {
   }
   const cert = pdf.addPage([612, 792]);
   let y = 730;
-  cert.drawText('Certificate Of Electronic Signature', { x: 54, y, size: 16, font: bold, color: rgb(0.13, 0.1, 0.25) }); y -= 24;
+  cert.drawText('Closing Time SecureSign - Certificate Of Electronic Signature', { x: 54, y, size: 16, font: bold, color: rgb(0.13, 0.1, 0.25) }); y -= 24;
   const line = (t: string, b = false, size = 9.5) => { cert.drawText(t.slice(0, 105), { x: 54, y, size, font: b ? bold : font, color: rgb(0.15, 0.15, 0.2) }); y -= size + 6; };
   line(`Document: ${req.document}`, true, 10.5); line(`Property: ${req.property}`); line(`Sent by: ${req.agent_name}`); line(`Request ID: ${req.id}`);
   line(`Fingerprint (SHA-256) of the document before signing:`); line(req.original_sha, false, 8); y -= 6;

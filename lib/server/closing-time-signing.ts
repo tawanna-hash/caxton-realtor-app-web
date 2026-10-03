@@ -41,8 +41,8 @@ export async function signingState(realtorId: string, dealId: string) {
       `SELECT id, provider, document, signers, status, created_at FROM closing_time_envelopes WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 20`, [realtorId, dealId]),
   ]);
   return {
-    providers: [{ slug: BUILTIN, name: 'Realty News Now Secure Signing' }, ...SIGN_PROVIDERS.filter((_, i) => accts[i]).map((slug) => ({ slug, name: appInfo(slug)?.name ?? slug }))],
-    envelopes: rows.map((r) => ({ id: r.id, provider: r.provider === BUILTIN ? 'Realty News Now' : appInfo(r.provider)?.name ?? r.provider, document: r.document, signers: r.signers, status: r.status, createdAt: iso(r.created_at) })),
+    providers: [{ slug: BUILTIN, name: 'Closing Time SecureSign' }, ...SIGN_PROVIDERS.filter((_, i) => accts[i]).map((slug) => ({ slug, name: appInfo(slug)?.name ?? slug }))],
+    envelopes: rows.map((r) => ({ id: r.id, provider: r.provider === BUILTIN ? 'Closing Time SecureSign' : appInfo(r.provider)?.name ?? r.provider, document: r.document, signers: r.signers, status: r.status, createdAt: iso(r.created_at) })),
   };
 }
 
