@@ -6,7 +6,7 @@ import IntegrationsPanel from './IntegrationsPanel';
 import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './AgentToolsPanels';
 
 const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
-  { id: 'transaction', label: 'Deal and Forms', keys: ['current', 'trec-forms'] },
+  { id: 'transaction', label: 'Current Deal', keys: ['current', 'trec-forms'] },
   { id: 'coordinator', label: 'Deal Settings', keys: ['assist'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
   { id: 'readiness', label: 'Readiness Check', keys: ['readiness'] },
@@ -2166,7 +2166,7 @@ export default function ClosingTime({
             <div className="flex flex-wrap items-center gap-3">
               <ClipboardCheck className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Current transaction</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Current Deal</p>
                 <h3 className="mt-1 text-xl font-semibold text-slate-950">
                   {activeDeal?.propertyAddress || activeDeal?.title || 'Start a transaction'}
                 </h3>
