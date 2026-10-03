@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { SecureSignRequests, SecureSignSettings, type SignLayout, type SignRequestRow, type SignSettings } from './SecureSignPanel';
 import SignaturePlacer, { type PlacedField } from './SignaturePlacer';
-import { SlidersHorizontal } from 'lucide-react';
+import { FilePenLine, FileSignature, FileUp, History, Link2, ListChecks, MessageSquare, PenLine, Plug, ShieldAlert, SlidersHorizontal, Users, Workflow } from 'lucide-react';
 import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 
@@ -155,7 +155,13 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
       {!data ? <p className="mt-4 text-sm text-slate-500">{error ? '' : 'Loading.'}</p> : (
         <div className="mt-5 grid gap-6 lg:grid-cols-2">
           <section aria-label="Risks">
-            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Risk Alerts</h4>
+            <div className="flex items-center gap-3">
+              <ShieldAlert className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Watchlist</p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">Risk Alerts</h4>
+              </div>
+            </div>
             <label className="mt-2 flex items-center gap-2 text-xs text-slate-600">Extension length
               <input type="number" min={1} max={30} value={extDays} onChange={(e) => setExtDays(Math.min(30, Math.max(1, Number(e.target.value) || 3)))} className="min-h-[32px] w-16 rounded-md border border-slate-300 px-2 text-sm" aria-label="Extension days" /> days
             </label>
@@ -178,7 +184,13 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           </section>
 
           <section aria-label="Amendment">
-            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Amendment (TREC 39-11)</h4>
+            <div className="flex items-center gap-3">
+              <FilePenLine className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Contract</p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">Amendment (TREC 39-11)</h4>
+              </div>
+            </div>
             <p className="mt-2 text-sm text-slate-600">Pre-fills the official amendment with this property and one change. Signatures and the acceptance date stay blank. Review it, add any option fee or terms yourself, and send it for signatures. Check the new date against the contract.</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <input type="date" className={`${input} max-w-[170px]`} value={newClosing} onChange={(e) => setNewClosing(e.target.value)} aria-label="New closing date" />
@@ -187,7 +199,13 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           </section>
 
           <section aria-label="Client portal">
-            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Client Progress Link</h4>
+            <div className="flex items-center gap-3">
+              <Link2 className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Client Portal</p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">Client Progress Link</h4>
+              </div>
+            </div>
             <p className="mt-2 text-sm text-slate-600">A read-only page for your client with key dates, documents, and open to-dos. No sign-in needed. It never shows your notes or form data.</p>
             {!data.portalToken ? (
               <button type="button" disabled={busy} className={`${btnPrimary} mt-3`} onClick={() => void post({ action: 'portal', dealId: deal.id })}>Create Link</button>
@@ -205,7 +223,13 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           </section>
 
           <section aria-label="Deal contacts" className="lg:col-span-2">
-            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Deal Contacts</h4>
+            <div className="flex items-center gap-3">
+              <Users className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">People</p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">Deal Contacts</h4>
+              </div>
+            </div>
             <ul className="mt-2 grid gap-2 sm:grid-cols-2">
               {data.parties.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-2 border border-slate-200 px-3 py-2 text-sm">
@@ -223,7 +247,13 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           </section>
 
           <section aria-label="Follow-ups" className="lg:col-span-2">
-            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Follow-Up Drafts</h4>
+            <div className="flex items-center gap-3">
+              <MessageSquare className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Communication</p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">Follow-Up Drafts</h4>
+              </div>
+            </div>
             <div className="mt-2 flex flex-wrap gap-2">
               <button type="button" disabled={busy} className={btn} onClick={() => void post({ action: 'draft', dealId: deal.id, kind: 'intro' })}>Draft Intro To All Parties</button>
               <button type="button" disabled={busy || !partyByRole('lender')} className={btn} onClick={() => void post({ action: 'draft', dealId: deal.id, kind: 'lender', partyId: partyByRole('lender')?.id })}>Ask Lender For Status</button>
@@ -269,7 +299,13 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           </section>
 
           <section aria-label="Connected tools" className="lg:col-span-2">
-            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Connected Tools</h4>
+            <div className="flex items-center gap-3">
+              <Plug className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Integrations</p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">Connected Tools</h4>
+              </div>
+            </div>
             {!data.connected || (!data.connected.calendar && !data.connected.mail && data.connected.storage.length === 0) ? (
               <p className="mt-2 text-sm text-slate-500">Connect your calendar, email or document storage on the Integrations page to use them here.</p>
             ) : (
@@ -293,7 +329,13 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
 
           {placer && <SignaturePlacer data={placer} signers={(data.parties ?? []).filter((p) => p.email && sigTo.includes(p.id)).map((p) => p.name || p.email)} fields={sigFields} onChange={setSigFields} onClose={() => setPlacer(null)} />}
           <section aria-label="Send for signature" className="lg:col-span-2">
-            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Send For Signature</h4>
+            <div className="flex items-center gap-3">
+              <PenLine className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Secure Sign</p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">Send For Signature</h4>
+              </div>
+            </div>
             {!data.signing || data.signing.providers.length === 0 ? (
               <p className="mt-2 text-sm text-slate-500">Send documents for signature from this deal.</p>
             ) : (
@@ -355,7 +397,13 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           </section>
 
           <section aria-label="Client uploads" className="lg:col-span-2">
-            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Client Uploads</h4>
+            <div className="flex items-center gap-3">
+              <FileUp className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Documents</p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">Client Uploads</h4>
+              </div>
+            </div>
             {data.uploads.filter((u) => !u.archived).length === 0 ? <p className="mt-2 text-sm text-slate-500">Files your client uploads through the progress link appear here. You get an email each time.</p> : (
               <ul className="mt-2 space-y-2">
                 {data.uploads.filter((u) => !u.archived).map((u) => {
@@ -389,7 +437,13 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           </section>
 
           <section aria-label="Signature tracking" className="lg:col-span-2">
-            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Signatures Being Tracked</h4>
+            <div className="flex items-center gap-3">
+              <FileSignature className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Signatures</p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">Signatures Being Tracked</h4>
+              </div>
+            </div>
             {data.signatures.length === 0 ? <p className="mt-2 text-sm text-slate-500">Type a document name above and press Track Signature next to the person who owes it.</p> : (
               <ul className="mt-2 space-y-2">
                 {data.signatures.map((g) => (
@@ -403,11 +457,17 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           </section>
 
           <section aria-label="Automation">
-            <label className="mb-3 flex items-start gap-2 text-sm text-slate-700">
+            <div className="flex items-center gap-3">
+              <Workflow className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Automation</p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">Automation</h4>
+              </div>
+            </div>
+            <label className="mt-3 flex items-start gap-2 text-sm text-slate-700">
               <input type="checkbox" className="mt-1" checked={data.autoSignature} disabled={busy} onChange={(e) => void post({ action: 'auto_signature', on: e.target.checked })} />
               <span>Automatically remind people to sign tracked documents: gentle at 2 and 4 days, firmer at 6 days or when closing is within 3 days. You are copied. After 3 reminders you get an email to follow up yourself. Off by default.</span>
             </label>
-            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Automation</h4>
             <label className="mt-2 flex items-start gap-2 text-sm text-slate-700">
               <input type="checkbox" className="mt-1" checked={data.autoIntro} disabled={busy} onChange={(e) => void post({ action: 'auto_intro', on: e.target.checked })} />
               <span>Automatically send the standard introduction to each lender, title, and co-op agent contact once a deal has an effective date. You are copied. Nothing about price or terms is ever sent automatically. Off by default, applies to all your deals.</span>
@@ -416,7 +476,13 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           </section>
 
           <section aria-label="Checklist">
-            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">Closing Checklist</h4>
+            <div className="flex items-center gap-3">
+              <ListChecks className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Checklist</p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">Closing Checklist</h4>
+              </div>
+            </div>
             <p className="mt-2 text-sm text-slate-600">{data.checklist.length} steps{data.customChecklist ? ' (your template)' : ' (starter template)'}. Applying adds each step as a dated task. It needs the effective or closing date.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button type="button" className={btnPrimary} onClick={() => onApplyChecklist(data.checklist)}>Apply To This Deal</button>
@@ -432,7 +498,13 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           </section>
 
           <section aria-label="File history">
-            <h4 className="text-sm font-bold uppercase tracking-wide text-[#7059A8]">File History</h4>
+            <div className="flex items-center gap-3">
+              <History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Activity</p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">File History</h4>
+              </div>
+            </div>
             <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto text-sm text-slate-600">
               {[...deal.activity].reverse().slice(0, 30).map((a) => (
                 <li key={a.id}><span className="text-xs text-slate-400">{new Date(a.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span> {a.message}</li>

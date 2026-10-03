@@ -1326,3 +1326,24 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk button[aria-expanded]:hover { border-color: #7059A8; }
 /* Notes and callouts */
 #agent-desk [class*='bg-[#F8F5FF]'] { background-color: #F6F3FB; }
+
+/* Deal Settings: each topic is its own card with the shared icon header */
+#agent-desk [data-section-key='assist'] section[aria-label] {
+  border: 1px solid #E2E2E8;
+  border-radius: 0.375rem;
+  background-color: #ffffff;
+  padding: 1.25rem 1.375rem;
+  min-width: 0;
+}
+#agent-desk [data-section-key='assist'] section[aria-label] > div:first-child:has(.rnn-heading-icon) {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #F0F0F4;
+}
+#agent-desk [data-section-key='assist'] > div[class*='grid'] { gap: 1.25rem; }
+#agent-desk [data-section-key='assist'] { background-color: transparent; border: 0; padding: 0; }
+
+/* Legacy beige tones retired in favor of the soft gray / light purple palette */
+#agent-desk [class*='border-[#D9D0BF]'] { border-color: #E2E2E8; }
+#agent-desk [class*='bg-[#F7F3EB]'] { background-color: #F6F3FB; }
+#agent-desk [class*='bg-[#FFF8E7]'], #agent-desk [class*='bg-[#FBF7EE]'] { background-color: #F6F3FB; }

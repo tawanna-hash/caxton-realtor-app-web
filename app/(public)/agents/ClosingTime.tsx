@@ -2467,10 +2467,11 @@ export default function ClosingTime({
                 </div>
 
                 <div className="mt-7 rounded-md border border-slate-200 bg-[#FCFBF9] p-5 sm:p-7">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <CalendarDays className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                     <div>
-                      <h4 className="text-lg font-semibold text-slate-950">Pressing Deadlines</h4>
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Contract Timeline</p>
+                      <h4 className="mt-1 text-xl font-semibold text-slate-950">Pressing Deadlines</h4>
                       <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates auto-populate from it using the contract terms and TREC timing rules, then sync with Calendar Exports and Deadline Alerts.</p>
                     </div>
                   </div>
