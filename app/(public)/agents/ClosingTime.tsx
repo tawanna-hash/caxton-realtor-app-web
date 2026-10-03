@@ -1934,7 +1934,7 @@ export default function ClosingTime({
   }
 
   return (
-    <main id="agent-desk" className="min-h-screen bg-[#F7F5F1]">
+    <main id="agent-desk" className="min-h-screen bg-white">
       <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>

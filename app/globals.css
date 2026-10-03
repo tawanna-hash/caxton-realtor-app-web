@@ -1235,3 +1235,72 @@ input[type='date']::-webkit-calendar-picker-indicator {
 [data-desk-view='referral'] [data-section-key='referral'],
 [data-desk-view='integrations'] [data-section-key='integrations'],
 [data-desk-view='audit'] [data-section-key='audit'] { display: revert; }
+
+/* ───────────────────────────────────────────────────────────────────────
+   Agent Desk (Closing Time) visual system.
+   Mirrors the Resources tool pages (e.g. Seller Net Sheet): white canvas,
+   thin gray rounded cards, wide-tracked gray eyebrows, serif headings,
+   quiet inputs with a brand focus ring. Scoped to #agent-desk only.
+   ─────────────────────────────────────────────────────────────────────── */
+#agent-desk { background-color: #ffffff; color: #111827; }
+
+/* Cards and panels */
+#agent-desk [class~='border'][class~='bg-white'],
+#agent-desk [class~='border'][class*='bg-[#FCFBF9]'],
+#agent-desk [class~='border'][class*='bg-[#FFFDF8]'] {
+  border-color: #e5e7eb;
+  border-radius: 0.375rem;
+}
+#agent-desk [class~='border'][class*='border-[#D9D0BF]'] { border-color: #e5e7eb; }
+#agent-desk [class*='bg-[#FFFDF8]'] { background-color: #fafafa; }
+#agent-desk [class*='bg-[#FCFBF9]'] { background-color: #fafafa; }
+#agent-desk .border-slate-200 { border-color: #e5e7eb; }
+#agent-desk .border-slate-100 { border-color: #f3f4f6; }
+#agent-desk .border-slate-300 { border-color: #d1d5db; }
+#agent-desk .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #f3f4f6; }
+
+/* Eyebrows: small caps, wide tracking, quiet gray */
+#agent-desk .uppercase[class*='text-[#7059A8]'] {
+  color: #6b7280;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+}
+
+/* Headings: serif, regular weight, near-black */
+#agent-desk :is(h2, h3, h4).text-lg,
+#agent-desk :is(h2, h3, h4).text-xl,
+#agent-desk :is(h2, h3, h4).text-2xl,
+#agent-desk :is(h2, h3, h4).text-3xl,
+#agent-desk :is(h2, h3, h4).sm\:text-4xl {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: #111827;
+}
+#agent-desk h2.text-3xl { letter-spacing: -0.02em; line-height: 1.15; }
+
+/* Text colors */
+#agent-desk .text-slate-950,
+#agent-desk .text-slate-900 { color: #111827; }
+#agent-desk .text-slate-600 { color: #4b5563; }
+#agent-desk .text-slate-500 { color: #6b7280; }
+
+/* Form controls */
+#agent-desk :is(input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']), select, textarea) {
+  border-color: #d1d5db;
+  border-radius: 0.375rem;
+  background-color: #ffffff;
+  color: #111827;
+}
+#agent-desk :is(input, select, textarea):focus {
+  outline: none;
+  border-color: var(--color-brand-700, #301d5d);
+  box-shadow: 0 0 0 1px rgb(48 29 93 / 0.3);
+}
+
+/* Buttons and tabs */
+#agent-desk :is(button, a)[class*='min-h-['] { border-radius: 0.375rem; }
+#agent-desk [role='tab'], #agent-desk nav button { letter-spacing: 0.01em; }
+
+/* Notice banners sit quietly */
+#agent-desk [class~='border'][class*='bg-amber-50'] { border-radius: 0.375rem; }
