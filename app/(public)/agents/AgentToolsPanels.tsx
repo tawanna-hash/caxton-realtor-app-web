@@ -139,6 +139,7 @@ export function WorkFasterPanel() {
 }
 
 export function ReferralNetworkPanel({ providers }: { providers: ReferralProvider[] }) {
+  const { section: collapsible, toggleProps } = useCollapsibles();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [providerRotation, setProviderRotation] = useState(0);
   const selectedCategoryRecord = REFERRAL_CATEGORIES.find((category) => category.id === selectedCategory) ?? REFERRAL_CATEGORIES[0];
@@ -165,21 +166,20 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
   return (
       <section id="referral-network" className="scroll-mt-20">
         <div className="">
-          <div className="grid gap-5 lg:grid-cols-[0.78fr_1.22fr]">
-            <div className="bg-[#301D5D] p-5 text-white sm:p-9">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-[#F4D06F]">
-                  <Handshake className="h-5 w-5" aria-hidden="true" />
-                </div>
+          <div {...collapsible('referral', { mobileOpen: true })} data-section-key={undefined} className="border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <Handshake className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Referral Network</p>
+                <h2 className="mt-1 text-xl font-semibold text-slate-950">Your Call List, Built for the Next Deal</h2>
               </div>
-              <p className="mt-7 text-xs font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">Referral network</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">Your Call List, Built for the Next Deal.</h2>
-              <p className="mt-5 text-base leading-7 text-white/75">
-                Find local service partners across title, appraisal, remodeling, A/C and heating, roofing, inspections, and lending. Discover who is visible in your market and take the next step with confidence.
-              </p>
+              <CollapseToggle {...toggleProps('referral', 'referral network', { mobileOpen: true })} className="ml-auto" />
             </div>
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              Find local service partners across title, appraisal, remodeling, A/C and heating, roofing, inspections, and lending. Discover who is visible in your market and take the next step with confidence.
+            </p>
 
-            <div className="border border-slate-200 bg-white p-4 sm:p-8">
+            <div className="mt-5 border-t border-slate-200 pt-5">
               <div className="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Find a service</p>
