@@ -3,16 +3,18 @@
 import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
 
-const DESK_VIEWS: { id: string; label: string; keys: string[] }[] = [
-  { id: 'overview', label: 'Overview', keys: [] },
-  { id: 'transaction', label: 'Current Transaction', keys: ['current', 'trec-forms', 'readiness'] },
-  { id: 'coordinator', label: 'Transaction Coordinator', keys: ['assist'] },
-  { id: 'deals', label: 'My Transactions', keys: ['active', 'closed'] },
+const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
+  { id: 'transaction', label: 'Deal and Forms', keys: ['current', 'trec-forms', 'readiness'] },
+  { id: 'coordinator', label: 'Coordinator', keys: ['assist'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
-  { id: 'alerts', label: 'Alerts and Calendar', keys: ['alerts', 'calendar'] },
-  { id: 'forms', label: 'TREC Forms', keys: ['trec-library'] },
   { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
 ];
+const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
+  { id: 'overview', label: 'Dashboard Overview', keys: [] },
+  { id: 'alerts', label: 'Alerts and Calendar', keys: ['alerts', 'calendar'] },
+  { id: 'forms', label: 'TREC Forms Library', keys: ['trec-library'] },
+];
+const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS];
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -1886,26 +1888,67 @@ export default function ClosingTime({
         </div>
 
         <div className="mt-5 lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start lg:gap-6">
-          <nav aria-label="Agent Desk sections" className="mb-5 lg:sticky lg:top-24 lg:mb-0">
-            <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:border lg:border-slate-200 lg:bg-white lg:p-2">
-              {DESK_VIEWS.map((view) => {
-                const active = view.id === effectiveView;
-                return (
-                  <li key={view.id} className="shrink-0">
-                    <button
-                      type="button"
-                      aria-current={active ? 'page' : undefined}
-                      onClick={() => { if (view.id === 'overview') setWorkspacePage(1); else { setWorkspacePage(2); setDeskView(view.id); } window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      className={`min-h-[40px] w-full whitespace-nowrap rounded-md px-3 text-left text-sm font-semibold transition ${active ? 'bg-[#301D5D] text-white' : 'border border-slate-200 bg-white text-slate-700 hover:border-[#301D5D] lg:border-transparent'}`}
-                    >
-                      {view.label}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          <aside aria-label="Transactions" className="mb-5 lg:sticky lg:top-24 lg:mb-0">
+            <div className="border border-slate-200 bg-white">
+              <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Transactions</p>
+                <button type="button" onClick={() => { createDeal(); setWorkspacePage(2); setDeskView('transaction'); }} className="min-h-[32px] rounded-md bg-[#301D5D] px-3 text-xs font-bold text-white hover:bg-[#42277c]">New</button>
+              </div>
+              <ul className="max-h-[46vh] overflow-y-auto">
+                {deals.length === 0 && <li className="px-3 py-4 text-sm text-slate-500">No transactions yet.</li>}
+                {[...activeDeals, ...closedDeals].map((deal) => {
+                  const days = daysUntilClosing(deal.closingDate, today);
+                  const closed = isDealClosedAndComplete(deal);
+                  const tone = closed ? 'bg-slate-300' : days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#9A3D2B]' : days <= 7 ? 'bg-[#B8860B]' : 'bg-[#2F7D5B]';
+                  const selected = deal.id === activeDealId && workspacePage === 2 && DEAL_TABS.some((t) => t.id === effectiveView);
+                  return (
+                    <li key={deal.id}>
+                      <button
+                        type="button"
+                        aria-current={selected ? 'true' : undefined}
+                        onClick={() => { setActiveDealId(deal.id); setWorkspacePage(2); if (!DEAL_TABS.some((t) => t.id === deskView)) setDeskView('transaction'); setFormsStatusDealId(deal.id); }}
+                        className={`flex w-full items-start gap-3 border-b border-slate-100 px-3 py-3 text-left transition last:border-0 hover:bg-[#F8F5FF] ${selected ? 'bg-[#F8F5FF] shadow-[inset_3px_0_0_#301D5D]' : ''}`}
+                      >
+                        <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${tone}`} aria-hidden="true" />
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
+                          <span className="block truncate text-xs text-slate-500">{closed ? 'Closed' : days === null ? 'Closing date not set' : closingCountdownLabel(deal.closingDate, today)}</span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <ul className="border-t border-slate-200 p-2">
+                {TOOL_VIEWS.map((view) => {
+                  const active = view.id === effectiveView;
+                  return (
+                    <li key={view.id}>
+                      <button
+                        type="button"
+                        aria-current={active ? 'page' : undefined}
+                        onClick={() => { if (view.id === 'overview') setWorkspacePage(1); else { setWorkspacePage(2); setDeskView(view.id); } }}
+                        className={`min-h-[38px] w-full rounded-md px-3 text-left text-sm font-semibold transition ${active ? 'bg-[#301D5D] text-white' : 'text-slate-700 hover:bg-[#F8F5FF]'}`}
+                      >
+                        {view.label}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </aside>
           <div data-desk-view={effectiveView} className="min-w-0">
+            {DEAL_TABS.some((t) => t.id === effectiveView) && (
+              <nav aria-label="Transaction sections" className="mb-4 border-b border-slate-200">
+                <p className="mb-2 truncate text-lg font-semibold text-slate-950">{activeDeal ? activeDeal.propertyAddress || activeDeal.title : 'Select a transaction'}</p>
+                <div className="flex gap-1 overflow-x-auto">
+                  {DEAL_TABS.map((tab) => (
+                    <button key={tab.id} type="button" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)} className={`min-h-[40px] shrink-0 border-b-2 px-3 text-sm font-semibold ${tab.id === effectiveView ? 'border-[#301D5D] text-[#301D5D]' : 'border-transparent text-slate-600 hover:text-[#301D5D]'}`}>{tab.label}</button>
+                  ))}
+                </div>
+              </nav>
+            )}
         {workspacePage === 2 && (
           <section className="mt-5 grid gap-5 lg:grid-cols-2" aria-label="Alerts and calendar">
             <div {...collapsible('alerts')} className="border border-slate-200 bg-white p-5 sm:p-6">
