@@ -1488,3 +1488,6 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-step-label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--d-ink); }
 #agent-desk .ds-step-sub { display: block; min-height: 1rem; font-size: 0.6875rem; color: var(--d-muted); }
 #agent-desk .ds-avatar { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 9999px; background: var(--d-lav-soft); color: var(--d-purple); font-size: 0.6875rem; font-weight: 600; margin-right: 0.625rem; }
+
+/* Small section labels stay ALL CAPS (the global heading capitalize rule is unlayered and would otherwise win) */
+#agent-desk :is(h1, h2, h3, h4, h5, h6).uppercase, #agent-desk :is(h3, h4)[class*='tracking-['][class*='text-xs'] { text-transform: uppercase; }
