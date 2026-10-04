@@ -7,7 +7,7 @@ import AlertSetupContent from './AlertSetupContent';
 import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './AgentToolsPanels';
 
 const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
-  { id: 'd-overview', label: 'Overview', keys: [] },
+  { id: 'd-overview', label: 'Snapshot', keys: [] },
   { id: 'd-documents', label: 'Documents', keys: [] },
   { id: 'd-people', label: 'People', keys: [] },
   { id: 'transaction', label: 'Current Deal', keys: ['current', 'trec-forms'] },

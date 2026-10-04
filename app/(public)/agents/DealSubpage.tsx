@@ -203,8 +203,13 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 
           {tab === 'overview' && (
             <div className="space-y-4">
+              <nav aria-label="Jump to a section" className="ds-pills">
+                {([['snap-attention', 'Attention'], ['snap-waiting', 'Waiting'], ['snap-next', 'Next Action'], ['snap-preferences', 'Preferences'], ['snap-offers', 'Offers & Showings'], ['snap-property', 'Property'], ['snap-parties', 'Parties'], ['snap-workspace', 'Workspace']] as const).map(([id, label]) => (
+                  <button key={id} type="button" onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{label}</button>
+                ))}
+              </nav>
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="ds-card !p-0">
+                <div id="snap-attention" className="ds-card !p-0 scroll-mt-24">
                   <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
                     <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><AlertCircle className="h-4 w-4 text-amber-600" aria-hidden="true" /> Needs Your Attention</p>
                     <span className="ds-chip bg-amber-50 text-amber-700">{attention.length}</span>
@@ -217,7 +222,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   ))}
                   <button type="button" onClick={() => onOpenView('tasks')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View all tasks <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
                 </div>
-                <div className="ds-card !p-0">
+                <div id="snap-waiting" className="ds-card !p-0 scroll-mt-24">
                   <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
                     <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Clock className="h-4 w-4 text-[#7059A8]" aria-hidden="true" /> Waiting On Others</p>
                     <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{waiting.length}</span>
@@ -231,13 +236,13 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   <button type="button" onClick={() => onOpenView('d-documents')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View documents <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
                 </div>
               </div>
-              <div className="ds-card">
+              <div id="snap-next" className="ds-card scroll-mt-24">
                 <label className="ds-field-label" htmlFor="deal-next-action">Next action</label>
                 <input id="deal-next-action" className={`${input} mt-1`} disabled={locked} value={deal.nextAction} placeholder={nextTask ? nextTask.title : nextDeadline ? `${nextDeadline.label} · ${formatDate(nextDeadline.date)}` : 'What happens next?'} onChange={(e) => onUpdate('nextAction', e.target.value)} />
                 <label className="ds-field-label mt-4 block" htmlFor="deal-notes">Notes</label>
                 <textarea id="deal-notes" rows={3} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" disabled={locked} value={deal.notes} placeholder="Signing details, client requests, reminders" onChange={(e) => onUpdate('notes', e.target.value)} />
               </div>
-              <div className="ds-card">
+              <div id="snap-preferences" className="ds-card scroll-mt-24">
                 <p className="ds-side-title !mt-0">Preferences</p>
                 <div className="ds-fields mt-3">
                   {([['budget', 'Budget'], ['financing', 'Financing'], ['targetAreas', 'Target areas'], ['mustHaves', 'Must-haves'], ['timeframe', 'Timeframe'], ['minBeds', 'Min beds']] as const).map(([key, label]) => (
@@ -245,7 +250,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   ))}
                 </div>
               </div>
-              <OffersShowings deal={deal} locked={locked} formatDate={formatDate} onUpdate={onUpdate} />
+              <div id="snap-offers" className="scroll-mt-24"><OffersShowings deal={deal} locked={locked} formatDate={formatDate} onUpdate={onUpdate} /></div>
             </div>
           )}
 
@@ -373,7 +378,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         </div>
 
         {(!section || section === 'overview') && (<aside className="ds-rail-right" aria-label="Deal details">
-          <h3 className="ds-side-title">Focus property</h3>
+          <h3 id="snap-property" className="ds-side-title scroll-mt-24">Focus property</h3>
           <div className="ds-card !p-0 overflow-hidden">
             <div
               className={`relative ${dragOver ? 'bg-[#EFEAF8] outline outline-2 -outline-offset-2 outline-[#301D5D]' : ''}`}
@@ -400,7 +405,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               {!locked && <input aria-label="Photo URL" className={`${input} mt-3`} placeholder="Photo URL" value={deal.photoUrl} onChange={(e) => onUpdate('photoUrl', e.target.value)} />}
             </div>
           </div>
-          <h3 className="ds-side-title">Parties</h3>
+          <h3 id="snap-parties" className="ds-side-title scroll-mt-24">Parties</h3>
           <div className="ds-card ds-list">
             {people.length === 0 && <p className="text-sm text-slate-500">No parties added.</p>}
             {people.slice(0, 8).map((p) => (
@@ -415,7 +420,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             ))}
             <button type="button" onClick={() => onOpenView('d-people')} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left text-xs text-slate-500">Manage people</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
           </div>
-          <h3 className="ds-side-title">Workspace</h3>
+          <h3 id="snap-workspace" className="ds-side-title scroll-mt-24">Workspace</h3>
           <div className="ds-card ds-list">
             {([['transaction', 'Current Deal'], ['coordinator', 'Deal Settings'], ['readiness', 'Readiness Check'], ['audit', 'Audit Trail']] as const).map(([view, label]) => (
               <button key={view} type="button" onClick={() => onOpenView(view)} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left">{label}</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
