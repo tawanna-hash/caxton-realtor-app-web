@@ -2055,13 +2055,13 @@ export default function ClosingTime({
                 const days = daysUntilClosing(deal.closingDate, today);
                 const closed = isDealClosedAndComplete(deal);
                 const tone = closed ? 'bg-slate-300' : days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#9A3D2B]' : days <= 7 ? 'bg-[#B8860B]' : 'bg-[#2F7D5B]';
-                const selected = deal.id === activeDealId && workspacePage === 2 && DEAL_TABS.some((t) => t.id === effectiveView);
+                const selected = deal.id === activeDealId && workspacePage === 2 && (DEAL_TABS.some((t) => t.id === effectiveView) || (effectiveView === 'deal-page' && dealPageId === deal.id));
                 return (
                   <li key={deal.id}>
                     <button
                       type="button"
                       aria-current={selected ? 'true' : undefined}
-                      onClick={() => { setActiveDealId(deal.id); setWorkspacePage(2); if (!DEAL_TABS.some((t) => t.id === deskView)) setDeskView('transaction'); setFormsStatusDealId(deal.id); }}
+                      onClick={() => { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setWorkspacePage(2); setDeskView('deal-page'); setFormsStatusDealId(deal.id); }}
                       className="ds-deal"
                     >
                       <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${tone}`} aria-hidden="true" />
