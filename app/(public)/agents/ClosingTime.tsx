@@ -2422,6 +2422,13 @@ export default function ClosingTime({
                 />
               );
             })()}
+            {DEAL_TABS.some((t) => t.id === effectiveView) && (
+              <nav aria-label="Deal sections" className="ds-dealnav mb-4">
+                {DEAL_TABS.map((tab) => (
+                  <button key={tab.id} type="button" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)}>{tab.label}</button>
+                ))}
+              </nav>
+            )}
             {effectiveView === 'd-overview' && (() => {
               const deal = activeDeal;
               if (!deal) return null;
@@ -2448,13 +2455,6 @@ export default function ClosingTime({
                 </div>
               );
             })()}
-            {DEAL_TABS.some((t) => t.id === effectiveView) && (
-              <nav aria-label="Deal sections" className="ds-dealnav mb-4">
-                {DEAL_TABS.map((tab) => (
-                  <button key={tab.id} type="button" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)}>{tab.label}</button>
-                ))}
-              </nav>
-            )}
             {['d-overview', 'd-documents', 'd-people'].includes(effectiveView) && (() => {
               const deal = activeDeal;
               const health = deal ? (() => {
