@@ -244,6 +244,24 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       </>)}
 
       {(!section || section === 'overview') && (<>
+      {section === 'overview' && (
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="ds-title !mt-0">{deal.propertyAddress || deal.title}</h2>
+              <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{DEAL_TYPES.find((t) => t.id === deal.dealType)?.label ?? 'Deal'}</span>
+              <span className="ds-chip bg-slate-100 text-slate-600">{statusLabels[deal.workflowStatus] ?? deal.workflowStatus}</span>
+            </div>
+            <p className="ds-subtitle">{clients.length ? clients.join(' · ') : 'No clients added'}{deal.owner ? ` · ${deal.owner}` : ''}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`ds-chip ${health.tone}`}>{health.label}</span>
+            <select aria-label="Deal status" value={deal.workflowStatus} disabled={locked} onChange={(e) => onUpdate('workflowStatus', e.target.value as AgentDeal['workflowStatus'])} className="ds-select !h-[34px] !min-w-[170px]">
+              {statuses.map((st) => <option key={st} value={st}>{statusLabels[st] ?? st}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
       <div className="ds-summary" aria-label="Deal summary">
         {([
           ['Price', price ? (price.startsWith('$') ? price : `$${price}`) : 'Not set', ''],
@@ -342,7 +360,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     {footLink('View all tasks', 'tasks')}
                   </div>
                   <div className="ds-card !p-0 self-start">
-                    {cardHead(<Sparkles className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />, 'The Assistant Is Handling', handling.length, 'bg-[#EFEAF8] text-[#301D5D]')}
+                    {cardHead(<Sparkles className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />, 'The AI Is Handling', handling.length, 'bg-[#EFEAF8] text-[#301D5D]')}
                     {handling.map((item) => (
                       <button key={item.key} type="button" onClick={() => onOpenView(item.go)} className="ds-snap-row">
                         <span className="min-w-0 flex-1 text-left">
@@ -352,7 +370,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                         <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{item.chip}</span>
                       </button>
                     ))}
-                    {footLink('Open deal settings', 'coordinator')}
+                    {footLink('Message AI', 'coordinator')}
                   </div>
                   <div className="ds-card !p-0 self-start">
                     {cardHead(<Clock className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />, 'Waiting On Others', waitingRows.length, 'bg-[#EFEAF8] text-[#301D5D]')}

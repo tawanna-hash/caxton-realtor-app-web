@@ -1476,7 +1476,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-review-btn { height: 1.75rem; padding: 0 0.625rem; font-size: 0.75rem; }
 
 /* Deal page: summary strip, progress stepper, parties */
-#agent-desk .ds-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.25rem; padding: 1rem 1.125rem; border: 1px solid var(--d-line); border-radius: 12px; background: #fff; }
+#agent-desk .ds-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; padding: 0; border: 0; background: transparent; }
 @media (min-width: 768px) { #agent-desk .ds-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 #agent-desk .ds-stepper { display: flex; list-style: none; margin: 1rem 0 0; padding: 0; overflow-x: auto; }
 #agent-desk .ds-step { position: relative; flex: 1 1 0; min-width: 96px; padding-top: 1.5rem; }
@@ -1547,7 +1547,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 /* Snapshot: reference layout (three cards + parties) */
 #agent-desk .ds-snap-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
 @media (min-width: 768px) { #agent-desk .ds-snap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1280px) { #agent-desk .ds-snap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) 300px; } }
+@media (min-width: 1024px) { #agent-desk .ds-snap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) 260px; } }
 #agent-desk .ds-snap-row { display: flex; width: 100%; align-items: center; gap: 0.5rem; height: auto; padding: 0.75rem 1rem; border: 0; border-bottom: 1px solid #F1F0F5; border-radius: 0; background: #fff; color: var(--d-ink); text-align: left; }
 #agent-desk .ds-snap-row:hover { background: var(--d-lav-wash); color: var(--d-ink); }
 #agent-desk .ds-snap-row:hover :is(span) { color: inherit; }
