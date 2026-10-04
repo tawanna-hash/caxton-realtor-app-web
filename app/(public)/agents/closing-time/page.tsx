@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: "It's Almost Closing Time! | Realty News Now",
-  description: 'Securely prepare transaction dates, tasks, documents, and TREC contract details.',
+  description: 'Securely prepare deal dates, tasks, documents, and TREC contract details.',
 };
 
 export default async function ClosingTimePage() {

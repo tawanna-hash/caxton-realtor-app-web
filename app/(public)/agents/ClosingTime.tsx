@@ -226,17 +226,17 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
       {
         id: 'agent-sponsorship-agreement',
         label: 'Agent Sponsorship Agreement',
-        description: 'Sponsoring broker agreement covering the agent for this transaction.',
+        description: 'Sponsoring broker agreement covering the agent for this deal.',
       },
       {
         id: 'financial-receipts-disbursements-log',
         label: 'Financial Receipts & Disbursements Log',
-        description: 'Trust account receipts and disbursements tied to this transaction.',
+        description: 'Trust account receipts and disbursements tied to this deal.',
       },
       {
         id: 'substantive-communications-log',
         label: 'Substantive Communications Log',
-        description: 'Emails and texts material to offers, negotiations, or disclosures for this transaction.',
+        description: 'Emails and texts material to offers, negotiations, or disclosures for this deal.',
       },
     ],
   },
@@ -368,7 +368,7 @@ function ReadinessChecklist({
       <div className="flex items-center gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Readiness check</p>
-          <Heading className="mt-1 text-xl font-semibold text-slate-950">Transaction readiness checklist</Heading>
+          <Heading className="mt-1 text-xl font-semibold text-slate-950">Deal readiness checklist</Heading>
         </div>
         <CollapseToggle {...toggleProps('readiness', 'readiness checklist', { mobileOpen: true })} className="ml-auto" />
       </div>
@@ -439,7 +439,7 @@ function ReadinessChecklist({
         ) : (
           <p className="mt-2 flex items-center gap-2 text-sm text-[#38643A]">
             <CheckCircle2 className="rnn-inline-icon" aria-hidden="true" />
-            No worksheet alerts for your active transactions.
+            No worksheet alerts for your active deals.
           </p>
         )}
       </div>
@@ -595,7 +595,7 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     reminders: [],
     tasks: [],
     documents: DOCUMENT_TEMPLATES.map(({ id, label }) => ({ id, label, status: 'requested' as const, complete: false, requestedAt: now, updatedAt: now, driveFileId: '', fileName: '', fileUploadedAt: '' })),
-    activity: [{ id: getId('activity'), message: 'Transaction workspace created', createdAt: now }],
+    activity: [{ id: getId('activity'), message: 'Deal workspace created', createdAt: now }],
     createdAt: now,
     updatedAt: now,
   };
@@ -693,13 +693,13 @@ async function downloadAuditPdf(deal: AgentDeal, selectedVersions: TrecFormVersi
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...GREY_500);
-  doc.text('REALTYLINE AUSTIN  ·  TRANSACTION AUDIT RECORD', margin, y);
+  doc.text('REALTYLINE AUSTIN  ·  DEAL AUDIT RECORD', margin, y);
   y += 26;
 
   doc.setFont('times', 'normal');
   doc.setFontSize(22);
   doc.setTextColor(...GREY_900);
-  const title = deal.propertyAddress || deal.title || 'Transaction';
+  const title = deal.propertyAddress || deal.title || 'Deal';
   doc.text(title, margin, y);
   y += 14;
 
@@ -1648,7 +1648,7 @@ export default function ClosingTime({
 
   const removeTask = (taskId: string) => {
     if (!activeDeal || isDealLocked(activeDeal)) return;
-    applyActiveAction('Removed a transaction task', { tasks: activeDeal.tasks.filter((task) => task.id !== taskId) });
+    applyActiveAction('Removed a deal task', { tasks: activeDeal.tasks.filter((task) => task.id !== taskId) });
   };
 
   const updateReminder = (reminderId: string, patch: Partial<AgentReminder>) => {
@@ -1866,7 +1866,7 @@ export default function ClosingTime({
 
       const notAttached = deal.documents.filter((document) => !document.driveFileId);
       const summaryLines = [
-        `Deal folder summary — ${deal.propertyAddress || deal.title || 'Transaction'}`,
+        `Deal folder summary — ${deal.propertyAddress || deal.title || 'Deal'}`,
         `Generated ${new Date().toLocaleString('en-US')}`,
         '',
         `Files included in this folder: ${attachedCount}${failedCount ? ` (${failedCount} attached file(s) could not be fetched — see below)` : ''}`,
@@ -1900,7 +1900,7 @@ export default function ClosingTime({
 
   const lockDealRecord = () => {
     if (!activeDeal || isDealLocked(activeDeal)) return;
-    applyActiveAction('Locked transaction record for TREC audit retention', { auditLocked: true });
+    applyActiveAction('Locked deal record for TREC audit retention', { auditLocked: true });
     trackEvent('closing_time_record_locked');
   };
 
@@ -1909,7 +1909,7 @@ export default function ClosingTime({
     if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
     const now = new Date().toISOString();
     const nextDeals = activeDeal ? deals.map((deal) => deal.id === activeDeal.id ? {
-      ...deal, updatedAt: now, activity: [...deal.activity, { id: getId('activity'), message: 'Saved transaction progress', createdAt: now }].slice(-300),
+      ...deal, updatedAt: now, activity: [...deal.activity, { id: getId('activity'), message: 'Saved deal progress', createdAt: now }].slice(-300),
     } : deal) : deals;
     setDeals(nextDeals);
     void saveToCloud({ deals: nextDeals, notificationPreferences });
@@ -1924,7 +1924,7 @@ export default function ClosingTime({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
-                  All Transactions · {overviewDealCount} Active Deal{overviewDealCount === 1 ? '' : 's'}
+                  All Deals · {overviewDealCount} Active Deal{overviewDealCount === 1 ? '' : 's'}
                 </p>
                 <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-gray-900">What Needs Attention</h2>
               </div>
@@ -1940,7 +1940,7 @@ export default function ClosingTime({
             <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
               {radarItems.length === 0 ? (
                 <p className="py-5 text-sm text-slate-600">
-                  {overviewDealCount === 0 ? 'No active transactions yet.' : 'No upcoming items or recent overdue deadlines.'}
+                  {overviewDealCount === 0 ? 'No active deals yet.' : 'No upcoming items or recent overdue deadlines.'}
                 </p>
               ) : radarItems.slice(0, 5).map((item) => (
                 <div key={item.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3">
@@ -1967,7 +1967,7 @@ export default function ClosingTime({
     <main id="agent-desk" className="min-h-screen bg-white">
       <div className="w-full">
         <div className="grid grid-cols-[64px_minmax(0,1fr)] items-start sm:grid-cols-[200px_minmax(0,1fr)] lg:grid-cols-[232px_minmax(0,1fr)]">
-          <aside aria-label="Transactions" className="sticky top-16 flex min-w-0 flex-col lg:top-24 ds-rail">
+          <aside aria-label="Deals" className="sticky top-16 flex min-w-0 flex-col lg:top-24 ds-rail">
             <div className="ds-brand">
               <span className="ds-brand-mark" aria-hidden="true"><ClipboardCheck className="h-4 w-4" /></span>
               <span className="ds-brand-name">Agent Desk</span>
@@ -1995,7 +1995,7 @@ export default function ClosingTime({
               <button type="button" onClick={() => setNewDealPickerOpen(true)} className="ds-new" aria-label="New contract"><Plus className="h-3.5 w-3.5" aria-hidden="true" /><span>New</span></button>
             </div>
             <ul className="ds-deals">
-              {deals.length === 0 && <li className="px-3 py-3 text-sm text-slate-500">No transactions yet.</li>}
+              {deals.length === 0 && <li className="px-3 py-3 text-sm text-slate-500">No deals yet.</li>}
               {[...activeDeals, ...closedDeals].map((deal) => {
                 const days = daysUntilClosing(deal.closingDate, today);
                 const closed = isDealClosedAndComplete(deal);
@@ -2095,7 +2095,7 @@ export default function ClosingTime({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h2 className="ds-title">Deals</h2>
-                      <p className="ds-subtitle">Every transaction in one place, with where each one stands and what is due next.</p>
+                      <p className="ds-subtitle">Every deal in one place, with where each one stands and what is due next.</p>
                     </div>
                     <button type="button" onClick={() => setNewDealPickerOpen(true)} className="inline-flex h-[40px] items-center gap-2 rounded-lg bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
                       <Plus className="h-4 w-4" aria-hidden="true" /> New deal
@@ -2125,7 +2125,7 @@ export default function ClosingTime({
                         </tr>
                       </thead>
                       <tbody>
-                        {rows.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-slate-500">{deals.length === 0 ? 'No transactions yet. Select New deal to start one.' : 'No deals match.'}</td></tr>}
+                        {rows.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-slate-500">{deals.length === 0 ? 'No deals yet. Select New deal to start one.' : 'No deals match.'}</td></tr>}
                         {rows.map((deal) => {
                           const health = healthOf(deal);
                           const done = deal.tasks.filter((t) => t.complete).length;
@@ -2183,11 +2183,11 @@ export default function ClosingTime({
               );
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
-              <nav aria-label="Transaction sections" className="mb-5 overflow-hidden border border-slate-200 bg-white px-5 pt-5">
+              <nav aria-label="Deal sections" className="mb-5 overflow-hidden border border-slate-200 bg-white px-5 pt-5">
                 <div className="flex items-center gap-3">
                   <div className="min-w-0">
                     <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Selected Deal</p>
-                    <h3 className="mt-1 truncate text-xl font-semibold text-gray-900">{activeDeal ? activeDeal.propertyAddress || activeDeal.title : 'Select a transaction'}</h3>
+                    <h3 className="mt-1 truncate text-xl font-semibold text-gray-900">{activeDeal ? activeDeal.propertyAddress || activeDeal.title : 'Select a deal'}</h3>
                   </div>
                 </div>
                 <div className="-mx-5 flex gap-1 overflow-x-auto px-5">
@@ -2204,7 +2204,7 @@ export default function ClosingTime({
                 <h3 className="text-lg font-semibold text-gray-900">Calendar Exports For Apple Calendar</h3>
                 <CollapseToggle {...toggleProps('calendar', 'calendar exports')} />
               </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">Subscribe once and your calendar stays current with deadlines, closing dates, reminders, and open tasks for every active transaction.</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">Subscribe once and your calendar stays current with deadlines, closing dates, reminders, and open tasks for every active deal.</p>
               {!calendarFeed ? (
                 <button type="button" onClick={() => void loadCalendarFeed()} disabled={calendarFeedState === 'loading'} className="mt-4 inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45">
                   {calendarFeedState === 'loading' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Link2 className="rnn-inline-icon" aria-hidden="true" />}
@@ -2262,7 +2262,7 @@ export default function ClosingTime({
                   ))}
                 </div>
               </div>
-              <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active transactions. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
+              <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active deals. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
             </div>
             {activeDeal && (
               <ClosingTimeAssist
@@ -2320,7 +2320,7 @@ export default function ClosingTime({
           <>
         <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            ['Agent transactions', activeDealCount, ClipboardCheck, 'bg-[#F8F5FF] text-[#301D5D]'],
+            ['Agent deals', activeDealCount, ClipboardCheck, 'bg-[#F8F5FF] text-[#301D5D]'],
             ['Closing in 30 days', closingSoonCount, CalendarDays, 'bg-[#FFF9E7] text-[#855D10]'],
             ['Review alerts', reviewAlerts.length, AlertTriangle, 'bg-[#FFF0EC] text-[#9A3D2B]'],
             ['Overdue tasks', overdueTaskCount, ListTodo, 'bg-[#F2EEE7] text-[#4C3B67]'],
@@ -2347,7 +2347,7 @@ export default function ClosingTime({
               <div className="min-w-0">
                 <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Current Deal</p>
                 <h3 className="text-2xl font-semibold tracking-tight text-gray-900">
-                  {activeDeal?.propertyAddress || activeDeal?.title || 'Start a transaction'}
+                  {activeDeal?.propertyAddress || activeDeal?.title || 'Start a deal'}
                 </h3>
                 {selectedFormVersions.length > 0 && (
                   <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
@@ -2506,7 +2506,7 @@ export default function ClosingTime({
                   )}
                 </div>
               )}
-              <CollapseToggle {...toggleProps('current', 'current transaction', { mobileOpen: true })} className={deals.length > 0 ? '' : 'ml-auto'} />
+              <CollapseToggle {...toggleProps('current', 'current deal', { mobileOpen: true })} className={deals.length > 0 ? '' : 'ml-auto'} />
             </div>
 
             {!activeDeal ? (
@@ -2515,7 +2515,7 @@ export default function ClosingTime({
                 <h4 className="mt-4 text-lg font-semibold text-gray-900">Build Your First Deal Workspace</h4>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">Create a private workspace to turn the contract terms in front of you into a workable list of actions.</p>
                 <button type="button" onClick={() => setNewDealPickerOpen(true)} className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">
-                  Create Transaction
+                  Create Deal
                   <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
@@ -2680,7 +2680,7 @@ export default function ClosingTime({
                   <div className="border-b border-[#D9D0BF] bg-[#F7F3EB] px-5 py-4 sm:px-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                       <div>
-                      <p className="flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Transaction Forms<CollapseToggle {...toggleProps('trec-forms', 'transaction forms')} /></p>
+                      <p className="flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Deal Forms<CollapseToggle {...toggleProps('trec-forms', 'deal forms')} /></p>
                       <h4 id="official-trec-fields-title" className="mt-1 text-lg font-semibold text-slate-950">
                           TREC {currentTrecFormVersion.formNumber} · {currentTrecFormVersion.title}
                       </h4>
@@ -2688,7 +2688,7 @@ export default function ClosingTime({
                       <p className="text-xs font-semibold text-slate-600">{currentTrecFormVersion.fields.length} total fillable controls · Effective {currentTrecFormVersion.effectiveDate}</p>
                     </div>
                     <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                      <p className="max-w-3xl text-sm leading-6 text-slate-600">Complete the contract and attached addenda directly on their official PDFs. Values remain separated by form and are saved with this transaction. Use Upload &amp; Auto-fill Contract to import values.</p>
+                      <p className="max-w-3xl text-sm leading-6 text-slate-600">Complete the contract and attached addenda directly on their official PDFs. Values remain separated by form and are saved with this deal. Use Upload &amp; Auto-fill Contract to import values.</p>
                     </div>
                     <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600">
                       <Save className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
@@ -2832,7 +2832,7 @@ export default function ClosingTime({
             <div className="flex items-center gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Active Deals</p>
-                <h3 className="mt-1 text-xl font-semibold text-gray-900">{activeDeals.length} Transaction{activeDeals.length === 1 ? '' : 's'} In Progress</h3>
+                <h3 className="mt-1 text-xl font-semibold text-gray-900">{activeDeals.length} Deal{activeDeals.length === 1 ? '' : 's'} In Progress</h3>
               </div>
               <CollapseToggle {...toggleProps('active', 'active deals')} className="ml-auto" />
             </div>
@@ -2910,14 +2910,14 @@ export default function ClosingTime({
               <table className="w-full min-w-[980px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
-                    <th scope="col" className="py-2 pr-4 font-bold">Transaction</th>
+                    <th scope="col" className="py-2 pr-4 font-bold">Deal</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Stage</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Effective Date</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Closing Date</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Forms</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Tasks</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Reminders</th>
-                    <th scope="col" className="py-2 pl-4" aria-label="Open transaction" />
+                    <th scope="col" className="py-2 pl-4" aria-label="Open deal" />
                   </tr>
                 </thead>
                 <tbody>
@@ -3000,9 +3000,9 @@ export default function ClosingTime({
             <div className="flex items-center gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Closed & Audit</p>
-                <h3 className="mt-1 text-xl font-semibold text-gray-900">{closedDeals.length} Closed Transaction{closedDeals.length === 1 ? '' : 's'}</h3>
+                <h3 className="mt-1 text-xl font-semibold text-gray-900">{closedDeals.length} Closed Deal{closedDeals.length === 1 ? '' : 's'}</h3>
               </div>
-              <CollapseToggle {...toggleProps('closed', 'closed transactions')} className="ml-auto" />
+              <CollapseToggle {...toggleProps('closed', 'closed deals')} className="ml-auto" />
             </div>
             {/* Mobile cards */}
             <div className="mt-5 divide-y divide-slate-100 md:hidden">
@@ -3061,11 +3061,11 @@ export default function ClosingTime({
               <table className="w-full min-w-[820px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
-                    <th scope="col" className="py-2 pr-4 font-bold">Transaction</th>
+                    <th scope="col" className="py-2 pr-4 font-bold">Deal</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Outcome</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Closing Date</th>
                     <th scope="col" className="py-2 pr-4 font-bold">Forms</th>
-                    <th scope="col" className="py-2 pl-4" aria-label="Open transaction" />
+                    <th scope="col" className="py-2 pl-4" aria-label="Open deal" />
                   </tr>
                 </thead>
                 <tbody>
@@ -3129,7 +3129,7 @@ export default function ClosingTime({
                 <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
               </div>
               <div className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2">
-                <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a transaction task" />
+                <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
                 <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
                 <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-[44px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
                 <button type="button" onClick={addTask} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
@@ -3167,7 +3167,7 @@ export default function ClosingTime({
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Audit</p>
                   <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                    {isDealLocked(activeDeal) ? `${activeDeal.propertyAddress || activeDeal.title}, Closed & Audit` : 'Transaction History, Audit and Closeout'}
+                    {isDealLocked(activeDeal) ? `${activeDeal.propertyAddress || activeDeal.title}, Closed & Audit` : 'Deal History, Audit and Closeout'}
                   </h3>
                 </div>
                 <CollapseToggle {...toggleProps('audit', 'audit')} className="ml-auto" />
@@ -3201,13 +3201,13 @@ export default function ClosingTime({
                 {activeDeal.auditLocked && !(Boolean(activeDeal.closeoutOutcome && activeDeal.closeoutDate) && isDealFullyComplete(activeDeal))
                   ? 'Manually locked for audit retention.'
                   : `Closed on ${formatDate(activeDeal.closeoutDate)}.`}
-                {' '}This record is locked and retained for at least four years — tasks and this transaction can no longer be removed.
+                {' '}This record is locked and retained for at least four years — tasks and this deal can no longer be removed.
               </p>
             )}
             {Boolean(activeDeal.closeoutOutcome) && !isDealFullyComplete(activeDeal) && (
               <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#9A6B1A]">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                Outcome set to {activeDeal.closeoutOutcome}, but this transaction stays in Transactions In Progress and unlocked until every task, reminder, and readiness document is marked complete.
+                Outcome set to {activeDeal.closeoutOutcome}, but this deal stays in Deals In Progress and unlocked until every task, reminder, and readiness document is marked complete.
               </p>
             )}
             <div className="mt-5 grid gap-3 md:grid-cols-3">

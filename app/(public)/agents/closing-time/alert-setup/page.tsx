@@ -34,7 +34,7 @@ const sections: Section[] = [
       <>In <strong>Deadline Alerts</strong>, check <strong>Send Deadline Alerts By Email</strong> and <strong>Send Browser Push Alerts</strong>.</>,
       <>Choose when you want to be alerted: <strong>7 Days Before</strong>, <strong>3 Days Before</strong>, <strong>1 Day Before</strong>, and/or <strong>Due Today</strong>.</>,
       <>Tap <strong>Connect This Device</strong> on every phone and computer you use, and tap <strong>Allow</strong> when asked. Each device has to be connected separately.</>,
-      <>Enter each deal&apos;s <strong>Effective Date</strong> so deadlines fill in. Alerts only send for active transactions with dates.</>,
+      <>Enter each deal&apos;s <strong>Effective Date</strong> so deadlines fill in. Alerts only send for active deals with dates.</>,
     ],
     note: <>Alerts go out between 8 and 10 AM Central on the days you choose.</>,
   },

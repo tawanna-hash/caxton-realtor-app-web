@@ -175,8 +175,8 @@ export default function DealSubpage({ deal, locked, health, statusLabels, status
               <div className="space-y-4">
                 <div className="ds-card flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="ds-side-title !m-0">{({ purchase: 'Purchase', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Transaction'} documents</p>
-                    <p className="text-sm text-slate-500">Required forms for this transaction type.</p>
+                    <p className="ds-side-title !m-0">{({ purchase: 'Purchase', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Deal'} documents</p>
+                    <p className="text-sm text-slate-500">Required forms for this deal type.</p>
                   </div>
                   <span className={`ds-chip ${requiredDone === PURCHASE_REQUIRED_IDS.length ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{requiredDone} of {PURCHASE_REQUIRED_IDS.length} required received</span>
                 </div>

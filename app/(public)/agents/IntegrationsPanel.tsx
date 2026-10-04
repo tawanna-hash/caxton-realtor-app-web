@@ -14,7 +14,7 @@ const BLURBS: Record<string, string> = {
   'Documents and Storage': 'so deal documents can be saved to your own account',
   'CRM and Leads': 'so your clients and leads stay in sync with your deals',
   'Messaging and Calls': 'so you and your team can be reached about deadlines',
-  'Real Estate': 'so transactions you already run elsewhere can be brought in',
+  'Real Estate': 'so deals you already run elsewhere can be brought in',
   'Accounting and Payments': 'so commissions and expenses can be tracked',
   'Tasks and Projects': 'so deal tasks can be shared with your task tools',
   'Marketing and Social': 'so your marketing tools can work with your deals',

@@ -143,7 +143,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
     <div {...collapsible('assist', { mobileOpen: true })} className="min-w-0 scroll-mt-24 lg:col-span-2">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Transaction Coordination</p>
+          <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Deal Coordination</p>
           <h3 className="text-2xl font-semibold tracking-tight text-gray-900">Deal Settings</h3>
         </div>
         <CollapseToggle {...toggleProps('assist', 'deal settings', { mobileOpen: true })} />
