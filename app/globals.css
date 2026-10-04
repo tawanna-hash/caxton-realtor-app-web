@@ -1507,3 +1507,10 @@ input[type='date']::-webkit-calendar-picker-indicator {
 /* Quick-jump pills */
 #agent-desk .ds-pills { display: flex; flex-wrap: wrap; gap: 0.375rem; }
 #agent-desk .ds-pills button { height: 1.625rem; padding: 0 0.625rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 500; }
+
+/* Snapshot: draggable cards */
+#agent-desk .ds-grip { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); z-index: 2; height: 1.25rem; width: 2rem; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--d-muted); opacity: 0; cursor: grab; border-radius: 6px; }
+#agent-desk .group:hover > .ds-grip, #agent-desk .ds-grip:focus-visible { opacity: 1; }
+#agent-desk .ds-grip:hover { background: var(--d-lav-soft); color: var(--d-purple); }
+#agent-desk .ds-grip:active { cursor: grabbing; }
+#agent-desk .ds-drop-target > :not(.ds-grip) { outline: 2px dashed var(--d-purple); outline-offset: 2px; border-radius: 12px; }

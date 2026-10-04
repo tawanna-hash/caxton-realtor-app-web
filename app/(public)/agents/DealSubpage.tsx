@@ -1,9 +1,13 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { AlertCircle, Check, ChevronLeft, ChevronRight, Clock, FileText, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { AlertCircle, Check, GripHorizontal, ChevronLeft, ChevronRight, Clock, FileText, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import { PURCHASE_FOLDERS, PURCHASE_REQUIRED_IDS } from './purchase-documents';
+
+type SnapId = 'attention' | 'waiting' | 'next' | 'preferences' | 'offers';
+const SNAP_DEFAULT_ORDER: SnapId[] = ['attention', 'waiting', 'next', 'preferences', 'offers'];
+const SNAP_ORDER_KEY = 'closing-time-snapshot-order';
 
 type Tab = 'overview' | 'documents' | 'people' | 'tasks' | 'history';
 
@@ -73,6 +77,38 @@ type Props = {
 
 export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
+  const [snapOrder, setSnapOrder] = useState<SnapId[]>(SNAP_DEFAULT_ORDER);
+  const [dragId, setDragId] = useState<SnapId | null>(null);
+  const [dragOverId, setDragOverId] = useState<SnapId | null>(null);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(SNAP_ORDER_KEY) ?? 'null');
+      if (Array.isArray(saved)) {
+        const valid = saved.filter((id): id is SnapId => SNAP_DEFAULT_ORDER.includes(id));
+        const missing = SNAP_DEFAULT_ORDER.filter((id) => !valid.includes(id));
+        setSnapOrder([...valid, ...missing]);
+      }
+    } catch { /* storage unavailable */ }
+  }, []);
+  const saveSnapOrder = (next: SnapId[]) => {
+    setSnapOrder(next);
+    try { window.localStorage.setItem(SNAP_ORDER_KEY, JSON.stringify(next)); } catch { /* storage unavailable */ }
+  };
+  const moveSnapCard = (from: SnapId, to: SnapId) => {
+    if (from === to) return;
+    const next = snapOrder.filter((id) => id !== from);
+    next.splice(next.indexOf(to) + (snapOrder.indexOf(from) < snapOrder.indexOf(to) ? 1 : 0), 0, from);
+    saveSnapOrder(next);
+  };
+  const nudgeSnapCard = (id: SnapId, delta: number) => {
+    const index = snapOrder.indexOf(id);
+    const target = index + delta;
+    if (target < 0 || target >= snapOrder.length) return;
+    const next = [...snapOrder];
+    [next[index], next[target]] = [next[target], next[index]];
+    saveSnapOrder(next);
+  };
+  const orderChanged = snapOrder.some((id, index) => id !== SNAP_DEFAULT_ORDER[index]);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
@@ -138,6 +174,60 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     ...missingRequired.slice(0, 2).map((doc) => ({ key: doc.id, label: doc.label, detail: 'Required document' })),
   ].slice(0, 4);
   const price = deal.contractDetails?.salesPrice?.trim();
+  const SNAP_LABELS: Record<SnapId, string> = { attention: 'Needs Your Attention', waiting: 'Waiting On Others', next: 'Next Action And Notes', preferences: 'Preferences', offers: 'Offers And Showings' };
+  const snapCards: Record<SnapId, ReactNode> = {
+    attention: (
+                <div className="ds-card !p-0">
+                  <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><AlertCircle className="h-4 w-4 text-amber-600" aria-hidden="true" /> Needs Your Attention</p>
+                    <span className="ds-chip bg-amber-50 text-amber-700">{attention.length}</span>
+                  </div>
+                  {attention.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing is overdue.</p> : attention.map((item) => (
+                    <div key={item.key} className="border-b border-[#F1F0F5] px-4 py-3 last:border-0">
+                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                      <p className={`mt-0.5 text-xs ${item.tone === 'red' ? 'text-[#9A3D2B]' : 'text-amber-700'}`}>{item.detail}</p>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => onOpenView('tasks')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View all tasks <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+                </div>
+    ),
+    waiting: (
+                <div className="ds-card !p-0">
+                  <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Clock className="h-4 w-4 text-[#7059A8]" aria-hidden="true" /> Waiting On Others</p>
+                    <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{waiting.length}</span>
+                  </div>
+                  {waiting.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing is pending.</p> : waiting.map((item) => (
+                    <div key={item.key} className="border-b border-[#F1F0F5] px-4 py-3 last:border-0">
+                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => onOpenView('d-documents')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View documents <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+                </div>
+    ),
+    next: (
+              <div className="ds-card">
+                <label className="ds-field-label" htmlFor="deal-next-action">Next action</label>
+                <input id="deal-next-action" className={`${input} mt-1`} disabled={locked} value={deal.nextAction} placeholder={nextTask ? nextTask.title : nextDeadline ? `${nextDeadline.label} · ${formatDate(nextDeadline.date)}` : 'What happens next?'} onChange={(e) => onUpdate('nextAction', e.target.value)} />
+                <label className="ds-field-label mt-4 block" htmlFor="deal-notes">Notes</label>
+                <textarea id="deal-notes" rows={3} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" disabled={locked} value={deal.notes} placeholder="Signing details, client requests, reminders" onChange={(e) => onUpdate('notes', e.target.value)} />
+              </div>
+    ),
+    preferences: (
+              <div className="ds-card">
+                <p className="ds-side-title !mt-0">Preferences</p>
+                <div className="ds-fields mt-3">
+                  {([['budget', 'Budget'], ['financing', 'Financing'], ['targetAreas', 'Target areas'], ['mustHaves', 'Must-haves'], ['timeframe', 'Timeframe'], ['minBeds', 'Min beds']] as const).map(([key, label]) => (
+                    <div key={key}><label className="ds-field-label" htmlFor={`pref-${key}`}>{label}</label><input id={`pref-${key}`} className={`${input} mt-1`} disabled={locked} value={prefs[key]} onChange={(e) => setPref(key, e.target.value)} /></div>
+                  ))}
+                </div>
+              </div>
+    ),
+    offers: (
+              <div className="scroll-mt-24"><OffersShowings deal={deal} locked={locked} formatDate={formatDate} onUpdate={onUpdate} /></div>
+    ),
+  };
   const tabs: [Tab, string][] = [['tasks', `Tasks ${deal.tasks.length}`], ['history', 'History']];
 
   return (
@@ -202,55 +292,40 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           )}
 
           {tab === 'overview' && (
-            <div className="space-y-4">
-              <nav aria-label="Jump to a section" className="ds-pills">
-                {([['snap-attention', 'Attention'], ['snap-waiting', 'Waiting'], ['snap-next', 'Next Action'], ['snap-preferences', 'Preferences'], ['snap-offers', 'Offers & Showings'], ['snap-property', 'Property'], ['snap-parties', 'Parties'], ['snap-workspace', 'Workspace']] as const).map(([id, label]) => (
-                  <button key={id} type="button" onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{label}</button>
-                ))}
-              </nav>
+            <div className="space-y-3">
+              {orderChanged && (
+                <div className="flex justify-end">
+                  <button type="button" onClick={() => saveSnapOrder(SNAP_DEFAULT_ORDER)}>Reset Layout</button>
+                </div>
+              )}
               <div className="grid gap-4 md:grid-cols-2">
-                <div id="snap-attention" className="ds-card !p-0 scroll-mt-24">
-                  <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
-                    <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><AlertCircle className="h-4 w-4 text-amber-600" aria-hidden="true" /> Needs Your Attention</p>
-                    <span className="ds-chip bg-amber-50 text-amber-700">{attention.length}</span>
+                {snapOrder.map((id) => (
+                  <div
+                    key={id}
+                    className={`group relative min-w-0 ${id === 'attention' || id === 'waiting' ? '' : 'md:col-span-2'} ${dragOverId === id && dragId !== id ? 'ds-drop-target' : ''}`}
+                    draggable={dragId === id}
+                    onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', id); }}
+                    onDragOver={(e) => { if (dragId && dragId !== id) { e.preventDefault(); setDragOverId(id); } }}
+                    onDragLeave={() => setDragOverId((current) => (current === id ? null : current))}
+                    onDrop={(e) => { e.preventDefault(); if (dragId) moveSnapCard(dragId, id); setDragId(null); setDragOverId(null); }}
+                    onDragEnd={() => { setDragId(null); setDragOverId(null); }}
+                  >
+                    <button
+                      type="button"
+                      className="ds-grip"
+                      aria-label={`Reorder ${SNAP_LABELS[id]}. Drag, or use the up and down arrow keys.`}
+                      title="Drag to reorder"
+                      onMouseDown={() => setDragId(id)}
+                      onMouseUp={() => setDragId(null)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); nudgeSnapCard(id, -1); }
+                        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); nudgeSnapCard(id, 1); }
+                      }}
+                    ><GripHorizontal className="h-4 w-4" aria-hidden="true" /></button>
+                    {snapCards[id]}
                   </div>
-                  {attention.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing is overdue.</p> : attention.map((item) => (
-                    <div key={item.key} className="border-b border-[#F1F0F5] px-4 py-3 last:border-0">
-                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
-                      <p className={`mt-0.5 text-xs ${item.tone === 'red' ? 'text-[#9A3D2B]' : 'text-amber-700'}`}>{item.detail}</p>
-                    </div>
-                  ))}
-                  <button type="button" onClick={() => onOpenView('tasks')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View all tasks <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
-                </div>
-                <div id="snap-waiting" className="ds-card !p-0 scroll-mt-24">
-                  <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
-                    <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Clock className="h-4 w-4 text-[#7059A8]" aria-hidden="true" /> Waiting On Others</p>
-                    <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{waiting.length}</span>
-                  </div>
-                  {waiting.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing is pending.</p> : waiting.map((item) => (
-                    <div key={item.key} className="border-b border-[#F1F0F5] px-4 py-3 last:border-0">
-                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
-                      <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
-                    </div>
-                  ))}
-                  <button type="button" onClick={() => onOpenView('d-documents')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View documents <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
-                </div>
+                ))}
               </div>
-              <div id="snap-next" className="ds-card scroll-mt-24">
-                <label className="ds-field-label" htmlFor="deal-next-action">Next action</label>
-                <input id="deal-next-action" className={`${input} mt-1`} disabled={locked} value={deal.nextAction} placeholder={nextTask ? nextTask.title : nextDeadline ? `${nextDeadline.label} · ${formatDate(nextDeadline.date)}` : 'What happens next?'} onChange={(e) => onUpdate('nextAction', e.target.value)} />
-                <label className="ds-field-label mt-4 block" htmlFor="deal-notes">Notes</label>
-                <textarea id="deal-notes" rows={3} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" disabled={locked} value={deal.notes} placeholder="Signing details, client requests, reminders" onChange={(e) => onUpdate('notes', e.target.value)} />
-              </div>
-              <div id="snap-preferences" className="ds-card scroll-mt-24">
-                <p className="ds-side-title !mt-0">Preferences</p>
-                <div className="ds-fields mt-3">
-                  {([['budget', 'Budget'], ['financing', 'Financing'], ['targetAreas', 'Target areas'], ['mustHaves', 'Must-haves'], ['timeframe', 'Timeframe'], ['minBeds', 'Min beds']] as const).map(([key, label]) => (
-                    <div key={key}><label className="ds-field-label" htmlFor={`pref-${key}`}>{label}</label><input id={`pref-${key}`} className={`${input} mt-1`} disabled={locked} value={prefs[key]} onChange={(e) => setPref(key, e.target.value)} /></div>
-                  ))}
-                </div>
-              </div>
-              <div id="snap-offers" className="scroll-mt-24"><OffersShowings deal={deal} locked={locked} formatDate={formatDate} onUpdate={onUpdate} /></div>
             </div>
           )}
 
