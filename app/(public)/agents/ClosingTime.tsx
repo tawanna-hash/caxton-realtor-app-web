@@ -2744,7 +2744,7 @@ export default function ClosingTime({
                         </div>
                       </div>
                     )}
-                    <div className="mt-7 rounded-md border border-slate-200 bg-slate-100 p-6 sm:p-10 lg:p-14">
+                    <div className="mt-7 rounded-md border border-[#E6E5EC] bg-[#F6F3FB] p-6 sm:p-10 lg:p-14">
                       {originalContract?.dealId === activeDeal.id && (
                         <div className="mx-auto mb-4 max-w-[1020px] border border-slate-300 bg-white p-3">
                           <button type="button" onClick={() => setShowSavedOriginal((value) => !value)}

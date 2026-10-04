@@ -53,6 +53,7 @@ export default function ResourceFloater({
 }: Props) {
   const router = useRouter();
   const [brandFooter, setBrandFooter] = useState<BrandFooter | null>(null);
+  const [brandLoaded, setBrandLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,10 +110,10 @@ export default function ResourceFloater({
         return (data?.branding ?? null) as BrandFooter | null;
       })
       .then((branding) => {
-        if (!cancelled) setBrandFooter(branding ?? designerBranding);
+        if (!cancelled) { setBrandFooter(branding ?? designerBranding); setBrandLoaded(true); }
       })
       .catch(() => {
-        if (!cancelled) setBrandFooter(designerBranding);
+        if (!cancelled) { setBrandFooter(designerBranding); setBrandLoaded(true); }
       });
     return () => {
       cancelled = true;
@@ -236,6 +237,11 @@ export default function ResourceFloater({
         />
       </div>
       {brandFooter && <PrintBrandFooter template={brandFooter.template} brand={brandFooter.brand} />}
+      {brandLoaded && !brandFooter && (
+        <aside aria-label="Email signature setup" className="hidden ds-signature-empty">
+          Add your email signature in <a href="/custom-designer">Custom Designer</a> and it appears here and on printed and downloaded sheets.
+        </aside>
+      )}
     </>
   );
 }
@@ -249,7 +255,7 @@ function PrintBrandFooter({ template, brand }: BrandFooter) {
   return (
     <aside
       aria-label="REALTOR contact information"
-      className={`hidden print:fixed print:inset-x-0 print:bottom-0 print:z-50 print:bg-white print:px-8 print:py-3 print:text-gray-900 ${
+      className={`hidden ds-signature print:fixed print:inset-x-0 print:bottom-0 print:z-50 print:bg-white print:px-8 print:py-3 print:text-gray-900 ${
         template === 'minimal-rows'
           ? 'print:flex print:items-center print:gap-5 print:border-t-2 print:border-[#301D5D]'
           : 'print:grid print:grid-cols-[72px_minmax(0,1fr)_100px] print:items-center print:gap-4 print:border-t print:border-gray-300'

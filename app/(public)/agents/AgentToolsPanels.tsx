@@ -117,7 +117,7 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
                     key={tool.href}
                     type="button"
                     onClick={() => { trackEvent('agent_command_center_tool_opened', { tool: tool.title }); onOpenTool(deskView); }}
-                    className={`group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition hover:bg-[#FBFBFD] sm:p-5 ${tool.tone}`}
+                    className={`ds-tool-row group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition hover:bg-[#FBFBFD] sm:p-5 ${tool.tone}`}
                   >
                     <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tool.iconTone}`}>
                       <Icon className="h-5 w-5" aria-hidden="true" />
@@ -239,7 +239,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
               </div>
 
               {visibleProviders.length > 0 ? (
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="mt-6 grid gap-3">
                   {visibleProviders.map((provider) => (
                     <Link
                       href={`/partners/${provider.slug}`}

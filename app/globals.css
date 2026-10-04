@@ -1447,3 +1447,15 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-embed :is(input, select, textarea) { border-color: var(--d-line); border-radius: 8px; }
 #agent-desk .ds-embed :is(input, select, textarea):focus { border-color: var(--d-purple); outline: none; box-shadow: 0 0 0 2px #EFEAF8; }
 #agent-desk .ds-embed [class*='rounded'][class*='border'] { border-color: var(--d-line); border-radius: 12px; }
+
+/* Tool rows: white text on the dark hover */
+#agent-desk .ds-tool-row:hover :is(h3, p, span) { color: #FFFFFF !important; opacity: 1 !important; }
+/* Purple focus ring instead of the browser's blue */
+#agent-desk :focus-visible { outline: 2px solid #301D5D; outline-offset: 2px; }
+/* Email signature on desk calculators */
+@media screen {
+  #agent-desk .ds-embed aside.ds-signature { display: flex !important; align-items: center; gap: 1rem; margin-top: 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--d-line); border-left: 3px solid var(--d-purple); border-radius: 12px; background: #fff; }
+  #agent-desk .ds-embed aside.ds-signature img { flex: none; }
+  #agent-desk .ds-embed aside.ds-signature-empty { display: block !important; margin-top: 1.5rem; padding: 0.875rem 1.25rem; border: 1px dashed var(--d-line); border-radius: 12px; background: #F6F3FB; color: var(--d-muted); font-size: 0.8125rem; }
+  #agent-desk .ds-embed aside.ds-signature-empty a { color: var(--d-purple); font-weight: 600; text-decoration: underline; }
+}
