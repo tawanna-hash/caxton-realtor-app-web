@@ -5,13 +5,13 @@ import { AlertCircle, Check, GripHorizontal, ChevronLeft, ChevronRight, Clock, F
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import { PURCHASE_FOLDERS, PURCHASE_REQUIRED_IDS } from './purchase-documents';
 
-type SnapId = 'attention' | 'waiting' | 'next' | 'preferences' | 'offers';
-const SNAP_DEFAULT_ORDER: SnapId[] = ['attention', 'waiting', 'next', 'preferences', 'offers'];
+type SnapId = 'attention' | 'waiting' | 'property' | 'next' | 'preferences' | 'offers' | 'parties' | 'workspace';
+const SNAP_DEFAULT_ORDER: SnapId[] = ['attention', 'waiting', 'property', 'next', 'preferences', 'parties', 'workspace', 'offers'];
 const SNAP_ORDER_KEY = 'closing-time-snapshot-order';
 const SNAP_SIZE_KEY = 'closing-time-snapshot-sizes';
 type SnapSize = { w: number; h: number };
 const SNAP_DEFAULT_SIZES: Record<SnapId, SnapSize> = {
-  attention: { w: 6, h: 3 }, waiting: { w: 6, h: 3 }, next: { w: 12, h: 3 }, preferences: { w: 12, h: 3 }, offers: { w: 12, h: 4 },
+  attention: { w: 4, h: 3 }, waiting: { w: 4, h: 3 }, property: { w: 4, h: 4 }, next: { w: 8, h: 3 }, preferences: { w: 8, h: 3 }, parties: { w: 4, h: 3 }, workspace: { w: 4, h: 2 }, offers: { w: 12, h: 4 },
 };
 const SNAP_ROW_PX = 120;
 const SNAP_GAP_PX = 16;
@@ -222,7 +222,69 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     ...missingRequired.slice(0, 2).map((doc) => ({ key: doc.id, label: doc.label, detail: 'Required document' })),
   ].slice(0, 4);
   const price = deal.contractDetails?.salesPrice?.trim();
-  const SNAP_LABELS: Record<SnapId, string> = { attention: 'Needs Your Attention', waiting: 'Waiting On Others', next: 'Next Action And Notes', preferences: 'Preferences', offers: 'Offers And Showings' };
+  const sideBlocks = {
+    property: (
+<>
+          <h3 className="ds-side-title">Focus property</h3>
+          <div className="ds-card !p-0 overflow-hidden">
+            <div
+              className={`relative ${dragOver ? 'bg-[#EFEAF8] outline outline-2 -outline-offset-2 outline-[#301D5D]' : ''}`}
+              onDragOver={(e) => { if (locked) return; e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => { e.preventDefault(); setDragOver(false); if (!locked) void uploadPhoto(e.dataTransfer.files?.[0]); }}
+            >
+              {deal.photoUrl
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={deal.photoUrl} alt={deal.propertyAddress || deal.title} className="h-44 w-full object-cover" />
+                : <div className="flex h-32 items-center justify-center bg-[#F6F3FB] text-sm text-slate-400">No photo</div>}
+              {!locked && (
+                <button type="button" onClick={() => photoInputRef.current?.click()} disabled={uploading}
+                  className="absolute inset-x-3 bottom-3 rounded-md border border-dashed border-slate-300 bg-white/90 px-3 py-2 text-xs font-medium text-slate-600">
+                  {uploading ? 'Uploading…' : dragOver ? 'Drop image to upload' : deal.photoUrl ? 'Drop a new image or click to replace' : 'Drop an image here or click to upload'}
+                </button>
+              )}
+              <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { void uploadPhoto(e.target.files?.[0]); e.target.value = ''; }} />
+            </div>
+            {photoError && <p className="px-4 pt-2 text-xs text-red-600" role="alert">{photoError}</p>}
+            <div className="p-4">
+              <p className="font-semibold text-slate-900">{deal.propertyAddress || deal.title}</p>
+              <p className="mt-1 text-xs text-slate-500">{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing date not set'}</p>
+              {!locked && <input aria-label="Photo URL" className={`${input} mt-3`} placeholder="Photo URL" value={deal.photoUrl} onChange={(e) => onUpdate('photoUrl', e.target.value)} />}
+            </div>
+          </div>
+</>
+    ),
+    parties: (
+<>
+          <h3 className="ds-side-title">Parties</h3>
+          <div className="ds-card ds-list">
+            {people.length === 0 && <p className="text-sm text-slate-500">No parties added.</p>}
+            {people.slice(0, 8).map((p) => (
+              <div key={p.id} className="ds-list-row">
+                <span className="ds-avatar" aria-hidden="true">{initials(p.name)}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-slate-900">{p.name}</span>
+                  <span className="mt-0.5 inline-block rounded-full bg-[#EFEAF8] px-2 py-0.5 text-[11px] font-medium capitalize text-[#301D5D]">{p.role}</span>
+                </span>
+                {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : null}
+              </div>
+            ))}
+            <button type="button" onClick={() => onOpenView('d-people')} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left text-xs text-slate-500">Manage people</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
+          </div>
+</>
+    ),
+    workspace: (
+<>
+          <h3 className="ds-side-title">Workspace</h3>
+          <div className="ds-card ds-list">
+            {([['transaction', 'Current Deal'], ['coordinator', 'Deal Settings'], ['readiness', 'Readiness Check'], ['audit', 'Audit Trail']] as const).map(([view, label]) => (
+              <button key={view} type="button" onClick={() => onOpenView(view)} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left">{label}</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
+            ))}
+          </div>
+</>
+    ),
+  };
+  const SNAP_LABELS: Record<SnapId, string> = { attention: 'Needs Your Attention', waiting: 'Waiting On Others', next: 'Next Action And Notes', preferences: 'Preferences', offers: 'Offers And Showings', property: 'Focus Property', parties: 'Parties', workspace: 'Workspace' };
   const snapCards: Record<SnapId, ReactNode> = {
     attention: (
                 <div className="ds-card !p-0">
@@ -272,6 +334,9 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                 </div>
               </div>
     ),
+    property: <div>{sideBlocks.property}</div>,
+    parties: <div>{sideBlocks.parties}</div>,
+    workspace: <div>{sideBlocks.workspace}</div>,
     offers: (
               <div className="scroll-mt-24"><OffersShowings deal={deal} locked={locked} formatDate={formatDate} onUpdate={onUpdate} /></div>
     ),
@@ -328,7 +393,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 
       </>)}
 
-      <div className={section && section !== 'overview' ? '' : 'ds-split'}>
+      <div className={section ? '' : 'ds-split'}>
         <div className="min-w-0">
           {!section && (
           <div className="ds-tabs !mt-0" role="tablist" aria-label="Deal sections">
@@ -515,55 +580,10 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           )}
         </div>
 
-        {(!section || section === 'overview') && (<aside className="ds-rail-right" aria-label="Deal details">
-          <h3 id="snap-property" className="ds-side-title scroll-mt-24">Focus property</h3>
-          <div className="ds-card !p-0 overflow-hidden">
-            <div
-              className={`relative ${dragOver ? 'bg-[#EFEAF8] outline outline-2 -outline-offset-2 outline-[#301D5D]' : ''}`}
-              onDragOver={(e) => { if (locked) return; e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => { e.preventDefault(); setDragOver(false); if (!locked) void uploadPhoto(e.dataTransfer.files?.[0]); }}
-            >
-              {deal.photoUrl
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={deal.photoUrl} alt={deal.propertyAddress || deal.title} className="h-44 w-full object-cover" />
-                : <div className="flex h-32 items-center justify-center bg-[#F6F3FB] text-sm text-slate-400">No photo</div>}
-              {!locked && (
-                <button type="button" onClick={() => photoInputRef.current?.click()} disabled={uploading}
-                  className="absolute inset-x-3 bottom-3 rounded-md border border-dashed border-slate-300 bg-white/90 px-3 py-2 text-xs font-medium text-slate-600">
-                  {uploading ? 'Uploading…' : dragOver ? 'Drop image to upload' : deal.photoUrl ? 'Drop a new image or click to replace' : 'Drop an image here or click to upload'}
-                </button>
-              )}
-              <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { void uploadPhoto(e.target.files?.[0]); e.target.value = ''; }} />
-            </div>
-            {photoError && <p className="px-4 pt-2 text-xs text-red-600" role="alert">{photoError}</p>}
-            <div className="p-4">
-              <p className="font-semibold text-slate-900">{deal.propertyAddress || deal.title}</p>
-              <p className="mt-1 text-xs text-slate-500">{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing date not set'}</p>
-              {!locked && <input aria-label="Photo URL" className={`${input} mt-3`} placeholder="Photo URL" value={deal.photoUrl} onChange={(e) => onUpdate('photoUrl', e.target.value)} />}
-            </div>
-          </div>
-          <h3 id="snap-parties" className="ds-side-title scroll-mt-24">Parties</h3>
-          <div className="ds-card ds-list">
-            {people.length === 0 && <p className="text-sm text-slate-500">No parties added.</p>}
-            {people.slice(0, 8).map((p) => (
-              <div key={p.id} className="ds-list-row">
-                <span className="ds-avatar" aria-hidden="true">{initials(p.name)}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold text-slate-900">{p.name}</span>
-                  <span className="mt-0.5 inline-block rounded-full bg-[#EFEAF8] px-2 py-0.5 text-[11px] font-medium capitalize text-[#301D5D]">{p.role}</span>
-                </span>
-                {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : null}
-              </div>
-            ))}
-            <button type="button" onClick={() => onOpenView('d-people')} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left text-xs text-slate-500">Manage people</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
-          </div>
-          <h3 id="snap-workspace" className="ds-side-title scroll-mt-24">Workspace</h3>
-          <div className="ds-card ds-list">
-            {([['transaction', 'Current Deal'], ['coordinator', 'Deal Settings'], ['readiness', 'Readiness Check'], ['audit', 'Audit Trail']] as const).map(([view, label]) => (
-              <button key={view} type="button" onClick={() => onOpenView(view)} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left">{label}</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
-            ))}
-          </div>
+        {!section && (<aside className="ds-rail-right" aria-label="Deal details">
+          {sideBlocks.property}
+          {sideBlocks.parties}
+          {sideBlocks.workspace}
         </aside>)}
       </div>
 
