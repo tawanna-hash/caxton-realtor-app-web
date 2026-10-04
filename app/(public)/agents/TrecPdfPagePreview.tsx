@@ -191,10 +191,10 @@ export default function TrecPdfPagePreview({
               onClick={() => onFieldChange(field.id, isChecked ? '' : 'true')}
               aria-label={`${field.label}, official form page ${field.page}`}
               title={field.label}
-              className={`absolute z-20 flex cursor-pointer items-center justify-center rounded-[2px] border focus:outline-none focus:ring-2 focus:ring-[#C88A14] focus:ring-offset-1 ${
+              className={`absolute z-20 flex cursor-pointer items-center justify-center rounded-[2px] border focus:outline-none focus:ring-2 focus:ring-[#301D5D] focus:ring-offset-1 ${
                 isChecked
                   ? 'border-[#301D5D] bg-[#301D5D] text-white'
-                  : 'border-[#446B9E] bg-[#FFF4B8]/70 text-transparent hover:bg-[#FFF0A0]'
+                  : 'border-[#7059A8] bg-[#EFEAF8]/90 text-transparent hover:bg-[#E3DBF3]'
               }`}
               style={{ left, top, width, height }}
             >
@@ -210,7 +210,7 @@ export default function TrecPdfPagePreview({
             onChange={(event) => onFieldChange(field.id, event.target.value)}
             aria-label={`${field.label}, official form page ${field.page}`}
             title={field.label}
-            className="absolute z-20 border border-[#446B9E]/65 bg-[#FFF4B8]/55 px-[2px] font-sans text-slate-950 outline-none transition hover:bg-[#FFF0A0]/75 focus:border-[#8A5A00] focus:bg-[#FFF4B8]/90 focus:ring-2 focus:ring-[#C88A14]"
+            className="absolute z-20 border border-[#7059A8]/65 bg-[#EFEAF8]/85 px-[2px] font-sans text-slate-950 outline-none transition hover:bg-[#E3DBF3] focus:border-[#301D5D] focus:bg-[#F6F3FB] focus:ring-2 focus:ring-[#301D5D]"
             style={{
               left,
               top,

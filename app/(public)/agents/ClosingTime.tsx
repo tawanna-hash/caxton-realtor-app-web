@@ -2655,7 +2655,7 @@ export default function ClosingTime({
                   </div>
                 </div>
 
-                <section id="trec-form-workspace" {...collapsible('trec-forms')} className="mt-7 scroll-mt-24 border border-[#D9D0BF] bg-white" aria-labelledby="official-trec-fields-title">
+                <section id="trec-form-workspace" {...collapsible('trec-forms')} className="mt-7 scroll-mt-24 border border-[#E6E5EC] bg-white" aria-labelledby="official-trec-fields-title">
                   <div className="border-b border-[#D9D0BF] bg-[#F7F3EB] px-5 py-4 sm:px-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                       <div>
