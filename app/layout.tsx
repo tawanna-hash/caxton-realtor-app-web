@@ -13,6 +13,7 @@ import ExternalLinkInterceptor from "@/components/ExternalLinkInterceptor";
 import NativeScrollToTop from "@/components/NativeScrollToTop";
 import BackToTopButton from "@/components/BackToTopButton";
 import AutoPrint from "@/components/AutoPrint";
+import ScrollTopOnReload from "@/components/ScrollTopOnReload";
 import MarketOnboardingPicker from "@/components/MarketOnboardingPicker";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -143,6 +144,7 @@ export default function RootLayout({
               set yet (no cookie, no localStorage). Self-dismisses after a
               choice and stays hidden on every subsequent launch. */}
           <MarketOnboardingPicker />
+          <ScrollTopOnReload />
           {children}
           {/* Native iOS shell only: opt-in Face ID / Touch ID lock that
               overlays the UI on cold launch and resume-from-background.
