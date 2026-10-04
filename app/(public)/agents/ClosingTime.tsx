@@ -2384,6 +2384,32 @@ export default function ClosingTime({
                 />
               );
             })()}
+            {effectiveView === 'd-overview' && (() => {
+              const deal = activeDeal;
+              if (!deal) return null;
+              const nextDeadline = dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
+              return (
+                <div className="mb-5">
+                  <DealSubpage
+                    key={`${deal.id}-strip`}
+                    stripOnly
+                    deal={deal}
+                    today={today}
+                    locked={isDealLocked(deal)}
+                    health={{ label: '', tone: '' }}
+                    statusLabels={TREC_DEAL_WORKFLOW_STATUS_LABELS}
+                    statuses={TREC_DEAL_WORKFLOW_STATUSES}
+                    documentGroups={DOCUMENT_GROUPS}
+                    nextDeadline={nextDeadline}
+                    formatDate={formatDate}
+                    countdownLabel={closingCountdownLabel(deal.closingDate, today)}
+                    onUpdate={updateActiveDeal}
+                    onBack={() => setDeskView('deals')}
+                    onOpenView={(view) => { setWorkspacePage(2); setDeskView(view); }}
+                  />
+                </div>
+              );
+            })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
               <nav aria-label="Deal sections" className="mb-5 overflow-hidden border border-slate-200 bg-white px-5 pt-5">
                 <div className="flex items-center gap-3">

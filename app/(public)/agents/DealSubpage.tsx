@@ -68,9 +68,10 @@ type Props = {
   onBack: () => void;
   onOpenView: (view: string) => void;
   section?: Tab;
+  stripOnly?: boolean;
 };
 
-export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section }: Props) {
+export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -235,6 +236,34 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               <div className="scroll-mt-24"><OffersShowings deal={deal} locked={locked} formatDate={formatDate} onUpdate={onUpdate} /></div>
     ),
   };
+  const progressStrip = (
+    <>
+      <div className="ds-summary" aria-label="Deal summary">
+        {([
+          ['Purchase price', price ? (price.startsWith('$') ? price : `$${price}`) : 'Not set', ''],
+          ['Buyers', deal.buyerNames || 'Not added', 'Your clients'],
+          ['Sellers', deal.sellerNames || 'Not added', ''],
+          ['Closing', deal.closingDate ? formatDate(deal.closingDate) : 'Not set', deal.closingDate ? countdownLabel : ''],
+        ] as const).map(([label, value, hint]) => (
+          <div key={label} className="min-w-0">
+            <p className="ds-eyebrow">{label}</p>
+            <p className="mt-1 truncate text-sm font-semibold text-slate-900">{value}{hint ? <span className="ml-1.5 text-xs font-normal text-slate-500">{hint}</span> : null}</p>
+          </div>
+        ))}
+      </div>
+      <ol className="ds-stepper" aria-label="Deal progress">
+        {milestones.map((m, index) => (
+          <li key={m.key} className={`ds-step ${m.done ? 'is-done' : ''} ${m.current ? 'is-current' : ''} ${index === 0 ? 'is-first' : ''} ${index === milestones.length - 1 ? 'is-last' : ''} ${index > 0 && milestones[index - 1].done ? 'prev-done' : ''}`} aria-current={m.current ? 'step' : undefined}>
+            <span className="ds-step-dot">{m.done ? <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" /> : null}</span>
+            <span className="ds-step-label">{m.label}</span>
+            <span className="ds-step-sub">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
+          </li>
+        ))}
+      </ol>
+    </>
+  );
+  if (stripOnly) return <div className="ds-page ds-strip" data-testid="deal-strip">{progressStrip}</div>;
+
   const tabs: [Tab, string][] = [['tasks', `Tasks ${deal.tasks.length}`], ['history', 'History']];
 
   if ((section as string | undefined) === 'overview') {
@@ -356,28 +385,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           </div>
         </div>
       )}
-      <div className="ds-summary" aria-label="Deal summary">
-        {([
-          ['Price', price ? (price.startsWith('$') ? price : `$${price}`) : 'Not set', ''],
-          ['Buyers', deal.buyerNames || 'Not added', 'Your clients'],
-          ['Sellers', deal.sellerNames || 'Not added', ''],
-          ['Closing', deal.closingDate ? formatDate(deal.closingDate) : 'Not set', deal.closingDate ? countdownLabel : ''],
-        ] as const).map(([label, value, hint]) => (
-          <div key={label} className="min-w-0">
-            <p className="ds-eyebrow">{label}</p>
-            <p className="mt-1 truncate text-sm font-semibold text-slate-900">{value}{hint ? <span className="ml-1.5 text-xs font-normal text-slate-500">{hint}</span> : null}</p>
-          </div>
-        ))}
-      </div>
-      <ol className="ds-stepper" aria-label="Deal progress">
-        {milestones.map((m, index) => (
-          <li key={m.key} className={`ds-step ${m.done ? 'is-done' : ''} ${m.current ? 'is-current' : ''} ${index === 0 ? 'is-first' : ''} ${index === milestones.length - 1 ? 'is-last' : ''} ${index > 0 && milestones[index - 1].done ? 'prev-done' : ''}`} aria-current={m.current ? 'step' : undefined}>
-            <span className="ds-step-dot">{m.done ? <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" /> : null}</span>
-            <span className="ds-step-label">{m.label}</span>
-            <span className="ds-step-sub">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
-          </li>
-        ))}
-      </ol>
+      {progressStrip}
 
       </>)}
 
