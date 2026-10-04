@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/server/auth/user';
 import { isClosingTimeGated } from '@/lib/server/closing-time-gate';
 import { getAgentCommandCenterWorkspace } from '@/lib/server/agent-command-center-workspaces';
 import { getActiveTrecFormVersion, listTrecFormVersions } from '@/lib/server/trec-form-versions';
+import { listCustomFormVersions } from '@/lib/server/custom-forms';
 import AgentCommandCenterClient from './AgentCommandCenterClient';
 import ComingSoon from './ComingSoon';
 
@@ -26,7 +27,7 @@ export default async function AgentCommandCenterPage() {
   const [workspaceRecord, trecFormVersion, trecFormVersions] = await Promise.all([
     getAgentCommandCenterWorkspace(user.realtorId),
     getActiveTrecFormVersion(),
-    listTrecFormVersions(),
+    Promise.all([listTrecFormVersions(), listCustomFormVersions(user.realtorId).catch(() => [])]).then(([builtIn, custom]) => [...builtIn, ...custom]),
   ]);
 
   return (

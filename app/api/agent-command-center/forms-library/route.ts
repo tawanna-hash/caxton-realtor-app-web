@@ -5,6 +5,9 @@ import { query } from '@/lib/server/db/neon';
 import { requireUser } from '@/lib/server/auth/user';
 import { withErrorHandling } from '@/lib/server/error';
 import { rateLimit } from '@/lib/server/rate-limit';
+import { ensureCustomFormsTable as ensureTable, extractPdfFields, type CustomFormRow } from '@/lib/server/custom-forms';
+
+type Row = Pick<CustomFormRow, 'id' | 'section' | 'title' | 'filename' | 'url' | 'size_bytes' | 'created_at' | 'page_count' | 'field_catalog'>;
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,36 +15,22 @@ export const dynamic = 'force-dynamic';
 const MAX_BYTES = 15 * 1024 * 1024;
 const SECTIONS = new Set(['trec', 'brokerage']);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-let schemaReady: Promise<void> | undefined;
+const toForm = (r: Row) => ({ fillable: (r.field_catalog?.length ?? 0) > 0, id: r.id, section: r.section, title: r.title, filename: r.filename, url: r.url, size: r.size_bytes, createdAt: r.created_at });
 
-type Row = { id: string; section: string; title: string; filename: string; url: string; size_bytes: number; created_at: string };
-
-function ensureTable(): Promise<void> {
-  if (!schemaReady) schemaReady = (async () => {
-    await query(`
-      CREATE TABLE IF NOT EXISTS closing_time_custom_forms (
-        id UUID PRIMARY KEY,
-        owner_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE,
-        section TEXT NOT NULL,
-        title TEXT NOT NULL,
-        filename TEXT NOT NULL,
-        url TEXT NOT NULL,
-        size_bytes INTEGER NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-      )
-    `);
-    await query(`CREATE INDEX IF NOT EXISTS closing_time_custom_forms_owner_idx ON closing_time_custom_forms (owner_id, section, created_at DESC)`);
-  })().catch((error: unknown) => { schemaReady = undefined; throw error; });
-  return schemaReady;
-}
-
-const toForm = (r: Row) => ({ id: r.id, section: r.section, title: r.title, filename: r.filename, url: r.url, size: r.size_bytes, createdAt: r.created_at });
-
-export const GET = withErrorHandling(async function GET() {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const user = await requireUser();
   await ensureTable();
+  const fileId = req.nextUrl.searchParams.get('file');
+  if (fileId) {
+    if (!UUID_RE.test(fileId)) return NextResponse.json({ error: 'Invalid form.' }, { status: 400 });
+    const found = await query<{ url: string }>(`SELECT url FROM closing_time_custom_forms WHERE id = $1 AND owner_id = $2`, [fileId, user.realtorId]);
+    if (!found[0]) return NextResponse.json({ error: 'Form not found.' }, { status: 404 });
+    const upstream = await fetch(found[0].url);
+    if (!upstream.ok) return NextResponse.json({ error: 'Form file unavailable.' }, { status: 502 });
+    return new Response(upstream.body, { headers: { 'Content-Type': 'application/pdf', 'Cache-Control': 'private, max-age=300', 'X-Content-Type-Options': 'nosniff' } });
+  }
   const rows = await query<Row>(
-    `SELECT id, section, title, filename, url, size_bytes, created_at FROM closing_time_custom_forms WHERE owner_id = $1 ORDER BY created_at DESC LIMIT 500`,
+    `SELECT id, section, title, filename, url, size_bytes, created_at, page_count, field_catalog FROM closing_time_custom_forms WHERE owner_id = $1 ORDER BY created_at DESC LIMIT 500`,
     [user.realtorId],
   );
   return NextResponse.json({ forms: rows.map(toForm) });
@@ -68,10 +57,12 @@ export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const blob = await put(`closing-time-forms/${user.realtorId}/${section}/${id}.pdf`, Buffer.from(bytes), {
     access: 'public', contentType: 'application/pdf', addRandomSuffix: false,
   });
+  let parsed: Awaited<ReturnType<typeof extractPdfFields>>;
+  try { parsed = await extractPdfFields(bytes, id.slice(0, 8)); } catch { parsed = { pageCount: 1, fields: [] }; }
   const rows = await query<Row>(
-    `INSERT INTO closing_time_custom_forms (id, owner_id, section, title, filename, url, size_bytes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, section, title, filename, url, size_bytes, created_at`,
-    [id, user.realtorId, section, title, filename, blob.url, bytes.length],
+    `INSERT INTO closing_time_custom_forms (id, owner_id, section, title, filename, url, size_bytes, page_count, field_catalog)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb) RETURNING id, section, title, filename, url, size_bytes, created_at, page_count, field_catalog`,
+    [id, user.realtorId, section, title, filename, blob.url, bytes.length, parsed.pageCount, JSON.stringify(parsed.fields)],
   );
   return NextResponse.json({ form: toForm(rows[0]) });
 });

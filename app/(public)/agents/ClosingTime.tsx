@@ -2798,7 +2798,7 @@ export default function ClosingTime({
                       )}
                       <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-white shadow-sm">
                         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2">
-                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">Official TREC {currentTrecFormVersion.formNumber} · Page {currentTrecPage}</p>
+                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">{currentTrecFormVersion.formFamily.startsWith('custom-') ? `${currentTrecFormVersion.formNumber} form` : `Official TREC ${currentTrecFormVersion.formNumber}`} · Page {currentTrecPage}</p>
                           <a href={currentTrecFormVersion.pdfUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5B438C] underline underline-offset-2">Open Full Form</a>
                         </div>
                         <TrecPdfPagePreview

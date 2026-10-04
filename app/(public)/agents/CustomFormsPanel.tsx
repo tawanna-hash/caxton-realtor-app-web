@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Download, ExternalLink, FileText, Trash2, Upload } from 'lucide-react';
+import { Download, ExternalLink, FileText, PencilLine, Trash2, Upload } from 'lucide-react';
 
-type CustomForm = { id: string; section: string; title: string; filename: string; url: string; size: number; createdAt: string };
+type CustomForm = { fillable?: boolean; id: string; section: string; title: string; filename: string; url: string; size: number; createdAt: string };
 
 const formatSize = (bytes: number) => (bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 
@@ -76,7 +76,11 @@ export default function CustomFormsPanel({ section, label }: { section: 'trec' |
                 <p className="mt-1 text-xs text-slate-500">{formatSize(form.size)} · Added {new Date(form.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
               </div>
             </div>
+            {!form.fillable && <p className="text-xs text-slate-500">This PDF has no fillable fields, so it can be opened and downloaded but not filled in.</p>}
             <div className="flex flex-wrap gap-2">
+              {form.fillable && (
+                <a href={`/agents/closing-time?form=${encodeURIComponent(`custom-${form.id}`)}#trec-form-workspace`} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#301D5D] px-3 text-sm font-bold text-white"><PencilLine className="h-4 w-4" aria-hidden="true" />Open &amp; Fill</a>
+              )}
               <a href={form.url} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F4F3F8]"><ExternalLink className="h-4 w-4" aria-hidden="true" />Open</a>
               <a href={form.url} download={form.filename} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F4F3F8]"><Download className="h-4 w-4" aria-hidden="true" />Download</a>
               <button type="button" aria-label={`Remove ${form.title}`} onClick={() => void remove(form)}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>
