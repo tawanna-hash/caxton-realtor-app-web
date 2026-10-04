@@ -1448,6 +1448,15 @@ export default function ClosingTime({
     trackEvent('closing_time_transaction_created', { deal_type: deal.dealType });
   };
 
+  const updateDealParties = (key: 'buyerNames' | 'sellerNames', value: string) => {
+    if (!activeDeal) return;
+    const buyers = key === 'buyerNames' ? value : activeDeal.buyerNames;
+    const sellers = key === 'sellerNames' ? value : activeDeal.sellerNames;
+    const title = buyerLastNames(buyers) || buyerLastNames(sellers) || 'New Contract';
+    persistDeals(deals.map((deal) => (
+      deal.id === activeDeal.id ? { ...deal, [key]: value, title, updatedAt: new Date().toISOString() } : deal
+    )));
+  };
   const updateActiveDeal = <Key extends keyof AgentDeal>(key: Key, value: AgentDeal[Key]) => {
     if (!activeDeal) return;
     const nextDeals = deals.map((deal) => (
@@ -2840,18 +2849,14 @@ export default function ClosingTime({
                   )}
                 </div>
 
-                <div className="mt-7 grid min-w-0 gap-3 sm:grid-cols-3">
-                  <label className="block min-w-0">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Buyer Or Seller Last Name</span>
-                    <input value={activeDeal.title} onChange={(event) => updateActiveDeal('title', event.target.value)} className="h-[40px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Buyer Or Seller Last Name" />
-                  </label>
+                <div className="mt-7 grid min-w-0 gap-3 sm:grid-cols-2">
                   <label className="block min-w-0">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Buyer(s)</span>
-                    <input value={activeDeal.buyerNames} onChange={(event) => updateActiveDeal('buyerNames', event.target.value)} className="h-[40px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Buyer Names" />
+                    <input value={activeDeal.buyerNames} onChange={(event) => updateDealParties('buyerNames', event.target.value)} className="h-[40px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Buyer Names" />
                   </label>
                   <label className="block min-w-0">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Seller(s)</span>
-                    <input value={activeDeal.sellerNames} onChange={(event) => updateActiveDeal('sellerNames', event.target.value)} className="h-[40px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Seller Names" />
+                    <input value={activeDeal.sellerNames} onChange={(event) => updateDealParties('sellerNames', event.target.value)} className="h-[40px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Seller Names" />
                   </label>
                 </div>
 
