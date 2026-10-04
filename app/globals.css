@@ -1355,7 +1355,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 /* Deal Settings: each topic is its own card */
 #agent-desk [data-section-key='assist'] { background-color: transparent; border: 0; padding: 0; }
 #agent-desk [data-section-key='assist'] > div[class*='grid'] { gap: 1.25rem; }
-#agent-desk [data-section-key='assist'] section[aria-label] {
+#agent-desk [data-section-key='assist'] section[aria-label].never {
   border: 1px solid var(--d-line);
   border-radius: 8px;
   background-color: var(--d-card);
@@ -1364,3 +1364,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 }
 #agent-desk aside div:has(> .rnn-heading-icon:first-child) { gap: 0.625rem; }
 #agent-desk aside div:has(> .rnn-heading-icon:first-child) p { font-size: 0.6875rem; letter-spacing: 0.1em; white-space: nowrap; }
+
+#agent-desk [data-section-key='assist'] { background: transparent; border: 0; padding: 0; box-shadow: none; }
+#agent-desk [data-section-key='assist'] > div:has(> .rnn-heading-icon:first-child) { border: 0; padding: 0; margin: 0; }
+#agent-desk [data-section-key='assist'] h3 { font-size: 1.5rem; }

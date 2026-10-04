@@ -2196,12 +2196,11 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && (
-          <div id="current-transaction" {...collapsible('current', { mobileOpen: true })} className="mt-5 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-7">
+          <div id="current-transaction" {...collapsible('current', { mobileOpen: true })} className="mt-5 scroll-mt-24 rounded-md border border-gray-200 bg-white p-5 sm:p-6">
             <div className="flex flex-wrap items-center gap-3">
-              <ClipboardCheck className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Current Deal</p>
-                <h3 className="mt-1 text-xl font-semibold text-slate-950">
+                <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Current Deal</p>
+                <h3 className="text-2xl font-semibold tracking-tight text-gray-900">
                   {activeDeal?.propertyAddress || activeDeal?.title || 'Start a transaction'}
                 </h3>
                 {selectedFormVersions.length > 0 && (
@@ -2485,12 +2484,11 @@ export default function ClosingTime({
                   </label>
                 </div>
 
-                <div className="mt-7 rounded-md border border-slate-200 bg-[#FCFBF9] p-5 sm:p-7">
+                <div className="mt-6 border-t border-gray-100 pt-6">
                   <div className="flex items-center gap-3">
-                    <CalendarDays className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Contract Timeline</p>
-                      <h4 className="mt-1 text-xl font-semibold text-slate-950">Pressing Deadlines</h4>
+                      <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Contract Timeline</p>
+                      <h4 className="mt-1 text-lg font-semibold text-gray-900">Pressing Deadlines</h4>
                       <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates auto-populate from it using the contract terms and TREC timing rules, then sync with Calendar Exports and Deadline Alerts.</p>
                     </div>
                   </div>
