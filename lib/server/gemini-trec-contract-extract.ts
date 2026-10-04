@@ -149,6 +149,8 @@ Rules:
 - For signatures, record only visible typed/printed signer text or a concise "signed" value when a mark is visibly present. Do not identify an unreadable signature.
 - If any populated control is ambiguous or unreadable, omit it and add a warning naming its page and field id.
 - For a checkbox/addendum that is not visibly attached or selected, return false. If it is unclear, return false and put the uncertainty in warnings.
+- If the uploaded document is not this form (for example, it is a different TREC form), return empty formFields, null worksheet values, all addenda false, and add one warning saying so. Never map another form's content onto this catalog.
+- For an Information About Brokerage Services (IABS) form, fill the broker firm, designated broker, supervisor, sales agent, license numbers, emails, phones, and date exactly as printed. Put the printed client name in buyerNames when the form is for a Buyer or Tenant, and in sellerNames when it is for a Seller or Landlord, only if a printed name is visible.
 - If a field is absent or unreadable, use null.
 
 Official TREC ${formNumber} field catalog:

@@ -1523,33 +1523,49 @@ export default function ClosingTime({
       if (file.type === 'application/pdf' && !originalId) {
         throw new Error('The original PDF could not be saved. Try uploading it again.');
       }
-      const formData = new FormData();
-      if (!originalId) formData.append('contract', file);
-      formData.append('trecFormVersionId', currentTrecFormVersion.id);
-      const response = await fetch('/api/agent-command-center/extract-contract', {
-        method: 'POST',
-        credentials: 'same-origin',
-        ...(originalId
-          ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ originalId, trecFormVersionId: currentTrecFormVersion.id }) }
-          : { body: formData }),
-      });
-      const data: unknown = await response.json().catch(() => null);
-      if (response.status === 401) {
-        window.location.assign('/login?next=%2Fagents');
-        return;
+      // Read the upload against the contract and every other selected form (IABS, addenda, etc.).
+      // Each form has its own field catalog; a document that is not that form simply returns nothing.
+      const targetVersions = [currentTrecFormVersion, ...selectedFormVersions.filter((version) => version.id !== currentTrecFormVersion.id && version.fields.length > 0)];
+      const readWithVersion = async (versionId: string) => {
+        const formData = new FormData();
+        if (!originalId) { formData.append('contract', file); formData.append('trecFormVersionId', versionId); }
+        const response = await fetch('/api/agent-command-center/extract-contract', {
+          method: 'POST',
+          credentials: 'same-origin',
+          ...(originalId
+            ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ originalId, trecFormVersionId: versionId }) }
+            : { body: formData }),
+        });
+        const data: unknown = await response.json().catch(() => null);
+        if (response.status === 401) { window.location.assign('/login?next=%2Fagents'); return null; }
+        if (!response.ok || !data || typeof data !== 'object') {
+          const error = data && typeof data === 'object' && 'error' in data
+            ? String((data as { error?: unknown }).error ?? 'Could not read this contract.')
+            : 'Could not read this contract.';
+          throw new Error(error);
+        }
+        const extraction = (data as { extraction?: unknown }).extraction;
+        if (!extraction || typeof extraction !== 'object') throw new Error('Contract suggestions were not available.');
+        const parsed = extraction as Partial<ExtractionDraft>;
+        if (!parsed.worksheet || typeof parsed.worksheet !== 'object' || !parsed.addenda || typeof parsed.addenda !== 'object') {
+          throw new Error('Contract suggestions were not in the expected format.');
+        }
+        return parsed;
+      };
+      const settled = await Promise.allSettled(targetVersions.map((version) => readWithVersion(version.id)));
+      if (settled.some((result) => result.status === 'fulfilled' && result.value === null)) return;
+      const readings = settled.flatMap((result) => (result.status === 'fulfilled' && result.value ? [result.value] : []));
+      if (readings.length === 0) {
+        const failed = settled.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+        throw failed?.reason instanceof Error ? failed.reason : new Error('Could not read this contract.');
       }
-      if (!response.ok || !data || typeof data !== 'object') {
-        const error = data && typeof data === 'object' && 'error' in data
-          ? String((data as { error?: unknown }).error ?? 'Could not read this contract.')
-          : 'Could not read this contract.';
-        throw new Error(error);
-      }
-      const extraction = (data as { extraction?: unknown }).extraction;
-      if (!extraction || typeof extraction !== 'object') throw new Error('Contract suggestions were not available.');
-      const record = extraction as Partial<ExtractionDraft>;
-      if (!record.worksheet || typeof record.worksheet !== 'object' || !record.addenda || typeof record.addenda !== 'object') {
-        throw new Error('Contract suggestions were not in the expected format.');
-      }
+      const record: { title?: string; worksheet: Record<string, string>; formFields: Record<string, string>; addenda: Record<string, boolean>; warnings: string[] } = {
+        title: readings.find((reading) => typeof reading.title === 'string')?.title,
+        worksheet: Object.assign({}, ...[...readings].reverse().map((reading) => reading.worksheet ?? {})) as Record<string, string>,
+        formFields: Object.assign({}, ...readings.map((reading) => reading.formFields ?? {})) as Record<string, string>,
+        addenda: Object.assign({}, ...[...readings].reverse().map((reading) => reading.addenda ?? {})) as Record<string, boolean>,
+        warnings: readings.flatMap((reading) => (Array.isArray(reading.warnings) ? reading.warnings : [])),
+      };
       const importedFields = record.formFields && typeof record.formFields === 'object'
         ? Object.entries(record.formFields).filter(([, value]) => typeof value === 'string')
         : [];
@@ -1647,6 +1663,28 @@ export default function ClosingTime({
       updatedAt: new Date().toISOString(),
       activity: [...activeDeal.activity, { id: getId('activity'), message: 'Applied reviewed contract extraction suggestions', createdAt: new Date().toISOString() }].slice(-300),
     };
+    const iabs = selectedFormVersions.find((version) => version.formFamily === 'IABS');
+    if (iabs) {
+      const valueOf = (field?: { id: string }) => (field ? (extractionDraft.formFields[field.id] ?? '').trim() : '');
+      const labelled = (pattern: RegExp) => iabs.fields.findIndex((field) => pattern.test(`${field.label} ${field.pdfFieldName}`));
+      const after = (index: number, pattern: RegExp) => (index < 0 ? undefined : iabs.fields.slice(index + 1, index + 4).find((field) => pattern.test(`${field.label} ${field.pdfFieldName}`)));
+      const firmIndex = labelled(/broker firm name/i);
+      const designatedIndex = labelled(/designated broker/i);
+      const agentIndex = labelled(/sales agent/i);
+      const fromIabs = {
+        brokerage: valueOf(iabs.fields[firmIndex]),
+        agentName: valueOf(iabs.fields[agentIndex]),
+        agentId: valueOf(after(agentIndex, /license/i)),
+        brokerName: valueOf(iabs.fields[designatedIndex]),
+        brokerEmail: valueOf(after(designatedIndex, /e-?mail/i)),
+      };
+      const found = Object.fromEntries(Object.entries(fromIabs).filter(([, value]) => value));
+      if (Object.keys(found).length) {
+        const merged = { ...brokerFooter, ...found };
+        setBrokerFooter(merged);
+        try { window.localStorage.setItem(BROKER_FOOTER_KEY, JSON.stringify(merged)); } catch { /* storage unavailable */ }
+      }
+    }
     persistDeals(deals.map((deal) => deal.id === activeDeal.id ? nextDeal : deal));
     clearContractPreview();
     setExtractionDraft(null);
