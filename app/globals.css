@@ -1528,3 +1528,18 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .group:hover > .ds-resize, #agent-desk .ds-resize:focus-visible { opacity: 0.8; }
 @media (max-width: 767px) { #agent-desk .ds-resize { display: none; } }
 #agent-desk .ds-resize:hover, #agent-desk .ds-resize:focus { background-color: transparent; border: 0; }
+
+/* Snapshot: micro-KPI counters */
+#agent-desk .ds-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.625rem; }
+@media (min-width: 640px) { #agent-desk .ds-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { #agent-desk .ds-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+#agent-desk .ds-kpi { display: flex; flex-direction: column; align-items: flex-start; gap: 0.125rem; height: auto; padding: 0.625rem 0.75rem; text-align: left; border: 1px solid var(--d-line); border-radius: 10px; background: #fff; color: var(--d-ink); }
+#agent-desk .ds-kpi-label { font-size: 0.625rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--d-muted); }
+#agent-desk .ds-kpi-num { font-size: 1.375rem; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em; color: var(--d-ink); }
+#agent-desk .ds-kpi-sub { font-size: 0.6875rem; color: var(--d-muted); }
+#agent-desk .ds-kpi.is-alert .ds-kpi-num { color: #9A3D2B; }
+#agent-desk .ds-kpi.is-ok .ds-kpi-num { color: #2F7D5B; }
+#agent-desk .ds-kpi.is-open { border-color: var(--d-purple); background: var(--d-lav-wash); }
+#agent-desk .ds-kpi:hover :is(.ds-kpi-label, .ds-kpi-num, .ds-kpi-sub) { color: #fff !important; }
+#agent-desk .ds-kpi-panel { animation: ds-kpi-in 0.15s ease-out; }
+@keyframes ds-kpi-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }

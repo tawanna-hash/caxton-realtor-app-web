@@ -1,21 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AlertCircle, Check, GripHorizontal, ChevronLeft, ChevronRight, Clock, FileText, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
+import { useRef, useState, type ReactNode } from 'react';
+import { AlertCircle, Check, ChevronLeft, ChevronRight, Clock, FileText, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import { PURCHASE_FOLDERS, PURCHASE_REQUIRED_IDS } from './purchase-documents';
 
 type SnapId = 'attention' | 'waiting' | 'property' | 'next' | 'preferences' | 'offers' | 'parties' | 'workspace';
-const SNAP_DEFAULT_ORDER: SnapId[] = ['attention', 'waiting', 'property', 'next', 'preferences', 'parties', 'workspace', 'offers'];
-const SNAP_ORDER_KEY = 'closing-time-snapshot-order';
-const SNAP_SIZE_KEY = 'closing-time-snapshot-sizes';
-type SnapSize = { w: number; h: number };
-const SNAP_DEFAULT_SIZES: Record<SnapId, SnapSize> = {
-  attention: { w: 4, h: 3 }, waiting: { w: 4, h: 3 }, property: { w: 4, h: 4 }, next: { w: 8, h: 3 }, preferences: { w: 8, h: 3 }, parties: { w: 4, h: 3 }, workspace: { w: 4, h: 2 }, offers: { w: 12, h: 4 },
-};
-const SNAP_ROW_PX = 120;
-const SNAP_GAP_PX = 16;
-const clampSize = (size: SnapSize): SnapSize => ({ w: Math.min(12, Math.max(3, Math.round(size.w))), h: Math.min(8, Math.max(1, Math.round(size.h))) });
 
 type Tab = 'overview' | 'documents' | 'people' | 'tasks' | 'history';
 
@@ -85,78 +75,7 @@ type Props = {
 
 export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
-  const [snapOrder, setSnapOrder] = useState<SnapId[]>(SNAP_DEFAULT_ORDER);
-  const [snapSizes, setSnapSizes] = useState<Record<SnapId, SnapSize>>(SNAP_DEFAULT_SIZES);
-  const wallRef = useRef<HTMLDivElement>(null);
-  const [dragId, setDragId] = useState<SnapId | null>(null);
-  const [dragOverId, setDragOverId] = useState<SnapId | null>(null);
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(window.localStorage.getItem(SNAP_ORDER_KEY) ?? 'null');
-      if (Array.isArray(saved)) {
-        const valid = saved.filter((id): id is SnapId => SNAP_DEFAULT_ORDER.includes(id));
-        const missing = SNAP_DEFAULT_ORDER.filter((id) => !valid.includes(id));
-        setSnapOrder([...valid, ...missing]);
-      }
-      const savedSizes = JSON.parse(window.localStorage.getItem(SNAP_SIZE_KEY) ?? 'null');
-      if (savedSizes && typeof savedSizes === 'object') {
-        setSnapSizes((current) => Object.fromEntries(SNAP_DEFAULT_ORDER.map((id) => [id, savedSizes[id] ? clampSize(savedSizes[id]) : current[id]])) as Record<SnapId, SnapSize>);
-      }
-    } catch { /* storage unavailable */ }
-  }, []);
-  const saveSnapSizes = (next: Record<SnapId, SnapSize>) => {
-    setSnapSizes(next);
-    try { window.localStorage.setItem(SNAP_SIZE_KEY, JSON.stringify(next)); } catch { /* storage unavailable */ }
-  };
-  const resizeSnapCard = (id: SnapId, size: SnapSize, persist: boolean) => {
-    const next = { ...snapSizes, [id]: clampSize(size) };
-    if (persist) saveSnapSizes(next); else setSnapSizes(next);
-  };
-  const startResize = (id: SnapId, event: React.PointerEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    const grid = wallRef.current;
-    if (!grid) return;
-    const target = event.currentTarget;
-    target.setPointerCapture(event.pointerId);
-    const start = snapSizes[id];
-    const originX = event.clientX;
-    const originY = event.clientY;
-    const cellW = (grid.clientWidth + SNAP_GAP_PX) / 12;
-    const cellH = SNAP_ROW_PX + SNAP_GAP_PX;
-    let latest = start;
-    const move = (e: PointerEvent) => {
-      latest = clampSize({ w: start.w + (e.clientX - originX) / cellW, h: start.h + (e.clientY - originY) / cellH });
-      setSnapSizes((current) => ({ ...current, [id]: latest }));
-    };
-    const finish = () => {
-      target.removeEventListener('pointermove', move);
-      target.removeEventListener('pointerup', finish);
-      target.removeEventListener('pointercancel', finish);
-      setSnapSizes((current) => { try { window.localStorage.setItem(SNAP_SIZE_KEY, JSON.stringify(current)); } catch { /* storage unavailable */ } return current; });
-    };
-    target.addEventListener('pointermove', move);
-    target.addEventListener('pointerup', finish);
-    target.addEventListener('pointercancel', finish);
-  };
-  const saveSnapOrder = (next: SnapId[]) => {
-    setSnapOrder(next);
-    try { window.localStorage.setItem(SNAP_ORDER_KEY, JSON.stringify(next)); } catch { /* storage unavailable */ }
-  };
-  const moveSnapCard = (from: SnapId, to: SnapId) => {
-    if (from === to) return;
-    const next = snapOrder.filter((id) => id !== from);
-    next.splice(next.indexOf(to) + (snapOrder.indexOf(from) < snapOrder.indexOf(to) ? 1 : 0), 0, from);
-    saveSnapOrder(next);
-  };
-  const nudgeSnapCard = (id: SnapId, delta: number) => {
-    const index = snapOrder.indexOf(id);
-    const target = index + delta;
-    if (target < 0 || target >= snapOrder.length) return;
-    const next = [...snapOrder];
-    [next[index], next[target]] = [next[target], next[index]];
-    saveSnapOrder(next);
-  };
-  const orderChanged = snapOrder.some((id, index) => id !== SNAP_DEFAULT_ORDER[index]) || SNAP_DEFAULT_ORDER.some((id) => snapSizes[id].w !== SNAP_DEFAULT_SIZES[id].w || snapSizes[id].h !== SNAP_DEFAULT_SIZES[id].h);
+  const [kpiOpen, setKpiOpen] = useState<SnapId | null>('attention');
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
@@ -404,58 +323,45 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           </div>
           )}
 
-          {tab === 'overview' && (
-            <div className="space-y-3">
-              {orderChanged && (
-                <div className="flex justify-end">
-                  <button type="button" onClick={() => { saveSnapOrder(SNAP_DEFAULT_ORDER); saveSnapSizes(SNAP_DEFAULT_SIZES); }}>Reset Layout</button>
+          {tab === 'overview' && (() => {
+            const daysToClose = deal.closingDate ? Math.ceil((Date.parse(`${deal.closingDate}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86400000) : null;
+            const requiredTotal = PURCHASE_REQUIRED_IDS.length;
+            const requiredDone = PURCHASE_REQUIRED_IDS.filter((id) => deal.documentChecks[id]).length;
+            const prefTotal = Object.keys(prefs).length;
+            const prefFilled = Object.values(prefs).filter((v) => String(v ?? '').trim()).length;
+            const kpis: { id: string; label: string; value: string; sub: string; tone?: 'alert' | 'ok'; panel?: SnapId; go?: string }[] = [
+              { id: 'k-attention', label: 'Attention', value: String(attention.length), sub: attention.length ? 'Needs action' : 'All clear', tone: attention.length ? 'alert' : 'ok', panel: 'attention' },
+              { id: 'k-waiting', label: 'Waiting', value: String(waiting.length), sub: 'On others', panel: 'waiting' },
+              { id: 'k-tasks', label: 'Open Tasks', value: String(openTasks.length), sub: 'Go to tasks', go: 'tasks' },
+              { id: 'k-docs', label: 'Required Docs', value: `${requiredDone}/${requiredTotal}`, sub: 'Go to documents', tone: requiredDone === requiredTotal ? 'ok' : undefined, go: 'd-documents' },
+              { id: 'k-close', label: 'Days To Close', value: daysToClose === null ? '—' : String(daysToClose), sub: deal.closingDate ? formatDate(deal.closingDate) : 'Date not set', tone: daysToClose !== null && daysToClose < 0 ? 'alert' : undefined, panel: 'next' },
+              { id: 'k-offers', label: 'Offers & Showings', value: String(deal.offersShowings.length), sub: 'Logged', panel: 'offers' },
+              { id: 'k-parties', label: 'Parties', value: String(people.length), sub: 'On this deal', panel: 'parties' },
+              { id: 'k-property', label: 'Property', value: deal.photoUrl ? 'Photo' : 'No photo', sub: price ? (price.startsWith('$') ? price : `$${price}`) : 'Price not set', panel: 'property' },
+              { id: 'k-prefs', label: 'Preferences', value: `${prefFilled}/${prefTotal}`, sub: 'Filled in', panel: 'preferences' },
+              { id: 'k-work', label: 'Workspace', value: '5', sub: 'Deal pages', panel: 'workspace' },
+            ];
+            return (
+              <div className="space-y-4">
+                <div className="ds-kpis" role="group" aria-label="Deal snapshot">
+                  {kpis.map((k) => (
+                    <button
+                      key={k.id}
+                      type="button"
+                      aria-pressed={k.panel ? kpiOpen === k.panel : undefined}
+                      onClick={() => { if (k.go) onOpenView(k.go); else if (k.panel) setKpiOpen(kpiOpen === k.panel ? null : k.panel); }}
+                      className={`ds-kpi ${k.tone === 'alert' ? 'is-alert' : k.tone === 'ok' ? 'is-ok' : ''} ${k.panel && kpiOpen === k.panel ? 'is-open' : ''}`}
+                    >
+                      <span className="ds-kpi-label">{k.label}</span>
+                      <span className="ds-kpi-num">{k.value}</span>
+                      <span className="ds-kpi-sub">{k.sub}</span>
+                    </button>
+                  ))}
                 </div>
-              )}
-              <div ref={wallRef} className="ds-wall">
-                {snapOrder.map((id) => (
-                  <div
-                    key={id}
-                    className={`group relative min-w-0 ds-tile ${dragOverId === id && dragId !== id ? 'ds-drop-target' : ''}`}
-                    style={{ '--w': snapSizes[id].w, '--h': snapSizes[id].h } as React.CSSProperties}
-                    draggable={dragId === id}
-                    onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', id); }}
-                    onDragOver={(e) => { if (dragId && dragId !== id) { e.preventDefault(); setDragOverId(id); } }}
-                    onDragLeave={() => setDragOverId((current) => (current === id ? null : current))}
-                    onDrop={(e) => { e.preventDefault(); if (dragId) moveSnapCard(dragId, id); setDragId(null); setDragOverId(null); }}
-                    onDragEnd={() => { setDragId(null); setDragOverId(null); }}
-                  >
-                    <button
-                      type="button"
-                      className="ds-grip"
-                      aria-label={`Reorder ${SNAP_LABELS[id]}. Drag, or use the up and down arrow keys.`}
-                      title="Drag to reorder"
-                      onMouseDown={() => setDragId(id)}
-                      onMouseUp={() => setDragId(null)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); nudgeSnapCard(id, -1); }
-                        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); nudgeSnapCard(id, 1); }
-                      }}
-                    ><GripHorizontal className="h-4 w-4" aria-hidden="true" /></button>
-                    {snapCards[id]}
-                    <button
-                      type="button"
-                      className="ds-resize"
-                      aria-label={`Resize ${SNAP_LABELS[id]}. Drag, or use the arrow keys.`}
-                      title="Drag to resize"
-                      onPointerDown={(e) => startResize(id, e)}
-                      onKeyDown={(e) => {
-                        const size = snapSizes[id];
-                        if (e.key === 'ArrowRight') { e.preventDefault(); resizeSnapCard(id, { ...size, w: size.w + 1 }, true); }
-                        if (e.key === 'ArrowLeft') { e.preventDefault(); resizeSnapCard(id, { ...size, w: size.w - 1 }, true); }
-                        if (e.key === 'ArrowDown') { e.preventDefault(); resizeSnapCard(id, { ...size, h: size.h + 1 }, true); }
-                        if (e.key === 'ArrowUp') { e.preventDefault(); resizeSnapCard(id, { ...size, h: size.h - 1 }, true); }
-                      }}
-                    />
-                  </div>
-                ))}
+                {kpiOpen && <div className="ds-kpi-panel" key={kpiOpen}>{snapCards[kpiOpen]}</div>}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {tab === 'documents' && (() => {
             const checks = deal.documentChecks;
