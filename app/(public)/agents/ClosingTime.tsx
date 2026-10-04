@@ -4,6 +4,7 @@ import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
 import IntegrationsPanel from './IntegrationsPanel';
 import AlertSetupContent from './AlertSetupContent';
+import UtilitiesPanel from './UtilitiesPanel';
 import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './AgentToolsPanels';
 
 const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
@@ -15,6 +16,7 @@ const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
   { id: 'readiness', label: 'Readiness Check', keys: ['readiness'] },
   { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
+  { id: 'd-utilities', label: 'Utilities', keys: [] },
 ];
 const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'overview', label: 'Snapshot', keys: [] },
@@ -2424,7 +2426,7 @@ export default function ClosingTime({
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
               <nav aria-label="Deal sections" className="ds-dealnav mb-4">
-                {([['Deal', ['d-overview', 'd-documents', 'd-people']], ['Contract', ['transaction', 'coordinator']], ['Work', ['tasks', 'readiness', 'audit']]] as const).map(([group, ids]) => (
+                {([['Deal', ['d-overview', 'd-documents', 'd-people']], ['Contract', ['transaction', 'coordinator']], ['Work', ['tasks', 'readiness', 'audit']], ['Resources', ['d-utilities']]] as const).map(([group, ids]) => (
                   <div key={group} className="ds-dealnav-group" role="group" aria-label={group}>
                     <span className="ds-dealnav-label">{group}</span>
                     {DEAL_TABS.filter((tab) => (ids as readonly string[]).includes(tab.id)).map((tab) => (
@@ -2460,6 +2462,7 @@ export default function ClosingTime({
                 </div>
               );
             })()}
+            {effectiveView === 'd-utilities' && <UtilitiesPanel />}
             {['d-overview', 'd-documents', 'd-people'].includes(effectiveView) && (() => {
               const deal = activeDeal;
               const health = deal ? (() => {
