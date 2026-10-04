@@ -17,7 +17,7 @@ const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
 ];
 const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
-  { id: 'overview', label: 'Dashboard Overview', keys: [] },
+  { id: 'overview', label: 'Snapshot', keys: [] },
   { id: 'forms', label: 'Forms Library', keys: ['trec-library'] },
   { id: 'tools', label: 'Calculators', keys: [] },
   { id: 'referral', label: 'Referral Network', keys: [] },
