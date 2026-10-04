@@ -2221,28 +2221,7 @@ export default function ClosingTime({
             <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
           <section className={'mt-5 grid gap-5'} aria-label="Deal settings, alerts and calendar">
-            {activeDeal && (
-              <ClosingTimeAssist
-                deal={activeDeal}
-                onMarkReceived={(docId, fileName) => {
-                  const now = new Date().toISOString();
-                  applyActiveAction('Marked a client-uploaded document received', {
-                    documents: activeDeal.documents.map((d) => d.id === docId ? { ...d, status: 'received' as const, complete: true, updatedAt: now, fileName: fileName.slice(0, 280), fileUploadedAt: now } : d),
-                  });
-                }}
-                onApplyChecklist={(steps) => {
-                  const base = (anchorKind: 'effective' | 'closing') => anchorKind === 'closing' ? activeDeal.closingDate : activeDeal.effectiveDate;
-                  const existing = new Set(activeDeal.tasks.map((t) => t.title));
-                  const added = steps.filter((s) => base(s.anchor) && !existing.has(s.title)).map((s) => ({
-                    id: getId('task'), title: s.title, dueDate: addDays(base(s.anchor), s.offsetDays),
-                    priority: 'normal' as const, status: 'todo' as const, complete: false,
-                  }));
-                  if (!added.length) return;
-                  applyActiveAction(`Applied closing checklist (${added.length} tasks)`, { tasks: [...activeDeal.tasks, ...added].slice(0, 200) });
-                }}
-              />
-            )}
-            <div {...collapsible('alerts')} className="border border-slate-200 bg-white p-5 sm:p-6">
+            <div {...collapsible('alerts')} className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-gray-900">Deadline Alerts</h3>
                 <CollapseToggle {...toggleProps('alerts', 'deadline alerts')} />
@@ -2270,6 +2249,27 @@ export default function ClosingTime({
               </div>
               <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active transactions. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
             </div>
+            {activeDeal && (
+              <ClosingTimeAssist
+                deal={activeDeal}
+                onMarkReceived={(docId, fileName) => {
+                  const now = new Date().toISOString();
+                  applyActiveAction('Marked a client-uploaded document received', {
+                    documents: activeDeal.documents.map((d) => d.id === docId ? { ...d, status: 'received' as const, complete: true, updatedAt: now, fileName: fileName.slice(0, 280), fileUploadedAt: now } : d),
+                  });
+                }}
+                onApplyChecklist={(steps) => {
+                  const base = (anchorKind: 'effective' | 'closing') => anchorKind === 'closing' ? activeDeal.closingDate : activeDeal.effectiveDate;
+                  const existing = new Set(activeDeal.tasks.map((t) => t.title));
+                  const added = steps.filter((s) => base(s.anchor) && !existing.has(s.title)).map((s) => ({
+                    id: getId('task'), title: s.title, dueDate: addDays(base(s.anchor), s.offsetDays),
+                    priority: 'normal' as const, status: 'todo' as const, complete: false,
+                  }));
+                  if (!added.length) return;
+                  applyActiveAction(`Applied closing checklist (${added.length} tasks)`, { tasks: [...activeDeal.tasks, ...added].slice(0, 200) });
+                }}
+              />
+            )}
             <div id="trec-forms" {...collapsible('trec-library')} className="ds-page min-w-0 scroll-mt-24 lg:col-span-2">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-0">
