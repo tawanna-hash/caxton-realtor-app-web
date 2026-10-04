@@ -151,7 +151,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
       <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">Risk alerts, follow-up drafts, a client progress link, and a closing checklist for this deal. Nothing is emailed to anyone until you approve that specific draft.</p>
       {error && <p className="mt-3 text-sm font-semibold text-[#9A3D2B]" role="alert">{error}</p>}
       {!data ? <p className="mt-4 text-sm text-slate-500">{error ? '' : 'Loading.'}</p> : (
-        <div className="mt-5 grid items-start gap-4 lg:grid-cols-2">
+        <div className="mt-5 grid items-stretch gap-4 lg:grid-cols-2">
           <section aria-label="Risks" className="rounded-md border border-gray-200 bg-white p-5">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Risk Alerts</h4>
             <label className="mt-2 flex items-center gap-2 text-xs text-slate-600">Extension length
@@ -202,7 +202,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             )}
           </section>
 
-          <section aria-label="Deal contacts" className="rounded-md border border-gray-200 bg-white p-5 lg:col-span-2">
+          <section aria-label="Deal contacts" className="rounded-md border border-gray-200 bg-white p-5">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Deal Contacts</h4>
             <ul className="mt-2 grid gap-2 sm:grid-cols-2">
               {data.parties.map((p) => (
@@ -266,7 +266,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             {sent.length > 0 && <p className="mt-3 text-xs text-slate-500">Recently sent: {sent.map((f) => f.subject).join(' · ')}</p>}
           </section>
 
-          <section aria-label="Connected tools" className="rounded-md border border-gray-200 bg-white p-5 lg:col-span-2">
+          <section aria-label="Connected tools" className="rounded-md border border-gray-200 bg-white p-5">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Connected Tools</h4>
             {!data.connected || (!data.connected.calendar && !data.connected.mail && data.connected.storage.length === 0) ? (
               <p className="mt-2 text-sm text-slate-500">Connect your calendar, email or document storage on the Integrations page to use them here.</p>
@@ -290,6 +290,19 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           </section>
 
           {placer && <SignaturePlacer data={placer} signers={(data.parties ?? []).filter((p) => p.email && sigTo.includes(p.id)).map((p) => p.name || p.email)} fields={sigFields} onChange={setSigFields} onClose={() => setPlacer(null)} />}
+          <section aria-label="Automation" className="rounded-md border border-gray-200 bg-white p-5">
+            <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Automation</h4>
+            <label className="mt-3 flex items-start gap-2 text-sm text-slate-700">
+              <input type="checkbox" className="mt-1" checked={data.autoSignature} disabled={busy} onChange={(e) => void post({ action: 'auto_signature', on: e.target.checked })} />
+              <span>Automatically remind people to sign tracked documents: gentle at 2 and 4 days, firmer at 6 days or when closing is within 3 days. You are copied. After 3 reminders you get an email to follow up yourself. Off by default.</span>
+            </label>
+            <label className="mt-2 flex items-start gap-2 text-sm text-slate-700">
+              <input type="checkbox" className="mt-1" checked={data.autoIntro} disabled={busy} onChange={(e) => void post({ action: 'auto_intro', on: e.target.checked })} />
+              <span>Automatically send the standard introduction to each lender, title, and co-op agent contact once a deal has an effective date. You are copied. Nothing about price or terms is ever sent automatically. Off by default, applies to all your deals.</span>
+            </label>
+            <a className={`${btn} mt-3`} href={`/api/closing-time/assist/export?dealId=${encodeURIComponent(deal.id)}`}>Export File History (CSV)</a>
+          </section>
+
           <section aria-label="Send for signature" className="rounded-md border border-gray-200 bg-white p-5 lg:col-span-2">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Send For Signature</h4>
             {!data.signing || data.signing.providers.length === 0 ? (
@@ -398,19 +411,6 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                 ))}
               </ul>
             )}
-          </section>
-
-          <section aria-label="Automation" className="rounded-md border border-gray-200 bg-white p-5">
-            <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Automation</h4>
-            <label className="mt-3 flex items-start gap-2 text-sm text-slate-700">
-              <input type="checkbox" className="mt-1" checked={data.autoSignature} disabled={busy} onChange={(e) => void post({ action: 'auto_signature', on: e.target.checked })} />
-              <span>Automatically remind people to sign tracked documents: gentle at 2 and 4 days, firmer at 6 days or when closing is within 3 days. You are copied. After 3 reminders you get an email to follow up yourself. Off by default.</span>
-            </label>
-            <label className="mt-2 flex items-start gap-2 text-sm text-slate-700">
-              <input type="checkbox" className="mt-1" checked={data.autoIntro} disabled={busy} onChange={(e) => void post({ action: 'auto_intro', on: e.target.checked })} />
-              <span>Automatically send the standard introduction to each lender, title, and co-op agent contact once a deal has an effective date. You are copied. Nothing about price or terms is ever sent automatically. Off by default, applies to all your deals.</span>
-            </label>
-            <a className={`${btn} mt-3`} href={`/api/closing-time/assist/export?dealId=${encodeURIComponent(deal.id)}`}>Export File History (CSV)</a>
           </section>
 
           <section aria-label="Checklist" className="rounded-md border border-gray-200 bg-white p-5">
