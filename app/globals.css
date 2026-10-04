@@ -1383,7 +1383,6 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--d-purple); }
 
 /* Deal subpage */
-#agent-desk [data-desk-view='deal-page'] .ds-header { display: none; }
 #agent-desk .ds-back { display: inline-flex; align-items: center; gap: 0.25rem; border: 0; background: transparent; padding: 0; font-size: 0.8125rem; color: var(--d-muted); }
 #agent-desk .ds-back:hover { color: var(--d-ink); }
 #agent-desk .ds-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; margin-top: 1.25rem; }
