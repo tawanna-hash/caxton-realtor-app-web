@@ -2489,7 +2489,7 @@ export default function ClosingTime({
                       <button
                         type="button"
                         onClick={() => removeDeal(activeDeal.id)}
-                        className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#9A3D2B] px-4 text-sm font-bold text-white"
+                        className="ds-confirm-remove inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#9A3D2B] px-4 text-sm font-bold text-white"
                       >
                         Confirm Remove
                       </button>

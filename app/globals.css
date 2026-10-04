@@ -1425,3 +1425,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
   color: #FFFFFF;
 }
 #agent-desk :is(button, a):not(.ds-navbtn):not(.ds-deal):not(.ds-tab):disabled { opacity: 0.5; }
+
+/* Destructive confirmation: solid red so it stands out */
+#agent-desk button.ds-confirm-remove { background-color: #C62828 !important; border-color: #C62828 !important; color: #FFFFFF !important; }
+#agent-desk button.ds-confirm-remove:hover:not(:disabled) { background-color: #A61E1E !important; border-color: #A61E1E !important; }
