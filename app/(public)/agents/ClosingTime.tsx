@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
 import IntegrationsPanel from './IntegrationsPanel';
+import AlertSetupContent from './AlertSetupContent';
 import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './AgentToolsPanels';
 
 const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
@@ -25,7 +26,8 @@ const CALC_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'calc-cash', label: 'Cash-To-Close', keys: [] },
 ];
 const DEALS_VIEW = { id: 'deals', label: 'Deals', keys: [] as string[] };
-const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, DEALS_VIEW];
+const ALERT_SETUP_VIEW = { id: 'alert-setup', label: 'Alert Setup', keys: [] as string[] };
+const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, DEALS_VIEW, ALERT_SETUP_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug };
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -918,6 +920,7 @@ function backupExportToDrive(filename: string, blob: Blob): void {
 // Google Drive integration disabled — GoogleDriveConnectPanel removed.
 
 export default function ClosingTime({
+  initialView,
   workspaceKey,
   realtorId,
   initialWorkspace,
@@ -933,6 +936,7 @@ export default function ClosingTime({
   initialWorkspaceVersion: number | null;
   trecFormVersion: TrecFormVersion;
   trecFormVersions: TrecFormVersion[];
+  initialView?: string;
   panelsOnly?: boolean;
   providers?: ReferralProvider[];
 }) {
@@ -1169,6 +1173,7 @@ export default function ClosingTime({
       } catch {
         restoredDealId = null;
       }
+      if (initialView && DESK_VIEWS.some((v) => v.id === initialView)) { setDeskView(initialView); setWorkspacePage(2); }
       setActiveDealId(restoredDealId ?? hydratedWorkspace.deals[0]?.id ?? null);
       setReady(true);
       setSyncState(cloudWorkspace ? 'ready' : 'loading');
@@ -2028,9 +2033,9 @@ export default function ClosingTime({
             {effectiveView !== 'overview' && effectiveView !== 'deal-page' && (() => {
               const toDeals = DEAL_TABS.some((t) => t.id === effectiveView);
               return (
-                <button type="button" className="ds-back mb-3" aria-label={toDeals ? 'Back to Deals' : effectiveView.startsWith('calc-') ? 'Back to Calculators' : 'Back to Today'}
-                  onClick={() => { if (toDeals) { setWorkspacePage(2); setDeskView('deals'); } else if (effectiveView.startsWith('calc-')) { setDeskView('tools'); } else { setWorkspacePage(1); } }}>
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> {toDeals ? 'Deals' : effectiveView.startsWith('calc-') ? 'Calculators' : 'Today'}
+                <button type="button" className="ds-back mb-3" aria-label={toDeals ? 'Back to Deals' : effectiveView.startsWith('calc-') ? 'Back to Calculators' : effectiveView === 'alert-setup' ? 'Back to Deal Settings' : 'Back to Today'}
+                  onClick={() => { if (toDeals) { setWorkspacePage(2); setDeskView('deals'); } else if (effectiveView.startsWith('calc-')) { setDeskView('tools'); } else if (effectiveView === 'alert-setup') { setDeskView('coordinator'); } else { setWorkspacePage(1); } }}>
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> {toDeals ? 'Deals' : effectiveView.startsWith('calc-') ? 'Calculators' : effectiveView === 'alert-setup' ? 'Deal Settings' : 'Today'}
                 </button>
               );
             })()}
@@ -2188,6 +2193,7 @@ export default function ClosingTime({
               </nav>
             )}
             <div data-section-key="tools" className="min-w-0"><WorkFasterPanel onOpenTool={(view) => { setWorkspacePage(2); setDeskView(view); }} /></div>
+            {effectiveView === 'alert-setup' && <AlertSetupContent />}
             {effectiveView === 'calc-net-sheet' && <div className="ds-embed"><SellerNetSheetClient /></div>}
             {effectiveView === 'calc-commission' && <div className="ds-embed"><CommissionCalculatorClient /></div>}
             {effectiveView === 'calc-cash' && <div className="ds-embed"><BuyerClosingCostsClient /></div>}
