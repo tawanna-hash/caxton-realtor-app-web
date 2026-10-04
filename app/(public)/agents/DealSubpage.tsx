@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, FileText, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
+import { PURCHASE_FOLDERS, PURCHASE_REQUIRED_IDS } from './purchase-documents';
 
 type Tab = 'overview' | 'documents' | 'people' | 'tasks' | 'history';
 
@@ -144,7 +145,43 @@ export default function DealSubpage({ deal, locked, health, statusLabels, status
             </div>
           )}
 
-          {tab === 'documents' && (
+          {tab === 'documents' && deal.dealType === 'purchase' && (() => {
+            const checks = deal.documentChecks;
+            const requiredDone = PURCHASE_REQUIRED_IDS.filter((id) => checks[id]).length;
+            return (
+              <div className="space-y-4">
+                <div className="ds-card flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="ds-side-title !m-0">Purchase documents</p>
+                    <p className="text-sm text-slate-500">Required forms for a Purchase transaction.</p>
+                  </div>
+                  <span className={`ds-chip ${requiredDone === PURCHASE_REQUIRED_IDS.length ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{requiredDone} of {PURCHASE_REQUIRED_IDS.length} required received</span>
+                </div>
+                {PURCHASE_FOLDERS.map((folder) => {
+                  const req = folder.docs.filter((x) => x.kind === 'required');
+                  const reqDone = req.filter((x) => checks[x.id]).length;
+                  return (
+                    <div key={folder.id} className="ds-card ds-list">
+                      <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                        <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />{folder.label}</span>
+                        {req.length > 0 && <span className="text-xs font-medium text-slate-500">{reqDone} of {req.length} required</span>}
+                      </div>
+                      {folder.docs.map((doc) => (
+                        <label key={doc.id} className="ds-list-row cursor-pointer">
+                          <span className={`w-20 shrink-0 text-[11px] font-semibold uppercase tracking-wide ${doc.kind === 'required' ? 'text-[#C2412D]' : 'text-slate-400'}`}>{doc.kind === 'reference' ? 'PDF' : doc.kind}</span>
+                          <input type="checkbox" checked={Boolean(checks[doc.id])} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...checks, [doc.id]: e.target.checked })} />
+                          <span className="min-w-0 flex-1">{doc.label}</span>
+                          <span className={`ds-chip ${checks[doc.id] ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{checks[doc.id] ? 'Received' : 'Not submitted'}</span>
+                        </label>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {tab === 'documents' && deal.dealType !== 'purchase' && (
             <div className="space-y-4">
               {documentGroups.map((group) => (
                 <div key={group.id} className="ds-card ds-list">

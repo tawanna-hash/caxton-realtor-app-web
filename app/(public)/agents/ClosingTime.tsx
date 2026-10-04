@@ -579,6 +579,7 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     closeoutNote: '',
     auditLocked: false,
     dealType: 'purchase',
+    documentChecks: {},
     serviceProviders: [],
     nextAction: '',
     notes: '',
@@ -2790,30 +2791,6 @@ export default function ClosingTime({
                         </div>
                       </div>
                     )}
-                    <div className="mb-4 flex flex-col gap-3 rounded-md border border-slate-200 bg-[#FCFBF9] p-3 sm:flex-row sm:items-center sm:justify-between">
-                      <button
-                        type="button"
-                        onClick={() => setActiveTrecPage((page) => Math.max(1, page - 1))}
-                        disabled={currentTrecPage === 1}
-                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                        Back
-                      </button>
-                      <div className="min-w-0 text-center">
-                        <p className="text-sm font-bold text-slate-950">Page {currentTrecPage} of {currentTrecFormVersion.pageCount}</p>
-                        <p className="mt-1 truncate text-xs font-semibold text-slate-600">{currentTrecFormVersion.pageSections[currentTrecPage] ?? `Official TREC page ${currentTrecPage}`}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTrecPage((page) => Math.min(currentTrecFormVersion.pageCount, page + 1))}
-                        disabled={currentTrecPage === currentTrecFormVersion.pageCount}
-                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </div>
                     <div className="mt-7 rounded-md border border-slate-200 bg-slate-100 p-6 sm:p-10 lg:p-14">
                       {originalContract?.dealId === activeDeal.id && (
                         <div className="mx-auto mb-4 max-w-[1020px] border border-slate-300 bg-white p-3">

@@ -147,6 +147,7 @@ export const agentDealSchema = z.object({
   closeoutOutcome: optionalShortText(120), closeoutDate: dateText.default(''), closeoutNote: optionalShortText(2_000),
   auditLocked: z.boolean().default(false),
   dealType: z.enum(['purchase', 'listing_sale', 'listing_lease', 'lease', 'real_estate_other', 'other']).default('purchase'),
+  documentChecks: z.record(z.string(), z.boolean()).default({}),
   serviceProviders: z.array(agentServiceProviderSchema).max(60).default([]),
   nextAction: optionalShortText(300), notes: optionalShortText(4_000), photoUrl: optionalShortText(1_000),
   preferences: agentDealPreferencesSchema,
