@@ -1459,3 +1459,8 @@ input[type='date']::-webkit-calendar-picker-indicator {
   #agent-desk .ds-embed aside.ds-signature-empty { display: block !important; margin-top: 1.5rem; padding: 0.875rem 1.25rem; border: 1px dashed var(--d-line); border-radius: 12px; background: #F6F3FB; color: var(--d-muted); font-size: 0.8125rem; }
   #agent-desk .ds-embed aside.ds-signature-empty a { color: var(--d-purple); font-weight: 600; text-decoration: underline; }
 }
+
+/* Calculators and Referral Network: same type scale as Current Deal (eyebrow 11px, title 18px/600, body 14px/12px) */
+#agent-desk .ds-compact .ds-eyebrow { font-size: 0.6875rem; letter-spacing: 0.08em; }
+#agent-desk .ds-compact .ds-title { font-size: 1.125rem; line-height: 1.35; font-weight: 600; margin-top: 0.5rem; }
+#agent-desk .ds-compact .ds-subtitle { font-size: 0.875rem; line-height: 1.5; margin-top: 0.375rem; }

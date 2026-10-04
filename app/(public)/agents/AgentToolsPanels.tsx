@@ -92,7 +92,7 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
   return (
     <section>
         <div className="">
-        <div {...collapsible('calculators', { mobileOpen: true })} data-section-key={undefined} className="ds-page">
+        <div {...collapsible('calculators', { mobileOpen: true })} data-section-key={undefined} className="ds-page ds-compact">
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="ds-eyebrow">Tools</p>
@@ -124,8 +124,8 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[11px] font-bold uppercase tracking-[0.16em] opacity-60">{tool.eyebrow}</p>
-                      <h3 className="mt-1 text-lg font-semibold tracking-[-0.025em]">{tool.title}</h3>
-                      <p className="mt-1 text-sm leading-6 opacity-75">{tool.description}</p>
+                      <h3 className="mt-1 text-sm font-semibold tracking-[-0.01em]">{tool.title}</h3>
+                      <p className="mt-1 text-xs leading-5 opacity-75">{tool.description}</p>
                     </div>
                     <span className="inline-flex shrink-0 items-center gap-1 text-sm font-bold">
                       Open Tool <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -188,7 +188,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
   return (
       <section id="referral-network" className="scroll-mt-20">
         <div className="">
-          <div {...collapsible('referral', { mobileOpen: true })} data-section-key={undefined} className="ds-page">
+          <div {...collapsible('referral', { mobileOpen: true })} data-section-key={undefined} className="ds-page ds-compact">
             <div className="flex items-center gap-3">
               <div className="min-w-0">
                 <p className="ds-eyebrow">Tools</p>
@@ -205,7 +205,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
               <div className="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Find a service</p>
-                  <h3 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-gray-900 sm:text-2xl">{selectedCategoryRecord.description}</h3>
+                  <h3 className="mt-2 text-lg font-semibold tracking-[-0.02em] text-gray-900">{selectedCategoryRecord.description}</h3>
                 </div>
                 <Link
                   href="/partners"
@@ -252,16 +252,16 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
                         </div>
                         <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-1 group-hover:text-[#301D5D]" aria-hidden="true" />
                       </div>
-                      <p className="mt-5 text-lg font-semibold tracking-[-0.02em] text-slate-950">{provider.name}</p>
-                      <p className="mt-1 text-sm font-medium text-[#5B438C]">{provider.industry || 'Local service partner'}</p>
-                      {provider.tagline && <p className="mt-3 line-clamp-2 text-sm leading-5 text-slate-600">{provider.tagline}</p>}
+                      <p className="mt-4 text-sm font-semibold text-slate-950">{provider.name}</p>
+                      <p className="mt-1 text-xs font-medium text-[#5B438C]">{provider.industry || 'Local service partner'}</p>
+                      {provider.tagline && <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-600">{provider.tagline}</p>}
                     </Link>
                   ))}
                 </div>
               ) : (
                 <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-6">
                   <Wrench className="rnn-heading-icon text-[#5B438C]" aria-hidden="true" />
-                  <p className="mt-4 text-lg font-semibold text-slate-950">This service category is growing</p>
+                  <p className="mt-4 text-sm font-semibold text-slate-950">This service category is growing</p>
                   <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
                     No market-matched partners with this service are available yet. Check back as the local network expands.
                   </p>
