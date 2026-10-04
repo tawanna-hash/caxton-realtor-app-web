@@ -1060,7 +1060,7 @@ export default function ClosingTime({
   useEffect(() => {
     if (!ready) return;
     try {
-      window.sessionStorage.setItem('closing-time-desk-position', JSON.stringify({ dealId: activeDealId, view: deskView, page: workspacePage }));
+      if (deskView !== 'alert-setup') window.sessionStorage.setItem('closing-time-desk-position', JSON.stringify({ dealId: activeDealId, view: deskView, page: workspacePage }));
     } catch {
       /* storage unavailable */
     }
@@ -1215,7 +1215,7 @@ export default function ClosingTime({
         const saved = JSON.parse(window.sessionStorage.getItem('closing-time-desk-position') ?? 'null') as { dealId?: string | null; view?: string; page?: number } | null;
         if (saved) {
           if (saved.dealId && hydratedWorkspace.deals.some((d) => d.id === saved.dealId)) restoredDealId = saved.dealId;
-          if (typeof saved.view === 'string' && DESK_VIEWS.some((v) => v.id === saved.view)) setDeskView(saved.view);
+          if (typeof saved.view === 'string' && saved.view !== 'alert-setup' && DESK_VIEWS.some((v) => v.id === saved.view)) setDeskView(saved.view);
           if (saved.page === 1 || saved.page === 2) setWorkspacePage(saved.page);
         }
       } catch {
