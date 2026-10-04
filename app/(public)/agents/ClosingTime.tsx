@@ -2842,7 +2842,8 @@ export default function ClosingTime({
                               placeholder={label}
                               aria-label={label}
                               title={label}
-                              className="h-7 w-full min-w-0 rounded-md border border-slate-200 bg-[#F6F3FB] px-2 text-center text-xs text-slate-900 outline-none focus:border-[#301D5D]"
+                              style={{ fontSize: '8pt' }}
+                              className="h-6 w-full min-w-0 rounded-md border border-slate-200 bg-[#F6F3FB] px-2 text-center text-slate-900 outline-none focus:border-[#301D5D]"
                             />
                           ))}
                         </div>
