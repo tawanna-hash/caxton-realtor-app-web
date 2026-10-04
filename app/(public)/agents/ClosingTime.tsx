@@ -3294,13 +3294,13 @@ export default function ClosingTime({
         )}
       </div>
       {newDealPickerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label="Start a new transaction" onClick={() => setNewDealPickerOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label="Start a new deal" onClick={() => setNewDealPickerOpen(false)}>
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-lg font-semibold text-slate-900">Start a new transaction</h3>
+              <h3 className="text-lg font-semibold text-slate-900">Start A New Deal</h3>
               <button type="button" aria-label="Close" onClick={() => setNewDealPickerOpen(false)} className="text-slate-500 hover:text-slate-900"><X className="h-5 w-5" aria-hidden="true" /></button>
             </div>
-            <p className="mt-1 text-sm text-slate-500">Choose the transaction type.</p>
+            <p className="mt-1 text-sm text-slate-500">Choose the deal type.</p>
             <div className="mt-4 grid gap-2">
               {([['purchase', 'Purchase'], ['listing_sale', 'Listing For Sale'], ['listing_lease', 'Listing For Lease'], ['lease', 'Lease']] as const).map(([type, label]) => (
                 <button key={type} type="button" onClick={() => { createDeal(type); setNewDealPickerOpen(false); setWorkspacePage(2); setDeskView('transaction'); }} className="ds-provider-tile !min-h-[44px] !flex-row !justify-start !px-4 text-sm font-medium">{label}</button>
