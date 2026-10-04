@@ -1892,7 +1892,7 @@ export default function ClosingTime({
 
   if (panelsOnly) {
     return (
-      <section id="agent-deal-tools" className="bg-[#F7F5F1]">
+      <section id="agent-deal-tools" className="bg-white">
         <div className="mx-auto max-w-7xl px-4 pt-5 sm:px-8">
           <div {...collapsible('attention')} className="border border-slate-200 bg-white p-4 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1939,84 +1939,91 @@ export default function ClosingTime({
 
   return (
     <main id="agent-desk" className="min-h-screen bg-white">
-      <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Agent Desk</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-gray-900 sm:text-4xl">It&apos;s Almost Closing Time!</h2>
-          </div>
-          <div data-testid="text-next-closing-countdown" className="border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-2 text-sm font-semibold text-[#301D5D]">
-            {nextClosingDays === null
-              ? 'No upcoming closings'
-              : nextClosingDays === 0
-                ? 'Next closing is today'
-                : `${nextClosingDays} day${nextClosingDays === 1 ? '' : 's'} to next closing`}
-          </div>
-        </div>
-
-        <div className="mt-5 flex items-start gap-3 border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-3 text-sm leading-6 text-slate-600">
-          <Save className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
-          <p>
-            <span className="font-semibold text-slate-900">{ready ? syncMessage : 'Loading your secure workspace.'}</span>
-          </p>
-        </div>
-
-        <div className="mt-5 grid grid-cols-[112px_minmax(0,1fr)] items-start gap-3 sm:grid-cols-[160px_minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
-          <aside aria-label="Transactions" className="sticky top-16 min-w-0 lg:top-24">
-            <div className="border border-slate-200 bg-white">
-              <div className="flex items-center gap-2 border-b border-slate-200 px-2 py-3 lg:gap-3 lg:px-4">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gray-500 lg:text-xs">Transactions</p>
-                  <p className="mt-0.5 text-base leading-5 text-slate-950 lg:text-lg">Deals</p>
-                </div>
-                <button type="button" onClick={() => { createDeal(); setWorkspacePage(2); setDeskView('transaction'); }} className="min-h-[32px] rounded-md bg-[#301D5D] px-2 text-xs font-bold text-white hover:bg-[#42277c] lg:px-3">New</button>
-              </div>
-              <ul className="max-h-[46vh] overflow-y-auto overflow-x-hidden">
-                {deals.length === 0 && <li className="px-3 py-4 text-sm text-slate-500">No transactions yet.</li>}
-                {[...activeDeals, ...closedDeals].map((deal) => {
-                  const days = daysUntilClosing(deal.closingDate, today);
-                  const closed = isDealClosedAndComplete(deal);
-                  const tone = closed ? 'bg-slate-300' : days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#9A3D2B]' : days <= 7 ? 'bg-[#B8860B]' : 'bg-[#2F7D5B]';
-                  const selected = deal.id === activeDealId && workspacePage === 2 && DEAL_TABS.some((t) => t.id === effectiveView);
-                  return (
-                    <li key={deal.id}>
-                      <button
-                        type="button"
-                        aria-current={selected ? 'true' : undefined}
-                        onClick={() => { setActiveDealId(deal.id); setWorkspacePage(2); if (!DEAL_TABS.some((t) => t.id === deskView)) setDeskView('transaction'); setFormsStatusDealId(deal.id); }}
-                        className={`flex w-full items-start gap-2 border-b border-slate-100 px-2 py-2.5 text-left lg:gap-3 lg:px-3 lg:py-3 transition last:border-0 hover:bg-[#F8F5FF] ${selected ? 'bg-[#F8F5FF] shadow-[inset_3px_0_0_#301D5D]' : ''}`}
-                      >
-                        <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${tone}`} aria-hidden="true" />
-                        <span className="min-w-0">
-                          <span className="block break-words text-xs font-semibold leading-4 text-slate-900 lg:truncate lg:text-sm">{deal.propertyAddress || deal.title}</span>
-                          <span className="block text-[10px] leading-4 text-slate-500 lg:truncate lg:text-xs">{closed ? 'Closed' : days === null ? 'Closing date not set' : closingCountdownLabel(deal.closingDate, today)}</span>
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              <ul className="border-t border-slate-200 p-1 lg:p-2">
-                {TOOL_VIEWS.map((view) => {
-                  const active = view.id === effectiveView;
-                  return (
-                    <li key={view.id}>
-                      <button
-                        type="button"
-                        aria-current={active ? 'page' : undefined}
-                        onClick={() => { if (view.id === 'overview') setWorkspacePage(1); else { setWorkspacePage(2); setDeskView(view.id); } }}
-                        className="flex min-h-[40px] w-full items-center gap-2 px-2 py-1 text-left text-xs leading-4 transition lg:gap-3 lg:px-4 lg:text-sm"
-                      >
-                        {(() => { const NavIcon = NAV_ICONS[view.id] ?? FileText; return <NavIcon className="ct-navicon" aria-hidden="true" />; })()}
-                        {view.label}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+      <div className="w-full">
+        <div className="grid grid-cols-[64px_minmax(0,1fr)] items-start sm:grid-cols-[200px_minmax(0,1fr)] lg:grid-cols-[232px_minmax(0,1fr)]">
+          <aside aria-label="Transactions" className="sticky top-16 flex min-w-0 flex-col lg:top-24 ds-rail">
+            <div className="ds-brand">
+              <span className="ds-brand-mark" aria-hidden="true"><ClipboardCheck className="h-4 w-4" /></span>
+              <span className="ds-brand-name">Agent Desk</span>
             </div>
+            <ul className="ds-nav-top">
+              {TOOL_VIEWS.filter((view) => view.id === 'overview').map((view) => {
+                const active = view.id === effectiveView;
+                const NavIcon = NAV_ICONS[view.id] ?? FileText;
+                return (
+                  <li key={view.id}>
+                    <button type="button" aria-current={active ? 'page' : undefined} onClick={() => setWorkspacePage(1)} className="ds-navbtn">
+                      <NavIcon className="ct-navicon" aria-hidden="true" /><span>Today</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="ds-group">
+              <p className="ds-group-label">Pipeline</p>
+              <button type="button" onClick={() => { createDeal(); setWorkspacePage(2); setDeskView('transaction'); }} className="ds-new" aria-label="New transaction"><Plus className="h-3.5 w-3.5" aria-hidden="true" /><span>New</span></button>
+            </div>
+            <ul className="ds-deals">
+              {deals.length === 0 && <li className="px-3 py-3 text-sm text-slate-500">No transactions yet.</li>}
+              {[...activeDeals, ...closedDeals].map((deal) => {
+                const days = daysUntilClosing(deal.closingDate, today);
+                const closed = isDealClosedAndComplete(deal);
+                const tone = closed ? 'bg-slate-300' : days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#9A3D2B]' : days <= 7 ? 'bg-[#B8860B]' : 'bg-[#2F7D5B]';
+                const selected = deal.id === activeDealId && workspacePage === 2 && DEAL_TABS.some((t) => t.id === effectiveView);
+                return (
+                  <li key={deal.id}>
+                    <button
+                      type="button"
+                      aria-current={selected ? 'true' : undefined}
+                      onClick={() => { setActiveDealId(deal.id); setWorkspacePage(2); if (!DEAL_TABS.some((t) => t.id === deskView)) setDeskView('transaction'); setFormsStatusDealId(deal.id); }}
+                      className="ds-deal"
+                    >
+                      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${tone}`} aria-hidden="true" />
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm">{deal.propertyAddress || deal.title}</span>
+                        <span className="block truncate text-xs ds-sub">{closed ? 'Closed' : days === null ? 'Closing date not set' : closingCountdownLabel(deal.closingDate, today)}</span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="ds-group-label ds-group-solo">Tools</p>
+            <ul className="ds-nav-top">
+              {TOOL_VIEWS.filter((view) => view.id !== 'overview').map((view) => {
+                const active = view.id === effectiveView;
+                const NavIcon = NAV_ICONS[view.id] ?? FileText;
+                return (
+                  <li key={view.id}>
+                    <button type="button" aria-current={active ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView(view.id); }} className="ds-navbtn">
+                      <NavIcon className="ct-navicon" aria-hidden="true" /><span>{view.label}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </aside>
-          <div data-desk-view={effectiveView} className="min-w-0">
+          <div data-desk-view={effectiveView} className="ds-main min-w-0">
+            <header className="ds-header">
+              <div className="min-w-0">
+                <p className="ds-eyebrow">{new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
+                <h2 className="ds-title">It&apos;s Almost Closing Time!</h2>
+                <p className="ds-subtitle">{ready ? syncMessage : 'Loading your secure workspace.'}</p>
+              </div>
+              <div data-testid="text-next-closing-countdown" className="ds-pill-lg">
+                {nextClosingDays === null
+                  ? 'No upcoming closings'
+                  : nextClosingDays === 0
+                    ? 'Next closing is today'
+                    : `${nextClosingDays} day${nextClosingDays === 1 ? '' : 's'} to next closing`}
+              </div>
+            </header>
+            <div className="ds-stats" aria-label="Desk summary">
+              <div className="ds-stat"><div><p className="ds-stat-label">Active files</p><p className="ds-stat-num">{activeDeals.length}</p><p className="ds-stat-sub">Under contract</p></div><span className="ds-stat-icon ds-i-purple"><ClipboardCheck className="h-4 w-4" aria-hidden="true" /></span></div>
+              <div className="ds-stat"><div><p className="ds-stat-label">Next closing</p><p className="ds-stat-num">{nextClosingDays === null ? '—' : nextClosingDays}</p><p className="ds-stat-sub">{nextClosingDays === null ? 'None scheduled' : 'Days away'}</p></div><span className="ds-stat-icon ds-i-green"><CalendarDays className="h-4 w-4" aria-hidden="true" /></span></div>
+              <div className="ds-stat"><div><p className="ds-stat-label">Open tasks</p><p className="ds-stat-num">{activeDeals.reduce((n, d) => n + d.tasks.filter((t) => !t.complete).length, 0)}</p><p className="ds-stat-sub">Across active files</p></div><span className="ds-stat-icon ds-i-blue"><ListTodo className="h-4 w-4" aria-hidden="true" /></span></div>
+              <div className="ds-stat"><div><p className="ds-stat-label">Closed</p><p className="ds-stat-num">{closedDeals.length}</p><p className="ds-stat-sub">Completed files</p></div><span className="ds-stat-icon ds-i-amber"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span></div>
+            </div>
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
               <nav aria-label="Transaction sections" className="mb-5 overflow-hidden border border-slate-200 bg-white px-5 pt-5">
                 <div className="flex items-center gap-3">

@@ -62,35 +62,33 @@ export default function AgentCommandCenterClient({
   };
 
   return (
-    <main className="min-h-screen bg-[#F7F5F1] pb-16">
-      <section className="border-b border-[#251548] bg-[#301D5D] text-white">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:gap-10 sm:px-8 sm:py-12 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:py-16">
+    <main id="agent-desk" className="min-h-screen bg-white pb-16">
+      <section className="border-b border-[#E6E5EC] bg-white">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-8 sm:py-10 lg:grid-cols-[1.3fr_0.7fr] lg:items-start">
           <div>
-            <p className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">
+            <p className="ds-eyebrow inline-flex items-center gap-2">
               <Sparkles className="rnn-inline-icon" aria-hidden="true" />
               Closing Time
             </p>
-            <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.045em] text-white sm:text-5xl lg:text-6xl">
-              Keep Your Deals Moving
-            </h1>
-            <p className="mt-4 max-w-2xl text-xl font-semibold leading-8 text-white sm:text-2xl">
+            <h1 className="ds-title mt-2 sm:!text-[2rem]">Keep Your Deals Moving</h1>
+            <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-slate-900">
               Stay Ahead Of Deadlines. Deliver Smoother Closings.
             </p>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">
+            <p className="ds-subtitle max-w-2xl leading-7">
               Never Miss A Critical Contract Deadline With Automated Notifications, Generate Instant Financial Estimates, And Connect Clients With Vetted Vendor Partners—All From One Agent-First Platform.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/agents/closing-time"
                 onClick={() => trackEvent('closing_time_opened')}
-                className="inline-flex h-[46px] items-center justify-center gap-2 rounded-md bg-[#F4D06F] px-5 text-sm font-bold text-[#241642] transition hover:bg-[#FFE296]"
+                className="inline-flex h-[40px] items-center justify-center gap-2 rounded-lg bg-[#301D5D] px-4 text-sm font-semibold text-white transition hover:bg-[#42277C]"
               >
                 Open Agent Desk
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
               <a
                 href="#referral-network"
-                className="inline-flex h-[46px] items-center justify-center gap-2 rounded-md border border-white/25 px-5 text-sm font-semibold text-white transition hover:bg-white/10"
+                className="inline-flex h-[40px] items-center justify-center gap-2 rounded-lg border border-[#E6E5EC] bg-white px-4 text-sm font-medium text-slate-900 transition hover:bg-[#F4F3F8]"
               >
                 Find A Local Partner
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -98,19 +96,19 @@ export default function AgentCommandCenterClient({
             </div>
           </div>
 
-          <aside className="border border-white/15 bg-white/[0.08] p-4 shadow-2xl shadow-[#140A29]/20 sm:p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#F4D06F]">Today&apos;s agent desk</p>
-            <div className="mt-5 space-y-4">
+          <aside className="rounded-xl border border-[#E6E5EC] bg-white p-5">
+            <p className="ds-eyebrow">Today&apos;s agent desk</p>
+            <div className="mt-4 space-y-4">
               {[
                 ['01', 'Map Key TREC Dates', 'Bring the effective date and period terms.'],
                 ['02', 'Prepare The Numbers', 'Run the seller net sheet or commission split.'],
                 ['03', 'Solve The Next Need', 'Connect with a local partner from the network.'],
               ].map(([number, title, description]) => (
-                <div key={number} className="flex gap-3 border-t border-white/10 pt-4 first:border-t-0 first:pt-0">
-                  <span className="pt-0.5 text-xs font-bold text-[#F4D06F]">{number}</span>
+                <div key={number} className="flex gap-3 border-t border-[#F1F0F5] pt-4 first:border-t-0 first:pt-0">
+                  <span className="ds-stat-icon ds-i-purple !h-7 !w-7 text-xs font-semibold">{number}</span>
                   <div>
-                    <p className="text-sm font-semibold text-white">{title}</p>
-                    <p className="mt-1 text-sm leading-5 text-white/60">{description}</p>
+                    <p className="text-sm font-semibold text-slate-900">{title}</p>
+                    <p className="mt-0.5 text-sm leading-5 text-slate-500">{description}</p>
                   </div>
                 </div>
               ))}
@@ -123,7 +121,7 @@ export default function AgentCommandCenterClient({
         <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-8 sm:pt-8 lg:pt-10">
           <div className="border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(40,25,77,0.05)] sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="flex items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F2EEE7] text-[#301D5D]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EFEAF8] text-[#301D5D]">
                 <CalendarDays className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
@@ -144,7 +142,7 @@ export default function AgentCommandCenterClient({
 
           {quickCheckOpen && (
             <div className="mt-3 grid border border-slate-200 bg-white lg:grid-cols-[0.72fr_1.28fr]">
-              <div className="bg-[#ECE6DA] p-4 sm:p-6">
+              <div className="bg-[#FBFBFD] p-4 sm:p-6">
                 <div className="space-y-4">
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Effective date</span>
