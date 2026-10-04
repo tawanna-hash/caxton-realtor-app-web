@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, FileText, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import { PURCHASE_FOLDERS, PURCHASE_REQUIRED_IDS } from './purchase-documents';
@@ -66,6 +66,29 @@ type Props = {
 
 export default function DealSubpage({ deal, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
+  const [dragOver, setDragOver] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const uploadPhoto = async (file?: File) => {
+    if (!file) return;
+    setPhotoError('');
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { setPhotoError('Use a JPG, PNG, or WebP image.'); return; }
+    if (file.size > 8 * 1024 * 1024) { setPhotoError('Image must be 8 MB or smaller.'); return; }
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      const res = await fetch('/api/agent-command-center/photo', { method: 'POST', body });
+      const data = await res.json().catch(() => ({})) as { url?: string; error?: string };
+      if (!res.ok || !data.url) throw new Error(data.error || 'Upload failed. Try again.');
+      onUpdate('photoUrl', data.url);
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : 'Upload failed. Try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
   const [providerCategory, setProviderCategory] = useState<string | null>(null);
   const [showPersonForm, setShowPersonForm] = useState(false);
 
@@ -271,10 +294,25 @@ export default function DealSubpage({ deal, locked, health, statusLabels, status
         <aside className="ds-rail-right" aria-label="Deal details">
           <h3 className="ds-side-title">Focus property</h3>
           <div className="ds-card !p-0 overflow-hidden">
-            {deal.photoUrl
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={deal.photoUrl} alt={deal.propertyAddress || deal.title} className="h-44 w-full object-cover" />
-              : <div className="flex h-32 items-center justify-center bg-[#F6F3FB] text-sm text-slate-400">No photo</div>}
+            <div
+              className={`relative ${dragOver ? 'bg-[#EFEAF8] outline outline-2 -outline-offset-2 outline-[#301D5D]' : ''}`}
+              onDragOver={(e) => { if (locked) return; e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => { e.preventDefault(); setDragOver(false); if (!locked) void uploadPhoto(e.dataTransfer.files?.[0]); }}
+            >
+              {deal.photoUrl
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={deal.photoUrl} alt={deal.propertyAddress || deal.title} className="h-44 w-full object-cover" />
+                : <div className="flex h-32 items-center justify-center bg-[#F6F3FB] text-sm text-slate-400">No photo</div>}
+              {!locked && (
+                <button type="button" onClick={() => photoInputRef.current?.click()} disabled={uploading}
+                  className="absolute inset-x-3 bottom-3 rounded-md border border-dashed border-slate-300 bg-white/90 px-3 py-2 text-xs font-medium text-slate-600">
+                  {uploading ? 'Uploading…' : dragOver ? 'Drop image to upload' : deal.photoUrl ? 'Drop a new image or click to replace' : 'Drop an image here or click to upload'}
+                </button>
+              )}
+              <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { void uploadPhoto(e.target.files?.[0]); e.target.value = ''; }} />
+            </div>
+            {photoError && <p className="px-4 pt-2 text-xs text-red-600" role="alert">{photoError}</p>}
             <div className="p-4">
               <p className="font-semibold text-slate-900">{deal.propertyAddress || deal.title}</p>
               <p className="mt-1 text-xs text-slate-500">{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing date not set'}</p>
