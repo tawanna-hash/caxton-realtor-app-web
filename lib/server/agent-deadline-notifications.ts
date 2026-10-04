@@ -108,7 +108,7 @@ function lastNameFrom(names: string | undefined): string {
 
 function clientLastName(deal: AgentDeal): string {
   const title = (deal.title || '').trim();
-  if (title && !/^new transaction$/i.test(title)) return title;
+  if (title && !/^new (transaction|contract)$/i.test(title)) return title;
   return lastNameFrom(deal.buyerNames) || lastNameFrom(deal.sellerNames);
 }
 
