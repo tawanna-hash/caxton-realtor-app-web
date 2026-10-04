@@ -1379,3 +1379,21 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-chip-purple { background: var(--d-lav-soft); color: #5B3FA0; }
 #agent-desk .ds-bar { display: inline-block; width: 72px; height: 6px; border-radius: 999px; background: #E6E5EC; overflow: hidden; }
 #agent-desk .ds-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--d-purple); }
+
+/* Deal subpage */
+#agent-desk [data-desk-view='deal-page'] .ds-header { display: none; }
+#agent-desk .ds-back { display: inline-flex; align-items: center; gap: 0.25rem; border: 0; background: transparent; padding: 0; font-size: 0.8125rem; color: var(--d-muted); }
+#agent-desk .ds-back:hover { color: var(--d-ink); }
+#agent-desk .ds-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; margin-top: 1.25rem; }
+@media (min-width: 1024px) { #agent-desk .ds-split { grid-template-columns: minmax(0, 1fr) 320px; } }
+#agent-desk .ds-card { border: 1px solid var(--d-line); border-radius: 12px; background: #fff; padding: 1rem 1.125rem; }
+#agent-desk .ds-card.ds-list { padding: 0; }
+#agent-desk .ds-card.ds-list > p { padding: 1rem 1.125rem; }
+#agent-desk .ds-list-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.125rem; border-top: 1px solid var(--d-line); font-size: 0.875rem; width: 100%; background: transparent; border-left: 0; border-right: 0; border-bottom: 0; border-radius: 0; }
+#agent-desk .ds-list-row:first-child { border-top: 0; }
+#agent-desk .ds-link-row:hover { background: var(--d-rail); }
+#agent-desk .ds-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem 1.5rem; }
+#agent-desk .ds-field-label { margin: 0; font-size: 0.8125rem; color: var(--d-muted); }
+#agent-desk .ds-field-value { margin: 0.25rem 0 0; font-size: 0.9375rem; color: var(--d-ink); }
+#agent-desk .ds-side-title { margin: 1.25rem 0 0.5rem; font-size: 0.9375rem; font-weight: 600; color: var(--d-ink); }
+#agent-desk .ds-side-title:first-child { margin-top: 0; }
