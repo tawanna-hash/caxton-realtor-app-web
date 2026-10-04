@@ -131,16 +131,17 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   };
   const shortDate = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   const completedDeal = deal.workflowStatus === 'completed';
-  const requiredAllIn = PURCHASE_REQUIRED_IDS.every((id) => deal.documentChecks[id]);
+  const showings = deal.offersShowings.filter((x) => x.kind === 'showing').map((x) => x.date).filter(Boolean).sort();
+  const offers = deal.offersShowings.filter((x) => x.kind === 'offer').map((x) => x.date).filter(Boolean).sort();
+  const underContract = Boolean(deal.effectiveDate);
+  const deadlineDates = [deal.optionPeriodDays, deal.appraisalDeadlineDays, deal.titleCommitmentDays].map((d) => addDays(deal.effectiveDate, d)).filter(Boolean).sort();
   const rawMilestones: { key: string; label: string; date: string; done: boolean }[] = [
-    { key: 'contract', label: 'Under Contract', date: deal.effectiveDate, done: Boolean(deal.effectiveDate) && deal.effectiveDate <= today },
-    { key: 'earnest', label: 'Earnest Money Received', date: deal.earnestMoneyDeliveredDate || addDays(deal.effectiveDate, 3), done: Boolean(deal.earnestMoneyDeliveredDate) },
-    { key: 'option', label: 'Option Period Ends', date: addDays(deal.effectiveDate, deal.optionPeriodDays), done: Boolean(addDays(deal.effectiveDate, deal.optionPeriodDays)) && addDays(deal.effectiveDate, deal.optionPeriodDays) <= today },
-    { key: 'appraisal', label: 'Appraisal Complete', date: addDays(deal.effectiveDate, deal.appraisalDeadlineDays), done: Boolean(addDays(deal.effectiveDate, deal.appraisalDeadlineDays)) && addDays(deal.effectiveDate, deal.appraisalDeadlineDays) <= today },
-    { key: 'title', label: 'Title Commitment', date: addDays(deal.effectiveDate, deal.titleCommitmentDays), done: Boolean(addDays(deal.effectiveDate, deal.titleCommitmentDays)) && addDays(deal.effectiveDate, deal.titleCommitmentDays) <= today },
-    { key: 'clear', label: 'Clear To Close', date: '', done: requiredAllIn },
+    { key: 'showing', label: 'Showing', date: showings[0] ?? '', done: showings.length > 0 || offers.length > 0 || underContract },
+    { key: 'offer', label: 'Offer', date: offers[0] ?? '', done: offers.length > 0 || underContract },
+    { key: 'contract', label: 'Contract', date: deal.effectiveDate, done: underContract },
+    { key: 'deadlines', label: 'Deadlines', date: deadlineDates.find((d) => d >= today) ?? deadlineDates[deadlineDates.length - 1] ?? '', done: deadlineDates.length > 0 && deadlineDates.every((d) => d <= today) },
     { key: 'closing', label: 'Closing', date: deal.closingDate, done: completedDeal || (Boolean(deal.closingDate) && deal.closingDate < today) },
-    { key: 'wrap', label: 'File Wrap-Up', date: deal.closeoutDate, done: completedDeal },
+    { key: 'compliance', label: 'Compliance', date: deal.closeoutDate, done: completedDeal },
   ];
   const firstOpen = rawMilestones.findIndex((m) => !m.done);
   const milestones = rawMilestones.map((m, index) => ({ ...m, current: index === firstOpen }));
