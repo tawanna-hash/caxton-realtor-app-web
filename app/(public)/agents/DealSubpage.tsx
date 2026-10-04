@@ -145,15 +145,15 @@ export default function DealSubpage({ deal, locked, health, statusLabels, status
             </div>
           )}
 
-          {tab === 'documents' && deal.dealType === 'purchase' && (() => {
+          {tab === 'documents' && (() => {
             const checks = deal.documentChecks;
             const requiredDone = PURCHASE_REQUIRED_IDS.filter((id) => checks[id]).length;
             return (
               <div className="space-y-4">
                 <div className="ds-card flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="ds-side-title !m-0">Purchase documents</p>
-                    <p className="text-sm text-slate-500">Required forms for a Purchase transaction.</p>
+                    <p className="ds-side-title !m-0">{({ purchase: 'Purchase', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Transaction'} documents</p>
+                    <p className="text-sm text-slate-500">Required forms for this transaction type.</p>
                   </div>
                   <span className={`ds-chip ${requiredDone === PURCHASE_REQUIRED_IDS.length ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{requiredDone} of {PURCHASE_REQUIRED_IDS.length} required received</span>
                 </div>
@@ -180,28 +180,6 @@ export default function DealSubpage({ deal, locked, health, statusLabels, status
               </div>
             );
           })()}
-
-          {tab === 'documents' && deal.dealType !== 'purchase' && (
-            <div className="space-y-4">
-              {documentGroups.map((group) => (
-                <div key={group.id} className="ds-card ds-list">
-                  <div className="flex items-center gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />{group.label}</div>
-                  {group.items.map((item) => {
-                    const doc = docById.get(item.id);
-                    if (!doc) return null;
-                    return (
-                      <label key={item.id} className="ds-list-row cursor-pointer">
-                        <input type="checkbox" checked={doc.complete} disabled={locked} onChange={(e) => onUpdate('documents', deal.documents.map((d) => d.id === doc.id ? { ...d, complete: e.target.checked, status: e.target.checked ? 'received' as const : 'requested' as const, updatedAt: new Date().toISOString() } : d))} />
-                        <span className="min-w-0 flex-1">{item.label}</span>
-                        <span className={`ds-chip ${doc.complete ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{doc.complete ? 'Received' : 'Requested'}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              ))}
-              <div className="text-sm text-slate-500">Upload and attach files from Readiness Check. <button type="button" className="font-medium text-[#301D5D] hover:underline" onClick={() => onOpenView('readiness')}>Open Readiness Check</button></div>
-            </div>
-          )}
 
           {tab === 'people' && (
             <div className="space-y-6">
