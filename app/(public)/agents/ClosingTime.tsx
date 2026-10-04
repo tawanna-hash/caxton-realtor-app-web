@@ -1159,7 +1159,7 @@ export default function ClosingTime({
       deals: legacyDeals,
       notificationPreferences: defaultAgentNotificationPreferences(),
     };
-    const migratedDeals = startingWorkspace.deals.map(mergeReadinessDocuments);
+    const migratedDeals = startingWorkspace.deals.map(mergeReadinessDocuments).map((deal) => (deal.title === 'New Transaction' ? { ...deal, title: 'New Contract' } : deal));
     const readinessChecklistChanged = JSON.stringify(migratedDeals) !== JSON.stringify(startingWorkspace.deals);
     const hydratedWorkspace = { ...startingWorkspace, deals: migratedDeals };
 
