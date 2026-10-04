@@ -27,7 +27,8 @@ const CALC_VIEWS: { id: string; label: string; keys: string[] }[] = [
 ];
 const DEALS_VIEW = { id: 'deals', label: 'Deals', keys: [] as string[] };
 const ALERT_SETUP_VIEW = { id: 'alert-setup', label: 'Alert Setup', keys: [] as string[] };
-const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, DEALS_VIEW, ALERT_SETUP_VIEW];
+const CLOSINGS_VIEW = { id: 'closings', label: 'Closings', keys: [] as string[] };
+const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug };
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -53,6 +54,7 @@ import {
   FileUp,
   FolderDown,
   ListTodo,
+  Landmark,
   Link2,
   LoaderCircle,
   Lock,
@@ -2030,6 +2032,13 @@ export default function ClosingTime({
               <p className="ds-group-label">Pipeline</p>
               <button type="button" onClick={() => setNewDealPickerOpen(true)} className="ds-new" aria-label="New contract"><Plus className="h-3.5 w-3.5" aria-hidden="true" /><span>New</span></button>
             </div>
+            <ul className="ds-nav-top ds-nav-closings">
+              <li>
+                <button type="button" aria-current={effectiveView === 'closings' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('closings'); }} className="ds-navbtn">
+                  <Landmark className="ct-navicon" aria-hidden="true" /><span>Closings</span>
+                </button>
+              </li>
+            </ul>
             <ul className="ds-deals">
               {deals.length === 0 && <li className="px-3 py-3 text-sm text-slate-500">No deals yet.</li>}
               {[...activeDeals, ...closedDeals].map((deal) => {
@@ -2100,6 +2109,60 @@ export default function ClosingTime({
               <div className="ds-stat"><div><p className="ds-stat-label">Open tasks</p><p className="ds-stat-num">{activeDeals.reduce((n, d) => n + d.tasks.filter((t) => !t.complete).length, 0)}</p><p className="ds-stat-sub">Across active files</p></div><span className="ds-stat-icon ds-i-blue"><ListTodo className="h-4 w-4" aria-hidden="true" /></span></div>
               <div className="ds-stat"><div><p className="ds-stat-label">Closed</p><p className="ds-stat-num">{closedDeals.length}</p><p className="ds-stat-sub">Completed files</p></div><span className="ds-stat-icon ds-i-amber"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span></div>
             </div>
+            {effectiveView === 'closings' && (() => {
+              const stageList = TREC_DEAL_WORKFLOW_STATUSES.filter((status) => status !== 'cancelled');
+              const inFlight = deals.filter((deal) => !isDealClosedAndComplete(deal)).sort((a, b) => (a.closingDate || '9999').localeCompare(b.closingDate || '9999'));
+              const closedList = deals.filter((deal) => isDealClosedAndComplete(deal));
+              const typeLabel: Record<string, string> = { purchase: 'Buy side', listing_sale: 'Sell side', listing_lease: 'Lease listing', lease: 'Lease', real_estate_other: 'Other', other: 'Other' };
+              const openDeal = (deal: (typeof deals)[number]) => { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setDeskView('deal-page'); };
+              const row = (deal: (typeof deals)[number]) => {
+                const days = daysUntilClosing(deal.closingDate, today);
+                const dot = days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#9A3D2B]' : days <= 7 ? 'bg-[#B8860B]' : 'bg-[#2F7D5B]';
+                const stageIdx = Math.max(0, stageList.indexOf(deal.workflowStatus as (typeof stageList)[number]));
+                const pct = Math.round(((stageIdx + 1) / stageList.length) * 100);
+                const openTasks = deal.tasks.filter((t) => !t.complete).length;
+                const price = deal.contractDetails?.salesPrice?.trim();
+                return (
+                  <li key={deal.id}>
+                    <button type="button" onClick={() => openDeal(deal)} className="ds-closing-row">
+                      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${dot}`} aria-hidden="true" />
+                      <span className="min-w-0 flex-1 text-left">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="truncate text-sm font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
+                          <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{typeLabel[deal.dealType] ?? 'Deal'}</span>
+                        </span>
+                        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+                          <span className="font-medium text-slate-900">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span>
+                          <span className="ds-progress" aria-hidden="true"><span style={{ width: `${pct}%` }} /></span>
+                          <span>{stageIdx + 1}/{stageList.length}</span>
+                          <span>·</span>
+                          <span>{deal.closingDate ? `closes ${formatDate(deal.closingDate)}` : 'closing date not set'}</span>
+                          <span>·</span>
+                          <span>{openTasks} open {openTasks === 1 ? 'task' : 'tasks'}</span>
+                        </span>
+                      </span>
+                      {price ? <span className="shrink-0 text-sm font-semibold text-slate-900">{price.startsWith('$') ? price : `$${price}`}</span> : null}
+                    </button>
+                  </li>
+                );
+              };
+              return (
+                <div className="ds-page ds-compact" data-testid="closings-page">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="ds-eyebrow">Pipeline</p>
+                      <h2 className="ds-title">Closings</h2>
+                      <p className="ds-subtitle">Contract to keys. The nearest closings sort to the top.</p>
+                    </div>
+                    <button type="button" onClick={() => setNewDealPickerOpen(true)}><Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />New Contract</button>
+                  </div>
+                  <p className="mt-6 text-sm font-semibold text-slate-900">In Flight <span className="ds-chip ml-1 bg-[#EFEAF8] text-[#301D5D]">{inFlight.length}</span></p>
+                  <ul className="ds-closing-list">{inFlight.length === 0 ? <li className="px-4 py-4 text-sm text-slate-500">No closings in flight.</li> : inFlight.map(row)}</ul>
+                  <p className="mt-6 text-sm font-semibold text-slate-900">Closed</p>
+                  <ul className="ds-closing-list">{closedList.length === 0 ? <li className="px-4 py-4 text-sm text-slate-500">No closings completed yet.</li> : closedList.map(row)}</ul>
+                </div>
+              );
+            })()}
             {effectiveView === 'deals' && (() => {
               const healthOf = (deal: (typeof deals)[number]) => {
                 if (isDealClosedAndComplete(deal)) return { key: 'closed', label: 'Closed', tone: 'bg-slate-100 text-slate-600' };
