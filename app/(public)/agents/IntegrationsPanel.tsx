@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plug, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 
 type Account = { id: string; appSlug: string; appName: string; healthy: boolean };
@@ -103,10 +103,9 @@ export default function IntegrationsPanel() {
   return (
     <section aria-label="Integrations" {...collapsible('integrations', { mobileOpen: true })} data-section-key={undefined} className="border border-slate-200 bg-white p-5 sm:p-6">
       <div className="flex items-center gap-3">
-        <Plug className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Integrations</p>
-          <h2 className="mt-1 text-xl font-semibold text-slate-950">Connect The Tools You Already Use</h2>
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Integrations</p>
+          <h2 className="mt-1 text-xl font-semibold text-gray-900">Connect The Tools You Already Use</h2>
         </div>
         <CollapseToggle {...toggleProps('integrations', 'integrations', { mobileOpen: true })} className="ml-auto" />
       </div>
@@ -148,7 +147,7 @@ export default function IntegrationsPanel() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label={selected.name} onClick={() => setSelected(null)}>
           <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3"><Logo item={selected} size={36} /><h3 className="truncate text-lg font-semibold text-slate-950">{selected.name}</h3></div>
+              <div className="flex min-w-0 items-center gap-3"><Logo item={selected} size={36} /><h3 className="truncate text-lg font-semibold text-gray-900">{selected.name}</h3></div>
               <button type="button" onClick={() => setSelected(null)} aria-label="Close" className="flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><X className="h-5 w-5" aria-hidden="true" /></button>
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-700">Connect your {selected.name} account {BLURBS[selected.group] ?? 'so it can work with your deals'}.</p>

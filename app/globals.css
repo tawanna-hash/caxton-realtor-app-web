@@ -1340,13 +1340,6 @@ input[type='date']::-webkit-calendar-picker-indicator {
 /* Callouts */
 #agent-desk [class*='bg-amber-50'] { background-color: var(--d-lav-wash); border-color: var(--d-line); color: var(--d-text); }
 
-/* Header pattern shared by every card: round icon, gray eyebrow, title, hairline divider */
-#agent-desk div:has(> .rnn-heading-icon:first-child) {
-  padding-bottom: 1rem;
-  margin-bottom: 1.25rem;
-  border-bottom: 1px solid var(--d-line-soft);
-}
-#agent-desk aside div:has(> .rnn-heading-icon:first-child) { margin-bottom: 0; padding: 0.75rem 1rem; }
 #agent-desk aside .ct-navicon, #agent-desk .ct-navicon { width: 1rem; height: 1rem; flex: none; color: var(--d-lav); }
 #agent-desk aside ul li > button:not([aria-current]) { background-color: transparent; }
 #agent-desk aside ul li > button:not([aria-current]):hover { background-color: var(--d-lav-wash); }

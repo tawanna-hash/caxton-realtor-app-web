@@ -9,7 +9,6 @@ import {
   CalendarDays,
   Calculator,
   ChevronRight,
-  Handshake,
   Home,
   Landmark,
   ShieldCheck,
@@ -97,10 +96,9 @@ export function WorkFasterPanel() {
         <div className="">
         <div {...collapsible('calculators', { mobileOpen: true })} data-section-key={undefined} className="border border-slate-200 bg-white p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-3">
-            <Calculator className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Calculators</p>
-              <h2 className="mt-1 text-xl font-semibold text-slate-950">Client-Ready Tools, One Click Away</h2>
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Calculators</p>
+              <h2 className="mt-1 text-xl font-semibold text-gray-900">Client-Ready Tools, One Click Away</h2>
             </div>
             <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
               See Every Agent Tool
@@ -168,10 +166,9 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
         <div className="">
           <div {...collapsible('referral', { mobileOpen: true })} data-section-key={undefined} className="border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex items-center gap-3">
-              <Handshake className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Referral Network</p>
-                <h2 className="mt-1 text-xl font-semibold text-slate-950">Your Call List, Built for the Next Deal</h2>
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Referral Network</p>
+                <h2 className="mt-1 text-xl font-semibold text-gray-900">Your Call List, Built for the Next Deal</h2>
               </div>
               <CollapseToggle {...toggleProps('referral', 'referral network', { mobileOpen: true })} className="ml-auto" />
             </div>
@@ -182,8 +179,8 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
             <div className="mt-5 border-t border-slate-200 pt-5">
               <div className="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Find a service</p>
-                  <h3 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-2xl">{selectedCategoryRecord.description}</h3>
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Find a service</p>
+                  <h3 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-gray-900 sm:text-2xl">{selectedCategoryRecord.description}</h3>
                 </div>
                 <Link
                   href="/partners"

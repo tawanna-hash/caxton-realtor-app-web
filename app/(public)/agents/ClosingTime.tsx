@@ -25,13 +25,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Bell,
-  Briefcase,
   Calculator,
   Handshake,
   LayoutDashboard,
   Plug,
   type LucideIcon,
-  Building2,
   Camera,
   CalendarDays,
   Check,
@@ -46,7 +44,6 @@ import {
   FileText,
   FileUp,
   FolderDown,
-  History,
   ListTodo,
   Link2,
   LoaderCircle,
@@ -364,9 +361,8 @@ function ReadinessChecklist({
   return (
     <div {...collapsible('readiness', { mobileOpen: true })} className="border border-slate-200 bg-white p-5 sm:p-6">
       <div className="flex items-center gap-3">
-        <FileText className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Readiness check</p>
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Readiness check</p>
           <Heading className="mt-1 text-xl font-semibold text-slate-950">Transaction readiness checklist</Heading>
         </div>
         <CollapseToggle {...toggleProps('readiness', 'readiness checklist', { mobileOpen: true })} className="ml-auto" />
@@ -382,7 +378,7 @@ function ReadinessChecklist({
           return (
             <section key={group.id} className="overflow-hidden rounded-md border border-slate-200">
               <div className="flex items-center justify-between gap-3 bg-[#F7F5F1] px-4 py-3">
-                <h4 className="text-sm font-bold text-slate-950">{group.label}</h4>
+                <h4 className="text-sm font-bold text-gray-900">{group.label}</h4>
                 <span className="shrink-0 rounded-md bg-white px-2.5 py-1 text-xs font-bold text-[#301D5D]">{completeCount} of {groupDocuments.length}</span>
               </div>
               <div>{groupDocuments.map(({ item, document }) => renderDocument(document, item.description))}</div>
@@ -393,7 +389,7 @@ function ReadinessChecklist({
         {additionalDocuments.length ? (
           <section className="overflow-hidden rounded-md border border-slate-200">
             <div className="bg-[#F7F5F1] px-4 py-3">
-              <h4 className="text-sm font-bold text-slate-950">Additional Documentation</h4>
+              <h4 className="text-sm font-bold text-gray-900">Additional Documentation</h4>
             </div>
             <div>{additionalDocuments.map((document) => renderDocument(document))}</div>
           </section>
@@ -1901,10 +1897,10 @@ export default function ClosingTime({
           <div {...collapsible('attention')} className="border border-slate-200 bg-white p-4 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
                   All Transactions · {overviewDealCount} Active Deal{overviewDealCount === 1 ? '' : 's'}
                 </p>
-                <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">What Needs Attention</h2>
+                <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-gray-900">What Needs Attention</h2>
               </div>
               <span data-testid="text-dashboard-next-closing-countdown" className="bg-[#F8F5FF] px-3 py-2 text-xs font-bold text-[#301D5D]">
                 {nextClosingDays === null
@@ -1947,7 +1943,7 @@ export default function ClosingTime({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Agent Desk</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">It&apos;s Almost Closing Time!</h2>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-gray-900 sm:text-4xl">It&apos;s Almost Closing Time!</h2>
           </div>
           <div data-testid="text-next-closing-countdown" className="border border-[#D9D0BF] bg-[#FFFDF8] px-4 py-2 text-sm font-semibold text-[#301D5D]">
             {nextClosingDays === null
@@ -1969,9 +1965,8 @@ export default function ClosingTime({
           <aside aria-label="Transactions" className="sticky top-16 min-w-0 lg:top-24">
             <div className="border border-slate-200 bg-white">
               <div className="flex items-center gap-2 border-b border-slate-200 px-2 py-3 lg:gap-3 lg:px-4">
-                <Briefcase className="rnn-heading-icon hidden text-[#7059A8] lg:block" aria-hidden="true" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7059A8] lg:text-xs lg:tracking-[0.16em]">Transactions</p>
+                  <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gray-500 lg:text-xs">Transactions</p>
                   <p className="mt-0.5 text-base leading-5 text-slate-950 lg:text-lg">Deals</p>
                 </div>
                 <button type="button" onClick={() => { createDeal(); setWorkspacePage(2); setDeskView('transaction'); }} className="min-h-[32px] rounded-md bg-[#301D5D] px-2 text-xs font-bold text-white hover:bg-[#42277c] lg:px-3">New</button>
@@ -2025,10 +2020,9 @@ export default function ClosingTime({
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
               <nav aria-label="Transaction sections" className="mb-5 overflow-hidden border border-slate-200 bg-white px-5 pt-5">
                 <div className="flex items-center gap-3">
-                  <Briefcase className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Selected Deal</p>
-                    <h3 className="mt-1 truncate text-xl font-semibold text-slate-950">{activeDeal ? activeDeal.propertyAddress || activeDeal.title : 'Select a transaction'}</h3>
+                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Selected Deal</p>
+                    <h3 className="mt-1 truncate text-xl font-semibold text-gray-900">{activeDeal ? activeDeal.propertyAddress || activeDeal.title : 'Select a transaction'}</h3>
                   </div>
                 </div>
                 <div className="-mx-5 flex gap-1 overflow-x-auto px-5">
@@ -2042,7 +2036,7 @@ export default function ClosingTime({
             {!calendarConnected && (
             <div {...collapsible('calendar')} className="mb-5 border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-slate-950">Calendar Exports For Apple Calendar</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Calendar Exports For Apple Calendar</h3>
                 <CollapseToggle {...toggleProps('calendar', 'calendar exports')} />
               </div>
               <p className="mt-3 border-l-4 border-[#7059A8] bg-[#F8F5FF] p-3 text-sm leading-6 text-slate-700">Using Apple Calendar? Apple Calendar cannot be connected, so subscribe here instead. If you use Google Calendar or Outlook, connect it on the Integrations page and your deal dates are added for you.</p>
@@ -2101,7 +2095,7 @@ export default function ClosingTime({
             )}
             <div {...collapsible('alerts')} className="border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-slate-950">Deadline Alerts</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Deadline Alerts</h3>
                 <CollapseToggle {...toggleProps('alerts', 'deadline alerts')} />
               </div>
               <div className="mt-4 space-y-3">
@@ -2129,10 +2123,9 @@ export default function ClosingTime({
             </div>
             <div id="trec-forms" {...collapsible('trec-library')} className="min-w-0 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
               <div className="flex flex-wrap items-center gap-3">
-                <FileText className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">TREC Forms Library</p>
-                  <h3 className="mt-1 text-xl font-semibold text-slate-950">TREC Contracts And Forms</h3>
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">TREC Forms Library</p>
+                  <h3 className="mt-1 text-xl font-semibold text-gray-900">TREC Contracts And Forms</h3>
                 </div>
                 <div className="ml-auto flex shrink-0 items-center gap-2">
                   <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-md border border-[#301D5D] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white sm:inline-flex">Verify on TREC</a>
@@ -2376,7 +2369,7 @@ export default function ClosingTime({
             {!activeDeal ? (
               <div className="mt-7 flex min-h-[260px] flex-col items-center justify-center border border-dashed border-slate-300 bg-[#FCFBF9] px-6 text-center">
                 <ClipboardCheck className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
-                <h4 className="mt-4 text-lg font-semibold text-slate-950">Build Your First Deal Workspace</h4>
+                <h4 className="mt-4 text-lg font-semibold text-gray-900">Build Your First Deal Workspace</h4>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">Create a private workspace to turn the contract terms in front of you into a workable list of actions.</p>
                 <button type="button" onClick={createDeal} className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">
                   Create Transaction
@@ -2716,10 +2709,9 @@ export default function ClosingTime({
         {workspacePage === 2 && activeDeals.length > 0 && (
           <section {...collapsible('active')} className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex items-center gap-3">
-              <Building2 className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Active Deals</p>
-                <h3 className="mt-1 text-xl font-semibold text-slate-950">{activeDeals.length} Transaction{activeDeals.length === 1 ? '' : 's'} In Progress</h3>
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Active Deals</p>
+                <h3 className="mt-1 text-xl font-semibold text-gray-900">{activeDeals.length} Transaction{activeDeals.length === 1 ? '' : 's'} In Progress</h3>
               </div>
               <CollapseToggle {...toggleProps('active', 'active deals')} className="ml-auto" />
             </div>
@@ -2885,10 +2877,9 @@ export default function ClosingTime({
         {workspacePage === 2 && closedDeals.length > 0 && (
           <section {...collapsible('closed')} className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex items-center gap-3">
-              <Lock className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closed & Audit</p>
-                <h3 className="mt-1 text-xl font-semibold text-slate-950">{closedDeals.length} Closed Transaction{closedDeals.length === 1 ? '' : 's'}</h3>
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Closed & Audit</p>
+                <h3 className="mt-1 text-xl font-semibold text-gray-900">{closedDeals.length} Closed Transaction{closedDeals.length === 1 ? '' : 's'}</h3>
               </div>
               <CollapseToggle {...toggleProps('closed', 'closed transactions')} className="ml-auto" />
             </div>
@@ -3028,7 +3019,7 @@ export default function ClosingTime({
                 <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7059A8]">{isDealLocked(statusDeal) ? 'Closed & Audit' : 'Transaction Forms'}</p>
-                    <h4 className="mt-0.5 text-lg font-semibold text-slate-950">{statusDeal.propertyAddress || statusDeal.title}</h4>
+                    <h4 className="mt-0.5 text-lg font-semibold text-gray-900">{statusDeal.propertyAddress || statusDeal.title}</h4>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -3139,10 +3130,9 @@ export default function ClosingTime({
           <div className="mt-6 grid gap-6">
             <div {...collapsible('tasks')} className="border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center gap-3">
-                <ListTodo className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Action list</p>
-                  <h3 className="mt-1 text-xl font-semibold text-slate-950">Tasks and Reminders</h3>
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Action list</p>
+                  <h3 className="mt-1 text-xl font-semibold text-gray-900">Tasks and Reminders</h3>
                 </div>
                 <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
               </div>
@@ -3182,10 +3172,9 @@ export default function ClosingTime({
           <section {...collapsible('audit')} className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                {isDealLocked(activeDeal) ? <Lock className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" /> : <History className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />}
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Audit</p>
-                  <h3 className="mt-1 text-xl font-semibold text-slate-950">
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Audit</p>
+                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
                     {isDealLocked(activeDeal) ? `${activeDeal.propertyAddress || activeDeal.title}, Closed & Audit` : 'Transaction History, Audit and Closeout'}
                   </h3>
                 </div>
