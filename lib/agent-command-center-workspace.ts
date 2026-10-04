@@ -116,6 +116,24 @@ export const agentActivitySchema = z.object({
   id: shortText(120), message: shortText(600), createdAt: z.string().datetime(),
 }).strict();
 
+export const agentDealPreferencesSchema = z.object({
+  budget: optionalShortText(120), financing: optionalShortText(120), targetAreas: optionalShortText(400),
+  mustHaves: optionalShortText(600), timeframe: optionalShortText(200), minBeds: optionalShortText(20),
+}).strict().default({ budget: '', financing: '', targetAreas: '', mustHaves: '', timeframe: '', minBeds: '' });
+
+export const agentClientContactSchema = z.object({
+  id: shortText(120), name: shortText(200), role: optionalShortText(60), email: optionalShortText(200), phone: optionalShortText(60),
+}).strict();
+
+export const agentServiceProviderSchema = z.object({
+  id: shortText(120), category: shortText(60), name: shortText(200), phone: optionalShortText(60), email: optionalShortText(200),
+}).strict();
+
+export const agentOfferShowingSchema = z.object({
+  id: shortText(120), kind: z.enum(['offer', 'showing']).default('showing'), date: dateText.default(''),
+  label: shortText(300), amount: optionalShortText(60), status: optionalShortText(60),
+}).strict();
+
 export const agentDealSchema = z.object({
   id: shortText(120), title: shortText(200), propertyAddress: shortText(400), buyerNames: shortText(300), sellerNames: shortText(300),
   effectiveDate: dateText.default(''), optionPeriodDays: optionalShortText(4), additionalEarnestMoneyDays: optionalShortText(4), financingDeadlineDays: optionalShortText(4),
@@ -128,6 +146,12 @@ export const agentDealSchema = z.object({
   trecFormVersionId: optionalShortText(120).default('built-in-trec-20-19'),
   closeoutOutcome: optionalShortText(120), closeoutDate: dateText.default(''), closeoutNote: optionalShortText(2_000),
   auditLocked: z.boolean().default(false),
+  dealType: z.enum(['purchase', 'listing_sale', 'listing_lease', 'lease', 'real_estate_other', 'other']).default('purchase'),
+  serviceProviders: z.array(agentServiceProviderSchema).max(60).default([]),
+  nextAction: optionalShortText(300), notes: optionalShortText(4_000), photoUrl: optionalShortText(1_000),
+  preferences: agentDealPreferencesSchema,
+  clientContacts: z.array(agentClientContactSchema).max(20).default([]),
+  offersShowings: z.array(agentOfferShowingSchema).max(100).default([]),
   contractDetails: agentContractDetailsSchema,
   formFields: agentTrecFormFieldsSchema,
   addenda: z.record(z.string(), z.boolean()).default({}),

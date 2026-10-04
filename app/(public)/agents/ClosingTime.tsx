@@ -61,6 +61,7 @@ import {
 import PushOptInButton from '@/components/PushOptInButton';
 import TrecPdfPagePreview from './TrecPdfPagePreview';
 import TrecFormsLibrary from './TrecFormsLibrary';
+import DealSubpage from './DealSubpage';
 import {
   buildClosingTimeIcs,
   calendarEventsForActiveDeals,
@@ -89,6 +90,7 @@ import type { TrecFormVersion } from '@/lib/trec-form-versions';
 import {
   buildTrecValidation,
   TREC_DEAL_WORKFLOW_STATUS_LABELS,
+  TREC_DEAL_WORKFLOW_STATUSES,
   TREC_TASK_PRIORITIES,
   TREC_TASK_STATUSES,
   type TrecTaskPriority,
@@ -576,6 +578,14 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     closeoutDate: '',
     closeoutNote: '',
     auditLocked: false,
+    dealType: 'purchase',
+    serviceProviders: [],
+    nextAction: '',
+    notes: '',
+    photoUrl: '',
+    preferences: { budget: '', financing: '', targetAreas: '', mustHaves: '', timeframe: '', minBeds: '' },
+    clientContacts: [],
+    offersShowings: [],
     contractDetails: defaultAgentContractDetails(),
     formFields: {},
     addenda: {},
@@ -956,7 +966,7 @@ export default function ClosingTime({
   const [dealsQuery, setDealsQuery] = useState('');
   const [dealsHealth, setDealsHealth] = useState('all');
   const [dealPageId, setDealPageId] = useState<string | null>(null);
-  const [dealPageTab, setDealPageTab] = useState<'overview' | 'tasks' | 'documents' | 'history'>('overview');
+  const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
   useEffect(() => {
     DESK_VIEWS.find((v) => v.id === effectiveView)?.keys.forEach((key) => reveal(key));
@@ -2103,7 +2113,7 @@ export default function ClosingTime({
                           const done = deal.tasks.filter((t) => t.complete).length;
                           const total = deal.tasks.length;
                           return (
-                            <tr key={deal.id} tabIndex={0} onClick={() => { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('overview'); setDeskView('deal-page'); }} onKeyDown={(e) => { if (e.key === 'Enter') { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('overview'); setDeskView('deal-page'); } }} className="cursor-pointer">
+                            <tr key={deal.id} tabIndex={0} onClick={() => { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setDeskView('deal-page'); }} onKeyDown={(e) => { if (e.key === 'Enter') { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setDeskView('deal-page'); } }} className="cursor-pointer">
                               <td className="py-3 pl-4 font-medium text-slate-900">{deal.propertyAddress || deal.title}</td>
                               <td>{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(', ') || '—'}</td>
                               <td><span className="ds-chip ds-chip-purple">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span></td>
@@ -2127,105 +2137,31 @@ export default function ClosingTime({
             })()}
             {effectiveView === 'deal-page' && (() => {
               const deal = deals.find((d) => d.id === dealPageId);
-              if (!deal) return (
-                <div className="ds-page"><button type="button" className="ds-back" onClick={() => setDeskView('deals')}><ChevronLeft className="h-4 w-4" aria-hidden="true" /> Deals</button><p className="mt-4 text-sm text-slate-500">That deal is no longer available.</p></div>
-              );
-              const closed = isDealClosedAndComplete(deal);
-              const days = daysUntilClosing(deal.closingDate, today);
+              const closed = deal ? isDealClosedAndComplete(deal) : false;
+              const days = deal ? daysUntilClosing(deal.closingDate, today) : null;
               const health = closed ? { label: 'Closed', tone: 'bg-slate-100 text-slate-600' }
                 : days === null ? { label: 'No date', tone: 'bg-slate-100 text-slate-600' }
                 : days < 0 ? { label: 'Overdue', tone: 'bg-red-50 text-red-700' }
                 : days <= 7 ? { label: 'Needs attention', tone: 'bg-amber-50 text-amber-700' }
                 : { label: 'On track', tone: 'bg-emerald-50 text-emerald-700' };
-              const deadlines = dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date));
-              const nextDeadline = deadlines[0];
-              const nextTask = deal.tasks.find((t) => !t.complete);
-              const clients = [deal.buyerNames, deal.sellerNames].filter(Boolean);
-              const formsCount = activePacketForms.filter((version) => deal.selectedFormFamilies[version.formFamily]).length;
-              const openDeal = (view: string) => { setActiveDealId(deal.id); setWorkspacePage(2); setDeskView(view); };
+              const nextDeadline = deal ? dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] : undefined;
               return (
-                <div className="ds-page" data-testid="deal-subpage">
-                  <button type="button" className="ds-back" onClick={() => setDeskView('deals')}><ChevronLeft className="h-4 w-4" aria-hidden="true" /> Deals</button>
-                  <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="ds-title">{deal.propertyAddress || deal.title}</h2>
-                      <p className="ds-subtitle">{clients.length ? clients.join(' · ') : 'No clients added'}{deal.owner ? ` · ${deal.owner}` : ''}</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`ds-chip ${health.tone}`}>{health.label}</span>
-                      <button type="button" onClick={() => openDeal('transaction')} className="inline-flex h-[36px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F4F3F8]">Edit deal</button>
-                      <span className="ds-chip ds-chip-purple">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span>
-                    </div>
-                  </div>
-                  <div className="ds-split">
-                    <div className="min-w-0">
-                      <div className="ds-card">
-                        <p className="ds-field-label">Next action</p>
-                        <p className="ds-field-value">{nextTask ? nextTask.title : nextDeadline ? `${nextDeadline.label} · ${formatDate(nextDeadline.date)}` : 'Nothing scheduled'}</p>
-                        <p className="ds-field-label mt-4">Next deadline</p>
-                        <p className="ds-field-value">{nextDeadline ? `${nextDeadline.label} · ${formatDate(nextDeadline.date)}` : 'No upcoming deadlines'}</p>
-                      </div>
-                      <div className="ds-tabs" role="tablist" aria-label="Deal sections">
-                        {([['overview', 'Overview'], ['tasks', `Tasks ${deal.tasks.length}`], ['documents', 'Documents'], ['history', 'History']] as const).map(([id, label]) => (
-                          <button key={id} type="button" role="tab" aria-selected={dealPageTab === id} onClick={() => setDealPageTab(id)} className="ds-tab">{label}</button>
-                        ))}
-                      </div>
-                      {dealPageTab === 'overview' && (
-                        <div className="ds-card ds-fields">
-                          {[
-                            ['Effective date', deal.effectiveDate ? formatDate(deal.effectiveDate) : '—'],
-                            ['Closing date', deal.closingDate ? `${formatDate(deal.closingDate)} · ${closingCountdownLabel(deal.closingDate, today)}` : '—'],
-                            ['Option period', deal.optionPeriodDays ? `${deal.optionPeriodDays} days` : '—'],
-                            ['Forms selected', String(formsCount)],
-                            ['Open tasks', String(deal.tasks.filter((t) => !t.complete).length)],
-                            ['Open reminders', String(deal.reminders.filter((r) => !r.complete).length)],
-                          ].map(([label, value]) => (
-                            <div key={label}><p className="ds-field-label">{label}</p><p className="ds-field-value">{value}</p></div>
-                          ))}
-                        </div>
-                      )}
-                      {dealPageTab === 'tasks' && (
-                        <div className="ds-card ds-list">
-                          {deal.tasks.length === 0 && <p className="text-sm text-slate-500">No tasks yet.</p>}
-                          {deal.tasks.map((t) => (
-                            <div key={t.id} className="ds-list-row"><span className={`h-2 w-2 shrink-0 rounded-full ${t.complete ? 'bg-emerald-500' : 'bg-slate-300'}`} aria-hidden="true" /><span className={`min-w-0 flex-1 ${t.complete ? 'text-slate-400 line-through' : ''}`}>{t.title}</span>{t.dueDate && <span className="text-xs text-slate-500">{formatDate(t.dueDate)}</span>}</div>
-                          ))}
-                        </div>
-                      )}
-                      {dealPageTab === 'documents' && (
-                        <div className="ds-card ds-list">
-                          {deal.documents.length === 0 && <p className="text-sm text-slate-500">No documents yet.</p>}
-                          {deal.documents.map((d) => (
-                            <div key={d.id} className="ds-list-row"><FileText className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" /><span className="min-w-0 flex-1">{d.label}</span><span className={`ds-chip ${d.complete ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{d.complete ? 'Received' : 'Requested'}</span></div>
-                          ))}
-                        </div>
-                      )}
-                      {dealPageTab === 'history' && (
-                        <div className="ds-card ds-list">
-                          {[...deal.activity].reverse().slice(0, 50).map((a) => (
-                            <div key={a.id} className="ds-list-row"><span className="min-w-0 flex-1">{a.message}</span><span className="text-xs text-slate-500">{formatDate(a.createdAt.slice(0, 10))}</span></div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <aside className="ds-rail-right" aria-label="Deal details">
-                      <h3 className="ds-side-title">Property</h3>
-                      <div className="ds-card"><p className="font-semibold text-slate-900">{deal.propertyAddress || deal.title}</p><p className="mt-1 text-xs text-slate-500">{deal.closingDate ? `Closing ${formatDate(deal.closingDate)}` : 'Closing date not set'}</p></div>
-                      <h3 className="ds-side-title">Contacts</h3>
-                      <div className="ds-card ds-list">
-                        {clients.length === 0 && <p className="text-sm text-slate-500">No contacts added.</p>}
-                        {deal.buyerNames && <div className="ds-list-row"><span className="ds-stat-icon ds-i-green !h-8 !w-8"><Mail className="h-4 w-4" aria-hidden="true" /></span><span className="min-w-0"><span className="block text-sm font-medium text-slate-900">{deal.buyerNames}</span><span className="block text-xs text-slate-500">Buyer</span></span></div>}
-                        {deal.sellerNames && <div className="ds-list-row"><span className="ds-stat-icon ds-i-blue !h-8 !w-8"><Mail className="h-4 w-4" aria-hidden="true" /></span><span className="min-w-0"><span className="block text-sm font-medium text-slate-900">{deal.sellerNames}</span><span className="block text-xs text-slate-500">Seller</span></span></div>}
-                      </div>
-                      <h3 className="ds-side-title">Workspace</h3>
-                      <div className="ds-card ds-list">
-                        {([['transaction', 'Current Deal'], ['coordinator', 'Deal Settings'], ['readiness', 'Readiness Check'], ['audit', 'Audit Trail']] as const).map(([view, label]) => (
-                          <button key={view} type="button" onClick={() => openDeal(view)} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left">{label}</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
-                        ))}
-                      </div>
-                    </aside>
-                  </div>
-                </div>
+                <DealSubpage
+                  key={deal?.id ?? 'none'}
+                  deal={deal}
+                  today={today}
+                  locked={deal ? isDealLocked(deal) : false}
+                  health={health}
+                  statusLabels={TREC_DEAL_WORKFLOW_STATUS_LABELS}
+                  statuses={TREC_DEAL_WORKFLOW_STATUSES}
+                  documentGroups={DOCUMENT_GROUPS}
+                  nextDeadline={nextDeadline}
+                  formatDate={formatDate}
+                  countdownLabel={deal ? closingCountdownLabel(deal.closingDate, today) : ''}
+                  onUpdate={updateActiveDeal}
+                  onBack={() => setDeskView('deals')}
+                  onOpenView={(view) => { setWorkspacePage(2); setDeskView(view); }}
+                />
               );
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
@@ -2909,6 +2845,30 @@ export default function ClosingTime({
                           onFieldChange={updateTrecFormField}
                         />
                       </div>
+                    </div>
+                    <div className="mt-4 flex flex-col gap-3 rounded-md border border-slate-200 bg-[#FCFBF9] p-3 sm:flex-row sm:items-center sm:justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTrecPage((page) => Math.max(1, page - 1))}
+                        disabled={currentTrecPage === 1}
+                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                        Back
+                      </button>
+                      <div className="min-w-0 text-center">
+                        <p className="text-sm font-bold text-slate-950">Page {currentTrecPage} of {currentTrecFormVersion.pageCount}</p>
+                        <p className="mt-1 truncate text-xs font-semibold text-slate-600">{currentTrecFormVersion.pageSections[currentTrecPage] ?? `Official TREC page ${currentTrecPage}`}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTrecPage((page) => Math.min(currentTrecFormVersion.pageCount, page + 1))}
+                        disabled={currentTrecPage === currentTrecFormVersion.pageCount}
+                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                      </button>
                     </div>
                   </div>
                 </section>

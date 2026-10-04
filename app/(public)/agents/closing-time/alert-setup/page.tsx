@@ -2,6 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Bell, Laptop, Mail, Monitor, Smartphone, Wrench } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { isClosingTimeGated } from '@/lib/server/closing-time-gate';
+import ComingSoon from '../../ComingSoon';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Closing Time Alert Setup | Realty News Now',
@@ -112,7 +116,8 @@ const troubleshooting: ReactNode[] = [
   <>New phone or computer? Connect it again. Alert access does not transfer between devices.</>,
 ];
 
-export default function ClosingTimeAlertSetupPage() {
+export default async function ClosingTimeAlertSetupPage() {
+  if (await isClosingTimeGated()) return <ComingSoon />;
   return (
     <main id="agent-desk" className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
       <p className="ds-eyebrow">Closing Time</p>
