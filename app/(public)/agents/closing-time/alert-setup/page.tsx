@@ -119,7 +119,7 @@ const troubleshooting: ReactNode[] = [
 export default async function ClosingTimeAlertSetupPage() {
   if (await isClosingTimeGated()) return <ComingSoon />;
   return (
-    <main id="agent-desk" className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+    <main id="agent-desk" className="mx-auto my-6 w-full max-w-4xl rounded-2xl border border-[#E6E5EC] bg-white px-5 py-8 sm:px-8 sm:py-10">
       <p className="ds-eyebrow">Closing Time</p>
       <h1 className="ds-title">Never Miss A Deadline Alert</h1>
       <p className="ds-subtitle max-w-2xl">
