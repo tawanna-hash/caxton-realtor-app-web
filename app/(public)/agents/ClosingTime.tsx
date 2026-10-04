@@ -1003,6 +1003,21 @@ export default function ClosingTime({
     rail.addEventListener('click', onClick);
     return () => rail.removeEventListener('click', onClick);
   }, [ready]);
+  const BROKER_FOOTER_KEY = `closing-time-broker-footer:${realtorId}`;
+  const [brokerFooter, setBrokerFooter] = useState({ brokerage: '', address: '', agentId: '', agentName: '' });
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(BROKER_FOOTER_KEY) ?? 'null');
+      if (saved && typeof saved === 'object') setBrokerFooter((current) => ({ ...current, ...saved }));
+    } catch { /* storage unavailable */ }
+  }, [BROKER_FOOTER_KEY]);
+  const updateBrokerFooter = (key: 'brokerage' | 'address' | 'agentId' | 'agentName', value: string) => {
+    setBrokerFooter((current) => {
+      const next = { ...current, [key]: value };
+      try { window.localStorage.setItem(BROKER_FOOTER_KEY, JSON.stringify(next)); } catch { /* storage unavailable */ }
+      return next;
+    });
+  };
   const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
@@ -2792,6 +2807,19 @@ export default function ClosingTime({
                           values={currentFormValues}
                           onFieldChange={updateTrecFormField}
                         />
+                        <div className="grid gap-2 border-t border-slate-200 bg-white p-3 sm:grid-cols-[1fr_1.6fr_0.7fr_1fr]" aria-label="Brokerage and agent details">
+                          {([['brokerage', 'Brokerage'], ['address', 'Brokerage Address'], ['agentId', 'Agent ID'], ['agentName', 'Agent Name']] as const).map(([key, label]) => (
+                            <label key={key} className="block min-w-0">
+                              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</span>
+                              <input
+                                value={brokerFooter[key]}
+                                onChange={(event) => updateBrokerFooter(key, event.target.value)}
+                                placeholder={label}
+                                className="w-full rounded-lg border border-slate-200 bg-[#F6F3FB] px-3 py-2 text-center text-sm text-slate-900 outline-none focus:border-[#301D5D]"
+                              />
+                            </label>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <div className="mt-4 flex flex-col gap-3 rounded-md border border-slate-200 bg-[#FCFBF9] p-3 sm:flex-row sm:items-center sm:justify-between">
