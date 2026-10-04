@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, type ReactNode } from 'react';
-import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
+import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, MoreHorizontal, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import { PURCHASE_FOLDERS, PURCHASE_REQUIRED_IDS } from './purchase-documents';
 
@@ -279,8 +279,53 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     const stat = (label: string, value: string, tone?: string) => (
       <div className="min-w-0"><p className="ds-eyebrow">{label}</p><p className={`mt-1 text-xl font-semibold ${tone ?? 'text-slate-900'}`}>{value}</p></div>
     );
+    type PartyRow = { id: string; name: string; role: string; sub: string; email: string; phone: string; menu?: boolean };
+    const clientRe = /buyer|seller|client|tenant|landlord|owner/i;
+    const sideRe = /agent|coordinator|broker|realtor/i;
+    const known = new Set(deal.clientContacts.map((p) => p.name.trim().toLowerCase()));
+    const fromNames = (names: string, role: string): PartyRow[] => (names || '').split(/\s*(?:&|,|\band\b)\s*/i).map((n) => n.trim()).filter((n) => n && !known.has(n.toLowerCase())).map((n) => ({ id: `n-${role}-${n}`, name: n, role, sub: 'Your client', email: '', phone: '' }));
+    const yourSide: PartyRow[] = [
+      ...deal.clientContacts.filter((p) => !p.role || clientRe.test(p.role) || sideRe.test(p.role)).map((p) => ({ id: p.id, name: p.name, role: p.role || 'Client', sub: !p.role || clientRe.test(p.role) ? 'Your client' : (p.email ?? ''), email: p.email ?? '', phone: p.phone ?? '', menu: Boolean(p.role && sideRe.test(p.role)) })),
+      ...fromNames(deal.buyerNames, 'Buyer'),
+      ...fromNames(deal.sellerNames, 'Seller'),
+    ];
+    const external: PartyRow[] = [
+      ...deal.clientContacts.filter((p) => p.role && !clientRe.test(p.role) && !sideRe.test(p.role)).map((p) => ({ id: p.id, name: p.name, role: p.role as string, sub: p.email ?? '', email: p.email ?? '', phone: p.phone ?? '' })),
+      ...deal.serviceProviders.map((p) => ({ id: p.id, name: p.name, role: p.category, sub: p.email ?? '', email: p.email ?? '', phone: p.phone ?? '' })),
+    ];
+    const roleTone = () => ['border-[#E6E5EC] bg-[#F6F3FB] text-[#301D5D]', 'bg-[#EFEAF8] text-[#301D5D]'];
+    const partyRow = (p: PartyRow) => {
+      const [pill, avatar] = roleTone();
+      return (
+        <div key={p.id} className="flex items-start gap-3 border-b border-[#F1F0F5] px-4 py-3 last:border-0">
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${avatar}`} aria-hidden="true">{initials(p.name)}</span>
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-center gap-1.5"><span className="text-sm font-semibold text-slate-900">{p.name}</span><span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize ${pill}`}>{p.role}</span></span>
+            {p.sub ? <span className="mt-0.5 block truncate text-xs text-slate-500">{p.sub}</span> : null}
+          </span>
+          <span className="flex shrink-0 items-center gap-3 pt-1.5 text-slate-400">
+            {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : <Mail className="h-4 w-4 opacity-40" aria-hidden="true" />}
+            {p.phone ? <a href={`tel:${p.phone}`} aria-label={`Call ${p.name}`} className="hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : <Phone className="h-4 w-4 opacity-40" aria-hidden="true" />}
+            {p.menu ? <MoreHorizontal className="h-4 w-4" aria-hidden="true" /> : null}
+          </span>
+        </div>
+      );
+    };
+    const partiesCard = (
+      <div className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white self-start">
+        <div className="flex items-center justify-between px-4 py-3.5">
+          <p className="text-base font-semibold text-slate-900">Parties</p>
+          <button type="button" className="!border-0 !bg-transparent !text-slate-500 hover:!text-[#301D5D]" onClick={() => onOpenView('d-people')}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add</button>
+        </div>
+        <p className="border-y border-[#F1F0F5] bg-[#F6F3FB] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Your side</p>
+        {yourSide.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">No parties added.</p> : yourSide.map(partyRow)}
+        {external.length > 0 && <p className="border-y border-[#F1F0F5] bg-[#F6F3FB] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">External parties</p>}
+        {external.map(partyRow)}
+      </div>
+    );
     return (
       <div className="ds-page" data-testid="deal-snapshot">
+        <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="grid gap-3 md:grid-cols-2">
           <div className="ds-card">
             <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">Tasks</p><button type="button" onClick={() => onOpenView('tasks')}>View all</button></div>
@@ -339,6 +384,8 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               {stat('Showings', String(deal.offersShowings.filter((x) => x.kind === 'showing').length))}
             </div>
           </div>
+        </div>
+        {partiesCard}
         </div>
       </div>
     );
