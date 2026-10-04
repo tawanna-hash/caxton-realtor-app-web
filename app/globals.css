@@ -1584,3 +1584,10 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-dealnav button { height: 2rem; min-height: 0; padding: 0 0.625rem; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: #5B5870; font-size: 0.8125rem; font-weight: 500; margin-bottom: -1px; }
 #agent-desk .ds-dealnav button:hover { background: transparent; color: #301D5D; border-bottom-color: #D9CFF0; }
 #agent-desk .ds-dealnav button[aria-current='page'] { background: transparent; color: #301D5D; font-weight: 600; border-bottom-color: #301D5D; }
+
+#agent-desk .ds-dealnav-menu { position: absolute; left: 0; top: 100%; z-index: 20; min-width: 10rem; padding: 0.25rem; background: #fff; border: 1px solid var(--d-line); border-radius: 10px; display: flex; flex-direction: column; }
+#agent-desk .ds-dealnav .ds-dealnav-menu button { height: 2rem; margin: 0; width: 100%; justify-content: flex-start; text-align: left; border: 0; border-radius: 6px; padding: 0 0.625rem; }
+#agent-desk .ds-dealnav .ds-dealnav-menu button:hover { background: #EFEAF8; color: #301D5D; border: 0; }
+#agent-desk .ds-dealnav button[aria-expanded] { background: transparent; border: 0; border-bottom: 2px solid transparent; color: #5B5870; }
+#agent-desk .ds-dealnav button[aria-expanded='true'] { color: #301D5D; }
+#agent-desk .ds-dealnav button[aria-expanded][aria-current='page'] { border-bottom-color: #301D5D; color: #301D5D; font-weight: 600; }

@@ -1020,6 +1020,7 @@ export default function ClosingTime({
       if (saved && typeof saved === 'object') setBrokerFooter((current) => ({ ...current, ...saved }));
     } catch { /* storage unavailable */ }
   }, [BROKER_FOOTER_KEY]);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
   const [reviewState, setReviewState] = useState<{ status: 'idle' | 'sending' | 'sent' | 'error'; message: string }>({ status: 'idle', message: '' });
@@ -2426,12 +2427,22 @@ export default function ClosingTime({
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
               <nav aria-label="Deal sections" className="ds-dealnav mb-4">
-                {([['Deal', ['d-overview', 'd-documents', 'd-people']], ['Contract', ['transaction', 'coordinator']], ['Work', ['tasks', 'readiness', 'audit']], ['Resources', ['d-utilities']]] as const).map(([group, ids]) => (
+                {([['Deal', ['d-overview', 'd-documents', 'd-people']], ['Contract', ['transaction', 'coordinator']], ['Work', ['tasks', 'readiness', 'audit']]] as const).map(([group, ids]) => (
                   <div key={group} className="ds-dealnav-group" role="group" aria-label={group}>
                     <span className="ds-dealnav-label">{group}</span>
                     {DEAL_TABS.filter((tab) => (ids as readonly string[]).includes(tab.id)).map((tab) => (
                       <button key={tab.id} type="button" className="ds-tab" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)}>{tab.label}</button>
                     ))}
+                    {group === 'Work' && (
+                      <span className="relative">
+                        <button type="button" className="ds-tab" aria-haspopup="menu" aria-expanded={resourcesOpen} aria-current={effectiveView === 'd-utilities' ? 'page' : undefined} onClick={() => setResourcesOpen((open) => !open)}>Resources ▾</button>
+                        {resourcesOpen && (
+                          <span role="menu" className="ds-dealnav-menu">
+                            <button type="button" role="menuitem" onClick={() => { setResourcesOpen(false); setDeskView('d-utilities'); }}>Utilities</button>
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </div>
                 ))}
               </nav>
