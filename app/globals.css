@@ -1478,18 +1478,26 @@ input[type='date']::-webkit-calendar-picker-indicator {
 /* Deal page: summary strip, progress stepper, parties */
 #agent-desk .ds-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; padding: 0; border: 0; background: transparent; }
 @media (min-width: 768px) { #agent-desk .ds-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-#agent-desk .ds-stepper { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); list-style: none; margin: 1.5rem 0 0; padding: 0; overflow-x: auto; }
-#agent-desk .ds-step { position: relative; min-width: 84px; padding-top: 1.625rem; }
-#agent-desk .ds-step::before { content: ''; position: absolute; top: 0.4375rem; left: 0.5rem; right: -0.5rem; height: 1.5px; background: var(--d-line); }
-#agent-desk .ds-step.is-last::before { display: none; }
-#agent-desk .ds-step.is-done::before { background: #2F7D5B; }
-#agent-desk .ds-step-dot { position: absolute; top: 0; left: 0; width: 0.9375rem; height: 0.9375rem; box-sizing: border-box; border-radius: 9999px; border: 1.5px dashed #C9C7D3; background: #fff; display: flex; align-items: center; justify-content: center; color: #fff; z-index: 1; }
-#agent-desk .ds-step.is-done .ds-step-dot { background: #2F7D5B; border: 1.5px solid #2F7D5B; }
-#agent-desk .ds-step.is-current .ds-step-dot { border: 1.5px solid #2F7D5B; background: #fff; }
+#agent-desk .ds-stepper { display: flex; list-style: none; margin: 1.5rem 0 0; padding: 0; overflow-x: auto; }
+#agent-desk .ds-step { position: relative; flex: 1 1 0; min-width: 96px; padding-top: 2rem; text-align: center; }
+#agent-desk .ds-step::before, #agent-desk .ds-step::after { content: ''; position: absolute; top: 0.6875rem; height: 2px; background: #E6E5EC; }
+#agent-desk .ds-step::before { left: 0; right: 50%; }
+#agent-desk .ds-step::after { left: 50%; right: 0; }
+#agent-desk .ds-step.prev-done::before, #agent-desk .ds-step.is-done::after { background: #2F7D5B; }
+#agent-desk .ds-step.is-first { text-align: left; }
+#agent-desk .ds-step.is-first::before, #agent-desk .ds-step.is-last::after { display: none; }
+#agent-desk .ds-step.is-first::after { left: 0.6875rem; }
 #agent-desk .ds-step.is-last { text-align: right; }
-#agent-desk .ds-step.is-last .ds-step-dot { left: auto; right: 0; }
-#agent-desk .ds-step-label { display: block; font-size: 0.6875rem; font-weight: 500; color: var(--d-ink); line-height: 1.3; }
-#agent-desk .ds-step-sub { display: block; min-height: 1rem; margin-top: 0.125rem; font-size: 0.625rem; color: var(--d-muted); }
+#agent-desk .ds-step.is-last::before { right: 0.6875rem; }
+#agent-desk .ds-step-dot { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 1.4375rem; height: 1.4375rem; box-sizing: border-box; border-radius: 9999px; border: 2px dashed #C9C7D3; background: #fff; display: flex; align-items: center; justify-content: center; color: #fff; z-index: 1; }
+#agent-desk .ds-step.is-first .ds-step-dot { left: 0; transform: none; }
+#agent-desk .ds-step.is-last .ds-step-dot { left: auto; right: 0; transform: none; }
+#agent-desk .ds-step.is-done .ds-step-dot { background: #2F7D5B; border: 2px solid #2F7D5B; }
+#agent-desk .ds-step.is-current .ds-step-dot { border: 2px solid #2F7D5B; background: #fff; }
+#agent-desk .ds-step-label { display: block; font-size: 0.8125rem; font-weight: 400; color: #6B6A75; line-height: 1.3; }
+#agent-desk .ds-step.is-current .ds-step-label { color: var(--d-ink); font-weight: 500; }
+#agent-desk .ds-step-sub { display: block; min-height: 1rem; margin-top: 0.125rem; font-size: 0.75rem; color: #A3A2AD; }
+#agent-desk .ds-step.is-current .ds-step-sub { color: var(--d-ink); }
 #agent-desk .ds-avatar { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 9999px; background: var(--d-lav-soft); color: var(--d-purple); font-size: 0.6875rem; font-weight: 600; margin-right: 0.625rem; }
 
 /* Small section labels stay ALL CAPS (the global heading capitalize rule is unlayered and would otherwise win) */

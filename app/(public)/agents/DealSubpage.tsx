@@ -131,17 +131,18 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   };
   const shortDate = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   const completedDeal = deal.workflowStatus === 'completed';
-  const showings = deal.offersShowings.filter((x) => x.kind === 'showing').map((x) => x.date).filter(Boolean).sort();
-  const offers = deal.offersShowings.filter((x) => x.kind === 'offer').map((x) => x.date).filter(Boolean).sort();
-  const underContract = Boolean(deal.effectiveDate);
-  const deadlineDates = [deal.optionPeriodDays, deal.appraisalDeadlineDays, deal.titleCommitmentDays].map((d) => addDays(deal.effectiveDate, d)).filter(Boolean).sort();
+  const optionEnd = addDays(deal.effectiveDate, deal.optionPeriodDays);
+  const appraisalEnd = addDays(deal.effectiveDate, deal.appraisalDeadlineDays);
+  const requiredAllIn = PURCHASE_REQUIRED_IDS.every((id) => deal.documentChecks[id]);
   const rawMilestones: { key: string; label: string; date: string; done: boolean }[] = [
-    { key: 'showing', label: 'Showing', date: showings[0] ?? '', done: showings.length > 0 || offers.length > 0 || underContract },
-    { key: 'offer', label: 'Offer', date: offers[0] ?? '', done: offers.length > 0 || underContract },
-    { key: 'contract', label: 'Contract', date: deal.effectiveDate, done: underContract },
-    { key: 'deadlines', label: 'Deadlines', date: deadlineDates.find((d) => d >= today) ?? deadlineDates[deadlineDates.length - 1] ?? '', done: deadlineDates.length > 0 && deadlineDates.every((d) => d <= today) },
+    { key: 'contract', label: 'Under contract', date: deal.effectiveDate, done: Boolean(deal.effectiveDate) && deal.effectiveDate <= today },
+    { key: 'earnest', label: 'Earnest money received', date: deal.earnestMoneyDeliveredDate || addDays(deal.effectiveDate, 3), done: Boolean(deal.earnestMoneyDeliveredDate) },
+    { key: 'inspection', label: 'Inspection resolved', date: optionEnd, done: Boolean(optionEnd) && optionEnd <= today },
+    { key: 'appraisal', label: 'Appraisal complete', date: appraisalEnd, done: Boolean(appraisalEnd) && appraisalEnd <= today },
+    { key: 'clear', label: 'Clear to close', date: '', done: requiredAllIn },
+    { key: 'prep', label: 'Closing prep', date: '', done: completedDeal || (Boolean(deal.closingDate) && deal.closingDate <= today) },
     { key: 'closing', label: 'Closing', date: deal.closingDate, done: completedDeal || (Boolean(deal.closingDate) && deal.closingDate < today) },
-    { key: 'compliance', label: 'Compliance', date: deal.closeoutDate, done: completedDeal },
+    { key: 'wrap', label: 'File wrap-up', date: deal.closeoutDate, done: completedDeal },
   ];
   const firstOpen = rawMilestones.findIndex((m) => !m.done);
   const milestones = rawMilestones.map((m, index) => ({ ...m, current: index === firstOpen }));
@@ -293,8 +294,8 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       </div>
       <ol className="ds-stepper" aria-label="Deal progress">
         {milestones.map((m, index) => (
-          <li key={m.key} className={`ds-step ${m.done ? 'is-done' : ''} ${m.current ? 'is-current' : ''} ${index === milestones.length - 1 ? 'is-last' : ''}`} aria-current={m.current ? 'step' : undefined}>
-            <span className="ds-step-dot">{m.done ? <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden="true" /> : null}</span>
+          <li key={m.key} className={`ds-step ${m.done ? 'is-done' : ''} ${m.current ? 'is-current' : ''} ${index === 0 ? 'is-first' : ''} ${index === milestones.length - 1 ? 'is-last' : ''} ${index > 0 && milestones[index - 1].done ? 'prev-done' : ''}`} aria-current={m.current ? 'step' : undefined}>
+            <span className="ds-step-dot">{m.done ? <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" /> : null}</span>
             <span className="ds-step-label">{m.label}</span>
             <span className="ds-step-sub">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
           </li>
