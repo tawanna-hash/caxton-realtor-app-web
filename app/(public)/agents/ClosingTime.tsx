@@ -2428,7 +2428,7 @@ export default function ClosingTime({
                   <div key={group} className="ds-dealnav-group" role="group" aria-label={group}>
                     <span className="ds-dealnav-label">{group}</span>
                     {DEAL_TABS.filter((tab) => (ids as readonly string[]).includes(tab.id)).map((tab) => (
-                      <button key={tab.id} type="button" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)}>{tab.label}</button>
+                      <button key={tab.id} type="button" className="ds-tab" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)}>{tab.label}</button>
                     ))}
                   </div>
                 ))}
