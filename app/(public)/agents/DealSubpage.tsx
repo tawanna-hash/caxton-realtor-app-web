@@ -47,177 +47,6 @@ const btn = 'inline-flex h-[34px] items-center gap-1.5 rounded-lg border border-
 const btnPrimary = 'inline-flex h-[34px] items-center gap-1.5 rounded-lg bg-[#301D5D] px-3 text-sm font-semibold text-white hover:bg-[#42277C]';
 
 
-const STAGE_LABELS: Record<string, string> = {
-  intake: 'Intake', contract_review: 'Contract Review', active_transaction: 'Active Deal', closing: 'Closing Prep', completed: 'Completed',
-};
-const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '?';
-
-function newId(prefix: string) {
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
-}
-
-type Props = {
-  deal: AgentDeal | undefined;
-  today: string;
-  locked: boolean;
-  health: { label: string; tone: string };
-  statusLabels: Record<string, string>;
-  statuses: readonly string[];
-  documentGroups: readonly { id: string; label: string; items: readonly { id: string; label: string }[] }[];
-  nextDeadline?: { label: string; date: string };
-  formatDate: (value: string) => string;
-  countdownLabel: string;
-  onUpdate: <K extends keyof AgentDeal>(key: K, value: AgentDeal[K]) => void;
-  onBack: () => void;
-  onOpenView: (view: string) => void;
-  section?: Tab;
-};
-
-export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section }: Props) {
-  const [tab, setTab] = useState<Tab>(section ?? 'tasks');
-  const [dragOver, setDragOver] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [photoError, setPhotoError] = useState('');
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const uploadPhoto = async (file?: File) => {
-    if (!file) return;
-    setPhotoError('');
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { setPhotoError('Use a JPG, PNG, or WebP image.'); return; }
-    if (file.size > 8 * 1024 * 1024) { setPhotoError('Image must be 8 MB or smaller.'); return; }
-    setUploading(true);
-    try {
-      const body = new FormData();
-      body.append('file', file);
-      const res = await fetch('/api/agent-command-center/photo', { method: 'POST', body });
-      const data = await res.json().catch(() => ({})) as { url?: string; error?: string };
-      if (!res.ok || !data.url) throw new Error(data.error || 'Upload failed. Try again.');
-      onUpdate('photoUrl', data.url);
-    } catch (err) {
-      setPhotoError(err instanceof Error ? err.message : 'Upload failed. Try again.');
-    } finally {
-      setUploading(false);
-    }
-  };
-  const [providerCategory, setProviderCategory] = useState<string | null>(null);
-  const [showPersonForm, setShowPersonForm] = useState(false);
-
-  if (!deal) {
-    return (
-      <div className="ds-page">
-        <button type="button" className="ds-back" onClick={onBack}><ChevronLeft className="h-4 w-4" aria-hidden="true" /> Deals</button>
-        <p className="mt-4 text-sm text-slate-500">That deal is no longer available.</p>
-      </div>
-    );
-  }
-
-  const clients = [deal.buyerNames, deal.sellerNames].filter(Boolean);
-  const people = deal.clientContacts;
-  const docById = new Map(deal.documents.map((d) => [d.id, d]));
-  const prefs = deal.preferences;
-  const setPref = (key: keyof AgentDeal['preferences'], value: string) => onUpdate('preferences', { ...prefs, [key]: value });
-  const nextTask = deal.tasks.find((t) => !t.complete);
-
-  const addTemplate = (id: string) => {
-    const template = TASK_TEMPLATES.find((t) => t.id === id);
-    if (!template) return;
-    const existing = new Set(deal.tasks.map((t) => t.title));
-    const added = template.tasks.filter((title) => !existing.has(title)).map((title) => ({
-      id: newId('task'), title, dueDate: '', priority: 'normal' as const, status: 'todo' as const, complete: false,
-    }));
-    onUpdate('tasks', [...deal.tasks, ...added].slice(0, 200));
-  };
-
-  const stageIds = statuses.filter((status) => status !== 'cancelled');
-  const stageIndex = Math.max(0, stageIds.indexOf(deal.workflowStatus));
-  const openTasks = deal.tasks.filter((t) => !t.complete);
-  const missingRequired = PURCHASE_FOLDERS.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' && !deal.documentChecks[doc.id]);
-  const price = deal.contractDetails?.salesPrice?.trim();
-  const sideBlocks = {
-    property: (
-<>
-          <h3 className="ds-side-title">Focus property</h3>
-          <div className="ds-card !p-0 overflow-hidden">
-            <div
-              className={`relative ${dragOver ? 'bg-[#EFEAF8] outline outline-2 -outline-offset-2 outline-[#301D5D]' : ''}`}
-              onDragOver={(e) => { if (locked) return; e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => { e.preventDefault(); setDragOver(false); if (!locked) void uploadPhoto(e.dataTransfer.files?.[0]); }}
-            >
-              {deal.photoUrl
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={deal.photoUrl} alt={deal.propertyAddress || deal.title} className="h-44 w-full object-cover" />
-                : <div className="flex h-32 items-center justify-center bg-[#F6F3FB] text-sm text-slate-400">No photo</div>}
-              {!locked && (
-                <button type="button" onClick={() => photoInputRef.current?.click()} disabled={uploading}
-                  className="absolute inset-x-3 bottom-3 rounded-md border border-dashed border-slate-300 bg-white/90 px-3 py-2 text-xs font-medium text-slate-600">
-                  {uploading ? 'Uploading…' : dragOver ? 'Drop image to upload' : deal.photoUrl ? 'Drop a new image or click to replace' : 'Drop an image here or click to upload'}
-                </button>
-              )}
-              <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { void uploadPhoto(e.target.files?.[0]); e.target.value = ''; }} />
-            </div>
-            {photoError && <p className="px-4 pt-2 text-xs text-red-600" role="alert">{photoError}</p>}
-            <div className="p-4">
-              <p className="font-semibold text-slate-900">{deal.propertyAddress || deal.title}</p>
-              <p className="mt-1 text-xs text-slate-500">{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing date not set'}</p>
-              {!locked && <input aria-label="Photo URL" className={`${input} mt-3`} placeholder="Photo URL" value={deal.photoUrl} onChange={(e) => onUpdate('photoUrl', e.target.value)} />}
-            </div>
-          </div>
-</>
-    ),
-    parties: (
-<>
-          <h3 className="ds-side-title">Parties</h3>
-          <div className="ds-card ds-list">
-            {people.length === 0 && <p className="text-sm text-slate-500">No parties added.</p>}
-            {people.slice(0, 8).map((p) => (
-              <div key={p.id} className="ds-list-row">
-                <span className="ds-avatar" aria-hidden="true">{initials(p.name)}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold text-slate-900">{p.name}</span>
-                  <span className="mt-0.5 inline-block rounded-full bg-[#EFEAF8] px-2 py-0.5 text-[11px] font-medium capitalize text-[#301D5D]">{p.role}</span>
-                </span>
-                {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : null}
-              </div>
-            ))}
-            <button type="button" onClick={() => onOpenView('d-people')} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left text-xs text-slate-500">Manage people</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
-          </div>
-</>
-    ),
-    workspace: (
-<>
-          <h3 className="ds-side-title">Workspace</h3>
-          <div className="ds-card ds-list">
-            {([['transaction', 'Current Deal'], ['coordinator', 'Deal Settings'], ['readiness', 'Readiness Check'], ['audit', 'Audit Trail']] as const).map(([view, label]) => (
-              <button key={view} type="button" onClick={() => onOpenView(view)} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left">{label}</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
-            ))}
-          </div>
-</>
-    ),
-  };
-  const snapCards: Partial<Record<SnapId, ReactNode>> = {
-    next: (
-              <div className="ds-card">
-                <label className="ds-field-label" htmlFor="deal-next-action">Next action</label>
-                <input id="deal-next-action" className={`${input} mt-1`} disabled={locked} value={deal.nextAction} placeholder={nextTask ? nextTask.title : nextDeadline ? `${nextDeadline.label} · ${formatDate(nextDeadline.date)}` : 'What happens next?'} onChange={(e) => onUpdate('nextAction', e.target.value)} />
-                <label className="ds-field-label mt-4 block" htmlFor="deal-notes">Notes</label>
-                <textarea id="deal-notes" rows={3} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" disabled={locked} value={deal.notes} placeholder="Signing details, client requests, reminders" onChange={(e) => onUpdate('notes', e.target.value)} />
-              </div>
-    ),
-    preferences: (
-              <div className="ds-card">
-                <p className="ds-side-title !mt-0">Preferences</p>
-                <div className="ds-fields mt-3">
-                  {([['budget', 'Budget'], ['financing', 'Financing'], ['targetAreas', 'Target areas'], ['mustHaves', 'Must-haves'], ['timeframe', 'Timeframe'], ['minBeds', 'Min beds']] as const).map(([key, label]) => (
-                    <div key={key}><label className="ds-field-label" htmlFor={`pref-${key}`}>{label}</label><input id={`pref-${key}`} className={`${input} mt-1`} disabled={locked} value={prefs[key]} onChange={(e) => setPref(key, e.target.value)} /></div>
-                  ))}
-                </div>
-              </div>
-    ),
-    property: <div>{sideBlocks.property}</div>,
-    offers: (
-              <div className="scroll-mt-24"><OffersShowings deal={deal} locked={locked} formatDate={formatDate} onUpdate={onUpdate} /></div>
-    ),
-  };
   const tabs: [Tab, string][] = [['tasks', `Tasks ${deal.tasks.length}`], ['history', 'History']];
 
   return (
@@ -276,17 +105,13 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         ))}
       </div>
       <ol className="ds-stepper" aria-label="Deal progress">
-        {stageIds.map((stage, index) => {
-          const done = index < stageIndex || deal.workflowStatus === 'completed';
-          const current = index === stageIndex && deal.workflowStatus !== 'completed';
-          return (
-            <li key={stage} className={`ds-step ${done ? 'is-done' : ''} ${current ? 'is-current' : ''}`} aria-current={current ? 'step' : undefined}>
-              <span className="ds-step-dot">{done ? <Check className="h-3 w-3" aria-hidden="true" /> : null}</span>
-              <span className="ds-step-label">{STAGE_LABELS[stage] ?? stage}</span>
-              <span className="ds-step-sub">{done ? 'Done' : current ? 'Now' : ''}</span>
-            </li>
-          );
-        })}
+        {milestones.map((m, index) => (
+          <li key={m.key} className={`ds-step ${m.done ? 'is-done' : ''} ${m.current ? 'is-current' : ''} ${index === milestones.length - 1 ? 'is-last' : ''}`} aria-current={m.current ? 'step' : undefined}>
+            <span className="ds-step-dot">{m.done ? <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden="true" /> : null}</span>
+            <span className="ds-step-label">{m.label}</span>
+            <span className="ds-step-sub">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
+          </li>
+        ))}
       </ol>
 
       </>)}
