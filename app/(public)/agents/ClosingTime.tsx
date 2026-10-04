@@ -2840,10 +2840,18 @@ export default function ClosingTime({
                   )}
                 </div>
 
-                <div className="mt-7 min-w-0">
+                <div className="mt-7 grid min-w-0 gap-3 sm:grid-cols-3">
                   <label className="block min-w-0">
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Buyer Or Seller Last Name</span>
-                    <input value={activeDeal.title} onChange={(event) => updateActiveDeal('title', event.target.value)} className="h-[46px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-base outline-none focus:border-[#301D5D] sm:max-w-xl sm:text-sm" placeholder="Buyer Or Seller Last Name" />
+                    <input value={activeDeal.title} onChange={(event) => updateActiveDeal('title', event.target.value)} className="h-[40px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Buyer Or Seller Last Name" />
+                  </label>
+                  <label className="block min-w-0">
+                    <span className="mb-2 block text-sm font-semibold text-slate-800">Buyer(s)</span>
+                    <input value={activeDeal.buyerNames} onChange={(event) => updateActiveDeal('buyerNames', event.target.value)} className="h-[40px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Buyer Names" />
+                  </label>
+                  <label className="block min-w-0">
+                    <span className="mb-2 block text-sm font-semibold text-slate-800">Seller(s)</span>
+                    <input value={activeDeal.sellerNames} onChange={(event) => updateActiveDeal('sellerNames', event.target.value)} className="h-[40px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Seller Names" />
                   </label>
                 </div>
 
