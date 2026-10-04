@@ -71,15 +71,6 @@ const QUICK_TOOLS = [
     tone: 'bg-white text-slate-900 border-slate-200',
     iconTone: 'bg-[#EFEAF8] text-[#5B3FA0]',
   },
-  {
-    href: '/calendar',
-    eyebrow: 'In your market',
-    title: 'Local calendar',
-    description: 'Keep client conversations local with current events and deadlines.',
-    icon: CalendarDays,
-    tone: 'bg-white text-slate-900 border-slate-200',
-    iconTone: 'bg-[#EFEAF8] text-[#5B3FA0]',
-  },
 ] as const;
 
 // Calculators that open inside the Agent Desk instead of the public site.
@@ -116,7 +107,7 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
             )}
             <CollapseToggle {...toggleProps('calculators', 'calculators', { mobileOpen: true })} />
           </div>
-          <div className="mt-6 grid gap-4 sm:mt-8 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-4 sm:mt-8 md:grid-cols-3">
             {QUICK_TOOLS.map((tool) => {
               const Icon = tool.icon;
               const deskView = DESK_TOOL_VIEWS[tool.href];
