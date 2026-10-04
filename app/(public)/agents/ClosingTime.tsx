@@ -2350,13 +2350,6 @@ export default function ClosingTime({
               </div>
               {deals.length > 0 && (
                 <div className="flex min-w-0 flex-wrap gap-2 sm:ml-auto">
-                  <button
-                    type="button"
-                    onClick={() => setNewDealPickerOpen(true)}
-                    className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"
-                  >
-                    Start A New Transaction
-                  </button>
                   {activeDeal && (
                     <div
                       onDragOver={(event) => {
@@ -2687,7 +2680,7 @@ export default function ClosingTime({
                       <p className="text-xs font-semibold text-slate-600">{currentTrecFormVersion.fields.length} total fillable controls · Effective {currentTrecFormVersion.effectiveDate}</p>
                     </div>
                     <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                      <p className="max-w-3xl text-sm leading-6 text-slate-600">Complete the contract and attached addenda directly on their official PDFs. Values remain separated by form and are saved with this transaction. Use Upload &amp; Auto-fill Contract beside Start A New Transaction to import values.</p>
+                      <p className="max-w-3xl text-sm leading-6 text-slate-600">Complete the contract and attached addenda directly on their official PDFs. Values remain separated by form and are saved with this transaction. Use Upload &amp; Auto-fill Contract to import values.</p>
                     </div>
                     <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600">
                       <Save className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
