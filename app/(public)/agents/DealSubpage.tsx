@@ -101,7 +101,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   if (!deal) {
     return (
       <div className="ds-page">
-        <button type="button" className="ds-back" onClick={onBack}><ChevronLeft className="h-4 w-4" aria-hidden="true" /> Closings</button>
+        <button type="button" className="ds-back" onClick={onBack}><ChevronLeft className="h-4 w-4" aria-hidden="true" /> Deals</button>
         <p className="mt-4 text-sm text-slate-500">That deal is no longer available.</p>
       </div>
     );
@@ -141,7 +141,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 
   return (
     <div className="ds-page" data-testid="deal-subpage">
-      <button type="button" className="ds-back" onClick={onBack}><ChevronLeft className="h-4 w-4" aria-hidden="true" /> Closings</button>
+      <button type="button" className="ds-back" onClick={onBack}><ChevronLeft className="h-4 w-4" aria-hidden="true" /> Deals</button>
       <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="ds-title">{deal.propertyAddress || deal.title}</h2>

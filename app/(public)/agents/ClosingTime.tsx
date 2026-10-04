@@ -1053,7 +1053,7 @@ export default function ClosingTime({
   const [contactsQuery, setContactsQuery] = useState('');
   const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
-  const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView === 'deals' ? 'closings' : deskView;
+  const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
   useEffect(() => {
     DESK_VIEWS.find((v) => v.id === effectiveView)?.keys.forEach((key) => reveal(key));
   }, [effectiveView, reveal]);
@@ -2032,6 +2032,11 @@ export default function ClosingTime({
                   <Users className="ct-navicon" aria-hidden="true" /><span>Contacts</span>
                 </button>
               </li>
+              <li>
+                <button type="button" aria-current={effectiveView === 'deals' || effectiveView === 'deal-page' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('deals'); }} className="ds-navbtn">
+                  <ListTodo className="ct-navicon" aria-hidden="true" /><span>Deals</span>
+                </button>
+              </li>
             </ul>
             <div className="ds-group">
               <p className="ds-group-label">Pipeline</p>
@@ -2039,7 +2044,7 @@ export default function ClosingTime({
             </div>
             <ul className="ds-nav-top ds-nav-closings">
               <li>
-                <button type="button" aria-current={effectiveView === 'closings' || effectiveView === 'deals' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('closings'); }} className="ds-navbtn">
+                <button type="button" aria-current={effectiveView === 'closings' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('closings'); }} className="ds-navbtn">
                   <Landmark className="ct-navicon" aria-hidden="true" /><span>Closings</span>
                 </button>
               </li>
@@ -2088,9 +2093,9 @@ export default function ClosingTime({
             {effectiveView !== 'overview' && effectiveView !== 'deal-page' && (() => {
               const toDeals = DEAL_TABS.some((t) => t.id === effectiveView);
               return (
-                <button type="button" className="ds-back mb-3" aria-label={toDeals ? 'Back to Closings' : effectiveView.startsWith('calc-') ? 'Back to Calculators' : effectiveView === 'alert-setup' ? 'Back to Deal Settings' : 'Back to Today'}
-                  onClick={() => { if (toDeals) { setWorkspacePage(2); setDeskView('closings'); } else if (effectiveView.startsWith('calc-')) { setDeskView('tools'); } else if (effectiveView === 'alert-setup') { setDeskView('coordinator'); } else { setWorkspacePage(1); } }}>
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> {toDeals ? 'Closings' : effectiveView.startsWith('calc-') ? 'Calculators' : effectiveView === 'alert-setup' ? 'Deal Settings' : 'Today'}
+                <button type="button" className="ds-back mb-3" aria-label={toDeals ? 'Back to Deals' : effectiveView.startsWith('calc-') ? 'Back to Calculators' : effectiveView === 'alert-setup' ? 'Back to Deal Settings' : 'Back to Today'}
+                  onClick={() => { if (toDeals) { setWorkspacePage(2); setDeskView('deals'); } else if (effectiveView.startsWith('calc-')) { setDeskView('tools'); } else if (effectiveView === 'alert-setup') { setDeskView('coordinator'); } else { setWorkspacePage(1); } }}>
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> {toDeals ? 'Deals' : effectiveView.startsWith('calc-') ? 'Calculators' : effectiveView === 'alert-setup' ? 'Deal Settings' : 'Today'}
                 </button>
               );
             })()}
@@ -2197,10 +2202,8 @@ export default function ClosingTime({
             })()}
             {effectiveView === 'closings' && (() => {
               const stageList = TREC_DEAL_WORKFLOW_STATUSES.filter((status) => status !== 'cancelled');
-              const cq = dealsQuery.trim().toLowerCase();
-              const matches = (deal: (typeof deals)[number]) => !cq || `${deal.propertyAddress} ${deal.title} ${deal.buyerNames} ${deal.sellerNames}`.toLowerCase().includes(cq);
-              const inFlight = deals.filter((deal) => !isDealClosedAndComplete(deal) && matches(deal)).sort((a, b) => (a.closingDate || '9999').localeCompare(b.closingDate || '9999'));
-              const closedList = deals.filter((deal) => isDealClosedAndComplete(deal) && matches(deal));
+              const inFlight = deals.filter((deal) => !isDealClosedAndComplete(deal)).sort((a, b) => (a.closingDate || '9999').localeCompare(b.closingDate || '9999'));
+              const closedList = deals.filter((deal) => isDealClosedAndComplete(deal));
               const typeLabel: Record<string, string> = { purchase: 'Buy side', listing_sale: 'Sell side', listing_lease: 'Lease listing', lease: 'Lease', real_estate_other: 'Other', other: 'Other' };
               const openDeal = (deal: (typeof deals)[number]) => { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setDeskView('deal-page'); };
               const row = (deal: (typeof deals)[number]) => {
@@ -2244,7 +2247,6 @@ export default function ClosingTime({
                     </div>
                     <button type="button" onClick={() => setNewDealPickerOpen(true)}><Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />New Contract</button>
                   </div>
-                  <input value={dealsQuery} onChange={(e) => setDealsQuery(e.target.value)} placeholder="Search closings" aria-label="Search closings" className="mt-4 h-8 w-full rounded-lg border border-[#E6E5EC] bg-white px-3 text-sm" />
                   <p className="mt-6 text-sm font-semibold text-slate-900">In Flight <span className="ds-chip ml-1 bg-[#EFEAF8] text-[#301D5D]">{inFlight.length}</span></p>
                   <ul className="ds-closing-list">{inFlight.length === 0 ? <li className="px-4 py-4 text-sm text-slate-500">No closings in flight.</li> : inFlight.map(row)}</ul>
                   <p className="mt-6 text-sm font-semibold text-slate-900">Closed</p>
@@ -2365,7 +2367,7 @@ export default function ClosingTime({
                   formatDate={formatDate}
                   countdownLabel={deal ? closingCountdownLabel(deal.closingDate, today) : ''}
                   onUpdate={updateActiveDeal}
-                  onBack={() => setDeskView('closings')}
+                  onBack={() => setDeskView('deals')}
                   onOpenView={(view) => { setWorkspacePage(2); setDeskView(view); }}
                 />
               );
