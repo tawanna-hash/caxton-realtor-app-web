@@ -968,6 +968,14 @@ export default function ClosingTime({
   const [dealsHealth, setDealsHealth] = useState('all');
   const [dealPageId, setDealPageId] = useState<string | null>(null);
   const [newDealPickerOpen, setNewDealPickerOpen] = useState(false);
+  // A refresh always lands at the top of the page instead of restoring the old scroll position.
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+    const toTop = () => window.scrollTo(0, 0);
+    toTop();
+    const timer = window.setTimeout(toTop, 150);
+    return () => window.clearTimeout(timer);
+  }, []);
   const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
