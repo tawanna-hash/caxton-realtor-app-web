@@ -2027,6 +2027,15 @@ export default function ClosingTime({
             </ul>
           </aside>
           <div data-desk-view={effectiveView} className="ds-main min-w-0">
+            {effectiveView !== 'overview' && effectiveView !== 'deal-page' && (() => {
+              const toDeals = DEAL_TABS.some((t) => t.id === effectiveView);
+              return (
+                <button type="button" className="ds-back mb-3" aria-label={toDeals ? 'Back to Deals' : 'Back to Today'}
+                  onClick={() => { if (toDeals) { setWorkspacePage(2); setDeskView('deals'); } else { setWorkspacePage(1); } }}>
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> {toDeals ? 'Deals' : 'Today'}
+                </button>
+              );
+            })()}
             <header className="ds-header">
               <div className="min-w-0">
                 <p className="ds-eyebrow">{new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
@@ -2277,7 +2286,7 @@ export default function ClosingTime({
                   <p className="ds-subtitle">TREC contracts and your brokerage forms, in one place.</p>
                 </div>
                 <div className="ml-auto flex shrink-0 items-center gap-2">
-                  <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#301D5D] hover:text-white sm:inline-flex">Verify on TREC</a>
+                  {formsLibraryTab === 'trec' && <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#301D5D] hover:text-white sm:inline-flex">Verify on TREC</a>}
                   <CollapseToggle {...toggleProps('trec-library', 'forms library')} />
                 </div>
               </div>
