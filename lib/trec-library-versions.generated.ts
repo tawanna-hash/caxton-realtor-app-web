@@ -19700,5 +19700,243 @@ export const GENERATED_TREC_FORM_VERSIONS: TrecFormVersion[] = [
     },
     "isActive": true,
     "createdAt": "2014-02-10T00:00:00.000Z"
+  },
+  {
+    "id": "built-in-trec-iabs-1-2",
+    "formFamily": "IABS",
+    "formNumber": "IABS 1-2",
+    "title": "Information About Brokerage Services",
+    "effectiveDate": "2026-01-01",
+    "pdfUrl": "/forms/trec-library/trec-IABS-1-2.pdf",
+    "pageCount": 1,
+    "fields": [
+      {
+        "id": "trec_IABS_p01_f001",
+        "page": 1,
+        "index": 1,
+        "type": "text",
+        "label": "Licensed Broker Broker Firm Name or",
+        "pdfFieldName": "Licensed Broker Broker Firm Name or"
+      },
+      {
+        "id": "trec_IABS_p01_f002",
+        "page": 1,
+        "index": 2,
+        "type": "text",
+        "label": "License No",
+        "pdfFieldName": "License No"
+      },
+      {
+        "id": "trec_IABS_p01_f003",
+        "page": 1,
+        "index": 3,
+        "type": "text",
+        "label": "Email",
+        "pdfFieldName": "Email"
+      },
+      {
+        "id": "trec_IABS_p01_f004",
+        "page": 1,
+        "index": 4,
+        "type": "text",
+        "label": "Phone",
+        "pdfFieldName": "Phone"
+      },
+      {
+        "id": "trec_IABS_p01_f005",
+        "page": 1,
+        "index": 5,
+        "type": "text",
+        "label": "Designated Broker of Firm",
+        "pdfFieldName": "Designated Broker of Firm"
+      },
+      {
+        "id": "trec_IABS_p01_f006",
+        "page": 1,
+        "index": 6,
+        "type": "text",
+        "label": "License No_2",
+        "pdfFieldName": "License No_2"
+      },
+      {
+        "id": "trec_IABS_p01_f007",
+        "page": 1,
+        "index": 7,
+        "type": "text",
+        "label": "Email_2",
+        "pdfFieldName": "Email_2"
+      },
+      {
+        "id": "trec_IABS_p01_f008",
+        "page": 1,
+        "index": 8,
+        "type": "text",
+        "label": "Phone_2",
+        "pdfFieldName": "Phone_2"
+      },
+      {
+        "id": "trec_IABS_p01_f009",
+        "page": 1,
+        "index": 9,
+        "type": "text",
+        "label": "Licensed Supervisor of Sales Agent",
+        "pdfFieldName": "Licensed Supervisor of Sales Agent"
+      },
+      {
+        "id": "trec_IABS_p01_f010",
+        "page": 1,
+        "index": 10,
+        "type": "text",
+        "label": "License No_3",
+        "pdfFieldName": "License No_3"
+      },
+      {
+        "id": "trec_IABS_p01_f011",
+        "page": 1,
+        "index": 11,
+        "type": "text",
+        "label": "Email_3",
+        "pdfFieldName": "Email_3"
+      },
+      {
+        "id": "trec_IABS_p01_f012",
+        "page": 1,
+        "index": 12,
+        "type": "text",
+        "label": "Phone_3",
+        "pdfFieldName": "Phone_3"
+      },
+      {
+        "id": "trec_IABS_p01_f013",
+        "page": 1,
+        "index": 13,
+        "type": "text",
+        "label": "Sales AgentAssociates Name",
+        "pdfFieldName": "Sales AgentAssociates Name"
+      },
+      {
+        "id": "trec_IABS_p01_f014",
+        "page": 1,
+        "index": 14,
+        "type": "text",
+        "label": "License No_4",
+        "pdfFieldName": "License No_4"
+      },
+      {
+        "id": "trec_IABS_p01_f015",
+        "page": 1,
+        "index": 15,
+        "type": "text",
+        "label": "Email_4",
+        "pdfFieldName": "Email_4"
+      },
+      {
+        "id": "trec_IABS_p01_f016",
+        "page": 1,
+        "index": 16,
+        "type": "text",
+        "label": "Phone_4",
+        "pdfFieldName": "Phone_4"
+      },
+      {
+        "id": "trec_IABS_p01_f017",
+        "page": 1,
+        "index": 17,
+        "type": "text",
+        "label": "Date",
+        "pdfFieldName": "Date"
+      },
+      {
+        "id": "trec_IABS_p01_f018",
+        "page": 1,
+        "index": 18,
+        "type": "text",
+        "label": "BuyerTenantSellerLandlord Initials",
+        "pdfFieldName": "BuyerTenantSellerLandlord Initials"
+      },
+      {
+        "id": "trec_IABS_p01_f019",
+        "page": 1,
+        "index": 19,
+        "type": "text",
+        "label": "undefined",
+        "pdfFieldName": "undefined"
+      }
+    ],
+    "pageSections": {
+      "1": "Official TREC page 1"
+    },
+    "isActive": true,
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "built-in-trec-cn-1-5",
+    "formFamily": "CN",
+    "formNumber": "CN 1-5",
+    "title": "Consumer Protection Notice",
+    "effectiveDate": "2023-09-01",
+    "pdfUrl": "/forms/trec-library/trec-CN-1-5.pdf",
+    "pageCount": 1,
+    "fields": [],
+    "pageSections": {
+      "1": "Official TREC page 1"
+    },
+    "isActive": true,
+    "createdAt": "2023-09-01T00:00:00.000Z"
+  },
+  {
+    "id": "built-in-trec-erw-4-1",
+    "formFamily": "ERW",
+    "formNumber": "ERW 4-1",
+    "title": "Notice Concerning Easements and Rights-of-Way",
+    "effectiveDate": "2016-08-18",
+    "pdfUrl": "/forms/trec-library/trec-ERW-4-1.pdf",
+    "pageCount": 1,
+    "fields": [
+      {
+        "id": "trec_ERW_p01_f001",
+        "page": 1,
+        "index": 1,
+        "type": "text",
+        "label": "Name of Easement or RightofWay Agent",
+        "pdfFieldName": "Name of Easement or RightofWay Agent"
+      },
+      {
+        "id": "trec_ERW_p01_f002",
+        "page": 1,
+        "index": 2,
+        "type": "text",
+        "label": "TREC Registration Number",
+        "pdfFieldName": "TREC Registration Number"
+      },
+      {
+        "id": "trec_ERW_p01_f003",
+        "page": 1,
+        "index": 3,
+        "type": "text",
+        "label": "Name of Person Represented by Easement or RightofWay Agent",
+        "pdfFieldName": "Name of Person Represented by Easement or RightofWay Agent"
+      }
+    ],
+    "pageSections": {
+      "1": "Official TREC page 1"
+    },
+    "isActive": true,
+    "createdAt": "2016-08-18T00:00:00.000Z"
+  },
+  {
+    "id": "built-in-trec-op-i",
+    "formFamily": "OP-I",
+    "formNumber": "OP-I",
+    "title": "Texas Real Estate Consumer Notice Concerning Hazards or Deficiencies",
+    "effectiveDate": "2015-05-04",
+    "pdfUrl": "/forms/trec-library/trec-OP-I.pdf",
+    "pageCount": 1,
+    "fields": [],
+    "pageSections": {
+      "1": "Official TREC page 1"
+    },
+    "isActive": true,
+    "createdAt": "2015-05-04T00:00:00.000Z"
   }
 ];

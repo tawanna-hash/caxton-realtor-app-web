@@ -1384,8 +1384,8 @@ export default function ClosingTime({
 
   const createDeal = (dealType?: AgentDeal['dealType']) => {
     const base = newDeal(trecFormVersion.id);
-    // Pre-tick the required TREC forms: the One to Four Family contract and the Seller's Disclosure Notice.
-    const deal = { ...base, ...(dealType ? { dealType } : {}), selectedFormFamilies: { ...base.selectedFormFamilies, '20': true, '55': true } };
+    // Pre-tick the required TREC forms: the One to Four Family contract, the Seller's Disclosure Notice and IABS.
+    const deal = { ...base, ...(dealType ? { dealType } : {}), selectedFormFamilies: { ...base.selectedFormFamilies, '20': true, '55': true, IABS: true } };
     persistDeals([deal, ...deals]);
     setActiveDealId(deal.id);
     setPendingRemoval(null);
