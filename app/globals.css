@@ -1431,7 +1431,8 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk button.ds-confirm-remove:hover:not(:disabled) { background-color: #A61E1E !important; border-color: #A61E1E !important; }
 
 /* Calculators embedded in the Agent Desk: follow the desk's type and spacing */
-#agent-desk .ds-embed main { max-width: none; margin: 0; padding: 0 0 7rem; }
+#agent-desk .ds-embed main { max-width: none; margin: 0; padding: 0 0 2rem; }
+#agent-desk .ds-embed div[class*='fixed'][class*='pointer-events-none'] { display: none !important; }
 #agent-desk .ds-embed :is(h1, h2, h3, .font-serif) { font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; color: var(--d-ink); }
 #agent-desk .ds-embed h1 { font-size: 1.75rem; line-height: 1.15; font-weight: 600; }
 #agent-desk .ds-embed :is(input, select, textarea) { border-color: var(--d-line); border-radius: 8px; }
