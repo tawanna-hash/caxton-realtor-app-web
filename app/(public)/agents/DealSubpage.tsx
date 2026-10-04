@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, FileText, Plus, Trash2, UserRound, X } from 'lucide-react';
+import { AlertCircle, Check, ChevronLeft, ChevronRight, Clock, FileText, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import { PURCHASE_FOLDERS, PURCHASE_REQUIRED_IDS } from './purchase-documents';
 
@@ -44,6 +44,12 @@ const input = 'h-[36px] w-full rounded-lg border border-slate-200 bg-white px-3 
 const btn = 'inline-flex h-[34px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F4F3F8]';
 const btnPrimary = 'inline-flex h-[34px] items-center gap-1.5 rounded-lg bg-[#301D5D] px-3 text-sm font-semibold text-white hover:bg-[#42277C]';
 
+
+const STAGE_LABELS: Record<string, string> = {
+  intake: 'Intake', contract_review: 'Contract Review', active_transaction: 'Active Deal', closing: 'Closing Prep', completed: 'Completed',
+};
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '?';
+
 function newId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
 }
@@ -64,7 +70,7 @@ type Props = {
   onOpenView: (view: string) => void;
 };
 
-export default function DealSubpage({ deal, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView }: Props) {
+export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -118,6 +124,19 @@ export default function DealSubpage({ deal, locked, health, statusLabels, status
     onUpdate('tasks', [...deal.tasks, ...added].slice(0, 200));
   };
 
+  const stageIds = statuses.filter((status) => status !== 'cancelled');
+  const stageIndex = Math.max(0, stageIds.indexOf(deal.workflowStatus));
+  const openTasks = deal.tasks.filter((t) => !t.complete);
+  const attention: { key: string; label: string; detail: string; tone: 'red' | 'amber' }[] = [
+    ...openTasks.filter((t) => t.dueDate && t.dueDate <= today).slice(0, 3).map((t) => ({ key: t.id, label: t.title, detail: t.dueDate < today ? `Overdue · ${formatDate(t.dueDate)}` : 'Due today', tone: (t.dueDate < today ? 'red' : 'amber') as 'red' | 'amber' })),
+    ...(nextDeadline && nextDeadline.date <= today ? [{ key: 'deadline', label: nextDeadline.label, detail: nextDeadline.date < today ? `Past due · ${formatDate(nextDeadline.date)}` : 'Due today', tone: 'red' as const }] : []),
+  ];
+  const missingRequired = PURCHASE_FOLDERS.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' && !deal.documentChecks[doc.id]);
+  const waiting = [
+    ...openTasks.filter((t) => !t.dueDate || t.dueDate > today).slice(0, 3).map((t) => ({ key: t.id, label: t.title, detail: t.dueDate ? `Due ${formatDate(t.dueDate)}` : 'No due date' })),
+    ...missingRequired.slice(0, 2).map((doc) => ({ key: doc.id, label: doc.label, detail: 'Required document' })),
+  ].slice(0, 4);
+  const price = deal.contractDetails?.salesPrice?.trim();
   const tabs: [Tab, string][] = [['overview', 'Overview'], ['documents', 'Documents'], ['people', 'People'], ['tasks', `Tasks ${deal.tasks.length}`], ['history', 'History']];
 
   return (
@@ -140,16 +159,72 @@ export default function DealSubpage({ deal, locked, health, statusLabels, status
         <span className={`ds-chip ${health.tone}`}>{health.label}</span>
       </div>
 
+      <div className="ds-summary" aria-label="Deal summary">
+        {([
+          ['Price', price ? (price.startsWith('$') ? price : `$${price}`) : 'Not set', ''],
+          ['Buyers', deal.buyerNames || 'Not added', 'Your clients'],
+          ['Sellers', deal.sellerNames || 'Not added', ''],
+          ['Closing', deal.closingDate ? formatDate(deal.closingDate) : 'Not set', deal.closingDate ? countdownLabel : ''],
+        ] as const).map(([label, value, hint]) => (
+          <div key={label} className="min-w-0">
+            <p className="ds-eyebrow">{label}</p>
+            <p className="mt-1 truncate text-sm font-semibold text-slate-900">{value}{hint ? <span className="ml-1.5 text-xs font-normal text-slate-500">{hint}</span> : null}</p>
+          </div>
+        ))}
+      </div>
+      <ol className="ds-stepper" aria-label="Deal progress">
+        {stageIds.map((stage, index) => {
+          const done = index < stageIndex || deal.workflowStatus === 'completed';
+          const current = index === stageIndex && deal.workflowStatus !== 'completed';
+          return (
+            <li key={stage} className={`ds-step ${done ? 'is-done' : ''} ${current ? 'is-current' : ''}`} aria-current={current ? 'step' : undefined}>
+              <span className="ds-step-dot">{done ? <Check className="h-3 w-3" aria-hidden="true" /> : null}</span>
+              <span className="ds-step-label">{STAGE_LABELS[stage] ?? stage}</span>
+              <span className="ds-step-sub">{done ? 'Done' : current ? 'Now' : ''}</span>
+            </li>
+          );
+        })}
+      </ol>
+
       <div className="ds-split">
         <div className="min-w-0">
           <div className="ds-tabs !mt-0" role="tablist" aria-label="Deal sections">
             {tabs.map(([id, label]) => (
               <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className="ds-tab">{label}</button>
             ))}
+            <button type="button" className="ds-tab" onClick={() => onOpenView('transaction')}>Contract</button>
           </div>
 
           {tab === 'overview' && (
             <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="ds-card !p-0">
+                  <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><AlertCircle className="h-4 w-4 text-amber-600" aria-hidden="true" /> Needs Your Attention</p>
+                    <span className="ds-chip bg-amber-50 text-amber-700">{attention.length}</span>
+                  </div>
+                  {attention.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing is overdue.</p> : attention.map((item) => (
+                    <div key={item.key} className="border-b border-[#F1F0F5] px-4 py-3 last:border-0">
+                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                      <p className={`mt-0.5 text-xs ${item.tone === 'red' ? 'text-[#9A3D2B]' : 'text-amber-700'}`}>{item.detail}</p>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => setTab('tasks')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View all tasks <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+                </div>
+                <div className="ds-card !p-0">
+                  <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Clock className="h-4 w-4 text-[#7059A8]" aria-hidden="true" /> Waiting On Others</p>
+                    <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{waiting.length}</span>
+                  </div>
+                  {waiting.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing is pending.</p> : waiting.map((item) => (
+                    <div key={item.key} className="border-b border-[#F1F0F5] px-4 py-3 last:border-0">
+                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => setTab('documents')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View documents <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+                </div>
+              </div>
               <div className="ds-card">
                 <label className="ds-field-label" htmlFor="deal-next-action">Next action</label>
                 <input id="deal-next-action" className={`${input} mt-1`} disabled={locked} value={deal.nextAction} placeholder={nextTask ? nextTask.title : nextDeadline ? `${nextDeadline.label} · ${formatDate(nextDeadline.date)}` : 'What happens next?'} onChange={(e) => onUpdate('nextAction', e.target.value)} />
@@ -319,12 +394,20 @@ export default function DealSubpage({ deal, locked, health, statusLabels, status
               {!locked && <input aria-label="Photo URL" className={`${input} mt-3`} placeholder="Photo URL" value={deal.photoUrl} onChange={(e) => onUpdate('photoUrl', e.target.value)} />}
             </div>
           </div>
-          <h3 className="ds-side-title">Contacts</h3>
+          <h3 className="ds-side-title">Parties</h3>
           <div className="ds-card ds-list">
-            {people.length === 0 && <p className="text-sm text-slate-500">No contacts added.</p>}
-            {people.slice(0, 5).map((p) => (
-              <div key={p.id} className="ds-list-row"><span className="min-w-0"><span className="block text-sm font-medium text-slate-900">{p.name}</span><span className="block truncate text-xs text-slate-500">{p.email || p.role}</span></span></div>
+            {people.length === 0 && <p className="text-sm text-slate-500">No parties added.</p>}
+            {people.slice(0, 8).map((p) => (
+              <div key={p.id} className="ds-list-row">
+                <span className="ds-avatar" aria-hidden="true">{initials(p.name)}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-slate-900">{p.name}</span>
+                  <span className="mt-0.5 inline-block rounded-full bg-[#EFEAF8] px-2 py-0.5 text-[11px] font-medium capitalize text-[#301D5D]">{p.role}</span>
+                </span>
+                {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : null}
+              </div>
             ))}
+            <button type="button" onClick={() => setTab('people')} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left text-xs text-slate-500">Manage people</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
           </div>
           <h3 className="ds-side-title">Workspace</h3>
           <div className="ds-card ds-list">

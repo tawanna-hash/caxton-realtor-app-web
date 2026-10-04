@@ -1474,3 +1474,17 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-header .ds-title { font-size: 1.375rem; }
 #agent-desk .ds-embed h1 { font-size: 1.125rem; line-height: 1.35; font-weight: 600; }
 #agent-desk .ds-review-btn { height: 1.75rem; padding: 0 0.625rem; font-size: 0.75rem; }
+
+/* Deal page: summary strip, progress stepper, parties */
+#agent-desk .ds-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.25rem; padding: 1rem 1.125rem; border: 1px solid var(--d-line); border-radius: 12px; background: #fff; }
+@media (min-width: 768px) { #agent-desk .ds-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+#agent-desk .ds-stepper { display: flex; list-style: none; margin: 1rem 0 0; padding: 0; overflow-x: auto; }
+#agent-desk .ds-step { position: relative; flex: 1 1 0; min-width: 96px; padding-top: 1.5rem; }
+#agent-desk .ds-step::before { content: ''; position: absolute; top: 0.5rem; left: 0; right: 0; height: 2px; background: var(--d-line); }
+#agent-desk .ds-step.is-done::before { background: var(--d-purple); }
+#agent-desk .ds-step-dot { position: absolute; top: 0; left: 0; width: 1.1rem; height: 1.1rem; border-radius: 9999px; border: 2px solid var(--d-line); background: #fff; display: flex; align-items: center; justify-content: center; color: #fff; z-index: 1; }
+#agent-desk .ds-step.is-done .ds-step-dot { background: var(--d-purple); border-color: var(--d-purple); }
+#agent-desk .ds-step.is-current .ds-step-dot { border-color: var(--d-purple); box-shadow: 0 0 0 3px var(--d-lav-soft); }
+#agent-desk .ds-step-label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--d-ink); }
+#agent-desk .ds-step-sub { display: block; min-height: 1rem; font-size: 0.6875rem; color: var(--d-muted); }
+#agent-desk .ds-avatar { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 9999px; background: var(--d-lav-soft); color: var(--d-purple); font-size: 0.6875rem; font-weight: 600; margin-right: 0.625rem; }
