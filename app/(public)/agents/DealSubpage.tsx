@@ -237,7 +237,82 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   };
   const tabs: [Tab, string][] = [['tasks', `Tasks ${deal.tasks.length}`], ['history', 'History']];
 
-  if ((section as string | undefined) === 'overview') return <div className="ds-page" data-testid="deal-snapshot" />;
+  if ((section as string | undefined) === 'overview') {
+    const doneTasks = deal.tasks.length - openTasks.length;
+    const overdueTasks = openTasks.filter((t) => t.dueDate && t.dueDate < today).length;
+    const weekEnd = new Date(Date.parse(`${today}T12:00:00Z`) + 7 * 86400000).toISOString().slice(0, 10);
+    const dueSoon = openTasks.filter((t) => t.dueDate && t.dueDate >= today && t.dueDate <= weekEnd).length;
+    const upcoming = [...openTasks].sort((a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999')).slice(0, 6);
+    const pct = (done: number, total: number) => (total ? Math.round((done / total) * 100) : 0);
+    const reqDone = PURCHASE_REQUIRED_IDS.filter((id) => deal.documentChecks[id]).length;
+    const scheduled = deal.reminders.filter((r) => !r.complete).length;
+    const stat = (label: string, value: string, tone?: string) => (
+      <div className="min-w-0"><p className="ds-eyebrow">{label}</p><p className={`mt-1 text-xl font-semibold ${tone ?? 'text-slate-900'}`}>{value}</p></div>
+    );
+    return (
+      <div className="ds-page" data-testid="deal-snapshot">
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="ds-card">
+            <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">Tasks</p><button type="button" onClick={() => onOpenView('tasks')}>View all</button></div>
+            <div className="mt-3 grid grid-cols-4 gap-3">
+              {stat('Open', String(openTasks.length))}
+              {stat('Done', String(doneTasks))}
+              {stat('Overdue', String(overdueTasks), overdueTasks ? 'text-[#9A3D2B]' : undefined)}
+              {stat('Due 7 days', String(dueSoon))}
+            </div>
+            <div className="ds-bar mt-3" aria-hidden="true"><span style={{ width: `${pct(doneTasks, deal.tasks.length)}%` }} /></div>
+            <p className="mt-1 text-xs text-slate-500">{pct(doneTasks, deal.tasks.length)}% complete</p>
+            <ul className="mt-3 divide-y divide-[#F1F0F5]">
+              {upcoming.length === 0 && <li className="py-2 text-xs text-slate-500">No open tasks.</li>}
+              {upcoming.map((t) => (
+                <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <span className="min-w-0 truncate text-slate-900">{t.title}</span>
+                  <span className={`shrink-0 text-xs ${t.dueDate && t.dueDate < today ? 'text-[#9A3D2B]' : 'text-slate-500'}`}>{t.dueDate ? formatDate(t.dueDate) : 'No date'}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="ds-card">
+            <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">Documents</p><button type="button" onClick={() => onOpenView('d-documents')}>View all</button></div>
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              {stat('Required in', `${reqDone}/${PURCHASE_REQUIRED_IDS.length}`, reqDone === PURCHASE_REQUIRED_IDS.length ? 'text-[#2F7D5B]' : undefined)}
+              {stat('Missing', String(missingRequired.length), missingRequired.length ? 'text-[#9A3D2B]' : undefined)}
+              {stat('Complete', `${pct(reqDone, PURCHASE_REQUIRED_IDS.length)}%`)}
+            </div>
+            <ul className="mt-3 space-y-2.5">
+              {PURCHASE_FOLDERS.map((folder) => {
+                const total = folder.docs.length;
+                const done = folder.docs.filter((d) => deal.documentChecks[d.id]).length;
+                return (
+                  <li key={folder.id}>
+                    <div className="flex items-center justify-between text-xs"><span className="text-slate-900">{folder.label}</span><span className="text-slate-500">{done}/{total}</span></div>
+                    <div className="ds-bar mt-1" aria-hidden="true"><span style={{ width: `${pct(done, total)}%` }} /></div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+          <div className="ds-card">
+            <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">Deadlines And Reminders</p><button type="button" onClick={() => onOpenView('transaction')}>Open</button></div>
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              {stat('Next deadline', nextDeadline ? formatDate(nextDeadline.date) : '—', nextDeadline && nextDeadline.date < today ? 'text-[#9A3D2B]' : undefined)}
+              {stat('Closing', deal.closingDate ? formatDate(deal.closingDate) : '—')}
+              {stat('Reminders', String(scheduled))}
+            </div>
+            {nextDeadline && <p className="mt-3 text-xs text-slate-500">{nextDeadline.label}</p>}
+          </div>
+          <div className="ds-card">
+            <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">People And Offers</p><button type="button" onClick={() => onOpenView('d-people')}>Open</button></div>
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              {stat('Parties', String(deal.clientContacts.length))}
+              {stat('Offers', String(deal.offersShowings.filter((x) => x.kind === 'offer').length))}
+              {stat('Showings', String(deal.offersShowings.filter((x) => x.kind === 'showing').length))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="ds-page" data-testid="deal-subpage">

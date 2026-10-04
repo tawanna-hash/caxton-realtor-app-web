@@ -2051,7 +2051,7 @@ export default function ClosingTime({
               </li>
             </ul>
             <div className="ds-group">
-              <p className="ds-group-label">Pipeline</p>
+              <p className="ds-group-label">On The Clock</p>
               <button type="button" onClick={() => setNewDealPickerOpen(true)} className="ds-new" aria-label="New contract"><Plus className="h-3.5 w-3.5" aria-hidden="true" /><span>New</span></button>
             </div>
             <ul className="ds-nav-top ds-nav-closings">
