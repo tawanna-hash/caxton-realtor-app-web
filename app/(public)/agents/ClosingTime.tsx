@@ -985,6 +985,20 @@ export default function ClosingTime({
     const timer = window.setTimeout(toTop, 150);
     return () => window.clearTimeout(timer);
   }, []);
+  // Any click in the left nav starts the destination page at the top.
+  useEffect(() => {
+    const rail = document.querySelector('#agent-desk .ds-rail');
+    if (!rail) return;
+    const toTop = () => window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    const onClick = (event: Event) => {
+      if (!(event.target as HTMLElement).closest('button, a')) return;
+      toTop();
+      window.setTimeout(toTop, 60);
+      window.setTimeout(toTop, 250);
+    };
+    rail.addEventListener('click', onClick);
+    return () => rail.removeEventListener('click', onClick);
+  }, [ready]);
   const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
