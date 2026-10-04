@@ -2833,23 +2833,23 @@ export default function ClosingTime({
                           values={currentFormValues}
                           onFieldChange={updateTrecFormField}
                         />
-                        <div className="grid gap-2 border-t border-slate-200 bg-white p-3 sm:grid-cols-[1fr_1.6fr_0.7fr_1fr]" aria-label="Brokerage and agent details">
+                        <div className="grid gap-1.5 border-t border-slate-200 bg-white px-3 py-2 sm:grid-cols-[1fr_1.6fr_0.7fr_1fr]" aria-label="Brokerage and agent details">
                           {([['brokerage', 'Brokerage'], ['address', 'Brokerage Address'], ['agentId', 'Agent ID'], ['agentName', 'Agent Name']] as const).map(([key, label]) => (
-                            <label key={key} className="block min-w-0">
-                              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</span>
-                              <input
-                                value={brokerFooter[key]}
-                                onChange={(event) => updateBrokerFooter(key, event.target.value)}
-                                placeholder={label}
-                                className="w-full rounded-lg border border-slate-200 bg-[#F6F3FB] px-3 py-2 text-center text-sm text-slate-900 outline-none focus:border-[#301D5D]"
-                              />
-                            </label>
+                            <input
+                              key={key}
+                              value={brokerFooter[key]}
+                              onChange={(event) => updateBrokerFooter(key, event.target.value)}
+                              placeholder={label}
+                              aria-label={label}
+                              title={label}
+                              className="h-7 w-full min-w-0 rounded-md border border-slate-200 bg-[#F6F3FB] px-2 text-center text-xs text-slate-900 outline-none focus:border-[#301D5D]"
+                            />
                           ))}
                         </div>
-                        <div className="border-t border-slate-200 bg-white p-3">
+                        <div className="border-t border-slate-200 bg-white px-3 py-2">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <p className="text-xs text-slate-500">Send this filled form to your broker to review.</p>
-                            <button type="button" onClick={() => { setReviewOpen((open) => !open); setReviewState({ status: 'idle', message: '' }); }} aria-expanded={reviewOpen}>Submit For Review</button>
+                            <button type="button" onClick={() => { setReviewOpen((open) => !open); setReviewState({ status: 'idle', message: '' }); }} aria-expanded={reviewOpen} className="ds-review-btn">Submit For Review</button>
                           </div>
                           {reviewOpen && (
                             <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -2857,16 +2857,16 @@ export default function ClosingTime({
                                 <label key={key} className="block min-w-0">
                                   <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</span>
                                   <input type={type} value={brokerFooter[key]} onChange={(event) => updateBrokerFooter(key, event.target.value)} placeholder={label}
-                                    className="w-full rounded-lg border border-slate-200 bg-[#F6F3FB] px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#301D5D]" />
+                                    className="h-7 w-full rounded-md border border-slate-200 bg-[#F6F3FB] px-2 text-xs text-slate-900 outline-none focus:border-[#301D5D]" />
                                 </label>
                               ))}
                               <label className="block sm:col-span-2">
                                 <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Message To Broker (Optional)</span>
                                 <textarea value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} rows={2} placeholder="Anything the broker should look at first"
-                                  className="w-full rounded-lg border border-slate-200 bg-[#F6F3FB] px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#301D5D]" />
+                                  className="w-full rounded-md border border-slate-200 bg-[#F6F3FB] px-2 py-1 text-xs text-slate-900 outline-none focus:border-[#301D5D]" />
                               </label>
                               <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
-                                <button type="button" disabled={reviewState.status === 'sending' || !brokerFooter.brokerEmail.trim()} onClick={() => void submitForBrokerReview()}>
+                                <button type="button" disabled={reviewState.status === 'sending' || !brokerFooter.brokerEmail.trim()} className="ds-review-btn" onClick={() => void submitForBrokerReview()}>
                                   {reviewState.status === 'sending' ? 'Sending...' : 'Send To Broker'}
                                 </button>
                                 {reviewState.message && <p role="status" className={`text-xs ${reviewState.status === 'error' ? 'text-[#9A3D2B]' : 'text-[#1F7A3D]'}`}>{reviewState.message}</p>}

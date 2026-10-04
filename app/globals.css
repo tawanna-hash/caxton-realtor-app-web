@@ -1473,3 +1473,4 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .font-bold, #agent-desk .font-extrabold, #agent-desk .font-black { font-weight: 600; }
 #agent-desk .ds-header .ds-title { font-size: 1.375rem; }
 #agent-desk .ds-embed h1 { font-size: 1.125rem; line-height: 1.35; font-weight: 600; }
+#agent-desk .ds-review-btn { height: 1.75rem; padding: 0 0.625rem; font-size: 0.75rem; }
