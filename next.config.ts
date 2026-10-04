@@ -206,6 +206,18 @@ const nextConfig: NextConfig = {
         source: '/:path*',
         headers: securityHeaders,
       },
+      // The saved original contract PDF is previewed in an iframe on our own
+      // Agent Desk page, so allow same-origin framing for this route only.
+      {
+        source: '/api/agent-command-center/contracts/original',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: cspString.replace("frame-ancestors 'none'", "frame-ancestors 'self'"),
+          },
+        ],
+      },
       // Repo-hosted static assets (logos, maps, hero art). Cache for a day in
       // browsers and a week in the CDN, revalidating in the background, so
       // repeat visits skip the re-check without stranding replaced files.
