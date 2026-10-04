@@ -50,8 +50,8 @@ const QUICK_TOOLS = [
     title: 'Seller net sheet',
     description: 'Build a clean Texas closing estimate before the conversation turns into numbers.',
     icon: Landmark,
-    tone: 'bg-[#301D5D] text-white border-[#301D5D]',
-    iconTone: 'bg-white/10 text-white',
+    tone: 'bg-white text-slate-900 border-slate-200',
+    iconTone: 'bg-[#EFEAF8] text-[#5B3FA0]',
   },
   {
     href: '/resources/commission-calculator',
@@ -107,7 +107,7 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
             )}
             <CollapseToggle {...toggleProps('calculators', 'calculators', { mobileOpen: true })} />
           </div>
-          <div className="mt-6 grid gap-4 sm:mt-8 md:grid-cols-3">
+          <div className="mt-6 flex flex-col gap-3 sm:mt-8">
             {QUICK_TOOLS.map((tool) => {
               const Icon = tool.icon;
               const deskView = DESK_TOOL_VIEWS[tool.href];
@@ -117,16 +117,18 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
                     key={tool.href}
                     type="button"
                     onClick={() => { trackEvent('agent_command_center_tool_opened', { tool: tool.title }); onOpenTool(deskView); }}
-                    className={`group flex flex-col items-start rounded-xl border p-5 text-left transition hover:bg-[#FBFBFD] md:min-h-[200px] ${tool.tone}`}
+                    className={`group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition hover:bg-[#FBFBFD] sm:p-5 ${tool.tone}`}
                   >
-                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${tool.iconTone}`}>
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tool.iconTone}`}>
                       <Icon className="h-5 w-5" aria-hidden="true" />
                     </div>
-                    <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60 sm:mt-7">{tool.eyebrow}</p>
-                    <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em]">{tool.title}</h3>
-                    <p className="mt-3 text-sm leading-6 opacity-75">{tool.description}</p>
-                    <span className="mt-5 inline-flex items-center gap-1 text-sm font-bold">
-                      Open Tool <ArrowRight className="h-4 w-4 " aria-hidden="true" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.16em] opacity-60">{tool.eyebrow}</p>
+                      <h3 className="mt-1 text-lg font-semibold tracking-[-0.025em]">{tool.title}</h3>
+                      <p className="mt-1 text-sm leading-6 opacity-75">{tool.description}</p>
+                    </div>
+                    <span className="inline-flex shrink-0 items-center gap-1 text-sm font-bold">
+                      Open Tool <ArrowRight className="h-4 w-4" aria-hidden="true" />
                     </span>
                   </button>
                 );
