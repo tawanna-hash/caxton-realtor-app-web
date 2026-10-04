@@ -7,6 +7,9 @@ import AlertSetupContent from './AlertSetupContent';
 import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './AgentToolsPanels';
 
 const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
+  { id: 'd-overview', label: 'Overview', keys: [] },
+  { id: 'd-documents', label: 'Documents', keys: [] },
+  { id: 'd-people', label: 'People', keys: [] },
   { id: 'transaction', label: 'Current Deal', keys: ['current', 'trec-forms'] },
   { id: 'coordinator', label: 'Deal Settings', keys: ['assist', 'alerts'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
@@ -2061,7 +2064,7 @@ export default function ClosingTime({
                     <button
                       type="button"
                       aria-current={selected ? 'true' : undefined}
-                      onClick={() => { setActiveDealId(deal.id); setWorkspacePage(2); if (!DEAL_TABS.some((t) => t.id === deskView)) setDeskView('transaction'); setFormsStatusDealId(deal.id); }}
+                      onClick={() => { setActiveDealId(deal.id); setWorkspacePage(2); if (!DEAL_TABS.some((t) => t.id === deskView)) setDeskView('d-overview'); setFormsStatusDealId(deal.id); }}
                       className="ds-deal"
                     >
                       <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${tone}`} aria-hidden="true" />
@@ -2370,6 +2373,36 @@ export default function ClosingTime({
                   onBack={() => setDeskView('deals')}
                   onOpenView={(view) => { setWorkspacePage(2); setDeskView(view); }}
                 />
+              );
+            })()}
+            {['d-overview', 'd-documents', 'd-people'].includes(effectiveView) && (() => {
+              const deal = activeDeal;
+              const health = deal ? (() => {
+                if (isDealClosedAndComplete(deal)) return { label: 'Closed', tone: 'bg-slate-100 text-slate-600' };
+                const d = daysUntilClosing(deal.closingDate, today);
+                return d === null ? { label: 'No date', tone: 'bg-slate-100 text-slate-600' } : d < 0 ? { label: 'Overdue', tone: 'bg-red-50 text-red-700' } : d <= 7 ? { label: 'Needs attention', tone: 'bg-amber-50 text-amber-700' } : { label: 'On track', tone: 'bg-emerald-50 text-emerald-700' };
+              })() : { label: 'No date', tone: 'bg-slate-100 text-slate-600' };
+              const nextDeadline = deal ? dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] : undefined;
+              return (
+                <div className="ds-page">
+                  <DealSubpage
+                    key={`${deal?.id ?? 'none'}-${effectiveView}`}
+                    section={effectiveView === 'd-documents' ? 'documents' : effectiveView === 'd-people' ? 'people' : 'overview'}
+                    deal={deal ?? undefined}
+                    today={today}
+                    locked={deal ? isDealLocked(deal) : false}
+                    health={health}
+                    statusLabels={TREC_DEAL_WORKFLOW_STATUS_LABELS}
+                    statuses={TREC_DEAL_WORKFLOW_STATUSES}
+                    documentGroups={DOCUMENT_GROUPS}
+                    nextDeadline={nextDeadline}
+                    formatDate={formatDate}
+                    countdownLabel={deal ? closingCountdownLabel(deal.closingDate, today) : ''}
+                    onUpdate={updateActiveDeal}
+                    onBack={() => setDeskView('deals')}
+                    onOpenView={(view) => { setWorkspacePage(2); setDeskView(view); }}
+                  />
+                </div>
               );
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (

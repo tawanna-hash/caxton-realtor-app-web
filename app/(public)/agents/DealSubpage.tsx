@@ -68,10 +68,11 @@ type Props = {
   onUpdate: <K extends keyof AgentDeal>(key: K, value: AgentDeal[K]) => void;
   onBack: () => void;
   onOpenView: (view: string) => void;
+  section?: Tab;
 };
 
-export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView }: Props) {
-  const [tab, setTab] = useState<Tab>('overview');
+export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section }: Props) {
+  const [tab, setTab] = useState<Tab>(section ?? 'tasks');
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
@@ -137,10 +138,11 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     ...missingRequired.slice(0, 2).map((doc) => ({ key: doc.id, label: doc.label, detail: 'Required document' })),
   ].slice(0, 4);
   const price = deal.contractDetails?.salesPrice?.trim();
-  const tabs: [Tab, string][] = [['overview', 'Overview'], ['documents', 'Documents'], ['people', 'People'], ['tasks', `Tasks ${deal.tasks.length}`], ['history', 'History']];
+  const tabs: [Tab, string][] = [['tasks', `Tasks ${deal.tasks.length}`], ['history', 'History']];
 
   return (
     <div className="ds-page" data-testid="deal-subpage">
+      {!section && (<>
       <button type="button" className="ds-back" onClick={onBack}><ChevronLeft className="h-4 w-4" aria-hidden="true" /> Deals</button>
       <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
@@ -186,14 +188,18 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         })}
       </ol>
 
-      <div className="ds-split">
+      </>)}
+
+      <div className={section && section !== 'overview' ? '' : 'ds-split'}>
         <div className="min-w-0">
+          {!section && (
           <div className="ds-tabs !mt-0" role="tablist" aria-label="Deal sections">
             {tabs.map(([id, label]) => (
               <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className="ds-tab">{label}</button>
             ))}
             <button type="button" className="ds-tab" onClick={() => onOpenView('transaction')}>Contract</button>
           </div>
+          )}
 
           {tab === 'overview' && (
             <div className="space-y-4">
@@ -209,7 +215,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                       <p className={`mt-0.5 text-xs ${item.tone === 'red' ? 'text-[#9A3D2B]' : 'text-amber-700'}`}>{item.detail}</p>
                     </div>
                   ))}
-                  <button type="button" onClick={() => setTab('tasks')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View all tasks <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+                  <button type="button" onClick={() => onOpenView('tasks')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View all tasks <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
                 </div>
                 <div className="ds-card !p-0">
                   <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
@@ -222,7 +228,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                       <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
                     </div>
                   ))}
-                  <button type="button" onClick={() => setTab('documents')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View documents <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+                  <button type="button" onClick={() => onOpenView('d-documents')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View documents <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
                 </div>
               </div>
               <div className="ds-card">
@@ -366,7 +372,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           )}
         </div>
 
-        <aside className="ds-rail-right" aria-label="Deal details">
+        {(!section || section === 'overview') && (<aside className="ds-rail-right" aria-label="Deal details">
           <h3 className="ds-side-title">Focus property</h3>
           <div className="ds-card !p-0 overflow-hidden">
             <div
@@ -407,7 +413,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                 {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : null}
               </div>
             ))}
-            <button type="button" onClick={() => setTab('people')} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left text-xs text-slate-500">Manage people</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
+            <button type="button" onClick={() => onOpenView('d-people')} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left text-xs text-slate-500">Manage people</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
           </div>
           <h3 className="ds-side-title">Workspace</h3>
           <div className="ds-card ds-list">
@@ -415,7 +421,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               <button key={view} type="button" onClick={() => onOpenView(view)} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left">{label}</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
             ))}
           </div>
-        </aside>
+        </aside>)}
       </div>
 
       {providerCategory && (
