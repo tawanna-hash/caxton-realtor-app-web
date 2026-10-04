@@ -2196,7 +2196,6 @@ export default function ClosingTime({
                 <h3 className="text-lg font-semibold text-gray-900">Calendar Exports For Apple Calendar</h3>
                 <CollapseToggle {...toggleProps('calendar', 'calendar exports')} />
               </div>
-              <p className="mt-3 border-l-4 border-[#7059A8] bg-[#F8F5FF] p-3 text-sm leading-6 text-slate-700">Using Apple Calendar? Apple Calendar cannot be connected, so subscribe here instead. If you use Google Calendar or Outlook, connect it on the Integrations page and your deal dates are added for you.</p>
               <p className="mt-3 text-sm leading-6 text-slate-600">Subscribe once and your calendar stays current with deadlines, closing dates, reminders, and open tasks for every active transaction.</p>
               {!calendarFeed ? (
                 <button type="button" onClick={() => void loadCalendarFeed()} disabled={calendarFeedState === 'loading'} className="mt-4 inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45">
