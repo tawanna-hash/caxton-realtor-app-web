@@ -1357,3 +1357,25 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-page > div:first-child { margin-bottom: 1.25rem; }
 #agent-desk .ds-page :is(a, button) { transition: background-color 0.15s, border-color 0.15s; }
 #agent-desk .ds-page article, #agent-desk .ds-page li > button { box-shadow: none; }
+
+/* Deals solo page */
+#agent-desk [data-desk-view='deals'] .ds-header { display: none; }
+#agent-desk .ds-tabs { display: flex; gap: 0.25rem; margin: 1.25rem 0 1rem; border-bottom: 1px solid var(--d-line); }
+#agent-desk .ds-tab { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; padding: 0.625rem 0.75rem; font-size: 0.875rem; font-weight: 500; color: var(--d-muted); margin-bottom: -1px; }
+#agent-desk .ds-tab[aria-selected='true'] { color: var(--d-ink); font-weight: 600; border-bottom-color: var(--d-purple); }
+#agent-desk .ds-tab-count { margin-left: 0.25rem; font-size: 0.75rem; color: var(--d-muted); }
+#agent-desk .ds-filters { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
+#agent-desk .ds-search { display: flex; align-items: center; gap: 0.5rem; min-width: 260px; flex: 0 1 360px; height: 40px; padding: 0 0.75rem; border: 1px solid var(--d-line); border-radius: 8px; background: #fff; color: var(--d-muted); }
+#agent-desk .ds-search input { flex: 1; min-width: 0; border: 0 !important; box-shadow: none !important; outline: none; background: transparent !important; color: var(--d-ink); }
+#agent-desk .ds-select { height: 40px; min-width: 130px; padding: 0 0.75rem; }
+#agent-desk .ds-table-wrap { overflow-x: auto; border: 1px solid var(--d-line); border-radius: 12px; background: #fff; }
+#agent-desk .ds-table-wrap table { border-collapse: collapse; }
+#agent-desk .ds-table-wrap thead th { padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--d-line); background: var(--d-rail); }
+#agent-desk .ds-table-wrap tbody td { padding: 0.875rem 0.5rem; }
+#agent-desk .ds-table-wrap tbody tr { border-top: 1px solid var(--d-line); }
+#agent-desk .ds-table-wrap tbody tr:first-child { border-top: 0; }
+#agent-desk .ds-table-wrap tbody tr:hover, #agent-desk .ds-table-wrap tbody tr:focus-visible { background: var(--d-rail); outline: none; }
+#agent-desk .ds-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.125rem 0.625rem; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+#agent-desk .ds-chip-purple { background: var(--d-lav-soft); color: #5B3FA0; }
+#agent-desk .ds-bar { display: inline-block; width: 72px; height: 6px; border-radius: 999px; background: #E6E5EC; overflow: hidden; }
+#agent-desk .ds-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--d-purple); }

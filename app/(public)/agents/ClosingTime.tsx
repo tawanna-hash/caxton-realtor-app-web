@@ -19,7 +19,8 @@ const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'referral', label: 'Referral Network', keys: [] },
   { id: 'integrations', label: 'Integrations', keys: ['calendar'] },
 ];
-const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS];
+const DEALS_VIEW = { id: 'deals', label: 'Deals', keys: [] as string[] };
+const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, DEALS_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug };
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -52,6 +53,7 @@ import {
   Plus,
   RefreshCw,
   Save,
+  Search,
   Smartphone,
   Trash2,
   X,
@@ -950,6 +952,9 @@ export default function ClosingTime({
   const [formsStatusDealId, setFormsStatusDealId] = useState<string | null>(null);
   const [workspacePage, setWorkspacePage] = useState<1 | 2>(2);
   const [deskView, setDeskView] = useState('transaction');
+  const [dealsTab, setDealsTab] = useState<'all' | 'active' | 'closed'>('all');
+  const [dealsQuery, setDealsQuery] = useState('');
+  const [dealsHealth, setDealsHealth] = useState('all');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
   useEffect(() => {
     DESK_VIEWS.find((v) => v.id === effectiveView)?.keys.forEach((key) => reveal(key));
@@ -1958,6 +1963,11 @@ export default function ClosingTime({
                   </li>
                 );
               })}
+              <li>
+                <button type="button" aria-current={effectiveView === 'deals' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('deals'); }} className="ds-navbtn">
+                  <ListTodo className="ct-navicon" aria-hidden="true" /><span>Deals</span>
+                </button>
+              </li>
             </ul>
             <div className="ds-group">
               <p className="ds-group-label">Pipeline</p>
@@ -2024,6 +2034,95 @@ export default function ClosingTime({
               <div className="ds-stat"><div><p className="ds-stat-label">Open tasks</p><p className="ds-stat-num">{activeDeals.reduce((n, d) => n + d.tasks.filter((t) => !t.complete).length, 0)}</p><p className="ds-stat-sub">Across active files</p></div><span className="ds-stat-icon ds-i-blue"><ListTodo className="h-4 w-4" aria-hidden="true" /></span></div>
               <div className="ds-stat"><div><p className="ds-stat-label">Closed</p><p className="ds-stat-num">{closedDeals.length}</p><p className="ds-stat-sub">Completed files</p></div><span className="ds-stat-icon ds-i-amber"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span></div>
             </div>
+            {effectiveView === 'deals' && (() => {
+              const healthOf = (deal: (typeof deals)[number]) => {
+                if (isDealClosedAndComplete(deal)) return { key: 'closed', label: 'Closed', tone: 'bg-slate-100 text-slate-600' };
+                const d = daysUntilClosing(deal.closingDate, today);
+                if (d === null) return { key: 'nodate', label: 'No date', tone: 'bg-slate-100 text-slate-600' };
+                if (d < 0) return { key: 'overdue', label: 'Overdue', tone: 'bg-red-50 text-red-700' };
+                if (d <= 7) return { key: 'attention', label: 'Needs attention', tone: 'bg-amber-50 text-amber-700' };
+                return { key: 'ontrack', label: 'On track', tone: 'bg-emerald-50 text-emerald-700' };
+              };
+              const sinceLabel = (iso?: string) => {
+                if (!iso) return '—';
+                const days = Math.floor((Date.parse(`${today}T12:00:00Z`) - Date.parse(iso)) / 86400000);
+                if (Number.isNaN(days)) return '—';
+                if (days <= 0) return 'Today';
+                if (days === 1) return 'Yesterday';
+                return `${days} days ago`;
+              };
+              const q = dealsQuery.trim().toLowerCase();
+              const rows = deals.filter((deal) => {
+                const closed = isDealClosedAndComplete(deal);
+                if (dealsTab === 'active' && closed) return false;
+                if (dealsTab === 'closed' && !closed) return false;
+                if (dealsHealth !== 'all' && healthOf(deal).key !== dealsHealth) return false;
+                if (q && !`${deal.propertyAddress} ${deal.title} ${deal.buyerNames} ${deal.sellerNames}`.toLowerCase().includes(q)) return false;
+                return true;
+              });
+              return (
+                <div className="ds-page" data-testid="deals-page">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h2 className="ds-title">Deals</h2>
+                      <p className="ds-subtitle">Every transaction in one place, with where each one stands and what is due next.</p>
+                    </div>
+                    <button type="button" onClick={() => { createDeal(); setWorkspacePage(2); setDeskView('transaction'); }} className="inline-flex h-[40px] items-center gap-2 rounded-lg bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
+                      <Plus className="h-4 w-4" aria-hidden="true" /> New deal
+                    </button>
+                  </div>
+                  <div className="ds-tabs" role="tablist" aria-label="Deal filter">
+                    {([['all', 'All deals', deals.length], ['active', 'Active', activeDeals.length], ['closed', 'Closed', closedDeals.length]] as const).map(([id, label, count]) => (
+                      <button key={id} type="button" role="tab" aria-selected={dealsTab === id} aria-current={dealsTab === id ? 'page' : undefined} onClick={() => setDealsTab(id)} className="ds-tab">{label} <span className="ds-tab-count">{count}</span></button>
+                    ))}
+                  </div>
+                  <div className="ds-filters">
+                    <label className="ds-search"><Search className="h-4 w-4" aria-hidden="true" /><input value={dealsQuery} onChange={(e) => setDealsQuery(e.target.value)} placeholder="Search deals..." aria-label="Search deals" /></label>
+                    <select value={dealsHealth} onChange={(e) => setDealsHealth(e.target.value)} aria-label="Health" className="ds-select">
+                      <option value="all">Health</option>
+                      <option value="ontrack">On track</option>
+                      <option value="attention">Needs attention</option>
+                      <option value="overdue">Overdue</option>
+                      <option value="nodate">No date</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </div>
+                  <div className="ds-table-wrap">
+                    <table className="w-full min-w-[860px] text-left text-sm">
+                      <thead>
+                        <tr>
+                          <th className="py-3 pl-4">Deal</th><th>Clients</th><th>Stage</th><th>Progress</th><th>Health</th><th>Closing</th><th className="pr-4">Last activity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-slate-500">{deals.length === 0 ? 'No transactions yet. Select New deal to start one.' : 'No deals match.'}</td></tr>}
+                        {rows.map((deal) => {
+                          const health = healthOf(deal);
+                          const done = deal.tasks.filter((t) => t.complete).length;
+                          const total = deal.tasks.length;
+                          return (
+                            <tr key={deal.id} tabIndex={0} onClick={() => { setActiveDealId(deal.id); setWorkspacePage(2); setDeskView('transaction'); }} onKeyDown={(e) => { if (e.key === 'Enter') { setActiveDealId(deal.id); setWorkspacePage(2); setDeskView('transaction'); } }} className="cursor-pointer">
+                              <td className="py-3 pl-4 font-medium text-slate-900">{deal.propertyAddress || deal.title}</td>
+                              <td>{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(', ') || '—'}</td>
+                              <td><span className="ds-chip ds-chip-purple">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span></td>
+                              <td>
+                                <div className="flex items-center gap-2">
+                                  <span className="ds-bar" aria-hidden="true"><span style={{ width: total ? `${Math.round((done / total) * 100)}%` : '0%' }} /></span>
+                                  <span className="text-xs text-slate-500">{total ? `${done}/${total}` : '—'}</span>
+                                </div>
+                              </td>
+                              <td><span className={`ds-chip ${health.tone}`}>{health.label}</span></td>
+                              <td className="whitespace-nowrap">{deal.closingDate ? formatDate(deal.closingDate) : '—'}</td>
+                              <td className="whitespace-nowrap pr-4">{sinceLabel(deal.activity[deal.activity.length - 1]?.createdAt)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
               <nav aria-label="Transaction sections" className="mb-5 overflow-hidden border border-slate-200 bg-white px-5 pt-5">
                 <div className="flex items-center gap-3">
