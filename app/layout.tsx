@@ -119,6 +119,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="antialiased font-sans">
+        <script dangerouslySetInnerHTML={{ __html: "try{var n=performance.getEntriesByType('navigation')[0];if(n&&n.type==='reload'&&'scrollRestoration' in history){history.scrollRestoration='manual';}}catch(e){}" }} />
         <PostHogProvider>
           <PushBootstrap />
           {/* Native iOS shell only: dismiss the Capacitor splash screen as

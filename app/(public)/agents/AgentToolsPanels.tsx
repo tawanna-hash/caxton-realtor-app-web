@@ -82,6 +82,13 @@ const QUICK_TOOLS = [
   },
 ] as const;
 
+// Calculators that open inside the Agent Desk instead of the public site.
+const DESK_TOOL_VIEWS: Record<string, string> = {
+  '/resources/seller-net-sheet': 'calc-net-sheet',
+  '/resources/commission-calculator': 'calc-commission',
+  '/resources/buyer-closing-costs': 'calc-cash',
+};
+
 function providerMatchesCategory(provider: ReferralProvider, category: ReferralCategory): boolean {
   if (category.id === 'all') return true;
   const searchable = `${provider.name} ${provider.industry ?? ''} ${provider.tagline ?? ''}`.toLowerCase();
@@ -89,7 +96,7 @@ function providerMatchesCategory(provider: ReferralProvider, category: ReferralC
 }
 
 
-export function WorkFasterPanel() {
+export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string) => void } = {}) {
   const { section: collapsible, toggleProps } = useCollapsibles();
   return (
     <section>
@@ -101,15 +108,38 @@ export function WorkFasterPanel() {
               <h2 className="ds-title">Calculators</h2>
               <p className="ds-subtitle">Client-ready tools, one click away.</p>
             </div>
-            <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
-              See Every Agent Tool
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
+            {!onOpenTool && (
+              <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
+                See Every Agent Tool
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            )}
             <CollapseToggle {...toggleProps('calculators', 'calculators', { mobileOpen: true })} />
           </div>
           <div className="mt-6 grid gap-4 sm:mt-8 md:grid-cols-2 lg:grid-cols-4">
             {QUICK_TOOLS.map((tool) => {
               const Icon = tool.icon;
+              const deskView = DESK_TOOL_VIEWS[tool.href];
+              if (onOpenTool && deskView) {
+                return (
+                  <button
+                    key={tool.href}
+                    type="button"
+                    onClick={() => { trackEvent('agent_command_center_tool_opened', { tool: tool.title }); onOpenTool(deskView); }}
+                    className={`group flex flex-col items-start rounded-xl border p-5 text-left transition hover:bg-[#FBFBFD] md:min-h-[200px] ${tool.tone}`}
+                  >
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${tool.iconTone}`}>
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60 sm:mt-7">{tool.eyebrow}</p>
+                    <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em]">{tool.title}</h3>
+                    <p className="mt-3 text-sm leading-6 opacity-75">{tool.description}</p>
+                    <span className="mt-5 inline-flex items-center gap-1 text-sm font-bold">
+                      Open Tool <ArrowRight className="h-4 w-4 " aria-hidden="true" />
+                    </span>
+                  </button>
+                );
+              }
               return (
                 <Link
                   key={tool.href}

@@ -19,8 +19,13 @@ const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'referral', label: 'Referral Network', keys: [] },
   { id: 'integrations', label: 'Integrations', keys: ['calendar'] },
 ];
+const CALC_VIEWS: { id: string; label: string; keys: string[] }[] = [
+  { id: 'calc-net-sheet', label: 'Seller Net Sheet', keys: [] },
+  { id: 'calc-commission', label: 'Commission Calculator', keys: [] },
+  { id: 'calc-cash', label: 'Cash-To-Close', keys: [] },
+];
 const DEALS_VIEW = { id: 'deals', label: 'Deals', keys: [] as string[] };
-const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, DEALS_VIEW];
+const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, DEALS_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug };
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -60,8 +65,12 @@ import {
 } from 'lucide-react';
 import PushOptInButton from '@/components/PushOptInButton';
 import TrecPdfPagePreview from './TrecPdfPagePreview';
+import dynamic from 'next/dynamic';
 import TrecFormsLibrary from './TrecFormsLibrary';
 import CustomFormsPanel from './CustomFormsPanel';
+const SellerNetSheetClient = dynamic(() => import('../resources/seller-net-sheet/SellerNetSheetClient'), { ssr: false });
+const CommissionCalculatorClient = dynamic(() => import('../resources/commission-calculator/CommissionCalculatorClient'), { ssr: false });
+const BuyerClosingCostsClient = dynamic(() => import('../resources/buyer-closing-costs/BuyerClosingCostsClient'), { ssr: false });
 import DealSubpage from './DealSubpage';
 import {
   buildClosingTimeIcs,
@@ -1974,7 +1983,7 @@ export default function ClosingTime({
             </div>
             <ul className="ds-nav-top">
               {TOOL_VIEWS.filter((view) => view.id === 'overview').map((view) => {
-                const active = view.id === effectiveView;
+                const active = view.id === effectiveView || (view.id === 'tools' && effectiveView.startsWith('calc-'));
                 const NavIcon = NAV_ICONS[view.id] ?? FileText;
                 return (
                   <li key={view.id}>
@@ -2038,9 +2047,9 @@ export default function ClosingTime({
             {effectiveView !== 'overview' && effectiveView !== 'deal-page' && (() => {
               const toDeals = DEAL_TABS.some((t) => t.id === effectiveView);
               return (
-                <button type="button" className="ds-back mb-3" aria-label={toDeals ? 'Back to Deals' : 'Back to Today'}
-                  onClick={() => { if (toDeals) { setWorkspacePage(2); setDeskView('deals'); } else { setWorkspacePage(1); } }}>
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> {toDeals ? 'Deals' : 'Today'}
+                <button type="button" className="ds-back mb-3" aria-label={toDeals ? 'Back to Deals' : effectiveView.startsWith('calc-') ? 'Back to Calculators' : 'Back to Today'}
+                  onClick={() => { if (toDeals) { setWorkspacePage(2); setDeskView('deals'); } else if (effectiveView.startsWith('calc-')) { setDeskView('tools'); } else { setWorkspacePage(1); } }}>
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> {toDeals ? 'Deals' : effectiveView.startsWith('calc-') ? 'Calculators' : 'Today'}
                 </button>
               );
             })()}
@@ -2197,7 +2206,10 @@ export default function ClosingTime({
                 </div>
               </nav>
             )}
-            <div data-section-key="tools" className="min-w-0"><WorkFasterPanel /></div>
+            <div data-section-key="tools" className="min-w-0"><WorkFasterPanel onOpenTool={(view) => { setWorkspacePage(2); setDeskView(view); }} /></div>
+            {effectiveView === 'calc-net-sheet' && <div className="ds-embed"><SellerNetSheetClient /></div>}
+            {effectiveView === 'calc-commission' && <div className="ds-embed"><CommissionCalculatorClient /></div>}
+            {effectiveView === 'calc-cash' && <div className="ds-embed"><BuyerClosingCostsClient /></div>}
             {!calendarConnected && (
             <div {...collapsible('calendar')} className="mb-5 border border-slate-200 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
