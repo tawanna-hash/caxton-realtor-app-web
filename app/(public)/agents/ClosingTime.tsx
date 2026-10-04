@@ -28,7 +28,8 @@ const CALC_VIEWS: { id: string; label: string; keys: string[] }[] = [
 const DEALS_VIEW = { id: 'deals', label: 'Deals', keys: [] as string[] };
 const ALERT_SETUP_VIEW = { id: 'alert-setup', label: 'Alert Setup', keys: [] as string[] };
 const CLOSINGS_VIEW = { id: 'closings', label: 'Closings', keys: [] as string[] };
-const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW];
+const CONTACTS_VIEW = { id: 'contacts', label: 'Contacts', keys: [] as string[] };
+const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug };
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -55,6 +56,7 @@ import {
   FolderDown,
   ListTodo,
   Landmark,
+  Users,
   Link2,
   LoaderCircle,
   Lock,
@@ -1046,6 +1048,9 @@ export default function ClosingTime({
       return next;
     });
   };
+  const [contactsTab, setContactsTab] = useState<'clients' | 'external'>('clients');
+  const [contactsFilter, setContactsFilter] = useState<'all' | 'active' | 'past'>('all');
+  const [contactsQuery, setContactsQuery] = useState('');
   const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
@@ -2023,6 +2028,11 @@ export default function ClosingTime({
                 );
               })}
               <li>
+                <button type="button" aria-current={effectiveView === 'contacts' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('contacts'); }} className="ds-navbtn">
+                  <Users className="ct-navicon" aria-hidden="true" /><span>Contacts</span>
+                </button>
+              </li>
+              <li>
                 <button type="button" aria-current={effectiveView === 'deals' || effectiveView === 'deal-page' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('deals'); }} className="ds-navbtn">
                   <ListTodo className="ct-navicon" aria-hidden="true" /><span>Deals</span>
                 </button>
@@ -2109,6 +2119,87 @@ export default function ClosingTime({
               <div className="ds-stat"><div><p className="ds-stat-label">Open tasks</p><p className="ds-stat-num">{activeDeals.reduce((n, d) => n + d.tasks.filter((t) => !t.complete).length, 0)}</p><p className="ds-stat-sub">Across active files</p></div><span className="ds-stat-icon ds-i-blue"><ListTodo className="h-4 w-4" aria-hidden="true" /></span></div>
               <div className="ds-stat"><div><p className="ds-stat-label">Closed</p><p className="ds-stat-num">{closedDeals.length}</p><p className="ds-stat-sub">Completed files</p></div><span className="ds-stat-icon ds-i-amber"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span></div>
             </div>
+            {effectiveView === 'contacts' && (() => {
+              type ContactRow = { key: string; name: string; email: string; phone: string; role: string; dealIds: string[]; active: boolean; last: string; client: boolean };
+              const map = new Map<string, ContactRow>();
+              const clientRole = /buyer|seller|client|tenant|landlord|owner/i;
+              const add = (deal: (typeof deals)[number], name: string, email: string, phone: string, role: string, forceClient: boolean) => {
+                const cleaned = name.trim();
+                if (!cleaned) return;
+                const key = (email.trim().toLowerCase() || cleaned.toLowerCase());
+                const closed = isDealClosedAndComplete(deal);
+                const existing = map.get(key);
+                const client = forceClient || !role.trim() || clientRole.test(role);
+                if (existing) {
+                  if (!existing.dealIds.includes(deal.id)) existing.dealIds.push(deal.id);
+                  existing.active = existing.active || !closed;
+                  if (deal.updatedAt > existing.last) existing.last = deal.updatedAt;
+                  existing.email = existing.email || email; existing.phone = existing.phone || phone;
+                  existing.client = existing.client || client;
+                } else {
+                  map.set(key, { key, name: cleaned, email, phone, role: role.trim(), dealIds: [deal.id], active: !closed, last: deal.updatedAt, client });
+                }
+              };
+              deals.forEach((deal) => {
+                deal.clientContacts.forEach((p) => add(deal, p.name, p.email ?? '', p.phone ?? '', p.role ?? '', false));
+                [deal.buyerNames, deal.sellerNames].forEach((names, i) => (names || '').split(/\s*(?:&|,|\band\b)\s*/i).forEach((n) => add(deal, n, '', '', i === 0 ? 'Buyer' : 'Seller', true)));
+              });
+              const all = Array.from(map.values());
+              const clients = all.filter((c) => c.client);
+              const external = all.filter((c) => !c.client);
+              const q = contactsQuery.trim().toLowerCase();
+              const list = (contactsTab === 'clients' ? clients : external)
+                .filter((c) => contactsFilter === 'all' || (contactsFilter === 'active' ? c.active : !c.active))
+                .filter((c) => !q || `${c.name} ${c.email} ${c.phone} ${c.role}`.toLowerCase().includes(q))
+                .sort((a, b) => a.name.localeCompare(b.name));
+              const touch = (iso: string) => {
+                const days = Math.floor((Date.parse(`${today}T12:00:00Z`) - Date.parse(iso)) / 86400000);
+                if (Number.isNaN(days)) return '—';
+                return days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
+              };
+              return (
+                <div className="ds-page ds-compact" data-testid="contacts-page">
+                  <p className="ds-eyebrow">CRM</p>
+                  <h2 className="ds-title">Contacts</h2>
+                  <p className="ds-subtitle">Everyone you work with: your clients and the professionals on your deals.</p>
+                  <div className="ds-tabs" role="tablist" aria-label="Contact groups">
+                    <button type="button" role="tab" aria-selected={contactsTab === 'clients'} className="ds-tab" onClick={() => setContactsTab('clients')}>Clients ({clients.length})</button>
+                    <button type="button" role="tab" aria-selected={contactsTab === 'external'} className="ds-tab" onClick={() => setContactsTab('external')}>External Contacts ({external.length})</button>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="inline-flex gap-1" role="group" aria-label="Contact status">
+                      {(['all', 'active', 'past'] as const).map((id) => (
+                        <button key={id} type="button" aria-pressed={contactsFilter === id} onClick={() => setContactsFilter(id)} className={contactsFilter === id ? 'ds-filter-on' : ''}>{id === 'all' ? 'All' : id === 'active' ? 'Active' : 'Past'}</button>
+                      ))}
+                    </div>
+                    <input value={contactsQuery} onChange={(e) => setContactsQuery(e.target.value)} placeholder={`Search ${contactsTab === 'clients' ? 'clients' : 'external contacts'}`} aria-label="Search contacts" className="h-8 min-w-[220px] flex-1 rounded-lg border border-[#E6E5EC] bg-white px-3 text-sm" />
+                  </div>
+                  <div className="ds-table-wrap mt-3">
+                    <table className="w-full text-left text-sm">
+                      <thead><tr><th className="px-4 py-2">Name</th><th>{contactsTab === 'clients' ? 'Stage' : 'Role'}</th><th>Email</th><th>Phone</th><th>Deal</th><th className="pr-4">Last Touch</th></tr></thead>
+                      <tbody>
+                        {list.length === 0 && <tr><td colSpan={6} className="px-4 py-6 text-sm text-slate-500">No contacts found.</td></tr>}
+                        {list.map((c) => {
+                          const first = deals.find((d) => d.id === c.dealIds[0]);
+                          return (
+                            <tr key={c.key} tabIndex={0} onClick={() => { if (first) { setActiveDealId(first.id); setDealPageId(first.id); setDealPageTab('preferences'); setDeskView('deal-page'); } }}>
+                              <td className="px-4 py-2.5 font-medium text-slate-900">{c.name}</td>
+                              <td>{contactsTab === 'clients'
+                                ? <span className={`ds-chip ${c.active ? 'bg-emerald-50 text-emerald-700' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{c.active ? 'Active client' : 'Past client'}</span>
+                                : <span className="capitalize">{c.role || '—'}</span>}</td>
+                              <td>{c.email || '—'}</td>
+                              <td>{c.phone || '—'}</td>
+                              <td className="max-w-[220px] truncate">{first ? (first.propertyAddress || first.title) : '—'}{c.dealIds.length > 1 ? ` +${c.dealIds.length - 1}` : ''}</td>
+                              <td className="pr-4 whitespace-nowrap">{touch(c.last)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
             {effectiveView === 'closings' && (() => {
               const stageList = TREC_DEAL_WORKFLOW_STATUSES.filter((status) => status !== 'cancelled');
               const inFlight = deals.filter((deal) => !isDealClosedAndComplete(deal)).sort((a, b) => (a.closingDate || '9999').localeCompare(b.closingDate || '9999'));
