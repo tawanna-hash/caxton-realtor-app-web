@@ -237,6 +237,8 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   };
   const tabs: [Tab, string][] = [['tasks', `Tasks ${deal.tasks.length}`], ['history', 'History']];
 
+  if ((section as string | undefined) === 'overview') return <div className="ds-page" data-testid="deal-snapshot" />;
+
   return (
     <div className="ds-page" data-testid="deal-subpage">
       {!section && (<>
