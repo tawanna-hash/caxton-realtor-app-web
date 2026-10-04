@@ -2411,18 +2411,10 @@ export default function ClosingTime({
               );
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
-              <nav aria-label="Deal sections" className="mb-5 overflow-hidden border border-slate-200 bg-white px-5 pt-5">
-                <div className="flex items-center gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Selected Deal</p>
-                    <h3 className="mt-1 truncate text-xl font-semibold text-gray-900">{activeDeal ? activeDeal.propertyAddress || activeDeal.title : 'Select a deal'}</h3>
-                  </div>
-                </div>
-                <div className="-mx-5 flex gap-1 overflow-x-auto px-5">
-                  {DEAL_TABS.map((tab) => (
-                    <button key={tab.id} type="button" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)} className={`min-h-[40px] shrink-0 border-b-2 px-3 text-sm font-semibold ${tab.id === effectiveView ? 'border-[#301D5D] text-[#301D5D]' : 'border-transparent text-slate-600 hover:text-[#301D5D]'}`}>{tab.label}</button>
-                  ))}
-                </div>
+              <nav aria-label="Deal sections" className="ds-dealnav mb-4">
+                {DEAL_TABS.map((tab) => (
+                  <button key={tab.id} type="button" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)}>{tab.label}</button>
+                ))}
               </nav>
             )}
             {['d-overview', 'd-documents', 'd-people'].includes(effectiveView) && (() => {
