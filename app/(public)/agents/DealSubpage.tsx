@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, type ReactNode } from 'react';
-import { AlertCircle, Check, ChevronLeft, ChevronRight, Clock, FileText, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
+import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import { PURCHASE_FOLDERS, PURCHASE_REQUIRED_IDS } from './purchase-documents';
 
@@ -75,7 +75,6 @@ type Props = {
 
 export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
-  const [kpiOpen, setKpiOpen] = useState<SnapId | null>('attention');
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
@@ -131,15 +130,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   const stageIds = statuses.filter((status) => status !== 'cancelled');
   const stageIndex = Math.max(0, stageIds.indexOf(deal.workflowStatus));
   const openTasks = deal.tasks.filter((t) => !t.complete);
-  const attention: { key: string; label: string; detail: string; tone: 'red' | 'amber' }[] = [
-    ...openTasks.filter((t) => t.dueDate && t.dueDate <= today).slice(0, 3).map((t) => ({ key: t.id, label: t.title, detail: t.dueDate < today ? `Overdue · ${formatDate(t.dueDate)}` : 'Due today', tone: (t.dueDate < today ? 'red' : 'amber') as 'red' | 'amber' })),
-    ...(nextDeadline && nextDeadline.date <= today ? [{ key: 'deadline', label: nextDeadline.label, detail: nextDeadline.date < today ? `Past due · ${formatDate(nextDeadline.date)}` : 'Due today', tone: 'red' as const }] : []),
-  ];
   const missingRequired = PURCHASE_FOLDERS.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' && !deal.documentChecks[doc.id]);
-  const waiting = [
-    ...openTasks.filter((t) => !t.dueDate || t.dueDate > today).slice(0, 3).map((t) => ({ key: t.id, label: t.title, detail: t.dueDate ? `Due ${formatDate(t.dueDate)}` : 'No due date' })),
-    ...missingRequired.slice(0, 2).map((doc) => ({ key: doc.id, label: doc.label, detail: 'Required document' })),
-  ].slice(0, 4);
   const price = deal.contractDetails?.salesPrice?.trim();
   const sideBlocks = {
     property: (
@@ -203,38 +194,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 </>
     ),
   };
-  const SNAP_LABELS: Record<SnapId, string> = { attention: 'Needs Your Attention', waiting: 'Waiting On Others', next: 'Next Action And Notes', preferences: 'Preferences', offers: 'Offers And Showings', property: 'Focus Property', parties: 'Parties', workspace: 'Workspace' };
-  const snapCards: Record<SnapId, ReactNode> = {
-    attention: (
-                <div className="ds-card !p-0">
-                  <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
-                    <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><AlertCircle className="h-4 w-4 text-amber-600" aria-hidden="true" /> Needs Your Attention</p>
-                    <span className="ds-chip bg-amber-50 text-amber-700">{attention.length}</span>
-                  </div>
-                  {attention.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing is overdue.</p> : attention.map((item) => (
-                    <div key={item.key} className="border-b border-[#F1F0F5] px-4 py-3 last:border-0">
-                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
-                      <p className={`mt-0.5 text-xs ${item.tone === 'red' ? 'text-[#9A3D2B]' : 'text-amber-700'}`}>{item.detail}</p>
-                    </div>
-                  ))}
-                  <button type="button" onClick={() => onOpenView('tasks')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View all tasks <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
-                </div>
-    ),
-    waiting: (
-                <div className="ds-card !p-0">
-                  <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
-                    <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Clock className="h-4 w-4 text-[#7059A8]" aria-hidden="true" /> Waiting On Others</p>
-                    <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{waiting.length}</span>
-                  </div>
-                  {waiting.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing is pending.</p> : waiting.map((item) => (
-                    <div key={item.key} className="border-b border-[#F1F0F5] px-4 py-3 last:border-0">
-                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
-                      <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
-                    </div>
-                  ))}
-                  <button type="button" onClick={() => onOpenView('d-documents')} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">View documents <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
-                </div>
-    ),
+  const snapCards: Partial<Record<SnapId, ReactNode>> = {
     next: (
               <div className="ds-card">
                 <label className="ds-field-label" htmlFor="deal-next-action">Next action</label>
@@ -254,8 +214,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               </div>
     ),
     property: <div>{sideBlocks.property}</div>,
-    parties: <div>{sideBlocks.parties}</div>,
-    workspace: <div>{sideBlocks.workspace}</div>,
     offers: (
               <div className="scroll-mt-24"><OffersShowings deal={deal} locked={locked} formatDate={formatDate} onUpdate={onUpdate} /></div>
     ),
@@ -283,6 +241,9 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         <span className={`ds-chip ${health.tone}`}>{health.label}</span>
       </div>
 
+      </>)}
+
+      {(!section || section === 'overview') && (<>
       <div className="ds-summary" aria-label="Deal summary">
         {([
           ['Price', price ? (price.startsWith('$') ? price : `$${price}`) : 'Not set', ''],
@@ -324,41 +285,107 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           )}
 
           {tab === 'overview' && (() => {
-            const daysToClose = deal.closingDate ? Math.ceil((Date.parse(`${deal.closingDate}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86400000) : null;
-            const requiredTotal = PURCHASE_REQUIRED_IDS.length;
-            const requiredDone = PURCHASE_REQUIRED_IDS.filter((id) => deal.documentChecks[id]).length;
-            const prefTotal = Object.keys(prefs).length;
-            const prefFilled = Object.values(prefs).filter((v) => String(v ?? '').trim()).length;
-            const kpis: { id: string; label: string; value: string; sub: string; tone?: 'alert' | 'ok'; panel?: SnapId; go?: string }[] = [
-              { id: 'k-attention', label: 'Attention', value: String(attention.length), sub: attention.length ? 'Needs action' : 'All clear', tone: attention.length ? 'alert' : 'ok', panel: 'attention' },
-              { id: 'k-waiting', label: 'Waiting', value: String(waiting.length), sub: 'On others', panel: 'waiting' },
-              { id: 'k-tasks', label: 'Open Tasks', value: String(openTasks.length), sub: 'Go to tasks', go: 'tasks' },
-              { id: 'k-docs', label: 'Required Docs', value: `${requiredDone}/${requiredTotal}`, sub: 'Go to documents', tone: requiredDone === requiredTotal ? 'ok' : undefined, go: 'd-documents' },
-              { id: 'k-close', label: 'Days To Close', value: daysToClose === null ? '—' : String(daysToClose), sub: deal.closingDate ? formatDate(deal.closingDate) : 'Date not set', tone: daysToClose !== null && daysToClose < 0 ? 'alert' : undefined, panel: 'next' },
-              { id: 'k-offers', label: 'Offers & Showings', value: String(deal.offersShowings.length), sub: 'Logged', panel: 'offers' },
-              { id: 'k-parties', label: 'Parties', value: String(people.length), sub: 'On this deal', panel: 'parties' },
-              { id: 'k-property', label: 'Property', value: deal.photoUrl ? 'Photo' : 'No photo', sub: price ? (price.startsWith('$') ? price : `$${price}`) : 'Price not set', panel: 'property' },
-              { id: 'k-prefs', label: 'Preferences', value: `${prefFilled}/${prefTotal}`, sub: 'Filled in', panel: 'preferences' },
-              { id: 'k-work', label: 'Workspace', value: '5', sub: 'Deal pages', panel: 'workspace' },
+            const clientRole = /buyer|seller|client|tenant|landlord|owner|agent|coordinator/i;
+            const named = new Set(people.map((p) => p.name.trim().toLowerCase()));
+            const clientNames = [[deal.buyerNames, 'Buyer'], [deal.sellerNames, 'Seller']].flatMap(([names, role]) => (names || '').split(/\s*(?:&|,|\band\b)\s*/i).map((n) => n.trim()).filter((n) => n && !named.has(n.toLowerCase())).map((n) => ({ id: `n-${role}-${n}`, name: n, role, email: '', phone: '', sub: 'Your client' })));
+            const yourSide = [...people.filter((p) => !p.role || clientRole.test(p.role)).map((p) => ({ id: p.id, name: p.name, role: p.role || 'Client', email: p.email ?? '', phone: p.phone ?? '', sub: /buyer|seller|client|tenant|landlord|owner/i.test(p.role ?? '') || !p.role ? 'Your client' : (p.email ?? '') })), ...clientNames];
+            const external = people.filter((p) => p.role && !clientRole.test(p.role)).map((p) => ({ id: p.id, name: p.name, role: p.role as string, email: p.email ?? '', phone: p.phone ?? '', sub: p.email ?? '' }));
+            const soon = nextDeadline && nextDeadline.date <= new Date(Date.parse(`${today}T12:00:00Z`) + 3 * 86400000).toISOString().slice(0, 10);
+            const attentionRows: { key: string; eyebrow: string; title: string; detail: string; tone: 'red' | 'amber'; go: string }[] = [
+              ...openTasks.filter((t) => t.dueDate && t.dueDate <= today).map((t) => ({ key: t.id, eyebrow: 'Task', title: t.title, detail: t.dueDate < today ? `Overdue · ${formatDate(t.dueDate)}` : 'Due today', tone: (t.dueDate < today ? 'red' : 'amber') as 'red' | 'amber', go: 'tasks' })),
+              ...(nextDeadline && soon ? [{ key: 'deadline', eyebrow: 'Deadline', title: nextDeadline.label, detail: nextDeadline.date <= today ? (nextDeadline.date < today ? `Past due · ${formatDate(nextDeadline.date)}` : 'Due today') : `Due ${formatDate(nextDeadline.date)}`, tone: (nextDeadline.date <= today ? 'red' : 'amber') as 'red' | 'amber', go: 'transaction' }] : []),
             ];
+            const waitingRows = [
+              ...openTasks.filter((t) => !t.dueDate || t.dueDate > today).map((t) => ({ key: t.id, chip: 'Task', title: t.title, detail: t.dueDate ? `Due ${formatDate(t.dueDate)}` : 'No due date', go: 'tasks' })),
+              ...missingRequired.map((doc) => ({ key: doc.id, chip: 'Document', title: doc.label, detail: 'Required document', go: 'd-documents' })),
+            ];
+            const requiredDone = PURCHASE_REQUIRED_IDS.filter((id) => deal.documentChecks[id]).length;
+            const scheduled = deal.reminders.filter((r) => !r.complete).length;
+            const handling = [
+              { key: 'alerts', title: 'Deadline alerts', detail: `${scheduled} ${scheduled === 1 ? 'reminder' : 'reminders'} scheduled`, chip: scheduled ? 'In motion' : 'Not set', go: 'coordinator' },
+              { key: 'readiness', title: 'Readiness check', detail: `${requiredDone} of ${PURCHASE_REQUIRED_IDS.length} required documents in`, chip: requiredDone === PURCHASE_REQUIRED_IDS.length ? 'Complete' : 'In progress', go: 'readiness' },
+              { key: 'followups', title: 'Follow-up drafts', detail: 'Intro and status requests to your parties', chip: 'Ready', go: 'coordinator' },
+            ];
+            const cardHead = (icon: ReactNode, title: string, count: number, tone: string) => (
+              <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
+                <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">{icon} {title}</p>
+                <span className={`ds-chip ${tone}`}>{count}</span>
+              </div>
+            );
+            const footLink = (label: string, go: string) => (
+              <button type="button" onClick={() => onOpenView(go)} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">{label} <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+            );
+            const partyRow = (p: { id: string; name: string; role: string; email: string; phone: string; sub: string }) => (
+              <div key={p.id} className="flex items-center gap-2.5 px-4 py-2.5">
+                <span className="ds-avatar !mr-0" aria-hidden="true">{initials(p.name)}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-1.5"><span className="truncate text-sm font-semibold text-slate-900">{p.name}</span><span className="rounded-full bg-[#EFEAF8] px-2 py-0.5 text-[11px] font-medium capitalize text-[#301D5D]">{p.role}</span></span>
+                  {p.sub ? <span className="block truncate text-xs text-slate-500">{p.sub}</span> : null}
+                </span>
+                {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : null}
+                {p.phone ? <a href={`tel:${p.phone}`} aria-label={`Call ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : null}
+              </div>
+            );
             return (
               <div className="space-y-4">
-                <div className="ds-kpis" role="group" aria-label="Deal snapshot">
-                  {kpis.map((k) => (
-                    <button
-                      key={k.id}
-                      type="button"
-                      aria-pressed={k.panel ? kpiOpen === k.panel : undefined}
-                      onClick={() => { if (k.go) onOpenView(k.go); else if (k.panel) setKpiOpen(kpiOpen === k.panel ? null : k.panel); }}
-                      className={`ds-kpi ${k.tone === 'alert' ? 'is-alert' : k.tone === 'ok' ? 'is-ok' : ''} ${k.panel && kpiOpen === k.panel ? 'is-open' : ''}`}
-                    >
-                      <span className="ds-kpi-label">{k.label}</span>
-                      <span className="ds-kpi-num">{k.value}</span>
-                      <span className="ds-kpi-sub">{k.sub}</span>
-                    </button>
+                <div className="ds-snap-grid">
+                  <div className="ds-card !p-0 self-start">
+                    {cardHead(<AlertCircle className="h-4 w-4 text-amber-600" aria-hidden="true" />, 'Needs Your Attention', attentionRows.length, 'bg-amber-50 text-amber-700')}
+                    {attentionRows.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing needs you right now.</p> : attentionRows.map((item) => (
+                      <div key={item.key} className="border-b border-[#F1F0F5] px-4 py-3">
+                        <p className={`text-[11px] font-medium ${item.tone === 'red' ? 'text-[#9A3D2B]' : 'text-amber-700'}`}>{item.eyebrow}</p>
+                        <p className="mt-0.5 text-sm font-semibold text-slate-900">{item.title}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
+                        <button type="button" className="mt-2" onClick={() => onOpenView(item.go)}>Open</button>
+                      </div>
+                    ))}
+                    {footLink('View all tasks', 'tasks')}
+                  </div>
+                  <div className="ds-card !p-0 self-start">
+                    {cardHead(<Sparkles className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />, 'The Assistant Is Handling', handling.length, 'bg-[#EFEAF8] text-[#301D5D]')}
+                    {handling.map((item) => (
+                      <button key={item.key} type="button" onClick={() => onOpenView(item.go)} className="ds-snap-row">
+                        <span className="min-w-0 flex-1 text-left">
+                          <span className="block text-sm font-semibold">{item.title}</span>
+                          <span className="block text-xs opacity-70">{item.detail}</span>
+                        </span>
+                        <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{item.chip}</span>
+                      </button>
+                    ))}
+                    {footLink('Open deal settings', 'coordinator')}
+                  </div>
+                  <div className="ds-card !p-0 self-start">
+                    {cardHead(<Clock className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />, 'Waiting On Others', waitingRows.length, 'bg-[#EFEAF8] text-[#301D5D]')}
+                    {waitingRows.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing is pending.</p> : waitingRows.slice(0, 5).map((item) => (
+                      <button key={item.key} type="button" onClick={() => onOpenView(item.go)} className="ds-snap-row">
+                        <span className="min-w-0 flex-1 text-left">
+                          <span className="flex flex-wrap items-center gap-1.5"><span className="text-sm font-semibold">{item.title}</span><span className="rounded bg-[#EFEAF8] px-1.5 py-0.5 text-[11px] font-medium text-[#301D5D]">{item.chip}</span></span>
+                          <span className="block text-xs opacity-70">{item.detail}</span>
+                        </span>
+                      </button>
+                    ))}
+                    {footLink(waitingRows.length > 5 ? `View all ${waitingRows.length}` : 'View documents', 'd-documents')}
+                  </div>
+                  <div className="ds-card !p-0 self-start">
+                    <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
+                      <p className="text-sm font-semibold text-slate-900">Parties</p>
+                      <button type="button" onClick={() => onOpenView('d-people')}><Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />Add</button>
+                    </div>
+                    <p className="ds-eyebrow px-4 pt-3">Your side</p>
+                    {yourSide.length === 0 ? <p className="px-4 py-3 text-xs text-slate-500">No parties added.</p> : yourSide.map(partyRow)}
+                    {external.length > 0 && <p className="ds-eyebrow px-4 pt-3">External parties</p>}
+                    {external.map(partyRow)}
+                    <div className="h-2" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {([['next', 'Next Action And Notes'], ['preferences', 'Preferences'], ['offers', 'Offers And Showings'], ['property', 'Focus Property']] as const).map(([id, label]) => (
+                    <details key={id} className="ds-detail">
+                      <summary>{label}</summary>
+                      <div className="pt-3">{snapCards[id]}</div>
+                    </details>
                   ))}
                 </div>
-                {kpiOpen && <div className="ds-kpi-panel" key={kpiOpen}>{snapCards[kpiOpen]}</div>}
               </div>
             );
           })()}
