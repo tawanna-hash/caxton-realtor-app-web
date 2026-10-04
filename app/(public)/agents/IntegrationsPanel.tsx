@@ -101,21 +101,22 @@ export default function IntegrationsPanel() {
   const selectedAccount = selected ? accounts.find((a) => a.appSlug === selected.slug) : undefined;
 
   return (
-    <section aria-label="Integrations" {...collapsible('integrations', { mobileOpen: true })} data-section-key={undefined} className="border border-slate-200 bg-white p-5 sm:p-6">
+    <section aria-label="Integrations" {...collapsible('integrations', { mobileOpen: true })} data-section-key={undefined} className="ds-page">
       <div className="flex items-center gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Integrations</p>
-          <h2 className="mt-1 text-xl font-semibold text-gray-900">Connect The Tools You Already Use</h2>
+          <p className="ds-eyebrow">Tools</p>
+          <h2 className="ds-title">Integrations</h2>
+          <p className="ds-subtitle">Connect the tools you already use.</p>
         </div>
         <CollapseToggle {...toggleProps('integrations', 'integrations', { mobileOpen: true })} className="ml-auto" />
       </div>
-      <p className="mt-2 text-sm leading-6 text-slate-600">Each connection is yours alone. You sign in with the provider, and you can disconnect at any time.</p>
+      <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">Each connection is yours alone. You sign in with the provider, and you can disconnect at any time.</p>
 
       {!configured && loaded && <p className="mt-4 border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Integrations are not turned on yet. They will be available here soon.</p>}
       {message && <p role="status" className="mt-4 text-sm font-semibold text-[#301D5D]">{message}</p>}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <label className="flex min-h-[42px] min-w-0 flex-1 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm">
+        <label className="flex min-h-[40px] min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm">
           <Search className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search integrations" aria-label="Search integrations" className="min-w-0 flex-1 bg-transparent outline-none" />
         </label>
@@ -131,7 +132,7 @@ export default function IntegrationsPanel() {
               const connected = accounts.some((a) => a.appSlug === item.slug);
               return (
                 <li key={item.slug}>
-                  <button type="button" onClick={() => setSelected(item)} className="flex min-h-[56px] w-full items-center gap-3 rounded-md border border-slate-200 bg-white px-3 text-left hover:border-[#301D5D]">
+                  <button type="button" onClick={() => setSelected(item)} className="flex min-h-[56px] w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 text-left hover:bg-[#FBFBFD]">
                     <Logo item={item} size={28} />
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950">{item.name}</span>
                     {connected && <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">Connected</span>}
@@ -145,7 +146,7 @@ export default function IntegrationsPanel() {
 
       {selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label={selected.name} onClick={() => setSelected(null)}>
-          <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3"><Logo item={selected} size={36} /><h3 className="truncate text-lg font-semibold text-gray-900">{selected.name}</h3></div>
               <button type="button" onClick={() => setSelected(null)} aria-label="Close" className="flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><X className="h-5 w-5" aria-hidden="true" /></button>

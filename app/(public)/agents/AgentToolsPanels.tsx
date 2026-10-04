@@ -60,7 +60,7 @@ const QUICK_TOOLS = [
     description: 'Model sides, splits, flat fees, and referrals before you write.',
     icon: Calculator,
     tone: 'bg-white text-slate-900 border-slate-200',
-    iconTone: 'bg-[#F2EEE7] text-[#301D5D]',
+    iconTone: 'bg-[#EFEAF8] text-[#5B3FA0]',
   },
   {
     href: '/resources/buyer-closing-costs',
@@ -69,7 +69,7 @@ const QUICK_TOOLS = [
     description: 'Set expectations with an easy buyer closing-cost breakdown.',
     icon: Home,
     tone: 'bg-white text-slate-900 border-slate-200',
-    iconTone: 'bg-[#F2EEE7] text-[#301D5D]',
+    iconTone: 'bg-[#EFEAF8] text-[#5B3FA0]',
   },
   {
     href: '/calendar',
@@ -78,7 +78,7 @@ const QUICK_TOOLS = [
     description: 'Keep client conversations local with current events and deadlines.',
     icon: CalendarDays,
     tone: 'bg-white text-slate-900 border-slate-200',
-    iconTone: 'bg-[#F2EEE7] text-[#301D5D]',
+    iconTone: 'bg-[#EFEAF8] text-[#5B3FA0]',
   },
 ] as const;
 
@@ -94,11 +94,12 @@ export function WorkFasterPanel() {
   return (
     <section>
         <div className="">
-        <div {...collapsible('calculators', { mobileOpen: true })} data-section-key={undefined} className="border border-slate-200 bg-white p-5 sm:p-6">
+        <div {...collapsible('calculators', { mobileOpen: true })} data-section-key={undefined} className="ds-page">
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Calculators</p>
-              <h2 className="mt-1 text-xl font-semibold text-gray-900">Client-Ready Tools, One Click Away</h2>
+              <p className="ds-eyebrow">Tools</p>
+              <h2 className="ds-title">Calculators</h2>
+              <p className="ds-subtitle">Client-ready tools, one click away.</p>
             </div>
             <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
               See Every Agent Tool
@@ -114,16 +115,16 @@ export function WorkFasterPanel() {
                   key={tool.href}
                   href={tool.href}
                   onClick={() => trackEvent('agent_command_center_tool_opened', { tool: tool.title })}
-                  className={`group border p-4 transition hover:-translate-y-1 hover:shadow-xl sm:p-5 md:min-h-[230px] ${tool.tone}`}
+                  className={`group rounded-xl border p-5 transition hover:bg-[#FBFBFD] md:min-h-[200px] ${tool.tone}`}
                 >
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-full ${tool.iconTone}`}>
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${tool.iconTone}`}>
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60 sm:mt-7">{tool.eyebrow}</p>
                   <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em]">{tool.title}</h3>
                   <p className="mt-3 text-sm leading-6 opacity-75">{tool.description}</p>
                   <span className="mt-5 inline-flex items-center gap-1 text-sm font-bold">
-                    Open Tool <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                    Open Tool <ArrowRight className="h-4 w-4 " aria-hidden="true" />
                   </span>
                 </Link>
               );
@@ -164,15 +165,16 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
   return (
       <section id="referral-network" className="scroll-mt-20">
         <div className="">
-          <div {...collapsible('referral', { mobileOpen: true })} data-section-key={undefined} className="border border-slate-200 bg-white p-5 sm:p-6">
+          <div {...collapsible('referral', { mobileOpen: true })} data-section-key={undefined} className="ds-page">
             <div className="flex items-center gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Referral Network</p>
-                <h2 className="mt-1 text-xl font-semibold text-gray-900">Your Call List, Built for the Next Deal</h2>
+                <p className="ds-eyebrow">Tools</p>
+                <h2 className="ds-title">Referral Network</h2>
+                <p className="ds-subtitle">Your call list, built for the next deal.</p>
               </div>
               <CollapseToggle {...toggleProps('referral', 'referral network', { mobileOpen: true })} className="ml-auto" />
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-600">
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
               Find local service partners across title, appraisal, remodeling, A/C and heating, roofing, inspections, and lending. Discover who is visible in your market and take the next step with confidence.
             </p>
 
@@ -184,7 +186,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
                 </div>
                 <Link
                   href="/partners"
-                  className="inline-flex h-[42px] shrink-0 items-center justify-center gap-1 rounded-md border border-[#301D5D] px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white"
+                  className="inline-flex h-[42px] shrink-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 transition hover:bg-[#F4F3F8]"
                 >
                   All Partners <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
@@ -201,7 +203,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
                         setProviderRotation(0);
                         trackEvent('agent_referral_network_category_selected', { category: category.id });
                       }}
-                      className={`h-[42px] rounded-md border px-3.5 text-sm font-semibold transition ${
+                      className={`h-[36px] rounded-full border px-3.5 text-sm font-medium transition ${
                         selected
                           ? 'border-[#301D5D] bg-[#301D5D] text-white'
                           : 'border-slate-200 bg-white text-slate-700 hover:border-[#301D5D] hover:text-[#301D5D]'
@@ -219,10 +221,10 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
                     <Link
                       href={`/partners/${provider.slug}`}
                       key={provider.id}
-                      className="group border border-slate-200 bg-[#FCFBF9] p-4 transition hover:border-[#8E78BF] hover:bg-white hover:shadow-md"
+                      className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:bg-[#FBFBFD]"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEE8F9] text-[#5B438C]">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFEAF8] text-[#5B3FA0]">
                           <Building2 className="h-5 w-5" aria-hidden="true" />
                         </div>
                         <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-1 group-hover:text-[#301D5D]" aria-hidden="true" />
@@ -234,7 +236,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
                   ))}
                 </div>
               ) : (
-                <div className="mt-6 border border-dashed border-slate-300 bg-[#FCFBF9] p-6">
+                <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-6">
                   <Wrench className="rnn-heading-icon text-[#5B438C]" aria-hidden="true" />
                   <p className="mt-4 text-lg font-semibold text-slate-950">This service category is growing</p>
                   <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">

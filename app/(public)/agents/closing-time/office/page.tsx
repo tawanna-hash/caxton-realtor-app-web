@@ -19,21 +19,21 @@ export default async function OfficeDashboardPage() {
   const agents = await officeOverview(brokerage.id, today);
   const totals = agents.reduce((a, x) => ({ deals: a.deals + x.activeDeals, urgent: a.urgent + x.urgent, watch: a.watch + x.watch }), { deals: 0, urgent: 0, watch: 0 });
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Office dashboard</p>
-      <h1 className="mt-2 text-2xl font-bold text-[#301D5D]">{brokerage.name}</h1>
+    <main id="agent-desk" className="mx-auto max-w-5xl px-4 py-10">
+      <p className="ds-eyebrow">Office dashboard</p>
+      <h1 className="ds-title">{brokerage.name}</h1>
       <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-        <div className="border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-slate-950">{totals.deals}</p><p className="text-xs text-slate-600">Active deals</p></div>
-        <div className="border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-[#9A3D2B]">{totals.urgent}</p><p className="text-xs text-slate-600">Urgent risks</p></div>
-        <div className="border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-slate-950">{totals.watch}</p><p className="text-xs text-slate-600">To watch</p></div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-slate-950">{totals.deals}</p><p className="text-xs text-slate-600">Active deals</p></div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-[#9A3D2B]">{totals.urgent}</p><p className="text-xs text-slate-600">Urgent risks</p></div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-slate-950">{totals.watch}</p><p className="text-xs text-slate-600">To watch</p></div>
       </div>
       <div className="mt-5 flex gap-3 text-sm font-bold">
         <a className="underline text-[#301D5D]" href="/api/closing-time/office/export">Export office deals (CSV)</a>
         <Link className="underline text-[#301D5D]" href="/agents/closing-time">Back to Closing Time</Link>
       </div>
-      <div className="mt-5 overflow-x-auto border border-slate-200 bg-white">
+      <div className="mt-5 overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
+          <thead className="bg-[#FBFBFD]">
             <tr><th className="p-3">Agent</th><th className="p-3">Deals</th><th className="p-3">Urgent</th><th className="p-3">Watch</th><th className="p-3">Drafts</th><th className="p-3">Next date</th></tr>
           </thead>
           <tbody>

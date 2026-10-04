@@ -1349,3 +1349,11 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk tbody tr { border-color: var(--d-line); }
 #agent-desk tbody tr:hover { background-color: var(--d-rail); }
 #agent-desk [class*='bg-amber-50'], #agent-desk [class*='bg-[#FFF9E7]'] { background-color: var(--d-lav-wash); border-color: var(--d-line); color: var(--d-text); border-radius: 10px; }
+
+/* Tool child pages (Forms Library, Calculators, Referral Network, Integrations):
+   plain page header + outlined cards, no outer card. */
+#agent-desk .ds-page { background: transparent; border: 0; border-radius: 0; padding: 0; box-shadow: none; }
+#agent-desk .ds-page .ds-title { font-size: 1.75rem; }
+#agent-desk .ds-page > div:first-child { margin-bottom: 1.25rem; }
+#agent-desk .ds-page :is(a, button) { transition: background-color 0.15s, border-color 0.15s; }
+#agent-desk .ds-page article, #agent-desk .ds-page li > button { box-shadow: none; }

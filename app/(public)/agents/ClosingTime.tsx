@@ -2128,14 +2128,15 @@ export default function ClosingTime({
               </div>
               <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active transactions. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
             </div>
-            <div id="trec-forms" {...collapsible('trec-library')} className="min-w-0 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
+            <div id="trec-forms" {...collapsible('trec-library')} className="ds-page min-w-0 scroll-mt-24 lg:col-span-2">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">TREC Forms Library</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">TREC Contracts And Forms</h3>
+                  <p className="ds-eyebrow">Tools</p>
+                  <h3 className="ds-title">TREC Forms Library</h3>
+                  <p className="ds-subtitle">Search and download current TREC contracts and forms.</p>
                 </div>
                 <div className="ml-auto flex shrink-0 items-center gap-2">
-                  <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-md border border-[#301D5D] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white sm:inline-flex">Verify on TREC</a>
+                  <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#301D5D] hover:text-white sm:inline-flex">Verify on TREC</a>
                   <CollapseToggle {...toggleProps('trec-library', 'TREC contracts and forms')} />
                 </div>
               </div>

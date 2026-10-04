@@ -63,7 +63,7 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
               value={query}
               onChange={(event) => { setQuery(event.target.value); setPage(1); }}
               placeholder="Search by form name or number"
-              className="h-[46px] w-full rounded-md border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]"
+              className="h-[40px] w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]"
             />
           </label>
           <div className="flex flex-wrap gap-2" aria-label="Filter TREC forms by category">
@@ -72,7 +72,7 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
                 key={option}
                 type="button"
                 onClick={() => { setCategory(option); setPage(1); }}
-                className={`rounded-md border font-bold transition h-[46px] px-4 text-sm ${
+                className={`rounded-full border font-medium transition h-[36px] px-3.5 text-sm ${
                   category === option
                     ? 'border-[#301D5D] bg-[#301D5D] text-white'
                     : 'border-slate-300 bg-white text-slate-700 hover:border-[#7059A8] hover:bg-[#F8F5FF]'
@@ -91,14 +91,14 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
 
         <div className={`mt-4 grid gap-3 md:grid-cols-2 ${embedded ? 'max-h-[340px] overflow-y-auto overscroll-contain pr-1' : ''}`}>
           {pagedForms.map((form) => (
-            <article key={form.formFamily} className={`flex min-w-0 flex-col justify-between gap-5 border border-slate-200 p-5 ${embedded ? 'bg-[#FCFBF9]' : 'bg-white'}`}>
+            <article key={form.formFamily} className={`flex min-w-0 flex-col justify-between gap-5 rounded-xl border border-slate-200 p-5 ${'bg-white'}`}>
               <div className="flex min-w-0 items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEE8F9] text-[#5B438C]">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFEAF8] text-[#5B3FA0]">
                   <FileText className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-md bg-[#F2EEE7] px-2 py-1 text-xs font-bold text-[#301D5D]">TREC {form.formNumber}</span>
+                    <span className="rounded-full bg-[#EFEAF8] px-2 py-0.5 text-xs font-semibold text-[#301D5D]">TREC {form.formNumber}</span>
                     <span className="text-xs font-semibold text-slate-500">{form.category}</span>
                   </div>
                   <h3 className="mt-2 text-sm font-semibold leading-5 text-slate-950">{form.title}</h3>
@@ -118,7 +118,7 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
                   download={form.local ? `TREC-${form.formNumber.replace(/\s+/g, '-')}.pdf` : undefined}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-md border border-[#301D5D] bg-white px-3 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]"
+                  className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 transition hover:bg-[#F4F3F8]"
                 >
                   <Download className="rnn-inline-icon" aria-hidden="true" />
                   Download
@@ -161,13 +161,13 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
   if (embedded) return <div>{libraryBody}</div>;
 
   return (
-    <section id="trec-forms" className="border-y border-slate-200 bg-[#F7F5F1]">
-      <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-16">
+    <section id="trec-forms" className="bg-white">
+      <div className="ds-page">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Official form library</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">TREC Contracts and Forms</h2>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+            <p className="ds-eyebrow">Official form library</p>
+            <h2 className="ds-title">TREC Contracts and Forms</h2>
+            <p className="ds-subtitle max-w-3xl">
               Search and download all current forms listed in the Texas Real Estate Commission contract library. Always confirm the revision and effective date before use.
             </p>
           </div>

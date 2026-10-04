@@ -114,10 +114,10 @@ const troubleshooting: ReactNode[] = [
 
 export default function ClosingTimeAlertSetupPage() {
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Closing Time</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-4xl">Never Miss A Deadline Alert</h1>
-      <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+    <main id="agent-desk" className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+      <p className="ds-eyebrow">Closing Time</p>
+      <h1 className="ds-title">Never Miss A Deadline Alert</h1>
+      <p className="ds-subtitle max-w-2xl">
         Follow these steps on each phone and computer you use so Closing Time email and push alerts reach you.
       </p>
 
@@ -126,14 +126,14 @@ export default function ClosingTimeAlertSetupPage() {
           <a
             key={section.id}
             href={`#${section.id}`}
-            className="inline-flex min-h-[36px] items-center rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:border-[#7059A8] hover:bg-[#F8F5FF]"
+            className="inline-flex min-h-[36px] items-center rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#F4F3F8]"
           >
             {section.title}
           </a>
         ))}
         <a
           href="#troubleshooting"
-          className="inline-flex min-h-[36px] items-center rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:border-[#7059A8] hover:bg-[#F8F5FF]"
+          className="inline-flex min-h-[36px] items-center rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#F4F3F8]"
         >
           Troubleshooting
         </a>
@@ -141,7 +141,7 @@ export default function ClosingTimeAlertSetupPage() {
 
       <div className="mt-8 space-y-4">
         {sections.map((section) => (
-          <section key={section.id} id={section.id} className="scroll-mt-24 border border-slate-200 bg-white p-4 sm:p-6">
+          <section key={section.id} id={section.id} className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
             <div className="flex items-start gap-3">
               {section.icon}
               <div>
@@ -165,7 +165,7 @@ export default function ClosingTimeAlertSetupPage() {
           </section>
         ))}
 
-        <section id="troubleshooting" className="scroll-mt-24 border border-slate-200 bg-white p-4 sm:p-6">
+        <section id="troubleshooting" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
           <div className="flex items-start gap-3">
             <Wrench className={iconClass} aria-hidden="true" />
             <div>
@@ -187,7 +187,7 @@ export default function ClosingTimeAlertSetupPage() {
       <div className="mt-8">
         <Link
           href="/agents/closing-time"
-          className="inline-flex min-h-[44px] items-center rounded-md bg-[#301D5D] px-5 text-sm font-bold text-white transition hover:bg-[#241646]"
+          className="inline-flex min-h-[44px] items-center rounded-lg bg-[#301D5D] px-4 text-sm font-semibold text-white transition hover:bg-[#42277C]"
         >
           Back To Closing Time
         </Link>
