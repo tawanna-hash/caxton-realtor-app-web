@@ -1383,7 +1383,9 @@ export default function ClosingTime({
   const overdueTaskCount = deals.flatMap((deal) => deal.tasks).filter((task) => !task.complete && task.dueDate < today).length;
 
   const createDeal = (dealType?: AgentDeal['dealType']) => {
-    const deal = { ...newDeal(trecFormVersion.id), ...(dealType ? { dealType } : {}) };
+    const base = newDeal(trecFormVersion.id);
+    // Pre-tick the required TREC forms: the One to Four Family contract and the Seller's Disclosure Notice.
+    const deal = { ...base, ...(dealType ? { dealType } : {}), selectedFormFamilies: { ...base.selectedFormFamilies, '20': true, '55': true } };
     persistDeals([deal, ...deals]);
     setActiveDealId(deal.id);
     setPendingRemoval(null);
