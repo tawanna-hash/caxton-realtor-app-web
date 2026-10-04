@@ -1004,14 +1004,40 @@ export default function ClosingTime({
     return () => rail.removeEventListener('click', onClick);
   }, [ready]);
   const BROKER_FOOTER_KEY = `closing-time-broker-footer:${realtorId}`;
-  const [brokerFooter, setBrokerFooter] = useState({ brokerage: '', address: '', agentId: '', agentName: '' });
+  const [brokerFooter, setBrokerFooter] = useState({ brokerage: '', address: '', agentId: '', agentName: '', brokerName: '', brokerEmail: '' });
   useEffect(() => {
     try {
       const saved = JSON.parse(window.localStorage.getItem(BROKER_FOOTER_KEY) ?? 'null');
       if (saved && typeof saved === 'object') setBrokerFooter((current) => ({ ...current, ...saved }));
     } catch { /* storage unavailable */ }
   }, [BROKER_FOOTER_KEY]);
-  const updateBrokerFooter = (key: 'brokerage' | 'address' | 'agentId' | 'agentName', value: string) => {
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewNote, setReviewNote] = useState('');
+  const [reviewState, setReviewState] = useState<{ status: 'idle' | 'sending' | 'sent' | 'error'; message: string }>({ status: 'idle', message: '' });
+  const submitForBrokerReview = async () => {
+    if (!activeDeal) return;
+    setReviewState({ status: 'sending', message: '' });
+    const values: Record<string, string> = {};
+    currentTrecFormVersion.fields.forEach((field) => { const v = currentFormValues[field.id]; if (v) values[field.pdfFieldName] = String(v); });
+    try {
+      const response = await fetch('/api/agent-command-center/submit-review', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          formNumber: currentTrecFormVersion.formNumber, title: currentTrecFormVersion.title, pdfUrl: currentTrecFormVersion.pdfUrl,
+          property: activeDeal.propertyAddress || activeDeal.title, dealName: activeDeal.title, values,
+          broker: { name: brokerFooter.brokerName, email: brokerFooter.brokerEmail, note: reviewNote },
+          footer: { brokerage: brokerFooter.brokerage, address: brokerFooter.address, agentId: brokerFooter.agentId, agentName: brokerFooter.agentName },
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || 'Could not send for review.');
+      setReviewState({ status: 'sent', message: `Sent to ${brokerFooter.brokerEmail}.` });
+      applyActiveAction(`Submitted ${currentTrecFormVersion.formNumber} to broker for review`, {});
+    } catch (error) {
+      setReviewState({ status: 'error', message: error instanceof Error ? error.message : 'Could not send for review.' });
+    }
+  };
+  const updateBrokerFooter = (key: 'brokerage' | 'address' | 'agentId' | 'agentName' | 'brokerName' | 'brokerEmail', value: string) => {
     setBrokerFooter((current) => {
       const next = { ...current, [key]: value };
       try { window.localStorage.setItem(BROKER_FOOTER_KEY, JSON.stringify(next)); } catch { /* storage unavailable */ }
@@ -2819,6 +2845,34 @@ export default function ClosingTime({
                               />
                             </label>
                           ))}
+                        </div>
+                        <div className="border-t border-slate-200 bg-white p-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-xs text-slate-500">Send this filled form to your broker to review.</p>
+                            <button type="button" onClick={() => { setReviewOpen((open) => !open); setReviewState({ status: 'idle', message: '' }); }} aria-expanded={reviewOpen}>Submit For Review</button>
+                          </div>
+                          {reviewOpen && (
+                            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                              {([['brokerName', 'Broker Name', 'text'], ['brokerEmail', 'Broker Email', 'email']] as const).map(([key, label, type]) => (
+                                <label key={key} className="block min-w-0">
+                                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</span>
+                                  <input type={type} value={brokerFooter[key]} onChange={(event) => updateBrokerFooter(key, event.target.value)} placeholder={label}
+                                    className="w-full rounded-lg border border-slate-200 bg-[#F6F3FB] px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#301D5D]" />
+                                </label>
+                              ))}
+                              <label className="block sm:col-span-2">
+                                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Message To Broker (Optional)</span>
+                                <textarea value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} rows={2} placeholder="Anything the broker should look at first"
+                                  className="w-full rounded-lg border border-slate-200 bg-[#F6F3FB] px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#301D5D]" />
+                              </label>
+                              <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+                                <button type="button" disabled={reviewState.status === 'sending' || !brokerFooter.brokerEmail.trim()} onClick={() => void submitForBrokerReview()}>
+                                  {reviewState.status === 'sending' ? 'Sending...' : 'Send To Broker'}
+                                </button>
+                                {reviewState.message && <p role="status" className={`text-xs ${reviewState.status === 'error' ? 'text-[#9A3D2B]' : 'text-[#1F7A3D]'}`}>{reviewState.message}</p>}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
