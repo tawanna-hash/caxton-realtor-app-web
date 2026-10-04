@@ -966,6 +966,7 @@ export default function ClosingTime({
   const [dealsQuery, setDealsQuery] = useState('');
   const [dealsHealth, setDealsHealth] = useState('all');
   const [dealPageId, setDealPageId] = useState<string | null>(null);
+  const [newDealPickerOpen, setNewDealPickerOpen] = useState(false);
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
   useEffect(() => {
@@ -1385,12 +1386,12 @@ export default function ClosingTime({
   const closingSoonCount = deals.filter((deal) => deal.status !== 'completed' && deal.closingDate >= today && deal.closingDate <= addDays(today, 30)).length;
   const overdueTaskCount = deals.flatMap((deal) => deal.tasks).filter((task) => !task.complete && task.dueDate < today).length;
 
-  const createDeal = () => {
-    const deal = newDeal(trecFormVersion.id);
+  const createDeal = (dealType?: AgentDeal['dealType']) => {
+    const deal = { ...newDeal(trecFormVersion.id), ...(dealType ? { dealType } : {}) };
     persistDeals([deal, ...deals]);
     setActiveDealId(deal.id);
     setPendingRemoval(null);
-    trackEvent('closing_time_transaction_created');
+    trackEvent('closing_time_transaction_created', { deal_type: deal.dealType });
   };
 
   const updateActiveDeal = <Key extends keyof AgentDeal>(key: Key, value: AgentDeal[Key]) => {
@@ -1983,7 +1984,7 @@ export default function ClosingTime({
             </ul>
             <div className="ds-group">
               <p className="ds-group-label">Pipeline</p>
-              <button type="button" onClick={() => { createDeal(); setWorkspacePage(2); setDeskView('transaction'); }} className="ds-new" aria-label="New transaction"><Plus className="h-3.5 w-3.5" aria-hidden="true" /><span>New</span></button>
+              <button type="button" onClick={() => setNewDealPickerOpen(true)} className="ds-new" aria-label="New transaction"><Plus className="h-3.5 w-3.5" aria-hidden="true" /><span>New</span></button>
             </div>
             <ul className="ds-deals">
               {deals.length === 0 && <li className="px-3 py-3 text-sm text-slate-500">No transactions yet.</li>}
@@ -2079,7 +2080,7 @@ export default function ClosingTime({
                       <h2 className="ds-title">Deals</h2>
                       <p className="ds-subtitle">Every transaction in one place, with where each one stands and what is due next.</p>
                     </div>
-                    <button type="button" onClick={() => { createDeal(); setWorkspacePage(2); setDeskView('transaction'); }} className="inline-flex h-[40px] items-center gap-2 rounded-lg bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
+                    <button type="button" onClick={() => setNewDealPickerOpen(true)} className="inline-flex h-[40px] items-center gap-2 rounded-lg bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
                       <Plus className="h-4 w-4" aria-hidden="true" /> New deal
                     </button>
                   </div>
@@ -2355,10 +2356,7 @@ export default function ClosingTime({
                 <div className="flex min-w-0 flex-wrap gap-2 sm:ml-auto">
                   <button
                     type="button"
-                    onClick={() => {
-                      createDeal();
-                      setPendingRemoval(null);
-                    }}
+                    onClick={() => setNewDealPickerOpen(true)}
                     className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"
                   >
                     Start A New Transaction
@@ -2519,7 +2517,7 @@ export default function ClosingTime({
                 <ClipboardCheck className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
                 <h4 className="mt-4 text-lg font-semibold text-gray-900">Build Your First Deal Workspace</h4>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">Create a private workspace to turn the contract terms in front of you into a workable list of actions.</p>
-                <button type="button" onClick={createDeal} className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">
+                <button type="button" onClick={() => setNewDealPickerOpen(true)} className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">
                   Create Transaction
                   <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -3345,6 +3343,22 @@ export default function ClosingTime({
           </div>
         )}
       </div>
+      {newDealPickerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label="Start a new transaction" onClick={() => setNewDealPickerOpen(false)}>
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-lg font-semibold text-slate-900">Start a new transaction</h3>
+              <button type="button" aria-label="Close" onClick={() => setNewDealPickerOpen(false)} className="text-slate-500 hover:text-slate-900"><X className="h-5 w-5" aria-hidden="true" /></button>
+            </div>
+            <p className="mt-1 text-sm text-slate-500">Choose the transaction type.</p>
+            <div className="mt-4 grid gap-2">
+              {([['purchase', 'Purchase'], ['listing_sale', 'Listing For Sale'], ['listing_lease', 'Listing For Lease'], ['lease', 'Lease']] as const).map(([type, label]) => (
+                <button key={type} type="button" onClick={() => { createDeal(type); setNewDealPickerOpen(false); setWorkspacePage(2); setDeskView('transaction'); }} className="ds-provider-tile !min-h-[44px] !flex-row !justify-start !px-4 text-sm font-medium">{label}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
