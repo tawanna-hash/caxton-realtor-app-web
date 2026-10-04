@@ -14,7 +14,7 @@ const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
 ];
 const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'overview', label: 'Dashboard Overview', keys: [] },
-  { id: 'forms', label: 'TREC Forms Library', keys: ['trec-library'] },
+  { id: 'forms', label: 'Forms Library', keys: ['trec-library'] },
   { id: 'tools', label: 'Calculators', keys: [] },
   { id: 'referral', label: 'Referral Network', keys: [] },
   { id: 'integrations', label: 'Integrations', keys: ['calendar'] },
@@ -61,6 +61,7 @@ import {
 import PushOptInButton from '@/components/PushOptInButton';
 import TrecPdfPagePreview from './TrecPdfPagePreview';
 import TrecFormsLibrary from './TrecFormsLibrary';
+import CustomFormsPanel from './CustomFormsPanel';
 import DealSubpage from './DealSubpage';
 import {
   buildClosingTimeIcs,
@@ -967,6 +968,7 @@ export default function ClosingTime({
   const [dealsHealth, setDealsHealth] = useState('all');
   const [dealPageId, setDealPageId] = useState<string | null>(null);
   const [newDealPickerOpen, setNewDealPickerOpen] = useState(false);
+  const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
   useEffect(() => {
@@ -2271,15 +2273,28 @@ export default function ClosingTime({
               <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-0">
                   <p className="ds-eyebrow">Tools</p>
-                  <h3 className="ds-title">TREC Forms Library</h3>
-                  <p className="ds-subtitle">Search and download current TREC contracts and forms.</p>
+                  <h3 className="ds-title">Forms Library</h3>
+                  <p className="ds-subtitle">TREC contracts and your brokerage forms, in one place.</p>
                 </div>
                 <div className="ml-auto flex shrink-0 items-center gap-2">
                   <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#301D5D] hover:text-white sm:inline-flex">Verify on TREC</a>
-                  <CollapseToggle {...toggleProps('trec-library', 'TREC contracts and forms')} />
+                  <CollapseToggle {...toggleProps('trec-library', 'forms library')} />
                 </div>
               </div>
-              <TrecFormsLibrary versions={trecFormVersions} embedded />
+              <div role="tablist" aria-label="Forms library pages" className="mt-4 flex gap-5 border-b border-[#E6E5EC]">
+                {([['trec', 'TREC Forms'], ['brokerage', 'Brokerage Forms']] as const).map(([id, label]) => (
+                  <button key={id} type="button" role="tab" aria-selected={formsLibraryTab === id} onClick={() => setFormsLibraryTab(id)}
+                    className={`-mb-px border-b-2 px-0.5 pb-2 text-sm font-semibold ${formsLibraryTab === id ? 'border-[#301D5D] text-[#301D5D]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}>{label}</button>
+                ))}
+              </div>
+              {formsLibraryTab === 'trec' && (
+                <>
+                  <TrecFormsLibrary versions={trecFormVersions} embedded />
+                  <h4 className="mt-6 text-sm font-semibold text-slate-900">Your uploaded TREC forms</h4>
+                  <CustomFormsPanel section="trec" label="TREC form" />
+                </>
+              )}
+              {formsLibraryTab === 'brokerage' && <CustomFormsPanel section="brokerage" label="Brokerage form" />}
             </div>
           </section>
         )}
