@@ -999,39 +999,6 @@ export default function ClosingTime({
       /* storage unavailable */
     }
   }, [ready, activeDealId, deskView, workspacePage]);
-  useEffect(() => {
-    if (!ready) return;
-    const KEY = 'closing-time-scroll-y';
-    const previous = window.history.scrollRestoration;
-    window.history.scrollRestoration = 'manual';
-    let timer: number | null = null;
-    const save = () => {
-      if (timer) return;
-      timer = window.setTimeout(() => {
-        timer = null;
-        try { window.sessionStorage.setItem(KEY, String(Math.round(window.scrollY))); } catch { /* storage unavailable */ }
-      }, 150);
-    };
-    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-    let target = 0;
-    try { target = nav?.type === 'reload' ? Number(window.sessionStorage.getItem(KEY) ?? 0) || 0 : 0; } catch { target = 0; }
-    const timers: number[] = [];
-    if (target > 0) {
-      [100, 400, 900, 1600, 2600].forEach((ms) => timers.push(window.setTimeout(() => {
-        const max = document.documentElement.scrollHeight - window.innerHeight;
-        window.scrollTo(0, Math.min(target, Math.max(0, max)));
-      }, ms)));
-    } else {
-      window.scrollTo(0, 0);
-    }
-    window.addEventListener('scroll', save, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', save);
-      timers.forEach((t) => window.clearTimeout(t));
-      if (timer) window.clearTimeout(timer);
-      window.history.scrollRestoration = previous;
-    };
-  }, [ready]);
   const versionRef = useRef<number | null>(initialWorkspaceVersion);
   const syncTimerRef = useRef<number | null>(null);
   const saveInFlightRef = useRef(false);
