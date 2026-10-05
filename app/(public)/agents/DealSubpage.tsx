@@ -500,15 +500,15 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     ];
     const roleTone = () => ['border-[#E6E5EC] bg-[#F6F3FB] text-[#301D5D]', 'bg-[#EFEAF8] text-[#301D5D]'];
     const partyRow = (p: PartyRow) => {
-      const [pill, avatar] = roleTone();
+      const [, avatar] = roleTone();
       return (
-        <div key={p.id} className="flex items-start gap-3 border-b border-[#F1F0F5] px-4 py-3 last:border-0">
-          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${avatar}`} aria-hidden="true">{initials(p.name)}</span>
+        <div key={p.id} className="flex items-start gap-3 border-b border-[#F1F0F5] py-3 last:border-0">
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatar}`} aria-hidden="true">{initials(p.name)}</span>
           <span className="min-w-0 flex-1">
-            <span className="flex flex-wrap items-center gap-1.5"><span className="text-sm font-semibold text-slate-900">{p.name}</span><span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize ${pill}`}>{p.role}</span></span>
+            <span className="flex flex-wrap items-center gap-1.5"><span className="text-sm font-semibold text-slate-900">{p.name}</span><span className="text-xs font-medium text-slate-500">{p.role}</span></span>
             {p.sub ? <span className="mt-0.5 block truncate text-xs text-slate-500">{p.sub}</span> : null}
           </span>
-          <span className="flex shrink-0 items-center gap-3 pt-1.5 text-slate-400">
+          <span className="flex shrink-0 items-center gap-3 pt-1 text-slate-400">
             {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : <Mail className="h-4 w-4 opacity-40" aria-hidden="true" />}
             {p.phone ? <a href={`tel:${p.phone}`} aria-label={`Call ${p.name}`} className="hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : <Phone className="h-4 w-4 opacity-40" aria-hidden="true" />}
             {p.menu ? <MoreHorizontal className="h-4 w-4" aria-hidden="true" /> : null}
@@ -517,15 +517,16 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       );
     };
     const partiesCard = (
-      <div className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white self-start">
-        <div className="flex items-center justify-between px-4 py-3.5">
-          <p className="text-base font-semibold text-slate-900">Parties</p>
-          <button type="button" className="!border-0 !bg-transparent !text-slate-500 hover:!text-[#301D5D]" onClick={() => onOpenView('d-people')}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add</button>
+      <div className="ds-card self-start">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-slate-900">Parties</p>
+          <button type="button" onClick={() => onOpenView('d-people')}>Add</button>
         </div>
-        <div className="border-t border-[#F1F0F5]" />
-        {yourSide.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">No parties added.</p> : yourSide.map(partyRow)}
-        {external.length > 0 && <p className="border-y border-[#F1F0F5] bg-[#F6F3FB] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">External Parties</p>}
-        {external.map(partyRow)}
+        <div className="mt-3">
+          {yourSide.length === 0 ? <p className="text-xs text-slate-500">No parties added.</p> : yourSide.map(partyRow)}
+        </div>
+        {external.length > 0 && <p className="ds-eyebrow mt-3 border-t border-[#F1F0F5] pt-3">External Parties</p>}
+        {external.length > 0 && <div className="mt-1">{external.map(partyRow)}</div>}
       </div>
     );
     return (
