@@ -336,8 +336,9 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         <p className="text-xs text-slate-500">{label}</p>
       </div>
     );
-    return (
-      <>
+    return {
+      tiles: (
+        <>
       <div className="ds-card">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold text-slate-900">Required Documents</p>
@@ -351,6 +352,10 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={tilePct} aria-valuemin={0} aria-valuemax={100} aria-label="Required documents submitted"><div className="h-full bg-[#301D5D]" style={{ width: `${tilePct}%` }} /></div>
         <p className="mt-2 text-xs text-slate-500">{tileSubmitted} of {tileTotal} submitted</p>
       </div>
+        </>
+      ),
+      pressing: (
+        <>
       <div className="ds-card">
         <p className="mt-1 text-lg font-semibold text-slate-900">Pressing Deadlines</p>
         <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules.</p>
@@ -391,13 +396,15 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           </div>
         )}
       </div>
-      </>
-    );
+        </>
+      ),
+    };
   };
 
   const tabs: [Tab, string][] = [['tasks', `Tasks ${deal.tasks.length}`], ['history', 'History']];
 
   if ((section as string | undefined) === 'overview') {
+    const snapshotTop = renderSnapshotTop();
     const doneTasks = deal.tasks.length - openTasks.length;
     const overdueTasks = openTasks.filter((t) => t.dueDate && t.dueDate < today).length;
     const weekEnd = new Date(Date.parse(`${today}T12:00:00Z`) + 7 * 86400000).toISOString().slice(0, 10);
@@ -454,8 +461,14 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     );
     return (
       <div className="ds-page" data-testid="deal-snapshot">
-        <div className="mb-3 space-y-3">{renderSnapshotTop()}</div>
-        <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="mb-3 space-y-3">
+          <div className="grid items-start gap-3 lg:grid-cols-4">
+            <div className="lg:col-span-2">{snapshotTop.tiles}</div>
+            <div className="lg:col-span-2">{partiesCard}</div>
+          </div>
+          {snapshotTop.pressing}
+        </div>
+        <div className="grid items-start gap-3">
         <div className="grid gap-3 md:grid-cols-2">
           <div className="ds-card">
             <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">Tasks</p><button type="button" onClick={() => onOpenView('tasks')}>View all</button></div>
@@ -506,7 +519,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             </div>
           </div>
         </div>
-        {partiesCard}
         </div>
       </div>
     );
