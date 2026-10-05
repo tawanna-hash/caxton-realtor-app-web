@@ -12,7 +12,7 @@ const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'd-documents', label: 'Documents', keys: [] },
   { id: 'd-people', label: 'People', keys: [] },
   { id: 'transaction', label: 'Current Deal', keys: ['current', 'trec-forms'] },
-  { id: 'coordinator', label: 'Deal Settings', keys: ['assist', 'alerts'] },
+  { id: 'coordinator', label: 'Settings', keys: ['assist', 'alerts', 'calendar-link'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
   { id: 'readiness', label: 'Readiness Check', keys: ['readiness'] },
   { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
@@ -2167,9 +2167,9 @@ export default function ClosingTime({
             {effectiveView !== 'overview' && effectiveView !== 'deal-page' && (() => {
               const toDeals = DEAL_TABS.some((t) => t.id === effectiveView);
               return (
-                <button type="button" className="ds-back mb-3" aria-label={toDeals ? 'Back to Deals' : effectiveView.startsWith('calc-') ? 'Back to Calculators' : effectiveView === 'alert-setup' ? 'Back to Deal Settings' : 'Back to Today'}
+                <button type="button" className="ds-back mb-3" aria-label={toDeals ? 'Back to Deals' : effectiveView.startsWith('calc-') ? 'Back to Calculators' : effectiveView === 'alert-setup' ? 'Back to Settings' : 'Back to Today'}
                   onClick={() => { if (toDeals) { setWorkspacePage(2); setDeskView('deals'); } else if (effectiveView.startsWith('calc-')) { setDeskView('tools'); } else if (effectiveView === 'alert-setup') { setDeskView('coordinator'); } else { setWorkspacePage(1); } }}>
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> {toDeals ? 'Deals' : effectiveView.startsWith('calc-') ? 'Calculators' : effectiveView === 'alert-setup' ? 'Deal Settings' : 'Today'}
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> {toDeals ? 'Deals' : effectiveView.startsWith('calc-') ? 'Calculators' : effectiveView === 'alert-setup' ? 'Settings' : 'Today'}
                 </button>
               );
             })()}
@@ -2546,7 +2546,6 @@ export default function ClosingTime({
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-[#301D5D]">
                       <a href={calendarFeed.webcalUrl} onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'apple' })} className="underline underline-offset-2">Open In Apple Calendar</a>
                       <button type="button" onClick={() => void copyCalendarFeed()} className="underline underline-offset-2">{calendarFeedCopied ? 'Copied' : 'Copy link'}</button>
-                      <button type="button" onClick={() => void loadCalendarFeed(true)} disabled={calendarFeedState === 'loading'} className="underline underline-offset-2">Reset</button>
                     </div>
                     {calendarFeedState === 'error' && <p className="text-xs font-semibold text-[#9A3D2B]">Could not load your link. Try again.</p>}
                   </div>
@@ -2556,6 +2555,14 @@ export default function ClosingTime({
             <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
           <section className={'mt-5 grid gap-5'} aria-label="Deal settings, alerts and calendar">
+            <div data-section-key="calendar-link" className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
+              <h3 className="text-lg font-semibold text-gray-900">Calendar Link</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">Your Apple Calendar subscription uses a private link. Anyone with it can view your deal dates. Reset it if it was shared by mistake. The old link stops working and you will need to subscribe again.</p>
+              <button type="button" disabled={calendarFeedState === 'loading'} onClick={() => { if (window.confirm('Reset your calendar link? The old link will stop working.')) void loadCalendarFeed(true); }} className="mt-4 inline-flex min-h-[36px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700">
+                {calendarFeedState === 'loading' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}Reset Calendar Link
+              </button>
+              {calendarFeed && calendarFeedState !== 'loading' && <p className="mt-2 text-xs text-slate-500">Use Open In Apple Calendar on the Integrations page to subscribe with the new link.</p>}
+            </div>
             <div {...collapsible('alerts')} className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-gray-900">Deadline Alerts</h3>
