@@ -610,7 +610,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               if (docId === 'pd-closing-statement' || docId === 'pd-walkthrough') return deal.closingDate ? { label: 'Closing', date: deal.closingDate } : null;
               const id = DOC_DEADLINE_IDS[docId];
               const match = id ? (deadlines ?? []).find((item) => item.id === id) : undefined;
-              return match ? { label: match.label, date: match.date } : null;
+              return match ? { label: match.label.replace(/\b([a-z])/g, (c) => c.toUpperCase()), date: match.date } : null;
             };
             const statusChip = (done: boolean, docId?: string) => {
               if (done) return <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">Submitted</span>;
@@ -629,7 +629,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   <input type="checkbox" aria-label={`Mark ${doc.label} submitted`} checked={Boolean(checks[doc.id])} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...checks, [doc.id]: e.target.checked })} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm text-slate-900">{doc.label}</span>
-                    {(addedOptional || (!checks[doc.id] && dueFor(doc.id))) && <span className="block text-xs text-slate-500">{[addedOptional ? 'Added from optional' : '', !checks[doc.id] && dueFor(doc.id) ? `${dueFor(doc.id)!.label} ${formatDate(dueFor(doc.id)!.date)}` : ''].filter(Boolean).join(' · ')}</span>}
+                    {(addedOptional || (!checks[doc.id] && dueFor(doc.id))) && <span className="block text-xs text-slate-500">{[addedOptional ? 'Added From Optional' : '', !checks[doc.id] && dueFor(doc.id) ? `${dueFor(doc.id)!.label} ${formatDate(dueFor(doc.id)!.date)}` : ''].filter(Boolean).join(' · ')}</span>}
                   </span>
                   {form && <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{formStatus(form)}</span>}
                   {statusChip(Boolean(checks[doc.id]), doc.id)}
@@ -643,7 +643,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                 <div className="ds-card flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="ds-side-title !m-0">{dealTypeLabel} documents</p>
-                    <p className="text-sm text-slate-500">Required first. Check an optional document to add it to the required list.</p>
                   </div>
                   <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{submittedCount} of {requiredDocs.length} submitted</span>
                 </div>
