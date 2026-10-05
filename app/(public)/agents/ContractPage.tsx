@@ -261,8 +261,6 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
       </section>
 
       <div className="mt-6" aria-label="All Contract Fields">
-        <p className="mb-2 text-base font-semibold text-slate-900">1-4 Residential Contract: All Fields</p>
-        <p className="mb-3 text-xs text-slate-500">Every field of the TREC 20-19 contract. Changes here update the form, the key terms above and the rest of the deal immediately.</p>
         <div className="space-y-2">
           {CONTRACT_MAP_SECTIONS.map((section) => {
             const filled = section.fields.filter((fl) => (rawDeal.formFields[fl.id] ?? '').trim()).length;
