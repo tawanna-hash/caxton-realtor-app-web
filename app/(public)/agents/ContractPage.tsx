@@ -396,7 +396,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       );
                     }
                     return (
-                      <div key={key} {...cellAttrs} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}${pickCls}`}>
+                      <div key={key} {...cellAttrs} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : fl.span === 4 ? 'sm:col-span-2 lg:col-span-4' : ''} ${placed}${pickCls}`}>
                         <div className="flex items-center justify-between gap-3 pb-1">
                           {labelInput(fl.id, fl.label)}
                           <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(section, fl.id))}</span>
