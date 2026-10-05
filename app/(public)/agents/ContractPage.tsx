@@ -24,44 +24,121 @@ function shortDate(iso: string): string {
   return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
 }
 
-const TERM_TEMPLATE: { id: string; term: string; ref: string }[] = [
-  { id: 'tpl-purchase-price', term: 'Purchase Price', ref: '§1.2 · p.1' },
-  { id: 'tpl-earnest-money', term: 'Earnest Money', ref: '§2.1 · p.2' },
-  { id: 'tpl-financing', term: 'Financing', ref: '§4.1 · p.3' },
-  { id: 'tpl-inspection', term: 'Inspection Contingency', ref: '§7.2 · p.5' },
-  { id: 'tpl-appraisal', term: 'Appraisal Contingency', ref: '§7.3 · p.5' },
-  { id: 'tpl-loan', term: 'Loan Contingency', ref: '§7.4 · p.5' },
-  { id: 'tpl-closing-date', term: 'Closing Date', ref: '§9.1 · p.7' },
-  { id: 'tpl-seller-credit', term: 'Seller Credit', ref: 'Addendum A' },
-  { id: 'tpl-inclusions', term: 'Inclusions', ref: '§3.2 · p.2' },
-  { id: 'tpl-possession', term: 'Possession', ref: '§9.4 · p.7' },
+type Auto = { value: string; note: string };
+type TermDef = { id: string; term: string; ref: string; auto: (deal: AgentDeal) => Auto; source?: keyof AgentDeal['contractDetails'] };
+
+function plusDays(iso: string, days: string): string {
+  const n = Number.parseInt(days, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) || !Number.isFinite(n)) return '';
+  const date = new Date(`${iso}T12:00:00`);
+  date.setDate(date.getDate() + n);
+  return date.toISOString().slice(0, 10);
+}
+
+const dueFrom = (deal: AgentDeal, days: string): string => {
+  const due = plusDays(deal.effectiveDate, days);
+  return due ? shortDate(due) : days ? `${days} Days` : '';
+};
+
+const TERM_DEFS: TermDef[] = [
+  { id: 'tpl-purchase-price', term: 'Purchase Price', ref: '§1.2 · p.1', source: 'salesPrice', auto: (d) => ({ value: d.contractDetails.salesPrice, note: '' }) },
+  { id: 'tpl-earnest-money', term: 'Earnest Money', ref: '§2.1 · p.2', source: 'earnestMoney', auto: (d) => ({ value: d.contractDetails.earnestMoney, note: d.earnestMoneyDeliveredDate ? `Delivered ${shortDate(d.earnestMoneyDeliveredDate)}` : '' }) },
+  { id: 'tpl-financing', term: 'Financing', ref: '§4.1 · p.3', source: 'financingType', auto: (d) => ({ value: d.contractDetails.financingType, note: d.contractDetails.loanAmount ? `Loan ${d.contractDetails.loanAmount}` : '' }) },
+  { id: 'tpl-inspection', term: 'Inspection Contingency', ref: '§7.2 · p.5', auto: (d) => ({ value: dueFrom(d, d.optionPeriodDays), note: d.contractDetails.optionFee ? `Option fee ${d.contractDetails.optionFee}` : '' }) },
+  { id: 'tpl-appraisal', term: 'Appraisal Contingency', ref: '§7.3 · p.5', auto: (d) => ({ value: dueFrom(d, d.appraisalDeadlineDays), note: '' }) },
+  { id: 'tpl-loan', term: 'Loan Contingency', ref: '§7.4 · p.5', auto: (d) => ({ value: dueFrom(d, d.financingDeadlineDays), note: '' }) },
+  { id: 'tpl-closing-date', term: 'Closing Date', ref: '§9.1 · p.7', auto: (d) => ({ value: d.closingDate ? shortDate(d.closingDate) : '', note: d.contractDetails.titleCompany }) },
+  { id: 'tpl-seller-credit', term: 'Seller Credit', ref: 'Addendum A', auto: () => ({ value: '', note: '' }) },
+  { id: 'tpl-inclusions', term: 'Inclusions', ref: '§3.2 · p.2', source: 'improvementsAndAccessories', auto: (d) => ({ value: d.contractDetails.improvementsAndAccessories, note: '' }) },
+  { id: 'tpl-possession', term: 'Possession', ref: '§9.4 · p.7', source: 'possessionPlan', auto: (d) => ({ value: d.contractDetails.possessionPlan, note: '' }) },
+];
+
+const HIDDEN = '__hidden__';
+type LineDef = { id: string; label: (d: AgentDeal) => string; sign: '+' | '-'; amount: (d: AgentDeal) => string };
+const asNumber = (v: string): string => (parseMoney(v) ? String(parseMoney(v)) : '');
+const LINE_DEFS: LineDef[] = [
+  {
+    id: 'tpl-down', sign: '+', amount: (d) => asNumber(d.contractDetails.cashPortion),
+    label: (d) => {
+      const price = parseMoney(d.contractDetails.salesPrice); const cash = parseMoney(d.contractDetails.cashPortion);
+      return price && cash ? `Down Payment (${Math.round((cash / price) * 100)}%)` : 'Down Payment';
+    },
+  },
+  { id: 'tpl-closing-costs', sign: '+', amount: () => '', label: () => 'Closing Costs' },
+  { id: 'tpl-em', sign: '-', amount: (d) => asNumber(d.contractDetails.earnestMoney), label: () => 'Earnest Money Already In Escrow' },
+  { id: 'tpl-seller-credit', sign: '-', amount: () => '', label: () => 'Seller Credit' },
 ];
 
 const fieldCls = 'h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#301D5D]';
 
 export default function ContractPage({ deal, onPatch, onParties }: Props) {
   const stored = deal.keyTerms;
-  const terms: AgentKeyTerm[] = [
-    ...TERM_TEMPLATE.map((tpl) => stored.find((t) => t.id === tpl.id) ?? { ...tpl, value: '', note: '' }),
+  const storedLines = deal.cashLines;
+  const terms: (AgentKeyTerm & { source?: TermDef['source']; auto?: Auto })[] = [
+    ...TERM_DEFS.map((def) => {
+      const auto = def.auto(deal);
+      const own = stored.find((t) => t.id === def.id);
+      const value = def.source ? auto.value : (own?.value || auto.value);
+      return { id: def.id, term: def.term, ref: def.ref, value, note: own?.note || auto.note, source: def.source, auto };
+    }),
     ...stored.filter((t) => !t.id.startsWith('tpl-')),
   ];
-  const lines = deal.cashLines;
+  const lines: AgentCashLine[] = [
+    ...LINE_DEFS.flatMap((def) => {
+      const own = storedLines.find((l) => l.id === def.id);
+      if (own?.label === HIDDEN) return [];
+      return [{ id: def.id, label: own?.label || def.label(deal), sign: own ? own.sign : def.sign, amount: own?.amount || def.amount(deal), note: own?.note ?? '' }];
+    }),
+    ...storedLines.filter((l) => !l.id.startsWith('tpl-')),
+  ];
   const [editing, setEditing] = useState<AgentKeyTerm | null>(null);
   const [isNew, setIsNew] = useState(false);
 
-  const saveTerms = (next: AgentKeyTerm[]) => onPatch({ keyTerms: next.filter((t) => !t.id.startsWith('tpl-') || t.value.trim() || t.note.trim()), keyTermsCustom: true });
-  const saveLines = (next: AgentCashLine[]) => onPatch({ cashLines: next, cashLinesCustom: true });
-  const updateLine = (id: string, patch: Partial<AgentCashLine>) => saveLines(lines.map((line) => (line.id === id ? { ...line, ...patch } : line)));
+  const putTerm = (next: AgentKeyTerm[]) => onPatch({ keyTerms: next, keyTermsCustom: true });
+  const saveCustomTerms = (next: AgentKeyTerm[]) => putTerm([...stored.filter((t) => t.id.startsWith('tpl-')), ...next.filter((t) => !t.id.startsWith('tpl-'))]);
+  const saveLine = (line: AgentCashLine) => {
+    const exists = storedLines.some((l) => l.id === line.id);
+    onPatch({ cashLines: exists ? storedLines.map((l) => (l.id === line.id ? line : l)) : [...storedLines, line], cashLinesCustom: true });
+  };
+  const updateLine = (id: string, patch: Partial<AgentCashLine>) => {
+    const current = lines.find((l) => l.id === id);
+    if (current) saveLine({ ...current, ...patch, label: patch.label ?? current.label });
+  };
+  const removeLine = (id: string) => {
+    if (id.startsWith('tpl-')) saveLine({ id, label: HIDDEN, sign: '+', amount: '', note: '' });
+    else onPatch({ cashLines: storedLines.filter((l) => l.id !== id), cashLinesCustom: true });
+  };
+  const addLine = () => onPatch({ cashLines: [...storedLines, { id: newId('line'), label: 'New Line', sign: '+', amount: '', note: '' }], cashLinesCustom: true });
 
   const total = lines.reduce((sum, line) => sum + (line.sign === '-' ? -1 : 1) * parseMoney(line.amount), 0);
   const cells = terms.length + 1;
   const filler = (3 - (cells % 3)) % 3;
 
   const commit = () => {
-    if (!editing || !editing.term.trim() || (!editing.value.trim() && !editing.id.startsWith('tpl-'))) return;
-    const clean = { ...editing, term: editing.term.trim(), value: editing.value.trim() };
-    saveTerms(isNew ? [...terms, clean] : terms.map((t) => (t.id === clean.id ? clean : t)));
+    if (!editing || !editing.term.trim()) return;
+    const isTpl = editing.id.startsWith('tpl-');
+    if (!isTpl && !editing.value.trim()) return;
+    const clean = { ...editing, term: editing.term.trim(), value: editing.value.trim(), note: editing.note.trim() };
+    if (!isTpl) {
+      saveCustomTerms(isNew ? [...stored.filter((t) => !t.id.startsWith('tpl-')), clean] : stored.filter((t) => !t.id.startsWith('tpl-')).map((t) => (t.id === clean.id ? clean : t)));
+    } else {
+      const def = TERM_DEFS.find((d) => d.id === clean.id);
+      const others = stored.filter((t) => t.id !== clean.id);
+      if (def?.source) onPatch({ contractDetails: { ...deal.contractDetails, [def.source]: clean.value }, keyTerms: clean.note ? [...others, clean] : others, keyTermsCustom: true });
+      else putTerm(clean.value || clean.note ? [...others, clean] : others);
+    }
     setEditing(null);
+  };
+
+  const clearTerm = (t: AgentKeyTerm) => {
+    if (t.id.startsWith('tpl-')) {
+      const def = TERM_DEFS.find((d) => d.id === t.id);
+      const others = stored.filter((x) => x.id !== t.id);
+      if (def?.source) onPatch({ contractDetails: { ...deal.contractDetails, [def.source]: '' }, keyTerms: others, keyTermsCustom: true });
+      else putTerm(others);
+    } else {
+      saveCustomTerms(stored.filter((x) => x.id !== t.id));
+    }
   };
 
   return (
@@ -123,7 +200,7 @@ export default function ContractPage({ deal, onPatch, onParties }: Props) {
             <p className="text-xs text-slate-500">Shown to the client as the deposit held in escrow</p>
           </div>
           <label className="flex w-36 items-center gap-1 rounded-md border border-[#E6E5EC] px-2 text-sm text-slate-500 focus-within:border-[#301D5D]">$
-            <input value={deal.earnestInEscrow} onChange={(e) => onPatch({ earnestInEscrow: e.target.value })} inputMode="decimal" aria-label="Earnest money in escrow" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
+            <input value={deal.earnestInEscrow || asNumber(deal.contractDetails.earnestMoney)} onChange={(e) => onPatch({ earnestInEscrow: e.target.value })} inputMode="decimal" aria-label="Earnest money in escrow" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
           </label>
         </div>
         <div className="px-5 py-3">
@@ -143,14 +220,14 @@ export default function ContractPage({ deal, onPatch, onParties }: Props) {
                   <label className="flex w-32 items-center gap-1 rounded-md border border-[#E6E5EC] px-2 text-sm text-slate-500 focus-within:border-[#301D5D]">$
                     <input value={line.amount} onChange={(e) => updateLine(line.id, { amount: e.target.value })} inputMode="decimal" aria-label="Amount" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
                   </label>
-                  <button type="button" aria-label="Delete line" onClick={() => saveLines(lines.filter((l) => l.id !== line.id))} className="!border-0 !bg-transparent !px-2 text-slate-400 hover:!text-[#301D5D]"><Trash2 className="h-4 w-4" aria-hidden="true" /></button>
+                  <button type="button" aria-label="Delete line" onClick={() => removeLine(line.id)} className="!border-0 !bg-transparent !px-2 text-slate-400 hover:!text-[#301D5D]"><Trash2 className="h-4 w-4" aria-hidden="true" /></button>
                 </div>
                 <input value={line.note} onChange={(e) => updateLine(line.id, { note: e.target.value })} aria-label="Note shown to client" placeholder="Optional note the client sees under this line" className="mt-1 h-7 w-full bg-transparent text-xs italic text-slate-500 outline-none placeholder:text-slate-300" />
               </li>
             ))}
           </ul>
           <div className="flex items-center justify-between border-t border-[#F1F0F5] pt-3">
-            <button type="button" onClick={() => saveLines([...lines, { id: newId('line'), label: '', sign: '+', amount: '', note: '' }])}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Line</button>
+            <button type="button" onClick={addLine}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Line</button>
             <p className="text-sm font-semibold text-slate-900">Cash To Close {money(total)}</p>
           </div>
         </div>
@@ -178,7 +255,7 @@ export default function ContractPage({ deal, onPatch, onParties }: Props) {
               </label>
             </div>
             <div className="flex items-center justify-between gap-2 border-t border-[#E6E5EC] px-6 py-4">
-              {isNew ? <span /> : <button type="button" onClick={() => { saveTerms(editing.id.startsWith('tpl-') ? terms.map((t) => (t.id === editing.id ? { ...t, value: '', note: '' } : t)) : terms.filter((t) => t.id !== editing.id)); setEditing(null); }}>{editing.id.startsWith('tpl-') ? 'Clear' : 'Delete'}</button>}
+              {isNew ? <span /> : <button type="button" onClick={() => { clearTerm(editing); setEditing(null); }}>{editing.id.startsWith('tpl-') ? 'Clear' : 'Delete'}</button>}
               <div className="flex gap-2">
                 <button type="button" onClick={() => setEditing(null)}>Cancel</button>
                 <button type="button" disabled={!editing.term.trim() || (!editing.value.trim() && !editing.id.startsWith('tpl-'))} onClick={commit}>{isNew ? 'Add Term' : 'Save'}</button>

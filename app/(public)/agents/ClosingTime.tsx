@@ -1588,8 +1588,9 @@ export default function ClosingTime({
       }
       // Read the upload against the contract and every other selected form (IABS, addenda, etc.).
       // Each form has its own field catalog; a document that is not that form simply returns nothing.
-      // A row upload is independent: it reads only that form. The main contract upload still reads every selected form.
-      const targetVersions = family
+      const isolatedForm = Boolean(family) && family !== '20';
+      // A row upload for any other form is independent (the 1-4 Residential contract also drives the Contract page): it reads only that form. The main contract upload still reads every selected form.
+      const targetVersions = isolatedForm
         ? [primaryVersion]
         : [primaryVersion, ...selectedFormVersions.filter((version) => version.id !== primaryVersion.id && version.fields.length > 0)];
       const readWithVersion = async (versionId: string) => {
@@ -1626,10 +1627,10 @@ export default function ClosingTime({
         throw failed?.reason instanceof Error ? failed.reason : new Error('Could not read this contract.');
       }
       const record: { title?: string; worksheet: Record<string, string>; formFields: Record<string, string>; addenda: Record<string, boolean>; warnings: string[] } = {
-        title: family ? undefined : readings.find((reading) => typeof reading.title === 'string')?.title,
-        worksheet: family ? {} : Object.assign({}, ...[...readings].reverse().map((reading) => reading.worksheet ?? {})) as Record<string, string>,
+        title: isolatedForm ? undefined : readings.find((reading) => typeof reading.title === 'string')?.title,
+        worksheet: isolatedForm ? {} : Object.assign({}, ...[...readings].reverse().map((reading) => reading.worksheet ?? {})) as Record<string, string>,
         formFields: Object.assign({}, ...readings.map((reading) => reading.formFields ?? {})) as Record<string, string>,
-        addenda: family ? {} : Object.assign({}, ...[...readings].reverse().map((reading) => reading.addenda ?? {})) as Record<string, boolean>,
+        addenda: isolatedForm ? {} : Object.assign({}, ...[...readings].reverse().map((reading) => reading.addenda ?? {})) as Record<string, boolean>,
         warnings: readings.flatMap((reading) => (Array.isArray(reading.warnings) ? reading.warnings : [])),
       };
       const importedFields = record.formFields && typeof record.formFields === 'object'
