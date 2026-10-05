@@ -95,6 +95,9 @@ const LINE_DEFS: LineDef[] = [
   { id: 'tpl-seller-credit', sign: '-', amount: () => '', label: () => 'Seller Credit' },
 ];
 
+const POS_COL: Record<number, string> = { 1: 'lg:col-start-1', 2: 'lg:col-start-2', 3: 'lg:col-start-3', 4: 'lg:col-start-4' };
+const POS_ROW: Record<number, string> = { 1: 'lg:row-start-1', 2: 'lg:row-start-2', 3: 'lg:row-start-3', 4: 'lg:row-start-4', 5: 'lg:row-start-5', 6: 'lg:row-start-6' };
+
 // Starts closed and opens itself the first time it scrolls into view.
 function AutoDetails({ className, children }: { className?: string; children: ReactNode }) {
   const ref = useRef<HTMLDetailsElement>(null);
@@ -233,7 +236,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       );
                     }
                     return (
-                      <label key={fl.id} className={`block min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''}`}>
+                      <label key={fl.id} className={`block min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${fl.pos ? `${POS_COL[fl.pos[0]]} ${POS_ROW[fl.pos[1]]}` : ''}`}>
                         <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
                         <span className="mt-1 flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
                           {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
