@@ -618,6 +618,8 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     cashLines: [],
     cashLinesCustom: false,
     earnestInEscrow: '',
+    buyer2Name: '',
+    seller2Name: '',
     lender: '',
     otherAgent: '',
     otherBrokerage: '',
@@ -1496,13 +1498,18 @@ export default function ClosingTime({
     trackEvent('closing_time_transaction_created', { deal_type: deal.dealType });
   };
 
-  const updateDealParties = (key: 'buyerNames' | 'sellerNames', value: string) => {
+  const updateDealParties = (key: 'buyerNames' | 'sellerNames' | 'buyer2Name' | 'seller2Name', value: string) => {
     if (!activeDeal) return;
     const buyers = key === 'buyerNames' ? value : activeDeal.buyerNames;
+    const buyer2 = key === 'buyer2Name' ? value : (activeDeal.buyer2Name ?? '');
     const sellers = key === 'sellerNames' ? value : activeDeal.sellerNames;
+    const seller2 = key === 'seller2Name' ? value : (activeDeal.seller2Name ?? '');
     const title = buyerLastNames(buyers) || buyerLastNames(sellers) || 'New Contract';
+    const isSeller = key === 'sellerNames' || key === 'seller2Name';
+    const formKey = isSeller ? 'p01_f001' : 'p01_f002';
+    const formValue = (isSeller ? [sellers.trim(), seller2.trim()] : [buyers.trim(), buyer2.trim()]).filter(Boolean).join(' and ');
     persistDeals(deals.map((deal) => (
-      deal.id === activeDeal.id ? { ...deal, [key]: value, title, formFields: { ...deal.formFields, [key === 'buyerNames' ? 'p01_f002' : 'p01_f001']: value }, updatedAt: new Date().toISOString() } : deal
+      deal.id === activeDeal.id ? { ...deal, [key]: value, title, formFields: { ...deal.formFields, [formKey]: formValue }, updatedAt: new Date().toISOString() } : deal
     )));
   };
   const updateActiveDeal = <Key extends keyof AgentDeal>(key: Key, value: AgentDeal[Key]) => {

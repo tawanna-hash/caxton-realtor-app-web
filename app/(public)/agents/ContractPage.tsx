@@ -6,7 +6,7 @@ import { CONTRACT_MAP_SECTIONS } from '@/lib/trec-20-19-contract-map';
 import type { AgentCashLine, AgentDeal, AgentKeyTerm } from '@/lib/agent-command-center-workspace';
 
 type Patch = Partial<AgentDeal>;
-type Props = { deal: AgentDeal; onPatch: (patch: Patch) => void; onParties: (key: 'buyerNames' | 'sellerNames', value: string) => void };
+type Props = { deal: AgentDeal; onPatch: (patch: Patch) => void; onParties: (key: 'buyerNames' | 'sellerNames' | 'buyer2Name' | 'seller2Name', value: string) => void };
 
 const newId = (prefix: string) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
@@ -29,9 +29,9 @@ const CD_LINKS: Partial<Record<keyof AgentDeal['contractDetails'], string>> = {
   salesPrice: 'p01_f016', cashPortion: 'p01_f011', loanAmount: 'p01_f015', earnestMoney: 'p02_f031', optionFee: 'p02_f032',
   additionalEarnestMoney: 'p02_f033', titleCompany: 'p02_f038', county: 'p01_f007', exclusions: 'p01_f009', specialProvisionsNotes: 'p06_f097',
 };
-const DEAL_LINKS: Partial<Record<'optionPeriodDays' | 'additionalEarnestMoneyDays' | 'titleObjectionDays' | 'propertyAddress' | 'buyerNames' | 'sellerNames', string>> = {
+const DEAL_LINKS: Partial<Record<'optionPeriodDays' | 'additionalEarnestMoneyDays' | 'titleObjectionDays' | 'propertyAddress', string>> = {
   optionPeriodDays: 'p02_f035', additionalEarnestMoneyDays: 'p02_f034', titleObjectionDays: 'p03_f057',
-  propertyAddress: 'p01_f008', buyerNames: 'p01_f002', sellerNames: 'p01_f001',
+  propertyAddress: 'p01_f008',
 };
 
 // The 1-4 Residential form is the source of truth: a filled form field wins over the stored deal value.
@@ -174,8 +174,8 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
       <div aria-label="Contract Sections">
         <div className="space-y-2">
           {CONTRACT_MAP_SECTIONS.map((section) => {
-            const lead = section.id === 'buyer' ? ['Buyer Names', deal.buyerNames, (v: string) => onParties('buyerNames', v)] as const
-              : section.id === 'seller' ? ['Seller Names', deal.sellerNames, (v: string) => onParties('sellerNames', v)] as const
+            const leads = section.id === 'buyer' ? [['Buyer 1', rawDeal.buyerNames, (v: string) => onParties('buyerNames', v)], ['Buyer 2', rawDeal.buyer2Name ?? '', (v: string) => onParties('buyer2Name', v)]] as const
+              : section.id === 'seller' ? [['Seller 1', rawDeal.sellerNames, (v: string) => onParties('sellerNames', v)], ['Seller 2', rawDeal.seller2Name ?? '', (v: string) => onParties('seller2Name', v)]] as const
               : null;
             const filled = section.fields.filter((fl) => (rawDeal.formFields[fl.id] ?? '').trim()).length;
             return (
@@ -186,12 +186,12 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                   <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>
                 </summary>
                 <div className="grid gap-x-5 gap-y-3 border-t border-[#F1F0F5] px-5 py-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {lead && (
-                    <label className="block min-w-0 sm:col-span-2 lg:col-span-3">
-                      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{lead[0]}</span>
-                      <input value={lead[1] ?? ''} onChange={(e) => lead[2](e.target.value)} className={`${fieldCls} mt-1`} />
+                  {leads && leads.map(([label, value, set]) => (
+                    <label key={label} className="block min-w-0 sm:col-span-2">
+                      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
+                      <input value={value ?? ''} onChange={(e) => set(e.target.value)} className={`${fieldCls} mt-1`} />
                     </label>
-                  )}
+                  ))}
                   {section.fields.map((fl) => {
                     const value = rawDeal.formFields[fl.id] ?? '';
                     if (fl.kind === 'c') {

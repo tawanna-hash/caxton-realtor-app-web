@@ -12,11 +12,13 @@ export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
     f('p01_f003', 'Lot'), f('p01_f004', 'Block'), f('p01_f005', 'Addition'), f('p01_f007', 'County'),
   ] },
   { id: 'buyer', title: 'Buyer', fields: [
-    f('p08_f123', 'Phone'), f('p08_f124', 'Phone (Second)'), f('p08_f125', 'Email'), f('p08_f126', 'Email (Second)'),
+    f('p08_f123', 'Buyer 1 Phone'), f('p08_f125', 'Buyer 1 Email'),
+    f('p08_f124', 'Buyer 2 Phone'), f('p08_f126', 'Buyer 2 Email'),
   ] },
   { id: 'seller', title: 'Seller', fields: [
-    f('p08_f127', 'Address'), f('p08_f128', 'Address (Continued)'), f('p08_f129', 'Phone'), f('p08_f130', 'Phone (Second)'),
-    f('p08_f131', 'Email'), f('p08_f132', 'Email (Second)'),
+    f('p08_f127', 'Address'), f('p08_f128', 'Address (Continued)'),
+    f('p08_f129', 'Seller 1 Phone'), f('p08_f131', 'Seller 1 Email'),
+    f('p08_f130', 'Seller 2 Phone'), f('p08_f132', 'Seller 2 Email'),
   ] },
   { id: 'buyer-broker', title: "Buyer's Agent", fields: [
     f('p11_f212', 'Buyer’s Broker Firm'), f('p11_f215', 'Associate Name'), f('p11_f216', 'Team Name'), f('p11_f220', 'Licensed Supervisor'),
