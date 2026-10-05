@@ -261,10 +261,10 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
               className="!block !h-auto !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white px-5 py-4 text-left hover:!bg-[#F6F3FB]"
             >
               <span className="flex items-baseline justify-between gap-2">
-                <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">{t.term}</span>
-                {t.ref && <span className="font-mono text-[11px] text-slate-300">{t.ref}</span>}
+                <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{t.term}</span>
+                {t.ref && <span className="text-[11px] text-slate-400">{t.ref}</span>}
               </span>
-              <span className="mt-1 block min-h-[20px] break-words text-sm font-semibold text-slate-900">{t.value}</span>
+              <span className="mt-1 block min-h-[20px] break-words text-sm font-normal text-slate-900">{t.value}</span>
               <span className="mt-0.5 block min-h-[16px] break-words text-xs text-slate-500">{t.note}</span>
             </button>
           ))}
@@ -286,7 +286,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
             );
           })}
           <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Estimated Cash To Close">
-        <p className="border-b border-[#E6E5EC] px-5 py-4 text-base font-semibold text-slate-900">Estimated Cash To Close</p>
+        <p className="border-b border-[#E6E5EC] px-5 py-3.5 text-sm font-semibold text-slate-900">Estimated Cash To Close</p>
         <div className="flex items-center justify-between gap-4 border-b border-[#F1F0F5] px-5 py-3">
           <div>
             <p className="text-sm font-medium text-slate-900">Earnest Money In Escrow</p>
@@ -315,7 +315,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                   </label>
                   <button type="button" aria-label="Delete line" onClick={() => removeLine(line.id)} className="!border-0 !bg-transparent !px-2 text-slate-400 hover:!text-[#301D5D]"><Trash2 className="h-4 w-4" aria-hidden="true" /></button>
                 </div>
-                <input value={line.note} onChange={(e) => updateLine(line.id, { note: e.target.value })} aria-label="Note shown to client" placeholder="Optional note the client sees under this line" className="mt-1 h-7 w-full bg-transparent text-xs italic text-slate-500 outline-none placeholder:text-slate-300" />
+                <input value={line.note} onChange={(e) => updateLine(line.id, { note: e.target.value })} aria-label="Note shown to client" placeholder="Optional note the client sees under this line" className="mt-1 h-7 w-full bg-transparent text-xs text-slate-500 outline-none placeholder:text-slate-300" />
               </li>
             ))}
           </ul>
@@ -332,20 +332,20 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-label={isNew ? 'Add a term' : 'Edit term'} onClick={() => setEditing(null)}>
           <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-[#E6E5EC] px-6 py-4">
-              <p className="text-base font-semibold text-slate-900">{isNew ? 'Add A Term' : 'Edit Term'}</p>
+              <p className="text-sm font-semibold text-slate-900">{isNew ? 'Add A Term' : 'Edit Term'}</p>
               <button type="button" aria-label="Close" onClick={() => setEditing(null)} className="!border-0 !bg-transparent !px-1"><X className="h-4 w-4" aria-hidden="true" /></button>
             </div>
             <div className="grid gap-4 px-6 py-5 sm:grid-cols-2">
-              <label className="block text-sm font-medium text-slate-900">Term
+              <label className="block text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Term
                 <input value={editing.term} onChange={(e) => setEditing({ ...editing, term: e.target.value })} placeholder="Purchase Price" className={`${fieldCls} mt-1 font-normal`} />
               </label>
-              <label className="block text-sm font-medium text-slate-900">Where In The Contract
+              <label className="block text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Where In The Contract
                 <input value={editing.ref} onChange={(e) => setEditing({ ...editing, ref: e.target.value })} placeholder="§7.2 · p.5" className={`${fieldCls} mt-1 font-normal`} />
               </label>
-              <label className="block text-sm font-medium text-slate-900 sm:col-span-2">Value
+              <label className="block text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 sm:col-span-2">Value
                 <input value={editing.value} onChange={(e) => setEditing({ ...editing, value: e.target.value })} placeholder="$642,000" className={`${fieldCls} mt-1 font-normal`} />
               </label>
-              <label className="block text-sm font-medium text-slate-900 sm:col-span-2">Note
+              <label className="block text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 sm:col-span-2">Note
                 <textarea value={editing.note} onChange={(e) => setEditing({ ...editing, note: e.target.value })} rows={3} placeholder="Repair credit added by Addendum B." className="mt-1 w-full rounded-md border border-[#E6E5EC] bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-[#301D5D]" />
               </label>
             </div>
