@@ -26,12 +26,6 @@ export const AGENT_DESK_TEMPLATE = {
       "gap:nuir1m",
       "gap:nr9kwf",
       "app:lender.zip"
-    ],
-    "property": [
-      "p01_f004",
-      "p01_f003",
-      "p01_f005",
-      "p01_f007"
     ]
   },
   "contractHiddenFields": [],

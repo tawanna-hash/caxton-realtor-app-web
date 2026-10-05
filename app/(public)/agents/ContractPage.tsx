@@ -124,6 +124,14 @@ const fieldCls = 'h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 te
 
 type ContractSection = (typeof CONTRACT_MAP_SECTIONS)[number];
 
+// "9904 Whitley Bay Dr, Austin, TX 78717" gives "Austin"; returns nothing when the city is not clearly present.
+function cityFromAddress(address: string): string {
+  const parts = address.split(',').map((part) => part.trim()).filter(Boolean);
+  if (parts.length < 3) return '';
+  const city = parts[parts.length - 2];
+  return /\d/.test(city) ? '' : city;
+}
+
 export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Props) {
   const deal = effective(rawDeal);
   const setForm = (patch: Record<string, string>) => {
@@ -158,6 +166,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
         const put = (id: string, v: string | undefined) => { if (v && !have(id)) patch[id] = v.slice(0, 200); };
         if (result) {
           put('p01_f007', result.county);
+          put('p01_f006', cityFromAddress(lookupAddress));
           if (result.cad) {
             put('app:property.type', result.cad.propertyType); put('app:property.legalDescription', result.cad.legalDescription);
             put('app:property.neighborhood', result.cad.neighborhood); put('app:property.account', result.cad.account);
@@ -433,7 +442,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       );
                     }
                     return (
-                      <div key={key} {...cellAttrs} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : fl.span === 4 ? 'sm:col-span-2 lg:col-span-4' : ''} ${placed}${pickCls}`}>
+                      <div key={key} {...cellAttrs} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : fl.span === 4 ? 'sm:col-span-2 lg:col-span-4' : fl.span === 3 ? 'sm:col-span-2 lg:col-span-3' : ''} ${placed}${pickCls}`}>
                         <div className="flex items-center justify-between gap-3 pb-1">
                           {labelInput(fl.id, fl.label)}
                           <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(section, fl.id))}</span>

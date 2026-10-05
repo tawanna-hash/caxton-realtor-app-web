@@ -315,6 +315,21 @@ function restoreBrokerSections(deal: AgentDeal): AgentDeal {
   };
 }
 
+// One-time: Property Description starts with the contract's own Section 2.A fields in form order
+// (Lot, Block, Addition, City, County, Property Address), followed by the lookup fields.
+function restorePropertyFormOrder(deal: AgentDeal): AgentDeal {
+  const addresses = deal.contractAddresses ?? {};
+  if (addresses['migrated.propertyForm'] === '1') return deal;
+  const order: Record<string, string[]> = Object.fromEntries(Object.entries(deal.contractFieldOrder ?? {}).map(([key, list]) => [key, [...list]]));
+  delete order.property;
+  return {
+    ...deal,
+    contractFieldOrder: order,
+    contractHiddenFields: (deal.contractHiddenFields ?? []).filter((id) => id !== 'p01_f006'),
+    contractAddresses: { ...addresses, 'migrated.propertyForm': '1' },
+  };
+}
+
 function mergeReadinessDocuments(deal: AgentDeal): AgentDeal {
   const existingDocuments = new Map(deal.documents.map((document) => [document.id, document]));
   const requestedAt = deal.createdAt || new Date().toISOString();
@@ -1309,7 +1324,7 @@ export default function ClosingTime({
       deals: legacyDeals,
       notificationPreferences: defaultAgentNotificationPreferences(),
     };
-    const migratedDeals = startingWorkspace.deals.map(mergeReadinessDocuments).map(restoreBrokerSections).map((deal) => (deal.title === 'New Transaction' ? { ...deal, title: 'New Contract' } : deal));
+    const migratedDeals = startingWorkspace.deals.map(mergeReadinessDocuments).map(restoreBrokerSections).map(restorePropertyFormOrder).map((deal) => (deal.title === 'New Transaction' ? { ...deal, title: 'New Contract' } : deal));
     const readinessChecklistChanged = JSON.stringify(migratedDeals) !== JSON.stringify(startingWorkspace.deals);
     const hydratedWorkspace = { ...startingWorkspace, deals: migratedDeals };
 

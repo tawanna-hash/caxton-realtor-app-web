@@ -9,8 +9,8 @@ const f = (id: string, label: string, kind: ContractFieldKind = 't', span?: numb
 
 export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
   { id: 'property', title: 'Property Description', fields: [
-    f('p01_f008', 'Property Address', 't', 4),
-    f('p01_f003', 'Lot'), f('p01_f004', 'Block'), f('p01_f005', 'Addition'), f('p01_f007', 'County'),
+    f('p01_f003', 'Lot'), f('p01_f004', 'Block'), f('p01_f005', 'Addition'), f('p01_f006', 'City'),
+    f('p01_f007', 'County'), f('p01_f008', 'Property Address', 't', 3),
     f('app:property.type', 'Property Type'), f('app:property.account', 'Account'), f('app:property.mapNumber', 'Map Number'), f('app:property.effectiveAcres', 'Effective Acres'),
     f('app:property.neighborhood', 'Neighborhood', 't', 2), f('app:property.mailingAddress', 'Mailing Address', 't', 2),
     f('app:property.legalDescription', 'Legal Description', 't', 4),
