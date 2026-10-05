@@ -396,7 +396,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       pressing: (
         <>
       <div className="ds-card">
-        <p className="mt-1 text-lg font-semibold text-slate-900">Key Dates</p>
+        <p className="mt-1 text-lg font-semibold text-slate-900">Key Deadlines</p>
         <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules.</p>
         {timelineFields}
         {trackedDeadlines.length > 0 && (
@@ -501,12 +501,12 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     return (
       <div className="ds-page" data-testid="deal-snapshot">
         <div className="mb-3 space-y-3">
+          {snapshotTop.pressing}
           <div className="grid items-start gap-3 lg:grid-cols-4">
             <div className="lg:col-span-2">{snapshotTop.tiles}</div>
             <div className="min-w-0">{partiesCard}</div>
             <div className="min-w-0">{sideBlocks.property}</div>
           </div>
-          {snapshotTop.pressing}
         </div>
         <div className="grid items-start gap-3">
         <div className="grid gap-3 md:grid-cols-2">
