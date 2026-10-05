@@ -1594,3 +1594,5 @@ input[type='date']::-webkit-calendar-picker-indicator {
 
 #agent-desk .ds-nav-child { margin: 0.125rem 0 0.25rem 1.5rem; padding: 0 0 0 0.5rem; list-style: none; border-left: 1px solid var(--d-line); }
 #agent-desk .ds-nav-child .ds-navbtn { font-size: 0.8125rem; }
+#agent-desk .ds-navbtn[aria-expanded] { border: 0; background-color: transparent; color: inherit; }
+#agent-desk .ds-navbtn[aria-expanded]:hover { background-color: var(--d-hover); }
