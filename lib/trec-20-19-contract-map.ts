@@ -21,14 +21,11 @@ export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
   { id: 'buyer-broker', title: "Buyer's Agent", fields: [...brokerBlock('p11', 212, 'Buyer’s'), f('p08_f133', 'Notice Address'), f('p08_f134', 'Notice Address (Continued)'), f('p08_f135', 'Notice Phone'), f('p08_f136', 'Notice Email')] },
   { id: 'seller-broker', title: "Seller's Agent", fields: [...brokerBlock('p11', 201, 'Seller’s'), f('p08_f137', 'Notice Address'), f('p08_f138', 'Notice Address (Continued)'), f('p08_f139', 'Notice Phone'), f('p08_f140', 'Notice Email')] },
   { id: 'title-company', title: 'Title Company', fields: [
-    f('p02_f038', 'Title Company'),
-    f('p02_f028', 'Escrow Agent'), f('p02_f029', 'Escrow Agent Address'), f('p02_f030', 'Escrow Agent Address (Continued)'),
-    f('p12_f259', 'Contract Received By Escrow Agent'), f('p12_f260', 'Contract Received By'), f('p12_f261', 'Email'), f('p12_f262', 'Date Contract Received'),
-    f('p12_f263', 'Address'), f('p12_f264', 'Phone'), f('p12_f265', 'City'), f('p12_f266', 'State'), f('p12_f267', 'ZIP'), f('p12_f268', 'Fax'),
-    f('p12_f247', 'Earnest Money Receipt Amount', 'm'), f('p12_f248', 'Earnest Money Form Of Payment'), f('p12_f249', 'Earnest Money Receipt Escrow Agent'),
-    f('p12_f250', 'Earnest Money Received By'), f('p12_f251', 'Earnest Money Receipt Email'), f('p12_f252', 'Earnest Money Date And Time'),
-    f('p12_f253', 'Earnest Money Receipt Address'), f('p12_f254', 'Earnest Money Receipt Phone'), f('p12_f255', 'Earnest Money Receipt City'),
-    f('p12_f256', 'Earnest Money Receipt State'), f('p12_f257', 'Earnest Money Receipt ZIP'), f('p12_f258', 'Earnest Money Receipt Fax'),
+    f('p02_f038', 'Title Company'), f('p02_f028', 'Escrow Agent'),
+    f('p02_f029', 'Address'), f('p02_f030', 'Address (Continued)'), f('p12_f263', 'Additional Address'),
+    f('p12_f265', 'City'), f('p12_f266', 'State'), f('p12_f267', 'ZIP'),
+    f('p12_f264', 'Phone'), f('p12_f268', 'Fax'), f('p12_f261', 'Email'),
+    f('p12_f247', 'Earnest Money Receipt Amount', 'm'), f('p12_f248', 'Earnest Money Form Of Payment'),
   ] },
 ];
 
