@@ -1639,3 +1639,6 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-subtitle, #agent-desk .ds-back, #agent-desk .ds-step-label { font-size: 0.875rem; }
 #agent-desk .ds-stat-sub, #agent-desk .ds-kpi-sub { font-size: 0.75rem; font-weight: 500; color: var(--d-muted); }
 #agent-desk .ds-stat-num, #agent-desk .ds-kpi-num { font-size: 1.5rem; font-weight: 600; line-height: 1.2; color: var(--d-ink); }
+#agent-desk .ds-compact :is(h1, h2, h3).ds-title { font-size: 1.375rem; line-height: 1.2; font-weight: 600; margin-top: 0.25rem; }
+#agent-desk :is(h3, h4, p).uppercase { font-weight: 500; }
+#agent-desk .ds-subtitle { color: var(--d-muted); }
