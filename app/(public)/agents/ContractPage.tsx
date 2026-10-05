@@ -222,7 +222,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
   const hideField = (id: string) => onPatch({ contractHiddenFields: [...hidden, id] });
   const putCustom = (next: typeof customFields) => onPatch({ contractCustomFields: next });
   const hasOrder = (section: ContractSection) => (rawDeal.contractFieldOrder?.[section.id] ?? []).length > 0;
-  type FieldItem = { key: string; kind: 'map'; fl: ContractSection['fields'][number] } | { key: string; kind: 'custom'; cf: (typeof customFields)[number] };
+  type FieldItem = { key: string; kind: 'map'; fl: ContractSection['fields'][number] } | { key: string; kind: 'custom'; cf: (typeof customFields)[number] } | { key: string; kind: 'gap' };
   const orderedItems = (section: ContractSection): FieldItem[] => {
     const items: FieldItem[] = [
       ...section.fields.filter((fl) => !hidden.includes(fl.id)).map((fl) => ({ key: fl.id, kind: 'map' as const, fl })),
@@ -230,8 +230,24 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     ];
     const order = rawDeal.contractFieldOrder?.[section.id] ?? [];
     if (!order.length) return items;
+    for (const k of order) if (k.startsWith('gap:')) items.push({ key: k, kind: 'gap' });
     const idx = (k: string) => { const i = order.indexOf(k); return i === -1 ? order.length + items.findIndex((x) => x.key === k) : i; };
     return [...items].sort((x, y) => idx(x.key) - idx(y.key));
+  };
+  const [arrange, setArrange] = useState(false);
+  const [kdPicked, setKdPicked] = useState<string | null>(null);
+  const kdOrder = rawDeal.contractFieldOrder?.['key-details'] ?? [];
+  const kdItems: string[] = (() => {
+    const keys = [...terms.map((t) => t.id), ...kdOrder.filter((k) => k.startsWith('gap:'))];
+    if (!kdOrder.length) return keys;
+    const idx = (k: string) => { const i = kdOrder.indexOf(k); return i === -1 ? kdOrder.length + keys.indexOf(k) : i; };
+    return [...keys].sort((a, b) => idx(a) - idx(b));
+  })();
+  const kdSave = (keys: string[]) => onPatch({ contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), 'key-details': keys } });
+  const kdClick = (key: string) => {
+    if (!kdPicked) { if (!kdOrder.length) kdSave(kdItems); setKdPicked(key); return; }
+    if (kdPicked !== key) { const next = placeKeys(kdItems, kdPicked, key); if (next) kdSave(next); }
+    setKdPicked(null);
   };
   const [picked, setPicked] = useState<{ section: string; key: string } | null>(null);
   useEffect(() => {
@@ -240,19 +256,63 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [picked]);
-  const moveTo = (section: ContractSection, key: string, target: string) => {
+  const placeKeys = (keys: string[], key: string, target: string): string[] | null => {
+    const out = [...keys];
+    const from = out.indexOf(key);
+    if (from < 0) return null;
+    if (target.startsWith('gap:')) {
+      const gi = out.indexOf(target);
+      if (gi < 0) return null;
+      out[gi] = key;
+      out[from] = newGap();
+    } else if (target.startsWith('end:')) {
+      out[from] = newGap();
+      for (let i = 0; i < Number(target.slice(4)); i += 1) out.push(newGap());
+      out.push(key);
+    } else {
+      const to = out.indexOf(target);
+      if (to < 0 || to === from) return null;
+      out.splice(from, 1);
+      out.splice(to, 0, key);
+    }
+    while (out.length && out[out.length - 1].startsWith('gap:')) out.pop();
+    return out;
+  };
+  const newGap = () => `gap:${Math.random().toString(36).slice(2, 8)}`;
+  const saveOrder = (section: ContractSection, keys: string[]) => {
+    const next = [...keys];
+    while (next.length && next[next.length - 1].startsWith('gap:')) next.pop();
+    onPatch({ contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: next } });
+  };
+  const placeAt = (section: ContractSection, key: string, target: string) => {
     const keys = orderedItems(section).map((x) => x.key);
     const from = keys.indexOf(key);
-    const to = keys.indexOf(target);
-    if (from < 0 || to < 0 || from === to) return;
-    keys.splice(from, 1);
-    keys.splice(to, 0, key);
-    onPatch({ contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: keys } });
+    if (from < 0) return;
+    if (target.startsWith('gap:')) {
+      const gi = keys.indexOf(target);
+      if (gi < 0) return;
+      keys[gi] = key;
+      keys[from] = newGap();
+    } else if (target.startsWith('end:')) {
+      keys[from] = newGap();
+      for (let i = 0; i < Number(target.slice(4)); i += 1) keys.push(newGap());
+      keys.push(key);
+    } else {
+      const to = keys.indexOf(target);
+      if (to < 0 || to === from) return;
+      keys.splice(from, 1);
+      keys.splice(to, 0, key);
+    }
+    saveOrder(section, keys);
   };
   const cellClick = (section: ContractSection, key: string) => (e: React.MouseEvent<HTMLElement>) => {
     if ((e.target as HTMLElement).closest('input,button,label,textarea,select')) return;
-    if (!picked || picked.section !== section.id) { setPicked({ section: section.id, key }); return; }
-    if (picked.key !== key) moveTo(section, picked.key, key);
+    if (!picked || picked.section !== section.id) {
+      if (!hasOrder(section)) saveOrder(section, orderedItems(section).map((x) => x.key));
+      setPicked({ section: section.id, key });
+      return;
+    }
+    if (picked.key !== key) placeAt(section, picked.key, key);
     setPicked(null);
   };
   const moveBy = (section: ContractSection, key: string, delta: number) => {
@@ -295,6 +355,14 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     const xBtn = (label: string, onClick: () => void) => (
                       <button type="button" aria-label={label} title={label} onClick={onClick} className="!flex !h-4 !w-4 shrink-0 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-500 hover:!text-[#301D5D]"><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
                     );
+                    if (item.kind === 'gap') {
+                      const live = picked?.section === section.id;
+                      return (
+                        <div key={key} {...cellAttrs} className={`group/cell relative hidden min-h-[4.5rem] rounded-md sm:block ${live ? 'cursor-pointer border border-dashed border-[#B9ADD6] hover:bg-[#F6F3FB]' : ''}`}>
+                          {!live && <span className="absolute right-0 top-0 opacity-0 group-hover/cell:opacity-100">{xBtn('Remove blank space', () => saveOrder(section, (rawDeal.contractFieldOrder?.[section.id] ?? []).filter((k) => k !== key)))}</span>}
+                        </div>
+                      );
+                    }
                     if (item.kind === 'custom') {
                       const cf = item.cf;
                       return (
@@ -336,6 +404,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       </div>
                     );
                   })}
+                  {picked?.section === section.id && Array.from({ length: ((4 - (items.length % 4)) % 4) + 4 }).map((_, i) => (
+                    <div key={`end-${i}`} onClick={() => { placeAt(section, picked.key, `end:${i}`); setPicked(null); }} title="Click to place here" className="hidden min-h-[4.5rem] cursor-pointer rounded-md border border-dashed border-[#B9ADD6] hover:bg-[#F6F3FB] lg:block" />
+                  ))}
                   {!bordered && (
                     <div className="flex items-end">
                       <button type="button" onClick={() => putCustom([...customFields, { id: newId('cf'), section: section.id, label: 'New Field', value: '' }])}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Field</button>
@@ -411,25 +482,35 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
               </AutoDetails>
               {section.id === 'property' && (
                 <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
-                  <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId('key-details'); }}>Quick Entry</button></summary>
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span><span className="flex items-center gap-3"><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setArrange((v) => !v); setKdPicked(null); }}>{arrange ? 'Done Arranging' : 'Arrange'}</button><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId('key-details'); }}>Quick Entry</button></span></summary>
                   <div className="border-t border-[#F1F0F5]">
       <section className="overflow-hidden bg-white" aria-label="Contract Terms">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4">
-          {terms.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => { setIsNew(false); setEditing(t); }}
-              className="!block !h-auto !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white !px-[1.125rem] !py-4 text-left hover:!bg-[#F6F3FB]"
-            >
-              <span className="flex items-baseline justify-between gap-2">
-                <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{t.term}</span>
-                {t.ref && <span className="text-[11px] text-slate-400">{t.ref}</span>}
-              </span>
-              <span className="mt-1 block min-h-[20px] break-words text-sm font-medium text-slate-900">{t.value}</span>
-              <span className="mt-0.5 block min-h-[16px] break-words text-sm font-medium text-slate-500">{t.note}</span>
-            </button>
-          ))}
+          {kdItems.map((key) => {
+            const t = terms.find((x) => x.id === key);
+            if (!t) {
+              return arrange ? (
+                <div key={key} onClick={() => kdClick(key)} title="Click to place here" className={`hidden min-h-[76px] cursor-pointer border-b border-r border-[#E6E5EC] sm:block ${kdPicked ? 'bg-[#FBFAFD] outline-dashed outline-1 -outline-offset-4 outline-[#B9ADD6] hover:bg-[#F6F3FB]' : ''}`} />
+              ) : (
+                <div key={key} className="hidden min-h-[76px] border-b border-r border-[#E6E5EC] sm:block" aria-hidden="true" />
+              );
+            }
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => { if (arrange) { kdClick(t.id); return; } setIsNew(false); setEditing(t); }}
+                className={`!block !h-auto !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white !px-[1.125rem] !py-4 text-left hover:!bg-[#F6F3FB] ${kdPicked === t.id ? '!bg-[#F6F3FB] outline outline-2 -outline-offset-2 outline-[#301D5D]' : ''}`}
+              >
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{t.term}</span>
+                  {t.ref && <span className="text-[11px] text-slate-400">{t.ref}</span>}
+                </span>
+                <span className="mt-1 block min-h-[20px] break-words text-sm font-medium text-slate-900">{t.value}</span>
+                <span className="mt-0.5 block min-h-[16px] break-words text-sm font-medium text-slate-500">{t.note}</span>
+              </button>
+            );
+          })}
           <button
             type="button"
             onClick={() => { setIsNew(true); setEditing({ id: newId('term'), term: '', ref: '', value: '', note: '' }); }}
@@ -437,7 +518,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
           >
             <Plus className="h-4 w-4" aria-hidden="true" /> Add Term
           </button>
-          {Array.from({ length: filler }, (_, i) => <div key={`f${i}`} className="hidden border-b border-r border-[#E6E5EC] bg-[#F6F3FB] lg:block" aria-hidden="true" />)}
+          {Array.from({ length: (4 - ((kdItems.length + 1) % 4)) % 4 + (arrange && kdPicked ? 4 : 0) }, (_, i) => (
+            <div key={`f${i}`} onClick={() => { if (arrange && kdPicked) { const next = placeKeys(kdItems, kdPicked, `end:${i + 1}`); if (next) kdSave(next); setKdPicked(null); } }} title={arrange && kdPicked ? 'Click to place here' : undefined} className={`hidden min-h-[76px] border-b border-r border-[#E6E5EC] lg:block ${arrange && kdPicked ? 'cursor-pointer bg-[#FBFAFD] outline-dashed outline-1 -outline-offset-4 outline-[#B9ADD6] hover:bg-[#F6F3FB]' : 'bg-[#F6F3FB]'}`} aria-hidden="true" />
+          ))}
         </div>
       </section>
 
