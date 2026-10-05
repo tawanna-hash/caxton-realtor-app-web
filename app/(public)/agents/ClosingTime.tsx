@@ -1542,8 +1542,23 @@ export default function ClosingTime({
     }
   };
 
-  const extractContract = async (file: File | undefined) => {
+  const [formModalOpen, setFormModalOpen] = useState(false);
+  const rowUploadInputRef = useRef<HTMLInputElement | null>(null);
+  const rowUploadFamilyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!formModalOpen) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setFormModalOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [formModalOpen]);
+  const extractContract = async (file: File | undefined, family?: string) => {
     if (!file || !activeDeal) return;
+    const primaryVersion = (family ? activePacketForms.find((version) => version.formFamily === family) : undefined) ?? currentTrecFormVersion;
+    if (family) {
+      setActiveTrecFormFamily(family);
+      setActiveTrecPage(1);
+      if (!activeDeal.selectedFormFamilies[family]) updateActiveDeal('selectedFormFamilies', { ...activeDeal.selectedFormFamilies, [family]: true });
+    }
     clearContractPreview();
     contractFileRef.current = file;
     setIsPdfSource(file.type === 'application/pdf');
@@ -1562,7 +1577,7 @@ export default function ClosingTime({
       }
       // Read the upload against the contract and every other selected form (IABS, addenda, etc.).
       // Each form has its own field catalog; a document that is not that form simply returns nothing.
-      const targetVersions = [currentTrecFormVersion, ...selectedFormVersions.filter((version) => version.id !== currentTrecFormVersion.id && version.fields.length > 0)];
+      const targetVersions = [primaryVersion, ...selectedFormVersions.filter((version) => version.id !== primaryVersion.id && version.fields.length > 0)];
       const readWithVersion = async (versionId: string) => {
         const formData = new FormData();
         if (!originalId) { formData.append('contract', file); formData.append('trecFormVersionId', versionId); }
@@ -1607,7 +1622,7 @@ export default function ClosingTime({
         ? Object.entries(record.formFields).filter(([, value]) => typeof value === 'string')
         : [];
       const signatureFields = importedFields.filter(([id]) => {
-        const field = currentTrecFormVersion.fields.find((candidate) => candidate.id === id);
+        const field = primaryVersion.fields.find((candidate) => candidate.id === id);
         return /signatur|initial/i.test(`${field?.pdfFieldName ?? ''} ${field?.label ?? ''}`);
       });
       setExtractionDraft({
@@ -1655,11 +1670,16 @@ export default function ClosingTime({
         return;
       }
       setIsCameraOpen(false);
-      void extractContract(new File([blob], `contract-photo-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+      const targetFamily = cameraTargetFamilyRef.current ?? undefined;
+      cameraTargetFamilyRef.current = null;
+      if (targetFamily) setFormModalOpen(true);
+      void extractContract(new File([blob], `contract-photo-${Date.now()}.jpg`, { type: 'image/jpeg' }), targetFamily);
     }, 'image/jpeg', 0.92);
   };
 
-  const openContractCamera = () => {
+  const cameraTargetFamilyRef = useRef<string | null>(null);
+  const openContractCamera = (family?: string) => {
+    cameraTargetFamilyRef.current = family ?? null;
     setCameraError('');
     if (!navigator.mediaDevices?.getUserMedia) {
       contractCameraInputRef.current?.click();
@@ -2092,6 +2112,110 @@ export default function ClosingTime({
       </section>
     );
   }
+
+  const renderFormWindow = () => (!activeDeal ? null : (
+    <>
+                    <div className="mt-7 rounded-md border border-[#E6E5EC] bg-[#F6F3FB] p-6 sm:p-10 lg:p-14">
+                      {originalContract?.dealId === activeDeal.id && (
+                        <div className="mx-auto mb-4 max-w-[1020px] border border-slate-300 bg-white p-3">
+                          <button type="button" onClick={() => setShowSavedOriginal((value) => !value)}
+                            aria-expanded={showSavedOriginal}
+                            className="text-sm font-bold text-[#301D5D] underline">
+                            {showSavedOriginal ? 'Hide original contract' : 'View original uploaded contract (signatures in place)'}
+                          </button>
+                          {showSavedOriginal && <iframe
+                            title="Original uploaded contract, signatures unchanged"
+                            src={`/api/agent-command-center/contracts/original?id=${encodeURIComponent(originalContract.id)}`}
+                            className="mt-3 h-[70vh] w-full border border-slate-200"
+                          />}
+                        </div>
+                      )}
+                      <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-white shadow-sm">
+                        <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2">
+                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">{currentTrecFormVersion.formFamily.startsWith('custom-') ? `${currentTrecFormVersion.formNumber} form` : `Official TREC ${currentTrecFormVersion.formNumber}`} · Page {currentTrecPage}</p>
+                          <a href={`/api/agent-command-center/form-pdf?src=${encodeURIComponent(currentTrecFormVersion.pdfUrl)}&name=${encodeURIComponent(`TREC-${currentTrecFormVersion.formNumber.replace(/\s+/g, '-')}`)}`} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5B438C] underline underline-offset-2">Open Full Form</a>
+                        </div>
+                        <TrecPdfPagePreview
+                          pdfUrl={currentTrecFormVersion.pdfUrl}
+                          pageNumber={currentTrecPage}
+                          formNumber={currentTrecFormVersion.formNumber}
+                          fields={currentTrecFormVersion.fields.filter((field) => field.page === currentTrecPage)}
+                          values={currentFormValues}
+                          onFieldChange={updateTrecFormField}
+                        />
+                        <div className="grid gap-1.5 border-t border-slate-200 bg-white px-3 py-2 sm:grid-cols-[1fr_1.6fr_0.7fr_1fr]" aria-label="Brokerage and agent details">
+                          {([['brokerage', 'Brokerage'], ['address', 'Brokerage Address'], ['agentId', 'Agent ID'], ['agentName', 'Agent Name']] as const).map(([key, label]) => (
+                            <input
+                              key={key}
+                              value={brokerFooter[key]}
+                              onChange={(event) => updateBrokerFooter(key, event.target.value)}
+                              placeholder={label}
+                              aria-label={label}
+                              title={label}
+                              style={{ fontSize: '8pt' }}
+                              className="h-6 w-full min-w-0 rounded-md border border-slate-200 bg-[#F6F3FB] px-2 text-center text-slate-900 outline-none focus:border-[#301D5D]"
+                            />
+                          ))}
+                        </div>
+                        {(['brokerage', 'address', 'agentId', 'agentName'] as const).some((key) => !brokerFooter[key].trim()) && (
+                          <p className="border-t border-slate-100 bg-white px-3 py-1.5 text-center text-[11px] text-slate-500">Fill these once in <button type="button" onClick={() => setDeskView('coordinator')} className="font-semibold text-[#301D5D] underline underline-offset-2">Settings</button> and they appear on every form.</p>
+                        )}
+                        <div className="border-t border-slate-200 bg-white px-3 py-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-xs text-slate-500">Send this filled form to your broker to review.</p>
+                            <button type="button" onClick={() => { setReviewOpen((open) => !open); setReviewState({ status: 'idle', message: '' }); }} aria-expanded={reviewOpen} className="ds-review-btn">Submit For Review</button>
+                          </div>
+                          {reviewOpen && (
+                            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                              {([['brokerName', 'Broker Name', 'text'], ['brokerEmail', 'Broker Email', 'email']] as const).map(([key, label, type]) => (
+                                <label key={key} className="block min-w-0">
+                                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</span>
+                                  <input type={type} value={brokerFooter[key]} onChange={(event) => updateBrokerFooter(key, event.target.value)} placeholder={label}
+                                    className="h-7 w-full rounded-md border border-slate-200 bg-[#F6F3FB] px-2 text-xs text-slate-900 outline-none focus:border-[#301D5D]" />
+                                </label>
+                              ))}
+                              <label className="block sm:col-span-2">
+                                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Message To Broker (Optional)</span>
+                                <textarea value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} rows={2} placeholder="Anything the broker should look at first"
+                                  className="w-full rounded-md border border-slate-200 bg-[#F6F3FB] px-2 py-1 text-xs text-slate-900 outline-none focus:border-[#301D5D]" />
+                              </label>
+                              <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+                                <button type="button" disabled={reviewState.status === 'sending' || !brokerFooter.brokerEmail.trim()} className="ds-review-btn" onClick={() => void submitForBrokerReview()}>
+                                  {reviewState.status === 'sending' ? 'Sending...' : 'Send To Broker'}
+                                </button>
+                                {reviewState.message && <p role="status" className={`text-xs ${reviewState.status === 'error' ? 'text-[#9A3D2B]' : 'text-[#1F7A3D]'}`}>{reviewState.message}</p>}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-col gap-3 rounded-md border border-slate-200 bg-[#FCFBF9] p-3 sm:flex-row sm:items-center sm:justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTrecPage((page) => Math.max(1, page - 1))}
+                        disabled={currentTrecPage === 1}
+                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                        Back
+                      </button>
+                      <div className="min-w-0 text-center">
+                        <p className="text-sm font-bold text-slate-950">Page {currentTrecPage} of {currentTrecFormVersion.pageCount}</p>
+                        <p className="mt-1 truncate text-xs font-semibold text-slate-600">{currentTrecFormVersion.pageSections[currentTrecPage] ?? `Official TREC page ${currentTrecPage}`}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTrecPage((page) => Math.min(currentTrecFormVersion.pageCount, page + 1))}
+                        disabled={currentTrecPage === currentTrecFormVersion.pageCount}
+                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </div>
+    </>
+  ));
 
   return (
     <main id="agent-desk" className="min-h-screen bg-white">
@@ -2531,8 +2655,12 @@ export default function ClosingTime({
                       if (deal && !deal.selectedFormFamilies[family]) updateActiveDeal('selectedFormFamilies', { ...deal.selectedFormFamilies, [family]: true });
                       setActiveTrecFormFamily(family);
                       setActiveTrecPage(1);
-                      setWorkspacePage(2);
-                      setDeskView('transaction');
+                      setFormModalOpen(true);
+                    }}
+                    onUploadTrecForm={(family, mode) => {
+                      if (mode === 'photo') { openContractCamera(family); return; }
+                      rowUploadFamilyRef.current = family;
+                      rowUploadInputRef.current?.click();
                     }}
                   />
                 </div>
@@ -3166,105 +3294,7 @@ export default function ClosingTime({
                         </div>
                       </div>
                     )}
-                    <div className="mt-7 rounded-md border border-[#E6E5EC] bg-[#F6F3FB] p-6 sm:p-10 lg:p-14">
-                      {originalContract?.dealId === activeDeal.id && (
-                        <div className="mx-auto mb-4 max-w-[1020px] border border-slate-300 bg-white p-3">
-                          <button type="button" onClick={() => setShowSavedOriginal((value) => !value)}
-                            aria-expanded={showSavedOriginal}
-                            className="text-sm font-bold text-[#301D5D] underline">
-                            {showSavedOriginal ? 'Hide original contract' : 'View original uploaded contract (signatures in place)'}
-                          </button>
-                          {showSavedOriginal && <iframe
-                            title="Original uploaded contract, signatures unchanged"
-                            src={`/api/agent-command-center/contracts/original?id=${encodeURIComponent(originalContract.id)}`}
-                            className="mt-3 h-[70vh] w-full border border-slate-200"
-                          />}
-                        </div>
-                      )}
-                      <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-white shadow-sm">
-                        <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2">
-                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">{currentTrecFormVersion.formFamily.startsWith('custom-') ? `${currentTrecFormVersion.formNumber} form` : `Official TREC ${currentTrecFormVersion.formNumber}`} · Page {currentTrecPage}</p>
-                          <a href={`/api/agent-command-center/form-pdf?src=${encodeURIComponent(currentTrecFormVersion.pdfUrl)}&name=${encodeURIComponent(`TREC-${currentTrecFormVersion.formNumber.replace(/\s+/g, '-')}`)}`} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5B438C] underline underline-offset-2">Open Full Form</a>
-                        </div>
-                        <TrecPdfPagePreview
-                          pdfUrl={currentTrecFormVersion.pdfUrl}
-                          pageNumber={currentTrecPage}
-                          formNumber={currentTrecFormVersion.formNumber}
-                          fields={currentTrecFormVersion.fields.filter((field) => field.page === currentTrecPage)}
-                          values={currentFormValues}
-                          onFieldChange={updateTrecFormField}
-                        />
-                        <div className="grid gap-1.5 border-t border-slate-200 bg-white px-3 py-2 sm:grid-cols-[1fr_1.6fr_0.7fr_1fr]" aria-label="Brokerage and agent details">
-                          {([['brokerage', 'Brokerage'], ['address', 'Brokerage Address'], ['agentId', 'Agent ID'], ['agentName', 'Agent Name']] as const).map(([key, label]) => (
-                            <input
-                              key={key}
-                              value={brokerFooter[key]}
-                              onChange={(event) => updateBrokerFooter(key, event.target.value)}
-                              placeholder={label}
-                              aria-label={label}
-                              title={label}
-                              style={{ fontSize: '8pt' }}
-                              className="h-6 w-full min-w-0 rounded-md border border-slate-200 bg-[#F6F3FB] px-2 text-center text-slate-900 outline-none focus:border-[#301D5D]"
-                            />
-                          ))}
-                        </div>
-                        {(['brokerage', 'address', 'agentId', 'agentName'] as const).some((key) => !brokerFooter[key].trim()) && (
-                          <p className="border-t border-slate-100 bg-white px-3 py-1.5 text-center text-[11px] text-slate-500">Fill these once in <button type="button" onClick={() => setDeskView('coordinator')} className="font-semibold text-[#301D5D] underline underline-offset-2">Settings</button> and they appear on every form.</p>
-                        )}
-                        <div className="border-t border-slate-200 bg-white px-3 py-2">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="text-xs text-slate-500">Send this filled form to your broker to review.</p>
-                            <button type="button" onClick={() => { setReviewOpen((open) => !open); setReviewState({ status: 'idle', message: '' }); }} aria-expanded={reviewOpen} className="ds-review-btn">Submit For Review</button>
-                          </div>
-                          {reviewOpen && (
-                            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                              {([['brokerName', 'Broker Name', 'text'], ['brokerEmail', 'Broker Email', 'email']] as const).map(([key, label, type]) => (
-                                <label key={key} className="block min-w-0">
-                                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</span>
-                                  <input type={type} value={brokerFooter[key]} onChange={(event) => updateBrokerFooter(key, event.target.value)} placeholder={label}
-                                    className="h-7 w-full rounded-md border border-slate-200 bg-[#F6F3FB] px-2 text-xs text-slate-900 outline-none focus:border-[#301D5D]" />
-                                </label>
-                              ))}
-                              <label className="block sm:col-span-2">
-                                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Message To Broker (Optional)</span>
-                                <textarea value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} rows={2} placeholder="Anything the broker should look at first"
-                                  className="w-full rounded-md border border-slate-200 bg-[#F6F3FB] px-2 py-1 text-xs text-slate-900 outline-none focus:border-[#301D5D]" />
-                              </label>
-                              <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
-                                <button type="button" disabled={reviewState.status === 'sending' || !brokerFooter.brokerEmail.trim()} className="ds-review-btn" onClick={() => void submitForBrokerReview()}>
-                                  {reviewState.status === 'sending' ? 'Sending...' : 'Send To Broker'}
-                                </button>
-                                {reviewState.message && <p role="status" className={`text-xs ${reviewState.status === 'error' ? 'text-[#9A3D2B]' : 'text-[#1F7A3D]'}`}>{reviewState.message}</p>}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-col gap-3 rounded-md border border-slate-200 bg-[#FCFBF9] p-3 sm:flex-row sm:items-center sm:justify-between">
-                      <button
-                        type="button"
-                        onClick={() => setActiveTrecPage((page) => Math.max(1, page - 1))}
-                        disabled={currentTrecPage === 1}
-                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                        Back
-                      </button>
-                      <div className="min-w-0 text-center">
-                        <p className="text-sm font-bold text-slate-950">Page {currentTrecPage} of {currentTrecFormVersion.pageCount}</p>
-                        <p className="mt-1 truncate text-xs font-semibold text-slate-600">{currentTrecFormVersion.pageSections[currentTrecPage] ?? `Official TREC page ${currentTrecPage}`}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTrecPage((page) => Math.min(currentTrecFormVersion.pageCount, page + 1))}
-                        disabled={currentTrecPage === currentTrecFormVersion.pageCount}
-                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </div>
+                    {renderFormWindow()}
                   </div>
                 </section>
 
@@ -3740,6 +3770,55 @@ export default function ClosingTime({
           </div>
         )}
       </div>
+      <input
+        ref={rowUploadInputRef}
+        type="file"
+        accept="application/pdf,image/png,image/jpeg,image/webp"
+        className="sr-only"
+        tabIndex={-1}
+        aria-label="Choose a PDF or image for the selected form"
+        onChange={async (event) => {
+          const input = event.currentTarget;
+          const file = input.files?.[0];
+          const family = rowUploadFamilyRef.current ?? undefined;
+          rowUploadFamilyRef.current = null;
+          input.value = '';
+          if (file && family) setFormModalOpen(true);
+          await extractContract(file, family);
+        }}
+      />
+      {formModalOpen && activeDeal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-3 sm:p-6" role="dialog" aria-modal="true" aria-label={`${currentTrecFormVersion.formNumber} form`} onClick={() => setFormModalOpen(false)}>
+          <div className="flex max-h-full w-full max-w-[1120px] flex-col overflow-hidden rounded-xl bg-white shadow-xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] px-5 py-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{currentTrecFormVersion.formFamily.startsWith('custom-') ? 'Form' : 'TREC form'}</p>
+                <h3 className="truncate text-base font-semibold text-slate-900">{currentTrecFormVersion.formNumber} · {currentTrecFormVersion.title}</h3>
+              </div>
+              <button type="button" aria-label="Close" onClick={() => setFormModalOpen(false)} className="text-slate-500 hover:text-slate-900"><X className="h-5 w-5" aria-hidden="true" /></button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+              {extractionState === 'extracting' && <p role="status" className="mb-3 border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-sm text-slate-700">Reading your upload...</p>}
+              {extractionState === 'error' && <p role="alert" className="mb-3 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{extractionError || 'The upload could not be read. Use a clear PDF or image smaller than 15 MB, then try again.'}</p>}
+              {extractionState === 'ready' && extractionDraft && (
+                <div role="status" className="mb-3 flex flex-col gap-3 border border-[#D9CFF0] bg-[#F6F3FB] px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-slate-800">{Object.values(extractionDraft.formFields).filter(Boolean).length} fields found in your upload. Review them, then fill this form.</p>
+                  <div className="flex shrink-0 gap-2">
+                    <button type="button" onClick={applyExtraction} className="inline-flex min-h-[36px] items-center rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">Fill Form</button>
+                    <button type="button" onClick={() => { clearContractPreview(); setExtractionDraft(null); setExtractionState('idle'); }} className="inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700">Discard</button>
+                  </div>
+                </div>
+              )}
+              {extractionWarnings.length > 0 && (
+                <ul className="mb-3 list-disc space-y-1 border-l-2 border-amber-300 pl-6 text-xs leading-5 text-amber-900">
+                  {extractionWarnings.map((warning) => <li key={warning}>{warning}</li>)}
+                </ul>
+              )}
+              {renderFormWindow()}
+            </div>
+          </div>
+        </div>
+      )}
       {newDealPickerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label="Start a new deal" onClick={() => setNewDealPickerOpen(false)}>
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
