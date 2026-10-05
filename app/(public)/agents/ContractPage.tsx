@@ -135,6 +135,40 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     });
   };
   const getVal = (id: string): string => (id.startsWith('app:') ? (rawDeal.contractAddresses ?? {})[id.slice(4)] ?? '' : rawDeal.formFields[id] ?? '');
+
+  // Property lookup: when a property address is entered, fill County and the appraisal-district fields.
+  // Only empty fields are filled, and each address is looked up once.
+  const lookupRef = useRef({ rawDeal, setForm });
+  lookupRef.current = { rawDeal, setForm };
+  const lookupAddress = (deal.propertyAddress ?? '').trim().slice(0, 200);
+  const lookupDone = (rawDeal.contractAddresses ?? {})['property.lookupFor'] ?? '';
+  useEffect(() => {
+    if (rawDeal.isTemplate || lookupAddress.length < 6 || lookupDone === lookupAddress) return;
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch('/api/agent-command-center/property-lookup', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: lookupAddress }) });
+        if (!res.ok || cancelled) return;
+        const { result } = (await res.json()) as { result: null | { county: string; cad: null | { propertyType: string; legalDescription: string; neighborhood: string; account: string; mapNumber: string; effectiveAcres: string; mailingAddress: string } } };
+        if (cancelled) return;
+        const cur = lookupRef.current;
+        const have = (id: string) => (id.startsWith('app:') ? (cur.rawDeal.contractAddresses ?? {})[id.slice(4)] ?? '' : cur.rawDeal.formFields[id] ?? '').trim();
+        const patch: Record<string, string> = { 'app:property.lookupFor': lookupAddress };
+        const put = (id: string, v: string | undefined) => { if (v && !have(id)) patch[id] = v.slice(0, 200); };
+        if (result) {
+          put('p01_f007', result.county);
+          if (result.cad) {
+            put('app:property.type', result.cad.propertyType); put('app:property.legalDescription', result.cad.legalDescription);
+            put('app:property.neighborhood', result.cad.neighborhood); put('app:property.account', result.cad.account);
+            put('app:property.mapNumber', result.cad.mapNumber); put('app:property.effectiveAcres', result.cad.effectiveAcres);
+            put('app:property.mailingAddress', result.cad.mailingAddress);
+          }
+        }
+        cur.setForm(patch);
+      } catch { /* lookup is best effort; fields stay editable by hand */ }
+    }, 1500);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [lookupAddress, lookupDone, rawDeal.isTemplate]);
   const stored = deal.keyTerms;
   const storedLines = deal.cashLines;
   const terms: (AgentKeyTerm & { source?: TermDef['source']; auto?: Auto })[] = [
