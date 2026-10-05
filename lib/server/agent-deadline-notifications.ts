@@ -7,6 +7,8 @@ import {
 import { sendEmail } from '@/lib/email';
 import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines';
 import { query } from '@/lib/server/db/neon';
+import { blankFieldAlerts, type TrecFormStatus } from '@/lib/blank-field-alerts';
+import { BUILT_IN_TREC_FORM_VERSIONS } from '@/lib/trec-form-versions';
 import { sendPushToRealtor } from '@/lib/server/push';
 import { ensureAgentCommandCenterWorkspaceSchema } from '@/lib/server/agent-command-center-workspaces';
 
@@ -219,6 +221,35 @@ export function emailHtml(deal: AgentDeal, deadline: DealDeadline, offset: numbe
   `;
 }
 
+
+function formStatuses(deal: AgentDeal): TrecFormStatus[] {
+  return BUILT_IN_TREC_FORM_VERSIONS.filter((version) => version.isActive).map((version) => ({
+    formFamily: version.formFamily, formNumber: version.formNumber, title: version.title, total: version.fields.length,
+    filled: version.fields.filter((field) => (deal.formFields?.[field.id] ?? '').trim() !== '').length,
+    selected: Boolean(deal.selectedFormFamilies?.[version.formFamily]),
+  }));
+}
+
+function openBlankAlerts(deal: AgentDeal) {
+  const ignored = new Set(deal.ignoredBlankAlerts ?? []);
+  return blankFieldAlerts(deal, formStatuses(deal)).filter((alert) => !ignored.has(alert.id));
+}
+
+export function urgentEmailHtml(deal: AgentDeal, deadline: DealDeadline, items: Array<{ label: string; blank: number }>): string {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
+  const rows = items.slice(0, 12).map((item) => `<li style="margin:0 0 4px">${escapeHtml(item.label)}: ${item.blank} blank</li>`).join('');
+  return `
+    <div style="font-family:Arial,sans-serif;color:#1e293b;line-height:1.55;max-width:640px;margin:auto">
+      <p style="margin:0 0 8px;color:#7059A8;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Closing Time</p>
+      <h1 style="margin:0 0 16px;font-size:24px;color:#301D5D">Urgent: Review Blank Fields Before ${escapeHtml(deadline.label)}</h1>
+      <p style="margin:0 0 8px"><strong>Transaction:</strong> ${escapeHtml(dealLabel(deal))}</p>
+      <p style="margin:0 0 12px">${escapeHtml(deadline.label)} is due tomorrow, ${escapeHtml(formatDeadlineDate(deadline.date))}. These items still have blank fields. Review each one or ignore it if the blanks are intentional.</p>
+      <ul style="margin:0 0 24px;padding-left:20px">${rows}</ul>
+      <a href="${siteUrl}/agents/closing-time" style="display:inline-block;background:#301D5D;color:#ffffff;padding:12px 18px;border-radius:999px;text-decoration:none">Open Closing Time</a>
+    </div>
+  `;
+}
+
 export async function runAgentDeadlineNotifications(now = new Date()): Promise<AgentDeadlineNotificationRun> {
   await ensureAgentDeadlineDeliverySchema();
   const today = chicagoParts(now).date;
@@ -261,6 +292,42 @@ export async function runAgentDeadlineNotifications(now = new Date()): Promise<A
 
       for (const deal of parsed.data.deals) {
         if (deal.status === 'completed') continue;
+        // Urgent alert: the day before each key deadline, any item with unreviewed blank fields.
+        for (const deadline of deadlinesForDeal(deal)) {
+          if (addDays(deadline.date, -1) !== today) continue;
+          const items = openBlankAlerts(deal);
+          if (items.length === 0) continue;
+          const urgentKey: DealDeadline = { ...deadline, id: `urgent:${deadline.id}` };
+          const transaction = dealLabel(deal);
+          result.dueDeadlines += 1;
+          if (preferences.emailEnabled && row.email) {
+            const deliveryId = await claimDelivery(row.realtor_id, deal.id, urgentKey, 1, 'email');
+            if (deliveryId) {
+              const sent = await sendEmail({ to: row.email, subject: `Urgent: review blank fields before ${deadline.label} — ${transaction}`, html: urgentEmailHtml(deal, deadline, items) });
+              if (sent.ok) { await markDeliverySent(deliveryId, sent.messageId); result.emailSent += 1; }
+              else { await releaseDelivery(deliveryId, sent.error ?? 'email send failed'); result.errors.push(`urgent email ${deal.id}/${deadline.id}: ${sent.error ?? 'send failed'}`); }
+            }
+          }
+          if (preferences.pushEnabled) {
+            const deliveryId = await claimDelivery(row.realtor_id, deal.id, urgentKey, 1, 'web_push');
+            if (deliveryId) {
+              try {
+                const sent = await sendPushToRealtor(row.realtor_id, {
+                  title: `Urgent: ${deadline.label} is tomorrow`,
+                  body: `${transaction}\n${items.length} item${items.length === 1 ? '' : 's'} with blank fields need review.\nFrom Closing Time`,
+                  url: '/agents/closing-time',
+                  tag: `agent-urgent-${deal.id}-${deadline.id}`,
+                });
+                if (sent.sent > 0) { await markDeliverySent(deliveryId); result.pushSent += 1; }
+                else { await releaseDelivery(deliveryId, 'No active browser or app push subscription'); result.skipped += 1; }
+              } catch (error) {
+                const message = error instanceof Error ? error.message : 'push send failed';
+                await releaseDelivery(deliveryId, message);
+                result.errors.push(`urgent push ${deal.id}/${deadline.id}: ${message}`);
+              }
+            }
+          }
+        }
         for (const deadline of deadlinesForDeal(deal)) {
           for (const offset of preferences.reminderOffsets) {
             if (addDays(deadline.date, -offset) !== today) continue;

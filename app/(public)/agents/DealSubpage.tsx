@@ -435,10 +435,13 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         const open = all.filter((a) => !ignoredIds.includes(a.id));
         const ignored = all.filter((a) => ignoredIds.includes(a.id));
         if (open.length === 0 && ignored.length === 0) return null;
+        const tomorrow = (() => { const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); })();
+        const urgentDeadline = (deadlines ?? []).find((d) => !deal.documentChecks?.[`dl:${d.id}`] && d.date && d.date >= today && d.date <= tomorrow);
+        const urgent = open.length > 0 && Boolean(urgentDeadline);
         return (
-          <div className="ds-card" data-testid="blank-field-alerts">
-            <p className="text-sm font-semibold text-slate-900">Blank Fields Need Your Attention</p>
-            <p className="mt-1 text-sm text-slate-600">{open.length > 0 ? 'Review each item or ignore it if the blanks are intentional.' : 'Everything left is ignored.'}</p>
+          <div className={urgent ? 'ds-card !border-[#301D5D]' : 'ds-card'} data-testid="blank-field-alerts" data-urgent={urgent ? 'true' : undefined}>
+            <p className={urgent ? 'text-sm font-semibold text-[#301D5D]' : 'text-sm font-semibold text-slate-900'}>{urgent ? 'Urgent: Review Blank Fields' : 'Blank Fields Need Your Attention'}</p>
+            <p className="mt-1 text-sm text-slate-600">{urgent && urgentDeadline ? `${urgentDeadline.label} is ${urgentDeadline.date === today ? 'today' : 'tomorrow'}. Review each item or ignore it if the blanks are intentional.` : open.length > 0 ? 'Review each item or ignore it if the blanks are intentional.' : 'Everything left is ignored.'}</p>
             {open.length > 0 && (
               <ul className="mt-3 divide-y divide-[#E6E5EC]">
                 {open.map((a) => (
