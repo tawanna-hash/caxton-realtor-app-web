@@ -177,7 +177,7 @@ export async function getPortalView(token: string): Promise<PortalView | null> {
   const today = new Date().toISOString().slice(0, 10);
   const label: Record<AgentDeal['status'], string> = { prep: 'Getting started', active: 'Under contract', closing: 'Heading to closing', completed: 'Closed' };
   return {
-    property: deal.propertyAddress || deal.title,
+    property: (deal.propertyAddress || '').trim() || `${deal.title || 'Deal'} (address not entered)`,
     stage: label[deal.status],
     closingDate: deal.closingDate,
     agentName: [row.first_name, row.last_name].filter(Boolean).join(' '),
@@ -201,7 +201,7 @@ export async function draftFollowUp(realtorId: string, dealId: string, input: { 
   await ensureAssistSchema();
   const deal = await requireDeal(realtorId, dealId);
   const agent = await agentIdentity(realtorId);
-  const property = deal.propertyAddress || deal.title || 'the transaction';
+  const property = (deal.propertyAddress || '').trim() || `${deal.title || 'Deal'} (address not entered)`;
   const parties = await query<PartyRow>(`SELECT id, deal_id, role, name, email FROM closing_time_parties WHERE realtor_id=$1 AND deal_id=$2`, [realtorId, dealId]);
   const sign = `\n\nThank you,\n${agent.name}`;
   const make = (party: PartyRow | undefined, kind: FollowUpKind) => {
@@ -288,7 +288,7 @@ export async function runDailySummaries(today: string): Promise<{ sent: number; 
         ...upcoming.map((u) => `<li>${esc(u.label)}: ${esc(u.date)}</li>`),
         ...(drafts[0]?.n ? [`<li>${drafts[0].n} follow-up draft${drafts[0].n === 1 ? '' : 's'} waiting for your approval</li>`] : []),
       ];
-      if (lines.length) sections.push(`<h3 style="margin:18px 0 6px;color:#301D5D">${esc(deal.propertyAddress || deal.title)}</h3><ul style="margin:0;padding-left:18px">${lines.join('')}</ul>`);
+      if (lines.length) sections.push(`<h3 style="margin:18px 0 6px;color:#301D5D">${esc((deal.propertyAddress || '').trim() || `${deal.title || 'Deal'} (address not entered)`)}</h3><ul style="margin:0;padding-left:18px">${lines.join('')}</ul>`);
     }
     if (!sections.length) continue;
     const claim = await query<{ realtor_id: string }>(`INSERT INTO closing_time_daily_summaries (realtor_id, summary_date) VALUES ($1,$2::date) ON CONFLICT DO NOTHING RETURNING realtor_id`, [row.realtor_id, today]);
@@ -383,7 +383,7 @@ export async function runSignatureReminders(now = new Date()): Promise<{ sent: n
     const deal = await loadDeal(g.realtor_id, g.deal_id);
     const agent = await agentIdentity(g.realtor_id);
     if (!deal || deal.status === 'completed') { await query(`UPDATE closing_time_signatures SET status='cancelled', closed_at=NOW() WHERE id=$1`, [g.id]); continue; }
-    const property = deal.propertyAddress || deal.title || 'the transaction';
+    const property = (deal.propertyAddress || '').trim() || `${deal.title || 'Deal'} (address not entered)`;
     if (g.reminders_sent >= 3) {
       await query(`UPDATE closing_time_signatures SET status='escalated' WHERE id=$1 AND status='open'`, [g.id]);
       await sendEmail({ to: agent.email, subject: `Signature still missing: ${g.document} - ${property}`, html: htmlBody(`${g.to_name || g.to_email} has not signed "${g.document}" after 3 automatic reminders. Please follow up personally.`) });

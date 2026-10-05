@@ -132,7 +132,7 @@ export async function createSignRequest(realtorId: string, input: BuiltinInput):
   if (raw.length > MAX_BYTES) throw new Error('That file is over 3 MB. Send a smaller PDF.');
   let pdf: PDFDocument;
   try { pdf = await PDFDocument.load(raw, { ignoreEncryption: true }); } catch { throw new Error('Only PDF files can be sent for signature.'); }
-  const property = deal.propertyAddress || deal.title || 'Deal';
+  const property = (deal.propertyAddress || '').trim() || `${deal.title || 'Deal'} (address not entered)`;
   const docName = name.replace(/\.pdf$/i, '').slice(0, 120) || 'Document';
   let fields: SignField[];
   if (input.placement === 'inline') {
