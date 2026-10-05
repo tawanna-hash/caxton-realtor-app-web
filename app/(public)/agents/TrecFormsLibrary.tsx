@@ -8,6 +8,17 @@ import {
   type TrecFormLibraryCategory,
 } from '@/lib/trec-forms-library';
 import type { TrecFormVersion } from '@/lib/trec-form-versions';
+import TrecFormActions from './TrecFormActions';
+
+export type TrecLibraryDealContext = {
+  hasDeal: boolean;
+  locked: boolean;
+  selected: Record<string, boolean>;
+  filled: Record<string, number>;
+  onToggle: (formFamily: string, selected: boolean) => void;
+  onOpen: (formFamily: string) => void;
+  onUpload: (formFamily: string, mode: 'file' | 'photo') => void;
+};
 
 function formatEffectiveDate(value: string): string {
   return new Intl.DateTimeFormat('en-US', {
@@ -20,7 +31,7 @@ function formatEffectiveDate(value: string): string {
 
 const FORMS_PER_PAGE = 10;
 
-export default function TrecFormsLibrary({ versions, embedded = false }: { versions: TrecFormVersion[]; embedded?: boolean }) {
+export default function TrecFormsLibrary({ versions, embedded = false, dealContext }: { versions: TrecFormVersion[]; embedded?: boolean; dealContext?: TrecLibraryDealContext }) {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState<'All Forms' | TrecFormLibraryCategory>('All Forms');
@@ -89,6 +100,46 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
           <p className="text-xs text-slate-500">Library checked against TREC September 15, 2026</p>
         </div>
 
+        {dealContext ? (
+          <div className="ds-card ds-list mt-4 max-h-[560px] overflow-y-auto overscroll-contain">
+            {pagedForms.map((form) => {
+              const total = activeByFamily.get(form.formFamily)?.fields.length ?? 0;
+              const filled = dealContext.filled[form.formFamily] ?? 0;
+              return (
+                <div key={form.formFamily} className="ds-list-row">
+                  <input
+                    type="checkbox"
+                    aria-label={`Use ${form.formNumber} on the current deal`}
+                    title={dealContext.hasDeal ? 'Use on the current deal' : 'Create a deal first'}
+                    checked={Boolean(dealContext.selected[form.formFamily])}
+                    disabled={!dealContext.hasDeal || dealContext.locked}
+                    onChange={(event) => dealContext.onToggle(form.formFamily, event.target.checked)}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-slate-900">{form.formNumber} · {form.title}</span>
+                    <span className="block text-xs text-slate-500">{form.category} · Effective {formatEffectiveDate(form.effectiveDate)}</span>
+                  </span>
+                  <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{total > 0 ? (filled > 0 ? `Fillable · ${filled} of ${total}` : `Fillable · ${total} fields`) : 'Notice · nothing to fill'}</span>
+                  <TrecFormActions
+                    family={form.formFamily}
+                    disabled={!dealContext.hasDeal || dealContext.locked}
+                    onOpen={dealContext.onOpen}
+                    onUpload={dealContext.onUpload}
+                    extra={(
+                      <a
+                        href={`/api/agent-command-center/form-pdf?src=${encodeURIComponent(form.pdfUrl)}&name=${encodeURIComponent(`TREC-${form.formNumber.replace(/\s+/g, '-')}`)}&download=1`}
+                        download
+                        className="ds-row-btn"
+                      >
+                        <Download className="h-3.5 w-3.5" aria-hidden="true" />Download
+                      </a>
+                    )}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div className={`mt-4 grid gap-3 md:grid-cols-2 ${embedded ? 'max-h-[340px] overflow-y-auto overscroll-contain pr-1' : ''}`}>
           {pagedForms.map((form) => (
             <article key={form.formFamily} className={`flex min-w-0 flex-col justify-between gap-5 rounded-xl border border-slate-200 p-5 ${'bg-white'}`}>
@@ -127,6 +178,7 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
             </article>
           ))}
         </div>
+        )}
 
         {visibleForms.length === 0 && (
           <div className="mt-4 border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">

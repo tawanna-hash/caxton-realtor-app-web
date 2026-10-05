@@ -2904,7 +2904,28 @@ export default function ClosingTime({
               </div>
               {formsLibraryTab === 'trec' && (
                 <>
-                  <TrecFormsLibrary versions={trecFormVersions} embedded />
+                  <TrecFormsLibrary
+                    versions={trecFormVersions}
+                    embedded
+                    dealContext={{
+                      hasDeal: Boolean(activeDeal),
+                      locked: activeDeal ? isDealLocked(activeDeal) : false,
+                      selected: activeDeal?.selectedFormFamilies ?? {},
+                      filled: activeDeal ? Object.fromEntries(activePacketForms.map((version) => [version.formFamily, version.fields.filter((field) => (activeDeal.formFields[field.id] ?? '').trim() !== '').length])) : {},
+                      onToggle: (family, selected) => { if (activeDeal) updateActiveDeal('selectedFormFamilies', { ...activeDeal.selectedFormFamilies, [family]: selected }); },
+                      onOpen: (family) => {
+                        if (activeDeal && !activeDeal.selectedFormFamilies[family]) updateActiveDeal('selectedFormFamilies', { ...activeDeal.selectedFormFamilies, [family]: true });
+                        setActiveTrecFormFamily(family);
+                        setActiveTrecPage(1);
+                        setFormModalOpen(true);
+                      },
+                      onUpload: (family, mode) => {
+                        if (mode === 'photo') { openContractCamera(family); return; }
+                        rowUploadFamilyRef.current = family;
+                        rowUploadInputRef.current?.click();
+                      },
+                    }}
+                  />
                   <h4 className="mt-6 text-sm font-semibold text-slate-900">Your uploaded TREC forms</h4>
                   <CustomFormsPanel section="trec" label="TREC form" />
                 </>

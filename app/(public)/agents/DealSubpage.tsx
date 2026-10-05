@@ -1,8 +1,9 @@
 'use client';
 
 import { useRef, useState, type ReactNode } from 'react';
-import { AlertCircle, Camera, Check, ChevronDown, FileUp, Upload, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, MoreHorizontal, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
+import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, MoreHorizontal, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
+import TrecFormActions from './TrecFormActions';
 import { PURCHASE_FOLDERS, PURCHASE_REQUIRED_IDS } from './purchase-documents';
 
 type SnapId = 'attention' | 'waiting' | 'property' | 'next' | 'preferences' | 'offers' | 'parties' | 'workspace';
@@ -77,7 +78,6 @@ type Props = {
 
 export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
-  const [uploadMenu, setUploadMenu] = useState<{ family: string; top: number; right: number } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
@@ -567,29 +567,21 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   </div>
                   <span className={`ds-chip ${requiredDone === PURCHASE_REQUIRED_IDS.length ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{requiredDone} of {PURCHASE_REQUIRED_IDS.length} required received</span>
                 </div>
-                {trecForms && trecForms.length > 0 && (
+                {trecForms && (
                   <div className="ds-card ds-list">
                     <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
-                      <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />TREC Promulgated Documents</span>
-                      <span className="text-xs font-medium text-slate-500">{trecForms.filter((form) => form.selected).length} of {trecForms.length} on this deal</span>
+                      <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Forms On This Deal</span>
+                      <span className="text-xs font-medium text-slate-500">{trecForms.filter((form) => form.selected).length}</span>
                     </div>
-                    <p className="border-b border-[#F1F0F5] px-4 py-2 text-xs text-slate-500">Same forms as Current Deal. Check the forms this deal needs and click a name to fill it in.</p>
-                    <div className="max-h-[440px] overflow-y-auto overscroll-contain">
-                      {trecForms.map((form) => (
-                        <div key={form.formFamily} className="ds-list-row">
-                          <input type="checkbox" aria-label={`Use ${form.formNumber} on this deal`} checked={form.selected} disabled={locked} onChange={(e) => onToggleTrecForm?.(form.formFamily, e.target.checked)} />
-                          <button type="button" onClick={() => onOpenTrecForm?.(form.formFamily)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-slate-900 hover:text-[#301D5D]">{form.formNumber} · {form.title}</button>
-                          <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{form.total > 0 ? (form.filled > 0 ? `Fillable · ${form.filled} of ${form.total}` : `Fillable · ${form.total} fields`) : 'Notice · nothing to fill'}</span>
-                          <button type="button" disabled={locked} aria-haspopup="menu" aria-expanded={uploadMenu?.family === form.formFamily} onClick={(event) => {
-                            const rect = event.currentTarget.getBoundingClientRect();
-                            setUploadMenu(uploadMenu?.family === form.formFamily ? null : { family: form.formFamily, top: rect.bottom + 8, right: Math.max(8, window.innerWidth - rect.right) });
-                          }} className="ds-row-btn">
-                            <Upload className="h-3.5 w-3.5" aria-hidden="true" />Upload<ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
-                          </button>
-                          <button type="button" onClick={() => onOpenTrecForm?.(form.formFamily)} className="ds-row-btn">Open</button>
-                        </div>
-                      ))}
-                    </div>
+                    {trecForms.filter((form) => form.selected).length === 0 ? (
+                      <p className="px-4 py-4 text-xs text-slate-500">No forms added yet. Add the forms this deal needs from the Forms Library.</p>
+                    ) : trecForms.filter((form) => form.selected).map((form) => (
+                      <div key={form.formFamily} className="ds-list-row">
+                        <button type="button" onClick={() => onOpenTrecForm?.(form.formFamily)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-slate-900 hover:text-[#301D5D]">{form.formNumber} · {form.title}</button>
+                        <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{form.total > 0 ? (form.filled > 0 ? `Fillable · ${form.filled} of ${form.total}` : `Fillable · ${form.total} fields`) : 'Notice · nothing to fill'}</span>
+                        <TrecFormActions family={form.formFamily} disabled={locked} onOpen={(family) => onOpenTrecForm?.(family)} onUpload={(family, mode) => onUploadTrecForm?.(family, mode)} />
+                      </div>
+                    ))}
                   </div>
                 )}
                 {PURCHASE_FOLDERS.map((folder) => {
@@ -710,20 +702,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         </aside>)}
       </div>
 
-      {uploadMenu && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setUploadMenu(null)} aria-hidden="true" />
-          <div role="menu" style={{ top: uploadMenu.top, right: uploadMenu.right }} className="fixed z-50 w-[300px] max-w-[calc(100vw-16px)] rounded-2xl border border-[#E6E5EC] bg-white p-2 shadow-lg">
-            <button type="button" role="menuitem" onClick={() => { const family = uploadMenu.family; setUploadMenu(null); onUploadTrecForm?.(family, 'file'); }} className="ds-upload-opt">
-              <span className="ds-upload-ico"><FileUp className="h-4 w-4" aria-hidden="true" /></span>Choose PDF or Image
-            </button>
-            <button type="button" role="menuitem" onClick={() => { const family = uploadMenu.family; setUploadMenu(null); onUploadTrecForm?.(family, 'photo'); }} className="ds-upload-opt">
-              <span className="ds-upload-ico"><Camera className="h-4 w-4" aria-hidden="true" /></span>Take a Photo
-            </button>
-            <p className="border-t border-[#F1F0F5] px-3 pb-2 pt-3 text-xs leading-5 text-slate-500">PDF, PNG, JPG, or WEBP · 15 MB maximum. PDFs are kept privately with the deal; images are used for extraction only.</p>
-          </div>
-        </>
-      )}
       {providerCategory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label={`Trusted ${providerCategory.toLowerCase()} providers`} onClick={() => setProviderCategory(null)}>
           <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
