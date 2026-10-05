@@ -162,3 +162,49 @@ export const LISTING_REQUIRED_IDS = LISTING_FOLDERS.flatMap((f) => f.docs).filte
 /** Required and optional documents follow which side of the purchase the agent represents. */
 export const foldersForSide = (side?: string): PurchaseFolder[] => (side === 'listing' ? LISTING_FOLDERS : PURCHASE_FOLDERS);
 export const requiredIdsForSide = (side?: string): string[] => (side === 'listing' ? LISTING_REQUIRED_IDS : PURCHASE_REQUIRED_IDS);
+
+export const CONTRACT_FORM_OPTIONS = [
+  { value: '20', label: 'One To Four Family Residential Contract (Resale)' },
+  { value: '30', label: 'Residential Condominium Contract (Resale)' },
+  { value: '9', label: 'Unimproved Property Contract' },
+  { value: '25', label: 'Farm And Ranch Contract' },
+  { value: '24', label: 'New Home Contract (Completed Construction)' },
+  { value: '23', label: 'New Home Contract (Incomplete Construction)' },
+] as const;
+
+export const BUYER_REP_FORM_OPTIONS = [
+  { value: '1501', label: 'Buyer/Tenant Representation Agreement, Long Form (TXR-1501)' },
+  { value: '1507', label: 'Buyer/Tenant Representation Agreement, Short Form (TXR-1507)' },
+  { value: '1508', label: 'Unrepresented Customer Showing Form (TXR-1508)' },
+] as const;
+
+type FolderDeal = { agentSide?: string; buyerRepForm?: string; contractForm?: string; yearBuilt?: string; hasHoa?: boolean; contractDetails?: { financingType?: string } } | null | undefined;
+
+/** Folders for a deal: side-specific list, the chosen contract and representation forms, and addenda the deal triggers. */
+export function dealFolders(deal: FolderDeal): PurchaseFolder[] {
+  const base = foldersForSide(deal?.agentSide);
+  const financing = (deal?.contractDetails?.financingType ?? '').trim().toLowerCase();
+  const needsFinancing = Boolean(financing) && !/^cash\b/.test(financing);
+  const year = Number.parseInt(deal?.yearBuilt ?? '', 10);
+  const needsLead = Number.isFinite(year) && year > 0 && year < 1978;
+  const rep = BUYER_REP_FORM_OPTIONS.find((o) => o.value === deal?.buyerRepForm);
+  const contract = CONTRACT_FORM_OPTIONS.find((o) => o.value === (deal?.contractForm || '20'));
+  const folders = base.map((folder) => ({
+    ...folder,
+    docs: folder.docs.map((doc): PurchaseDoc => {
+      if (doc.id === 'pd-buyer-rep-agreement' && rep) return { ...doc, label: rep.label };
+      if (doc.id === 'pd-residential-contract' && contract) return { ...doc, label: contract.label, formFamily: contract.value };
+      if (doc.id === 'pd-third-party-financing') return { ...doc, formFamily: '40', kind: needsFinancing ? 'required' : doc.kind };
+      return doc;
+    }),
+  }));
+  const extra: PurchaseDoc[] = [];
+  const has = (id: string) => folders.some((folder) => folder.docs.some((doc) => doc.id === id));
+  if (deal?.hasHoa && !has('pd-hoa-addendum')) extra.push(d('pd-hoa-addendum', 'Addendum For Property Subject To Mandatory Membership In A Property Owners Association', 'required', '36'));
+  if (needsLead && !has('pd-lead-paint-addendum')) extra.push(d('pd-lead-paint-addendum', 'Lead-Based Paint Addendum (Built Before 1978)', 'required', '56'));
+  if (extra.length === 0) return folders;
+  const idx = folders.findIndex((folder) => folder.id === (deal?.agentSide === 'listing' ? 'listing-contract' : 'buyer-contract'));
+  const at = idx >= 0 ? idx : folders.length - 1;
+  return folders.map((folder, i) => (i === at ? { ...folder, docs: [...folder.docs, ...extra] } : folder));
+}
+export const requiredIdsFor = (folders: PurchaseFolder[]): string[] => folders.flatMap((f) => f.docs).filter((x) => x.kind === 'required').map((x) => x.id);

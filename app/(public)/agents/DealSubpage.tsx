@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, MoreHorizontal, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import TrecFormActions from './TrecFormActions';
-import { foldersForSide, requiredIdsForSide } from './purchase-documents';
+import { BUYER_REP_FORM_OPTIONS, CONTRACT_FORM_OPTIONS, dealFolders, requiredIdsFor } from './purchase-documents';
 
 type SnapId = 'attention' | 'waiting' | 'property' | 'next' | 'preferences' | 'offers' | 'parties' | 'workspace';
 
@@ -123,8 +123,8 @@ function AutoSection({ className, header, children }: { className?: string; head
 
 export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
-  const docFolders = foldersForSide(deal?.agentSide);
-  const requiredIdList = requiredIdsForSide(deal?.agentSide);
+  const docFolders = dealFolders(deal);
+  const requiredIdList = requiredIdsFor(docFolders);
   const [arrangePage, setArrangePage] = useState<string | null>(null);
   const [pickedCard, setPickedCard] = useState<{ page: string; key: string } | null>(null);
   const cardKeys = (page: string, defaults: string[]) => {
@@ -428,6 +428,12 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       ),
       pressing: (
         <>
+      {deal.agentSide !== 'listing' && !deal.documentChecks['pd-buyer-rep-agreement'] && (
+        <div className="ds-card">
+          <p className="text-sm font-semibold text-slate-900">Representation Agreement Needed</p>
+          <p className="mt-1 text-sm text-slate-600">Texas requires a signed written agreement with the buyer before touring a residential property or making an offer. Mark it received on the Documents page once it is signed.</p>
+        </div>
+      )}
       <div className="ds-card">
         <p className="text-sm font-semibold text-slate-900">Key Deadlines</p>
         <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules.</p>
@@ -789,6 +795,22 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     <p className="ds-side-title !m-0">{dealTypeLabel} Documents</p>
                   </div>
                   <span className="flex items-center gap-3"><span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{submittedCount} of {totalRequired} submitted</span>{arrangeButton('documents')}</span>
+                  {deal.agentSide !== 'listing' && (
+                    <div className="grid w-full gap-3 border-t border-[#F1F0F5] pt-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <label className="block min-w-0"><span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Contract Form</span>
+                        <select value={deal.contractForm} disabled={locked} onChange={(e) => onUpdate('contractForm', e.target.value as typeof deal.contractForm)} className="mt-1 h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-2 text-sm font-medium text-slate-900">
+                          {CONTRACT_FORM_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select></label>
+                      <label className="block min-w-0"><span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Representation Form</span>
+                        <select value={deal.buyerRepForm} disabled={locked} onChange={(e) => onUpdate('buyerRepForm', e.target.value as typeof deal.buyerRepForm)} className="mt-1 h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-2 text-sm font-medium text-slate-900">
+                          <option value="">Choose Form</option>
+                          {BUYER_REP_FORM_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select></label>
+                      <label className="block min-w-0"><span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Year Built</span>
+                        <input value={deal.yearBuilt} disabled={locked} inputMode="numeric" onChange={(e) => onUpdate('yearBuilt', e.target.value.replace(/\D/g, '').slice(0, 4))} className="mt-1 h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-2 text-sm font-medium text-slate-900" /></label>
+                      <label className="flex min-w-0 items-end gap-2 pb-2 text-sm font-medium text-slate-900"><input type="checkbox" checked={deal.hasHoa} disabled={locked} onChange={(e) => onUpdate('hasHoa', e.target.checked)} />Property Is In An HOA</label>
+                    </div>
+                  )}
                 </div>
                 {(() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'required'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                     <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Required Documents</span>
