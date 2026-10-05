@@ -166,7 +166,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
         }
         cur.setForm(patch);
       } catch { /* lookup is best effort; fields stay editable by hand */ }
-    }, 1500);
+    }, 700);
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [lookupAddress, lookupDone, rawDeal.isTemplate]);
   const stored = deal.keyTerms;
@@ -497,7 +497,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
   );
 
   return (
-    <div className="ds-page" data-testid="contract-page">
+    <div className="ds-page" data-testid="contract-page" onKeyDown={(e) => { const t = e.target as HTMLInputElement; if (e.key === 'Enter' && !e.shiftKey && t.tagName === 'INPUT' && t.type !== 'checkbox') { e.preventDefault(); t.blur(); } }}>
       <div aria-label="Contract Sections">
         <div className="space-y-3">
           {CONTRACT_MAP_SECTIONS.map((section) => {
