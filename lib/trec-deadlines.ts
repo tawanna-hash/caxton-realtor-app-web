@@ -130,14 +130,14 @@ export function calculateTrecDeadlines(input: TrecDeadlineInputs): TrecDeadline[
   if (!effectiveDate) return [];
 
   const deadlines: TrecDeadline[] = [
-    calculateMoneyDeadline(effectiveDate, 'Earnest money delivery', 3),
-    calculateMoneyDeadline(effectiveDate, 'Option fee delivery', 3),
+    calculateMoneyDeadline(effectiveDate, 'Earnest Money Delivery', 3),
+    calculateMoneyDeadline(effectiveDate, 'Option Fee Delivery', 3),
   ];
 
   const additionalEarnest = calculateCalendarDeadline(
     effectiveDate,
     'additional-earnest-money-delivery',
-    'Additional earnest money delivery',
+    'Additional Earnest Money Delivery',
     input.additionalEarnestMoneyDays ?? '',
     'contract-period',
   );
@@ -148,18 +148,18 @@ export function calculateTrecDeadlines(input: TrecDeadlineInputs): TrecDeadline[
   const optionPeriod = calculateCalendarDeadline(
     effectiveDate,
     'option-period-ends',
-    'Option period ends',
+    'Option Period Ends',
     input.optionPeriodDays ?? '',
     'option',
   );
   if (optionPeriod) deadlines.push(optionPeriod);
 
   const customPeriods = [
-    ['financing-deadline', 'Financing addendum deadline', input.financingDeadlineDays],
-    ['appraisal-deadline', 'Appraisal deadline', input.appraisalDeadlineDays],
-    ['title-commitment-due', 'Title commitment due', input.titleCommitmentDays],
-    ['survey-due', 'Survey due', input.surveyDays],
-    ['title-objection-deadline', 'Title objection deadline', input.titleObjectionDays],
+    ['financing-deadline', 'Financing Addendum Deadline', input.financingDeadlineDays],
+    ['appraisal-deadline', 'Appraisal Deadline', input.appraisalDeadlineDays],
+    ['title-commitment-due', 'Title Commitment Due', input.titleCommitmentDays],
+    ['survey-due', 'Survey Due', input.surveyDays],
+    ['title-objection-deadline', 'Title Objection Deadline', input.titleObjectionDays],
   ] as const;
 
   customPeriods.forEach(([id, label, days]) => {

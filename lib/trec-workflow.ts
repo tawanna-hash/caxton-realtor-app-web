@@ -209,8 +209,8 @@ export function buildTrecValidation(
   }
 
   const deliveryChecks = [
-    ['earnestMoneyDeliveredDate', 'earnest-money-delivery', 'Earnest money delivery'],
-    ['optionFeeDeliveredDate', 'option-fee-delivery', 'Option fee delivery'],
+    ['earnestMoneyDeliveredDate', 'earnest-money-delivery', 'Earnest Money Delivery'],
+    ['optionFeeDeliveredDate', 'option-fee-delivery', 'Option Fee Delivery'],
   ] as const;
 
   for (const [field, deadlineKey, label] of deliveryChecks) {
