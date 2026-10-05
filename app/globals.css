@@ -1630,3 +1630,12 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .italic { font-style: normal; }
 #agent-desk label > span.uppercase { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em; color: var(--d-muted); }
 #agent-desk :is(input, textarea, select) { text-transform: none; }
+
+/* Agent Desk design standard
+   Page titles 22/600 · section titles 14/600 · body 14/400 · values 14/500 · labels and captions 11-12/500 muted */
+#agent-desk :is(h1, h2, h3, h4).ds-title, #agent-desk :is(h2, h3)[class*='text-2xl'] { font-size: 1.375rem; line-height: 1.2; font-weight: 600; color: var(--d-ink); letter-spacing: -0.02em; }
+#agent-desk :is(h2, h3, h4)[class*='text-xl']:not(.ds-title), #agent-desk :is(h2, h3, h4)[class*='text-lg']:not(.ds-title), #agent-desk .ds-side-title { font-size: 0.875rem; line-height: 1.35; font-weight: 600; color: var(--d-ink); letter-spacing: -0.01em; }
+#agent-desk .ds-eyebrow, #agent-desk .ds-group-label, #agent-desk .ds-stat-label, #agent-desk .ds-kpi-label, #agent-desk thead th { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--d-muted); }
+#agent-desk .ds-subtitle, #agent-desk .ds-back, #agent-desk .ds-step-label { font-size: 0.875rem; }
+#agent-desk .ds-stat-sub, #agent-desk .ds-kpi-sub { font-size: 0.75rem; font-weight: 500; color: var(--d-muted); }
+#agent-desk .ds-stat-num, #agent-desk .ds-kpi-num { font-size: 1.5rem; font-weight: 600; line-height: 1.2; color: var(--d-ink); }
