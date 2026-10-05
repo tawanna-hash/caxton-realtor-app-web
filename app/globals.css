@@ -1304,8 +1304,13 @@ input[type='date']::-webkit-calendar-picker-indicator {
 
 /* Content */
 /* Every page lives inside one outlined board */
-#agent-desk .ds-main { margin: 1.25rem 1.25rem 3rem; padding: 1.5rem 1.75rem 2.25rem; border: 1px solid var(--d-line); border-radius: 16px; background: #fff; }
-@media (max-width: 639px) { #agent-desk .ds-main { margin: 0.75rem 0.5rem 2rem; padding: 1rem 0.875rem 1.5rem; border-radius: 12px; } }
+#agent-desk .ds-mainwrap { min-width: 0; }
+#agent-desk .ds-toolbar { margin: 1.25rem 1.25rem 0; padding: 0 0.5rem; }
+#agent-desk .ds-toolbar .ds-back { margin-bottom: 0.875rem; }
+#agent-desk .ds-toolbar .ds-dealnav { margin-bottom: 0; }
+#agent-desk .ds-toolbar + .ds-main { margin-top: 1rem; }
+#agent-desk .ds-main { margin: 1.25rem 1.25rem 3rem; padding: 2rem 2.25rem 2.75rem; border: 1px solid var(--d-line); border-radius: 16px; background: #fff; }
+@media (max-width: 639px) { #agent-desk .ds-main { margin: 0.75rem 0.5rem 2rem; padding: 1.25rem 1rem 1.75rem; border-radius: 12px; } #agent-desk .ds-toolbar { margin: 0.75rem 0.5rem 0; } }
 /* Legacy panels directly on the board: no second outline, just a hairline divider */
 #agent-desk .ds-main > section > div[class*='border-slate-200'], #agent-desk .ds-main > div[class*='border-slate-200'] { border-width: 0 0 1px; border-radius: 0; padding-left: 0; padding-right: 0; background: transparent; }
 #agent-desk .ds-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1rem; margin-bottom: 1.25rem; padding: 0.875rem 1.25rem; background: #F6F3FB; border: 1px solid var(--d-line); border-radius: 12px; }
@@ -1441,7 +1446,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a):hover { background: var(--d-purple); color: #fff !important; border-color: var(--d-purple); }
 #agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a)[aria-label='Back'] { display: none; }
 @media print {
-  #agent-desk .ds-rail, #agent-desk .ds-header, #agent-desk .ds-back { display: none !important; }
+  #agent-desk .ds-rail, #agent-desk .ds-header, #agent-desk .ds-back, #agent-desk .ds-toolbar { display: none !important; }
   #agent-desk .ds-main { margin: 0; padding: 0; border: 0; }
 }
 #agent-desk .ds-embed :is(h1, h2, h3, .font-serif) { font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; color: var(--d-ink); }
