@@ -37,7 +37,7 @@ const SETTINGS_VIEW = { id: 'coordinator', label: 'Settings', keys: ['assist', '
 const UTILITIES_VIEW = { id: 'utilities', label: 'Utilities', keys: [] as string[] };
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, SETTINGS_VIEW, UTILITIES_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug };
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Bell,
@@ -88,6 +88,7 @@ const CommissionCalculatorClient = dynamic(() => import('../resources/commission
 const BuyerClosingCostsClient = dynamic(() => import('../resources/buyer-closing-costs/BuyerClosingCostsClient'), { ssr: false });
 import { effectiveAgentSide } from './purchase-documents';
 import DealSubpage, { TASK_TEMPLATES } from './DealSubpage';
+import { autofillDeal, buildAutofillIndex } from '@/lib/deal-autofill';
 import { AGENT_DESK_TEMPLATE, templateTaskIdsFor } from '@/lib/agent-desk-template';
 import {
   buildClosingTimeIcs,
@@ -1410,7 +1411,11 @@ export default function ClosingTime({
     };
   }, [isCameraOpen]);
 
-  const persistDeals = (nextDeals: AgentDeal[]) => {
+  const autofillIndex = useMemo(() => buildAutofillIndex(trecFormVersions), [trecFormVersions]);
+  const persistDeals = (incoming: AgentDeal[]) => {
+    // Contract entries and uploaded-contract data flow into the matching blanks on the deal's other forms.
+    const before = new Map(dealsRef.current.map((deal) => [deal.id, deal]));
+    const nextDeals = incoming.map((deal) => (before.get(deal.id) === deal ? deal : autofillDeal(before.get(deal.id), deal, autofillIndex)));
     setDeals(nextDeals);
     if (ready) queueCloudSave({ deals: nextDeals, notificationPreferences });
   };
