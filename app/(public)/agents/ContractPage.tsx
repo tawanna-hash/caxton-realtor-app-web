@@ -216,7 +216,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
               </details>
               {section.id === 'property' && (
                 <details open className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
-                  <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900"><span>Purchase Price</span></summary>
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900"><span>Key Details</span></summary>
                   <div className="space-y-4 border-t border-[#F1F0F5] p-4">
       <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Contract Terms">
         <div className="grid sm:grid-cols-2 lg:grid-cols-3">
