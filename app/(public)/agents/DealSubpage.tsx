@@ -557,53 +557,84 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 
           {tab === 'documents' && (() => {
             const checks = deal.documentChecks;
-            const requiredDone = PURCHASE_REQUIRED_IDS.filter((id) => checks[id]).length;
+            const allDocs = PURCHASE_FOLDERS.flatMap((folder) => folder.docs);
+            const isAdded = (id: string) => Boolean(checks[`add:${id}`]);
+            const requiredDocs = allDocs.filter((doc) => doc.kind === 'required' || isAdded(doc.id));
+            const optionalDocs = allDocs.filter((doc) => doc.kind !== 'required' && !isAdded(doc.id));
+            const requiredIds = new Set(requiredDocs.map((doc) => doc.id));
+            const submittedCount = requiredDocs.filter((doc) => checks[doc.id]).length;
+            const usedFamilies = new Set(requiredDocs.flatMap((doc) => (doc.formFamily ? [doc.formFamily] : [])));
+            const dealForms = (trecForms ?? []).filter((form) => form.selected && !usedFamilies.has(form.formFamily));
+            const formInfo = (family: string | undefined) => (family ? (trecForms ?? []).find((form) => form.formFamily === family) : undefined);
+            const dealTypeLabel = ({ purchase: 'Residential Purchase', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Deal';
+            const statusChip = (done: boolean) => (
+              <span className={`ds-chip ${done ? 'bg-[#EFEAF8] text-[#301D5D]' : 'bg-slate-100 text-slate-600'}`}>{done ? 'Submitted' : 'Not submitted'}</span>
+            );
+            const formStatus = (form: { total: number; filled: number }) => (form.total > 0 ? (form.filled > 0 ? `Fillable · ${form.filled} of ${form.total}` : `Fillable · ${form.total} fields`) : 'Notice · nothing to fill');
+            const requiredRow = (doc: (typeof allDocs)[number]) => {
+              const form = formInfo(doc.formFamily);
+              const addedOptional = doc.kind !== 'required';
+              return (
+                <div key={doc.id} className="ds-list-row">
+                  <input type="checkbox" aria-label={`Mark ${doc.label} submitted`} checked={Boolean(checks[doc.id])} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...checks, [doc.id]: e.target.checked })} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm text-slate-900">{doc.label}</span>
+                    {addedOptional && <span className="block text-xs text-slate-500">Added from optional</span>}
+                  </span>
+                  {form && <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{formStatus(form)}</span>}
+                  {statusChip(Boolean(checks[doc.id]))}
+                  {form && <TrecFormActions family={form.formFamily} disabled={locked} onOpen={(family) => onOpenTrecForm?.(family)} onUpload={(family, mode) => onUploadTrecForm?.(family, mode)} />}
+                  {addedOptional && !locked && <button type="button" aria-label={`Move ${doc.label} back to optional`} className="text-xs text-slate-500 underline underline-offset-2 hover:text-slate-900" onClick={() => { const next = { ...checks }; delete next[`add:${doc.id}`]; delete next[doc.id]; onUpdate('documentChecks', next); }}>Remove</button>}
+                </div>
+              );
+            };
             return (
               <div className="space-y-4">
                 <div className="ds-card flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="ds-side-title !m-0">{({ purchase: 'Purchase', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Deal'} documents</p>
-                    <p className="text-sm text-slate-500">Required forms for this deal type.</p>
+                    <p className="ds-side-title !m-0">{dealTypeLabel} documents</p>
+                    <p className="text-sm text-slate-500">Required first. Check an optional document to add it to the required list.</p>
                   </div>
-                  <span className={`ds-chip ${requiredDone === PURCHASE_REQUIRED_IDS.length ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{requiredDone} of {PURCHASE_REQUIRED_IDS.length} required received</span>
+                  <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{submittedCount} of {requiredDocs.length} submitted</span>
+                </div>
+                <div className="ds-card ds-list">
+                  <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                    <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Required Documents</span>
+                    <span className="text-xs font-medium text-slate-500">{submittedCount} of {requiredDocs.length}</span>
+                  </div>
+                  {requiredDocs.map(requiredRow)}
                 </div>
                 {trecForms && (
                   <div className="ds-card ds-list">
                     <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                       <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Forms On This Deal</span>
-                      <span className="text-xs font-medium text-slate-500">{trecForms.filter((form) => form.selected).length}</span>
+                      <span className="text-xs font-medium text-slate-500">{dealForms.length}</span>
                     </div>
-                    {trecForms.filter((form) => form.selected).length === 0 ? (
-                      <p className="px-4 py-4 text-xs text-slate-500">No forms added yet. Add the forms this deal needs from the Forms Library.</p>
-                    ) : trecForms.filter((form) => form.selected).map((form) => (
+                    {dealForms.length === 0 ? (
+                      <p className="px-4 py-4 text-xs text-slate-500">No other forms added. Add forms this deal needs from the Forms Library.</p>
+                    ) : dealForms.map((form) => (
                       <div key={form.formFamily} className="ds-list-row">
                         <button type="button" onClick={() => onOpenTrecForm?.(form.formFamily)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-slate-900 hover:text-[#301D5D]">{form.formNumber} · {form.title}</button>
-                        <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{form.total > 0 ? (form.filled > 0 ? `Fillable · ${form.filled} of ${form.total}` : `Fillable · ${form.total} fields`) : 'Notice · nothing to fill'}</span>
+                        <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{formStatus(form)}</span>
                         <TrecFormActions family={form.formFamily} disabled={locked} onOpen={(family) => onOpenTrecForm?.(family)} onUpload={(family, mode) => onUploadTrecForm?.(family, mode)} />
                       </div>
                     ))}
                   </div>
                 )}
-                {PURCHASE_FOLDERS.map((folder) => {
-                  const req = folder.docs.filter((x) => x.kind === 'required');
-                  const reqDone = req.filter((x) => checks[x.id]).length;
-                  return (
-                    <div key={folder.id} className="ds-card ds-list">
-                      <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
-                        <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />{folder.label}</span>
-                        {req.length > 0 && <span className="text-xs font-medium text-slate-500">{reqDone} of {req.length} required</span>}
-                      </div>
-                      {folder.docs.map((doc) => (
-                        <label key={doc.id} className="ds-list-row cursor-pointer">
-                          <span className={`w-20 shrink-0 text-[11px] font-semibold uppercase tracking-wide ${doc.kind === 'required' ? 'text-[#C2412D]' : 'text-slate-400'}`}>{doc.kind === 'reference' ? 'PDF' : doc.kind}</span>
-                          <input type="checkbox" checked={Boolean(checks[doc.id])} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...checks, [doc.id]: e.target.checked })} />
-                          <span className="min-w-0 flex-1">{doc.label}</span>
-                          <span className={`ds-chip ${checks[doc.id] ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{checks[doc.id] ? 'Received' : 'Not submitted'}</span>
-                        </label>
-                      ))}
-                    </div>
-                  );
-                })}
+                <div className="ds-card ds-list">
+                  <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                    <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Optional Documents</span>
+                    <span className="text-xs font-medium text-slate-500">{optionalDocs.length}</span>
+                  </div>
+                  {optionalDocs.length === 0 && <p className="px-4 py-4 text-xs text-slate-500">Every optional document has been added.</p>}
+                  {optionalDocs.map((doc) => (
+                    <label key={doc.id} className="ds-list-row cursor-pointer">
+                      <input type="checkbox" aria-label={`Add ${doc.label} to required documents`} checked={false} disabled={locked || requiredIds.has(doc.id)} onChange={() => onUpdate('documentChecks', { ...checks, [`add:${doc.id}`]: true })} />
+                      <span className="min-w-0 flex-1 text-sm text-slate-800">{doc.label}</span>
+                      <span className="text-xs text-slate-400">{doc.kind === 'reference' ? 'Reference' : 'Optional'}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             );
           })()}
