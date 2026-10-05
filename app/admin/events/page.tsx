@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
+import PendingSubmissions from './PendingSubmissions';
 import PageTitle from '@/components/ui/PageTitle';
 import ContentPagination from '@/app/admin/_components/ContentPagination';
 import {
@@ -269,6 +270,7 @@ export default function EventsPage() {
           </Link>
         </div>
       </div>
+      <PendingSubmissions onChanged={reload} />
 
       <section className="content-admin-summary" aria-label="Event summary">
         <div><strong>{items.length.toLocaleString()}</strong><span>Total events</span></div>
