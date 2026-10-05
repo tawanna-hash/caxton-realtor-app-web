@@ -94,6 +94,31 @@ function dayDiff(today: string, date: string): number {
   return Math.round((Date.parse(`${date}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86400000);
 }
 
+function AutoSection({ className, header, children }: { className?: string; header: ReactNode; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let armed = false;
+    let done = false;
+    const io = new IntersectionObserver((entries) => {
+      if (!armed || done) return;
+      if (entries.some((entry) => entry.isIntersecting)) { setOpen(true); done = true; io.disconnect(); }
+    }, { rootMargin: '0px 0px -25% 0px' });
+    const arm = () => { armed = true; io.disconnect(); if (!done) io.observe(el); window.removeEventListener('scroll', arm, true); };
+    io.observe(el);
+    window.addEventListener('scroll', arm, true);
+    return () => { io.disconnect(); window.removeEventListener('scroll', arm, true); };
+  }, []);
+  return (
+    <div ref={ref} className={className}>
+      <div role="button" tabIndex={0} aria-expanded={open} className={open ? 'cursor-pointer' : 'cursor-pointer [&>div]:!border-b-0'} onClick={() => setOpen((v) => !v)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((v) => !v); } }}>{header}</div>
+      <div hidden={!open}>{children}</div>
+    </div>
+  );
+}
+
 export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
   const [waitingOnSigner, setWaitingOnSigner] = useState(0);
@@ -725,11 +750,10 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   </div>
                   <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{submittedCount} of {totalRequired} submitted</span>
                 </div>
-                <div className="ds-card ds-list">
-                  <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                <AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                     <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Required Documents</span>
                     <span className="text-xs font-medium text-slate-500">{submittedCount} of {totalRequired}</span>
-                  </div>
+                  </div>}>
                   {requiredDocs.map(requiredRow)}
                   {brokerageDocs.map((form) => (
                     <div key={form.id} className="ds-list-row">
@@ -743,7 +767,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                       {!locked && <button type="button" aria-label={`Remove ${form.title} from this deal`} className="text-xs text-slate-500 underline underline-offset-2 hover:text-slate-900" onClick={() => { const next = { ...checks }; delete next[`bf:${form.id}`]; delete next[`bfs:${form.id}`]; onUpdate('documentChecks', next); }}>Remove</button>}
                     </div>
                   ))}
-                </div>
+                </AutoSection>
                 {(() => {
                   const linked = [
                     ...Array.from(new Set(Object.values(DOC_DEADLINE_IDS))).map((id) => {
@@ -755,11 +779,10 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   if (linked.length === 0) return null;
                   const doneCount = linked.filter((item) => checks[`dl:${item.id}`]).length;
                   return (
-                    <div className="ds-card ds-list">
-                      <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                    <AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                         <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Deadline Completion</span>
                         <span className="text-xs font-medium text-slate-500">{doneCount} Of {linked.length} Done</span>
-                      </div>
+                      </div>}>
                       {linked.map((item) => {
                         const done = Boolean(checks[`dl:${item.id}`]);
                         const diff = dayDiff(today, item.date);
@@ -779,15 +802,14 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                           </div>
                         );
                       })}
-                    </div>
+                    </AutoSection>
                   );
                 })()}
                 {trecForms && (
-                  <div className="ds-card ds-list">
-                    <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                  <AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                       <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Additional Documents</span>
                       <span className="text-xs font-medium text-slate-500">{dealForms.length}</span>
-                    </div>
+                    </div>}>
                     {dealForms.length === 0 ? (
                       <p className="px-4 py-4 text-xs text-slate-500">No additional documents added. Add forms this deal needs from the Forms Library.</p>
                     ) : dealForms.map((form) => (
@@ -797,13 +819,12 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                         <TrecFormActions family={form.formFamily} disabled={locked} onOpen={(family) => onOpenTrecForm?.(family)} onUpload={(family, mode) => onUploadTrecForm?.(family, mode)} />
                       </div>
                     ))}
-                  </div>
+                  </AutoSection>
                 )}
-                <div className="ds-card ds-list">
-                  <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                <AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                     <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Optional Documents</span>
                     <span className="text-xs font-medium text-slate-500">{optionalDocs.length}</span>
-                  </div>
+                  </div>}>
                   {optionalDocs.length === 0 && <p className="px-4 py-4 text-xs text-slate-500">Every optional document has been added.</p>}
                   {optionalDocs.map((doc) => (
                     <label key={doc.id} className="ds-list-row cursor-pointer">
@@ -812,7 +833,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                       <span className="text-xs text-slate-400">{doc.kind === 'reference' ? 'Reference' : 'Optional'}</span>
                     </label>
                   ))}
-                </div>
+                </AutoSection>
               </div>
             );
           })()}
