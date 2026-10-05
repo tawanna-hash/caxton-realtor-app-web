@@ -229,7 +229,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
             rel="noreferrer"
             className="inline-flex h-[44px] shrink-0 items-center justify-center rounded-md border border-[#301D5D] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white"
           >
-            Verify on TREC
+            TREC Quick Link
           </a>
         </div>
 
