@@ -16,7 +16,6 @@ const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
   { id: 'readiness', label: 'Readiness Check', keys: ['readiness'] },
   { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
-  { id: 'd-utilities', label: 'Utilities', keys: [] },
 ];
 const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'overview', label: 'Snapshot', keys: [] },
@@ -34,7 +33,8 @@ const DEALS_VIEW = { id: 'deals', label: 'Deals', keys: [] as string[] };
 const ALERT_SETUP_VIEW = { id: 'alert-setup', label: 'Alert Setup', keys: [] as string[] };
 const CLOSINGS_VIEW = { id: 'closings', label: 'Closings', keys: [] as string[] };
 const CONTACTS_VIEW = { id: 'contacts', label: 'Contacts', keys: [] as string[] };
-const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
+const UTILITIES_VIEW = { id: 'utilities', label: 'Utilities', keys: [] as string[] };
+const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, UTILITIES_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug };
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -51,6 +51,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronLeft,
+  BookOpen,
   ChevronRight,
   Circle,
   ClipboardCheck,
@@ -2140,6 +2141,21 @@ export default function ClosingTime({
                   </li>
                 );
               })}
+              <li>
+                <button type="button" aria-expanded={resourcesOpen || effectiveView === 'utilities'} onClick={() => setResourcesOpen((open) => !open)} className="ds-navbtn">
+                  <BookOpen className="ct-navicon" aria-hidden="true" /><span>Resources</span>
+                  <ChevronRight className={`ml-auto h-3.5 w-3.5 transition-transform ${resourcesOpen || effectiveView === 'utilities' ? 'rotate-90' : ''}`} aria-hidden="true" />
+                </button>
+                {(resourcesOpen || effectiveView === 'utilities') && (
+                  <ul className="ds-nav-child">
+                    <li>
+                      <button type="button" aria-current={effectiveView === 'utilities' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('utilities'); }} className="ds-navbtn">
+                        <span>Utilities</span>
+                      </button>
+                    </li>
+                  </ul>
+                )}
+              </li>
             </ul>
           </aside>
           <div data-desk-view={effectiveView} className="ds-main min-w-0">
@@ -2433,16 +2449,6 @@ export default function ClosingTime({
                     {DEAL_TABS.filter((tab) => (ids as readonly string[]).includes(tab.id)).map((tab) => (
                       <button key={tab.id} type="button" className="ds-tab" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)}>{tab.label}</button>
                     ))}
-                    {group === 'Work' && (
-                      <span className="relative">
-                        <button type="button" className="ds-tab" aria-haspopup="menu" aria-expanded={resourcesOpen} aria-current={effectiveView === 'd-utilities' ? 'page' : undefined} onClick={() => setResourcesOpen((open) => !open)}>Resources ▾</button>
-                        {resourcesOpen && (
-                          <span role="menu" className="ds-dealnav-menu">
-                            <button type="button" role="menuitem" onClick={() => { setResourcesOpen(false); setDeskView('d-utilities'); }}>Utilities</button>
-                          </span>
-                        )}
-                      </span>
-                    )}
                   </div>
                 ))}
               </nav>
@@ -2473,7 +2479,7 @@ export default function ClosingTime({
                 </div>
               );
             })()}
-            {effectiveView === 'd-utilities' && <UtilitiesPanel />}
+            {effectiveView === 'utilities' && <UtilitiesPanel />}
             {['d-overview', 'd-documents', 'd-people'].includes(effectiveView) && (() => {
               const deal = activeDeal;
               const health = deal ? (() => {
