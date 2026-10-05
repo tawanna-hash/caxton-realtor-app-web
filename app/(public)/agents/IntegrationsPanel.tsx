@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Search, X } from 'lucide-react';
 import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 
@@ -29,7 +29,7 @@ function Logo({ item, size }: { item: Catalog; size: number }) {
   return <span style={style} className="flex shrink-0 items-center justify-center rounded-md bg-[#301D5D]/10 text-sm font-bold text-[#301D5D]" aria-hidden="true">{item.name.slice(0, 1)}</span>;
 }
 
-export default function IntegrationsPanel() {
+export default function IntegrationsPanel({ calendarTile }: { calendarTile?: ReactNode } = {}) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [catalog, setCatalog] = useState<Catalog[]>([]);
   const [configured, setConfigured] = useState(true);
@@ -140,6 +140,7 @@ export default function IntegrationsPanel() {
                 </li>
               );
             })}
+            {g.group === 'Calendar and Scheduling' ? calendarTile : null}
           </ul>
         </div>
       ))}

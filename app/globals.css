@@ -1596,3 +1596,11 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-nav-child .ds-navbtn { font-size: 0.8125rem; }
 #agent-desk .ds-navbtn[aria-expanded] { border: 0; background-color: transparent; color: inherit; }
 #agent-desk .ds-navbtn[aria-expanded]:hover { background-color: var(--d-hover); }
+
+/* Integrations page: Integrations first, then back arrow */
+#agent-desk .ds-main[data-desk-view='integrations'] { display: flex; flex-direction: column; }
+#agent-desk .ds-main[data-desk-view='integrations'] > [data-section-key='integrations'] { order: -2; }
+#agent-desk .ds-main[data-desk-view='integrations'] > .ds-back { order: -1; align-self: flex-start; margin-top: 1rem; }
+#agent-desk .ds-cal-tile button { border-color: #E6E5EC; }
+#agent-desk .ds-cal-tile div button { border: 0; background: transparent; padding: 0; height: auto; min-height: 0; color: #301D5D; font-weight: 600; }
+#agent-desk .ds-cal-tile div button:hover { background: transparent; color: #301D5D; }

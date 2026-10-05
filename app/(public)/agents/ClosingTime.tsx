@@ -2526,27 +2526,7 @@ export default function ClosingTime({
                 <h3 className="text-lg font-semibold text-gray-900">Calendar Exports For Apple Calendar</h3>
                 <CollapseToggle {...toggleProps('calendar', 'calendar exports')} />
               </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">Subscribe once and your calendar stays current with deadlines, closing dates, reminders, and open tasks for every active deal.</p>
-              {!calendarFeed ? (
-                <button type="button" onClick={() => void loadCalendarFeed()} disabled={calendarFeedState === 'loading'} className="mt-4 inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45">
-                  {calendarFeedState === 'loading' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Link2 className="rnn-inline-icon" aria-hidden="true" />}
-                  Subscribe To Calendar
-                </button>
-              ) : (
-                <div className="mt-4 space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    <a href={`https://calendar.google.com/calendar/render?cid=${encodeURIComponent(calendarFeed.webcalUrl)}`} target="_blank" rel="noreferrer" onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'google' })} className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c]"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Google</a>
-                    <a href={calendarFeed.webcalUrl} onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'apple' })} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Apple</a>
-                    <a href={`https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(calendarFeed.url)}&name=${encodeURIComponent('Closing Time Deadlines')}`} target="_blank" rel="noreferrer" onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'outlook' })} className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]"><CalendarDays className="rnn-inline-icon" aria-hidden="true" />Outlook</a>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => void copyCalendarFeed()} className="inline-flex min-h-[36px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF]">{calendarFeedCopied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}{calendarFeedCopied ? 'Copied' : 'Copy Link'}</button>
-                    <button type="button" onClick={() => void loadCalendarFeed(true)} disabled={calendarFeedState === 'loading'} className="inline-flex min-h-[36px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#9A3D2B] hover:text-[#9A3D2B] disabled:opacity-45"><RefreshCw className="h-4 w-4" aria-hidden="true" />Reset Link</button>
-                  </div>
-                  <p className="text-xs leading-5 text-slate-500">This link is private to you. Anyone with it can view your deal dates, so reset it if it&apos;s shared by mistake. Google Calendar may take several hours to show changes; Deadline Alerts cover anything urgent.</p>
-                </div>
-              )}
-              {calendarFeedState === 'error' && <p className="mt-2 text-xs font-semibold text-[#9A3D2B]">We couldn&apos;t load your calendar link. Please try again.</p>}
+              <p className="mt-3 text-sm leading-6 text-slate-600">Use Subscribe To Calendar under Calendar and Scheduling below to keep your calendar current with deadlines, closing dates, reminders, and open tasks for every active deal, or download a one-time file.</p>
               <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-100 pt-3 text-xs font-bold text-[#301D5D]">
                 <span className="font-semibold text-slate-500">One-time download:</span>
                 <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex items-center gap-1 underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-45"><Download className="h-3.5 w-3.5" aria-hidden="true" />This Deal (.ics)</button>
@@ -2554,7 +2534,27 @@ export default function ClosingTime({
               </div>
             </div>
             )}
-            <div data-section-key="integrations" className="min-w-0"><IntegrationsPanel /></div>
+            <div data-section-key="integrations" className="min-w-0"><IntegrationsPanel calendarTile={(
+              <li className="ds-cal-tile">
+                {!calendarFeed ? (
+                  <button type="button" onClick={() => void loadCalendarFeed()} disabled={calendarFeedState === 'loading'} className="flex min-h-[56px] w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 text-left hover:bg-[#F6F3FB]">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#EFEAF8] text-[#301D5D]">{calendarFeedState === 'loading' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Link2 className="h-4 w-4" aria-hidden="true" />}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950">Subscribe To Calendar</span>
+                  </button>
+                ) : (
+                  <div className="flex min-h-[56px] w-full flex-col justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-[#301D5D]">
+                      <a href={calendarFeed.webcalUrl} onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'apple' })} className="underline underline-offset-2">Apple</a>
+                      <a href={`https://calendar.google.com/calendar/render?cid=${encodeURIComponent(calendarFeed.webcalUrl)}`} target="_blank" rel="noreferrer" onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'google' })} className="underline underline-offset-2">Google</a>
+                      <a href={`https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(calendarFeed.url)}&name=${encodeURIComponent('Closing Time Deadlines')}`} target="_blank" rel="noreferrer" onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'outlook' })} className="underline underline-offset-2">Outlook</a>
+                      <button type="button" onClick={() => void copyCalendarFeed()} className="underline underline-offset-2">{calendarFeedCopied ? 'Copied' : 'Copy link'}</button>
+                      <button type="button" onClick={() => void loadCalendarFeed(true)} disabled={calendarFeedState === 'loading'} className="underline underline-offset-2">Reset</button>
+                    </div>
+                    {calendarFeedState === 'error' && <p className="text-xs font-semibold text-[#9A3D2B]">Could not load your link. Try again.</p>}
+                  </div>
+                )}
+              </li>
+            )} /></div>
             <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
           <section className={'mt-5 grid gap-5'} aria-label="Deal settings, alerts and calendar">
