@@ -115,7 +115,7 @@ const ALL_LISTING_FOLDERS: PurchaseFolder[] = [
     id: 'listing-rep', label: 'Listing Representation Documents',
     docs: [
       reuse('pd-iabs', 'required', 'Seller: Information About Brokerage Services'),
-      d('ld-listing-agreement', 'Residential Real Estate Listing Agreement (TXR 1101 Or Attorney-Drafted)', 'required'),
+      d('ld-listing-agreement', 'Residential Real Estate Listing Agreement (TXR 1101 Or Attorney-Drafted)', 'required', 'TXR1101'),
       d('ld-consumer-protection-notice', 'Consumer Protection Notice Displayed (Office, Website, Social Profiles)', 'required'),
       d('ld-wire-fraud-alert', 'Wire Fraud Alert For Sellers', 'required'),
       reuse('pd-sellers-disclosure-notice', 'required', "Seller's Disclosure Notice (TREC 55-1 Or TXR 1406)"),

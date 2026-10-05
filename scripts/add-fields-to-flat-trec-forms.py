@@ -11,7 +11,7 @@ import pymupdf
 
 ROOT = Path(__file__).resolve().parents[1]
 FORM_DIR = ROOT / "public" / "forms" / "trec-library"
-FORM_NAMES = ("trec-9-18.pdf", "trec-24-20.pdf", "trec-30-18.pdf", "trec-61-0.pdf")
+FORM_NAMES = ("trec-9-18.pdf", "trec-24-20.pdf", "trec-30-18.pdf", "trec-61-0.pdf", "txr-1101.pdf")
 
 
 def add_widgets(pdf_path: Path) -> None:
