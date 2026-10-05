@@ -505,14 +505,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               ))}
             </ul>
           </div>
-          <div className="ds-card">
-            <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">People And Offers</p><button type="button" onClick={() => onOpenView('d-people')}>Open</button></div>
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              {stat('Parties', String(deal.clientContacts.length))}
-              {stat('Offers', String(deal.offersShowings.filter((x) => x.kind === 'offer').length))}
-              {stat('Showings', String(deal.offersShowings.filter((x) => x.kind === 'showing').length))}
-            </div>
-          </div>
         </div>
         </div>
       </div>
