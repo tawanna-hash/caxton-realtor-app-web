@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2, X } from 'lucide-react';
 import { CONTRACT_MAP_SECTIONS } from '@/lib/trec-20-19-contract-map';
 import type { AgentCashLine, AgentDeal, AgentKeyTerm } from '@/lib/agent-command-center-workspace';
 
@@ -315,15 +315,6 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     if (picked.key !== key) placeAt(section, picked.key, key);
     setPicked(null);
   };
-  const moveBy = (section: ContractSection, key: string, delta: number) => {
-    const keys = orderedItems(section).map((x) => x.key);
-    const from = keys.indexOf(key);
-    const to = Math.max(0, Math.min(keys.length - 1, from + delta));
-    if (from < 0 || from === to) return;
-    keys.splice(from, 1);
-    keys.splice(to, 0, key);
-    onPatch({ contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: keys } });
-  };
   const leadsFor = (section: ContractSection) => section.id === 'buyer' ? [['Buyer 1', rawDeal.buyerNames, (v: string) => onParties('buyerNames', v)], ['Buyer 2', rawDeal.buyer2Name ?? '', (v: string) => onParties('buyer2Name', v)]] as const
               : section.id === 'lender' ? [['Lender', rawDeal.lender ?? '', (v: string) => onPatch({ lender: v })]] as const
               : section.id === 'seller' ? [['Seller 1', rawDeal.sellerNames, (v: string) => onParties('sellerNames', v)], ['Seller 2', rawDeal.seller2Name ?? '', (v: string) => onParties('seller2Name', v)]] as const
@@ -341,17 +332,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                   ))}
                   {items.map((item) => {
                     const key = item.key;
-                    const pos = items.findIndex((x) => x.key === key);
                     const isPicked = picked?.section === section.id && picked.key === key;
                     const cellAttrs = { onClick: cellClick(section, key), title: picked ? 'Click to place here' : 'Click to pick up and move' };
                     const pickCls = isPicked ? ' rounded-md bg-[#F6F3FB] ring-2 ring-[#301D5D]' : picked?.section === section.id ? ' cursor-pointer rounded-md hover:bg-[#F6F3FB]' : ' cursor-pointer';
-                    const arrowCls = '!flex !h-4 !w-4 shrink-0 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-600 hover:!text-[#301D5D] disabled:!opacity-30 disabled:hover:!text-slate-600';
-                    const arrows = (
-                      <span className="flex items-center gap-1">
-                        <button type="button" aria-label="Move earlier" title="Move earlier" disabled={pos <= 0} onClick={() => moveBy(section, key, -1)} className={arrowCls}><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
-                        <button type="button" aria-label="Move later" title="Move later" disabled={pos >= items.length - 1} onClick={() => moveBy(section, key, 1)} className={arrowCls}><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
-                      </span>
-                    );
                     const xBtn = (label: string, onClick: () => void) => (
                       <button type="button" aria-label={label} title={label} onClick={onClick} className="!flex !h-4 !w-4 shrink-0 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-500 hover:!text-[#301D5D]"><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
                     );
@@ -369,7 +352,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                         <div key={key} {...cellAttrs} className={`block min-w-0${pickCls}`}>
                           <div className="flex items-center justify-between gap-3 pb-1">
                             <input value={cf.label} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, label: e.target.value } : x)))} aria-label="Field name" placeholder="Field Name" className="cf-label h-4 min-w-0 flex-1 bg-transparent text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 outline-none" />
-                            <span className="flex items-center gap-3">{arrows}{xBtn('Remove field', () => putCustom(customFields.filter((x) => x.id !== cf.id)))}</span>
+                            <span className="flex items-center gap-3">{xBtn('Remove field', () => putCustom(customFields.filter((x) => x.id !== cf.id)))}</span>
                           </div>
                           <input value={cf.value} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, value: e.target.value } : x)))} aria-label={`${cf.label} value`} className={fieldCls} />
                         </div>
@@ -386,7 +369,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                               <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
                               <span className="min-w-0 break-words">{fl.label}</span>
                             </label>
-                            <span className="flex items-center gap-3">{arrows}{xBtn('Delete field', () => hideField(fl.id))}</span>
+                            <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(fl.id))}</span>
                           </div>
                         </div>
                       );
@@ -395,7 +378,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       <div key={key} {...cellAttrs} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}${pickCls}`}>
                         <div className="flex items-center justify-between gap-3 pb-1">
                           <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
-                          <span className="flex items-center gap-3">{arrows}{xBtn('Delete field', () => hideField(fl.id))}</span>
+                          <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(fl.id))}</span>
                         </div>
                         <span className="flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
                           {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
