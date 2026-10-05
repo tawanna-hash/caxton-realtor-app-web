@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Plus, Trash2, X } from 'lucide-react';
+import { GripVertical, Plus, Trash2, X } from 'lucide-react';
 import { CONTRACT_MAP_SECTIONS } from '@/lib/trec-20-19-contract-map';
 import type { AgentCashLine, AgentDeal, AgentKeyTerm } from '@/lib/agent-command-center-workspace';
 
@@ -219,6 +219,26 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
 
   const customFields = rawDeal.contractCustomFields ?? [];
   const putCustom = (next: typeof customFields) => onPatch({ contractCustomFields: next });
+  const dragKey = useRef<string | null>(null);
+  const [overKey, setOverKey] = useState<string | null>(null);
+  const hasOrder = (section: ContractSection) => (rawDeal.contractFieldOrder?.[section.id] ?? []).length > 0;
+  type FieldItem = { key: string; kind: 'map'; fl: ContractSection['fields'][number] } | { key: string; kind: 'custom'; cf: (typeof customFields)[number] };
+  const orderedItems = (section: ContractSection): FieldItem[] => {
+    const items: FieldItem[] = [
+      ...section.fields.map((fl) => ({ key: fl.id, kind: 'map' as const, fl })),
+      ...customFields.filter((cf) => cf.section === section.id).map((cf) => ({ key: `cf:${cf.id}`, kind: 'custom' as const, cf })),
+    ];
+    const order = rawDeal.contractFieldOrder?.[section.id] ?? [];
+    if (!order.length) return items;
+    const idx = (k: string) => { const i = order.indexOf(k); return i === -1 ? order.length + items.findIndex((x) => x.key === k) : i; };
+    return [...items].sort((x, y) => idx(x.key) - idx(y.key));
+  };
+  const moveField = (section: ContractSection, from: string, to: string) => {
+    const keys = orderedItems(section).map((x) => x.key).filter((k) => k !== from);
+    const at = keys.indexOf(to);
+    keys.splice(at < 0 ? keys.length : at, 0, from);
+    onPatch({ contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: keys } });
+  };
   const leadsFor = (section: ContractSection) => section.id === 'buyer' ? [['Buyer 1', rawDeal.buyerNames, (v: string) => onParties('buyerNames', v)], ['Buyer 2', rawDeal.buyer2Name ?? '', (v: string) => onParties('buyer2Name', v)]] as const
               : section.id === 'lender' ? [['Lender', rawDeal.lender ?? '', (v: string) => onPatch({ lender: v })]] as const
               : section.id === 'seller' ? [['Seller 1', rawDeal.sellerNames, (v: string) => onParties('sellerNames', v)], ['Seller 2', rawDeal.seller2Name ?? '', (v: string) => onParties('seller2Name', v)]] as const
@@ -233,35 +253,64 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       <input value={value ?? ''} onChange={(e) => set(e.target.value)} className={`${fieldCls} mt-1`} />
                     </label>
                   ))}
-                  {section.fields.map((fl) => {
+                  {orderedItems(section).map((item) => {
+                    const key = item.key;
+                    const grip = (
+                      <span
+                        draggable
+                        onDragStart={(e) => { dragKey.current = key; e.dataTransfer.effectAllowed = 'move'; const cell = (e.currentTarget as HTMLElement).closest('[data-cell]'); if (cell) e.dataTransfer.setDragImage(cell, 12, 12); }}
+                        onDragEnd={() => { dragKey.current = null; setOverKey(null); }}
+                        title="Drag to move"
+                        aria-label="Drag to move"
+                        className="absolute right-0 top-0 z-10 flex h-4 w-4 cursor-grab items-center justify-center text-slate-300 opacity-0 transition hover:text-[#301D5D] group-hover/cell:opacity-100 active:cursor-grabbing"
+                      ><GripVertical className="h-3.5 w-3.5" aria-hidden="true" /></span>
+                    );
+                    const cellProps = {
+                      'data-cell': true,
+                      onDragOver: (e: React.DragEvent) => { if (dragKey.current && dragKey.current !== key) { e.preventDefault(); setOverKey(key); } },
+                      onDrop: (e: React.DragEvent) => { e.preventDefault(); if (dragKey.current && dragKey.current !== key) moveField(section, dragKey.current, key); dragKey.current = null; setOverKey(null); },
+                    };
+                    const over = overKey === key ? ' rounded-md ring-2 ring-[#301D5D]/40' : '';
+                    if (item.kind === 'custom') {
+                      const cf = item.cf;
+                      return (
+                        <div key={key} {...cellProps} className={`group/cell relative block min-w-0${over}`}>
+                          {grip}
+                          <span className="flex items-center justify-between gap-1 pr-5">
+                            <input value={cf.label} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, label: e.target.value } : x)))} aria-label="Field name" placeholder="Field Name" className="cf-label h-4 min-w-0 flex-1 bg-transparent text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 outline-none" />
+                            <button type="button" aria-label="Remove field" onClick={() => putCustom(customFields.filter((x) => x.id !== cf.id))} className="!h-4 !border-0 !bg-transparent !px-0 text-slate-400 hover:!text-[#301D5D]"><X className="h-3 w-3" aria-hidden="true" /></button>
+                          </span>
+                          <input value={cf.value} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, value: e.target.value } : x)))} className={`${fieldCls} mt-1`} />
+                        </div>
+                      );
+                    }
+                    const fl = item.fl;
                     const value = getVal(fl.id);
+                    const placed = !hasOrder(section) && fl.pos ? `${POS_COL[fl.pos[0]]} ${POS_ROW[fl.pos[1]]}` : '';
                     if (fl.kind === 'c') {
                       return (
-                        <label key={fl.id} className="flex min-w-0 items-start gap-2 text-sm text-slate-900">
-                          <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
-                          <span className="min-w-0 break-words">{fl.label}</span>
-                        </label>
+                        <div key={key} {...cellProps} className={`group/cell relative min-w-0${over}`}>
+                          {grip}
+                          <label className="flex min-w-0 items-start gap-2 pr-5 text-sm text-slate-900">
+                            <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
+                            <span className="min-w-0 break-words">{fl.label}</span>
+                          </label>
+                        </div>
                       );
                     }
                     return (
-                      <label key={fl.id} className={`block min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${fl.pos ? `${POS_COL[fl.pos[0]]} ${POS_ROW[fl.pos[1]]}` : ''}`}>
-                        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
-                        <span className="mt-1 flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
-                          {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
-                          <input value={value} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
-                        </span>
-                      </label>
+                      <div key={key} {...cellProps} className={`group/cell relative min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}${over}`}>
+                        {grip}
+                        <label className="block min-w-0">
+                          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
+                          <span className="mt-1 flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
+                            {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
+                            <input value={value} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
+                          </span>
+                        </label>
+                      </div>
                     );
                   })}
-                  {customFields.filter((cf) => cf.section === section.id).map((cf) => (
-                    <div key={cf.id} className="block min-w-0">
-                      <span className="flex items-center justify-between gap-1">
-                        <input value={cf.label} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, label: e.target.value } : x)))} aria-label="Field name" placeholder="Field Name" className="cf-label h-4 min-w-0 flex-1 bg-transparent text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 outline-none" />
-                        <button type="button" aria-label="Remove field" onClick={() => putCustom(customFields.filter((x) => x.id !== cf.id))} className="!h-4 !border-0 !bg-transparent !px-0 text-slate-400 hover:!text-[#301D5D]"><X className="h-3 w-3" aria-hidden="true" /></button>
-                      </span>
-                      <input value={cf.value} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, value: e.target.value } : x)))} className={`${fieldCls} mt-1`} />
-                    </div>
-                  ))}
                   {!bordered && (
                     <div className="flex items-end">
                       <button type="button" onClick={() => putCustom([...customFields, { id: newId('cf'), section: section.id, label: 'New Field', value: '' }])}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Field</button>
