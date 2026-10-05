@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
+import { CONTRACT_MAP_SECTIONS } from '@/lib/trec-20-19-contract-map';
 import type { AgentCashLine, AgentDeal, AgentKeyTerm } from '@/lib/agent-command-center-workspace';
 
 type Patch = Partial<AgentDeal>;
@@ -24,6 +25,25 @@ function shortDate(iso: string): string {
   return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
 }
 
+const CD_LINKS: Partial<Record<keyof AgentDeal['contractDetails'], string>> = {
+  salesPrice: 'p01_f016', cashPortion: 'p01_f011', loanAmount: 'p01_f015', earnestMoney: 'p02_f031', optionFee: 'p02_f032',
+  additionalEarnestMoney: 'p02_f033', titleCompany: 'p02_f038', county: 'p01_f007', exclusions: 'p01_f009', specialProvisionsNotes: 'p06_f097',
+};
+const DEAL_LINKS: Partial<Record<'optionPeriodDays' | 'additionalEarnestMoneyDays' | 'titleObjectionDays' | 'propertyAddress' | 'buyerNames' | 'sellerNames', string>> = {
+  optionPeriodDays: 'p02_f035', additionalEarnestMoneyDays: 'p02_f034', titleObjectionDays: 'p03_f057',
+  propertyAddress: 'p01_f008', buyerNames: 'p01_f002', sellerNames: 'p01_f001',
+};
+
+// The 1-4 Residential form is the source of truth: a filled form field wins over the stored deal value.
+function effective(deal: AgentDeal): AgentDeal {
+  const ff = (id: string) => (deal.formFields[id] ?? '').trim();
+  const contractDetails = { ...deal.contractDetails };
+  for (const [key, id] of Object.entries(CD_LINKS)) { const v = ff(id as string); if (v) (contractDetails as Record<string, string>)[key] = v; }
+  const next: AgentDeal = { ...deal, contractDetails };
+  for (const [key, id] of Object.entries(DEAL_LINKS)) { const v = ff(id as string); if (v) (next as Record<string, unknown>)[key] = v; }
+  return next;
+}
+
 type Auto = { value: string; note: string };
 type TermDef = { id: string; term: string; ref: string; auto: (deal: AgentDeal) => Auto; source?: keyof AgentDeal['contractDetails'] };
 
@@ -41,16 +61,22 @@ const dueFrom = (deal: AgentDeal, days: string): string => {
 };
 
 const TERM_DEFS: TermDef[] = [
-  { id: 'tpl-purchase-price', term: 'Purchase Price', ref: '§1.2 · p.1', source: 'salesPrice', auto: (d) => ({ value: d.contractDetails.salesPrice, note: '' }) },
-  { id: 'tpl-earnest-money', term: 'Earnest Money', ref: '§2.1 · p.2', source: 'earnestMoney', auto: (d) => ({ value: d.contractDetails.earnestMoney, note: d.earnestMoneyDeliveredDate ? `Delivered ${shortDate(d.earnestMoneyDeliveredDate)}` : '' }) },
-  { id: 'tpl-financing', term: 'Financing', ref: '§4.1 · p.3', source: 'financingType', auto: (d) => ({ value: d.contractDetails.financingType, note: d.contractDetails.loanAmount ? `Loan ${d.contractDetails.loanAmount}` : '' }) },
-  { id: 'tpl-inspection', term: 'Inspection Contingency', ref: '§7.2 · p.5', auto: (d) => ({ value: dueFrom(d, d.optionPeriodDays), note: d.contractDetails.optionFee ? `Option fee ${d.contractDetails.optionFee}` : '' }) },
+  { id: 'tpl-purchase-price', term: 'Purchase Price', ref: '§3 · p.1', source: 'salesPrice', auto: (d) => ({ value: d.contractDetails.salesPrice, note: '' }) },
+  { id: 'tpl-earnest-money', term: 'Earnest Money', ref: '§5 · p.2', source: 'earnestMoney', auto: (d) => ({ value: d.contractDetails.earnestMoney, note: d.earnestMoneyDeliveredDate ? `Delivered ${shortDate(d.earnestMoneyDeliveredDate)}` : '' }) },
+  { id: 'tpl-financing', term: 'Financing', ref: '§3 · p.1', source: 'financingType', auto: (d) => {
+    const picked = [['p01_f012', 'Third Party Financing'], ['p01_f013', 'Loan Assumption'], ['p01_f014', 'Seller Financing']].filter(([id]) => d.formFields[id] === 'true').map(([, name]) => name).join(' · ');
+    return { value: picked || d.contractDetails.financingType, note: d.contractDetails.loanAmount ? `Loan ${d.contractDetails.loanAmount}` : '' };
+  } },
+  { id: 'tpl-inspection', term: 'Inspection Contingency', ref: '§5 · p.2', auto: (d) => ({ value: dueFrom(d, d.optionPeriodDays), note: d.contractDetails.optionFee ? `Option fee ${d.contractDetails.optionFee}` : '' }) },
   { id: 'tpl-appraisal', term: 'Appraisal Contingency', ref: '§7.3 · p.5', auto: (d) => ({ value: dueFrom(d, d.appraisalDeadlineDays), note: '' }) },
   { id: 'tpl-loan', term: 'Loan Contingency', ref: '§7.4 · p.5', auto: (d) => ({ value: dueFrom(d, d.financingDeadlineDays), note: '' }) },
-  { id: 'tpl-closing-date', term: 'Closing Date', ref: '§9.1 · p.7', auto: (d) => ({ value: d.closingDate ? shortDate(d.closingDate) : '', note: d.contractDetails.titleCompany }) },
-  { id: 'tpl-seller-credit', term: 'Seller Credit', ref: 'Addendum A', auto: () => ({ value: '', note: '' }) },
-  { id: 'tpl-inclusions', term: 'Inclusions', ref: '§3.2 · p.2', source: 'improvementsAndAccessories', auto: (d) => ({ value: d.contractDetails.improvementsAndAccessories, note: '' }) },
-  { id: 'tpl-possession', term: 'Possession', ref: '§9.4 · p.7', source: 'possessionPlan', auto: (d) => ({ value: d.contractDetails.possessionPlan, note: '' }) },
+  { id: 'tpl-closing-date', term: 'Closing Date', ref: '§9 · p.6', auto: (d) => {
+    const md = (d.formFields['p06_f093'] ?? '').trim(); const yr = (d.formFields['p06_f094'] ?? '').trim();
+    return { value: md ? `${md}${yr ? `, 20${yr}` : ''}` : d.closingDate ? shortDate(d.closingDate) : '', note: d.contractDetails.titleCompany };
+  } },
+  { id: 'tpl-seller-credit', term: 'Seller Credit', ref: '§12 · p.6', auto: (d) => ({ value: (d.formFields['p06_f100'] ?? '').trim(), note: '' }) },
+  { id: 'tpl-inclusions', term: 'Inclusions', ref: '§2 · p.1', source: 'improvementsAndAccessories', auto: (d) => ({ value: d.contractDetails.improvementsAndAccessories, note: '' }) },
+  { id: 'tpl-possession', term: 'Possession', ref: '§10 · p.6', source: 'possessionPlan', auto: (d) => ({ value: d.formFields['p06_f095'] === 'true' ? 'Upon Closing And Funding' : d.formFields['p06_f096'] === 'true' ? 'According To Temporary Lease' : d.contractDetails.possessionPlan, note: '' }) },
 ];
 
 const HIDDEN = '__hidden__';
@@ -71,14 +97,16 @@ const LINE_DEFS: LineDef[] = [
 
 const fieldCls = 'h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#301D5D]';
 
-export default function ContractPage({ deal, onPatch, onParties }: Props) {
+export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Props) {
+  const deal = effective(rawDeal);
+  const setForm = (patch: Record<string, string>) => onPatch({ formFields: { ...rawDeal.formFields, ...patch } });
   const stored = deal.keyTerms;
   const storedLines = deal.cashLines;
   const terms: (AgentKeyTerm & { source?: TermDef['source']; auto?: Auto })[] = [
     ...TERM_DEFS.map((def) => {
       const auto = def.auto(deal);
       const own = stored.find((t) => t.id === def.id);
-      const value = def.source ? auto.value : (own?.value || auto.value);
+      const value = auto.value || (def.source ? '' : own?.value || '');
       return { id: def.id, term: def.term, ref: def.ref, value, note: own?.note || auto.note, source: def.source, auto };
     }),
     ...stored.filter((t) => !t.id.startsWith('tpl-')),
@@ -124,7 +152,7 @@ export default function ContractPage({ deal, onPatch, onParties }: Props) {
     } else {
       const def = TERM_DEFS.find((d) => d.id === clean.id);
       const others = stored.filter((t) => t.id !== clean.id);
-      if (def?.source) onPatch({ contractDetails: { ...deal.contractDetails, [def.source]: clean.value }, keyTerms: clean.note ? [...others, clean] : others, keyTermsCustom: true });
+      if (def?.source) onPatch({ contractDetails: { ...rawDeal.contractDetails, [def.source]: clean.value }, ...(CD_LINKS[def.source] ? { formFields: { ...rawDeal.formFields, [CD_LINKS[def.source] as string]: clean.value } } : {}), keyTerms: clean.note ? [...others, clean] : others, keyTermsCustom: true });
       else putTerm(clean.value || clean.note ? [...others, clean] : others);
     }
     setEditing(null);
@@ -134,7 +162,7 @@ export default function ContractPage({ deal, onPatch, onParties }: Props) {
     if (t.id.startsWith('tpl-')) {
       const def = TERM_DEFS.find((d) => d.id === t.id);
       const others = stored.filter((x) => x.id !== t.id);
-      if (def?.source) onPatch({ contractDetails: { ...deal.contractDetails, [def.source]: '' }, keyTerms: others, keyTermsCustom: true });
+      if (def?.source) onPatch({ contractDetails: { ...rawDeal.contractDetails, [def.source]: '' }, ...(CD_LINKS[def.source] ? { formFields: { ...rawDeal.formFields, [CD_LINKS[def.source] as string]: '' } } : {}), keyTerms: others, keyTermsCustom: true });
       else putTerm(others);
     } else {
       saveCustomTerms(stored.filter((x) => x.id !== t.id));
@@ -146,11 +174,11 @@ export default function ContractPage({ deal, onPatch, onParties }: Props) {
       <section className="mb-4 rounded-2xl border border-[#E6E5EC] bg-white p-5" aria-label="Deal Details">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {([
-            ['Property Address', deal.propertyAddress, (v: string) => onPatch({ propertyAddress: v }), 'sm:col-span-2 lg:col-span-3'],
+            ['Property Address', deal.propertyAddress, (v: string) => onPatch({ propertyAddress: v, formFields: { ...rawDeal.formFields, p01_f008: v } }), 'sm:col-span-2 lg:col-span-3'],
             ['Buyer Names', deal.buyerNames, (v: string) => onParties('buyerNames', v), ''],
             ['Seller Names', deal.sellerNames, (v: string) => onParties('sellerNames', v), ''],
             ['Lender', deal.lender, (v: string) => onPatch({ lender: v }), ''],
-            ['Title Company', deal.contractDetails.titleCompany, (v: string) => onPatch({ contractDetails: { ...deal.contractDetails, titleCompany: v } }), ''],
+            ['Title Company', deal.contractDetails.titleCompany, (v: string) => onPatch({ contractDetails: { ...rawDeal.contractDetails, titleCompany: v }, formFields: { ...rawDeal.formFields, p02_f038: v } }), ''],
             ['Other Agent', deal.otherAgent, (v: string) => onPatch({ otherAgent: v }), ''],
             ['Brokerage', deal.otherBrokerage, (v: string) => onPatch({ otherBrokerage: v }), ''],
             ['Contact Information', deal.otherAgentContact, (v: string) => onPatch({ otherAgentContact: v }), 'sm:col-span-2'],
@@ -232,6 +260,46 @@ export default function ContractPage({ deal, onPatch, onParties }: Props) {
           </div>
         </div>
       </section>
+
+      <div className="mt-6" aria-label="All Contract Fields">
+        <p className="mb-2 text-base font-semibold text-slate-900">1-4 Residential Contract: All Fields</p>
+        <p className="mb-3 text-xs text-slate-500">Every field of the TREC 20-19 contract. Changes here update the form, the key terms above and the rest of the deal immediately.</p>
+        <div className="space-y-2">
+          {CONTRACT_MAP_SECTIONS.map((section) => {
+            const filled = section.fields.filter((fl) => (rawDeal.formFields[fl.id] ?? '').trim()).length;
+            return (
+              <details key={section.id} className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
+                <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900">
+                  <span>{section.title}</span>
+                  <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>
+                </summary>
+                <div className="grid gap-x-5 gap-y-3 border-t border-[#F1F0F5] px-5 py-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {section.fields.map((fl) => {
+                    const value = rawDeal.formFields[fl.id] ?? '';
+                    if (fl.kind === 'c') {
+                      return (
+                        <label key={fl.id} className="flex min-w-0 items-start gap-2 text-sm text-slate-900">
+                          <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
+                          <span className="min-w-0 break-words">{fl.label}</span>
+                        </label>
+                      );
+                    }
+                    return (
+                      <label key={fl.id} className="block min-w-0">
+                        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
+                        <span className="mt-1 flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
+                          {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
+                          <input value={value} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      </div>
 
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-label={isNew ? 'Add a term' : 'Edit term'} onClick={() => setEditing(null)}>

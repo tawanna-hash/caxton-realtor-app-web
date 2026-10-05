@@ -1502,7 +1502,7 @@ export default function ClosingTime({
     const sellers = key === 'sellerNames' ? value : activeDeal.sellerNames;
     const title = buyerLastNames(buyers) || buyerLastNames(sellers) || 'New Contract';
     persistDeals(deals.map((deal) => (
-      deal.id === activeDeal.id ? { ...deal, [key]: value, title, updatedAt: new Date().toISOString() } : deal
+      deal.id === activeDeal.id ? { ...deal, [key]: value, title, formFields: { ...deal.formFields, [key === 'buyerNames' ? 'p01_f002' : 'p01_f001']: value }, updatedAt: new Date().toISOString() } : deal
     )));
   };
   const updateActiveDeal = <Key extends keyof AgentDeal>(key: Key, value: AgentDeal[Key]) => {
