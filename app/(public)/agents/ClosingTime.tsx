@@ -12,7 +12,6 @@ const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'd-documents', label: 'Documents', keys: [] },
   { id: 'd-people', label: 'People', keys: [] },
   { id: 'transaction', label: 'Current Deal', keys: ['current', 'trec-forms'] },
-  { id: 'coordinator', label: 'Settings', keys: ['assist', 'alerts', 'calendar-link'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
   { id: 'readiness', label: 'Readiness Check', keys: ['readiness'] },
   { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
@@ -33,8 +32,9 @@ const DEALS_VIEW = { id: 'deals', label: 'Deals', keys: [] as string[] };
 const ALERT_SETUP_VIEW = { id: 'alert-setup', label: 'Alert Setup', keys: [] as string[] };
 const CLOSINGS_VIEW = { id: 'closings', label: 'Closings', keys: [] as string[] };
 const CONTACTS_VIEW = { id: 'contacts', label: 'Contacts', keys: [] as string[] };
+const SETTINGS_VIEW = { id: 'coordinator', label: 'Settings', keys: ['assist', 'alerts', 'calendar-link'] };
 const UTILITIES_VIEW = { id: 'utilities', label: 'Utilities', keys: [] as string[] };
-const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, UTILITIES_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
+const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, SETTINGS_VIEW, UTILITIES_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug };
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -52,6 +52,7 @@ import {
   ChevronDown,
   ChevronLeft,
   BookOpen,
+  Settings as SettingsIcon,
   ChevronRight,
   Circle,
   ClipboardCheck,
@@ -2161,6 +2162,11 @@ export default function ClosingTime({
                   </ul>
                 )}
               </li>
+              <li>
+                <button type="button" aria-current={effectiveView === 'coordinator' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('coordinator'); }} className="ds-navbtn">
+                  <SettingsIcon className="ct-navicon" aria-hidden="true" /><span>Settings</span>
+                </button>
+              </li>
             </ul>
           </aside>
           <div data-desk-view={effectiveView} className="ds-main min-w-0">
@@ -2448,7 +2454,7 @@ export default function ClosingTime({
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
               <nav aria-label="Deal sections" className="ds-dealnav mb-4">
-                {([['Deal', ['d-overview', 'd-documents', 'd-people']], ['Contract', ['transaction', 'coordinator']], ['Work', ['tasks', 'readiness', 'audit']]] as const).map(([group, ids]) => (
+                {([['Deal', ['d-overview', 'd-documents', 'd-people']], ['Contract', ['transaction']], ['Work', ['tasks', 'readiness', 'audit']]] as const).map(([group, ids]) => (
                   <div key={group} className="ds-dealnav-group" role="group" aria-label={group}>
                     <span className="ds-dealnav-label">{group}</span>
                     {DEAL_TABS.filter((tab) => (ids as readonly string[]).includes(tab.id)).map((tab) => (
