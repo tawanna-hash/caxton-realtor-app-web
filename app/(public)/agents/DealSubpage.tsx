@@ -319,7 +319,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     const trackedDeadlines = [
       ...(deadlines ?? []).map((item) => ({ id: item.id, label: item.label, date: item.date })),
       ...(deal.closingDate ? [{ id: 'closing-date', label: 'Closing Date', date: deal.closingDate }] : []),
-    ].sort((l, r) => l.date.localeCompare(r.date)).map((item) => ({ ...item, done: Boolean(deal.documentChecks[`dl:${item.id}`]) }));
+    ].filter((item) => !['earnest-money-delivery', 'option-period-ends', 'closing-date'].includes(item.id)).sort((l, r) => l.date.localeCompare(r.date)).map((item) => ({ ...item, done: Boolean(deal.documentChecks[`dl:${item.id}`]) }));
     const alertChannels = alerts ? [alerts.emailEnabled ? 'Email' : '', alerts.pushEnabled ? 'Push' : ''].filter(Boolean) : [];
     const nextAlert = alerts && alertChannels.length
       ? trackedDeadlines.filter((item) => !item.done).flatMap((item) => alerts.reminderOffsets.map((offset) => ({ label: item.label, date: new Date(Date.parse(`${item.date}T12:00:00Z`) - offset * 86400000).toISOString().slice(0, 10) }))).filter((entry) => entry.date >= today).sort((l, r) => l.date.localeCompare(r.date))[0]
@@ -352,7 +352,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         <p className="mt-2 text-xs text-slate-500">{tileSubmitted} of {tileTotal} submitted</p>
       </div>
       <div className="ds-card">
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">Contract Timeline</p>
         <p className="mt-1 text-lg font-semibold text-slate-900">Pressing Deadlines</p>
         <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules.</p>
         {timelineFields}
@@ -362,6 +361,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               <p className="text-sm font-semibold text-slate-900">Deadline Tracking</p>
               <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{trackedDeadlines.filter((item) => item.done).length} Of {trackedDeadlines.length} Done</span>
             </div>
+            <div className="grid sm:grid-cols-2 sm:gap-x-6">
             {trackedDeadlines.map((item) => {
               const diff = dayDiff(today, item.date);
               const chip = item.done ? { text: 'Done', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
@@ -379,6 +379,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                 </div>
               );
             })}
+            </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#F6F3FB] px-3 py-2.5 text-xs text-slate-600">
               <span>
                 {alertChannels.length === 0 ? 'Alerts Are Off' : `Alerts By ${alertChannels.join(' And ')}`}
