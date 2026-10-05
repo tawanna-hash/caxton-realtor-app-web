@@ -282,25 +282,22 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     const cellProps = cellPropsFor(section, key);
                     const over = overKey === key ? ' rounded-md ring-2 ring-[#301D5D]/40' : '';
                     const handle = {
-                      draggable: true,
                       title: 'Drag to move',
-                      onDragStart: (e: React.DragEvent<HTMLElement>) => { dragKey.current = key; setDragging(true); e.dataTransfer.effectAllowed = 'move'; const cell = e.currentTarget.closest('[data-cell]'); if (cell) e.dataTransfer.setDragImage(cell, 12, 12); },
-                      onDragEnd: endDrag,
                       onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
-                        if (e.pointerType === 'mouse' || (e.target as HTMLElement).closest('button,input')) return;
+                        if (e.button > 0 || (e.target as HTMLElement).closest('button,input')) return;
                         e.preventDefault();
                         e.currentTarget.setPointerCapture(e.pointerId);
                         dragKey.current = key;
                         setDragging(true);
                       },
                       onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
-                        if (e.pointerType === 'mouse' || !dragKey.current) return;
+                        if (!dragKey.current) return;
                         const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-cell-key]');
                         const k = hit?.getAttribute('data-cell-key') ?? null;
                         setOverKey(k && k !== dragKey.current ? k : null);
                       },
                       onPointerUp: (e: React.PointerEvent<HTMLElement>) => {
-                        if (e.pointerType === 'mouse') return;
+                        if (!dragKey.current) return;
                         const under = document.elementFromPoint(e.clientX, e.clientY);
                         const k = under?.closest('[data-cell-key]')?.getAttribute('data-cell-key') ?? (under?.closest('[data-grid]') ? 'end:0' : null);
                         if (dragKey.current && k && k !== dragKey.current) moveField(section, dragKey.current, k);
@@ -308,7 +305,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       },
                       onPointerCancel: endDrag,
                       style: { touchAction: 'none' } as const,
-                      className: 'flex cursor-grab items-center justify-between gap-3 pb-1 active:cursor-grabbing',
+                      className: 'flex cursor-grab select-none items-center justify-between gap-3 pb-1 active:cursor-grabbing',
                     };
                     const gripIcon = <GripVertical className="h-4 w-4 shrink-0 text-slate-600 hover:text-[#301D5D]" aria-hidden="true" />;
                     const xBtn = (label: string, onClick: () => void) => (
