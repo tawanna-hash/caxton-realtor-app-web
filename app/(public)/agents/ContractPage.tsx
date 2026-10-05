@@ -178,9 +178,6 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
             ['Buyer Names', deal.buyerNames, (v: string) => onParties('buyerNames', v), ''],
             ['Seller Names', deal.sellerNames, (v: string) => onParties('sellerNames', v), ''],
             ['Lender', deal.lender, (v: string) => onPatch({ lender: v }), ''],
-            ['Other Agent', deal.otherAgent, (v: string) => onPatch({ otherAgent: v }), ''],
-            ['Brokerage', deal.otherBrokerage, (v: string) => onPatch({ otherBrokerage: v }), ''],
-            ['Contact Information', deal.otherAgentContact, (v: string) => onPatch({ otherAgentContact: v }), 'sm:col-span-2'],
           ] as const).map(([label, value, set, span]) => (
             <label key={label} className={`block min-w-0 ${span}`}>
               <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
@@ -191,7 +188,6 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Contract Terms">
-        {deal.effectiveDate && <p className="border-b border-[#E6E5EC] px-5 py-3 text-xs text-slate-500">Signed {shortDate(deal.effectiveDate)}</p>}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3">
           {terms.map((t) => (
             <button
