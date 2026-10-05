@@ -32,7 +32,7 @@ const DEALS_VIEW = { id: 'deals', label: 'Deals', keys: [] as string[] };
 const ALERT_SETUP_VIEW = { id: 'alert-setup', label: 'Alert Setup', keys: [] as string[] };
 const CLOSINGS_VIEW = { id: 'closings', label: 'Closings', keys: [] as string[] };
 const CONTACTS_VIEW = { id: 'contacts', label: 'Contacts', keys: [] as string[] };
-const SETTINGS_VIEW = { id: 'coordinator', label: 'Settings', keys: ['assist', 'alerts', 'calendar-link', 'agent-details'] };
+const SETTINGS_VIEW = { id: 'coordinator', label: 'Settings', keys: ['assist', 'alerts', 'calendar-link', 'agent-details', 'mls'] };
 const UTILITIES_VIEW = { id: 'utilities', label: 'Utilities', keys: [] as string[] };
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, SETTINGS_VIEW, UTILITIES_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug };
@@ -1015,6 +1015,17 @@ export default function ClosingTime({
     return () => rail.removeEventListener('click', onClick);
   }, [ready]);
   const BROKER_FOOTER_KEY = `closing-time-broker-footer:${realtorId}`;
+  const [mlsSetup, setMlsSetup] = useState<Record<string, { status: string; broker: string }>>({});
+  useEffect(() => {
+    try { const raw = window.localStorage.getItem('closing-time-mls-setup'); if (raw) setMlsSetup(JSON.parse(raw) as Record<string, { status: string; broker: string }>); } catch { /* ignore */ }
+  }, []);
+  const updateMlsSetup = (id: string, patch: Partial<{ status: string; broker: string }>) => {
+    setMlsSetup((current) => {
+      const next = { ...current, [id]: { status: current[id]?.status ?? 'Not Started', broker: current[id]?.broker ?? '', ...patch } };
+      try { window.localStorage.setItem('closing-time-mls-setup', JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
   const [brokerFooter, setBrokerFooter] = useState({ brokerage: '', address: '', agentId: '', agentName: '', brokerName: '', brokerEmail: '' });
   const accountSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [accountSave, setAccountSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -2879,6 +2890,43 @@ export default function ClosingTime({
                 ))}
               </div>
               <p className="mt-3 text-xs text-slate-500" role="status">{accountSave === 'saving' ? 'Saving to your account...' : accountSave === 'error' ? 'Could not save to your account. Your entries are kept on this browser. Try again.' : 'Saved to your account.'}</p>
+            </div>
+            <div data-section-key="mls" className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-lg font-semibold text-gray-900">MLS Connection Setup</h3>
+                <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{Object.values(mlsSetup).filter((item) => item.status === 'Connected').length} Of 2 Connected</span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">An MLS shares listing data through a licensed feed, not a login. Your broker applies as the sponsor, the MLS approves your use, then sends credentials. Track each step here.</p>
+              <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-600">
+                <li>Ask your sponsoring broker to start the vendor registration.</li>
+                <li>Wait for the MLS to verify the application and confirm pricing.</li>
+                <li>Receive the credential and send it to be added securely.</li>
+              </ol>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {([
+                  ['unlock', 'Unlock MLS', 'Austin', 'https://www.unlockmls.com/data-licensing'],
+                  ['sabor', 'SABOR MLS', 'San Antonio', 'https://sabor.com/for-members/multiple-listing-service/idx-feeds-and-technical-services/'],
+                ] as const).map(([id, name, market, url]) => (
+                  <div key={id} className="min-w-0 rounded-md border border-slate-200 bg-white p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-bold text-slate-900">{name}</p>
+                      <span className="text-xs text-slate-500">{market}</span>
+                    </div>
+                    <label className="mt-3 block">
+                      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Status</span>
+                      <select value={mlsSetup[id]?.status ?? 'Not Started'} onChange={(event) => updateMlsSetup(id, { status: event.target.value })} className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm">
+                        {['Not Started', 'Broker Contacted', 'Application Submitted', 'Approved', 'Connected'].map((option) => <option key={option}>{option}</option>)}
+                      </select>
+                    </label>
+                    <label className="mt-3 block">
+                      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Sponsoring Broker Email</span>
+                      <input type="email" value={mlsSetup[id]?.broker ?? ''} onChange={(event) => updateMlsSetup(id, { broker: event.target.value })} placeholder="broker@example.com" className="h-9 w-full rounded-md border border-slate-300 px-2 text-sm" />
+                    </label>
+                    <a href={url} target="_blank" rel="noreferrer" className="ds-row-btn mt-3">Open {name} Application</a>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-slate-500">Status is saved on this device. Credentials are not stored here.</p>
             </div>
             <div data-section-key="calendar-link" className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
               <h3 className="text-lg font-semibold text-gray-900">Calendar Link</h3>
