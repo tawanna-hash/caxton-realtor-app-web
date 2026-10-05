@@ -625,6 +625,7 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     auditLocked: false,
     dealType: 'purchase',
     agentSide: '',
+    isTemplate: false,
     buyerRepForm: '',
     contractForm: '20',
     yearBuilt: '',
@@ -1306,7 +1307,7 @@ export default function ClosingTime({
         restoredDealId = null;
       }
       if (initialView && DESK_VIEWS.some((v) => v.id === initialView)) { setDeskView(initialView); setWorkspacePage(2); }
-      setActiveDealId(restoredDealId ?? hydratedWorkspace.deals[0]?.id ?? null);
+      setActiveDealId(restoredDealId ?? (hydratedWorkspace.deals.find((d) => !d.isTemplate) ?? hydratedWorkspace.deals[0])?.id ?? null);
       setReady(true);
       setSyncState(cloudWorkspace ? 'ready' : 'loading');
     });
@@ -1413,8 +1414,28 @@ export default function ClosingTime({
     deal.reminders.every((reminder) => reminder.complete) &&
     deal.documents.every((document) => document.complete || isReadinessItemHidden(document.id, effectiveAgentSide(deal)));
   const isDealClosedAndComplete = (deal: AgentDeal) => deal.auditLocked || (Boolean(deal.closeoutOutcome) && isDealFullyComplete(deal));
-  const activeDeals = deals.filter((deal) => !isDealClosedAndComplete(deal));
-  const closedDeals = deals.filter((deal) => isDealClosedAndComplete(deal));
+  const templateDeal = deals.find((deal) => deal.isTemplate) ?? null;
+  const liveDeals = deals.filter((deal) => !deal.isTemplate);
+  const activeDeals = liveDeals.filter((deal) => !isDealClosedAndComplete(deal));
+  const closedDeals = liveDeals.filter((deal) => isDealClosedAndComplete(deal));
+  const templateCreatedRef = useRef(false);
+  useEffect(() => {
+    if (!ready || templateDeal || templateCreatedRef.current) return;
+    templateCreatedRef.current = true;
+    const base = newDeal(trecFormVersion.id);
+    const template: AgentDeal = {
+      ...base,
+      title: 'Template',
+      isTemplate: true,
+      contractCustomFields: AGENT_DESK_TEMPLATE.contractCustomFields.map((field) => ({ ...field })),
+      contractFieldOrder: Object.fromEntries(Object.entries(AGENT_DESK_TEMPLATE.contractFieldOrder).map(([key, list]) => [key, [...list]])),
+      contractHiddenFields: [...AGENT_DESK_TEMPLATE.contractHiddenFields],
+      contractFieldLabels: { ...AGENT_DESK_TEMPLATE.contractFieldLabels },
+      selectedFormFamilies: { ...base.selectedFormFamilies, '20': true, '55': true, IABS: true },
+    };
+    persistDeals([template, ...deals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, templateDeal]);
   const upcomingClosingDays = activeDeals.flatMap((deal) => {
     const days = daysUntilClosing(deal.closingDate, today);
     return deal.status !== 'completed' && days !== null && days >= 0 ? [days] : [];
@@ -1460,7 +1481,7 @@ export default function ClosingTime({
     const windowEnd = addDays(today, 14);
     const items: RadarItem[] = [];
 
-    deals.filter((deal) => deal.status !== 'completed' && !isDealClosedAndComplete(deal)).forEach((deal) => {
+    liveDeals.filter((deal) => deal.status !== 'completed' && !isDealClosedAndComplete(deal)).forEach((deal) => {
       dealDeadlines(deal).forEach((deadline) => {
         if (deadline.date <= windowEnd && deadline.date >= addDays(today, -7)) {
           items.push({
@@ -1503,7 +1524,7 @@ export default function ClosingTime({
     return items.sort((left, right) => left.date.localeCompare(right.date)).slice(0, 10);
   })();
 
-  const reviewAlerts = deals.flatMap((deal) => {
+  const reviewAlerts = liveDeals.flatMap((deal) => {
     if (deal.status === 'completed') return [];
     const label = deal.propertyAddress || deal.title;
     return buildTrecValidation(
@@ -1514,10 +1535,10 @@ export default function ClosingTime({
   });
 
 
-  const activeDealCount = deals.filter((deal) => deal.status !== 'completed').length;
+  const activeDealCount = liveDeals.filter((deal) => deal.status !== 'completed').length;
   const overviewDealCount = activeDeals.filter((deal) => deal.status !== 'completed').length;
-  const closingSoonCount = deals.filter((deal) => deal.status !== 'completed' && deal.closingDate >= today && deal.closingDate <= addDays(today, 30)).length;
-  const overdueTaskCount = deals.flatMap((deal) => deal.tasks).filter((task) => !task.complete && task.dueDate < today).length;
+  const closingSoonCount = liveDeals.filter((deal) => deal.status !== 'completed' && deal.closingDate >= today && deal.closingDate <= addDays(today, 30)).length;
+  const overdueTaskCount = liveDeals.flatMap((deal) => deal.tasks).filter((task) => !task.complete && task.dueDate < today).length;
 
   const createDeal = (dealType?: AgentDeal['dealType'], agentSide?: AgentDeal['agentSide']) => {
     const base = newDeal(trecFormVersion.id);
@@ -1525,16 +1546,20 @@ export default function ClosingTime({
     const seededTasks = templateTaskIdsFor(dealType, agentSide).flatMap((id) => TASK_TEMPLATES.find((t) => t.id === id)?.tasks ?? [])
       .filter((title, index, all) => all.indexOf(title) === index)
       .map((title) => ({ id: getId('task'), title, dueDate: '', priority: 'normal' as const, status: 'todo' as const, complete: false }));
+    const layout = templateDeal ?? AGENT_DESK_TEMPLATE;
+    const seededTitles = new Set(seededTasks.map((task) => task.title));
+    const extraTasks = (templateDeal?.tasks ?? []).filter((task) => !seededTitles.has(task.title))
+      .map((task) => ({ id: getId('task'), title: task.title, dueDate: '', priority: task.priority, status: 'todo' as const, complete: false }));
     const deal = {
       ...base,
       ...(dealType ? { dealType } : {}),
       ...(agentSide ? { agentSide } : {}),
-      contractCustomFields: AGENT_DESK_TEMPLATE.contractCustomFields.map((field) => ({ ...field })),
-      contractFieldOrder: Object.fromEntries(Object.entries(AGENT_DESK_TEMPLATE.contractFieldOrder).map(([key, list]) => [key, [...list]])),
-      contractHiddenFields: [...AGENT_DESK_TEMPLATE.contractHiddenFields],
-      contractFieldLabels: { ...AGENT_DESK_TEMPLATE.contractFieldLabels },
-      tasks: seededTasks,
-      selectedFormFamilies: { ...base.selectedFormFamilies, '20': true, '55': true, IABS: true },
+      contractCustomFields: layout.contractCustomFields.map((field) => ({ ...field, value: '' })),
+      contractFieldOrder: Object.fromEntries(Object.entries(layout.contractFieldOrder).map(([key, list]) => [key, [...list]])),
+      contractHiddenFields: [...layout.contractHiddenFields],
+      contractFieldLabels: { ...layout.contractFieldLabels },
+      tasks: [...seededTasks, ...extraTasks],
+      selectedFormFamilies: { ...base.selectedFormFamilies, ...(templateDeal?.selectedFormFamilies ?? {}), '20': true, '55': true, IABS: true },
     };
     persistDeals([deal, ...deals]);
     setActiveDealId(deal.id);
@@ -1951,7 +1976,7 @@ export default function ClosingTime({
 
   const removeDeal = (dealId: string) => {
     const dealToRemove = deals.find((deal) => deal.id === dealId);
-    if (dealToRemove && isDealLocked(dealToRemove)) return;
+    if (dealToRemove && (isDealLocked(dealToRemove) || dealToRemove.isTemplate)) return;
     const nextDeals = deals.filter((deal) => deal.id !== dealId);
     persistDeals(nextDeals);
     setActiveDealId(nextDeals[0]?.id ?? null);
@@ -2022,7 +2047,7 @@ export default function ClosingTime({
   };
 
   const exportAllDealsCalendar = () => {
-    const events = calendarEventsForActiveDeals(deals);
+    const events = calendarEventsForActiveDeals(liveDeals);
     downloadCalendar(events, 'realty-news-now-active-deal-dates.ics');
     trackEvent('closing_time_calendar_exported', { scope: 'all_active_deals' });
   };
@@ -2450,7 +2475,23 @@ export default function ClosingTime({
               </li>
             </ul>
             <ul className="ds-deals">
-              {deals.length === 0 && <li className="px-3 py-3 text-sm text-slate-500">No deals yet.</li>}
+              {templateDeal && (
+                <li className="relative">
+                  <button
+                    type="button"
+                    aria-current={templateDeal.id === activeDealId && workspacePage === 2 && DEAL_TABS.some((t) => t.id === effectiveView) ? 'true' : undefined}
+                    onClick={() => { setActiveDealId(templateDeal.id); setWorkspacePage(2); if (!DEAL_TABS.some((t) => t.id === deskView)) setDeskView('d-overview'); setFormsStatusDealId(templateDeal.id); }}
+                    className="ds-deal"
+                  >
+                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#7059A8]" aria-hidden="true" />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm">Template</span>
+                      <span className="block truncate text-xs ds-sub">Edits Apply To New Contracts</span>
+                    </span>
+                  </button>
+                </li>
+              )}
+              {liveDeals.length === 0 && <li className="px-3 py-3 text-sm text-slate-500">No deals yet.</li>}
               {[...activeDeals, ...closedDeals].map((deal) => {
                 const days = daysUntilClosing(deal.closingDate, today);
                 const closed = isDealClosedAndComplete(deal);
@@ -2591,7 +2632,7 @@ export default function ClosingTime({
                   map.set(key, { key, name: cleaned, email, phone, role: role.trim(), dealIds: [deal.id], active: !closed, last: deal.updatedAt, client });
                 }
               };
-              deals.forEach((deal) => {
+              liveDeals.forEach((deal) => {
                 deal.clientContacts.forEach((p) => add(deal, p.name, p.email ?? '', p.phone ?? '', p.role ?? '', false));
                 [deal.buyerNames, deal.sellerNames].forEach((names, i) => (names || '').split(/\s*(?:&|,|\band\b)\s*/i).forEach((n) => add(deal, n, '', '', i === 0 ? 'Buyer' : 'Seller', true)));
               });
@@ -2653,8 +2694,8 @@ export default function ClosingTime({
             })()}
             {effectiveView === 'closings' && (() => {
               const stageList = TREC_DEAL_WORKFLOW_STATUSES.filter((status) => status !== 'cancelled');
-              const inFlight = deals.filter((deal) => !isDealClosedAndComplete(deal)).sort((a, b) => (a.closingDate || '9999').localeCompare(b.closingDate || '9999'));
-              const closedList = deals.filter((deal) => isDealClosedAndComplete(deal));
+              const inFlight = liveDeals.filter((deal) => !isDealClosedAndComplete(deal)).sort((a, b) => (a.closingDate || '9999').localeCompare(b.closingDate || '9999'));
+              const closedList = liveDeals.filter((deal) => isDealClosedAndComplete(deal));
               const typeLabel: Record<string, string> = { purchase: 'Buy side', listing_sale: 'Sell side', listing_lease: 'Lease listing', lease: 'Lease', real_estate_other: 'Other', other: 'Other' };
               const openDeal = (deal: (typeof deals)[number]) => { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setDeskView('deal-page'); };
               const row = (deal: (typeof deals)[number]) => {
@@ -2723,7 +2764,7 @@ export default function ClosingTime({
                 return `${days} days ago`;
               };
               const q = dealsQuery.trim().toLowerCase();
-              const rows = deals.filter((deal) => {
+              const rows = liveDeals.filter((deal) => {
                 const closed = isDealClosedAndComplete(deal);
                 if (dealsTab === 'active' && closed) return false;
                 if (dealsTab === 'closed' && !closed) return false;
@@ -2743,7 +2784,7 @@ export default function ClosingTime({
                     </button>
                   </div>
                   <div className="ds-tabs" role="tablist" aria-label="Deal filter">
-                    {([['all', 'All deals', deals.length], ['active', 'Active', activeDeals.length], ['closed', 'Closed', closedDeals.length]] as const).map(([id, label, count]) => (
+                    {([['all', 'All deals', liveDeals.length], ['active', 'Active', activeDeals.length], ['closed', 'Closed', closedDeals.length]] as const).map(([id, label, count]) => (
                       <button key={id} type="button" role="tab" aria-selected={dealsTab === id} aria-current={dealsTab === id ? 'page' : undefined} onClick={() => setDealsTab(id)} className="ds-tab">{label} <span className="ds-tab-count">{count}</span></button>
                     ))}
                   </div>

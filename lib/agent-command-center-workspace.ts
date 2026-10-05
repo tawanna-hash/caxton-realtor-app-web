@@ -154,6 +154,7 @@ export const agentDealSchema = z.object({
   trecFormVersionId: optionalShortText(120).default('built-in-trec-20-19'),
   closeoutOutcome: optionalShortText(120), closeoutDate: dateText.default(''), closeoutNote: optionalShortText(2_000),
   auditLocked: z.boolean().default(false),
+  isTemplate: z.boolean().default(false),
   buyerRepForm: z.enum(['', '1501', '1507', '1508']).default(''),
   contractForm: z.enum(['20', '30', '9', '25', '24', '23']).default('20'),
   yearBuilt: optionalShortText(8),
