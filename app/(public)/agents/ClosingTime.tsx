@@ -2472,10 +2472,10 @@ export default function ClosingTime({
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
               <nav aria-label="Deal sections" className="ds-dealnav mb-4">
-                {([['Deal', ['d-overview', 'd-documents', 'd-people']], ['Contract', ['transaction']], ['Work', ['tasks', 'readiness', 'audit']]] as const).map(([group, ids]) => (
+                {([['Deal', ['d-overview', 'transaction']], ['Work', ['d-documents', 'd-people', 'tasks', 'readiness', 'audit']]] as const).map(([group, ids]) => (
                   <div key={group} className="ds-dealnav-group" role="group" aria-label={group}>
                     <span className="ds-dealnav-label">{group}</span>
-                    {DEAL_TABS.filter((tab) => (ids as readonly string[]).includes(tab.id)).map((tab) => (
+                    {(ids as readonly string[]).map((id) => DEAL_TABS.find((tab) => tab.id === id)).filter((tab): tab is (typeof DEAL_TABS)[number] => Boolean(tab)).map((tab) => (
                       <button key={tab.id} type="button" className="ds-tab" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)}>{tab.label}</button>
                     ))}
                   </div>
