@@ -34,7 +34,7 @@ const ALL_PURCHASE_FOLDERS: PurchaseFolder[] = [
     docs: [
       d('pd-iabs', 'Buyer: Information About Brokerage Services', 'required', 'IABS'),
       d('pd-buyer-rep-agreement', 'Residential Buyer/Tenant Representation Agreement', 'required'),
-      d('pd-wire-fraud-alert', 'Wire Fraud Alert For Buyers', 'required'),
+      d('pd-wire-fraud-alert', 'Wire Fraud Alert Or Wire Fraud Notice (TXR 2517)', 'required'),
       d('pd-sales-disclosure-tx', 'Sales Disclosure - TX', 'required'),
       d('pd-affiliated-business', 'Affiliated Business Arrangement Disclosure', 'required'),
       d('pd-nar-disclosure', 'NAR Seller/Buyers Disclosure', 'optional'),
@@ -45,15 +45,17 @@ const ALL_PURCHASE_FOLDERS: PurchaseFolder[] = [
     id: 'buyer-contract', label: 'Buyer Under Contract Documents',
     docs: [
       d('pd-residential-contract', 'One to Four Family Residential Contract (Resale)', 'required', '20'),
-      d('pd-commission-intake', 'Commission Intake Form', 'optional'),
+      d('pd-commission-intake', 'Commission Intake Form', 'required'),
       d('pd-compensation-agreement', 'Compensation Agreement Between Brokers', 'optional'),
       d('pd-executed-contract-receipt', 'Executed Contract Receipted By Title Co.', 'required'),
       d('pd-sellers-disclosure-notice', 'Sellers Disclosure Notice', 'required', '55'),
       d('pd-tax-record', 'Tax Record', 'required'),
       d('pd-cma', 'Comparative Market Analysis (CMA or Comps)', 'required'),
-      d('pd-mls-printout', 'MLS Printout (Under Contract)', 'optional'),
+      d('pd-mls-printout', 'MLS Printout (Option/Pending Status)', 'required'),
+      d('pd-em-option-receipt', 'Earnest Money & Option Money Receipted Page (Both Receipted)', 'required'),
+      d('pd-preapproval-pof', 'Pre-Approval Letter Or Proof Of Funds', 'required'),
       d('pd-third-party-financing', 'Third-Party Financing Addendum', 'optional'),
-      d('pd-existing-survey-t47', 'Existing Survey & T-47', 'optional'),
+      d('pd-existing-survey-t47', 'Survey & T-47 (Survey Not Required On Cash Deals; T-47 Not Needed With A New Survey)', 'required'),
       d('pd-notice-to-purchaser', 'Notice To Purchaser Document', 'optional'),
       d('pd-hoa-addendum', 'HOA Addendum', 'optional'),
       d('pd-lead-paint-addendum', 'Lead Based Paint Addendum', 'optional'),
@@ -114,16 +116,25 @@ const ALL_LISTING_FOLDERS: PurchaseFolder[] = [
   {
     id: 'listing-rep', label: 'Listing Representation Documents',
     docs: [
+      d('ld-mls-active', 'MLS Printout Showing Status Active (Subagent Shows 0%)', 'required'),
       reuse('pd-iabs', 'required', 'Seller: Information About Brokerage Services'),
       d('ld-listing-agreement', 'Residential Real Estate Listing Agreement (TXR 1101 Or Attorney-Drafted)', 'required', 'TXR1101'),
       d('ld-consumer-protection-notice', 'Consumer Protection Notice Displayed (Office, Website, Social Profiles)', 'required'),
-      d('ld-wire-fraud-alert', 'Wire Fraud Alert For Sellers', 'required'),
+      d('ld-wire-fraud-alert', 'Wire Fraud Alert Or Wire Fraud Notice (TXR 2517)', 'required'),
       reuse('pd-sellers-disclosure-notice', 'required', "Seller's Disclosure Notice (TREC 55-1 Or TXR 1406)"),
-      d('ld-mls-input', 'MLS Listing Input Form', 'required'),
-      reuse('pd-tax-record', 'required'),
+      reuse('pd-affiliated-business', 'required', 'Affiliated Business Arrangement Disclosure Statement (ABA) For Sellers'),
+      reuse('pd-tax-record', 'required', 'Tax Information Sheet'),
+      d('ld-survey', 'Survey (Not Required On Cash Deals)', 'required'),
+      d('ld-t47', 'Residential Real Property Affidavit (T-47, TXR 1907, Notarized; Not Needed With A New Survey)', 'required'),
       reuse('pd-cma', 'required', 'Comparative Market Analysis (Listing Price)'),
+      reuse('pd-sales-disclosure-tx', 'required'),
+      reuse('pd-commission-intake', 'required'),
       d('ld-hoa-info', 'HOA Information And Resale Certificate', 'optional'),
-      d('ld-net-sheet', "Seller's Net Sheet", 'optional'),
+      d('ld-net-sheet', "Seller's Net Sheet (Signed By Seller)", 'optional'),
+      d('ld-septic-disclosure', 'Information About On-Site Sewer Facility (TXR 1407)', 'optional'),
+      d('ld-mud-disclosure', 'MUD Disclosure (If Applicable)', 'optional'),
+      d('ld-listing-amendment', 'Listing Amendment For Extensions And Price Changes (TXR 1404)', 'optional'),
+      d('ld-listing-termination', 'Listing Termination Agreement (TXR 1410)', 'optional'),
       reuse('pd-groundwater-disclosure-1', 'optional'),
     ],
   },
@@ -131,7 +142,9 @@ const ALL_LISTING_FOLDERS: PurchaseFolder[] = [
     id: 'listing-contract', label: 'Listing Under Contract Documents',
     docs: [
       reuse('pd-residential-contract', 'required'),
-      reuse('pd-executed-contract-receipt', 'required'),
+      reuse('pd-executed-contract-receipt', 'required', 'Receipted Residential Contract'),
+      d('ld-em-receipt', 'Earnest Money Receipt', 'required'),
+      d('ld-mls-pending', 'MLS Printout Showing Pending Status', 'required'),
       d('ld-buyer-agent-comp', 'Buyer Agent Compensation Agreement', 'optional'),
       reuse('pd-third-party-financing', 'optional'),
       reuse('pd-amendment', 'optional'),
@@ -186,6 +199,9 @@ export function dealFolders(deal: FolderDeal): PurchaseFolder[] {
   const financing = (deal?.contractDetails?.financingType ?? '').trim().toLowerCase();
   const needsFinancing = Boolean(financing) && !/^cash\b/.test(financing);
   const year = Number.parseInt(deal?.yearBuilt ?? '', 10);
+  const isCash = /^cash\b/.test(financing);
+  const form = deal?.contractForm || '20';
+  const noDisclosure = ['24', '23', '9'].includes(form);
   const needsLead = Number.isFinite(year) && year > 0 && year < 1978;
   const rep = BUYER_REP_FORM_OPTIONS.find((o) => o.value === deal?.buyerRepForm);
   const contract = CONTRACT_FORM_OPTIONS.find((o) => o.value === (deal?.contractForm || '20'));
@@ -195,6 +211,10 @@ export function dealFolders(deal: FolderDeal): PurchaseFolder[] {
       if (doc.id === 'pd-buyer-rep-agreement' && rep) return { ...doc, label: rep.label };
       if (doc.id === 'pd-residential-contract' && contract) return { ...doc, label: contract.label, formFamily: contract.value };
       if (doc.id === 'pd-third-party-financing') return { ...doc, formFamily: '40', kind: needsFinancing ? 'required' : doc.kind };
+      if (isCash && (doc.id === 'ld-survey' || doc.id === 'pd-existing-survey-t47')) return { ...doc, kind: 'optional' };
+      if (noDisclosure && doc.id === 'pd-sellers-disclosure-notice') return { ...doc, kind: 'optional' };
+      if (form === '25' && doc.id === 'ld-septic-disclosure') return { ...doc, kind: 'required' };
+      if (form === '25' && doc.id === 'ld-listing-agreement') return { ...doc, label: 'Farm And Ranch Real Estate Listing Agreement (TXR 1201)', formFamily: undefined };
       return doc;
     }),
   }));
