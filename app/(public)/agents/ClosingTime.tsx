@@ -2763,7 +2763,7 @@ export default function ClosingTime({
                 />
               );
             })()}
-            {effectiveView === 'd-overview' && (() => {
+            {DEAL_TABS.some((t) => t.id === effectiveView) && (() => {
               const deal = activeDeal;
               if (!deal) return null;
               const nextDeadline = dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
