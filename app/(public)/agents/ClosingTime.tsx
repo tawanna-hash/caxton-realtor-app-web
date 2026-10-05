@@ -86,7 +86,8 @@ import MlsConnectionsCard from './MlsConnectionsCard';
 const SellerNetSheetClient = dynamic(() => import('../resources/seller-net-sheet/SellerNetSheetClient'), { ssr: false });
 const CommissionCalculatorClient = dynamic(() => import('../resources/commission-calculator/CommissionCalculatorClient'), { ssr: false });
 const BuyerClosingCostsClient = dynamic(() => import('../resources/buyer-closing-costs/BuyerClosingCostsClient'), { ssr: false });
-import DealSubpage from './DealSubpage';
+import DealSubpage, { TASK_TEMPLATES } from './DealSubpage';
+import { AGENT_DESK_TEMPLATE, templateTaskIdsFor } from '@/lib/agent-desk-template';
 import {
   buildClosingTimeIcs,
   calendarEventsForActiveDeals,
@@ -1520,7 +1521,20 @@ export default function ClosingTime({
   const createDeal = (dealType?: AgentDeal['dealType'], agentSide?: AgentDeal['agentSide']) => {
     const base = newDeal(trecFormVersion.id);
     // Pre-tick the required TREC forms: the One to Four Family contract, the Seller's Disclosure Notice and IABS.
-    const deal = { ...base, ...(dealType ? { dealType } : {}), ...(agentSide ? { agentSide } : {}), selectedFormFamilies: { ...base.selectedFormFamilies, '20': true, '55': true, IABS: true } };
+    const seededTasks = templateTaskIdsFor(dealType, agentSide).flatMap((id) => TASK_TEMPLATES.find((t) => t.id === id)?.tasks ?? [])
+      .filter((title, index, all) => all.indexOf(title) === index)
+      .map((title) => ({ id: getId('task'), title, dueDate: '', priority: 'normal' as const, status: 'todo' as const, complete: false }));
+    const deal = {
+      ...base,
+      ...(dealType ? { dealType } : {}),
+      ...(agentSide ? { agentSide } : {}),
+      contractCustomFields: AGENT_DESK_TEMPLATE.contractCustomFields.map((field) => ({ ...field })),
+      contractFieldOrder: Object.fromEntries(Object.entries(AGENT_DESK_TEMPLATE.contractFieldOrder).map(([key, list]) => [key, [...list]])),
+      contractHiddenFields: [...AGENT_DESK_TEMPLATE.contractHiddenFields],
+      contractFieldLabels: { ...AGENT_DESK_TEMPLATE.contractFieldLabels },
+      tasks: seededTasks,
+      selectedFormFamilies: { ...base.selectedFormFamilies, '20': true, '55': true, IABS: true },
+    };
     persistDeals([deal, ...deals]);
     setActiveDealId(deal.id);
     setPendingRemoval(null);
