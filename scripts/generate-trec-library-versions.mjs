@@ -30,7 +30,7 @@ function fieldType(field) {
 
 const versions = [];
 for (const item of catalog) {
-  if (['20', '40', '49'].includes(item.formFamily)) continue;
+  if (['20', '40', '49'].includes(item.formFamily) || (item.formFamily.startsWith('TXR') && item.formFamily !== 'TXR1101')) continue;
   const pdfPath = path.join(root, 'public', item.pdfUrl);
   const document = await PDFDocument.load(fs.readFileSync(pdfPath));
   const pages = document.getPages();
