@@ -96,7 +96,23 @@ function dayDiff(today: string, date: string): number {
 
 export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
+  const [waitingOnSigner, setWaitingOnSigner] = useState(0);
   const [brokerageForms, setBrokerageForms] = useState<{ id: string; title: string; url: string; filename: string; fillable?: boolean }[]>([]);
+  const signDealId = deal?.id;
+  useEffect(() => {
+    if (!signDealId || (stripOnly && !section)) return;
+    let cancelled = false;
+    fetch(`/api/closing-time/assist?dealId=${encodeURIComponent(signDealId)}`, { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { signing?: { envelopes?: { status: string }[]; requests?: { status: string }[] } } | null) => {
+        if (cancelled || !data?.signing) return;
+        const sentEnvelopes = (data.signing.envelopes ?? []).filter((item) => item.status === 'sent').length;
+        const sentRequests = (data.signing.requests ?? []).filter((item) => item.status === 'sent').length;
+        setWaitingOnSigner(Math.max(sentEnvelopes, sentRequests));
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [signDealId, stripOnly, section]);
   useEffect(() => {
     if (stripOnly && !section) return;
     let cancelled = false;
@@ -298,6 +314,86 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   );
   if (stripOnly) return <div className="ds-page ds-strip" data-testid="deal-strip">{progressStrip}</div>;
 
+  const renderSnapshotTop = () => {
+    const allReq = PURCHASE_FOLDERS.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' || deal.documentChecks[`add:${doc.id}`]);
+    const trackedDeadlines = [
+      ...(deadlines ?? []).map((item) => ({ id: item.id, label: item.label, date: item.date })),
+      ...(deal.closingDate ? [{ id: 'closing-date', label: 'Closing Date', date: deal.closingDate }] : []),
+    ].sort((l, r) => l.date.localeCompare(r.date)).map((item) => ({ ...item, done: Boolean(deal.documentChecks[`dl:${item.id}`]) }));
+    const alertChannels = alerts ? [alerts.emailEnabled ? 'Email' : '', alerts.pushEnabled ? 'Push' : ''].filter(Boolean) : [];
+    const nextAlert = alerts && alertChannels.length
+      ? trackedDeadlines.filter((item) => !item.done).flatMap((item) => alerts.reminderOffsets.map((offset) => ({ label: item.label, date: new Date(Date.parse(`${item.date}T12:00:00Z`) - offset * 86400000).toISOString().slice(0, 10) }))).filter((entry) => entry.date >= today).sort((l, r) => l.date.localeCompare(r.date))[0]
+      : undefined;
+    const tileBrokerage = brokerageForms.filter((form) => deal.documentChecks[`bf:${form.id}`]);
+    const tileSubmitted = allReq.filter((doc) => deal.documentChecks[doc.id]).length + tileBrokerage.filter((form) => deal.documentChecks[`bfs:${form.id}`]).length;
+    const tileStarted = allReq.filter((doc) => !deal.documentChecks[doc.id] && doc.formFamily && (trecForms ?? []).some((form) => form.formFamily === doc.formFamily && form.filled > 0)).length;
+    const tileTotal = allReq.length + tileBrokerage.length;
+    const tileNotStarted = Math.max(0, tileTotal - tileSubmitted - waitingOnSigner);
+    const tilePct = tileTotal ? Math.round((tileSubmitted / tileTotal) * 100) : 0;
+    const tile = (value: number, label: string) => (
+      <div className="rounded-lg bg-[#F6F3FB] px-4 py-3">
+        <p className="text-2xl font-semibold text-[#301D5D]">{value}</p>
+        <p className="text-xs text-slate-500">{label}</p>
+      </div>
+    );
+    return (
+      <>
+      <div className="ds-card">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-slate-900">Required Documents</p>
+          <button type="button" onClick={() => onOpenView('d-documents')}>Open</button>
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          {tile(tileSubmitted, 'Submitted')}
+          {tile(waitingOnSigner, 'Waiting On Signer')}
+          {tile(tileNotStarted, 'Not started')}
+        </div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={tilePct} aria-valuemin={0} aria-valuemax={100} aria-label="Required documents submitted"><div className="h-full bg-[#301D5D]" style={{ width: `${tilePct}%` }} /></div>
+        <p className="mt-2 text-xs text-slate-500">{tileSubmitted} of {tileTotal} submitted</p>
+      </div>
+      <div className="ds-card">
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">Contract Timeline</p>
+        <p className="mt-1 text-lg font-semibold text-slate-900">Pressing Deadlines</p>
+        <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules.</p>
+        {timelineFields}
+        {trackedDeadlines.length > 0 && (
+          <div className="mt-5 border-t border-[#E6E5EC] pt-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-slate-900">Deadline Tracking</p>
+              <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{trackedDeadlines.filter((item) => item.done).length} Of {trackedDeadlines.length} Done</span>
+            </div>
+            {trackedDeadlines.map((item) => {
+              const diff = dayDiff(today, item.date);
+              const chip = item.done ? { text: 'Done', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
+                : diff < 0 ? { text: `Overdue ${-diff} Day${diff === -1 ? '' : 's'}`, cls: 'bg-[#301D5D] text-white' }
+                : diff === 0 ? { text: 'Due Today', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
+                : { text: `Due In ${diff} Day${diff === 1 ? '' : 's'}`, cls: diff <= 3 ? 'bg-[#EFEAF8] text-[#301D5D]' : 'bg-slate-100 text-slate-600' };
+              return (
+                <div key={item.id} className="ds-list-row">
+                  <input type="checkbox" aria-label={`Mark ${item.label} done`} checked={item.done} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...deal.documentChecks, [`dl:${item.id}`]: e.target.checked })} />
+                  <span className="min-w-0 flex-1">
+                    <span className={`block truncate text-sm ${item.done ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{item.label}</span>
+                    <span className="block text-xs text-slate-500">{formatDate(item.date)}</span>
+                  </span>
+                  <span className={`ds-chip ${chip.cls}`}>{chip.text}</span>
+                </div>
+              );
+            })}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#F6F3FB] px-3 py-2.5 text-xs text-slate-600">
+              <span>
+                {alertChannels.length === 0 ? 'Alerts Are Off' : `Alerts By ${alertChannels.join(' And ')}`}
+                {alertChannels.length > 0 && alerts ? ` · ${[...alerts.reminderOffsets].sort((l, r) => r - l).map((o) => (o === 0 ? 'Due Today' : `${o}d`)).join(', ')}` : ''}
+                {nextAlert ? ` · Next Alert ${formatDate(nextAlert.date)} (${nextAlert.label})` : ''}
+              </span>
+              {onOpenAlerts && <button type="button" onClick={onOpenAlerts}>Manage Alerts</button>}
+            </div>
+          </div>
+        )}
+      </div>
+      </>
+    );
+  };
+
   const tabs: [Tab, string][] = [['tasks', `Tasks ${deal.tasks.length}`], ['history', 'History']];
 
   if ((section as string | undefined) === 'overview') {
@@ -308,7 +404,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     const upcoming = [...openTasks].sort((a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999')).slice(0, 6);
     const pct = (done: number, total: number) => (total ? Math.round((done / total) * 100) : 0);
     const reqDone = PURCHASE_REQUIRED_IDS.filter((id) => deal.documentChecks[id]).length;
-    const scheduled = deal.reminders.filter((r) => !r.complete).length;
     const stat = (label: string, value: string, tone?: string) => (
       <div className="min-w-0"><p className="ds-eyebrow">{label}</p><p className={`mt-1 text-xl font-semibold ${tone ?? 'text-slate-900'}`}>{value}</p></div>
     );
@@ -358,6 +453,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     );
     return (
       <div className="ds-page" data-testid="deal-snapshot">
+        <div className="mb-3 space-y-3">{renderSnapshotTop()}</div>
         <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="grid gap-3 md:grid-cols-2">
           <div className="ds-card">
@@ -399,15 +495,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                 );
               })}
             </ul>
-          </div>
-          <div className="ds-card">
-            <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">Deadlines And Reminders</p><button type="button" onClick={() => onOpenView('transaction')}>Open</button></div>
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              {stat('Next deadline', nextDeadline ? formatDate(nextDeadline.date) : '—', nextDeadline && nextDeadline.date < today ? 'text-[#9A3D2B]' : undefined)}
-              {stat('Closing', deal.closingDate ? formatDate(deal.closingDate) : '—')}
-              {stat('Reminders', String(scheduled))}
-            </div>
-            {nextDeadline && <p className="mt-3 text-xs text-slate-500">{nextDeadline.label}</p>}
           </div>
           <div className="ds-card">
             <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">People And Offers</p><button type="button" onClick={() => onOpenView('d-people')}>Open</button></div>
@@ -520,81 +607,8 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                 {p.phone ? <a href={`tel:${p.phone}`} aria-label={`Call ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : null}
               </div>
             );
-            const allReq = PURCHASE_FOLDERS.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' || deal.documentChecks[`add:${doc.id}`]);
-            const trackedDeadlines = [
-              ...(deadlines ?? []).map((item) => ({ id: item.id, label: item.label, date: item.date })),
-              ...(deal.closingDate ? [{ id: 'closing-date', label: 'Closing Date', date: deal.closingDate }] : []),
-            ].sort((l, r) => l.date.localeCompare(r.date)).map((item) => ({ ...item, done: Boolean(deal.documentChecks[`dl:${item.id}`]) }));
-            const alertChannels = alerts ? [alerts.emailEnabled ? 'Email' : '', alerts.pushEnabled ? 'Push' : ''].filter(Boolean) : [];
-            const nextAlert = alerts && alertChannels.length
-              ? trackedDeadlines.filter((item) => !item.done).flatMap((item) => alerts.reminderOffsets.map((offset) => ({ label: item.label, date: new Date(Date.parse(`${item.date}T12:00:00Z`) - offset * 86400000).toISOString().slice(0, 10) }))).filter((entry) => entry.date >= today).sort((l, r) => l.date.localeCompare(r.date))[0]
-              : undefined;
-            const tileBrokerage = brokerageForms.filter((form) => deal.documentChecks[`bf:${form.id}`]);
-            const tileSubmitted = allReq.filter((doc) => deal.documentChecks[doc.id]).length + tileBrokerage.filter((form) => deal.documentChecks[`bfs:${form.id}`]).length;
-            const tileStarted = allReq.filter((doc) => !deal.documentChecks[doc.id] && doc.formFamily && (trecForms ?? []).some((form) => form.formFamily === doc.formFamily && form.filled > 0)).length;
-            const tileTotal = allReq.length + tileBrokerage.length;
-            const tileNotStarted = tileTotal - tileSubmitted - tileStarted;
-            const tilePct = tileTotal ? Math.round((tileSubmitted / tileTotal) * 100) : 0;
-            const tile = (value: number, label: string) => (
-              <div className="rounded-lg bg-[#F6F3FB] px-4 py-3">
-                <p className="text-2xl font-semibold text-[#301D5D]">{value}</p>
-                <p className="text-xs text-slate-500">{label}</p>
-              </div>
-            );
             return (
               <div className="space-y-4">
-                <div className="ds-card">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-slate-900">Required Documents</p>
-                    <button type="button" onClick={() => onOpenView('d-documents')}>Open</button>
-                  </div>
-                  <div className="mt-3 grid grid-cols-3 gap-3">
-                    {tile(tileSubmitted, 'Submitted')}
-                    {tile(tileStarted, 'In progress')}
-                    {tile(tileNotStarted, 'Not started')}
-                  </div>
-                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={tilePct} aria-valuemin={0} aria-valuemax={100} aria-label="Required documents submitted"><div className="h-full bg-[#301D5D]" style={{ width: `${tilePct}%` }} /></div>
-                  <p className="mt-2 text-xs text-slate-500">{tileSubmitted} of {tileTotal} submitted</p>
-                </div>
-                <div className="ds-card">
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">Contract Timeline</p>
-                  <p className="mt-1 text-lg font-semibold text-slate-900">Pressing Deadlines</p>
-                  <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules.</p>
-                  {timelineFields}
-                  {trackedDeadlines.length > 0 && (
-                    <div className="mt-5 border-t border-[#E6E5EC] pt-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-slate-900">Deadline Tracking</p>
-                        <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{trackedDeadlines.filter((item) => item.done).length} Of {trackedDeadlines.length} Done</span>
-                      </div>
-                      {trackedDeadlines.map((item) => {
-                        const diff = dayDiff(today, item.date);
-                        const chip = item.done ? { text: 'Done', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
-                          : diff < 0 ? { text: `Overdue ${-diff} Day${diff === -1 ? '' : 's'}`, cls: 'bg-[#301D5D] text-white' }
-                          : diff === 0 ? { text: 'Due Today', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
-                          : { text: `Due In ${diff} Day${diff === 1 ? '' : 's'}`, cls: diff <= 3 ? 'bg-[#EFEAF8] text-[#301D5D]' : 'bg-slate-100 text-slate-600' };
-                        return (
-                          <div key={item.id} className="ds-list-row">
-                            <input type="checkbox" aria-label={`Mark ${item.label} done`} checked={item.done} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...deal.documentChecks, [`dl:${item.id}`]: e.target.checked })} />
-                            <span className="min-w-0 flex-1">
-                              <span className={`block truncate text-sm ${item.done ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{item.label}</span>
-                              <span className="block text-xs text-slate-500">{formatDate(item.date)}</span>
-                            </span>
-                            <span className={`ds-chip ${chip.cls}`}>{chip.text}</span>
-                          </div>
-                        );
-                      })}
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#F6F3FB] px-3 py-2.5 text-xs text-slate-600">
-                        <span>
-                          {alertChannels.length === 0 ? 'Alerts Are Off' : `Alerts By ${alertChannels.join(' And ')}`}
-                          {alertChannels.length > 0 && alerts ? ` · ${[...alerts.reminderOffsets].sort((l, r) => r - l).map((o) => (o === 0 ? 'Due Today' : `${o}d`)).join(', ')}` : ''}
-                          {nextAlert ? ` · Next Alert ${formatDate(nextAlert.date)} (${nextAlert.label})` : ''}
-                        </span>
-                        {onOpenAlerts && <button type="button" onClick={onOpenAlerts}>Manage Alerts</button>}
-                      </div>
-                    </div>
-                  )}
-                </div>
                 <div className="ds-snap-grid">
                   <div className="ds-card !p-0 self-start">
                     {cardHead(<AlertCircle className="h-4 w-4 text-amber-600" aria-hidden="true" />, 'Needs Your Attention', attentionRows.length, 'bg-amber-50 text-amber-700')}
@@ -671,8 +685,9 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             const formInfo = (family: string | undefined) => (family ? (trecForms ?? []).find((form) => form.formFamily === family) : undefined);
             const dealTypeLabel = ({ purchase: 'Residential Purchase', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Deal';
             const dueFor = (docId: string): { label: string; date: string } | null => {
-              if (docId === 'pd-closing-statement' || docId === 'pd-walkthrough') return deal.closingDate ? { label: 'Closing', date: deal.closingDate } : null;
+              if (docId === 'pd-closing-statement' || docId === 'pd-walkthrough') return deal.closingDate && !checks['dl:closing-date'] ? { label: 'Closing', date: deal.closingDate } : null;
               const id = DOC_DEADLINE_IDS[docId];
+              if (id && checks[`dl:${id}`]) return null;
               const match = id ? (deadlines ?? []).find((item) => item.id === id) : undefined;
               return match ? { label: match.label.replace(/\b([a-z])/g, (c) => c.toUpperCase()), date: match.date } : null;
             };
@@ -729,14 +744,52 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     </div>
                   ))}
                 </div>
+                {(() => {
+                  const linked = [
+                    ...Array.from(new Set(Object.values(DOC_DEADLINE_IDS))).map((id) => {
+                      const match = (deadlines ?? []).find((item) => item.id === id);
+                      return match ? { id, label: match.label, date: match.date, docs: Object.keys(DOC_DEADLINE_IDS).filter((key) => DOC_DEADLINE_IDS[key] === id) } : null;
+                    }),
+                    deal.closingDate ? { id: 'closing-date', label: 'Closing Date', date: deal.closingDate, docs: ['pd-walkthrough', 'pd-closing-statement'] } : null,
+                  ].filter((item): item is { id: string; label: string; date: string; docs: string[] } => Boolean(item)).sort((l, r) => l.date.localeCompare(r.date));
+                  if (linked.length === 0) return null;
+                  const doneCount = linked.filter((item) => checks[`dl:${item.id}`]).length;
+                  return (
+                    <div className="ds-card ds-list">
+                      <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                        <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Deadline Completion</span>
+                        <span className="text-xs font-medium text-slate-500">{doneCount} Of {linked.length} Done</span>
+                      </div>
+                      {linked.map((item) => {
+                        const done = Boolean(checks[`dl:${item.id}`]);
+                        const diff = dayDiff(today, item.date);
+                        const chip = done ? { text: 'Done', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
+                          : diff < 0 ? { text: `Overdue ${-diff} Day${diff === -1 ? '' : 's'}`, cls: 'bg-[#301D5D] text-white' }
+                          : diff === 0 ? { text: 'Due Today', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
+                          : { text: `Due In ${diff} Day${diff === 1 ? '' : 's'}`, cls: diff <= 3 ? 'bg-[#EFEAF8] text-[#301D5D]' : 'bg-slate-100 text-slate-600' };
+                        const docLabels = allDocs.filter((doc) => item.docs.includes(doc.id) && (doc.kind === 'required' || isAdded(doc.id))).map((doc) => doc.label);
+                        return (
+                          <div key={item.id} className="ds-list-row">
+                            <input type="checkbox" aria-label={`Mark ${item.label} done`} checked={done} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...checks, [`dl:${item.id}`]: e.target.checked })} />
+                            <span className="min-w-0 flex-1">
+                              <span className={`block truncate text-sm ${done ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{item.label} · {formatDate(item.date)}</span>
+                              {docLabels.length > 0 && <span className="block truncate text-xs text-slate-500">{docLabels.join(' · ')}</span>}
+                            </span>
+                            <span className={`ds-chip ${chip.cls}`}>{chip.text}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
                 {trecForms && (
                   <div className="ds-card ds-list">
                     <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
-                      <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Forms On This Deal</span>
+                      <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Additional Documents</span>
                       <span className="text-xs font-medium text-slate-500">{dealForms.length}</span>
                     </div>
                     {dealForms.length === 0 ? (
-                      <p className="px-4 py-4 text-xs text-slate-500">No other forms added. Add forms this deal needs from the Forms Library.</p>
+                      <p className="px-4 py-4 text-xs text-slate-500">No additional documents added. Add forms this deal needs from the Forms Library.</p>
                     ) : dealForms.map((form) => (
                       <div key={form.formFamily} className="ds-list-row">
                         <button type="button" onClick={() => onOpenTrecForm?.(form.formFamily)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-slate-900 hover:text-[#301D5D]">{form.formNumber} · {form.title}</button>
