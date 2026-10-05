@@ -72,13 +72,6 @@ const MARKETS: Market[] = [
   },
 ];
 
-const MUD_OPERATORS: Provider[] = [
-  { name: 'Inframark (formerly Severn Trent)', phone: '281-579-4500', note: 'Manages hundreds of MUDs across Houston, Austin and DFW' },
-  { name: 'Municipal Operations & Consulting (MOC)', phone: '281-367-5511', note: 'Major operator in the Houston area' },
-  { name: 'Si Environmental', phone: '832-490-1600', note: 'Serves numerous districts in Fort Bend and Harris counties' },
-  { name: 'Water District Management (WDM)', phone: '281-376-8802' },
-];
-
 function ProviderRow({ provider }: { provider: Provider }) {
   return (
     <li className="flex items-center justify-between gap-3 border-b border-[#F1F0F5] px-4 py-3 last:border-0">
@@ -116,18 +109,6 @@ export default function UtilitiesPanel() {
             <ul>{category.providers.map((provider) => <ProviderRow key={provider.name} provider={provider} />)}</ul>
           </div>
         ))}
-      </div>
-      <div className="ds-card !p-0">
-        <p className="border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">MUDs (Municipal Utility Districts) Statewide</p>
-        <p className="border-b border-[#F1F0F5] bg-[#F6F3FB] px-4 py-2.5 text-xs leading-5 text-slate-600">
-          Outside of primary city limits, water and sewer infrastructure is managed by MUDs or WCIDs (Water Control and Improvement Districts). Individual MUDs rarely have their own staff. They contract with large regional operating companies that handle billing, customer service and maintenance. A property in a MUD sets up service with one of these primary operators.
-        </p>
-        <ul>{MUD_OPERATORS.map((provider) => <ProviderRow key={provider.name} provider={provider} />)}</ul>
-        <p className="px-4 py-3 text-xs leading-5 text-slate-500">
-          To find a property&apos;s MUD and its management company, use the{' '}
-          <a href="https://www.tceq.texas.gov/gis/iwud" target="_blank" rel="noreferrer" className="font-medium text-[#301D5D] hover:underline">TCEQ Water Districts Map Viewer</a>{' '}or{' '}
-          <a href="https://www.districtdirectory.org" target="_blank" rel="noreferrer" className="font-medium text-[#301D5D] hover:underline">DistrictDirectory.org</a>.
-        </p>
       </div>
     </div>
   );
