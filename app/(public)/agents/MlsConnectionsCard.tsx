@@ -77,7 +77,7 @@ export default function MlsConnectionsCard() {
   }, [query, selected]);
 
   return (
-    <div data-section-key="mls" className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
+    <div data-section-key="mls" className="min-w-0 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem] lg:col-span-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-semibold text-gray-900">MLS Connections</h3>
         <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{selected.length} Selected</span>

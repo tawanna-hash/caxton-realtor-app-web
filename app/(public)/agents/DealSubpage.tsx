@@ -19,6 +19,8 @@ export const DEAL_TYPES: { id: AgentDeal['dealType']; label: string }[] = [
   { id: 'other', label: 'Other' },
 ];
 
+const titleCaseLabel = (v: string): string => v.replace(/(^|[\s/])([a-z])/g, (_m, a: string, b: string) => a + b.toUpperCase());
+
 export const SERVICE_PROVIDER_CATEGORIES = [
   'Utilities', 'Home improvement', 'Mortgage', 'Home security', 'Home inspection',
   'Moving & storage', 'Home warranty', 'Attorney', 'Home insurance', 'Escrow/title', 'Other home services',
@@ -890,7 +892,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     return (
                       <button key={category} type="button" onClick={() => setProviderCategory(category)} className="ds-provider-tile">
                         <span className="text-xs font-semibold uppercase tracking-wide text-[#5B3FA0]">{count ? `${count} added` : 'Set up'}</span>
-                        <span className="text-sm font-medium text-slate-900">{category}</span>
+                        <span className="text-sm font-medium text-slate-900">{titleCaseLabel(category)}</span>
                       </button>
                     );
                   })}
@@ -940,7 +942,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label={`Trusted ${providerCategory.toLowerCase()} providers`} onClick={() => setProviderCategory(null)}>
           <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-lg font-semibold text-slate-900">Trusted {providerCategory.toLowerCase()} providers</h3>
+              <h3 className="text-lg font-semibold text-slate-900">Trusted {titleCaseLabel(providerCategory)} Providers</h3>
               <button type="button" aria-label="Close" className="text-slate-500 hover:text-slate-900" onClick={() => setProviderCategory(null)}><X className="h-5 w-5" aria-hidden="true" /></button>
             </div>
             <div className="mt-3 divide-y divide-[#F1F0F5]">

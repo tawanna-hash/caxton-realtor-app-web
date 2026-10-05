@@ -388,7 +388,7 @@ function ReadinessChecklist({
 
   const { section: collapsible, toggleProps } = useCollapsibles();
   return (
-    <div {...collapsible('readiness', { mobileOpen: true })} className="border border-slate-200 bg-white p-5 sm:p-6">
+    <div {...collapsible('readiness', { mobileOpen: true })} className="rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem]">
       <div className="flex items-center gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Readiness Check</p>
@@ -2878,7 +2878,7 @@ export default function ClosingTime({
             <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
           <section className={'mt-5 grid gap-5'} aria-label="Deal settings, alerts and calendar">
-            <div data-section-key="agent-details" className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
+            <div data-section-key="agent-details" className="min-w-0 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem] lg:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-lg font-semibold text-gray-900">Account: Brokerage And Agent Details</h3>
                 <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{(['brokerage', 'address', 'agentId', 'agentName'] as const).filter((key) => brokerFooter[key].trim()).length} of 4 required filled</span>
@@ -2895,7 +2895,7 @@ export default function ClosingTime({
               <p className="mt-3 text-xs text-slate-500" role="status">{accountSave === 'saving' ? 'Saving to your account...' : accountSave === 'error' ? 'Could not save to your account. Your entries are kept on this browser. Try again.' : 'Saved to your account.'}</p>
             </div>
             <MlsConnectionsCard />
-            <div data-section-key="calendar-link" className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
+            <div data-section-key="calendar-link" className="min-w-0 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem] lg:col-span-2">
               <h3 className="text-lg font-semibold text-gray-900">Calendar Link</h3>
               <p className="mt-3 text-sm leading-6 text-slate-600">Your Apple Calendar subscription uses a private link. Anyone with it can view your deal dates. Reset it if it was shared by mistake. The old link stops working and you will need to subscribe again.</p>
               <button type="button" disabled={calendarFeedState === 'loading'} onClick={() => { if (window.confirm('Reset your calendar link? The old link will stop working.')) void loadCalendarFeed(true); }} className="mt-4 inline-flex min-h-[36px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700">
@@ -2903,7 +2903,7 @@ export default function ClosingTime({
               </button>
               {calendarFeed && calendarFeedState !== 'loading' && <p className="mt-2 text-xs text-slate-500">Use Open In Apple Calendar on the Integrations page to subscribe with the new link.</p>}
             </div>
-            <div {...collapsible('alerts')} className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
+            <div {...collapsible('alerts')} className="min-w-0 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem] lg:col-span-2">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-gray-900">Deadline Alerts</h3>
                 <CollapseToggle {...toggleProps('alerts', 'deadline alerts')} />
@@ -3048,7 +3048,7 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && activeDeals.length > 0 && (
-          <section {...collapsible('active')} className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
+          <section {...collapsible('active')} className="mt-6 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem]">
             <div className="flex items-center gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Active Deals</p>
@@ -3216,7 +3216,7 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && closedDeals.length > 0 && (
-          <section {...collapsible('closed')} className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
+          <section {...collapsible('closed')} className="mt-6 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem]">
             <div className="flex items-center gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Closed & Audit</p>
@@ -3340,7 +3340,7 @@ export default function ClosingTime({
         {workspacePage === 2 && activeDeal && (
           <>
           <div className="mt-6 grid gap-6">
-            <div {...collapsible('tasks')} className="border border-slate-200 bg-white p-5 sm:p-6">
+            <div {...collapsible('tasks')} className="rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem]">
               <div className="flex items-center gap-3">
                 <h3 className="text-xl font-semibold text-gray-900">Tasks and Reminders</h3>
                 <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
@@ -3378,7 +3378,7 @@ export default function ClosingTime({
               documentUploadError={documentUploadError}
             />
           </div>
-          <section {...collapsible('audit')} className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
+          <section {...collapsible('audit')} className="mt-6 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem]">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div>
