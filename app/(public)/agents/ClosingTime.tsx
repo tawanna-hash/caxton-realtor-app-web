@@ -619,6 +619,7 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     cashLinesCustom: false,
     earnestInEscrow: '',
     contractAddresses: {},
+    contractCustomFields: [],
     buyer2Name: '',
     seller2Name: '',
     lender: '',

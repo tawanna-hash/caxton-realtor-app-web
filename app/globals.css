@@ -1642,3 +1642,4 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-compact :is(h1, h2, h3).ds-title { font-size: 1.375rem; line-height: 1.2; font-weight: 600; margin-top: 0.25rem; }
 #agent-desk :is(h3, h4, p).uppercase { font-weight: 500; }
 #agent-desk .ds-subtitle { color: var(--d-muted); }
+#agent-desk input.cf-label { font-size: 0.6875rem !important; font-weight: 500 !important; letter-spacing: 0.08em !important; text-transform: uppercase !important; color: var(--d-muted) !important; }
