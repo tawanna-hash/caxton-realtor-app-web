@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
-import { GripVertical, Plus, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, X } from 'lucide-react';
 import { CONTRACT_MAP_SECTIONS } from '@/lib/trec-20-19-contract-map';
 import type { AgentCashLine, AgentDeal, AgentKeyTerm } from '@/lib/agent-command-center-workspace';
 
@@ -221,11 +221,8 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
   const hidden = rawDeal.contractHiddenFields ?? [];
   const hideField = (id: string) => onPatch({ contractHiddenFields: [...hidden, id] });
   const putCustom = (next: typeof customFields) => onPatch({ contractCustomFields: next });
-  const dragKey = useRef<string | null>(null);
-  const [overKey, setOverKey] = useState<string | null>(null);
-  const [dragging, setDragging] = useState(false);
   const hasOrder = (section: ContractSection) => (rawDeal.contractFieldOrder?.[section.id] ?? []).length > 0;
-  type FieldItem = { key: string; kind: 'map'; fl: ContractSection['fields'][number] } | { key: string; kind: 'custom'; cf: (typeof customFields)[number] } | { key: string; kind: 'gap' };
+  type FieldItem = { key: string; kind: 'map'; fl: ContractSection['fields'][number] } | { key: string; kind: 'custom'; cf: (typeof customFields)[number] };
   const orderedItems = (section: ContractSection): FieldItem[] => {
     const items: FieldItem[] = [
       ...section.fields.filter((fl) => !hidden.includes(fl.id)).map((fl) => ({ key: fl.id, kind: 'map' as const, fl })),
@@ -233,100 +230,53 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     ];
     const order = rawDeal.contractFieldOrder?.[section.id] ?? [];
     if (!order.length) return items;
-    for (const k of order) if (k.startsWith('gap:')) items.push({ key: k, kind: 'gap' });
     const idx = (k: string) => { const i = order.indexOf(k); return i === -1 ? order.length + items.findIndex((x) => x.key === k) : i; };
     return [...items].sort((x, y) => idx(x.key) - idx(y.key));
   };
-  const moveField = (section: ContractSection, from: string, to: string) => {
-    const all = orderedItems(section).map((x) => x.key);
-    let keys: string[];
-    if (to.startsWith('gap:')) {
-      keys = [...all];
-      const gi = keys.indexOf(to);
-      const fi = keys.indexOf(from);
-      if (gi < 0 || fi < 0) return;
-      keys[gi] = from;
-      keys[fi] = to;
-    } else if (to.startsWith('end:')) {
-      keys = all.filter((k) => k !== from);
-      for (let i = 0; i < Number(to.slice(4)); i += 1) keys.push(`gap:${Math.random().toString(36).slice(2, 8)}`);
-      keys.push(from);
-    } else {
-      keys = all.filter((k) => k !== from);
-      const at = keys.indexOf(to);
-      keys.splice(at < 0 ? keys.length : at, 0, from);
-    }
+  const moveBy = (section: ContractSection, key: string, delta: number) => {
+    const keys = orderedItems(section).map((x) => x.key);
+    const from = keys.indexOf(key);
+    const to = Math.max(0, Math.min(keys.length - 1, from + delta));
+    if (from < 0 || from === to) return;
+    keys.splice(from, 1);
+    keys.splice(to, 0, key);
     onPatch({ contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: keys } });
   };
-  const cellPropsFor = (section: ContractSection, key: string) => ({
-    'data-cell': true,
-    'data-cell-key': key,
-    onDragOver: (e: React.DragEvent) => { if (dragKey.current && dragKey.current !== key) { e.preventDefault(); e.stopPropagation(); setOverKey(key); } },
-    onDrop: (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); if (dragKey.current && dragKey.current !== key) moveField(section, dragKey.current, key); dragKey.current = null; setOverKey(null); setDragging(false); },
-  });
-  const endDrag = () => { dragKey.current = null; setOverKey(null); setDragging(false); };
   const leadsFor = (section: ContractSection) => section.id === 'buyer' ? [['Buyer 1', rawDeal.buyerNames, (v: string) => onParties('buyerNames', v)], ['Buyer 2', rawDeal.buyer2Name ?? '', (v: string) => onParties('buyer2Name', v)]] as const
               : section.id === 'lender' ? [['Lender', rawDeal.lender ?? '', (v: string) => onPatch({ lender: v })]] as const
               : section.id === 'seller' ? [['Seller 1', rawDeal.sellerNames, (v: string) => onParties('sellerNames', v)], ['Seller 2', rawDeal.seller2Name ?? '', (v: string) => onParties('seller2Name', v)]] as const
               : null;
   const renderSectionBody = (section: ContractSection, bordered: boolean) => {
     const leads = leadsFor(section);
+    const items = orderedItems(section);
     return (
-                <div data-grid={section.id} onDragOver={(e) => { if (dragKey.current) e.preventDefault(); }} onDrop={(e) => { e.preventDefault(); if (dragKey.current) moveField(section, dragKey.current, 'end:0'); endDrag(); }} className={`grid gap-x-4 gap-y-3 ${bordered ? 'border-t border-[#F1F0F5] px-[1.125rem] py-4' : ''} sm:grid-cols-2 lg:grid-cols-4`}>
+                <div data-grid={section.id} className={`grid gap-x-4 gap-y-3 ${bordered ? 'border-t border-[#F1F0F5] px-[1.125rem] py-4' : ''} sm:grid-cols-2 lg:grid-cols-4`}>
                   {leads && leads.map(([label, value, set]) => (
                     <label key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-4' : ''}`}>
                       <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
                       <input value={value ?? ''} onChange={(e) => set(e.target.value)} className={`${fieldCls} mt-1`} />
                     </label>
                   ))}
-                  {orderedItems(section).map((item) => {
+                  {items.map((item) => {
                     const key = item.key;
-                    const cellProps = cellPropsFor(section, key);
-                    const over = overKey === key ? ' rounded-md ring-2 ring-[#301D5D]/40' : '';
-                    const handle = {
-                      title: 'Drag to move',
-                      onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
-                        if (e.button > 0 || (e.target as HTMLElement).closest('button,input')) return;
-                        e.preventDefault();
-                        e.currentTarget.setPointerCapture(e.pointerId);
-                        dragKey.current = key;
-                        setDragging(true);
-                      },
-                      onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
-                        if (!dragKey.current) return;
-                        const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-cell-key]');
-                        const k = hit?.getAttribute('data-cell-key') ?? null;
-                        setOverKey(k && k !== dragKey.current ? k : null);
-                      },
-                      onPointerUp: (e: React.PointerEvent<HTMLElement>) => {
-                        if (!dragKey.current) return;
-                        const under = document.elementFromPoint(e.clientX, e.clientY);
-                        const k = under?.closest('[data-cell-key]')?.getAttribute('data-cell-key') ?? (under?.closest('[data-grid]') ? 'end:0' : null);
-                        if (dragKey.current && k && k !== dragKey.current) moveField(section, dragKey.current, k);
-                        endDrag();
-                      },
-                      onPointerCancel: endDrag,
-                      style: { touchAction: 'none' } as const,
-                      className: 'flex cursor-grab select-none items-center justify-between gap-3 pb-1 active:cursor-grabbing',
-                    };
-                    const gripIcon = <GripVertical className="h-4 w-4 shrink-0 text-slate-600 hover:text-[#301D5D]" aria-hidden="true" />;
+                    const pos = items.findIndex((x) => x.key === key);
+                    const arrowCls = '!flex !h-4 !w-4 shrink-0 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-600 hover:!text-[#301D5D] disabled:!opacity-30 disabled:hover:!text-slate-600';
+                    const arrows = (
+                      <span className="flex items-center gap-1">
+                        <button type="button" aria-label="Move earlier" title="Move earlier" disabled={pos <= 0} onClick={() => moveBy(section, key, -1)} className={arrowCls}><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
+                        <button type="button" aria-label="Move later" title="Move later" disabled={pos >= items.length - 1} onClick={() => moveBy(section, key, 1)} className={arrowCls}><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+                      </span>
+                    );
                     const xBtn = (label: string, onClick: () => void) => (
                       <button type="button" aria-label={label} title={label} onClick={onClick} className="!flex !h-4 !w-4 shrink-0 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-500 hover:!text-[#301D5D]"><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
                     );
-                    if (item.kind === 'gap') {
-                      return (
-                        <div key={key} {...cellProps} className={`group/cell relative hidden min-h-[3.75rem] rounded-md sm:block ${dragging ? 'border border-dashed border-[#D8D2E6]' : ''}${over}`}>
-                          <span className="absolute right-0 top-0 opacity-0 group-hover/cell:opacity-100">{xBtn('Remove blank space', () => onPatch({ contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: (rawDeal.contractFieldOrder?.[section.id] ?? []).filter((k) => k !== key) } }))}</span>
-                        </div>
-                      );
-                    }
                     if (item.kind === 'custom') {
                       const cf = item.cf;
                       return (
-                        <div key={key} {...cellProps} className={`block min-w-0${over}`}>
-                          <div {...handle}>
+                        <div key={key} className={`block min-w-0`}>
+                          <div className="flex items-center justify-between gap-3 pb-1">
                             <input value={cf.label} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, label: e.target.value } : x)))} aria-label="Field name" placeholder="Field Name" className="cf-label h-4 min-w-0 flex-1 bg-transparent text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 outline-none" />
-                            <span className="flex items-center gap-2">{xBtn('Remove field', () => putCustom(customFields.filter((x) => x.id !== cf.id)))}{gripIcon}</span>
+                            <span className="flex items-center gap-3">{arrows}{xBtn('Remove field', () => putCustom(customFields.filter((x) => x.id !== cf.id)))}</span>
                           </div>
                           <input value={cf.value} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, value: e.target.value } : x)))} aria-label={`${cf.label} value`} className={fieldCls} />
                         </div>
@@ -337,22 +287,22 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     const placed = !hasOrder(section) && fl.pos ? `${POS_COL[fl.pos[0]]} ${POS_ROW[fl.pos[1]]}` : '';
                     if (fl.kind === 'c') {
                       return (
-                        <div key={key} {...cellProps} className={`min-w-0${over}`}>
-                          <div {...handle} className={`${handle.className} !pb-0`}>
+                        <div key={key} className={`min-w-0`}>
+                          <div className="flex items-center justify-between gap-3">
                             <label className="flex min-w-0 flex-1 items-start gap-2 text-sm text-slate-900">
                               <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
                               <span className="min-w-0 break-words">{fl.label}</span>
                             </label>
-                            <span className="flex items-center gap-2">{xBtn('Delete field', () => hideField(fl.id))}{gripIcon}</span>
+                            <span className="flex items-center gap-3">{arrows}{xBtn('Delete field', () => hideField(fl.id))}</span>
                           </div>
                         </div>
                       );
                     }
                     return (
-                      <div key={key} {...cellProps} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}${over}`}>
-                        <div {...handle}>
+                      <div key={key} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}`}>
+                        <div className="flex items-center justify-between gap-3 pb-1">
                           <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
-                          <span className="flex items-center gap-2">{xBtn('Delete field', () => hideField(fl.id))}{gripIcon}</span>
+                          <span className="flex items-center gap-3">{arrows}{xBtn('Delete field', () => hideField(fl.id))}</span>
                         </div>
                         <span className="flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
                           {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
@@ -361,9 +311,6 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       </div>
                     );
                   })}
-                  {Array.from({ length: (4 - (orderedItems(section).length % 4)) % 4 }).map((_, i) => (
-                    <div key={`end-${i}`} {...cellPropsFor(section, `end:${i}`)} className={`hidden min-h-[3.75rem] rounded-md lg:block ${dragging ? 'border border-dashed border-[#D8D2E6]' : ''}${overKey === `end:${i}` ? ' ring-2 ring-[#301D5D]/40' : ''}`} />
-                  ))}
                   {!bordered && (
                     <div className="flex items-end">
                       <button type="button" onClick={() => putCustom([...customFields, { id: newId('cf'), section: section.id, label: 'New Field', value: '' }])}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Field</button>
