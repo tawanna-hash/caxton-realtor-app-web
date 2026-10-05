@@ -34,6 +34,7 @@ export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
     f('p11_f206', 'Associate Email'),
     f('p11_f203', 'Broker Firm License No.'), f('p11_f208', 'Associate License No.'), f('p11_f211', 'Supervisor License No.'),
   ] },
+  { id: 'lender', title: 'Lender', fields: [] },
   { id: 'title-company', title: 'Title Company', fields: [
     f('p02_f038', 'Title Company'), f('p02_f028', 'Escrow Agent'),
     f('p02_f029', 'Address'), f('p02_f030', 'Address (Continued)'), f('p12_f263', 'Additional Address'),

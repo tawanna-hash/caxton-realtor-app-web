@@ -140,7 +140,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
 
   const total = lines.reduce((sum, line) => sum + (line.sign === '-' ? -1 : 1) * parseMoney(line.amount), 0);
   const cells = terms.length + 1;
-  const filler = (3 - (cells % 3)) % 3;
+  const filler = (4 - (cells % 4)) % 4;
 
   const commit = () => {
     if (!editing || !editing.term.trim()) return;
@@ -175,6 +175,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
         <div className="space-y-2">
           {CONTRACT_MAP_SECTIONS.map((section) => {
             const leads = section.id === 'buyer' ? [['Buyer 1', rawDeal.buyerNames, (v: string) => onParties('buyerNames', v)], ['Buyer 2', rawDeal.buyer2Name ?? '', (v: string) => onParties('buyer2Name', v)]] as const
+              : section.id === 'lender' ? [['Lender', rawDeal.lender ?? '', (v: string) => onPatch({ lender: v })]] as const
               : section.id === 'seller' ? [['Seller 1', rawDeal.sellerNames, (v: string) => onParties('sellerNames', v)], ['Seller 2', rawDeal.seller2Name ?? '', (v: string) => onParties('seller2Name', v)]] as const
               : null;
             const filled = section.fields.filter((fl) => (rawDeal.formFields[fl.id] ?? '').trim()).length;
@@ -183,9 +184,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
               <details open={section.id === 'property' ? true : undefined} className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
                 <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900">
                   <span>{section.title}</span>
-                  <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>
+                  {section.fields.length > 0 && <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>}
                 </summary>
-                <div className="grid gap-x-5 gap-y-3 border-t border-[#F1F0F5] px-5 py-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className={`grid gap-x-5 gap-y-3 border-t border-[#F1F0F5] px-5 py-4 sm:grid-cols-2 ${section.id === 'property' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
                   {leads && leads.map(([label, value, set]) => (
                     <label key={label} className="block min-w-0 sm:col-span-2">
                       <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
@@ -219,7 +220,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                   <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900"><span>Key Details</span></summary>
                   <div className="space-y-4 border-t border-[#F1F0F5] p-4">
       <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Contract Terms">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4">
           {terms.map((t) => (
             <button
               key={t.id}
@@ -246,7 +247,13 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Estimated Cash To Close">
+                  </div>
+                </details>
+              )}
+              </Fragment>
+            );
+          })}
+          <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Estimated Cash To Close">
         <p className="border-b border-[#E6E5EC] px-5 py-4 text-base font-semibold text-slate-900">Estimated Cash To Close</p>
         <div className="flex items-center justify-between gap-4 border-b border-[#F1F0F5] px-5 py-3">
           <div>
@@ -286,21 +293,6 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
           </div>
         </div>
       </section>
-                  </div>
-                </details>
-              )}
-              </Fragment>
-            );
-          })}
-          <details className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
-            <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900"><span>Lender</span></summary>
-            <div className="border-t border-[#F1F0F5] px-5 py-4">
-              <label className="block min-w-0">
-                <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Lender</span>
-                <input value={deal.lender ?? ''} onChange={(e) => onPatch({ lender: e.target.value })} className={`${fieldCls} mt-1`} />
-              </label>
-            </div>
-          </details>
         </div>
       </div>
 
