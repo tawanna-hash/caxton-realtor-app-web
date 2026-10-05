@@ -258,7 +258,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
               key={t.id}
               type="button"
               onClick={() => { setIsNew(false); setEditing(t); }}
-              className="!block !h-auto !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white px-[1.125rem] py-4 text-left hover:!bg-[#F6F3FB]"
+              className="!block !h-auto !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white !px-[1.125rem] !py-4 text-left hover:!bg-[#F6F3FB]"
             >
               <span className="flex items-baseline justify-between gap-2">
                 <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{t.term}</span>
@@ -271,7 +271,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
           <button
             type="button"
             onClick={() => { setIsNew(true); setEditing({ id: newId('term'), term: '', ref: '', value: '', note: '' }); }}
-            className="!flex !h-auto min-h-[76px] !items-center !justify-center !gap-1 !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white px-[1.125rem] py-4 text-sm text-slate-500 hover:!bg-[#F6F3FB]"
+            className="!flex !h-auto min-h-[76px] !items-center !justify-center !gap-1 !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white !px-[1.125rem] !py-4 text-sm text-slate-500 hover:!bg-[#F6F3FB]"
           >
             <Plus className="h-4 w-4" aria-hidden="true" /> Add Term
           </button>
