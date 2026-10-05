@@ -24,15 +24,32 @@ function shortDate(iso: string): string {
   return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
 }
 
+const TERM_TEMPLATE: { id: string; term: string; ref: string }[] = [
+  { id: 'tpl-purchase-price', term: 'Purchase Price', ref: '§1.2 · p.1' },
+  { id: 'tpl-earnest-money', term: 'Earnest Money', ref: '§2.1 · p.2' },
+  { id: 'tpl-financing', term: 'Financing', ref: '§4.1 · p.3' },
+  { id: 'tpl-inspection', term: 'Inspection Contingency', ref: '§7.2 · p.5' },
+  { id: 'tpl-appraisal', term: 'Appraisal Contingency', ref: '§7.3 · p.5' },
+  { id: 'tpl-loan', term: 'Loan Contingency', ref: '§7.4 · p.5' },
+  { id: 'tpl-closing-date', term: 'Closing Date', ref: '§9.1 · p.7' },
+  { id: 'tpl-seller-credit', term: 'Seller Credit', ref: 'Addendum A' },
+  { id: 'tpl-inclusions', term: 'Inclusions', ref: '§3.2 · p.2' },
+  { id: 'tpl-possession', term: 'Possession', ref: '§9.4 · p.7' },
+];
+
 const fieldCls = 'h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#301D5D]';
 
 export default function ContractPage({ deal, onPatch, onParties }: Props) {
-  const terms = deal.keyTerms;
+  const stored = deal.keyTerms;
+  const terms: AgentKeyTerm[] = [
+    ...TERM_TEMPLATE.map((tpl) => stored.find((t) => t.id === tpl.id) ?? { ...tpl, value: '', note: '' }),
+    ...stored.filter((t) => !t.id.startsWith('tpl-')),
+  ];
   const lines = deal.cashLines;
   const [editing, setEditing] = useState<AgentKeyTerm | null>(null);
   const [isNew, setIsNew] = useState(false);
 
-  const saveTerms = (next: AgentKeyTerm[]) => onPatch({ keyTerms: next, keyTermsCustom: true });
+  const saveTerms = (next: AgentKeyTerm[]) => onPatch({ keyTerms: next.filter((t) => !t.id.startsWith('tpl-') || t.value.trim() || t.note.trim()), keyTermsCustom: true });
   const saveLines = (next: AgentCashLine[]) => onPatch({ cashLines: next, cashLinesCustom: true });
   const updateLine = (id: string, patch: Partial<AgentCashLine>) => saveLines(lines.map((line) => (line.id === id ? { ...line, ...patch } : line)));
 
@@ -41,7 +58,7 @@ export default function ContractPage({ deal, onPatch, onParties }: Props) {
   const filler = (3 - (cells % 3)) % 3;
 
   const commit = () => {
-    if (!editing || !editing.term.trim() || !editing.value.trim()) return;
+    if (!editing || !editing.term.trim() || (!editing.value.trim() && !editing.id.startsWith('tpl-'))) return;
     const clean = { ...editing, term: editing.term.trim(), value: editing.value.trim() };
     saveTerms(isNew ? [...terms, clean] : terms.map((t) => (t.id === clean.id ? clean : t)));
     setEditing(null);
@@ -83,8 +100,8 @@ export default function ContractPage({ deal, onPatch, onParties }: Props) {
                 <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">{t.term}</span>
                 {t.ref && <span className="font-mono text-[11px] text-slate-300">{t.ref}</span>}
               </span>
-              <span className="mt-1 block break-words text-sm font-semibold text-slate-900">{t.value}</span>
-              {t.note && <span className="mt-0.5 block break-words text-xs text-slate-500">{t.note}</span>}
+              <span className="mt-1 block min-h-[20px] break-words text-sm font-semibold text-slate-900">{t.value}</span>
+              <span className="mt-0.5 block min-h-[16px] break-words text-xs text-slate-500">{t.note}</span>
             </button>
           ))}
           <button
@@ -161,10 +178,10 @@ export default function ContractPage({ deal, onPatch, onParties }: Props) {
               </label>
             </div>
             <div className="flex items-center justify-between gap-2 border-t border-[#E6E5EC] px-6 py-4">
-              {isNew ? <span /> : <button type="button" onClick={() => { saveTerms(terms.filter((t) => t.id !== editing.id)); setEditing(null); }}>Delete</button>}
+              {isNew ? <span /> : <button type="button" onClick={() => { saveTerms(editing.id.startsWith('tpl-') ? terms.map((t) => (t.id === editing.id ? { ...t, value: '', note: '' } : t)) : terms.filter((t) => t.id !== editing.id)); setEditing(null); }}>{editing.id.startsWith('tpl-') ? 'Clear' : 'Delete'}</button>}
               <div className="flex gap-2">
                 <button type="button" onClick={() => setEditing(null)}>Cancel</button>
-                <button type="button" disabled={!editing.term.trim() || !editing.value.trim()} onClick={commit}>{isNew ? 'Add Term' : 'Save'}</button>
+                <button type="button" disabled={!editing.term.trim() || (!editing.value.trim() && !editing.id.startsWith('tpl-'))} onClick={commit}>{isNew ? 'Add Term' : 'Save'}</button>
               </div>
             </div>
           </div>
