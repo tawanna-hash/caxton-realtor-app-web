@@ -60,19 +60,20 @@ const dueFrom = (deal: AgentDeal, days: string): string => {
   return due ? shortDate(due) : days ? `${days} Days` : '';
 };
 
+const isMoney = (v: string): boolean => /^\$?\s*[\d,]+(\.\d{1,2})?$/.test((v ?? '').trim());
 const TERM_DEFS: TermDef[] = [
   { id: 'tpl-purchase-price', term: 'Purchase Price', ref: '§3 · p.1', source: 'salesPrice', auto: (d) => ({ value: d.contractDetails.salesPrice, note: '' }) },
   { id: 'tpl-earnest-money', term: 'Earnest Money', ref: '§5 · p.2', source: 'earnestMoney', auto: (d) => ({ value: d.contractDetails.earnestMoney, note: d.earnestMoneyDeliveredDate ? `Delivered ${shortDate(d.earnestMoneyDeliveredDate)}` : '' }) },
   { id: 'tpl-financing', term: 'Financing', ref: '§3 · p.1', source: 'financingType', auto: (d) => {
     const picked = [['p01_f012', 'Third Party Financing'], ['p01_f013', 'Loan Assumption'], ['p01_f014', 'Seller Financing']].filter(([id]) => d.formFields[id] === 'true').map(([, name]) => name).join(' · ');
-    return { value: picked || d.contractDetails.financingType, note: d.contractDetails.loanAmount ? `Loan ${d.contractDetails.loanAmount}` : '' };
+    return { value: picked || d.contractDetails.financingType, note: isMoney(d.contractDetails.loanAmount) ? `Loan ${d.contractDetails.loanAmount}` : '' };
   } },
-  { id: 'tpl-inspection', term: 'Inspection Contingency', ref: '§5 · p.2', auto: (d) => ({ value: dueFrom(d, d.optionPeriodDays), note: d.contractDetails.optionFee ? `Option fee ${d.contractDetails.optionFee}` : '' }) },
+  { id: 'tpl-inspection', term: 'Inspection Contingency', ref: '§5 · p.2', auto: (d) => ({ value: dueFrom(d, d.optionPeriodDays), note: isMoney(d.contractDetails.optionFee) ? `Option fee ${d.contractDetails.optionFee}` : '' }) },
   { id: 'tpl-appraisal', term: 'Appraisal Contingency', ref: '§7.3 · p.5', auto: (d) => ({ value: dueFrom(d, d.appraisalDeadlineDays), note: '' }) },
   { id: 'tpl-loan', term: 'Loan Contingency', ref: '§7.4 · p.5', auto: (d) => ({ value: dueFrom(d, d.financingDeadlineDays), note: '' }) },
   { id: 'tpl-closing-date', term: 'Closing Date', ref: '§9 · p.6', auto: (d) => {
     const md = (d.formFields['p06_f093'] ?? '').trim(); const yr = (d.formFields['p06_f094'] ?? '').trim();
-    return { value: md ? `${md}${yr ? `, 20${yr}` : ''}` : d.closingDate ? shortDate(d.closingDate) : '', note: d.contractDetails.titleCompany };
+    return { value: md ? `${md}${yr ? `, 20${yr}` : ''}` : d.closingDate ? shortDate(d.closingDate) : '', note: '' };
   } },
   { id: 'tpl-seller-credit', term: 'Seller Credit', ref: '§12 · p.6', auto: (d) => ({ value: (d.formFields['p06_f100'] ?? '').trim(), note: '' }) },
   { id: 'tpl-inclusions', term: 'Inclusions', ref: '§2 · p.1', source: 'improvementsAndAccessories', auto: (d) => ({ value: d.contractDetails.improvementsAndAccessories, note: '' }) },
@@ -265,7 +266,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                 {t.ref && <span className="text-[11px] text-slate-400">{t.ref}</span>}
               </span>
               <span className="mt-1 block min-h-[20px] break-words text-sm font-medium text-slate-900">{t.value}</span>
-              <span className="mt-0.5 block min-h-[16px] break-words text-xs text-slate-500">{t.note}</span>
+              <span className="mt-0.5 block min-h-[16px] break-words text-sm font-medium text-slate-500">{t.note}</span>
             </button>
           ))}
           <button
