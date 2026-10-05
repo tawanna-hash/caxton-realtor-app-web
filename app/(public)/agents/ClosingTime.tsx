@@ -2420,7 +2420,7 @@ export default function ClosingTime({
               </li>
             </ul>
             <div className="ds-group">
-              <p className="ds-group-label">On The Clock</p>
+              <p className="ds-group-label">Pipeline</p>
               <button type="button" onClick={() => { setPickerStep('type'); setNewDealPickerOpen(true); }} className="ds-new" aria-label="New contract"><Plus className="h-3.5 w-3.5" aria-hidden="true" /><span>New</span></button>
             </div>
             <ul className="ds-nav-top ds-nav-closings">
@@ -2438,7 +2438,7 @@ export default function ClosingTime({
                 const tone = closed ? 'bg-slate-300' : days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#9A3D2B]' : days <= 7 ? 'bg-[#B8860B]' : 'bg-[#2F7D5B]';
                 const selected = deal.id === activeDealId && workspacePage === 2 && DEAL_TABS.some((t) => t.id === effectiveView);
                 return (
-                  <li key={deal.id}>
+                  <li key={deal.id} className="group/deal relative">
                     <button
                       type="button"
                       aria-current={selected ? 'true' : undefined}
@@ -2451,6 +2451,15 @@ export default function ClosingTime({
                         <span className="block truncate text-xs ds-sub">{closed ? 'Closed' : days === null ? 'Closing Date Not Set' : closingCountdownLabel(deal.closingDate, today)}</span>
                       </span>
                     </button>
+                    {!isDealLocked(deal) && (
+                      <button
+                        type="button"
+                        aria-label={`Delete ${deal.propertyAddress || deal.title}`}
+                        title="Delete Deal"
+                        onClick={() => { if (window.confirm(`Delete ${deal.propertyAddress || deal.title}? This cannot be undone.`)) removeDeal(deal.id); }}
+                        className="absolute right-1 top-1.5 !flex !h-6 !w-6 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-300 opacity-0 transition hover:!text-[#9A3D2B] group-hover/deal:opacity-100 [@media(hover:none)]:opacity-100"
+                      ><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
+                    )}
                   </li>
                 );
               })}
