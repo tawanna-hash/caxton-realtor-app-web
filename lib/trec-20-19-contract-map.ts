@@ -19,7 +19,13 @@ export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
     f('p08_f131', 'Email'), f('p08_f132', 'Email (Second)'),
   ] },
   { id: 'buyer-broker', title: "Buyer's Agent", fields: [...brokerBlock('p11', 212, 'Buyer’s'), f('p08_f133', 'Notice Address'), f('p08_f134', 'Notice Address (Continued)'), f('p08_f135', 'Notice Phone'), f('p08_f136', 'Notice Email')] },
-  { id: 'seller-broker', title: "Seller's Agent", fields: [...brokerBlock('p11', 201, 'Seller’s'), f('p08_f137', 'Notice Address'), f('p08_f138', 'Notice Address (Continued)'), f('p08_f139', 'Notice Phone'), f('p08_f140', 'Notice Email')] },
+  { id: 'seller-broker', title: "Seller's Agent", fields: [
+    f('p11_f201', 'Seller’s Broker Firm'), f('p11_f204', 'Associate Name'), f('p11_f205', 'Team Name'), f('p11_f209', 'Licensed Supervisor'),
+    f('p11_f202', 'Address'), f('p08_f137', 'Notice Address'), f('p08_f138', 'Notice Address (Continued)'),
+    f('p11_f207', 'Associate Phone'), f('p08_f139', 'Notice Phone'), f('p11_f210', 'Supervisor Phone'),
+    f('p11_f206', 'Associate Email'), f('p08_f140', 'Notice Email'),
+    f('p11_f203', 'Broker Firm License No.'), f('p11_f208', 'Associate License No.'), f('p11_f211', 'Supervisor License No.'),
+  ] },
   { id: 'title-company', title: 'Title Company', fields: [
     f('p02_f038', 'Title Company'), f('p02_f028', 'Escrow Agent'),
     f('p02_f029', 'Address'), f('p02_f030', 'Address (Continued)'), f('p12_f263', 'Additional Address'),
