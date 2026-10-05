@@ -892,7 +892,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     const count = deal.serviceProviders.filter((p) => p.category === category).length;
                     return (
                       <button key={category} type="button" onClick={() => setProviderCategory(category)} className="ds-provider-tile">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-[#5B3FA0]">{count ? `${count} added` : 'Set up'}</span>
+                        <span className="text-xs font-semibold uppercase tracking-wide text-[#5B3FA0]">{count ? `${count} Added` : 'Set Up'}</span>
                         <span className="text-sm font-medium text-slate-900">{titleCaseLabel(category)}</span>
                       </button>
                     );
