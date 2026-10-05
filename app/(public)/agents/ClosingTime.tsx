@@ -2857,20 +2857,6 @@ export default function ClosingTime({
             {effectiveView === 'calc-net-sheet' && <div className="ds-embed"><SellerNetSheetClient /></div>}
             {effectiveView === 'calc-commission' && <div className="ds-embed"><CommissionCalculatorClient /></div>}
             {effectiveView === 'calc-cash' && <div className="ds-embed"><BuyerClosingCostsClient /></div>}
-            {!calendarConnected && (
-            <div {...collapsible('calendar')} className="mb-5 border border-slate-200 bg-white p-5 sm:p-6">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-gray-900">Calendar Exports For Apple Calendar</h3>
-                <CollapseToggle {...toggleProps('calendar', 'calendar exports')} />
-              </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">Use Subscribe To Apple Calendar under Calendar and Scheduling below to keep your calendar current with deadlines, closing dates, reminders, and open tasks for every active deal, or download a one-time file.</p>
-              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-100 pt-3 text-xs font-bold text-[#301D5D]">
-                <span className="font-semibold text-slate-500">One-time download:</span>
-                <button type="button" onClick={exportActiveDealCalendar} disabled={!activeDeal || !calendarEventsForDeal(activeDeal).length} className="inline-flex items-center gap-1 underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-45"><Download className="h-3.5 w-3.5" aria-hidden="true" />This Deal (.ics)</button>
-                <button type="button" onClick={exportAllDealsCalendar} disabled={!calendarEventsForActiveDeals(deals).length} className="inline-flex items-center gap-1 underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-45"><Download className="h-3.5 w-3.5" aria-hidden="true" />Active Deals (.ics)</button>
-              </div>
-            </div>
-            )}
             <div data-section-key="integrations" className="min-w-0"><IntegrationsPanel calendarTile={(
               <li className="ds-cal-tile">
                 {!calendarFeed ? (
