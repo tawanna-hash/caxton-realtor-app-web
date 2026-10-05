@@ -2113,6 +2113,55 @@ export default function ClosingTime({
     );
   }
 
+  const renderTimelineFields = () => (activeDeal ? (
+    <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <label className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
+        <span className="block text-sm font-bold text-slate-900">Signed Contract / Effective Date</span>
+        <span className="mt-1 block text-xs leading-5 text-slate-500 sm:min-h-[84px]">TREC rule: use the contract&apos;s effective date after final acceptance. This is day zero; deadline counting begins on the following calendar day.</span>
+        <input
+          type="date"
+          value={activeDeal.effectiveDate}
+          onChange={(event) => updateActiveDeal('effectiveDate', event.target.value)}
+          className="mt-4"
+        />
+      </label>
+      <div className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
+        <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
+        <p className="mt-1 text-xs leading-5 text-slate-500 sm:min-h-[84px]">TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies.</p>
+        <input
+          type="date"
+          readOnly
+          value={activeDeadlines.find((deadline) => deadline.id === 'earnest-money-delivery')?.date ?? ''}
+          className="mt-4 bg-slate-50 text-slate-700"
+          aria-label="Calculated earnest money deposit deadline"
+        />
+      </div>
+      {CALCULATED_TIMELINE_FIELDS.map(({ key, deadlineId, label, rule }) => (
+        <label key={key} className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
+          <span className="block text-sm font-bold text-slate-900">{label}</span>
+          <span className="mt-1 block text-xs leading-5 text-slate-500 sm:min-h-[84px]">TREC rule: {rule}</span>
+          <input
+            type="date"
+            value={activeDeadlines.find((deadline) => deadline.id === deadlineId)?.date ?? ''}
+            disabled={!activeDeal.effectiveDate}
+            onChange={(event) => updateCalculatedDeadline(key, event.target.value)}
+            className="mt-4 disabled:cursor-not-allowed disabled:bg-slate-50"
+          />
+        </label>
+      ))}
+      <label className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
+        <span className="block text-sm font-bold text-slate-900">Closing Date</span>
+        <span className="mt-1 block text-xs leading-5 text-slate-500 sm:min-h-[84px]">TREC rule: use the negotiated closing date stated in Paragraph 9; TREC does not supply a default number of days.</span>
+        <input
+          type="date"
+          value={activeDeal.closingDate}
+          onChange={(event) => updateActiveDeal('closingDate', event.target.value)}
+          className="mt-4"
+        />
+      </label>
+    </div>
+  ) : null);
+
   const renderExtractionReview = () => (extractionState === 'ready' && extractionDraft ? (
     <section role="status" className="mt-4 border border-[#D9CFF0] bg-[#F6F3FB] p-4">
                       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
@@ -2743,6 +2792,9 @@ export default function ClosingTime({
                     documentGroups={DOCUMENT_GROUPS}
                     nextDeadline={nextDeadline}
                     deadlines={deal ? dealDeadlines(deal) : []}
+                    timelineFields={renderTimelineFields()}
+                    alerts={notificationPreferences}
+                    onOpenAlerts={() => { setWorkspacePage(2); setDeskView('coordinator'); }}
                     formatDate={formatDate}
                     countdownLabel={deal ? closingCountdownLabel(deal.closingDate, today) : ''}
                     onUpdate={updateActiveDeal}
@@ -3185,62 +3237,6 @@ export default function ClosingTime({
                     <span className="mb-2 block text-sm font-semibold text-slate-800">Seller(s)</span>
                     <input value={activeDeal.sellerNames} onChange={(event) => updateDealParties('sellerNames', event.target.value)} className="h-[40px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Seller Names" />
                   </label>
-                </div>
-
-                <div className="mt-6 border-t border-gray-100 pt-6">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Contract Timeline</p>
-                      <h4 className="mt-1 text-lg font-semibold text-gray-900">Pressing Deadlines</h4>
-                      <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates auto-populate from it using the contract terms and TREC timing rules, then sync with Calendar Exports and Deadline Alerts.</p>
-                    </div>
-                  </div>
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <label className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
-                      <span className="block text-sm font-bold text-slate-900">Signed Contract / Effective Date</span>
-                      <span className="mt-1 block text-xs leading-5 text-slate-500 sm:min-h-[84px]">TREC rule: use the contract&apos;s effective date after final acceptance. This is day zero; deadline counting begins on the following calendar day.</span>
-                      <input
-                        type="date"
-                        value={activeDeal.effectiveDate}
-                        onChange={(event) => updateActiveDeal('effectiveDate', event.target.value)}
-                        className="mt-4"
-                      />
-                    </label>
-                    <div className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
-                      <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500 sm:min-h-[84px]">TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies.</p>
-                      <input
-                        type="date"
-                        readOnly
-                        value={activeDeadlines.find((deadline) => deadline.id === 'earnest-money-delivery')?.date ?? ''}
-                        className="mt-4 bg-slate-50 text-slate-700"
-                        aria-label="Calculated earnest money deposit deadline"
-                      />
-                    </div>
-                    {CALCULATED_TIMELINE_FIELDS.map(({ key, deadlineId, label, rule }) => (
-                      <label key={key} className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
-                        <span className="block text-sm font-bold text-slate-900">{label}</span>
-                        <span className="mt-1 block text-xs leading-5 text-slate-500 sm:min-h-[84px]">TREC rule: {rule}</span>
-                        <input
-                          type="date"
-                          value={activeDeadlines.find((deadline) => deadline.id === deadlineId)?.date ?? ''}
-                          disabled={!activeDeal.effectiveDate}
-                          onChange={(event) => updateCalculatedDeadline(key, event.target.value)}
-                          className="mt-4 disabled:cursor-not-allowed disabled:bg-slate-50"
-                        />
-                      </label>
-                    ))}
-                    <label className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
-                      <span className="block text-sm font-bold text-slate-900">Closing Date</span>
-                      <span className="mt-1 block text-xs leading-5 text-slate-500 sm:min-h-[84px]">TREC rule: use the negotiated closing date stated in Paragraph 9; TREC does not supply a default number of days.</span>
-                      <input
-                        type="date"
-                        value={activeDeal.closingDate}
-                        onChange={(event) => updateActiveDeal('closingDate', event.target.value)}
-                        className="mt-4"
-                      />
-                    </label>
-                  </div>
                 </div>
 
                 <section id="trec-form-workspace" {...collapsible('trec-forms')} className="mt-7 scroll-mt-24 border border-[#E6E5EC] bg-white" aria-labelledby="official-trec-fields-title">

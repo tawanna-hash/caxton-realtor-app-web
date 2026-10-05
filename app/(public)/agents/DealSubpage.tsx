@@ -64,6 +64,9 @@ type Props = {
   documentGroups: readonly { id: string; label: string; items: readonly { id: string; label: string }[] }[];
   nextDeadline?: { label: string; date: string };
   deadlines?: readonly { id: string; label: string; date: string }[];
+  timelineFields?: ReactNode;
+  alerts?: { emailEnabled: boolean; pushEnabled: boolean; reminderOffsets: readonly number[] };
+  onOpenAlerts?: () => void;
   formatDate: (value: string) => string;
   countdownLabel: string;
   onUpdate: <K extends keyof AgentDeal>(key: K, value: AgentDeal[K]) => void;
@@ -91,7 +94,7 @@ function dayDiff(today: string, date: string): number {
   return Math.round((Date.parse(`${date}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86400000);
 }
 
-export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
+export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
   const [brokerageForms, setBrokerageForms] = useState<{ id: string; title: string; url: string; filename: string; fillable?: boolean }[]>([]);
   useEffect(() => {
@@ -518,6 +521,14 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               </div>
             );
             const allReq = PURCHASE_FOLDERS.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' || deal.documentChecks[`add:${doc.id}`]);
+            const trackedDeadlines = [
+              ...(deadlines ?? []).map((item) => ({ id: item.id, label: item.label, date: item.date })),
+              ...(deal.closingDate ? [{ id: 'closing-date', label: 'Closing Date', date: deal.closingDate }] : []),
+            ].sort((l, r) => l.date.localeCompare(r.date)).map((item) => ({ ...item, done: Boolean(deal.documentChecks[`dl:${item.id}`]) }));
+            const alertChannels = alerts ? [alerts.emailEnabled ? 'Email' : '', alerts.pushEnabled ? 'Push' : ''].filter(Boolean) : [];
+            const nextAlert = alerts && alertChannels.length
+              ? trackedDeadlines.filter((item) => !item.done).flatMap((item) => alerts.reminderOffsets.map((offset) => ({ label: item.label, date: new Date(Date.parse(`${item.date}T12:00:00Z`) - offset * 86400000).toISOString().slice(0, 10) }))).filter((entry) => entry.date >= today).sort((l, r) => l.date.localeCompare(r.date))[0]
+              : undefined;
             const tileBrokerage = brokerageForms.filter((form) => deal.documentChecks[`bf:${form.id}`]);
             const tileSubmitted = allReq.filter((doc) => deal.documentChecks[doc.id]).length + tileBrokerage.filter((form) => deal.documentChecks[`bfs:${form.id}`]).length;
             const tileStarted = allReq.filter((doc) => !deal.documentChecks[doc.id] && doc.formFamily && (trecForms ?? []).some((form) => form.formFamily === doc.formFamily && form.filled > 0)).length;
@@ -544,6 +555,45 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   </div>
                   <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={tilePct} aria-valuemin={0} aria-valuemax={100} aria-label="Required documents submitted"><div className="h-full bg-[#301D5D]" style={{ width: `${tilePct}%` }} /></div>
                   <p className="mt-2 text-xs text-slate-500">{tileSubmitted} of {tileTotal} submitted</p>
+                </div>
+                <div className="ds-card">
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">Contract Timeline</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-900">Pressing Deadlines</p>
+                  <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules.</p>
+                  {timelineFields}
+                  {trackedDeadlines.length > 0 && (
+                    <div className="mt-5 border-t border-[#E6E5EC] pt-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-slate-900">Deadline Tracking</p>
+                        <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{trackedDeadlines.filter((item) => item.done).length} Of {trackedDeadlines.length} Done</span>
+                      </div>
+                      {trackedDeadlines.map((item) => {
+                        const diff = dayDiff(today, item.date);
+                        const chip = item.done ? { text: 'Done', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
+                          : diff < 0 ? { text: `Overdue ${-diff} Day${diff === -1 ? '' : 's'}`, cls: 'bg-[#301D5D] text-white' }
+                          : diff === 0 ? { text: 'Due Today', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
+                          : { text: `Due In ${diff} Day${diff === 1 ? '' : 's'}`, cls: diff <= 3 ? 'bg-[#EFEAF8] text-[#301D5D]' : 'bg-slate-100 text-slate-600' };
+                        return (
+                          <div key={item.id} className="ds-list-row">
+                            <input type="checkbox" aria-label={`Mark ${item.label} done`} checked={item.done} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...deal.documentChecks, [`dl:${item.id}`]: e.target.checked })} />
+                            <span className="min-w-0 flex-1">
+                              <span className={`block truncate text-sm ${item.done ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{item.label}</span>
+                              <span className="block text-xs text-slate-500">{formatDate(item.date)}</span>
+                            </span>
+                            <span className={`ds-chip ${chip.cls}`}>{chip.text}</span>
+                          </div>
+                        );
+                      })}
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#F6F3FB] px-3 py-2.5 text-xs text-slate-600">
+                        <span>
+                          {alertChannels.length === 0 ? 'Alerts Are Off' : `Alerts By ${alertChannels.join(' And ')}`}
+                          {alertChannels.length > 0 && alerts ? ` · ${[...alerts.reminderOffsets].sort((l, r) => r - l).map((o) => (o === 0 ? 'Due Today' : `${o}d`)).join(', ')}` : ''}
+                          {nextAlert ? ` · Next Alert ${formatDate(nextAlert.date)} (${nextAlert.label})` : ''}
+                        </span>
+                        {onOpenAlerts && <button type="button" onClick={onOpenAlerts}>Manage Alerts</button>}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="ds-snap-grid">
                   <div className="ds-card !p-0 self-start">

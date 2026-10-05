@@ -86,6 +86,7 @@ function deadlinesForDeal(deal: AgentDeal): DealDeadline[] {
     surveyDays: deal.surveyDays,
   }).map(({ id, label, date }) => ({ id, label, date }));
 
+
   if (deal.closingDate) {
     deadlines.push({
       id: 'closing-date',
@@ -93,7 +94,8 @@ function deadlinesForDeal(deal: AgentDeal): DealDeadline[] {
       date: deal.closingDate,
     });
   }
-  return deadlines;
+  // Deadlines marked done on the Snapshot no longer send alerts.
+  return deadlines.filter((deadline) => !deal.documentChecks?.[`dl:${deadline.id}`]);
 }
 
 function titleCase(value: string): string {
