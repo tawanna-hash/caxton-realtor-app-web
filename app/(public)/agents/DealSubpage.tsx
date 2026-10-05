@@ -69,9 +69,12 @@ type Props = {
   onOpenView: (view: string) => void;
   section?: Tab;
   stripOnly?: boolean;
+  trecForms?: readonly { formFamily: string; formNumber: string; title: string; total: number; filled: number; selected: boolean }[];
+  onOpenTrecForm?: (formFamily: string) => void;
+  onToggleTrecForm?: (formFamily: string, selected: boolean) => void;
 };
 
-export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly }: Props) {
+export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -566,6 +569,24 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   </div>
                   <span className={`ds-chip ${requiredDone === PURCHASE_REQUIRED_IDS.length ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{requiredDone} of {PURCHASE_REQUIRED_IDS.length} required received</span>
                 </div>
+                {trecForms && trecForms.length > 0 && (
+                  <div className="ds-card ds-list">
+                    <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                      <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />TREC Promulgated Documents</span>
+                      <span className="text-xs font-medium text-slate-500">{trecForms.filter((form) => form.selected).length} of {trecForms.length} on this deal</span>
+                    </div>
+                    <p className="border-b border-[#F1F0F5] px-4 py-2 text-xs text-slate-500">Same forms as Current Deal. Check the forms this deal needs and click a name to fill it in.</p>
+                    <div className="max-h-[440px] overflow-y-auto overscroll-contain">
+                      {trecForms.map((form) => (
+                        <div key={form.formFamily} className="ds-list-row">
+                          <input type="checkbox" aria-label={`Use ${form.formNumber} on this deal`} checked={form.selected} disabled={locked} onChange={(e) => onToggleTrecForm?.(form.formFamily, e.target.checked)} />
+                          <button type="button" onClick={() => onOpenTrecForm?.(form.formFamily)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-slate-900 hover:text-[#301D5D]">{form.formNumber} · {form.title}</button>
+                          <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{form.total > 0 ? (form.filled > 0 ? `Fillable · ${form.filled} of ${form.total}` : `Fillable · ${form.total} fields`) : 'Notice · nothing to fill'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {PURCHASE_FOLDERS.map((folder) => {
                   const req = folder.docs.filter((x) => x.kind === 'required');
                   const reqDone = req.filter((x) => checks[x.id]).length;

@@ -9,7 +9,19 @@ export type PurchaseFolder = { id: string; label: string; docs: PurchaseDoc[] };
 
 const d = (id: string, label: string, kind: PurchaseDocKind): PurchaseDoc => ({ id, label, kind });
 
-export const PURCHASE_FOLDERS: PurchaseFolder[] = [
+/**
+ * TREC promulgated forms are listed live from the Current Deal form library, so
+ * their static checklist rows are not repeated here. Required receipt checks stay.
+ */
+const PROMULGATED_IN_LIBRARY = new Set([
+  'pd-hoa-addendum', 'pd-lead-paint-addendum', 'pd-lead-paint-txr', 'pd-amendment', 'pd-amendment-1903',
+  'pd-one-to-four-contract', 'pd-non-realty-items', 'pd-mandatory-poa', 'pd-backup-contract',
+  'pd-sale-of-other-property', 'pd-buyer-temp-lease', 'pd-seller-temp-lease', 'pd-residential-service-company',
+  'pd-environmental-assessment', 'pd-buyer-termination-notice', 'pd-short-sale-addendum',
+  'pd-consumer-notice-hazards', 'pd-groundwater-disclosure-1', 'pd-groundwater-disclosure-2',
+]);
+
+const ALL_PURCHASE_FOLDERS: PurchaseFolder[] = [
   {
     id: 'resources', label: 'Transaction & Document Resources',
     docs: [
@@ -87,5 +99,9 @@ export const PURCHASE_FOLDERS: PurchaseFolder[] = [
     ],
   },
 ];
+
+export const PURCHASE_FOLDERS: PurchaseFolder[] = ALL_PURCHASE_FOLDERS
+  .map((folder) => ({ ...folder, docs: folder.docs.filter((doc) => !PROMULGATED_IN_LIBRARY.has(doc.id)) }))
+  .filter((folder) => folder.docs.length > 0);
 
 export const PURCHASE_REQUIRED_IDS = PURCHASE_FOLDERS.flatMap((f) => f.docs).filter((x) => x.kind === 'required').map((x) => x.id);
