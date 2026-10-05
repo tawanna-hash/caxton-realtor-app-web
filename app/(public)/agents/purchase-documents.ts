@@ -115,10 +115,10 @@ const ALL_LISTING_FOLDERS: PurchaseFolder[] = [
     id: 'listing-rep', label: 'Listing Representation Documents',
     docs: [
       reuse('pd-iabs', 'required', 'Seller: Information About Brokerage Services'),
-      d('ld-listing-agreement', 'Residential Real Estate Listing Agreement (TXR 1101)', 'required'),
+      d('ld-listing-agreement', 'Residential Real Estate Listing Agreement (TXR 1101 Or Attorney-Drafted)', 'required'),
+      d('ld-consumer-protection-notice', 'Consumer Protection Notice Displayed (Office, Website, Social Profiles)', 'required'),
       d('ld-wire-fraud-alert', 'Wire Fraud Alert For Sellers', 'required'),
-      reuse('pd-sellers-disclosure-notice', 'required'),
-      d('ld-lead-paint-disclosure', 'Lead-Based Paint Disclosure (Pre-1978)', 'optional'),
+      reuse('pd-sellers-disclosure-notice', 'required', "Seller's Disclosure Notice (TREC 55-1 Or TXR 1406)"),
       d('ld-mls-input', 'MLS Listing Input Form', 'required'),
       reuse('pd-tax-record', 'required'),
       reuse('pd-cma', 'required', 'Comparative Market Analysis (Listing Price)'),
