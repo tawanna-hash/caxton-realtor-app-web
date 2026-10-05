@@ -88,6 +88,7 @@ const CommissionCalculatorClient = dynamic(() => import('../resources/commission
 const BuyerClosingCostsClient = dynamic(() => import('../resources/buyer-closing-costs/BuyerClosingCostsClient'), { ssr: false });
 import { effectiveAgentSide } from './purchase-documents';
 import DealSubpage, { TASK_TEMPLATES } from './DealSubpage';
+import { syncStoredFromForm } from './ContractPage';
 import { autofillDeal, buildAutofillIndex } from '@/lib/deal-autofill';
 import { AGENT_DESK_TEMPLATE, templateTaskIdsFor } from '@/lib/agent-desk-template';
 import {
@@ -1436,7 +1437,7 @@ export default function ClosingTime({
   const persistDeals = (incoming: AgentDeal[]) => {
     // Contract entries and uploaded-contract data flow into the matching blanks on the deal's other forms.
     const before = new Map(dealsRef.current.map((deal) => [deal.id, deal]));
-    const nextDeals = incoming.map((deal) => (before.get(deal.id) === deal ? deal : autofillDeal(before.get(deal.id), deal, autofillIndex)));
+    const nextDeals = incoming.map((deal) => (before.get(deal.id) === deal ? deal : syncStoredFromForm(autofillDeal(before.get(deal.id), deal, autofillIndex))));
     setDeals(nextDeals);
     if (ready) queueCloudSave({ deals: nextDeals, notificationPreferences });
   };

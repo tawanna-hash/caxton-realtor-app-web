@@ -45,6 +45,24 @@ function effective(deal: AgentDeal): AgentDeal {
   return next;
 }
 
+// The deal's stored values (address, option days, contract details) stay empty when only the contract form was
+// filled. Copy them over so the sidebar, titles, deadlines and notifications see them. Existing values are kept.
+export function syncStoredFromForm(deal: AgentDeal): AgentDeal {
+  const e = effective(deal);
+  let changed = false;
+  const next: AgentDeal = { ...deal };
+  for (const key of Object.keys(DEAL_LINKS) as Array<keyof typeof DEAL_LINKS>) {
+    if (!String(deal[key] ?? '').trim() && String(e[key] ?? '').trim()) { (next as Record<string, unknown>)[key] = e[key]; changed = true; }
+  }
+  const details = { ...deal.contractDetails };
+  for (const key of Object.keys(CD_LINKS) as Array<keyof AgentDeal['contractDetails']>) {
+    if (!String(details[key] ?? '').trim() && String(e.contractDetails[key] ?? '').trim()) { (details as Record<string, string>)[key] = String(e.contractDetails[key]); changed = true; }
+  }
+  if (!changed) return deal;
+  next.contractDetails = details;
+  return next;
+}
+
 type Auto = { value: string; note: string };
 type TermDef = { id: string; term: string; ref: string; auto: (deal: AgentDeal) => Auto; source?: keyof AgentDeal['contractDetails'] };
 

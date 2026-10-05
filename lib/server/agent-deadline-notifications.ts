@@ -74,7 +74,7 @@ function escapeHtml(value: string): string {
 }
 
 function dealLabel(deal: AgentDeal): string {
-  const address = (deal.propertyAddress || '').trim();
+  const address = (deal.propertyAddress || deal.formFields?.p01_f008 || '').trim();
   return address || `${deal.title || 'Your deal'} (address not entered)`;
 }
 
