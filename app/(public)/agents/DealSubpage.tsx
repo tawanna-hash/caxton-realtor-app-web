@@ -202,7 +202,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   const sideBlocks = {
     property: (
 <>
-          <h3 className="ds-side-title">Focus property</h3>
           <div className="ds-card !p-0 overflow-hidden">
             <div
               className={`relative ${dragOver ? 'bg-[#EFEAF8] outline outline-2 -outline-offset-2 outline-[#301D5D]' : ''}`}
