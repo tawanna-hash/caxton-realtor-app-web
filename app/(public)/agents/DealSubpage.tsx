@@ -449,6 +449,34 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     const weekEnd = new Date(Date.parse(`${today}T12:00:00Z`) + 7 * 86400000).toISOString().slice(0, 10);
     const dueSoon = openTasks.filter((t) => t.dueDate && t.dueDate >= today && t.dueDate <= weekEnd).length;
     const upcoming = [...openTasks].sort((a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999')).slice(0, 6);
+    const openReminders = (deal.reminders ?? []).filter((r) => !r.complete);
+    const tasksTotal = deal.tasks.length + (deal.reminders ?? []).length;
+    const tasksOpen = openTasks.length + openReminders.length;
+    const tasksDone = tasksTotal - tasksOpen;
+    const tasksOverdue = overdueTasks + openReminders.filter((r) => r.reminderDate && r.reminderDate < today).length;
+    const tasksSoon = dueSoon + openReminders.filter((r) => r.reminderDate && r.reminderDate >= today && r.reminderDate <= weekEnd).length;
+    const tasksPct = tasksTotal ? Math.round((tasksDone / tasksTotal) * 100) : 0;
+    const taskTile = (value: number, label: string) => (
+      <div className="rounded-lg bg-[#F6F3FB] px-4 py-3">
+        <p className="text-2xl font-semibold text-[#301D5D]">{value}</p>
+        <p className="text-xs text-slate-500">{label}</p>
+      </div>
+    );
+    const tasksCard = (
+      <div className="ds-card">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-slate-900">Tasks &amp; Reminders</p>
+          <button type="button" onClick={() => onOpenView('tasks')}>View All</button>
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          {taskTile(tasksOpen, 'Open')}
+          {taskTile(tasksOverdue, 'Overdue')}
+          {taskTile(tasksSoon, 'Due In 7 Days')}
+        </div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={tasksPct} aria-valuemin={0} aria-valuemax={100} aria-label="Tasks and reminders completed"><div className="h-full bg-[#301D5D]" style={{ width: `${tasksPct}%` }} /></div>
+        <p className="mt-2 text-xs text-slate-500">{tasksDone} of {tasksTotal} complete</p>
+      </div>
+    );
     const pct = (done: number, total: number) => (total ? Math.round((done / total) * 100) : 0);
     const reqDone = PURCHASE_REQUIRED_IDS.filter((id) => deal.documentChecks[id]).length;
     const stat = (label: string, value: string, tone?: string) => (
@@ -506,6 +534,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             <div className="lg:col-span-2">{snapshotTop.tiles}</div>
             <div className="min-w-0">{partiesCard}</div>
             <div className="min-w-0">{sideBlocks.property}</div>
+            <div className="min-w-0 lg:col-span-2">{tasksCard}</div>
           </div>
         </div>
       </div>
