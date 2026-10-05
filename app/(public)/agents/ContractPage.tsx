@@ -218,6 +218,8 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
   };
 
   const customFields = rawDeal.contractCustomFields ?? [];
+  const hidden = rawDeal.contractHiddenFields ?? [];
+  const hideField = (id: string) => onPatch({ contractHiddenFields: [...hidden, id] });
   const putCustom = (next: typeof customFields) => onPatch({ contractCustomFields: next });
   const dragKey = useRef<string | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
@@ -226,7 +228,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
   type FieldItem = { key: string; kind: 'map'; fl: ContractSection['fields'][number] } | { key: string; kind: 'custom'; cf: (typeof customFields)[number] } | { key: string; kind: 'gap' };
   const orderedItems = (section: ContractSection): FieldItem[] => {
     const items: FieldItem[] = [
-      ...section.fields.map((fl) => ({ key: fl.id, kind: 'map' as const, fl })),
+      ...section.fields.filter((fl) => !hidden.includes(fl.id)).map((fl) => ({ key: fl.id, kind: 'map' as const, fl })),
       ...customFields.filter((cf) => cf.section === section.id).map((cf) => ({ key: `cf:${cf.id}`, kind: 'custom' as const, cf })),
     ];
     const order = rawDeal.contractFieldOrder?.[section.id] ?? [];
@@ -341,7 +343,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                               <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
                               <span className="min-w-0 break-words">{fl.label}</span>
                             </label>
-                            <span className="flex items-center gap-2">{xBtn('Clear field', () => setForm({ [fl.id]: '' }))}{gripIcon}</span>
+                            <span className="flex items-center gap-2">{xBtn('Delete field', () => hideField(fl.id))}{gripIcon}</span>
                           </div>
                         </div>
                       );
@@ -350,7 +352,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       <div key={key} {...cellProps} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}${over}`}>
                         <div {...handle}>
                           <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
-                          <span className="flex items-center gap-2">{xBtn('Clear field', () => setForm({ [fl.id]: '' }))}{gripIcon}</span>
+                          <span className="flex items-center gap-2">{xBtn('Delete field', () => hideField(fl.id))}{gripIcon}</span>
                         </div>
                         <span className="flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
                           {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
@@ -418,14 +420,17 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
       <div aria-label="Contract Sections">
         <div className="space-y-3">
           {CONTRACT_MAP_SECTIONS.map((section) => {
-            const filled = section.fields.filter((fl) => getVal(fl.id).trim()).length;
+            const visibleFields = section.fields.filter((fl) => !hidden.includes(fl.id));
+            const hiddenCount = section.fields.length - visibleFields.length;
+            const filled = visibleFields.filter((fl) => getVal(fl.id).trim()).length;
             return (
               <Fragment key={section.id}>
               <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
                 <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900">
                   <span>{section.title}</span>
                   <span className="flex items-center gap-3">
-                    {section.fields.length > 0 && <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>}
+                    {section.fields.length > 0 && <span className="text-xs font-normal text-slate-500">{filled} Of {visibleFields.length} Filled</span>}
+                    {hiddenCount > 0 && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPatch({ contractHiddenFields: hidden.filter((id) => !section.fields.some((fl) => fl.id === id)) }); }}>Restore Fields ({hiddenCount})</button>}
                     <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); const d = e.currentTarget.closest('details'); if (d) d.open = true; putCustom([...customFields, { id: newId('cf'), section: section.id, label: 'New Field', value: '' }]); }}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Field</button>
                     <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId(section.id); }}>Quick Entry</button>
                   </span>

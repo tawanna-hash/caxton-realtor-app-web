@@ -169,6 +169,7 @@ export const agentDealSchema = z.object({
   earnestInEscrow: optionalShortText(30),
   contractAddresses: z.record(z.string(), shortText(200)).default({}),
   contractFieldOrder: z.record(z.string(), z.array(z.string())).default({}),
+  contractHiddenFields: z.array(z.string()).default([]),
   contractCustomFields: z.array(z.object({ id: shortText(80), section: shortText(60), label: shortText(120), value: shortText(500) })).default([]),
   buyer2Name: optionalShortText(300), seller2Name: optionalShortText(300), lender: optionalShortText(200), otherAgent: optionalShortText(200), otherBrokerage: optionalShortText(200), otherAgentContact: optionalShortText(300),
   formFields: agentTrecFormFieldsSchema,
