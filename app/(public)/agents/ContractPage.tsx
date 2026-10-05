@@ -228,7 +228,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
   const labelInput = (id: string, fallback: string) => (
     <input value={labelOf(id, fallback)} onChange={(e) => setLabel(id, e.target.value)} onBlur={(e) => { if (!e.target.value.trim()) setLabel(id, ''); }} aria-label="Field name" placeholder={fallback} className="cf-label h-4 min-w-0 flex-1 bg-transparent text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 outline-none" />
   );
-  const hideField = (id: string) => onPatch({ contractHiddenFields: [...hidden, id] });
+
   const putCustom = (next: typeof customFields) => onPatch({ contractCustomFields: next });
   const hasOrder = (section: ContractSection) => (rawDeal.contractFieldOrder?.[section.id] ?? []).length > 0;
   type FieldItem = { key: string; kind: 'map'; fl: ContractSection['fields'][number] } | { key: string; kind: 'custom'; cf: (typeof customFields)[number] } | { key: string; kind: 'gap' };
@@ -281,13 +281,26 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     } else {
       const to = out.indexOf(target);
       if (to < 0 || to === from) return null;
-      out.splice(from, 1);
-      out.splice(to, 0, key);
+      [out[from], out[to]] = [out[to], out[from]];
     }
     while (out.length && out[out.length - 1].startsWith('gap:')) out.pop();
     return out;
   };
   const newGap = () => `gap:${Math.random().toString(36).slice(2, 8)}`;
+  const hideField = (section: ContractSection, id: string) => {
+    const keys = orderedItems(section).map((x) => (x.key === id ? newGap() : x.key));
+    onPatch({ contractHiddenFields: [...hidden, id], contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: keys } });
+  };
+  const removeCustom = (section: ContractSection, cfId: string) => {
+    const keys = orderedItems(section).map((x) => (x.key === `cf:${cfId}` ? newGap() : x.key));
+    onPatch({ contractCustomFields: customFields.filter((x) => x.id !== cfId), contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: keys } });
+  };
+  const restoreHidden = (section: ContractSection) => {
+    const back = section.fields.filter((fl) => hidden.includes(fl.id)).map((fl) => fl.id);
+    const keys = orderedItems(section).map((x) => x.key);
+    for (const id of back) { const g = keys.findIndex((k) => k.startsWith('gap:')); if (g >= 0) keys[g] = id; else keys.push(id); }
+    onPatch({ contractHiddenFields: hidden.filter((id) => !back.includes(id)), contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: keys } });
+  };
   const saveOrder = (section: ContractSection, keys: string[]) => {
     const next = [...keys];
     while (next.length && next[next.length - 1].startsWith('gap:')) next.pop();
@@ -309,8 +322,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     } else {
       const to = keys.indexOf(target);
       if (to < 0 || to === from) return;
-      keys.splice(from, 1);
-      keys.splice(to, 0, key);
+      [keys[from], keys[to]] = [keys[to], keys[from]];
     }
     saveOrder(section, keys);
   };
@@ -361,7 +373,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                         <div key={key} {...cellAttrs} className={`block min-w-0${pickCls}`}>
                           <div className="flex items-center justify-between gap-3 pb-1">
                             <input value={cf.label} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, label: e.target.value } : x)))} aria-label="Field name" placeholder="Field Name" className="cf-label h-4 min-w-0 flex-1 bg-transparent text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 outline-none" />
-                            <span className="flex items-center gap-3">{xBtn('Remove field', () => putCustom(customFields.filter((x) => x.id !== cf.id)))}</span>
+                            <span className="flex items-center gap-3">{xBtn('Remove field', () => removeCustom(section, cf.id))}</span>
                           </div>
                           <input value={cf.value} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, value: e.target.value } : x)))} aria-label={`${cf.label} value`} className={fieldCls} />
                         </div>
@@ -378,7 +390,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                               <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
                               {labelInput(fl.id, fl.label)}
                             </label>
-                            <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(fl.id))}</span>
+                            <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(section, fl.id))}</span>
                           </div>
                         </div>
                       );
@@ -387,7 +399,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       <div key={key} {...cellAttrs} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}${pickCls}`}>
                         <div className="flex items-center justify-between gap-3 pb-1">
                           {labelInput(fl.id, fl.label)}
-                          <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(fl.id))}</span>
+                          <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(section, fl.id))}</span>
                         </div>
                         <span className="flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
                           {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
@@ -465,7 +477,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                   <span>{section.title}</span>
                   <span className="flex items-center gap-3">
                     {section.fields.length > 0 && <span className="text-xs font-normal text-slate-500">{filled} Of {visibleFields.length} Filled</span>}
-                    {hiddenCount > 0 && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPatch({ contractHiddenFields: hidden.filter((id) => !section.fields.some((fl) => fl.id === id)) }); }}>Restore Fields ({hiddenCount})</button>}
+                    {hiddenCount > 0 && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); restoreHidden(section); }}>Restore Fields ({hiddenCount})</button>}
                     <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); const d = e.currentTarget.closest('details'); if (d) d.open = true; putCustom([...customFields, { id: newId('cf'), section: section.id, label: 'New Field', value: '' }]); }}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Field</button>
                     <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId(section.id); }}>Quick Entry</button>
                   </span>
