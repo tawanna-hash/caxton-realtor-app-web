@@ -1604,3 +1604,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-cal-tile button { border-color: #E6E5EC; }
 #agent-desk .ds-cal-tile div button { border: 0; background: transparent; padding: 0; height: auto; min-height: 0; color: #301D5D; font-weight: 600; }
 #agent-desk .ds-cal-tile div button:hover { background: transparent; color: #301D5D; }
+
+/* Integrations tiles: light purple hover */
+#agent-desk [data-section-key='integrations'] li > button:hover:not(:disabled) { background-color: #EFEAF8 !important; border-color: #D9CFF0 !important; color: #301D5D !important; }
+#agent-desk .ds-cal-tile div button, #agent-desk .ds-cal-tile div button:hover:not(:disabled) { border: 0 !important; background: transparent !important; padding: 0 !important; height: auto !important; min-height: 0 !important; color: #301D5D !important; font-size: 0.75rem; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
