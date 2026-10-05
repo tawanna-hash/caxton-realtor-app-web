@@ -174,8 +174,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
       <div aria-label="Contract Sections">
         <div className="space-y-2">
           {CONTRACT_MAP_SECTIONS.map((section) => {
-            const lead = section.id === 'property' ? ['Property Address', deal.propertyAddress, (v: string) => onPatch({ propertyAddress: v, formFields: { ...rawDeal.formFields, p01_f008: v } })] as const
-              : section.id === 'buyer' ? ['Buyer Names', deal.buyerNames, (v: string) => onParties('buyerNames', v)] as const
+            const lead = section.id === 'buyer' ? ['Buyer Names', deal.buyerNames, (v: string) => onParties('buyerNames', v)] as const
               : section.id === 'seller' ? ['Seller Names', deal.sellerNames, (v: string) => onParties('sellerNames', v)] as const
               : null;
             const filled = section.fields.filter((fl) => (rawDeal.formFields[fl.id] ?? '').trim()).length;

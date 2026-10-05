@@ -8,7 +8,7 @@ export type ContractMapSection = { id: string; title: string; fields: ContractMa
 const f = (id: string, label: string, kind: ContractFieldKind = 't'): ContractMapField => ({ id, label, kind });
 
 export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
-  { id: 'property', title: '2. Property', fields: [
+  { id: 'property', title: 'Property Description', fields: [
     f('p01_f003', 'Lot'), f('p01_f004', 'Block'), f('p01_f005', 'Addition'), f('p01_f007', 'County'),
   ] },
   { id: 'buyer', title: 'Buyer', fields: [
