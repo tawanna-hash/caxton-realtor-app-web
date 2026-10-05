@@ -467,11 +467,8 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               ...missingRequired.map((doc) => ({ key: doc.id, chip: 'Document', title: doc.label, detail: 'Required document', go: 'd-documents' })),
             ];
             const requiredDone = PURCHASE_REQUIRED_IDS.filter((id) => deal.documentChecks[id]).length;
-            const scheduled = deal.reminders.filter((r) => !r.complete).length;
             const handling = [
-              { key: 'alerts', title: 'Deadline alerts', detail: `${scheduled} ${scheduled === 1 ? 'reminder' : 'reminders'} scheduled`, chip: scheduled ? 'In motion' : 'Not set', go: 'coordinator' },
               { key: 'readiness', title: 'Readiness check', detail: `${requiredDone} of ${PURCHASE_REQUIRED_IDS.length} required documents in`, chip: requiredDone === PURCHASE_REQUIRED_IDS.length ? 'Complete' : 'In progress', go: 'readiness' },
-              { key: 'followups', title: 'Follow-up drafts', detail: 'Intro and status requests to your parties', chip: 'Ready', go: 'coordinator' },
             ];
             const cardHead = (icon: ReactNode, title: string, count: number, tone: string) => (
               <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
@@ -519,7 +516,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                         <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{item.chip}</span>
                       </button>
                     ))}
-                    {footLink('Message AI', 'coordinator')}
                   </div>
                   <div className="ds-card !p-0 self-start">
                     {cardHead(<Clock className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />, 'Waiting On Others', waitingRows.length, 'bg-[#EFEAF8] text-[#301D5D]')}

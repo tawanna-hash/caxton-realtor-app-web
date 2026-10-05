@@ -1016,12 +1016,43 @@ export default function ClosingTime({
   }, [ready]);
   const BROKER_FOOTER_KEY = `closing-time-broker-footer:${realtorId}`;
   const [brokerFooter, setBrokerFooter] = useState({ brokerage: '', address: '', agentId: '', agentName: '', brokerName: '', brokerEmail: '' });
+  const accountSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [accountSave, setAccountSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const saveAccountDetails = useCallback((details: typeof brokerFooter) => {
+    if (accountSaveTimer.current) clearTimeout(accountSaveTimer.current);
+    setAccountSave('saving');
+    accountSaveTimer.current = setTimeout(async () => {
+      try {
+        const response = await fetch('/api/agent-command-center/account', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(details),
+        });
+        setAccountSave(response.ok ? 'saved' : 'error');
+      } catch { setAccountSave('error'); }
+    }, 700);
+  }, []);
   useEffect(() => {
+    let cancelled = false;
+    let local: Record<string, string> | null = null;
     try {
       const saved = JSON.parse(window.localStorage.getItem(BROKER_FOOTER_KEY) ?? 'null');
-      if (saved && typeof saved === 'object') setBrokerFooter((current) => ({ ...current, ...saved }));
+      if (saved && typeof saved === 'object') { local = saved; setBrokerFooter((current) => ({ ...current, ...saved })); }
     } catch { /* storage unavailable */ }
-  }, [BROKER_FOOTER_KEY]);
+    void (async () => {
+      try {
+        const response = await fetch('/api/agent-command-center/account', { cache: 'no-store' });
+        if (!response.ok || cancelled) return;
+        const data = await response.json() as { details: Record<string, string> | null };
+        if (data.details && Object.values(data.details).some((value) => String(value).trim())) {
+          setBrokerFooter((current) => ({ ...current, ...data.details }));
+          try { window.localStorage.setItem(BROKER_FOOTER_KEY, JSON.stringify({ ...(local ?? {}), ...data.details })); } catch { /* storage unavailable */ }
+          setAccountSave('saved');
+        } else if (local && Object.values(local).some((value) => String(value).trim())) {
+          saveAccountDetails({ brokerage: '', address: '', agentId: '', agentName: '', brokerName: '', brokerEmail: '', ...local });
+        }
+      } catch { /* account details unavailable; the browser copy still works */ }
+    })();
+    return () => { cancelled = true; };
+  }, [BROKER_FOOTER_KEY, saveAccountDetails]);
   const [resourcesOpen, setResourcesOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
@@ -1053,6 +1084,7 @@ export default function ClosingTime({
     setBrokerFooter((current) => {
       const next = { ...current, [key]: value };
       try { window.localStorage.setItem(BROKER_FOOTER_KEY, JSON.stringify(next)); } catch { /* storage unavailable */ }
+      saveAccountDetails(next);
       return next;
     });
   };
@@ -2579,10 +2611,10 @@ export default function ClosingTime({
           <section className={'mt-5 grid gap-5'} aria-label="Deal settings, alerts and calendar">
             <div data-section-key="agent-details" className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-lg font-semibold text-gray-900">Brokerage And Agent Details</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Account: Brokerage And Agent Details</h3>
                 <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{(['brokerage', 'address', 'agentId', 'agentName'] as const).filter((key) => brokerFooter[key].trim()).length} of 4 required filled</span>
               </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">Fill these in once. They appear along the bottom of every form and go with every form you send to your broker for review.</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">Fill these in once. They appear along the bottom of every form and are stamped along the bottom of every page of any PDF you download, send to your broker or send for signature.</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {([['brokerage', 'Brokerage', 'text', true], ['address', 'Brokerage Address', 'text', true], ['agentId', 'Agent License Number', 'text', true], ['agentName', 'Agent Name', 'text', true], ['brokerName', 'Broker Name', 'text', false], ['brokerEmail', 'Broker Email', 'email', false]] as const).map(([key, label, type, required]) => (
                   <label key={key} className="block min-w-0">
@@ -2591,7 +2623,7 @@ export default function ClosingTime({
                   </label>
                 ))}
               </div>
-              <p className="mt-3 text-xs text-slate-500">Saved on this browser.</p>
+              <p className="mt-3 text-xs text-slate-500" role="status">{accountSave === 'saving' ? 'Saving to your account...' : accountSave === 'error' ? 'Could not save to your account. Your entries are kept on this browser. Try again.' : 'Saved to your account.'}</p>
             </div>
             <div data-section-key="calendar-link" className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
               <h3 className="text-lg font-semibold text-gray-900">Calendar Link</h3>
@@ -3152,7 +3184,7 @@ export default function ClosingTime({
                       <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-white shadow-sm">
                         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2">
                           <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">{currentTrecFormVersion.formFamily.startsWith('custom-') ? `${currentTrecFormVersion.formNumber} form` : `Official TREC ${currentTrecFormVersion.formNumber}`} · Page {currentTrecPage}</p>
-                          <a href={currentTrecFormVersion.pdfUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5B438C] underline underline-offset-2">Open Full Form</a>
+                          <a href={`/api/agent-command-center/form-pdf?src=${encodeURIComponent(currentTrecFormVersion.pdfUrl)}&name=${encodeURIComponent(`TREC-${currentTrecFormVersion.formNumber.replace(/\s+/g, '-')}`)}`} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5B438C] underline underline-offset-2">Open Full Form</a>
                         </div>
                         <TrecPdfPagePreview
                           pdfUrl={currentTrecFormVersion.pdfUrl}

@@ -4,6 +4,8 @@ import { requireUser } from '@/lib/server/auth/user';
 import { withErrorHandling } from '@/lib/server/error';
 import { rateLimit } from '@/lib/server/rate-limit';
 import { sendEmail } from '@/lib/email';
+import { getAgentAccountDetails } from '@/lib/server/agent-account-details';
+import { stampBrokerageFooter } from '@/lib/server/brokerage-footer-pdf';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,6 +49,8 @@ export const POST = withErrorHandling(async function POST(req: NextRequest) {
         else if (field instanceof PDFRadioGroup || field instanceof PDFDropdown || field instanceof PDFOptionList) field.select(value);
       } catch { /* skip fields that cannot be filled */ }
     }
+    const saved = await getAgentAccountDetails(user.realtorId).catch(() => null);
+    await stampBrokerageFooter(doc, saved ?? { brokerage: body.footer?.brokerage ?? '', address: body.footer?.address ?? '', agentId: body.footer?.agentId ?? '', agentName: body.footer?.agentName ?? '' });
     output = await doc.save();
   } catch { /* send the blank form if it cannot be filled */ }
 

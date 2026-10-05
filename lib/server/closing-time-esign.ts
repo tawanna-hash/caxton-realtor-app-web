@@ -1,5 +1,7 @@
 import { createHash, createHmac, randomBytes, randomUUID } from 'crypto';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { getAgentAccountDetails } from '@/lib/server/agent-account-details';
+import { stampBrokerageFooter } from '@/lib/server/brokerage-footer-pdf';
 import { query } from '@/lib/server/db/neon';
 import { sendEmail } from '@/lib/email';
 import { ensureAssistSchema, getUpload, requireDeal } from '@/lib/server/closing-time-assist';
@@ -138,6 +140,7 @@ export async function createSignRequest(realtorId: string, input: BuiltinInput):
     fields = (input.fields ?? []).filter((f) => f.signer >= 0 && f.signer < input.signers.length && f.page >= 0 && f.page < pages).slice(0, 80).map((f) => ({ id: randomUUID(), signer: f.signer, type: f.type === 'date' ? 'date' : 'signature', page: f.page, x: clamp(f.x), y: clamp(f.y), w: Math.min(0.9, Math.max(0.04, clamp(f.w))), h: Math.min(0.5, Math.max(0.015, clamp(f.h))) }));
     input.signers.forEach((s, i) => { if (!fields.some((f) => f.signer === i && f.type === 'signature')) throw new Error(`Place a signature field for ${s.name}.`); });
   } else fields = await withSignaturePage(pdf, input.signers, `${docName} - ${property}`);
+  await stampBrokerageFooter(pdf, await getAgentAccountDetails(realtorId).catch(() => null));
   const bytes = Buffer.from(await pdf.save());
   const me = await query<{ first_name: string | null; last_name: string | null; email: string }>(`SELECT first_name, last_name, email FROM realtors WHERE id=$1`, [realtorId]);
   const agentName = [me[0]?.first_name, me[0]?.last_name].filter(Boolean).join(' ') || 'Your agent';

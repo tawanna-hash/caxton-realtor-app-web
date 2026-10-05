@@ -114,8 +114,8 @@ export default function TrecFormsLibrary({ versions, embedded = false }: { versi
                   Open &amp; Fill
                 </a>
                 <a
-                  href={form.pdfUrl}
-                  download={form.local ? `TREC-${form.formNumber.replace(/\s+/g, '-')}.pdf` : undefined}
+                  href={`/api/agent-command-center/form-pdf?src=${encodeURIComponent(form.pdfUrl)}&name=${encodeURIComponent(`TREC-${form.formNumber.replace(/\s+/g, '-')}`)}&download=1`}
+                  download
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 transition hover:bg-[#F4F3F8]"
