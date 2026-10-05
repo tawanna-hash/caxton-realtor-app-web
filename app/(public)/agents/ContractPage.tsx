@@ -121,6 +121,8 @@ function AutoDetails({ className, children }: { className?: string; children: Re
 
 const fieldCls = 'h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#301D5D]';
 
+type ContractSection = (typeof CONTRACT_MAP_SECTIONS)[number];
+
 export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Props) {
   const deal = effective(rawDeal);
   const setForm = (patch: Record<string, string>) => {
@@ -153,6 +155,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     ...storedLines.filter((l) => !l.id.startsWith('tpl-')),
   ];
   const [editing, setEditing] = useState<AgentKeyTerm | null>(null);
+  const [quickId, setQuickId] = useState<string | null>(null);
   const [isNew, setIsNew] = useState(false);
 
   const putTerm = (next: AgentKeyTerm[]) => onPatch({ keyTerms: next, keyTermsCustom: true });
@@ -202,24 +205,14 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     }
   };
 
-  return (
-    <div className="ds-page" data-testid="contract-page">
-      <div aria-label="Contract Sections">
-        <div className="space-y-3">
-          {CONTRACT_MAP_SECTIONS.map((section) => {
-            const leads = section.id === 'buyer' ? [['Buyer 1', rawDeal.buyerNames, (v: string) => onParties('buyerNames', v)], ['Buyer 2', rawDeal.buyer2Name ?? '', (v: string) => onParties('buyer2Name', v)]] as const
+  const leadsFor = (section: ContractSection) => section.id === 'buyer' ? [['Buyer 1', rawDeal.buyerNames, (v: string) => onParties('buyerNames', v)], ['Buyer 2', rawDeal.buyer2Name ?? '', (v: string) => onParties('buyer2Name', v)]] as const
               : section.id === 'lender' ? [['Lender', rawDeal.lender ?? '', (v: string) => onPatch({ lender: v })]] as const
               : section.id === 'seller' ? [['Seller 1', rawDeal.sellerNames, (v: string) => onParties('sellerNames', v)], ['Seller 2', rawDeal.seller2Name ?? '', (v: string) => onParties('seller2Name', v)]] as const
               : null;
-            const filled = section.fields.filter((fl) => getVal(fl.id).trim()).length;
-            return (
-              <Fragment key={section.id}>
-              <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
-                <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900">
-                  <span>{section.title}</span>
-                  {section.fields.length > 0 && <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>}
-                </summary>
-                <div className={`grid gap-x-4 gap-y-3 border-t border-[#F1F0F5] px-[1.125rem] py-4 sm:grid-cols-2 lg:grid-cols-4`}>
+  const renderSectionBody = (section: ContractSection, bordered: boolean) => {
+    const leads = leadsFor(section);
+    return (
+                <div className={`grid gap-x-4 gap-y-3 ${bordered ? 'border-t border-[#F1F0F5] px-[1.125rem] py-4' : ''} sm:grid-cols-2 lg:grid-cols-4`}>
                   {leads && leads.map(([label, value, set]) => (
                     <label key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-4' : ''}`}>
                       <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
@@ -247,6 +240,26 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     );
                   })}
                 </div>
+    );
+  };
+
+  return (
+    <div className="ds-page" data-testid="contract-page">
+      <div aria-label="Contract Sections">
+        <div className="space-y-3">
+          {CONTRACT_MAP_SECTIONS.map((section) => {
+            const filled = section.fields.filter((fl) => getVal(fl.id).trim()).length;
+            return (
+              <Fragment key={section.id}>
+              <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
+                <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900">
+                  <span>{section.title}</span>
+                  <span className="flex items-center gap-3">
+                    {section.fields.length > 0 && <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>}
+                    <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId(section.id); }}>Quick Entry</button>
+                  </span>
+                </summary>
+                {renderSectionBody(section, true)}
               </AutoDetails>
               {section.id === 'property' && (
                 <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
@@ -329,6 +342,22 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
         </div>
       </div>
 
+      {quickId && (() => {
+        const qs = CONTRACT_MAP_SECTIONS.find((x) => x.id === quickId);
+        if (!qs) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-label={`${qs.title} quick entry`} onClick={() => setQuickId(null)}>
+            <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-[#E6E5EC] px-[1.125rem] py-4">
+                <p className="text-sm font-semibold text-slate-900">{qs.title}</p>
+                <button type="button" aria-label="Close" onClick={() => setQuickId(null)} className="!border-0 !bg-transparent text-slate-500 hover:!text-[#301D5D]"><X className="h-4 w-4" aria-hidden="true" /></button>
+              </div>
+              <div className="px-[1.125rem] py-4">{renderSectionBody(qs, false)}</div>
+              <div className="flex justify-end border-t border-[#E6E5EC] px-[1.125rem] py-3"><button type="button" onClick={() => setQuickId(null)}>Done</button></div>
+            </div>
+          </div>
+        );
+      })()}
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-label={isNew ? 'Add a Term' : 'Edit Term'} onClick={() => setEditing(null)}>
           <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
