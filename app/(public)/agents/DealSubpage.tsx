@@ -344,7 +344,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       <div className="ds-card">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold text-slate-900">Required Documents</p>
-          <button type="button" onClick={() => onOpenView('d-documents')}>Open</button>
+          <button type="button" onClick={() => onOpenView('d-documents')}>View All</button>
         </div>
         <div className="mt-3 grid grid-cols-3 gap-3">
           {tile(tileSubmitted, 'Submitted')}
@@ -353,6 +353,18 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={tilePct} aria-valuemin={0} aria-valuemax={100} aria-label="Required documents submitted"><div className="h-full bg-[#301D5D]" style={{ width: `${tilePct}%` }} /></div>
         <p className="mt-2 text-xs text-slate-500">{tileSubmitted} of {tileTotal} submitted</p>
+          <ul className="mt-4 space-y-2.5">
+            {PURCHASE_FOLDERS.map((folder) => {
+              const total = folder.docs.length;
+              const done = folder.docs.filter((d) => deal.documentChecks[d.id]).length;
+              return (
+                <li key={folder.id}>
+                  <div className="flex items-center justify-between text-xs"><span className="text-slate-900">{folder.label}</span><span className="text-slate-500">{done}/{total}</span></div>
+                  <div className="ds-bar mt-1" aria-hidden="true"><span style={{ width: `${total ? Math.round((done / total) * 100) : 0}%` }} /></div>
+                </li>
+              );
+            })}
+          </ul>
       </div>
         </>
       ),
@@ -465,28 +477,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       <div className="ds-page" data-testid="deal-snapshot">
         <div className="mb-3 space-y-3">
           <div className="grid items-start gap-3 lg:grid-cols-4">
-            <div className="lg:col-span-2">
-            <div className="ds-card">
-              <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">Required Documents</p><button type="button" onClick={() => onOpenView('d-documents')}>View all</button></div>
-              <div className="mt-3 grid grid-cols-3 gap-3">
-                {stat('Required in', `${reqDone}/${PURCHASE_REQUIRED_IDS.length}`, reqDone === PURCHASE_REQUIRED_IDS.length ? 'text-[#301D5D]' : undefined)}
-                {stat('Missing', String(missingRequired.length), missingRequired.length ? 'text-[#9A3D2B]' : undefined)}
-                {stat('Complete', `${pct(reqDone, PURCHASE_REQUIRED_IDS.length)}%`)}
-              </div>
-              <ul className="mt-3 space-y-2.5">
-                {PURCHASE_FOLDERS.map((folder) => {
-                  const total = folder.docs.length;
-                  const done = folder.docs.filter((d) => deal.documentChecks[d.id]).length;
-                  return (
-                    <li key={folder.id}>
-                      <div className="flex items-center justify-between text-xs"><span className="text-slate-900">{folder.label}</span><span className="text-slate-500">{done}/{total}</span></div>
-                      <div className="ds-bar mt-1" aria-hidden="true"><span style={{ width: `${pct(done, total)}%` }} /></div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-            </div>
+            <div className="lg:col-span-2">{snapshotTop.tiles}</div>
             <div className="min-w-0">{partiesCard}</div>
             <div className="min-w-0">{sideBlocks.property}</div>
           </div>
