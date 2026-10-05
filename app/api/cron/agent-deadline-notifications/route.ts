@@ -30,6 +30,13 @@ export async function GET(req: Request) {
   }
   const { date, hour } = chicagoNow();
   const out: Record<string, unknown> = { ok: true };
+  // Manual test run: only with the cron secret, for one realtor, outside the 8-9 AM window.
+  const url = new URL(req.url);
+  const testRealtor = url.searchParams.get('testRealtorId');
+  const secret = process.env.CRON_SECRET;
+  if (testRealtor && secret && (req.headers.get('authorization') ?? '') === `Bearer ${secret}` && /^[0-9a-f-]{36}$/i.test(testRealtor)) {
+    return NextResponse.json({ ok: true, test: true, ...(await runAgentDeadlineNotifications(new Date(), { realtorId: testRealtor })) });
+  }
   if (isAgentDeadlineDeliveryWindow()) {
     Object.assign(out, await runAgentDeadlineNotifications());
     out.signatureReminders = await runSignatureReminders().catch((e) => ({ sent: 0, escalated: 0, errors: [String(e)] }));
