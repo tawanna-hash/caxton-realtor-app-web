@@ -465,7 +465,28 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       <div className="ds-page" data-testid="deal-snapshot">
         <div className="mb-3 space-y-3">
           <div className="grid items-start gap-3 lg:grid-cols-4">
-            <div className="lg:col-span-2">{snapshotTop.tiles}</div>
+            <div className="lg:col-span-2">
+            <div className="ds-card">
+              <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">Required Documents</p><button type="button" onClick={() => onOpenView('d-documents')}>View all</button></div>
+              <div className="mt-3 grid grid-cols-3 gap-3">
+                {stat('Required in', `${reqDone}/${PURCHASE_REQUIRED_IDS.length}`, reqDone === PURCHASE_REQUIRED_IDS.length ? 'text-[#301D5D]' : undefined)}
+                {stat('Missing', String(missingRequired.length), missingRequired.length ? 'text-[#9A3D2B]' : undefined)}
+                {stat('Complete', `${pct(reqDone, PURCHASE_REQUIRED_IDS.length)}%`)}
+              </div>
+              <ul className="mt-3 space-y-2.5">
+                {PURCHASE_FOLDERS.map((folder) => {
+                  const total = folder.docs.length;
+                  const done = folder.docs.filter((d) => deal.documentChecks[d.id]).length;
+                  return (
+                    <li key={folder.id}>
+                      <div className="flex items-center justify-between text-xs"><span className="text-slate-900">{folder.label}</span><span className="text-slate-500">{done}/{total}</span></div>
+                      <div className="ds-bar mt-1" aria-hidden="true"><span style={{ width: `${pct(done, total)}%` }} /></div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+            </div>
             <div className="min-w-0">{partiesCard}</div>
             <div className="min-w-0">{sideBlocks.property}</div>
           </div>
@@ -491,26 +512,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   <span className={`shrink-0 text-xs ${t.dueDate && t.dueDate < today ? 'text-[#9A3D2B]' : 'text-slate-500'}`}>{t.dueDate ? formatDate(t.dueDate) : 'No date'}</span>
                 </li>
               ))}
-            </ul>
-          </div>
-          <div className="ds-card">
-            <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">Documents</p><button type="button" onClick={() => onOpenView('d-documents')}>View all</button></div>
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              {stat('Required in', `${reqDone}/${PURCHASE_REQUIRED_IDS.length}`, reqDone === PURCHASE_REQUIRED_IDS.length ? 'text-[#2F7D5B]' : undefined)}
-              {stat('Missing', String(missingRequired.length), missingRequired.length ? 'text-[#9A3D2B]' : undefined)}
-              {stat('Complete', `${pct(reqDone, PURCHASE_REQUIRED_IDS.length)}%`)}
-            </div>
-            <ul className="mt-3 space-y-2.5">
-              {PURCHASE_FOLDERS.map((folder) => {
-                const total = folder.docs.length;
-                const done = folder.docs.filter((d) => deal.documentChecks[d.id]).length;
-                return (
-                  <li key={folder.id}>
-                    <div className="flex items-center justify-between text-xs"><span className="text-slate-900">{folder.label}</span><span className="text-slate-500">{done}/{total}</span></div>
-                    <div className="ds-bar mt-1" aria-hidden="true"><span style={{ width: `${pct(done, total)}%` }} /></div>
-                  </li>
-                );
-              })}
             </ul>
           </div>
           <div className="ds-card">
