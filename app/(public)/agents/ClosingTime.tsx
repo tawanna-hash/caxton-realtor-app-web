@@ -3055,6 +3055,10 @@ export default function ClosingTime({
                   <input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" />
                   <Mail className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" /> Send Deadline Alerts By Email
                 </label>
+                <label className="block text-xs font-semibold text-slate-600">
+                  Send Emails To
+                  <input type="email" defaultValue={notificationPreferences.notificationEmail ?? ''} placeholder="Account Email" onBlur={(event) => { const value = event.target.value.trim(); if (value !== (notificationPreferences.notificationEmail ?? '') && (value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))) updateNotificationPreferences({ notificationEmail: value }); }} className="mt-1 block w-full max-w-sm rounded-md border border-[#E6E5EC] px-3 py-2 text-sm font-normal text-slate-800" />
+                </label>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
                     <input type="checkbox" checked={notificationPreferences.pushEnabled} onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" />

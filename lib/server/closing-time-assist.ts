@@ -169,7 +169,7 @@ export async function getPortalView(token: string): Promise<PortalView | null> {
   if (!/^[A-Za-z0-9_-]{40,64}$/.test(token)) return null;
   await ensureAssistSchema();
   const rows = await query<{ realtor_id: string; deal_id: string; first_name: string | null; last_name: string | null; email: string }>(
-    `SELECT p.realtor_id, p.deal_id, r.first_name, r.last_name, r.email FROM closing_time_portals p JOIN realtors r ON r.id=p.realtor_id WHERE p.token=$1 LIMIT 1`, [token]);
+    `SELECT p.realtor_id, p.deal_id, r.first_name, r.last_name, COALESCE(NULLIF((SELECT w2.workspace->'notificationPreferences'->>'notificationEmail' FROM agent_command_center_workspaces w2 WHERE w2.realtor_id=p.realtor_id),''), r.email) AS email FROM closing_time_portals p JOIN realtors r ON r.id=p.realtor_id WHERE p.token=$1 LIMIT 1`, [token]);
   const row = rows[0];
   if (!row) return null;
   const deal = await loadDeal(row.realtor_id, row.deal_id);
@@ -192,7 +192,7 @@ function esc(v: string) { return v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const htmlBody = (text: string) => `<div style="font-family:Arial,sans-serif;color:#1e293b;line-height:1.55;max-width:640px">${esc(text).replace(/\n/g, '<br>')}</div>`;
 
 async function agentIdentity(realtorId: string) {
-  const r = await query<{ first_name: string | null; last_name: string | null; email: string }>(`SELECT first_name, last_name, email FROM realtors WHERE id=$1`, [realtorId]);
+  const r = await query<{ first_name: string | null; last_name: string | null; email: string }>(`SELECT first_name, last_name, COALESCE(NULLIF((SELECT w2.workspace->'notificationPreferences'->>'notificationEmail' FROM agent_command_center_workspaces w2 WHERE w2.realtor_id=realtors.id),''), realtors.email) AS email FROM realtors WHERE id=$1`, [realtorId]);
   const row = r[0];
   return { name: [row?.first_name, row?.last_name].filter(Boolean).join(' ') || 'Your agent', email: row?.email ?? '' };
 }
@@ -271,7 +271,7 @@ export async function runDailySummaries(today: string): Promise<{ sent: number; 
   await ensureAssistSchema();
   const out = { sent: 0, errors: [] as string[] };
   const rows = await query<{ realtor_id: string; email: string | null; first_name: string | null; workspace: unknown }>(
-    `SELECT w.realtor_id, w.workspace, r.email, r.first_name FROM agent_command_center_workspaces w JOIN realtors r ON r.id=w.realtor_id`);
+    `SELECT w.realtor_id, w.workspace, COALESCE(NULLIF(w.workspace->'notificationPreferences'->>'notificationEmail',''), r.email) AS email, r.first_name FROM agent_command_center_workspaces w JOIN realtors r ON r.id=w.realtor_id`);
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
   for (const row of rows) {
     const parsed = agentCommandCenterWorkspaceSchema.safeParse(row.workspace);
@@ -325,7 +325,7 @@ export async function savePortalUpload(token: string, docId: string, file: { nam
   await query(`UPDATE closing_time_portal_uploads SET archived=TRUE WHERE realtor_id=$1 AND deal_id=$2 AND doc_id=$3 AND archived=FALSE`, [row.realtor_id, row.deal_id, docId]);
   await query(`INSERT INTO closing_time_portal_uploads (id, realtor_id, deal_id, doc_id, filename, content_type, size_bytes, data_b64) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
     [randomUUID(), row.realtor_id, row.deal_id, docId, file.name.replace(/[^\w.\- ]+/g, '_').slice(0, 200) || 'upload', file.type, file.bytes.length, file.bytes.toString('base64')]);
-  const agent = await query<{ email: string }>(`SELECT email FROM realtors WHERE id=$1`, [row.realtor_id]);
+  const agent = await query<{ email: string }>(`SELECT COALESCE(NULLIF((SELECT w2.workspace->'notificationPreferences'->>'notificationEmail' FROM agent_command_center_workspaces w2 WHERE w2.realtor_id=realtors.id),''), realtors.email) AS email FROM realtors WHERE id=$1`, [row.realtor_id]);
   if (agent[0]?.email) {
     void sendEmail({ to: agent[0].email, subject: `New upload: ${doc.label} - ${deal?.propertyAddress || deal?.title || 'your deal'}`,
       html: htmlBody(`Your client uploaded a file for "${doc.label}".\n\nOpen Closing Time to review it and mark it received.`) });

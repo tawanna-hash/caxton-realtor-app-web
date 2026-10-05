@@ -19,10 +19,12 @@ export type AgentNotificationPreferences = {
   emailEnabled: boolean;
   pushEnabled: boolean;
   reminderOffsets: AgentDeadlineNotificationOffset[];
+  /** Where Closing Time emails go. Empty means the account email. */
+  notificationEmail: string;
 };
 
 export function defaultAgentNotificationPreferences(): AgentNotificationPreferences {
-  return { emailEnabled: false, pushEnabled: false, reminderOffsets: [7, 3, 1, 0] };
+  return { emailEnabled: false, pushEnabled: false, reminderOffsets: [7, 3, 1, 0], notificationEmail: '' };
 }
 
 export type AgentContractDetails = {
@@ -63,6 +65,7 @@ export const agentNotificationPreferencesSchema = z.object({
   emailEnabled: z.boolean().default(false),
   pushEnabled: z.boolean().default(false),
   reminderOffsets: z.array(z.union([z.literal(7), z.literal(3), z.literal(1), z.literal(0)])).min(1).max(4).default([7, 3, 1, 0]),
+  notificationEmail: z.string().trim().max(254).refine((v) => v === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), 'Enter a valid email address').default(''),
 }).strict().default(defaultAgentNotificationPreferences());
 
 export const agentContractDetailsSchema = z.object({

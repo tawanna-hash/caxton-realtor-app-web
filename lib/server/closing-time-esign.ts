@@ -142,7 +142,7 @@ export async function createSignRequest(realtorId: string, input: BuiltinInput):
   } else fields = await withSignaturePage(pdf, input.signers, `${docName} - ${property}`);
   await stampBrokerageFooter(pdf, await getAgentAccountDetails(realtorId).catch(() => null));
   const bytes = Buffer.from(await pdf.save());
-  const me = await query<{ first_name: string | null; last_name: string | null; email: string }>(`SELECT first_name, last_name, email FROM realtors WHERE id=$1`, [realtorId]);
+  const me = await query<{ first_name: string | null; last_name: string | null; email: string }>(`SELECT first_name, last_name, COALESCE(NULLIF((SELECT w2.workspace->'notificationPreferences'->>'notificationEmail' FROM agent_command_center_workspaces w2 WHERE w2.realtor_id=realtors.id),''), realtors.email) AS email FROM realtors WHERE id=$1`, [realtorId]);
   const agentName = [me[0]?.first_name, me[0]?.last_name].filter(Boolean).join(' ') || 'Your agent';
   const base = await getSignSettings(realtorId);
   const set = cleanSettings({ ...base, expireDays: input.expireDays ?? base.expireDays, remindEvery: input.remindEvery ?? base.remindEvery, maxReminders: input.maxReminders ?? base.maxReminders });

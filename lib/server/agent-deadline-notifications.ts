@@ -272,7 +272,7 @@ export async function runAgentDeadlineNotifications(now = new Date(), options: {
 
   while (pageCount === PAGE_SIZE) {
     const recipients = await query<WorkspaceRecipientRow>(
-      `SELECT workspace.realtor_id, workspace.workspace, realtors.email, realtors.first_name
+      `SELECT workspace.realtor_id, workspace.workspace, COALESCE(NULLIF(workspace.workspace->'notificationPreferences'->>'notificationEmail',''), realtors.email) AS email, realtors.first_name
        FROM agent_command_center_workspaces AS workspace
        JOIN realtors ON realtors.id = workspace.realtor_id
        WHERE ($3::uuid IS NULL OR workspace.realtor_id = $3::uuid)
