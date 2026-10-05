@@ -219,6 +219,15 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
 
   const customFields = rawDeal.contractCustomFields ?? [];
   const hidden = rawDeal.contractHiddenFields ?? [];
+  const labelOf = (id: string, fallback: string) => rawDeal.contractFieldLabels?.[id] ?? fallback;
+  const setLabel = (id: string, value: string) => {
+    const next = { ...(rawDeal.contractFieldLabels ?? {}) };
+    if (value === '') delete next[id]; else next[id] = value;
+    onPatch({ contractFieldLabels: next });
+  };
+  const labelInput = (id: string, fallback: string) => (
+    <input value={labelOf(id, fallback)} onChange={(e) => setLabel(id, e.target.value)} onBlur={(e) => { if (!e.target.value.trim()) setLabel(id, ''); }} aria-label="Field name" placeholder={fallback} className="cf-label h-4 min-w-0 flex-1 bg-transparent text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 outline-none" />
+  );
   const hideField = (id: string) => onPatch({ contractHiddenFields: [...hidden, id] });
   const putCustom = (next: typeof customFields) => onPatch({ contractCustomFields: next });
   const hasOrder = (section: ContractSection) => (rawDeal.contractFieldOrder?.[section.id] ?? []).length > 0;
@@ -325,10 +334,10 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     return (
                 <div data-grid={section.id} className={`grid gap-x-4 gap-y-3 ${bordered ? 'border-t border-[#F1F0F5] px-[1.125rem] py-4' : ''} sm:grid-cols-2 lg:grid-cols-4`}>
                   {leads && leads.map(([label, value, set]) => (
-                    <label key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-4' : ''}`}>
-                      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
-                      <input value={value ?? ''} onChange={(e) => set(e.target.value)} className={`${fieldCls} mt-1`} />
-                    </label>
+                    <div key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-4' : ''}`}>
+                      <span className="block pb-1">{labelInput(`lead:${label}`, label)}</span>
+                      <input value={value ?? ''} onChange={(e) => set(e.target.value)} aria-label={labelOf(`lead:${label}`, label)} className={fieldCls} />
+                    </div>
                   ))}
                   {items.map((item) => {
                     const key = item.key;
@@ -367,7 +376,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                           <div className="flex items-center justify-between gap-3">
                             <label className="flex min-w-0 flex-1 items-start gap-2 text-sm text-slate-900">
                               <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
-                              <span className="min-w-0 break-words">{fl.label}</span>
+                              {labelInput(fl.id, fl.label)}
                             </label>
                             <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(fl.id))}</span>
                           </div>
@@ -377,12 +386,12 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     return (
                       <div key={key} {...cellAttrs} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}${pickCls}`}>
                         <div className="flex items-center justify-between gap-3 pb-1">
-                          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
+                          {labelInput(fl.id, fl.label)}
                           <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(fl.id))}</span>
                         </div>
                         <span className="flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
                           {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
-                          <input value={value} aria-label={fl.label} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
+                          <input value={value} aria-label={labelOf(fl.id, fl.label)} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
                         </span>
                       </div>
                     );
