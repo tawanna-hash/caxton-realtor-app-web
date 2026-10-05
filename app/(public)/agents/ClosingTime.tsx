@@ -618,6 +618,10 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     cashLines: [],
     cashLinesCustom: false,
     earnestInEscrow: '',
+    lender: '',
+    otherAgent: '',
+    otherBrokerage: '',
+    otherAgentContact: '',
     formFields: {},
     addenda: {},
     selectedFormFamilies: {},
@@ -3045,7 +3049,7 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && (
-          <div data-section-key="current" className="min-w-0">{activeDeal ? <ContractPage deal={activeDeal} onPatch={(patch) => { const id = activeDeal.id; persistDeals(deals.map((d) => (d.id === id ? { ...d, ...patch, updatedAt: new Date().toISOString() } : d))); }} /> : <p className="text-sm text-slate-500">Start a deal to see its contract terms.</p>}</div>
+          <div data-section-key="current" className="min-w-0">{activeDeal ? <ContractPage deal={activeDeal} onParties={updateDealParties} onPatch={(patch) => { const id = activeDeal.id; persistDeals(deals.map((d) => (d.id === id ? { ...d, ...patch, updatedAt: new Date().toISOString() } : d))); }} /> : <p className="text-sm text-slate-500">Start a deal to see its contract terms.</p>}</div>
         )}
 
         {workspacePage === 2 && activeDeals.length > 0 && (

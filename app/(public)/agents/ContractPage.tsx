@@ -5,7 +5,7 @@ import { Plus, Trash2, X } from 'lucide-react';
 import type { AgentCashLine, AgentDeal, AgentKeyTerm } from '@/lib/agent-command-center-workspace';
 
 type Patch = Partial<AgentDeal>;
-type Props = { deal: AgentDeal; onPatch: (patch: Patch) => void };
+type Props = { deal: AgentDeal; onPatch: (patch: Patch) => void; onParties: (key: 'buyerNames' | 'sellerNames', value: string) => void };
 
 const newId = (prefix: string) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
@@ -24,49 +24,11 @@ function shortDate(iso: string): string {
   return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
 }
 
-function plusDays(iso: string, days: string): string {
-  const n = Number.parseInt(days, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) || !Number.isFinite(n)) return '';
-  const date = new Date(`${iso}T12:00:00`);
-  date.setDate(date.getDate() + n);
-  return date.toISOString().slice(0, 10);
-}
-
-function deriveTerms(deal: AgentDeal): AgentKeyTerm[] {
-  const d = deal.contractDetails;
-  const terms: Omit<AgentKeyTerm, 'id'>[] = [];
-  if (d.salesPrice) terms.push({ term: 'Purchase Price', ref: '§3 · p.1', value: d.salesPrice, note: d.cashPortion ? `Cash ${d.cashPortion}` : '' });
-  if (d.earnestMoney) terms.push({ term: 'Earnest Money', ref: '§5 · p.2', value: d.earnestMoney, note: deal.earnestMoneyDeliveredDate ? `Delivered ${shortDate(deal.earnestMoneyDeliveredDate)}` : '' });
-  if (d.optionFee || deal.optionPeriodDays) {
-    const ends = plusDays(deal.effectiveDate, deal.optionPeriodDays);
-    terms.push({ term: 'Option Period', ref: '§5 · p.2', value: ends ? shortDate(ends) : `${deal.optionPeriodDays} Days`, note: d.optionFee ? `Option fee ${d.optionFee}` : '' });
-  }
-  if (d.financingType || d.loanAmount) terms.push({ term: 'Financing', ref: '§3 · p.1', value: d.financingType || 'Financed', note: [d.loanAmount ? `Loan ${d.loanAmount}` : '', d.financingNotes].filter(Boolean).join(' · ') });
-  if (deal.financingDeadlineDays) {
-    const due = plusDays(deal.effectiveDate, deal.financingDeadlineDays);
-    terms.push({ term: 'Loan Contingency', ref: '§3 · p.1', value: due ? shortDate(due) : `${deal.financingDeadlineDays} Days`, note: '' });
-  }
-  if (d.titleCompany) terms.push({ term: 'Title Company', ref: '§6 · p.2', value: d.titleCompany, note: d.titlePolicyPayer ? `Policy paid by ${d.titlePolicyPayer}` : '' });
-  if (deal.closingDate) terms.push({ term: 'Closing Date', ref: '§9 · p.6', value: shortDate(deal.closingDate), note: '' });
-  if (d.possessionPlan) terms.push({ term: 'Possession', ref: '§10 · p.6', value: d.possessionPlan, note: '' });
-  if (d.improvementsAndAccessories) terms.push({ term: 'Inclusions', ref: '§2 · p.1', value: d.improvementsAndAccessories, note: '' });
-  if (d.specialProvisionsNotes) terms.push({ term: 'Special Provisions', ref: '§11 · p.6', value: d.specialProvisionsNotes, note: '' });
-  return terms.map((t, i) => ({ ...t, id: `derived-${i}` }));
-}
-
-function deriveCash(deal: AgentDeal): AgentCashLine[] {
-  const d = deal.contractDetails;
-  const lines: AgentCashLine[] = [];
-  if (d.cashPortion) lines.push({ id: 'derived-down', label: 'Down Payment', sign: '+', amount: String(parseMoney(d.cashPortion)), note: '' });
-  if (d.earnestMoney) lines.push({ id: 'derived-em', label: 'Earnest Money Already In Escrow', sign: '-', amount: String(parseMoney(d.earnestMoney)), note: '' });
-  return lines;
-}
-
 const fieldCls = 'h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#301D5D]';
 
-export default function ContractPage({ deal, onPatch }: Props) {
-  const terms = deal.keyTermsCustom ? deal.keyTerms : deriveTerms(deal);
-  const lines = deal.cashLinesCustom ? deal.cashLines : deriveCash(deal);
+export default function ContractPage({ deal, onPatch, onParties }: Props) {
+  const terms = deal.keyTerms;
+  const lines = deal.cashLines;
   const [editing, setEditing] = useState<AgentKeyTerm | null>(null);
   const [isNew, setIsNew] = useState(false);
 
@@ -87,12 +49,29 @@ export default function ContractPage({ deal, onPatch }: Props) {
 
   return (
     <div className="ds-page" data-testid="contract-page">
-      <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Key Terms">
-        <div className="flex items-center justify-between px-5 py-4">
-          <p className="text-base font-semibold text-slate-900">Key Terms</p>
-          {deal.effectiveDate && <span className="text-xs text-slate-500">Signed {shortDate(deal.effectiveDate)}</span>}
+      <section className="mb-4 rounded-2xl border border-[#E6E5EC] bg-white p-5" aria-label="Deal Details">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {([
+            ['Property Address', deal.propertyAddress, (v: string) => onPatch({ propertyAddress: v }), 'sm:col-span-2 lg:col-span-3'],
+            ['Buyer Names', deal.buyerNames, (v: string) => onParties('buyerNames', v), ''],
+            ['Seller Names', deal.sellerNames, (v: string) => onParties('sellerNames', v), ''],
+            ['Lender', deal.lender, (v: string) => onPatch({ lender: v }), ''],
+            ['Title Company', deal.contractDetails.titleCompany, (v: string) => onPatch({ contractDetails: { ...deal.contractDetails, titleCompany: v } }), ''],
+            ['Other Agent', deal.otherAgent, (v: string) => onPatch({ otherAgent: v }), ''],
+            ['Brokerage', deal.otherBrokerage, (v: string) => onPatch({ otherBrokerage: v }), ''],
+            ['Contact Information', deal.otherAgentContact, (v: string) => onPatch({ otherAgentContact: v }), 'sm:col-span-2'],
+          ] as const).map(([label, value, set, span]) => (
+            <label key={label} className={`block min-w-0 ${span}`}>
+              <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
+              <input value={value ?? ''} onChange={(e) => set(e.target.value)} className={`${fieldCls} mt-1`} />
+            </label>
+          ))}
         </div>
-        <div className="grid border-t border-[#E6E5EC] sm:grid-cols-2 lg:grid-cols-3">
+      </section>
+
+      <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Contract Terms">
+        {deal.effectiveDate && <p className="border-b border-[#E6E5EC] px-5 py-3 text-xs text-slate-500">Signed {shortDate(deal.effectiveDate)}</p>}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3">
           {terms.map((t) => (
             <button
               key={t.id}
@@ -127,7 +106,7 @@ export default function ContractPage({ deal, onPatch }: Props) {
             <p className="text-xs text-slate-500">Shown to the client as the deposit held in escrow</p>
           </div>
           <label className="flex w-36 items-center gap-1 rounded-md border border-[#E6E5EC] px-2 text-sm text-slate-500 focus-within:border-[#301D5D]">$
-            <input value={deal.earnestInEscrow || (deal.contractDetails.earnestMoney ? String(parseMoney(deal.contractDetails.earnestMoney)) : '')} onChange={(e) => onPatch({ earnestInEscrow: e.target.value })} inputMode="decimal" aria-label="Earnest money in escrow" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
+            <input value={deal.earnestInEscrow} onChange={(e) => onPatch({ earnestInEscrow: e.target.value })} inputMode="decimal" aria-label="Earnest money in escrow" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
           </label>
         </div>
         <div className="px-5 py-3">
