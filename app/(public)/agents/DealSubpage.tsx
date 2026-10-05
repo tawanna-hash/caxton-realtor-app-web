@@ -287,7 +287,10 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   };
   const progressStrip = (
     <>
-      <h2 className="ds-title !mt-0">{deal.propertyAddress && deal.title && deal.title !== deal.propertyAddress ? `${deal.propertyAddress} — ${deal.title}` : deal.propertyAddress || deal.title || 'New Contract'}</h2>
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="ds-title !mt-0">{deal.propertyAddress || deal.title || 'New Contract'}</h2>
+        <span className="ds-chip bg-[#EFEAF8] text-[#301D5D] uppercase tracking-wide">{({ purchase: 'Residential', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Residential'}</span>
+      </div>
       <div className="ds-summary" aria-label="Deal summary">
         {([
           ['Purchase price', price ? (price.startsWith('$') ? price : `$${price}`) : 'Not set', ''],
