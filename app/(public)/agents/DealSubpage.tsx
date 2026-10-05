@@ -63,6 +63,7 @@ type Props = {
   statuses: readonly string[];
   documentGroups: readonly { id: string; label: string; items: readonly { id: string; label: string }[] }[];
   nextDeadline?: { label: string; date: string };
+  deadlines?: readonly { id: string; label: string; date: string }[];
   formatDate: (value: string) => string;
   countdownLabel: string;
   onUpdate: <K extends keyof AgentDeal>(key: K, value: AgentDeal[K]) => void;
@@ -76,7 +77,21 @@ type Props = {
   onToggleTrecForm?: (formFamily: string, selected: boolean) => void;
 };
 
-export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
+
+const DOC_DEADLINE_IDS: Record<string, string> = {
+  'pd-executed-contract-receipt': 'earnest-money-delivery',
+  'pd-third-party-financing': 'financing-deadline',
+  'pd-third-party-financing-credit': 'financing-deadline',
+  'pd-right-to-terminate': 'appraisal-deadline',
+  'pd-new-survey': 'survey-due',
+  'pd-existing-survey-t47': 'survey-due',
+};
+
+function dayDiff(today: string, date: string): number {
+  return Math.round((Date.parse(`${date}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86400000);
+}
+
+export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -492,8 +507,32 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                 {p.phone ? <a href={`tel:${p.phone}`} aria-label={`Call ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : null}
               </div>
             );
+            const allReq = PURCHASE_FOLDERS.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' || deal.documentChecks[`add:${doc.id}`]);
+            const tileSubmitted = allReq.filter((doc) => deal.documentChecks[doc.id]).length;
+            const tileStarted = allReq.filter((doc) => !deal.documentChecks[doc.id] && doc.formFamily && (trecForms ?? []).some((form) => form.formFamily === doc.formFamily && form.filled > 0)).length;
+            const tileNotStarted = allReq.length - tileSubmitted - tileStarted;
+            const tilePct = allReq.length ? Math.round((tileSubmitted / allReq.length) * 100) : 0;
+            const tile = (value: number, label: string) => (
+              <div className="rounded-lg bg-[#F6F3FB] px-4 py-3">
+                <p className="text-2xl font-semibold text-[#301D5D]">{value}</p>
+                <p className="text-xs text-slate-500">{label}</p>
+              </div>
+            );
             return (
               <div className="space-y-4">
+                <div className="ds-card">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-slate-900">Required Documents</p>
+                    <button type="button" onClick={() => onOpenView('d-documents')}>Open</button>
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-3">
+                    {tile(tileSubmitted, 'Submitted')}
+                    {tile(tileStarted, 'In progress')}
+                    {tile(tileNotStarted, 'Not started')}
+                  </div>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={tilePct} aria-valuemin={0} aria-valuemax={100} aria-label="Required documents submitted"><div className="h-full bg-[#301D5D]" style={{ width: `${tilePct}%` }} /></div>
+                  <p className="mt-2 text-xs text-slate-500">{tileSubmitted} of {allReq.length} submitted</p>
+                </div>
                 <div className="ds-snap-grid">
                   <div className="ds-card !p-0 self-start">
                     {cardHead(<AlertCircle className="h-4 w-4 text-amber-600" aria-hidden="true" />, 'Needs Your Attention', attentionRows.length, 'bg-amber-50 text-amber-700')}
@@ -567,9 +606,20 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             const dealForms = (trecForms ?? []).filter((form) => form.selected && !usedFamilies.has(form.formFamily));
             const formInfo = (family: string | undefined) => (family ? (trecForms ?? []).find((form) => form.formFamily === family) : undefined);
             const dealTypeLabel = ({ purchase: 'Residential Purchase', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Deal';
-            const statusChip = (done: boolean) => (
-              <span className={`ds-chip ${done ? 'bg-[#EFEAF8] text-[#301D5D]' : 'bg-slate-100 text-slate-600'}`}>{done ? 'Submitted' : 'Not submitted'}</span>
-            );
+            const dueFor = (docId: string): { label: string; date: string } | null => {
+              if (docId === 'pd-closing-statement' || docId === 'pd-walkthrough') return deal.closingDate ? { label: 'Closing', date: deal.closingDate } : null;
+              const id = DOC_DEADLINE_IDS[docId];
+              const match = id ? (deadlines ?? []).find((item) => item.id === id) : undefined;
+              return match ? { label: match.label, date: match.date } : null;
+            };
+            const statusChip = (done: boolean, docId?: string) => {
+              if (done) return <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">Submitted</span>;
+              const due = docId ? dueFor(docId) : null;
+              if (!due) return <span className="ds-chip bg-slate-100 text-slate-600">Not submitted</span>;
+              const diff = dayDiff(today, due.date);
+              const text = diff < 0 ? `Overdue ${-diff} day${diff === -1 ? '' : 's'}` : diff === 0 ? 'Due today' : `Due in ${diff} day${diff === 1 ? '' : 's'}`;
+              return <span title={`${due.label} · ${formatDate(due.date)}`} className={`ds-chip ${diff < 0 ? 'bg-[#301D5D] text-white' : diff <= 3 ? 'bg-[#EFEAF8] text-[#301D5D]' : 'bg-slate-100 text-slate-600'}`}>{text}</span>;
+            };
             const formStatus = (form: { total: number; filled: number }) => (form.total > 0 ? (form.filled > 0 ? `Fillable · ${form.filled} of ${form.total}` : `Fillable · ${form.total} fields`) : 'Notice · nothing to fill');
             const requiredRow = (doc: (typeof allDocs)[number]) => {
               const form = formInfo(doc.formFamily);
@@ -579,10 +629,10 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   <input type="checkbox" aria-label={`Mark ${doc.label} submitted`} checked={Boolean(checks[doc.id])} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...checks, [doc.id]: e.target.checked })} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm text-slate-900">{doc.label}</span>
-                    {addedOptional && <span className="block text-xs text-slate-500">Added from optional</span>}
+                    {(addedOptional || (!checks[doc.id] && dueFor(doc.id))) && <span className="block text-xs text-slate-500">{[addedOptional ? 'Added from optional' : '', !checks[doc.id] && dueFor(doc.id) ? `${dueFor(doc.id)!.label} ${formatDate(dueFor(doc.id)!.date)}` : ''].filter(Boolean).join(' · ')}</span>}
                   </span>
                   {form && <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{formStatus(form)}</span>}
-                  {statusChip(Boolean(checks[doc.id]))}
+                  {statusChip(Boolean(checks[doc.id]), doc.id)}
                   {form && <TrecFormActions family={form.formFamily} disabled={locked} onOpen={(family) => onOpenTrecForm?.(family)} onUpload={(family, mode) => onUploadTrecForm?.(family, mode)} />}
                   {addedOptional && !locked && <button type="button" aria-label={`Move ${doc.label} back to optional`} className="text-xs text-slate-500 underline underline-offset-2 hover:text-slate-900" onClick={() => { const next = { ...checks }; delete next[`add:${doc.id}`]; delete next[doc.id]; onUpdate('documentChecks', next); }}>Remove</button>}
                 </div>

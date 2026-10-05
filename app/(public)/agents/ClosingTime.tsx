@@ -2742,6 +2742,7 @@ export default function ClosingTime({
                     statuses={TREC_DEAL_WORKFLOW_STATUSES}
                     documentGroups={DOCUMENT_GROUPS}
                     nextDeadline={nextDeadline}
+                    deadlines={deal ? dealDeadlines(deal) : []}
                     formatDate={formatDate}
                     countdownLabel={deal ? closingCountdownLabel(deal.closingDate, today) : ''}
                     onUpdate={updateActiveDeal}
