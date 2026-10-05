@@ -25,7 +25,7 @@ function contractValue(deal: AgentDeal, id: string): string {
   return '';
 }
 
-export type TrecFormStatus = { formFamily: string; formNumber: string; title: string; total: number; filled: number; selected: boolean };
+export type TrecFormStatus = { formFamily: string; formNumber: string; title: string; total: number; filled: number; selected: boolean; textTotal?: number; textFilled?: number };
 
 export function blankFieldAlerts(deal: AgentDeal, forms: readonly TrecFormStatus[] = []): BlankAlert[] {
   const hidden = new Set(deal.contractHiddenFields ?? []);
@@ -38,8 +38,11 @@ export function blankFieldAlerts(deal: AgentDeal, forms: readonly TrecFormStatus
     if (total > 0 && blank > 0) alerts.push({ id: `contract:${section.id}`, label: `Contract: ${section.title}`, blank, total, view: 'transaction' });
   }
   for (const form of forms) {
-    if (!form.selected || form.formFamily === '20' || form.total === 0) continue;
-    if (form.filled < form.total) alerts.push({ id: `form:${form.formFamily}`, label: `${form.formNumber} ${form.title}`, blank: form.total - form.filled, total: form.total, view: 'd-documents' });
+    if (!form.selected || form.formFamily === '20') continue;
+    // Alerts count text fields only; checkboxes and choices are often left unchecked on purpose.
+    const total = form.textTotal ?? form.total;
+    const filled = form.textFilled ?? form.filled;
+    if (total > 0 && filled < total) alerts.push({ id: `form:${form.formFamily}`, label: `${form.formNumber} ${form.title}`, blank: total - filled, total, view: 'd-documents' });
   }
   return alerts;
 }

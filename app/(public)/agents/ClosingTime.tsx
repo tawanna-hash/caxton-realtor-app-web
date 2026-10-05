@@ -2955,6 +2955,8 @@ export default function ClosingTime({
                       total: version.fields.length,
                       filled: version.fields.filter((field) => (deal.formFields[field.id] ?? '').trim() !== '').length,
                       selected: Boolean(deal.selectedFormFamilies[version.formFamily]),
+                      textTotal: version.fields.filter((field) => field.type === 'text').length,
+                      textFilled: version.fields.filter((field) => field.type === 'text' && (deal.formFields[field.id] ?? '').trim() !== '').length,
                     })) : undefined}
                     onToggleTrecForm={(family, selected) => updateActiveDeal('selectedFormFamilies', { ...(deal?.selectedFormFamilies ?? {}), [family]: selected })}
                     onOpenTrecForm={(family) => {

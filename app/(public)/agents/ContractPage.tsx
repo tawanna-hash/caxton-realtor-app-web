@@ -1,5 +1,6 @@
 'use client';
 
+import { parseLegalDescription } from '@/lib/legal-description';
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
 import { CONTRACT_MAP_SECTIONS } from '@/lib/trec-20-19-contract-map';
@@ -162,6 +163,8 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
             put('app:property.neighborhood', result.cad.neighborhood); put('app:property.account', result.cad.account);
             put('app:property.mapNumber', result.cad.mapNumber); put('app:property.effectiveAcres', result.cad.effectiveAcres);
             put('app:property.mailingAddress', result.cad.mailingAddress);
+            const legal = parseLegalDescription(result.cad.legalDescription);
+            put('p01_f003', legal.lot); put('p01_f004', legal.block); put('p01_f005', legal.addition);
           }
         }
         cur.setForm(patch);
