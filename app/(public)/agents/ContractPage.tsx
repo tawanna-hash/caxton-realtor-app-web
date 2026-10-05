@@ -148,8 +148,8 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
   ];
   const lines: AgentCashLine[] = [
     ...LINE_DEFS.flatMap((def) => {
-      const own = storedLines.find((l) => l.id === def.id);
-      if (own?.label === HIDDEN) return [];
+      const found = storedLines.find((l) => l.id === def.id);
+      const own = found && found.label !== HIDDEN ? found : undefined;
       return [{ id: def.id, label: own?.label || def.label(deal), sign: own ? own.sign : def.sign, amount: own?.amount || def.amount(deal), note: own?.note ?? '' }];
     }),
     ...storedLines.filter((l) => !l.id.startsWith('tpl-')),
@@ -168,9 +168,16 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     const current = lines.find((l) => l.id === id);
     if (current) saveLine({ ...current, ...patch, label: patch.label ?? current.label });
   };
+  // The trash button clears a line's amount and note and keeps the line itself.
   const removeLine = (id: string) => {
-    if (id.startsWith('tpl-')) saveLine({ id, label: HIDDEN, sign: '+', amount: '', note: '' });
-    else onPatch({ cashLines: storedLines.filter((l) => l.id !== id), cashLinesCustom: true });
+    const current = lines.find((l) => l.id === id);
+    if (!current) return;
+    if (!id.startsWith('tpl-') && !current.amount.trim() && !current.note.trim()) {
+      onPatch({ cashLines: storedLines.filter((l) => l.id !== id), cashLinesCustom: true });
+      return;
+    }
+    const def = LINE_DEFS.find((d) => d.id === id);
+    saveLine({ ...current, label: def ? def.label(deal) : current.label, amount: def && def.amount(deal) ? ' ' : '', note: '' });
   };
   const addLine = () => onPatch({ cashLines: [...storedLines, { id: newId('line'), label: 'New Line', sign: '+', amount: '', note: '' }], cashLinesCustom: true });
 
@@ -290,7 +297,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                   <label className="flex w-32 items-center gap-1 rounded-md border border-[#E6E5EC] px-2 text-sm text-slate-500 focus-within:border-[#301D5D]">$
                     <input value={line.amount} onChange={(e) => updateLine(line.id, { amount: e.target.value })} inputMode="decimal" aria-label="Amount" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
                   </label>
-                  <button type="button" aria-label="Delete line" onClick={() => removeLine(line.id)} className="!border-0 !bg-transparent !px-2 text-slate-400 hover:!text-[#301D5D]"><Trash2 className="h-4 w-4" aria-hidden="true" /></button>
+                  <button type="button" aria-label="Clear line" onClick={() => removeLine(line.id)} className="!border-0 !bg-transparent !px-2 text-slate-400 hover:!text-[#301D5D]"><Trash2 className="h-4 w-4" aria-hidden="true" /></button>
                 </div>
                 <input value={line.note} onChange={(e) => updateLine(line.id, { note: e.target.value })} aria-label="Note shown to client" placeholder="Optional note the client sees under this line" className="mt-1 h-7 w-full bg-transparent text-xs text-slate-500 outline-none placeholder:text-slate-300" />
               </li>
