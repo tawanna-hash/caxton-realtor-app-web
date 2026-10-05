@@ -119,7 +119,16 @@ const fieldCls = 'h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 te
 
 export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Props) {
   const deal = effective(rawDeal);
-  const setForm = (patch: Record<string, string>) => onPatch({ formFields: { ...rawDeal.formFields, ...patch } });
+  const setForm = (patch: Record<string, string>) => {
+    const appPatch: Record<string, string> = {};
+    const formPatch: Record<string, string> = {};
+    for (const [id, v] of Object.entries(patch)) { if (id.startsWith('app:')) appPatch[id.slice(4)] = v; else formPatch[id] = v; }
+    onPatch({
+      ...(Object.keys(formPatch).length ? { formFields: { ...rawDeal.formFields, ...formPatch } } : {}),
+      ...(Object.keys(appPatch).length ? { contractAddresses: { ...(rawDeal.contractAddresses ?? {}), ...appPatch } } : {}),
+    });
+  };
+  const getVal = (id: string): string => (id.startsWith('app:') ? (rawDeal.contractAddresses ?? {})[id.slice(4)] ?? '' : rawDeal.formFields[id] ?? '');
   const stored = deal.keyTerms;
   const storedLines = deal.cashLines;
   const terms: (AgentKeyTerm & { source?: TermDef['source']; auto?: Auto })[] = [
@@ -198,7 +207,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
               : section.id === 'lender' ? [['Lender', rawDeal.lender ?? '', (v: string) => onPatch({ lender: v })]] as const
               : section.id === 'seller' ? [['Seller 1', rawDeal.sellerNames, (v: string) => onParties('sellerNames', v)], ['Seller 2', rawDeal.seller2Name ?? '', (v: string) => onParties('seller2Name', v)]] as const
               : null;
-            const filled = section.fields.filter((fl) => (rawDeal.formFields[fl.id] ?? '').trim()).length;
+            const filled = section.fields.filter((fl) => getVal(fl.id).trim()).length;
             return (
               <Fragment key={section.id}>
               <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
@@ -208,13 +217,13 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                 </summary>
                 <div className={`grid gap-x-5 gap-y-3 border-t border-[#F1F0F5] px-5 py-4 sm:grid-cols-2 lg:grid-cols-4`}>
                   {leads && leads.map(([label, value, set]) => (
-                    <label key={label} className="block min-w-0 sm:col-span-2">
+                    <label key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-4' : ''}`}>
                       <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
                       <input value={value ?? ''} onChange={(e) => set(e.target.value)} className={`${fieldCls} mt-1`} />
                     </label>
                   ))}
                   {section.fields.map((fl) => {
-                    const value = rawDeal.formFields[fl.id] ?? '';
+                    const value = getVal(fl.id);
                     if (fl.kind === 'c') {
                       return (
                         <label key={fl.id} className="flex min-w-0 items-start gap-2 text-sm text-slate-900">

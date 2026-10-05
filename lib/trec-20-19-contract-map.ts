@@ -14,25 +14,28 @@ export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
   { id: 'buyer', title: 'Buyer', fields: [
     f('p08_f123', 'Buyer 1 Phone'), f('p08_f125', 'Buyer 1 Email'),
     f('p08_f124', 'Buyer 2 Phone'), f('p08_f126', 'Buyer 2 Email'),
+    f('app:buyer.address', 'Address'), f('app:buyer.city', 'City'), f('app:buyer.state', 'State'), f('app:buyer.zip', 'ZIP'),
   ] },
   { id: 'seller', title: 'Seller', fields: [
     f('p08_f129', 'Seller 1 Phone'), f('p08_f131', 'Seller 1 Email'),
     f('p08_f130', 'Seller 2 Phone'), f('p08_f132', 'Seller 2 Email'),
-    f('p08_f127', 'Address', 't', 2), f('p08_f128', 'Address (Continued)', 't', 2),
+    f('p08_f127', 'Address'), f('app:seller.city', 'City'), f('app:seller.state', 'State'), f('app:seller.zip', 'ZIP'),
   ] },
   { id: 'buyer-broker', title: "Buyer's Agent", fields: [
     f('p11_f212', 'Buyer’s Broker Firm'), f('p11_f215', 'Associate Name'), f('p11_f216', 'Team Name'), f('p11_f220', 'Licensed Supervisor'),
-    f('p11_f213', 'Address', 't', 2), f('p08_f133', 'City'), f('p08_f134', 'State'),
+    f('p11_f213', 'Address'), f('p08_f133', 'City'), f('p08_f134', 'State'), f('app:buyer-broker.zip', 'ZIP'),
     f('p11_f218', 'Associate Phone'), f('p11_f217', 'Associate Email', 't', 2), f('p11_f221', 'Supervisor Phone'),
     f('p11_f214', 'Broker Firm License No.'), f('p11_f219', 'Associate License No.'), f('p11_f222', 'Supervisor License No.'),
   ] },
   { id: 'seller-broker', title: "Seller's Agent", fields: [
     f('p11_f201', 'Seller’s Broker Firm'), f('p11_f204', 'Associate Name'), f('p11_f205', 'Team Name'), f('p11_f209', 'Licensed Supervisor'),
-    f('p11_f202', 'Address', 't', 2), f('p08_f137', 'City'), f('p08_f138', 'State'),
+    f('p11_f202', 'Address'), f('p08_f137', 'City'), f('p08_f138', 'State'), f('app:seller-broker.zip', 'ZIP'),
     f('p11_f207', 'Associate Phone'), f('p11_f206', 'Associate Email', 't', 2), f('p11_f210', 'Supervisor Phone'),
     f('p11_f203', 'Broker Firm License No.'), f('p11_f208', 'Associate License No.'), f('p11_f211', 'Supervisor License No.'),
   ] },
-  { id: 'lender', title: 'Lender', fields: [] },
+  { id: 'lender', title: 'Lender', fields: [
+    f('app:lender.address', 'Address'), f('app:lender.city', 'City'), f('app:lender.state', 'State'), f('app:lender.zip', 'ZIP'),
+  ] },
   { id: 'title-company', title: 'Title Company', fields: [
     f('p02_f038', 'Title Company', 't', 2), f('p02_f028', 'Escrow Agent', 't', 2),
     f('p02_f029', 'Address'), f('p12_f265', 'City'), f('p12_f266', 'State'), f('p12_f267', 'ZIP'),
