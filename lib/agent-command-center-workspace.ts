@@ -154,6 +154,7 @@ export const agentDealSchema = z.object({
   trecFormVersionId: optionalShortText(120).default('built-in-trec-20-19'),
   closeoutOutcome: optionalShortText(120), closeoutDate: dateText.default(''), closeoutNote: optionalShortText(2_000),
   auditLocked: z.boolean().default(false),
+  agentSide: z.enum(['', 'buyer', 'listing']).default(''),
   dealType: z.enum(['purchase', 'listing_sale', 'listing_lease', 'lease', 'real_estate_other', 'other']).default('purchase'),
   documentChecks: z.record(z.string(), z.boolean()).default({}),
   serviceProviders: z.array(agentServiceProviderSchema).max(60).default([]),

@@ -604,6 +604,7 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     closeoutNote: '',
     auditLocked: false,
     dealType: 'purchase',
+    agentSide: '',
     documentChecks: {},
     serviceProviders: [],
     nextAction: '',
@@ -1010,6 +1011,7 @@ export default function ClosingTime({
   const [dealsHealth, setDealsHealth] = useState('all');
   const [dealPageId, setDealPageId] = useState<string | null>(null);
   const [newDealPickerOpen, setNewDealPickerOpen] = useState(false);
+  const [pickerStep, setPickerStep] = useState<'type' | 'side'>('type');
   // A refresh always lands at the top of the page instead of restoring the old scroll position.
   useEffect(() => {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
@@ -1493,10 +1495,10 @@ export default function ClosingTime({
   const closingSoonCount = deals.filter((deal) => deal.status !== 'completed' && deal.closingDate >= today && deal.closingDate <= addDays(today, 30)).length;
   const overdueTaskCount = deals.flatMap((deal) => deal.tasks).filter((task) => !task.complete && task.dueDate < today).length;
 
-  const createDeal = (dealType?: AgentDeal['dealType']) => {
+  const createDeal = (dealType?: AgentDeal['dealType'], agentSide?: AgentDeal['agentSide']) => {
     const base = newDeal(trecFormVersion.id);
     // Pre-tick the required TREC forms: the One to Four Family contract, the Seller's Disclosure Notice and IABS.
-    const deal = { ...base, ...(dealType ? { dealType } : {}), selectedFormFamilies: { ...base.selectedFormFamilies, '20': true, '55': true, IABS: true } };
+    const deal = { ...base, ...(dealType ? { dealType } : {}), ...(agentSide ? { agentSide } : {}), selectedFormFamilies: { ...base.selectedFormFamilies, '20': true, '55': true, IABS: true } };
     persistDeals([deal, ...deals]);
     setActiveDealId(deal.id);
     setPendingRemoval(null);
@@ -2401,7 +2403,7 @@ export default function ClosingTime({
             </ul>
             <div className="ds-group">
               <p className="ds-group-label">On The Clock</p>
-              <button type="button" onClick={() => setNewDealPickerOpen(true)} className="ds-new" aria-label="New contract"><Plus className="h-3.5 w-3.5" aria-hidden="true" /><span>New</span></button>
+              <button type="button" onClick={() => { setPickerStep('type'); setNewDealPickerOpen(true); }} className="ds-new" aria-label="New contract"><Plus className="h-3.5 w-3.5" aria-hidden="true" /><span>New</span></button>
             </div>
             <ul className="ds-nav-top ds-nav-closings">
               <li>
@@ -2623,7 +2625,7 @@ export default function ClosingTime({
                       <span className="min-w-0 flex-1 text-left">
                         <span className="flex flex-wrap items-center gap-2">
                           <span className="truncate text-sm font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
-                          <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{typeLabel[deal.dealType] ?? 'Deal'}</span>
+                          <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{deal.dealType === 'purchase' && deal.agentSide === 'listing' ? 'Sell side' : (typeLabel[deal.dealType] ?? 'Deal')}</span>
                         </span>
                         <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
                           <span className="font-medium text-slate-900">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span>
@@ -2648,7 +2650,7 @@ export default function ClosingTime({
                       <h2 className="ds-title">Closings</h2>
                       <p className="ds-subtitle">Contract to keys. The nearest closings sort to the top.</p>
                     </div>
-                    <button type="button" onClick={() => setNewDealPickerOpen(true)}><Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />New Contract</button>
+                    <button type="button" onClick={() => { setPickerStep('type'); setNewDealPickerOpen(true); }}><Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />New Contract</button>
                   </div>
                   <p className="mt-6 text-sm font-semibold text-slate-900">In Flight <span className="ds-chip ml-1 bg-[#EFEAF8] text-[#301D5D]">{inFlight.length}</span></p>
                   <ul className="ds-closing-list">{inFlight.length === 0 ? <li className="px-4 py-4 text-sm text-slate-500">No closings in flight.</li> : inFlight.map(row)}</ul>
@@ -2690,7 +2692,7 @@ export default function ClosingTime({
                       <h2 className="ds-title">Deals</h2>
                       <p className="ds-subtitle">Every deal in one place, with where each one stands and what is due next.</p>
                     </div>
-                    <button type="button" onClick={() => setNewDealPickerOpen(true)} className="inline-flex h-[40px] items-center gap-2 rounded-lg bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
+                    <button type="button" onClick={() => { setPickerStep('type'); setNewDealPickerOpen(true); }} className="inline-flex h-[40px] items-center gap-2 rounded-lg bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
                       <Plus className="h-4 w-4" aria-hidden="true" /> New Deal
                     </button>
                   </div>
@@ -3564,12 +3566,26 @@ export default function ClosingTime({
               <h3 className="text-lg font-semibold text-slate-900">Start A New Deal</h3>
               <button type="button" aria-label="Close" onClick={() => setNewDealPickerOpen(false)} className="text-slate-500 hover:text-slate-900"><X className="h-5 w-5" aria-hidden="true" /></button>
             </div>
-            <p className="mt-1 text-sm text-slate-500">Choose the deal type.</p>
-            <div className="mt-4 grid gap-2">
-              {([['purchase', 'Purchase'], ['listing_sale', 'Listing For Sale'], ['listing_lease', 'Listing For Lease'], ['lease', 'Lease']] as const).map(([type, label]) => (
-                <button key={type} type="button" onClick={() => { createDeal(type); setNewDealPickerOpen(false); setWorkspacePage(2); setDeskView('transaction'); }} className="ds-provider-tile !min-h-[44px] !flex-row !justify-start !px-4 text-sm font-medium">{label}</button>
-              ))}
-            </div>
+            {pickerStep === 'type' ? (
+              <>
+                <p className="mt-1 text-sm text-slate-500">Choose the deal type.</p>
+                <div className="mt-4 grid gap-2">
+                  {([['purchase', 'Purchase'], ['listing_sale', 'Listing For Sale'], ['listing_lease', 'Listing For Lease'], ['lease', 'Lease']] as const).map(([type, label]) => (
+                    <button key={type} type="button" onClick={() => { if (type === 'purchase') { setPickerStep('side'); return; } createDeal(type); setNewDealPickerOpen(false); setWorkspacePage(2); setDeskView('transaction'); }} className="ds-provider-tile !min-h-[44px] !flex-row !justify-start !px-4 text-sm font-medium">{label}</button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-sm text-slate-500">Are You The Listing Agent Or The Buyer&apos;s Agent?</p>
+                <div className="mt-4 grid gap-2">
+                  {([['listing', 'Listing Agent'], ['buyer', "Buyer's Agent"]] as const).map(([side, label]) => (
+                    <button key={side} type="button" onClick={() => { createDeal('purchase', side); setNewDealPickerOpen(false); setPickerStep('type'); setWorkspacePage(2); setDeskView('transaction'); }} className="ds-provider-tile !min-h-[44px] !flex-row !justify-start !px-4 text-sm font-medium">{label}</button>
+                  ))}
+                </div>
+                <div className="mt-3"><button type="button" onClick={() => setPickerStep('type')}>Back</button></div>
+              </>
+            )}
           </div>
         </div>
       )}
