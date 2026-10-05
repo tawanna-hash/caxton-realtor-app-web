@@ -2130,7 +2130,7 @@ export default function ClosingTime({
             </ul>
             <p className="ds-group-label ds-group-solo">Tools</p>
             <ul className="ds-nav-top">
-              {TOOL_VIEWS.filter((view) => view.id !== 'overview').map((view) => {
+              {TOOL_VIEWS.filter((view) => view.id !== 'overview' && view.id !== 'referral').map((view) => {
                 const active = view.id === effectiveView;
                 const NavIcon = NAV_ICONS[view.id] ?? FileText;
                 return (
@@ -2142,15 +2142,20 @@ export default function ClosingTime({
                 );
               })}
               <li>
-                <button type="button" aria-expanded={resourcesOpen || effectiveView === 'utilities'} onClick={() => setResourcesOpen((open) => !open)} className="ds-navbtn">
+                <button type="button" aria-expanded={resourcesOpen || effectiveView === 'utilities' || effectiveView === 'referral'} onClick={() => setResourcesOpen((open) => !open)} className="ds-navbtn">
                   <BookOpen className="ct-navicon" aria-hidden="true" /><span>Resources</span>
-                  <ChevronRight className={`ml-auto h-3.5 w-3.5 transition-transform ${resourcesOpen || effectiveView === 'utilities' ? 'rotate-90' : ''}`} aria-hidden="true" />
+                  <ChevronRight className={`ml-auto h-3.5 w-3.5 transition-transform ${resourcesOpen || effectiveView === 'utilities' || effectiveView === 'referral' ? 'rotate-90' : ''}`} aria-hidden="true" />
                 </button>
-                {(resourcesOpen || effectiveView === 'utilities') && (
+                {(resourcesOpen || effectiveView === 'utilities' || effectiveView === 'referral') && (
                   <ul className="ds-nav-child">
                     <li>
                       <button type="button" aria-current={effectiveView === 'utilities' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('utilities'); }} className="ds-navbtn">
                         <span>Utilities</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button type="button" aria-current={effectiveView === 'referral' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('referral'); }} className="ds-navbtn">
+                        <span>Referral Network</span>
                       </button>
                     </li>
                   </ul>
