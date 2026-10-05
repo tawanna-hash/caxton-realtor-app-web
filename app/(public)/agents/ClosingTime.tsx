@@ -2716,26 +2716,6 @@ export default function ClosingTime({
                     onUpdate={updateActiveDeal}
                     onBack={() => setDeskView('deals')}
                     onOpenView={(view) => { setWorkspacePage(2); setDeskView(view); }}
-                    trecForms={deal ? activePacketForms.map((version) => ({
-                      formFamily: version.formFamily,
-                      formNumber: version.formNumber,
-                      title: version.title,
-                      total: version.fields.length,
-                      filled: version.fields.filter((field) => (deal.formFields[field.id] ?? '').trim() !== '').length,
-                      selected: Boolean(deal.selectedFormFamilies[version.formFamily]),
-                    })) : undefined}
-                    onToggleTrecForm={(family, selected) => updateActiveDeal('selectedFormFamilies', { ...(deal?.selectedFormFamilies ?? {}), [family]: selected })}
-                    onOpenTrecForm={(family) => {
-                      if (deal && !deal.selectedFormFamilies[family]) updateActiveDeal('selectedFormFamilies', { ...deal.selectedFormFamilies, [family]: true });
-                      setActiveTrecFormFamily(family);
-                      setActiveTrecPage(1);
-                      setFormModalOpen(true);
-                    }}
-                    onUploadTrecForm={(family, mode) => {
-                      if (mode === 'photo') { openContractCamera(family); return; }
-                      rowUploadFamilyRef.current = family;
-                      rowUploadInputRef.current?.click();
-                    }}
                   />
                 </div>
               );
@@ -2767,6 +2747,26 @@ export default function ClosingTime({
                     onUpdate={updateActiveDeal}
                     onBack={() => setDeskView('deals')}
                     onOpenView={(view) => { setWorkspacePage(2); setDeskView(view); }}
+                    trecForms={deal ? activePacketForms.map((version) => ({
+                      formFamily: version.formFamily,
+                      formNumber: version.formNumber,
+                      title: version.title,
+                      total: version.fields.length,
+                      filled: version.fields.filter((field) => (deal.formFields[field.id] ?? '').trim() !== '').length,
+                      selected: Boolean(deal.selectedFormFamilies[version.formFamily]),
+                    })) : undefined}
+                    onToggleTrecForm={(family, selected) => updateActiveDeal('selectedFormFamilies', { ...(deal?.selectedFormFamilies ?? {}), [family]: selected })}
+                    onOpenTrecForm={(family) => {
+                      if (deal && !deal.selectedFormFamilies[family]) updateActiveDeal('selectedFormFamilies', { ...deal.selectedFormFamilies, [family]: true });
+                      setActiveTrecFormFamily(family);
+                      setActiveTrecPage(1);
+                      setFormModalOpen(true);
+                    }}
+                    onUploadTrecForm={(family, mode) => {
+                      if (mode === 'photo') { openContractCamera(family); return; }
+                      rowUploadFamilyRef.current = family;
+                      rowUploadInputRef.current?.click();
+                    }}
                   />
                 </div>
               );
