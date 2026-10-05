@@ -324,6 +324,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                   <span>{section.title}</span>
                   <span className="flex items-center gap-3">
                     {section.fields.length > 0 && <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>}
+                    {section.fields.length > 0 && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); const d = e.currentTarget.closest('details'); if (d) d.open = true; putCustom([...customFields, { id: newId('cf'), section: section.id, label: 'New Field', value: '' }]); }}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Field</button>}
                     <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId(section.id); }}>Quick Entry</button>
                   </span>
                 </summary>
