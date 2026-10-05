@@ -642,7 +642,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               <div className="space-y-4">
                 <div className="ds-card flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="ds-side-title !m-0">{dealTypeLabel} documents</p>
+                    <p className="ds-side-title !m-0">{dealTypeLabel} Documents</p>
                   </div>
                   <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{submittedCount} of {requiredDocs.length} submitted</span>
                 </div>
