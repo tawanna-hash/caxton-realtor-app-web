@@ -508,30 +508,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             <div className="min-w-0">{sideBlocks.property}</div>
           </div>
         </div>
-        <div className="grid items-start gap-3">
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="ds-card">
-            <div className="flex items-center justify-between"><p className="text-sm font-semibold text-slate-900">Tasks</p><button type="button" onClick={() => onOpenView('tasks')}>View all</button></div>
-            <div className="mt-3 grid grid-cols-4 gap-3">
-              {stat('Open', String(openTasks.length))}
-              {stat('Done', String(doneTasks))}
-              {stat('Overdue', String(overdueTasks), overdueTasks ? 'text-[#9A3D2B]' : undefined)}
-              {stat('Due 7 days', String(dueSoon))}
-            </div>
-            <div className="ds-bar mt-3" aria-hidden="true"><span style={{ width: `${pct(doneTasks, deal.tasks.length)}%` }} /></div>
-            <p className="mt-1 text-xs text-slate-500">{pct(doneTasks, deal.tasks.length)}% complete</p>
-            <ul className="mt-3 divide-y divide-[#F1F0F5]">
-              {upcoming.length === 0 && <li className="py-2 text-xs text-slate-500">No open tasks.</li>}
-              {upcoming.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span className="min-w-0 truncate text-slate-900">{t.title}</span>
-                  <span className={`shrink-0 text-xs ${t.dueDate && t.dueDate < today ? 'text-[#9A3D2B]' : 'text-slate-500'}`}>{t.dueDate ? formatDate(t.dueDate) : 'No date'}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        </div>
       </div>
     );
   }
