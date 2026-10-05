@@ -3060,6 +3060,21 @@ export default function ClosingTime({
                   Send Emails To
                   <input type="email" defaultValue={notificationPreferences.notificationEmail ?? ''} placeholder="Account Email" onBlur={(event) => { const value = event.target.value.trim(); if (value !== (notificationPreferences.notificationEmail ?? '') && (value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))) updateNotificationPreferences({ notificationEmail: value }); }} className="mt-1 block w-full max-w-sm rounded-md border border-[#E6E5EC] px-3 py-2 text-sm font-normal text-slate-800" />
                 </label>
+                <div className="space-y-2">
+                  <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
+                    <input type="checkbox" checked={notificationPreferences.smsEnabled} onChange={async (event) => {
+                      if (!event.target.checked) { updateNotificationPreferences({ smsEnabled: false }); return; }
+                      const phone = (document.getElementById('closing-time-sms-phone') as HTMLInputElement | null)?.value.trim() ?? '';
+                      const res = await fetch('/api/agent-command-center/sms-consent', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
+                      if (!res.ok) { event.target.checked = false; window.alert('Enter your 10-digit US mobile number first.'); return; }
+                      const data = (await res.json()) as { phone: string };
+                      updateNotificationPreferences({ smsEnabled: true, smsPhone: data.phone });
+                    }} className="h-4 w-4 accent-[#301D5D]" />
+                    Send Deadline Alerts By Text
+                  </label>
+                  <input id="closing-time-sms-phone" type="tel" defaultValue={notificationPreferences.smsPhone} placeholder="Mobile Number" className="block w-full max-w-sm rounded-md border border-[#E6E5EC] px-3 py-2 text-sm font-normal text-slate-800" />
+                  <p className="text-xs text-slate-500">Each text includes the property address. Message and data rates may apply. Reply STOP to opt out.</p>
+                </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
                     <input type="checkbox" checked={notificationPreferences.pushEnabled} onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" />

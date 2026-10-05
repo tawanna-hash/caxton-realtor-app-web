@@ -9,6 +9,7 @@ import { calculateTrecDeadlines, type TrecDeadline } from '@/lib/trec-deadlines'
 import { query } from '@/lib/server/db/neon';
 import { blankFieldAlerts, type TrecFormStatus } from '@/lib/blank-field-alerts';
 import { BUILT_IN_TREC_FORM_VERSIONS } from '@/lib/trec-form-versions';
+import { sendSms, toE164 } from '@/lib/server/sms';
 import { sendPushToRealtor } from '@/lib/server/push';
 import { ensureAgentCommandCenterWorkspaceSchema } from '@/lib/server/agent-command-center-workspaces';
 
@@ -28,6 +29,7 @@ export type AgentDeadlineNotificationRun = {
   dueDeadlines: number;
   emailSent: number;
   pushSent: number;
+  smsSent: number;
   skipped: number;
   errors: string[];
 };
@@ -147,7 +149,7 @@ async function ensureAgentDeadlineDeliverySchema(): Promise<void> {
         deadline_key TEXT NOT NULL,
         deadline_date DATE NOT NULL,
         trigger_offset_days SMALLINT NOT NULL CHECK (trigger_offset_days IN (0, 1, 3, 7)),
-        channel TEXT NOT NULL CHECK (channel IN ('email', 'web_push')),
+        channel TEXT NOT NULL CHECK (channel IN ('email', 'web_push', 'sms')),
         claimed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         sent_at TIMESTAMPTZ,
         provider_message_id TEXT,
@@ -155,6 +157,12 @@ async function ensureAgentDeadlineDeliverySchema(): Promise<void> {
         UNIQUE (realtor_id, deal_id, deadline_key, deadline_date, trigger_offset_days, channel)
       )
     `);
+    // Text alerts were added after the table existed: widen the channel check once.
+    await query(`ALTER TABLE agent_command_center_deadline_deliveries DROP CONSTRAINT IF EXISTS agent_command_center_deadline_deliveries_channel_check`);
+    await query(`DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'agent_deadline_deliveries_channel_v2') THEN
+        ALTER TABLE agent_command_center_deadline_deliveries ADD CONSTRAINT agent_deadline_deliveries_channel_v2 CHECK (channel IN ('email', 'web_push', 'sms'));
+      END IF; END $$`);
     await query(`
       CREATE INDEX IF NOT EXISTS agent_deadline_deliveries_realtor_idx
       ON agent_command_center_deadline_deliveries (realtor_id, sent_at DESC)
@@ -171,7 +179,7 @@ async function claimDelivery(
   dealId: string,
   deadline: DealDeadline,
   offset: AgentDeadlineNotificationOffset,
-  channel: 'email' | 'web_push',
+  channel: 'email' | 'web_push' | 'sms',
 ): Promise<string | null> {
   const id = randomUUID();
   const rows = await query<ClaimedDelivery>(
@@ -239,6 +247,29 @@ function openBlankAlerts(deal: AgentDeal) {
   return blankFieldAlerts(deal, formStatuses(deal)).filter((alert) => !ignored.has(alert.id));
 }
 
+export const SMS_AUDIENCE = 'closing-time-alerts';
+
+/** One text to the agent's own number; only if they turned text alerts on (consent is recorded then). */
+async function textAgent(preferences: { smsEnabled?: boolean; smsPhone?: string }, text: string): Promise<{ ok: boolean; reason?: string }> {
+  if (!preferences.smsEnabled || !toE164(preferences.smsPhone)) return { ok: false, reason: 'text alerts off' };
+  try {
+    const out = await sendSms(SMS_AUDIENCE, text, [preferences.smsPhone as string]);
+    if (out.sent.length > 0) return { ok: true };
+    return { ok: false, reason: out.skipped[0]?.reason ?? out.failed[0]?.error ?? 'not sent' };
+  } catch (error) {
+    return { ok: false, reason: error instanceof Error ? error.message : 'text send failed' };
+  }
+}
+
+export function reminderText(deal: AgentDeal, deadline: DealDeadline, offset: number): string {
+  const timing = offset === 0 ? 'today' : `in ${offset} day${offset === 1 ? '' : 's'}`;
+  return `Closing Time: ${deadline.label} ${timing} (${formatDeadlineDate(deadline.date)}). Property: ${dealLabel(deal)}. Reply STOP to opt out.`;
+}
+
+export function urgentText(deal: AgentDeal, deadline: DealDeadline, count: number): string {
+  return `Closing Time URGENT: ${deadline.label} is tomorrow. ${count} item${count === 1 ? '' : 's'} with blank fields need review. Property: ${dealLabel(deal)}. Reply STOP to opt out.`;
+}
+
 export function urgentEmailHtml(deal: AgentDeal, deadline: DealDeadline, items: Array<{ label: string; blank: number }>): string {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
   const rows = items.slice(0, 12).map((item) => `<li style="margin:0 0 4px">${escapeHtml(item.label)}: ${item.blank} blank</li>`).join('');
@@ -263,6 +294,7 @@ export async function runAgentDeadlineNotifications(now = new Date(), options: {
     dueDeadlines: 0,
     emailSent: 0,
     pushSent: 0,
+    smsSent: 0,
     skipped: 0,
     errors: [],
   };
@@ -292,7 +324,7 @@ export async function runAgentDeadlineNotifications(now = new Date(), options: {
         continue;
       }
       const preferences = parsed.data.notificationPreferences;
-      if (!preferences.emailEnabled && !preferences.pushEnabled) continue;
+      if (!preferences.emailEnabled && !preferences.pushEnabled && !preferences.smsEnabled) continue;
       result.eligibleWorkspaces += 1;
 
       for (const deal of parsed.data.deals) {
@@ -330,6 +362,14 @@ export async function runAgentDeadlineNotifications(now = new Date(), options: {
                 await releaseDelivery(deliveryId, message);
                 result.errors.push(`urgent push ${deal.id}/${deadline.id}: ${message}`);
               }
+            }
+          }
+          if (preferences.smsEnabled) {
+            const deliveryId = await claimDelivery(row.realtor_id, deal.id, urgentKey, 1, 'sms');
+            if (deliveryId) {
+              const sent = await textAgent(preferences, urgentText(deal, deadline, items.length));
+              if (sent.ok) { await markDeliverySent(deliveryId); result.smsSent += 1; }
+              else { await releaseDelivery(deliveryId, sent.reason ?? 'text send failed'); result.skipped += 1; }
             }
           }
         }
@@ -381,6 +421,15 @@ export async function runAgentDeadlineNotifications(now = new Date(), options: {
                   await releaseDelivery(deliveryId, message);
                   result.errors.push(`push ${deal.id}/${deadline.id}: ${message}`);
                 }
+              }
+            }
+
+            if (preferences.smsEnabled) {
+              const deliveryId = await claimDelivery(row.realtor_id, deal.id, deadline, offset, 'sms');
+              if (deliveryId) {
+                const sent = await textAgent(preferences, reminderText(deal, deadline, offset));
+                if (sent.ok) { await markDeliverySent(deliveryId); result.smsSent += 1; }
+                else { await releaseDelivery(deliveryId, sent.reason ?? 'text send failed'); result.skipped += 1; }
               }
             }
           }
