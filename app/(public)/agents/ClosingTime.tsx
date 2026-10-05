@@ -86,6 +86,7 @@ import MlsConnectionsCard from './MlsConnectionsCard';
 const SellerNetSheetClient = dynamic(() => import('../resources/seller-net-sheet/SellerNetSheetClient'), { ssr: false });
 const CommissionCalculatorClient = dynamic(() => import('../resources/commission-calculator/CommissionCalculatorClient'), { ssr: false });
 const BuyerClosingCostsClient = dynamic(() => import('../resources/buyer-closing-costs/BuyerClosingCostsClient'), { ssr: false });
+import { effectiveAgentSide } from './purchase-documents';
 import DealSubpage, { TASK_TEMPLATES } from './DealSubpage';
 import { AGENT_DESK_TEMPLATE, templateTaskIdsFor } from '@/lib/agent-desk-template';
 import {
@@ -1410,7 +1411,7 @@ export default function ClosingTime({
   const isDealFullyComplete = (deal: AgentDeal) =>
     deal.tasks.every((task) => task.complete) &&
     deal.reminders.every((reminder) => reminder.complete) &&
-    deal.documents.every((document) => document.complete || isReadinessItemHidden(document.id, deal.agentSide));
+    deal.documents.every((document) => document.complete || isReadinessItemHidden(document.id, effectiveAgentSide(deal)));
   const isDealClosedAndComplete = (deal: AgentDeal) => deal.auditLocked || (Boolean(deal.closeoutOutcome) && isDealFullyComplete(deal));
   const activeDeals = deals.filter((deal) => !isDealClosedAndComplete(deal));
   const closedDeals = deals.filter((deal) => isDealClosedAndComplete(deal));
@@ -3417,7 +3418,7 @@ export default function ClosingTime({
             </div>
 
             <ReadinessChecklist
-              side={activeDeal.agentSide}
+              side={effectiveAgentSide(activeDeal)}
               documents={activeDeal.documents}
               documentName={documentName}
               setDocumentName={setDocumentName}

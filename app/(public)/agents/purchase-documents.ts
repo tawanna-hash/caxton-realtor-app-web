@@ -191,11 +191,16 @@ export const BUYER_REP_FORM_OPTIONS = [
   { value: '1508', label: 'Unrepresented Customer Showing Form (TXR-1508)' },
 ] as const;
 
-type FolderDeal = { agentSide?: string; buyerRepForm?: string; contractForm?: string; yearBuilt?: string; hasHoa?: boolean; contractDetails?: { financingType?: string } } | null | undefined;
+/** Listing deals work the seller side even though only purchases ask which side the agent is on. */
+export const effectiveAgentSide = (deal: { agentSide?: string; dealType?: string } | null | undefined): string =>
+  deal?.agentSide || (deal?.dealType === 'listing_sale' || deal?.dealType === 'listing_lease' ? 'listing' : '');
+
+type FolderDeal = { dealType?: string; agentSide?: string; buyerRepForm?: string; contractForm?: string; yearBuilt?: string; hasHoa?: boolean; contractDetails?: { financingType?: string } } | null | undefined;
 
 /** Folders for a deal: side-specific list, the chosen contract and representation forms, and addenda the deal triggers. */
 export function dealFolders(deal: FolderDeal): PurchaseFolder[] {
-  const base = foldersForSide(deal?.agentSide);
+  const side = effectiveAgentSide(deal);
+  const base = foldersForSide(side);
   const financing = (deal?.contractDetails?.financingType ?? '').trim().toLowerCase();
   const needsFinancing = Boolean(financing) && !/^cash\b/.test(financing);
   const year = Number.parseInt(deal?.yearBuilt ?? '', 10);
@@ -223,7 +228,7 @@ export function dealFolders(deal: FolderDeal): PurchaseFolder[] {
   if (deal?.hasHoa && !has('pd-hoa-addendum')) extra.push(d('pd-hoa-addendum', 'Addendum For Property Subject To Mandatory Membership In A Property Owners Association', 'required', '36'));
   if (needsLead && !has('pd-lead-paint-addendum')) extra.push(d('pd-lead-paint-addendum', 'Lead-Based Paint Addendum (Built Before 1978)', 'required', '56'));
   if (extra.length === 0) return folders;
-  const idx = folders.findIndex((folder) => folder.id === (deal?.agentSide === 'listing' ? 'listing-contract' : 'buyer-contract'));
+  const idx = folders.findIndex((folder) => folder.id === (side === 'listing' ? 'listing-contract' : 'buyer-contract'));
   const at = idx >= 0 ? idx : folders.length - 1;
   return folders.map((folder, i) => (i === at ? { ...folder, docs: [...folder.docs, ...extra] } : folder));
 }

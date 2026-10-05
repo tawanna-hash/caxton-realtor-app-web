@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, MoreHorizontal, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import TrecFormActions from './TrecFormActions';
-import { BUYER_REP_FORM_OPTIONS, CONTRACT_FORM_OPTIONS, dealFolders, requiredIdsFor } from './purchase-documents';
+import { BUYER_REP_FORM_OPTIONS, CONTRACT_FORM_OPTIONS, dealFolders, effectiveAgentSide, requiredIdsFor } from './purchase-documents';
 
 type SnapId = 'attention' | 'waiting' | 'property' | 'next' | 'preferences' | 'offers' | 'parties' | 'workspace';
 
@@ -428,7 +428,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       ),
       pressing: (
         <>
-      {deal.agentSide !== 'listing' && !deal.documentChecks['pd-buyer-rep-agreement'] && (
+      {effectiveAgentSide(deal) !== 'listing' && !deal.documentChecks['pd-buyer-rep-agreement'] && (
         <div className="ds-card">
           <p className="text-sm font-semibold text-slate-900">Representation Agreement Needed</p>
           <p className="mt-1 text-sm text-slate-600">Texas requires a signed written agreement with the buyer before touring a residential property or making an offer. Mark it received on the Documents page once it is signed.</p>
@@ -801,7 +801,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                         <select value={deal.contractForm} disabled={locked} onChange={(e) => onUpdate('contractForm', e.target.value as typeof deal.contractForm)} className="mt-1 h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-2 text-sm font-medium text-slate-900">
                           {CONTRACT_FORM_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select></label>
-{deal.agentSide !== 'listing' && (<label className="block min-w-0"><span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Representation Form</span>
+{effectiveAgentSide(deal) !== 'listing' && (<label className="block min-w-0"><span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Representation Form</span>
                         <select value={deal.buyerRepForm} disabled={locked} onChange={(e) => onUpdate('buyerRepForm', e.target.value as typeof deal.buyerRepForm)} className="mt-1 h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-2 text-sm font-medium text-slate-900">
                           <option value="">Choose Form</option>
                           {BUYER_REP_FORM_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
