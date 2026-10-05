@@ -1,5 +1,6 @@
 'use client';
 
+import ContractScope from './ContractScope';
 import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
 import IntegrationsPanel from './IntegrationsPanel';
@@ -3248,6 +3249,8 @@ export default function ClosingTime({
                     <input value={activeDeal.sellerNames} onChange={(event) => updateDealParties('sellerNames', event.target.value)} className="h-[40px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Seller Names" />
                   </label>
                 </div>
+
+                <ContractScope version={activePacketForms.find((version) => version.formFamily === '20')} values={activeDeal?.formFields ?? {}} onEdit={(page) => { setActiveTrecFormFamily('20'); setActiveTrecPage(page); document.getElementById('trec-form-workspace')?.scrollIntoView({ behavior: 'smooth' }); }} />
 
                 <section id="trec-form-workspace" {...collapsible('trec-forms')} className="mt-7 scroll-mt-24 border border-[#E6E5EC] bg-white" aria-labelledby="official-trec-fields-title">
                   <div className="border-b border-[#D9D0BF] bg-[#F7F3EB] px-5 py-4 sm:px-6">
