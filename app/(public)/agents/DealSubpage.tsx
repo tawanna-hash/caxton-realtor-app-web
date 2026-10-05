@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, MoreHorizontal, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import TrecFormActions from './TrecFormActions';
@@ -93,6 +93,16 @@ function dayDiff(today: string, date: string): number {
 
 export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
+  const [brokerageForms, setBrokerageForms] = useState<{ id: string; title: string; url: string; filename: string; fillable?: boolean }[]>([]);
+  useEffect(() => {
+    if (stripOnly && !section) return;
+    let cancelled = false;
+    fetch('/api/agent-command-center/forms-library', { cache: 'no-store' })
+      .then((res) => res.json() as Promise<{ forms?: { id: string; section: string; title: string; url: string; filename: string; fillable?: boolean }[] }>)
+      .then((data) => { if (!cancelled) setBrokerageForms((data.forms ?? []).filter((form) => form.section === 'brokerage')); })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [stripOnly, section]);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
@@ -508,10 +518,12 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               </div>
             );
             const allReq = PURCHASE_FOLDERS.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' || deal.documentChecks[`add:${doc.id}`]);
-            const tileSubmitted = allReq.filter((doc) => deal.documentChecks[doc.id]).length;
+            const tileBrokerage = brokerageForms.filter((form) => deal.documentChecks[`bf:${form.id}`]);
+            const tileSubmitted = allReq.filter((doc) => deal.documentChecks[doc.id]).length + tileBrokerage.filter((form) => deal.documentChecks[`bfs:${form.id}`]).length;
             const tileStarted = allReq.filter((doc) => !deal.documentChecks[doc.id] && doc.formFamily && (trecForms ?? []).some((form) => form.formFamily === doc.formFamily && form.filled > 0)).length;
-            const tileNotStarted = allReq.length - tileSubmitted - tileStarted;
-            const tilePct = allReq.length ? Math.round((tileSubmitted / allReq.length) * 100) : 0;
+            const tileTotal = allReq.length + tileBrokerage.length;
+            const tileNotStarted = tileTotal - tileSubmitted - tileStarted;
+            const tilePct = tileTotal ? Math.round((tileSubmitted / tileTotal) * 100) : 0;
             const tile = (value: number, label: string) => (
               <div className="rounded-lg bg-[#F6F3FB] px-4 py-3">
                 <p className="text-2xl font-semibold text-[#301D5D]">{value}</p>
@@ -531,7 +543,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     {tile(tileNotStarted, 'Not started')}
                   </div>
                   <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={tilePct} aria-valuemin={0} aria-valuemax={100} aria-label="Required documents submitted"><div className="h-full bg-[#301D5D]" style={{ width: `${tilePct}%` }} /></div>
-                  <p className="mt-2 text-xs text-slate-500">{tileSubmitted} of {allReq.length} submitted</p>
+                  <p className="mt-2 text-xs text-slate-500">{tileSubmitted} of {tileTotal} submitted</p>
                 </div>
                 <div className="ds-snap-grid">
                   <div className="ds-card !p-0 self-start">
@@ -601,7 +613,9 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             const requiredDocs = allDocs.filter((doc) => doc.kind === 'required' || isAdded(doc.id));
             const optionalDocs = allDocs.filter((doc) => doc.kind !== 'required' && !isAdded(doc.id));
             const requiredIds = new Set(requiredDocs.map((doc) => doc.id));
-            const submittedCount = requiredDocs.filter((doc) => checks[doc.id]).length;
+            const brokerageDocs = brokerageForms.filter((form) => checks[`bf:${form.id}`]);
+            const totalRequired = requiredDocs.length + brokerageDocs.length;
+            const submittedCount = requiredDocs.filter((doc) => checks[doc.id]).length + brokerageDocs.filter((form) => checks[`bfs:${form.id}`]).length;
             const usedFamilies = new Set(requiredDocs.flatMap((doc) => (doc.formFamily ? [doc.formFamily] : [])));
             const dealForms = (trecForms ?? []).filter((form) => form.selected && !usedFamilies.has(form.formFamily));
             const formInfo = (family: string | undefined) => (family ? (trecForms ?? []).find((form) => form.formFamily === family) : undefined);
@@ -644,14 +658,26 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   <div>
                     <p className="ds-side-title !m-0">{dealTypeLabel} Documents</p>
                   </div>
-                  <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{submittedCount} of {requiredDocs.length} submitted</span>
+                  <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{submittedCount} of {totalRequired} submitted</span>
                 </div>
                 <div className="ds-card ds-list">
                   <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                     <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Required Documents</span>
-                    <span className="text-xs font-medium text-slate-500">{submittedCount} of {requiredDocs.length}</span>
+                    <span className="text-xs font-medium text-slate-500">{submittedCount} of {totalRequired}</span>
                   </div>
                   {requiredDocs.map(requiredRow)}
+                  {brokerageDocs.map((form) => (
+                    <div key={form.id} className="ds-list-row">
+                      <input type="checkbox" aria-label={`Mark ${form.title} submitted`} checked={Boolean(checks[`bfs:${form.id}`])} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...checks, [`bfs:${form.id}`]: e.target.checked })} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm text-slate-900">{form.title}</span>
+                        <span className="block text-xs text-slate-500">Brokerage Form</span>
+                      </span>
+                      {statusChip(Boolean(checks[`bfs:${form.id}`]))}
+                      <a href={form.fillable ? `/agents/closing-time?form=${encodeURIComponent(`custom-${form.id}`)}#trec-form-workspace` : form.url} target={form.fillable ? undefined : '_blank'} rel="noreferrer" className="ds-row-btn">Open</a>
+                      {!locked && <button type="button" aria-label={`Remove ${form.title} from this deal`} className="text-xs text-slate-500 underline underline-offset-2 hover:text-slate-900" onClick={() => { const next = { ...checks }; delete next[`bf:${form.id}`]; delete next[`bfs:${form.id}`]; onUpdate('documentChecks', next); }}>Remove</button>}
+                    </div>
+                  ))}
                 </div>
                 {trecForms && (
                   <div className="ds-card ds-list">

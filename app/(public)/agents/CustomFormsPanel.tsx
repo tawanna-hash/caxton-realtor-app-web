@@ -7,7 +7,14 @@ type CustomForm = { fillable?: boolean; id: string; section: string; title: stri
 
 const formatSize = (bytes: number) => (bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 
-export default function CustomFormsPanel({ section, label }: { section: 'trec' | 'brokerage'; label: string }) {
+export type CustomFormsDealContext = {
+  hasDeal: boolean;
+  locked: boolean;
+  checks: Record<string, boolean>;
+  onToggle: (formId: string, selected: boolean) => void;
+};
+
+export default function CustomFormsPanel({ section, label, dealContext }: { section: 'trec' | 'brokerage'; label: string; dealContext?: CustomFormsDealContext }) {
   const [forms, setForms] = useState<CustomForm[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -76,6 +83,12 @@ export default function CustomFormsPanel({ section, label }: { section: 'trec' |
                 <p className="mt-1 text-xs text-slate-500">{formatSize(form.size)} · Added {new Date(form.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
               </div>
             </div>
+            {dealContext && (
+              <label className="flex items-center gap-2 text-xs text-slate-600" title={dealContext.hasDeal ? 'Adds this form to Documents for the current deal' : 'Create a deal first'}>
+                <input type="checkbox" checked={Boolean(dealContext.checks[`bf:${form.id}`])} disabled={!dealContext.hasDeal || dealContext.locked} onChange={(e) => dealContext.onToggle(form.id, e.target.checked)} />
+                Use On Current Deal
+              </label>
+            )}
             {!form.fillable && <p className="text-xs text-slate-500">This PDF has no fillable fields, so it can be opened and downloaded but not filled in.</p>}
             <div className="flex flex-wrap gap-2">
               {form.fillable && (

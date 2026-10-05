@@ -2931,7 +2931,21 @@ export default function ClosingTime({
                   <CustomFormsPanel section="trec" label="TREC form" />
                 </>
               )}
-              {formsLibraryTab === 'brokerage' && <CustomFormsPanel section="brokerage" label="Brokerage form" />}
+              {formsLibraryTab === 'brokerage' && <CustomFormsPanel
+                section="brokerage"
+                label="Brokerage form"
+                dealContext={{
+                  hasDeal: Boolean(activeDeal),
+                  locked: activeDeal ? isDealLocked(activeDeal) : false,
+                  checks: activeDeal?.documentChecks ?? {},
+                  onToggle: (formId, selected) => {
+                    if (!activeDeal) return;
+                    const next = { ...activeDeal.documentChecks };
+                    if (selected) next[`bf:${formId}`] = true; else { delete next[`bf:${formId}`]; delete next[`bfs:${formId}`]; }
+                    updateActiveDeal('documentChecks', next);
+                  },
+                }}
+              />}
             </div>
           </section>
         )}
