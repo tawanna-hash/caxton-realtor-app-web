@@ -216,7 +216,7 @@ export default function TrecPdfPagePreview({
               top,
               width,
               height,
-              fontSize: Math.max(8, height * 0.72),
+              fontSize: Math.max(8, Math.min(14.67, height * 0.72)),
               lineHeight: `${height}px`,
             }}
           />
