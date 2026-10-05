@@ -2113,6 +2113,80 @@ export default function ClosingTime({
     );
   }
 
+  const renderExtractionReview = () => (extractionState === 'ready' && extractionDraft ? (
+    <section role="status" className="mt-4 border border-[#D9CFF0] bg-[#F6F3FB] p-4">
+                      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                        <div>
+                          <p className="text-sm font-semibold text-[#301D5D]">Contract suggestions are ready to review</p>
+                          <p className="mt-1 text-sm leading-6 text-slate-700">
+                            {Object.values(extractionDraft.worksheet).filter(Boolean).length} operational facts, {Object.values(extractionDraft.formFields).filter(Boolean).length} official TREC fields, and {Object.values(extractionDraft.addenda).filter(Boolean).length} selected addenda were found. Review the preview before applying.
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 flex-wrap gap-2">
+                          <button type="button" onClick={applyExtraction} className="inline-flex min-h-[40px] items-center justify-center rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277C]">Apply to This Deal</button>
+                          <button type="button" onClick={() => { clearContractPreview(); setExtractionDraft(null); setExtractionState('idle'); }} className="inline-flex min-h-[40px] items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-300">Discard</button>
+                        </div>
+                      </div>
+                      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                        <div className="overflow-hidden border border-[#D9CFF0] bg-white">
+                          <div className="border-b border-[#E6E5EC] px-3 py-2">
+                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#301D5D]">Uploaded contract</p>
+                          </div>
+                          {contractPreviewUrl ? (
+                            <iframe
+                              src={contractPreviewUrl}
+                              title="Uploaded contract preview"
+                              className="h-[420px] w-full bg-slate-100 sm:h-[560px]"
+                            />
+                          ) : (
+                            <div className="flex h-[280px] items-center justify-center px-5 text-center text-sm text-slate-600">
+                              The temporary contract preview is no longer available.
+                            </div>
+                          )}
+                        </div>
+                        <div className="max-h-[560px] overflow-y-auto border border-[#D9CFF0] bg-white">
+                          <div className="sticky top-0 z-10 border-b border-[#E6E5EC] bg-white px-3 py-2">
+                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#301D5D]">Proposed entries</p>
+                            <p className="mt-1 text-xs text-slate-600">Compare each entry with the unchanged contract before applying.</p>
+                          </div>
+                          <div className="space-y-5 p-3">
+                            {Object.entries(extractionDraft.worksheet).filter(([, value]) => Boolean(value)).length > 0 && (
+                              <div>
+                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Workspace summary and timing</p>
+                                <dl className="mt-2 space-y-2">
+                                  {Object.entries(extractionDraft.worksheet).filter(([, value]) => Boolean(value)).map(([key, value]) => (
+                                    <div key={key} className="border border-slate-200 bg-[#FCFBF9] px-3 py-2 text-xs">
+                                      <dt className="font-semibold text-slate-900">{sentenceCaseKey(key)}</dt>
+                                      <dd className="mt-1 break-words text-slate-700">{value}</dd>
+                                    </div>
+                                  ))}
+                                </dl>
+                              </div>
+                            )}
+                            {Object.entries(extractionDraft.formFields).filter(([, value]) => Boolean(value)).length > 0 && (
+                              <div>
+                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Official TREC fields</p>
+                                <dl className="mt-2 space-y-2">
+                                  {Object.entries(extractionDraft.formFields).filter(([, value]) => Boolean(value)).map(([key, value]) => {
+                                    const field = trecFormFieldById.get(key);
+                                    return (
+                                      <div key={key} className="border border-slate-200 bg-[#FCFBF9] px-3 py-2 text-xs">
+                                        <dt className="font-semibold leading-5 text-slate-900">{field?.label ?? key}</dt>
+                                        <dd className="mt-1 break-words text-slate-700">{value === 'true' ? 'Selected' : value}</dd>
+                                        {field && <dd className="mt-1 text-[11px] text-slate-500">Page {field.page}</dd>}
+                                      </div>
+                                    );
+                                  })}
+                                </dl>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <p className="mt-3 text-xs leading-5 text-slate-700">Existing signatures stay on the unchanged uploaded PDF. Extracted values never transfer signatures to a blank form.</p>
+                    </section>
+  ) : null);
+
   const renderFormWindow = () => (!activeDeal ? null : (
     <>
                     <div className="mt-7 rounded-md border border-[#E6E5EC] bg-[#F6F3FB] p-6 sm:p-10 lg:p-14">
@@ -3047,79 +3121,7 @@ export default function ClosingTime({
             ) : (
               <>
                 <div className="mt-5">
-                  {extractionState === 'ready' && extractionDraft && (
-                    <section role="status" className="mt-4 border border-emerald-200 bg-emerald-50 p-4">
-                      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                        <div>
-                          <p className="text-sm font-semibold text-emerald-950">Contract suggestions are ready to review</p>
-                          <p className="mt-1 text-sm leading-6 text-emerald-800">
-                            {Object.values(extractionDraft.worksheet).filter(Boolean).length} operational facts, {Object.values(extractionDraft.formFields).filter(Boolean).length} official TREC fields, and {Object.values(extractionDraft.addenda).filter(Boolean).length} selected addenda were found. Review the preview before applying.
-                          </p>
-                        </div>
-                        <div className="flex shrink-0 flex-wrap gap-2">
-                          <button type="button" onClick={applyExtraction} className="inline-flex min-h-[40px] items-center justify-center rounded-md bg-emerald-700 px-4 text-sm font-bold text-white hover:bg-emerald-800">Apply to This Deal</button>
-                          <button type="button" onClick={() => { clearContractPreview(); setExtractionDraft(null); setExtractionState('idle'); }} className="inline-flex min-h-[40px] items-center justify-center rounded-md border border-emerald-300 bg-white px-4 text-sm font-bold text-emerald-800 hover:bg-emerald-100">Discard</button>
-                        </div>
-                      </div>
-                      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                        <div className="overflow-hidden border border-emerald-200 bg-white">
-                          <div className="border-b border-emerald-100 px-3 py-2">
-                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-900">Uploaded contract</p>
-                          </div>
-                          {contractPreviewUrl ? (
-                            <iframe
-                              src={contractPreviewUrl}
-                              title="Uploaded contract preview"
-                              className="h-[420px] w-full bg-slate-100 sm:h-[560px]"
-                            />
-                          ) : (
-                            <div className="flex h-[280px] items-center justify-center px-5 text-center text-sm text-slate-600">
-                              The temporary contract preview is no longer available.
-                            </div>
-                          )}
-                        </div>
-                        <div className="max-h-[560px] overflow-y-auto border border-emerald-200 bg-white">
-                          <div className="sticky top-0 z-10 border-b border-emerald-100 bg-white px-3 py-2">
-                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-900">Proposed entries</p>
-                            <p className="mt-1 text-xs text-slate-600">Compare each entry with the unchanged contract before applying.</p>
-                          </div>
-                          <div className="space-y-5 p-3">
-                            {Object.entries(extractionDraft.worksheet).filter(([, value]) => Boolean(value)).length > 0 && (
-                              <div>
-                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Workspace summary and timing</p>
-                                <dl className="mt-2 space-y-2">
-                                  {Object.entries(extractionDraft.worksheet).filter(([, value]) => Boolean(value)).map(([key, value]) => (
-                                    <div key={key} className="border border-slate-200 bg-[#FCFBF9] px-3 py-2 text-xs">
-                                      <dt className="font-semibold text-slate-900">{sentenceCaseKey(key)}</dt>
-                                      <dd className="mt-1 break-words text-slate-700">{value}</dd>
-                                    </div>
-                                  ))}
-                                </dl>
-                              </div>
-                            )}
-                            {Object.entries(extractionDraft.formFields).filter(([, value]) => Boolean(value)).length > 0 && (
-                              <div>
-                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Official TREC fields</p>
-                                <dl className="mt-2 space-y-2">
-                                  {Object.entries(extractionDraft.formFields).filter(([, value]) => Boolean(value)).map(([key, value]) => {
-                                    const field = trecFormFieldById.get(key);
-                                    return (
-                                      <div key={key} className="border border-slate-200 bg-[#FCFBF9] px-3 py-2 text-xs">
-                                        <dt className="font-semibold leading-5 text-slate-900">{field?.label ?? key}</dt>
-                                        <dd className="mt-1 break-words text-slate-700">{value === 'true' ? 'Selected' : value}</dd>
-                                        {field && <dd className="mt-1 text-[11px] text-slate-500">Page {field.page}</dd>}
-                                      </div>
-                                    );
-                                  })}
-                                </dl>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="mt-3 text-xs leading-5 text-emerald-800">Existing signatures stay on the unchanged uploaded PDF. Extracted values never transfer signatures to a blank form.</p>
-                    </section>
-                  )}
+                  {renderExtractionReview()}
                   {isPdfSource && (originalSaveBusy || originalSaved || documentUploadError) && (
                     <p role="status" className="mt-3 text-xs font-semibold text-slate-700">
                       {originalSaveBusy ? 'Saving original PDF privately…' : originalSaved ? 'Original PDF saved privately, with existing signatures unchanged.' : ''}
@@ -3800,15 +3802,7 @@ export default function ClosingTime({
             <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
               {extractionState === 'extracting' && <p role="status" className="mb-3 border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-sm text-slate-700">Reading your upload...</p>}
               {extractionState === 'error' && <p role="alert" className="mb-3 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{extractionError || 'The upload could not be read. Use a clear PDF or image smaller than 15 MB, then try again.'}</p>}
-              {extractionState === 'ready' && extractionDraft && (
-                <div role="status" className="mb-3 flex flex-col gap-3 border border-[#D9CFF0] bg-[#F6F3FB] px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-slate-800">{Object.values(extractionDraft.formFields).filter(Boolean).length} fields found in your upload. Review them, then fill this form.</p>
-                  <div className="flex shrink-0 gap-2">
-                    <button type="button" onClick={applyExtraction} className="inline-flex min-h-[36px] items-center rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">Fill Form</button>
-                    <button type="button" onClick={() => { clearContractPreview(); setExtractionDraft(null); setExtractionState('idle'); }} className="inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700">Discard</button>
-                  </div>
-                </div>
-              )}
+              {renderExtractionReview()}
               {extractionWarnings.length > 0 && (
                 <ul className="mb-3 list-disc space-y-1 border-l-2 border-amber-300 pl-6 text-xs leading-5 text-amber-900">
                   {extractionWarnings.map((warning) => <li key={warning}>{warning}</li>)}
