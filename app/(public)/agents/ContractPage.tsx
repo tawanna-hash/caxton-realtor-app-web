@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
 import { CONTRACT_MAP_SECTIONS } from '@/lib/trec-20-19-contract-map';
 import type { AgentCashLine, AgentDeal, AgentKeyTerm } from '@/lib/agent-command-center-workspace';
@@ -95,6 +95,26 @@ const LINE_DEFS: LineDef[] = [
   { id: 'tpl-seller-credit', sign: '-', amount: () => '', label: () => 'Seller Credit' },
 ];
 
+// Starts closed and opens itself the first time it scrolls into view.
+function AutoDetails({ className, children }: { className?: string; children: ReactNode }) {
+  const ref = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let armed = false;
+    let done = false;
+    const io = new IntersectionObserver((entries) => {
+      if (!armed || done) return;
+      if (entries.some((entry) => entry.isIntersecting)) { el.open = true; done = true; io.disconnect(); }
+    }, { rootMargin: '0px 0px -25% 0px' });
+    const arm = () => { armed = true; io.disconnect(); if (!done) io.observe(el); window.removeEventListener('scroll', arm, true); };
+    io.observe(el);
+    window.addEventListener('scroll', arm, true);
+    return () => { io.disconnect(); window.removeEventListener('scroll', arm, true); };
+  }, []);
+  return <details ref={ref} className={className}>{children}</details>;
+}
+
 const fieldCls = 'h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#301D5D]';
 
 export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Props) {
@@ -181,7 +201,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
             const filled = section.fields.filter((fl) => (rawDeal.formFields[fl.id] ?? '').trim()).length;
             return (
               <Fragment key={section.id}>
-              <details open={section.id === 'property' ? true : undefined} className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
+              <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
                 <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900">
                   <span>{section.title}</span>
                   {section.fields.length > 0 && <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>}
@@ -214,9 +234,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     );
                   })}
                 </div>
-              </details>
+              </AutoDetails>
               {section.id === 'property' && (
-                <details open className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
+                <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
                   <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900"><span>Key Details</span></summary>
                   <div className="space-y-4 border-t border-[#F1F0F5] p-4">
       <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Contract Terms">
@@ -248,7 +268,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
       </section>
 
                   </div>
-                </details>
+                </AutoDetails>
               )}
               </Fragment>
             );
