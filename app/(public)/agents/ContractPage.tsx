@@ -260,13 +260,35 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                         draggable
                         onDragStart={(e) => { dragKey.current = key; e.dataTransfer.effectAllowed = 'move'; const cell = (e.currentTarget as HTMLElement).closest('[data-cell]'); if (cell) e.dataTransfer.setDragImage(cell, 12, 12); }}
                         onDragEnd={() => { dragKey.current = null; setOverKey(null); }}
+                        onPointerDown={(e) => {
+                          if (e.pointerType === 'mouse') return;
+                          e.preventDefault();
+                          e.currentTarget.setPointerCapture(e.pointerId);
+                          dragKey.current = key;
+                        }}
+                        onPointerMove={(e) => {
+                          if (e.pointerType === 'mouse' || !dragKey.current) return;
+                          const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-cell-key]');
+                          const k = hit?.getAttribute('data-cell-key') ?? null;
+                          setOverKey(k && k !== dragKey.current ? k : null);
+                        }}
+                        onPointerUp={(e) => {
+                          if (e.pointerType === 'mouse') return;
+                          const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-cell-key]');
+                          const k = hit?.getAttribute('data-cell-key');
+                          if (dragKey.current && k && k !== dragKey.current) moveField(section, dragKey.current, k);
+                          dragKey.current = null; setOverKey(null);
+                        }}
+                        onPointerCancel={() => { dragKey.current = null; setOverKey(null); }}
+                        style={{ touchAction: 'none' }}
                         title="Drag to move"
                         aria-label="Drag to move"
-                        className="absolute right-0 top-0 z-10 flex h-4 w-4 cursor-grab items-center justify-center text-slate-300 opacity-0 transition hover:text-[#301D5D] group-hover/cell:opacity-100 active:cursor-grabbing"
+                        className="absolute right-0 top-0 z-10 flex h-4 w-4 cursor-grab items-center justify-center text-slate-300 opacity-0 transition hover:text-[#301D5D] group-hover/cell:opacity-100 [@media(hover:none)]:opacity-100 active:cursor-grabbing"
                       ><GripVertical className="h-3.5 w-3.5" aria-hidden="true" /></span>
                     );
                     const cellProps = {
                       'data-cell': true,
+                      'data-cell-key': key,
                       onDragOver: (e: React.DragEvent) => { if (dragKey.current && dragKey.current !== key) { e.preventDefault(); setOverKey(key); } },
                       onDrop: (e: React.DragEvent) => { e.preventDefault(); if (dragKey.current && dragKey.current !== key) moveField(section, dragKey.current, key); dragKey.current = null; setOverKey(null); },
                     };
@@ -301,6 +323,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     return (
                       <div key={key} {...cellProps} className={`group/cell relative min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}${over}`}>
                         {grip}
+                        <button type="button" aria-label="Clear field" title="Clear field" onClick={() => setForm({ [fl.id]: '' })} className="absolute right-[18px] top-0 z-10 !flex !h-4 !w-4 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-300 opacity-0 transition hover:!text-[#301D5D] group-hover/cell:opacity-100 [@media(hover:none)]:opacity-100"><X className="h-3 w-3" aria-hidden="true" /></button>
                         <label className="block min-w-0">
                           <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
                           <span className="mt-1 flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
