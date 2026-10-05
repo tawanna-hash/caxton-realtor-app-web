@@ -186,7 +186,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                   <span>{section.title}</span>
                   {section.fields.length > 0 && <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>}
                 </summary>
-                <div className={`grid gap-x-5 gap-y-3 border-t border-[#F1F0F5] px-5 py-4 sm:grid-cols-2 ${section.id === 'property' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+                <div className={`grid gap-x-5 gap-y-3 border-t border-[#F1F0F5] px-5 py-4 sm:grid-cols-2 lg:grid-cols-4`}>
                   {leads && leads.map(([label, value, set]) => (
                     <label key={label} className="block min-w-0 sm:col-span-2">
                       <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
