@@ -710,7 +710,7 @@ function isStoredDeal(value: unknown): value is AgentDeal {
 }
 
 function dealDeadlines(deal: AgentDeal): TrecDeadline[] {
-  return calculateTrecDeadlines({
+  const list = calculateTrecDeadlines({
     effectiveDate: deal.effectiveDate,
     optionPeriodDays: deal.optionPeriodDays,
     additionalEarnestMoneyDays: deal.additionalEarnestMoneyDays,
@@ -720,6 +720,11 @@ function dealDeadlines(deal: AgentDeal): TrecDeadline[] {
     surveyDays: deal.surveyDays,
     titleObjectionDays: deal.titleObjectionDays,
   });
+  // The closing date is a key deadline too (it is typed in, not calculated from the effective date).
+  if (deal.closingDate && !list.some((item) => item.id === 'closing-date')) {
+    list.push({ id: 'closing-date', label: 'Closing Date', date: deal.closingDate, category: 'contract-period', rule: 'Negotiated closing date from Paragraph 9 of the contract.', rolloverApplied: false });
+  }
+  return list;
 }
 
 type ExtractionState = 'idle' | 'extracting' | 'ready' | 'error';

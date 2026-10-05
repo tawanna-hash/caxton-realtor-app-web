@@ -86,6 +86,7 @@ function deadlinesForDeal(deal: AgentDeal): DealDeadline[] {
     appraisalDeadlineDays: deal.appraisalDeadlineDays,
     titleCommitmentDays: deal.titleCommitmentDays,
     surveyDays: deal.surveyDays,
+    titleObjectionDays: deal.titleObjectionDays,
   }).map(({ id, label, date }) => ({ id, label, date }));
 
 
@@ -252,7 +253,7 @@ export function urgentEmailHtml(deal: AgentDeal, deadline: DealDeadline, items: 
   `;
 }
 
-export async function runAgentDeadlineNotifications(now = new Date()): Promise<AgentDeadlineNotificationRun> {
+export async function runAgentDeadlineNotifications(now = new Date(), options: { realtorId?: string } = {}): Promise<AgentDeadlineNotificationRun> {
   await ensureAgentDeadlineDeliverySchema();
   const today = chicagoParts(now).date;
 
@@ -274,10 +275,11 @@ export async function runAgentDeadlineNotifications(now = new Date()): Promise<A
       `SELECT workspace.realtor_id, workspace.workspace, realtors.email, realtors.first_name
        FROM agent_command_center_workspaces AS workspace
        JOIN realtors ON realtors.id = workspace.realtor_id
+       WHERE ($3::uuid IS NULL OR workspace.realtor_id = $3::uuid)
        ORDER BY workspace.updated_at DESC
        LIMIT $1
        OFFSET $2`,
-      [PAGE_SIZE, pageOffset],
+      [PAGE_SIZE, pageOffset, options.realtorId ?? null],
     );
     pageCount = recipients.length;
     pageOffset += pageCount;
@@ -293,7 +295,7 @@ export async function runAgentDeadlineNotifications(now = new Date()): Promise<A
       result.eligibleWorkspaces += 1;
 
       for (const deal of parsed.data.deals) {
-        if (deal.status === 'completed') continue;
+        if (deal.status === 'completed' || deal.isTemplate) continue;
         // Urgent alert: the day before each key deadline, any item with unreviewed blank fields.
         for (const deadline of deadlinesForDeal(deal)) {
           if (addDays(deadline.date, -1) !== today) continue;
