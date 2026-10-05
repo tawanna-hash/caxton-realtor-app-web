@@ -1229,6 +1229,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 [data-desk-view='coordinator'] [data-section-key='assist'],
 [data-desk-view='coordinator'] [data-section-key='alerts'],
 [data-desk-view='coordinator'] [data-section-key='calendar-link'],
+[data-desk-view='coordinator'] [data-section-key='agent-details'],
 [data-desk-view='integrations'] [data-section-key='calendar'],
 [data-desk-view='tasks'] [data-section-key='tasks'],
 [data-desk-view='forms'] [data-section-key='trec-library'],

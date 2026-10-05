@@ -32,7 +32,7 @@ const DEALS_VIEW = { id: 'deals', label: 'Deals', keys: [] as string[] };
 const ALERT_SETUP_VIEW = { id: 'alert-setup', label: 'Alert Setup', keys: [] as string[] };
 const CLOSINGS_VIEW = { id: 'closings', label: 'Closings', keys: [] as string[] };
 const CONTACTS_VIEW = { id: 'contacts', label: 'Contacts', keys: [] as string[] };
-const SETTINGS_VIEW = { id: 'coordinator', label: 'Settings', keys: ['assist', 'alerts', 'calendar-link'] };
+const SETTINGS_VIEW = { id: 'coordinator', label: 'Settings', keys: ['assist', 'alerts', 'calendar-link', 'agent-details'] };
 const UTILITIES_VIEW = { id: 'utilities', label: 'Utilities', keys: [] as string[] };
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, SETTINGS_VIEW, UTILITIES_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug };
@@ -2577,6 +2577,22 @@ export default function ClosingTime({
             <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
           <section className={'mt-5 grid gap-5'} aria-label="Deal settings, alerts and calendar">
+            <div data-section-key="agent-details" className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-lg font-semibold text-gray-900">Brokerage And Agent Details</h3>
+                <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{(['brokerage', 'address', 'agentId', 'agentName'] as const).filter((key) => brokerFooter[key].trim()).length} of 4 required filled</span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">Fill these in once. They appear along the bottom of every form and go with every form you send to your broker for review.</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {([['brokerage', 'Brokerage', 'text', true], ['address', 'Brokerage Address', 'text', true], ['agentId', 'Agent License Number', 'text', true], ['agentName', 'Agent Name', 'text', true], ['brokerName', 'Broker Name', 'text', false], ['brokerEmail', 'Broker Email', 'email', false]] as const).map(([key, label, type, required]) => (
+                  <label key={key} className="block min-w-0">
+                    <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}{required ? ' (required)' : ' (for broker review)'}</span>
+                    <input type={type} value={brokerFooter[key]} onChange={(event) => updateBrokerFooter(key, event.target.value)} placeholder={label} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#301D5D]" />
+                  </label>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-slate-500">Saved on this browser.</p>
+            </div>
             <div data-section-key="calendar-link" className="min-w-0 border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-2">
               <h3 className="text-lg font-semibold text-gray-900">Calendar Link</h3>
               <p className="mt-3 text-sm leading-6 text-slate-600">Your Apple Calendar subscription uses a private link. Anyone with it can view your deal dates. Reset it if it was shared by mistake. The old link stops working and you will need to subscribe again.</p>
@@ -3160,6 +3176,9 @@ export default function ClosingTime({
                             />
                           ))}
                         </div>
+                        {(['brokerage', 'address', 'agentId', 'agentName'] as const).some((key) => !brokerFooter[key].trim()) && (
+                          <p className="border-t border-slate-100 bg-white px-3 py-1.5 text-center text-[11px] text-slate-500">Fill these once in <button type="button" onClick={() => setDeskView('coordinator')} className="font-semibold text-[#301D5D] underline underline-offset-2">Settings</button> and they appear on every form.</p>
+                        )}
                         <div className="border-t border-slate-200 bg-white px-3 py-2">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <p className="text-xs text-slate-500">Send this filled form to your broker to review.</p>
