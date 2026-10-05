@@ -3066,7 +3066,7 @@ export default function ClosingTime({
                       if (!event.target.checked) { updateNotificationPreferences({ smsEnabled: false }); return; }
                       const phone = (document.getElementById('closing-time-sms-phone') as HTMLInputElement | null)?.value.trim() ?? '';
                       const res = await fetch('/api/agent-command-center/sms-consent', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
-                      if (!res.ok) { event.target.checked = false; window.alert('Enter your 10-digit US mobile number first.'); return; }
+                      if (!res.ok) { event.target.checked = false; window.alert(res.status === 403 ? 'Text alerts are not available on this account yet.' : 'Enter your 10-digit US mobile number first.'); return; }
                       const data = (await res.json()) as { phone: string };
                       updateNotificationPreferences({ smsEnabled: true, smsPhone: data.phone });
                     }} className="h-4 w-4 accent-[#301D5D]" />

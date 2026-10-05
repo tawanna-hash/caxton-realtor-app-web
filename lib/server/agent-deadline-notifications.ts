@@ -247,10 +247,14 @@ function openBlankAlerts(deal: AgentDeal) {
   return blankFieldAlerts(deal, formStatuses(deal)).filter((alert) => !ignored.has(alert.id));
 }
 
+const SMS_OWNER_EMAILS = new Set(['tawanna@verock.com', 'tawanna@myrealtyline.com']);
+export const smsAllowedFor = (email: string | null | undefined): boolean => SMS_OWNER_EMAILS.has((email ?? '').trim().toLowerCase());
 export const SMS_AUDIENCE = 'closing-time-alerts';
 
 /** One text to the agent's own number; only if they turned text alerts on (consent is recorded then). */
-async function textAgent(preferences: { smsEnabled?: boolean; smsPhone?: string }, text: string): Promise<{ ok: boolean; reason?: string }> {
+async function textAgent(email: string | null | undefined, preferences: { smsEnabled?: boolean; smsPhone?: string }, text: string): Promise<{ ok: boolean; reason?: string }> {
+  // Texts go out on the owner's Telnyx account (paid per message), so they are owner-only for now.
+  if (!smsAllowedFor(email)) return { ok: false, reason: 'text alerts not available for this account' };
   if (!preferences.smsEnabled || !toE164(preferences.smsPhone)) return { ok: false, reason: 'text alerts off' };
   try {
     const out = await sendSms(SMS_AUDIENCE, text, [preferences.smsPhone as string]);
@@ -367,7 +371,7 @@ export async function runAgentDeadlineNotifications(now = new Date(), options: {
           if (preferences.smsEnabled) {
             const deliveryId = await claimDelivery(row.realtor_id, deal.id, urgentKey, 1, 'sms');
             if (deliveryId) {
-              const sent = await textAgent(preferences, urgentText(deal, deadline, items.length));
+              const sent = await textAgent(row.email, preferences, urgentText(deal, deadline, items.length));
               if (sent.ok) { await markDeliverySent(deliveryId); result.smsSent += 1; }
               else { await releaseDelivery(deliveryId, sent.reason ?? 'text send failed'); result.skipped += 1; }
             }
@@ -427,7 +431,7 @@ export async function runAgentDeadlineNotifications(now = new Date(), options: {
             if (preferences.smsEnabled) {
               const deliveryId = await claimDelivery(row.realtor_id, deal.id, deadline, offset, 'sms');
               if (deliveryId) {
-                const sent = await textAgent(preferences, reminderText(deal, deadline, offset));
+                const sent = await textAgent(row.email, preferences, reminderText(deal, deadline, offset));
                 if (sent.ok) { await markDeliverySent(deliveryId); result.smsSent += 1; }
                 else { await releaseDelivery(deliveryId, sent.reason ?? 'text send failed'); result.skipped += 1; }
               }
