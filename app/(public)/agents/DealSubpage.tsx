@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, MoreHorizontal, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import TrecFormActions from './TrecFormActions';
-import { PURCHASE_FOLDERS, PURCHASE_REQUIRED_IDS } from './purchase-documents';
+import { foldersForSide, requiredIdsForSide } from './purchase-documents';
 
 type SnapId = 'attention' | 'waiting' | 'property' | 'next' | 'preferences' | 'offers' | 'parties' | 'workspace';
 
@@ -123,6 +123,8 @@ function AutoSection({ className, header, children }: { className?: string; head
 
 export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
+  const docFolders = foldersForSide(deal?.agentSide);
+  const requiredIdList = requiredIdsForSide(deal?.agentSide);
   const [arrangePage, setArrangePage] = useState<string | null>(null);
   const [pickedCard, setPickedCard] = useState<{ page: string; key: string } | null>(null);
   const cardKeys = (page: string, defaults: string[]) => {
@@ -239,7 +241,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   const completedDeal = deal.workflowStatus === 'completed';
   const optionEnd = addDays(deal.effectiveDate, deal.optionPeriodDays);
   const appraisalEnd = addDays(deal.effectiveDate, deal.appraisalDeadlineDays);
-  const requiredAllIn = PURCHASE_REQUIRED_IDS.every((id) => deal.documentChecks[id]);
+  const requiredAllIn = requiredIdList.every((id) => deal.documentChecks[id]);
   const rawMilestones: { key: string; label: string; date: string; done: boolean }[] = [
     { key: 'contract', label: 'Under Contract', date: deal.effectiveDate, done: Boolean(deal.effectiveDate) && deal.effectiveDate <= today },
     { key: 'earnest', label: 'Earnest Money Received', date: deal.earnestMoneyDeliveredDate || addDays(deal.effectiveDate, 3), done: Boolean(deal.earnestMoneyDeliveredDate) },
@@ -253,7 +255,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   const firstOpen = rawMilestones.findIndex((m) => !m.done);
   const milestones = rawMilestones.map((m, index) => ({ ...m, current: index === firstOpen }));
   const openTasks = deal.tasks.filter((t) => !t.complete);
-  const missingRequired = PURCHASE_FOLDERS.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' && !deal.documentChecks[doc.id]);
+  const missingRequired = docFolders.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' && !deal.documentChecks[doc.id]);
   const price = deal.contractDetails?.salesPrice?.trim();
   const sideBlocks = {
     property: (
@@ -373,7 +375,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   if (stripOnly) return <div className="ds-page ds-strip" data-testid="deal-strip">{progressStrip}</div>;
 
   const renderSnapshotTop = () => {
-    const allReq = PURCHASE_FOLDERS.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' || deal.documentChecks[`add:${doc.id}`]);
+    const allReq = docFolders.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' || deal.documentChecks[`add:${doc.id}`]);
     const trackedDeadlines = [
       ...(deadlines ?? []).map((item) => ({ id: item.id, label: item.label, date: item.date })),
       ...(deal.closingDate ? [{ id: 'closing-date', label: 'Closing Date', date: deal.closingDate }] : []),
@@ -410,7 +412,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={tilePct} aria-valuemin={0} aria-valuemax={100} aria-label="Required documents submitted"><div className="h-full bg-[#301D5D]" style={{ width: `${tilePct}%` }} /></div>
         <p className="mt-2 text-xs text-slate-500">{tileSubmitted} of {tileTotal} submitted</p>
           <ul className="mt-4 space-y-2.5">
-            {PURCHASE_FOLDERS.map((folder) => {
+            {docFolders.map((folder) => {
               const total = folder.docs.length;
               const done = folder.docs.filter((d) => deal.documentChecks[d.id]).length;
               return (
@@ -509,7 +511,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       </div>
     );
     const pct = (done: number, total: number) => (total ? Math.round((done / total) * 100) : 0);
-    const reqDone = PURCHASE_REQUIRED_IDS.filter((id) => deal.documentChecks[id]).length;
+    const reqDone = requiredIdList.filter((id) => deal.documentChecks[id]).length;
     const stat = (label: string, value: string, tone?: string) => (
       <div className="min-w-0"><p className="ds-eyebrow">{label}</p><p className={`mt-1 text-xl font-semibold ${tone ?? 'text-slate-900'}`}>{value}</p></div>
     );
@@ -646,9 +648,9 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               ...openTasks.filter((t) => !t.dueDate || t.dueDate > today).map((t) => ({ key: t.id, chip: 'Task', title: t.title, detail: t.dueDate ? `Due ${formatDate(t.dueDate)}` : 'No due date', go: 'tasks' })),
               ...missingRequired.map((doc) => ({ key: doc.id, chip: 'Document', title: doc.label, detail: 'Required document', go: 'd-documents' })),
             ];
-            const requiredDone = PURCHASE_REQUIRED_IDS.filter((id) => deal.documentChecks[id]).length;
+            const requiredDone = requiredIdList.filter((id) => deal.documentChecks[id]).length;
             const handling = [
-              { key: 'readiness', title: 'Readiness check', detail: `${requiredDone} of ${PURCHASE_REQUIRED_IDS.length} required documents in`, chip: requiredDone === PURCHASE_REQUIRED_IDS.length ? 'Complete' : 'In progress', go: 'readiness' },
+              { key: 'readiness', title: 'Readiness check', detail: `${requiredDone} of ${requiredIdList.length} required documents in`, chip: requiredDone === requiredIdList.length ? 'Complete' : 'In progress', go: 'readiness' },
             ];
             const cardHead = (icon: ReactNode, title: string, count: number, tone: string) => (
               <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
@@ -735,7 +737,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 
           {tab === 'documents' && (() => {
             const checks = deal.documentChecks;
-            const allDocs = PURCHASE_FOLDERS.flatMap((folder) => folder.docs);
+            const allDocs = docFolders.flatMap((folder) => folder.docs);
             const isAdded = (id: string) => Boolean(checks[`add:${id}`]);
             const requiredDocs = allDocs.filter((doc) => doc.kind === 'required' || isAdded(doc.id));
             const optionalDocs = allDocs.filter((doc) => doc.kind !== 'required' && !isAdded(doc.id));

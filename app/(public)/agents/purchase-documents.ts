@@ -106,3 +106,59 @@ export const PURCHASE_FOLDERS: PurchaseFolder[] = ALL_PURCHASE_FOLDERS
   .filter((folder) => folder.docs.length > 0);
 
 export const PURCHASE_REQUIRED_IDS = PURCHASE_FOLDERS.flatMap((f) => f.docs).filter((x) => x.kind === 'required').map((x) => x.id);
+
+const ALL_BY_ID = new Map(ALL_PURCHASE_FOLDERS.flatMap((folder) => folder.docs).map((doc) => [doc.id, doc] as const));
+const reuse = (id: string, kind: PurchaseDocKind, label?: string): PurchaseDoc => ({ ...(ALL_BY_ID.get(id) as PurchaseDoc), kind, ...(label ? { label } : {}) });
+
+const ALL_LISTING_FOLDERS: PurchaseFolder[] = [
+  {
+    id: 'listing-rep', label: 'Listing Representation Documents',
+    docs: [
+      reuse('pd-iabs', 'required', 'Seller: Information About Brokerage Services'),
+      d('ld-listing-agreement', 'Residential Real Estate Listing Agreement (TXR 1101)', 'required'),
+      d('ld-wire-fraud-alert', 'Wire Fraud Alert For Sellers', 'required'),
+      reuse('pd-sellers-disclosure-notice', 'required'),
+      d('ld-lead-paint-disclosure', 'Lead-Based Paint Disclosure (Pre-1978)', 'optional'),
+      d('ld-mls-input', 'MLS Listing Input Form', 'required'),
+      reuse('pd-tax-record', 'required'),
+      reuse('pd-cma', 'required', 'Comparative Market Analysis (Listing Price)'),
+      d('ld-hoa-info', 'HOA Information And Resale Certificate', 'optional'),
+      d('ld-net-sheet', "Seller's Net Sheet", 'optional'),
+      reuse('pd-groundwater-disclosure-1', 'optional'),
+    ],
+  },
+  {
+    id: 'listing-contract', label: 'Listing Under Contract Documents',
+    docs: [
+      reuse('pd-residential-contract', 'required'),
+      reuse('pd-executed-contract-receipt', 'required'),
+      d('ld-buyer-agent-comp', 'Buyer Agent Compensation Agreement', 'optional'),
+      reuse('pd-third-party-financing', 'optional'),
+      reuse('pd-amendment', 'optional'),
+      d('ld-repair-negotiation', 'Repair Request And Negotiation Documents', 'optional'),
+      reuse('pd-hoa-addendum', 'optional'),
+      reuse('pd-lead-paint-addendum', 'optional'),
+      d('ld-seller-termination', "Notice of Seller's Termination of Contract", 'optional'),
+    ],
+  },
+  {
+    id: 'listing-closing', label: 'Listing Closing Documents',
+    docs: [
+      reuse('pd-closing-statement', 'required', "Seller's Closing/Settlement Statement"),
+      d('ld-commission-disbursement', 'Commission Disbursement Authorization', 'required'),
+      d('ld-final-walkthrough', "Seller's Final Walk-Through", 'optional'),
+      d('ld-keybox', 'Keybox And Lockbox Removal', 'optional'),
+      reuse('pd-communication-log', 'optional'),
+    ],
+  },
+];
+
+export const LISTING_FOLDERS: PurchaseFolder[] = ALL_LISTING_FOLDERS
+  .map((folder) => ({ ...folder, docs: folder.docs.filter((doc) => !PROMULGATED_IN_LIBRARY.has(doc.id)) }))
+  .filter((folder) => folder.docs.length > 0);
+
+export const LISTING_REQUIRED_IDS = LISTING_FOLDERS.flatMap((f) => f.docs).filter((x) => x.kind === 'required').map((x) => x.id);
+
+/** Required and optional documents follow which side of the purchase the agent represents. */
+export const foldersForSide = (side?: string): PurchaseFolder[] => (side === 'listing' ? LISTING_FOLDERS : PURCHASE_FOLDERS);
+export const requiredIdsForSide = (side?: string): string[] => (side === 'listing' ? LISTING_REQUIRED_IDS : PURCHASE_REQUIRED_IDS);
