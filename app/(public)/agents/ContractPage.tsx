@@ -221,8 +221,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
   const putCustom = (next: typeof customFields) => onPatch({ contractCustomFields: next });
   const dragKey = useRef<string | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const hasOrder = (section: ContractSection) => (rawDeal.contractFieldOrder?.[section.id] ?? []).length > 0;
-  type FieldItem = { key: string; kind: 'map'; fl: ContractSection['fields'][number] } | { key: string; kind: 'custom'; cf: (typeof customFields)[number] };
+  type FieldItem = { key: string; kind: 'map'; fl: ContractSection['fields'][number] } | { key: string; kind: 'custom'; cf: (typeof customFields)[number] } | { key: string; kind: 'gap' };
   const orderedItems = (section: ContractSection): FieldItem[] => {
     const items: FieldItem[] = [
       ...section.fields.map((fl) => ({ key: fl.id, kind: 'map' as const, fl })),
@@ -230,15 +231,38 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     ];
     const order = rawDeal.contractFieldOrder?.[section.id] ?? [];
     if (!order.length) return items;
+    for (const k of order) if (k.startsWith('gap:')) items.push({ key: k, kind: 'gap' });
     const idx = (k: string) => { const i = order.indexOf(k); return i === -1 ? order.length + items.findIndex((x) => x.key === k) : i; };
     return [...items].sort((x, y) => idx(x.key) - idx(y.key));
   };
   const moveField = (section: ContractSection, from: string, to: string) => {
-    const keys = orderedItems(section).map((x) => x.key).filter((k) => k !== from);
-    const at = keys.indexOf(to);
-    keys.splice(at < 0 ? keys.length : at, 0, from);
+    const all = orderedItems(section).map((x) => x.key);
+    let keys: string[];
+    if (to.startsWith('gap:')) {
+      keys = [...all];
+      const gi = keys.indexOf(to);
+      const fi = keys.indexOf(from);
+      if (gi < 0 || fi < 0) return;
+      keys[gi] = from;
+      keys[fi] = to;
+    } else if (to.startsWith('end:')) {
+      keys = all.filter((k) => k !== from);
+      for (let i = 0; i < Number(to.slice(4)); i += 1) keys.push(`gap:${Math.random().toString(36).slice(2, 8)}`);
+      keys.push(from);
+    } else {
+      keys = all.filter((k) => k !== from);
+      const at = keys.indexOf(to);
+      keys.splice(at < 0 ? keys.length : at, 0, from);
+    }
     onPatch({ contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: keys } });
   };
+  const cellPropsFor = (section: ContractSection, key: string) => ({
+    'data-cell': true,
+    'data-cell-key': key,
+    onDragOver: (e: React.DragEvent) => { if (dragKey.current && dragKey.current !== key) { e.preventDefault(); e.stopPropagation(); setOverKey(key); } },
+    onDrop: (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); if (dragKey.current && dragKey.current !== key) moveField(section, dragKey.current, key); dragKey.current = null; setOverKey(null); setDragging(false); },
+  });
+  const endDrag = () => { dragKey.current = null; setOverKey(null); setDragging(false); };
   const leadsFor = (section: ContractSection) => section.id === 'buyer' ? [['Buyer 1', rawDeal.buyerNames, (v: string) => onParties('buyerNames', v)], ['Buyer 2', rawDeal.buyer2Name ?? '', (v: string) => onParties('buyer2Name', v)]] as const
               : section.id === 'lender' ? [['Lender', rawDeal.lender ?? '', (v: string) => onPatch({ lender: v })]] as const
               : section.id === 'seller' ? [['Seller 1', rawDeal.sellerNames, (v: string) => onParties('sellerNames', v)], ['Seller 2', rawDeal.seller2Name ?? '', (v: string) => onParties('seller2Name', v)]] as const
@@ -246,7 +270,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
   const renderSectionBody = (section: ContractSection, bordered: boolean) => {
     const leads = leadsFor(section);
     return (
-                <div className={`grid gap-x-4 gap-y-3 ${bordered ? 'border-t border-[#F1F0F5] px-[1.125rem] py-4' : ''} sm:grid-cols-2 lg:grid-cols-4`}>
+                <div data-grid={section.id} onDragOver={(e) => { if (dragKey.current) e.preventDefault(); }} onDrop={(e) => { e.preventDefault(); if (dragKey.current) moveField(section, dragKey.current, 'end:0'); endDrag(); }} className={`grid gap-x-4 gap-y-3 ${bordered ? 'border-t border-[#F1F0F5] px-[1.125rem] py-4' : ''} sm:grid-cols-2 lg:grid-cols-4`}>
                   {leads && leads.map(([label, value, set]) => (
                     <label key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-4' : ''}`}>
                       <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
@@ -258,13 +282,14 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     const grip = (
                       <span
                         draggable
-                        onDragStart={(e) => { dragKey.current = key; e.dataTransfer.effectAllowed = 'move'; const cell = (e.currentTarget as HTMLElement).closest('[data-cell]'); if (cell) e.dataTransfer.setDragImage(cell, 12, 12); }}
-                        onDragEnd={() => { dragKey.current = null; setOverKey(null); }}
+                        onDragStart={(e) => { dragKey.current = key; setDragging(true); e.dataTransfer.effectAllowed = 'move'; const cell = (e.currentTarget as HTMLElement).closest('[data-cell]'); if (cell) e.dataTransfer.setDragImage(cell, 12, 12); }}
+                        onDragEnd={endDrag}
                         onPointerDown={(e) => {
                           if (e.pointerType === 'mouse') return;
                           e.preventDefault();
                           e.currentTarget.setPointerCapture(e.pointerId);
                           dragKey.current = key;
+                          setDragging(true);
                         }}
                         onPointerMove={(e) => {
                           if (e.pointerType === 'mouse' || !dragKey.current) return;
@@ -275,24 +300,26 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                         onPointerUp={(e) => {
                           if (e.pointerType === 'mouse') return;
                           const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-cell-key]');
-                          const k = hit?.getAttribute('data-cell-key');
+                          const k = hit?.getAttribute('data-cell-key') ?? (hit || document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-grid]') ? 'end:0' : null);
                           if (dragKey.current && k && k !== dragKey.current) moveField(section, dragKey.current, k);
-                          dragKey.current = null; setOverKey(null);
+                          endDrag();
                         }}
-                        onPointerCancel={() => { dragKey.current = null; setOverKey(null); }}
+                        onPointerCancel={endDrag}
                         style={{ touchAction: 'none' }}
                         title="Drag to move"
                         aria-label="Drag to move"
                         className="absolute right-0 top-0 z-10 flex h-4 w-4 cursor-grab items-center justify-center text-slate-300 opacity-0 transition hover:text-[#301D5D] group-hover/cell:opacity-100 [@media(hover:none)]:opacity-100 active:cursor-grabbing"
                       ><GripVertical className="h-3.5 w-3.5" aria-hidden="true" /></span>
                     );
-                    const cellProps = {
-                      'data-cell': true,
-                      'data-cell-key': key,
-                      onDragOver: (e: React.DragEvent) => { if (dragKey.current && dragKey.current !== key) { e.preventDefault(); setOverKey(key); } },
-                      onDrop: (e: React.DragEvent) => { e.preventDefault(); if (dragKey.current && dragKey.current !== key) moveField(section, dragKey.current, key); dragKey.current = null; setOverKey(null); },
-                    };
+                    const cellProps = cellPropsFor(section, key);
                     const over = overKey === key ? ' rounded-md ring-2 ring-[#301D5D]/40' : '';
+                    if (item.kind === 'gap') {
+                      return (
+                        <div key={key} {...cellProps} className={`group/cell relative hidden min-h-[3.75rem] rounded-md sm:block ${dragging ? 'border border-dashed border-[#D8D2E6]' : ''}${over}`}>
+                          <button type="button" aria-label="Remove blank space" title="Remove blank space" onClick={() => onPatch({ contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: (rawDeal.contractFieldOrder?.[section.id] ?? []).filter((k) => k !== key) } })} className="absolute right-0 top-0 !flex !h-4 !w-4 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-300 opacity-0 hover:!text-[#301D5D] group-hover/cell:opacity-100"><X className="h-3 w-3" aria-hidden="true" /></button>
+                        </div>
+                      );
+                    }
                     if (item.kind === 'custom') {
                       const cf = item.cf;
                       return (
@@ -313,7 +340,8 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       return (
                         <div key={key} {...cellProps} className={`group/cell relative min-w-0${over}`}>
                           {grip}
-                          <label className="flex min-w-0 items-start gap-2 pr-5 text-sm text-slate-900">
+                          <button type="button" aria-label="Clear field" title="Clear field" onClick={() => setForm({ [fl.id]: '' })} className="absolute right-[18px] top-0 z-10 !flex !h-4 !w-4 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-400 transition hover:!text-[#301D5D]"><X className="h-3 w-3" aria-hidden="true" /></button>
+                          <label className="flex min-w-0 items-start gap-2 pr-10 text-sm text-slate-900">
                             <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
                             <span className="min-w-0 break-words">{fl.label}</span>
                           </label>
@@ -323,9 +351,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     return (
                       <div key={key} {...cellProps} className={`group/cell relative min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}${over}`}>
                         {grip}
-                        <button type="button" aria-label="Clear field" title="Clear field" onClick={() => setForm({ [fl.id]: '' })} className="absolute right-[18px] top-0 z-10 !flex !h-4 !w-4 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-300 opacity-0 transition hover:!text-[#301D5D] group-hover/cell:opacity-100 [@media(hover:none)]:opacity-100"><X className="h-3 w-3" aria-hidden="true" /></button>
+                        <button type="button" aria-label="Clear field" title="Clear field" onClick={() => setForm({ [fl.id]: '' })} className="absolute right-[18px] top-0 z-10 !flex !h-4 !w-4 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-400 transition hover:!text-[#301D5D]"><X className="h-3 w-3" aria-hidden="true" /></button>
                         <label className="block min-w-0">
-                          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
+                          <span className="block pr-10 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
                           <span className="mt-1 flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
                             {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
                             <input value={value} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
@@ -334,6 +362,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       </div>
                     );
                   })}
+                  {Array.from({ length: (4 - (orderedItems(section).length % 4)) % 4 }).map((_, i) => (
+                    <div key={`end-${i}`} {...cellPropsFor(section, `end:${i}`)} className={`hidden min-h-[3.75rem] rounded-md lg:block ${dragging ? 'border border-dashed border-[#D8D2E6]' : ''}${overKey === `end:${i}` ? ' ring-2 ring-[#301D5D]/40' : ''}`} />
+                  ))}
                   {!bordered && (
                     <div className="flex items-end">
                       <button type="button" onClick={() => putCustom([...customFields, { id: newId('cf'), section: section.id, label: 'New Field', value: '' }])}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Field</button>
