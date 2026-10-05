@@ -648,6 +648,7 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     dealType: 'purchase',
     agentSide: '',
     isTemplate: false,
+    ignoredBlankAlerts: [],
     buyerRepForm: '',
     contractForm: '20',
     yearBuilt: '',

@@ -1,5 +1,6 @@
 'use client';
 
+import { blankFieldAlerts } from '@/lib/blank-field-alerts';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, MoreHorizontal, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
@@ -428,6 +429,45 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       ),
       pressing: (
         <>
+      {(() => {
+        const all = blankFieldAlerts(deal, trecForms ?? []);
+        const ignoredIds = deal.ignoredBlankAlerts ?? [];
+        const open = all.filter((a) => !ignoredIds.includes(a.id));
+        const ignored = all.filter((a) => ignoredIds.includes(a.id));
+        if (open.length === 0 && ignored.length === 0) return null;
+        return (
+          <div className="ds-card" data-testid="blank-field-alerts">
+            <p className="text-sm font-semibold text-slate-900">Blank Fields Need Your Attention</p>
+            <p className="mt-1 text-sm text-slate-600">{open.length > 0 ? 'Review each item or ignore it if the blanks are intentional.' : 'Everything left is ignored.'}</p>
+            {open.length > 0 && (
+              <ul className="mt-3 divide-y divide-[#E6E5EC]">
+                {open.map((a) => (
+                  <li key={a.id} className="flex items-center justify-between gap-3 py-2">
+                    <span className="min-w-0 text-sm text-slate-900"><span className="block truncate font-medium">{a.label}</span><span className="block text-xs text-slate-500">{a.blank} Of {a.total} Blank</span></span>
+                    <span className="flex shrink-0 gap-2">
+                      <button type="button" onClick={() => onOpenView(a.view)}>Review</button>
+                      <button type="button" onClick={() => onUpdate('ignoredBlankAlerts', [...ignoredIds, a.id])}>Ignore</button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {ignored.length > 0 && (
+              <details className="mt-3 border-t border-[#E6E5EC] pt-2">
+                <summary className="cursor-pointer text-xs text-slate-500">{ignored.length} Ignored</summary>
+                <ul className="mt-2">
+                  {ignored.map((a) => (
+                    <li key={a.id} className="flex items-center justify-between gap-3 py-1">
+                      <span className="min-w-0 truncate text-xs text-slate-600">{a.label} · {a.blank} Blank</span>
+                      <button type="button" onClick={() => onUpdate('ignoredBlankAlerts', ignoredIds.filter((id) => id !== a.id))}>Restore</button>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
+        );
+      })()}
       {effectiveAgentSide(deal) !== 'listing' && !deal.documentChecks['pd-buyer-rep-agreement'] && (
         <div className="ds-card">
           <p className="text-sm font-semibold text-slate-900">Representation Agreement Needed</p>
