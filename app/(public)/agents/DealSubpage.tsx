@@ -464,7 +464,8 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         <div className="mb-3 space-y-3">
           <div className="grid items-start gap-3 lg:grid-cols-4">
             <div className="lg:col-span-2">{snapshotTop.tiles}</div>
-            <div className="lg:col-span-2">{partiesCard}</div>
+            <div className="min-w-0">{partiesCard}</div>
+            <div className="min-w-0">{sideBlocks.property}</div>
           </div>
           {snapshotTop.pressing}
         </div>
@@ -918,7 +919,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         </div>
 
         {!section && (<aside className="ds-rail-right" aria-label="Deal details">
-          {sideBlocks.property}
           {sideBlocks.parties}
           {sideBlocks.workspace}
         </aside>)}
