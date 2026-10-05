@@ -467,7 +467,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           <p className="text-base font-semibold text-slate-900">Parties</p>
           <button type="button" className="!border-0 !bg-transparent !text-slate-500 hover:!text-[#301D5D]" onClick={() => onOpenView('d-people')}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add</button>
         </div>
-        <p className="border-y border-[#F1F0F5] bg-[#F6F3FB] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Your side</p>
+        <div className="border-t border-[#F1F0F5]" />
         {yourSide.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">No parties added.</p> : yourSide.map(partyRow)}
         {external.length > 0 && <p className="border-y border-[#F1F0F5] bg-[#F6F3FB] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">External parties</p>}
         {external.map(partyRow)}
