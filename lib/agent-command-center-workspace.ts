@@ -134,6 +134,14 @@ export const agentOfferShowingSchema = z.object({
   label: shortText(300), amount: optionalShortText(60), status: optionalShortText(60),
 }).strict();
 
+export const agentKeyTermSchema = z.object({
+  id: shortText(120), term: shortText(120), ref: optionalShortText(60), value: shortText(300), note: optionalShortText(600),
+}).strict();
+
+export const agentCashLineSchema = z.object({
+  id: shortText(120), label: shortText(200), sign: z.enum(['+', '-']).default('+'), amount: optionalShortText(30), note: optionalShortText(600),
+}).strict();
+
 export const agentDealSchema = z.object({
   id: shortText(120), title: shortText(200), propertyAddress: shortText(400), buyerNames: shortText(300), sellerNames: shortText(300),
   effectiveDate: dateText.default(''), optionPeriodDays: optionalShortText(4), additionalEarnestMoneyDays: optionalShortText(4), financingDeadlineDays: optionalShortText(4),
@@ -154,6 +162,11 @@ export const agentDealSchema = z.object({
   clientContacts: z.array(agentClientContactSchema).max(20).default([]),
   offersShowings: z.array(agentOfferShowingSchema).max(100).default([]),
   contractDetails: agentContractDetailsSchema,
+  keyTerms: z.array(agentKeyTermSchema).max(60).default([]),
+  keyTermsCustom: z.boolean().default(false),
+  cashLines: z.array(agentCashLineSchema).max(60).default([]),
+  cashLinesCustom: z.boolean().default(false),
+  earnestInEscrow: optionalShortText(30),
   formFields: agentTrecFormFieldsSchema,
   addenda: z.record(z.string(), z.boolean()).default({}),
   selectedFormFamilies: z.record(z.string(), z.boolean()).default({}),
@@ -171,5 +184,7 @@ export type AgentReminder = z.infer<typeof agentReminderSchema>;
 export type AgentTask = z.infer<typeof agentTaskSchema>;
 export type AgentDocument = z.infer<typeof agentDocumentSchema>;
 export type AgentActivity = z.infer<typeof agentActivitySchema>;
+export type AgentKeyTerm = z.infer<typeof agentKeyTermSchema>;
+export type AgentCashLine = z.infer<typeof agentCashLineSchema>;
 export type AgentDeal = z.infer<typeof agentDealSchema>;
 export type AgentCommandCenterWorkspace = z.infer<typeof agentCommandCenterWorkspaceSchema>;

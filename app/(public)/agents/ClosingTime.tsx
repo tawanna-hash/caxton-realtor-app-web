@@ -1,6 +1,6 @@
 'use client';
 
-import ContractScope from './ContractScope';
+import ContractPage from './ContractPage';
 import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
 import IntegrationsPanel from './IntegrationsPanel';
@@ -12,7 +12,7 @@ const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'd-overview', label: 'Snapshot', keys: [] },
   { id: 'd-documents', label: 'Documents', keys: [] },
   { id: 'd-people', label: 'People', keys: [] },
-  { id: 'transaction', label: 'Current Deal', keys: ['current', 'trec-forms'] },
+  { id: 'transaction', label: 'Contract', keys: ['current', 'trec-forms'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
   { id: 'readiness', label: 'Readiness Check', keys: ['readiness'] },
   { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
@@ -613,6 +613,11 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     clientContacts: [],
     offersShowings: [],
     contractDetails: defaultAgentContractDetails(),
+    keyTerms: [],
+    keyTermsCustom: false,
+    cashLines: [],
+    cashLinesCustom: false,
+    earnestInEscrow: '',
     formFields: {},
     addenda: {},
     selectedFormFamilies: {},
@@ -1579,7 +1584,7 @@ export default function ClosingTime({
       }
       // Read the upload against the contract and every other selected form (IABS, addenda, etc.).
       // Each form has its own field catalog; a document that is not that form simply returns nothing.
-      // A row upload is independent: it reads only that form. The main Current Deal upload still reads every selected form.
+      // A row upload is independent: it reads only that form. The main contract upload still reads every selected form.
       const targetVersions = family
         ? [primaryVersion]
         : [primaryVersion, ...selectedFormVersions.filter((version) => version.id !== primaryVersion.id && version.fields.length > 0)];
@@ -3040,314 +3045,7 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && (
-          <div id="current-transaction" {...collapsible('current', { mobileOpen: true })} className="mt-5 scroll-mt-24 rounded-md border border-gray-200 bg-white p-5 sm:p-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="min-w-0">
-                <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Current Deal</p>
-                <h3 className="text-2xl font-semibold tracking-tight text-gray-900">
-                  {activeDeal?.propertyAddress || activeDeal?.title || 'Start a deal'}
-                </h3>
-                {selectedFormVersions.length > 0 && (
-                  <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                    <FileText className="h-3.5 w-3.5 text-[#7059A8]" aria-hidden="true" />
-                    {selectedFormVersions.length} form{selectedFormVersions.length === 1 ? '' : 's'} selected: {selectedFormVersions.map((version) => version.formNumber).join(', ')}
-                  </p>
-                )}
-              </div>
-              {deals.length > 0 && (
-                <div className="flex min-w-0 flex-wrap gap-2 sm:ml-auto">
-                  {activeDeal && (
-                    <div
-                      onDragOver={(event) => {
-                        event.preventDefault();
-                        if (extractionState !== 'extracting') setIsContractDropActive(true);
-                      }}
-                      onDragLeave={() => setIsContractDropActive(false)}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        setIsContractDropActive(false);
-                        void extractContract(event.dataTransfer.files?.[0]);
-                      }}
-                      className={`min-w-0 max-w-full ${extractionState === 'extracting' ? 'pointer-events-none opacity-70' : ''}`}
-                    >
-                      <div className="relative w-full sm:w-[290px]">
-                        <div
-                          className={`flex h-[42px] overflow-hidden rounded-md border text-sm font-bold transition ${
-                            isContractDropActive
-                              ? 'border-violet-600 bg-violet-100 text-violet-950'
-                              : 'border-[#7059A8] bg-white text-[#301D5D]'
-                          }`}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => contractUploadInputRef.current?.click()}
-                            disabled={extractionState === 'extracting'}
-                            className="flex min-w-0 flex-1 items-center justify-center gap-2 px-3 transition hover:bg-violet-50"
-                          >
-                            {extractionState === 'extracting' ? (
-                              <LoaderCircle className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
-                            ) : (
-                              <FileUp className="rnn-inline-icon" aria-hidden="true" />
-                            )}
-                            <span className="truncate">
-                              {extractionState === 'extracting'
-                                ? 'Reading Contract…'
-                                : isContractDropActive
-                                  ? 'Drop to Upload'
-                                  : 'Upload & Auto-fill Contract'}
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setIsUploadMenuOpen((isOpen) => !isOpen)}
-                            disabled={extractionState === 'extracting'}
-                            aria-label="More contract upload options"
-                            aria-expanded={isUploadMenuOpen}
-                            aria-haspopup="menu"
-                            className="flex w-10 shrink-0 items-center justify-center border-l border-[#7059A8] transition hover:bg-violet-50"
-                          >
-                            <ChevronDown className="h-4 w-4" aria-hidden="true" />
-                          </button>
-                        </div>
-
-                        {isUploadMenuOpen && extractionState !== 'extracting' && (
-                          <div
-                            role="menu"
-                            className="absolute right-0 z-20 mt-2 w-[280px] rounded-md border border-slate-200 bg-white p-2 text-left shadow-lg"
-                          >
-                            <button
-                              type="button"
-                              role="menuitem"
-                              onClick={() => {
-                                contractUploadInputRef.current?.click();
-                                setIsUploadMenuOpen(false);
-                              }}
-                              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
-                            >
-                              <FileUp className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
-                              Choose PDF or Image
-                            </button>
-                            <button
-                              type="button"
-                              role="menuitem"
-                              onClick={() => {
-                                setIsUploadMenuOpen(false);
-                                openContractCamera();
-                              }}
-                              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-slate-800 transition hover:bg-violet-50"
-                            >
-                              <Camera className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
-                              Take a Photo
-                            </button>
-                            <p className="border-t border-slate-100 px-3 pt-2.5 text-xs leading-5 text-slate-500">
-                              PDF, PNG, JPG, or WEBP · 15 MB maximum. PDFs are kept privately with the deal; images are used for extraction only.
-                            </p>
-                          </div>
-                        )}
-                        <input
-                          ref={contractUploadInputRef}
-                          type="file"
-                          accept="application/pdf,image/png,image/jpeg,image/webp"
-                          disabled={extractionState === 'extracting'}
-                          onChange={async (event) => {
-                            const input = event.currentTarget;
-                            const file = input.files?.[0];
-                            await extractContract(file);
-                            input.value = '';
-                          }}
-                          className="sr-only"
-                          tabIndex={-1}
-                        />
-                        <input
-                          ref={contractCameraInputRef}
-                          type="file"
-                          accept="image/png,image/jpeg,image/webp"
-                          capture="environment"
-                          disabled={extractionState === 'extracting'}
-                          onChange={async (event) => {
-                            const input = event.currentTarget;
-                            const file = input.files?.[0];
-                            await extractContract(file);
-                            input.value = '';
-                          }}
-                          className="sr-only"
-                          tabIndex={-1}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  {activeDeal && isDealLocked(activeDeal) && (
-                    <span className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-500">
-                      <Lock className="h-3.5 w-3.5" aria-hidden="true" />
-                      Locked — closed record
-                    </span>
-                  )}
-                  {activeDeal && !isDealLocked(activeDeal) && (
-                    pendingRemoval === activeDeal.id ? (
-                      <button
-                        type="button"
-                        onClick={() => removeDeal(activeDeal.id)}
-                        className="ds-confirm-remove inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#9A3D2B] px-4 text-sm font-bold text-white"
-                      >
-                        Confirm Remove
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setPendingRemoval(activeDeal.id)}
-                        className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-[#D8A79D] px-4 text-sm font-semibold text-[#9A3D2B] transition hover:bg-[#FFF0EC]"
-                      >
-                        <Trash2 className="rnn-inline-icon" aria-hidden="true" />
-                        Remove
-                      </button>
-                    )
-                  )}
-                </div>
-              )}
-              <CollapseToggle {...toggleProps('current', 'current deal', { mobileOpen: true })} className={deals.length > 0 ? '' : 'ml-auto'} />
-            </div>
-
-            {!activeDeal ? (
-              <div className="mt-7 flex min-h-[260px] flex-col items-center justify-center border border-dashed border-slate-300 bg-[#FCFBF9] px-6 text-center">
-                <ClipboardCheck className="rnn-heading-icon text-[#7059A8]" aria-hidden="true" />
-                <h4 className="mt-4 text-lg font-semibold text-gray-900">Build Your First Deal Workspace</h4>
-                <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">Create a private workspace to turn the contract terms in front of you into a workable list of actions.</p>
-                <button type="button" onClick={() => setNewDealPickerOpen(true)} className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white">
-                  Create Deal
-                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="mt-5">
-                  {renderExtractionReview()}
-                  {isPdfSource && (originalSaveBusy || originalSaved || documentUploadError) && (
-                    <p role="status" className="mt-3 text-xs font-semibold text-slate-700">
-                      {originalSaveBusy ? 'Saving original PDF privately…' : originalSaved ? 'Original PDF saved privately, with existing signatures unchanged.' : ''}
-                      {documentUploadError && <span role="alert" className="text-red-800">{documentUploadError}</span>}
-                    </p>
-                  )}
-                  {extractionState === 'error' && (
-                    <p role="alert" className="mt-4 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-                      {extractionError || 'The contract could not be read. Use a clear PDF or image smaller than 15 MB, then try again.'}
-                    </p>
-                  )}
-                  {extractionWarnings.length > 0 && (
-                    <ul className="mt-4 list-disc space-y-1 border-l-2 border-amber-300 pl-6 text-xs leading-5 text-amber-900">
-                      {extractionWarnings.map((warning) => <li key={warning}>{warning}</li>)}
-                    </ul>
-                  )}
-                </div>
-
-                <div className="mt-7 grid min-w-0 gap-3 sm:grid-cols-2">
-                  <label className="block min-w-0">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Buyer(s)</span>
-                    <input value={activeDeal.buyerNames} onChange={(event) => updateDealParties('buyerNames', event.target.value)} className="h-[40px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Buyer Names" />
-                  </label>
-                  <label className="block min-w-0">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Seller(s)</span>
-                    <input value={activeDeal.sellerNames} onChange={(event) => updateDealParties('sellerNames', event.target.value)} className="h-[40px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Seller Names" />
-                  </label>
-                </div>
-
-                <ContractScope version={activePacketForms.find((version) => version.formFamily === '20')} values={activeDeal?.formFields ?? {}} onEdit={(page) => { setActiveTrecFormFamily('20'); setActiveTrecPage(page); document.getElementById('trec-form-workspace')?.scrollIntoView({ behavior: 'smooth' }); }} />
-
-                <section id="trec-form-workspace" {...collapsible('trec-forms')} className="mt-7 scroll-mt-24 border border-[#E6E5EC] bg-white" aria-labelledby="official-trec-fields-title">
-                  <div className="border-b border-[#D9D0BF] bg-[#F7F3EB] px-5 py-4 sm:px-6">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                      <div>
-                      <p className="flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Deal Forms<CollapseToggle {...toggleProps('trec-forms', 'deal forms')} /></p>
-                      <h4 id="official-trec-fields-title" className="mt-1 text-lg font-semibold text-slate-950">
-                          TREC {currentTrecFormVersion.formNumber} · {currentTrecFormVersion.title}
-                      </h4>
-                      </div>
-                      <p className="text-xs font-semibold text-slate-600">{currentTrecFormVersion.fields.length} total fillable controls · Effective {currentTrecFormVersion.effectiveDate}</p>
-                    </div>
-                    <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                      <p className="max-w-3xl text-sm leading-6 text-slate-600">Complete the contract and attached addenda directly on their official PDFs. Values remain separated by form and are saved with this deal. Use Upload &amp; Auto-fill Contract to import values.</p>
-                    </div>
-                    <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600">
-                      <Save className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" />
-                      Progress is saved in your private cloud workspace.
-                    </p>
-                  </div>
-                  <div className="p-6 sm:p-10">
-                    <div className="mb-4">
-                      <span className="mb-1.5 block text-sm font-bold text-slate-900">Select A TREC Contract Or Form</span>
-                      <p className="mb-2 text-xs text-slate-500">Check the forms needed; click a name to fill it in.</p>
-                      <div className="max-h-[300px] divide-y divide-slate-100 overflow-y-auto overscroll-contain rounded-md border border-slate-300 bg-white" role="list" aria-label="TREC contracts and forms">
-                        {activePacketForms.map((version) => {
-                          const isSelected = activeDeal.selectedFormFamilies[version.formFamily] ?? false;
-                          const isViewing = version.formFamily === currentTrecFormVersion.formFamily;
-                          return (
-                            <div
-                              key={version.id}
-                              className={`flex items-center gap-2 px-2.5 py-1.5 ${isViewing ? 'bg-[#F8F5FF]' : ''}`}
-                            >
-                              <input
-                                type="checkbox"
-                                id={`form-family-${version.id}`}
-                                checked={isSelected}
-                                disabled={isDealLocked(activeDeal)}
-                                onChange={(event) => {
-                                  updateActiveDeal('selectedFormFamilies', {
-                                    ...activeDeal.selectedFormFamilies,
-                                    [version.formFamily]: event.target.checked,
-                                  });
-                                }}
-                                className="h-3.5 w-3.5 shrink-0 rounded border-slate-400 text-[#301D5D] focus:ring-[#301D5D] disabled:cursor-not-allowed disabled:opacity-50"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveTrecFormFamily(version.formFamily);
-                                  setActiveTrecPage(1);
-                                }}
-                                title={version.title}
-                                className={`min-w-0 flex-1 truncate text-left text-xs font-semibold ${isViewing ? 'text-[#301D5D]' : 'text-slate-800 hover:text-[#301D5D]'}`}
-                              >
-                                {version.formNumber} · {version.title}
-                              </button>
-                              {isViewing && (
-                                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#301D5D]" aria-label="Currently viewing" title="Currently viewing" />
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <p className="mt-1.5 text-xs text-slate-500">{activePacketForms.length} forms · scroll the list to see them all</p>
-                    </div>
-                    {selectedFormVersions.length > 0 && (
-                      <div className="mb-4">
-                        <span className="mb-1.5 block text-xs font-bold uppercase tracking-[0.1em] text-slate-500">Selected Forms ({selectedFormVersions.length})</span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {selectedFormVersions.map((version) => {
-                            const isViewing = version.formFamily === currentTrecFormVersion.formFamily;
-                            return (
-                              <button
-                                key={version.id}
-                                type="button"
-                                title={version.title}
-                                onClick={() => {
-                                  setActiveTrecFormFamily(version.formFamily);
-                                  setActiveTrecPage(1);
-                                }}
-                                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition ${isViewing ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-[#301D5D] hover:text-[#301D5D]'}`}
-                              >
-                                {version.formNumber}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                    {renderFormWindow()}
-                  </div>
-                </section>
-
-              </>
-            )}
-          </div>
+          <div data-section-key="current" className="min-w-0">{activeDeal ? <ContractPage deal={activeDeal} onPatch={(patch) => { const id = activeDeal.id; persistDeals(deals.map((d) => (d.id === id ? { ...d, ...patch, updatedAt: new Date().toISOString() } : d))); }} /> : <p className="text-sm text-slate-500">Start a deal to see its contract terms.</p>}</div>
         )}
 
         {workspacePage === 2 && activeDeals.length > 0 && (

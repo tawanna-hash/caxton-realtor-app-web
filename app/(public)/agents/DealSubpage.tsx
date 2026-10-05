@@ -253,7 +253,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 <>
           <h3 className="ds-side-title">Workspace</h3>
           <div className="ds-card ds-list">
-            {([['transaction', 'Current Deal'], ['readiness', 'Readiness Check'], ['audit', 'Audit Trail']] as const).map(([view, label]) => (
+            {([['transaction', 'Contract'], ['readiness', 'Readiness Check'], ['audit', 'Audit Trail']] as const).map(([view, label]) => (
               <button key={view} type="button" onClick={() => onOpenView(view)} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left">{label}</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
             ))}
           </div>
