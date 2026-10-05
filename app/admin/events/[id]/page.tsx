@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import {
@@ -106,6 +106,8 @@ export default function EditEventPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [approving, setApproving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (!admin || !Number.isFinite(id)) return;
@@ -156,6 +158,19 @@ export default function EditEventPage() {
     }
   };
 
+  const deleteSubmission = async () => {
+    if (!window.confirm('Delete this submitted event? This cannot be undone.')) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await adminApi.deleteEvent(event.id);
+      router.push('/admin/events');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Delete failed');
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="mb-6">
@@ -186,14 +201,24 @@ export default function EditEventPage() {
                 Review the details below, then approve to publish this event to the Calendar.
               </p>
             </div>
+            <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={deleteSubmission}
+              disabled={deleting || approving}
+              className="rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+            >
+              {deleting ? 'Deleting...' : 'Delete Submission'}
+            </button>
             <button
               type="button"
               onClick={approveAndPublish}
-              disabled={approving}
+              disabled={approving || deleting}
               className="shrink-0 rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 disabled:opacity-50"
             >
               {approving ? 'Publishing...' : 'Approve and Publish'}
             </button>
+            </div>
           </div>
         )}
         {!event.hidden && event.externalSource === 'submission' && (

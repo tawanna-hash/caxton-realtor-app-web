@@ -965,7 +965,7 @@ export async function deleteEvent(id: number): Promise<boolean> {
   const result = await query<{ id: number }>(
     `DELETE FROM events
        WHERE id = $1
-         AND external_source = 'manual'
+         AND external_source IN ('manual', 'submission')
      RETURNING id`,
     [id],
   );
