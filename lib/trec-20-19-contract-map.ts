@@ -9,23 +9,15 @@ const f = (id: string, label: string, kind: ContractFieldKind = 't'): ContractMa
 
 export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
   { id: 'property', title: '2. Property', fields: [
-    f('p01_f003', 'Lot'), f('p01_f004', 'Block'), f('p01_f005', 'Addition'), f('p01_f006', 'City'), f('p01_f007', 'County'),
-    f('p01_f008', 'Address And ZIP Code'), f('p01_f009', 'Exclusions'), f('p01_f010', 'Exclusions (Continued)'),
+    f('p01_f003', 'Lot'), f('p01_f004', 'Block'), f('p01_f005', 'Addition'), f('p01_f007', 'County'),
   ] },
-  { id: 'closing', title: '9. Closing And 10. Possession', fields: [
-    f('p06_f093', 'Closing Date (Month And Day)'), f('p06_f094', 'Closing Year (20__)', 'd'),
-    f('p06_f095', 'Possession Upon Closing And Funding', 'c'), f('p06_f096', 'Possession According To Temporary Lease', 'c'),
-  ] },
-  { id: 'notices', title: '21. Notices', fields: [
-    f('p08_f121', 'Buyer Address'), f('p08_f122', 'Buyer Address (Continued)'), f('p08_f123', 'Buyer Phone'), f('p08_f124', 'Buyer Phone (Second)'),
+  { id: 'notices', title: '21. Notices', fields: [ f('p08_f123', 'Buyer Phone'), f('p08_f124', 'Buyer Phone (Second)'),
     f('p08_f125', 'Buyer Email'), f('p08_f126', 'Buyer Email (Second)'),
     f('p08_f127', 'Seller Address'), f('p08_f128', 'Seller Address (Continued)'), f('p08_f129', 'Seller Phone'), f('p08_f130', 'Seller Phone (Second)'),
     f('p08_f131', 'Seller Email'), f('p08_f132', 'Seller Email (Second)'),
-    f('p08_f133', 'Buyer’s Agent Address'), f('p08_f134', 'Buyer’s Agent Address (Continued)'), f('p08_f135', 'Buyer’s Agent Phone'), f('p08_f136', 'Buyer’s Agent Email'),
-    f('p08_f137', 'Seller’s Agent Address'), f('p08_f138', 'Seller’s Agent Address (Continued)'), f('p08_f139', 'Seller’s Agent Phone'), f('p08_f140', 'Seller’s Agent Email'),
   ] },
-  { id: 'seller-broker', title: "Seller's Agent", fields: brokerBlock('p11', 201, 'Seller’s') },
-  { id: 'buyer-broker', title: "Buyer's Agent", fields: brokerBlock('p11', 212, 'Buyer’s') },
+  { id: 'seller-broker', title: "Seller's Agent", fields: [...brokerBlock('p11', 201, 'Seller’s'), f('p08_f137', 'Notice Address'), f('p08_f138', 'Notice Address (Continued)'), f('p08_f139', 'Notice Phone'), f('p08_f140', 'Notice Email')] },
+  { id: 'buyer-broker', title: "Buyer's Agent", fields: [...brokerBlock('p11', 212, 'Buyer’s'), f('p08_f133', 'Notice Address'), f('p08_f134', 'Notice Address (Continued)'), f('p08_f135', 'Notice Phone'), f('p08_f136', 'Notice Email')] },
   { id: 'receipt-earnest', title: 'Earnest Money Receipt', fields: receiptBlock(247, 'Earnest Money') },
   { id: 'receipt-contract', title: 'Title Company', fields: [
     f('p12_f259', 'Escrow Agent'), f('p12_f260', 'Received By'), f('p12_f261', 'Email'), f('p12_f262', 'Date'),
