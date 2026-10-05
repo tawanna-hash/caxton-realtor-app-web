@@ -158,7 +158,8 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <a
-                  href={`/agents/closing-time?form=${encodeURIComponent(form.formFamily)}#trec-form-workspace`}
+                  href={form.category === 'TR Forms' ? form.pdfUrl : `/agents/closing-time?form=${encodeURIComponent(form.formFamily)}#trec-form-workspace`}
+                  {...(form.category === 'TR Forms' ? { target: '_blank', rel: 'noreferrer' } : {})}
                   className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-3 text-sm font-bold text-white transition hover:bg-[#42277C]"
                 >
                   <PencilLine className="h-4 w-4 shrink-0" aria-hidden="true" />
