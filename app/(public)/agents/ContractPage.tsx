@@ -279,57 +279,57 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                   ))}
                   {orderedItems(section).map((item) => {
                     const key = item.key;
-                    const grip = (
-                      <span
-                        draggable
-                        onDragStart={(e) => { dragKey.current = key; setDragging(true); e.dataTransfer.effectAllowed = 'move'; const cell = (e.currentTarget as HTMLElement).closest('[data-cell]'); if (cell) e.dataTransfer.setDragImage(cell, 12, 12); }}
-                        onDragEnd={endDrag}
-                        onPointerDown={(e) => {
-                          if (e.pointerType === 'mouse') return;
-                          e.preventDefault();
-                          e.currentTarget.setPointerCapture(e.pointerId);
-                          dragKey.current = key;
-                          setDragging(true);
-                        }}
-                        onPointerMove={(e) => {
-                          if (e.pointerType === 'mouse' || !dragKey.current) return;
-                          const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-cell-key]');
-                          const k = hit?.getAttribute('data-cell-key') ?? null;
-                          setOverKey(k && k !== dragKey.current ? k : null);
-                        }}
-                        onPointerUp={(e) => {
-                          if (e.pointerType === 'mouse') return;
-                          const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-cell-key]');
-                          const k = hit?.getAttribute('data-cell-key') ?? (hit || document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-grid]') ? 'end:0' : null);
-                          if (dragKey.current && k && k !== dragKey.current) moveField(section, dragKey.current, k);
-                          endDrag();
-                        }}
-                        onPointerCancel={endDrag}
-                        style={{ touchAction: 'none' }}
-                        title="Drag to move"
-                        aria-label="Drag to move"
-                        className="absolute right-0 top-0 z-10 flex h-4 w-4 cursor-grab items-center justify-center text-slate-300 opacity-0 transition hover:text-[#301D5D] group-hover/cell:opacity-100 [@media(hover:none)]:opacity-100 active:cursor-grabbing"
-                      ><GripVertical className="h-3.5 w-3.5" aria-hidden="true" /></span>
-                    );
                     const cellProps = cellPropsFor(section, key);
                     const over = overKey === key ? ' rounded-md ring-2 ring-[#301D5D]/40' : '';
+                    const handle = {
+                      draggable: true,
+                      title: 'Drag to move',
+                      onDragStart: (e: React.DragEvent<HTMLElement>) => { dragKey.current = key; setDragging(true); e.dataTransfer.effectAllowed = 'move'; const cell = e.currentTarget.closest('[data-cell]'); if (cell) e.dataTransfer.setDragImage(cell, 12, 12); },
+                      onDragEnd: endDrag,
+                      onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+                        if (e.pointerType === 'mouse' || (e.target as HTMLElement).closest('button,input')) return;
+                        e.preventDefault();
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                        dragKey.current = key;
+                        setDragging(true);
+                      },
+                      onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
+                        if (e.pointerType === 'mouse' || !dragKey.current) return;
+                        const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-cell-key]');
+                        const k = hit?.getAttribute('data-cell-key') ?? null;
+                        setOverKey(k && k !== dragKey.current ? k : null);
+                      },
+                      onPointerUp: (e: React.PointerEvent<HTMLElement>) => {
+                        if (e.pointerType === 'mouse') return;
+                        const under = document.elementFromPoint(e.clientX, e.clientY);
+                        const k = under?.closest('[data-cell-key]')?.getAttribute('data-cell-key') ?? (under?.closest('[data-grid]') ? 'end:0' : null);
+                        if (dragKey.current && k && k !== dragKey.current) moveField(section, dragKey.current, k);
+                        endDrag();
+                      },
+                      onPointerCancel: endDrag,
+                      style: { touchAction: 'none' } as const,
+                      className: 'flex cursor-grab items-center justify-between gap-3 pb-1 active:cursor-grabbing',
+                    };
+                    const gripIcon = <GripVertical className="h-4 w-4 shrink-0 text-slate-600 hover:text-[#301D5D]" aria-hidden="true" />;
+                    const xBtn = (label: string, onClick: () => void) => (
+                      <button type="button" aria-label={label} title={label} onClick={onClick} className="!flex !h-4 !w-4 shrink-0 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-500 hover:!text-[#301D5D]"><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
+                    );
                     if (item.kind === 'gap') {
                       return (
                         <div key={key} {...cellProps} className={`group/cell relative hidden min-h-[3.75rem] rounded-md sm:block ${dragging ? 'border border-dashed border-[#D8D2E6]' : ''}${over}`}>
-                          <button type="button" aria-label="Remove blank space" title="Remove blank space" onClick={() => onPatch({ contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: (rawDeal.contractFieldOrder?.[section.id] ?? []).filter((k) => k !== key) } })} className="absolute right-0 top-0 !flex !h-4 !w-4 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-300 opacity-0 hover:!text-[#301D5D] group-hover/cell:opacity-100"><X className="h-3 w-3" aria-hidden="true" /></button>
+                          <span className="absolute right-0 top-0 opacity-0 group-hover/cell:opacity-100">{xBtn('Remove blank space', () => onPatch({ contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: (rawDeal.contractFieldOrder?.[section.id] ?? []).filter((k) => k !== key) } }))}</span>
                         </div>
                       );
                     }
                     if (item.kind === 'custom') {
                       const cf = item.cf;
                       return (
-                        <div key={key} {...cellProps} className={`group/cell relative block min-w-0${over}`}>
-                          {grip}
-                          <span className="flex items-center justify-between gap-1 pr-5">
+                        <div key={key} {...cellProps} className={`block min-w-0${over}`}>
+                          <div {...handle}>
                             <input value={cf.label} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, label: e.target.value } : x)))} aria-label="Field name" placeholder="Field Name" className="cf-label h-4 min-w-0 flex-1 bg-transparent text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 outline-none" />
-                            <button type="button" aria-label="Remove field" onClick={() => putCustom(customFields.filter((x) => x.id !== cf.id))} className="!h-4 !border-0 !bg-transparent !px-0 text-slate-400 hover:!text-[#301D5D]"><X className="h-3 w-3" aria-hidden="true" /></button>
-                          </span>
-                          <input value={cf.value} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, value: e.target.value } : x)))} className={`${fieldCls} mt-1`} />
+                            <span className="flex items-center gap-2">{xBtn('Remove field', () => putCustom(customFields.filter((x) => x.id !== cf.id)))}{gripIcon}</span>
+                          </div>
+                          <input value={cf.value} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, value: e.target.value } : x)))} aria-label={`${cf.label} value`} className={fieldCls} />
                         </div>
                       );
                     }
@@ -338,27 +338,27 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     const placed = !hasOrder(section) && fl.pos ? `${POS_COL[fl.pos[0]]} ${POS_ROW[fl.pos[1]]}` : '';
                     if (fl.kind === 'c') {
                       return (
-                        <div key={key} {...cellProps} className={`group/cell relative min-w-0${over}`}>
-                          {grip}
-                          <button type="button" aria-label="Clear field" title="Clear field" onClick={() => setForm({ [fl.id]: '' })} className="absolute right-[18px] top-0 z-10 !flex !h-4 !w-4 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-400 transition hover:!text-[#301D5D]"><X className="h-3 w-3" aria-hidden="true" /></button>
-                          <label className="flex min-w-0 items-start gap-2 pr-10 text-sm text-slate-900">
-                            <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
-                            <span className="min-w-0 break-words">{fl.label}</span>
-                          </label>
+                        <div key={key} {...cellProps} className={`min-w-0${over}`}>
+                          <div {...handle} className={`${handle.className} !pb-0`}>
+                            <label className="flex min-w-0 flex-1 items-start gap-2 text-sm text-slate-900">
+                              <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
+                              <span className="min-w-0 break-words">{fl.label}</span>
+                            </label>
+                            <span className="flex items-center gap-2">{xBtn('Clear field', () => setForm({ [fl.id]: '' }))}{gripIcon}</span>
+                          </div>
                         </div>
                       );
                     }
                     return (
-                      <div key={key} {...cellProps} className={`group/cell relative min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}${over}`}>
-                        {grip}
-                        <button type="button" aria-label="Clear field" title="Clear field" onClick={() => setForm({ [fl.id]: '' })} className="absolute right-[18px] top-0 z-10 !flex !h-4 !w-4 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-400 transition hover:!text-[#301D5D]"><X className="h-3 w-3" aria-hidden="true" /></button>
-                        <label className="block min-w-0">
-                          <span className="block pr-10 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
-                          <span className="mt-1 flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
-                            {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
-                            <input value={value} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
-                          </span>
-                        </label>
+                      <div key={key} {...cellProps} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}${over}`}>
+                        <div {...handle}>
+                          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
+                          <span className="flex items-center gap-2">{xBtn('Clear field', () => setForm({ [fl.id]: '' }))}{gripIcon}</span>
+                        </div>
+                        <span className="flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
+                          {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
+                          <input value={value} aria-label={fl.label} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
+                        </span>
                       </div>
                     );
                   })}
