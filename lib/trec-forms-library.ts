@@ -44,7 +44,7 @@ export const TREC_FORM_LIBRARY: TrecFormLibraryItem[] = [
   { formFamily: '40', formNumber: '40-11', title: 'Third Party Financing Addendum', effectiveDate: '2025-01-03', category: 'Contract Addenda', pdfUrl: '/forms/trec-40-11.pdf', local: true },
 
   { formFamily: '32', formNumber: '32-5', title: 'Condominium Resale Certificate', effectiveDate: '2024-11-25', category: 'Other Forms', pdfUrl: '/forms/trec-library/trec-32-5.pdf', local: true },
-  { formFamily: 'RSC', formNumber: 'RSC-4', title: 'Disclosure of Relationship with Residential Service Company', effectiveDate: '2023-06-11', category: 'Other Forms', pdfUrl: '/forms/trec-library/trec-RSC-4.pdf', local: true },
+  { formFamily: 'RSC', formNumber: 'RSC-4', title: 'Disclosure of Relationship with Contract Provider or Administrator', effectiveDate: '2023-06-11', category: 'Other Forms', pdfUrl: '/forms/trec-library/trec-RSC-4.pdf', local: true },
   { formFamily: '54', formNumber: '54-1', title: "Landlord's Floodplain and Flood Notice", effectiveDate: '2025-11-26', category: 'Other Forms', pdfUrl: '/forms/trec-library/trec-54-1.pdf', local: true },
   { formFamily: '38', formNumber: '38-8', title: "Notice of Buyer's Termination of Contract", effectiveDate: '2025-04-01', category: 'Other Forms', pdfUrl: '/forms/trec-library/trec-38-8.pdf', local: true },
   { formFamily: '50', formNumber: '50-0', title: "Notice of Seller's Termination of Contract", effectiveDate: '2018-08-13', category: 'Other Forms', pdfUrl: '/forms/trec-library/trec-50-0.pdf', local: true },

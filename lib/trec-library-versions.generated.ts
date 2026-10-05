@@ -14382,7 +14382,7 @@ export const GENERATED_TREC_FORM_VERSIONS: TrecFormVersion[] = [
     "id": "built-in-trec-rsc-4",
     "formFamily": "RSC",
     "formNumber": "RSC-4",
-    "title": "Disclosure of Relationship with Residential Service Company",
+    "title": "Disclosure of Relationship with Contract Provider or Administrator",
     "effectiveDate": "2023-06-11",
     "pdfUrl": "/forms/trec-library/trec-RSC-4.pdf",
     "pageCount": 1,
