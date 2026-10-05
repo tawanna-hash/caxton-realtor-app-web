@@ -357,7 +357,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     const cellAttrs = { onClick: cellClick(section, key), title: picked ? 'Click to place here' : 'Click to pick up and move' };
                     const pickCls = isPicked ? ' rounded-md bg-[#F6F3FB] ring-2 ring-[#301D5D]' : picked?.section === section.id ? ' cursor-pointer rounded-md hover:bg-[#F6F3FB]' : ' cursor-pointer';
                     const xBtn = (label: string, onClick: () => void) => (
-                      <button type="button" aria-label={label} title={label} onClick={onClick} className="!flex !h-4 !w-4 shrink-0 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-500 hover:!text-[#301D5D]"><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
+                      <button type="button" aria-label={label} title={label} onClick={onClick} className="!flex !h-4 !w-4 shrink-0 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-300 hover:!text-[#301D5D]"><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
                     );
                     if (item.kind === 'gap') {
                       const live = picked?.section === section.id;

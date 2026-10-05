@@ -123,6 +123,35 @@ function AutoSection({ className, header, children }: { className?: string; head
 
 export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
+  const [arrangePage, setArrangePage] = useState<string | null>(null);
+  const [pickedCard, setPickedCard] = useState<{ page: string; key: string } | null>(null);
+  const cardKeys = (page: string, defaults: string[]) => {
+    const saved = (deal?.contractFieldOrder?.[`page:${page}`] ?? []).filter((k) => defaults.includes(k));
+    return [...saved, ...defaults.filter((k) => !saved.includes(k))];
+  };
+  const cardProps = (page: string, defaults: string[], key: string) => {
+    const keys = cardKeys(page, defaults);
+    const active = arrangePage === page;
+    const picked = pickedCard?.page === page && pickedCard.key === key;
+    return {
+      style: { order: keys.indexOf(key) } as const,
+      className: active ? `cursor-pointer rounded-xl ${picked ? 'ring-2 ring-[#301D5D]' : 'hover:ring-2 hover:ring-[#B9ADD6]'}` : '',
+      onClickCapture: active ? (e: React.MouseEvent) => {
+        e.preventDefault(); e.stopPropagation();
+        if (!pickedCard || pickedCard.page !== page) { setPickedCard({ page, key }); return; }
+        if (pickedCard.key !== key) {
+          const next = [...keys];
+          const a = next.indexOf(pickedCard.key); const b = next.indexOf(key);
+          [next[a], next[b]] = [next[b], next[a]];
+          onUpdate('contractFieldOrder', { ...(deal?.contractFieldOrder ?? {}), [`page:${page}`]: next });
+        }
+        setPickedCard(null);
+      } : undefined,
+    };
+  };
+  const arrangeButton = (page: string) => (
+    <button type="button" onClick={() => { setArrangePage(arrangePage === page ? null : page); setPickedCard(null); }}>{arrangePage === page ? 'Done Arranging' : 'Arrange'}</button>
+  );
   const [waitingOnSigner, setWaitingOnSigner] = useState(0);
   const [brokerageForms, setBrokerageForms] = useState<{ id: string; title: string; url: string; filename: string; fillable?: boolean }[]>([]);
   const signDealId = deal?.id;
@@ -533,11 +562,12 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       <div className="ds-page" data-testid="deal-snapshot">
         <div className="mb-3 space-y-3">
           {snapshotTop.pressing}
+          <div className="flex justify-end">{arrangeButton('snapshot')}</div>
           <div className="grid items-start gap-3 lg:grid-cols-4">
-            <div className="lg:col-span-2">{snapshotTop.tiles}</div>
-            <div className="min-w-0">{partiesCard}</div>
-            <div className="min-w-0">{sideBlocks.property}</div>
-            <div className="min-w-0 lg:col-span-2">{tasksCard}</div>
+            {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'docs'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`lg:col-span-2 ${p.className}`}>{snapshotTop.tiles}</div>; })()}
+            {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'parties'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 ${p.className}`}>{partiesCard}</div>; })()}
+            {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'property'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 ${p.className}`}>{sideBlocks.property}</div>; })()}
+            {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'tasks'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 lg:col-span-2 ${p.className}`}>{tasksCard}</div>; })()}
           </div>
         </div>
       </div>
@@ -751,14 +781,14 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               );
             };
             return (
-              <div className="space-y-4">
-                <div className="ds-card flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-col gap-4">
+                <div className="ds-card flex flex-wrap items-center justify-between gap-3" style={{ order: -1 }}>
                   <div>
                     <p className="ds-side-title !m-0">{dealTypeLabel} Documents</p>
                   </div>
-                  <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{submittedCount} of {totalRequired} submitted</span>
+                  <span className="flex items-center gap-3"><span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{submittedCount} of {totalRequired} submitted</span>{arrangeButton('documents')}</span>
                 </div>
-                <AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                {(() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'required'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                     <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Required Documents</span>
                     <span className="text-xs font-medium text-slate-500">{submittedCount} of {totalRequired}</span>
                   </div>}>
@@ -775,7 +805,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                       {!locked && <button type="button" aria-label={`Remove ${form.title} from this deal`} className="text-xs text-slate-500 underline underline-offset-2 hover:text-slate-900" onClick={() => { const next = { ...checks }; delete next[`bf:${form.id}`]; delete next[`bfs:${form.id}`]; onUpdate('documentChecks', next); }}>Remove</button>}
                     </div>
                   ))}
-                </AutoSection>
+                </AutoSection></div>); })()}
                 {(() => {
                   const linked = [
                     ...Array.from(new Set(Object.values(DOC_DEADLINE_IDS))).map((id) => {
@@ -787,7 +817,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   if (linked.length === 0) return null;
                   const doneCount = linked.filter((item) => checks[`dl:${item.id}`]).length;
                   return (
-                    <AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                    (() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'deadlines'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                         <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Deadline Completion</span>
                         <span className="text-xs font-medium text-slate-500">{doneCount} Of {linked.length} Done</span>
                       </div>}>
@@ -810,11 +840,11 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                           </div>
                         );
                       })}
-                    </AutoSection>
+                    </AutoSection></div>); })()
                   );
                 })()}
                 {trecForms && (
-                  <AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                  (() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'forms'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                       <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Additional Documents</span>
                       <span className="text-xs font-medium text-slate-500">{dealForms.length}</span>
                     </div>}>
@@ -827,9 +857,9 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                         <TrecFormActions family={form.formFamily} disabled={locked} onOpen={(family) => onOpenTrecForm?.(family)} onUpload={(family, mode) => onUploadTrecForm?.(family, mode)} />
                       </div>
                     ))}
-                  </AutoSection>
+                  </AutoSection></div>); })()
                 )}
-                <AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                {(() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'optional'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                     <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Optional Documents</span>
                     <span className="text-xs font-medium text-slate-500">{optionalDocs.length}</span>
                   </div>}>
@@ -841,7 +871,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                       <span className="text-xs text-slate-400">{doc.kind === 'reference' ? 'Reference' : 'Optional'}</span>
                     </label>
                   ))}
-                </AutoSection>
+                </AutoSection></div>); })()}
               </div>
             );
           })()}
