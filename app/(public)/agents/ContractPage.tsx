@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
 import { CONTRACT_MAP_SECTIONS } from '@/lib/trec-20-19-contract-map';
 import type { AgentCashLine, AgentDeal, AgentKeyTerm } from '@/lib/agent-command-center-workspace';
@@ -171,22 +171,54 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
 
   return (
     <div className="ds-page" data-testid="contract-page">
-      <section className="mb-4 rounded-2xl border border-[#E6E5EC] bg-white p-5" aria-label="Deal Details">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {([
-            ['Property Address', deal.propertyAddress, (v: string) => onPatch({ propertyAddress: v, formFields: { ...rawDeal.formFields, p01_f008: v } }), 'sm:col-span-2 lg:col-span-3'],
-            ['Buyer Names', deal.buyerNames, (v: string) => onParties('buyerNames', v), ''],
-            ['Seller Names', deal.sellerNames, (v: string) => onParties('sellerNames', v), ''],
-            ['Lender', deal.lender, (v: string) => onPatch({ lender: v }), ''],
-          ] as const).map(([label, value, set, span]) => (
-            <label key={label} className={`block min-w-0 ${span}`}>
-              <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
-              <input value={value ?? ''} onChange={(e) => set(e.target.value)} className={`${fieldCls} mt-1`} />
-            </label>
-          ))}
-        </div>
-      </section>
-
+      <div aria-label="Contract Sections">
+        <div className="space-y-2">
+          {CONTRACT_MAP_SECTIONS.map((section) => {
+            const lead = section.id === 'property' ? ['Property Address', deal.propertyAddress, (v: string) => onPatch({ propertyAddress: v, formFields: { ...rawDeal.formFields, p01_f008: v } })] as const
+              : section.id === 'buyer' ? ['Buyer Names', deal.buyerNames, (v: string) => onParties('buyerNames', v)] as const
+              : section.id === 'seller' ? ['Seller Names', deal.sellerNames, (v: string) => onParties('sellerNames', v)] as const
+              : null;
+            const filled = section.fields.filter((fl) => (rawDeal.formFields[fl.id] ?? '').trim()).length;
+            return (
+              <Fragment key={section.id}>
+              <details open={section.id === 'property' ? true : undefined} className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
+                <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900">
+                  <span>{section.title}</span>
+                  <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>
+                </summary>
+                <div className="grid gap-x-5 gap-y-3 border-t border-[#F1F0F5] px-5 py-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {lead && (
+                    <label className="block min-w-0 sm:col-span-2 lg:col-span-3">
+                      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{lead[0]}</span>
+                      <input value={lead[1] ?? ''} onChange={(e) => lead[2](e.target.value)} className={`${fieldCls} mt-1`} />
+                    </label>
+                  )}
+                  {section.fields.map((fl) => {
+                    const value = rawDeal.formFields[fl.id] ?? '';
+                    if (fl.kind === 'c') {
+                      return (
+                        <label key={fl.id} className="flex min-w-0 items-start gap-2 text-sm text-slate-900">
+                          <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
+                          <span className="min-w-0 break-words">{fl.label}</span>
+                        </label>
+                      );
+                    }
+                    return (
+                      <label key={fl.id} className="block min-w-0">
+                        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
+                        <span className="mt-1 flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
+                          {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
+                          <input value={value} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </details>
+              {section.id === 'property' && (
+                <details open className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900"><span>Purchase Price</span></summary>
+                  <div className="space-y-4 border-t border-[#F1F0F5] p-4">
       <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Contract Terms">
         <div className="grid sm:grid-cols-2 lg:grid-cols-3">
           {terms.map((t) => (
@@ -215,7 +247,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
         </div>
       </section>
 
-      <section className="mt-4 overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Estimated Cash To Close">
+      <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Estimated Cash To Close">
         <p className="border-b border-[#E6E5EC] px-5 py-4 text-base font-semibold text-slate-900">Estimated Cash To Close</p>
         <div className="flex items-center justify-between gap-4 border-b border-[#F1F0F5] px-5 py-3">
           <div>
@@ -255,42 +287,21 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
           </div>
         </div>
       </section>
-
-      <div className="mt-6" aria-label="All Contract Fields">
-        <div className="space-y-2">
-          {CONTRACT_MAP_SECTIONS.map((section) => {
-            const filled = section.fields.filter((fl) => (rawDeal.formFields[fl.id] ?? '').trim()).length;
-            return (
-              <details key={section.id} className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
-                <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900">
-                  <span>{section.title}</span>
-                  <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>
-                </summary>
-                <div className="grid gap-x-5 gap-y-3 border-t border-[#F1F0F5] px-5 py-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {section.fields.map((fl) => {
-                    const value = rawDeal.formFields[fl.id] ?? '';
-                    if (fl.kind === 'c') {
-                      return (
-                        <label key={fl.id} className="flex min-w-0 items-start gap-2 text-sm text-slate-900">
-                          <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
-                          <span className="min-w-0 break-words">{fl.label}</span>
-                        </label>
-                      );
-                    }
-                    return (
-                      <label key={fl.id} className="block min-w-0">
-                        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
-                        <span className="mt-1 flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
-                          {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
-                          <input value={value} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </details>
+                  </div>
+                </details>
+              )}
+              </Fragment>
             );
           })}
+          <details className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900"><span>Lender</span></summary>
+            <div className="border-t border-[#F1F0F5] px-5 py-4">
+              <label className="block min-w-0">
+                <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Lender</span>
+                <input value={deal.lender ?? ''} onChange={(e) => onPatch({ lender: e.target.value })} className={`${fieldCls} mt-1`} />
+              </label>
+            </div>
+          </details>
         </div>
       </div>
 
