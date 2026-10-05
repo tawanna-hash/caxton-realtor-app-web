@@ -266,6 +266,22 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
   },
 ] as const;
 
+// Which readiness items apply depends on whether the agent represents the buyer or the seller.
+const SIDE_HIDDEN_ITEMS: Record<'buyer' | 'listing', ReadonlySet<string>> = {
+  buyer: new Set(['seller-listing-agreement', 'seller-general-warranty-deed']),
+  listing: new Set(['buyer-representation-agreement']),
+};
+const sideKey = (side?: string): 'buyer' | 'listing' => (side === 'listing' ? 'listing' : 'buyer');
+function readinessGroupsForSide(side?: string): ReadinessDocumentGroup[] {
+  const hidden = SIDE_HIDDEN_ITEMS[sideKey(side)];
+  const groups = DOCUMENT_GROUPS.map((group) => ({ ...group, items: group.items.filter((item) => !hidden.has(item.id)) }))
+    .map((group) => (sideKey(side) === 'listing' && group.id === 'buyer' ? { ...group, label: 'Buyer And Offer Documentation' } : group));
+  if (sideKey(side) !== 'listing') return groups;
+  const order = ['seller', 'buyer', 'lender', 'valuation-audit'];
+  return [...groups].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+}
+const isReadinessItemHidden = (id: string, side?: string) => SIDE_HIDDEN_ITEMS[sideKey(side)].has(id);
+
 const DOCUMENT_TEMPLATES = DOCUMENT_GROUPS.flatMap((group) => group.items);
 const DOCUMENT_TEMPLATE_IDS = new Set<string>(DOCUMENT_TEMPLATES.map((item) => item.id));
 // 2026-09-16: added Valuation, Sponsorship & Audit checklist group. Deals created before this
@@ -304,6 +320,7 @@ function mergeReadinessDocuments(deal: AgentDeal): AgentDeal {
 
 function ReadinessChecklist({
   headingTag = 'h3',
+  side,
   documents,
   documentName,
   setDocumentName,
@@ -316,6 +333,7 @@ function ReadinessChecklist({
   documentUploadError,
 }: {
   headingTag?: 'h2' | 'h3';
+  side?: string;
   documents: AgentDocument[];
   documentName: string;
   setDocumentName: (value: string) => void;
@@ -398,7 +416,7 @@ function ReadinessChecklist({
       </div>
 
       <div className="mt-5 space-y-5">
-        {DOCUMENT_GROUPS.map((group) => {
+        {readinessGroupsForSide(side).map((group) => {
           const groupDocuments = group.items
             .map((item) => ({ item, document: documents.find((document) => document.id === item.id) }))
             .filter((entry): entry is { item: (typeof group.items)[number]; document: AgentDocument } => Boolean(entry.document));
@@ -1387,7 +1405,7 @@ export default function ClosingTime({
   const isDealFullyComplete = (deal: AgentDeal) =>
     deal.tasks.every((task) => task.complete) &&
     deal.reminders.every((reminder) => reminder.complete) &&
-    deal.documents.every((document) => document.complete);
+    deal.documents.every((document) => document.complete || isReadinessItemHidden(document.id, deal.agentSide));
   const isDealClosedAndComplete = (deal: AgentDeal) => deal.auditLocked || (Boolean(deal.closeoutOutcome) && isDealFullyComplete(deal));
   const activeDeals = deals.filter((deal) => !isDealClosedAndComplete(deal));
   const closedDeals = deals.filter((deal) => isDealClosedAndComplete(deal));
@@ -3372,6 +3390,7 @@ export default function ClosingTime({
             </div>
 
             <ReadinessChecklist
+              side={activeDeal.agentSide}
               documents={activeDeal.documents}
               documentName={documentName}
               setDocumentName={setDocumentName}
