@@ -345,7 +345,7 @@ function ReadinessChecklist({
           {hasFile ? (
             <span className="inline-flex items-center gap-1.5 rounded-md bg-[#EAF6EC] px-2 py-1 text-xs font-bold text-[#1F7A3D]">
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-              {document.fileName || 'File attached'}
+              {document.fileName || 'File Attached'}
             </span>
           ) : null}
           <label className="inline-flex min-h-[32px] cursor-pointer items-center gap-1.5 rounded-md border border-slate-300 px-2.5 text-xs font-bold text-slate-600 hover:border-[#7059A8] hover:text-[#301D5D]">
@@ -391,8 +391,8 @@ function ReadinessChecklist({
     <div {...collapsible('readiness', { mobileOpen: true })} className="border border-slate-200 bg-white p-5 sm:p-6">
       <div className="flex items-center gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Readiness check</p>
-          <Heading className="mt-1 text-xl font-semibold text-slate-950">Deal readiness checklist</Heading>
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Readiness Check</p>
+          <Heading className="mt-1 text-xl font-semibold text-slate-950">Deal Readiness Checklist</Heading>
         </div>
         <CollapseToggle {...toggleProps('readiness', 'readiness checklist', { mobileOpen: true })} className="ml-auto" />
       </div>
@@ -477,25 +477,25 @@ const CONTRACT_DETAIL_FIELDS: ReadonlyArray<{
   multiline?: boolean;
 }> = [
   { key: 'county', label: 'County' },
-  { key: 'legalDescription', label: 'Legal description', multiline: true },
-  { key: 'improvementsAndAccessories', label: 'Improvements and accessories', multiline: true },
+  { key: 'legalDescription', label: 'Legal Description', multiline: true },
+  { key: 'improvementsAndAccessories', label: 'Improvements and Accessories', multiline: true },
   { key: 'exclusions', label: 'Exclusions', multiline: true },
-  { key: 'cashPortion', label: 'Cash portion' },
-  { key: 'loanAmount', label: 'Loan amount' },
-  { key: 'salesPrice', label: 'Sales price' },
-  { key: 'financingType', label: 'Financing type' },
-  { key: 'financingNotes', label: 'Financing notes', multiline: true },
-  { key: 'earnestMoney', label: 'Earnest money' },
+  { key: 'cashPortion', label: 'Cash Portion' },
+  { key: 'loanAmount', label: 'Loan Amount' },
+  { key: 'salesPrice', label: 'Sales Price' },
+  { key: 'financingType', label: 'Financing Type' },
+  { key: 'financingNotes', label: 'Financing Notes', multiline: true },
+  { key: 'earnestMoney', label: 'Earnest Money' },
   { key: 'titleCompany', label: 'Title company / escrow holder' },
-  { key: 'optionFee', label: 'Option fee' },
-  { key: 'additionalEarnestMoney', label: 'Additional earnest money' },
-  { key: 'titlePolicyPayer', label: 'Title policy payer' },
-  { key: 'surveyPlan', label: 'Survey plan', multiline: true },
-  { key: 'titleAndSurveyNotes', label: 'Title and survey notes', multiline: true },
-  { key: 'conditionAndRepairNotes', label: 'Condition and repair notes', multiline: true },
-  { key: 'possessionPlan', label: 'Possession plan', multiline: true },
-  { key: 'specialProvisionsNotes', label: 'Special provisions notes', multiline: true },
-  { key: 'settlementNotes', label: 'Settlement and expense notes', multiline: true },
+  { key: 'optionFee', label: 'Option Fee' },
+  { key: 'additionalEarnestMoney', label: 'Additional Earnest Money' },
+  { key: 'titlePolicyPayer', label: 'Title Policy Payer' },
+  { key: 'surveyPlan', label: 'Survey Plan', multiline: true },
+  { key: 'titleAndSurveyNotes', label: 'Title and Survey Notes', multiline: true },
+  { key: 'conditionAndRepairNotes', label: 'Condition and Repair Notes', multiline: true },
+  { key: 'possessionPlan', label: 'Possession Plan', multiline: true },
+  { key: 'specialProvisionsNotes', label: 'Special Provisions Notes', multiline: true },
+  { key: 'settlementNotes', label: 'Settlement and Expense Notes', multiline: true },
   { key: 'notices', label: 'Notices', multiline: true },
 ];
 
@@ -2105,7 +2105,7 @@ export default function ClosingTime({
                 {nextClosingDays === null
                   ? 'No upcoming closings'
                   : nextClosingDays === 0
-                    ? 'Next closing today'
+                    ? 'Next Closing Today'
                     : `Next closing · ${nextClosingDays} day${nextClosingDays === 1 ? '' : 's'}`}
               </span>
               <CollapseToggle {...toggleProps('attention', 'what needs attention')} />
@@ -2122,7 +2122,7 @@ export default function ClosingTime({
                     <p className="text-xs text-slate-500">{item.dealTitle}</p>
                   </div>
                   <span className={`text-xs font-bold ${item.overdue ? 'text-[#9A3D2B]' : 'text-[#301D5D]'}`}>
-                    {item.overdue ? 'Overdue' : item.date === today ? 'Due today' : formatDate(item.date)}
+                    {item.overdue ? 'Overdue' : item.date === today ? 'Due Today' : formatDate(item.date)}
                   </span>
                 </div>
               ))}
@@ -2189,7 +2189,7 @@ export default function ClosingTime({
     <section role="status" className="mt-4 border border-[#D9CFF0] bg-[#F6F3FB] p-4">
                       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                         <div>
-                          <p className="text-sm font-semibold text-[#301D5D]">Contract suggestions are ready to review</p>
+                          <p className="text-sm font-semibold text-[#301D5D]">Contract Suggestions Are Ready to Review</p>
                           <p className="mt-1 text-sm leading-6 text-slate-700">
                             {Object.values(extractionDraft.worksheet).filter(Boolean).length} operational facts, {Object.values(extractionDraft.formFields).filter(Boolean).length} official TREC fields, and {Object.values(extractionDraft.addenda).filter(Boolean).length} selected addenda were found. Review the preview before applying.
                           </p>
@@ -2202,7 +2202,7 @@ export default function ClosingTime({
                       <div className="mt-4 grid gap-4 lg:grid-cols-2">
                         <div className="overflow-hidden border border-[#D9CFF0] bg-white">
                           <div className="border-b border-[#E6E5EC] px-3 py-2">
-                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#301D5D]">Uploaded contract</p>
+                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#301D5D]">Uploaded Contract</p>
                           </div>
                           {contractPreviewUrl ? (
                             <iframe
@@ -2218,13 +2218,13 @@ export default function ClosingTime({
                         </div>
                         <div className="max-h-[560px] overflow-y-auto border border-[#D9CFF0] bg-white">
                           <div className="sticky top-0 z-10 border-b border-[#E6E5EC] bg-white px-3 py-2">
-                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#301D5D]">Proposed entries</p>
+                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#301D5D]">Proposed Entries</p>
                             <p className="mt-1 text-xs text-slate-600">Compare each entry with the unchanged contract before applying.</p>
                           </div>
                           <div className="space-y-5 p-3">
                             {Object.entries(extractionDraft.worksheet).filter(([, value]) => Boolean(value)).length > 0 && (
                               <div>
-                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Workspace summary and timing</p>
+                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Workspace Summary and Timing</p>
                                 <dl className="mt-2 space-y-2">
                                   {Object.entries(extractionDraft.worksheet).filter(([, value]) => Boolean(value)).map(([key, value]) => (
                                     <div key={key} className="border border-slate-200 bg-[#FCFBF9] px-3 py-2 text-xs">
@@ -2237,7 +2237,7 @@ export default function ClosingTime({
                             )}
                             {Object.entries(extractionDraft.formFields).filter(([, value]) => Boolean(value)).length > 0 && (
                               <div>
-                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Official TREC fields</p>
+                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Official TREC Fields</p>
                                 <dl className="mt-2 space-y-2">
                                   {Object.entries(extractionDraft.formFields).filter(([, value]) => Boolean(value)).map(([key, value]) => {
                                     const field = trecFormFieldById.get(key);
@@ -2267,7 +2267,7 @@ export default function ClosingTime({
                           <button type="button" onClick={() => setShowSavedOriginal((value) => !value)}
                             aria-expanded={showSavedOriginal}
                             className="text-sm font-bold text-[#301D5D] underline">
-                            {showSavedOriginal ? 'Hide original contract' : 'View original uploaded contract (signatures in place)'}
+                            {showSavedOriginal ? 'Hide Original Contract' : 'View original uploaded contract (signatures in place)'}
                           </button>
                           {showSavedOriginal && <iframe
                             title="Original uploaded contract, signatures unchanged"
@@ -2424,7 +2424,7 @@ export default function ClosingTime({
                       <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${tone}`} aria-hidden="true" />
                       <span className="min-w-0">
                         <span className="block truncate text-sm">{deal.propertyAddress || deal.title}</span>
-                        <span className="block truncate text-xs ds-sub">{closed ? 'Closed' : days === null ? 'Closing date not set' : closingCountdownLabel(deal.closingDate, today)}</span>
+                        <span className="block truncate text-xs ds-sub">{closed ? 'Closed' : days === null ? 'Closing Date Not Set' : closingCountdownLabel(deal.closingDate, today)}</span>
                       </span>
                     </button>
                   </li>
@@ -2508,15 +2508,15 @@ export default function ClosingTime({
                 {nextClosingDays === null
                   ? 'No upcoming closings'
                   : nextClosingDays === 0
-                    ? 'Next closing is today'
+                    ? 'Next Closing Is Today'
                     : `${nextClosingDays} day${nextClosingDays === 1 ? '' : 's'} to next closing`}
               </div>
             </header>
             <div className="ds-stats" aria-label="Desk summary">
-              <div className="ds-stat"><div><p className="ds-stat-label">Active files</p><p className="ds-stat-num">{activeDeals.length}</p><p className="ds-stat-sub">Under contract</p></div><span className="ds-stat-icon ds-i-purple"><ClipboardCheck className="h-4 w-4" aria-hidden="true" /></span></div>
-              <div className="ds-stat"><div><p className="ds-stat-label">Next closing</p><p className="ds-stat-num">{nextClosingDays === null ? '—' : nextClosingDays}</p><p className="ds-stat-sub">{nextClosingDays === null ? 'None scheduled' : 'Days away'}</p></div><span className="ds-stat-icon ds-i-green"><CalendarDays className="h-4 w-4" aria-hidden="true" /></span></div>
-              <div className="ds-stat"><div><p className="ds-stat-label">Open tasks</p><p className="ds-stat-num">{activeDeals.reduce((n, d) => n + d.tasks.filter((t) => !t.complete).length, 0)}</p><p className="ds-stat-sub">Across active files</p></div><span className="ds-stat-icon ds-i-blue"><ListTodo className="h-4 w-4" aria-hidden="true" /></span></div>
-              <div className="ds-stat"><div><p className="ds-stat-label">Closed</p><p className="ds-stat-num">{closedDeals.length}</p><p className="ds-stat-sub">Completed files</p></div><span className="ds-stat-icon ds-i-amber"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span></div>
+              <div className="ds-stat"><div><p className="ds-stat-label">Active Files</p><p className="ds-stat-num">{activeDeals.length}</p><p className="ds-stat-sub">Under Contract</p></div><span className="ds-stat-icon ds-i-purple"><ClipboardCheck className="h-4 w-4" aria-hidden="true" /></span></div>
+              <div className="ds-stat"><div><p className="ds-stat-label">Next Closing</p><p className="ds-stat-num">{nextClosingDays === null ? '—' : nextClosingDays}</p><p className="ds-stat-sub">{nextClosingDays === null ? 'None Scheduled' : 'Days Away'}</p></div><span className="ds-stat-icon ds-i-green"><CalendarDays className="h-4 w-4" aria-hidden="true" /></span></div>
+              <div className="ds-stat"><div><p className="ds-stat-label">Open tasks</p><p className="ds-stat-num">{activeDeals.reduce((n, d) => n + d.tasks.filter((t) => !t.complete).length, 0)}</p><p className="ds-stat-sub">Across Active Files</p></div><span className="ds-stat-icon ds-i-blue"><ListTodo className="h-4 w-4" aria-hidden="true" /></span></div>
+              <div className="ds-stat"><div><p className="ds-stat-label">Closed</p><p className="ds-stat-num">{closedDeals.length}</p><p className="ds-stat-sub">Completed Files</p></div><span className="ds-stat-icon ds-i-amber"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span></div>
             </div>
             {effectiveView === 'contacts' && (() => {
               type ContactRow = { key: string; name: string; email: string; phone: string; role: string; dealIds: string[]; active: boolean; last: string; client: boolean };
@@ -2584,7 +2584,7 @@ export default function ClosingTime({
                             <tr key={c.key} tabIndex={0} onClick={() => { if (first) { setActiveDealId(first.id); setDealPageId(first.id); setDealPageTab('preferences'); setDeskView('deal-page'); } }}>
                               <td className="px-4 py-2.5 font-medium text-slate-900">{c.name}</td>
                               <td>{contactsTab === 'clients'
-                                ? <span className={`ds-chip ${c.active ? 'bg-emerald-50 text-emerald-700' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{c.active ? 'Active client' : 'Past client'}</span>
+                                ? <span className={`ds-chip ${c.active ? 'bg-emerald-50 text-emerald-700' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{c.active ? 'Active Client' : 'Past Client'}</span>
                                 : <span className="capitalize">{c.role || '—'}</span>}</td>
                               <td>{c.email || '—'}</td>
                               <td>{c.phone || '—'}</td>
@@ -2659,8 +2659,8 @@ export default function ClosingTime({
                 const d = daysUntilClosing(deal.closingDate, today);
                 if (d === null) return { key: 'nodate', label: 'No date', tone: 'bg-slate-100 text-slate-600' };
                 if (d < 0) return { key: 'overdue', label: 'Overdue', tone: 'bg-red-50 text-red-700' };
-                if (d <= 7) return { key: 'attention', label: 'Needs attention', tone: 'bg-amber-50 text-amber-700' };
-                return { key: 'ontrack', label: 'On track', tone: 'bg-emerald-50 text-emerald-700' };
+                if (d <= 7) return { key: 'attention', label: 'Needs Attention', tone: 'bg-amber-50 text-amber-700' };
+                return { key: 'ontrack', label: 'On Track', tone: 'bg-emerald-50 text-emerald-700' };
               };
               const sinceLabel = (iso?: string) => {
                 if (!iso) return '—';
@@ -2687,7 +2687,7 @@ export default function ClosingTime({
                       <p className="ds-subtitle">Every deal in one place, with where each one stands and what is due next.</p>
                     </div>
                     <button type="button" onClick={() => setNewDealPickerOpen(true)} className="inline-flex h-[40px] items-center gap-2 rounded-lg bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
-                      <Plus className="h-4 w-4" aria-hidden="true" /> New deal
+                      <Plus className="h-4 w-4" aria-hidden="true" /> New Deal
                     </button>
                   </div>
                   <div className="ds-tabs" role="tablist" aria-label="Deal filter">
@@ -2699,8 +2699,8 @@ export default function ClosingTime({
                     <label className="ds-search"><Search className="h-4 w-4" aria-hidden="true" /><input value={dealsQuery} onChange={(e) => setDealsQuery(e.target.value)} placeholder="Search deals..." aria-label="Search deals" /></label>
                     <select value={dealsHealth} onChange={(e) => setDealsHealth(e.target.value)} aria-label="Health" className="ds-select">
                       <option value="all">Health</option>
-                      <option value="ontrack">On track</option>
-                      <option value="attention">Needs attention</option>
+                      <option value="ontrack">On Track</option>
+                      <option value="attention">Needs Attention</option>
                       <option value="overdue">Overdue</option>
                       <option value="nodate">No date</option>
                       <option value="closed">Closed</option>
@@ -2710,7 +2710,7 @@ export default function ClosingTime({
                     <table className="w-full min-w-[860px] text-left text-sm">
                       <thead>
                         <tr>
-                          <th className="py-3 pl-4">Deal</th><th>Clients</th><th>Stage</th><th>Progress</th><th>Health</th><th>Closing</th><th className="pr-4">Last activity</th>
+                          <th className="py-3 pl-4">Deal</th><th>Clients</th><th>Stage</th><th>Progress</th><th>Health</th><th>Closing</th><th className="pr-4">Last Activity</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2749,8 +2749,8 @@ export default function ClosingTime({
               const health = closed ? { label: 'Closed', tone: 'bg-slate-100 text-slate-600' }
                 : days === null ? { label: 'No date', tone: 'bg-slate-100 text-slate-600' }
                 : days < 0 ? { label: 'Overdue', tone: 'bg-red-50 text-red-700' }
-                : days <= 7 ? { label: 'Needs attention', tone: 'bg-amber-50 text-amber-700' }
-                : { label: 'On track', tone: 'bg-emerald-50 text-emerald-700' };
+                : days <= 7 ? { label: 'Needs Attention', tone: 'bg-amber-50 text-amber-700' }
+                : { label: 'On Track', tone: 'bg-emerald-50 text-emerald-700' };
               const nextDeadline = deal ? dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] : undefined;
               return (
                 <DealSubpage
@@ -2803,7 +2803,7 @@ export default function ClosingTime({
               const health = deal ? (() => {
                 if (isDealClosedAndComplete(deal)) return { label: 'Closed', tone: 'bg-slate-100 text-slate-600' };
                 const d = daysUntilClosing(deal.closingDate, today);
-                return d === null ? { label: 'No date', tone: 'bg-slate-100 text-slate-600' } : d < 0 ? { label: 'Overdue', tone: 'bg-red-50 text-red-700' } : d <= 7 ? { label: 'Needs attention', tone: 'bg-amber-50 text-amber-700' } : { label: 'On track', tone: 'bg-emerald-50 text-emerald-700' };
+                return d === null ? { label: 'No date', tone: 'bg-slate-100 text-slate-600' } : d < 0 ? { label: 'Overdue', tone: 'bg-red-50 text-red-700' } : d <= 7 ? { label: 'Needs Attention', tone: 'bg-amber-50 text-amber-700' } : { label: 'On Track', tone: 'bg-emerald-50 text-emerald-700' };
               })() : { label: 'No date', tone: 'bg-slate-100 text-slate-600' };
               const nextDeadline = deal ? dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] : undefined;
               return (
@@ -2868,7 +2868,7 @@ export default function ClosingTime({
                   <div className="flex min-h-[56px] w-full flex-col justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-[#301D5D]">
                       <a href={calendarFeed.webcalUrl} onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'apple' })} className="underline underline-offset-2">Open In Apple Calendar</a>
-                      <button type="button" onClick={() => void copyCalendarFeed()} className="underline underline-offset-2">{calendarFeedCopied ? 'Copied' : 'Copy link'}</button>
+                      <button type="button" onClick={() => void copyCalendarFeed()} className="underline underline-offset-2">{calendarFeedCopied ? 'Copied' : 'Copy Link'}</button>
                     </div>
                     {calendarFeedState === 'error' && <p className="text-xs font-semibold text-[#9A3D2B]">Could not load your link. Try again.</p>}
                   </div>
@@ -2994,7 +2994,7 @@ export default function ClosingTime({
                       },
                     }}
                   />
-                  <h4 className="mt-6 text-sm font-semibold text-slate-900">Your uploaded TREC forms</h4>
+                  <h4 className="mt-6 text-sm font-semibold text-slate-900">Your Uploaded TREC Forms</h4>
                   <CustomFormsPanel section="trec" label="TREC form" />
                 </>
               )}
@@ -3534,7 +3534,7 @@ export default function ClosingTime({
           <div className="flex max-h-full w-full max-w-[1120px] flex-col overflow-hidden rounded-xl bg-white shadow-xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] px-5 py-3">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{currentTrecFormVersion.formFamily.startsWith('custom-') ? 'Form' : 'TREC form'}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{currentTrecFormVersion.formFamily.startsWith('custom-') ? 'Form' : 'TREC Form'}</p>
                 <h3 className="truncate text-base font-semibold text-slate-900">{currentTrecFormVersion.formNumber} · {currentTrecFormVersion.title}</h3>
               </div>
               <button type="button" aria-label="Close" onClick={() => setFormModalOpen(false)} className="text-slate-500 hover:text-slate-900"><X className="h-5 w-5" aria-hidden="true" /></button>

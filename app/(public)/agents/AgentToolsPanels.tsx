@@ -204,7 +204,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
             <div className="mt-5 border-t border-slate-200 pt-5">
               <div className="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Find a service</p>
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Find a Service</p>
                   <h3 className="mt-2 text-lg font-semibold tracking-[-0.02em] text-gray-900">{selectedCategoryRecord.description}</h3>
                 </div>
                 <Link
@@ -253,7 +253,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
                         <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-1 group-hover:text-[#301D5D]" aria-hidden="true" />
                       </div>
                       <p className="mt-4 text-sm font-semibold text-slate-950">{provider.name}</p>
-                      <p className="mt-1 text-xs font-medium text-[#5B438C]">{provider.industry || 'Local service partner'}</p>
+                      <p className="mt-1 text-xs font-medium text-[#5B438C]">{provider.industry || 'Local Service Partner'}</p>
                       {provider.tagline && <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-600">{provider.tagline}</p>}
                     </Link>
                   ))}
@@ -261,7 +261,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
               ) : (
                 <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-6">
                   <Wrench className="rnn-heading-icon text-[#5B438C]" aria-hidden="true" />
-                  <p className="mt-4 text-sm font-semibold text-slate-950">This service category is growing</p>
+                  <p className="mt-4 text-sm font-semibold text-slate-950">This Service Category Is Growing</p>
                   <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
                     No market-matched partners with this service are available yet. Check back as the local network expands.
                   </p>

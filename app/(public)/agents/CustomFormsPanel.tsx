@@ -84,7 +84,7 @@ export default function CustomFormsPanel({ section, label, dealContext }: { sect
               </div>
             </div>
             {dealContext && (
-              <label className="flex items-center gap-2 text-xs text-slate-600" title={dealContext.hasDeal ? 'Adds this form to Documents for the current deal' : 'Create a deal first'}>
+              <label className="flex items-center gap-2 text-xs text-slate-600" title={dealContext.hasDeal ? 'Adds this form to Documents for the current deal' : 'Create a Deal First'}>
                 <input type="checkbox" checked={Boolean(dealContext.checks[`bf:${form.id}`])} disabled={!dealContext.hasDeal || dealContext.locked} onChange={(e) => dealContext.onToggle(form.id, e.target.checked)} />
                 Use On Current Deal
               </label>

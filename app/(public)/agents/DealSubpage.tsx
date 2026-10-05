@@ -12,10 +12,10 @@ type Tab = 'overview' | 'documents' | 'people' | 'tasks' | 'history';
 
 export const DEAL_TYPES: { id: AgentDeal['dealType']; label: string }[] = [
   { id: 'purchase', label: 'Purchase' },
-  { id: 'listing_sale', label: 'Listing for sale' },
-  { id: 'listing_lease', label: 'Listing for lease' },
+  { id: 'listing_sale', label: 'Listing for Sale' },
+  { id: 'listing_lease', label: 'Listing for Lease' },
   { id: 'lease', label: 'Lease' },
-  { id: 'real_estate_other', label: 'Real estate other' },
+  { id: 'real_estate_other', label: 'Real Estate Other' },
   { id: 'other', label: 'Other' },
 ];
 
@@ -26,19 +26,19 @@ export const SERVICE_PROVIDER_CATEGORIES = [
 
 const TASK_TEMPLATES: { id: string; label: string; tasks: string[] }[] = [
   {
-    id: 'tc-buyer', label: 'TC buyer checklist',
+    id: 'tc-buyer', label: 'TC Buyer Checklist',
     tasks: ['Send welcome letter to agent', 'Confirm whether the property has a well or needs a septic inspection', 'Order home warranty (if applicable)', 'Complete contact information sheets', 'Send intro email to title with executed contract', 'Send intro email to lender with executed contract', 'Send intro email to the other agent', 'Send intro email to client', 'Earnest money due', 'Confirm earnest money receipt with title', 'Order inspection', 'Inspection deadline', 'Wood-destroying insect inspection (VA/FHA)', 'Review inspection report', 'Request repairs', 'Loan application', 'Loan approval', 'Schedule closing with title', 'Seller property disclosure received', 'Title commitment and insurance deadline', 'Appraisal due', 'Buyer homeowner insurance', 'HOA application and approval', 'HOA estoppel', 'Survey and survey report'],
   },
   {
-    id: 'tc-seller', label: 'TC seller checklist',
+    id: 'tc-seller', label: 'TC Seller Checklist',
     tasks: ['Executed sales contract received', 'Send contact sheets to all parties', 'Executed seller property disclosure', 'Send executed contract to title company', 'Earnest money due', 'Second earnest money deposit', 'Confirm earnest money receipt from title', 'Inspection deadline', 'Buyer loan application', 'Buyer loan approval', 'Schedule closing with title', 'Appraisal due', 'HOA estoppel requested from title', 'Title commitment requested from title', 'Utilities information shared with buyer agent', 'Closing disclosure delivered to buyer', 'Clear to close', 'Proof of funds', 'Pre-qualification letter', 'Lead-based paint disclosure (if applicable)', 'Final walk-through coordinated', 'Closing date', 'Compensation agreement from buyer agent', 'Update MLS to closed'],
   },
   {
-    id: 'listing', label: 'Listing checklist',
+    id: 'listing', label: 'Listing Checklist',
     tasks: ['Sign listing agreement', 'Collect seller disclosure', 'Order professional photos', 'Measure and gather property details', 'Enter listing in MLS', 'Install sign and lockbox', 'Schedule open house', 'Review showing feedback', 'Review offers with seller', 'Execute contract'],
   },
   {
-    id: 'buying', label: 'Buying checklist',
+    id: 'buying', label: 'Buying Checklist',
     tasks: ['Add earnest money receipt', 'Add contingencies to calendar and tasks', 'Add inspector', 'Add lender', 'Order inspections', 'Upload inspection report', 'Create inspection addendum', 'Remove inspection contingency', 'Complete agent info sheet for title', 'Schedule closing', 'Do a final walkthrough', 'Complete close', 'Upload closing statement', 'Ask for a review', 'Create market report for the new neighborhood'],
   },
 ];
@@ -210,12 +210,12 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   const appraisalEnd = addDays(deal.effectiveDate, deal.appraisalDeadlineDays);
   const requiredAllIn = PURCHASE_REQUIRED_IDS.every((id) => deal.documentChecks[id]);
   const rawMilestones: { key: string; label: string; date: string; done: boolean }[] = [
-    { key: 'contract', label: 'Under contract', date: deal.effectiveDate, done: Boolean(deal.effectiveDate) && deal.effectiveDate <= today },
-    { key: 'earnest', label: 'Earnest money received', date: deal.earnestMoneyDeliveredDate || addDays(deal.effectiveDate, 3), done: Boolean(deal.earnestMoneyDeliveredDate) },
-    { key: 'inspection', label: 'Inspection resolved', date: optionEnd, done: Boolean(optionEnd) && optionEnd <= today },
-    { key: 'appraisal', label: 'Appraisal complete', date: appraisalEnd, done: Boolean(appraisalEnd) && appraisalEnd <= today },
-    { key: 'clear', label: 'Clear to close', date: '', done: requiredAllIn },
-    { key: 'prep', label: 'Closing prep', date: '', done: completedDeal || (Boolean(deal.closingDate) && deal.closingDate <= today) },
+    { key: 'contract', label: 'Under Contract', date: deal.effectiveDate, done: Boolean(deal.effectiveDate) && deal.effectiveDate <= today },
+    { key: 'earnest', label: 'Earnest Money Received', date: deal.earnestMoneyDeliveredDate || addDays(deal.effectiveDate, 3), done: Boolean(deal.earnestMoneyDeliveredDate) },
+    { key: 'inspection', label: 'Inspection Resolved', date: optionEnd, done: Boolean(optionEnd) && optionEnd <= today },
+    { key: 'appraisal', label: 'Appraisal Complete', date: appraisalEnd, done: Boolean(appraisalEnd) && appraisalEnd <= today },
+    { key: 'clear', label: 'Clear to Close', date: '', done: requiredAllIn },
+    { key: 'prep', label: 'Closing Prep', date: '', done: completedDeal || (Boolean(deal.closingDate) && deal.closingDate <= today) },
     { key: 'closing', label: 'Closing', date: deal.closingDate, done: completedDeal || (Boolean(deal.closingDate) && deal.closingDate < today) },
     { key: 'wrap', label: 'File wrap-up', date: deal.closeoutDate, done: completedDeal },
   ];
@@ -241,7 +241,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               {!locked && (
                 <button type="button" onClick={() => photoInputRef.current?.click()} disabled={uploading}
                   className="absolute inset-x-3 bottom-3 rounded-md border border-dashed border-slate-300 bg-white/90 px-3 py-2 text-xs font-medium text-slate-600">
-                  {uploading ? 'Uploading…' : dragOver ? 'Drop image to upload' : deal.photoUrl ? 'Drop a new image or click to replace' : 'Drop an image here or click to upload'}
+                  {uploading ? 'Uploading…' : dragOver ? 'Drop Image to Upload' : deal.photoUrl ? 'Drop a new image or click to replace' : 'Drop an image here or click to upload'}
                 </button>
               )}
               <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { void uploadPhoto(e.target.files?.[0]); e.target.value = ''; }} />
@@ -249,7 +249,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             {photoError && <p className="px-4 pt-2 text-xs text-red-600" role="alert">{photoError}</p>}
             <div className="p-4">
               <p className="font-semibold text-slate-900">{deal.propertyAddress || deal.title}</p>
-              <p className="mt-1 text-xs text-slate-500">{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing date not set'}</p>
+              <p className="mt-1 text-xs text-slate-500">{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing Date Not Set'}</p>
               {!locked && <input aria-label="Photo URL" className={`${input} mt-3`} placeholder="Photo URL" value={deal.photoUrl} onChange={(e) => onUpdate('photoUrl', e.target.value)} />}
             </div>
           </div>
@@ -270,7 +270,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                 {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : null}
               </div>
             ))}
-            <button type="button" onClick={() => onOpenView('d-people')} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left text-xs text-slate-500">Manage people</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
+            <button type="button" onClick={() => onOpenView('d-people')} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left text-xs text-slate-500">Manage People</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
           </div>
 </>
     ),
@@ -288,7 +288,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   const snapCards: Partial<Record<SnapId, ReactNode>> = {
     next: (
               <div className="ds-card">
-                <label className="ds-field-label" htmlFor="deal-next-action">Next action</label>
+                <label className="ds-field-label" htmlFor="deal-next-action">Next Action</label>
                 <input id="deal-next-action" className={`${input} mt-1`} disabled={locked} value={deal.nextAction} placeholder={nextTask ? nextTask.title : nextDeadline ? `${nextDeadline.label} · ${formatDate(nextDeadline.date)}` : 'What happens next?'} onChange={(e) => onUpdate('nextAction', e.target.value)} />
                 <label className="ds-field-label mt-4 block" htmlFor="deal-notes">Notes</label>
                 <textarea id="deal-notes" rows={3} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" disabled={locked} value={deal.notes} placeholder="Signing details, client requests, reminders" onChange={(e) => onUpdate('notes', e.target.value)} />
@@ -317,10 +317,10 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       </div>
       <div className="ds-summary" aria-label="Deal summary">
         {([
-          ['Purchase price', price ? (price.startsWith('$') ? price : `$${price}`) : 'Not set', ''],
-          ['Buyers', deal.buyerNames || 'Not added', 'Your clients'],
-          ['Sellers', deal.sellerNames || 'Not added', ''],
-          ['Closing', deal.closingDate ? formatDate(deal.closingDate) : 'Not set', deal.closingDate ? countdownLabel : ''],
+          ['Purchase price', price ? (price.startsWith('$') ? price : `$${price}`) : 'Not Set', ''],
+          ['Buyers', deal.buyerNames || 'Not Added', 'Your clients'],
+          ['Sellers', deal.sellerNames || 'Not Added', ''],
+          ['Closing', deal.closingDate ? formatDate(deal.closingDate) : 'Not Set', deal.closingDate ? countdownLabel : ''],
         ] as const).map(([label, value, hint]) => (
           <div key={label} className="min-w-0">
             <p className="ds-eyebrow">{label}</p>
@@ -522,7 +522,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         </div>
         <div className="border-t border-[#F1F0F5]" />
         {yourSide.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">No parties added.</p> : yourSide.map(partyRow)}
-        {external.length > 0 && <p className="border-y border-[#F1F0F5] bg-[#F6F3FB] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">External parties</p>}
+        {external.length > 0 && <p className="border-y border-[#F1F0F5] bg-[#F6F3FB] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">External Parties</p>}
         {external.map(partyRow)}
       </div>
     );
@@ -556,7 +556,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             <select aria-label="Deal status" value={deal.workflowStatus} disabled={locked} onChange={(e) => onUpdate('workflowStatus', e.target.value as AgentDeal['workflowStatus'])} className="ds-select !h-[34px] !min-w-[170px]">
               {statuses.map((s) => <option key={s} value={s}>{statusLabels[s] ?? s}</option>)}
             </select>
-            <button type="button" className="text-sm font-medium text-[#301D5D] underline-offset-2 hover:underline" onClick={() => onOpenView('transaction')}>View details</button>
+            <button type="button" className="text-sm font-medium text-[#301D5D] underline-offset-2 hover:underline" onClick={() => onOpenView('transaction')}>View Details</button>
           </div>
         </div>
         <span className={`ds-chip ${health.tone}`}>{health.label}</span>
@@ -674,16 +674,16 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                         </span>
                       </button>
                     ))}
-                    {footLink(waitingRows.length > 5 ? `View all ${waitingRows.length}` : 'View documents', 'd-documents')}
+                    {footLink(waitingRows.length > 5 ? `View all ${waitingRows.length}` : 'View Documents', 'd-documents')}
                   </div>
                   <div className="ds-card !p-0 self-start">
                     <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
                       <p className="text-sm font-semibold text-slate-900">Parties</p>
                       <button type="button" onClick={() => onOpenView('d-people')}><Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />Add</button>
                     </div>
-                    <p className="ds-eyebrow px-4 pt-3">Your side</p>
+                    <p className="ds-eyebrow px-4 pt-3">Your Side</p>
                     {yourSide.length === 0 ? <p className="px-4 py-3 text-xs text-slate-500">No parties added.</p> : yourSide.map(partyRow)}
-                    {external.length > 0 && <p className="ds-eyebrow px-4 pt-3">External parties</p>}
+                    {external.length > 0 && <p className="ds-eyebrow px-4 pt-3">External Parties</p>}
                     {external.map(partyRow)}
                     <div className="h-2" />
                   </div>
@@ -724,7 +724,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             const statusChip = (done: boolean, docId?: string) => {
               if (done) return <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">Submitted</span>;
               const due = docId ? dueFor(docId) : null;
-              if (!due) return <span className="ds-chip bg-slate-100 text-slate-600">Not submitted</span>;
+              if (!due) return <span className="ds-chip bg-slate-100 text-slate-600">Not Submitted</span>;
               const diff = dayDiff(today, due.date);
               const text = diff < 0 ? `Overdue ${-diff} day${diff === -1 ? '' : 's'}` : diff === 0 ? 'Due today' : `Due in ${diff} day${diff === 1 ? '' : 's'}`;
               return <span title={`${due.label} · ${formatDate(due.date)}`} className={`ds-chip ${diff < 0 ? 'bg-[#301D5D] text-white' : diff <= 3 ? 'bg-[#EFEAF8] text-[#301D5D]' : 'bg-slate-100 text-slate-600'}`}>{text}</span>;
@@ -848,7 +848,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               <section>
                 <div className="flex items-center justify-between gap-3">
                   <div><p className="ds-side-title !m-0">People</p><p className="text-sm text-slate-500">Clients, vendors and others on this deal.</p></div>
-                  {!locked && <button type="button" className={btnPrimary} onClick={() => setShowPersonForm((v) => !v)}><Plus className="h-4 w-4" aria-hidden="true" /> Add people</button>}
+                  {!locked && <button type="button" className={btnPrimary} onClick={() => setShowPersonForm((v) => !v)}><Plus className="h-4 w-4" aria-hidden="true" /> Add People</button>}
                 </div>
                 {showPersonForm && (
                   <form className="ds-card mt-3 grid gap-3 sm:grid-cols-2" onSubmit={(e) => {
@@ -882,7 +882,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               </section>
 
               <section>
-                <p className="ds-side-title !m-0">Trusted service providers</p>
+                <p className="ds-side-title !m-0">Trusted Service Providers</p>
                 <p className="text-sm text-slate-500">Set up the lenders, inspectors, attorneys and others you recommend on this deal.</p>
                 <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {SERVICE_PROVIDER_CATEGORIES.map((category) => {
@@ -902,7 +902,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           {tab === 'tasks' && (
             <div className="space-y-4">
               <div className="ds-card">
-                <p className="ds-side-title !m-0">Add task list</p>
+                <p className="ds-side-title !m-0">Add Task List</p>
                 <p className="text-sm text-slate-500">Load a checklist into this deal. Tasks already on the deal are skipped.</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {TASK_TEMPLATES.map((t) => <button key={t.id} type="button" disabled={locked} className={btn} onClick={() => addTemplate(t.id)}><Plus className="h-4 w-4" aria-hidden="true" />{t.label}</button>)}
@@ -964,7 +964,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                 <input name="name" required placeholder="Company or name" aria-label="Company or name" className={input} />
                 <input name="phone" type="tel" placeholder="Phone" aria-label="Phone" className={input} />
                 <input name="email" type="email" placeholder="Email" aria-label="Email" className={input} />
-                <div className="sm:col-span-3 flex justify-end gap-2"><button type="button" className={btn} onClick={() => setProviderCategory(null)}>Done</button><button type="submit" className={btnPrimary}>Add provider</button></div>
+                <div className="sm:col-span-3 flex justify-end gap-2"><button type="button" className={btn} onClick={() => setProviderCategory(null)}>Done</button><button type="submit" className={btnPrimary}>Add Provider</button></div>
               </form>
             )}
           </div>

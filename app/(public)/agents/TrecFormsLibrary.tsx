@@ -67,7 +67,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
     <>
         <div className={`${embedded ? 'mt-4' : 'mt-7'} grid gap-3 lg:grid-cols-[minmax(260px,0.8fr)_1.2fr]`}>
           <label className="relative block">
-            <span className="sr-only">Search TREC forms</span>
+            <span className="sr-only">Search TREC Forms</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
             <input
               type="search"
@@ -110,7 +110,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
                   <input
                     type="checkbox"
                     aria-label={`Use ${form.formNumber} on the current deal`}
-                    title={dealContext.hasDeal ? 'Use on the current deal' : 'Create a deal first'}
+                    title={dealContext.hasDeal ? 'Use on the current deal' : 'Create a Deal First'}
                     checked={Boolean(dealContext.selected[form.formFamily])}
                     disabled={!dealContext.hasDeal || dealContext.locked}
                     onChange={(event) => dealContext.onToggle(form.formFamily, event.target.checked)}
@@ -119,7 +119,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
                     <span className="block truncate text-sm font-medium text-slate-900">{form.formNumber} · {form.title}</span>
                     <span className="block text-xs text-slate-500">{form.category} · Effective {formatEffectiveDate(form.effectiveDate)}</span>
                   </span>
-                  <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{total > 0 ? (filled > 0 ? `Fillable · ${filled} of ${total}` : `Fillable · ${total} fields`) : 'Notice · nothing to fill'}</span>
+                  <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{total > 0 ? (filled > 0 ? `Fillable · ${filled} of ${total}` : `Fillable · ${total} fields`) : 'Notice · Nothing to Fill'}</span>
                   <TrecFormActions
                     family={form.formFamily}
                     disabled={!dealContext.hasDeal || dealContext.locked}
@@ -217,7 +217,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
       <div className="ds-page">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="ds-eyebrow">Official form library</p>
+            <p className="ds-eyebrow">Official Form Library</p>
             <h2 className="ds-title">TREC Contracts and Forms</h2>
             <p className="ds-subtitle max-w-3xl">
               Search and download all current forms listed in the Texas Real Estate Commission contract library. Always confirm the revision and effective date before use.

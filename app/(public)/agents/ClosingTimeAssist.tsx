@@ -154,7 +154,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
         <div className="mt-5 grid items-stretch gap-4 lg:grid-cols-2">
           <section aria-label="Risks" className="rounded-md border border-gray-200 bg-white p-5">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Risk Alerts</h4>
-            <label className="mt-2 flex items-center gap-2 text-xs text-slate-600">Extension length
+            <label className="mt-2 flex items-center gap-2 text-xs text-slate-600">Extension Length
               <input type="number" min={1} max={30} value={extDays} onChange={(e) => setExtDays(Math.min(30, Math.max(1, Number(e.target.value) || 3)))} className="min-h-[32px] w-16 rounded-md border border-slate-300 px-2 text-sm" aria-label="Extension days" /> days
             </label>
             {data.risks.length === 0 ? <p className="mt-2 text-sm text-slate-500">No risks flagged for this deal.</p> : (
@@ -314,18 +314,18 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             ) : (
               <div className="mt-2 space-y-3 border border-slate-200 p-3 text-sm">
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <label className="block"><span className="text-xs font-semibold text-slate-600">Signing app</span>
+                  <label className="block"><span className="text-xs font-semibold text-slate-600">Signing App</span>
                     <select className={input} value={sigProvider || data.signing.providers[0].slug} onChange={(e) => setSigProvider(e.target.value)}>{data.signing.providers.map((p) => <option key={p.slug} value={p.slug}>{p.name}</option>)}</select></label>
                   <label className="block"><span className="text-xs font-semibold text-slate-600">Document</span>
                     <select className={input} value={sigDoc} onChange={(e) => setSigDoc(e.target.value)}>
-                      <option value="">Choose a document</option>
+                      <option value="">Choose a Document</option>
                       {sigFile && <option value="file">{sigFile.name}</option>}
                       {data.uploads.map((u) => <option key={u.id} value={u.id}>{u.filename}</option>)}
                     </select></label>
                 </div>
                 <label className="block"><span className="text-xs font-semibold text-slate-600">Or choose a PDF from your computer (3 MB max)</span>
                   <input type="file" accept="application/pdf,.pdf" className="mt-1 block text-xs" onChange={(e) => pickFile(e.target.files?.[0])} /></label>
-                <fieldset><legend className="text-xs font-semibold text-slate-600">Who signs</legend>
+                <fieldset><legend className="text-xs font-semibold text-slate-600">Who Signs</legend>
                   {data.parties.filter((p) => p.email).length === 0 ? <p className="mt-1 text-slate-500">Add a deal contact with an email above first.</p> : (
                     <div className="mt-1 flex flex-wrap gap-3">{data.parties.filter((p) => p.email).map((p) => (
                       <label key={p.id} className="flex items-center gap-2"><input type="checkbox" checked={sigTo.includes(p.id)} onChange={(e) => setSigTo(e.target.checked ? [...sigTo, p.id] : sigTo.filter((x) => x !== p.id))} /> {p.name || p.email} <span className="text-xs text-slate-500">{ROLES[p.role] ?? p.role}</span></label>
@@ -333,9 +333,9 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                   )}
                 </fieldset>
                 {(sigProvider || data.signing.providers[0].slug) === 'builtin' && (
-                  <fieldset className="space-y-1"><legend className="text-xs font-semibold text-slate-600">Where signatures go</legend>
+                  <fieldset className="space-y-1"><legend className="text-xs font-semibold text-slate-600">Where Signatures Go</legend>
                     <label className="flex items-center gap-2"><input type="radio" name="sigplace" checked={sigPlacement === 'page'} onChange={() => setSigPlacement('page')} /> Add a signature page at the end</label>
-                    <label className="flex items-center gap-2"><input type="radio" name="sigplace" checked={sigPlacement === 'inline'} onChange={() => setSigPlacement('inline')} /> Place signature fields inside the contract</label>
+                    <label className="flex items-center gap-2"><input type="radio" name="sigplace" checked={sigPlacement === 'inline'} onChange={() => setSigPlacement('inline')} /> Place Signature Fields Inside the Contract</label>
                     {sigPlacement === 'inline' && data.signing.layouts.length > 0 && (
                       <div className="flex flex-wrap items-center gap-2"><select className={`${input} max-w-xs`} aria-label="Saved layout" value={sigLayout} onChange={(e) => { setSigLayout(e.target.value); const l = data.signing?.layouts.find((x) => x.id === e.target.value); if (l) setSigFields(l.fields); }}><option value="">Use a saved layout</option>{data.signing.layouts.map((l) => <option key={l.id} value={l.id}>{l.name} ({l.roles} signer{l.roles === 1 ? '' : 's'})</option>)}</select>
                         {sigLayout && <button type="button" className={btn} onClick={() => void post({ action: 'delete_sign_layout', id: sigLayout }).then(() => setSigLayout(''))}>Delete Layout</button>}</div>)}
@@ -359,7 +359,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                 {data.signing.envelopes.filter((e) => e.provider !== 'Closing Time Secure Sign').map((e) => (
                   <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
                     <span className="min-w-0"><span className="font-semibold">{e.document}</span> <span className="text-xs text-slate-500">via {e.provider} to {e.signers.map((x) => x.name).join(', ')}</span></span>
-                    <span className="flex items-center gap-2"><span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold capitalize">{e.status === 'sent' ? 'Awaiting signatures' : e.status}</span>
+                    <span className="flex items-center gap-2"><span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold capitalize">{e.status === 'sent' ? 'Awaiting Signatures' : e.status}</span>
                       {e.status === 'sent' && <button type="button" disabled={busy} className={btn} onClick={() => void refreshSig(e.id)}>Refresh Status</button>}</span>
                   </li>
                 ))}
@@ -409,7 +409,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
               <ul className="mt-2 space-y-2">
                 {data.signatures.map((g) => (
                   <li key={g.id} className="flex flex-wrap items-center justify-between gap-2 border border-slate-200 px-3 py-2 text-sm">
-                    <span><span className="font-semibold text-slate-900">{g.document}</span> · {g.toName || g.toEmail} · {g.status === 'open' ? `${g.remindersSent} of 3 reminders sent` : g.status === 'escalated' ? 'Needs your follow-up' : g.status === 'signed' ? 'Signed' : g.status}</span>
+                    <span><span className="font-semibold text-slate-900">{g.document}</span> · {g.toName || g.toEmail} · {g.status === 'open' ? `${g.remindersSent} of 3 reminders sent` : g.status === 'escalated' ? 'Needs Your Follow-Up' : g.status === 'signed' ? 'Signed' : g.status}</span>
                     {(g.status === 'open' || g.status === 'escalated') && <button type="button" disabled={busy} className={btnPrimary} onClick={() => void post({ action: 'signature_signed', id: g.id })}>Mark Signed</button>}
                   </li>
                 ))}

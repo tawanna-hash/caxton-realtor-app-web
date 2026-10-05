@@ -125,7 +125,7 @@ export default function AgentCommandCenterClient({
                 <CalendarDays className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Quick date check</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Quick Date Check</p>
                 <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Need a Date Without Opening Closing Time?</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">Use the compact, unsaved TREC timing check only when you need a fast answer.</p>
               </div>
@@ -145,15 +145,15 @@ export default function AgentCommandCenterClient({
               <div className="bg-[#FBFBFD] p-4 sm:p-6">
                 <div className="space-y-4">
                   <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Effective date</span>
+                    <span className="mb-2 block text-sm font-semibold text-slate-800">Effective Date</span>
                     <input type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} onBlur={() => effectiveDate && trackEvent('agent_deadline_planner_updated', { field: 'effective_date' })} className="h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" />
                   </label>
                   <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Option period days <span className="font-normal text-slate-500">(optional)</span></span>
+                    <span className="mb-2 block text-sm font-semibold text-slate-800">Option Period Days <span className="font-normal text-slate-500">(optional)</span></span>
                     <input type="number" min="1" inputMode="numeric" value={optionPeriodDays} onChange={(event) => setOptionPeriodDays(event.target.value)} className="h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" placeholder="Example: 10" />
                   </label>
                   <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-800">Additional earnest days <span className="font-normal text-slate-500">(optional)</span></span>
+                    <span className="mb-2 block text-sm font-semibold text-slate-800">Additional Earnest Days <span className="font-normal text-slate-500">(optional)</span></span>
                     <input type="number" min="1" inputMode="numeric" value={additionalEarnestMoneyDays} onChange={(event) => setAdditionalEarnestMoneyDays(event.target.value)} className="h-[44px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]" placeholder="Example: 7" />
                   </label>
                   {effectiveDate && <button type="button" onClick={resetPlanner} className="inline-flex h-[38px] items-center gap-2 rounded-md border border-slate-400 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-slate-950"><RotateCcw className="rnn-inline-icon" aria-hidden="true" />Clear</button>}

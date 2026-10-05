@@ -204,7 +204,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
   return (
     <div className="ds-page" data-testid="contract-page">
       <div aria-label="Contract Sections">
-        <div className="space-y-2">
+        <div className="space-y-3">
           {CONTRACT_MAP_SECTIONS.map((section) => {
             const leads = section.id === 'buyer' ? [['Buyer 1', rawDeal.buyerNames, (v: string) => onParties('buyerNames', v)], ['Buyer 2', rawDeal.buyer2Name ?? '', (v: string) => onParties('buyer2Name', v)]] as const
               : section.id === 'lender' ? [['Lender', rawDeal.lender ?? '', (v: string) => onPatch({ lender: v })]] as const
@@ -214,11 +214,11 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
             return (
               <Fragment key={section.id}>
               <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
-                <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900">
+                <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900">
                   <span>{section.title}</span>
                   {section.fields.length > 0 && <span className="text-xs font-normal text-slate-500">{filled} Of {section.fields.length} Filled</span>}
                 </summary>
-                <div className={`grid gap-x-5 gap-y-3 border-t border-[#F1F0F5] px-5 py-4 sm:grid-cols-2 lg:grid-cols-4`}>
+                <div className={`grid gap-x-4 gap-y-3 border-t border-[#F1F0F5] px-[1.125rem] py-4 sm:grid-cols-2 lg:grid-cols-4`}>
                   {leads && leads.map(([label, value, set]) => (
                     <label key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-4' : ''}`}>
                       <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{label}</span>
@@ -249,29 +249,29 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
               </AutoDetails>
               {section.id === 'property' && (
                 <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
-                  <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3.5 text-sm font-semibold text-slate-900"><span>Key Details</span></summary>
-                  <div className="space-y-4 border-t border-[#F1F0F5] p-4">
-      <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Contract Terms">
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span></summary>
+                  <div className="border-t border-[#F1F0F5]">
+      <section className="overflow-hidden bg-white" aria-label="Contract Terms">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4">
           {terms.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => { setIsNew(false); setEditing(t); }}
-              className="!block !h-auto !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white px-5 py-4 text-left hover:!bg-[#F6F3FB]"
+              className="!block !h-auto !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white px-[1.125rem] py-4 text-left hover:!bg-[#F6F3FB]"
             >
               <span className="flex items-baseline justify-between gap-2">
                 <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{t.term}</span>
                 {t.ref && <span className="text-[11px] text-slate-400">{t.ref}</span>}
               </span>
-              <span className="mt-1 block min-h-[20px] break-words text-sm font-normal text-slate-900">{t.value}</span>
+              <span className="mt-1 block min-h-[20px] break-words text-sm font-medium text-slate-900">{t.value}</span>
               <span className="mt-0.5 block min-h-[16px] break-words text-xs text-slate-500">{t.note}</span>
             </button>
           ))}
           <button
             type="button"
             onClick={() => { setIsNew(true); setEditing({ id: newId('term'), term: '', ref: '', value: '', note: '' }); }}
-            className="!flex !h-auto min-h-[76px] !items-center !justify-center !gap-1 !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white px-5 py-4 text-sm text-slate-500 hover:!bg-[#F6F3FB]"
+            className="!flex !h-auto min-h-[76px] !items-center !justify-center !gap-1 !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white px-[1.125rem] py-4 text-sm text-slate-500 hover:!bg-[#F6F3FB]"
           >
             <Plus className="h-4 w-4" aria-hidden="true" /> Add Term
           </button>
@@ -286,8 +286,8 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
             );
           })}
           <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Estimated Cash To Close">
-        <p className="border-b border-[#E6E5EC] px-5 py-3.5 text-sm font-semibold text-slate-900">Estimated Cash To Close</p>
-        <div className="flex items-center justify-between gap-4 border-b border-[#F1F0F5] px-5 py-3">
+        <p className="border-b border-[#E6E5EC] px-[1.125rem] py-4 text-sm font-semibold text-slate-900">Estimated Cash To Close</p>
+        <div className="flex items-center justify-between gap-4 border-b border-[#F1F0F5] px-[1.125rem] py-3">
           <div>
             <p className="text-sm font-medium text-slate-900">Earnest Money In Escrow</p>
             <p className="text-xs text-slate-500">Shown to the client as the deposit held in escrow</p>
@@ -296,7 +296,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
             <input value={deal.earnestInEscrow || asNumber(deal.contractDetails.earnestMoney)} onChange={(e) => onPatch({ earnestInEscrow: e.target.value })} inputMode="decimal" aria-label="Earnest money in escrow" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
           </label>
         </div>
-        <div className="px-5 py-3">
+        <div className="px-[1.125rem] py-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-900">Estimated Cash To Close</p>
             <p className="text-xs text-slate-500">Shown on the client&apos;s closing page</p>
@@ -329,7 +329,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-label={isNew ? 'Add a term' : 'Edit term'} onClick={() => setEditing(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-label={isNew ? 'Add a Term' : 'Edit Term'} onClick={() => setEditing(null)}>
           <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-[#E6E5EC] px-6 py-4">
               <p className="text-sm font-semibold text-slate-900">{isNew ? 'Add A Term' : 'Edit Term'}</p>

@@ -120,7 +120,7 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
           <Search className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search integrations" aria-label="Search integrations" className="min-w-0 flex-1 bg-transparent outline-none" />
         </label>
-        <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={connectedOnly} onChange={(e) => setConnectedOnly(e.target.checked)} /> Show connected only</label>
+        <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={connectedOnly} onChange={(e) => setConnectedOnly(e.target.checked)} /> Show Connected Only</label>
       </div>
 
       {loaded && groups.length === 0 && <p className="mt-4 text-sm text-slate-500">No integrations match.</p>}

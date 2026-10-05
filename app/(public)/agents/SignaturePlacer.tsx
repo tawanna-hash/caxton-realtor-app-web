@@ -14,7 +14,7 @@ export default function SignaturePlacer({ data, signers, fields, onChange, onClo
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white" role="dialog" aria-modal="true" aria-label="Place signature fields">
       <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 p-3 text-sm">
-        <strong>Place fields in the contract</strong>
+        <strong>Place Fields in the Contract</strong>
         <label className="flex items-center gap-1">Signer
           <select className="min-h-[36px] rounded-md border border-slate-300 px-2" value={who} onChange={(e) => setWho(Number(e.target.value))}>{signers.map((s, i) => <option key={s + i} value={i}>{s}</option>)}</select></label>
         <label className="flex items-center gap-1">Field
