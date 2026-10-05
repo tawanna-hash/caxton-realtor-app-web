@@ -178,7 +178,6 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
             ['Buyer Names', deal.buyerNames, (v: string) => onParties('buyerNames', v), ''],
             ['Seller Names', deal.sellerNames, (v: string) => onParties('sellerNames', v), ''],
             ['Lender', deal.lender, (v: string) => onPatch({ lender: v }), ''],
-            ['Title Company', deal.contractDetails.titleCompany, (v: string) => onPatch({ contractDetails: { ...rawDeal.contractDetails, titleCompany: v }, formFields: { ...rawDeal.formFields, p02_f038: v } }), ''],
             ['Other Agent', deal.otherAgent, (v: string) => onPatch({ otherAgent: v }), ''],
             ['Brokerage', deal.otherBrokerage, (v: string) => onPatch({ otherBrokerage: v }), ''],
             ['Contact Information', deal.otherAgentContact, (v: string) => onPatch({ otherAgentContact: v }), 'sm:col-span-2'],

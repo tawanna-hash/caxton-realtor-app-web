@@ -11,17 +11,24 @@ export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
   { id: 'property', title: '2. Property', fields: [
     f('p01_f003', 'Lot'), f('p01_f004', 'Block'), f('p01_f005', 'Addition'), f('p01_f007', 'County'),
   ] },
-  { id: 'notices', title: '21. Notices', fields: [ f('p08_f123', 'Buyer Phone'), f('p08_f124', 'Buyer Phone (Second)'),
-    f('p08_f125', 'Buyer Email'), f('p08_f126', 'Buyer Email (Second)'),
-    f('p08_f127', 'Seller Address'), f('p08_f128', 'Seller Address (Continued)'), f('p08_f129', 'Seller Phone'), f('p08_f130', 'Seller Phone (Second)'),
-    f('p08_f131', 'Seller Email'), f('p08_f132', 'Seller Email (Second)'),
+  { id: 'buyer', title: 'Buyer', fields: [
+    f('p08_f123', 'Phone'), f('p08_f124', 'Phone (Second)'), f('p08_f125', 'Email'), f('p08_f126', 'Email (Second)'),
   ] },
-  { id: 'seller-broker', title: "Seller's Agent", fields: [...brokerBlock('p11', 201, 'Seller’s'), f('p08_f137', 'Notice Address'), f('p08_f138', 'Notice Address (Continued)'), f('p08_f139', 'Notice Phone'), f('p08_f140', 'Notice Email')] },
+  { id: 'seller', title: 'Seller', fields: [
+    f('p08_f127', 'Address'), f('p08_f128', 'Address (Continued)'), f('p08_f129', 'Phone'), f('p08_f130', 'Phone (Second)'),
+    f('p08_f131', 'Email'), f('p08_f132', 'Email (Second)'),
+  ] },
   { id: 'buyer-broker', title: "Buyer's Agent", fields: [...brokerBlock('p11', 212, 'Buyer’s'), f('p08_f133', 'Notice Address'), f('p08_f134', 'Notice Address (Continued)'), f('p08_f135', 'Notice Phone'), f('p08_f136', 'Notice Email')] },
-  { id: 'receipt-earnest', title: 'Earnest Money Receipt', fields: receiptBlock(247, 'Earnest Money') },
-  { id: 'receipt-contract', title: 'Title Company', fields: [
-    f('p12_f259', 'Escrow Agent'), f('p12_f260', 'Received By'), f('p12_f261', 'Email'), f('p12_f262', 'Date'),
+  { id: 'seller-broker', title: "Seller's Agent", fields: [...brokerBlock('p11', 201, 'Seller’s'), f('p08_f137', 'Notice Address'), f('p08_f138', 'Notice Address (Continued)'), f('p08_f139', 'Notice Phone'), f('p08_f140', 'Notice Email')] },
+  { id: 'title-company', title: 'Title Company', fields: [
+    f('p02_f038', 'Title Company'),
+    f('p02_f028', 'Escrow Agent'), f('p02_f029', 'Escrow Agent Address'), f('p02_f030', 'Escrow Agent Address (Continued)'),
+    f('p12_f259', 'Contract Received By Escrow Agent'), f('p12_f260', 'Contract Received By'), f('p12_f261', 'Email'), f('p12_f262', 'Date Contract Received'),
     f('p12_f263', 'Address'), f('p12_f264', 'Phone'), f('p12_f265', 'City'), f('p12_f266', 'State'), f('p12_f267', 'ZIP'), f('p12_f268', 'Fax'),
+    f('p12_f247', 'Earnest Money Receipt Amount', 'm'), f('p12_f248', 'Earnest Money Form Of Payment'), f('p12_f249', 'Earnest Money Receipt Escrow Agent'),
+    f('p12_f250', 'Earnest Money Received By'), f('p12_f251', 'Earnest Money Receipt Email'), f('p12_f252', 'Earnest Money Date And Time'),
+    f('p12_f253', 'Earnest Money Receipt Address'), f('p12_f254', 'Earnest Money Receipt Phone'), f('p12_f255', 'Earnest Money Receipt City'),
+    f('p12_f256', 'Earnest Money Receipt State'), f('p12_f257', 'Earnest Money Receipt ZIP'), f('p12_f258', 'Earnest Money Receipt Fax'),
   ] },
 ];
 
