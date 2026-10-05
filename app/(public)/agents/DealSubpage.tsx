@@ -2,7 +2,7 @@
 
 import { blankFieldAlerts } from '@/lib/blank-field-alerts';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, MoreHorizontal, Mail, Plus, Trash2, UserRound, X } from 'lucide-react';
+import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, MoreHorizontal, Mail, MessageSquare, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import TrecFormActions from './TrecFormActions';
 import { BUYER_REP_FORM_OPTIONS, CONTRACT_FORM_OPTIONS, dealFolders, effectiveAgentSide, requiredIdsFor } from './purchase-documents';
@@ -120,6 +120,14 @@ function AutoSection({ className, header, children }: { className?: string; head
       <div hidden={!open}>{children}</div>
     </div>
   );
+}
+
+/** Opens the phone's own Messages app with the number and a short note filled in; the agent taps Send. */
+function textHref(phone: string, name: string, address: string): string {
+  const digits = phone.replace(/[^0-9+]/g, '');
+  const first = name.trim().split(/\s+/)[0] || '';
+  const body = `Hi${first ? ` ${first}` : ''}, this is about ${address || 'your transaction'}. `;
+  return `sms:${digits}?&body=${encodeURIComponent(body)}`;
 }
 
 export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
@@ -590,6 +598,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           </span>
           <span className="flex shrink-0 items-center gap-3 pt-1 text-slate-400">
             {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : <Mail className="h-4 w-4 opacity-40" aria-hidden="true" />}
+            {p.phone ? <a href={textHref(p.phone, p.name, deal.propertyAddress || deal.title)} aria-label={`Text ${p.name}`} className="hover:text-[#301D5D]"><MessageSquare className="h-4 w-4" aria-hidden="true" /></a> : null}
             {p.phone ? <a href={`tel:${p.phone}`} aria-label={`Call ${p.name}`} className="hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : <Phone className="h-4 w-4 opacity-40" aria-hidden="true" />}
             {p.menu ? <MoreHorizontal className="h-4 w-4" aria-hidden="true" /> : null}
           </span>
@@ -718,6 +727,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   {p.sub ? <span className="block truncate text-xs text-slate-500">{p.sub}</span> : null}
                 </span>
                 {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : null}
+                {p.phone ? <a href={textHref(p.phone, p.name, deal.propertyAddress || deal.title)} aria-label={`Text ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><MessageSquare className="h-4 w-4" aria-hidden="true" /></a> : null}
                 {p.phone ? <a href={`tel:${p.phone}`} aria-label={`Call ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : null}
               </div>
             );
