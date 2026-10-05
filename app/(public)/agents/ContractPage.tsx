@@ -233,6 +233,28 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     const idx = (k: string) => { const i = order.indexOf(k); return i === -1 ? order.length + items.findIndex((x) => x.key === k) : i; };
     return [...items].sort((x, y) => idx(x.key) - idx(y.key));
   };
+  const [picked, setPicked] = useState<{ section: string; key: string } | null>(null);
+  useEffect(() => {
+    if (!picked) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPicked(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [picked]);
+  const moveTo = (section: ContractSection, key: string, target: string) => {
+    const keys = orderedItems(section).map((x) => x.key);
+    const from = keys.indexOf(key);
+    const to = keys.indexOf(target);
+    if (from < 0 || to < 0 || from === to) return;
+    keys.splice(from, 1);
+    keys.splice(to, 0, key);
+    onPatch({ contractFieldOrder: { ...(rawDeal.contractFieldOrder ?? {}), [section.id]: keys } });
+  };
+  const cellClick = (section: ContractSection, key: string) => (e: React.MouseEvent<HTMLElement>) => {
+    if ((e.target as HTMLElement).closest('input,button,label,textarea,select')) return;
+    if (!picked || picked.section !== section.id) { setPicked({ section: section.id, key }); return; }
+    if (picked.key !== key) moveTo(section, picked.key, key);
+    setPicked(null);
+  };
   const moveBy = (section: ContractSection, key: string, delta: number) => {
     const keys = orderedItems(section).map((x) => x.key);
     const from = keys.indexOf(key);
@@ -260,6 +282,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                   {items.map((item) => {
                     const key = item.key;
                     const pos = items.findIndex((x) => x.key === key);
+                    const isPicked = picked?.section === section.id && picked.key === key;
+                    const cellAttrs = { onClick: cellClick(section, key), title: picked ? 'Click to place here' : 'Click to pick up and move' };
+                    const pickCls = isPicked ? ' rounded-md bg-[#F6F3FB] ring-2 ring-[#301D5D]' : picked?.section === section.id ? ' cursor-pointer rounded-md hover:bg-[#F6F3FB]' : ' cursor-pointer';
                     const arrowCls = '!flex !h-4 !w-4 shrink-0 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-600 hover:!text-[#301D5D] disabled:!opacity-30 disabled:hover:!text-slate-600';
                     const arrows = (
                       <span className="flex items-center gap-1">
@@ -273,7 +298,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     if (item.kind === 'custom') {
                       const cf = item.cf;
                       return (
-                        <div key={key} className={`block min-w-0`}>
+                        <div key={key} {...cellAttrs} className={`block min-w-0${pickCls}`}>
                           <div className="flex items-center justify-between gap-3 pb-1">
                             <input value={cf.label} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, label: e.target.value } : x)))} aria-label="Field name" placeholder="Field Name" className="cf-label h-4 min-w-0 flex-1 bg-transparent text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 outline-none" />
                             <span className="flex items-center gap-3">{arrows}{xBtn('Remove field', () => putCustom(customFields.filter((x) => x.id !== cf.id)))}</span>
@@ -287,7 +312,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     const placed = !hasOrder(section) && fl.pos ? `${POS_COL[fl.pos[0]]} ${POS_ROW[fl.pos[1]]}` : '';
                     if (fl.kind === 'c') {
                       return (
-                        <div key={key} className={`min-w-0`}>
+                        <div key={key} {...cellAttrs} className={`min-w-0${pickCls}`}>
                           <div className="flex items-center justify-between gap-3">
                             <label className="flex min-w-0 flex-1 items-start gap-2 text-sm text-slate-900">
                               <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
@@ -299,7 +324,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       );
                     }
                     return (
-                      <div key={key} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}`}>
+                      <div key={key} {...cellAttrs} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''} ${placed}${pickCls}`}>
                         <div className="flex items-center justify-between gap-3 pb-1">
                           <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
                           <span className="flex items-center gap-3">{arrows}{xBtn('Delete field', () => hideField(fl.id))}</span>
