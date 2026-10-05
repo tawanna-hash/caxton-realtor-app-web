@@ -293,6 +293,27 @@ const VALUATION_AUDIT_ITEM_IDS = new Set<string>(
   DOCUMENT_GROUPS.find((group) => group.id === 'valuation-audit')?.items.map((item) => item.id) ?? [],
 );
 
+// One-time: the Buyer's Agent and Seller's Agent sections show every field on the contract's Broker Contact
+// Information page (firm, address, license, associate, team, email, phone, supervisor), with the form's own labels,
+// so an uploaded contract fills all of them. Custom broker fields that already hold a value are left alone.
+function restoreBrokerSections(deal: AgentDeal): AgentDeal {
+  const addresses = deal.contractAddresses ?? {};
+  if (addresses['migrated.brokerFields'] === '1') return deal;
+  const isBrokerField = (id: string) => /^p11_f2(0[1-9]|1\d|2[0-2])$/.test(id);
+  const brokerSections = new Set(['buyer-broker', 'seller-broker']);
+  const keep = (deal.contractCustomFields ?? []).filter((field) => !brokerSections.has(field.section) || (field.value ?? '').trim() !== '');
+  const order: Record<string, string[]> = Object.fromEntries(Object.entries(deal.contractFieldOrder ?? {}).map(([key, list]) => [key, [...list]]));
+  for (const key of brokerSections) delete order[key];
+  return {
+    ...deal,
+    contractCustomFields: keep,
+    contractFieldOrder: order,
+    contractHiddenFields: (deal.contractHiddenFields ?? []).filter((id) => !isBrokerField(id)),
+    contractFieldLabels: Object.fromEntries(Object.entries(deal.contractFieldLabels ?? {}).filter(([id]) => !isBrokerField(id))),
+    contractAddresses: { ...addresses, 'migrated.brokerFields': '1' },
+  };
+}
+
 function mergeReadinessDocuments(deal: AgentDeal): AgentDeal {
   const existingDocuments = new Map(deal.documents.map((document) => [document.id, document]));
   const requestedAt = deal.createdAt || new Date().toISOString();
@@ -1286,7 +1307,7 @@ export default function ClosingTime({
       deals: legacyDeals,
       notificationPreferences: defaultAgentNotificationPreferences(),
     };
-    const migratedDeals = startingWorkspace.deals.map(mergeReadinessDocuments).map((deal) => (deal.title === 'New Transaction' ? { ...deal, title: 'New Contract' } : deal));
+    const migratedDeals = startingWorkspace.deals.map(mergeReadinessDocuments).map(restoreBrokerSections).map((deal) => (deal.title === 'New Transaction' ? { ...deal, title: 'New Contract' } : deal));
     const readinessChecklistChanged = JSON.stringify(migratedDeals) !== JSON.stringify(startingWorkspace.deals);
     const hydratedWorkspace = { ...startingWorkspace, deals: migratedDeals };
 
