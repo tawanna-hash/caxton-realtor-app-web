@@ -37,10 +37,9 @@ export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
   { id: 'lender', title: 'Lender', fields: [] },
   { id: 'title-company', title: 'Title Company', fields: [
     f('p02_f038', 'Title Company'), f('p02_f028', 'Escrow Agent'),
-    f('p02_f029', 'Address'), f('p02_f030', 'Address (Continued)'), f('p12_f263', 'Additional Address'),
+    f('p02_f029', 'Address'), f('p02_f030', 'Address (Continued)'),
     f('p12_f265', 'City'), f('p12_f266', 'State'), f('p12_f267', 'ZIP'),
     f('p12_f264', 'Phone'), f('p12_f268', 'Fax'), f('p12_f261', 'Email'),
-    f('p12_f247', 'Earnest Money Receipt Amount', 'm'), f('p12_f248', 'Earnest Money Form Of Payment'),
   ] },
 ];
 
