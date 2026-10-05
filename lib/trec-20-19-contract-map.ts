@@ -10,6 +10,7 @@ const f = (id: string, label: string, kind: ContractFieldKind = 't', span?: numb
 export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
   { id: 'property', title: 'Property Description', fields: [
     f('p01_f003', 'Lot'), f('p01_f004', 'Block'), f('p01_f005', 'Addition'), f('p01_f007', 'County'),
+    f('app:property.address', 'Address'), f('app:property.city', 'City'), f('app:property.state', 'State'), f('app:property.zip', 'ZIP'),
   ] },
   { id: 'buyer', title: 'Buyer', fields: [
     f('p08_f123', 'Buyer 1 Phone'), f('p08_f125', 'Buyer 1 Email'),
@@ -32,10 +33,14 @@ export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
     f('p08_f134', 'State', 't', undefined, [3, 6]), f('app:buyer-broker.zip', 'ZIP', 't', undefined, [4, 6]),
   ] },
   { id: 'seller-broker', title: "Seller's Agent", fields: [
-    f('p11_f201', 'Seller’s Broker Firm'), f('p11_f204', 'Associate Name'), f('p11_f205', 'Team Name'), f('p11_f209', 'Licensed Supervisor'),
-    f('p11_f202', 'Address'), f('p08_f137', 'City'), f('p08_f138', 'State'), f('app:seller-broker.zip', 'ZIP'),
-    f('p11_f207', 'Associate Phone'), f('p11_f206', 'Associate Email', 't', 2), f('p11_f210', 'Supervisor Phone'),
-    f('p11_f203', 'Broker Firm License No.'), f('p11_f208', 'Associate License No.'), f('p11_f211', 'Supervisor License No.'),
+    f('p11_f201', 'Brokerage Name', 't', undefined, [1, 1]), f('p11_f203', 'Broker Firm License No.', 't', undefined, [1, 2]),
+    f('p11_f209', 'Licensed Supervisor', 't', undefined, [1, 3]), f('p11_f211', 'Supervisor License No.', 't', undefined, [1, 4]),
+    f('p11_f210', 'Supervisor Phone', 't', undefined, [1, 5]),
+    f('p11_f204', 'Associate Name', 't', undefined, [2, 1]), f('p11_f205', 'Team Name', 't', undefined, [2, 2]),
+    f('p11_f206', 'Associate Email', 't', undefined, [2, 3]), f('p11_f207', 'Associate Phone', 't', undefined, [2, 4]),
+    f('p11_f208', 'Associate License No.', 't', undefined, [2, 5]),
+    f('p11_f202', 'Brokerage Address', 't', undefined, [1, 6]), f('p08_f137', 'City', 't', undefined, [2, 6]),
+    f('p08_f138', 'State', 't', undefined, [3, 6]), f('app:seller-broker.zip', 'ZIP', 't', undefined, [4, 6]),
   ] },
   { id: 'lender', title: 'Lender', fields: [
     f('app:lender.address', 'Address'), f('app:lender.city', 'City'), f('app:lender.state', 'State'), f('app:lender.zip', 'ZIP'),
