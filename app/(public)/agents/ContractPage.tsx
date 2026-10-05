@@ -224,7 +224,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                       );
                     }
                     return (
-                      <label key={fl.id} className="block min-w-0">
+                      <label key={fl.id} className={`block min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : ''}`}>
                         <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{fl.label}</span>
                         <span className="mt-1 flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
                           {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
