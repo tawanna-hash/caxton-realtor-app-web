@@ -10,7 +10,7 @@ type Party = { id: string; role: string; name: string; email: string };
 type FollowUp = { id: string; kind: string; toName: string; toEmail: string; subject: string; body: string; status: 'draft' | 'sent' | 'dismissed'; sentAt: string | null };
 type Risk = { id: string; severity: 'high' | 'medium'; title: string; detail: string; deadlineLabel?: string };
 type Step = { title: string; offsetDays: number; anchor: 'effective' | 'closing' };
-type Upload = { id: string; docId: string; filename: string; sizeBytes: number; createdAt: string; reviewed: boolean; archived: boolean };
+type Upload = { id: string; docId: string; filename: string; sizeBytes: number; createdAt: string; reviewed: boolean; archived: boolean; uploader: string; storedIn: string; storedPath: string; storedUrl: string };
 type Sig = { id: string; toName: string; toEmail: string; document: string; status: string; remindersSent: number; createdAt: string };
 type Connected = { calendar: string | null; mail: string | null; storage: { slug: string; name: string }[]; sendFromConnected: boolean };
 type Envelope = { id: string; provider: string; document: string; signers: { name: string; email: string }[]; status: string; createdAt: string };
@@ -357,10 +357,12 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                   const doc = deal.documents.find((d) => d.id === u.docId);
                   return (
                     <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 border border-slate-200 px-3 py-2 text-sm">
-                      <span className="min-w-0 truncate"><span className="font-semibold text-slate-900">{doc?.label ?? (u.docId === 'other' ? 'General Upload' : 'Document')}</span> · {u.filename} · {Math.max(1, Math.round(u.sizeBytes / 1024))} KB{u.reviewed ? '' : ' · new'}</span>
+                      <span className="min-w-0 truncate"><span className="font-semibold text-slate-900">{doc?.label ?? (u.docId === 'other' ? 'General Upload' : 'Document')}</span> · {u.filename}{u.uploader ? ` · from ${u.uploader}` : ''} · {Math.max(1, Math.round(u.sizeBytes / 1024))} KB{u.reviewed ? '' : ' · new'}</span>
                       <span className="flex gap-2">
-                        <a className={btn} href={`/api/closing-time/assist/upload/${u.id}`}>Download</a>
-                        {data.connected?.storage.map((st) => <button key={st.slug} type="button" disabled={busy} className={btn} onClick={() => void saveFile(u.id, st.slug)}>Save to {st.name}</button>)}
+                        {u.storedIn
+                          ? (u.storedUrl ? <a className={btn} href={u.storedUrl} target="_blank" rel="noreferrer">Open In Storage</a> : <span className="text-xs text-slate-500">Saved: {u.storedPath}</span>)
+                          : <a className={btn} href={`/api/closing-time/assist/upload/${u.id}`}>Download</a>}
+                        {!u.storedIn && data.connected?.storage.map((st) => <button key={st.slug} type="button" disabled={busy} className={btn} onClick={() => void saveFile(u.id, st.slug)}>Save to {st.name}</button>)}
                         {!u.reviewed && <button type="button" disabled={busy} className={btnPrimary} onClick={() => { onMarkReceived(u.docId, u.filename); void post({ action: 'upload_reviewed', id: u.id }); }}>Mark Received</button>}
                       </span>
                     </li>

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, MoreHorizontal, Mail, MessageSquare, Plus, Trash2, UserRound, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import TrecFormActions from './TrecFormActions';
+import ClientUploadsCard from './ClientUploadsCard';
 import { BUYER_REP_FORM_OPTIONS, CONTRACT_FORM_OPTIONS, dealFolders, effectiveAgentSide, requiredIdsFor } from './purchase-documents';
 
 type SnapId = 'attention' | 'waiting' | 'property' | 'next' | 'preferences' | 'offers' | 'parties' | 'workspace';
@@ -949,6 +950,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     </label>
                   ))}
                 </AutoSection></div>); })()}
+                {deal && <ClientUploadsCard dealId={deal.id} version={deal.updatedAt} />}
               </div>
             );
           })()}

@@ -66,6 +66,10 @@ export function ensureAssistSchema(): Promise<void> {
       deal_id TEXT NOT NULL, doc_id TEXT NOT NULL, filename TEXT NOT NULL, content_type TEXT NOT NULL,
       size_bytes INTEGER NOT NULL, data_b64 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), reviewed BOOLEAN NOT NULL DEFAULT FALSE)`);
     await query(`ALTER TABLE closing_time_portal_uploads ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE`);
+    await query(`ALTER TABLE closing_time_portal_uploads ADD COLUMN IF NOT EXISTS uploader TEXT NOT NULL DEFAULT ''`);
+    await query(`ALTER TABLE closing_time_portal_uploads ADD COLUMN IF NOT EXISTS stored_in TEXT NOT NULL DEFAULT ''`);
+    await query(`ALTER TABLE closing_time_portal_uploads ADD COLUMN IF NOT EXISTS stored_path TEXT NOT NULL DEFAULT ''`);
+    await query(`ALTER TABLE closing_time_portal_uploads ADD COLUMN IF NOT EXISTS stored_url TEXT NOT NULL DEFAULT ''`);
     await query(`UPDATE closing_time_portal_uploads o SET archived=TRUE WHERE o.archived=FALSE AND o.doc_id<>'signed' AND EXISTS (SELECT 1 FROM closing_time_portal_uploads n WHERE n.realtor_id=o.realtor_id AND n.deal_id=o.deal_id AND n.doc_id=o.doc_id AND n.created_at>o.created_at)`);
     await query(`CREATE INDEX IF NOT EXISTS closing_time_portal_uploads_deal_idx ON closing_time_portal_uploads (realtor_id, deal_id, created_at DESC)`);
     await query(`CREATE TABLE IF NOT EXISTS closing_time_daily_summaries (
@@ -107,8 +111,8 @@ export async function listAssist(realtorId: string, dealId: string) {
     query<FollowRow>(`SELECT id, deal_id, kind, to_name, to_email, subject, body, status, created_at, sent_at FROM closing_time_followups WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 50`, [realtorId, dealId]),
     query<{ token: string }>(`SELECT token FROM closing_time_portals WHERE realtor_id=$1 AND deal_id=$2`, [realtorId, dealId]),
     query<{ steps: ChecklistStep[] }>(`SELECT steps FROM closing_time_checklists WHERE realtor_id=$1`, [realtorId]),
-    query<{ id: string; doc_id: string; filename: string; size_bytes: number; created_at: Date | string; reviewed: boolean; archived: boolean }>(
-      `SELECT id, doc_id, filename, size_bytes, created_at, reviewed, archived FROM closing_time_portal_uploads WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 50`, [realtorId, dealId]),
+    query<{ id: string; doc_id: string; filename: string; size_bytes: number; created_at: Date | string; reviewed: boolean; archived: boolean; uploader: string; stored_in: string; stored_path: string; stored_url: string }>(
+      `SELECT id, doc_id, filename, size_bytes, created_at, reviewed, archived, uploader, stored_in, stored_path, stored_url FROM closing_time_portal_uploads WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 50`, [realtorId, dealId]),
     query<{ auto_intro: boolean; auto_signature: boolean }>(`SELECT auto_intro, auto_signature FROM closing_time_settings WHERE realtor_id=$1`, [realtorId]),
     query<{ id: string; to_name: string; to_email: string; document: string; status: string; reminders_sent: number; created_at: Date | string }>(
       `SELECT id, to_name, to_email, document, status, reminders_sent, created_at FROM closing_time_signatures WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 30`, [realtorId, dealId]),
@@ -123,7 +127,7 @@ export async function listAssist(realtorId: string, dealId: string) {
     portalLinks: await listPortalLinks(realtorId, dealId),
     checklist: checklist[0]?.steps?.length ? checklist[0].steps : DEFAULT_CHECKLIST,
     customChecklist: Boolean(checklist[0]?.steps?.length),
-    uploads: uploads.map((u) => ({ id: u.id, docId: u.doc_id, filename: u.filename, sizeBytes: u.size_bytes, createdAt: iso(u.created_at), reviewed: u.reviewed, archived: u.archived })),
+    uploads: uploads.map((u) => ({ id: u.id, docId: u.doc_id, filename: u.filename, sizeBytes: u.size_bytes, createdAt: iso(u.created_at), reviewed: u.reviewed, archived: u.archived, uploader: u.uploader, storedIn: u.stored_in, storedPath: u.stored_path, storedUrl: u.stored_url })),
     autoIntro: settings[0]?.auto_intro ?? false,
     autoSignature: settings[0]?.auto_signature ?? false,
     signatures: sigs.map((x) => ({ id: x.id, toName: x.to_name, toEmail: x.to_email, document: x.document, status: x.status, remindersSent: x.reminders_sent, createdAt: iso(x.created_at) })),
@@ -388,7 +392,7 @@ export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const UPLOAD_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/webp']);
 
 /** Client upload through the portal link. Only attaches to a document the agent already requested. */
-export async function savePortalUpload(token: string, docId: string, file: { name: string; type: string; bytes: Buffer }): Promise<{ ok: boolean; error?: string }> {
+export async function savePortalUpload(token: string, docId: string, file: { name: string; type: string; bytes: Buffer }): Promise<{ ok: boolean; error?: string; id?: string; realtorId?: string; dealId?: string; uploader?: string; label?: string }> {
   if (!UPLOAD_TYPES.has(file.type)) return { ok: false, error: 'Upload a PDF or a photo (JPG, PNG, HEIC, WebP).' };
   if (file.bytes.length === 0 || file.bytes.length > MAX_UPLOAD_BYTES) return { ok: false, error: 'File must be under 4 MB.' };
   const row = await resolvePortalToken(token);
@@ -399,20 +403,33 @@ export async function savePortalUpload(token: string, docId: string, file: { nam
   const count = await query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM closing_time_portal_uploads WHERE realtor_id=$1 AND deal_id=$2 AND created_at > NOW() - INTERVAL '1 day'`, [row.realtor_id, row.deal_id]);
   if ((count[0]?.n ?? 0) >= 25) return { ok: false, error: 'Upload limit reached for today. Contact your agent.' };
   if (docId !== 'other') await query(`UPDATE closing_time_portal_uploads SET archived=TRUE WHERE realtor_id=$1 AND deal_id=$2 AND doc_id=$3 AND archived=FALSE`, [row.realtor_id, row.deal_id, docId]);
-  await query(`INSERT INTO closing_time_portal_uploads (id, realtor_id, deal_id, doc_id, filename, content_type, size_bytes, data_b64) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-    [randomUUID(), row.realtor_id, row.deal_id, docId, file.name.replace(/[^\w.\- ]+/g, '_').slice(0, 200) || 'upload', file.type, file.bytes.length, file.bytes.toString('base64')]);
-  const agent = await query<{ email: string }>(`SELECT COALESCE(NULLIF((SELECT w2.workspace->'notificationPreferences'->>'notificationEmail' FROM agent_command_center_workspaces w2 WHERE w2.realtor_id=realtors.id),''), realtors.email) AS email FROM realtors WHERE id=$1`, [row.realtor_id]);
-  if (agent[0]?.email) {
-    void sendEmail({ to: agent[0].email, subject: `New upload: ${doc.label} - ${deal?.propertyAddress || deal?.title || 'your deal'}`,
-      html: htmlBody(`Your client uploaded a file for "${doc.label}".\n\nOpen Closing Time to review it and mark it received.`) });
-  }
-  return { ok: true };
+  const id = randomUUID();
+  await query(`INSERT INTO closing_time_portal_uploads (id, realtor_id, deal_id, doc_id, filename, content_type, size_bytes, data_b64, uploader) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    [id, row.realtor_id, row.deal_id, docId, file.name.replace(/[^\w.\- ]+/g, '_').slice(0, 200) || 'upload', file.type, file.bytes.length, file.bytes.toString('base64'), row.person]);
+  return { ok: true, id, realtorId: row.realtor_id, dealId: row.deal_id, uploader: row.person, label: doc.label };
+}
+
+/** Emails the agent about a client upload, saying who sent it and where the file was filed. */
+export async function notifyAgentOfUpload(realtorId: string, dealId: string, info: { uploader: string; label: string; filename: string; storedNote: string }) {
+  const deal = await loadDeal(realtorId, dealId);
+  const agent = await query<{ email: string }>(`SELECT COALESCE(NULLIF((SELECT w2.workspace->'notificationPreferences'->>'notificationEmail' FROM agent_command_center_workspaces w2 WHERE w2.realtor_id=realtors.id),''), realtors.email) AS email FROM realtors WHERE id=$1`, [realtorId]);
+  if (!agent[0]?.email) return;
+  const property = deal?.propertyAddress || deal?.title || 'your deal';
+  const who = info.uploader || 'Your client';
+  void sendEmail({ to: agent[0].email, subject: `New upload from ${who}: ${info.label} - ${property}`,
+    html: htmlBody(`${who} uploaded "${info.filename}" (${info.label}) for ${property}.\n\n${info.storedNote}`) });
+}
+
+/** Marks an upload as filed in the agent's storage and removes the copy held in the database. */
+export async function markUploadStored(realtorId: string, uploadId: string, storedIn: string, storedPath: string, storedUrl: string) {
+  await ensureAssistSchema();
+  await query(`UPDATE closing_time_portal_uploads SET stored_in=$3, stored_path=$4, stored_url=$5, data_b64='' WHERE id=$1 AND realtor_id=$2`, [uploadId, realtorId, storedIn, storedPath.slice(0, 500), storedUrl.slice(0, 1000)]);
 }
 
 export async function getUpload(realtorId: string, id: string) {
   await ensureAssistSchema();
-  const r = await query<{ filename: string; content_type: string; data_b64: string }>(`SELECT filename, content_type, data_b64 FROM closing_time_portal_uploads WHERE id=$1 AND realtor_id=$2`, [id, realtorId]);
-  return r[0] ? { filename: r[0].filename, contentType: r[0].content_type, bytes: Buffer.from(r[0].data_b64, 'base64') } : null;
+  const r = await query<{ filename: string; content_type: string; data_b64: string; uploader: string }>(`SELECT filename, content_type, data_b64, uploader FROM closing_time_portal_uploads WHERE id=$1 AND realtor_id=$2`, [id, realtorId]);
+  return r[0] && r[0].data_b64 ? { uploader: r[0].uploader, filename: r[0].filename, contentType: r[0].content_type, bytes: Buffer.from(r[0].data_b64, 'base64') } : null;
 }
 export async function markUploadReviewed(realtorId: string, id: string) {
   await ensureAssistSchema();

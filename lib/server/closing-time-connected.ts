@@ -1,6 +1,6 @@
 import { query } from '@/lib/server/db/neon';
 import { dealTimeline } from '@/lib/closing-time-risks';
-import { ensureAssistSchema, getUpload, requireDeal } from '@/lib/server/closing-time-assist';
+import { ensureAssistSchema, getUpload, markUploadStored, notifyAgentOfUpload, requireDeal } from '@/lib/server/closing-time-assist';
 import { APPS, accountFor, proxyCall } from '@/lib/server/composio';
 
 export const CALENDAR_SLUGS = ['google_calendar', 'outlook'];
@@ -98,7 +98,7 @@ export async function sendFromAgentMailbox(realtorId: string, m: { to: string; s
 
 const safe = (v: string) => v.replace(/[\\/:*?"<>|\r\n]+/g, ' ').trim().slice(0, 120) || 'Deal';
 
-export async function saveUploadToStorage(realtorId: string, dealId: string, uploadId: string, slug: string): Promise<string> {
+async function fileUpload(realtorId: string, dealId: string, uploadId: string, slug: string): Promise<{ message: string; path: string; url: string }> {
   await ensure();
   if (!STORAGE_SLUGS.includes(slug)) throw new Error('Unsupported storage.');
   const deal = await requireDeal(realtorId, dealId);
@@ -107,19 +107,20 @@ export async function saveUploadToStorage(realtorId: string, dealId: string, upl
   const acct = await accountFor(realtorId, [slug]);
   if (!acct) throw new Error('Connect that storage in Integrations first.');
   const folder = safe(deal.propertyAddress || deal.title || 'Deal');
-  const name = safe(file.filename);
+  const name = safe(file.uploader ? `${file.uploader} - ${file.filename}` : file.filename);
   if (slug === 'dropbox') {
     const res = await proxyCall(realtorId, acct.id, 'https://content.dropboxapi.com/2/files/upload', {
       body: file.bytes, headers: { 'Dropbox-API-Arg': JSON.stringify({ path: `/Realty News Now/${folder}/${name}`, mode: 'add', autorename: true }), 'content-type': 'application/octet-stream' },
     });
     if (!res.ok) throw new Error(`Dropbox rejected the file (${res.status}).`);
-    return `Saved to Dropbox in Realty News Now / ${folder}.`;
+    return { message: `Saved to Dropbox in Realty News Now / ${folder}.`, path: `Dropbox / Realty News Now / ${folder}`, url: '' };
   }
   if (slug === 'microsoft_onedrive') {
     const path = `Realty News Now/${folder}/${name}`.split('/').map(encodeURIComponent).join('/');
     const res = await proxyCall(realtorId, acct.id, `https://graph.microsoft.com/v1.0/me/drive/root:/${path}:/content`, { method: 'PUT', body: file.bytes, headers: { 'content-type': file.contentType || 'application/octet-stream' } });
     if (!res.ok) throw new Error(`OneDrive rejected the file (${res.status}).`);
-    return `Saved to OneDrive in Realty News Now / ${folder}.`;
+    const webUrl = (res.data as { webUrl?: string } | null)?.webUrl ?? '';
+    return { message: `Saved to OneDrive in Realty News Now / ${folder}.`, path: `OneDrive / Realty News Now / ${folder}`, url: /^https:\/\//.test(webUrl) ? webUrl : '' };
   }
   const findOrCreate = async (nameStr: string, parent: string | null): Promise<string> => {
     const q = `name='${nameStr.replace(/'/g, "\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false${parent ? ` and '${parent}' in parents` : ''}`;
@@ -136,7 +137,26 @@ export async function saveUploadToStorage(realtorId: string, dealId: string, upl
   const up = await proxyCall(realtorId, acct.id, 'https://www.googleapis.com/upload/drive/v3/files?uploadType=media', { body: file.bytes, headers: { 'content-type': file.contentType || 'application/octet-stream' } });
   const fileId = (up.data as { id?: string })?.id;
   if (!up.ok || !fileId) throw new Error(`Google Drive rejected the file (${up.status}).`);
-  const mv = await proxyCall(realtorId, acct.id, `https://www.googleapis.com/drive/v3/files/${fileId}?addParents=${dealFolder}&removeParents=root`, { method: 'PATCH', json: { name } });
+  const mv = await proxyCall(realtorId, acct.id, `https://www.googleapis.com/drive/v3/files/${fileId}?addParents=${dealFolder}&removeParents=root&fields=id,webViewLink`, { method: 'PATCH', json: { name } });
   if (!mv.ok) throw new Error(`Google Drive could not file the document (${mv.status}).`);
-  return `Saved to Google Drive in Realty News Now / ${folder}.`;
+  const link = (mv.data as { webViewLink?: string } | null)?.webViewLink ?? '';
+  return { message: `Saved to Google Drive in Realty News Now / ${folder}.`, path: `Google Drive / Realty News Now / ${folder}`, url: /^https:\/\//.test(link) ? link : '' };
+}
+
+/** Files an upload in the agent's storage, then drops the copy held in the database. */
+export async function saveUploadToStorage(realtorId: string, dealId: string, uploadId: string, slug: string): Promise<string> {
+  const done = await fileUpload(realtorId, dealId, uploadId, slug);
+  await markUploadStored(realtorId, uploadId, slug, done.path, done.url);
+  return done.message;
+}
+
+/** Called right after a client uploads: files it in the agent's connected storage when there is one, then emails the agent. */
+export async function fileClientUpload(realtorId: string, dealId: string, uploadId: string, info: { uploader: string; label: string; filename: string }) {
+  let note = 'It is held in Closing Time until you connect document storage (Google Drive, Dropbox or OneDrive) on the Integrations page, then use Save To on the deal.';
+  try {
+    const state = await connectedState(realtorId);
+    const slug = state.storage[0]?.slug;
+    if (slug) { const done = await fileUpload(realtorId, dealId, uploadId, slug); await markUploadStored(realtorId, uploadId, slug, done.path, done.url); note = `It was filed in ${done.path}.`; }
+  } catch { note = 'Closing Time could not file it in your connected storage. It is held in Closing Time. Open the deal and use Save To to try again.'; }
+  await notifyAgentOfUpload(realtorId, dealId, { ...info, storedNote: note });
 }
