@@ -119,7 +119,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
     setFiles(next);
     if (fileRef.current) fileRef.current.value = '';
   };
-  const targets = layout === 'timeline' && !contact ? parties.filter((p) => (recips.length ? recips : party ? [party.key] : []).includes(p.key)) : party ? [party] : [];
+  const targets = (layout === 'timeline' || layout === 'split') && !contact ? parties.filter((p) => (recips.length ? recips : party ? [party.key] : []).includes(p.key)) : party ? [party] : [];
   const sendEmail = async () => {
     const list = targets.filter((p) => p.email);
     if (!list.length) return;
@@ -327,7 +327,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   const chip = !contact && (
     <div className="mb-3 flex flex-wrap items-center gap-3">
       <button type="button" className={btn} onClick={() => setChanging((v) => !v)} aria-expanded={changing}>
-        Layout: {({ inbox: 'Inbox With Deal Rail', timeline: 'One Deal Timeline', strip: 'People Strip With Chat', threads: 'Thread List And Panel' } as const)[layout]}
+        Layout: {({ inbox: 'Inbox With Deal Rail', timeline: 'One Deal Timeline', strip: 'People Strip With Chat', threads: 'Thread List And Panel', split: 'Compose And History Split' } as const)[layout]}
       </button>
       <span className="text-[12px] font-medium text-[#7A7787]">Saved to your account. Change it any time.</span>
     </div>
@@ -340,6 +340,18 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
     </div>
   );
 
+  const recipientCard = !locked && (
+          <div className="ds-card px-4 py-3">
+            <span className={lab}>To</span>
+            <div className="flex flex-wrap gap-2">
+              {parties.map((p) => {
+                const on = recipKeys.includes(p.key);
+                return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r.length ? r : [sel]; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-lg !border text-[13px] font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name}</button>;
+              })}
+            </div>
+            <p className="mt-2 text-[12px] font-medium text-[#7A7787]">Each person gets their own copy. Texts go only to people who agreed to texts.</p>
+          </div>
+  );
   let body_: React.ReactNode;
   if (layout === 'timeline' && !contact) {
     body_ = (
@@ -366,19 +378,22 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             </div>
           ))}
         </div>
-        {!locked && (
-          <div className="ds-card px-4 py-3">
-            <span className={lab}>To</span>
-            <div className="flex flex-wrap gap-2">
-              {parties.map((p) => {
-                const on = recipKeys.includes(p.key);
-                return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r.length ? r : [sel]; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-lg !border text-[13px] font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name}</button>;
-              })}
-            </div>
-            <p className="mt-2 text-[12px] font-medium text-[#7A7787]">Each person gets their own copy. Texts go only to people who agreed to texts.</p>
-          </div>
-        )}
+        {recipientCard}
         {composerCard}
+      </div>
+    );
+  } else if (layout === 'split' && !contact) {
+    body_ = (
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="space-y-4">{recipientCard}{composerCard}</div>
+        <div className="ds-card self-start">
+          {party && header}
+          <div className="max-h-[640px] space-y-3 overflow-auto px-4 py-4">
+            {!loaded && <p className="text-xs text-slate-500">Loading messages.</p>}
+            {loaded && items.length === 0 && <p className="text-xs text-slate-500">No messages with {party?.name ?? 'this person'} yet.</p>}
+            {[...items].reverse().map((i) => bubble(i))}
+          </div>
+        </div>
       </div>
     );
   } else if (layout === 'strip' && !contact) {

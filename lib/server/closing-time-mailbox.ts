@@ -31,7 +31,7 @@ export async function mailboxState(realtorId: string): Promise<MailboxState> {
   return { layout: r?.message_layout ?? null, watching, connected: acct ? (acct.appSlug === 'gmail' ? 'Gmail' : 'Outlook') : null, readReplies: r?.read_replies ?? false, lastChecked: r?.last_checked ? new Date(r.last_checked).toISOString() : null, lastError: r?.last_error ?? null };
 }
 
-export const MESSAGE_LAYOUTS = ['inbox', 'timeline', 'strip', 'threads'] as const;
+export const MESSAGE_LAYOUTS = ['inbox', 'timeline', 'strip', 'threads', 'split'] as const;
 export async function setMessageLayout(realtorId: string, layout: (typeof MESSAGE_LAYOUTS)[number]): Promise<void> {
   await ensure();
   await query(`INSERT INTO closing_time_mailbox (realtor_id, message_layout) VALUES ($1,$2) ON CONFLICT (realtor_id) DO UPDATE SET message_layout=EXCLUDED.message_layout`, [realtorId, layout]);

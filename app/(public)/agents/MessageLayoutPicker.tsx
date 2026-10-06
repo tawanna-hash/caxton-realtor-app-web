@@ -1,11 +1,12 @@
 'use client';
 
-export type MessageLayout = 'inbox' | 'timeline' | 'strip' | 'threads';
+export type MessageLayout = 'inbox' | 'timeline' | 'strip' | 'threads' | 'split';
 
 export const MESSAGE_LAYOUTS: { id: MessageLayout; name: string; text: string }[] = [
   { id: 'inbox', name: 'Inbox With Deal Rail', text: 'People on the left, the conversation in the middle, deal facts on the right.' },
   { id: 'timeline', name: 'One Deal Timeline', text: 'Every email and text on the deal in one feed by day. Write to several people at once.' },
   { id: 'strip', name: 'People Strip With Chat', text: 'People across the top, chat bubbles below, and quick templates.' },
+  { id: 'split', name: 'Compose And History Split', text: 'Write on the left. The conversation history stays visible on the right.' },
   { id: 'threads', name: 'Thread List And Panel', text: 'A list of threads by subject. Open one in a side panel to read and reply.' },
 ];
 

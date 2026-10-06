@@ -23,7 +23,7 @@ const action = z.discriminatedUnion('action', [
     attachments: z.array(z.object({ filename: z.string().trim().min(1).max(200), content: z.string().max(4_200_000), contentType: z.string().max(120).optional() })).max(5).optional() }),
   z.object({ action: z.literal('mailbox_read'), on: z.boolean() }),
   z.object({ action: z.literal('mailbox_check') }),
-  z.object({ action: z.literal('message_layout'), value: z.enum(['inbox', 'timeline', 'strip', 'threads']) }),
+  z.object({ action: z.literal('message_layout'), value: z.enum(['inbox', 'timeline', 'strip', 'threads', 'split']) }),
   z.object({ action: z.literal('opt_in_request'), dealId, ...person }),
   z.object({ action: z.literal('confirm_agreed'), dealId, ...person }),
 ]);
