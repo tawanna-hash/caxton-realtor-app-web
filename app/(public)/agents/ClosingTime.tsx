@@ -2730,7 +2730,7 @@ export default function ClosingTime({
                     </div>
                     <input value={contactsQuery} onChange={(e) => setContactsQuery(e.target.value)} placeholder={`Search ${contactsTab === 'clients' ? 'clients' : 'external contacts'}`} aria-label="Search contacts" className="h-8 min-w-[220px] flex-1 rounded-lg border border-[#E6E5EC] bg-white px-3 text-sm" />
                   </div>
-                  <div className="ds-table-wrap mt-3">
+                  <div className="ds-table-wrap ds-cards mt-3">
                     <table className="w-full text-left text-sm">
                       <thead><tr><th className="px-4 py-2">Name</th><th>{contactsTab === 'clients' ? 'Stage' : 'Role'}</th><th>Email</th><th>Phone</th><th>Deal</th><th>Last Touch</th><th className="pr-4"><span className="sr-only">Message</span></th></tr></thead>
                       <tbody>
@@ -2739,15 +2739,15 @@ export default function ClosingTime({
                           const first = deals.find((d) => d.id === c.dealIds[0]);
                           return (
                             <tr key={c.key} tabIndex={0} onClick={() => { if (first) { setActiveDealId(first.id); setDealPageId(first.id); setDealPageTab('preferences'); setDeskView('deal-page'); } }}>
-                              <td className="px-4 py-2.5 font-medium text-slate-900">{c.name}</td>
-                              <td>{contactsTab === 'clients'
+                              <td data-label="Name" className="px-4 py-2.5 font-medium text-slate-900">{c.name}</td>
+                              <td data-label={contactsTab === 'clients' ? 'Stage' : 'Role'}>{contactsTab === 'clients'
                                 ? <span className={`ds-chip ${c.active ? 'bg-emerald-50 text-emerald-700' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{c.active ? 'Active Client' : 'Past Client'}</span>
                                 : <span className="capitalize">{c.role || '—'}</span>}</td>
-                              <td>{c.email || '—'}</td>
-                              <td>{c.phone || '—'}</td>
-                              <td className="max-w-[220px] truncate">{first ? (first.propertyAddress || first.title) : '—'}{c.dealIds.length > 1 ? ` +${c.dealIds.length - 1}` : ''}</td>
-                              <td className="whitespace-nowrap">{touch(c.last)}</td>
-                              <td className="pr-4"><button type="button" className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-1 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white" onClick={(e) => { e.stopPropagation(); setMessagingContact({ name: c.name, email: c.email, phone: c.phone, role: c.role || (c.client ? 'Client' : 'Contact') }); }}>Message</button></td>
+                              <td data-label="Email">{c.email || '—'}</td>
+                              <td data-label="Phone">{c.phone || '—'}</td>
+                              <td data-label="Deal" className="max-w-[220px] truncate">{first ? (first.propertyAddress || first.title) : '—'}{c.dealIds.length > 1 ? ` +${c.dealIds.length - 1}` : ''}</td>
+                              <td data-label="Last Touch" className="whitespace-nowrap">{touch(c.last)}</td>
+                              <td data-label="" className="pr-4"><button type="button" className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-1 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white" onClick={(e) => { e.stopPropagation(); setMessagingContact({ name: c.name, email: c.email, phone: c.phone, role: c.role || (c.client ? 'Client' : 'Contact') }); }}>Message</button></td>
                             </tr>
                           );
                         })}
@@ -2864,7 +2864,7 @@ export default function ClosingTime({
                       <option value="closed">Closed</option>
                     </select>
                   </div>
-                  <div className="ds-table-wrap">
+                  <div className="ds-table-wrap ds-cards">
                     <table className="w-full min-w-[860px] text-left text-sm">
                       <thead>
                         <tr>
@@ -2879,18 +2879,18 @@ export default function ClosingTime({
                           const total = deal.tasks.length;
                           return (
                             <tr key={deal.id} tabIndex={0} onClick={() => { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setDeskView('deal-page'); }} onKeyDown={(e) => { if (e.key === 'Enter') { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setDeskView('deal-page'); } }} className="cursor-pointer">
-                              <td className="py-3 pl-4 font-medium text-slate-900">{deal.propertyAddress || deal.title}</td>
-                              <td>{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(', ') || '—'}</td>
-                              <td><span className="ds-chip ds-chip-purple">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span></td>
-                              <td>
+                              <td data-label="Deal" className="py-3 pl-4 font-medium text-slate-900">{deal.propertyAddress || deal.title}</td>
+                              <td data-label="Clients">{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(', ') || '—'}</td>
+                              <td data-label="Stage"><span className="ds-chip ds-chip-purple">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span></td>
+                              <td data-label="Progress">
                                 <div className="flex items-center gap-2">
                                   <span className="ds-bar" aria-hidden="true"><span style={{ width: total ? `${Math.round((done / total) * 100)}%` : '0%' }} /></span>
                                   <span className="text-xs text-slate-500">{total ? `${done}/${total}` : '—'}</span>
                                 </div>
                               </td>
-                              <td><span className={`ds-chip ${health.tone}`}>{health.label}</span></td>
-                              <td className="whitespace-nowrap">{deal.closingDate ? formatDate(deal.closingDate) : '—'}</td>
-                              <td className="whitespace-nowrap pr-4">{sinceLabel(deal.activity[deal.activity.length - 1]?.createdAt)}</td>
+                              <td data-label="Health"><span className={`ds-chip ${health.tone}`}>{health.label}</span></td>
+                              <td data-label="Closing" className="whitespace-nowrap">{deal.closingDate ? formatDate(deal.closingDate) : '—'}</td>
+                              <td data-label="Last Activity" className="whitespace-nowrap pr-4">{sinceLabel(deal.activity[deal.activity.length - 1]?.createdAt)}</td>
                             </tr>
                           );
                         })}
