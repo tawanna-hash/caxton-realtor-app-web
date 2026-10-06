@@ -382,9 +382,12 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   ]
     .filter((d) => d.date && !(d.id === 'earnest-money-delivery' && deal.earnestMoneyDeliveredDate) && !deal.documentChecks[`dl:${d.id}`] && !completedDeal)
     .map((d) => ({ ...d, days: daysFromToday(d.date) }))
-    .filter((d) => d.days <= 3)
+    .filter((d) => d.days <= 1)
     .sort((l, r) => l.days - r.days);
-  const isCritical = criticalDeadlines.length > 0;
+  const level: 'red' | 'amber' | null = criticalDeadlines.some((d) => d.days <= 0) ? 'red' : criticalDeadlines.length ? 'amber' : null;
+  const isCritical = level !== null;
+  const textTone = level === 'red' ? 'text-[#B42318]' : 'text-[#8A5A00]';
+  const barTone = level === 'red' ? 'bg-[#B42318]' : 'bg-[#E3A008]';
   const dueText = (days: number) => (days < 0 ? `${-days} ${-days === 1 ? 'day' : 'days'} overdue` : days === 0 ? 'due today' : days === 1 ? 'due tomorrow' : `due in ${days} days`);
   const progressStrip = (
     <>
@@ -397,17 +400,17 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           {(headerPeople || priceText) && <p className="mt-1 text-[13px] font-medium text-[#7A7787]">{[headerPeople, priceText].filter(Boolean).join(' · ')}</p>}
         </div>
         <div className="text-right">
-          <p className={`text-[14px] font-semibold ${isCritical ? 'text-[#B42318]' : 'text-[#1B1726]'}`}>{stageName} · {Math.min(stageIndex + 1, milestones.length)} of {milestones.length}</p>
-          <p className={`text-[13px] font-medium ${isCritical ? 'text-[#B42318]' : 'text-[#7A7787]'}`}>{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing Date Not Set'}</p>
+          <p className={`text-[14px] font-semibold ${isCritical ? textTone : 'text-[#1B1726]'}`}>{stageName} · {Math.min(stageIndex + 1, milestones.length)} of {milestones.length}</p>
+          <p className={`text-[13px] font-medium ${isCritical ? textTone : 'text-[#7A7787]'}`}>{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing Date Not Set'}</p>
         </div>
       </div>
       {isCritical && (
-        <p className="mt-2 text-[13px] font-semibold text-[#B42318]" role="alert">
+        <p className={`mt-2 text-[13px] font-semibold ${textTone}`} role="alert">
           {criticalDeadlines.slice(0, 2).map((d) => `${d.label} ${dueText(d.days)}`).join(' · ')}{criticalDeadlines.length > 2 ? ` · ${criticalDeadlines.length - 2} more` : ''}
         </p>
       )}
       <div className="mt-3 flex gap-[3px]" role="progressbar" aria-label="Deal progress" aria-valuemin={0} aria-valuemax={milestones.length} aria-valuenow={Math.min(stageIndex, milestones.length)} aria-valuetext={`${stageName}, step ${Math.min(stageIndex + 1, milestones.length)} of ${milestones.length}`}>
-        {milestones.map((m) => <span key={m.key} title={m.label} className={`h-2 flex-1 rounded-[3px] ${m.done ? 'bg-[#301D5D]' : m.current ? (isCritical ? 'bg-[#B42318]' : 'bg-[#7059A8]') : 'bg-[#E6E5EC]'}`} />)}
+        {milestones.map((m) => <span key={m.key} title={m.label} className={`h-2 flex-1 rounded-[3px] ${m.done ? 'bg-[#301D5D]' : m.current ? (isCritical ? barTone : 'bg-[#7059A8]') : 'bg-[#E6E5EC]'}`} />)}
       </div>
       <button type="button" aria-expanded={stagesOpen} onClick={() => setStagesOpen((v) => !v)} className="mt-2 !border-0 !bg-transparent !px-0 !py-0 text-[13px] font-medium text-[#7A7787] underline underline-offset-2 hover:!bg-transparent hover:!text-[#301D5D]">{stagesOpen ? 'Hide Stages' : 'Show All Stages'}</button>
       {stagesOpen && (
