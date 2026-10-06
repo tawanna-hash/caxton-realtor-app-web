@@ -95,16 +95,17 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
       {!contact && <div className="ds-card">
         <h2 className="border-b border-[#E6E5EC] px-4 py-3 text-[14px] font-semibold text-[#1B1726]">People On This Deal</h2>
         {parties.map((p) => (
-          <button key={p.key} type="button" onClick={() => { setSel(p.key); setMsg(''); }} className={`block w-full border-b border-[#E6E5EC] px-4 py-3 text-left last:border-0 ${p.key === sel ? 'bg-[#F6F3FB]' : 'bg-white hover:bg-[#F6F3FB]'}`}>
+          <button key={p.key} type="button" onClick={() => { setSel(p.key); setMsg(''); }} className={`block w-full border-b border-[#E6E5EC] px-4 py-3 text-left last:border-0 ${p.key === sel ? '!bg-[#EFEAF8]' : 'bg-white'} hover:!bg-[#EFEAF8] hover:!text-[#1B1726]`}>
             <span className="block text-[14px] font-medium text-[#1B1726]">{p.name}</span>
             <span className="block text-[12px] font-medium text-[#7A7787]">{p.role} · {last(p)}</span>
           </button>
         ))}
       </div>}
 
-      <div className="ds-card">
+      <div className="space-y-4">
         {party && (
           <>
+            <div className="ds-card">
             <div className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] px-4 py-3">
               <div>
                 <div className="text-[14px] font-semibold text-[#1B1726]">{party.name}</div>
@@ -123,10 +124,13 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
                 </div>
               ))}
             </div>
+            </div>
+            <div className="ds-card">
             {locked ? (
-              <p className="border-t border-[#E6E5EC] px-4 py-4 text-[13px] text-[#4A4757]">This deal is closed and its record is locked. Messaging has stopped. The history above is kept for the audit record.</p>
+              <p className="px-4 py-4 text-[13px] text-[#4A4757]">This deal is closed and its record is locked. Messaging has stopped. The history above is kept for the audit record.</p>
             ) : (
-            <div className="border-t border-[#E6E5EC] px-4 py-4">
+            <div className="px-4 py-4">
+              <h3 className="mb-2 text-[14px] font-semibold text-[#1B1726]">{mode === 'email' ? 'New Email' : 'New Text'}</h3>
               {mailbox && mailbox.connected && !mailbox.readReplies && (
                 <label className="mb-4 flex items-start gap-2 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-[12px] font-medium text-[#4A4757]">
                   <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={false} disabled={busy} onChange={() => void post({ action: 'mailbox_read', on: true })} />
@@ -136,7 +140,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
               {mailbox?.readReplies && mailbox.lastError && <p className="mb-4 text-[12px] font-medium text-[#9A3D2B]">{mailbox.lastError}</p>}
               <div className="mb-3 flex gap-5 border-b border-[#E6E5EC]">
                 {(['email', 'sms'] as const).map((m) => (
-                  <button key={m} type="button" onClick={() => { setMode(m); setMsg(''); }} className={`-mb-px border-b-2 pb-2 text-[13px] font-medium ${mode === m ? 'border-[#301D5D] text-[#301D5D]' : 'border-transparent text-[#7A7787]'}`}>{m === 'email' ? 'Email' : 'Text'}</button>
+                  <button key={m} type="button" onClick={() => { setMode(m); setMsg(''); }} className={`-mb-px border-b-2 pb-2 text-[13px] font-medium !rounded-none !border-x-0 !border-t-0 !bg-transparent !px-0 hover:!bg-transparent hover:!text-[#301D5D] ${mode === m ? '!border-[#301D5D] !text-[#301D5D]' : '!border-transparent text-[#7A7787]'}`}>{m === 'email' ? 'Email' : 'Text'}</button>
                 ))}
               </div>
               {mode === 'email' && (
@@ -176,6 +180,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
               {msg && <p role="status" className="mt-3 text-[12px] font-medium text-[#4A4757]">{msg}</p>}
             </div>
             )}
+            </div>
           </>
         )}
       </div>
