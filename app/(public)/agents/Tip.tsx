@@ -21,6 +21,7 @@ export default function Tip({ text }: { text: string }) {
     if (!host) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const show = () => {
+      try { if (window.localStorage.getItem('ct-tips') === 'off') return; } catch { /* ignore */ }
       timer = setTimeout(() => {
         const el = floater(); const r = host.getBoundingClientRect();
         el.textContent = text;

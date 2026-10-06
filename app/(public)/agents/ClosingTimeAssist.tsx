@@ -88,6 +88,20 @@ function MessageLayoutSetting({ dealId }: { dealId: string }) {
   );
 }
 
+function HoverTipsSetting() {
+  const [on, setOn] = useState(() => { try { return window.localStorage.getItem('ct-tips') !== 'off'; } catch { return true; } });
+  const toggle = (v: boolean) => { setOn(v); try { window.localStorage.setItem('ct-tips', v ? 'on' : 'off'); } catch { /* ignore */ } };
+  return (
+    <section aria-label="Hover tips" className="rounded-md border border-gray-200 bg-white p-5">
+      <h4 className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Hover Tips</h4>
+      <label className="flex items-center gap-2 text-[13px] font-medium text-[#1B1726]">
+        <input type="checkbox" className="h-4 w-4 accent-[#301D5D]" checked={on} onChange={(e) => toggle(e.target.checked)} />
+        <span>Show explanations when I hover over a field</span>
+      </label>
+    </section>
+  );
+}
+
 export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceived }: { deal: AgentDeal; onApplyChecklist: (steps: Step[]) => void; onMarkReceived: (docId: string, fileName: string) => void }) {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState('');
@@ -334,6 +348,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
 
           {placer && <SignaturePlacer data={placer} signers={(data.parties ?? []).filter((p) => p.email && sigTo.includes(p.id)).map((p) => p.name || p.email)} fields={sigFields} onChange={setSigFields} onClose={() => setPlacer(null)} />}
           <MessageLayoutSetting dealId={deal.id} />
+          <HoverTipsSetting />
           <section aria-label="Automation" className="rounded-md border border-gray-200 bg-white p-5">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Automation</h4>
             <label className="mt-3 flex items-start gap-2 text-sm text-slate-700">
