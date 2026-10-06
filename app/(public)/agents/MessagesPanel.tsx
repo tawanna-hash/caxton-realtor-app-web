@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TREC_FORM_LIBRARY } from '@/lib/trec-forms-library';
+import Tip from './Tip';
 import SpellHelper from './SpellHelper';
 import MessageLayoutPicker, { type MessageLayout } from './MessageLayoutPicker';
 import { dealFolders } from './purchase-documents';
@@ -15,9 +16,6 @@ type Consent = 'opted_in' | 'pending' | 'opted_out' | 'none';
 type Party = { key: string; name: string; role: string; email: string; phone: string };
 type Item = { id: string; at: string; kind: 'email' | 'sms'; out: boolean; title: string; body: string; status: string; error: string | null };
 
-function Tip({ text }: { text: string }) {
-  return <span title={text} aria-label={text} className="inline-flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full border border-[#E6E5EC] text-[10px] font-medium leading-none text-[#7A7787]">i</span>;
-}
 const btn = 'inline-flex items-center rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white disabled:opacity-45';
 const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[14px] text-[#1B1726]';
 const lab = 'mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]';
