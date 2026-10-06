@@ -17,6 +17,7 @@ function ensure(): Promise<void> {
     await query(`CREATE TABLE IF NOT EXISTS closing_time_mailbox (
       realtor_id UUID PRIMARY KEY, read_replies BOOLEAN NOT NULL DEFAULT FALSE, last_checked TIMESTAMPTZ, last_error TEXT)`);
     await query(`ALTER TABLE closing_time_mailbox ADD COLUMN IF NOT EXISTS message_layout TEXT`);
+    await query(`ALTER TABLE closing_time_mailbox ADD COLUMN IF NOT EXISTS hover_tips BOOLEAN`);
   })().catch((e) => { ready = null; throw e; });
   return ready;
 }
@@ -177,4 +178,16 @@ export async function syncAllMailboxes(): Promise<{ checked: number; stored: num
     if (res.error) out.errors.push(res.error);
   }
   return out;
+}
+
+/** Account-wide preference. Defaults to on until the agent turns it off. */
+export async function getHoverTips(realtorId: string): Promise<boolean> {
+  await ensure();
+  const rows = await query<{ hover_tips: boolean | null }>(`SELECT hover_tips FROM closing_time_mailbox WHERE realtor_id=$1`, [realtorId]);
+  return rows[0]?.hover_tips !== false;
+}
+
+export async function setHoverTips(realtorId: string, on: boolean): Promise<void> {
+  await ensure();
+  await query(`INSERT INTO closing_time_mailbox (realtor_id, hover_tips) VALUES ($1,$2) ON CONFLICT (realtor_id) DO UPDATE SET hover_tips=EXCLUDED.hover_tips`, [realtorId, on]);
 }

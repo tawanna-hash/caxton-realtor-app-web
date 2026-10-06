@@ -90,7 +90,16 @@ function MessageLayoutSetting({ dealId }: { dealId: string }) {
 
 function HoverTipsSetting() {
   const [on, setOn] = useState(() => { try { return window.localStorage.getItem('ct-tips') !== 'off'; } catch { return true; } });
-  const toggle = (v: boolean) => { setOn(v); try { window.localStorage.setItem('ct-tips', v ? 'on' : 'off'); } catch { /* ignore */ } };
+  useEffect(() => {
+    let live = true;
+    fetch('/api/closing-time/preferences', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((b) => { if (live && b && typeof b.hoverTips === 'boolean') { setOn(b.hoverTips); try { window.localStorage.setItem('ct-tips', b.hoverTips ? 'on' : 'off'); } catch { /* ignore */ } } }).catch(() => undefined);
+    return () => { live = false; };
+  }, []);
+  const toggle = (v: boolean) => {
+    setOn(v);
+    try { window.localStorage.setItem('ct-tips', v ? 'on' : 'off'); } catch { /* ignore */ }
+    void fetch('/api/closing-time/preferences', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ hoverTips: v }) });
+  };
   return (
     <section aria-label="Hover tips" className="rounded-md border border-gray-200 bg-white p-5">
       <h4 className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Hover Tips</h4>

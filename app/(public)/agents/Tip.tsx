@@ -2,6 +2,16 @@
 
 import { useEffect, useRef } from 'react';
 
+let synced = false;
+/** Pulls the account preference once per page load and keeps a local copy for instant reads. */
+function syncPreference() {
+  if (synced || typeof window === 'undefined') return;
+  synced = true;
+  fetch('/api/closing-time/preferences', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((b) => {
+    if (b && typeof b.hoverTips === 'boolean') { try { window.localStorage.setItem('ct-tips', b.hoverTips ? 'on' : 'off'); } catch { /* ignore */ } }
+  }).catch(() => { synced = false; });
+}
+
 function floater(): HTMLDivElement {
   let el = document.getElementById('tip-float') as HTMLDivElement | null;
   if (!el) { el = document.createElement('div'); el.id = 'tip-float'; el.setAttribute('role', 'tooltip'); document.body.appendChild(el); }
@@ -17,6 +27,7 @@ export default function Tip({ text }: { text: string }) {
   useEffect(() => {
     const me = ref.current;
     if (!me) return;
+    syncPreference();
     const host = (me.previousElementSibling ?? me.nextElementSibling ?? me.parentElement) as HTMLElement | null;
     if (!host) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
