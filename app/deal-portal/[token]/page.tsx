@@ -74,7 +74,7 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
             </ol>
           </section>
 
-          <RequestedDocs token={token} requests={view.requests} />
+          <RequestedDocs token={token} requests={view.requests} agentName={view.agentName} />
 
           {next && (
             <section className={`${card} flex flex-wrap items-center gap-5 border-[#301D5D] p-4`}>

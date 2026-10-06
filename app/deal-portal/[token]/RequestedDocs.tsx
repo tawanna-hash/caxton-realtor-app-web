@@ -53,11 +53,11 @@ function Row({ token, req }: { token: string; req: Req }) {
   );
 }
 
-export default function RequestedDocs({ token, requests }: { token: string; requests: Req[] }) {
+export default function RequestedDocs({ token, requests, agentName }: { token: string; requests: Req[]; agentName: string }) {
   if (requests.length === 0) return null;
   return (
     <section className="rounded-[10px] border border-[#301D5D] bg-white">
-      <h2 className="border-b border-[#E6E5EC] px-4 py-3.5 text-[14px] font-semibold text-[#1B1726]">Requested From You</h2>
+      <h2 className="border-b border-[#E6E5EC] px-4 py-3.5 text-[14px] font-semibold text-[#1B1726]">Requested By Your Agent{agentName ? `, ${agentName}` : ''}</h2>
       <ul className="px-4">{requests.map((r) => <Row key={r.id} token={token} req={r} />)}</ul>
     </section>
   );
