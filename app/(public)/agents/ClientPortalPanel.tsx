@@ -140,7 +140,7 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
               {people.length === 0 && <li className="py-3 text-[14px] text-[#4A4757]">No clients on this deal yet.</li>}
             </ul>
           )}
-          {error && <p role="alert" className="mt-3 text-[12px] font-medium text-[#9A3D2B]">{error}</p>}
+          {error && <p role="alert" className="mt-3 text-[12px] font-medium text-[#661102]">{error}</p>}
         </section>
       </div>
 

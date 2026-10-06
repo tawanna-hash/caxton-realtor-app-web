@@ -60,7 +60,7 @@ function EmailRepliesSetting({ dealId, mail }: { dealId: string; mail: string })
           <span>{m.lastChecked ? `Last checked ${new Date(m.lastChecked).toLocaleString()}` : 'Not checked yet'}</span>
           <span>{m.watching ? `Watching ${m.watching} email ${m.watching === 1 ? 'address' : 'addresses'} from your deals` : 'No email addresses on your deals yet'}</span>
           <button type="button" className="underline underline-offset-2 hover:text-[#301D5D]" disabled={busy} onClick={() => void act({ action: 'mailbox_check' })}>Check Now</button>
-          {m.lastError && <span className="text-[#9A3D2B]">{m.lastError}</span>}
+          {m.lastError && <span className="text-[#661102]">{m.lastError}</span>}
         </p>
       )}
     </div>
@@ -228,7 +228,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
         <CollapseToggle {...toggleProps('assist', 'deal settings', { mobileOpen: true })} />
       </div>
       <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">Risk alerts, follow-up drafts, a client progress link, and a closing checklist for this deal. Nothing is emailed to anyone until you approve that specific draft.</p>
-      {error && <p className="mt-3 text-sm font-semibold text-[#9A3D2B]" role="alert">{error}</p>}
+      {error && <p className="mt-3 text-sm font-semibold text-[#661102]" role="alert">{error}</p>}
       {!data ? <p className="mt-4 text-sm text-slate-500">{error ? '' : 'Loading.'}</p> : (
         <div className="mt-5 grid items-stretch gap-4 lg:grid-cols-2">
           <section aria-label="Risks" className="rounded-md border border-gray-200 bg-white p-5">
@@ -239,7 +239,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             {data.risks.length === 0 ? <p className="mt-2 text-sm text-slate-500">No risks flagged for this deal.</p> : (
               <ul className="mt-2 space-y-2">
                 {data.risks.map((r) => (
-                  <li key={r.id} className={`border px-3 py-2 text-sm ${r.severity === 'high' ? 'border-[#9A3D2B] bg-[#FFF5F2]' : 'border-[#D9D0BF] bg-[#FFFDF8]'}`}>
+                  <li key={r.id} className={`border px-3 py-2 text-sm ${r.severity === 'high' ? 'border-[#661102] bg-[#FFF5F2]' : 'border-[#D9D0BF] bg-[#FFFDF8]'}`}>
                     <p className="font-semibold text-slate-950">{r.severity === 'high' ? 'Urgent: ' : ''}{r.title}</p>
                     <p className="mt-0.5 text-slate-600">{r.detail}</p>
                     {r.deadlineLabel && (
@@ -273,7 +273,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                     <p className="mt-0.5 break-words text-base font-semibold text-slate-900">{p.name || 'No name'}</p>
                     <p className="break-all text-sm text-slate-600">{p.email || 'No email'}</p>
                   </div>
-                  <button type="button" className="shrink-0 text-xs font-bold text-[#9A3D2B] underline" onClick={() => void post({ action: 'remove_party', partyId: p.id })}>Remove</button>
+                  <button type="button" className="shrink-0 text-xs font-bold text-[#661102] underline" onClick={() => void post({ action: 'remove_party', partyId: p.id })}>Remove</button>
                 </li>
               ))}
             </ul>

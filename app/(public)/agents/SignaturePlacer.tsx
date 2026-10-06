@@ -5,7 +5,7 @@ import SignPdfPages from '@/components/SignPdfPages';
 import Tip from './Tip';
 
 export type PlacedField = { signer: number; type: 'signature' | 'date'; page: number; x: number; y: number; w: number; h: number };
-const COLORS = ['#301D5D', '#9A3D2B', '#1B6B5C', '#8A5A00', '#2F5DA8', '#7A2F7A'];
+const COLORS = ['#301D5D', '#661102', '#1B6B5C', '#8A5A00', '#2F5DA8', '#7A2F7A'];
 const SIZE = { signature: { w: 0.3, h: 0.055 }, date: { w: 0.18, h: 0.03 } };
 
 export default function SignaturePlacer({ data, signers, fields, onChange, onClose }: { data: Uint8Array; signers: string[]; fields: PlacedField[]; onChange: (f: PlacedField[]) => void; onClose: () => void }) {
@@ -23,7 +23,7 @@ export default function SignaturePlacer({ data, signers, fields, onChange, onClo
         <Tip text="Click the page to place it. Click a placed field to remove it." />
         <button type="button" className="ml-auto min-h-[36px] rounded-md bg-[#301D5D] px-4 font-bold text-white" onClick={onClose}>Done</button>
       </div>
-      {missing.length > 0 && <p className="bg-amber-50 px-3 py-2 text-xs text-amber-900">Still needs a signature field: {missing.join(', ')}</p>}
+      {missing.length > 0 && <p className="bg-[#FEF8CC] px-3 py-2 text-xs text-[#645600]">Still needs a signature field: {missing.join(', ')}</p>}
       <div className="min-h-0 flex-1 overflow-auto bg-slate-100 p-4">
         <SignPdfPages data={data} width={Math.min(760, typeof window === 'undefined' ? 760 : window.innerWidth - 48)}
           onPageClick={(page, fx, fy) => { const sz = SIZE[type]; onChange([...fields, { signer: who, type, page, x: Math.min(1 - sz.w, Math.max(0, fx - sz.w / 2)), y: Math.min(1 - sz.h, Math.max(0, fy - sz.h / 2)), w: sz.w, h: sz.h }]); }}

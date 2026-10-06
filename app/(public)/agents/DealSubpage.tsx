@@ -73,7 +73,7 @@ function PartyLine({ p, textHref: textLink, onRemove }: { p: PartyView; textHref
         {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : <Mail className="h-4 w-4 opacity-40" aria-hidden="true" />}
         {p.phone ? <a href={textLink} aria-label={`Text ${p.name}`} className="hover:text-[#301D5D]"><MessageSquare className="h-4 w-4" aria-hidden="true" /></a> : null}
         {p.phone ? <a href={`tel:${p.phone.replace(/[^+\d]/g, '')}`} aria-label={`Call ${p.name}`} className="hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : <Phone className="h-4 w-4 opacity-40" aria-hidden="true" />}
-        {onRemove ? <button type="button" aria-label={`Remove ${p.name}`} className="hover:text-[#9A3D2B]" onClick={onRemove}><Trash2 className="h-4 w-4" aria-hidden="true" /></button> : null}
+        {onRemove ? <button type="button" aria-label={`Remove ${p.name}`} className="hover:text-[#661102]" onClick={onRemove}><Trash2 className="h-4 w-4" aria-hidden="true" /></button> : null}
       </span>
     </div>
   );
@@ -306,8 +306,8 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     .sort((l, r) => l.days - r.days);
   const level: 'red' | 'amber' | null = criticalDeadlines.some((d) => d.days <= 0) ? 'red' : criticalDeadlines.length ? 'amber' : null;
   const isCritical = level !== null;
-  const textTone = level === 'red' ? 'text-[#B42318]' : 'text-[#8A5A00]';
-  const barTone = level === 'red' ? 'bg-[#B42318]' : 'bg-[#E3A008]';
+  const textTone = level === 'red' ? 'text-[#661102]' : 'text-[#645600]';
+  const barTone = level === 'red' ? 'bg-[#FF2A04]' : 'bg-[#FAD800]';
   const sideBlocks = {
     property: (
 <>
@@ -330,7 +330,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               )}
               <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { void uploadPhoto(e.target.files?.[0]); e.target.value = ''; }} />
             </div>
-            {photoError && <p className="px-4 pt-2 text-xs text-red-600" role="alert">{photoError}</p>}
+            {photoError && <p className="px-4 pt-2 text-xs text-[#661102]" role="alert">{photoError}</p>}
             <div className="p-4">
               <p className="font-semibold text-slate-900">{deal.propertyAddress || deal.title}</p>
               <p className={`mt-1 text-xs ${isCritical ? `font-semibold ${textTone}` : 'text-slate-500'}`}>{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing Date Not Set'}</p>
@@ -736,10 +736,10 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               <div className="space-y-4">
                 <div className="ds-snap-grid">
                   <div className="ds-card !p-0 self-start">
-                    {cardHead(<AlertCircle className="h-4 w-4 text-amber-600" aria-hidden="true" />, 'Needs Your Attention', attentionRows.length, 'bg-amber-50 text-amber-700')}
+                    {cardHead(<AlertCircle className="h-4 w-4 text-[#645600]" aria-hidden="true" />, 'Needs Your Attention', attentionRows.length, 'bg-[#FEF8CC] text-[#645600]')}
                     {attentionRows.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing needs you right now.</p> : attentionRows.map((item) => (
                       <div key={item.key} className="border-b border-[#F1F0F5] px-4 py-3">
-                        <p className={`text-[11px] font-medium ${item.tone === 'red' ? 'text-[#9A3D2B]' : 'text-amber-700'}`}>{item.eyebrow}</p>
+                        <p className={`text-[11px] font-medium ${item.tone === 'red' ? 'text-[#661102]' : 'text-[#645600]'}`}>{item.eyebrow}</p>
                         <p className="mt-0.5 text-sm font-semibold text-slate-900">{item.title}</p>
                         <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
                         <button type="button" className="mt-2" onClick={() => onOpenView(item.go)}>Open</button>
@@ -1057,7 +1057,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               {deal.serviceProviders.filter((p) => p.category === providerCategory).map((p) => (
                 <div key={p.id} className="flex items-center gap-3 py-2 text-sm">
                   <span className="min-w-0 flex-1"><span className="block font-medium text-slate-900">{p.name}</span><span className="block truncate text-xs text-slate-500">{[p.phone, p.email].filter(Boolean).join(' · ')}</span></span>
-                  {!locked && <button type="button" aria-label={`Remove ${p.name}`} className="text-slate-400 hover:text-[#9A3D2B]" onClick={() => onUpdate('serviceProviders', deal.serviceProviders.filter((x) => x.id !== p.id))}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}
+                  {!locked && <button type="button" aria-label={`Remove ${p.name}`} className="text-slate-400 hover:text-[#661102]" onClick={() => onUpdate('serviceProviders', deal.serviceProviders.filter((x) => x.id !== p.id))}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}
                 </div>
               ))}
               {deal.serviceProviders.filter((p) => p.category === providerCategory).length === 0 && <p className="py-2 text-sm text-slate-500">No providers added yet.</p>}
@@ -1095,7 +1095,7 @@ function OffersShowings({ deal, locked, formatDate, onUpdate }: Pick<Props, 'dea
           <div key={item.id} className="flex items-center gap-3 py-2 text-sm">
             <span className={`ds-chip ${item.kind === 'offer' ? 'ds-chip-purple' : 'bg-slate-100 text-slate-600'}`}>{item.kind === 'offer' ? 'Offer' : 'Showing'}</span>
             <span className="min-w-0 flex-1"><span className="block font-medium text-slate-900">{item.label}</span><span className="block text-xs text-slate-500">{[item.date ? formatDate(item.date) : '', item.amount, item.status].filter(Boolean).join(' · ')}</span></span>
-            {!locked && <button type="button" aria-label={`Remove ${item.label}`} className="text-slate-400 hover:text-[#9A3D2B]" onClick={() => onUpdate('offersShowings', items.filter((x) => x.id !== item.id))}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}
+            {!locked && <button type="button" aria-label={`Remove ${item.label}`} className="text-slate-400 hover:text-[#661102]" onClick={() => onUpdate('offersShowings', items.filter((x) => x.id !== item.id))}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}
           </div>
         ))}
       </div>

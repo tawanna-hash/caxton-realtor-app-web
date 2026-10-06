@@ -24,7 +24,7 @@ export default async function OfficeDashboardPage() {
       <h1 className="ds-title">{brokerage.name}</h1>
       <div className="mt-5 grid grid-cols-3 gap-3 text-center">
         <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-slate-950">{totals.deals}</p><p className="text-xs text-slate-600">Active deals</p></div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-[#9A3D2B]">{totals.urgent}</p><p className="text-xs text-slate-600">Urgent risks</p></div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-[#661102]">{totals.urgent}</p><p className="text-xs text-slate-600">Urgent risks</p></div>
         <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-slate-950">{totals.watch}</p><p className="text-xs text-slate-600">To watch</p></div>
       </div>
       <div className="mt-5 flex gap-3 text-sm font-bold">
@@ -41,7 +41,7 @@ export default async function OfficeDashboardPage() {
               <tr key={a.realtorId} className="border-t border-slate-100 align-top">
                 <td className="p-3"><p className="font-semibold text-slate-950">{a.name || a.email}</p><p className="text-xs text-slate-500">{a.email}</p></td>
                 <td className="p-3">{a.activeDeals}</td>
-                <td className={`p-3 font-semibold ${a.urgent ? 'text-[#9A3D2B]' : ''}`}>{a.urgent}</td>
+                <td className={`p-3 font-semibold ${a.urgent ? 'text-[#661102]' : ''}`}>{a.urgent}</td>
                 <td className="p-3">{a.watch}</td>
                 <td className="p-3">{a.draftsWaiting}</td>
                 <td className="p-3 text-slate-600">{a.nextDate ? `${fmt(a.nextDate)}: ${a.nextLabel}` : 'None'}</td>

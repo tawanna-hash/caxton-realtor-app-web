@@ -112,7 +112,7 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
       </div>
       <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">Each connection is yours alone. You sign in with the provider, and you can disconnect at any time.</p>
 
-      {!configured && loaded && <p className="mt-4 border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Integrations are not turned on yet. They will be available here soon.</p>}
+      {!configured && loaded && <p className="mt-4 border border-[#FAD800] bg-[#FEF8CC] p-3 text-sm text-[#645600]">Integrations are not turned on yet. They will be available here soon.</p>}
       {message && <p role="status" className="mt-4 text-sm font-semibold text-[#301D5D]">{message}</p>}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -135,7 +135,7 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
                   <button type="button" onClick={() => setSelected(item)} className="flex min-h-[56px] w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 text-left hover:bg-[#FBFBFD]">
                     <Logo item={item} size={28} />
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950">{item.name}</span>
-                    {connected && <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">Connected</span>}
+                    {connected && <span className="shrink-0 rounded-full bg-[#E0FBE0] px-2 py-0.5 text-xs font-semibold text-[#005A00]">Connected</span>}
                   </button>
                 </li>
               );
@@ -157,7 +157,7 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
             <div className="mt-4 flex justify-end gap-2">
               <button type="button" onClick={() => setSelected(null)} className="min-h-[40px] rounded-md border border-slate-300 px-4 text-sm font-bold text-slate-700">Cancel</button>
               {selectedAccount ? (
-                <button type="button" disabled={busy === selectedAccount.id} onClick={() => void disconnect(selectedAccount)} className="min-h-[40px] rounded-md border border-[#9A3D2B] px-4 text-sm font-bold text-[#9A3D2B] disabled:opacity-50">Disconnect</button>
+                <button type="button" disabled={busy === selectedAccount.id} onClick={() => void disconnect(selectedAccount)} className="min-h-[40px] rounded-md border border-[#661102] px-4 text-sm font-bold text-[#661102] disabled:opacity-50">Disconnect</button>
               ) : (
                 <button type="button" disabled={!configured || busy === selected.slug} onClick={() => void connect(selected)} className="min-h-[40px] rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c] disabled:opacity-45">{busy === selected.slug ? 'Opening…' : `Connect ${selected.name}`}</button>
               )}

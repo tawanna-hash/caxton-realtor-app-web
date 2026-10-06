@@ -242,7 +242,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
           <span>Show email replies from {mailbox.connected}. Only replies to emails sent from here, or mail naming the property, from people on your deals. Once on, this is saved in Settings.</span>
         </label>
       )}
-      {mailbox?.readReplies && mailbox.lastError && <p className="mb-4 text-[12px] font-medium text-[#9A3D2B]">{mailbox.lastError}</p>}
+      {mailbox?.readReplies && mailbox.lastError && <p className="mb-4 text-[12px] font-medium text-[#661102]">{mailbox.lastError}</p>}
       <div className="mb-3 flex gap-5 border-b border-[#E6E5EC]">
         {(['email', 'sms'] as const).map((m) => (
           <button key={m} type="button" onClick={() => { setMode(m); setMsg(''); }} className={`-mb-px border-b-2 pb-2 text-[13px] font-medium !rounded-none !border-x-0 !border-t-0 !bg-transparent !px-0 hover:!bg-transparent hover:!text-[#301D5D] ${mode === m ? '!border-[#301D5D] !text-[#301D5D]' : '!border-transparent text-[#7A7787]'}`}>{m === 'email' ? 'Email' : 'Text'}</button>

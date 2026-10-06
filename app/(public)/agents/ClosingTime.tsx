@@ -427,7 +427,7 @@ function ReadinessChecklist({
             <button
               type="button"
               onClick={() => removeDocumentFile(document.id)}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#9A3D2B]"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#661102]"
               aria-label={`Remove attached file from ${document.label}`}
             >
               <X className="h-3.5 w-3.5" aria-hidden="true" />
@@ -490,7 +490,7 @@ function ReadinessChecklist({
       </div>
 
       {documentUploadError ? (
-        <p className="mt-4 flex items-center gap-2 rounded-md border border-[#E0A9A0] bg-[#FBEFEC] px-3 py-2 text-xs font-semibold text-[#9A3D2B]">
+        <p className="mt-4 flex items-center gap-2 rounded-md border border-[#E0A9A0] bg-[#FBEFEC] px-3 py-2 text-xs font-semibold text-[#661102]">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           {documentUploadError}
         </p>
@@ -2244,7 +2244,7 @@ export default function ClosingTime({
                     <p className="text-sm font-semibold text-slate-900">{item.label}</p>
                     <p className="text-xs text-slate-500">{item.dealTitle}</p>
                   </div>
-                  <span className={`text-xs font-bold ${item.overdue ? 'text-[#9A3D2B]' : 'text-[#301D5D]'}`}>
+                  <span className={`text-xs font-bold ${item.overdue ? 'text-[#661102]' : 'text-[#301D5D]'}`}>
                     {item.overdue ? 'Overdue' : item.date === today ? 'Due Today' : formatDate(item.date)}
                   </span>
                 </div>
@@ -2452,7 +2452,7 @@ export default function ClosingTime({
                                 <button type="button" disabled={reviewState.status === 'sending' || !brokerFooter.brokerEmail.trim()} className="ds-review-btn" onClick={() => void submitForBrokerReview()}>
                                   {reviewState.status === 'sending' ? 'Sending...' : 'Send To Broker'}
                                 </button>
-                                {reviewState.message && <p role="status" className={`text-xs ${reviewState.status === 'error' ? 'text-[#9A3D2B]' : 'text-[#1F7A3D]'}`}>{reviewState.message}</p>}
+                                {reviewState.message && <p role="status" className={`text-xs ${reviewState.status === 'error' ? 'text-[#661102]' : 'text-[#1F7A3D]'}`}>{reviewState.message}</p>}
                               </div>
                             </div>
                           )}
@@ -2551,7 +2551,7 @@ export default function ClosingTime({
               {[...activeDeals, ...closedDeals].map((deal) => {
                 const days = daysUntilClosing(deal.closingDate, today);
                 const closed = isDealClosedAndComplete(deal);
-                const tone = closed ? 'bg-slate-300' : days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#9A3D2B]' : days <= 7 ? 'bg-[#B8860B]' : 'bg-[#2F7D5B]';
+                const tone = closed ? 'bg-slate-300' : days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#FF2A04] ring-1 ring-[#661102]' : days <= 7 ? 'bg-[#FAD800] ring-1 ring-[#645600]' : 'bg-[#00E200] ring-1 ring-[#005A00]';
                 const selected = deal.id === activeDealId && workspacePage === 2 && DEAL_TABS.some((t) => t.id === effectiveView);
                 return (
                   <li key={deal.id} className="group/deal relative">
@@ -2575,7 +2575,7 @@ export default function ClosingTime({
                         aria-label={`Delete ${deal.propertyAddress || deal.title}`}
                         title="Delete Deal"
                         onClick={() => { if (window.confirm(`Delete ${deal.propertyAddress || deal.title}? This cannot be undone.`)) removeDeal(deal.id); }}
-                        className="absolute right-1 top-1.5 !flex !h-6 !w-6 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-300 opacity-0 transition hover:!text-[#9A3D2B] group-hover/deal:opacity-100 [@media(hover:none)]:opacity-100"
+                        className="absolute right-1 top-1.5 !flex !h-6 !w-6 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-300 opacity-0 transition hover:!text-[#661102] group-hover/deal:opacity-100 [@media(hover:none)]:opacity-100"
                       ><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
                     )}
                   </li>
@@ -2744,7 +2744,7 @@ export default function ClosingTime({
                             <tr key={c.key} tabIndex={0} onClick={() => { if (first) { setActiveDealId(first.id); setDealPageId(first.id); setDealPageTab('preferences'); setDeskView('deal-page'); } }}>
                               <td data-label="Name" className="px-4 py-2.5 font-medium text-slate-900">{c.name}</td>
                               <td data-label={contactsTab === 'clients' ? 'Stage' : 'Role'}>{contactsTab === 'clients'
-                                ? <span className={`ds-chip ${c.active ? 'bg-emerald-50 text-emerald-700' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{c.active ? 'Active Client' : 'Past Client'}</span>
+                                ? <span className={`ds-chip ${c.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{c.active ? 'Active Client' : 'Past Client'}</span>
                                 : <span className="capitalize">{c.role || '—'}</span>}</td>
                               <td data-label="Email">{c.email || '—'}</td>
                               <td data-label="Phone">{c.phone || '—'}</td>
@@ -2768,7 +2768,7 @@ export default function ClosingTime({
               const openDeal = (deal: (typeof deals)[number]) => { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setDeskView('deal-page'); };
               const row = (deal: (typeof deals)[number]) => {
                 const days = daysUntilClosing(deal.closingDate, today);
-                const dot = days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#9A3D2B]' : days <= 7 ? 'bg-[#B8860B]' : 'bg-[#2F7D5B]';
+                const dot = days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#FF2A04] ring-1 ring-[#661102]' : days <= 7 ? 'bg-[#FAD800] ring-1 ring-[#645600]' : 'bg-[#00E200] ring-1 ring-[#005A00]';
                 const stageIdx = Math.max(0, stageList.indexOf(deal.workflowStatus as (typeof stageList)[number]));
                 const pct = Math.round(((stageIdx + 1) / stageList.length) * 100);
                 const openTasks = deal.tasks.filter((t) => !t.complete).length;
@@ -2819,9 +2819,9 @@ export default function ClosingTime({
                 if (isDealClosedAndComplete(deal)) return { key: 'closed', label: 'Closed', tone: 'bg-slate-100 text-slate-600' };
                 const d = daysUntilClosing(deal.closingDate, today);
                 if (d === null) return { key: 'nodate', label: 'No date', tone: 'bg-slate-100 text-slate-600' };
-                if (d < 0) return { key: 'overdue', label: 'Overdue', tone: 'bg-red-50 text-red-700' };
-                if (d <= 7) return { key: 'attention', label: 'Needs Attention', tone: 'bg-amber-50 text-amber-700' };
-                return { key: 'ontrack', label: 'On Track', tone: 'bg-emerald-50 text-emerald-700' };
+                if (d < 0) return { key: 'overdue', label: 'Overdue', tone: 'bg-[#FFEAE6] text-[#661102]' };
+                if (d <= 7) return { key: 'attention', label: 'Needs Attention', tone: 'bg-[#FEF8CC] text-[#645600]' };
+                return { key: 'ontrack', label: 'On Track', tone: 'bg-[#E0FBE0] text-[#005A00]' };
               };
               const sinceLabel = (iso?: string) => {
                 if (!iso) return '—';
@@ -2909,9 +2909,9 @@ export default function ClosingTime({
               const days = deal ? daysUntilClosing(deal.closingDate, today) : null;
               const health = closed ? { label: 'Closed', tone: 'bg-slate-100 text-slate-600' }
                 : days === null ? { label: 'No date', tone: 'bg-slate-100 text-slate-600' }
-                : days < 0 ? { label: 'Overdue', tone: 'bg-red-50 text-red-700' }
-                : days <= 7 ? { label: 'Needs Attention', tone: 'bg-amber-50 text-amber-700' }
-                : { label: 'On Track', tone: 'bg-emerald-50 text-emerald-700' };
+                : days < 0 ? { label: 'Overdue', tone: 'bg-[#FFEAE6] text-[#661102]' }
+                : days <= 7 ? { label: 'Needs Attention', tone: 'bg-[#FEF8CC] text-[#645600]' }
+                : { label: 'On Track', tone: 'bg-[#E0FBE0] text-[#005A00]' };
               const nextDeadline = deal ? dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] : undefined;
               return (
                 <DealSubpage
@@ -2966,7 +2966,7 @@ export default function ClosingTime({
               const health = deal ? (() => {
                 if (isDealClosedAndComplete(deal)) return { label: 'Closed', tone: 'bg-slate-100 text-slate-600' };
                 const d = daysUntilClosing(deal.closingDate, today);
-                return d === null ? { label: 'No date', tone: 'bg-slate-100 text-slate-600' } : d < 0 ? { label: 'Overdue', tone: 'bg-red-50 text-red-700' } : d <= 7 ? { label: 'Needs Attention', tone: 'bg-amber-50 text-amber-700' } : { label: 'On Track', tone: 'bg-emerald-50 text-emerald-700' };
+                return d === null ? { label: 'No date', tone: 'bg-slate-100 text-slate-600' } : d < 0 ? { label: 'Overdue', tone: 'bg-[#FFEAE6] text-[#661102]' } : d <= 7 ? { label: 'Needs Attention', tone: 'bg-[#FEF8CC] text-[#645600]' } : { label: 'On Track', tone: 'bg-[#E0FBE0] text-[#005A00]' };
               })() : { label: 'No date', tone: 'bg-slate-100 text-slate-600' };
               const nextDeadline = deal ? dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] : undefined;
               return (
@@ -3035,7 +3035,7 @@ export default function ClosingTime({
                       <a href={calendarFeed.webcalUrl} onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'apple' })} className="underline underline-offset-2">Open In Apple Calendar</a>
                       <button type="button" onClick={() => void copyCalendarFeed()} className="underline underline-offset-2">{calendarFeedCopied ? 'Copied' : 'Copy Link'}</button>
                     </div>
-                    {calendarFeedState === 'error' && <p className="text-xs font-semibold text-[#9A3D2B]">Could not load your link. Try again.</p>}
+                    {calendarFeedState === 'error' && <p className="text-xs font-semibold text-[#661102]">Could not load your link. Try again.</p>}
                   </div>
                 )}
               </li>
@@ -3208,7 +3208,7 @@ export default function ClosingTime({
           {[
             ['Agent deals', activeDealCount, ClipboardCheck, 'bg-[#F8F5FF] text-[#301D5D]'],
             ['Closing in 30 days', closingSoonCount, CalendarDays, 'bg-[#FFF9E7] text-[#855D10]'],
-            ['Review alerts', reviewAlerts.length, AlertTriangle, 'bg-[#FFF0EC] text-[#9A3D2B]'],
+            ['Review alerts', reviewAlerts.length, AlertTriangle, 'bg-[#FFEAE6] text-[#661102]'],
             ['Overdue tasks', overdueTaskCount, ListTodo, 'bg-[#F2EEE7] text-[#4C3B67]'],
           ].map(([label, value, Icon, tone]) => {
             const MetricIcon = Icon as typeof CalendarDays;
@@ -3544,7 +3544,7 @@ export default function ClosingTime({
               <div className="mt-5 space-y-2">
                 {!activeDeal.tasks.length && !activeDeal.reminders.length ? <p className="border border-dashed border-slate-300 bg-[#FCFBF9] p-4 text-sm text-slate-600">Use deadline presets (7d, 3d, 1d, due) in the review step or add a custom action here.</p> : <>
                   {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border border-[#E7C769] bg-[#FFF9E7] p-3"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#A97A1A] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}>{reminder.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#855D10]">{formatDate(reminder.reminderDate)}</span></div>)}
-                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-red-100 text-red-800' : task.priority === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'} capitalize`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#B6402C]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#9A3D2B]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
+                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-[#FFEAE6] text-[#661102]' : task.priority === 'high' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-slate-100 text-slate-600'} capitalize`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#B6402C]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#661102]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
                 </>}
               </div>
             </div>
@@ -3586,11 +3586,11 @@ export default function ClosingTime({
                   </button>
                 )}
                 {!isDealLocked(activeDeal) && (
-                  <button type="button" onClick={lockDealRecord} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#9A3D2B] px-4 text-sm font-bold text-white"><Lock className="h-4 w-4" aria-hidden="true" />Lock Record</button>
+                  <button type="button" onClick={lockDealRecord} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#661102] px-4 text-sm font-bold text-white"><Lock className="h-4 w-4" aria-hidden="true" />Lock Record</button>
                 )}
               </div>
               {dealFolderError ? (
-                <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#9A3D2B]"><AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />{dealFolderError}</p>
+                <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#661102]"><AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />{dealFolderError}</p>
               ) : null}
             </div>
             <p className="mt-3 text-xs text-slate-500">
@@ -3660,7 +3660,7 @@ export default function ClosingTime({
               </div>
 
               {cameraError && (
-                <p role="alert" className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-900">
+                <p role="alert" className="mt-3 rounded-md border border-[#FAD800] bg-[#FEF8CC] px-3 py-2 text-sm leading-6 text-[#645600]">
                   {cameraError}
                 </p>
               )}
@@ -3726,10 +3726,10 @@ export default function ClosingTime({
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
               {extractionState === 'extracting' && <p role="status" className="mb-3 border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-sm text-slate-700">Reading your upload...</p>}
-              {extractionState === 'error' && <p role="alert" className="mb-3 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{extractionError || 'The upload could not be read. Use a clear PDF or image smaller than 15 MB, then try again.'}</p>}
+              {extractionState === 'error' && <p role="alert" className="mb-3 border border-[#FF2A04] bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">{extractionError || 'The upload could not be read. Use a clear PDF or image smaller than 15 MB, then try again.'}</p>}
               {renderExtractionReview()}
               {extractionWarnings.length > 0 && (
-                <ul className="mb-3 list-disc space-y-1 border-l-2 border-amber-300 pl-6 text-xs leading-5 text-amber-900">
+                <ul className="mb-3 list-disc space-y-1 border-l-2 border-[#FAD800] pl-6 text-xs leading-5 text-[#645600]">
                   {extractionWarnings.map((warning) => <li key={warning}>{warning}</li>)}
                 </ul>
               )}

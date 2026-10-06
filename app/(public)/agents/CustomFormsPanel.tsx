@@ -71,7 +71,7 @@ export default function CustomFormsPanel({ section, label, dealContext }: { sect
         <button type="button" disabled={uploading} onClick={() => inputRef.current?.click()}>Upload PDF</button>
         <input ref={inputRef} type="file" accept="application/pdf,.pdf" multiple className="hidden" onChange={(e) => { void upload(e.target.files); e.target.value = ''; }} />
       </div>
-      {error && <p className="mt-2 text-xs text-red-600" role="alert">{error}</p>}
+      {error && <p className="mt-2 text-xs text-[#661102]" role="alert">{error}</p>}
       <p className="mt-4 text-sm font-semibold text-slate-700">{forms.length} {forms.length === 1 ? 'form' : 'forms'}</p>
       {loaded && forms.length === 0 && <p className="mt-2 text-sm text-slate-500">Nothing here yet. Upload a form to add it.</p>}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
