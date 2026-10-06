@@ -12,7 +12,7 @@ export default function ClientUploadsCard({ dealId, version }: { dealId: string;
     let live = true;
     fetch(`/api/closing-time/assist?dealId=${encodeURIComponent(dealId)}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((body) => { if (live) setRows(body ? (body.uploads as Upload[]).filter((u) => !u.archived) : []); })
+      .then((body) => { if (live) setRows(body ? (body.uploads as Upload[]).filter((u) => !u.archived && !u.docId.startsWith('req:')) : []); })
       .catch(() => { if (live) setRows([]); });
     return () => { live = false; };
   }, [dealId, version]);
@@ -24,7 +24,7 @@ export default function ClientUploadsCard({ dealId, version }: { dealId: string;
         <span className="flex items-center gap-2 text-sm font-semibold text-slate-900"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Client Uploads</span>
         <span className="text-xs font-medium text-slate-500">{rows.length}</span>
       </div>
-      {rows.length === 0 && <p className="px-4 pb-4 text-xs text-slate-500">Files your clients upload through their portal links appear here.</p>}
+      {rows.length === 0 && <p className="px-4 pb-4 text-xs text-slate-500">General uploads from your clients appear here. Files for a document request show under that request.</p>}
       {rows.map((u) => (
         <div key={u.id} className="ds-list-row">
           <span className="min-w-0 flex-1">
