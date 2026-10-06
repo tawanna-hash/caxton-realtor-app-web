@@ -313,7 +313,10 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-slate-900">{p.name}</span>
                   <span className="mt-0.5 inline-block rounded-full bg-[#EFEAF8] px-2 py-0.5 text-[11px] font-medium capitalize text-[#301D5D]">{p.role}</span>
+                  {p.email ? <span className="mt-1 block truncate text-xs text-slate-500">{p.email}</span> : null}
+                  {p.phone ? <span className="block truncate text-xs text-slate-500">{p.phone}</span> : null}
                 </span>
+                {p.phone ? <a href={`tel:${p.phone.replace(/[^+\d]/g, '')}`} aria-label={`Call ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : null}
                 {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : null}
               </div>
             ))}
