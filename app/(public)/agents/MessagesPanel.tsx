@@ -215,7 +215,8 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   );
   const composerInner = !party ? null : (
     <div className="px-4 py-4">
-      <h3 className="mb-2 text-[14px] font-semibold text-[#1B1726]">{mode === 'email' ? 'New Email' : 'New Text'}</h3>
+      <h3 className="text-[14px] font-semibold text-[#1B1726]">{mode === 'email' ? 'New Email' : 'New Text'}</h3>
+      <p className="mb-3 mt-0.5 break-words text-[12px] font-medium text-[#7A7787]">To: {(targets.length ? targets : [party]).map((p) => `${p.name}${mode === 'email' ? (p.email ? ` (${p.email})` : ' (no email)') : (p.phone ? ` (${p.phone})` : ' (no phone)')}`).join(', ')}</p>
       {mailbox && mailbox.connected && !mailbox.readReplies && (
         <label className="mb-4 flex items-start gap-2 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-[12px] font-medium text-[#4A4757]">
           <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={false} disabled={busy} onChange={() => void post({ action: 'mailbox_read', on: true })} />
