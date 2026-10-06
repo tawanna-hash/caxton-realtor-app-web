@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ExternalLink, Search } from 'lucide-react';
+import Tip from './Tip';
 
 type Mls = { id: string; name: string; market: string; url?: string };
 
@@ -82,7 +83,7 @@ export default function MlsConnectionsCard() {
         <h3 className="text-lg font-semibold text-gray-900">MLS Connections</h3>
         <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{selected.length} Selected</span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-600">Choose the MLS services you belong to. You sign in to your own MLS account. Closing Time does not store your MLS password.</p>
+      <Tip text="Choose the MLS services you belong to. You sign in to your own MLS account. Closing Time does not store your MLS password." />
       <label className="relative mt-4 block">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
         <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by name or city" aria-label="Search Texas MLS services" className="h-9 w-full rounded-md border border-slate-300 pl-9 pr-3 text-sm" />

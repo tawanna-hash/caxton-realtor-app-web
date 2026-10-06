@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import SignPdfPages from '@/components/SignPdfPages';
+import Tip from './Tip';
 
 export type PlacedField = { signer: number; type: 'signature' | 'date'; page: number; x: number; y: number; w: number; h: number };
 const COLORS = ['#301D5D', '#9A3D2B', '#1B6B5C', '#8A5A00', '#2F5DA8', '#7A2F7A'];
@@ -19,7 +20,7 @@ export default function SignaturePlacer({ data, signers, fields, onChange, onClo
           <select className="min-h-[36px] rounded-md border border-slate-300 px-2" value={who} onChange={(e) => setWho(Number(e.target.value))}>{signers.map((s, i) => <option key={s + i} value={i}>{s}</option>)}</select></label>
         <label className="flex items-center gap-1">Field
           <select className="min-h-[36px] rounded-md border border-slate-300 px-2" value={type} onChange={(e) => setType(e.target.value as 'signature' | 'date')}><option value="signature">Signature</option><option value="date">Date</option></select></label>
-        <span className="text-slate-600">Click the page to place it. Click a placed field to remove it.</span>
+        <Tip text="Click the page to place it. Click a placed field to remove it." />
         <button type="button" className="ml-auto min-h-[36px] rounded-md bg-[#301D5D] px-4 font-bold text-white" onClick={onClose}>Done</button>
       </div>
       {missing.length > 0 && <p className="bg-amber-50 px-3 py-2 text-xs text-amber-900">Still needs a signature field: {missing.join(', ')}</p>}

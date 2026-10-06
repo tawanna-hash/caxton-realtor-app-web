@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Tip from './Tip';
 
 export type SignSettings = { expireDays: number; remindEvery: number; maxReminders: number; draw: boolean; type: boolean; upload: boolean; notice: string; redirectUrl: string; attach: boolean; emailRequester: boolean; accent: string; brandName: string };
 export type SignRequestRow = { id: string; document: string; status: string; createdAt: string; signed: number; total: number };
@@ -35,7 +36,7 @@ export function SecureSignSettings({ settings, post, busy }: { settings: SignSet
             <label className="block"><span className={label}>Brand name (defaults to your brokerage from Custom Designer)</span><input className={input} maxLength={80} value={s.brandName} onChange={(e) => setS({ ...s, brandName: e.target.value })} /></label>
             <label className="block"><span className={label}>Accent Color</span><span className="flex gap-2"><input type="color" aria-label="Accent color" className="h-9 w-12" value={s.accent} onChange={(e) => setS({ ...s, accent: e.target.value })} /><input className={input} value={s.accent} maxLength={7} onChange={(e) => setS({ ...s, accent: e.target.value })} /></span></label>
           </div>
-          <p className="text-xs text-slate-500">Your logo comes from your agent details in Custom Designer.</p>
+          <Tip text="Your logo comes from your agent details in Custom Designer." />
           <label className="block"><span className={label}>Notice shown above the document (for example a brokerage disclaimer)</span><input className={input} maxLength={400} value={s.notice} onChange={(e) => setS({ ...s, notice: e.target.value })} /></label>
           <label className="block"><span className={label}>After signing, send signers to (https address, optional)</span><input className={input} maxLength={500} placeholder="https://" value={s.redirectUrl} onChange={(e) => setS({ ...s, redirectUrl: e.target.value })} /></label>
           <div className="space-y-1">{check('attach', 'Attach the completed PDF to the completion email')}{check('emailRequester', 'Email me when a request completes or is declined')}</div>

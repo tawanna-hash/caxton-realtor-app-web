@@ -6,6 +6,7 @@ import { SecureSignRequests, SecureSignSettings, type SignLayout, type SignReque
 import SignaturePlacer, { type PlacedField } from './SignaturePlacer';
 import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
+import Tip from './Tip';
 
 type Party = { id: string; role: string; name: string; email: string };
 type FollowUp = { id: string; kind: string; toName: string; toEmail: string; subject: string; body: string; status: 'draft' | 'sent' | 'dismissed'; sentAt: string | null };
@@ -81,7 +82,7 @@ function MessageLayoutSetting({ dealId }: { dealId: string }) {
   return (
     <section aria-label="Messages layout" className="rounded-md border border-gray-200 bg-white p-5">
       <h4 className="mb-1 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Messages Layout</h4>
-      <p className="mb-3 text-sm text-slate-500">Choose how the Messages tab looks. You can also change it from the Messages tab.</p>
+      <Tip text="Choose how the Messages tab looks. You can also change it from the Messages tab." />
       <MessageLayoutPicker value={value} onPick={(v) => void pick(v)} disabled={busy} />
     </section>
   );
@@ -298,7 +299,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                         }}>Approve And Send</button>
                         <button type="button" disabled={busy} className={btn} onClick={() => void post({ action: 'dismiss', id: f.id })}>Dismiss</button>
                       </div>
-                      <p className="mt-1 text-xs text-slate-500">Sent with you copied; replies come to you.</p>
+                      <Tip text="Sent with you copied; replies come to you." />
                     </li>
                   );
                 })}
@@ -389,7 +390,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                 )}
                 <label className="block"><span className="text-xs font-semibold text-slate-600">Email subject (optional)</span>
                   <input className={input} value={sigSubject} maxLength={200} onChange={(e) => setSigSubject(e.target.value)} /></label>
-                <p className="text-xs text-slate-500">Nothing is sent until you press the button.</p>
+                <Tip text="Nothing is sent until you press the button." />
                 <button type="button" disabled={busy} className={btnPrimary} onClick={() => void sendSignature()}>Send For Signature</button>
               </div>
             )}
@@ -468,7 +469,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             {showChecklist && (
               <div className="mt-3">
                 <textarea className="min-h-[170px] w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs" value={checklistText} onChange={(e) => setChecklistText(e.target.value)} aria-label="Checklist template" />
-                <p className="mt-1 text-xs text-slate-500">One step per line: title | days | effective or closing. Use a negative number for days before closing.</p>
+                <Tip text="One step per line: title | days | effective or closing. Use a negative number for days before closing." />
                 <button type="button" disabled={busy} className={`${btnPrimary} mt-2`} onClick={async () => { const steps = textToSteps(checklistText); if (steps.length) { await post({ action: 'save_checklist', steps }); setShowChecklist(false); } }}>Save Template</button>
               </div>
             )}

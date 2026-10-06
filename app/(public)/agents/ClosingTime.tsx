@@ -130,6 +130,7 @@ import {
   type TrecTaskPriority,
   type TrecTaskStatus,
 } from '@/lib/trec-workflow';
+import Tip from './Tip';
 
 type RadarItem = {
   id: string;
@@ -2272,7 +2273,7 @@ export default function ClosingTime({
       </label>
       <div className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
         <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
-        <p className="mt-1 text-xs leading-5 text-slate-500 sm:min-h-[84px]">TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies.</p>
+        <Tip text="TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies." />
         <input
           type="date"
           readOnly
@@ -2341,7 +2342,7 @@ export default function ClosingTime({
                         <div className="max-h-[560px] overflow-y-auto border border-[#D9CFF0] bg-white">
                           <div className="sticky top-0 z-10 border-b border-[#E6E5EC] bg-white px-3 py-2">
                             <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#301D5D]">Proposed Entries</p>
-                            <p className="mt-1 text-xs text-slate-600">Compare each entry with the unchanged contract before applying.</p>
+                            <Tip text="Compare each entry with the unchanged contract before applying." />
                           </div>
                           <div className="space-y-5 p-3">
                             {Object.entries(extractionDraft.worksheet).filter(([, value]) => Boolean(value)).length > 0 && (
@@ -2430,7 +2431,7 @@ export default function ClosingTime({
                         )}
                         <div className="border-t border-slate-200 bg-white px-3 py-2">
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="text-xs text-slate-500">Send this filled form to your broker to review.</p>
+                            <Tip text="Send this filled form to your broker to review." />
                             <button type="button" onClick={() => { setReviewOpen((open) => !open); setReviewState({ status: 'idle', message: '' }); }} aria-expanded={reviewOpen} className="ds-review-btn">Submit For Review</button>
                           </div>
                           {reviewOpen && (
@@ -3062,7 +3063,7 @@ export default function ClosingTime({
               <button type="button" disabled={calendarFeedState === 'loading'} onClick={() => { if (window.confirm('Reset your calendar link? The old link will stop working.')) void loadCalendarFeed(true); }} className="mt-4 inline-flex min-h-[36px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700">
                 {calendarFeedState === 'loading' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}Reset Calendar Link
               </button>
-              {calendarFeed && calendarFeedState !== 'loading' && <p className="mt-2 text-xs text-slate-500">Use Open In Apple Calendar on the Integrations page to subscribe with the new link.</p>}
+              {calendarFeed && calendarFeedState !== 'loading' && <Tip text="Use Open In Apple Calendar on the Integrations page to subscribe with the new link." />}
             </div>
             <div {...collapsible('alerts')} className="min-w-0 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem] lg:col-span-2">
               <div className="flex items-center justify-between gap-3">
@@ -3091,7 +3092,7 @@ export default function ClosingTime({
                     Send Deadline Alerts By Text
                   </label>
                   <input id="closing-time-sms-phone" type="tel" defaultValue={notificationPreferences.smsPhone} placeholder="Mobile Number" className="block w-full max-w-sm rounded-md border border-[#E6E5EC] px-3 py-2 text-sm font-normal text-slate-800" />
-                  <p className="text-xs text-slate-500">Each text includes the property address. Message and data rates may apply. Reply STOP to opt out.</p>
+                  <Tip text="Each text includes the property address. Message and data rates may apply. Reply STOP to opt out." />
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FileText } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import { clientsOf } from './ClientPortalPanel';
+import Tip from './Tip';
 
 type Req = { id: string; label: string; note: string; personName: string; status: 'pending' | 'uploaded' | 'received' | 'cancelled'; emailed: boolean; createdAt: string; uploadedAt: string | null; receivedAt: string | null; logged: { requested: boolean; uploaded: boolean; received: boolean } };
 type Upload = { id: string; docId: string; filename: string; storedIn: string; storedPath: string; storedUrl: string; archived: boolean };
@@ -157,7 +158,7 @@ export default function DocumentRequestsCard({ deal, locked, documentGroups, onU
         </div>
       )}
       {message && <p className="border-t border-[#E6E5EC] px-4 py-2 text-xs font-medium text-slate-600" role="status">{message}</p>}
-      {reqs.length === 0 && !open && <p className="px-4 pb-4 text-xs text-slate-500">Ask a client for a document, like a driver&apos;s license, and track it here until you mark it received.</p>}
+      {reqs.length === 0 && !open && <Tip text="Ask a client for a document, like a driver's license, and track it here until you mark it received." />}
       {reqs.map((r) => {
         const files = uploads.filter((u) => u.docId === `req:${r.id}` && !u.archived);
         return (

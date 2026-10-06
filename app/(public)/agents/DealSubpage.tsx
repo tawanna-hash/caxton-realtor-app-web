@@ -9,6 +9,7 @@ import TrecFormActions from './TrecFormActions';
 import ClientUploadsCard from './ClientUploadsCard';
 import DocumentRequestsCard from './DocumentRequestsCard';
 import { BUYER_REP_FORM_OPTIONS, CONTRACT_FORM_OPTIONS, dealFolders, effectiveAgentSide, requiredIdsFor } from './purchase-documents';
+import Tip from './Tip';
 
 type SnapId = 'attention' | 'waiting' | 'property' | 'next' | 'preferences' | 'offers' | 'parties' | 'workspace';
 
@@ -504,7 +505,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
       )}
       <div className="ds-card">
         <p className="text-sm font-semibold text-slate-900">Key Deadlines</p>
-        <p className="mt-1 text-sm text-slate-600">Enter the signed contract&apos;s effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules.</p>
+        <Tip text="Enter the signed contract's effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules." />
         {timelineFields}
         {trackedDeadlines.length > 0 && (
           <div className="mt-5 border-t border-[#E6E5EC] pt-3">

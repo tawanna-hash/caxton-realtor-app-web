@@ -5,6 +5,7 @@ import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
 import { CONTRACT_MAP_SECTIONS } from '@/lib/trec-20-19-contract-map';
 import type { AgentCashLine, AgentDeal, AgentKeyTerm } from '@/lib/agent-command-center-workspace';
+import Tip from './Tip';
 
 type Patch = Partial<AgentDeal>;
 type Props = { deal: AgentDeal; onPatch: (patch: Patch) => void; onParties: (key: 'buyerNames' | 'sellerNames' | 'buyer2Name' | 'seller2Name', value: string) => void };
@@ -489,7 +490,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
         <div className="flex items-center justify-between gap-4 border-b border-[#F1F0F5] px-[1.125rem] py-3">
           <div>
             <p className="text-sm font-medium text-slate-900">Earnest Money In Escrow</p>
-            <p className="text-xs text-slate-500">Shown to the client as the deposit held in escrow</p>
+            <Tip text="Shown to the client as the deposit held in escrow" />
           </div>
           <label className="flex w-36 items-center gap-1 rounded-md border border-[#E6E5EC] px-2 text-sm text-slate-500 focus-within:border-[#301D5D]">$
             <input value={deal.earnestInEscrow || asNumber(deal.contractDetails.earnestMoney)} onChange={(e) => onPatch({ earnestInEscrow: e.target.value })} inputMode="decimal" aria-label="Earnest money in escrow" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
@@ -498,7 +499,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
         <div className="px-[1.125rem] py-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-900">Estimated Cash To Close</p>
-            <p className="text-xs text-slate-500">Shown on the client&apos;s closing page</p>
+            <Tip text="Shown on the client's closing page" />
           </div>
           <ul className="mt-2 divide-y divide-[#F1F0F5]">
             {lines.map((line) => (

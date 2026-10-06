@@ -8,6 +8,7 @@ import type { AgentCommandCenterWorkspace } from '@/lib/agent-command-center-wor
 import type { TrecFormVersion } from '@/lib/trec-form-versions';
 import { trackEvent } from '@/app/posthog-provider';
 import ClosingTime from './ClosingTime';
+import Tip from './Tip';
 
 export type { ReferralProvider } from './AgentToolsPanels';
 
@@ -127,7 +128,7 @@ export default function AgentCommandCenterClient({
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Quick Date Check</p>
                 <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Need a Date Without Opening Closing Time?</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">Use the compact, unsaved TREC timing check only when you need a fast answer.</p>
+                <Tip text="Use the compact, unsaved TREC timing check only when you need a fast answer." />
               </div>
             </div>
             <button
@@ -161,7 +162,7 @@ export default function AgentCommandCenterClient({
               </div>
               <div className="p-4 sm:p-6">
                 {!effectiveDate ? (
-                  <p className="text-sm leading-6 text-slate-600">Enter the effective date to see earnest money and option fee delivery timing.</p>
+                  <Tip text="Enter the effective date to see earnest money and option fee delivery timing." />
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2">
                     {deadlines.map((deadline) => (
