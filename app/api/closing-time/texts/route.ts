@@ -4,7 +4,7 @@ import { requireUser } from '@/lib/server/auth/user';
 import { withErrorHandling } from '@/lib/server/error';
 import { requireDeal } from '@/lib/server/closing-time-assist';
 import { smsAllowedFor } from '@/lib/server/agent-deadline-notifications';
-import { mailboxState, setReadReplies, syncMailboxReplies } from '@/lib/server/closing-time-mailbox';
+import { mailboxState, setMessageLayout, setReadReplies, syncMailboxReplies } from '@/lib/server/closing-time-mailbox';
 import { CONTACT_SCOPE, listContactActivity, attestDealConsent, listContactMessages, consentFor, listDealEmails, listDealTexts, sendDealEmail, sendDealOptIn, sendDealText } from '@/lib/server/closing-time-texts';
 import { query } from '@/lib/server/db/neon';
 
@@ -20,6 +20,7 @@ const action = z.discriminatedUnion('action', [
     to: z.array(z.object({ name: z.string().trim().min(1).max(200), email: z.string().trim().email().max(320) })).min(1).max(10) }),
   z.object({ action: z.literal('mailbox_read'), on: z.boolean() }),
   z.object({ action: z.literal('mailbox_check') }),
+  z.object({ action: z.literal('message_layout'), value: z.enum(['inbox', 'timeline', 'strip', 'threads']) }),
   z.object({ action: z.literal('opt_in_request'), dealId, ...person }),
   z.object({ action: z.literal('confirm_agreed'), dealId, ...person }),
 ]);
@@ -49,6 +50,7 @@ export const POST = withErrorHandling(async (req: Request): Promise<Response> =>
   const user = await requireUser();
   const input = action.parse(await req.json());
   if (input.action === 'mailbox_read') { await setReadReplies(user.realtorId, input.on); if (input.on) await syncMailboxReplies(user.realtorId, true).catch(() => undefined); return priv({ ok: true }); }
+  if (input.action === 'message_layout') { await setMessageLayout(user.realtorId, input.value); return priv({ ok: true }); }
   if (input.action === 'mailbox_check') return priv({ ok: true, ...(await syncMailboxReplies(user.realtorId, true)) });
   const isContact = input.dealId === CONTACT_SCOPE;
   const deal = isContact ? null : await requireDeal(user.realtorId, input.dealId);

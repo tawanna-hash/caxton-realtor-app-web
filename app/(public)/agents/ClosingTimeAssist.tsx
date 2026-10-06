@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import MessageLayoutPicker, { type MessageLayout } from './MessageLayoutPicker';
 import { SecureSignRequests, SecureSignSettings, type SignLayout, type SignRequestRow, type SignSettings } from './SecureSignPanel';
 import SignaturePlacer, { type PlacedField } from './SignaturePlacer';
 import CollapseToggle, { useCollapsibles } from './CollapseToggle';
@@ -62,6 +63,27 @@ function EmailRepliesSetting({ dealId, mail }: { dealId: string; mail: string })
         </p>
       )}
     </div>
+  );
+}
+
+function MessageLayoutSetting({ dealId }: { dealId: string }) {
+  const [value, setValue] = useState<MessageLayout | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    let live = true;
+    fetch(`/api/closing-time/texts?dealId=${encodeURIComponent(dealId)}&phones=`, { cache: 'no-store' }).then((r) => r.json()).then((b) => { if (live) setValue((b.mailbox?.layout as MessageLayout | null) ?? null); }).catch(() => undefined);
+    return () => { live = false; };
+  }, [dealId]);
+  const pick = async (v: MessageLayout) => {
+    setBusy(true); setValue(v);
+    try { await fetch('/api/closing-time/texts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'message_layout', value: v }) }); } finally { setBusy(false); }
+  };
+  return (
+    <section aria-label="Messages layout" className="rounded-md border border-gray-200 bg-white p-5">
+      <h4 className="mb-1 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Messages Layout</h4>
+      <p className="mb-3 text-sm text-slate-500">Choose how the Messages tab looks. You can also change it from the Messages tab.</p>
+      <MessageLayoutPicker value={value} onPick={(v) => void pick(v)} disabled={busy} />
+    </section>
   );
 }
 
@@ -310,6 +332,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           </section>
 
           {placer && <SignaturePlacer data={placer} signers={(data.parties ?? []).filter((p) => p.email && sigTo.includes(p.id)).map((p) => p.name || p.email)} fields={sigFields} onChange={setSigFields} onClose={() => setPlacer(null)} />}
+          <MessageLayoutSetting dealId={deal.id} />
           <section aria-label="Automation" className="rounded-md border border-gray-200 bg-white p-5">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Automation</h4>
             <label className="mt-3 flex items-start gap-2 text-sm text-slate-700">
