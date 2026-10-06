@@ -123,7 +123,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
     setFiles(next);
     if (fileRef.current) fileRef.current.value = '';
   };
-  const targets = (layout === 'timeline' || layout === 'split') && !contact ? parties.filter((p) => (recips.length ? recips : party ? [party.key] : []).includes(p.key)) : party ? [party] : [];
+  const targets = (layout === 'timeline' || layout === 'split') && !contact ? parties.filter((p) => recips.includes(p.key)) : party ? [party] : [];
   const sendEmail = async () => {
     const list = targets.filter((p) => p.email);
     if (!list.length) return;
@@ -146,7 +146,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
 
   if (!parties.length) return <div className="ds-card px-4 py-6 text-sm text-slate-600">Add the people on this deal on the People tab to message them here.</div>;
   const items = party ? itemsFor(party) : [];
-  const recipKeys = recips.length ? recips : party ? [party.key] : [];
+  const recipKeys = (layout === 'timeline' || layout === 'split') && !contact ? recips : party ? [party.key] : [];
   const last = (p: Party) => { const l = itemsFor(p).at(-1); return l ? `${l.kind === 'sms' ? 'Text' : 'Email'} · ${stamp(l.at)}` : 'No messages yet'; };
 
   const bubble = (i: Item, who?: string) => (
@@ -225,7 +225,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   const composerInner = !party ? null : (
     <div className="px-4 py-4">
       <h3 className="text-[14px] font-semibold text-[#1B1726]">{mode === 'email' ? 'New Email' : 'New Text'}</h3>
-      <p className="mb-3 mt-0.5 break-words text-[12px] font-medium text-[#7A7787]">To: {(targets.length ? targets : [party]).map((p) => `${p.name}${mode === 'email' ? (p.email ? ` (${p.email})` : ' (no email)') : (p.phone ? ` (${p.phone})` : ' (no phone)')}`).join(', ')}</p>
+      <p className="mb-3 mt-0.5 break-words text-[12px] font-medium text-[#7A7787]">To: {targets.length === 0 ? 'Select a contact above' : targets.map((p) => `${p.name}${mode === 'email' ? (p.email ? ` (${p.email})` : ' (no email)') : (p.phone ? ` (${p.phone})` : ' (no phone)')}`).join(', ')}</p>
       {mailbox && mailbox.connected && !mailbox.readReplies && (
         <label className="mb-4 flex items-start gap-2 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-[12px] font-medium text-[#4A4757]">
           <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={false} disabled={busy} onChange={() => void post({ action: 'mailbox_read', on: true })} />
@@ -265,8 +265,8 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             {attachUI}
             <div className="flex items-center justify-between gap-3">
               <span className="text-[12px] font-medium text-[#7A7787]">Goes to {party.email}. You are copied and replies go to your email. The subject starts with the property address.</span>
-              <span className="flex gap-2"><button type="button" className={btn} disabled={busy || !body} onClick={clearAll}>Clear</button>
-              <button type="button" className={btn} disabled={busy || !subject.trim() || !body.trim()} onClick={() => void sendEmail()}>Send Email</button></span>
+              <span className="flex gap-2"><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !body} onClick={clearAll}>Clear</button>
+              <button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !targets.length || !subject.trim() || !body.trim()} onClick={() => void sendEmail()}>Send Email</button></span>
             </div>
           </div>
         ) : <p className="text-[13px] text-[#4A4757]">No email on file for {party.name}. Add one on the People tab.</p>
@@ -282,7 +282,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             {requestUI}
             <div className="flex items-center justify-between gap-3">
               <span className="text-[12px] font-medium text-[#7A7787]">Sent to {party.phone}. The property address and a STOP line are added.</span>
-              <span className="flex gap-2"><button type="button" className={btn} disabled={busy || !body} onClick={clearAll}>Clear</button><button type="button" className={btn} disabled={busy || !body.trim()} onClick={() => void sendText()}>Send Text</button></span>
+              <span className="flex gap-2"><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !body} onClick={clearAll}>Clear</button><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !targets.length || !body.trim()} onClick={() => void sendText()}>Send Text</button></span>
             </div>
           </div>
         ) : (
@@ -358,7 +358,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             <div className="flex flex-wrap gap-2">
               {parties.map((p) => {
                 const on = recipKeys.includes(p.key);
-                return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r.length ? r : [sel]; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-full !border !px-2 !py-0.5 !text-[10px] !leading-4 font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#7A7787]">{p.role}</span></button>;
+                return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-full !border !px-2 !py-0.5 !text-[10px] !leading-4 font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#7A7787]">{p.role}</span></button>;
               })}
             </div>
             <p className="mt-2 text-[12px] font-medium text-[#7A7787]">Each person gets their own copy. Texts go only to people who agreed to texts.</p>

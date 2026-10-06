@@ -16,6 +16,7 @@ function ensure(): Promise<void> {
   ready ??= (async () => {
     await query(`CREATE TABLE IF NOT EXISTS closing_time_mailbox (
       realtor_id UUID PRIMARY KEY, read_replies BOOLEAN NOT NULL DEFAULT FALSE, last_checked TIMESTAMPTZ, last_error TEXT)`);
+    await query(`ALTER TABLE closing_time_mailbox ADD COLUMN IF NOT EXISTS message_layout TEXT`);
   })().catch((e) => { ready = null; throw e; });
   return ready;
 }
