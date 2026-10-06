@@ -1700,3 +1700,5 @@ input[type='date']::-webkit-calendar-picker-indicator {
 @media (max-width: 767px) {
   #agent-desk :is(.ds-navbtn, .ds-tab, .ds-new, .ds-row-btn, .ds-back, .ds-deal) { min-height: 44px; }
 }
+
+#agent-desk .ds-dealnav-label { color: #7A7787; }
