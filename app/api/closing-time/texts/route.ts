@@ -4,7 +4,8 @@ import { requireUser } from '@/lib/server/auth/user';
 import { withErrorHandling } from '@/lib/server/error';
 import { requireDeal } from '@/lib/server/closing-time-assist';
 import { smsAllowedFor } from '@/lib/server/agent-deadline-notifications';
-import { CONTACT_SCOPE, attestDealConsent, listContactMessages, consentFor, listDealEmails, listDealTexts, sendDealEmail, sendDealOptIn, sendDealText } from '@/lib/server/closing-time-texts';
+import { mailboxState, setReadReplies, syncMailboxReplies } from '@/lib/server/closing-time-mailbox';
+import { CONTACT_SCOPE, listContactActivity, attestDealConsent, listContactMessages, consentFor, listDealEmails, listDealTexts, sendDealEmail, sendDealOptIn, sendDealText } from '@/lib/server/closing-time-texts';
 import { query } from '@/lib/server/db/neon';
 
 export const runtime = 'nodejs';
@@ -17,6 +18,8 @@ const action = z.discriminatedUnion('action', [
   z.object({ action: z.literal('send'), dealId, ...person, body: z.string().trim().min(1).max(900) }),
   z.object({ action: z.literal('email'), dealId, subject: z.string().trim().min(1).max(200), body: z.string().trim().min(1).max(10000),
     to: z.array(z.object({ name: z.string().trim().min(1).max(200), email: z.string().trim().email().max(320) })).min(1).max(10) }),
+  z.object({ action: z.literal('mailbox_read'), on: z.boolean() }),
+  z.object({ action: z.literal('mailbox_check') }),
   z.object({ action: z.literal('opt_in_request'), dealId, ...person }),
   z.object({ action: z.literal('confirm_agreed'), dealId, ...person }),
 ]);
@@ -27,22 +30,26 @@ export const GET = withErrorHandling(async (req: Request): Promise<Response> => 
   const id = dealId.parse(url.searchParams.get('dealId'));
   const phones = (url.searchParams.get('phones') ?? '').split(',').filter(Boolean);
   const allowed = smsAllowedFor(user.email);
+  await syncMailboxReplies(user.realtorId).catch(() => undefined);
+  const mailbox = await mailboxState(user.realtorId).catch(() => null);
   if (id === CONTACT_SCOPE) {
     // Contacts stay open after a deal is closed and locked: this is the ongoing thread with a current or past client.
     const who = { name: url.searchParams.get('name') ?? '', email: url.searchParams.get('email') ?? '', phone: url.searchParams.get('phone') ?? '' };
     const m = await listContactMessages(user.realtorId, who);
-    return priv({ allowed, locked: false, texts: allowed ? m.texts : [], emails: m.emails, consent: allowed ? await consentFor(phones) : {} });
+    return priv({ allowed, locked: false, mailbox, activity: await listContactActivity(user.realtorId, who.name), texts: allowed ? m.texts : [], emails: m.emails, consent: allowed ? await consentFor(phones) : {} });
   }
   const deal = await requireDeal(user.realtorId, id);
   const locked = deal.auditLocked === true;
   const emails = await listDealEmails(user.realtorId, id);
-  if (!allowed) return priv({ allowed: false, locked, texts: [], emails, consent: {} });
-  return priv({ allowed: true, locked, texts: await listDealTexts(user.realtorId, id), emails, consent: await consentFor(phones) });
+  if (!allowed) return priv({ allowed: false, locked, mailbox, texts: [], emails, consent: {} });
+  return priv({ allowed: true, locked, mailbox, texts: await listDealTexts(user.realtorId, id), emails, consent: await consentFor(phones) });
 });
 
 export const POST = withErrorHandling(async (req: Request): Promise<Response> => {
   const user = await requireUser();
   const input = action.parse(await req.json());
+  if (input.action === 'mailbox_read') { await setReadReplies(user.realtorId, input.on); if (input.on) await syncMailboxReplies(user.realtorId, true).catch(() => undefined); return priv({ ok: true }); }
+  if (input.action === 'mailbox_check') return priv({ ok: true, ...(await syncMailboxReplies(user.realtorId, true)) });
   const isContact = input.dealId === CONTACT_SCOPE;
   const deal = isContact ? null : await requireDeal(user.realtorId, input.dealId);
   const meRow = await query<{ first_name: string | null; last_name: string | null }>(`SELECT first_name, last_name FROM realtors WHERE id=$1`, [user.realtorId]);

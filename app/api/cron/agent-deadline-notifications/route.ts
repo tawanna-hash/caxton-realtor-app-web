@@ -3,6 +3,7 @@ import {
   isAgentDeadlineDeliveryWindow,
   runAgentDeadlineNotifications,
 } from '@/lib/server/agent-deadline-notifications';
+import { syncAllMailboxes } from '@/lib/server/closing-time-mailbox';
 import { runSignReminders } from '@/lib/server/closing-time-esign';
 import { runAutoIntros, runDailySummaries, runSignatureReminders } from '@/lib/server/closing-time-assist';
 
@@ -43,6 +44,8 @@ export async function GET(req: Request) {
     out.signReminders = await runSignReminders(new URL(req.url).origin).catch((e) => ({ sent: 0, errors: [String(e)] }));
     out.autoIntros = await runAutoIntros().catch((e) => ({ sent: 0, errors: [String(e)] }));
   }
+  // Email replies from people on deals, for agents who turned on reading replies from their own mailbox.
+  out.mailboxReplies = await syncAllMailboxes().catch((e) => ({ checked: 0, stored: 0, errors: [String(e)] }));
   // End-of-day summary, 6 PM Central (one retry hour; the ledger prevents duplicates).
   if (hour === 18 || hour === 19) {
     out.summaries = await runDailySummaries(date).catch((e) => ({ sent: 0, errors: [String(e)] }));
