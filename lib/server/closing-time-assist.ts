@@ -48,6 +48,12 @@ export function ensureAssistSchema(): Promise<void> {
     await query(`CREATE TABLE IF NOT EXISTS closing_time_portal_people (
       realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE, deal_id TEXT NOT NULL, person_key TEXT NOT NULL,
       name TEXT NOT NULL DEFAULT '', token TEXT NOT NULL UNIQUE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY (realtor_id, deal_id, person_key))`);
+    await query(`CREATE TABLE IF NOT EXISTS closing_time_doc_requests (
+      id UUID PRIMARY KEY, realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE, deal_id TEXT NOT NULL,
+      label TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', person_key TEXT NOT NULL DEFAULT '', person_name TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'pending', emailed BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), uploaded_at TIMESTAMPTZ, received_at TIMESTAMPTZ)`);
+    await query(`CREATE INDEX IF NOT EXISTS closing_time_doc_requests_deal_idx ON closing_time_doc_requests (realtor_id, deal_id, created_at DESC)`);
     await query(`CREATE TABLE IF NOT EXISTS closing_time_checklists (
       realtor_id UUID PRIMARY KEY REFERENCES realtors(id) ON DELETE CASCADE, steps JSONB NOT NULL DEFAULT '[]'::jsonb,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
@@ -125,6 +131,7 @@ export async function listAssist(realtorId: string, dealId: string) {
     })),
     portalToken: portal[0]?.token ?? null,
     portalLinks: await listPortalLinks(realtorId, dealId),
+    docRequests: await listDocRequests(realtorId, dealId),
     checklist: checklist[0]?.steps?.length ? checklist[0].steps : DEFAULT_CHECKLIST,
     customChecklist: Boolean(checklist[0]?.steps?.length),
     uploads: uploads.map((u) => ({ id: u.id, docId: u.doc_id, filename: u.filename, sizeBytes: u.size_bytes, createdAt: iso(u.created_at), reviewed: u.reviewed, archived: u.archived, uploader: u.uploader, storedIn: u.stored_in, storedPath: u.stored_path, storedUrl: u.stored_url })),
@@ -186,6 +193,33 @@ export async function setPortalLink(realtorId: string, dealId: string, name: str
   return token;
 }
 
+export type DocRequest = { id: string; label: string; note: string; personName: string; status: 'pending' | 'uploaded' | 'received' | 'cancelled'; emailed: boolean; createdAt: string; uploadedAt: string | null; receivedAt: string | null };
+type DocRequestRow = { id: string; label: string; note: string; person_name: string; status: string; emailed: boolean; created_at: Date | string; uploaded_at: Date | string | null; received_at: Date | string | null };
+const toDocRequest = (r: DocRequestRow): DocRequest => ({ id: r.id, label: r.label, note: r.note, personName: r.person_name, status: r.status as DocRequest['status'], emailed: r.emailed, createdAt: new Date(r.created_at).toISOString(), uploadedAt: r.uploaded_at ? new Date(r.uploaded_at).toISOString() : null, receivedAt: r.received_at ? new Date(r.received_at).toISOString() : null });
+
+export async function listDocRequests(realtorId: string, dealId: string): Promise<DocRequest[]> {
+  await ensureAssistSchema();
+  const rows = await query<DocRequestRow>(`SELECT id, label, note, person_name, status, emailed, created_at, uploaded_at, received_at FROM closing_time_doc_requests WHERE realtor_id=$1 AND deal_id=$2 AND status<>'cancelled' ORDER BY created_at DESC LIMIT 100`, [realtorId, dealId]);
+  return rows.map(toDocRequest);
+}
+
+/** Records that the agent asked a client for a document. It stays pending until the client uploads it. */
+export async function createDocRequest(realtorId: string, dealId: string, input: { label: string; note: string; personName: string }): Promise<string> {
+  await ensureAssistSchema();
+  const id = randomUUID();
+  await query(`INSERT INTO closing_time_doc_requests (id, realtor_id, deal_id, label, note, person_key, person_name) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+    [id, realtorId, dealId, input.label.slice(0, 200), input.note.slice(0, 500), personKey(input.personName), input.personName.slice(0, 200)]);
+  return id;
+}
+export async function markDocRequestEmailed(realtorId: string, id: string) {
+  await query(`UPDATE closing_time_doc_requests SET emailed=TRUE WHERE id=$1 AND realtor_id=$2`, [id, realtorId]);
+}
+export async function setDocRequestStatus(realtorId: string, id: string, status: 'received' | 'cancelled'): Promise<void> {
+  await ensureAssistSchema();
+  if (status === 'received') await query(`UPDATE closing_time_doc_requests SET status='received', received_at=NOW() WHERE id=$1 AND realtor_id=$2 AND status='uploaded'`, [id, realtorId]);
+  else await query(`UPDATE closing_time_doc_requests SET status='cancelled' WHERE id=$1 AND realtor_id=$2 AND status IN ('pending','uploaded')`, [id, realtorId]);
+}
+
 export async function getOrCreatePortalToken(realtorId: string, dealId: string, reset = false): Promise<string> {
   await ensureAssistSchema();
   if (!reset) {
@@ -208,6 +242,7 @@ export type PortalView = {
   steps: { label: string; date: string; note: string; state: 'done' | 'current' | 'upcoming' }[];
   timeline: { id: string; label: string; date: string; done: boolean; note: string }[];
   forms: { family: string; label: string }[];
+  requests: { id: string; label: string; note: string; status: 'pending' | 'uploaded' | 'received' }[];
   documents: { id: string; label: string; status: string }[];
   todos: { title: string; dueDate: string }[];
 };
@@ -265,6 +300,7 @@ export async function getPortalView(token: string): Promise<PortalView | null> {
     clientFirstName, clientNames: names, clientSide, titleCompany,
     daysToClosing: deal.closingDate && deal.closingDate >= today ? days(deal.closingDate) : null,
     steps, timeline,
+    requests: (await listDocRequests(row.realtor_id, row.deal_id)).filter((r) => r.status !== 'cancelled' && (!r.personName || personKey(r.personName) === personKey(link.person))).map((r) => ({ id: r.id, label: r.label, note: r.note, status: r.status as 'pending' | 'uploaded' | 'received' })),
     forms: portalForms(deal).map((v) => ({ family: v.formFamily, label: v.title })),
     documents: deal.documents.filter((d) => d.status !== 'not_needed').map((d) => ({ id: d.id, label: d.label, status: d.status })),
     todos: deal.tasks.filter((t) => !t.complete).slice(0, 20).map((t) => ({ title: t.title, dueDate: t.dueDate })),
@@ -398,14 +434,20 @@ export async function savePortalUpload(token: string, docId: string, file: { nam
   const row = await resolvePortalToken(token);
   if (!row) return { ok: false, error: 'Invalid link' };
   const deal = await loadDeal(row.realtor_id, row.deal_id);
-  const doc = docId === 'other' ? { label: 'General Upload' } : deal?.documents.find((d) => d.id === docId && d.status !== 'not_needed');
+  let request: DocRequest | undefined;
+  if (docId.startsWith('req:')) {
+    request = (await listDocRequests(row.realtor_id, row.deal_id)).find((r) => r.id === docId.slice(4) && r.status !== 'cancelled' && (!r.personName || personKey(r.personName) === personKey(row.person)));
+    if (!request) return { ok: false, error: 'That request is no longer open.' };
+  }
+  const doc = request ? { label: request.label } : docId === 'other' ? { label: 'General Upload' } : deal?.documents.find((d) => d.id === docId && d.status !== 'not_needed');
   if (!doc) return { ok: false, error: 'That document is not requested.' };
   const count = await query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM closing_time_portal_uploads WHERE realtor_id=$1 AND deal_id=$2 AND created_at > NOW() - INTERVAL '1 day'`, [row.realtor_id, row.deal_id]);
   if ((count[0]?.n ?? 0) >= 25) return { ok: false, error: 'Upload limit reached for today. Contact your agent.' };
-  if (docId !== 'other') await query(`UPDATE closing_time_portal_uploads SET archived=TRUE WHERE realtor_id=$1 AND deal_id=$2 AND doc_id=$3 AND archived=FALSE`, [row.realtor_id, row.deal_id, docId]);
+  if (docId !== 'other' && !request) await query(`UPDATE closing_time_portal_uploads SET archived=TRUE WHERE realtor_id=$1 AND deal_id=$2 AND doc_id=$3 AND archived=FALSE`, [row.realtor_id, row.deal_id, docId]);
   const id = randomUUID();
   await query(`INSERT INTO closing_time_portal_uploads (id, realtor_id, deal_id, doc_id, filename, content_type, size_bytes, data_b64, uploader) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
     [id, row.realtor_id, row.deal_id, docId, file.name.replace(/[^\w.\- ]+/g, '_').slice(0, 200) || 'upload', file.type, file.bytes.length, file.bytes.toString('base64'), row.person]);
+  if (request && request.status === 'pending') await query(`UPDATE closing_time_doc_requests SET status='uploaded', uploaded_at=NOW() WHERE id=$1 AND status='pending'`, [request.id]);
   return { ok: true, id, realtorId: row.realtor_id, dealId: row.deal_id, uploader: row.person, label: doc.label };
 }
 

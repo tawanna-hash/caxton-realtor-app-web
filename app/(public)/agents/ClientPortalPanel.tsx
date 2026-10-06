@@ -16,11 +16,11 @@ const lab = 'text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]'
 const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
 
 type Link = { key: string; name: string; token: string };
-type Person = { key: string; name: string; email: string };
+export type Person = { key: string; name: string; email: string };
 const keyOf = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 200);
 const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
 
-function clientsOf(deal: AgentDeal): Person[] {
+export function clientsOf(deal: AgentDeal): Person[] {
   const clientRe = /buyer|seller|client|tenant|landlord|owner/i;
   const people: Person[] = [];
   const add = (name: string, email: string) => { const key = keyOf(name); if (key && !people.some((p) => p.key === key)) people.push({ key, name: name.trim(), email }); };

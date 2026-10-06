@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import UploadDrop from './UploadDrop';
+import RequestedDocs from './RequestedDocs';
 import { getPortalView } from '@/lib/server/closing-time-assist';
 
 export const dynamic = 'force-dynamic';
@@ -72,6 +73,8 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
               ))}
             </ol>
           </section>
+
+          <RequestedDocs token={token} requests={view.requests} />
 
           {next && (
             <section className={`${card} flex flex-wrap items-center gap-5 border-[#301D5D] p-4`}>

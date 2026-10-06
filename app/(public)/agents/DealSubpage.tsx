@@ -6,6 +6,7 @@ import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, 
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import TrecFormActions from './TrecFormActions';
 import ClientUploadsCard from './ClientUploadsCard';
+import DocumentRequestsCard from './DocumentRequestsCard';
 import { BUYER_REP_FORM_OPTIONS, CONTRACT_FORM_OPTIONS, dealFolders, effectiveAgentSide, requiredIdsFor } from './purchase-documents';
 
 type SnapId = 'attention' | 'waiting' | 'property' | 'next' | 'preferences' | 'offers' | 'parties' | 'workspace';
@@ -950,6 +951,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     </label>
                   ))}
                 </AutoSection></div>); })()}
+                {deal && <DocumentRequestsCard deal={deal} locked={locked} />}
                 {deal && <ClientUploadsCard dealId={deal.id} version={deal.updatedAt} />}
               </div>
             );

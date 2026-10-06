@@ -1,0 +1,125 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { FileText } from 'lucide-react';
+import type { AgentDeal } from '@/lib/agent-command-center-workspace';
+import { clientsOf } from './ClientPortalPanel';
+
+type Req = { id: string; label: string; note: string; personName: string; status: 'pending' | 'uploaded' | 'received' | 'cancelled'; emailed: boolean; createdAt: string; uploadedAt: string | null; receivedAt: string | null };
+type Upload = { id: string; docId: string; filename: string; storedIn: string; storedPath: string; storedUrl: string; archived: boolean };
+
+const PRESETS = ["Driver's License (Front And Back)", 'Pre-Approval Letter', 'Proof Of Funds', 'Homeowners Insurance Binder', 'Other'];
+const btn = 'inline-flex items-center rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white disabled:opacity-45';
+const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[14px] text-[#1B1726]';
+const lab = 'mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]';
+const when = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const STATUS: Record<string, string> = { pending: 'Pending', uploaded: 'Uploaded, Needs Review', received: 'Received' };
+
+/** Agent requests a document from a client, tracks it as pending, and marks it received after the client uploads. */
+export default function DocumentRequestsCard({ deal, locked }: { deal: AgentDeal; locked: boolean }) {
+  const [reqs, setReqs] = useState<Req[] | null>(null);
+  const [uploads, setUploads] = useState<Upload[]>([]);
+  const [open, setOpen] = useState(false);
+  const [preset, setPreset] = useState(PRESETS[0]);
+  const [custom, setCustom] = useState('');
+  const [note, setNote] = useState('');
+  const [who, setWho] = useState('all');
+  const [email, setEmail] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const [tick, setTick] = useState(0);
+
+  const people = clientsOf(deal);
+
+  useEffect(() => {
+    let live = true;
+    fetch(`/api/closing-time/assist?dealId=${encodeURIComponent(deal.id)}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((b) => { if (live) { setReqs(b ? (b.docRequests as Req[]) : []); setUploads(b ? (b.uploads as Upload[]) : []); } })
+      .catch(() => { if (live) setReqs([]); });
+    return () => { live = false; };
+  }, [deal.id, deal.updatedAt, tick]);
+
+  const post = useCallback(async (payload: Record<string, unknown>) => {
+    setBusy(true); setMessage('');
+    try {
+      const res = await fetch('/api/closing-time/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+      const body = await res.json();
+      if (!res.ok) { setMessage(body.error ?? 'Something went wrong.'); return null; }
+      setTick((n) => n + 1);
+      return body;
+    } catch { setMessage('Something went wrong.'); return null; } finally { setBusy(false); }
+  }, []);
+
+  const send = async () => {
+    const label = preset === 'Other' ? custom.trim() : preset;
+    if (!label) { setMessage('Enter what you need.'); return; }
+    const chosen = who === 'all' ? people : people.filter((p) => p.key === who);
+    if (!chosen.length) { setMessage('Add the client on the People tab first.'); return; }
+    const r = await post({ action: 'request_document', dealId: deal.id, label, note, email, people: chosen.map((p) => ({ name: p.name, email: p.email })) });
+    if (r) {
+      setMessage(`Request recorded for ${chosen.map((p) => p.name).join(' and ')}.${email ? ` ${r.emailed} email${r.emailed === 1 ? '' : 's'} sent.` : ''}`);
+      setOpen(false); setNote(''); setCustom('');
+    }
+  };
+
+  if (!reqs) return null;
+  const pending = reqs.filter((r) => r.status === 'pending' || r.status === 'uploaded').length;
+  return (
+    <div className="ds-card">
+      <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <span className="flex items-center gap-2 text-sm font-semibold text-slate-900"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Client Document Requests</span>
+        <span className="flex items-center gap-3">
+          <span className="text-xs font-medium text-slate-500">{pending} Open</span>
+          {!locked && <button type="button" className={btn} onClick={() => setOpen((v) => !v)}>{open ? 'Close' : 'Request Document'}</button>}
+        </span>
+      </div>
+      {open && (
+        <div className="space-y-3 border-t border-[#E6E5EC] px-4 py-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label><span className={lab}>Document</span>
+              <select className={field} value={preset} onChange={(e) => setPreset(e.target.value)}>{PRESETS.map((p) => <option key={p}>{p}</option>)}</select>
+            </label>
+            <label><span className={lab}>Send To</span>
+              <select className={field} value={who} onChange={(e) => setWho(e.target.value)}>
+                <option value="all">Everyone On The Deal (Separate Request Each)</option>
+                {people.map((p) => <option key={p.key} value={p.key}>{p.name}</option>)}
+              </select>
+            </label>
+          </div>
+          {preset === 'Other' && <label className="block"><span className={lab}>What Do You Need</span><input className={field} value={custom} onChange={(e) => setCustom(e.target.value)} maxLength={200} /></label>}
+          <label className="block"><span className={lab}>Note To Client (Optional)</span><input className={field} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="For example: a clear photo of both sides" /></label>
+          <label className="flex items-center gap-2 text-[14px] text-[#4A4757]"><input type="checkbox" className="h-4 w-4 accent-[#301D5D]" checked={email} onChange={(e) => setEmail(e.target.checked)} />Email the request with their private portal link (only people with an email on file)</label>
+          <button type="button" disabled={busy} className={btn} onClick={() => void send()}>Send Request</button>
+        </div>
+      )}
+      {message && <p className="border-t border-[#E6E5EC] px-4 py-2 text-xs font-medium text-slate-600" role="status">{message}</p>}
+      {reqs.length === 0 && !open && <p className="px-4 pb-4 text-xs text-slate-500">Ask a client for a document, like a driver&apos;s license, and track it here until you mark it received.</p>}
+      {reqs.map((r) => {
+        const files = uploads.filter((u) => u.docId === `req:${r.id}` && !u.archived);
+        return (
+          <div key={r.id} className="ds-list-row !items-start">
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm text-slate-800">{r.label}{r.personName ? ` · ${r.personName}` : ''}</span>
+              <span className="block text-xs text-slate-500">
+                Requested {when(r.createdAt)}{r.emailed ? ' · Emailed' : ''} · {STATUS[r.status]}{r.uploadedAt ? ` ${when(r.uploadedAt)}` : ''}{r.receivedAt ? ` · Received ${when(r.receivedAt)}` : ''}
+              </span>
+              {r.note && <span className="block text-xs text-slate-500">{r.note}</span>}
+              {files.map((u) => (
+                <span key={u.id} className="block text-xs text-slate-600">
+                  {u.filename} · {u.storedIn ? (u.storedUrl ? <a className="font-medium text-[#301D5D] underline underline-offset-2" href={u.storedUrl} target="_blank" rel="noreferrer">{u.storedPath || 'Open'}</a> : u.storedPath) : <a className="font-medium text-[#301D5D] underline underline-offset-2" href={`/api/closing-time/assist/upload/${u.id}`}>Held In Closing Time</a>}
+                </span>
+              ))}
+            </span>
+            {!locked && (
+              <span className="flex shrink-0 gap-2">
+                {r.status === 'uploaded' && <button type="button" disabled={busy} className={btn} onClick={() => void post({ action: 'request_received', id: r.id })}>Mark Received</button>}
+                {(r.status === 'pending' || r.status === 'uploaded') && <button type="button" disabled={busy} className={btn} onClick={() => { if (window.confirm('Cancel this request?')) void post({ action: 'request_cancel', id: r.id }); }}>Cancel</button>}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}

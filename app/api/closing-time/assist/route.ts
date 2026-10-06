@@ -5,12 +5,13 @@ import { withErrorHandling } from '@/lib/server/error';
 import { dealRisks, extensionDraft } from '@/lib/closing-time-risks';
 import {
   FOLLOWUP_KINDS, PARTY_ROLES, addParty, approveFollowUp, dismissFollowUp, draftFollowUp, editFollowUp,
-  getOrCreatePortalToken, setPortalLink, listPortalLinks, listAssist, removeParty, removePortal, requireDeal, saveChecklist, saveExtensionDraft, markUploadReviewed, setAutoIntro, setAutoSignature, addSignatureRequest, closeSignature,
+  getOrCreatePortalToken, setPortalLink, createDocRequest, markDocRequestEmailed, setDocRequestStatus, listDocRequests, listPortalLinks, listAssist, removeParty, removePortal, requireDeal, saveChecklist, saveExtensionDraft, markUploadReviewed, setAutoIntro, setAutoSignature, addSignatureRequest, closeSignature,
 } from '@/lib/server/closing-time-assist';
 import { connectedState, saveUploadToStorage, setSendFromConnected, syncCalendar } from '@/lib/server/closing-time-connected';
 import { cancelSignRequest, deleteSignLayout, saveSignLayout, saveSignSettings } from '@/lib/server/closing-time-esign';
 import { BUILTIN, SIGN_PROVIDERS, refreshEnvelope, sendForSignature, signingState } from '@/lib/server/closing-time-signing';
 import { query } from '@/lib/server/db/neon';
+import { sendEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,6 +28,10 @@ const action = z.discriminatedUnion('action', [
   z.object({ action: z.literal('dismiss'), id: z.string().uuid() }),
   z.object({ action: z.literal('portal'), dealId, reset: z.boolean().optional(), disable: z.boolean().optional() }),
   z.object({ action: z.literal('portal_link'), dealId, name: z.string().trim().min(1).max(200), reset: z.boolean().optional(), disable: z.boolean().optional() }),
+  z.object({ action: z.literal('request_document'), dealId, label: z.string().trim().min(1).max(200), note: z.string().trim().max(500).optional(), email: z.boolean(),
+    people: z.array(z.object({ name: z.string().trim().min(1).max(200), email: z.string().trim().max(320) })).min(1).max(10) }),
+  z.object({ action: z.literal('request_received'), id: z.string().uuid() }),
+  z.object({ action: z.literal('request_cancel'), id: z.string().uuid() }),
   z.object({ action: z.literal('upload_reviewed'), id: z.string().uuid() }),
   z.object({ action: z.literal('auto_intro'), on: z.boolean() }),
   z.object({ action: z.literal('auto_signature'), on: z.boolean() }),
@@ -111,6 +116,26 @@ export const POST = withErrorHandling(async (req: Request): Promise<Response> =>
       const token = await setPortalLink(user.realtorId, input.dealId, input.name, { reset: input.reset, disable: input.disable });
       return priv({ ok: true, token, links: await listPortalLinks(user.realtorId, input.dealId) });
     }
+    case 'request_document': {
+      const deal = await requireDeal(user.realtorId, input.dealId);
+      const origin = new URL(req.url).origin;
+      const property = (deal.propertyAddress || deal.title || 'your deal').trim();
+      let emailed = 0;
+      for (const person of input.people) {
+        const id = await createDocRequest(user.realtorId, input.dealId, { label: input.label, note: input.note ?? '', personName: person.name });
+        if (input.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(person.email)) {
+          const token = await setPortalLink(user.realtorId, input.dealId, person.name, {});
+          const href = `${origin}/deal-portal/${token}`;
+          const esc = (v: string) => v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c));
+          const sent = await sendEmail({ to: person.email, replyTo: user.email, subject: `Document needed: ${input.label} - ${property}`,
+            html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p>Hello ${esc(person.name.split(/\s+/)[0])},</p><p>Your agent needs <strong>${esc(input.label)}</strong> for ${esc(property)}.</p>${input.note ? `<p>${esc(input.note)}</p>` : ''}<p><a href="${href}" style="display:inline-block;padding:10px 16px;background:#301D5D;color:#ffffff;text-decoration:none;border-radius:8px">Open Your Client Portal</a></p><p style="color:#7A7787;font-size:13px">This link is private to you. Upload the document in the Requested From You section. Reply to this email with any questions.</p></div>` }).catch(() => ({ ok: false }));
+          if ((sent as { ok?: boolean })?.ok !== false) { await markDocRequestEmailed(user.realtorId, id); emailed += 1; }
+        }
+      }
+      return priv({ ok: true, emailed, requests: await listDocRequests(user.realtorId, input.dealId) });
+    }
+    case 'request_received': await setDocRequestStatus(user.realtorId, input.id, 'received'); return priv({ ok: true });
+    case 'request_cancel': await setDocRequestStatus(user.realtorId, input.id, 'cancelled'); return priv({ ok: true });
     case 'upload_reviewed': await markUploadReviewed(user.realtorId, input.id); return priv({ ok: true });
     case 'auto_signature': await setAutoSignature(user.realtorId, input.on); return priv({ ok: true });
     case 'track_signature': await addSignatureRequest(user.realtorId, input.dealId, input.partyId, input.document); return priv({ ok: true });
