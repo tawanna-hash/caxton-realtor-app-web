@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { messagingPeople } from '@/lib/closing-time-people';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 
 type Text = { id: string; personName: string; phone: string; direction: 'outbound' | 'inbound'; body: string; status: string; error: string | null; createdAt: string };
@@ -19,19 +20,7 @@ const stamp = (iso: string) => new Date(iso).toLocaleString('en-US', { month: 's
 const STATUS: Record<string, string> = { queued: 'Sent To Carrier', sent: 'Sent', delivered: 'Delivered', received: 'Received', failed: 'Failed', delivery_failed: 'Not Delivered', sending_failed: 'Not Delivered' };
 
 function partiesOf(deal: AgentDeal): Party[] {
-  const out: Party[] = [];
-  const add = (name: string, role: string, email: string, phone: string) => {
-    const k = key(name); if (!k) return;
-    const have = out.find((p) => p.key === k);
-    if (have) { have.email ||= email; have.phone ||= phone; return; }
-    out.push({ key: k, name: name.trim(), role, email, phone });
-  };
-  (deal.clientContacts ?? []).forEach((c) => add(c.name, c.role || 'Client', c.email ?? '', c.phone ?? ''));
-  const split = (v: string) => (v || '').split(/\s*(?:&|,|\/|\band\b)\s*/i);
-  split(deal.buyerNames).forEach((n) => add(n, 'Buyer', '', ''));
-  split(deal.sellerNames).forEach((n) => add(n, 'Seller', '', ''));
-  (deal.serviceProviders ?? []).forEach((s) => add(s.name, s.category || 'Provider', s.email ?? '', s.phone ?? ''));
-  return out;
+  return messagingPeople(deal).map((p) => ({ key: key(p.name), name: p.name, role: p.role, email: p.email, phone: p.phone }));
 }
 
 /** Messages on a deal: email and text with each person on it, kept in one thread per person and written to the Audit Trail. */

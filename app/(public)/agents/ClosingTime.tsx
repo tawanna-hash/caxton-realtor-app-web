@@ -4,6 +4,7 @@ import ContractPage from './ContractPage';
 import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
 import ClientPortalPanel from './ClientPortalPanel';
+import { dealPeople } from '@/lib/closing-time-people';
 import MessagesPanel from './MessagesPanel';
 import IntegrationsPanel from './IntegrationsPanel';
 import AlertSetupContent from './AlertSetupContent';
@@ -2686,8 +2687,7 @@ export default function ClosingTime({
                 }
               };
               liveDeals.forEach((deal) => {
-                deal.clientContacts.forEach((p) => add(deal, p.name, p.email ?? '', p.phone ?? '', p.role ?? '', false));
-                [deal.buyerNames, deal.sellerNames].forEach((names, i) => (names || '').split(/\s*(?:&|,|\band\b)\s*/i).forEach((n) => add(deal, n, '', '', i === 0 ? 'Buyer' : 'Seller', true)));
+                dealPeople(deal).filter((p) => p.kind === 'client').forEach((p) => add(deal, p.name, p.email, p.phone, p.role, p.kind === 'client' && /buyer|seller/i.test(p.role)));
               });
               const all = Array.from(map.values());
               const clients = all.filter((c) => c.client);

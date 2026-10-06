@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { query } from '@/lib/server/db/neon';
 import { accountFor, proxyCall } from '@/lib/server/composio';
 import { getAgentCommandCenterWorkspace } from '@/lib/server/agent-command-center-workspaces';
+import { messagingPeople } from '@/lib/closing-time-people';
 import { MAIL_SLUGS } from '@/lib/server/closing-time-connected';
 import { CONTACT_SCOPE, note } from '@/lib/server/closing-time-texts';
 
@@ -43,8 +44,8 @@ async function addressBook(realtorId: string): Promise<Map<string, Target>> {
   const book = new Map<string, Target & { rank: string; open: boolean }>();
   for (const deal of ws?.workspace.deals ?? []) {
     const open = deal.auditLocked !== true;
-    for (const c of deal.clientContacts ?? []) {
-      const email = (c.email ?? '').trim().toLowerCase();
+    for (const c of messagingPeople(deal)) {
+      const email = c.email.trim().toLowerCase();
       if (!email || !c.name.trim()) continue;
       const cur = book.get(email);
       const better = !cur || (open && !cur.open) || (open === cur.open && deal.updatedAt > cur.rank);
