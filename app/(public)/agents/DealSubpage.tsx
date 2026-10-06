@@ -158,6 +158,7 @@ function textHref(phone: string, name: string, address: string): string {
 
 export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
+  const [stagesOpen, setStagesOpen] = useState(false);
   const docFolders = dealFolders(deal);
   const requiredIdList = requiredIdsFor(docFolders);
   const [arrangePage, setArrangePage] = useState<string | null>(null);
@@ -369,34 +370,40 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               <div className="scroll-mt-24"><OffersShowings deal={deal} locked={locked} formatDate={formatDate} onUpdate={onUpdate} /></div>
     ),
   };
+  const stageIndex = firstOpen === -1 ? milestones.length : firstOpen;
+  const stageName = firstOpen === -1 ? 'Complete' : milestones[firstOpen].label;
+  const headerPeople = [deal.buyerNames, deal.sellerNames].filter(Boolean).join(' · ');
+  const priceText = price ? (price.startsWith('$') ? price : `$${price}`) : '';
   const progressStrip = (
     <>
-      <div className="flex flex-wrap items-center gap-3">
-        <h2 className="ds-title !mt-0">{deal.propertyAddress || deal.title || 'New Contract'}</h2>
-        <span className="ds-chip bg-[#EFEAF8] text-[#301D5D] uppercase tracking-wide">{({ purchase: 'Residential', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Residential'}</span>
-      </div>
-      <div className="ds-summary" aria-label="Deal summary">
-        {([
-          ['Purchase price', price ? (price.startsWith('$') ? price : `$${price}`) : 'Not Set', ''],
-          ['Buyers', deal.buyerNames || 'Not Added', 'Your clients'],
-          ['Sellers', deal.sellerNames || 'Not Added', ''],
-          ['Closing', deal.closingDate ? formatDate(deal.closingDate) : 'Not Set', deal.closingDate ? countdownLabel : ''],
-        ] as const).map(([label, value, hint]) => (
-          <div key={label} className="min-w-0">
-            <p className="ds-eyebrow">{label}</p>
-            <p className="mt-1 truncate text-sm font-semibold text-slate-900">{value}{hint ? <span className="ml-1.5 text-xs font-normal text-slate-500">{hint}</span> : null}</p>
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="ds-title !mt-0">{deal.propertyAddress || deal.title || 'New Contract'}</h2>
+            <span className="ds-chip bg-[#EFEAF8] text-[#301D5D] uppercase tracking-wide">{({ purchase: 'Residential', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Residential'}</span>
           </div>
-        ))}
+          {(headerPeople || priceText) && <p className="mt-1 text-[13px] font-medium text-[#7A7787]">{[headerPeople, priceText].filter(Boolean).join(' · ')}</p>}
+        </div>
+        <div className="text-right">
+          <p className="text-[14px] font-semibold text-[#1B1726]">{stageName} · {Math.min(stageIndex + 1, milestones.length)} of {milestones.length}</p>
+          <p className="text-[13px] font-medium text-[#7A7787]">{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing Date Not Set'}</p>
+        </div>
       </div>
-      <ol className="ds-stepper" aria-label="Deal progress">
-        {milestones.map((m, index) => (
-          <li key={m.key} className={`ds-step ${m.done ? 'is-done' : ''} ${m.current ? 'is-current' : ''} ${index === 0 ? 'is-first' : ''} ${index === milestones.length - 1 ? 'is-last' : ''} ${index > 0 && milestones[index - 1].done ? 'prev-done' : ''}`} aria-current={m.current ? 'step' : undefined}>
-            <span className="ds-step-dot">{m.done ? <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" /> : null}</span>
-            <span className="ds-step-label">{m.label}</span>
-            <span className="ds-step-sub">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
-          </li>
-        ))}
-      </ol>
+      <div className="mt-3 flex gap-[3px]" role="progressbar" aria-label="Deal progress" aria-valuemin={0} aria-valuemax={milestones.length} aria-valuenow={Math.min(stageIndex, milestones.length)} aria-valuetext={`${stageName}, step ${Math.min(stageIndex + 1, milestones.length)} of ${milestones.length}`}>
+        {milestones.map((m) => <span key={m.key} title={m.label} className={`h-2 flex-1 rounded-[3px] ${m.done ? 'bg-[#301D5D]' : m.current ? 'bg-[#7059A8]' : 'bg-[#E6E5EC]'}`} />)}
+      </div>
+      <button type="button" aria-expanded={stagesOpen} onClick={() => setStagesOpen((v) => !v)} className="mt-2 !border-0 !bg-transparent !px-0 !py-0 text-[13px] font-medium text-[#7A7787] underline underline-offset-2 hover:!bg-transparent hover:!text-[#301D5D]">{stagesOpen ? 'Hide Stages' : 'Show All Stages'}</button>
+      {stagesOpen && (
+        <ol className="mt-3 grid gap-x-8 gap-y-1 sm:grid-cols-2" aria-label="All deal stages">
+          {milestones.map((m) => (
+            <li key={m.key} aria-current={m.current ? 'step' : undefined} className="flex items-center gap-2 py-1 text-[14px] text-[#1B1726]">
+              <span className={`flex h-3.5 w-3.5 flex-none items-center justify-center rounded-full border-2 ${m.done ? 'border-[#301D5D] bg-[#301D5D]' : m.current ? 'border-[#301D5D] bg-[#EFEAF8]' : 'border-[#D5D2DF]'}`}>{m.done ? <Check className="h-2.5 w-2.5 text-white" strokeWidth={4} aria-hidden="true" /> : null}</span>
+              <span className={m.current ? 'font-semibold' : ''}>{m.label}</span>
+              <span className="ml-auto text-[12px] font-medium text-[#7A7787]">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
+            </li>
+          ))}
+        </ol>
+      )}
     </>
   );
   if (stripOnly) return <div className="ds-page ds-strip" data-testid="deal-strip">{progressStrip}</div>;
