@@ -24,6 +24,7 @@ export default function robots(): MetadataRoute.Robots {
           '/api/',
           '/advertise/checkout/',
           '/sign/',
+          '/deal-portal/',
           '/r/',
         ],
       },

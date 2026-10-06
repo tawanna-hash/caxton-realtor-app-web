@@ -35,6 +35,8 @@ export default function MarketOnboardingPicker() {
     // The shareable product tour must open cleanly for prospects and partners.
     // It demonstrates all markets and does not need a persisted publication.
     if (window.location.pathname === '/product-tour') return;
+    // Client portal links and signing links are private pages for a client. They never pick a market.
+    if (window.location.pathname.startsWith('/deal-portal/') || window.location.pathname.startsWith('/sign/')) return;
     // Dashboard owns its sign-in and publication flow. Showing this global
     // picker there created two stacked market-selection screens and hid the
     // account actions underneath.
