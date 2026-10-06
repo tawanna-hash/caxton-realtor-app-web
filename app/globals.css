@@ -1691,3 +1691,12 @@ input[type='date']::-webkit-calendar-picker-indicator {
   #agent-desk .ds-list-row { flex-wrap: wrap; }
   #agent-desk .ds-list-row > .min-w-0.flex-1 { flex: 1 1 calc(100% - 2.5rem); }
 }
+
+/* Closing Time page titles use the same serif as the public site headings. */
+#agent-desk :is(h1, h2, h3, h4).ds-title { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.01em; font-size: 1.5rem; line-height: 1.2; }
+#agent-desk .ds-header .ds-title { font-size: 1.5rem; }
+
+/* Phones: main navigation and row controls get 44px tap targets. */
+@media (max-width: 767px) {
+  #agent-desk :is(.ds-navbtn, .ds-tab, .ds-new, .ds-row-btn, .ds-back, .ds-deal) { min-height: 44px; }
+}
