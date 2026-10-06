@@ -3,6 +3,7 @@ import { query } from '@/lib/server/db/neon';
 import { smsAllowedFor } from '@/lib/server/agent-deadline-notifications';
 import { consentState, recordConsent, sendOptInRequest, sendSms, toE164, type ConsentState } from '@/lib/server/sms';
 import { sendEmail } from '@/lib/email';
+import { requireDeal } from '@/lib/server/closing-time-assist';
 import { logDealEvent } from '@/lib/server/closing-time-events';
 
 /** Texts between the agent and the people on a deal. Sent on the owner's Telnyx account, so owner-only for now. */
@@ -40,6 +41,12 @@ export async function consentFor(phones: string[]): Promise<Record<string, Conse
   return out;
 }
 
+const LOCKED_MESSAGE = 'This deal is closed and its record is locked. Messaging has stopped; the history is kept for the audit record.';
+async function isLocked(realtorId: string, dealId: string): Promise<boolean> {
+  try { return (await requireDeal(realtorId, dealId)).auditLocked === true; } catch { return false; }
+}
+export { LOCKED_MESSAGE, isLocked };
+
 const STOP_LINE = ' Reply STOP to opt out.';
 
 async function store(realtorId: string, dealId: string, name: string, phone: string, body: string, status: string, telnyxId: string | null, error: string | null) {
@@ -52,6 +59,7 @@ type Sender = { realtorId: string; email: string };
 
 /** Asks one person to agree to texts. The only text that goes out without prior consent. */
 export async function sendDealOptIn(s: Sender, dealId: string, property: string, agentName: string, p: { name: string; phone: string }): Promise<{ ok: boolean; error?: string }> {
+  if (await isLocked(s.realtorId, dealId)) return { ok: false, error: LOCKED_MESSAGE };
   if (!smsAllowedFor(s.email)) return { ok: false, error: 'Texting is not available for this account yet.' };
   const phone = toE164(p.phone);
   if (!phone) return { ok: false, error: 'Add a valid mobile number first.' };
@@ -73,6 +81,7 @@ export async function attestDealConsent(s: Sender, dealId: string, p: { name: st
 }
 
 export async function sendDealText(s: Sender, dealId: string, property: string, p: { name: string; phone: string; body: string }): Promise<{ ok: boolean; error?: string }> {
+  if (await isLocked(s.realtorId, dealId)) return { ok: false, error: LOCKED_MESSAGE };
   if (!smsAllowedFor(s.email)) return { ok: false, error: 'Texting is not available for this account yet.' };
   const phone = toE164(p.phone);
   if (!phone) return { ok: false, error: 'Add a valid mobile number first.' };
@@ -96,6 +105,7 @@ export async function attachInboundText(phone: string, body: string, telnyxId: s
     const last = await query<{ realtor_id: string; deal_id: string; person_name: string }>(`SELECT realtor_id, deal_id, person_name FROM closing_time_texts WHERE phone=$1 AND direction='outbound' ORDER BY created_at DESC LIMIT 1`, [phone]);
     const l = last[0];
     if (!l) return;
+    if (await isLocked(l.realtor_id, l.deal_id)) return; // closed and locked: replies are no longer recorded
     await query(`INSERT INTO closing_time_texts (id, realtor_id, deal_id, person_name, phone, direction, body, status, telnyx_id) VALUES ($1,$2,$3,$4,$5,'inbound',$6,'received',$7)`, [randomUUID(), l.realtor_id, l.deal_id, l.person_name, phone, body.slice(0, 1600), telnyxId]);
     await logDealEvent(l.realtor_id, l.deal_id, 'text', `Text received from ${l.person_name} (${phone}): ${body.slice(0, 200)}`);
   } catch { /* ignore */ }
@@ -119,6 +129,7 @@ const esc = (v: string) => v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 
 /** Emails from the deal's Messages tab. Replies go to the agent's own email; they are not threaded back here. */
 export async function sendDealEmail(realtorId: string, dealId: string, property: string, agent: { name: string; email: string }, input: { to: { name: string; email: string }[]; subject: string; body: string }): Promise<{ ok: boolean; sent: number; error?: string }> {
+  if (await isLocked(realtorId, dealId)) return { ok: false, sent: 0, error: LOCKED_MESSAGE };
   await ensure();
   const subject = (input.subject.includes(property) ? input.subject : `${input.subject} - ${property}`).slice(0, 200);
   const html = `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:600px">${input.body.split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}<p style="color:#7A7787;font-size:12px">Regarding ${esc(property)}. Reply to this email to reach ${esc(agent.name || 'your agent')}.</p></div>`;

@@ -42,6 +42,7 @@ export default function MessagesPanel({ deal }: { deal: AgentDeal }) {
   const [emails, setEmails] = useState<Email[]>([]);
   const [consent, setConsent] = useState<Record<string, Consent>>({});
   const [allowed, setAllowed] = useState(true);
+  const [locked, setLocked] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -54,7 +55,7 @@ export default function MessagesPanel({ deal }: { deal: AgentDeal }) {
     let live = true;
     const run = () => fetch(`/api/closing-time/texts?dealId=${encodeURIComponent(deal.id)}&phones=${encodeURIComponent(phonesParam)}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((b) => { if (live && b) { setAllowed(b.allowed); setTexts(b.texts ?? []); setEmails(b.emails ?? []); setConsent(b.consent ?? {}); setLoaded(true); } })
+      .then((b) => { if (live && b) { setAllowed(b.allowed); setLocked(b.locked === true); setTexts(b.texts ?? []); setEmails(b.emails ?? []); setConsent(b.consent ?? {}); setLoaded(true); } })
       .catch(() => undefined);
     run();
     const t = setInterval(run, 20000);
@@ -129,6 +130,9 @@ export default function MessagesPanel({ deal }: { deal: AgentDeal }) {
                 </div>
               ))}
             </div>
+            {locked ? (
+              <p className="border-t border-[#E6E5EC] px-4 py-4 text-[13px] text-[#4A4757]">This deal is closed and its record is locked. Messaging has stopped. The history above is kept for the audit record.</p>
+            ) : (
             <div className="border-t border-[#E6E5EC] px-4 py-4">
               <div className="mb-3 flex gap-5 border-b border-[#E6E5EC]">
                 {(['email', 'sms'] as const).map((m) => (
@@ -171,6 +175,7 @@ export default function MessagesPanel({ deal }: { deal: AgentDeal }) {
               )}
               {msg && <p role="status" className="mt-3 text-[12px] font-medium text-[#4A4757]">{msg}</p>}
             </div>
+            )}
           </>
         )}
       </div>
