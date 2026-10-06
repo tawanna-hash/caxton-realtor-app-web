@@ -1,3 +1,4 @@
+import { portalForms } from '@/lib/server/portal-forms';
 import { randomBytes, randomUUID } from 'crypto';
 import { agentCommandCenterWorkspaceSchema, type AgentDeal } from '@/lib/agent-command-center-workspace';
 import { dealRisks, dealTimeline } from '@/lib/closing-time-risks';
@@ -162,9 +163,20 @@ export type PortalView = {
   clientFirstName: string; clientSide: 'buyer' | 'seller'; daysToClosing: number | null; titleCompany: string;
   steps: { label: string; date: string; state: 'done' | 'current' | 'upcoming' }[];
   timeline: { id: string; label: string; date: string; done: boolean; note: string }[];
+  forms: { family: string; label: string }[];
   documents: { id: string; label: string; status: string }[];
   todos: { title: string; dueDate: string }[];
 };
+
+/** Resolves a portal token to its agent and deal (null for an unknown or malformed token). */
+export async function getPortalDeal(token: string): Promise<{ realtorId: string; deal: AgentDeal } | null> {
+  if (!/^[A-Za-z0-9_-]{40,64}$/.test(token)) return null;
+  await ensureAssistSchema();
+  const rows = await query<{ realtor_id: string; deal_id: string }>(`SELECT realtor_id, deal_id FROM closing_time_portals WHERE token=$1 LIMIT 1`, [token]);
+  if (!rows[0]) return null;
+  const deal = await loadDeal(rows[0].realtor_id, rows[0].deal_id);
+  return deal ? { realtorId: rows[0].realtor_id, deal } : null;
+}
 
 /** Read-only client view. Only client-safe fields are exposed: no notes, form data, or activity. */
 export async function getPortalView(token: string): Promise<PortalView | null> {
@@ -211,6 +223,7 @@ export async function getPortalView(token: string): Promise<PortalView | null> {
     clientFirstName, clientSide, titleCompany,
     daysToClosing: deal.closingDate && deal.closingDate >= today ? days(deal.closingDate) : null,
     steps, timeline,
+    forms: portalForms(deal).map((v) => ({ family: v.formFamily, label: v.title })),
     documents: deal.documents.filter((d) => d.status !== 'not_needed').map((d) => ({ id: d.id, label: d.label, status: d.status })),
     todos: deal.tasks.filter((t) => !t.complete).slice(0, 20).map((t) => ({ title: t.title, dueDate: t.dueDate })),
   };

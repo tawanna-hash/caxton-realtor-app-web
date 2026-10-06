@@ -127,6 +127,23 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
             </section>
           </div>
 
+          {view.forms.length > 0 && (
+            <section className={card}>
+              <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3.5">
+                <h2 className="text-[14px] font-semibold text-[#1B1726]">Deal Forms</h2>
+                <span className="text-[12px] font-medium text-[#7A7787]">View Only</span>
+              </div>
+              <ul className="px-4">
+                {view.forms.map((f) => (
+                  <li key={f.family} className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] py-3 last:border-0">
+                    <span className="text-[14px] font-medium text-[#1B1726]">{f.label}</span>
+                    <a href={`/api/deal-portal/${token}/form/${encodeURIComponent(f.family)}`} target="_blank" rel="noreferrer" className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white">View</a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {view.todos.length > 0 && (
             <section className={card}>
               <h2 className="border-b border-[#E6E5EC] px-4 py-3.5 text-[14px] font-semibold text-[#1B1726]">What We Need From You</h2>
