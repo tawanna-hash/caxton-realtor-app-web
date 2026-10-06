@@ -109,7 +109,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   const layout: MessageLayout = contact ? 'inbox' : (layoutChoice ?? layoutSaved ?? 'inbox');
   const needsChoice = !contact && loaded && !layoutSaved && !layoutChoice;
   const spellIgnore = [deal?.propertyAddress ?? '', deal?.title ?? '', ...parties.map((p) => p.name)];
-  const clearAll = () => { setBody(''); setSubject(''); setAsks([]); setAskOther(''); setFiles([]); setCc([]); setAskOpen(false); setMsg(''); };
+  const clearAll = () => { setBody(''); };
   const addFiles = async (list: FileList | null) => {
     if (!list) return;
     const next = [...files];
@@ -265,7 +265,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             {attachUI}
             <div className="flex items-center justify-between gap-3">
               <span className="text-[12px] font-medium text-[#7A7787]">Goes to {party.email}. You are copied and replies go to your email. The subject starts with the property address.</span>
-              <span className="flex gap-2"><button type="button" className={btn} disabled={busy || !(body || subject || asks.length || askOther || files.length || cc.length)} onClick={clearAll}>Clear</button>
+              <span className="flex gap-2"><button type="button" className={btn} disabled={busy || !body} onClick={clearAll}>Clear</button>
               <button type="button" className={btn} disabled={busy || !subject.trim() || !body.trim()} onClick={() => void sendEmail()}>Send Email</button></span>
             </div>
           </div>
@@ -282,7 +282,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             {requestUI}
             <div className="flex items-center justify-between gap-3">
               <span className="text-[12px] font-medium text-[#7A7787]">Sent to {party.phone}. The property address and a STOP line are added.</span>
-              <span className="flex gap-2"><button type="button" className={btn} disabled={busy || !(body || asks.length || askOther)} onClick={clearAll}>Clear</button><button type="button" className={btn} disabled={busy || !body.trim()} onClick={() => void sendText()}>Send Text</button></span>
+              <span className="flex gap-2"><button type="button" className={btn} disabled={busy || !body} onClick={clearAll}>Clear</button><button type="button" className={btn} disabled={busy || !body.trim()} onClick={() => void sendText()}>Send Text</button></span>
             </div>
           </div>
         ) : (
