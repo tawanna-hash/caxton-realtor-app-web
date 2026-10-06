@@ -3,6 +3,7 @@
 import ContractPage from './ContractPage';
 import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
+import ClientPortalPanel from './ClientPortalPanel';
 import IntegrationsPanel from './IntegrationsPanel';
 import AlertSetupContent from './AlertSetupContent';
 import UtilitiesPanel from './UtilitiesPanel';
@@ -12,6 +13,7 @@ const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'd-overview', label: 'Snapshot', keys: [] },
   { id: 'd-documents', label: 'Documents', keys: [] },
   { id: 'd-people', label: 'People', keys: [] },
+  { id: 'd-portal', label: 'Client Portal', keys: [] },
   { id: 'transaction', label: 'Contract', keys: ['current', 'trec-forms'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
   { id: 'readiness', label: 'Readiness Check', keys: ['readiness'] },
@@ -2626,7 +2628,7 @@ export default function ClosingTime({
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
               <nav aria-label="Deal sections" className="ds-dealnav mb-4">
-                {([['Deal', ['d-overview', 'transaction']], ['Work', ['d-documents', 'd-people', 'tasks', 'readiness', 'audit']]] as const).map(([group, ids]) => (
+                {([['Deal', ['d-overview', 'transaction']], ['Work', ['d-documents', 'd-people', 'd-portal', 'tasks', 'readiness', 'audit']]] as const).map(([group, ids]) => (
                   <div key={group} className="ds-dealnav-group" role="group" aria-label={group}>
                     <span className="ds-dealnav-label">{group}</span>
                     {(ids as readonly string[]).map((id) => DEAL_TABS.find((tab) => tab.id === id)).filter((tab): tab is (typeof DEAL_TABS)[number] => Boolean(tab)).map((tab) => (
@@ -2939,6 +2941,7 @@ export default function ClosingTime({
               );
             })()}
             {effectiveView === 'utilities' && <UtilitiesPanel />}
+            {effectiveView === 'd-portal' && activeDeal && <div className="ds-page"><ClientPortalPanel key={activeDeal.id} deal={activeDeal} /></div>}
             {['d-overview', 'd-documents', 'd-people'].includes(effectiveView) && (() => {
               const deal = activeDeal;
               const health = deal ? (() => {
