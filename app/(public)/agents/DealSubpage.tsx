@@ -951,7 +951,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     </label>
                   ))}
                 </AutoSection></div>); })()}
-                {deal && <DocumentRequestsCard deal={deal} locked={locked} />}
+                {deal && <DocumentRequestsCard deal={deal} locked={locked} documentGroups={documentGroups} onUpdate={onUpdate} />}
                 {deal && <ClientUploadsCard dealId={deal.id} version={deal.updatedAt} />}
               </div>
             );
@@ -1034,6 +1034,8 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               </div>
             </div>
           )}
+
+          {tab !== 'documents' && deal && <DocumentRequestsCard headless deal={deal} locked={locked} documentGroups={documentGroups} onUpdate={onUpdate} />}
 
           {tab === 'history' && (
             <div className="ds-card ds-list">

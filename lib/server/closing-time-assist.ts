@@ -53,6 +53,7 @@ export function ensureAssistSchema(): Promise<void> {
       label TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', person_key TEXT NOT NULL DEFAULT '', person_name TEXT NOT NULL DEFAULT '',
       status TEXT NOT NULL DEFAULT 'pending', emailed BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), uploaded_at TIMESTAMPTZ, received_at TIMESTAMPTZ)`);
+    await query(`ALTER TABLE closing_time_doc_requests ADD COLUMN IF NOT EXISTS log_requested BOOLEAN NOT NULL DEFAULT FALSE, ADD COLUMN IF NOT EXISTS log_uploaded BOOLEAN NOT NULL DEFAULT FALSE, ADD COLUMN IF NOT EXISTS log_received BOOLEAN NOT NULL DEFAULT FALSE`);
     await query(`CREATE INDEX IF NOT EXISTS closing_time_doc_requests_deal_idx ON closing_time_doc_requests (realtor_id, deal_id, created_at DESC)`);
     await query(`CREATE TABLE IF NOT EXISTS closing_time_checklists (
       realtor_id UUID PRIMARY KEY REFERENCES realtors(id) ON DELETE CASCADE, steps JSONB NOT NULL DEFAULT '[]'::jsonb,
@@ -193,13 +194,13 @@ export async function setPortalLink(realtorId: string, dealId: string, name: str
   return token;
 }
 
-export type DocRequest = { id: string; label: string; note: string; personName: string; status: 'pending' | 'uploaded' | 'received' | 'cancelled'; emailed: boolean; createdAt: string; uploadedAt: string | null; receivedAt: string | null };
-type DocRequestRow = { id: string; label: string; note: string; person_name: string; status: string; emailed: boolean; created_at: Date | string; uploaded_at: Date | string | null; received_at: Date | string | null };
-const toDocRequest = (r: DocRequestRow): DocRequest => ({ id: r.id, label: r.label, note: r.note, personName: r.person_name, status: r.status as DocRequest['status'], emailed: r.emailed, createdAt: new Date(r.created_at).toISOString(), uploadedAt: r.uploaded_at ? new Date(r.uploaded_at).toISOString() : null, receivedAt: r.received_at ? new Date(r.received_at).toISOString() : null });
+export type DocRequest = { id: string; label: string; note: string; personName: string; status: 'pending' | 'uploaded' | 'received' | 'cancelled'; emailed: boolean; createdAt: string; uploadedAt: string | null; receivedAt: string | null; logged: { requested: boolean; uploaded: boolean; received: boolean } };
+type DocRequestRow = { id: string; label: string; note: string; person_name: string; status: string; emailed: boolean; created_at: Date | string; uploaded_at: Date | string | null; received_at: Date | string | null; log_requested: boolean; log_uploaded: boolean; log_received: boolean };
+const toDocRequest = (r: DocRequestRow): DocRequest => ({ id: r.id, label: r.label, note: r.note, personName: r.person_name, status: r.status as DocRequest['status'], emailed: r.emailed, createdAt: new Date(r.created_at).toISOString(), uploadedAt: r.uploaded_at ? new Date(r.uploaded_at).toISOString() : null, receivedAt: r.received_at ? new Date(r.received_at).toISOString() : null, logged: { requested: r.log_requested, uploaded: r.log_uploaded, received: r.log_received } });
 
 export async function listDocRequests(realtorId: string, dealId: string): Promise<DocRequest[]> {
   await ensureAssistSchema();
-  const rows = await query<DocRequestRow>(`SELECT id, label, note, person_name, status, emailed, created_at, uploaded_at, received_at FROM closing_time_doc_requests WHERE realtor_id=$1 AND deal_id=$2 AND status<>'cancelled' ORDER BY created_at DESC LIMIT 100`, [realtorId, dealId]);
+  const rows = await query<DocRequestRow>(`SELECT id, label, note, person_name, status, emailed, created_at, uploaded_at, received_at, log_requested, log_uploaded, log_received FROM closing_time_doc_requests WHERE realtor_id=$1 AND deal_id=$2 AND status<>'cancelled' ORDER BY created_at DESC LIMIT 100`, [realtorId, dealId]);
   return rows.map(toDocRequest);
 }
 
@@ -213,6 +214,10 @@ export async function createDocRequest(realtorId: string, dealId: string, input:
 }
 export async function markDocRequestEmailed(realtorId: string, id: string) {
   await query(`UPDATE closing_time_doc_requests SET emailed=TRUE WHERE id=$1 AND realtor_id=$2`, [id, realtorId]);
+}
+export async function markDocRequestLogged(realtorId: string, id: string, event: 'requested' | 'uploaded' | 'received'): Promise<void> {
+  const col = event === 'requested' ? 'log_requested' : event === 'uploaded' ? 'log_uploaded' : 'log_received';
+  await query(`UPDATE closing_time_doc_requests SET ${col}=TRUE WHERE id=$1 AND realtor_id=$2`, [id, realtorId]);
 }
 export async function setDocRequestStatus(realtorId: string, id: string, status: 'received' | 'cancelled'): Promise<void> {
   await ensureAssistSchema();

@@ -1,11 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FileText } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import { clientsOf } from './ClientPortalPanel';
 
-type Req = { id: string; label: string; note: string; personName: string; status: 'pending' | 'uploaded' | 'received' | 'cancelled'; emailed: boolean; createdAt: string; uploadedAt: string | null; receivedAt: string | null };
+type Req = { id: string; label: string; note: string; personName: string; status: 'pending' | 'uploaded' | 'received' | 'cancelled'; emailed: boolean; createdAt: string; uploadedAt: string | null; receivedAt: string | null; logged: { requested: boolean; uploaded: boolean; received: boolean } };
 type Upload = { id: string; docId: string; filename: string; storedIn: string; storedPath: string; storedUrl: string; archived: boolean };
 
 const PRESETS = ["Driver's License (Front And Back)", 'Pre-Approval Letter', 'Proof Of Funds', 'Homeowners Insurance Binder', 'Other'];
@@ -13,10 +13,22 @@ const btn = 'inline-flex items-center rounded-lg border border-[#E6E5EC] bg-whit
 const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[14px] text-[#1B1726]';
 const lab = 'mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]';
 const when = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-const STATUS: Record<string, string> = { pending: 'Pending', uploaded: 'Uploaded, Needs Review', received: 'Received' };
+const STATUS: Record<string, string> = { pending: 'Pending', uploaded: 'Needs Review', received: 'Received' };
 
 /** Agent requests a document from a client, tracks it as pending, and marks it received after the client uploads. */
-export default function DocumentRequestsCard({ deal, locked }: { deal: AgentDeal; locked: boolean }) {
+type Group = { items: readonly { id: string; label: string }[] };
+const KEYWORDS: RegExp[] = [/pre-?approval/i, /proof of funds/i, /insurance/i, /driver|licen[sc]e|identification/i];
+/** Checklist items that this request satisfies, matched by what the request asks for. */
+function matchingDocs(label: string, groups: readonly Group[]) {
+  const all = groups.flatMap((g) => g.items);
+  return KEYWORDS.filter((k) => k.test(label)).flatMap((k) => all.filter((i) => k.test(i.label)));
+}
+
+/**
+ * Requests are kept in the database. This copies each step (requested, uploaded, received) into the deal's Audit Trail once,
+ * and checks off the matching checklist items when a request is received. headless = sync only, no card.
+ */
+export default function DocumentRequestsCard({ deal, locked, documentGroups, onUpdate, headless }: { deal: AgentDeal; locked: boolean; documentGroups: readonly Group[]; onUpdate: <K extends keyof AgentDeal>(key: K, value: AgentDeal[K]) => void; headless?: boolean }) {
   const [reqs, setReqs] = useState<Req[] | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [open, setOpen] = useState(false);
@@ -30,6 +42,49 @@ export default function DocumentRequestsCard({ deal, locked }: { deal: AgentDeal
   const [tick, setTick] = useState(0);
 
   const people = clientsOf(deal);
+  const latest = useRef(deal);
+  const pendingChecks = useRef<Record<string, boolean>>({});
+
+  // Step two of the sync: runs after the activity update has rendered, so the checklist update does not overwrite it.
+  useEffect(() => {
+    latest.current = deal;
+    const pending = pendingChecks.current;
+    if (Object.keys(pending).length && !locked) {
+      pendingChecks.current = {};
+      onUpdate('documentChecks', { ...deal.documentChecks, ...pending });
+    }
+  }, [deal, locked, onUpdate]);
+
+  useEffect(() => {
+    if (!reqs || locked) return;
+    const d = latest.current;
+    const have = new Set(d.activity.map((a) => a.id));
+    const add: { id: string; message: string; createdAt: string }[] = [];
+    const marks: { id: string; event: 'requested' | 'uploaded' | 'received' }[] = [];
+    const checks: Record<string, boolean> = {};
+    for (const r of [...reqs].reverse()) {
+      const who = r.personName ? ` from ${r.personName}` : '';
+      const ev = (event: 'requested' | 'uploaded' | 'received', message: string, at: string | null) => {
+        if (!at || r.logged[event]) return;
+        const id = `docreq-${r.id}-${event}`;
+        if (!have.has(id)) add.push({ id, message: message.slice(0, 600), createdAt: at });
+        marks.push({ id: r.id, event });
+      };
+      ev('requested', `Requested ${r.label}${who}`, r.createdAt);
+      ev('uploaded', `${r.personName || 'Client'} uploaded ${r.label}`, r.uploadedAt);
+      if (r.status === 'received' && !r.logged.received) {
+        const docs = matchingDocs(r.label, documentGroups);
+        docs.forEach((i) => { checks[i.id] = true; });
+        checks[`req:${r.id}`] = true;
+        ev('received', `Marked received: ${r.label}${who}${docs.length ? `. Checklist checked: ${docs.map((i) => i.label).join(', ')}` : ''}`, r.receivedAt);
+      }
+    }
+    if (!marks.length) return;
+    pendingChecks.current = checks;
+    if (add.length) onUpdate('activity', [...d.activity, ...add].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).slice(-300));
+    else onUpdate('documentChecks', { ...d.documentChecks, ...checks });
+    for (const m of marks) void fetch('/api/closing-time/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'request_logged', ...m }) });
+  }, [reqs, locked, documentGroups, onUpdate]);
 
   useEffect(() => {
     let live = true;
@@ -63,7 +118,7 @@ export default function DocumentRequestsCard({ deal, locked }: { deal: AgentDeal
     }
   };
 
-  if (!reqs) return null;
+  if (!reqs || headless) return null;
   const pending = reqs.filter((r) => r.status === 'pending' || r.status === 'uploaded').length;
   return (
     <div className="ds-card">
@@ -99,10 +154,11 @@ export default function DocumentRequestsCard({ deal, locked }: { deal: AgentDeal
         const files = uploads.filter((u) => u.docId === `req:${r.id}` && !u.archived);
         return (
           <div key={r.id} className="ds-list-row !items-start">
+            <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-[#301D5D]" aria-label={`Mark ${r.label} received`} checked={r.status === 'received'} disabled={locked || busy || r.status !== 'uploaded'} title={r.status === 'pending' ? 'Available after the client uploads' : undefined} onChange={() => void post({ action: 'request_received', id: r.id })} />
             <span className="min-w-0 flex-1">
               <span className="block text-sm text-slate-800">{r.label}{r.personName ? ` · ${r.personName}` : ''}</span>
               <span className="block text-xs text-slate-500">
-                Requested {when(r.createdAt)}{r.emailed ? ' · Emailed' : ''} · {STATUS[r.status]}{r.uploadedAt ? ` ${when(r.uploadedAt)}` : ''}{r.receivedAt ? ` · Received ${when(r.receivedAt)}` : ''}
+                Requested {when(r.createdAt)}{r.emailed ? ' · Emailed' : ''}{r.uploadedAt ? ` · Uploaded ${when(r.uploadedAt)}` : ''}{r.receivedAt ? ` · Received ${when(r.receivedAt)}` : ` · ${STATUS[r.status]}`}
               </span>
               {r.note && <span className="block text-xs text-slate-500">{r.note}</span>}
               {files.map((u) => (

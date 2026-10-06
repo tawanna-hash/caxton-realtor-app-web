@@ -5,7 +5,7 @@ import { withErrorHandling } from '@/lib/server/error';
 import { dealRisks, extensionDraft } from '@/lib/closing-time-risks';
 import {
   FOLLOWUP_KINDS, PARTY_ROLES, addParty, approveFollowUp, dismissFollowUp, draftFollowUp, editFollowUp,
-  getOrCreatePortalToken, setPortalLink, createDocRequest, markDocRequestEmailed, setDocRequestStatus, listDocRequests, listPortalLinks, listAssist, removeParty, removePortal, requireDeal, saveChecklist, saveExtensionDraft, markUploadReviewed, setAutoIntro, setAutoSignature, addSignatureRequest, closeSignature,
+  getOrCreatePortalToken, setPortalLink, createDocRequest, markDocRequestEmailed, setDocRequestStatus, markDocRequestLogged, listDocRequests, listPortalLinks, listAssist, removeParty, removePortal, requireDeal, saveChecklist, saveExtensionDraft, markUploadReviewed, setAutoIntro, setAutoSignature, addSignatureRequest, closeSignature,
 } from '@/lib/server/closing-time-assist';
 import { connectedState, saveUploadToStorage, setSendFromConnected, syncCalendar } from '@/lib/server/closing-time-connected';
 import { cancelSignRequest, deleteSignLayout, saveSignLayout, saveSignSettings } from '@/lib/server/closing-time-esign';
@@ -30,6 +30,7 @@ const action = z.discriminatedUnion('action', [
   z.object({ action: z.literal('portal_link'), dealId, name: z.string().trim().min(1).max(200), reset: z.boolean().optional(), disable: z.boolean().optional() }),
   z.object({ action: z.literal('request_document'), dealId, label: z.string().trim().min(1).max(200), note: z.string().trim().max(500).optional(), email: z.boolean(),
     people: z.array(z.object({ name: z.string().trim().min(1).max(200), email: z.string().trim().max(320) })).min(1).max(10) }),
+  z.object({ action: z.literal('request_logged'), id: z.string().uuid(), event: z.enum(['requested', 'uploaded', 'received']) }),
   z.object({ action: z.literal('request_received'), id: z.string().uuid() }),
   z.object({ action: z.literal('request_cancel'), id: z.string().uuid() }),
   z.object({ action: z.literal('upload_reviewed'), id: z.string().uuid() }),
@@ -134,6 +135,7 @@ export const POST = withErrorHandling(async (req: Request): Promise<Response> =>
       }
       return priv({ ok: true, emailed, requests: await listDocRequests(user.realtorId, input.dealId) });
     }
+    case 'request_logged': await markDocRequestLogged(user.realtorId, input.id, input.event); return priv({ ok: true });
     case 'request_received': await setDocRequestStatus(user.realtorId, input.id, 'received'); return priv({ ok: true });
     case 'request_cancel': await setDocRequestStatus(user.realtorId, input.id, 'cancelled'); return priv({ ok: true });
     case 'upload_reviewed': await markUploadReviewed(user.realtorId, input.id); return priv({ ok: true });
