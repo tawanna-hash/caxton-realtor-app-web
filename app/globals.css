@@ -1644,16 +1644,11 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-subtitle { color: var(--d-muted); }
 #agent-desk input.cf-label { font-size: 0.6875rem !important; font-weight: 500 !important; letter-spacing: 0.08em !important; text-transform: uppercase !important; color: var(--d-muted) !important; }
 
-/* Hover explanations: the field itself shows the tip, no icon. */
-.tip-host { position: relative; border-radius: 8px; transition: background-color .12s ease; }
-.tip-host:hover { background-color: rgba(246, 243, 251, 0.7); }
-.tip-host::after {
-  content: attr(data-tip);
-  position: absolute; left: 0; top: calc(100% + 4px); z-index: 60;
-  width: max-content; max-width: min(320px, 90vw);
-  background: #301D5D; color: #fff;
-  font: 500 12px/1.4 Inter, system-ui, sans-serif; text-transform: none; letter-spacing: 0;
-  padding: 8px 10px; border-radius: 8px;
-  opacity: 0; pointer-events: none; transition: opacity .12s ease 0s;
+/* Hover explanations: the specific field shows the tip, no icon. */
+.tip-host { transition: background-color .12s ease; border-radius: 8px; }
+.tip-host:not(input):not(textarea):not(select):hover { background-color: rgba(246, 243, 251, 0.7); }
+#tip-float {
+  position: fixed; z-index: 2000; width: max-content; max-width: min(320px, 90vw);
+  background: #301D5D; color: #fff; font: 500 12px/1.4 Inter, system-ui, sans-serif;
+  padding: 8px 10px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .12s ease;
 }
-.tip-host:hover::after { opacity: 1; transition-delay: .35s; }
