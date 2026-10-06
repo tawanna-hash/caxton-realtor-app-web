@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 
 type Text = { id: string; personName: string; phone: string; direction: 'outbound' | 'inbound'; body: string; status: string; error: string | null; createdAt: string };
-type Email = { id: string; personName: string; toEmail: string; subject: string; body: string; status: string; error: string | null; createdAt: string };
+type Email = { direction?: 'outbound' | 'inbound'; id: string; personName: string; toEmail: string; subject: string; body: string; status: string; error: string | null; createdAt: string };
+type Mailbox = { connected: string | null; readReplies: boolean; lastChecked: string | null; lastError: string | null };
 type Consent = 'opted_in' | 'pending' | 'opted_out' | 'none';
 type Party = { key: string; name: string; role: string; email: string; phone: string };
 type Item = { id: string; at: string; kind: 'email' | 'sms'; out: boolean; title: string; body: string; status: string; error: string | null };
@@ -44,6 +45,8 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   const [consent, setConsent] = useState<Record<string, Consent>>({});
   const [allowed, setAllowed] = useState(true);
   const [locked, setLocked] = useState(false);
+  const [mailbox, setMailbox] = useState<Mailbox | null>(null);
+  const [activity, setActivity] = useState<{ id: string; message: string; createdAt: string }[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -56,7 +59,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
     let live = true;
     const run = () => fetch(`/api/closing-time/texts?dealId=${encodeURIComponent(scope)}&phones=${encodeURIComponent(phonesParam)}${contact ? `&name=${encodeURIComponent(contact.name)}&email=${encodeURIComponent(contact.email)}&phone=${encodeURIComponent(contact.phone)}` : ''}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((b) => { if (live && b) { setAllowed(b.allowed); setLocked(b.locked === true); setTexts(b.texts ?? []); setEmails(b.emails ?? []); setConsent(b.consent ?? {}); setLoaded(true); } })
+      .then((b) => { if (live && b) { setAllowed(b.allowed); setLocked(b.locked === true); setMailbox(b.mailbox ?? null); setActivity(b.activity ?? []); setTexts(b.texts ?? []); setEmails(b.emails ?? []); setConsent(b.consent ?? {}); setLoaded(true); } })
       .catch(() => undefined);
     run();
     const t = setInterval(run, 20000);
@@ -69,7 +72,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
 
   const itemsFor = useCallback((p: Party): Item[] => {
     const k = key(p.name);
-    const e = emails.filter((x) => key(x.personName) === k).map((x): Item => ({ id: x.id, at: x.createdAt, kind: 'email', out: true, title: x.subject, body: x.body, status: x.status, error: x.error }));
+    const e = emails.filter((x) => key(x.personName) === k).map((x): Item => ({ id: x.id, at: x.createdAt, kind: 'email', out: x.direction !== 'inbound', title: x.subject, body: x.body, status: x.status, error: x.error }));
     const t = texts.filter((x) => key(x.personName) === k).map((x): Item => ({ id: x.id, at: x.createdAt, kind: 'sms', out: x.direction === 'outbound', title: x.direction === 'outbound' ? 'Text To ' + p.name : 'Text From ' + p.name, body: x.body, status: x.status, error: x.error }));
     return [...e, ...t].sort((a, b) => a.at.localeCompare(b.at));
   }, [emails, texts]);
@@ -135,6 +138,25 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
               <p className="border-t border-[#E6E5EC] px-4 py-4 text-[13px] text-[#4A4757]">This deal is closed and its record is locked. Messaging has stopped. The history above is kept for the audit record.</p>
             ) : (
             <div className="border-t border-[#E6E5EC] px-4 py-4">
+              {mailbox && (
+                <div className="mb-4 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-[12px] font-medium text-[#4A4757]">
+                  {mailbox.connected ? (
+                    <>
+                      <label className="flex items-start gap-2">
+                        <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={mailbox.readReplies} disabled={busy} onChange={(e) => void post({ action: 'mailbox_read', on: e.target.checked })} />
+                        <span>Show email replies from {mailbox.connected}. The app looks only for mail from people listed on your deals. Other mail is not read into the app or stored.</span>
+                      </label>
+                      {mailbox.readReplies && (
+                        <div className="mt-1 flex flex-wrap items-center gap-3 pl-6">
+                          <span>{mailbox.lastChecked ? `Last checked ${stamp(mailbox.lastChecked)}` : 'Not checked yet'}</span>
+                          <button type="button" className="underline underline-offset-2 hover:text-[#301D5D]" disabled={busy} onClick={() => void post({ action: 'mailbox_check' })}>Check Now</button>
+                          {mailbox.lastError && <span className="text-[#9A3D2B]">{mailbox.lastError}</span>}
+                        </div>
+                      )}
+                    </>
+                  ) : <span>Connect Gmail or Outlook in Integrations to see email replies here.</span>}
+                </div>
+              )}
               <div className="mb-3 flex gap-5 border-b border-[#E6E5EC]">
                 {(['email', 'sms'] as const).map((m) => (
                   <button key={m} type="button" onClick={() => { setMode(m); setMsg(''); }} className={`-mb-px border-b-2 pb-2 text-[13px] font-medium ${mode === m ? 'border-[#301D5D] text-[#301D5D]' : 'border-transparent text-[#7A7787]'}`}>{m === 'email' ? 'Email' : 'Text'}</button>
@@ -180,6 +202,18 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
           </>
         )}
       </div>
+      {contact && (
+        <div className="ds-card">
+          <h2 className="border-b border-[#E6E5EC] px-4 py-3 text-[14px] font-semibold text-[#1B1726]">Activity Log</h2>
+          {activity.length === 0 && <p className="px-4 py-4 text-xs text-slate-500">Texts, emails, replies and consent changes with {contact.name} are listed here.</p>}
+          {activity.map((a) => (
+            <div key={a.id} className="flex items-start justify-between gap-4 border-b border-[#E6E5EC] px-4 py-2.5 last:border-0">
+              <span className="text-[14px] text-[#4A4757]">{a.message}</span>
+              <span className="shrink-0 text-[12px] font-medium text-[#7A7787]">{stamp(a.createdAt)}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
