@@ -127,26 +127,13 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
               <p className="border-t border-[#E6E5EC] px-4 py-4 text-[13px] text-[#4A4757]">This deal is closed and its record is locked. Messaging has stopped. The history above is kept for the audit record.</p>
             ) : (
             <div className="border-t border-[#E6E5EC] px-4 py-4">
-              {mailbox && (
-                <div className="mb-4 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-[12px] font-medium text-[#4A4757]">
-                  {mailbox.connected ? (
-                    <>
-                      <label className="flex items-start gap-2">
-                        <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={mailbox.readReplies} disabled={busy} onChange={(e) => void post({ action: 'mailbox_read', on: e.target.checked })} />
-                        <span>Show email replies from {mailbox.connected}. The app looks only for mail from people listed on your deals. Other mail is not read into the app or stored.</span>
-                      </label>
-                      {mailbox.readReplies && (
-                        <div className="mt-1 flex flex-wrap items-center gap-3 pl-6">
-                          <span>{mailbox.lastChecked ? `Last checked ${stamp(mailbox.lastChecked)}` : 'Not checked yet'}</span>
-                          <span>{mailbox.watching ? `Watching ${mailbox.watching} email ${mailbox.watching === 1 ? 'address' : 'addresses'} from your deals` : 'No email addresses on your deals yet, so there is nothing to look for'}</span>
-                          <button type="button" className="underline underline-offset-2 hover:text-[#301D5D]" disabled={busy} onClick={() => void post({ action: 'mailbox_check' })}>Check Now</button>
-                          {mailbox.lastError && <span className="text-[#9A3D2B]">{mailbox.lastError}</span>}
-                        </div>
-                      )}
-                    </>
-                  ) : <span>Connect Gmail or Outlook in Integrations to see email replies here.</span>}
-                </div>
+              {mailbox && mailbox.connected && !mailbox.readReplies && (
+                <label className="mb-4 flex items-start gap-2 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-[12px] font-medium text-[#4A4757]">
+                  <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={false} disabled={busy} onChange={() => void post({ action: 'mailbox_read', on: true })} />
+                  <span>Show email replies from {mailbox.connected}. Only replies to emails sent from here, or mail naming the property, from people on your deals. Once on, this is saved in Settings.</span>
+                </label>
               )}
+              {mailbox?.readReplies && mailbox.lastError && <p className="mb-4 text-[12px] font-medium text-[#9A3D2B]">{mailbox.lastError}</p>}
               <div className="mb-3 flex gap-5 border-b border-[#E6E5EC]">
                 {(['email', 'sms'] as const).map((m) => (
                   <button key={m} type="button" onClick={() => { setMode(m); setMsg(''); }} className={`-mb-px border-b-2 pb-2 text-[13px] font-medium ${mode === m ? 'border-[#301D5D] text-[#301D5D]' : 'border-transparent text-[#7A7787]'}`}>{m === 'email' ? 'Email' : 'Text'}</button>

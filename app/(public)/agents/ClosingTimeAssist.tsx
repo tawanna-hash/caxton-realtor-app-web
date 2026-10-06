@@ -30,6 +30,37 @@ function textToSteps(text: string): Step[] {
   });
 }
 
+type MailboxInfo = { watching?: number; readReplies: boolean; lastChecked: string | null; lastError: string | null };
+function EmailRepliesSetting({ dealId, mail }: { dealId: string; mail: string }) {
+  const [m, setM] = useState<MailboxInfo | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(async () => {
+    try { const r = await fetch(`/api/closing-time/texts?dealId=${encodeURIComponent(dealId)}&phones=`, { cache: 'no-store' }); const b = await r.json(); setM(b.mailbox ?? null); } catch { /* ignore */ }
+  }, [dealId]);
+  useEffect(() => { void load(); }, [load]);
+  const act = async (payload: Record<string, unknown>) => {
+    setBusy(true);
+    try { await fetch('/api/closing-time/texts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }); await load(); } finally { setBusy(false); }
+  };
+  if (!m) return null;
+  return (
+    <div className="border border-slate-200 px-3 py-2">
+      <label className="flex items-start gap-2">
+        <input type="checkbox" className="mt-1" checked={m.readReplies} disabled={busy} onChange={(e) => void act({ action: 'mailbox_read', on: e.target.checked })} />
+        <span>Show email replies from my {mail} in Messages. The app looks only for replies from people on your deals to emails sent from here, or mail that names the property. Nothing else is read or stored.</span>
+      </label>
+      {m.readReplies && (
+        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-6 text-xs text-slate-500">
+          <span>{m.lastChecked ? `Last checked ${new Date(m.lastChecked).toLocaleString()}` : 'Not checked yet'}</span>
+          <span>{m.watching ? `Watching ${m.watching} email ${m.watching === 1 ? 'address' : 'addresses'} from your deals` : 'No email addresses on your deals yet'}</span>
+          <button type="button" className="underline underline-offset-2 hover:text-[#301D5D]" disabled={busy} onClick={() => void act({ action: 'mailbox_check' })}>Check Now</button>
+          {m.lastError && <span className="text-[#9A3D2B]">{m.lastError}</span>}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceived }: { deal: AgentDeal; onApplyChecklist: (steps: Step[]) => void; onMarkReceived: (docId: string, fileName: string) => void }) {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState('');
@@ -268,6 +299,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                     <span>Send approved follow-ups from my own {data.connected.mail} address. If it fails, the message goes out through Realty News Now with you copied.</span>
                   </label>
                 )}
+                {data.connected.mail && <EmailRepliesSetting dealId={deal.id} mail={data.connected.mail} />}
                 {notice && <p role="status" className="font-semibold text-[#301D5D]">{notice}</p>}
               </div>
             )}

@@ -36,12 +36,13 @@ export async function setReadReplies(realtorId: string, on: boolean): Promise<vo
   await query(`INSERT INTO closing_time_mailbox (realtor_id, read_replies) VALUES ($1,$2) ON CONFLICT (realtor_id) DO UPDATE SET read_replies=EXCLUDED.read_replies${on ? ', last_checked=NULL, last_error=NULL' : ''}`, [realtorId, on]);
 }
 
-type Target = { dealId: string; name: string };
+type Target = { dealId: string; name: string; address: string };
 
 /** address -> where its replies belong. Open deals win over locked ones; locked-only people go to their contact thread. */
 async function addressBook(realtorId: string): Promise<Map<string, Target>> {
   const ws = await getAgentCommandCenterWorkspace(realtorId);
   const book = new Map<string, Target & { rank: string; open: boolean }>();
+  const street = (d: { propertyAddress?: string; title?: string }) => ((d.propertyAddress || d.title || '').split(',')[0] ?? '').trim().toLowerCase();
   for (const deal of ws?.workspace.deals ?? []) {
     const open = deal.auditLocked !== true;
     for (const c of messagingPeople(deal)) {
@@ -49,10 +50,10 @@ async function addressBook(realtorId: string): Promise<Map<string, Target>> {
       if (!email || !c.name.trim()) continue;
       const cur = book.get(email);
       const better = !cur || (open && !cur.open) || (open === cur.open && deal.updatedAt > cur.rank);
-      if (better) book.set(email, { dealId: open ? deal.id : CONTACT_SCOPE, name: c.name.trim(), rank: deal.updatedAt, open });
+      if (better) book.set(email, { dealId: open ? deal.id : CONTACT_SCOPE, name: c.name.trim(), address: street(deal), rank: deal.updatedAt, open });
     }
   }
-  return new Map(Array.from(book, ([k, v]) => [k, { dealId: v.dealId, name: v.name }]));
+  return new Map(Array.from(book, ([k, v]) => [k, { dealId: v.dealId, name: v.name, address: v.address }]));
 }
 
 const b64 = (v: string) => Buffer.from(v.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
@@ -65,6 +66,15 @@ function trimQuoted(text: string): string {
     out.push(line);
   }
   return out.join('\n').trim().slice(0, 5000);
+}
+
+const norm = (subject: string) => subject.replace(/^(\s*(re|fwd?|fw)\s*:\s*)+/i, '').trim().toLowerCase();
+
+/** Mail from a deal person counts only when it is a reply to something sent from the app, or it names the deal's property. Everything else (newsletters, other business, the agent's own test mail) is ignored. */
+function belongsToDeal(m: { subject: string; body: string }, t: Target, sent: Set<string>): boolean {
+  if (sent.has(norm(m.subject))) return true;
+  const a = t.address;
+  return a.length >= 5 && `${m.subject}\n${m.body.slice(0, 1500)}`.toLowerCase().includes(a);
 }
 
 type Found = { id: string; from: string; subject: string; body: string; at: string };
@@ -117,12 +127,25 @@ export async function syncMailboxReplies(realtorId: string, force = false): Prom
     const book = await addressBook(realtorId);
     const addrs = Array.from(book.keys());
     let stored = 0;
+    const sentBy = new Map<string, Set<string>>();
+    const sentRows = await query<{ to_email: string; subject: string }>(`SELECT to_email, subject FROM closing_time_emails WHERE realtor_id=$1 AND direction='outbound' AND created_at > NOW() - INTERVAL '90 days'`, [realtorId]);
+    for (const r of sentRows) { const k = r.to_email.toLowerCase(); (sentBy.get(k) ?? sentBy.set(k, new Set()).get(k)!).add(norm(r.subject)); }
+    // Remove earlier imports that are not tied to the deal.
+    const prior = await query<{ id: string; to_email: string; subject: string; body: string; person_name: string }>(`SELECT id, to_email, subject, body, person_name FROM closing_time_emails WHERE realtor_id=$1 AND direction='inbound' AND external_id IS NOT NULL ORDER BY created_at DESC LIMIT 500`, [realtorId]);
+    for (const p of prior) {
+      const t = book.get(p.to_email.toLowerCase());
+      if (t && belongsToDeal(p, t, sentBy.get(p.to_email.toLowerCase()) ?? new Set())) continue;
+      await query(`DELETE FROM closing_time_emails WHERE id=$1 AND realtor_id=$2`, [p.id, realtorId]);
+      const msg = `Email reply received from ${p.person_name} <${p.to_email}>: ${p.subject.slice(0, 160)}`;
+      await query(`DELETE FROM closing_time_audit_events WHERE realtor_id=$1 AND message=$2`, [realtorId, msg.slice(0, 560)]);
+      await query(`DELETE FROM closing_time_contact_activity WHERE realtor_id=$1 AND message=$2`, [realtorId, msg.slice(0, 560)]);
+    }
     if (addrs.length) {
       const since = Math.max(last ? last - 10 * 60_000 : Date.now() - 7 * 86_400_000, Date.now() - 14 * 86_400_000);
       const found = acct.appSlug === 'gmail' ? await readGmail(realtorId, acct.id, addrs, since) : await readOutlook(realtorId, acct.id, since);
       for (const m of found) {
         const t = book.get(m.from);
-        if (!t) continue; // not a person on a deal: never stored
+        if (!t || !belongsToDeal(m, t, sentBy.get(m.from) ?? new Set())) continue; // not a person on a deal, or not about the deal: never stored
         const ins = await query(`INSERT INTO closing_time_emails (id, realtor_id, deal_id, person_name, to_email, subject, body, status, direction, external_id, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,'received','inbound',$8,$9) ON CONFLICT DO NOTHING RETURNING id`,
           [randomUUID(), realtorId, t.dealId, t.name, m.from, m.subject.slice(0, 200), m.body || '(No text)', `${acct.appSlug}:${m.id}`, m.at]);
         if (ins[0]) { stored += 1; await note(realtorId, t.dealId, t.name, 'email', `Email reply received from ${t.name} <${m.from}>: ${m.subject.slice(0, 160)}`); }
