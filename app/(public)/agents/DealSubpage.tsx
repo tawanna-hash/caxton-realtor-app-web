@@ -294,6 +294,20 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   const openTasks = deal.tasks.filter((t) => !t.complete);
   const missingRequired = docFolders.flatMap((folder) => folder.docs).filter((doc) => doc.kind === 'required' && !deal.documentChecks[doc.id]);
   const price = deal.contractDetails?.salesPrice?.trim();
+  const dayMs = 86400000;
+  const daysFromToday = (iso: string) => Math.round((Date.parse(`${iso}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / dayMs);
+  const criticalDeadlines = [
+    ...(deadlines ?? []).map((d) => ({ id: d.id, label: d.label, date: d.date })),
+    ...(deal.closingDate ? [{ id: 'closing-date', label: 'Closing', date: deal.closingDate }] : []),
+  ]
+    .filter((d) => d.date && !(d.id === 'earnest-money-delivery' && deal.earnestMoneyDeliveredDate) && !deal.documentChecks[`dl:${d.id}`] && !completedDeal)
+    .map((d) => ({ ...d, days: daysFromToday(d.date) }))
+    .filter((d) => d.days <= 1)
+    .sort((l, r) => l.days - r.days);
+  const level: 'red' | 'amber' | null = criticalDeadlines.some((d) => d.days <= 0) ? 'red' : criticalDeadlines.length ? 'amber' : null;
+  const isCritical = level !== null;
+  const textTone = level === 'red' ? 'text-[#B42318]' : 'text-[#8A5A00]';
+  const barTone = level === 'red' ? 'bg-[#B42318]' : 'bg-[#E3A008]';
   const sideBlocks = {
     property: (
 <>
@@ -319,7 +333,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             {photoError && <p className="px-4 pt-2 text-xs text-red-600" role="alert">{photoError}</p>}
             <div className="p-4">
               <p className="font-semibold text-slate-900">{deal.propertyAddress || deal.title}</p>
-              <p className="mt-1 text-xs text-slate-500">{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing Date Not Set'}</p>
+              <p className={`mt-1 text-xs ${isCritical ? `font-semibold ${textTone}` : 'text-slate-500'}`}>{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing Date Not Set'}</p>
               {!locked && <input aria-label="Photo URL" className={`${input} mt-3`} placeholder="Photo URL" value={deal.photoUrl} onChange={(e) => onUpdate('photoUrl', e.target.value)} />}
             </div>
           </div>
@@ -374,20 +388,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   const stageName = firstOpen === -1 ? 'Complete' : milestones[firstOpen].label;
   const headerPeople = [deal.buyerNames, deal.sellerNames].filter(Boolean).join(' · ');
   const priceText = price ? (price.startsWith('$') ? price : `$${price}`) : '';
-  const dayMs = 86400000;
-  const daysFromToday = (iso: string) => Math.round((Date.parse(`${iso}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / dayMs);
-  const criticalDeadlines = [
-    ...(deadlines ?? []).map((d) => ({ id: d.id, label: d.label, date: d.date })),
-    ...(deal.closingDate ? [{ id: 'closing-date', label: 'Closing', date: deal.closingDate }] : []),
-  ]
-    .filter((d) => d.date && !(d.id === 'earnest-money-delivery' && deal.earnestMoneyDeliveredDate) && !deal.documentChecks[`dl:${d.id}`] && !completedDeal)
-    .map((d) => ({ ...d, days: daysFromToday(d.date) }))
-    .filter((d) => d.days <= 1)
-    .sort((l, r) => l.days - r.days);
-  const level: 'red' | 'amber' | null = criticalDeadlines.some((d) => d.days <= 0) ? 'red' : criticalDeadlines.length ? 'amber' : null;
-  const isCritical = level !== null;
-  const textTone = level === 'red' ? 'text-[#B42318]' : 'text-[#8A5A00]';
-  const barTone = level === 'red' ? 'bg-[#B42318]' : 'bg-[#E3A008]';
   const dueText = (days: number) => (days < 0 ? `${-days} ${-days === 1 ? 'day' : 'days'} overdue` : days === 0 ? 'due today' : days === 1 ? 'due tomorrow' : `due in ${days} days`);
   const progressStrip = (
     <>
