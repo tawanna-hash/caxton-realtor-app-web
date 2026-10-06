@@ -229,6 +229,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 
   const clients = [deal.buyerNames, deal.sellerNames].filter(Boolean);
   const people = deal.clientContacts;
+  const allPeople = dealPeople(deal);
   const derived = dealPeople(deal).filter((p) => p.fromContract && !deal.clientContacts.some((c) => c.name.trim().toLowerCase() === p.name.trim().toLowerCase()));
   const docById = new Map(deal.documents.map((d) => [d.id, d]));
   const prefs = deal.preferences;
@@ -305,9 +306,9 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 <>
           <h3 className="ds-side-title">Parties</h3>
           <div className="ds-card ds-list">
-            {people.length === 0 && <p className="text-sm text-slate-500">No parties added.</p>}
-            {people.slice(0, 8).map((p) => (
-              <div key={p.id} className="ds-list-row">
+            {allPeople.length === 0 && <p className="text-sm text-slate-500">No parties added.</p>}
+            {allPeople.slice(0, 10).map((p) => (
+              <div key={`${p.role}-${p.name}`} className="ds-list-row">
                 <span className="ds-avatar" aria-hidden="true">{initials(p.name)}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-slate-900">{p.name}</span>
