@@ -101,19 +101,19 @@ function rowHtml({ agreement: ag, bucket, daysUntil, expDate }: DigestRow, siteU
   let badgeColor: string;
   if (bucket === 'just_expired') {
     badgeText = 'Expired';
-    badgeColor = '#7f1d1d';
+    badgeColor = '#661102';
   } else if (bucket === 'heads_up_45') {
     badgeText = '45 days out';
-    badgeColor = '#c2410c';
+    badgeColor = '#301D5D';
   } else if (daysUntil === 0) {
     badgeText = 'Expires today';
-    badgeColor = '#b91c1c';
+    badgeColor = '#661102';
   } else if (daysUntil <= 7) {
     badgeText = `${daysUntil} days left`;
-    badgeColor = '#b91c1c';
+    badgeColor = '#661102';
   } else {
     badgeText = `${daysUntil} days left`;
-    badgeColor = '#c2410c';
+    badgeColor = '#301D5D';
   }
 
   return `

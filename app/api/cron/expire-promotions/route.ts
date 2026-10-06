@@ -118,7 +118,7 @@ function digestHtml(rows: FlippedRow[], siteUrl: string): string {
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;vertical-align:top;color:#374151;font-size:13px">
             <div>${exp}</div>
-            <div style="color:#7f1d1d;font-weight:600;margin-top:2px">Expired</div>
+            <div style="color:#661102;font-weight:600;margin-top:2px">Expired</div>
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;vertical-align:top">
             <a href="${link}" style="display:inline-block;padding:8px 14px;background:#111827;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;font-weight:500">Open in admin</a>

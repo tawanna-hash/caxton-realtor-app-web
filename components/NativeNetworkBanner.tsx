@@ -139,7 +139,7 @@ export default function NativeNetworkBanner() {
         // Sit above BottomNav (h-16 = 64px + safe area).
         bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
         zIndex: 9990,
-        background: isOffline ? '#7F1D1D' : '#005A00',
+        background: isOffline ? '#661102' : '#005A00',
         color: '#fff',
         borderRadius: 12,
         padding: '10px 14px',
@@ -164,7 +164,7 @@ export default function NativeNetworkBanner() {
           width: 8,
           height: 8,
           borderRadius: '50%',
-          background: isOffline ? '#F87171' : '#34D399',
+          background: isOffline ? '#FF2A04' : '#34D399',
           boxShadow: `0 0 0 3px ${isOffline ? 'rgba(248,113,113,0.25)' : 'rgba(52,211,153,0.25)'}`,
           flexShrink: 0,
         }}
