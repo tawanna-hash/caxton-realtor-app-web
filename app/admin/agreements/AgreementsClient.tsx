@@ -61,7 +61,7 @@ function SummaryMetric({
     </>
   );
   return onClick ? (
-    <button type="button" onClick={onClick} className="min-w-0 px-3 py-1 text-left hover:bg-orange-50">
+    <button type="button" onClick={onClick} className="min-w-0 px-3 py-1 text-left hover:bg-[#F6F3FB]">
       {content}
     </button>
   ) : (
@@ -302,8 +302,8 @@ export default function AgreementsClient({
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) { void handleUploadFile(f); } e.target.value = ''; }}
                 />
                 <button onClick={handleUploadClick} title="Upload manually signed agreement (pdf, jpeg)" className="inline-flex h-9 items-center whitespace-nowrap rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 hover:bg-gray-50">Upload signed</button>
-                <button onClick={() => setNewQuoteOpen(true)} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700">New proposal</button>
-                <button onClick={() => setCreateAg(true)} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700">New agreement</button>
+                <button onClick={() => setNewQuoteOpen(true)} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">New proposal</button>
+                <button onClick={() => setCreateAg(true)} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">New agreement</button>
               </>
           }
         </div>
@@ -311,15 +311,15 @@ export default function AgreementsClient({
 
       {/* Recently-signed banner (last 24h) */}
       {!signedBannerDismissed && recentlySigned.length > 0 && (
-        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 flex items-start gap-3">
-          <div className="flex-shrink-0 mt-0.5 text-emerald-600" aria-hidden>✓</div>
+        <div className="rounded-md border border-[#00E200]/30 bg-[#E0FBE0] px-4 py-3 flex items-start gap-3">
+          <div className="flex-shrink-0 mt-0.5 text-[#005A00]" aria-hidden>✓</div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-emerald-900">
+            <div className="text-sm font-semibold text-[#005A00]">
               {recentlySigned.length === 1
                 ? '1 agreement signed in the last 24 hours'
                 : `${recentlySigned.length} agreements signed in the last 24 hours`}
             </div>
-            <ul className="mt-1 text-xs text-emerald-800 space-y-0.5">
+            <ul className="mt-1 text-xs text-[#005A00] space-y-0.5">
               {recentlySigned.slice(0, 5).map((ag) => (
                 <li key={ag.id} className="flex items-baseline gap-2">
                   <button
@@ -329,20 +329,20 @@ export default function AgreementsClient({
                   >
                     {ag.company_name || ag.advertiser_name || '(unnamed)'}
                   </button>
-                  <span className="text-emerald-700">
+                  <span className="text-[#005A00]">
                     {ag.signer_name ? `signed by ${ag.signer_name}` : 'signed'}
                   </span>
                 </li>
               ))}
               {recentlySigned.length > 5 && (
-                <li className="text-emerald-700 italic">+{recentlySigned.length - 5} more</li>
+                <li className="text-[#005A00] italic">+{recentlySigned.length - 5} more</li>
               )}
             </ul>
           </div>
           <button
             type="button"
             onClick={dismissSignedBanner}
-            className="flex-shrink-0 text-emerald-700 hover:text-emerald-900 text-sm px-2 py-1 rounded-md hover:bg-emerald-100"
+            className="flex-shrink-0 text-[#005A00] hover:text-[#005A00] text-sm px-2 py-1 rounded-md hover:bg-[#E0FBE0]"
             aria-label="Dismiss notification"
           >
             Dismiss
@@ -383,10 +383,10 @@ export default function AgreementsClient({
       </section>
 
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">{error}</div>
       )}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-md border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-800 shadow-lg">
+        <div className="fixed bottom-6 right-6 z-50 rounded-md border border-[#00E200]/30 bg-[#E0FBE0] px-5 py-3 text-sm text-[#005A00] shadow-lg">
           {toast}
         </div>
       )}
@@ -401,11 +401,11 @@ export default function AgreementsClient({
               key={t}
               onClick={() => { setTab(t); setStatusFilter('all'); }}
               className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
-                tab === t ? 'border-orange-600 text-orange-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+                tab === t ? 'border-[#301D5D] text-[#42277C]' : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               {label}
-              <span className={`ml-2 text-xs ${tab === t ? 'text-orange-600' : 'text-gray-400'}`}>
+              <span className={`ml-2 text-xs ${tab === t ? 'text-[#301D5D]' : 'text-gray-400'}`}>
                 ({count})
               </span>
             </button>
@@ -420,9 +420,9 @@ export default function AgreementsClient({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search partner, ad size&hellip;"
-            className="h-9 min-w-[240px] flex-1 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            className="h-9 min-w-[240px] flex-1 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]"
           />
-          <select aria-label="Filter by status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100">
+          <select aria-label="Filter by status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]">
             <option value="all">All statuses</option>
             {AG_STATUS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>

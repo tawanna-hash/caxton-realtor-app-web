@@ -22,10 +22,10 @@ const CHANNEL_TABS: readonly ChannelTab[] = ['all', ...AD_CHANNELS] as const;
 
 const STATUS_BADGE: Record<IoStatus, string> = {
   draft:        'bg-gray-100 text-gray-700 border-gray-200',
-  sent:         'bg-emerald-50 text-emerald-700 border-emerald-200',
-  acknowledged: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  active:       'bg-emerald-50 text-emerald-700 border-emerald-200',
-  fulfilled:    'bg-emerald-50 text-emerald-700 border-emerald-200',
+  sent:         'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
+  acknowledged: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
+  active:       'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
+  fulfilled:    'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
   cancelled:    'bg-gray-100 text-gray-500 border-gray-200',
 };
 
@@ -224,7 +224,7 @@ export default function IosTable() {
 
       {loading && <div className="text-sm text-gray-500 py-8 text-center">Loading…</div>}
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">
           {error}
         </div>
       )}
@@ -270,18 +270,18 @@ export default function IosTable() {
                     PDF
                   </a>
                   {io.status === 'draft' && (
-                    <button type="button" disabled={busyId === io.id} onClick={() => sendIo(io.id)} className="text-xs px-2 py-1 rounded border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50">Send</button>
+                    <button type="button" disabled={busyId === io.id} onClick={() => sendIo(io.id)} className="text-xs px-2 py-1 rounded border border-[#B9ADD6] bg-[#F6F3FB] text-[#42277C] hover:bg-[#EFEAF8] disabled:opacity-50">Send</button>
                   )}
                   {io.status === 'sent' && (
-                    <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'acknowledged')} className="text-xs px-2 py-1 rounded border border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50">Ack</button>
+                    <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'acknowledged')} className="text-xs px-2 py-1 rounded border border-[#B9ADD6] bg-[#F6F3FB] text-[#42277C] hover:bg-[#EFEAF8] disabled:opacity-50">Ack</button>
                   )}
                   {io.status === 'acknowledged' && (
-                    <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'active')} className="text-xs px-2 py-1 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">Activate</button>
+                    <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'active')} className="text-xs px-2 py-1 rounded border border-[#00E200]/50 bg-[#E0FBE0] text-[#005A00] hover:bg-[#E0FBE0] disabled:opacity-50">Activate</button>
                   )}
                   {io.status === 'active' && (
-                    <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'fulfilled')} className="text-xs px-2 py-1 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">Fulfill</button>
+                    <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'fulfilled')} className="text-xs px-2 py-1 rounded border border-[#00E200]/50 bg-[#E0FBE0] text-[#005A00] hover:bg-[#E0FBE0] disabled:opacity-50">Fulfill</button>
                   )}
-                  <button type="button" disabled={busyId === io.id} onClick={() => void deleteIo(io)} className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50">Delete</button>
+                  <button type="button" disabled={busyId === io.id} onClick={() => void deleteIo(io)} className="text-xs px-2 py-1 rounded border border-[#FF2A04]/50 bg-[#FFEAE6] text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50">Delete</button>
                 </div>
               </li>
             ))
@@ -346,7 +346,7 @@ export default function IosTable() {
                             type="button"
                             disabled={busyId === io.id}
                             onClick={() => sendIo(io.id)}
-                            className="text-xs px-2 py-1 rounded border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+                            className="text-xs px-2 py-1 rounded border border-[#B9ADD6] bg-[#F6F3FB] text-[#42277C] hover:bg-[#EFEAF8] disabled:opacity-50"
                           >
                             Send
                           </button>
@@ -356,7 +356,7 @@ export default function IosTable() {
                             type="button"
                             disabled={busyId === io.id}
                             onClick={() => transition(io.id, 'acknowledged')}
-                            className="text-xs px-2 py-1 rounded border border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+                            className="text-xs px-2 py-1 rounded border border-[#B9ADD6] bg-[#F6F3FB] text-[#42277C] hover:bg-[#EFEAF8] disabled:opacity-50"
                           >
                             Ack
                           </button>
@@ -366,7 +366,7 @@ export default function IosTable() {
                             type="button"
                             disabled={busyId === io.id}
                             onClick={() => transition(io.id, 'active')}
-                            className="text-xs px-2 py-1 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+                            className="text-xs px-2 py-1 rounded border border-[#00E200]/50 bg-[#E0FBE0] text-[#005A00] hover:bg-[#E0FBE0] disabled:opacity-50"
                           >
                             Activate
                           </button>
@@ -376,7 +376,7 @@ export default function IosTable() {
                             type="button"
                             disabled={busyId === io.id}
                             onClick={() => transition(io.id, 'fulfilled')}
-                            className="text-xs px-2 py-1 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+                            className="text-xs px-2 py-1 rounded border border-[#00E200]/50 bg-[#E0FBE0] text-[#005A00] hover:bg-[#E0FBE0] disabled:opacity-50"
                           >
                             Fulfill
                           </button>
@@ -385,7 +385,7 @@ export default function IosTable() {
                           type="button"
                           disabled={busyId === io.id}
                           onClick={() => void deleteIo(io)}
-                          className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50"
+                          className="text-xs px-2 py-1 rounded border border-[#FF2A04]/50 bg-[#FFEAE6] text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
                         >
                           Delete
                         </button>

@@ -163,7 +163,7 @@ export default function EditInventoryModal({ id, onClose, onChanged }: Props) {
           {error && !loading && (
             <div
               role="alert"
-              className="border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-900"
+              className="border-l-4 border-[#661102] bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]"
             >
               {error}
             </div>

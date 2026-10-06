@@ -246,7 +246,7 @@ export default function HotspotConfigModal({
             <h3 className="font-medium">Detection Evidence</h3>
             <p className="mt-1 break-words text-gray-700">{hotspot.detection.evidence}</p>
             <p className="mt-1 text-xs text-gray-600">{hotspot.detection.origin.replace(/_/g, ' ')} · {hotspot.detection.confidence === 'exact' ? 'Direct extraction; verify the destination.' : 'Suggested detection; confirm its match and position.'}</p>
-            {hotspot.detection.needs_match && <p className="mt-1 text-xs text-amber-800">Originally unmatched. Choose a partner and verify its destination, or enter a confirmed destination yourself.</p>}
+            {hotspot.detection.needs_match && <p className="mt-1 text-xs text-[#645600]">Originally unmatched. Choose a partner and verify its destination, or enter a confirmed destination yourself.</p>}
           </section>}
           {/* Type picker */}
           <div>
@@ -272,7 +272,7 @@ export default function HotspotConfigModal({
           <section className="rounded-md border border-gray-200 p-3 text-sm">
             <h3 className="font-medium">Destination Preview</h3>
             <p className="mt-1 break-all text-gray-600">{hotspotDestination(config) || 'No destination yet'}</p>
-            {problem && <p className="mt-1 text-xs text-amber-800">{problem}</p>}
+            {problem && <p className="mt-1 text-xs text-[#645600]">{problem}</p>}
             {destination && !problem && <a href={destination} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block font-medium text-purple-900 underline">Test Link</a>}
             <p className="mt-1 text-xs text-gray-500">Tests do not record clicks. Email and phone tests open your device’s app.</p>
           </section>
@@ -324,7 +324,7 @@ export default function HotspotConfigModal({
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-800">
+            <div className="p-3 bg-[#FFEAE6] border border-[#FF2A04]/30 rounded-md text-sm text-[#661102]">
               {error}
             </div>
           )}
@@ -336,7 +336,7 @@ export default function HotspotConfigModal({
             type="button"
             onClick={onRequestDelete}
             disabled={saving}
-            className="px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 rounded-md"
+            className="px-3 py-2 text-sm font-medium text-[#661102] hover:bg-[#FFEAE6] rounded-md"
           >
             Delete hotspot
           </button>
@@ -492,7 +492,7 @@ function AdvertiserPicker({
           <button
             type="button"
             onClick={() => setShowNewForm(true)}
-            className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+            className="text-xs text-[#301D5D] hover:underline whitespace-nowrap"
           >
             + New partner…
           </button>
@@ -853,7 +853,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-600">*</span>}
+        {label} {required && <span className="text-[#661102]">*</span>}
       </label>
       {children}
     </div>
@@ -925,7 +925,7 @@ function BlobUpload({
             href={currentUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-blue-600 hover:underline truncate max-w-xs"
+            className="text-xs text-[#301D5D] hover:underline truncate max-w-xs"
           >
             {currentUrl.split('/').pop()}
           </a>

@@ -24,7 +24,7 @@ function TrendArrow({ pct }: { pct: number }) {
     );
   }
   const up = pct > 0;
-  const color = up ? 'text-green-600' : 'text-red-600';
+  const color = up ? 'text-[#005A00]' : 'text-[#661102]';
   const arrow = up ? '↑' : '↓';
   return (
     <span className={`inline-flex items-center ${color} text-xs font-medium`}>

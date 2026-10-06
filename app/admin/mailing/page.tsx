@@ -257,7 +257,7 @@ export default async function MailingHubPage() {
             <Link
               key={s.slug}
               href={`/admin/mailing/${s.slug}`}
-              className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-orange-300 hover:bg-orange-50/30"
+              className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-[#B9ADD6] hover:bg-[#F6F3FB]/30"
             >
               <div className="flex items-start justify-between mb-3">
                 <div
@@ -275,7 +275,7 @@ export default async function MailingHubPage() {
               </div>
               <div className="text-sm font-semibold text-gray-900">{s.label}</div>
               <p className="mt-1 text-xs leading-5 text-gray-600">{s.caption}</p>
-              <div className="mt-2 text-xs font-medium text-orange-700">
+              <div className="mt-2 text-xs font-medium text-[#42277C]">
                 Open list
               </div>
             </Link>
@@ -331,7 +331,7 @@ export default async function MailingHubPage() {
           <Link
             key={t.href}
             href={t.href}
-            className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-orange-300 hover:bg-orange-50/30"
+            className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-[#B9ADD6] hover:bg-[#F6F3FB]/30"
           >
             <div className="flex items-start justify-between mb-3">
               <div
@@ -343,7 +343,7 @@ export default async function MailingHubPage() {
             </div>
             <div className="text-sm font-semibold text-gray-900">{t.label}</div>
             <p className="mt-1 text-xs leading-5 text-gray-600">{t.caption}</p>
-            <div className="mt-2 text-xs font-medium text-orange-700">
+            <div className="mt-2 text-xs font-medium text-[#42277C]">
               Open page
             </div>
           </Link>

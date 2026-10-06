@@ -18,9 +18,9 @@ type ChannelTab = 'all' | AdChannel;
 const CHANNEL_TABS: readonly ChannelTab[] = ['all', ...AD_CHANNELS] as const;
 
 const STATUS_BADGE: Record<TearsheetStatus, string> = {
-  pending: 'bg-amber-50 text-amber-700 border-amber-200',
-  ready:   'bg-blue-50 text-blue-700 border-blue-200',
-  sent:    'bg-emerald-50 text-emerald-700 border-emerald-200',
+  pending: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30',
+  ready:   'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
+  sent:    'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
 };
 
 function formatDate(s: string | null): string {
@@ -169,7 +169,7 @@ export default function TearsheetsTable() {
 
       {loading && <div className="text-sm text-gray-500 py-8 text-center">Loading…</div>}
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">
           {error}
         </div>
       )}
@@ -201,7 +201,7 @@ export default function TearsheetsTable() {
                   <dt className="text-gray-500">File</dt>
                   <dd>
                     {t.file_url ? (
-                      <a href={t.file_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">View</a>
+                      <a href={t.file_url} target="_blank" rel="noreferrer" className="text-[#301D5D] hover:underline">View</a>
                     ) : (
                       <span className="text-gray-400">No file</span>
                     )}
@@ -215,9 +215,9 @@ export default function TearsheetsTable() {
                 </dl>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {t.status !== 'sent' && t.file_url && (
-                    <button type="button" disabled={busyId === t.id} onClick={() => sendTearsheet(t.id)} className="text-xs px-2 py-1 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">Send</button>
+                    <button type="button" disabled={busyId === t.id} onClick={() => sendTearsheet(t.id)} className="text-xs px-2 py-1 rounded border border-[#00E200]/50 bg-[#E0FBE0] text-[#005A00] hover:bg-[#E0FBE0] disabled:opacity-50">Send</button>
                   )}
-                  <button type="button" disabled={busyId === t.id} onClick={() => deleteTearsheet(t.id)} className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50">Delete</button>
+                  <button type="button" disabled={busyId === t.id} onClick={() => deleteTearsheet(t.id)} className="text-xs px-2 py-1 rounded border border-[#FF2A04]/50 bg-[#FFEAE6] text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50">Delete</button>
                 </div>
               </li>
             ))
@@ -261,7 +261,7 @@ export default function TearsheetsTable() {
                           href={t.file_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-blue-600 hover:underline text-xs"
+                          className="text-[#301D5D] hover:underline text-xs"
                         >
                           View
                         </a>
@@ -291,7 +291,7 @@ export default function TearsheetsTable() {
                             type="button"
                             disabled={busyId === t.id}
                             onClick={() => sendTearsheet(t.id)}
-                            className="text-xs px-2 py-1 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+                            className="text-xs px-2 py-1 rounded border border-[#00E200]/50 bg-[#E0FBE0] text-[#005A00] hover:bg-[#E0FBE0] disabled:opacity-50"
                           >
                             Send
                           </button>
@@ -300,7 +300,7 @@ export default function TearsheetsTable() {
                           type="button"
                           disabled={busyId === t.id}
                           onClick={() => deleteTearsheet(t.id)}
-                          className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50"
+                          className="text-xs px-2 py-1 rounded border border-[#FF2A04]/50 bg-[#FFEAE6] text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
                         >
                           Delete
                         </button>

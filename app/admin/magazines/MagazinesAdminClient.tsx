@@ -227,7 +227,7 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
             </Link>
             <Link
               href="/admin/magazines/new"
-              className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md font-medium text-sm"
+              className="bg-[#301D5D] hover:bg-[#42277C] text-white px-4 py-2 rounded-md font-medium text-sm"
             >
               + New Issue
             </Link>
@@ -246,7 +246,7 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
         </section>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md mb-4">
+          <div className="bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] px-4 py-3 rounded-md mb-4">
             {error}
           </div>
         )}
@@ -345,7 +345,7 @@ function Column({
                   {m.page_count} {m.page_count === 1 ? 'page' : 'pages'} · sort {m.sort_date?.slice(0, 10)}
                 </p>
                 {(!m.cover_url || !m.page_urls || m.page_urls.length === 0) && (
-                  <p className="text-xs text-amber-600 mt-1">
+                  <p className="text-xs text-[#645600] mt-1">
                     ⚠ {!m.cover_url ? 'missing cover · ' : ''}
                     {!m.page_urls || m.page_urls.length === 0 ? 'no pages uploaded' : ''}
                   </p>
@@ -353,20 +353,20 @@ function Column({
                 <div className="flex items-center gap-4 mt-3 flex-wrap">
                   <Link
                     href={`/admin/magazines/${m.id}`}
-                    className="text-sm text-blue-600 hover:underline"
+                    className="text-sm text-[#301D5D] hover:underline"
                   >
                     Edit
                   </Link>
                   <Link
                     href={`/admin/magazines/${m.id}/hotspots`}
-                    className="text-sm text-blue-600 hover:underline"
+                    className="text-sm text-[#301D5D] hover:underline"
                   >
                     Hotspots
                   </Link>
                   <button
                     onClick={() => onDelete(m.id, m.issue_label)}
                     disabled={deletingId === m.id}
-                    className="text-sm text-red-600 hover:underline disabled:opacity-50"
+                    className="text-sm text-[#661102] hover:underline disabled:opacity-50"
                   >
                     {deletingId === m.id ? 'Deleting…' : 'Delete'}
                   </button>
@@ -408,7 +408,7 @@ function Column({
                                 href={url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline truncate max-w-[180px]"
+                                className="text-xs text-[#301D5D] hover:underline truncate max-w-[180px]"
                                 title={url}
                               >
                                 View
@@ -423,7 +423,7 @@ function Column({
                             </>
                           )}
                           {err && (
-                            <span className="text-xs text-red-600 break-words">{err}</span>
+                            <span className="text-xs text-[#661102] break-words">{err}</span>
                           )}
                         </div>
                       );

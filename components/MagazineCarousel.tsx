@@ -78,7 +78,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   if (error) {
     return (
       <div className="px-4 py-12 bg-gray-50">
-        <p className="text-sm text-red-600 text-center">Couldn&apos;t load magazines: {error}</p>
+        <p className="text-sm text-[#661102] text-center">Couldn&apos;t load magazines: {error}</p>
       </div>
     );
   }

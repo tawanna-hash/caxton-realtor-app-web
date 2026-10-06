@@ -96,8 +96,8 @@ function BundleSavingsSection() {
   });
 
   return (
-    <section className="mb-8 rounded-md border border-emerald-200 bg-emerald-50/60 p-6 md:p-8">
-      <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-800">
+    <section className="mb-8 rounded-md border border-[#00E200]/30 bg-[#E0FBE0]/60 p-6 md:p-8">
+      <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-[#005A00]">
         Bundle &amp; save
       </p>
       <h2 className="text-xl font-bold tracking-tight text-gray-900 md:text-2xl">
@@ -109,7 +109,7 @@ function BundleSavingsSection() {
       </p>
       <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         {ladder.map((row) => (
-          <div key={row.markets} className="rounded-md border border-emerald-200 bg-white p-4">
+          <div key={row.markets} className="rounded-md border border-[#00E200]/30 bg-white p-4">
             <p className="min-h-[2.2em] text-[11px] font-medium uppercase leading-tight tracking-wider text-gray-500">
               {MARKET_LABELS[row.markets].name}
               {MARKET_LABELS[row.markets].comingSoon && (
@@ -126,7 +126,7 @@ function BundleSavingsSection() {
             <p className="mt-1.5 text-xs text-gray-500">
               {row.savingsPct > 0 ? (
                 <>
-                  <span className="font-semibold text-emerald-700">{row.savingsPct}% off</span>
+                  <span className="font-semibold text-[#005A00]">{row.savingsPct}% off</span>
                   <span className="text-gray-400"> vs ${row.separately.toLocaleString()}</span>
                 </>
               ) : (
@@ -173,7 +173,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
           </div>
           {showRotationNotice && (
             <span
-              className="shrink-0 inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+              className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#F6F3FB] text-[#42277C] border border-[#D9CFF0] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
               title="Rotates with up to 5 active campaigns. 6s dwell, 2s cross-fade."
             >
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -185,7 +185,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
           )}
         </div>
         {showRotationNotice && (
-          <div className="text-[11px] text-blue-700">
+          <div className="text-[11px] text-[#42277C]">
             Shared placement · up to 5 partners cycle · 6-second view + 2-second fade
           </div>
         )}
@@ -249,7 +249,7 @@ export default function PublicAdvertisePlacementsPage() {
           before you check out.
         </p>
         <p className="text-sm text-gray-600 leading-relaxed max-w-3xl mt-3">
-          Slots marked <span className="inline-flex items-center gap-1 align-middle rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+          Slots marked <span className="inline-flex items-center gap-1 align-middle rounded-full bg-[#F6F3FB] text-[#42277C] border border-[#D9CFF0] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M21 12a9 9 0 1 1-3-6.7" />
               <polyline points="21 3 21 9 15 9" />

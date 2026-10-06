@@ -945,9 +945,9 @@ export function AgreementDrawer({
       onClose={onClose}
     >
       {!isCreate && onGenerateInvoice && (
-        <div className="rounded-md border border-blue-200 bg-blue-50/60 p-3 flex items-center justify-between">
+        <div className="rounded-md border border-[#D9CFF0] bg-[#F6F3FB]/60 p-3 flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase tracking-[0.2em] text-blue-700 font-medium">
+            <div className="text-xs uppercase tracking-[0.2em] text-[#42277C] font-medium">
               Invoice
             </div>
             <div className="text-sm text-gray-800 mt-0.5">
@@ -974,7 +974,7 @@ export function AgreementDrawer({
                 amount_cents: existing!.amount_cents,
               })
             }
-            className="px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs hover:bg-blue-700"
+            className="px-3 py-1.5 rounded-md bg-[#301D5D] text-white text-xs hover:bg-[#42277C]"
           >
             Generate invoice
           </button>
@@ -1161,7 +1161,7 @@ export function AgreementDrawer({
                         upd("ad_size", s);
                         onSizeFrChange(s, form.frequency);
                       }}
-                      className="w-4 h-4 accent-blue-600"
+                      className="w-4 h-4 accent-[#301D5D]"
                     />
                     {s}
                   </label>
@@ -1185,7 +1185,7 @@ export function AgreementDrawer({
                         upd("frequency", f);
                         onSizeFrChange(form.ad_size, f);
                       }}
-                      className="w-4 h-4 accent-blue-600"
+                      className="w-4 h-4 accent-[#301D5D]"
                     />
                     {f} {FREQ_PKG_AG[f] ? `· ${FREQ_PKG_AG[f]}` : ""}
                   </label>
@@ -1203,7 +1203,7 @@ export function AgreementDrawer({
                       className={INPUT_READONLY}
                       readOnly
                     />
-                    <div className="text-[10px] text-amber-600 mt-1">
+                    <div className="text-[10px] text-[#645600] mt-1">
                       +3% CC surcharge (base: ${form.ad_rate_base})
                     </div>
                   </>
@@ -1223,7 +1223,7 @@ export function AgreementDrawer({
                   />
                 )}
                 {rateLockOverride ? (
-                  <div className="text-[10px] text-orange-600 mt-1">
+                  <div className="text-[10px] text-[#301D5D] mt-1">
                     ⏰ Rate lock expired — this renewal was drafted after the
                     prior agreement&apos;s exp date, so the rate updated from $
                     {rateLockOverride.oldRate.toFixed(2)} to $
@@ -1308,7 +1308,7 @@ export function AgreementDrawer({
                 type="checkbox"
                 checked={form.pos_premium_active}
                 onChange={(e) => onTogglePosPremium(e.target.checked)}
-                className="w-4 h-4 accent-blue-600"
+                className="w-4 h-4 accent-[#301D5D]"
               />
               Apply 20% premium
             </label>
@@ -1333,7 +1333,7 @@ export function AgreementDrawer({
                       [m.k]: e.target.checked,
                     })
                   }
-                  className="w-3.5 h-3.5 accent-blue-600 flex-shrink-0"
+                  className="w-3.5 h-3.5 accent-[#301D5D] flex-shrink-0"
                 />
                 <label
                   htmlFor={`agm_${m.k}`}
@@ -1395,7 +1395,7 @@ export function AgreementDrawer({
                 value={b}
                 checked={form.bill_to === b}
                 onChange={() => upd("bill_to", b)}
-                className="w-4 h-4 accent-blue-600"
+                className="w-4 h-4 accent-[#301D5D]"
               />
               {b}
             </label>
@@ -1446,7 +1446,7 @@ export function AgreementDrawer({
                 value={pt}
                 checked={form.payment_type === pt}
                 onChange={() => onPayTypeChange(pt)}
-                className="w-4 h-4 accent-blue-600"
+                className="w-4 h-4 accent-[#301D5D]"
               />
               {pt}
             </label>
@@ -1454,11 +1454,11 @@ export function AgreementDrawer({
         </div>
 
         {form.payment_type === "Credit Card" && (
-          <div className="rounded-md border border-amber-200 bg-amber-50/40 p-3 space-y-3">
-            <div className="text-xs text-amber-800 font-medium">
+          <div className="rounded-md border border-[#FAD800]/30 bg-[#FEF8CC]/40 p-3 space-y-3">
+            <div className="text-xs text-[#645600] font-medium">
               A 3% surcharge applies to credit card transactions
             </div>
-            <div className="text-xs text-amber-900 bg-amber-100 border border-amber-300 rounded-md p-2 leading-relaxed">
+            <div className="text-xs text-[#645600] bg-[#FEF8CC] border border-[#FAD800]/50 rounded-md p-2 leading-relaxed">
               <strong>
                 The actual card charge happens on the signing link.
               </strong>{" "}
@@ -1482,7 +1482,7 @@ export function AgreementDrawer({
                     value={ct}
                     checked={form.card_type === ct}
                     onChange={() => upd("card_type", ct)}
-                    className="w-4 h-4 accent-blue-600"
+                    className="w-4 h-4 accent-[#301D5D]"
                   />
                   {ct}
                 </label>
@@ -1558,12 +1558,12 @@ export function AgreementDrawer({
                     : ""}
                 </span>
                 {stripeCardExpStatus === "expired" && (
-                  <span className="rounded-full border border-rose-300 bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-800">
+                  <span className="rounded-full border border-[#FF2A04]/50 bg-[#FFEAE6] px-2 py-0.5 text-xs font-medium text-[#661102]">
                     Expired
                   </span>
                 )}
                 {stripeCardExpStatus === "expiring_soon" && (
-                  <span className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                  <span className="rounded-full border border-[#FAD800]/50 bg-[#FEF8CC] px-2 py-0.5 text-xs font-medium text-[#645600]">
                     Expiring soon
                   </span>
                 )}
@@ -1577,7 +1577,7 @@ export function AgreementDrawer({
               <button
                 type="button"
                 onClick={() => setShowAddCard(true)}
-                className="rounded-md border border-blue-300 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                className="rounded-md border border-[#B9ADD6] bg-white px-3 py-1.5 text-sm font-medium text-[#42277C] hover:bg-[#F6F3FB]"
               >
                 {stripeCardPresent ? "Update card on file" : "Add card on file"}
               </button>
@@ -1607,7 +1607,7 @@ export function AgreementDrawer({
               type="checkbox"
               checked={form.terms_accepted}
               onChange={(e) => upd("terms_accepted", e.target.checked)}
-              className="w-4 h-4 accent-blue-600"
+              className="w-4 h-4 accent-[#301D5D]"
             />
             I have read and accept the terms above
           </label>
@@ -1622,7 +1622,7 @@ export function AgreementDrawer({
             </Field>
           </div>
           <div
-            className={`rounded-md border-2 p-3 space-y-1 mt-1 ${form.terms_accepted ? "border-amber-400 bg-amber-50/40" : "border-gray-200"}`}
+            className={`rounded-md border-2 p-3 space-y-1 mt-1 ${form.terms_accepted ? "border-[#FAD800] bg-[#FEF8CC]/40" : "border-gray-200"}`}
           >
             <div className="text-xs text-gray-600 font-medium">
               Type your full legal name to sign
@@ -1686,7 +1686,7 @@ export function AgreementDrawer({
                     href={f.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:underline text-blue-600"
+                    className="hover:underline text-[#301D5D]"
                   >
                     {f.name}
                   </a>
@@ -1704,7 +1704,7 @@ export function AgreementDrawer({
             {uploadingFiles.map((f) => (
               <div key={f.key} className="flex items-center gap-2 text-xs">
                 <svg
-                  className="w-3 h-3 text-blue-400"
+                  className="w-3 h-3 text-[#7059A8]"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -1717,9 +1717,9 @@ export function AgreementDrawer({
                 <span className="text-gray-700">{f.name}</span>
                 {f.error ? (
                   <>
-                    <span className="text-rose-600">— {f.error}</span>
+                    <span className="text-[#661102]">— {f.error}</span>
                     <button
-                      className="text-rose-500 hover:underline"
+                      className="text-[#661102] hover:underline"
                       onClick={() =>
                         setUploadingFiles((u) =>
                           u.filter((x) => x.key !== f.key),
@@ -1732,7 +1732,7 @@ export function AgreementDrawer({
                 ) : (
                   <span className="text-gray-400 inline-flex items-center gap-1">
                     <svg
-                      className="w-3 h-3 animate-spin text-blue-500"
+                      className="w-3 h-3 animate-spin text-[#7059A8]"
                       viewBox="0 0 20 20"
                       fill="none"
                     >
@@ -1767,7 +1767,7 @@ export function AgreementDrawer({
                 className="flex items-center gap-2 text-xs text-gray-600"
               >
                 <svg
-                  className="w-3 h-3 text-amber-400"
+                  className="w-3 h-3 text-[#645600]"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -1780,7 +1780,7 @@ export function AgreementDrawer({
                 <span>{f.name}</span>
                 <span className="text-gray-400">— will upload on save</span>
                 <button
-                  className="text-rose-500 hover:underline"
+                  className="text-[#661102] hover:underline"
                   onClick={() =>
                     upd(
                       "pendingFiles",
@@ -1797,7 +1797,7 @@ export function AgreementDrawer({
         {/* Drop zone */}
         <div
           ref={dropRef}
-          className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center text-xs text-gray-500 cursor-pointer hover:border-blue-400"
+          className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center text-xs text-gray-500 cursor-pointer hover:border-[#7059A8]"
           onClick={() => {
             const inp = document.createElement("input");
             inp.type = "file";
@@ -1941,12 +1941,12 @@ export function AgreementDrawer({
 
       {/* ── Footer ── */}
       {signingMsg && (
-        <div className="sticky bottom-[72px] -mx-6 px-6 py-2 bg-indigo-50 border-t border-indigo-200 text-xs text-indigo-800">
+        <div className="sticky bottom-[72px] -mx-6 px-6 py-2 bg-[#F6F3FB] border-t border-[#D9CFF0] text-xs text-[#301D5D]">
           {signingMsg}
         </div>
       )}
       {amendedMsg && (
-        <div className="sticky bottom-[72px] -mx-6 px-6 py-2 bg-amber-50 border-t border-amber-200 text-xs text-amber-800">
+        <div className="sticky bottom-[72px] -mx-6 px-6 py-2 bg-[#FEF8CC] border-t border-[#FAD800]/30 text-xs text-[#645600]">
           {amendedMsg}
         </div>
       )}
@@ -1958,7 +1958,7 @@ export function AgreementDrawer({
           <button
             type="button"
             onClick={() => setShowCustomMessage((v) => !v)}
-            className="text-xs font-medium text-indigo-700 hover:text-indigo-900 inline-flex items-center gap-1"
+            className="text-xs font-medium text-[#42277C] hover:text-[#1B1726] inline-flex items-center gap-1"
           >
             <span>{showCustomMessage ? "▾" : "▸"}</span>
             <span>
@@ -1975,7 +1975,7 @@ export function AgreementDrawer({
                 onChange={(e) => setCustomMessage(e.target.value)}
                 rows={4}
                 placeholder="Leave blank to use the standard pitch. When filled in, this replaces the body paragraph of the signing email."
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-normal text-gray-800 placeholder:text-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-normal text-gray-800 placeholder:text-gray-400 focus:border-[#7059A8] focus:outline-none focus:ring-1 focus:ring-[#B9ADD6]"
               />
               <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
                 <span>
@@ -1986,7 +1986,7 @@ export function AgreementDrawer({
                   <button
                     type="button"
                     onClick={() => setCustomMessage("")}
-                    className="text-rose-600 hover:text-rose-800"
+                    className="text-[#661102] hover:text-[#661102]"
                   >
                     Clear
                   </button>
@@ -2004,7 +2004,7 @@ export function AgreementDrawer({
             type="button"
             onClick={handleDelete}
             disabled={saving}
-            className="px-4 py-2 rounded-md border border-rose-300 text-rose-700 text-sm hover:bg-rose-50 disabled:opacity-50 whitespace-nowrap"
+            className="px-4 py-2 rounded-md border border-[#FF2A04]/50 text-[#661102] text-sm hover:bg-[#FFEAE6] disabled:opacity-50 whitespace-nowrap"
           >
             Delete
           </button>
@@ -2030,7 +2030,7 @@ export function AgreementDrawer({
         <button
           onClick={() => save(false)}
           disabled={saving}
-          className="px-4 py-2 rounded-md border border-blue-500 bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 rounded-md border border-[#7059A8] bg-[#301D5D] text-white text-sm hover:bg-[#42277C] disabled:opacity-50"
           title="Save the agreement with the currently selected status"
         >
           {saving ? "Saving…" : isCreate ? "Save as Draft" : "Save"}
@@ -2040,7 +2040,7 @@ export function AgreementDrawer({
             <button
               onClick={sendSigningLink}
               disabled={saving}
-              className="px-4 py-2 rounded-md border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50 whitespace-nowrap"
+              className="px-4 py-2 rounded-md border border-[#B9ADD6] text-[#42277C] text-sm hover:bg-[#F6F3FB] disabled:opacity-50 whitespace-nowrap"
             >
               {sendStageLabel}
             </button>
@@ -2055,7 +2055,7 @@ export function AgreementDrawer({
             <button
               onClick={copySigningLink}
               disabled={saving}
-              className="px-4 py-2 rounded-md border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50 whitespace-nowrap"
+              className="px-4 py-2 rounded-md border border-[#B9ADD6] text-[#42277C] text-sm hover:bg-[#F6F3FB] disabled:opacity-50 whitespace-nowrap"
               title="Copy signing link to clipboard"
             >
               Copy Link
@@ -2071,7 +2071,7 @@ export function AgreementDrawer({
             type="button"
             onClick={saveAndSendAmended}
             disabled={saving || sendingAmended}
-            className="px-4 py-2 rounded-md border border-amber-400 bg-amber-50 text-amber-800 text-sm hover:bg-amber-100 disabled:opacity-50 whitespace-nowrap"
+            className="px-4 py-2 rounded-md border border-[#FAD800] bg-[#FEF8CC] text-[#645600] text-sm hover:bg-[#FEF8CC] disabled:opacity-50 whitespace-nowrap"
             title="Save current edits, regenerate the PDF, and email it to the partner as an FYI"
           >
             {sendingAmended ? "Sending…" : "Save & send amended PDF"}

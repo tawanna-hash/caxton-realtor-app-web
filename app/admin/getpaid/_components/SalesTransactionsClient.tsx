@@ -70,9 +70,9 @@ type InvoiceSender =
 type InvoiceSenderChoice = InvoiceSender | 'auto';
 
 const CONTROL =
-  'min-h-11 sm:h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100';
+  'min-h-11 sm:h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]';
 const ORANGE_BUTTON =
-  'inline-flex min-h-11 items-center justify-center gap-2 rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex min-h-11 items-center justify-center gap-2 rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#42277C] focus:outline-none focus:ring-2 focus:ring-[#B9ADD6] disabled:cursor-not-allowed disabled:opacity-50';
 
 function isSafeHttpUrl(value: unknown): value is string {
   if (typeof value !== 'string' || !value) return false;
@@ -244,7 +244,7 @@ function StatusCell({ invoice, referenceTime }: { invoice: InvoiceWithAdvertiser
   if (invoice.is_overdue) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
-        <AlertCircle className="h-4 w-4 text-orange-600" aria-hidden="true" />
+        <AlertCircle className="h-4 w-4 text-[#301D5D]" aria-hidden="true" />
         {statusLabel(invoice, referenceTime)}
       </span>
     );
@@ -252,7 +252,7 @@ function StatusCell({ invoice, referenceTime }: { invoice: InvoiceWithAdvertiser
   if (invoice.status === 'paid') {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
-        <CheckCircle2 className="h-4 w-4 fill-emerald-600 text-white" aria-hidden="true" />
+        <CheckCircle2 className="h-4 w-4 fill-[#005A00] text-white" aria-hidden="true" />
         Paid
       </span>
     );
@@ -350,15 +350,15 @@ function TransactionCard({
       </div>
       <div><StatusCell invoice={invoice} referenceTime={referenceTime} /></div>
       <div className="relative flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
-        <button type="button" disabled={busy} className="min-h-11 font-medium text-orange-700 hover:underline disabled:opacity-50" onClick={onView}>
+        <button type="button" disabled={busy} className="min-h-11 font-medium text-[#42277C] hover:underline disabled:opacity-50" onClick={onView}>
           View/Edit
         </button>
         {canReceivePayment ? (
-          <button type="button" disabled={busy} className="min-h-11 font-medium text-orange-700 hover:underline disabled:opacity-50" onClick={onReceivePayment}>
+          <button type="button" disabled={busy} className="min-h-11 font-medium text-[#42277C] hover:underline disabled:opacity-50" onClick={onReceivePayment}>
             Receive payment
           </button>
         ) : (
-          <button type="button" className="min-h-11 font-medium text-orange-700 hover:underline" onClick={onPrint}>
+          <button type="button" className="min-h-11 font-medium text-[#42277C] hover:underline" onClick={onPrint}>
             <span className="inline-flex items-center gap-1"><Printer className="h-3.5 w-3.5" aria-hidden="true" />Print</span>
           </button>
         )}
@@ -366,7 +366,7 @@ function TransactionCard({
           type="button"
           aria-label={`More actions for ${invoice.number ?? 'transaction'}`}
           disabled={busy}
-          className="ml-auto inline-flex min-h-11 min-w-11 items-center justify-center rounded p-1 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
+          className="ml-auto inline-flex min-h-11 min-w-11 items-center justify-center rounded p-1 text-[#42277C] hover:bg-[#EFEAF8] disabled:opacity-50"
           onClick={onToggleMenu}
         >
           <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
@@ -384,7 +384,7 @@ function TransactionCard({
                 onClick={() => onRowAction(action)}
               >
                 <span>{label}</span>
-                {action === 'duplicate-ai' && <span className="rounded bg-fuchsia-100 px-1.5 py-0.5 text-[10px] font-semibold text-fuchsia-700">NEW</span>}
+                {action === 'duplicate-ai' && <span className="rounded bg-[#EFEAF8] px-1.5 py-0.5 text-[10px] font-semibold text-[#42277C]">NEW</span>}
               </button>
             ))}
           </div>
@@ -469,7 +469,7 @@ function EmailInvoiceDialog({
               <input className={`${CONTROL} mt-1 w-full`} value={subject} onChange={(event) => setSubject(event.target.value)} />
             </label>
             <label className="block text-xs font-medium text-gray-600">Message
-              <textarea className="mt-1 min-h-48 w-full rounded border border-gray-300 p-3 text-sm leading-6 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100" value={body} onChange={(event) => setBody(event.target.value)} />
+              <textarea className="mt-1 min-h-48 w-full rounded border border-gray-300 p-3 text-sm leading-6 outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]" value={body} onChange={(event) => setBody(event.target.value)} />
             </label>
             {!reminder && (
               <div className="space-y-1 border-t border-gray-200 pt-3 text-xs font-medium text-gray-700">
@@ -484,7 +484,7 @@ function EmailInvoiceDialog({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/brand/caxton-logo.jpg" alt="Caxton Publications" className="mx-auto h-24 w-auto object-contain" />
               </div>
-              <div className="bg-blue-50 px-6 py-8 text-center">
+              <div className="bg-[#F6F3FB] px-6 py-8 text-center">
                 <div className="text-xl font-semibold text-gray-900">Your invoice is ready!</div>
                 <div className="mt-5 text-xs uppercase tracking-wider text-gray-500">Balance due</div>
                 <div className="mt-1 text-3xl font-semibold text-gray-900">{formatCents(outstandingCents(invoice))}</div>
@@ -995,7 +995,7 @@ export function SalesTransactionsClient({
           </div>
           <PageTitle size="md">{invoiceWorkspace ? 'Invoices' : 'Sales transactions'}</PageTitle>
         </div>
-        <button type="button" className="text-sm font-medium text-orange-700 hover:underline">
+        <button type="button" className="text-sm font-medium text-[#42277C] hover:underline">
           Give feedback
         </button>
       </div>
@@ -1009,8 +1009,8 @@ export function SalesTransactionsClient({
               <div className="border-l border-gray-200 text-right"><SummaryMetric amount={summary.notDueAmount} count={summary.notDueCount} label="not due yet" /></div>
             </div>
             <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
-              <div className="bg-orange-600" style={{ width: `${summary.openAmount ? (summary.overdueAmount / summary.openAmount) * 100 : 0}%` }} />
-              <div className="flex-1 bg-orange-300" />
+              <div className="bg-[#301D5D]" style={{ width: `${summary.openAmount ? (summary.overdueAmount / summary.openAmount) * 100 : 0}%` }} />
+              <div className="flex-1 bg-[#B9ADD6]" />
             </div>
           </div>
           <div>
@@ -1020,8 +1020,8 @@ export function SalesTransactionsClient({
               <div className="border-l border-gray-200 text-right"><SummaryMetric amount={summary.depositedAmount} count={summary.depositedCount} label="Stripe payments" /></div>
             </div>
             <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
-              <div className="bg-emerald-400" style={{ width: `${summary.paidAmount ? (summary.notDepositedAmount / summary.paidAmount) * 100 : 0}%` }} />
-              <div className="flex-1 bg-emerald-600" />
+              <div className="bg-[#00E200]" style={{ width: `${summary.paidAmount ? (summary.notDepositedAmount / summary.paidAmount) * 100 : 0}%` }} />
+              <div className="flex-1 bg-[#005A00]" />
             </div>
           </div>
         </section>
@@ -1034,11 +1034,11 @@ export function SalesTransactionsClient({
             <SummaryMetric amount={summary.paidAmount} count={summary.paidCount} label="recently paid" />
           </div>
           <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
-            <div className="w-[12%] bg-cyan-300" />
-            <div className="w-[28%] bg-orange-600" />
+            <div className="w-[12%] bg-[#64D9FF]/50" />
+            <div className="w-[28%] bg-[#301D5D]" />
             <div className="w-[43%] bg-gray-300" />
-            <div className="w-[16.5%] bg-orange-500" />
-            <div className="w-[0.5%] min-w-1 bg-emerald-600" />
+            <div className="w-[16.5%] bg-[#7059A8]" />
+            <div className="w-[0.5%] min-w-1 bg-[#005A00]" />
           </div>
         </section>
       )}
@@ -1047,7 +1047,7 @@ export function SalesTransactionsClient({
         <div
           role="status"
           className={`rounded border px-4 py-2 text-sm ${
-            error ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+            error ? 'border-[#FF2A04]/30 bg-[#FFEAE6] text-[#661102]' : 'border-[#00E200]/30 bg-[#E0FBE0] text-[#005A00]'
           }`}
         >
           {error || message}
@@ -1214,7 +1214,7 @@ export function SalesTransactionsClient({
                 const memo = memoSummary(invoice);
                 const canReceivePayment = !['paid', 'void'].includes(invoice.status);
                 return (
-                  <tr key={invoice.id} className="group hover:bg-orange-50/40">
+                  <tr key={invoice.id} className="group hover:bg-[#F6F3FB]/40">
                     <td className="px-3 py-2.5">
                       <input
                         type="checkbox"
@@ -1238,15 +1238,15 @@ export function SalesTransactionsClient({
                     <td className="whitespace-nowrap px-2 py-2.5 text-right font-medium text-gray-800">{formatCents(invoice.total_cents)}</td>
                     <td className="px-2 py-2.5"><StatusCell invoice={invoice} referenceTime={referenceTime} /></td>
                     <td className="relative whitespace-nowrap px-2 py-2.5 text-right">
-                      <button type="button" disabled={busy} className="font-medium text-orange-700 hover:underline disabled:opacity-50" onClick={() => setEditingInvoice(invoice)}>View/Edit</button>
+                      <button type="button" disabled={busy} className="font-medium text-[#42277C] hover:underline disabled:opacity-50" onClick={() => setEditingInvoice(invoice)}>View/Edit</button>
                       {canReceivePayment ? (
-                        <button type="button" disabled={busy} className="ml-3 font-medium text-orange-700 hover:underline disabled:opacity-50" onClick={() => setPaymentInvoice(invoice)}>Receive payment</button>
+                        <button type="button" disabled={busy} className="ml-3 font-medium text-[#42277C] hover:underline disabled:opacity-50" onClick={() => setPaymentInvoice(invoice)}>Receive payment</button>
                       ) : (
-                        <button type="button" className="ml-3 font-medium text-orange-700 hover:underline" onClick={() => printInvoice(invoice)}>
+                        <button type="button" className="ml-3 font-medium text-[#42277C] hover:underline" onClick={() => printInvoice(invoice)}>
                           <span className="inline-flex items-center gap-1"><Printer className="h-3.5 w-3.5" aria-hidden="true" />Print</span>
                         </button>
                       )}
-                      <button type="button" aria-label={`More actions for ${invoice.number ?? 'transaction'}`} disabled={busy} className="ml-2 inline-flex rounded p-1 text-orange-700 hover:bg-orange-100 disabled:opacity-50" onClick={() => setRowMenuId((id) => id === invoice.id ? null : invoice.id)}>
+                      <button type="button" aria-label={`More actions for ${invoice.number ?? 'transaction'}`} disabled={busy} className="ml-2 inline-flex rounded p-1 text-[#42277C] hover:bg-[#EFEAF8] disabled:opacity-50" onClick={() => setRowMenuId((id) => id === invoice.id ? null : invoice.id)}>
                         <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
                       </button>
                       {rowMenuId === invoice.id && (
@@ -1281,7 +1281,7 @@ export function SalesTransactionsClient({
                               onClick={() => handleRowAction(invoice, action)}
                             >
                               <span>{label}</span>
-                              {action === 'duplicate-ai' && <span className="rounded bg-fuchsia-100 px-1.5 py-0.5 text-[10px] font-semibold text-fuchsia-700">NEW</span>}
+                              {action === 'duplicate-ai' && <span className="rounded bg-[#EFEAF8] px-1.5 py-0.5 text-[10px] font-semibold text-[#42277C]">NEW</span>}
                             </button>
                           ))}
                         </div>
@@ -1338,8 +1338,8 @@ export function SalesTransactionsClient({
             </header>
             <div className="flex-1 overflow-y-auto">
               <section className="border-b border-gray-200 px-5 py-4">
-                <div className={`inline-flex items-center gap-1.5 text-xs font-medium ${activityInvoice.is_overdue ? 'text-orange-700' : activityInvoice.status === 'paid' ? 'text-emerald-700' : 'text-gray-600'}`}>
-                  <span className={`h-2 w-2 rounded-full ${activityInvoice.is_overdue ? 'bg-orange-600' : activityInvoice.status === 'paid' ? 'bg-emerald-600' : 'bg-gray-400'}`} />
+                <div className={`inline-flex items-center gap-1.5 text-xs font-medium ${activityInvoice.is_overdue ? 'text-[#42277C]' : activityInvoice.status === 'paid' ? 'text-[#005A00]' : 'text-gray-600'}`}>
+                  <span className={`h-2 w-2 rounded-full ${activityInvoice.is_overdue ? 'bg-[#301D5D]' : activityInvoice.status === 'paid' ? 'bg-[#005A00]' : 'bg-gray-400'}`} />
                   {statusLabel(activityInvoice, referenceTime)}
                 </div>
                 <div className="mt-2 text-xs font-medium text-gray-600">Total due</div>
@@ -1353,7 +1353,7 @@ export function SalesTransactionsClient({
               <section className="border-b border-gray-200 px-5 py-4 text-sm">
                 <div className="font-semibold text-gray-900">{activityInvoice.advertiser_name ?? activityInvoice.bill_to_name ?? 'Customer'}</div>
                 {activityInvoice.bill_to_address && <div className="mt-3 whitespace-pre-line text-xs leading-5 text-gray-600">{activityInvoice.bill_to_address}</div>}
-                {activityInvoice.bill_to_email && <a href={`mailto:${activityInvoice.bill_to_email}`} className="mt-3 block break-all text-xs font-medium text-orange-700 hover:underline">{activityInvoice.bill_to_email}</a>}
+                {activityInvoice.bill_to_email && <a href={`mailto:${activityInvoice.bill_to_email}`} className="mt-3 block break-all text-xs font-medium text-[#42277C] hover:underline">{activityInvoice.bill_to_email}</a>}
               </section>
 
               {!!activityInvoice.payments?.length && (
@@ -1388,7 +1388,7 @@ export function SalesTransactionsClient({
                   ].map((step, index, steps) => (
                     <li key={step.label} className="relative flex min-h-14 gap-3 text-xs">
                       {index < steps.length - 1 && <span className="absolute left-[5px] top-3 h-full w-px bg-gray-200" />}
-                      <span className={`relative mt-1 h-3 w-3 shrink-0 rounded-full border-2 ${step.complete ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300 bg-white'}`} />
+                      <span className={`relative mt-1 h-3 w-3 shrink-0 rounded-full border-2 ${step.complete ? 'border-[#005A00] bg-[#005A00]' : 'border-gray-300 bg-white'}`} />
                       <div>
                         <div className={step.complete ? 'font-medium text-gray-900' : 'text-gray-500'}>{step.label}</div>
                         {step.date && <div className="mt-0.5 text-gray-500">{new Date(step.date).toLocaleString()}</div>}

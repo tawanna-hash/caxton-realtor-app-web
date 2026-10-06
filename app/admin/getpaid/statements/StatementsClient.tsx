@@ -22,7 +22,7 @@ export type StatementPartnerRow = {
 };
 
 const CONTROL =
-  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500';
+  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]';
 type SortKey = 'partner' | 'email' | 'invoices' | 'overdue' | 'outstanding';
 type SortDir = 'asc' | 'desc';
 type StatementHistory = { id: string; recipient_email: string; subject: string; sent_at: string; outstanding_cents: number };
@@ -104,7 +104,7 @@ function StatementCard({
         </div>
         <div>
           <div className="text-gray-400">Overdue</div>
-          <div className="font-medium text-orange-700">{partner.overdue_cents ? formatCents(partner.overdue_cents) : '—'}</div>
+          <div className="font-medium text-[#42277C]">{partner.overdue_cents ? formatCents(partner.overdue_cents) : '—'}</div>
         </div>
         <div>
           <div className="text-gray-400">Last sent</div>
@@ -119,7 +119,7 @@ function StatementCard({
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
-        <Link href={`/admin/getpaid/statements/${partner.advertiser_id}`} className="font-medium text-orange-700 hover:underline">
+        <Link href={`/admin/getpaid/statements/${partner.advertiser_id}`} className="font-medium text-[#42277C] hover:underline">
           View
         </Link>
         <StatementEmailButton
@@ -239,10 +239,10 @@ export default function StatementsClient({
         </div>
         <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
           <div
-            className="bg-orange-600"
+            className="bg-[#301D5D]"
             style={{ width: `${totalOutstanding ? (totalOverdue / totalOutstanding) * 100 : 0}%` }}
           />
-          <div className="flex-1 bg-orange-300" />
+          <div className="flex-1 bg-[#B9ADD6]" />
         </div>
       </section>
 
@@ -309,7 +309,7 @@ export default function StatementsClient({
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filtered.map((partner) => (
-                <tr key={partner.advertiser_id} className="hover:bg-orange-50/40">
+                <tr key={partner.advertiser_id} className="hover:bg-[#F6F3FB]/40">
                   <td className="truncate px-3 py-2.5 font-medium text-gray-900">
                     {partner.advertiser_name}
                   </td>
@@ -322,7 +322,7 @@ export default function StatementsClient({
                   <td className="px-2 py-2.5 text-right text-gray-700">
                     {Number(partner.open_invoice_count).toLocaleString()}
                   </td>
-                  <td className="px-2 py-2.5 text-right font-medium text-orange-700">
+                  <td className="px-2 py-2.5 text-right font-medium text-[#42277C]">
                     {partner.overdue_cents ? formatCents(partner.overdue_cents) : '—'}
                   </td>
                   <td className="px-2 py-2.5 text-right font-medium text-gray-900">
@@ -339,7 +339,7 @@ export default function StatementsClient({
                   <td className="whitespace-nowrap px-3 py-2.5 text-right">
                     <Link
                       href={`/admin/getpaid/statements/${partner.advertiser_id}`}
-                      className="font-medium text-orange-700 hover:underline"
+                      className="font-medium text-[#42277C] hover:underline"
                     >
                       View
                     </Link>
@@ -385,8 +385,8 @@ export default function StatementsClient({
       {historyPartner && (
         <section className="rounded border border-gray-200 bg-white p-4 shadow-sm" aria-label="Statement send history">
           <div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold text-gray-900">Send history · {historyPartner.advertiser_name}</h2><p className="text-xs text-gray-500">Sent records are retained by default. Permanent deletion requires the history ID.</p></div><button type="button" onClick={() => { historyRequest.current += 1; setHistoryPartner(null); }} className="text-sm text-gray-600 hover:underline">Close</button></div>
-          {historyError && <p className="mt-3 text-sm text-rose-700">{historyError}</p>}
-          <div className="mt-3 divide-y divide-gray-200">{history.map((entry) => <div key={entry.id} className="flex items-center justify-between gap-3 py-3 text-sm"><div><div className="font-medium text-gray-800">{entry.recipient_email}</div><div className="text-xs text-gray-500">{new Date(entry.sent_at).toLocaleString('en-US')} · {entry.subject}</div></div><button type="button" className="text-xs font-medium text-rose-700 hover:underline" onClick={() => void deleteHistory(entry)}>Permanent delete</button></div>)}</div>
+          {historyError && <p className="mt-3 text-sm text-[#661102]">{historyError}</p>}
+          <div className="mt-3 divide-y divide-gray-200">{history.map((entry) => <div key={entry.id} className="flex items-center justify-between gap-3 py-3 text-sm"><div><div className="font-medium text-gray-800">{entry.recipient_email}</div><div className="text-xs text-gray-500">{new Date(entry.sent_at).toLocaleString('en-US')} · {entry.subject}</div></div><button type="button" className="text-xs font-medium text-[#661102] hover:underline" onClick={() => void deleteHistory(entry)}>Permanent delete</button></div>)}</div>
           {!historyError && history.length === 0 && <p className="mt-3 text-sm text-gray-500">No sent statements recorded.</p>}
         </section>
       )}

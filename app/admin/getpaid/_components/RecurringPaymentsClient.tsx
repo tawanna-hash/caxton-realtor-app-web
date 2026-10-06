@@ -25,9 +25,9 @@ type StatusFilter = 'all' | RecurringScheduleStatus;
 type FrequencyFilter = 'all' | RecurringFrequency;
 
 const CONTROL =
-  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500';
+  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]';
 const ORANGE_BUTTON =
-  'inline-flex h-9 items-center justify-center gap-2 rounded bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2';
+  'inline-flex h-9 items-center justify-center gap-2 rounded bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#42277C] focus:outline-none focus:ring-2 focus:ring-[#7059A8] focus:ring-offset-2';
 
 // Wrapping Date.now() in a named module-level function keeps the actual
 // call site outside the component body, satisfying the React Compiler's
@@ -98,7 +98,7 @@ function StatusCell({ status }: { status: RecurringScheduleStatus }) {
   if (status === 'active') {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
-        <CheckCircle2 className="h-4 w-4 fill-emerald-600 text-white" aria-hidden="true" />
+        <CheckCircle2 className="h-4 w-4 fill-[#005A00] text-white" aria-hidden="true" />
         Active
       </span>
     );
@@ -106,7 +106,7 @@ function StatusCell({ status }: { status: RecurringScheduleStatus }) {
   if (status === 'paused') {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
-        <Clock3 className="h-4 w-4 text-orange-600" aria-hidden="true" />
+        <Clock3 className="h-4 w-4 text-[#301D5D]" aria-hidden="true" />
         Paused
       </span>
     );
@@ -157,11 +157,11 @@ function RecurringPaymentCard({
       <div className="flex items-center justify-between border-t border-gray-100 pt-2.5 text-xs">
         <StatusCell status={schedule.status} />
         <div className="flex items-center gap-4">
-          <button type="button" className="font-medium text-orange-700 hover:underline" onClick={onEdit}>View/Edit</button>
+          <button type="button" className="font-medium text-[#42277C] hover:underline" onClick={onEdit}>View/Edit</button>
           {schedule.status === 'active' ? (
-            <button type="button" className="font-medium text-orange-700 hover:underline" onClick={onPause}>Pause</button>
+            <button type="button" className="font-medium text-[#42277C] hover:underline" onClick={onPause}>Pause</button>
           ) : (
-            <button type="button" className="font-medium text-rose-700 hover:underline" onClick={onDelete}>Permanent delete</button>
+            <button type="button" className="font-medium text-[#661102] hover:underline" onClick={onDelete}>Permanent delete</button>
           )}
         </div>
       </div>
@@ -317,13 +317,13 @@ export function RecurringPaymentsClient({
         </div>
         <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
           <div
-            className="bg-emerald-600"
+            className="bg-[#005A00]"
             style={{
               width: `${schedules.length ? (summary.activeCount / schedules.length) * 100 : 0}%`,
             }}
           />
           <div
-            className="bg-orange-400"
+            className="bg-[#7059A8]"
             style={{
               width: `${schedules.length ? (summary.pausedCount / schedules.length) * 100 : 0}%`,
             }}
@@ -333,7 +333,7 @@ export function RecurringPaymentsClient({
       </section>
 
       {error && (
-        <div role="alert" className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
+        <div role="alert" className="rounded border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-2 text-sm text-[#661102]">
           {error}
         </div>
       )}
@@ -422,7 +422,7 @@ export function RecurringPaymentsClient({
             </thead>
             <tbody className="divide-y divide-gray-200">
               {pageRows.map((schedule) => (
-                <tr key={schedule.id} className="hover:bg-orange-50/40">
+                <tr key={schedule.id} className="hover:bg-[#F6F3FB]/40">
                   <td className="truncate px-3 py-2.5 font-medium text-gray-900" title={schedule.name}>
                     {schedule.name}
                   </td>
@@ -452,15 +452,15 @@ export function RecurringPaymentsClient({
                   <td className="whitespace-nowrap px-3 py-2.5 text-right">
                     <button
                       type="button"
-                      className="font-medium text-orange-700 hover:underline"
+                      className="font-medium text-[#42277C] hover:underline"
                       onClick={() => setEditingId(schedule.id)}
                     >
                       View/Edit
                     </button>
                     {schedule.status === 'active' ? (
-                      <button type="button" className="font-medium text-orange-700 hover:underline" onClick={() => void pauseSchedule(schedule)}>Pause</button>
+                      <button type="button" className="font-medium text-[#42277C] hover:underline" onClick={() => void pauseSchedule(schedule)}>Pause</button>
                     ) : (
-                      <button type="button" className="font-medium text-rose-700 hover:underline" onClick={() => void permanentlyDelete(schedule)}>Permanent delete</button>
+                      <button type="button" className="font-medium text-[#661102] hover:underline" onClick={() => void permanentlyDelete(schedule)}>Permanent delete</button>
                     )}
                   </td>
                 </tr>
@@ -480,7 +480,7 @@ export function RecurringPaymentsClient({
             {!schedules.length && (
               <button
                 type="button"
-                className="mt-4 text-sm font-medium text-orange-700 hover:underline"
+                className="mt-4 text-sm font-medium text-[#42277C] hover:underline"
                 onClick={() => setCreating(true)}
               >
                 Create recurring invoice

@@ -158,7 +158,7 @@ function Dashboard({
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-md">
+          <div className="mb-4 p-3 bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] text-sm rounded-md">
             {error}
           </div>
         )}

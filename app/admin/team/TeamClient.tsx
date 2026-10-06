@@ -201,14 +201,14 @@ export default function TeamClient({ initialAdmins }: Props) {
         <button
           type="button"
           onClick={() => { setAddOpen((v) => !v); setFormError(null); }}
-          className="inline-flex h-9 items-center justify-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700"
+          className="inline-flex h-9 items-center justify-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#42277C]"
         >
           {addOpen ? 'Cancel' : 'Add admin'}
         </button>
       </section>
 
       {addedNote && (
-        <div className="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="mb-4 rounded border border-[#00E200]/30 bg-[#E0FBE0] px-4 py-3 text-sm text-[#005A00]">
           {addedNote}
         </div>
       )}
@@ -242,12 +242,12 @@ export default function TeamClient({ initialAdmins }: Props) {
               />
             </div>
           </div>
-          {formError && <div className="text-sm text-red-600">{formError}</div>}
+          {formError && <div className="text-sm text-[#661102]">{formError}</div>}
           <div className="flex items-center gap-3">
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex h-9 items-center justify-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700 disabled:opacity-60"
+              className="inline-flex h-9 items-center justify-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#42277C] disabled:opacity-60"
             >
               {submitting ? 'Sending invite…' : 'Send invite'}
             </button>
@@ -283,7 +283,7 @@ export default function TeamClient({ initialAdmins }: Props) {
                         <td className="px-4 py-3">
                           <div className="font-medium text-gray-900">{a.fullName}</div>
                           {a.isOwner && (
-                            <div className="text-xs text-orange-700 font-medium">Owner</div>
+                            <div className="text-xs text-[#42277C] font-medium">Owner</div>
                           )}
                         </td>
                         <td className="px-4 py-3 text-gray-700">{a.email}</td>
@@ -316,7 +316,7 @@ export default function TeamClient({ initialAdmins }: Props) {
                                   type="button"
                                   disabled={busyId === a.id}
                                   onClick={() => deleteAdmin(a)}
-                                  className="text-sm font-medium text-red-600 hover:text-red-800 disabled:opacity-50"
+                                  className="text-sm font-medium text-[#661102] hover:text-[#661102] disabled:opacity-50"
                                 >
                                   Delete
                                 </button>
@@ -358,7 +358,7 @@ export default function TeamClient({ initialAdmins }: Props) {
                                   type="button"
                                   disabled={editSubmitting}
                                   onClick={() => saveEdit(a)}
-                                  className="inline-flex h-9 items-center justify-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700 disabled:opacity-60"
+                                  className="inline-flex h-9 items-center justify-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#42277C] disabled:opacity-60"
                                 >
                                   {editSubmitting ? 'Saving…' : 'Save'}
                                 </button>
@@ -373,7 +373,7 @@ export default function TeamClient({ initialAdmins }: Props) {
                               </div>
                             </div>
                             {editError && (
-                              <div className="mt-2 text-sm text-red-600">{editError}</div>
+                              <div className="mt-2 text-sm text-[#661102]">{editError}</div>
                             )}
                             <div className="mt-2 text-xs text-gray-500">
                               Changing the email doesn&apos;t affect an active session —

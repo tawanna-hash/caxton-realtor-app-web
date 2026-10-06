@@ -108,13 +108,13 @@ export default function NativePushToggle({ accentColor = '#301D5D' }: Props) {
             Get alerts for breaking news, new issues, and event reminders.
           </p>
           {blocked && (
-            <p className="mt-2 text-xs text-rose-600 font-light" role="status">
+            <p className="mt-2 text-xs text-[#661102] font-light" role="status">
               Notifications are blocked in iOS Settings. Open Settings →
               Realty News Now → Notifications to re-enable.
             </p>
           )}
           {error && !blocked && (
-            <p className="mt-2 text-xs text-rose-600 font-light" role="status">
+            <p className="mt-2 text-xs text-[#661102] font-light" role="status">
               {error}
             </p>
           )}

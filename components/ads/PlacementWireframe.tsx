@@ -34,8 +34,8 @@ function Highlight({
   if (active) {
     return (
       <div className="relative">
-        <div className="absolute -inset-0.5 rounded-md border-2 border-dashed border-emerald-500 pointer-events-none" />
-        <div className="absolute -top-2 left-2 z-10 rounded-md bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
+        <div className="absolute -inset-0.5 rounded-md border-2 border-dashed border-[#00E200] pointer-events-none" />
+        <div className="absolute -top-2 left-2 z-10 rounded-md bg-[#00E200] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
           Ad{label ? ` \u2014 ${label}` : ''}
         </div>
         {children}
@@ -128,7 +128,7 @@ function ArticleWireframe({ active }: { active: string }) {
       </div>
       {active === 'article_interstitial' && (
         <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
-          <div className="w-3/4 h-3/4 bg-white rounded-md border-2 border-dashed border-emerald-500 flex items-center justify-center text-gray-700 text-[9px] font-semibold">
+          <div className="w-3/4 h-3/4 bg-white rounded-md border-2 border-dashed border-[#00E200] flex items-center justify-center text-gray-700 text-[9px] font-semibold">
             Interstitial overlay
           </div>
         </div>
@@ -153,7 +153,7 @@ function CalendarWireframe({ active }: { active: string }) {
       <div className="flex-1 px-2 py-2 space-y-1.5">
         <div className="h-7 bg-white rounded-md border border-gray-200" />
         <Highlight active={active === 'calendar_event_sponsor'} label="Sponsored event">
-          <div className="h-9 bg-amber-50 rounded-md border-2 border-amber-400 flex items-center justify-center text-amber-700">
+          <div className="h-9 bg-[#FEF8CC] rounded-md border-2 border-[#FAD800] flex items-center justify-center text-[#645600]">
             Sponsored event card
           </div>
         </Highlight>
@@ -184,7 +184,7 @@ function AccountWireframe({ active }: { active: string }) {
       </div>
       {active === 'splash_welcome' && (
         <div className="absolute inset-0 bg-gray-900/40 flex items-center justify-center">
-          <div className="w-3/4 h-1/2 bg-white rounded-md border-2 border-dashed border-emerald-500 flex items-center justify-center text-gray-700 text-[9px] font-semibold text-center px-2">
+          <div className="w-3/4 h-1/2 bg-white rounded-md border-2 border-dashed border-[#00E200] flex items-center justify-center text-gray-700 text-[9px] font-semibold text-center px-2">
             First-launch welcome overlay
           </div>
         </div>
@@ -262,7 +262,7 @@ function GiveawaysWireframe({ active }: { active: string }) {
       </div>
       <div className="flex-1 px-2 py-2">
         <Highlight active={active === 'giveaway_prize_sponsor'} label="Sponsored prize">
-          <div className="h-full bg-amber-50 rounded-md border-2 border-amber-400 flex flex-col items-center justify-center text-amber-700 px-2 text-center">
+          <div className="h-full bg-[#FEF8CC] rounded-md border-2 border-[#FAD800] flex flex-col items-center justify-center text-[#645600] px-2 text-center">
             <div className="font-semibold">Sponsored prize</div>
             <div className="text-[7px] mt-1">Builder logo + prize details</div>
           </div>

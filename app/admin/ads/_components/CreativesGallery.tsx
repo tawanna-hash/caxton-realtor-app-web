@@ -140,7 +140,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
   return (
     <div className="space-y-3">
       {error && (
-        <div role="alert" className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
+        <div role="alert" className="rounded border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-2 text-sm text-[#661102]">
           {error}
         </div>
       )}
@@ -319,23 +319,23 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                     <span className="text-xs text-gray-600">
                       {used === 0 ? (
-                        <span className="text-amber-700">Unused</span>
+                        <span className="text-[#645600]">Unused</span>
                       ) : (
-                        <span className="text-green-700">Used in {used}</span>
+                        <span className="text-[#005A00]">Used in {used}</span>
                       )}
                     </span>
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => startEdit(c)}
                         disabled={busy}
-                        className="text-xs font-medium text-orange-700 hover:underline disabled:opacity-50"
+                        className="text-xs font-medium text-[#42277C] hover:underline disabled:opacity-50"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(c)}
                         disabled={busy || used > 0}
-                        className="text-red-700 hover:text-red-900 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-[#661102] hover:text-[#661102] text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                         title={used > 0 ? `Referenced by ${used} campaign(s)` : 'Delete this creative'}
                       >
                         Delete

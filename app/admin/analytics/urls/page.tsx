@@ -47,7 +47,7 @@ function UrlRollupCard({ row }: { row: UrlRollupRow }) {
           href={row.display_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="min-w-0 truncate text-sm font-medium text-orange-700 hover:underline"
+          className="min-w-0 truncate text-sm font-medium text-[#42277C] hover:underline"
           title={row.url_key}
         >
           {row.url_key || '(empty)'}
@@ -180,7 +180,7 @@ export default function UrlAnalyticsPage() {
             value={from}
             max={to}
             onChange={(e) => { setFrom(e.target.value); setPage(1); }}
-            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
           />
         </div>
         <div>
@@ -191,7 +191,7 @@ export default function UrlAnalyticsPage() {
             min={from}
             max={todayIso()}
             onChange={(e) => { setTo(e.target.value); setPage(1); }}
-            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
           />
         </div>
         <div>
@@ -199,7 +199,7 @@ export default function UrlAnalyticsPage() {
           <select
             value={publication}
             onChange={(e) => { setPublication(e.target.value as PublicationFilter); setPage(1); }}
-            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
           >
             <option value="all">All</option>
             {PUBLICATIONS.map((publicationOption) => (
@@ -216,7 +216,7 @@ export default function UrlAnalyticsPage() {
             value={magazineId}
             placeholder="optional"
             onChange={(e) => { setMagazineId(e.target.value); setPage(1); }}
-            className="h-9 w-32 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="h-9 w-32 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
           />
         </div>
         <div className="ml-auto flex gap-2">
@@ -228,7 +228,7 @@ export default function UrlAnalyticsPage() {
           </button>
           <button
             onClick={refresh}
-            className="h-9 rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+            className="h-9 rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
           >
             Refresh
           </button>
@@ -253,7 +253,7 @@ export default function UrlAnalyticsPage() {
       <section className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
       <div className="divide-y divide-gray-100 md:hidden">
         {loading && <div className="px-3 py-6 text-center text-sm text-gray-500">Loading…</div>}
-        {error && !loading && <div className="px-3 py-6 text-center text-sm text-red-600">{error}</div>}
+        {error && !loading && <div className="px-3 py-6 text-center text-sm text-[#661102]">{error}</div>}
         {!loading && !error && data && data.rows.length === 0 && (
           <div className="px-3 py-6 text-center text-sm text-gray-500">No click events in this range.</div>
         )}
@@ -281,7 +281,7 @@ export default function UrlAnalyticsPage() {
             )}
             {error && !loading && (
               <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-red-600">{error}</td>
+                <td colSpan={6} className="px-3 py-6 text-center text-[#661102]">{error}</td>
               </tr>
             )}
             {!loading && !error && data && data.rows.length === 0 && (
@@ -298,7 +298,7 @@ export default function UrlAnalyticsPage() {
                     href={r.display_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block truncate font-medium text-orange-700 hover:underline"
+                    className="block truncate font-medium text-[#42277C] hover:underline"
                     title={r.url_key}
                   >
                     {r.url_key || '(empty)'}

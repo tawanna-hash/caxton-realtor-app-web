@@ -141,7 +141,7 @@ export function AddCardDrawer({
 
           {loading && <p className="text-sm text-gray-500">Loading secure card fields…</p>}
           {error && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            <div className="rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] p-3 text-sm text-[#645600]">
               Card setup unavailable: {error}
             </div>
           )}
@@ -255,7 +255,7 @@ function SetupForm({
           setInnerError(event.error?.message ?? 'Secure card fields failed to load. Please reload the page.');
         }}
       />
-      {innerError && <p className="rounded-md bg-red-50 p-2 text-sm text-red-600">{innerError}</p>}
+      {innerError && <p className="rounded-md bg-[#FFEAE6] p-2 text-sm text-[#661102]">{innerError}</p>}
       <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
         <button
           type="button"
@@ -268,7 +268,7 @@ function SetupForm({
           type="button"
           disabled={!canSave}
           onClick={() => void save()}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-md bg-[#301D5D] px-4 py-2 text-sm text-white hover:bg-[#42277C] disabled:opacity-50"
         >
           {saving ? 'Saving card…' : 'Save card'}
         </button>

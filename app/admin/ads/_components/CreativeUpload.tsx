@@ -111,17 +111,17 @@ export function CreativeUpload({ advertiserName, clickUrl, altText, onUploaded, 
           disabled={busy || disabled}
           className="block w-full text-sm text-gray-900
                      file:mr-4 file:h-9 file:px-4 file:rounded
-                     file:border file:border-orange-700 file:text-sm file:font-semibold
-                     file:bg-orange-600 file:text-white
-                     hover:file:bg-orange-700
+                     file:border file:border-[#42277C] file:text-sm file:font-semibold
+                     file:bg-[#301D5D] file:text-white
+                     hover:file:bg-[#42277C]
                      disabled:opacity-50"
         />
       </label>
       {progress && (
-        <p className="text-sm text-orange-700" aria-live="polite">{progress}</p>
+        <p className="text-sm text-[#42277C]" aria-live="polite">{progress}</p>
       )}
       {error && (
-        <p className="text-sm text-red-700" role="alert">{error}</p>
+        <p className="text-sm text-[#661102]" role="alert">{error}</p>
       )}
       <p className="text-xs text-gray-500">
         PNG, JPEG, WebP, or GIF. Max 10MB. Image dimensions are read automatically.

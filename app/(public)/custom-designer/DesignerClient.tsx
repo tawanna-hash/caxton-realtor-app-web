@@ -786,9 +786,9 @@ export default function DesignerClient() {
             <p
               className={`-mt-2 text-[10px] font-semibold ${
                 syncStatus === 'error'
-                  ? 'text-red-300'
+                  ? 'text-[#661102]'
                   : syncStatus === 'saved'
-                    ? 'text-emerald-300'
+                    ? 'text-[#005A00]'
                     : 'text-slate-400'
               }`}
               aria-live="polite"
@@ -1074,7 +1074,7 @@ export default function DesignerClient() {
               <button type="button" onClick={exportHtml} className="studio-export-button bg-[#63206f] hover:bg-[#4d1758]">
                 <FileCode2 size={15} /> Download HTML
               </button>
-              <button type="button" onClick={exportPdf} disabled={product !== 'flyer'} className="studio-export-button bg-emerald-600 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-35">
+              <button type="button" onClick={exportPdf} disabled={product !== 'flyer'} className="studio-export-button bg-[#005A00] hover:bg-[#005A00] disabled:cursor-not-allowed disabled:opacity-35">
                 <Download size={15} /> Generate PDF
               </button>
             </div>

@@ -73,7 +73,7 @@ export default async function PortalFormsPage() {
                   </div>
                   <div className="text-right text-xs text-gray-500">
                     Assigned {new Date(a.assigned_at).toLocaleDateString()}
-                    {a.due_at && <div className="text-amber-700 mt-1">Due {new Date(a.due_at).toLocaleDateString()}</div>}
+                    {a.due_at && <div className="text-[#645600] mt-1">Due {new Date(a.due_at).toLocaleDateString()}</div>}
                   </div>
                 </div>
               </Link>

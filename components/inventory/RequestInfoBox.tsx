@@ -257,7 +257,7 @@ export default function RequestInfoBox({
           </label>
 
           {status === 'error' && (
-            <p className="text-xs text-red-600">
+            <p className="text-xs text-[#661102]">
               {errorMsg || 'Could not send. Please try again.'}
             </p>
           )}

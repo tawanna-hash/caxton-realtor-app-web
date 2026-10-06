@@ -133,7 +133,7 @@ export default function AdminBuilderPagesPage() {
         type="button"
         onClick={() => toggle(b.builder_name, false)}
         disabled={busy}
-        className="bg-green-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-green-700 rounded-md transition-colors disabled:opacity-60"
+        className="bg-[#005A00] text-white px-3 py-1.5 text-xs font-medium hover:bg-[#005A00] rounded-md transition-colors disabled:opacity-60"
       >
         {busy ? '…' : 'On'}
       </button>
@@ -157,7 +157,7 @@ export default function AdminBuilderPagesPage() {
         type="button"
         onClick={() => handleDelete(b)}
         disabled={isDeleting}
-        className="text-red-600 hover:text-red-700 disabled:opacity-40 transition-colors"
+        className="text-[#661102] hover:text-[#661102] disabled:opacity-40 transition-colors"
         title={`Delete ${b.builder_name}`}
       >
         {isDeleting ? '…' : <Trash2 size={16} />}
@@ -199,7 +199,7 @@ export default function AdminBuilderPagesPage() {
       </section>
 
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">
           {error}
         </div>
       )}

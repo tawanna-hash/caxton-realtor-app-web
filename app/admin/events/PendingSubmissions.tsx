@@ -61,13 +61,13 @@ export default function PendingSubmissions({ onChanged }: { onChanged?: () => vo
   if (items === null || (items.length === 0 && !error)) return null;
 
   return (
-    <section aria-label="Submitted events" className="mb-6 rounded-md border border-amber-200 bg-amber-50 p-4">
-      <h2 className="text-sm font-semibold text-amber-950">
+    <section aria-label="Submitted events" className="mb-6 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] p-4">
+      <h2 className="text-sm font-semibold text-[#645600]">
         Submitted events awaiting review ({items.length})
       </h2>
-      <p className="mt-1 text-xs text-amber-800">Public submissions are not shown on the Calendar until you approve them.</p>
-      {error && <p className="mt-2 text-xs font-medium text-red-700" role="alert">{error}</p>}
-      <ul className="mt-3 divide-y divide-amber-200 rounded-md border border-amber-200 bg-white">
+      <p className="mt-1 text-xs text-[#645600]">Public submissions are not shown on the Calendar until you approve them.</p>
+      {error && <p className="mt-2 text-xs font-medium text-[#661102]" role="alert">{error}</p>}
+      <ul className="mt-3 divide-y divide-[#FAD800]/30 rounded-md border border-[#FAD800]/30 bg-white">
         {items.map((ev) => (
           <li key={ev.id} className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
@@ -76,8 +76,8 @@ export default function PendingSubmissions({ onChanged }: { onChanged?: () => vo
             </div>
             <div className="flex shrink-0 gap-2">
               <Link href={`/admin/events/${ev.id}`} className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">Review</Link>
-              <button type="button" disabled={busyId === ev.id} onClick={() => act(ev, 'approve')} className="rounded-md bg-green-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-800 disabled:opacity-50">Approve</button>
-              <button type="button" disabled={busyId === ev.id} onClick={() => act(ev, 'delete')} className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50">Delete</button>
+              <button type="button" disabled={busyId === ev.id} onClick={() => act(ev, 'approve')} className="rounded-md bg-[#005A00] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#005A00] disabled:opacity-50">Approve</button>
+              <button type="button" disabled={busyId === ev.id} onClick={() => act(ev, 'delete')} className="rounded-md border border-[#FF2A04]/50 bg-white px-3 py-1.5 text-xs font-medium text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50">Delete</button>
             </div>
           </li>
         ))}

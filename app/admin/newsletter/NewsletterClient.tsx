@@ -247,7 +247,7 @@ export default function NewsletterClient() {
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search email..."
-            className="h-9 flex-1 rounded border border-gray-300 px-3 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-orange-600"
+            className="h-9 flex-1 rounded border border-gray-300 px-3 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#301D5D]"
           />
           {q && (
             <button
@@ -313,7 +313,7 @@ export default function NewsletterClient() {
 
       {loading && <div className="text-sm text-gray-500 py-8">Loading subscribers...</div>}
       {error && (
-        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-4">
+        <div className="text-sm text-[#661102] bg-[#FFEAE6] border border-[#FF2A04]/30 rounded-md p-4">
           Error: {error}
         </div>
       )}
@@ -321,21 +321,21 @@ export default function NewsletterClient() {
       {!loading && !error && data && (
         <>
           {mounted && selectedIds.size > 0 && (
-            <div className="flex items-center gap-2 px-4 py-3 mb-3 rounded-md bg-indigo-50 border border-indigo-200">
-              <span className="text-sm text-indigo-900 font-medium">{selectedIds.size} selected on this page</span>
+            <div className="flex items-center gap-2 px-4 py-3 mb-3 rounded-md bg-[#F6F3FB] border border-[#D9CFF0]">
+              <span className="text-sm text-[#1B1726] font-medium">{selectedIds.size} selected on this page</span>
               <div className="flex-1" />
               <button
                 type="button"
                 onClick={handleExport}
                 disabled={exporting}
-                className="px-3 py-1.5 rounded-md border border-indigo-300 text-indigo-700 text-xs font-medium hover:bg-indigo-100 disabled:opacity-50"
+                className="px-3 py-1.5 rounded-md border border-[#B9ADD6] text-[#42277C] text-xs font-medium hover:bg-[#EFEAF8] disabled:opacity-50"
               >
                 {exporting ? 'Exporting…' : 'Export CSV (full)'}
               </button>
               <button
                 type="button"
                 onClick={clearSelection}
-                className="px-3 py-1.5 rounded-md text-indigo-700 text-xs hover:text-indigo-900"
+                className="px-3 py-1.5 rounded-md text-[#42277C] text-xs hover:text-[#1B1726]"
               >
                 Clear
               </button>
@@ -381,7 +381,7 @@ export default function NewsletterClient() {
                           className={
                             'shrink-0 inline-block px-2 py-0.5 text-[10px] rounded-md ' +
                             (s.status === 'active'
-                              ? 'bg-green-50 text-green-700 border border-green-200'
+                              ? 'bg-[#E0FBE0] text-[#005A00] border border-[#00E200]/30'
                               : 'bg-gray-100 text-gray-600 border border-gray-200')
                           }
                         >
@@ -401,7 +401,7 @@ export default function NewsletterClient() {
                           type="button"
                           onClick={() => void deleteSubscriber(s)}
                           disabled={deletingId === s.id}
-                          className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                          className="rounded border border-[#FF2A04]/50 bg-[#FFEAE6] px-2 py-1 text-xs font-medium text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
                         >
                           {deletingId === s.id ? 'Deleting…' : 'Delete'}
                         </button>
@@ -467,7 +467,7 @@ export default function NewsletterClient() {
                         className={
                           'inline-block px-2 py-0.5 text-xs rounded-md ' +
                           (s.status === 'active'
-                            ? 'bg-green-50 text-green-700 border border-green-200'
+                            ? 'bg-[#E0FBE0] text-[#005A00] border border-[#00E200]/30'
                             : 'bg-gray-100 text-gray-600 border border-gray-200')
                         }
                       >
@@ -480,7 +480,7 @@ export default function NewsletterClient() {
                         type="button"
                         onClick={() => void deleteSubscriber(s)}
                         disabled={deletingId === s.id}
-                        className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                        className="rounded border border-[#FF2A04]/50 bg-[#FFEAE6] px-2 py-1 text-xs font-medium text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
                       >
                         {deletingId === s.id ? 'Deleting…' : 'Delete'}
                       </button>

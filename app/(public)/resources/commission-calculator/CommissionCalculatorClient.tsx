@@ -253,7 +253,7 @@ function Row({
       <span>{label}</span>
       <span
         className={`font-medium ${
-          isNeg ? 'text-rose-700' : muted ? 'text-gray-600' : 'text-gray-900'
+          isNeg ? 'text-[#661102]' : muted ? 'text-gray-600' : 'text-gray-900'
         }`}
       >
         {isNeg ? '−' : ''}

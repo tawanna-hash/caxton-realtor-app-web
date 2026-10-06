@@ -113,8 +113,8 @@ function senderAddress(from: string | null): string {
 }
 
 function confidenceStyle(c: number): string {
-  if (c >= 0.75) return 'bg-green-100 text-green-800';
-  if (c >= 0.5) return 'bg-amber-100 text-amber-800';
+  if (c >= 0.75) return 'bg-[#E0FBE0] text-[#005A00]';
+  if (c >= 0.5) return 'bg-[#FEF8CC] text-[#645600]';
   return 'bg-gray-100 text-gray-700';
 }
 
@@ -404,7 +404,7 @@ function GmailEventsQueue() {
             type="button"
             onClick={handleDeleteDuplicates}
             disabled={dedupeBusy}
-            className="px-4 py-2 bg-white text-red-700 text-sm font-medium rounded-md border border-red-300 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+            className="px-4 py-2 bg-white text-[#661102] text-sm font-medium rounded-md border border-[#FF2A04]/50 hover:bg-[#FFEAE6] transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {dedupeBusy ? 'Removing…' : 'Remove duplicates'}
           </button>
@@ -477,7 +477,7 @@ function GmailEventsQueue() {
       <div className="mb-4 text-sm">
         {mailbox ? (
           <span className="inline-flex items-center gap-2 text-gray-700">
-            <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+            <span className="inline-block w-2 h-2 rounded-full bg-[#00E200]" />
             Connected as <span className="font-medium">{mailbox.emailAddress}</span>
           </span>
         ) : (
@@ -489,7 +489,7 @@ function GmailEventsQueue() {
       </div>
 
       {!oauthConfigured && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3 rounded-md mb-4">
+        <div className="bg-[#FEF8CC] border border-[#FAD800]/30 text-[#645600] text-sm px-4 py-3 rounded-md mb-4">
           Google OAuth is not configured on this deployment. Set{' '}
           <code>GOOGLE_OAUTH_CLIENT_ID</code> and <code>GOOGLE_OAUTH_CLIENT_SECRET</code>,
           then redeploy. See <code>docs/GMAIL_EVENT_SCANNER.md</code>.
@@ -497,13 +497,13 @@ function GmailEventsQueue() {
       )}
 
       {connectedFlag && (
-        <div className="bg-green-50 border border-green-200 text-green-800 text-sm px-4 py-3 rounded-md mb-4">
+        <div className="bg-[#E0FBE0] border border-[#00E200]/30 text-[#005A00] text-sm px-4 py-3 rounded-md mb-4">
           Gmail connected. Run &ldquo;Scan now&rdquo; to pull the last 30 days of event mail.
         </div>
       )}
 
       {oauthError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md mb-4">
+        <div className="bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] text-sm px-4 py-3 rounded-md mb-4">
           {OAUTH_ERRORS[oauthError] ?? `Gmail connection failed (${oauthError}).`}
         </div>
       )}
@@ -518,7 +518,7 @@ function GmailEventsQueue() {
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md mb-4">
+        <div className="bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] text-sm px-4 py-3 rounded-md mb-4">
           {error}
         </div>
       )}
@@ -538,7 +538,7 @@ function GmailEventsQueue() {
               type="button"
               onClick={handleBulkDelete}
               disabled={bulkBusy}
-              className="px-3 py-1.5 rounded-md text-white bg-red-600 hover:bg-red-700 text-xs font-medium disabled:opacity-50"
+              className="px-3 py-1.5 rounded-md text-white bg-[#661102] hover:bg-[#661102] text-xs font-medium disabled:opacity-50"
             >
               {bulkBusy ? 'Deleting…' : `Delete selected (${selectedIds.size})`}
             </button>
@@ -592,7 +592,7 @@ function GmailEventsQueue() {
                   <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
                     <dt className="text-gray-500">When</dt>
                     <dd className="text-gray-700">
-                      {ev.startDate ? formatWhen(ev.startDate, ev.endDate) : <span className="text-amber-700">Date TBD</span>}
+                      {ev.startDate ? formatWhen(ev.startDate, ev.endDate) : <span className="text-[#645600]">Date TBD</span>}
                     </dd>
                     <dt className="text-gray-500">Location</dt>
                     <dd className="text-gray-700">{ev.location || '—'}</dd>
@@ -623,9 +623,9 @@ function GmailEventsQueue() {
                     </button>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
-                    <button onClick={() => handleApprove(ev)} disabled={busyId === ev.id} className="text-green-700 hover:text-green-900 font-medium disabled:opacity-50">Approve</button>
+                    <button onClick={() => handleApprove(ev)} disabled={busyId === ev.id} className="text-[#005A00] hover:text-[#005A00] font-medium disabled:opacity-50">Approve</button>
                     <Link href={`/admin/events/${ev.id}`} className="text-brand-700 hover:underline">Edit</Link>
-                    <button onClick={() => handleReject(ev)} disabled={busyId === ev.id} className="text-red-600 hover:text-red-800 disabled:opacity-50">Reject</button>
+                    <button onClick={() => handleReject(ev)} disabled={busyId === ev.id} className="text-[#661102] hover:text-[#661102] disabled:opacity-50">Reject</button>
                   </div>
                 </div>
               </div>
@@ -682,7 +682,7 @@ function GmailEventsQueue() {
                     {ev.startDate ? (
                       formatWhen(ev.startDate, ev.endDate)
                     ) : (
-                      <span className="text-amber-700">Date TBD</span>
+                      <span className="text-[#645600]">Date TBD</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-gray-700 max-w-[14rem]">{ev.location || '—'}</td>
@@ -725,7 +725,7 @@ function GmailEventsQueue() {
                     <button
                       onClick={() => handleApprove(ev)}
                       disabled={busyId === ev.id}
-                      className="text-xs text-green-700 hover:text-green-900 font-medium mr-3 disabled:opacity-50"
+                      className="text-xs text-[#005A00] hover:text-[#005A00] font-medium mr-3 disabled:opacity-50"
                     >
                       Approve
                     </button>
@@ -738,7 +738,7 @@ function GmailEventsQueue() {
                     <button
                       onClick={() => handleReject(ev)}
                       disabled={busyId === ev.id}
-                      className="text-xs text-red-600 hover:text-red-800 disabled:opacity-50"
+                      className="text-xs text-[#661102] hover:text-[#661102] disabled:opacity-50"
                     >
                       Reject
                     </button>
@@ -810,7 +810,7 @@ function SourceDrawer({
         </div>
         <div className="px-6 py-4">
           {error ? (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md">
+            <div className="bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] text-sm px-4 py-3 rounded-md">
               {error}
             </div>
           ) : !source ? (

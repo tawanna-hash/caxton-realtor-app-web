@@ -152,7 +152,7 @@ export default function NewsletterCTA({
               {submitting ? 'Signing\u2026' : 'Sign Up'}
             </button>
           </div>
-          {error && <p className="text-center text-sm text-red-600 mt-3">{error}</p>}
+          {error && <p className="text-center text-sm text-[#661102] mt-3">{error}</p>}
           <div className="flex items-center justify-center gap-6 mt-4 text-xs uppercase tracking-wider text-gray-600 font-medium">
             <a href="/newsletter" className="border-b border-gray-400 pb-0.5">
               All Emails

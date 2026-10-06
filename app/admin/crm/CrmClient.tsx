@@ -51,8 +51,8 @@ type Props = {
 };
 
 const STATUS_OPTIONS: { value: AdvertiserStatus; label: string; tone: string }[] = [
-  { value: 'prospect',   label: 'Prospect',   tone: 'bg-sky-50 text-sky-700 border-sky-200' },
-  { value: 'advertiser', label: 'Partner', tone: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { value: 'prospect',   label: 'Prospect',   tone: 'bg-[#E3F7FF] text-[#285766] border-[#64D9FF]/30' },
+  { value: 'advertiser', label: 'Partner', tone: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30' },
   { value: 'archived',   label: 'Archived',   tone: 'bg-gray-100 text-gray-600 border-gray-200' },
 ];
 
@@ -311,14 +311,14 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
           <button
             type="button"
             onClick={() => setComposerOpen(true)}
-            className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700"
+            className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]"
           >
             Compose email
           </button>
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700"
+            className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]"
           >
             New partner
           </button>
@@ -332,7 +332,7 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
       )}
 
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">
           {error}
         </div>
       )}
@@ -382,7 +382,7 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
             >
               {meta.label}
               {!live && (
-                <span className="ml-2 text-[10px] uppercase tracking-wider text-amber-600 font-semibold">
+                <span className="ml-2 text-[10px] uppercase tracking-wider text-[#645600] font-semibold">
                   Soon
                 </span>
               )}
@@ -401,11 +401,11 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
       <div className="mt-4 flex gap-2 border-b border-gray-200" role="tablist" aria-label="CRM view">
         <button type="button" role="tab" aria-selected={view === 'audience'}
           onClick={() => setView('audience')}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'audience' ? 'border-orange-600 text-orange-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'audience' ? 'border-[#301D5D] text-[#42277C]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >Audience</button>
         <button type="button" role="tab" aria-selected={view === 'sent'}
           onClick={() => setView('sent')}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'sent' ? 'border-orange-600 text-orange-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'sent' ? 'border-[#301D5D] text-[#42277C]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >Sent</button>
       </div>
 
@@ -420,14 +420,14 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search partners"
             data-testid="input-partner-search"
-            className="h-9 flex-1 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            className="h-9 flex-1 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]"
           />
           <label htmlFor="partner-sort" className="sr-only">Sort partners</label>
           <select
             id="partner-sort"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 sm:w-auto"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8] sm:w-auto"
             aria-label="Sort partners"
             data-testid="select-partner-sort"
           >
@@ -436,13 +436,13 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
         </div>
 
         {recentBounces.length > 0 && (
-            <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 flex items-start gap-3">
+            <div className="rounded-md border border-[#FF2A04]/50 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102] flex items-start gap-3">
             <span className="text-lg leading-none">⚠</span>
             <div className="flex-1 min-w-0">
               <div className="font-semibold">
                 {recentBounces.length} partner{recentBounces.length === 1 ? '' : 's'} with recent bounce{recentBounces.length === 1 ? '' : 's'}
               </div>
-              <div className="mt-1 text-xs text-red-800 truncate">
+              <div className="mt-1 text-xs text-[#661102] truncate">
                 {recentBounces.slice(0, 5).map((r) => r.contact_email ?? r.name).filter(Boolean).join(', ')}
                 {recentBounces.length > 5 ? ` … (+${recentBounces.length - 5} more)` : ''}
               </div>
@@ -646,7 +646,7 @@ function CrmRow({
   const opensCell = row.last_bounced_at ? (
     <div className="flex flex-col leading-tight gap-0.5">
       <span
-        className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-800 border border-red-300 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit"
+        className="inline-flex items-center gap-1 rounded-full bg-[#FFEAE6] text-[#661102] border border-[#FF2A04]/50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit"
         title={`Last bounce: ${row.last_bounce_type ?? 'unknown'} on ${formatShortDate(row.last_bounced_at)}`}
       >
         Bounced
@@ -655,7 +655,7 @@ function CrmRow({
     </div>
   ) : row.open_count && row.open_count > 0 ? (
     <div className="flex flex-col leading-tight">
-      <span className="font-medium text-emerald-700 text-sm">{row.open_count} opens</span>
+      <span className="font-medium text-[#005A00] text-sm">{row.open_count} opens</span>
       <span className="text-gray-500 text-xs">{formatShortDate(row.last_opened_at)}</span>
     </div>
   ) : (
@@ -671,7 +671,7 @@ function CrmRow({
         aria-pressed={!!row.is_locked}
         className={`px-2 py-1 text-xs rounded-md border font-medium disabled:opacity-50 ${
           row.is_locked
-            ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+            ? 'border-[#FAD800]/50 bg-[#FEF8CC] text-[#645600] hover:bg-[#FEF8CC]'
             : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
         }`}
         title={row.is_locked ? 'Unlock this partner record' : 'Lock this partner record against deletion'}
@@ -689,7 +689,7 @@ function CrmRow({
       <button
         type="button"
         onClick={onOpen}
-        className="rounded bg-orange-600 px-2 py-1 text-xs font-medium text-white hover:bg-orange-700"
+        className="rounded bg-[#301D5D] px-2 py-1 text-xs font-medium text-white hover:bg-[#42277C]"
       >
         Edit
       </button>
@@ -699,7 +699,7 @@ function CrmRow({
   return (
     <>
       {/* Desktop grid ≥ sm — unchanged layout */}
-      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2.5 text-xs items-center hover:bg-orange-50/40 transition">
+      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2.5 text-xs items-center hover:bg-[#F6F3FB]/40 transition">
         <div className="col-span-4">{contactCell}</div>
         <div className="col-span-1">
           <StatusBadge status={row.status ?? 'prospect'} />
@@ -713,7 +713,7 @@ function CrmRow({
       </div>
 
       {/* Mobile card < sm */}
-      <div className="sm:hidden px-4 py-3 space-y-2 hover:bg-blue-50/40 transition">
+      <div className="sm:hidden px-4 py-3 space-y-2 hover:bg-[#F6F3FB]/40 transition">
         {contactCell}
         <div className="flex items-center gap-1.5 flex-wrap">
           <StatusBadge status={row.status ?? 'prospect'} />
@@ -744,10 +744,10 @@ function formatShortDate(iso: string | null | undefined): string {
 function publicationTone(key: PublicationKey): string {
   switch (key) {
     case 'san_antonio': return 'bg-purple-50 text-purple-800 border-purple-200';
-    case 'houston':     return 'bg-teal-50 text-teal-800 border-teal-200';
-    case 'dallas':      return 'bg-amber-50 text-amber-800 border-amber-200';
+    case 'houston':     return 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30';
+    case 'dallas':      return 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30';
     case 'austin':
-    default:            return 'bg-blue-50 text-blue-800 border-blue-200';
+    default:            return 'bg-[#F6F3FB] text-[#301D5D] border-[#D9CFF0]';
   }
 }
 
@@ -779,7 +779,7 @@ function StatusChip({
   label: string; active: boolean; count: number; tone?: string; onClick: () => void;
 }) {
   const base = active
-    ? 'bg-orange-600 text-white border-orange-600'
+    ? 'bg-[#301D5D] text-white border-[#301D5D]'
     : tone || 'bg-white text-gray-700 border-gray-300';
   return (
     <button
@@ -1213,7 +1213,7 @@ function EditDrawer({
               id={`crm-display-name-${row.id}`}
               value={displayName}
               onChange={(e) => updateCompanyName(e.target.value)}
-              className="mt-0.5 w-full rounded border border-transparent bg-transparent px-0 text-xl text-gray-900 outline-none transition hover:border-gray-300 hover:px-2 focus:border-blue-500 focus:px-2 focus:ring-2 focus:ring-blue-100"
+              className="mt-0.5 w-full rounded border border-transparent bg-transparent px-0 text-xl text-gray-900 outline-none transition hover:border-gray-300 hover:px-2 focus:border-[#7059A8] focus:px-2 focus:ring-2 focus:ring-[#EFEAF8]"
               placeholder="Partner company name"
               autoComplete="organization"
             />
@@ -1379,7 +1379,7 @@ function EditDrawer({
                         type="button"
                         onClick={addIndustry}
                         disabled={industryBusy || !newIndustryLabel.trim()}
-                        className="shrink-0 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-40"
+                        className="shrink-0 rounded-md bg-[#301D5D] px-3 py-2 text-sm font-medium text-white hover:bg-[#42277C] disabled:opacity-40"
                       >
                         Add
                       </button>
@@ -1415,7 +1415,7 @@ function EditDrawer({
                         type="checkbox"
                         checked={publications.includes(p.id)}
                         onChange={() => togglePublication(p.id)}
-                        className="h-4 w-4 rounded-md border-gray-300 text-orange-600 focus:ring-orange-500"
+                        className="h-4 w-4 rounded-md border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
                       />
                       <span>{p.label}</span>
                     </label>
@@ -1464,7 +1464,7 @@ function EditDrawer({
               </div>
               <Link
                 href={`/admin/reports?tab=advertisers&advertiserId=${row.id}`}
-                className="inline-block text-xs text-orange-600 hover:underline"
+                className="inline-block text-xs text-[#301D5D] hover:underline"
               >
                 Open analytics dashboard
               </Link>
@@ -1561,7 +1561,7 @@ function EditDrawer({
                 </button>
               </div>
               {linkResult?.error && (
-                <div className="rounded-md bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-xs">
+                <div className="rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] px-3 py-2 text-xs">
                   {linkResult.error}
                 </div>
               )}
@@ -1604,7 +1604,7 @@ function EditDrawer({
                               type="button"
                               onClick={() => void revokePortalLink(link)}
                               disabled={revokingPortalLink === link.id}
-                              className="shrink-0 rounded border border-red-300 bg-red-50 px-2 py-1 font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                              className="shrink-0 rounded border border-[#FF2A04]/50 bg-[#FFEAE6] px-2 py-1 font-medium text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
                             >
                               {revokingPortalLink === link.id ? 'Revoking…' : 'Revoke'}
                             </button>
@@ -1644,7 +1644,7 @@ function EditDrawer({
                 </button>
               </div>
               {tokenError && (
-                <div className="rounded-md bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-xs">
+                <div className="rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] px-3 py-2 text-xs">
                   {tokenError}
                 </div>
               )}
@@ -1669,7 +1669,7 @@ function EditDrawer({
                     href={submissionUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs text-orange-600 underline"
+                    className="text-xs text-[#301D5D] underline"
                   >
                     Open form in new tab ↗
                   </a>
@@ -1709,7 +1709,7 @@ function EditDrawer({
           {deleteRequested && (
             <div
               role="alert"
-              className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+              className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]"
             >
               <strong>{row.name}</strong> is marked for deletion. Click <strong>Save &amp; delete</strong> to permanently remove the record, or undo the deletion.
             </div>
@@ -1727,7 +1727,7 @@ function EditDrawer({
                 className={`px-3 py-1.5 rounded-md border text-xs disabled:opacity-50 ${
                   deleteRequested
                     ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                    : 'border-red-200 text-red-700 hover:bg-red-50'
+                    : 'border-[#FF2A04]/30 text-[#661102] hover:bg-[#FFEAE6]'
                 }`}
                 title={row.is_locked ? 'Unlock this partner from the Partners list before deleting' : 'Mark this partner for deletion'}
               >
@@ -1743,8 +1743,8 @@ function EditDrawer({
                 disabled={saving || deleting}
                 className={`px-4 py-2 rounded-md text-white text-sm disabled:opacity-50 whitespace-nowrap ${
                   deleteRequested
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-orange-600 hover:bg-orange-700'
+                    ? 'bg-[#661102] hover:bg-[#661102]'
+                    : 'bg-[#301D5D] hover:bg-[#42277C]'
                 }`}
               >
                 {deleting ? 'Deleting...' : saving ? 'Saving...' : deleteRequested ? 'Save & delete' : 'Save changes'}
@@ -1757,7 +1757,7 @@ function EditDrawer({
   );
 }
 
-const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500';
+const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -1837,7 +1837,7 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
       {!hasAgreement && !hasAnyBilling ? (
         <p className="text-xs text-gray-500 italic">
           No agreement linked yet. Create or sign one from{' '}
-          <a href="/admin/agreements" className="text-orange-600 hover:underline">/admin/agreements</a>{' '}
+          <a href="/admin/agreements" className="text-[#301D5D] hover:underline">/admin/agreements</a>{' '}
           and it will appear here automatically.
         </p>
       ) : (
@@ -1846,9 +1846,9 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
             Read-only mirror of the partner&rsquo;s most recent active-ish agreement.
             To edit, open{' '}
             {row.current_agreement_id ? (
-              <a href={`/admin/agreements?id=${row.current_agreement_id}`} className="text-orange-600 hover:underline">/admin/agreements</a>
+              <a href={`/admin/agreements?id=${row.current_agreement_id}`} className="text-[#301D5D] hover:underline">/admin/agreements</a>
             ) : (
-              <a href="/admin/agreements" className="text-orange-600 hover:underline">/admin/agreements</a>
+              <a href="/admin/agreements" className="text-[#301D5D] hover:underline">/admin/agreements</a>
             )}
             {' '}&mdash; saves there flow back here.
           </p>
@@ -1992,7 +1992,7 @@ function CreateAdvertiserModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
               placeholder="e.g. La Cima"
               disabled={saving}
               autoFocus
@@ -2008,7 +2008,7 @@ function CreateAdvertiserModal({
                     checked={publications.includes(opt.id)}
                     onChange={() => togglePublication(opt.id)}
                     disabled={saving}
-                    className="h-4 w-4 rounded-md border-gray-300 text-orange-600 focus:ring-orange-500"
+                    className="h-4 w-4 rounded-md border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
                   />
                   <span>{opt.label}</span>
                 </label>
@@ -2022,7 +2022,7 @@ function CreateAdvertiserModal({
               value={status}
               onChange={(e) => setStatus(e.target.value as AdvertiserStatus)}
               disabled={saving}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
             >
               <option value="prospect">Prospect</option>
               <option value="advertiser">Partner</option>
@@ -2035,7 +2035,7 @@ function CreateAdvertiserModal({
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
               placeholder="contact@example.com"
               disabled={saving}
             />
@@ -2046,7 +2046,7 @@ function CreateAdvertiserModal({
               type="email"
               value={billingEmail}
               onChange={(e) => setBillingEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
               placeholder="billing@example.com"
               disabled={saving}
             />
@@ -2065,7 +2065,7 @@ function CreateAdvertiserModal({
           </button>
           <button
             onClick={save}
-            className="px-4 py-2 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 text-sm whitespace-nowrap"
+            className="px-4 py-2 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50 text-sm whitespace-nowrap"
             disabled={saving || !name.trim()}
           >
             {saving ? 'Creating...' : 'Create'}

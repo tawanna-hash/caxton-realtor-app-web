@@ -24,7 +24,7 @@ const MARKET_LABELS: Record<string, string> = {
 };
 
 const CONTROL =
-  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100';
+  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]';
 const FEATURED_CATEGORY = 'Print & Digital Replica Packages';
 
 function marketLabel(m: string | null): string {
@@ -50,7 +50,7 @@ function ProductServiceCard({
           <button
             type="button"
             onClick={onEdit}
-            className="block max-w-full truncate text-left text-sm font-medium text-orange-700 hover:underline"
+            className="block max-w-full truncate text-left text-sm font-medium text-[#42277C] hover:underline"
           >
             {product.name}
           </button>
@@ -77,15 +77,15 @@ function ProductServiceCard({
         </div>
       </div>
       <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs ${product.is_active ? 'text-gray-700' : 'text-gray-500'}`}>
-        <span className={`h-2 w-2 rounded-full ${product.is_active ? 'bg-emerald-600' : 'bg-gray-400'}`} />
+        <span className={`h-2 w-2 rounded-full ${product.is_active ? 'bg-[#005A00]' : 'bg-gray-400'}`} />
         {product.is_active ? 'Active' : 'Inactive'}
       </span>
       <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
-        <button type="button" onClick={onEdit} className="font-medium text-orange-700 hover:underline">Edit</button>
-        <button type="button" onClick={onToggleActive} className="font-medium text-orange-700 hover:underline">
+        <button type="button" onClick={onEdit} className="font-medium text-[#42277C] hover:underline">Edit</button>
+        <button type="button" onClick={onToggleActive} className="font-medium text-[#42277C] hover:underline">
           {product.is_active ? 'Deactivate' : 'Activate'}
         </button>
-        <button type="button" onClick={onDelete} className="font-medium text-red-600 hover:underline">Delete</button>
+        <button type="button" onClick={onDelete} className="font-medium text-[#661102] hover:underline">Delete</button>
       </div>
     </div>
   );
@@ -203,14 +203,14 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
         <button
           type="button"
           onClick={() => setEditing('new')}
-          className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#42277C] focus:outline-none focus:ring-2 focus:ring-[#B9ADD6]"
         >
           <PackagePlus className="h-4 w-4" aria-hidden="true" />
           New item
         </button>
       </div>
 
-      {error && <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      {error && <div className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">{error}</div>}
 
       <section aria-label="Catalog summary" className="bg-white">
         <div className="grid grid-cols-2 divide-x divide-gray-200 lg:grid-cols-4">
@@ -233,7 +233,7 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
         </div>
         <div className="mt-3 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
           <div
-            className="bg-orange-600"
+            className="bg-[#301D5D]"
             style={{ width: `${products.length ? (summary.active / products.length) * 100 : 0}%` }}
           />
           <div className="flex-1 bg-gray-300" />
@@ -286,7 +286,7 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
           <div className="p-12 text-center">
             <div className="text-sm font-medium text-gray-800">No products or services found</div>
             <p className="mt-1 text-xs text-gray-500">Try changing your search or filters.</p>
-            <button type="button" onClick={() => setEditing('new')} className="mt-4 text-sm font-semibold text-orange-700 hover:underline">
+            <button type="button" onClick={() => setEditing('new')} className="mt-4 text-sm font-semibold text-[#42277C] hover:underline">
               Create a new item
             </button>
           </div>
@@ -332,12 +332,12 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
                       </th>
                     </tr>
                     {items.map((product) => (
-                      <tr key={product.id} className={`hover:bg-orange-50/40 ${!product.is_active ? 'bg-gray-50/60 text-gray-500' : ''}`}>
+                      <tr key={product.id} className={`hover:bg-[#F6F3FB]/40 ${!product.is_active ? 'bg-gray-50/60 text-gray-500' : ''}`}>
                         <td className="px-4 py-2.5">
                           <button
                             type="button"
                             onClick={() => setEditing(product)}
-                            className="block max-w-full text-left font-medium text-orange-700 hover:underline"
+                            className="block max-w-full text-left font-medium text-[#42277C] hover:underline"
                           >
                             <span className="block truncate">{product.name}</span>
                           </button>
@@ -349,16 +349,16 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
                         <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold text-gray-900">{formatProductPrice(product.price_cents)}</td>
                         <td className="px-3 py-2.5">
                           <span className={`inline-flex items-center gap-1.5 whitespace-nowrap ${product.is_active ? 'text-gray-700' : 'text-gray-500'}`}>
-                            <span className={`h-2 w-2 rounded-full ${product.is_active ? 'bg-emerald-600' : 'bg-gray-400'}`} />
+                            <span className={`h-2 w-2 rounded-full ${product.is_active ? 'bg-[#005A00]' : 'bg-gray-400'}`} />
                             {product.is_active ? 'Active' : 'Inactive'}
                           </span>
                         </td>
                         <td className="whitespace-nowrap px-4 py-2.5 text-right">
-                          <button type="button" onClick={() => setEditing(product)} className="font-medium text-orange-700 hover:underline">Edit</button>
-                          <button type="button" onClick={() => void handleToggleActive(product)} className="ml-3 font-medium text-orange-700 hover:underline">
+                          <button type="button" onClick={() => setEditing(product)} className="font-medium text-[#42277C] hover:underline">Edit</button>
+                          <button type="button" onClick={() => void handleToggleActive(product)} className="ml-3 font-medium text-[#42277C] hover:underline">
                             {product.is_active ? 'Deactivate' : 'Activate'}
                           </button>
-                          <button type="button" onClick={() => void handleDelete(product)} className="ml-3 font-medium text-red-600 hover:underline">Delete</button>
+                          <button type="button" onClick={() => void handleDelete(product)} className="ml-3 font-medium text-[#661102] hover:underline">Delete</button>
                         </td>
                       </tr>
                     ))}

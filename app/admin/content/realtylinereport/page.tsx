@@ -342,7 +342,7 @@ export default function RealtyLineMlsAdminPage() {
       </section>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">{error}</div>
+        <div className="mb-4 p-3 bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] rounded-md">{error}</div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -356,7 +356,7 @@ export default function RealtyLineMlsAdminPage() {
                 type="button"
                 onClick={onPickFile}
                 disabled={importing}
-                className="text-xs font-medium px-3 py-1.5 border border-orange-700 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition disabled:opacity-60"
+                className="text-xs font-medium px-3 py-1.5 border border-[#42277C] bg-[#301D5D] text-white rounded-md hover:bg-[#42277C] transition disabled:opacity-60"
               >
                 {importing ? 'Extracting\u2026' : 'Upload graphic to autopopulate'}
               </button>
@@ -527,7 +527,7 @@ export default function RealtyLineMlsAdminPage() {
                     <button
                       type="button"
                       onClick={() => removeListingRow(i)}
-                      className="text-xs text-red-600 hover:underline pb-2"
+                      className="text-xs text-[#661102] hover:underline pb-2"
                       aria-label="Remove row"
                     >
                       Remove
@@ -586,7 +586,7 @@ export default function RealtyLineMlsAdminPage() {
                       <button
                         type="button"
                         onClick={() => removeBandRow(i)}
-                        className="text-xs text-red-600 hover:underline"
+                        className="text-xs text-[#661102] hover:underline"
                       >
                         Remove
                       </button>
@@ -671,8 +671,8 @@ export default function RealtyLineMlsAdminPage() {
                     <p className="text-xs text-gray-500 mt-1">{r.headline_label_en || ''}</p>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <button onClick={() => startEdit(r)} className="text-sm text-blue-600 hover:underline">Edit</button>
-                    <button onClick={() => remove(r.id)} className="text-sm text-red-600 hover:underline">Delete</button>
+                    <button onClick={() => startEdit(r)} className="text-sm text-[#301D5D] hover:underline">Edit</button>
+                    <button onClick={() => remove(r.id)} className="text-sm text-[#661102] hover:underline">Delete</button>
                   </div>
                 </li>
               ))}

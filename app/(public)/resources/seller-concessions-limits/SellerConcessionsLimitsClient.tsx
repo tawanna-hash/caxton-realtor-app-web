@@ -296,7 +296,7 @@ function ScenarioBlock({
                 </div>
                 <div className="col-span-6 text-right">
                   {row.kind === 'unlimited' ? (
-                    <span className="text-base font-semibold text-emerald-700">
+                    <span className="text-base font-semibold text-[#005A00]">
                       Unlimited
                     </span>
                   ) : (

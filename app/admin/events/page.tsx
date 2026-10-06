@@ -229,7 +229,7 @@ export default function EventsPage() {
       onClick={() => setFilter(key)}
       className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
         filter === key
-          ? 'bg-orange-600 text-white border-brand-700'
+          ? 'bg-[#301D5D] text-white border-brand-700'
           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
       }`}
     >
@@ -256,7 +256,7 @@ export default function EventsPage() {
                 ? 'No expired events need clearing'
                 : `Delete ${expiredSummary.manual} manual and hide ${expiredSummary.visibleScraped} scraped expired events`
             }
-            className="px-4 py-2 bg-white text-red-700 text-sm font-medium rounded-md border border-red-300 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+            className="px-4 py-2 bg-white text-[#661102] text-sm font-medium rounded-md border border-[#FF2A04]/50 hover:bg-[#FFEAE6] transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {bulkBusy
               ? 'Clearing\u2026'
@@ -264,7 +264,7 @@ export default function EventsPage() {
           </button>
           <Link
             href="/admin/events/new"
-            className="px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-orange-700 transition-colors"
+            className="px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-[#42277C] transition-colors"
           >
             + New Event
           </Link>
@@ -311,7 +311,7 @@ export default function EventsPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md mb-4">
+        <div className="bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] text-sm px-4 py-3 rounded-md mb-4">
           {error}
         </div>
       )}
@@ -337,7 +337,7 @@ export default function EventsPage() {
                       {ev.title}
                     </Link>
                     {hasEdits && !isManual && (
-                      <div className="text-xs text-amber-700 mt-0.5">✎ Edited: {ev.editedFields.join(', ')}</div>
+                      <div className="text-xs text-[#645600] mt-0.5">✎ Edited: {ev.editedFields.join(', ')}</div>
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
@@ -347,7 +347,7 @@ export default function EventsPage() {
                     {ev.hidden ? (
                       <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-700">Hidden</span>
                     ) : (
-                      <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-medium bg-green-100 text-green-800">Visible</span>
+                      <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#E0FBE0] text-[#005A00]">Visible</span>
                     )}
                   </div>
                 </div>
@@ -370,7 +370,7 @@ export default function EventsPage() {
                     onClick={() => handleDelete(ev)}
                     disabled={!isManual || busyId === ev.id}
                     title={isManual ? '' : 'Scraped events can only be hidden — they would be recreated on next scraper run.'}
-                    className="text-red-600 hover:text-red-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="text-[#661102] hover:text-[#661102] disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Delete
                   </button>
@@ -402,7 +402,7 @@ export default function EventsPage() {
                         {ev.title}
                       </Link>
                       {hasEdits && !isManual && (
-                        <div className="text-xs text-amber-700 mt-0.5">
+                        <div className="text-xs text-[#645600] mt-0.5">
                           ✎ Edited: {ev.editedFields.join(', ')}
                         </div>
                       )}
@@ -422,7 +422,7 @@ export default function EventsPage() {
                       {ev.hidden ? (
                         <span className="inline-block px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700">Hidden</span>
                       ) : (
-                        <span className="inline-block px-2 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800">Visible</span>
+                        <span className="inline-block px-2 py-0.5 rounded-md text-xs font-medium bg-[#E0FBE0] text-[#005A00]">Visible</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
@@ -440,7 +440,7 @@ export default function EventsPage() {
                         onClick={() => handleDelete(ev)}
                         disabled={!isManual || busyId === ev.id}
                         title={isManual ? '' : 'Scraped events can only be hidden — they would be recreated on next scraper run.'}
-                        className="text-xs text-red-600 hover:text-red-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="text-xs text-[#661102] hover:text-[#661102] disabled:opacity-30 disabled:cursor-not-allowed"
                       >
                         Delete
                       </button>

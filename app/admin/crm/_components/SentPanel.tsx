@@ -57,10 +57,10 @@ function fmt(dt: string | null): string {
 
 function StatusBadge({ status }: { status: string }) {
   const cls =
-    status === 'sent' ? 'bg-green-100 text-green-800'
-      : status === 'scheduled' ? 'bg-blue-100 text-blue-800'
-        : status === 'sending' ? 'bg-yellow-100 text-yellow-800'
-          : status === 'failed' ? 'bg-red-100 text-red-800'
+    status === 'sent' ? 'bg-[#E0FBE0] text-[#005A00]'
+      : status === 'scheduled' ? 'bg-[#EFEAF8] text-[#301D5D]'
+        : status === 'sending' ? 'bg-[#FEF8CC] text-[#645600]'
+          : status === 'failed' ? 'bg-[#FFEAE6] text-[#661102]'
             : status === 'cancelled' ? 'bg-gray-200 text-gray-700'
               : 'bg-gray-100 text-gray-700';
   return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{status}</span>;
@@ -75,18 +75,18 @@ function FailedRecipientDropdown({ row }: { row: SentRow }) {
 
   return (
     <details className="mt-0.5 text-left">
-      <summary className="cursor-pointer select-none text-xs font-medium text-red-700 hover:text-red-900">
+      <summary className="cursor-pointer select-none text-xs font-medium text-[#661102] hover:text-[#661102]">
         {label}
       </summary>
-      <div className="mt-1 w-72 max-w-[calc(100vw-3rem)] rounded-md border border-red-200 bg-red-50 p-2 text-xs text-gray-800 shadow-sm">
+      <div className="mt-1 w-72 max-w-[calc(100vw-3rem)] rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] p-2 text-xs text-gray-800 shadow-sm">
         {row.error_message && (
-          <div className="mb-2 break-words font-medium text-red-900">
+          <div className="mb-2 break-words font-medium text-[#661102]">
             Campaign error: {row.error_message}
           </div>
         )}
         {failures.length === 0 ? (
           !row.error_message && (
-            <div className="text-red-800">Failure details are unavailable for this send.</div>
+            <div className="text-[#661102]">Failure details are unavailable for this send.</div>
           )
         ) : (
           <ul className="space-y-2">
@@ -94,13 +94,13 @@ function FailedRecipientDropdown({ row }: { row: SentRow }) {
               const name = [failure.first_name, failure.last_name].filter(Boolean).join(' ');
               return (
                 <li key={`${failure.email}-${index}`} className="break-words">
-                  <div className="font-semibold text-red-900">{failure.email}</div>
+                  <div className="font-semibold text-[#661102]">{failure.email}</div>
                   {(name || failure.company) && (
                     <div className="text-gray-600">
                       {[name, failure.company].filter(Boolean).join(' · ')}
                     </div>
                   )}
-                  <div className="mt-0.5 text-red-800">
+                  <div className="mt-0.5 text-[#661102]">
                     {failure.error || (failure.status === 'bounced' ? 'Email bounced' : 'Provider did not return a reason')}
                   </div>
                 </li>
@@ -184,12 +184,12 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
             <label className="block text-xs uppercase tracking-wide text-gray-500">Search subject</label>
             <input type="text" value={q} onChange={(e) => { setQ(e.target.value); setOffset(0); }}
               placeholder="Subject contains…"
-              className="mt-1 h-9 w-64 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100" />
+              className="mt-1 h-9 w-64 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wide text-gray-500">Status</label>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setOffset(0); }}
-                    className="mt-1 h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100">
+                    className="mt-1 h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]">
               <option value="">Any</option>
               <option value="sent">Sent</option>
               <option value="scheduled">Scheduled</option>
@@ -201,7 +201,7 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
           <div>
             <label className="block text-xs uppercase tracking-wide text-gray-500">Type</label>
             <select value={recurring} onChange={(e) => { setRecurring(e.target.value as 'any' | 'series' | 'oneoff'); setOffset(0); }}
-                    className="mt-1 h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100">
+                    className="mt-1 h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]">
               <option value="any">Any</option>
               <option value="oneoff">One-off</option>
               <option value="series">Recurring</option>
@@ -219,7 +219,7 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
         </div>
       )}
 
-      {error && <div className="mb-2 rounded bg-red-50 px-3 py-2 text-sm text-red-800">{error}</div>}
+      {error && <div className="mb-2 rounded bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">{error}</div>}
 
       {/* mobile card list */}
       <ul className="sm:hidden divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white overflow-hidden">
@@ -277,7 +277,7 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
                   type="button"
                   disabled={busyId === row.id || !onEditResend}
                   onClick={() => onEditResend?.(row)}
-                  className="rounded border border-orange-300 bg-orange-50 px-2 py-1 text-xs text-orange-800 hover:bg-orange-100 disabled:opacity-50"
+                  className="rounded border border-[#B9ADD6] bg-[#F6F3FB] px-2 py-1 text-xs text-[#301D5D] hover:bg-[#EFEAF8] disabled:opacity-50"
                 >
                   Edit &amp; Resend
                 </button>
@@ -286,7 +286,7 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
                     type="button"
                     disabled={busyId === row.id}
                     onClick={() => void doCancelSeries(row.id)}
-                    className="rounded-md border border-red-300 bg-white px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:opacity-50"
+                    className="rounded-md border border-[#FF2A04]/50 bg-white px-2 py-1 text-xs text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
                   >
                     Cancel series
                   </button>
@@ -363,12 +363,12 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
                         title="Resend as-is to the original audience">Resend</button>
                       <button type="button" disabled={busyId === row.id || !onEditResend}
                         onClick={() => onEditResend?.(row)}
-                        className="rounded border border-orange-300 bg-orange-50 px-2 py-1 text-xs text-orange-800 hover:bg-orange-100 disabled:opacity-50"
+                        className="rounded border border-[#B9ADD6] bg-[#F6F3FB] px-2 py-1 text-xs text-[#301D5D] hover:bg-[#EFEAF8] disabled:opacity-50"
                         title="Open composer prefilled with this email">Edit &amp; Resend</button>
                       {isSeries && (
                         <button type="button" disabled={busyId === row.id}
                           onClick={() => void doCancelSeries(row.id)}
-                          className="rounded-md border border-red-300 bg-white px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:opacity-50"
+                          className="rounded-md border border-[#FF2A04]/50 bg-white px-2 py-1 text-xs text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
                           title="Stop all future runs of this recurring series">Cancel series</button>
                       )}
                     </div>

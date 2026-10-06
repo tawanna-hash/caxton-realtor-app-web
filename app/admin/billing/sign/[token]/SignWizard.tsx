@@ -257,7 +257,7 @@ function EditableField({
     <label className="block">
       <div className="text-xs text-gray-600 mb-1">
         {label}
-        {required && <span className="text-red-500 ml-0.5">*</span>}
+        {required && <span className="text-[#661102] ml-0.5">*</span>}
       </div>
       <input
         type={type ?? 'text'}
@@ -611,7 +611,7 @@ export default function SignWizard({
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       {emailDateLabels.map((label, index) => (
         <label key={label} htmlFor={`${idPrefix}-${index}`} className="text-xs text-gray-700">
-          {label}{index === 0 && <span className="text-red-500"> *</span>}
+          {label}{index === 0 && <span className="text-[#661102]"> *</span>}
           <input
             id={`${idPrefix}-${index}`}
             type="date"
@@ -1123,12 +1123,12 @@ export default function SignWizard({
             <p className="text-sm text-gray-500 mt-1">This is not yet an agreement. Review the insertion order and approve it to continue.</p>
           </div>
           <div className="bg-white rounded-md border border-gray-200 shadow-sm p-8 space-y-5">
-            {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
+            {error && <div className="text-sm text-[#661102] bg-[#FFEAE6] rounded-md p-3">{error}</div>}
 
             <div>
               <Eyebrow>Partner Information</Eyebrow>
               <label htmlFor="proposal-company-name" className="block text-sm font-medium text-gray-800 mb-1">
-                Company Name <span className="text-red-500">*</span>
+                Company Name <span className="text-[#661102]">*</span>
               </label>
               <input
                 id="proposal-company-name"
@@ -1204,7 +1204,7 @@ export default function SignWizard({
                       );
                     })}
                   </div>
-                  {numMarkets === 0 && <p className="text-xs text-amber-700 mt-1">Pick at least one market.</p>}
+                  {numMarkets === 0 && <p className="text-xs text-[#645600] mt-1">Pick at least one market.</p>}
                 </div>
               </>
             ) : (
@@ -1310,7 +1310,7 @@ export default function SignWizard({
             <strong>RealtyLine</strong> for{' '}
             <strong>{ag.company_name ?? 'your company'}</strong>.
           </p>
-          <div className="inline-block rounded-md border-l-4 p-4 text-left text-sm text-gray-700 bg-amber-50 border-amber-400 max-w-md">
+          <div className="inline-block rounded-md border-l-4 p-4 text-left text-sm text-gray-700 bg-[#FEF8CC] border-[#FAD800] max-w-md">
             <p className="font-semibold mb-1">⚠️ Legal Notice</p>
             <p>
               This is a legally binding digital signature. By completing this process, you agree to
@@ -1340,10 +1340,10 @@ export default function SignWizard({
             Your Partner Details
           </h2>
           <p className="text-sm text-gray-600">
-            Fill in or update your information below. Fields marked <span className="text-red-500">*</span> are required.
+            Fill in or update your information below. Fields marked <span className="text-[#661102]">*</span> are required.
           </p>
 
-          {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
+          {error && <div className="text-sm text-[#661102] bg-[#FFEAE6] rounded-md p-3">{error}</div>}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <EditableField
@@ -1424,7 +1424,7 @@ export default function SignWizard({
               : ' If anything looks wrong, please contact us before signing.'}
           </p>
 
-          {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
+          {error && <div className="text-sm text-[#661102] bg-[#FFEAE6] rounded-md p-3">{error}</div>}
 
           {lineItems.length > 0 ? (
             <div className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
@@ -1554,7 +1554,7 @@ export default function SignWizard({
             Your Ad Details
           </h2>
 
-          {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
+          {error && <div className="text-sm text-[#661102] bg-[#FFEAE6] rounded-md p-3">{error}</div>}
 
           {/* Ad Size */}
           <div>
@@ -1738,7 +1738,7 @@ export default function SignWizard({
             Billing Information
           </h2>
 
-          {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
+          {error && <div className="text-sm text-[#661102] bg-[#FFEAE6] rounded-md p-3">{error}</div>}
 
           {/* Bill To */}
           <div>
@@ -1817,15 +1817,15 @@ export default function SignWizard({
               billing address securely; server populates DB fields from the
               PaymentMethod when the webhook fires. */}
           {paymentType === 'Credit Card' && (
-            <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50 p-4">
+            <div className="space-y-4 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] p-4">
               {ccSurchargeTotal != null && (
-                <div className="text-sm text-amber-800 rounded-md border border-amber-300 bg-amber-100 p-3">
+                <div className="text-sm text-[#645600] rounded-md border border-[#FAD800]/50 bg-[#FEF8CC] p-3">
                   A 3% credit card surcharge is automatically added to your ad rate.{' '}
                   <strong>{surchargeLabel}: ${ccSurchargeTotal.toFixed(2)}</strong>
                 </div>
               )}
 
-              <div className="rounded-md bg-white p-4 border border-amber-200">
+              <div className="rounded-md bg-white p-4 border border-[#FAD800]/30">
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
                   Secure Card Payment
                 </p>
@@ -1882,10 +1882,10 @@ export default function SignWizard({
           Review and Sign the Insertion Order
         </h2>
 
-        {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
+        {error && <div className="text-sm text-[#661102] bg-[#FFEAE6] rounded-md p-3">{error}</div>}
 
         {paymentType === 'Credit Card' && confirmedPaymentIntentId && (
-          <div className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-md p-3">
+          <div className="text-sm text-[#005A00] bg-[#E0FBE0] border border-[#00E200]/30 rounded-md p-3">
             ✓ Card authorized. Your card will be charged the moment you click <strong>Approve &amp; Sign Insertion Order</strong> below.
           </div>
         )}

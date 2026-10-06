@@ -102,7 +102,7 @@ export default function SubmitEventClient({ token }: { token: string }) {
 
   if (loadErr) {
     return (
-      <div className="rounded-md bg-white border border-red-200 p-8 shadow-sm">
+      <div className="rounded-md bg-white border border-[#FF2A04]/30 p-8 shadow-sm">
         <PageTitle size="md">
           Submission link not found
         </PageTitle>
@@ -120,8 +120,8 @@ export default function SubmitEventClient({ token }: { token: string }) {
 
   if (submitOk) {
     return (
-      <div className="rounded-md bg-white border border-emerald-200 p-8 shadow-sm">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-700 font-medium mb-2">
+      <div className="rounded-md bg-white border border-[#00E200]/30 p-8 shadow-sm">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-[#005A00] font-medium mb-2">
           Submitted
         </p>
         <PageTitle size="md">
@@ -261,7 +261,7 @@ export default function SubmitEventClient({ token }: { token: string }) {
         </div>
 
         {submitErr && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 ring-1 ring-red-200">
+          <div className="rounded-md bg-[#FFEAE6] p-3 text-sm text-[#661102] ring-1 ring-[#FF2A04]/30">
             {submitErr}
           </div>
         )}
@@ -296,7 +296,7 @@ function Field({
     <label className="block">
       <span className="block text-sm font-medium text-gray-800 mb-1">
         {label}
-        {required && <span className="text-red-600 ml-0.5">*</span>}
+        {required && <span className="text-[#661102] ml-0.5">*</span>}
       </span>
       {children}
     </label>

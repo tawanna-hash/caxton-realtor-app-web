@@ -64,9 +64,9 @@ export default async function PortalHome() {
           What You Can Do Here
         </h2>
         <ul className="space-y-2 text-gray-700 text-sm">
-          <li>• <Link href="/portal/files" className="text-blue-700 hover:underline">View files</Link> we&apos;ve shared with you (agreements, invoices, proofs, photos).</li>
-          <li>• <Link href="/portal/forms" className="text-blue-700 hover:underline">Complete forms</Link> requested by your account manager.</li>
-          <li>• <Link href="/portal/account" className="text-blue-700 hover:underline">Update your contact info</Link>.</li>
+          <li>• <Link href="/portal/files" className="text-[#42277C] hover:underline">View files</Link> we&apos;ve shared with you (agreements, invoices, proofs, photos).</li>
+          <li>• <Link href="/portal/forms" className="text-[#42277C] hover:underline">Complete forms</Link> requested by your account manager.</li>
+          <li>• <Link href="/portal/account" className="text-[#42277C] hover:underline">Update your contact info</Link>.</li>
         </ul>
       </section>
     </div>
@@ -80,7 +80,7 @@ function Card({ label, value, sub, href, tone = 'neutral' }: {
   href?: string;
   tone?: 'neutral' | 'attention';
 }) {
-  const ring = tone === 'attention' ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white';
+  const ring = tone === 'attention' ? 'border-[#FAD800]/50 bg-[#FEF8CC]' : 'border-gray-200 bg-white';
   const body = (
     <div className={`rounded-md border p-4 ${ring}`}>
       <div className="text-xs uppercase tracking-wider text-gray-500">{label}</div>

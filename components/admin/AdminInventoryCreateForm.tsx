@@ -386,8 +386,8 @@ export default function AdminInventoryCreateForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       {errorMessage && (
-        <div className="border border-red-300 bg-red-50 px-4 py-3 rounded-md">
-          <p className="text-sm text-red-900">{errorMessage}</p>
+        <div className="border border-[#FF2A04]/50 bg-[#FFEAE6] px-4 py-3 rounded-md">
+          <p className="text-sm text-[#661102]">{errorMessage}</p>
         </div>
       )}
 
@@ -570,7 +570,7 @@ export default function AdminInventoryCreateForm() {
       {/* Image upload */}
       <div>
         <label htmlFor="image" className={labelStyle}>
-          Image {!pdfFile && <span className="text-red-600">*</span>}
+          Image {!pdfFile && <span className="text-[#661102]">*</span>}
         </label>
         <input
           id="image"
@@ -583,7 +583,7 @@ export default function AdminInventoryCreateForm() {
         {imageFile && (
           <p className={helpStyle}>{imageFile.name} ({(imageFile.size / 1024 / 1024).toFixed(2)} MB)</p>
         )}
-        {imageError && <p className="mt-1 text-xs text-red-600">{imageError}</p>}
+        {imageError && <p className="mt-1 text-xs text-[#661102]">{imageError}</p>}
         <p className={helpStyle}>jpg, png, or webp. Max 10 MB. Used as the card thumbnail.</p>
       </div>
 
@@ -603,7 +603,7 @@ export default function AdminInventoryCreateForm() {
         {pdfFile && (
           <p className={helpStyle}>{pdfFile.name} ({(pdfFile.size / 1024 / 1024).toFixed(2)} MB)</p>
         )}
-        {pdfError && <p className="mt-1 text-xs text-red-600">{pdfError}</p>}
+        {pdfError && <p className="mt-1 text-xs text-[#661102]">{pdfError}</p>}
         <p className={helpStyle}>Max 25 MB. Optional when an image is provided.</p>
         {pdfFile && (
           <button
@@ -616,7 +616,7 @@ export default function AdminInventoryCreateForm() {
           </button>
         )}
         {extractNote && (
-          <p className="mt-1 text-xs text-green-700">{extractNote}</p>
+          <p className="mt-1 text-xs text-[#005A00]">{extractNote}</p>
         )}
       </div>
 
@@ -654,7 +654,7 @@ export default function AdminInventoryCreateForm() {
             </div>
             <div>
               <label htmlFor="expiresAt" className={labelStyle}>
-                Expires <span className="text-red-600">*</span>
+                Expires <span className="text-[#661102]">*</span>
               </label>
               <input
                 id="expiresAt"

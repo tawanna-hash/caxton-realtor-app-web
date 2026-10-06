@@ -364,11 +364,11 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-gray-100 pt-3 text-sm">
-          <span>{active.length} Hotspots</span><span className="text-amber-800">{attention.length} Need Attention</span><span>{ready.length} Ready To Review</span><span>{active.filter(h => h.is_published).length} Published</span>
+          <span>{active.length} Hotspots</span><span className="text-[#645600]">{attention.length} Need Attention</span><span>{ready.length} Ready To Review</span><span>{active.filter(h => h.is_published).length} Published</span>
           <button className="font-medium text-[#301D5D] underline" onClick={() => setChecklistOpen(!checklistOpen)}>Page Review Checklist</button>
           <span role="status" className="ml-auto text-xs text-gray-600">{message || 'Ready'}</span>
         </div>
-        {error && <div role="alert" className="mt-3 flex flex-wrap items-center gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950"><span className="flex-1">{error}</span><button className="underline" disabled={blocked} onClick={() => { void refresh().then(() => { setHistory([]); setFuture([]); setError(''); }).catch(e => setError(e.message)); }}>Reload Saved Version</button><button aria-label="Dismiss message" onClick={() => setError('')}><X className={icon} /></button></div>}
+        {error && <div role="alert" className="mt-3 flex flex-wrap items-center gap-3 rounded-md border border-[#FAD800]/50 bg-[#FEF8CC] p-3 text-sm text-[#645600]"><span className="flex-1">{error}</span><button className="underline" disabled={blocked} onClick={() => { void refresh().then(() => { setHistory([]); setFuture([]); setError(''); }).catch(e => setError(e.message)); }}>Reload Saved Version</button><button aria-label="Dismiss message" onClick={() => setError('')}><X className={icon} /></button></div>}
       </header>
 
       {checklistOpen && <section className="border-b border-gray-200 bg-white px-4 py-4">
@@ -380,7 +380,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
             return <button key={p} onClick={() => go(p)} className={`${button} !items-start !justify-start !text-left`}>
               <span><strong>Page {p + 1}</strong><span className="mt-1 block text-xs font-normal">{rows.filter(h => reviewStatus(h) === 'pending').length} unreviewed · {rows.filter(h => reviewProblem(h)).length} missing/invalid · {rows.filter(h => overlapIds.has(h.id)).length} overlapping</span>
                 <span className="mt-1 block text-xs font-normal">Scan: {scanState?.status || 'not scanned'}</span>
-                {scanState?.warnings?.map((w, i) => <span key={i} className="mt-1 block text-xs font-normal text-amber-800">{w}</span>)}</span>
+                {scanState?.warnings?.map((w, i) => <span key={i} className="mt-1 block text-xs font-normal text-[#645600]">{w}</span>)}</span>
             </button>;
           })}
         </div>
@@ -458,8 +458,8 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
                     <span className="block truncate text-sm font-medium">{numbers.get(h.id) ? `${numbers.get(h.id)}. ` : ''}{h.label || TYPE_LABELS[h.type]}</span>
                     <span className="mt-0.5 block truncate text-xs text-gray-600">{hotspotDestination(h.config) || 'Needs Destination'}</span>
                     <span className="mt-1 block text-xs text-gray-600">P{h.page_idx + 1} · {h.is_deleted ? 'Deleted' : h.is_published ? 'Published' : reviewStatus(h) === 'approved' ? 'Approved Draft' : reviewStatus(h) === 'rejected' ? 'Rejected' : 'Needs Review'}{h.editor_hidden ? ' · Hidden In Editor' : ''}</span>
-                    {reviewProblem(h) && <span className="mt-1 block text-xs text-amber-800">{reviewProblem(h)}</span>}
-                    {conflictIds.has(h.id) && <span className="mt-1 block text-xs text-amber-800">Conflicting destination in this area</span>}
+                    {reviewProblem(h) && <span className="mt-1 block text-xs text-[#645600]">{reviewProblem(h)}</span>}
+                    {conflictIds.has(h.id) && <span className="mt-1 block text-xs text-[#645600]">Conflicting destination in this area</span>}
                   </button>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 pl-1 text-xs">

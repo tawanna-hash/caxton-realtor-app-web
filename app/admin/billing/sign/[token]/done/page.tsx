@@ -16,7 +16,7 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-md border border-emerald-200 shadow-sm p-10 text-center space-y-5">
+        <div className="bg-white rounded-md border border-[#00E200]/30 shadow-sm p-10 text-center space-y-5">
           <div className="text-5xl">✅</div>
 
           <div>
@@ -40,7 +40,7 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
             <p className="text-xs text-gray-400">Agreement #{id}</p>
           )}
 
-          <div className="bg-emerald-50 rounded-md border border-emerald-200 p-4 text-sm text-emerald-800">
+          <div className="bg-[#E0FBE0] rounded-md border border-[#00E200]/30 p-4 text-sm text-[#005A00]">
             <strong>What happens next:</strong>
             <ul className="list-disc list-inside mt-2 space-y-1 text-left">
               <li>You&apos;ll receive a confirmation email shortly</li>

@@ -104,8 +104,8 @@ async function request(path: string, init?: RequestInit) {
 }
 
 function statusClass(status: Testimonial['status']): string {
-  if (status === 'published') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-  if (status === 'pending') return 'bg-amber-50 text-amber-700 border-amber-200';
+  if (status === 'published') return 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30';
+  if (status === 'pending') return 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30';
   return 'bg-gray-100 text-gray-600 border-gray-200';
 }
 
@@ -339,7 +339,7 @@ export default function TestimonialHubClient() {
       </header>
 
       {(error || notice) && (
-        <div role="status" className={`mt-5 rounded-md border px-4 py-3 text-sm ${error ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
+        <div role="status" className={`mt-5 rounded-md border px-4 py-3 text-sm ${error ? 'border-[#FF2A04]/30 bg-[#FFEAE6] text-[#661102]' : 'border-[#00E200]/30 bg-[#E0FBE0] text-[#005A00]'}`}>
           {error || notice}
         </div>
       )}
@@ -386,11 +386,11 @@ export default function TestimonialHubClient() {
                     </div>
                     <div className="flex gap-1">
                       <button onClick={() => startEdit(item)} aria-label={`Edit testimonial from ${item.client_name}`} className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900"><Pencil size={16} /></button>
-                      <button onClick={() => void remove(item)} aria-label={`Delete testimonial from ${item.client_name}`} className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-gray-500 hover:bg-red-50 hover:text-red-700"><Trash2 size={16} /></button>
+                      <button onClick={() => void remove(item)} aria-label={`Delete testimonial from ${item.client_name}`} className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-gray-500 hover:bg-[#FFEAE6] hover:text-[#661102]"><Trash2 size={16} /></button>
                     </div>
                   </div>
                   {item.rating && (
-                    <div className="mt-3 flex gap-0.5 text-amber-500" aria-label={`${item.rating} out of 5 stars`}>
+                    <div className="mt-3 flex gap-0.5 text-[#645600]" aria-label={`${item.rating} out of 5 stars`}>
                       {Array.from({ length: item.rating }).map((_, index) => <Star key={index} size={14} fill="currentColor" />)}
                     </div>
                   )}
@@ -504,7 +504,7 @@ export default function TestimonialHubClient() {
                     <input value={link.label} onChange={(event) => updateFeaturedLink(index, 'label', event.target.value)} className="min-h-11 rounded-md border border-gray-300 px-3 text-sm" placeholder="Link title" />
                     <div className="flex gap-2">
                       <input type="url" value={link.url} onChange={(event) => updateFeaturedLink(index, 'url', event.target.value)} className="min-h-11 min-w-0 flex-1 rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" />
-                      <button type="button" onClick={() => removeFeaturedLink(index)} aria-label={`Remove featured link ${index + 1}`} className="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-gray-300 text-gray-500 hover:bg-red-50 hover:text-red-700"><Trash2 size={16} /></button>
+                      <button type="button" onClick={() => removeFeaturedLink(index)} aria-label={`Remove featured link ${index + 1}`} className="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-gray-300 text-gray-500 hover:bg-[#FFEAE6] hover:text-[#661102]"><Trash2 size={16} /></button>
                     </div>
                   </div>
                 ))}

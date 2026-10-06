@@ -196,7 +196,7 @@ export default function AdvertisersReportTab() {
       </div>
 
       {loadError ? (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">
           Failed to load partners: {loadError}
         </div>
       ) : null}
@@ -218,7 +218,7 @@ export default function AdvertisersReportTab() {
                     className={[
                       'px-3 text-sm border-r border-gray-300 last:border-r-0 transition-colors',
                       days === opt.value
-                        ? 'bg-orange-600 text-white'
+                        ? 'bg-[#301D5D] text-white'
                         : 'bg-white text-gray-700 hover:bg-gray-50',
                     ].join(' ')}
                   >
@@ -232,7 +232,7 @@ export default function AdvertisersReportTab() {
                 type="button"
                 onClick={selectAllSendable}
                 disabled={loading || sendable.length === 0}
-                className="text-xs text-orange-700 hover:underline disabled:text-gray-400 disabled:no-underline"
+                className="text-xs text-[#42277C] hover:underline disabled:text-gray-400 disabled:no-underline"
               >
                 Select all sendable
               </button>
@@ -270,7 +270,7 @@ export default function AdvertisersReportTab() {
                       onClick={() => handleRowClick(a)}
                       className={[
                         'flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors',
-                        isActive ? 'bg-orange-50' : 'hover:bg-orange-50/40',
+                        isActive ? 'bg-[#F6F3FB]' : 'hover:bg-[#F6F3FB]/40',
                       ].join(' ')}
                     >
                       <input
@@ -293,7 +293,7 @@ export default function AdvertisersReportTab() {
                         </p>
                       </div>
                       {isActive ? (
-                        <span className="text-[10px] uppercase tracking-wider font-medium text-orange-700 shrink-0">
+                        <span className="text-[10px] uppercase tracking-wider font-medium text-[#42277C] shrink-0">
                           Viewing
                         </span>
                       ) : null}
@@ -323,11 +323,11 @@ export default function AdvertisersReportTab() {
               type="button"
               onClick={handleSend}
               disabled={sending || selectedCount === 0}
-              className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 disabled:opacity-40"
+              className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C] disabled:opacity-40"
             >
               {sending ? 'Sending…' : `Send ${selectedCount || ''} report${selectedCount === 1 ? '' : 's'}`}
             </button>
-            {sendError ? <span className="text-sm text-red-700">{sendError}</span> : null}
+            {sendError ? <span className="text-sm text-[#661102]">{sendError}</span> : null}
           </div>
 
           {results ? (
@@ -338,7 +338,7 @@ export default function AdvertisersReportTab() {
               <ul className="divide-y divide-gray-100">
                 {results.map((r) => (
                   <li key={r.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                    <span className={r.sent ? 'text-emerald-600' : 'text-red-600'}>
+                    <span className={r.sent ? 'text-[#005A00]' : 'text-[#661102]'}>
                       {r.sent ? '✓' : '✕'}
                     </span>
                     <span className="flex-1 text-gray-900">{r.name}</span>

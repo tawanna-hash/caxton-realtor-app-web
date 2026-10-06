@@ -33,11 +33,11 @@ export default function GenerateLinkButton({ invoiceId }: { invoiceId: string })
         type="button"
         onClick={generate}
         disabled={busy}
-        className="font-semibold text-blue-700 underline disabled:opacity-50"
+        className="font-semibold text-[#42277C] underline disabled:opacity-50"
       >
         {busy ? 'Generating…' : 'Generate link'}
       </button>
-      {error && <div className="text-[9px] text-red-600">{error}</div>}
+      {error && <div className="text-[9px] text-[#661102]">{error}</div>}
     </div>
   );
 }
@@ -52,7 +52,7 @@ export function GenerateStatementLinkButton({ action }: { action: () => Promise<
       <button
         type="button"
         disabled={pending}
-        className="inline-flex rounded bg-orange-600 px-4 py-2 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
+        className="inline-flex rounded bg-[#301D5D] px-4 py-2 text-xs font-semibold text-white hover:bg-[#42277C] disabled:opacity-50"
         onClick={() => {
           setError('');
           startTransition(async () => {
@@ -66,7 +66,7 @@ export function GenerateStatementLinkButton({ action }: { action: () => Promise<
       >
         {pending ? 'Creating secure link…' : 'Create pay-all-overdue link'}
       </button>
-      {error && <div className="mt-2 text-xs text-red-700">{error}</div>}
+      {error && <div className="mt-2 text-xs text-[#661102]">{error}</div>}
     </div>
   );
 }

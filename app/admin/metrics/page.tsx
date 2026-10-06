@@ -86,8 +86,8 @@ export default function AdminMetricsPage() {
       </header>
 
       {error && (
-        <div role="alert" className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
-          <p className="text-sm text-red-900">{error}</p>
+        <div role="alert" className="rounded border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-2 text-sm text-[#661102]">
+          <p className="text-sm text-[#661102]">{error}</p>
         </div>
       )}
 
@@ -154,7 +154,7 @@ export default function AdminMetricsPage() {
                         </span>
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-md overflow-hidden">
-                      <div className="h-full bg-orange-600" style={{ width: `${pct}%` }} />
+                      <div className="h-full bg-[#301D5D]" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   );

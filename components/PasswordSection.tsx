@@ -81,12 +81,12 @@ export default function PasswordSection({ accentColor = '#301D5D', hasPassword }
       </p>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-md px-3 py-2 mb-3">
+        <div className="text-sm text-[#661102] bg-[#FFEAE6] border border-[#FFEAE6] rounded-md px-3 py-2 mb-3">
           {error}
         </div>
       )}
       {info && (
-        <div className="text-sm text-green-700 bg-green-50 border border-green-100 rounded-md px-3 py-2 mb-3">
+        <div className="text-sm text-[#005A00] bg-[#E0FBE0] border border-[#E0FBE0] rounded-md px-3 py-2 mb-3">
           {info}
         </div>
       )}

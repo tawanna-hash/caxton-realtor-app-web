@@ -163,7 +163,7 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
             />
             {confirming && <p className="text-sm text-gray-500">Authorizing card…</p>}
             {innerError && (
-              <p className="text-sm text-red-600 bg-red-50 rounded-md p-2">{innerError}</p>
+              <p className="text-sm text-[#661102] bg-[#FFEAE6] rounded-md p-2">{innerError}</p>
             )}
           </div>
         );
@@ -212,7 +212,7 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
 
   if (error) {
     return (
-      <div className="text-sm text-amber-800 bg-amber-50 rounded-md p-3 border border-amber-200">
+      <div className="text-sm text-[#645600] bg-[#FEF8CC] rounded-md p-3 border border-[#FAD800]/30">
         Card payment unavailable: {error}.<br />
         Your signature will still be saved. We&apos;ll follow up with an invoice link.
       </div>

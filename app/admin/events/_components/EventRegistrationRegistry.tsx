@@ -217,8 +217,8 @@ export default function EventRegistrationRegistry({
           No registrations yet.
         </p>
       )}
-      {error && <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      {message && <p className="mt-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">{message}</p>}
+      {error && <p className="mt-4 rounded-md bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">{error}</p>}
+      {message && <p className="mt-4 rounded-md bg-[#E0FBE0] px-3 py-2 text-sm text-[#005A00]">{message}</p>}
     </section>
   );
 }

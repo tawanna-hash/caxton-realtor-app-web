@@ -21,10 +21,10 @@ function itemStatus(it: TrendingItem): StatusFilter {
 
 function statusBadge(s: StatusFilter): { label: string; className: string } {
   switch (s) {
-    case 'live':      return { label: 'Live',      className: 'bg-green-100 text-green-800' };
-    case 'scheduled': return { label: 'Scheduled', className: 'bg-blue-100 text-blue-800' };
+    case 'live':      return { label: 'Live',      className: 'bg-[#E0FBE0] text-[#005A00]' };
+    case 'scheduled': return { label: 'Scheduled', className: 'bg-[#EFEAF8] text-[#301D5D]' };
     case 'draft':     return { label: 'Draft',     className: 'bg-gray-100 text-gray-700' };
-    case 'expired':   return { label: 'Expired',   className: 'bg-red-100 text-red-800' };
+    case 'expired':   return { label: 'Expired',   className: 'bg-[#FFEAE6] text-[#661102]' };
     default:          return { label: 'Unknown',   className: 'bg-gray-100 text-gray-700' };
   }
 }
@@ -205,7 +205,7 @@ export default function TrendingAdminClient() {
           <button
             type="button"
             onClick={() => setCreatingNew(true)}
-            className="inline-flex h-9 items-center px-4 rounded border border-orange-700 bg-orange-600 text-sm text-white hover:bg-orange-700 font-semibold shadow-sm"
+            className="inline-flex h-9 items-center px-4 rounded border border-[#42277C] bg-[#301D5D] text-sm text-white hover:bg-[#42277C] font-semibold shadow-sm"
           >
             + New trending
           </button>
@@ -213,11 +213,11 @@ export default function TrendingAdminClient() {
       </div>
 
       {loading && <div className="text-sm text-gray-600">Loading…</div>}
-      {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-3">{error}</div>}
+      {error && <div className="text-sm text-[#661102] bg-[#FFEAE6] border border-[#FF2A04]/30 rounded-md p-3">{error}</div>}
 
       {!loading && !error && filtered.length === 0 && (
         <div className="content-admin-empty">
-          <div className="mb-3 text-sm font-semibold uppercase tracking-widest text-orange-600">Trending</div>
+          <div className="mb-3 text-sm font-semibold uppercase tracking-widest text-[#301D5D]">Trending</div>
           <div className="text-sm font-medium text-gray-900 mb-1">No trending items</div>
           <div className="text-xs text-gray-600 mb-4">
             {items.length === 0 ? 'Create your first item to get started.' : 'No items match your filters.'}
@@ -226,7 +226,7 @@ export default function TrendingAdminClient() {
             <button
               type="button"
               onClick={() => setCreatingNew(true)}
-              className="text-sm px-3 py-1.5 rounded-md bg-orange-600 text-white hover:bg-orange-700 font-medium"
+              className="text-sm px-3 py-1.5 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] font-medium"
             >
               + New trending
             </button>
@@ -320,7 +320,7 @@ export default function TrendingAdminClient() {
                   <button
                     type="button"
                     onClick={() => void del(it)}
-                    className="text-xs px-2 py-1 rounded-md border border-red-200 text-red-700 bg-white hover:bg-red-50"
+                    className="text-xs px-2 py-1 rounded-md border border-[#FF2A04]/30 text-[#661102] bg-white hover:bg-[#FFEAE6]"
                   >
                     Delete
                   </button>

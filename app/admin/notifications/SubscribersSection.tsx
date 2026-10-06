@@ -222,7 +222,7 @@ export default function SubscribersSection() {
       </div>
 
       {error && (
-        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+        <div className="mb-3 p-3 bg-[#FFEAE6] border border-[#FF2A04]/30 rounded text-sm text-[#661102]">
           {error}
         </div>
       )}
@@ -307,7 +307,7 @@ export default function SubscribersSection() {
                             type="button"
                             onClick={() => revoke(sub)}
                             disabled={busy === sub.id}
-                            className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+                            className="text-xs font-medium text-[#661102] hover:underline disabled:opacity-50"
                           >
                             Revoke
                           </button>
@@ -376,7 +376,7 @@ export default function SubscribersSection() {
                         type="button"
                         onClick={() => revoke(sub)}
                         disabled={busy === sub.id}
-                        className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+                        className="text-xs font-medium text-[#661102] hover:underline disabled:opacity-50"
                       >
                         Revoke
                       </button>

@@ -115,7 +115,7 @@ export default function BiometricToggle({ accentColor = '#301D5D' }: Props) {
             sits in the background for a few minutes.
           </p>
           {error && (
-            <p className="mt-2 text-xs text-rose-600 font-light" role="status">
+            <p className="mt-2 text-xs text-[#661102] font-light" role="status">
               {error}
             </p>
           )}

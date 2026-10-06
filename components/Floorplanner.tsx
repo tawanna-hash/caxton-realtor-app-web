@@ -643,11 +643,11 @@ export default function Floorplanner({
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
                         }}
-                        className="px-2 py-1 text-sm rounded-md bg-blue-600 text-white shadow-lg outline-none w-32 placeholder:text-blue-100"
+                        className="px-2 py-1 text-sm rounded-md bg-[#301D5D] text-white shadow-lg outline-none w-32 placeholder:text-[#EFEAF8]"
                       />
                     ) : (
                       <div
-                        className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-600 text-white text-sm font-medium shadow-lg cursor-move whitespace-nowrap"
+                        className="flex items-center gap-1 px-2 py-1 rounded-md bg-[#301D5D] text-white text-sm font-medium shadow-lg cursor-move whitespace-nowrap"
                         onDoubleClick={() => setEditingTextId(a.id)}
                       >
                         {a.text}
@@ -656,7 +656,7 @@ export default function Floorplanner({
                           onPointerDown={(e) => e.stopPropagation()}
                           onClick={() => removeAnnotation(a.id)}
                           aria-label="Delete note"
-                          className="ml-1 text-blue-200 hover:text-white"
+                          className="ml-1 text-[#D9CFF0] hover:text-white"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -696,7 +696,7 @@ export default function Floorplanner({
                 type="button"
                 onClick={confirmCalibration}
                 aria-label="Set scale"
-                className="w-8 h-8 rounded-full bg-yellow-400 text-gray-900 flex items-center justify-center hover:bg-yellow-300"
+                className="w-8 h-8 rounded-full bg-[#FAD800] text-gray-900 flex items-center justify-center hover:bg-[#FAD800]/50"
               >
                 <Check className="w-4 h-4" />
               </button>
@@ -797,7 +797,7 @@ function ToolButton({
       disabled={disabled}
       onClick={onClick}
       className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center transition-colors ${
-        active ? 'bg-yellow-400 text-gray-900' : 'bg-white/10 text-white hover:bg-white/20'
+        active ? 'bg-[#FAD800] text-gray-900' : 'bg-white/10 text-white hover:bg-white/20'
       } ${disabled ? 'opacity-30 pointer-events-none' : ''}`}
     >
       {children}

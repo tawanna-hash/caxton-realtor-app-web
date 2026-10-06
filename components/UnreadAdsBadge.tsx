@@ -85,7 +85,7 @@ export default function UnreadAdsBadge({
   if (variant === 'inline') {
     return (
       <span
-        className="ml-2 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-600 text-white text-[10px] font-semibold leading-none"
+        className="ml-2 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-[#661102] text-white text-[10px] font-semibold leading-none"
         aria-label={`${count} new ${channel === 'all' ? 'ad inquiry' : channel} inquiries`}
       >
         {label}
@@ -97,7 +97,7 @@ export default function UnreadAdsBadge({
   // nav button. The parent must be `relative`.
   return (
     <span
-      className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-red-600 text-white text-[10px] font-semibold leading-none ring-2 ring-brand-700"
+      className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-[#661102] text-white text-[10px] font-semibold leading-none ring-2 ring-brand-700"
       aria-label={`${count} new ad inquiries`}
     >
       {label}

@@ -297,7 +297,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
               </div>
             </details>
 
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-relaxed text-amber-950">
+            <div className="rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-3 py-3 text-xs leading-relaxed text-[#645600]">
               <p className="font-semibold">Texas advertising compliance</p>
               <p className="mt-1">
                 The broker name remains clearly displayed at no less than 50% of the largest agent contact or logo treatment.
@@ -321,8 +321,8 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
               </div>
             </div>
 
-            {error && <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-            {message && <p className="mt-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{message}</p>}
+            {error && <p className="mt-4 rounded-md bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">{error}</p>}
+            {message && <p className="mt-4 rounded-md bg-[#E0FBE0] px-3 py-2 text-sm text-[#005A00]">{message}</p>}
           </div>
         </div>
       </form>

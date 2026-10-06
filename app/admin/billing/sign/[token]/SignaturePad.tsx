@@ -246,7 +246,7 @@ function UploadField({
           )}
         </div>
       </label>
-      {error && <div className="text-xs text-red-600 mt-2">{error}</div>}
+      {error && <div className="text-xs text-[#661102] mt-2">{error}</div>}
     </div>
   );
 }
@@ -277,7 +277,7 @@ export default function SignaturePad({ initialSignerName, enabled, onChange }: P
   return (
     <div
       className={`rounded-md border-2 p-4 space-y-4 transition-colors ${
-        enabled ? 'border-amber-400 bg-amber-50/40' : 'border-gray-200'
+        enabled ? 'border-[#FAD800] bg-[#FEF8CC]/40' : 'border-gray-200'
       }`}
     >
       <div className="text-xs text-gray-600 font-medium">Digital Signature</div>
@@ -303,7 +303,7 @@ export default function SignaturePad({ initialSignerName, enabled, onChange }: P
           onChange={(e) => setSignerName(e.target.value)}
           disabled={!enabled}
           placeholder="Full legal name"
-          className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-100 disabled:text-gray-400"
+          className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2A04] disabled:bg-gray-100 disabled:text-gray-400"
         />
       </div>
 

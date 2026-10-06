@@ -43,7 +43,7 @@ export function InvoiceList({
               tabIndex={0}
               onClick={() => onOpen(r)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(r); } }}
-              className={`group relative w-full text-left hover:bg-blue-50/40 cursor-pointer ${isPaid ? 'bg-emerald-50/30' : ''}`}
+              className={`group relative w-full text-left hover:bg-[#F6F3FB]/40 cursor-pointer ${isPaid ? 'bg-[#E0FBE0]/30' : ''}`}
             >
               {/* Desktop */}
               <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-3">
@@ -60,7 +60,7 @@ export function InvoiceList({
                   {isPaid
                     ? <PaidStamp paidAt={r.paid_at} />
                     : isVoid
-                      ? <span className="text-xs text-rose-600 font-medium uppercase tracking-wider">Void</span>
+                      ? <span className="text-xs text-[#661102] font-medium uppercase tracking-wider">Void</span>
                       : <UnpaidBadge overdue={!!r.is_overdue} />}
                 </div>
                 <div className="col-span-1"><StatusPill value={r.status} options={INV_STATUS} /></div>
@@ -84,7 +84,7 @@ export function InvoiceList({
                     {isPaid
                       ? <PaidStamp paidAt={r.paid_at} />
                       : isVoid
-                        ? <span className="text-xs text-rose-600 font-medium uppercase tracking-wider">Void</span>
+                        ? <span className="text-xs text-[#661102] font-medium uppercase tracking-wider">Void</span>
                         : <UnpaidBadge overdue={!!r.is_overdue} />}
                   </dd>
                   <dt className="text-gray-500 uppercase tracking-wider">Status</dt>
@@ -96,7 +96,7 @@ export function InvoiceList({
                   type="button"
                   title="Delete draft invoice"
                   onClick={(e) => { e.stopPropagation(); onDelete(r); }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md border border-red-200 bg-white px-2 py-1 text-xs text-red-600 opacity-0 shadow-sm hover:bg-red-50 group-hover:opacity-100 focus:opacity-100"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md border border-[#FF2A04]/30 bg-white px-2 py-1 text-xs text-[#661102] opacity-0 shadow-sm hover:bg-[#FFEAE6] group-hover:opacity-100 focus:opacity-100"
                 >
                   Delete
                 </button>

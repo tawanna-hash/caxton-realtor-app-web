@@ -136,7 +136,7 @@ export default function NewGiveawayPage() {
         </div>
 
         {error && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 rounded-md">{error}</div>
+          <div className="text-sm text-[#661102] bg-[#FFEAE6] border border-[#FFEAE6] px-3 py-2 rounded-md">{error}</div>
         )}
 
         <div className="flex items-center gap-3 pt-2">
@@ -170,7 +170,7 @@ function Field({
   return (
     <div>
       <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">
-        {label} {required && <span className="text-red-500">*</span>}
+        {label} {required && <span className="text-[#661102]">*</span>}
         {hint && <span className="ml-2 normal-case tracking-normal text-gray-400">{hint}</span>}
       </label>
       {children}

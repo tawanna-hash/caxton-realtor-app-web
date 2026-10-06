@@ -214,7 +214,7 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                   const st = runState[s.path];
                   const status = st?.status ?? 'idle';
                   const r = runMap.get(s.path);
-                  const badgeColor = r?.status === 'ok' ? 'text-green-700 bg-green-50' : r?.status === 'error' ? 'text-red-700 bg-red-50' : 'text-amber-700 bg-amber-50';
+                  const badgeColor = r?.status === 'ok' ? 'text-[#005A00] bg-[#E0FBE0]' : r?.status === 'error' ? 'text-[#661102] bg-[#FFEAE6]' : 'text-[#645600] bg-[#FEF8CC]';
                   return (
                     <li key={`m-${s.path}`} className="p-3">
                       <div className="flex items-start justify-between gap-2">
@@ -237,9 +237,9 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                             disabled={status === 'running'}
                             className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-50 ${
                               status === 'success'
-                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                ? 'bg-[#E0FBE0] text-[#005A00] hover:bg-[#00E200]/30'
                                 : status === 'error'
-                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                ? 'bg-[#FFEAE6] text-[#661102] hover:bg-[#FF2A04]/30'
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                           >
@@ -264,7 +264,7 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                             const ago = Math.floor((Date.now() - new Date(r.lastRunAt).getTime()) / 60000);
                             return ago < 60 ? `${ago}m ago` : ago < 1440 ? `${Math.floor(ago/60)}h ago` : `${Math.floor(ago/1440)}d ago`;
                           })()}
-                          {r.errorMessage && <div className="text-red-600 mt-0.5 break-all">{r.errorMessage}</div>}
+                          {r.errorMessage && <div className="text-[#661102] mt-0.5 break-all">{r.errorMessage}</div>}
                         </div>
                       )}
                     </li>
@@ -305,12 +305,12 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                               const when = new Date(r.lastRunAt);
                               const ago = Math.floor((Date.now() - when.getTime()) / 60000);
                               const agoText = ago < 60 ? `${ago}m ago` : ago < 1440 ? `${Math.floor(ago/60)}h ago` : `${Math.floor(ago/1440)}d ago`;
-                              const badgeColor = r.status === 'ok' ? 'text-green-700 bg-green-50' : r.status === 'error' ? 'text-red-700 bg-red-50' : 'text-amber-700 bg-amber-50';
+                              const badgeColor = r.status === 'ok' ? 'text-[#005A00] bg-[#E0FBE0]' : r.status === 'error' ? 'text-[#661102] bg-[#FFEAE6]' : 'text-[#645600] bg-[#FEF8CC]';
                               return (
                                 <div className="text-xs text-gray-500 mt-0.5">
                                   <span className={`inline-block px-1.5 py-0.5 rounded ${badgeColor} font-medium mr-1.5`}>{r.status}</span>
                                   {r.rowCount} rows · {agoText}
-                                  {r.errorMessage && <div className="text-red-600 mt-0.5">{r.errorMessage}</div>}
+                                  {r.errorMessage && <div className="text-[#661102] mt-0.5">{r.errorMessage}</div>}
                                 </div>
                               );
                             })()}
@@ -326,9 +326,9 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                               disabled={status === 'running'}
                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-50 ${
                                 status === 'success'
-                                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                  ? 'bg-[#E0FBE0] text-[#005A00] hover:bg-[#00E200]/30'
                                   : status === 'error'
-                                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                  ? 'bg-[#FFEAE6] text-[#661102] hover:bg-[#FF2A04]/30'
                                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                               }`}
                             >
@@ -351,7 +351,7 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                 </table>
               </div>
               {group.scrapers.some((s) => runState[s.path]?.status === 'error' && runState[s.path]?.result) && (
-                <div className="mt-1 px-4 py-2 text-xs text-red-600">
+                <div className="mt-1 px-4 py-2 text-xs text-[#661102]">
                   {group.scrapers
                     .filter((s) => runState[s.path]?.status === 'error')
                     .map((s) => `${s.name}: ${runState[s.path]?.result}`)

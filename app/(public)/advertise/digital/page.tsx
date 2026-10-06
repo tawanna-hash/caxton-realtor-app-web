@@ -102,7 +102,7 @@ export default async function AdvertiseDigitalPage() {
           </Link>
         </p>
 
-        <div className="mt-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="mt-6 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 text-sm text-[#645600]">
           <p>
             Please allow up to 2 days for your ad space to go live after payment
             while we review and approve your creative.
@@ -146,11 +146,11 @@ export default async function AdvertiseDigitalPage() {
                   {slot.tier} · {slot.zone}
                 </span>
                 {soldOut ? (
-                  <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-[#645600] bg-[#FEF8CC] px-2 py-0.5 rounded-md">
                     Sold out
                   </span>
                 ) : (
-                  <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-[#005A00] bg-[#E0FBE0] px-2 py-0.5 rounded-md">
                     Available
                   </span>
                 )}
@@ -164,7 +164,7 @@ export default async function AdvertiseDigitalPage() {
                 {rateLine(slot)}
               </p>
 
-              <p className={`text-xs font-medium mb-2 ${soldOut ? 'text-amber-700' : 'text-emerald-700'}`}>
+              <p className={`text-xs font-medium mb-2 ${soldOut ? 'text-[#645600]' : 'text-[#005A00]'}`}>
                 {soldOut
                   ? `Sold out · ${inv.sold} sold`
                   : `${inv.available} available · ${inv.sold} sold`}

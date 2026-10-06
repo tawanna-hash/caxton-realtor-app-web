@@ -27,7 +27,7 @@ type PageProps = {
 };
 
 const CONTROL =
-  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100';
+  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]';
 
 function payoutHref(
   params: Awaited<PageProps['searchParams']>,
@@ -102,7 +102,7 @@ function PayoutCard({ row }: { row: PayoutRow }) {
       </div>
       <div className="flex items-center justify-between gap-3 text-xs">
         <span className="inline-flex items-center gap-1.5 text-gray-700">
-          {row.status === 'paid' && <CheckCircle2 className="h-4 w-4 fill-emerald-600 text-white" aria-hidden="true" />}
+          {row.status === 'paid' && <CheckCircle2 className="h-4 w-4 fill-[#005A00] text-white" aria-hidden="true" />}
           {row.status.replaceAll('_', ' ')}
         </span>
         <span className="truncate font-mono text-gray-500" title={row.id}>{row.id}</span>
@@ -168,8 +168,8 @@ export default async function StripePayoutsPage({ searchParams }: PageProps) {
             Actual Stripe payouts by expected bank arrival date, including settlement fees and adjustments.
           </p>
         </div>
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-emerald-700">
-          <CheckCircle2 className="h-4 w-4 fill-emerald-600 text-white" aria-hidden="true" />
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-[#005A00]">
+          <CheckCircle2 className="h-4 w-4 fill-[#005A00] text-white" aria-hidden="true" />
           Stripe connected
         </span>
       </div>
@@ -193,7 +193,7 @@ export default async function StripePayoutsPage({ searchParams }: PageProps) {
             <div className="mt-0.5 truncate text-xs text-gray-600">average payout · latest {latestPayout}</div>
           </div>
         </div>
-        <div className="mt-3 h-4 rounded-sm bg-emerald-600" aria-hidden="true" />
+        <div className="mt-3 h-4 rounded-sm bg-[#005A00]" aria-hidden="true" />
       </section>
 
       <form method="get" className="flex flex-wrap items-end gap-2" aria-label="Payout filters">
@@ -229,7 +229,7 @@ export default async function StripePayoutsPage({ searchParams }: PageProps) {
         </label>
         <button
           type="submit"
-          className="inline-flex h-9 items-center justify-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="inline-flex h-9 items-center justify-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#42277C] focus:outline-none focus:ring-2 focus:ring-[#B9ADD6]"
         >
           Apply
         </button>
@@ -253,14 +253,14 @@ export default async function StripePayoutsPage({ searchParams }: PageProps) {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {pageRows.map((row) => (
-                <tr key={row.id} className="hover:bg-orange-50/40">
+                <tr key={row.id} className="hover:bg-[#F6F3FB]/40">
                   <td className="whitespace-nowrap px-4 py-2.5 font-medium text-gray-900">{row.batch_date}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold text-gray-900">{formatCents(Number(row.amount_cents))}</td>
                   <td className="px-3 py-2.5 text-right text-gray-700">{formatCents(row.fees_cents)}</td>
                   <td className="px-3 py-2.5 text-right text-gray-700">{Number(row.transactions).toLocaleString()}</td>
                   <td className="px-3 py-2.5">
                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
-                      {row.status === 'paid' && <CheckCircle2 className="h-4 w-4 fill-emerald-600 text-white" aria-hidden="true" />}
+                      {row.status === 'paid' && <CheckCircle2 className="h-4 w-4 fill-[#005A00] text-white" aria-hidden="true" />}
                       {row.status.replaceAll('_', ' ')}
                     </span>
                   </td>

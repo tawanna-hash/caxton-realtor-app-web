@@ -78,7 +78,7 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
   if (error && !profile) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f7f4ee] px-5">
-        <div className="max-w-md rounded-xl border border-red-100 bg-white p-8 text-center shadow-sm">
+        <div className="max-w-md rounded-xl border border-[#FFEAE6] bg-white p-8 text-center shadow-sm">
           <Quote className="mx-auto text-gray-300" size={34} />
           <h1 className="mt-4 text-xl font-semibold text-gray-950">Link Unavailable</h1>
           <p className="mt-2 text-sm leading-6 text-gray-600">{error}</p>
@@ -91,7 +91,7 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f7f4ee] px-5">
         <div className="max-w-lg rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-10">
-          <Check className="mx-auto text-emerald-600" size={38} />
+          <Check className="mx-auto text-[#005A00]" size={38} />
           <h1 className="mt-5 text-2xl font-semibold text-gray-950">Thank You for Sharing</h1>
           <p className="mt-3 text-base leading-7 text-gray-600">Your testimonial has been sent to {profile?.display_name} for review.</p>
           {profile?.website_url && <a href={profile.website_url} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-[#301D5D] px-5 text-sm font-semibold text-white">Return to {profile.display_name}&apos;s website</a>}
@@ -116,7 +116,7 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
         </header>
 
         <form onSubmit={submit} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
-          {error && <div role="alert" className="mb-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+          {error && <div role="alert" className="mb-5 rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">{error}</div>}
           <label className="block text-sm font-semibold text-gray-800">
             Your testimonial
             <textarea required minLength={10} name="quote" rows={6} className="mt-2 w-full rounded-md border border-gray-300 px-3 py-3 text-base leading-7" placeholder="What stood out about working together?" />
@@ -133,8 +133,8 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
             <legend className="text-sm font-semibold text-gray-800">Rating</legend>
             <div className="mt-2 flex gap-1">
               {[1, 2, 3, 4, 5].map((value) => (
-                <button key={value} type="button" onClick={() => setRating(value)} aria-label={`${value} stars`} className="flex min-h-11 min-w-11 items-center justify-center rounded-md hover:bg-amber-50">
-                  <Star size={24} className={rating && value <= rating ? 'text-amber-500' : 'text-gray-300'} fill={rating && value <= rating ? 'currentColor' : 'none'} />
+                <button key={value} type="button" onClick={() => setRating(value)} aria-label={`${value} stars`} className="flex min-h-11 min-w-11 items-center justify-center rounded-md hover:bg-[#FEF8CC]">
+                  <Star size={24} className={rating && value <= rating ? 'text-[#645600]' : 'text-gray-300'} fill={rating && value <= rating ? 'currentColor' : 'none'} />
                 </button>
               ))}
             </div>

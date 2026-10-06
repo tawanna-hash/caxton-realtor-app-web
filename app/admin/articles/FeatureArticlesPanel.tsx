@@ -214,7 +214,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
           partner&apos;s public detail page beneath their event photos.
         </p>
         <button onClick={openCreate}
-          className="shrink-0 inline-flex items-center gap-2 bg-orange-600 text-white px-5 py-2 text-sm font-medium hover:bg-orange-700 rounded-md transition-colors whitespace-nowrap self-start">
+          className="shrink-0 inline-flex items-center gap-2 bg-[#301D5D] text-white px-5 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors whitespace-nowrap self-start">
           <Plus size={16} /> Add Article
         </button>
       </div>
@@ -227,9 +227,9 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
       </section>
 
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center justify-between">
+        <div className="mb-4 rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102] flex items-center justify-between">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600"><X size={16} /></button>
+          <button onClick={() => setError(null)} className="text-[#661102] hover:text-[#661102]"><X size={16} /></button>
         </div>
       )}
 
@@ -289,7 +289,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {a.status === 'draft' && (
-                        <span className="text-[10px] uppercase tracking-[0.15em] font-medium px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                        <span className="text-[10px] uppercase tracking-[0.15em] font-medium px-1.5 py-0.5 rounded-md bg-[#FEF8CC] text-[#645600] border border-[#FAD800]/30">
                           Draft
                         </span>
                       )}
@@ -303,7 +303,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
                         <Pencil size={15} />
                       </button>
                       <button onClick={() => handleDelete(a.id)} disabled={deleting === a.id}
-                        className="text-gray-400 hover:text-red-600 disabled:opacity-40" title="Delete">
+                        className="text-gray-400 hover:text-[#661102] disabled:opacity-40" title="Delete">
                         <Trash2 size={15} />
                       </button>
                     </div>

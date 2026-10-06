@@ -308,7 +308,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             type="button"
             onClick={handleSync}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
+            className="inline-flex items-center gap-2 rounded-md bg-[#301D5D] px-4 py-2 text-sm font-medium text-white hover:bg-[#42277C] disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
           >
             {busy ? (
               <>
@@ -342,7 +342,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           {tab === 'monthly' && syncedAt && !syncError && (
             <span className="text-xs text-gray-500">Last sync: {syncedAt}</span>
           )}
-          {tab === 'monthly' && syncError && <span className="text-xs text-red-600">{syncError}</span>}
+          {tab === 'monthly' && syncError && <span className="text-xs text-[#661102]">{syncError}</span>}
         </div>
       </div>
 
@@ -380,7 +380,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
 
       {/* Feed errors */}
       {initialErrors.length > 0 && (
-        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="mb-4 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 text-sm text-[#645600]">
           <p className="font-medium">Some feeds failed to load:</p>
           <ul className="mt-1 list-disc list-inside">
             {initialErrors.map((err, i) => (
@@ -391,7 +391,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
       )}
 
       {/* Filters */}
-      {deleteError && <p role="alert" className="mb-3 text-sm text-red-700">{deleteError}</p>}
+      {deleteError && <p role="alert" className="mb-3 text-sm text-[#661102]">{deleteError}</p>}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {(['all', 'austin', 'san_antonio'] as const).map((key) => (
           <button
@@ -461,7 +461,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                       {PUB_LABEL[a.publication]}
                     </span>
                     {a.editedFields.length > 0 && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Edited</span>
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-[#E0FBE0] text-[#005A00] border border-[#00E200]/30">Edited</span>
                     )}
                     {a.hidden && (
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">Hidden</span>
@@ -483,7 +483,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                 <button type="button" onClick={() => setEditing(a)} className="text-brand-700 hover:underline text-xs font-medium">Edit</button>
                 <a href={a.link} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:underline text-xs">View ↗</a>
                 <button type="button" onClick={() => void handleDelete(a)} disabled={deletingId === a.id}
-                  className="text-red-700 hover:underline text-xs disabled:opacity-50">{deletingId === a.id ? 'Deleting…' : 'Delete'}</button>
+                  className="text-[#661102] hover:underline text-xs disabled:opacity-50">{deletingId === a.id ? 'Deleting…' : 'Delete'}</button>
               </div>
             </li>
           ))}
@@ -529,7 +529,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-gray-900 line-clamp-2">{a.head}</p>
                             {a.editedFields.length > 0 && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-[#E0FBE0] text-[#005A00] border border-[#00E200]/30 whitespace-nowrap">
                                 Edited
                               </span>
                             )}
@@ -577,7 +577,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                           View ↗
                         </a>
                         <button type="button" onClick={() => void handleDelete(a)} disabled={deletingId === a.id}
-                          className="text-red-700 hover:underline text-xs disabled:opacity-50">{deletingId === a.id ? 'Deleting…' : 'Delete'}</button>
+                          className="text-[#661102] hover:underline text-xs disabled:opacity-50">{deletingId === a.id ? 'Deleting…' : 'Delete'}</button>
                       </div>
                     </td>
                   </tr>
@@ -810,7 +810,7 @@ function EditModal({
           </label>
 
           {error && (
-            <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+            <div className="rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 px-3 py-2 text-sm text-[#661102]">
               {error}
             </div>
           )}
@@ -823,7 +823,7 @@ function EditModal({
                 type="button"
                 onClick={revert}
                 disabled={busy}
-                className="text-sm text-red-600 hover:underline disabled:opacity-50 min-h-[44px]"
+                className="text-sm text-[#661102] hover:underline disabled:opacity-50 min-h-[44px]"
               >
                 {reverting ? 'Reverting…' : 'Revert to WordPress'}
               </button>
@@ -1046,7 +1046,7 @@ function CreateModal({
           </Field>
 
           {error && (
-            <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+            <div className="rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 px-3 py-2 text-sm text-[#661102]">
               {error}
             </div>
           )}
@@ -1219,7 +1219,7 @@ function ImageUpload({
                 type="button"
                 onClick={() => onChange('')}
                 disabled={uploading}
-                className="text-xs text-gray-500 hover:text-red-600 hover:underline disabled:opacity-50"
+                className="text-xs text-gray-500 hover:text-[#661102] hover:underline disabled:opacity-50"
               >
                 Clear
               </button>
@@ -1234,7 +1234,7 @@ function ImageUpload({
           />
         </div>
       </div>
-      {err && <p className="text-xs text-red-600">{err}</p>}
+      {err && <p className="text-xs text-[#661102]">{err}</p>}
     </div>
   );
 }

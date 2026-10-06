@@ -139,7 +139,7 @@ export default function SignClient({ token }: { token: string }) {
           const m = marks[f.id];
           return (
             <button key={f.id} type="button" style={style} disabled={!consent} onClick={() => { setEditing(f.id); setMode(view.methods.type ? 'type' : view.methods.draw ? 'draw' : 'upload'); }}
-              className={`absolute flex items-center justify-center overflow-hidden border-2 text-xs font-bold ${m ? 'border-emerald-600 bg-white' : 'border-[#9A3D2B] bg-[#FFF5F2] text-[#9A3D2B] animate-pulse'} disabled:animate-none disabled:opacity-60`} aria-label="Signature box">
+              className={`absolute flex items-center justify-center overflow-hidden border-2 text-xs font-bold ${m ? 'border-[#005A00] bg-white' : 'border-[#9A3D2B] bg-[#FFF5F2] text-[#9A3D2B] animate-pulse'} disabled:animate-none disabled:opacity-60`} aria-label="Signature box">
               {m ? (m.kind !== 'typed' ? <SigImg src={m.value} /> : <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(12px,3.2vw,22px)', color: '#0d1a59' }}>{m.value}</span>) : 'Sign here'}
             </button>
           );

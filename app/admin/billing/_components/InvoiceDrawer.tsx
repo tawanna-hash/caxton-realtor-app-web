@@ -475,10 +475,10 @@ export function InvoiceDrawer({
             />
             <label className="min-w-0 text-xs text-gray-600 sm:col-span-2"><span className="sm:sr-only">Quantity</span><input aria-label="Quantity" className={`${INPUT} mt-1 min-w-0 sm:mt-0`} value={li.qty} type="number" min={1} onChange={(e) => updateLineItem(i, 'qty', e.target.value)} /></label>
             <label className="min-w-0 text-xs text-gray-600 sm:col-span-3"><span className="sm:sr-only">Unit price</span><input aria-label="Unit price" className={`${INPUT} mt-1 min-w-0 sm:mt-0`} value={li.unit_cents / 100} type="number" step="0.01" onChange={(e) => updateLineItem(i, 'unit_cents', Math.round(parseFloat(e.target.value || '0') * 100))} placeholder="Unit $" /></label>
-            <button type="button" onClick={() => removeLineItem(i)} aria-label="Remove line item" className="col-span-2 min-h-11 text-left text-xs text-rose-600 hover:underline sm:col-span-1 sm:text-center">Remove</button>
+            <button type="button" onClick={() => removeLineItem(i)} aria-label="Remove line item" className="col-span-2 min-h-11 text-left text-xs text-[#661102] hover:underline sm:col-span-1 sm:text-center">Remove</button>
           </div>
         ))}
-        <button type="button" onClick={addLineItem} className="text-xs text-orange-600 hover:underline">+ Add line item</button>
+        <button type="button" onClick={addLineItem} className="text-xs text-[#301D5D] hover:underline">+ Add line item</button>
       </Section>
 
       <Section title="Amount &amp; status">
@@ -505,7 +505,7 @@ export function InvoiceDrawer({
               <button
                 type="button"
                 onClick={() => setShowAddCard(true)}
-                className="text-sm font-medium text-orange-600 hover:underline"
+                className="text-sm font-medium text-[#301D5D] hover:underline"
               >
                 Add one
               </button>
@@ -523,8 +523,8 @@ export function InvoiceDrawer({
           <div
             className={
               cardExpStatus === 'expired'
-                ? 'flex flex-wrap items-center gap-2 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-900'
-                : 'flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900'
+                ? 'flex flex-wrap items-center gap-2 rounded-md border border-[#FF2A04]/50 bg-[#FFEAE6] px-3 py-2 text-xs text-[#661102]'
+                : 'flex flex-wrap items-center gap-2 rounded-md border border-[#FAD800]/50 bg-[#FEF8CC] px-3 py-2 text-xs text-[#645600]'
             }
           >
             <span>{cardExpMessage}</span>
@@ -558,13 +558,13 @@ export function InvoiceDrawer({
           <button
             type="button"
             onClick={() => setShowAddCard(true)}
-            className="text-xs text-orange-600 hover:underline"
+            className="text-xs text-[#301D5D] hover:underline"
           >
             Update card on file
           </button>
         )}
         {autoChargeWarning && (
-          <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <div className="rounded-md border border-[#FAD800]/50 bg-[#FEF8CC] px-3 py-2 text-xs text-[#645600]">
             Invoice was created, but the card was not charged: {autoChargeWarning}
           </div>
         )}
@@ -618,8 +618,8 @@ export function InvoiceDrawer({
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4">
           <p className="text-xs text-gray-500">Void preserves the record. Permanent delete requires the invoice ID.</p>
           <div className="flex gap-2">
-            {existing.status !== 'void' && <button type="button" disabled={saving} onClick={() => void voidInvoice()} className="rounded border border-orange-300 px-3 py-2 text-sm font-medium text-orange-800 hover:bg-orange-50 disabled:opacity-50">Void invoice</button>}
-            <button type="button" disabled={saving} onClick={() => void permanentlyDelete()} className="rounded border border-rose-300 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50">Permanent delete</button>
+            {existing.status !== 'void' && <button type="button" disabled={saving} onClick={() => void voidInvoice()} className="rounded border border-[#B9ADD6] px-3 py-2 text-sm font-medium text-[#301D5D] hover:bg-[#F6F3FB] disabled:opacity-50">Void invoice</button>}
+            <button type="button" disabled={saving} onClick={() => void permanentlyDelete()} className="rounded border border-[#FF2A04]/50 px-3 py-2 text-sm font-medium text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50">Permanent delete</button>
           </div>
         </div>
       )}
@@ -800,13 +800,13 @@ function PaymentHistoryRow({
           <div className="mt-1 text-xs text-gray-500">
             {historyDate(payment.payment_date)}{payment.created_by ? ` · ${payment.created_by}` : ''}
             {saving && <span className="ml-1 text-gray-400">· saving…</span>}
-            {saved && !saving && <span className="ml-1 text-emerald-700">· saved</span>}
+            {saved && !saving && <span className="ml-1 text-[#005A00]">· saved</span>}
           </div>
-          {error && <div className="mt-1 text-xs text-rose-700">{error}</div>}
+          {error && <div className="mt-1 text-xs text-[#661102]">{error}</div>}
         </div>
-        <div className="shrink-0 text-sm font-semibold tabular-nums text-emerald-700">{formatCents(payment.amount_cents)}</div>
+        <div className="shrink-0 text-sm font-semibold tabular-nums text-[#005A00]">{formatCents(payment.amount_cents)}</div>
       </div>
-      <button type="button" disabled={saving} onClick={() => void deletePayment()} className="mt-2 text-xs font-medium text-rose-700 hover:underline disabled:opacity-50">Permanent delete payment</button>
+      <button type="button" disabled={saving} onClick={() => void deletePayment()} className="mt-2 text-xs font-medium text-[#661102] hover:underline disabled:opacity-50">Permanent delete payment</button>
     </div>
   );
 }
@@ -859,7 +859,7 @@ function InvoiceHistory({
         <button
           type="button"
           onClick={onRecordPayment}
-          className="inline-flex items-center rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+          className="inline-flex items-center rounded-md bg-[#301D5D] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
         >
           Record payment
         </button>

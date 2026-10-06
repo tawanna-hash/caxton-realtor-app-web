@@ -286,7 +286,7 @@ export default function NavDrawer({
                       <p className="text-sm font-semibold text-white truncate">{m.label}</p>
                     </div>
                     {isCurrent && (
-                      <span className="text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-200 flex-shrink-0">
+                      <span className="text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full bg-[#00E200]/25 text-[#E0FBE0] flex-shrink-0">
                         Current
                       </span>
                     )}
@@ -315,7 +315,7 @@ export default function NavDrawer({
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-white/80 truncate">{m.label}</p>
                   </div>
-                  <span className="text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-200 flex-shrink-0">
+                  <span className="text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full bg-[#FAD800]/20 text-[#FEF8CC] flex-shrink-0">
                     Coming Soon
                   </span>
                 </button>

@@ -213,7 +213,7 @@ export default function BiometricGate() {
           Sign out
         </button>
         {error && (
-          <p className="mt-6 text-xs text-rose-600 font-light" role="status">
+          <p className="mt-6 text-xs text-[#661102] font-light" role="status">
             {error}
           </p>
         )}

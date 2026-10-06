@@ -115,8 +115,8 @@ export default async function SignPage({ params }: PageProps) {
       : '';
     return (
       <div className="min-h-screen flex items-center justify-center bg-white px-4">
-        <div className="bg-white rounded-md border border-orange-200 p-10 max-w-lg text-center shadow-sm">
-          <div className="text-xs font-bold tracking-[0.2em] uppercase text-orange-700 mb-3">
+        <div className="bg-white rounded-md border border-[#D9CFF0] p-10 max-w-lg text-center shadow-sm">
+          <div className="text-xs font-bold tracking-[0.2em] uppercase text-[#42277C] mb-3">
             Renewal offer expired
           </div>
           <h1 className="text-2xl font-semibold text-gray-900 mb-3">
@@ -141,7 +141,7 @@ export default async function SignPage({ params }: PageProps) {
   if (ag.status === 'signed' || ag.status === 'active') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="bg-white rounded-md border border-emerald-200 p-10 max-w-md text-center">
+        <div className="bg-white rounded-md border border-[#00E200]/30 p-10 max-w-md text-center">
           <div className="text-4xl mb-3">✓</div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
             Already Signed

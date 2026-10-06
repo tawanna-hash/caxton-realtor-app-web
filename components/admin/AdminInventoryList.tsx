@@ -259,7 +259,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
                 type="button"
                 onClick={handleBulkApprove}
                 disabled={bulkApproving}
-                className="shrink-0 bg-green-600 text-white px-4 py-2 text-sm font-medium hover:bg-green-700 rounded-md transition-colors whitespace-nowrap disabled:opacity-60"
+                className="shrink-0 bg-[#005A00] text-white px-4 py-2 text-sm font-medium hover:bg-[#005A00] rounded-md transition-colors whitespace-nowrap disabled:opacity-60"
               >
                 {bulkApproving
                   ? 'Approving…'
@@ -274,7 +274,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
             </Link>
             <Link
               href={`/admin/inventory/new?kind=${kind}`}
-              className="shrink-0 bg-orange-600 text-white px-4 py-2 text-sm font-medium hover:bg-orange-700 rounded-md transition-colors whitespace-nowrap"
+              className="shrink-0 bg-[#301D5D] text-white px-4 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors whitespace-nowrap"
             >
               {copy.createLabel}
             </Link>
@@ -304,7 +304,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
                 className={
                   'px-4 py-2 text-sm font-medium rounded-md transition-colors ' +
                   (active
-                    ? 'bg-orange-600 text-white'
+                    ? 'bg-[#301D5D] text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
                 }
               >
@@ -343,7 +343,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
                 {t === 'pending' && !active && count != null && count > 0 && (
                   <span
                     aria-label={`${count} pending review`}
-                    className="ml-1.5 inline-block w-2 h-2 rounded-full bg-red-600 align-middle"
+                    className="ml-1.5 inline-block w-2 h-2 rounded-full bg-[#661102] align-middle"
                   />
                 )}
               </button>
@@ -354,7 +354,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
         {error && (
           <div
             role="alert"
-            className="border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-900 mb-6"
+            className="border-l-4 border-[#661102] bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102] mb-6"
           >
             {error}
           </div>

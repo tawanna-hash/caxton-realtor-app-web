@@ -184,7 +184,7 @@ export default function EditEventPage() {
           </span>
         </div>
         {!isManual && (
-          <p className="text-xs text-amber-700 mt-2 bg-amber-50 border border-amber-200 px-3 py-2 rounded-md">
+          <p className="text-xs text-[#645600] mt-2 bg-[#FEF8CC] border border-[#FAD800]/30 px-3 py-2 rounded-md">
             ⚠️ This event was scraped. Any field you change will be locked from future scraper updates.
           </p>
         )}
@@ -194,10 +194,10 @@ export default function EditEventPage() {
           </p>
         )}
         {isPendingSubmission && (
-          <div className="mt-4 flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 flex flex-col gap-3 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-amber-950">Pending public submission</p>
-              <p className="mt-1 text-xs text-amber-800">
+              <p className="text-sm font-semibold text-[#645600]">Pending public submission</p>
+              <p className="mt-1 text-xs text-[#645600]">
                 Review the details below, then approve to publish this event to the Calendar.
               </p>
             </div>
@@ -206,7 +206,7 @@ export default function EditEventPage() {
               type="button"
               onClick={deleteSubmission}
               disabled={deleting || approving}
-              className="rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+              className="rounded-md border border-[#FF2A04]/50 bg-white px-4 py-2 text-sm font-medium text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
             >
               {deleting ? 'Deleting...' : 'Delete Submission'}
             </button>
@@ -214,7 +214,7 @@ export default function EditEventPage() {
               type="button"
               onClick={approveAndPublish}
               disabled={approving || deleting}
-              className="shrink-0 rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 disabled:opacity-50"
+              className="shrink-0 rounded-md bg-[#005A00] px-4 py-2 text-sm font-medium text-white hover:bg-[#005A00] disabled:opacity-50"
             >
               {approving ? 'Publishing...' : 'Approve and Publish'}
             </button>
@@ -222,12 +222,12 @@ export default function EditEventPage() {
           </div>
         )}
         {!event.hidden && event.externalSource === 'submission' && (
-          <div className="mt-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">
+          <div className="mt-4 rounded-md border border-[#00E200]/30 bg-[#E0FBE0] px-4 py-3 text-sm font-medium text-[#005A00]">
             Approved and published to the Calendar.
           </div>
         )}
         {error && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mt-4 rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">
             {error}
           </div>
         )}

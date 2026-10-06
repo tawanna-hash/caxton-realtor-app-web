@@ -56,7 +56,7 @@ function PlacementRow({ slot }: { slot: AppAdSlot }) {
       : '/wk';
 
   return (
-    <article className="grid min-w-[980px] grid-cols-[210px_minmax(220px,1fr)_150px_190px_170px] border-b border-gray-200 last:border-b-0 hover:bg-orange-50/30">
+    <article className="grid min-w-[980px] grid-cols-[210px_minmax(220px,1fr)_150px_190px_170px] border-b border-gray-200 last:border-b-0 hover:bg-[#F6F3FB]/30">
       <div className="h-36 border-r border-gray-200 bg-gray-50 p-2.5">
         {hasWireframe(slot.slug) ? (
           <PlacementWireframe slug={slot.slug} />
@@ -68,7 +68,7 @@ function PlacementRow({ slot }: { slot: AppAdSlot }) {
         <div className="flex flex-wrap items-center gap-1.5">
           <h2 className="text-sm font-semibold text-gray-900">{slot.name}</h2>
           {slot.rotates && (
-            <span className="rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700">
+            <span className="rounded bg-[#E3F7FF] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#285766]">
               Rotates
             </span>
           )}
@@ -79,7 +79,7 @@ function PlacementRow({ slot }: { slot: AppAdSlot }) {
       <div className="px-3 py-3 text-xs">
         <div className="font-medium text-gray-800">{ZONE_LABEL[slot.zone]}</div>
         <span className={`mt-1.5 inline-flex rounded px-1.5 py-0.5 font-medium capitalize ${
-          slot.tier === 'premium' ? 'bg-amber-100 text-amber-900' : 'bg-gray-100 text-gray-700'
+          slot.tier === 'premium' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-gray-100 text-gray-700'
         }`}>
           {slot.tier}
         </span>
@@ -95,7 +95,7 @@ function PlacementRow({ slot }: { slot: AppAdSlot }) {
           <Link
             href={`/advertise/checkout/${slot.slug}?pub=realtyline`}
             target="_blank"
-            className="inline-flex items-center gap-1 font-medium text-orange-700 hover:underline"
+            className="inline-flex items-center gap-1 font-medium text-[#42277C] hover:underline"
           >
             Open checkout <ExternalLink className="h-3 w-3" aria-hidden="true" />
           </Link>

@@ -345,7 +345,7 @@ export function RecurringScheduleDrawer({
             key={value}
             type="button"
             onClick={() => setActiveTab(value)}
-            className={`border-b-2 px-4 py-2 text-sm ${activeTab === value ? "border-orange-600 font-medium text-orange-700" : "border-transparent text-gray-500 hover:text-gray-800"}`}
+            className={`border-b-2 px-4 py-2 text-sm ${activeTab === value ? "border-[#301D5D] font-medium text-[#42277C]" : "border-transparent text-gray-500 hover:text-gray-800"}`}
           >
             {label}
           </button>
@@ -537,7 +537,7 @@ export function RecurringScheduleDrawer({
                 </Field>
               )}
             </div>
-            <div className="rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-800">
+            <div className="rounded-md bg-[#F6F3FB] px-3 py-2 text-xs text-[#301D5D]">
               Repeats{" "}
               {frequency === "monthly"
                 ? "monthly"
@@ -628,7 +628,7 @@ export function RecurringScheduleDrawer({
                 <button
                   type="button"
                   onClick={() => removeLine(i)}
-                  className="col-span-1 text-gray-400 hover:text-red-600 text-lg leading-none"
+                  className="col-span-1 text-gray-400 hover:text-[#661102] text-lg leading-none"
                 >
                   ×
                 </button>
@@ -637,7 +637,7 @@ export function RecurringScheduleDrawer({
             <button
               type="button"
               onClick={addLine}
-              className="text-sm text-orange-600 hover:text-orange-700"
+              className="text-sm text-[#301D5D] hover:text-[#42277C]"
             >
               + Add line item
             </button>
@@ -760,7 +760,7 @@ export function RecurringScheduleDrawer({
                   <button
                     type="button"
                     onClick={() => setEmailCcBcc((value) => (value ? "" : " "))}
-                    className="mt-6 h-9 rounded-md px-2 text-xs font-medium text-orange-700 hover:bg-orange-50"
+                    className="mt-6 h-9 rounded-md px-2 text-xs font-medium text-[#42277C] hover:bg-[#F6F3FB]"
                   >
                     Cc/Bcc
                   </button>
@@ -810,7 +810,7 @@ export function RecurringScheduleDrawer({
                     className="mx-auto h-20 w-auto object-contain"
                   />
                 </div>
-                <div className="mx-8 bg-orange-50 px-6 py-7 text-center">
+                <div className="mx-8 bg-[#F6F3FB] px-6 py-7 text-center">
                   <h3 className="mx-auto max-w-sm text-xl font-semibold leading-7 text-gray-900">
                     Set up recurring invoice to Caxton Publications Inc. by{" "}
                     {firstChargeDate}
@@ -823,7 +823,7 @@ export function RecurringScheduleDrawer({
                   </div>
                   <button
                     type="button"
-                    className="mt-5 rounded-md bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+                    className="mt-5 rounded-md bg-[#301D5D] px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
                   >
                     Set up recurring invoice
                   </button>
@@ -866,7 +866,7 @@ export function RecurringScheduleDrawer({
                     <div className="mt-6 text-center">
                       <button
                         type="button"
-                        className="rounded-md bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+                        className="rounded-md bg-[#301D5D] px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
                       >
                         Set up recurring invoice
                       </button>

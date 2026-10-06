@@ -859,7 +859,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               <button
                 onClick={() => handleRefreshAddresses(true)}
                 disabled={busy !== null}
-                className="block w-full text-left px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
+                className="block w-full text-left px-3 py-1.5 text-sm text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
               >
                 Force overwrite all
               </button>
@@ -868,7 +868,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         )}
         <button
           onClick={handleDeleteAllInSegment}
-          className="px-4 py-2 text-sm rounded-md border border-red-300 text-red-700 hover:bg-red-50 whitespace-nowrap"
+          className="px-4 py-2 text-sm rounded-md border border-[#FF2A04]/50 text-[#661102] hover:bg-[#FFEAE6] whitespace-nowrap"
         >
           Delete all
         </button>
@@ -1054,8 +1054,8 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       )}
 
       {mounted && filterAll && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-md bg-indigo-50 border border-indigo-200">
-          <span className="text-sm text-indigo-900 font-medium">All {total.toLocaleString()} matching this filter selected.</span>
+        <div className="flex items-center gap-2 px-4 py-3 rounded-md bg-[#F6F3FB] border border-[#D9CFF0]">
+          <span className="text-sm text-[#1B1726] font-medium">All {total.toLocaleString()} matching this filter selected.</span>
           <div className="flex-1" />
           <MoveToMenu
             currentSegment={segment}
@@ -1067,14 +1067,14 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             type="button"
             onClick={handleFilterDelete}
             disabled={busy !== null}
-            className="px-3 py-1.5 rounded-md border border-red-300 text-red-700 text-xs font-medium hover:bg-red-50 disabled:opacity-50"
+            className="px-3 py-1.5 rounded-md border border-[#FF2A04]/50 text-[#661102] text-xs font-medium hover:bg-[#FFEAE6] disabled:opacity-50"
           >
             Delete {total.toLocaleString()}
           </button>
           <button
             type="button"
             onClick={() => { setFilterAll(false); setSelectedIds(new Set()); }}
-            className="px-3 py-1.5 rounded-md text-indigo-700 text-xs hover:text-indigo-900"
+            className="px-3 py-1.5 rounded-md text-[#42277C] text-xs hover:text-[#1B1726]"
           >
             Clear
           </button>
@@ -1082,12 +1082,12 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       )}
 
       {mounted && !filterAll && !hasFieldFilters && selectedIds.size > 0 && allSelected && total > rows.length && (
-        <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-50 border border-indigo-100 text-sm">
-          <span className="text-indigo-900">All {selectedIds.size} on this page selected.</span>
+        <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#F6F3FB] border border-[#EFEAF8] text-sm">
+          <span className="text-[#1B1726]">All {selectedIds.size} on this page selected.</span>
           <button
             type="button"
             onClick={() => { setFilterAll(true); setSelectedIds(new Set()); }}
-            className="text-indigo-700 font-medium underline underline-offset-2 hover:text-indigo-900"
+            className="text-[#42277C] font-medium underline underline-offset-2 hover:text-[#1B1726]"
           >
             Select all {total.toLocaleString()} matching this filter
           </button>
@@ -1095,7 +1095,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       )}
 
       {jobProgress && (
-        <div className="px-4 py-2 rounded-md bg-amber-50 border border-amber-200 text-sm text-amber-900">
+        <div className="px-4 py-2 rounded-md bg-[#FEF8CC] border border-[#FAD800]/30 text-sm text-[#645600]">
           Working in background\u2026 {jobProgress.processed.toLocaleString()} / {(jobProgress.total ?? 0).toLocaleString()}
         </div>
       )}
@@ -1122,7 +1122,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             type="button"
             onClick={handleDelete}
             disabled={busy !== null}
-            className="px-3 py-1.5 rounded-md border border-red-300 text-red-700 text-xs font-medium hover:bg-red-50 disabled:opacity-50"
+            className="px-3 py-1.5 rounded-md border border-[#FF2A04]/50 text-[#661102] text-xs font-medium hover:bg-[#FFEAE6] disabled:opacity-50"
           >
             Delete {selectedIds.size}
           </button>
@@ -1140,12 +1140,12 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         <div className="text-sm text-gray-600 italic">{busy}</div>
       )}
       {toast && (
-        <div className="px-4 py-3 rounded-md bg-blue-50 border border-blue-200 text-sm text-blue-900">
+        <div className="px-4 py-3 rounded-md bg-[#F6F3FB] border border-[#D9CFF0] text-sm text-[#1B1726]">
           {toast}
         </div>
       )}
       {error && (
-        <div className="px-4 py-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-900">
+        <div className="px-4 py-3 rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 text-sm text-[#661102]">
           {error}
         </div>
       )}
@@ -1175,7 +1175,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             checked={allSelected}
             onChange={(e) => handleSelectAll(e.target.checked)}
             aria-label="Select all rows"
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="h-4 w-4 rounded border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
           />
           <span>Select all ({selectedIds.size} of {rows.length})</span>
         </div>
@@ -1203,7 +1203,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                 checked={selectedIds.has(r.id)}
                 onChange={(e) => handleSelect(r.id, e.target.checked)}
                 aria-label={`Select ${fullName || r.email || r.id}`}
-                className="mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
               />
               <div className="min-w-0 flex-1 space-y-1.5">
                 {isVisible('name') && (
@@ -1217,7 +1217,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                     <a
                       href={`mailto:${r.email}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-blue-600 hover:underline break-words"
+                      className="text-[#301D5D] hover:underline break-words"
                     >{r.email}</a>
                   </div>
                 )}
@@ -1266,7 +1266,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                   <button type="button" onClick={() => setEditing(r)}
                     className="px-2 py-1 rounded border border-gray-300 text-[11px] font-medium text-gray-700">Edit</button>
                   <button type="button" onClick={() => void handleDeleteOne(r)}
-                    className="px-2 py-1 rounded border border-red-300 text-[11px] font-medium text-red-700">Delete</button>
+                    className="px-2 py-1 rounded border border-[#FF2A04]/50 text-[11px] font-medium text-[#661102]">Delete</button>
                 </div>
                 {(isVisible('address') || isVisible('email_verify')) && (
                   <div className="pt-1 flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -1370,7 +1370,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                         <a
                           href={`mailto:${r.email}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                          className="text-[#301D5D] hover:text-[#301D5D] hover:underline"
                         >
                           {r.email}
                         </a>
@@ -1436,7 +1436,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                       <button
                         type="button"
                         onClick={() => void handleDeleteOne(r)}
-                        className="px-2 py-1 rounded border border-red-300 text-[11px] font-medium text-red-700 hover:bg-red-50"
+                        className="px-2 py-1 rounded border border-[#FF2A04]/50 text-[11px] font-medium text-[#661102] hover:bg-[#FFEAE6]"
                       >
                         Delete
                       </button>
@@ -1715,8 +1715,8 @@ function VerifyCell({
 }) {
   if (!hasData) return <span className="text-xs text-gray-400">—</span>;
   const pill =
-    status === 'Valid'   ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-green-100 text-green-800">✓ Valid</span> :
-    status === 'Invalid' ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-red-100 text-red-800">✗ Invalid</span> :
+    status === 'Valid'   ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00]">✓ Valid</span> :
+    status === 'Invalid' ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#FFEAE6] text-[#661102]">✗ Invalid</span> :
                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Pending</span>;
   return (
     <div className="flex items-center gap-1.5">
@@ -1739,14 +1739,14 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   if (row.email_disposable) {
     flags.push({
       label: 'Disposable',
-      cls:   'bg-red-100 text-red-800 ring-1 ring-red-200',
+      cls:   'bg-[#FFEAE6] text-[#661102] ring-1 ring-[#FF2A04]/30',
       title: 'Throwaway / temporary email provider',
     });
   }
   if (row.email_catch_all) {
     flags.push({
       label: 'Catch-all',
-      cls:   'bg-amber-100 text-amber-800 ring-1 ring-amber-200',
+      cls:   'bg-[#FEF8CC] text-[#645600] ring-1 ring-[#FAD800]/30',
       title: 'Domain accepts any mailbox — existence cannot be proven',
     });
   }
@@ -1760,14 +1760,14 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   if (row.email_role) {
     flags.push({
       label: 'Role',
-      cls:   'bg-indigo-100 text-indigo-800 ring-1 ring-indigo-200',
+      cls:   'bg-[#EFEAF8] text-[#301D5D] ring-1 ring-[#D9CFF0]',
       title: 'Role / generic mailbox (info@, admin@, support@…)',
     });
   }
   if (row.email_suggestion) {
     flags.push({
       label: `⇒ @${row.email_suggestion}`,
-      cls:   'bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200',
+      cls:   'bg-[#FEF8CC] text-[#645600] ring-1 ring-[#FAD800]/30',
       title: `Likely typo — did you mean @${row.email_suggestion}?`,
     });
   }
@@ -1786,7 +1786,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   if (sig?.smtpTimedOut && !sig?.smtpConnected) {
     flags.push({
       label: '⏱ Timed out',
-      cls:   'bg-orange-100 text-orange-800 ring-1 ring-orange-200',
+      cls:   'bg-[#EFEAF8] text-[#301D5D] ring-1 ring-[#D9CFF0]',
       title: `Mail server did not respond${sig.mxAttempts ? ` across ${sig.mxAttempts} MX host${sig.mxAttempts === 1 ? '' : 's'}` : ''} — domain may be misconfigured or rate-limiting us`,
     });
   }
@@ -1799,7 +1799,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
     const l = labels[sig.managedMailProvider];
     flags.push({
       label: l.short,
-      cls:   'bg-sky-100 text-sky-800 ring-1 ring-sky-200',
+      cls:   'bg-[#E3F7FF] text-[#285766] ring-1 ring-[#64D9FF]/30',
       title: `${l.long} — SMTP verification blocked from cloud IPs; needs manual confirmation`,
     });
   }
@@ -1857,11 +1857,11 @@ function ProximityBadges({
     }
     return (
       <span
-        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-medium"
+        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00] font-medium"
         title={`${dS.toFixed(1)} mi from SABOR HQ`}
       >
         <span>Near SABOR</span>
-        <span className="text-emerald-700/70">{dS.toFixed(0)} mi</span>
+        <span className="text-[#005A00]/70">{dS.toFixed(0)} mi</span>
       </span>
     );
   }
@@ -1902,20 +1902,20 @@ function ProximityBadges({
     <div className="flex flex-col gap-1">
       {nearA && (
         <span
-          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-medium"
+          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00] font-medium"
           title={`${dA!.toFixed(1)} mi from ABoR HQ`}
         >
           <span>Near ABoR</span>
-          <span className="text-emerald-700/70">{dA!.toFixed(0)} mi</span>
+          <span className="text-[#005A00]/70">{dA!.toFixed(0)} mi</span>
         </span>
       )}
       {nearF && (
         <span
-          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-medium"
+          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#E3F7FF] text-[#285766] font-medium"
           title={`${dF!.toFixed(1)} mi from Five Points Board of REALTORS`}
         >
           <span>Near Five Points</span>
-          <span className="text-sky-700/70">{dF!.toFixed(0)} mi</span>
+          <span className="text-[#285766]/70">{dF!.toFixed(0)} mi</span>
         </span>
       )}
     </div>
@@ -2112,10 +2112,10 @@ function EditDrawer({
               </div>
               <div className="text-sm">
                 {row.addr_status === 'Valid' && (
-                  <span className="text-green-700 font-medium">✓ Valid address</span>
+                  <span className="text-[#005A00] font-medium">✓ Valid address</span>
                 )}
                 {row.addr_status === 'Invalid' && (
-                  <span className="text-red-700 font-medium">✗ Invalid</span>
+                  <span className="text-[#661102] font-medium">✗ Invalid</span>
                 )}
                 {(!row.addr_status || row.addr_status === 'Pending') && (
                   <span className="text-gray-600">Pending</span>
@@ -2143,7 +2143,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-2.5 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify address'}
               </button>
@@ -2156,19 +2156,19 @@ function EditDrawer({
               {/* Effective verdict — override (if any) wins over the probe */}
               <div className="text-sm flex items-center gap-2 flex-wrap">
                 {effectiveStatus === 'Valid' && (
-                  <span className="text-green-700 font-medium">
+                  <span className="text-[#005A00] font-medium">
                     ✓ Valid{isOverridden ? '' : ' (SMTP)'}
                   </span>
                 )}
                 {effectiveStatus === 'Invalid' && (
-                  <span className="text-red-700 font-medium">✗ Invalid</span>
+                  <span className="text-[#661102] font-medium">✗ Invalid</span>
                 )}
                 {effectiveStatus === 'Pending' && (
                   <span className="text-gray-600">Pending</span>
                 )}
                 {isOverridden && (
                   <span
-                    className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300"
+                    className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-[#FEF8CC] text-[#645600] border border-[#FAD800]/50"
                     title={
                       `Manual override: ${overrideStatus}` +
                       (overrideByShort ? ` by ${overrideByShort}` : '') +
@@ -2206,7 +2206,7 @@ function EditDrawer({
                   type="button"
                   disabled={emailBusy || overrideBusy || !form.email}
                   onClick={onVerifyEmail}
-                  className="text-xs px-2.5 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
+                  className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
                 >
                   {emailBusy ? 'Verifying…' : 'Verify Email'}
                 </button>
@@ -2215,7 +2215,7 @@ function EditDrawer({
                     type="button"
                     disabled={emailBusy || overrideBusy || !form.email}
                     onClick={() => { void handleOverride('set', 'Valid'); }}
-                    className="text-xs px-2.5 py-1 rounded-md bg-green-700 text-white hover:bg-green-800 disabled:opacity-50"
+                    className="text-xs px-2.5 py-1 rounded-md bg-[#005A00] text-white hover:bg-[#005A00] disabled:opacity-50"
                     title="Manually mark this email as Valid (e.g. for Google Workspace inboxes that block SMTP probes from cloud IPs)"
                   >
                     {overrideBusy ? 'Working…' : 'Mark as Valid'}
@@ -2226,7 +2226,7 @@ function EditDrawer({
                     type="button"
                     disabled={emailBusy || overrideBusy || !form.email}
                     onClick={() => { void handleOverride('set', 'Invalid'); }}
-                    className="text-xs px-2.5 py-1 rounded-md bg-red-700 text-white hover:bg-red-800 disabled:opacity-50"
+                    className="text-xs px-2.5 py-1 rounded-md bg-[#661102] text-white hover:bg-[#661102] disabled:opacity-50"
                     title="Manually mark this email as Invalid"
                   >
                     {overrideBusy ? 'Working…' : 'Mark as Invalid'}
@@ -2325,7 +2325,7 @@ function EditDrawer({
           </div>
 
           {saveError && (
-            <div className="px-3 py-2 rounded-md bg-red-50 border border-red-200 text-xs text-red-900">
+            <div className="px-3 py-2 rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 text-xs text-[#661102]">
               {saveError}
             </div>
           )}
@@ -2335,7 +2335,7 @@ function EditDrawer({
           <button
             type="button"
             onClick={onDelete}
-            className="mr-auto px-3 py-1.5 rounded-md border border-red-300 text-sm text-red-700 hover:bg-red-50"
+            className="mr-auto px-3 py-1.5 rounded-md border border-[#FF2A04]/50 text-sm text-[#661102] hover:bg-[#FFEAE6]"
           >
             Delete
           </button>
@@ -2611,7 +2611,7 @@ function AddDialog({
           rows={3}
           className="w-full mt-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200"
         />
-        {err && <div className="mt-3 text-sm text-red-700">{err}</div>}
+        {err && <div className="mt-3 text-sm text-[#661102]">{err}</div>}
         <div className="mt-4 flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50 whitespace-nowrap">Cancel</button>
           <button onClick={save} disabled={saving} className="px-4 py-2 text-sm rounded-md bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap">
@@ -2857,12 +2857,12 @@ function ImportDialog({
         )}
 
         {step === 'go' && result && (
-          <div className="rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
+          <div className="rounded-md bg-[#E0FBE0] border border-[#00E200]/30 px-4 py-3 text-sm text-[#005A00]">
             Imported <strong>{result.inserted}</strong> contacts. {result.skipped > 0 && <>Skipped {result.skipped} (missing required fields or duplicates within the file).</>}
           </div>
         )}
 
-        {err && <div className="mt-3 text-sm text-red-700">{err}</div>}
+        {err && <div className="mt-3 text-sm text-[#661102]">{err}</div>}
 
         <div className="mt-4 flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50 whitespace-nowrap">
@@ -3207,7 +3207,7 @@ function BulkEditDialog({
             )}
           </div>
         </div>
-        {err && <div className="mt-3 text-sm text-red-700">{err}</div>}
+        {err && <div className="mt-3 text-sm text-[#661102]">{err}</div>}
         <div className="mt-4 flex justify-end gap-2">
           <button
             type="button"

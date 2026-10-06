@@ -409,7 +409,7 @@ export default function SellerNetSheetClient() {
             <p className={EYEBROW}>Estimated Net to Seller</p>
             <p
               className={`text-4xl mb-1 ${
-                result.netToSeller >= 0 ? 'text-gray-900' : 'text-rose-700'
+                result.netToSeller >= 0 ? 'text-gray-900' : 'text-[#661102]'
               }`}
             >
               {fmtUSD(result.netToSeller)}
@@ -445,7 +445,7 @@ export default function SellerNetSheetClient() {
             <hr className="border-gray-200 my-4" />
             <div className="flex items-center justify-between text-base font-semibold text-gray-900">
               <span>Net to seller</span>
-              <span className={result.netToSeller >= 0 ? '' : 'text-rose-700'}>
+              <span className={result.netToSeller >= 0 ? '' : 'text-[#661102]'}>
                 {fmtUSD(result.netToSeller)}
               </span>
             </div>
@@ -494,7 +494,7 @@ function Row({
       <span>{label}</span>
       <span
         className={`${bold ? 'text-gray-900' : 'font-medium'} ${
-          isNeg ? 'text-rose-700' : ''
+          isNeg ? 'text-[#661102]' : ''
         }`}
       >
         {isNeg ? '−' : ''}
@@ -509,7 +509,7 @@ function SubRow({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center justify-between text-sm text-gray-700 pl-3">
       <span>{label}</span>
-      <span className={`font-medium ${isNeg ? 'text-rose-700' : 'text-gray-900'}`}>
+      <span className={`font-medium ${isNeg ? 'text-[#661102]' : 'text-gray-900'}`}>
         {isNeg ? '−' : ''}
         {fmtUSD(Math.abs(value), { cents: true })}
       </span>
@@ -588,7 +588,7 @@ function TextField({
     <label className="block">
       <span className="block text-sm font-medium text-gray-800 mb-1">
         {label}
-        {required && <span className="text-rose-600 ml-0.5">*</span>}
+        {required && <span className="text-[#661102] ml-0.5">*</span>}
       </span>
       <input
         type="text"
@@ -599,12 +599,12 @@ function TextField({
         aria-invalid={empty}
         className={`w-full rounded-md border px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-1 ${
           empty
-            ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-500/30'
+            ? 'border-[#FF2A04]/50 focus:border-[#FF2A04] focus:ring-[#FF2A04]/30'
             : 'border-gray-300 focus:border-brand-700 focus:ring-brand-700/30'
         }`}
       />
       {empty ? (
-        <span className="block text-xs text-rose-600 mt-1">Required</span>
+        <span className="block text-xs text-[#661102] mt-1">Required</span>
       ) : (
         hint && <span className="block text-xs text-gray-500 mt-1">{hint}</span>
       )}

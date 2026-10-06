@@ -320,7 +320,7 @@ export default function DfwReportAdminPage() {
       </div>
 
       {msg && (
-        <div className={`mt-3 rounded-md px-3 py-2 text-sm ${msg.tone === 'ok' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+        <div className={`mt-3 rounded-md px-3 py-2 text-sm ${msg.tone === 'ok' ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#FFEAE6] text-[#661102]'}`}>
           {msg.text}
         </div>
       )}

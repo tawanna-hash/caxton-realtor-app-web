@@ -149,7 +149,7 @@ export default function AdsHubPage() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-800 ring-1 ring-red-200">
+        <div className="mb-4 rounded-md bg-[#FFEAE6] p-3 text-sm text-[#661102] ring-1 ring-[#FF2A04]/30">
           {error}
         </div>
       )}
@@ -272,15 +272,15 @@ interface KpiProps {
 function KpiTile({ label, value, sub, href, accent = 'gray' }: KpiProps) {
   const accentRing =
     accent === 'green'
-      ? 'ring-green-200'
+      ? 'ring-[#00E200]/30'
       : accent === 'orange'
-        ? 'ring-orange-200'
+        ? 'ring-[#D9CFF0]'
         : 'ring-gray-200';
   const accentValueColor =
     accent === 'green'
-      ? 'text-green-700'
+      ? 'text-[#005A00]'
       : accent === 'orange'
-        ? 'text-orange-700'
+        ? 'text-[#42277C]'
         : 'text-gray-900';
   return (
     <Link
@@ -336,7 +336,7 @@ function SectionCard({
           {title}
         </h3>
         {badge && (
-          <span className="inline-flex rounded-full bg-orange-100 text-orange-800 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 ring-1 ring-orange-200">
+          <span className="inline-flex rounded-full bg-[#EFEAF8] text-[#301D5D] text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 ring-1 ring-[#D9CFF0]">
             {badge}
           </span>
         )}
@@ -351,7 +351,7 @@ function SectionCard({
       <div
         className={
           'text-sm font-medium mt-3 ' +
-          (isNavy ? 'text-white' : 'text-blue-700')
+          (isNavy ? 'text-white' : 'text-[#42277C]')
         }
       >
         {cta} {'\u2192'}

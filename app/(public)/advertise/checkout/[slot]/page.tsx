@@ -114,7 +114,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
           </p>
         </div>
 
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 mb-6 text-sm text-amber-900">
+        <div className="rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 mb-6 text-sm text-[#645600]">
           <p>
             Please allow up to 2 days for your ad space to go live after payment
             while we review and approve your creative.

@@ -151,7 +151,7 @@ export default function PublicationSettingsForm({ initialSettings }: Props) {
                       value={value}
                       onChange={(e) => setDraft((prev) => ({ ...prev, [pub]: e.target.value }))}
                       placeholder="G-XXXXXXX"
-                      className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#7059A8] focus:border-[#7059A8]"
                       autoComplete="off"
                       spellCheck={false}
                     />
@@ -161,7 +161,7 @@ export default function PublicationSettingsForm({ initialSettings }: Props) {
                       type="button"
                       onClick={() => handleSave(pub)}
                       disabled={isSaving || !dirty}
-                      className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-md text-sm font-medium"
+                      className="bg-[#301D5D] hover:bg-[#42277C] disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-md text-sm font-medium"
                     >
                       {isSaving ? 'Saving…' : 'Save'}
                     </button>
@@ -174,11 +174,11 @@ export default function PublicationSettingsForm({ initialSettings }: Props) {
                         Revert
                       </button>
                     )}
-                    {justSaved && <span className="text-xs text-green-700">Saved</span>}
+                    {justSaved && <span className="text-xs text-[#005A00]">Saved</span>}
                     {saved && <span className="text-xs text-gray-500">Current: {saved}</span>}
                   </div>
                   {err && (
-                    <p className="text-sm text-red-700 mt-2">{err}</p>
+                    <p className="text-sm text-[#661102] mt-2">{err}</p>
                   )}
                 </div>
               );

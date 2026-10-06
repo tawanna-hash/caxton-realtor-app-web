@@ -230,7 +230,7 @@ export default function AdvertiserReportDrawer({
                     className={[
                       'px-3 text-sm border-r border-gray-300 last:border-r-0 transition-colors',
                       days === opt.value
-                        ? 'bg-orange-600 text-white'
+                        ? 'bg-[#301D5D] text-white'
                         : 'bg-white text-gray-700 hover:bg-gray-50',
                     ].join(' ')}
                   >
@@ -275,7 +275,7 @@ export default function AdvertiserReportDrawer({
             </div>
           ) : previewError ? (
             <div className="p-5">
-              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <div className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">
                 Failed to load preview: {previewError}
               </div>
             </div>
@@ -293,7 +293,7 @@ export default function AdvertiserReportDrawer({
         {/* Footer */}
         <div className="px-5 py-4 border-t border-gray-200 bg-white">
           {sentRecipient ? (
-            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 flex items-center justify-between gap-3">
+            <div className="rounded-md border border-[#00E200]/30 bg-[#E0FBE0] px-4 py-3 text-sm text-[#005A00] flex items-center justify-between gap-3">
               <span>Report sent to {sentRecipient}.</span>
               <button
                 type="button"
@@ -308,7 +308,7 @@ export default function AdvertiserReportDrawer({
               <div className="text-xs text-gray-500 min-w-0 truncate">
                 {recipient ? `Recipient: ${recipient}` : null}
                 {sendError ? (
-                  <span className="text-red-700">{sendError}</span>
+                  <span className="text-[#661102]">{sendError}</span>
                 ) : null}
               </div>
               <div className="flex items-center gap-2">
@@ -323,7 +323,7 @@ export default function AdvertiserReportDrawer({
                   type="button"
                   onClick={handleSend}
                   disabled={sending || !canSend || loadingPreview}
-                className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 disabled:opacity-40"
+                className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C] disabled:opacity-40"
                 >
                   {sending ? 'Sending…' : 'Send to this partner'}
                 </button>

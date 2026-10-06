@@ -27,12 +27,12 @@ type AgreementRow = {
 };
 
 const STATUS_TONE: Record<string, string> = {
-  active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  signed: 'bg-blue-50 text-blue-700 border-blue-200',
-  sent: 'bg-amber-50 text-amber-700 border-amber-200',
+  active: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
+  signed: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
+  sent: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30',
   draft: 'bg-gray-100 text-gray-700 border-gray-200',
   expired: 'bg-gray-50 text-gray-500 border-gray-200',
-  cancelled: 'bg-rose-50 text-rose-700 border-rose-200',
+  cancelled: 'bg-[#FFEAE6] text-[#661102] border-[#FF2A04]/30',
 };
 
 function fmtUsd(cents: number | null): string {
@@ -157,7 +157,7 @@ export default async function PortalOrders() {
                           href={r.signed_document}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-700 hover:underline"
+                          className="text-[#42277C] hover:underline"
                         >
                           View PDF
                         </Link>
@@ -202,7 +202,7 @@ export default async function PortalOrders() {
                         href={r.signed_document}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-blue-700 hover:underline"
+                        className="text-sm text-[#42277C] hover:underline"
                       >
                         View PDF
                       </Link>

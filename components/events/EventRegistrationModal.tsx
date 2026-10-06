@@ -78,7 +78,7 @@ export function EventRegistrationModal({ eventId, eventTitle, color, onClose }: 
 
         {complete ? (
           <div className="px-6 py-12 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-2xl text-green-700">✓</div>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#E0FBE0] text-2xl text-[#005A00]">✓</div>
             <h3 className="text-xl font-semibold text-gray-950">You’re Registered</h3>
             <p className="mt-2 text-sm leading-6 text-gray-600">
               Your attendee information has been received. If the organizer has an event
@@ -136,7 +136,7 @@ export function EventRegistrationModal({ eventId, eventTitle, color, onClose }: 
                 event organizer for event administration.
               </span>
             </label>
-            {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+            {error && <p className="rounded-md bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">{error}</p>}
             <button
               type="submit"
               disabled={submitting}

@@ -816,8 +816,8 @@ export function EventForm({
 
   if (submitted) {
     return (
-      <div className="max-w-4xl rounded-md border border-emerald-200 bg-white p-8">
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-emerald-700">
+      <div className="max-w-4xl rounded-md border border-[#00E200]/30 bg-white p-8">
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#005A00]">
           Submitted for review
         </p>
         <h2 className="mt-2 text-2xl font-semibold text-gray-900">Thank You for Sharing Your Event</h2>
@@ -866,7 +866,7 @@ export function EventForm({
       className="space-y-6 max-w-4xl"
     >
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md">
+        <div className="bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] text-sm px-4 py-3 rounded-md">
           {error}
         </div>
       )}
@@ -957,7 +957,7 @@ export function EventForm({
                       event.stopPropagation();
                       setData((current) => ({ ...current, imageUrl: '', imageThumb: '' }));
                       setAutoCaptureNotice(null);
-                    }} className="inline-flex items-center gap-1 text-xs font-medium text-red-700 hover:underline">
+                    }} className="inline-flex items-center gap-1 text-xs font-medium text-[#661102] hover:underline">
                       <X size={14} /> Remove
                     </button>
                   )}
@@ -981,7 +981,7 @@ export function EventForm({
         <div className={sectionTitleClass}>Core</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className={labelClass}>Title <span className="text-red-500">*</span></label>
+            <label className={labelClass}>Title <span className="text-[#661102]">*</span></label>
             <input
               required
               type="text"
@@ -1044,7 +1044,7 @@ export function EventForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>
-              Start {mode === 'public' && <span className="text-red-500">*</span>}
+              Start {mode === 'public' && <span className="text-[#661102]">*</span>}
             </label>
             <input
               required={mode === 'public'}
@@ -1139,7 +1139,7 @@ export function EventForm({
                   type="button"
                   disabled={readingSchedule}
                   onClick={() => update('schedule', data.schedule.filter((_, i) => i !== index))}
-                  className="text-xs font-medium text-red-700 hover:underline"
+                  className="text-xs font-medium text-[#661102] hover:underline"
                   aria-label={`Remove schedule item ${index + 1}`}
                 >
                   Remove
@@ -1289,7 +1289,7 @@ export function EventForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>
-              Organizer {mode === 'public' && <span className="text-red-500">*</span>}
+              Organizer {mode === 'public' && <span className="text-[#661102]">*</span>}
             </label>
             <input
               required={mode === 'public'}
@@ -1302,7 +1302,7 @@ export function EventForm({
           </div>
           <div>
             <label className={labelClass}>
-              Organizer Email {mode === 'public' && <span className="text-red-500">*</span>}
+              Organizer Email {mode === 'public' && <span className="text-[#661102]">*</span>}
             </label>
             <input
               required={mode === 'public'}
@@ -1440,7 +1440,7 @@ export function EventForm({
                   disabled={readingSpeakers}
                   aria-label={`Remove speaker ${index + 1}`}
                   onClick={() => update('speakers', data.speakers.filter((_, i) => i !== index))}
-                  className="text-xs font-medium text-red-700 hover:underline"
+                  className="text-xs font-medium text-[#661102] hover:underline"
                 >Remove</button>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -1577,7 +1577,7 @@ export function EventForm({
 
       {/* Actions */}
       {error && (
-        <div role="alert" className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md">
+        <div role="alert" className="bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] text-sm px-4 py-3 rounded-md">
           {error}
         </div>
       )}
@@ -1789,7 +1789,7 @@ function PeopleListEditor({
             type="button"
             onClick={() => remove(index)}
             aria-label="Remove"
-            className="flex items-center justify-center rounded-md border border-gray-300 px-2 py-1.5 text-gray-500 hover:text-red-600 hover:border-red-300"
+            className="flex items-center justify-center rounded-md border border-gray-300 px-2 py-1.5 text-gray-500 hover:text-[#661102] hover:border-[#FF2A04]/50"
           >
             <X size={14} />
           </button>

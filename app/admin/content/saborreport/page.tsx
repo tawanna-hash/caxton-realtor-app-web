@@ -378,7 +378,7 @@ export default function SaborMlsAdminPage() {
       </section>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">{error}</div>
+        <div className="mb-4 p-3 bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] rounded-md">{error}</div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -667,8 +667,8 @@ export default function SaborMlsAdminPage() {
                     <p className="text-xs text-gray-500 mt-1">{r.headline_label_en || ''}</p>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <button onClick={() => startEdit(r)} className="text-sm text-blue-600 hover:underline">Edit</button>
-                    <button onClick={() => remove(r.id)} className="text-sm text-red-600 hover:underline">Delete</button>
+                    <button onClick={() => startEdit(r)} className="text-sm text-[#301D5D] hover:underline">Edit</button>
+                    <button onClick={() => remove(r.id)} className="text-sm text-[#661102] hover:underline">Delete</button>
                   </div>
                 </li>
               ))}

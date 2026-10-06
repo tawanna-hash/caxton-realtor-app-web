@@ -208,7 +208,7 @@ export default function SubmissionForm() {
       {/* Builder dropdown */}
       <div>
         <label htmlFor="builder" className={labelStyle}>
-          Builder or developer <span className="text-red-600">*</span>
+          Builder or developer <span className="text-[#661102]">*</span>
         </label>
         <select
           id="builder"
@@ -244,7 +244,7 @@ export default function SubmissionForm() {
       <div>
         <label htmlFor="title" className={labelStyle}>
           {kind === 'listing' ? 'Community name' : 'Promotion title'}{' '}
-          <span className="text-red-600">*</span>
+          <span className="text-[#661102]">*</span>
         </label>
         <input
           id="title"
@@ -266,7 +266,7 @@ export default function SubmissionForm() {
       <div className="grid grid-cols-3 gap-3">
         <div className="col-span-2">
           <label htmlFor="city" className={labelStyle}>
-            City <span className="text-red-600">*</span>
+            City <span className="text-[#661102]">*</span>
           </label>
           <input
             id="city"
@@ -298,7 +298,7 @@ export default function SubmissionForm() {
       {/* Publication */}
       <div>
         <label htmlFor="publication" className={labelStyle}>
-          Which publication(s)? <span className="text-red-600">*</span>
+          Which publication(s)? <span className="text-[#661102]">*</span>
         </label>
         <select
           id="publication"
@@ -419,7 +419,7 @@ export default function SubmissionForm() {
       {/* Flyer PDF */}
       <div>
         <label htmlFor="flyerPdf" className={labelStyle}>
-          Flyer PDF (letter size recommended) <span className="text-red-600">*</span>
+          Flyer PDF (letter size recommended) <span className="text-[#661102]">*</span>
         </label>
         <input
           id="flyerPdf"
@@ -434,7 +434,7 @@ export default function SubmissionForm() {
           Max 25 MB. We will generate a thumbnail and host the full flyer for realtors to view.
         </p>
         {pdfError && (
-          <p className="mt-1 text-sm text-red-700">{pdfError}</p>
+          <p className="mt-1 text-sm text-[#661102]">{pdfError}</p>
         )}
         {pdfFile && !pdfError && (
           <p className="mt-1 text-sm text-gray-700">
@@ -451,7 +451,7 @@ export default function SubmissionForm() {
 
         <div>
           <label htmlFor="submitterName" className={labelStyle}>
-            Your name <span className="text-red-600">*</span>
+            Your name <span className="text-[#661102]">*</span>
           </label>
           <input
             id="submitterName"
@@ -467,7 +467,7 @@ export default function SubmissionForm() {
 
         <div>
           <label htmlFor="submitterEmail" className={labelStyle}>
-            Your email <span className="text-red-600">*</span>
+            Your email <span className="text-[#661102]">*</span>
           </label>
           <input
             id="submitterEmail"
@@ -504,7 +504,7 @@ export default function SubmissionForm() {
       {errorMessage && (
         <div
           role="alert"
-          className="border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-900"
+          className="border-l-4 border-[#661102] bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]"
         >
           {errorMessage}
         </div>

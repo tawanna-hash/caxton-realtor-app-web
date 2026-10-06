@@ -107,7 +107,7 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
           <label key={key} className="block">
             <div className="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
               <span>{label}</span>
-              {savedKey === key && <span className="text-xs text-emerald-700">Saved</span>}
+              {savedKey === key && <span className="text-xs text-[#005A00]">Saved</span>}
             </div>
             <input
               value={values[key]}
@@ -123,7 +123,7 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
         ))}
 
         {saveError && (
-          <div className="rounded-md bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-sm">
+          <div className="rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] px-3 py-2 text-sm">
             {saveError}
           </div>
         )}
@@ -137,7 +137,7 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
           >
             Default Footer Template
           </h2>
-          {footerSaved && <span className="text-xs text-emerald-700">Saved</span>}
+          {footerSaved && <span className="text-xs text-[#005A00]">Saved</span>}
         </div>
         <p className="text-sm text-gray-600 mb-4">
           Picked automatically when you download any tool from the Resources

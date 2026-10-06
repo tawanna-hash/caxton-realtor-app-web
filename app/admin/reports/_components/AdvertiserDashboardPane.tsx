@@ -171,7 +171,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                 className={
                   'px-3 py-1.5 text-xs font-medium rounded-md ' +
                   (preset === p
-                    ? 'bg-orange-600 text-white'
+                    ? 'bg-[#301D5D] text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')
                 }
               >
@@ -199,7 +199,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
             title={advertiser.contact_email
               ? 'Preview and send the performance report email'
               : 'Add a contact email on the Partners page to send a report'}
-            className="px-3 py-1.5 text-xs font-medium rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-40"
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-40"
           >
             Send report email
           </button>
@@ -208,7 +208,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
 
       <div className="p-5">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-md">
+          <div className="mb-4 p-3 bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] text-sm rounded-md">
             {error}
           </div>
         )}
@@ -295,8 +295,8 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                           <div className="text-xs text-gray-500">Page {h.page_idx + 1}</div>
                         </div>
                         {h.is_published
-                          ? <span className="shrink-0 text-xs text-green-700">live</span>
-                          : <span className="shrink-0 text-xs text-amber-700">draft</span>}
+                          ? <span className="shrink-0 text-xs text-[#005A00]">live</span>
+                          : <span className="shrink-0 text-xs text-[#645600]">draft</span>}
                       </div>
                       <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
                         <dt className="text-gray-500">Label</dt>
@@ -338,7 +338,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                       </tr>
                     )}
                     {pageHotspots.map((h) => (
-                      <tr key={h.hotspot_id} className="border-b border-gray-100 hover:bg-orange-50/40">
+                      <tr key={h.hotspot_id} className="border-b border-gray-100 hover:bg-[#F6F3FB]/40">
                         <td className="px-4 py-2">
                           <div className="text-gray-900">{h.magazine_label}</div>
                           <div className="text-xs text-gray-500">Page {h.page_idx + 1}</div>
@@ -362,8 +362,8 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                         <td className="px-4 py-2 text-gray-700 text-right">{h.unique_sessions}</td>
                         <td className="px-4 py-2">
                           {h.is_published
-                            ? <span className="text-xs text-green-700">live</span>
-                            : <span className="text-xs text-amber-700">draft</span>}
+                            ? <span className="text-xs text-[#005A00]">live</span>
+                            : <span className="text-xs text-[#645600]">draft</span>}
                         </td>
                       </tr>
                     ))}

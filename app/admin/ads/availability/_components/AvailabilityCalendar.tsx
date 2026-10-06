@@ -19,16 +19,16 @@ type ChannelTab = 'all' | AdChannel;
 const CHANNEL_TABS: readonly ChannelTab[] = ['all', ...AD_CHANNELS] as const;
 
 const CHANNEL_BADGE_CLASS: Record<AdChannel, string> = {
-  print: 'bg-rose-50 text-rose-800 border-rose-200',
-  digital: 'bg-sky-50 text-sky-800 border-sky-200',
-  email: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  print: 'bg-[#FFEAE6] text-[#661102] border-[#FF2A04]/30',
+  digital: 'bg-[#E3F7FF] text-[#285766] border-[#64D9FF]/30',
+  email: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
   app: 'bg-purple-50 text-purple-800 border-purple-200',
 };
 
 const CHANNEL_DOT_CLASS: Record<AdChannel, string> = {
-  print: 'bg-rose-500',
-  digital: 'bg-sky-500',
-  email: 'bg-emerald-500',
+  print: 'bg-[#FF2A04]',
+  digital: 'bg-[#64D9FF]',
+  email: 'bg-[#00E200]',
   app: 'bg-purple-500',
 };
 
@@ -298,7 +298,7 @@ export default function AvailabilityCalendar() {
                 onClick={() => setUrl({ channel: c === 'all' ? null : c })}
                 className={`h-9 rounded px-3 text-sm font-medium transition ${
                   active
-                    ? 'bg-orange-50 text-orange-800 ring-1 ring-orange-200'
+                    ? 'bg-[#F6F3FB] text-[#301D5D] ring-1 ring-[#D9CFF0]'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }`}
                 aria-current={active ? 'page' : undefined}
@@ -359,14 +359,14 @@ export default function AvailabilityCalendar() {
 
       {/* Print deadline banner */}
       {printDeadline && (
-        <div className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-900">
+        <div className="border-b border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-2 text-sm text-[#661102]">
           <strong>Print deadline:</strong> {printDeadline.deadline} ·{' '}
           <strong>Mail date:</strong> {printDeadline.mail}
         </div>
       )}
 
       {error && (
-        <div role="alert" className="flex items-center gap-3 border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
+        <div role="alert" className="flex items-center gap-3 border-b border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-2 text-sm text-[#661102]">
           <span>{error}</span>
           <button type="button" onClick={refetch} className="font-semibold hover:underline">Try again</button>
         </div>
@@ -397,10 +397,10 @@ export default function AvailabilityCalendar() {
               <div
                 key={iso}
                 className={`min-h-[5.5rem] border-b border-r border-gray-100 px-1.5 py-1 ${
-                  isToday ? 'bg-orange-50/60' : 'bg-white'
+                  isToday ? 'bg-[#F6F3FB]/60' : 'bg-white'
                 }`}
               >
-                <div className={`text-xs font-medium ${isToday ? 'text-orange-700' : 'text-gray-700'}`}>
+                <div className={`text-xs font-medium ${isToday ? 'text-[#42277C]' : 'text-gray-700'}`}>
                   {day}
                 </div>
                 <div className="mt-1 flex flex-col gap-0.5">
@@ -470,7 +470,7 @@ export default function AvailabilityCalendar() {
                   </div>
                   <Link
                     href={detailHref(b)}
-                    className="shrink-0 whitespace-nowrap text-xs font-medium text-orange-700 hover:underline"
+                    className="shrink-0 whitespace-nowrap text-xs font-medium text-[#42277C] hover:underline"
                   >
                     Open →
                   </Link>
@@ -502,7 +502,7 @@ export default function AvailabilityCalendar() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {monthBookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-orange-50/40">
+                  <tr key={b.id} className="hover:bg-[#F6F3FB]/40">
                     <td className="px-4 py-2.5">
                       <span
                         className={`inline-flex items-center rounded border px-2 py-0.5 text-xs ${CHANNEL_BADGE_CLASS[b.channel]}`}
@@ -523,7 +523,7 @@ export default function AvailabilityCalendar() {
                     <td className="px-3 py-2 text-right">
                       <Link
                         href={detailHref(b)}
-                        className="text-xs font-medium text-orange-700 hover:underline"
+                        className="text-xs font-medium text-[#42277C] hover:underline"
                       >
                         Open →
                       </Link>

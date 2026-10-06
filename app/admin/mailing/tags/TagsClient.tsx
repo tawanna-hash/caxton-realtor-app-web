@@ -180,13 +180,13 @@ export default function TagsClient() {
       </div>
 
       {statusMsg && (
-        <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+        <div className="rounded border border-[#00E200]/30 bg-[#E0FBE0] px-3 py-2 text-sm text-[#005A00]">
           {statusMsg}
           <button className="ml-3 text-xs underline" onClick={() => setStatusMsg(null)}>dismiss</button>
         </div>
       )}
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+        <div className="rounded border border-[#FF2A04]/30 bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">
           {error}
         </div>
       )}
@@ -231,7 +231,7 @@ export default function TagsClient() {
                     <button
                       onClick={() => void doRename(r.tag, renaming.to)}
                       disabled={isBusy}
-                      className="rounded bg-orange-600 px-2 py-1 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
+                      className="rounded bg-[#301D5D] px-2 py-1 text-xs font-semibold text-white hover:bg-[#42277C] disabled:opacity-50"
                     >
                       {isBusy ? 'Saving…' : 'Save'}
                     </button>
@@ -270,7 +270,7 @@ export default function TagsClient() {
                     <button
                       onClick={() => void doDelete(r.tag, r.total)}
                       disabled={isBusy}
-                      className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:opacity-50"
+                      className="rounded border border-[#FF2A04]/30 px-2 py-1 text-xs text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
                     >
                       {isBusy ? 'Working…' : 'Delete'}
                     </button>
@@ -319,7 +319,7 @@ export default function TagsClient() {
                           <button
                             onClick={() => void doRename(r.tag, renaming.to)}
                             disabled={isBusy}
-                            className="rounded bg-orange-600 px-2 py-1 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
+                            className="rounded bg-[#301D5D] px-2 py-1 text-xs font-semibold text-white hover:bg-[#42277C] disabled:opacity-50"
                           >
                             {isBusy ? 'Saving…' : 'Save'}
                           </button>
@@ -354,7 +354,7 @@ export default function TagsClient() {
                           <button
                             onClick={() => void doDelete(r.tag, r.total)}
                             disabled={isBusy}
-                            className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:opacity-50"
+                            className="rounded border border-[#FF2A04]/30 px-2 py-1 text-xs text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
                           >
                             {isBusy ? 'Working…' : 'Delete'}
                           </button>

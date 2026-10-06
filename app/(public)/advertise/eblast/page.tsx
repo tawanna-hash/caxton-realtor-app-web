@@ -53,7 +53,7 @@ export default async function EblastOrderPage({ searchParams }: PageProps) {
             </p>
           </header>
 
-          <div className="mb-6 rounded-md border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-950">
+          <div className="mb-6 rounded-md border border-[#D9CFF0] bg-[#F6F3FB] px-4 py-3 text-sm text-[#1B1726]">
             Preferred dates are requests until confirmed. Please order at least
             three business days before your first requested send.
           </div>

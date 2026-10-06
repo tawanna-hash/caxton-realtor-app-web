@@ -79,7 +79,7 @@ export function TrendingMetrics({ days }: { days: number }) {
         </h2>
         <a
           href="/admin/content/trending"
-          className="text-xs font-medium text-orange-700 hover:underline"
+          className="text-xs font-medium text-[#42277C] hover:underline"
         >
           Manage &rarr;
         </a>
@@ -90,8 +90,8 @@ export function TrendingMetrics({ days }: { days: number }) {
       )}
 
       {error && (
-        <div className="border border-red-300 bg-red-50 px-4 py-3 rounded-md">
-          <p className="text-sm text-red-900">{error}</p>
+        <div className="border border-[#FF2A04]/50 bg-[#FFEAE6] px-4 py-3 rounded-md">
+          <p className="text-sm text-[#661102]">{error}</p>
         </div>
       )}
 

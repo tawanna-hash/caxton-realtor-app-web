@@ -165,7 +165,7 @@ export function CampaignForm({ initial }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 ring-1 ring-red-200">
+        <div className="rounded-md bg-[#FFEAE6] p-3 text-sm text-[#661102] ring-1 ring-[#FF2A04]/30">
           {error}
         </div>
       )}
@@ -229,14 +229,14 @@ export function CampaignForm({ initial }: Props) {
             <button
               type="button"
               onClick={() => setCreativeMode('existing')}
-              className={`px-3 py-1 rounded-md ${creativeMode === 'existing' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}
+              className={`px-3 py-1 rounded-md ${creativeMode === 'existing' ? 'bg-[#301D5D] text-white' : 'bg-gray-100 text-gray-800'}`}
             >
               Use existing
             </button>
             <button
               type="button"
               onClick={() => setCreativeMode('upload')}
-              className={`px-3 py-1 rounded-md ${creativeMode === 'upload' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}
+              className={`px-3 py-1 rounded-md ${creativeMode === 'upload' ? 'bg-[#301D5D] text-white' : 'bg-gray-100 text-gray-800'}`}
             >
               Upload new
             </button>
@@ -367,7 +367,7 @@ export function CampaignForm({ initial }: Props) {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:opacity-50 text-sm whitespace-nowrap"
+          className="rounded-md bg-[#301D5D] px-4 py-2 text-white font-medium hover:bg-[#42277C] disabled:opacity-50 text-sm whitespace-nowrap"
         >
           {submitting ? 'Saving...' : isEdit ? 'Save changes' : 'Create campaign'}
         </button>
@@ -387,7 +387,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
   return (
     <label className="block">
       <span className="block text-sm font-medium text-gray-900 mb-1">
-        {label}{required && <span className="text-red-600 ml-0.5">*</span>}
+        {label}{required && <span className="text-[#661102] ml-0.5">*</span>}
       </span>
       {children}
     </label>

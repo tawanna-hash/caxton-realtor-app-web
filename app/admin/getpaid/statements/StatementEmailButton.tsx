@@ -19,7 +19,7 @@ type InvoiceSender =
   | 'hello@newslinesa.com';
 
 const CONTROL =
-  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500';
+  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]';
 
 export default function StatementEmailButton({
   advertiserId,
@@ -76,8 +76,8 @@ export default function StatementEmailButton({
         }}
         className={
           compact
-            ? 'font-medium text-orange-700 hover:underline'
-            : 'inline-flex h-9 items-center justify-center gap-2 rounded bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700'
+            ? 'font-medium text-[#42277C] hover:underline'
+            : 'inline-flex h-9 items-center justify-center gap-2 rounded bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]'
         }
       >
         {!compact && <Mail className="h-4 w-4" aria-hidden="true" />}
@@ -152,7 +152,7 @@ export default function StatementEmailButton({
                 <label className="block text-xs font-medium text-gray-600">
                   Message
                   <textarea
-                    className="mt-1 min-h-48 w-full rounded border border-gray-300 p-3 text-sm leading-6 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                    className="mt-1 min-h-48 w-full rounded border border-gray-300 p-3 text-sm leading-6 outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]"
                     value={message}
                     onChange={(event) => setMessage(event.target.value)}
                   />
@@ -177,8 +177,8 @@ export default function StatementEmailButton({
               <div
                 className={`mx-6 mb-4 rounded border px-4 py-3 text-sm ${
                   error
-                    ? 'border-red-200 bg-red-50 text-red-800'
-                    : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                    ? 'border-[#FF2A04]/30 bg-[#FFEAE6] text-[#661102]'
+                    : 'border-[#00E200]/30 bg-[#E0FBE0] text-[#005A00]'
                 }`}
               >
                 {error || result}
@@ -197,7 +197,7 @@ export default function StatementEmailButton({
                 <button
                   type="button"
                   disabled={busy || !to.trim() || !subject.trim()}
-                  className="inline-flex h-9 items-center justify-center rounded bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 disabled:opacity-50"
+                  className="inline-flex h-9 items-center justify-center rounded bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C] disabled:opacity-50"
                   onClick={send}
                 >
                   {busy ? 'Refreshing links and sending…' : 'Send email + PDF'}

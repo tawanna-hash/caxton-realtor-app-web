@@ -248,7 +248,7 @@ function DetailView({
                 {builderForPill}
               </Link>
               {row.kind === 'promotion' && (
-                <span className="inline-block text-[10px] uppercase tracking-[0.1em] font-medium px-2 py-1 border border-amber-200 bg-amber-50 text-amber-800 rounded-md">
+                <span className="inline-block text-[10px] uppercase tracking-[0.1em] font-medium px-2 py-1 border border-[#FAD800]/30 bg-[#FEF8CC] text-[#645600] rounded-md">
                   Promotion
                 </span>
               )}

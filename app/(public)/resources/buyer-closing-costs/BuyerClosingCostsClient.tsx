@@ -307,7 +307,7 @@ export default function BuyerClosingCostsClient() {
               <span>{fmtUSD(downPayment)}</span>
             </div>
             {result.totalCredits > 0 && (
-              <div className="flex items-center justify-between text-sm text-rose-700 mt-1">
+              <div className="flex items-center justify-between text-sm text-[#661102] mt-1">
                 <span>− Credits & earnest</span>
                 <span>−{fmtUSD(result.totalCredits)}</span>
               </div>

@@ -51,7 +51,7 @@ export default async function PortalFilesPage() {
                     href={f.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 whitespace-nowrap text-sm text-blue-700 hover:underline"
+                    className="shrink-0 whitespace-nowrap text-sm text-[#42277C] hover:underline"
                   >
                     Download
                   </a>
@@ -93,7 +93,7 @@ export default async function PortalFilesPage() {
                       href={f.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-700 hover:underline"
+                      className="text-[#42277C] hover:underline"
                     >
                       Download
                     </a>

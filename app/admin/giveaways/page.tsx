@@ -22,9 +22,9 @@ type Giveaway = {
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 border-gray-200 rounded-md',
-  active: 'bg-green-50 text-green-700 border-green-200 rounded-md',
-  closed: 'bg-amber-50 text-amber-700 border-amber-200 rounded-md',
-  announced: 'bg-blue-50 text-blue-700 border-blue-200',
+  active: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30 rounded-md',
+  closed: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30 rounded-md',
+  announced: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
 };
 
 function formatDate(s?: string) {
@@ -102,7 +102,7 @@ export default function GiveawaysPage() {
         </div>
         <Link
           href="/admin/giveaways/new"
-          className="bg-orange-600 text-white px-4 py-2 text-sm font-medium hover:bg-orange-700 rounded-md transition-colors"
+          className="bg-[#301D5D] text-white px-4 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors"
         >
           + Create Giveaway
         </Link>
@@ -117,7 +117,7 @@ export default function GiveawaysPage() {
 
       {loading && <div className="text-sm text-gray-500">Loading giveaways...</div>}
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3 rounded-md">{error}</div>
+        <div className="text-sm text-[#661102] bg-[#FFEAE6] border border-[#FFEAE6] px-4 py-3 rounded-md">{error}</div>
       )}
 
       {!loading && items.length === 0 && (

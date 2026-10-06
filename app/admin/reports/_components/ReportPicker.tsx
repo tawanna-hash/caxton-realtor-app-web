@@ -102,7 +102,7 @@ export default function ReportPicker({
           onKeyDown={handleKey}
           placeholder={placeholder}
           aria-label="Search list"
-          className="h-9 w-full rounded border border-gray-300 bg-white pl-9 pr-9 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+          className="h-9 w-full rounded border border-gray-300 bg-white pl-9 pr-9 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
         />
         {/* Magnifying glass */}
         <svg
@@ -173,10 +173,10 @@ export default function ReportPicker({
                 className={[
                   'w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors',
                   isSelected
-                    ? 'bg-orange-50'
+                    ? 'bg-[#F6F3FB]'
                     : isActive
-                      ? 'bg-orange-50/40'
-                      : 'bg-white hover:bg-orange-50/40',
+                      ? 'bg-[#F6F3FB]/40'
+                      : 'bg-white hover:bg-[#F6F3FB]/40',
                 ].join(' ')}
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
@@ -186,9 +186,9 @@ export default function ReportPicker({
                     className={[
                       'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider',
                       it.pub.toLowerCase() === 'realtyline'
-                        ? 'bg-amber-100 text-amber-900'
+                        ? 'bg-[#FEF8CC] text-[#645600]'
                         : it.pub.toLowerCase() === 'newsline'
-                          ? 'bg-sky-100 text-sky-900'
+                          ? 'bg-[#E3F7FF] text-[#285766]'
                           : 'bg-gray-100 text-gray-700',
                     ].join(' ')}
                   >
@@ -214,7 +214,7 @@ export default function ReportPicker({
                 {isSelected && (
                   <svg
                     viewBox="0 0 20 20"
-                    className="shrink-0 w-4 h-4 text-orange-700"
+                    className="shrink-0 w-4 h-4 text-[#42277C]"
                     aria-hidden="true"
                   >
                     <path

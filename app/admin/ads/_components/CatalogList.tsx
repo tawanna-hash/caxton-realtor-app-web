@@ -110,18 +110,18 @@ export function CatalogList({ spaces, campaigns }: Props) {
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/admin/ads/placements?q=${encodeURIComponent(space.slug)}`}
-                    className="font-medium text-gray-900 hover:text-orange-700 hover:underline truncate"
+                    className="font-medium text-gray-900 hover:text-[#42277C] hover:underline truncate"
                   >
                     {space.display_name}
                   </Link>
                   <div className="mt-0.5 truncate font-mono text-[11px] text-gray-500">{space.slug}</div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <span className={active ? 'whitespace-nowrap font-medium text-emerald-700' : 'whitespace-nowrap text-gray-500'}>
+                  <span className={active ? 'whitespace-nowrap font-medium text-[#005A00]' : 'whitespace-nowrap text-gray-500'}>
                     {active ? `${active} live` : 'Available'}
                   </span>
                   {ROTATING_SLUGS.has(space.slug) && (
-                    <div className="mt-1 inline-block rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700">
+                    <div className="mt-1 inline-block rounded bg-[#E3F7FF] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#285766]">
                       Rotates
                     </div>
                   )}
@@ -133,7 +133,7 @@ export function CatalogList({ spaces, campaigns }: Props) {
                 <dt className="text-gray-500">Tier</dt>
                 <dd>
                   <span className={`inline-flex rounded px-2 py-0.5 font-medium capitalize ${
-                    space.tier === 'premium' ? 'bg-amber-100 text-amber-900' : 'bg-gray-100 text-gray-700'
+                    space.tier === 'premium' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-gray-100 text-gray-700'
                   }`}>
                     {space.tier}
                   </span>
@@ -163,9 +163,9 @@ export function CatalogList({ spaces, campaigns }: Props) {
             {visible.map((space) => {
               const active = activeBySlug.get(space.slug) ?? 0;
               return (
-                <tr key={space.slug} className="hover:bg-orange-50/40">
+                <tr key={space.slug} className="hover:bg-[#F6F3FB]/40">
                   <td className="px-4 py-2.5">
-                    <Link href={`/admin/ads/placements?q=${encodeURIComponent(space.slug)}`} className="font-medium text-gray-900 hover:text-orange-700 hover:underline">
+                    <Link href={`/admin/ads/placements?q=${encodeURIComponent(space.slug)}`} className="font-medium text-gray-900 hover:text-[#42277C] hover:underline">
                       {space.display_name}
                     </Link>
                     <div className="mt-0.5 truncate font-mono text-[11px] text-gray-500">{space.slug}</div>
@@ -173,7 +173,7 @@ export function CatalogList({ spaces, campaigns }: Props) {
                   <td className="px-3 py-2.5 text-gray-700">{ZONE_LABELS[space.zone]}</td>
                   <td className="px-3 py-2.5">
                     <span className={`inline-flex rounded px-2 py-0.5 font-medium capitalize ${
-                      space.tier === 'premium' ? 'bg-amber-100 text-amber-900' : 'bg-gray-100 text-gray-700'
+                      space.tier === 'premium' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-gray-100 text-gray-700'
                     }`}>
                       {space.tier}
                     </span>
@@ -183,11 +183,11 @@ export function CatalogList({ spaces, campaigns }: Props) {
                     {space.notes && <div className="mt-0.5 line-clamp-1 text-gray-500">{space.notes}</div>}
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className={active ? 'font-medium text-emerald-700' : 'text-gray-500'}>
+                    <span className={active ? 'font-medium text-[#005A00]' : 'text-gray-500'}>
                       {active ? `${active} live` : 'Available'}
                     </span>
                     {ROTATING_SLUGS.has(space.slug) && (
-                      <span className="ml-2 rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700">
+                      <span className="ml-2 rounded bg-[#E3F7FF] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#285766]">
                         Rotates
                       </span>
                     )}

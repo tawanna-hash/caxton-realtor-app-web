@@ -229,26 +229,26 @@ function SubscribersInner() {
       </div>
 
       {loading && <div className="text-sm text-gray-500 py-8">Loading subscribers...</div>}
-      {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-4">Error: {error}</div>}
+      {error && <div className="text-sm text-[#661102] bg-[#FFEAE6] border border-[#FF2A04]/30 rounded-md p-4">Error: {error}</div>}
 
       {!loading && !error && data && (
         <>
           {mounted && selectedIds.size > 0 && (
-            <div className="flex items-center gap-2 px-4 py-3 mb-3 rounded-md bg-indigo-50 border border-indigo-200">
-              <span className="text-sm text-indigo-900 font-medium">{selectedIds.size} selected on this page</span>
+            <div className="flex items-center gap-2 px-4 py-3 mb-3 rounded-md bg-[#F6F3FB] border border-[#D9CFF0]">
+              <span className="text-sm text-[#1B1726] font-medium">{selectedIds.size} selected on this page</span>
               <div className="flex-1" />
               <button
                 type="button"
                 onClick={exportSelected}
                 disabled={exporting}
-                className="px-3 py-1.5 rounded-md border border-indigo-300 text-indigo-700 text-xs font-medium hover:bg-indigo-100 disabled:opacity-50"
+                className="px-3 py-1.5 rounded-md border border-[#B9ADD6] text-[#42277C] text-xs font-medium hover:bg-[#EFEAF8] disabled:opacity-50"
               >
                 {exporting ? 'Exporting…' : 'Export CSV (full)'}
               </button>
               <button
                 type="button"
                 onClick={clearSelection}
-                className="px-3 py-1.5 rounded-md text-indigo-700 text-xs hover:text-indigo-900"
+                className="px-3 py-1.5 rounded-md text-[#42277C] text-xs hover:text-[#1B1726]"
               >
                 Clear
               </button>

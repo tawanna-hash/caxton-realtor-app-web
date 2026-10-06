@@ -102,7 +102,7 @@ function AgreementRowLayout({ row: r, onOpen, onEmail }: {
   return (
     <>
       {/* Desktop */}
-      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2.5 text-xs items-center hover:bg-orange-50/40">
+      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2.5 text-xs items-center hover:bg-[#F6F3FB]/40">
         <div className="col-span-3">{advertiserCell}</div>
         <button onClick={onOpen} className="col-span-2 text-left text-sm text-gray-700">
           <div>{typeLabel}</div>
@@ -112,7 +112,7 @@ function AgreementRowLayout({ row: r, onOpen, onEmail }: {
         <button
           onClick={onOpen}
           title={r.amount_cents == null ? 'No contract amount set yet — open the agreement to add one.' : undefined}
-          className={`col-span-2 text-left text-sm ${r.amount_cents == null ? 'text-amber-700' : 'text-gray-900'}`}
+          className={`col-span-2 text-left text-sm ${r.amount_cents == null ? 'text-[#645600]' : 'text-gray-900'}`}
         >
           {r.amount_cents == null ? 'Not set' : formatCents(r.amount_cents)}
         </button>
@@ -121,7 +121,7 @@ function AgreementRowLayout({ row: r, onOpen, onEmail }: {
       </div>
 
       {/* Mobile card */}
-      <div className="sm:hidden px-4 py-3 space-y-2 hover:bg-blue-50/40">
+      <div className="sm:hidden px-4 py-3 space-y-2 hover:bg-[#F6F3FB]/40">
         {advertiserCell}
         <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
           <dt className="text-gray-500 uppercase tracking-wider">Type</dt>
@@ -129,7 +129,7 @@ function AgreementRowLayout({ row: r, onOpen, onEmail }: {
           <dt className="text-gray-500 uppercase tracking-wider">Term</dt>
           <dd className="text-gray-800 text-right">{term}</dd>
           <dt className="text-gray-500 uppercase tracking-wider">Amount</dt>
-          <dd className={`text-right ${r.amount_cents == null ? 'text-amber-700' : 'text-gray-900'}`}>{r.amount_cents == null ? 'Not set' : formatCents(r.amount_cents)}</dd>
+          <dd className={`text-right ${r.amount_cents == null ? 'text-[#645600]' : 'text-gray-900'}`}>{r.amount_cents == null ? 'Not set' : formatCents(r.amount_cents)}</dd>
           <dt className="text-gray-500 uppercase tracking-wider">Invoiced</dt>
           <dd className="text-gray-800 text-right">{formatCents(r.invoiced_cents)}</dd>
         </dl>

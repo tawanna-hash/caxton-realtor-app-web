@@ -93,9 +93,9 @@ export default function PromotionGuideContent() {
         {/* Browser frame */}
         <div className="rounded-lg border border-gray-300 shadow-sm overflow-hidden bg-white">
           <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 border-b border-gray-200">
-            <span className="h-3 w-3 rounded-full bg-red-400" />
-            <span className="h-3 w-3 rounded-full bg-yellow-400" />
-            <span className="h-3 w-3 rounded-full bg-green-400" />
+            <span className="h-3 w-3 rounded-full bg-[#FF2A04]" />
+            <span className="h-3 w-3 rounded-full bg-[#FAD800]" />
+            <span className="h-3 w-3 rounded-full bg-[#00E200]" />
             <span className="ml-3 text-xs text-gray-500 font-mono truncate">
               realtynewsnow.app/inventory/653
             </span>
@@ -186,7 +186,7 @@ export default function PromotionGuideContent() {
                   <span className="inline-flex items-center rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white">
                     {EXAMPLE.builderName}
                   </span>{' '}
-                  <span className="inline-flex items-center rounded-full bg-orange-600 px-3 py-1 text-xs font-semibold text-white">
+                  <span className="inline-flex items-center rounded-full bg-[#301D5D] px-3 py-1 text-xs font-semibold text-white">
                     Promotion
                   </span>
                   <div className="mt-1">
@@ -214,7 +214,7 @@ export default function PromotionGuideContent() {
                   <h4 className="text-xs uppercase tracking-[0.15em] text-gray-500 font-medium mb-1">
                     Offer type <FieldBadge name="promoType" />
                   </h4>
-                  <span className="inline-flex items-center rounded-md bg-orange-50 border border-orange-200 px-3 py-1 text-xs font-medium text-orange-700">
+                  <span className="inline-flex items-center rounded-md bg-[#F6F3FB] border border-[#D9CFF0] px-3 py-1 text-xs font-medium text-[#42277C]">
                     {EXAMPLE.promoType} (broker bonus)
                   </span>
                 </div>
@@ -384,7 +384,7 @@ export default function PromotionGuideContent() {
             </li>
           ))}
         </ol>
-        <div className="mt-5 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="mt-5 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 text-sm text-[#645600]">
           <strong className="font-semibold">Pitfalls:</strong> promotions do NOT
           auto-publish — the upsert only auto-activates kind=&apos;listing&apos;
           rows, so scraped promotions land{' '}

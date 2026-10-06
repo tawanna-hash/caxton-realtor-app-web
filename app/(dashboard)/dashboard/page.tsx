@@ -288,7 +288,7 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
                 style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px' }}
                 aria-hidden="true"
               />
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && <p className="text-sm text-[#661102]">{error}</p>}
               <button
                 type="submit"
                 disabled={status === 'submitting'}
@@ -382,7 +382,7 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <p className="text-lg font-semibold text-gray-700">{pub.name}</p>
-                        <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Coming Soon</span>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-[#FEF8CC] text-[#645600]">Coming Soon</span>
                       </div>
                       <p className="text-base text-gray-400 font-light">{pub.city} - {pub.tagline}</p>
                     </div>
@@ -708,7 +708,7 @@ function AuthGate({
               <div className={step >= 3 ? 'w-3 h-3 rounded-full bg-brand-700' : 'w-3 h-3 rounded-full bg-gray-200'} />
             </div>
 
-            {error && <p className="text-base text-red-500 text-center mb-4 font-light">{error}</p>}
+            {error && <p className="text-base text-[#661102] text-center mb-4 font-light">{error}</p>}
 
             {/* Step 1: License + Identity */}
             {step === 1 && (
@@ -889,7 +889,7 @@ function AuthGate({
               </p>
 
               {error && (
-                <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div role="alert" className="mb-4 rounded-lg border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">
                   {error}
                 </div>
               )}
@@ -1707,9 +1707,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
         <DashboardHero pub={pub as "realtyline" | "newsline" | "realtyline-dallas" | "realtyline-houston"} />
       )}
       {user?.guest && (
-        <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
-          <p className="text-sm text-amber-700 font-light">Browsing as Guest</p>
-          <button onClick={() => window.location.reload()} className="text-sm text-amber-700 font-medium underline">Sign In</button>
+        <div className="px-4 py-2.5 bg-[#FEF8CC] border-b border-[#FAD800]/30 flex items-center justify-between">
+          <p className="text-sm text-[#645600] font-light">Browsing as Guest</p>
+          <button onClick={() => window.location.reload()} className="text-sm text-[#645600] font-medium underline">Sign In</button>
         </div>
       )}
       {tab === 'n' && showPreLaunch && pubKey && (

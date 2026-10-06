@@ -314,10 +314,10 @@ export default function CheckoutForm({
 
   if (success) {
     return (
-      <div className="rounded-md bg-emerald-50 border border-emerald-200 p-6 sm:p-8 text-center">
-        <div className="text-emerald-700 text-4xl mb-3">✓</div>
-        <h2 className="text-2xl font-bold text-emerald-900 mb-2">Payment Received — Pending Approval.</h2>
-        <div className="text-emerald-800 mb-4">
+      <div className="rounded-md bg-[#E0FBE0] border border-[#00E200]/30 p-6 sm:p-8 text-center">
+        <div className="text-[#005A00] text-4xl mb-3">✓</div>
+        <h2 className="text-2xl font-bold text-[#005A00] mb-2">Payment Received — Pending Approval.</h2>
+        <div className="text-[#005A00] mb-4">
           <p>
             Please allow up to 2 days for your ad space to go live after payment
             while we review and approve your creative.
@@ -339,8 +339,8 @@ export default function CheckoutForm({
             </li>
           </ul>
         </div>
-        <p className="text-xs text-emerald-700">Confirmation #{success.agreementId.slice(0, 8)}</p>
-        <p className="text-sm text-emerald-700 mt-4">
+        <p className="text-xs text-[#005A00]">Confirmation #{success.agreementId.slice(0, 8)}</p>
+        <p className="text-sm text-[#005A00] mt-4">
           Receipt sent to <strong>{email}</strong>.
         </p>
       </div>
@@ -409,11 +409,11 @@ export default function CheckoutForm({
                   >
                     {label}
                     {isComingSoon ? (
-                      <span className="ml-1.5 text-[10px] uppercase tracking-wider font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-md">
+                      <span className="ml-1.5 text-[10px] uppercase tracking-wider font-semibold text-[#645600] bg-[#FEF8CC] px-1.5 py-0.5 rounded-md">
                         Coming soon
                       </span>
                     ) : taken ? (
-                      <span className="ml-1.5 text-[10px] uppercase tracking-wider font-semibold text-amber-700">
+                      <span className="ml-1.5 text-[10px] uppercase tracking-wider font-semibold text-[#645600]">
                         sold
                       </span>
                     ) : null}
@@ -422,17 +422,17 @@ export default function CheckoutForm({
               })}
             </div>
             {isBundle && (
-              <p className="mt-2 text-xs text-emerald-700 font-medium">
+              <p className="mt-2 text-xs text-[#005A00] font-medium">
                 {marketCount}-market bundle pricing applied ({MARKET_MULTIPLIERS[marketCount].toFixed(1)}x base rate).
               </p>
             )}
             {bookedSet.size > 0 && !allBlocked && (
-              <p className="mt-2 text-xs text-amber-700">
+              <p className="mt-2 text-xs text-[#645600]">
                 One or more publications are currently booked for this placement.
               </p>
             )}
             {allBlocked && (
-              <p className="mt-2 text-xs text-amber-800 font-medium">
+              <p className="mt-2 text-xs text-[#645600] font-medium">
                 This placement is fully booked right now. Use the inquiry form to join the waitlist.
               </p>
             )}
@@ -687,7 +687,7 @@ export default function CheckoutForm({
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-800">
+        <div className="rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 p-4 text-sm text-[#661102]">
           {error}
         </div>
       )}
@@ -785,7 +785,7 @@ function PayBlock({
         type="button"
         disabled={paying || !stripe || !elements}
         onClick={pay}
-        className="w-full px-6 py-3 rounded-md bg-emerald-600 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-700 transition"
+        className="w-full px-6 py-3 rounded-md bg-[#005A00] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#005A00] transition"
       >
         {paying ? 'Processing…' : `Pay ${(intent.amountCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`}
       </button>

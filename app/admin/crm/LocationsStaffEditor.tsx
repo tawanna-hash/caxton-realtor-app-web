@@ -13,7 +13,7 @@ import type { AdvertiserLocation, AdvertiserStaff } from '@/lib/advertisers';
 import { formatPhoneInput } from '@/lib/format-phone';
 import AdvertiserImageUploader from '@/components/AdvertiserImageUploader';
 
-const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]';
 
 type Props = {
   advertiserId: number;
@@ -447,7 +447,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search locations & staff — name, title, city, email, phone…"
-            className="w-full pl-9 pr-9 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-9 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
           />
           {search && (
             <button
@@ -484,7 +484,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
               syncing
                 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
-                : 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
+                : 'bg-[#301D5D] text-white border-[#42277C] hover:bg-[#42277C]'
             }`}
           >
             {syncing ? 'Syncing...' : 'Sync now'}
@@ -495,8 +495,8 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
         <div
           className={`text-xs px-3 py-2 rounded-md ${
             syncMsg.startsWith('Sync failed')
-              ? 'bg-red-50 text-red-700 border border-red-200'
-              : 'bg-blue-50 text-blue-700 border border-blue-200'
+              ? 'bg-[#FFEAE6] text-[#661102] border border-[#FF2A04]/30'
+              : 'bg-[#F6F3FB] text-[#42277C] border border-[#D9CFF0]'
           }`}
         >
           {syncMsg}
@@ -531,7 +531,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
           importing
             ? 'border-gray-200 bg-gray-100 cursor-wait'
             : dragOver
-              ? 'border-blue-500 bg-blue-50'
+              ? 'border-[#7059A8] bg-[#F6F3FB]'
               : 'border-gray-300 bg-gray-50/60 hover:border-gray-400 hover:bg-gray-100'
         }`}
       >
@@ -546,7 +546,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className={importing ? 'text-gray-400' : dragOver ? 'text-blue-600' : 'text-gray-500'}
+            className={importing ? 'text-gray-400' : dragOver ? 'text-[#301D5D]' : 'text-gray-500'}
             aria-hidden="true"
           >
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -565,8 +565,8 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
         <div
           className={`text-xs px-3 py-2 rounded-md ${
             importMsg.startsWith('Import failed')
-              ? 'bg-red-50 text-red-700 border border-red-200'
-              : 'bg-blue-50 text-blue-700 border border-blue-200'
+              ? 'bg-[#FFEAE6] text-[#661102] border border-[#FF2A04]/30'
+              : 'bg-[#F6F3FB] text-[#42277C] border border-[#D9CFF0]'
           }`}
         >
           {importMsg}
@@ -626,7 +626,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                 <button
                   onClick={() => deleteLocation(loc.id)}
                   type="button"
-                  className="text-xs text-red-600 hover:text-red-800 px-2"
+                  className="text-xs text-[#661102] hover:text-[#661102] px-2"
                   aria-label="Delete location"
                 >
                   ×
@@ -697,7 +697,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                     <a
                       href={`mailto:${loc.email}`}
                       title={`Email ${loc.email}`}
-                      className="text-blue-600 hover:text-blue-800 text-base px-1 rounded-md"
+                      className="text-[#301D5D] hover:text-[#301D5D] text-base px-1 rounded-md"
                       tabIndex={-1}
                     >
                       ✉
@@ -761,7 +761,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                 <button
                   onClick={() => deleteStaff(s.id)}
                   type="button"
-                  className="text-xs text-red-600 hover:text-red-800 px-2"
+                  className="text-xs text-[#661102] hover:text-[#661102] px-2"
                   aria-label="Delete staff"
                 >
                   ×
@@ -785,7 +785,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                     <a
                       href={`mailto:${s.email}`}
                       title={`Email ${s.email}`}
-                      className="text-blue-600 hover:text-blue-800 text-base px-1 rounded-md"
+                      className="text-[#301D5D] hover:text-[#301D5D] text-base px-1 rounded-md"
                       tabIndex={-1}
                     >
                       ✉
@@ -822,7 +822,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                           onClick={() => toggleStaffLocation(s.id, loc.id)}
                           className={`text-xs px-2 py-1 rounded-md border ${
                             checked
-                              ? 'bg-blue-600 text-white border-blue-600'
+                              ? 'bg-[#301D5D] text-white border-[#301D5D]'
                               : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                           }`}
                         >

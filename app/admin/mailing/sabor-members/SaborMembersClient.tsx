@@ -601,7 +601,7 @@ export default function SaborMembersClient() {
           type="button"
           onClick={handleDeleteAll}
           disabled={busy !== null}
-          className="px-4 py-2 text-sm rounded-md border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50 whitespace-nowrap"
+          className="px-4 py-2 text-sm rounded-md border border-[#FF2A04]/50 text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50 whitespace-nowrap"
         >
           {busy === 'delete-all' ? 'Deleting…' : 'Delete all'}
         </button>
@@ -626,17 +626,17 @@ export default function SaborMembersClient() {
             </div>
             <div className="flex items-center gap-3 text-xs">
               <span className="inline-flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="inline-block w-2 h-2 rounded-full bg-[#00E200]" />
                 <span className="text-gray-600">Valid</span>
                 <span className="font-medium text-gray-900">{drainJob.valid.toLocaleString()}</span>
               </span>
               <span className="inline-flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-full bg-rose-500" />
+                <span className="inline-block w-2 h-2 rounded-full bg-[#FF2A04]" />
                 <span className="text-gray-600">Invalid</span>
                 <span className="font-medium text-gray-900">{drainJob.invalid.toLocaleString()}</span>
               </span>
               <span className="inline-flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+                <span className="inline-block w-2 h-2 rounded-full bg-[#FAD800]" />
                 <span className="text-gray-600">Pending</span>
                 <span className="font-medium text-gray-900">{drainJob.pending.toLocaleString()}</span>
               </span>
@@ -748,7 +748,7 @@ export default function SaborMembersClient() {
             type="button"
             onClick={promote}
             disabled={busy !== null}
-            className="px-3 py-1.5 rounded-md bg-green-600 text-white text-xs font-medium hover:bg-green-700 disabled:opacity-50"
+            className="px-3 py-1.5 rounded-md bg-[#005A00] text-white text-xs font-medium hover:bg-[#005A00] disabled:opacity-50"
           >
             {busy === 'promote' ? 'Promoting…' : 'Promote to Mailing'}
           </button>
@@ -756,7 +756,7 @@ export default function SaborMembersClient() {
             type="button"
             onClick={reject}
             disabled={busy !== null}
-            className="px-3 py-1.5 rounded-md bg-red-600 text-white text-xs font-medium hover:bg-red-700 disabled:opacity-50"
+            className="px-3 py-1.5 rounded-md bg-[#661102] text-white text-xs font-medium hover:bg-[#661102] disabled:opacity-50"
           >
             {busy === 'reject' ? 'Rejecting…' : 'Reject'}
           </button>
@@ -771,12 +771,12 @@ export default function SaborMembersClient() {
       )}
 
       {toast && (
-        <div className="px-4 py-3 rounded-md bg-blue-50 border border-blue-200 text-sm text-blue-900">
+        <div className="px-4 py-3 rounded-md bg-[#F6F3FB] border border-[#D9CFF0] text-sm text-[#1B1726]">
           {toast}
         </div>
       )}
       {error && (
-        <div className="px-4 py-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-900">
+        <div className="px-4 py-3 rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 text-sm text-[#661102]">
           {error}
         </div>
       )}
@@ -802,7 +802,7 @@ export default function SaborMembersClient() {
             checked={allSelected}
             onChange={(e) => handleSelectAll(e.target.checked)}
             aria-label="Select all rows"
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="h-4 w-4 rounded border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
           />
           <span>Select all ({selectedIds.size} of {rows.length})</span>
         </div>
@@ -830,7 +830,7 @@ export default function SaborMembersClient() {
                 checked={selectedIds.has(r.id)}
                 onChange={(e) => handleSelect(r.id, e.target.checked)}
                 aria-label={`Select ${fullName || r.email || r.id}`}
-                className="mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
               />
               <div className="min-w-0 flex-1 space-y-1.5">
                 <div>
@@ -842,7 +842,7 @@ export default function SaborMembersClient() {
                     <a
                       href={`mailto:${r.email}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-blue-600 hover:underline break-words"
+                      className="text-[#301D5D] hover:underline break-words"
                     >{r.email}</a>
                   </div>
                 )}
@@ -952,7 +952,7 @@ export default function SaborMembersClient() {
                       <a
                         href={`mailto:${r.email}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                        className="text-[#301D5D] hover:text-[#301D5D] hover:underline"
                       >
                         {r.email}
                       </a>
@@ -1120,8 +1120,8 @@ function VerifyCell({
 }) {
   if (!hasData) return <span className="text-xs text-gray-400">—</span>;
   const pill =
-    status === 'Valid'   ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-green-100 text-green-800">✓ Valid</span> :
-    status === 'Invalid' ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-red-100 text-red-800">✗ Invalid</span> :
+    status === 'Valid'   ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00]">✓ Valid</span> :
+    status === 'Invalid' ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#FFEAE6] text-[#661102]">✗ Invalid</span> :
                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Pending</span>;
   return (
     <div className="flex items-center gap-1.5">
@@ -1144,14 +1144,14 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   if (row.email_disposable) {
     flags.push({
       label: 'Disposable',
-      cls:   'bg-red-100 text-red-800 ring-1 ring-red-200',
+      cls:   'bg-[#FFEAE6] text-[#661102] ring-1 ring-[#FF2A04]/30',
       title: 'Throwaway / temporary email provider',
     });
   }
   if (row.email_catch_all) {
     flags.push({
       label: 'Catch-all',
-      cls:   'bg-amber-100 text-amber-800 ring-1 ring-amber-200',
+      cls:   'bg-[#FEF8CC] text-[#645600] ring-1 ring-[#FAD800]/30',
       title: 'Domain accepts any mailbox — existence cannot be proven',
     });
   }
@@ -1165,14 +1165,14 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   if (row.email_role) {
     flags.push({
       label: 'Role',
-      cls:   'bg-indigo-100 text-indigo-800 ring-1 ring-indigo-200',
+      cls:   'bg-[#EFEAF8] text-[#301D5D] ring-1 ring-[#D9CFF0]',
       title: 'Role / generic mailbox (info@, admin@, support@…)',
     });
   }
   if (row.email_suggestion) {
     flags.push({
       label: `⇒ @${row.email_suggestion}`,
-      cls:   'bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200',
+      cls:   'bg-[#FEF8CC] text-[#645600] ring-1 ring-[#FAD800]/30',
       title: `Likely typo — did you mean @${row.email_suggestion}?`,
     });
   }
@@ -1191,7 +1191,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   if (sig?.smtpTimedOut && !sig?.smtpConnected) {
     flags.push({
       label: '⏱ Timed out',
-      cls:   'bg-orange-100 text-orange-800 ring-1 ring-orange-200',
+      cls:   'bg-[#EFEAF8] text-[#301D5D] ring-1 ring-[#D9CFF0]',
       title: `Mail server did not respond${sig.mxAttempts ? ` across ${sig.mxAttempts} MX host${sig.mxAttempts === 1 ? '' : 's'}` : ''} — domain may be misconfigured or rate-limiting us`,
     });
   }
@@ -1204,7 +1204,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
     const l = labels[sig.managedMailProvider];
     flags.push({
       label: l.short,
-      cls:   'bg-sky-100 text-sky-800 ring-1 ring-sky-200',
+      cls:   'bg-[#E3F7FF] text-[#285766] ring-1 ring-[#64D9FF]/30',
       title: `${l.long} — SMTP verification blocked from cloud IPs; needs manual confirmation`,
     });
   }
@@ -1256,11 +1256,11 @@ function ProximityBadges({ row }: { row: MailingContactRow }) {
   }
   return (
     <span
-      className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-medium"
+      className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00] font-medium"
       title={`${d!.toFixed(1)} mi from SABOR HQ (9110 IH-10 W, San Antonio)`}
     >
       <span>Within 60 mi</span>
-      <span className="text-emerald-700/70">{d!.toFixed(0)} mi · SABOR</span>
+      <span className="text-[#005A00]/70">{d!.toFixed(0)} mi · SABOR</span>
     </span>
   );
 }
@@ -1384,10 +1384,10 @@ function EditDrawer({
               </div>
               <div className="text-sm">
                 {row.addr_status === 'Valid' && (
-                  <span className="text-green-700 font-medium">✓ Valid address</span>
+                  <span className="text-[#005A00] font-medium">✓ Valid address</span>
                 )}
                 {row.addr_status === 'Invalid' && (
-                  <span className="text-red-700 font-medium">✗ Invalid</span>
+                  <span className="text-[#661102] font-medium">✗ Invalid</span>
                 )}
                 {(!row.addr_status || row.addr_status === 'Pending') && (
                   <span className="text-gray-600">Pending</span>
@@ -1407,7 +1407,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-2.5 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify address'}
               </button>
@@ -1419,10 +1419,10 @@ function EditDrawer({
               </div>
               <div className="text-sm">
                 {row.email_status === 'Valid' && (
-                  <span className="text-green-700 font-medium">✓ Valid (SMTP)</span>
+                  <span className="text-[#005A00] font-medium">✓ Valid (SMTP)</span>
                 )}
                 {row.email_status === 'Invalid' && (
-                  <span className="text-red-700 font-medium">✗ Invalid</span>
+                  <span className="text-[#661102] font-medium">✗ Invalid</span>
                 )}
                 {(!row.email_status || row.email_status === 'Pending') && (
                   <span className="text-gray-600">Pending</span>
@@ -1435,7 +1435,7 @@ function EditDrawer({
                 type="button"
                 disabled={emailBusy || !form.email}
                 onClick={onVerifyEmail}
-                className="text-xs px-2.5 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
               >
                 {emailBusy ? 'Verifying…' : 'Verify Email'}
               </button>
@@ -1482,7 +1482,7 @@ function EditDrawer({
           </div>
 
           {saveError && (
-            <div className="px-3 py-2 rounded-md bg-red-50 border border-red-200 text-xs text-red-900">
+            <div className="px-3 py-2 rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 text-xs text-[#661102]">
               {saveError}
             </div>
           )}

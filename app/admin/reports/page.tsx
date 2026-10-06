@@ -278,7 +278,7 @@ function AdminReportsPageInner() {
                 className={[
                   'px-1 pb-3 text-sm font-medium border-b-2 transition-colors',
                   isActive
-                    ? 'border-orange-600 text-gray-900'
+                    ? 'border-[#301D5D] text-gray-900'
                     : 'border-transparent text-gray-500 hover:text-gray-700',
                 ].join(' ')}
                 aria-current={isActive ? 'page' : undefined}
@@ -301,7 +301,7 @@ function AdminReportsPageInner() {
           {articlesLoading ? (
             <div className="text-sm text-gray-500">Loading articles…</div>
           ) : articlesError ? (
-            <div className="text-sm text-red-700">{articlesError}</div>
+            <div className="text-sm text-[#661102]">{articlesError}</div>
           ) : articles.length === 0 ? (
             <div className="text-sm text-gray-500">
               No articles with tracking data in the last 180 days.
@@ -338,7 +338,7 @@ function AdminReportsPageInner() {
                   className={[
                     'px-3 text-sm font-medium transition-colors',
                     !isFirst ? 'border-l border-gray-200' : '',
-                    isActive ? 'bg-orange-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                    isActive ? 'bg-[#301D5D] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
                   ].filter(Boolean).join(' ')}
                 >
                   {opt.label}
@@ -353,7 +353,7 @@ function AdminReportsPageInner() {
             type="button"
             onClick={generateReport}
             disabled={!selectedArticleId || reportLoading}
-            className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {reportLoading ? 'Generating…' : 'Generate report'}
           </button>
@@ -362,8 +362,8 @@ function AdminReportsPageInner() {
 
       {/* Report output (skeleton — branded preview comes in R3b) */}
       {reportError && (
-        <div className="border border-red-300 bg-red-50 px-4 py-3 rounded-md mb-6">
-          <p className="text-sm text-red-900">{reportError}</p>
+        <div className="border border-[#FF2A04]/50 bg-[#FFEAE6] px-4 py-3 rounded-md mb-6">
+          <p className="text-sm text-[#661102]">{reportError}</p>
         </div>
       )}
 
@@ -419,7 +419,7 @@ function AdminReportsPageInner() {
                   <button
                     type="button"
                     onClick={copyHtml}
-                    className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+                    className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
                   >
                     Copy HTML
                   </button>
@@ -489,7 +489,7 @@ function AdminReportsPageInner() {
           {eventsListLoading ? (
             <div className="text-sm text-gray-500">Loading events…</div>
           ) : eventsListError ? (
-            <div className="text-sm text-red-700">{eventsListError}</div>
+            <div className="text-sm text-[#661102]">{eventsListError}</div>
           ) : eventsList.length === 0 ? (
             <div className="text-sm text-gray-500">
               No events with tracking data in the last 180 days.
@@ -526,7 +526,7 @@ function AdminReportsPageInner() {
                   className={[
                     'px-3 text-sm font-medium transition-colors',
                     !isFirst ? 'border-l border-gray-200' : '',
-                    isActive ? 'bg-orange-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                    isActive ? 'bg-[#301D5D] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
                   ].filter(Boolean).join(' ')}
                 >
                   {opt.label}
@@ -541,7 +541,7 @@ function AdminReportsPageInner() {
             type="button"
             onClick={generateEventReport}
             disabled={!selectedEventId || eventReportLoading}
-            className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {eventReportLoading ? 'Generating…' : 'Generate report'}
           </button>
@@ -549,8 +549,8 @@ function AdminReportsPageInner() {
       </section>
 
       {eventReportError && (
-        <div className="border border-red-300 bg-red-50 px-4 py-3 rounded-md mb-6">
-          <p className="text-sm text-red-900">{eventReportError}</p>
+        <div className="border border-[#FF2A04]/50 bg-[#FFEAE6] px-4 py-3 rounded-md mb-6">
+          <p className="text-sm text-[#661102]">{eventReportError}</p>
         </div>
       )}
 
@@ -606,7 +606,7 @@ function AdminReportsPageInner() {
                   <button
                     type="button"
                     onClick={copyHtml}
-                    className="inline-flex h-9 items-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+                    className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
                   >
                     Copy HTML
                   </button>

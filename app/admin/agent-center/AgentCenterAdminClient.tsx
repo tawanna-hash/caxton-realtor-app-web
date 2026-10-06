@@ -117,8 +117,8 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
             Upload and activate
           </button>
         </div>
-        {error && <p role="alert" className="mt-4 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
-        {message && <p role="status" className="mt-4 border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{message}</p>}
+        {error && <p role="alert" className="mt-4 border border-[#FF2A04]/30 bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">{error}</p>}
+        {message && <p role="status" className="mt-4 border border-[#00E200]/30 bg-[#E0FBE0] px-3 py-2 text-sm text-[#005A00]">{message}</p>}
       </section>
 
       <section className="border border-slate-200 bg-white">
@@ -131,7 +131,7 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-semibold text-slate-950">TREC {version.formNumber}</h3>
-                  {version.isActive && <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-800"><CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />Active</span>}
+                  {version.isActive && <span className="inline-flex items-center gap-1 rounded-md bg-[#E0FBE0] px-2 py-1 text-xs font-bold text-[#005A00]"><CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />Active</span>}
                 </div>
                 <p className="mt-1 text-sm font-semibold text-slate-800">{version.title}</p>
                 <p className="mt-1 text-sm text-slate-600">Effective {version.effectiveDate} · {version.pageCount} pages · {version.fields.length} fillable controls</p>

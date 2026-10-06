@@ -50,7 +50,7 @@ export default function AdvertisePrintPage() {
               key={pkg.id}
               className={`relative flex flex-col border rounded-md p-5 ${
                 pkg.premium
-                  ? 'border-[#c2410c] bg-amber-50/30'
+                  ? 'border-[#c2410c] bg-[#FEF8CC]/30'
                   : pkg.popular
                   ? 'border-brand-700'
                   : 'border-gray-200'

@@ -84,9 +84,9 @@ export default function DeleteAccountSection({ accentColor = '#301D5D', email }:
 
   return (
     <>
-      <section className="rounded-md border border-red-200 bg-red-50/40 p-4">
-        <h2 className="text-sm font-medium text-red-900 mb-1">Delete Account</h2>
-        <p className="text-xs text-red-900/70 font-light mb-3">
+      <section className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6]/40 p-4">
+        <h2 className="text-sm font-medium text-[#661102] mb-1">Delete Account</h2>
+        <p className="text-xs text-[#661102]/70 font-light mb-3">
           Permanently delete your account and all associated data, including saved
           articles, push subscriptions, and notification
           preferences. This cannot be undone.
@@ -94,7 +94,7 @@ export default function DeleteAccountSection({ accentColor = '#301D5D', email }:
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-xs font-medium text-red-700 underline underline-offset-2 hover:text-red-900"
+          className="text-xs font-medium text-[#661102] underline underline-offset-2 hover:text-[#661102]"
         >
           Delete my account
         </button>
@@ -147,14 +147,14 @@ export default function DeleteAccountSection({ accentColor = '#301D5D', email }:
                 autoComplete="off"
                 autoCapitalize="off"
                 spellCheck={false}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2A04]"
                 placeholder={email}
                 disabled={loading}
               />
             </div>
 
             {error && (
-              <p className="text-xs text-red-700" role="alert">
+              <p className="text-xs text-[#661102]" role="alert">
                 {error}
               </p>
             )}
@@ -172,7 +172,7 @@ export default function DeleteAccountSection({ accentColor = '#301D5D', email }:
                 type="button"
                 onClick={handleDelete}
                 disabled={!matches || loading}
-                className="px-4 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-md text-sm font-medium text-white bg-[#661102] hover:bg-[#661102] disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {loading ? 'Deleting…' : 'Permanently delete'}
               </button>

@@ -219,7 +219,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
           {/* Headline */}
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-1">
-              Headline <span className="text-red-600">*</span>
+              Headline <span className="text-[#661102]">*</span>
             </label>
             <input
               type="text"
@@ -227,7 +227,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
               onChange={(e) => setHeadline(e.target.value)}
               placeholder="Austin home prices dip 3.2% in Q2"
               maxLength={140}
-              className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
             />
             <div className="text-[11px] text-gray-500 mt-0.5 tabular-nums">{headline.length} / 140</div>
           </div>
@@ -241,21 +241,21 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
               onChange={(e) => setSubheadline(e.target.value)}
               placeholder="First decline since 2019 — what it means"
               maxLength={200}
-              className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
             />
           </div>
 
           {/* Article URL */}
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-1">
-              Article URL <span className="text-red-600">*</span>
+              Article URL <span className="text-[#661102]">*</span>
             </label>
             <input
               type="text"
               value={articleUrl}
               onChange={(e) => setArticleUrl(e.target.value)}
               placeholder="/article/123 or https://..."
-              className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
             />
             <div className="text-[11px] text-gray-500 mt-0.5">Internal path or external URL. Opens on tap.</div>
           </div>
@@ -285,7 +285,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
                   value={thumbnailUrl}
                   onChange={(e) => setThumbnailUrl(e.target.value)}
                   placeholder="Or paste an image URL"
-                  className="w-full text-xs border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full text-xs border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                 />
                 {uploading && <div className="text-xs text-gray-600">Uploading…</div>}
               </div>
@@ -303,7 +303,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
                   onClick={() => setIconPrefix(emoji)}
                   className={`w-8 h-8 rounded-md text-lg flex items-center justify-center border ${
                     iconPrefix === emoji
-                      ? 'border-orange-500 bg-orange-50'
+                      ? 'border-[#7059A8] bg-[#F6F3FB]'
                       : 'border-gray-200 bg-white hover:bg-gray-50'
                   }`}
                   aria-label={`Icon ${emoji}`}
@@ -316,7 +316,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
                 value={iconPrefix}
                 onChange={(e) => setIconPrefix(e.target.value.slice(0, 4))}
                 placeholder="Custom"
-                className="w-20 text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-20 text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
               />
             </div>
           </div>
@@ -324,7 +324,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
           {/* Markets */}
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-1">
-              Markets <span className="text-red-600">*</span>
+              Markets <span className="text-[#661102]">*</span>
             </label>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               {PUB_ACTIVE.map((publication) => (
@@ -333,7 +333,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
                     type="checkbox"
                     checked={markets.includes(publication.id)}
                     onChange={() => toggleMarket(publication.id)}
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    className="rounded border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
                   />
                   <span>{publication.shortLabel}</span>
                 </label>
@@ -348,7 +348,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
                 type="checkbox"
                 checked={publishNow}
                 onChange={(e) => setPublishNow(e.target.checked)}
-                className="mt-0.5 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                className="mt-0.5 rounded border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
               />
               <span>
                 <span className="font-medium text-gray-900">Publish immediately</span>
@@ -363,7 +363,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
                   type="datetime-local"
                   value={publishedAt}
                   onChange={(e) => setPublishedAt(e.target.value)}
-                  className="text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                 />
                 <div className="text-[11px] text-gray-500 mt-0.5">Leave blank to save as draft (not published).</div>
               </div>
@@ -375,7 +375,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
                 type="datetime-local"
                 value={expiresAt}
                 onChange={(e) => setExpiresAt(e.target.value)}
-                className="text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
               />
               <div className="text-[11px] text-gray-500 mt-0.5">After this time, the item stops appearing.</div>
             </div>
@@ -388,13 +388,13 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
               type="number"
               value={sortOrder}
               onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
-              className="w-24 text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-24 text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
             />
             <div className="text-[11px] text-gray-500 mt-0.5">Lower numbers appear first. Use ↑/↓ in the list for quick swaps.</div>
           </div>
 
           {error && (
-            <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-2">{error}</div>
+            <div className="text-sm text-[#661102] bg-[#FFEAE6] border border-[#FF2A04]/30 rounded-md p-2">{error}</div>
           )}
         </div>
 
@@ -411,7 +411,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
             type="button"
             onClick={() => void save()}
             disabled={saving || uploading}
-            className="text-sm px-4 py-1.5 rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 font-medium"
+            className="text-sm px-4 py-1.5 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50 font-medium"
           >
             {saving ? 'Saving…' : (isEdit ? 'Save changes' : 'Create')}
           </button>

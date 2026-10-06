@@ -68,26 +68,26 @@ type Props = {
 };
 
 const CHANNEL_ACCENT: Record<AdChannel, string> = {
-  print: 'text-rose-700 border-rose-500',
-  digital: 'text-sky-700 border-sky-500',
-  email: 'text-emerald-700 border-emerald-500',
+  print: 'text-[#661102] border-[#FF2A04]',
+  digital: 'text-[#285766] border-[#64D9FF]',
+  email: 'text-[#005A00] border-[#00E200]',
   app: 'text-purple-700 border-purple-500',
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  signed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  sent: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  active: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
+  signed: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
+  paid: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
+  sent: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
   draft: 'bg-gray-100 text-gray-700 border-gray-200',
-  new: 'bg-amber-50 text-amber-700 border-amber-200',
-  replied: 'bg-blue-50 text-blue-700 border-blue-200',
-  quoted: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  won: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  new: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30',
+  replied: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
+  quoted: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
+  won: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
   lost: 'bg-gray-100 text-gray-600 border-gray-200',
   expired: 'bg-gray-100 text-gray-600 border-gray-200',
   cancelled: 'bg-gray-100 text-gray-600 border-gray-200',
-  overdue: 'bg-red-50 text-red-700 border-red-200',
+  overdue: 'bg-[#FFEAE6] text-[#661102] border-[#FF2A04]/30',
 };
 
 function formatMoney(cents: number | null | undefined) {
@@ -390,7 +390,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
           <div className="text-sm text-gray-500 py-4 text-center">Loading activity…</div>
         )}
         {error && (
-          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">
             Failed to load: {error}
           </div>
         )}
@@ -478,7 +478,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                                     href={t.file_url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-blue-600 hover:underline"
+                                    className="text-[#301D5D] hover:underline"
                                   >
                                     View
                                   </a>
@@ -487,7 +487,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                                   type="button"
                                   onClick={() => void deleteTearsheet(t.id)}
                                   disabled={tsBusy}
-                                  className="text-red-600 hover:underline disabled:opacity-50"
+                                  className="text-[#661102] hover:underline disabled:opacity-50"
                                 >
                                   Delete
                                 </button>
@@ -644,7 +644,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                       href={`/api/admin/insertion-orders/${io.id}/pdf`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs text-blue-600 hover:underline"
+                      className="text-xs text-[#301D5D] hover:underline"
                     >
                       PDF
                     </a>
@@ -674,7 +674,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                         type="button"
                         onClick={() => void clearIoPdf(io.id)}
                         disabled={ioBusy}
-                        className="text-xs px-2 py-0.5 rounded border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                        className="text-xs px-2 py-0.5 rounded border border-[#FF2A04]/30 text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
                         title="Clear uploaded PDF (revert to generated)"
                       >
                         Clear
@@ -760,7 +760,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                         href={t.file_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-xs text-blue-600 hover:underline"
+                        className="text-xs text-[#301D5D] hover:underline"
                       >
                         View
                       </a>
@@ -769,7 +769,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                       type="button"
                       onClick={() => void deleteTearsheet(t.id)}
                       disabled={tsBusy}
-                      className="text-xs px-2 py-0.5 rounded border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      className="text-xs px-2 py-0.5 rounded border border-[#FF2A04]/30 text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
                       title="Delete tearsheet"
                     >
                       Delete

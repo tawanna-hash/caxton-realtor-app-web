@@ -96,12 +96,12 @@ function AdminLoginForm() {
               aria-describedby={emailError ? 'admin-email-error' : undefined}
               className={`w-full border px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none ${
                 emailError
-                  ? 'border-red-400 focus:border-red-500'
+                  ? 'border-[#FF2A04] focus:border-[#FF2A04]'
                   : 'border-gray-300 focus:border-brand-700'
               }`}
             />
             {emailError && (
-              <p id="admin-email-error" className="mt-1.5 text-xs text-red-600">
+              <p id="admin-email-error" className="mt-1.5 text-xs text-[#661102]">
                 {emailError}
               </p>
             )}
@@ -127,7 +127,7 @@ function AdminLoginForm() {
             </div>
           </div>
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 rounded-md">{error}</div>
+            <div className="text-sm text-[#661102] bg-[#FFEAE6] border border-[#FFEAE6] px-3 py-2 rounded-md">{error}</div>
           )}
           <button
             type="submit"

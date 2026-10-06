@@ -99,14 +99,14 @@ function formatTime(ts: string): string {
 
 function eventBadge(event: string): { label: string; color: string } {
   if (event === '$pageview') return { label: 'view', color: 'bg-gray-100 text-gray-700' };
-  if (event === '$exception' || event === 'client_error') return { label: 'error', color: 'bg-rose-100 text-rose-800' };
-  if (event === '$rageclick') return { label: 'RAGE', color: 'bg-rose-100 text-rose-900 font-semibold' };
-  if (event === '$autocapture') return { label: 'click', color: 'bg-sky-100 text-sky-800' };
+  if (event === '$exception' || event === 'client_error') return { label: 'error', color: 'bg-[#FFEAE6] text-[#661102]' };
+  if (event === '$rageclick') return { label: 'RAGE', color: 'bg-[#FFEAE6] text-[#661102] font-semibold' };
+  if (event === '$autocapture') return { label: 'click', color: 'bg-[#E3F7FF] text-[#285766]' };
   if (event.includes('form_') || event.includes('_signed') || event.includes('signup') || event.includes('entered')) {
-    return { label: 'form', color: 'bg-emerald-100 text-emerald-800' };
+    return { label: 'form', color: 'bg-[#E0FBE0] text-[#005A00]' };
   }
   if (event === 'cta_clicked' || event === 'share_click' || event === 'article_opened') {
-    return { label: 'click', color: 'bg-sky-100 text-sky-800' };
+    return { label: 'click', color: 'bg-[#E3F7FF] text-[#285766]' };
   }
   return { label: event.slice(0, 12), color: 'bg-gray-100 text-gray-700' };
 }
@@ -289,11 +289,11 @@ export default function ActivityClient() {
             <p className="mt-1 text-sm text-gray-600">Public app events, refreshed every 10 seconds. Admin paths are excluded.</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`inline-flex h-9 items-center gap-2 rounded border px-3 text-sm ${paused ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
+            <span className={`inline-flex h-9 items-center gap-2 rounded border px-3 text-sm ${paused ? 'border-[#FAD800]/50 bg-[#FEF8CC] text-[#645600]' : 'border-[#00E200]/30 bg-[#E0FBE0] text-[#005A00]'}`}>
               <Radio className="h-4 w-4" aria-hidden="true" />
               {paused ? 'Paused' : 'Live'}
             </span>
-            <button onClick={downloadCsv} className="inline-flex h-9 items-center gap-2 rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700">
+            <button onClick={downloadCsv} className="inline-flex h-9 items-center gap-2 rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]">
               <Download className="h-4 w-4" aria-hidden="true" /> Export CSV
             </button>
           </div>
@@ -305,10 +305,10 @@ export default function ActivityClient() {
           <Tile label="Page views" value={rollup.pageviews} />
           <Tile label="Clicks" value={rollup.clicks} />
           {rollup.rageclicks > 0 && (
-            <Tile label="Rageclicks" value={rollup.rageclicks} accent="bg-rose-100 text-rose-900" />
+            <Tile label="Rageclicks" value={rollup.rageclicks} accent="bg-[#FFEAE6] text-[#661102]" />
           )}
-          <Tile label="Form submits" value={rollup.forms} accent="bg-emerald-50" />
-          <Tile label="Errors" value={rollup.errors} accent={rollup.errors > 0 ? 'bg-rose-50 text-rose-900' : ''} />
+          <Tile label="Form submits" value={rollup.forms} accent="bg-[#E0FBE0]" />
+          <Tile label="Errors" value={rollup.errors} accent={rollup.errors > 0 ? 'bg-[#FFEAE6] text-[#661102]' : ''} />
         </section>
 
         {/* Controls row */}
@@ -319,7 +319,7 @@ export default function ActivityClient() {
                 key={b.id}
                 onClick={() => setBucket(b.id)}
                 className={`h-9 rounded border px-3 text-sm font-medium ${
-                  bucket === b.id ? 'border-orange-700 bg-orange-600 text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                  bucket === b.id ? 'border-[#42277C] bg-[#301D5D] text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 {b.label}
@@ -329,7 +329,7 @@ export default function ActivityClient() {
           <select
             value={minutes}
             onChange={(e) => setMinutes(Number(e.target.value))}
-            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
           >
             {WINDOWS.map((w) => (
               <option key={w.minutes} value={w.minutes}>{w.label}</option>
@@ -338,24 +338,24 @@ export default function ActivityClient() {
           <label className="relative min-w-[210px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
             <span className="sr-only">Filter by path</span>
-            <input value={pathFilter} onChange={(e) => { setPathFilter(e.target.value); setPage(1); }} placeholder="Filter by path" className="h-9 w-full rounded border border-gray-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500" />
+            <input value={pathFilter} onChange={(e) => { setPathFilter(e.target.value); setPage(1); }} placeholder="Filter by path" className="h-9 w-full rounded border border-gray-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]" />
           </label>
           <input
             value={cityFilter}
             onChange={(e) => setCityFilter(e.target.value)}
             placeholder="City (e.g. Grayton Beach)"
-            className="h-9 w-40 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="h-9 w-40 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
           />
           <input
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             placeholder="Search errors / text"
-            className="h-9 w-48 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="h-9 w-48 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
           />
           <button
             onClick={() => setPaused((p) => !p)}
             className={`inline-flex h-9 items-center gap-2 rounded border px-3 text-sm font-medium ${
-              paused ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              paused ? 'bg-[#FEF8CC] border-[#FAD800]/50 text-[#645600]' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
             title={paused ? 'Live updates paused' : 'Live updates running'}
           >
@@ -370,7 +370,7 @@ export default function ActivityClient() {
             {loading ? 'Loading…' : `${events.length} event${events.length === 1 ? '' : 's'}`}
             {lastFetchedAt && !loading && ` · updated ${formatTime(lastFetchedAt.toISOString())}`}
           </div>
-          {error && <div className="text-rose-600">{error}</div>}
+          {error && <div className="text-[#661102]">{error}</div>}
         </div>
 
         {/* Feed */}
@@ -387,7 +387,7 @@ export default function ActivityClient() {
             const badge = eventBadge(e.event);
             const isOpen = expanded === i;
             return (
-              <div key={`${e.timestamp}-${i}`} className="hover:bg-orange-50/40">
+              <div key={`${e.timestamp}-${i}`} className="hover:bg-[#F6F3FB]/40">
                 <button
                   type="button"
                   onClick={() => setExpanded(isOpen ? null : i)}
@@ -405,7 +405,7 @@ export default function ActivityClient() {
                     {(e.event === '$exception' || e.event === 'client_error') &&
                       (e.masked_by_browser === true || e.masked_by_browser === 'true' ||
                         (e.error_message?.trim() === 'Script error.')) && (
-                      <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                      <div className="mb-3 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-3 py-2 text-xs text-[#645600]">
                         <div className="font-medium">Browser-masked cross-origin error</div>
                         <div className="mt-1 leading-relaxed">
                           A script from a different origin threw an error without the required

@@ -125,7 +125,7 @@ export default function BulkVerifyClient() {
         {emails ? (
           <div className="text-sm text-gray-800">
             <p><strong>{emails.length.toLocaleString()}</strong> of {total.toLocaleString()} addresses not yet checked. Up to {emails.length.toLocaleString()} credits.</p>
-            {emails.length > 50000 ? <p className="text-amber-700">Lists over 50,000 are sent in the first 50,000. Run again for the rest.</p> : null}
+            {emails.length > 50000 ? <p className="text-[#645600]">Lists over 50,000 are sent in the first 50,000. Run again for the rest.</p> : null}
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="border border-gray-200 p-3">
                 <p className="font-medium">Verify in batches</p>

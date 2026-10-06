@@ -48,7 +48,7 @@ export default function EditCampaignPage() {
     }
   }
 
-  if (error) return <div className="p-6 text-red-700">{error}</div>;
+  if (error) return <div className="p-6 text-[#661102]">{error}</div>;
   if (!campaign) return <div className="p-6 text-gray-700">Loading campaign...</div>;
 
   return (
@@ -64,7 +64,7 @@ export default function EditCampaignPage() {
           type="button"
           onClick={handleDelete}
           disabled={deleting}
-          className="rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 whitespace-nowrap"
+          className="rounded-md border border-[#FF2A04]/50 bg-white px-4 py-2 text-sm font-medium text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50 whitespace-nowrap"
         >
           {deleting ? 'Deleting…' : 'Delete campaign'}
         </button>

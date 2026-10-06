@@ -228,7 +228,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Title <span className="text-red-500">*</span>
+                  Title <span className="text-[#661102]">*</span>
                 </label>
                 <input
                   ref={titleRef}
@@ -241,7 +241,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
                 />
                 <div
                   className={`text-xs mt-1 ${
-                    titleTooLong ? 'text-red-600 font-medium' : 'text-gray-500'
+                    titleTooLong ? 'text-[#661102] font-medium' : 'text-gray-500'
                   }`}
                 >
                   {titleCount}/60
@@ -250,7 +250,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Body <span className="text-red-500">*</span>
+                  Body <span className="text-[#661102]">*</span>
                 </label>
                 <textarea
                   value={body}
@@ -262,7 +262,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
                 />
                 <div
                   className={`text-xs mt-1 ${
-                    bodyTooLong ? 'text-red-600 font-medium' : 'text-gray-500'
+                    bodyTooLong ? 'text-[#661102] font-medium' : 'text-gray-500'
                   }`}
                 >
                   {bodyCount}/140
@@ -419,7 +419,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
               </div>
 
               {error && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
+                <div className="mt-4 p-3 bg-[#FFEAE6] border border-[#FF2A04]/30 rounded-md text-sm text-[#661102]">
                   {error}
                 </div>
               )}

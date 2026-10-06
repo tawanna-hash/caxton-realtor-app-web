@@ -127,7 +127,7 @@ export default function EventClickLog({ eventId, days }: { eventId: string; days
       </div>
 
       {loading && <div className="text-sm text-gray-500 mt-4">Loading click log…</div>}
-      {error && <div className="text-sm text-red-700 mt-4">{error}</div>}
+      {error && <div className="text-sm text-[#661102] mt-4">{error}</div>}
 
       {!loading && !error && data?.clicks && data.clicks.length === 0 && (
         <div className="text-sm text-gray-500 mt-4">
@@ -154,7 +154,7 @@ export default function EventClickLog({ eventId, days }: { eventId: string; days
             </thead>
             <tbody>
               {pageRows.map((c, i) => (
-                <tr key={`${c.visitor_id}-${c.occurred_at}-${i}`} className="border-b border-gray-100 last:border-0 hover:bg-orange-50/40">
+                <tr key={`${c.visitor_id}-${c.occurred_at}-${i}`} className="border-b border-gray-100 last:border-0 hover:bg-[#F6F3FB]/40">
                   <td className="py-2 pr-4 text-gray-900 whitespace-nowrap">
                     {new Date(c.occurred_at).toLocaleString()}
                   </td>

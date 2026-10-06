@@ -36,7 +36,7 @@ function publicationLabel(publication: string | null): string {
 }
 
 const CONTROL =
-  'rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500';
+  'rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-[#7059A8] focus:outline-none focus:ring-1 focus:ring-[#7059A8]';
 
 function sourceLabel(source: string | null): string {
   const value = (source ?? '').trim();
@@ -184,11 +184,11 @@ export default function DepositReportClient({
           <button
             type="button"
             onClick={() => { void printSlip(); }}
-            className="min-h-11 rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+            className="min-h-11 rounded-md bg-[#301D5D] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
           >
             Print / Save PDF
           </button>
-          <button type="button" onClick={() => { setEmailOpen((open) => !open); setEmailStatus(''); }} className="col-span-2 min-h-11 rounded-md border border-orange-600 px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-50">
+          <button type="button" onClick={() => { setEmailOpen((open) => !open); setEmailStatus(''); }} className="col-span-2 min-h-11 rounded-md border border-[#301D5D] px-4 py-2 text-sm font-semibold text-[#42277C] hover:bg-[#F6F3FB]">
             {emailOpen ? 'Cancel email' : 'Email deposit slip'}
           </button>
         </div>
@@ -200,7 +200,7 @@ export default function DepositReportClient({
             <input type="email" required value={recipient} onChange={(event) => setRecipient(event.target.value)} className={`${CONTROL} mt-1 min-h-11 w-full min-w-0`} />
           </label>
           <p className="mt-3 text-sm text-gray-600">Send the PDF for {rangeLabel}: {rows.length} checks, {formatCents(totalCents)}. Only recorded check payments are included.</p>
-          <button type="submit" disabled={emailSending} className="mt-3 min-h-11 rounded-md bg-orange-600 px-4 text-sm font-semibold text-white disabled:opacity-50">
+          <button type="submit" disabled={emailSending} className="mt-3 min-h-11 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white disabled:opacity-50">
             {emailSending ? 'Sending…' : `Send to ${recipient.trim() || 'recipient'}`}
           </button>
         </form>
@@ -221,9 +221,9 @@ export default function DepositReportClient({
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <div className="col-span-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 sm:col-span-1 print:bg-white">
-            <div className="text-xs text-emerald-800">Total deposit</div>
-            <div className="mt-0.5 text-2xl font-semibold tabular-nums text-emerald-900">{formatCents(totalCents)}</div>
+          <div className="col-span-2 rounded-md border border-[#00E200]/30 bg-[#E0FBE0] px-4 py-3 sm:col-span-1 print:bg-white">
+            <div className="text-xs text-[#005A00]">Total deposit</div>
+            <div className="mt-0.5 text-2xl font-semibold tabular-nums text-[#005A00]">{formatCents(totalCents)}</div>
           </div>
           <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 print:bg-white">
             <div className="text-xs text-gray-600">Checks</div>

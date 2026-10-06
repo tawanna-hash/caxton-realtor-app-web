@@ -408,21 +408,21 @@ return (
       {actionMsg && (
         <div className={`mb-4 px-4 py-2 rounded-md text-sm border ${
           actionMsg.kind === 'ok'
-            ? 'bg-green-50 border-green-200 text-green-800'
-            : 'bg-red-50 border-red-200 text-red-800'
+            ? 'bg-[#E0FBE0] border-[#00E200]/30 text-[#005A00]'
+            : 'bg-[#FFEAE6] border-[#FF2A04]/30 text-[#661102]'
         }`}>
           {actionMsg.text}
         </div>
       )}
       {saveError && (
-        <div className="mb-4 px-4 py-2 rounded-md text-sm border bg-red-50 border-red-200 text-red-800">
+        <div className="mb-4 px-4 py-2 rounded-md text-sm border bg-[#FFEAE6] border-[#FF2A04]/30 text-[#661102]">
           Save error: {saveError}
         </div>
       )}
 
       {loading && <div className="text-sm text-gray-500 py-8">Loading subscriber...</div>}
       {error && (
-        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-4">
+        <div className="text-sm text-[#661102] bg-[#FFEAE6] border border-[#FF2A04]/30 rounded-md p-4">
           Error: {error}
         </div>
       )}
@@ -436,7 +436,7 @@ return (
             <p className="text-sm text-gray-500 mt-1">{fmtVal(sub.email)}</p>
             <p className="text-xs text-gray-400 mt-1 font-mono">{sub.id}</p>
             {sub.status === 'inactive' && (
-              <span className="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-md bg-yellow-100 text-yellow-800 border border-yellow-200">
+              <span className="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-md bg-[#FEF8CC] text-[#645600] border border-[#FAD800]/30">
                 INACTIVE
               </span>
             )}
@@ -580,7 +580,7 @@ return (
                   disabled={!platinum || updatingPlatinum}
                   className={`min-h-11 rounded-md px-4 text-sm font-semibold disabled:opacity-50 ${
                     platinum?.active
-                      ? 'border border-red-300 bg-white text-red-700 hover:bg-red-50'
+                      ? 'border border-[#FF2A04]/50 bg-white text-[#661102] hover:bg-[#FFEAE6]'
                       : 'bg-brand-700 text-white hover:bg-brand-800'
                   }`}
                 >
@@ -664,7 +664,7 @@ return (
                       <button
                         onClick={doDeactivate}
                         disabled={deactivating}
-                        className="text-sm font-medium px-3 py-1.5 rounded-md bg-yellow-600 text-white hover:bg-yellow-700 disabled:opacity-50"
+                        className="text-sm font-medium px-3 py-1.5 rounded-md bg-[#645600] text-white hover:bg-[#645600] disabled:opacity-50"
                       >
                         {deactivating ? 'Deactivating…' : 'Confirm deactivate'}
                       </button>
@@ -689,7 +689,7 @@ return (
                   </div>
                   <button
                     onClick={() => { setDeleteModalOpen(true); setDeleteConfirmText(''); setActionMsg(null); }}
-                    className="text-sm font-medium px-3 py-1.5 rounded-md border border-[#dc2626] text-[#dc2626] hover:bg-red-50"
+                    className="text-sm font-medium px-3 py-1.5 rounded-md border border-[#dc2626] text-[#dc2626] hover:bg-[#FFEAE6]"
                   >
                     Delete…
                   </button>
@@ -731,7 +731,7 @@ return (
               <button
                 onClick={doDelete}
                 disabled={!deleteEnabled || deleting}
-                className="text-sm font-medium px-4 py-2 rounded-md bg-[#dc2626] text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                className="text-sm font-medium px-4 py-2 rounded-md bg-[#dc2626] text-white hover:bg-[#661102] disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
               >
                 {deleting ? 'Deleting…' : 'Delete subscriber'}
               </button>

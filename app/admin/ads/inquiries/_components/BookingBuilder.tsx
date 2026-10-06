@@ -164,12 +164,12 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
   // ── Success card ──────────────────────────────────────────────────────
   if (created) {
     return (
-      <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4">
-        <div className="text-sm font-semibold text-emerald-900">
+      <div className="mt-4 rounded-md border border-[#00E200]/30 bg-[#E0FBE0] p-4">
+        <div className="text-sm font-semibold text-[#005A00]">
           Booked. Agreement created
           {created.invoice?.number ? ` — invoice ${created.invoice.number}` : ''}.
         </div>
-        <div className="mt-1 text-xs text-emerald-900">
+        <div className="mt-1 text-xs text-[#005A00]">
           Status: <strong>{created.agreement.status}</strong>
           {created.agreement.amount_cents != null && (
             <>
@@ -185,13 +185,13 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
             href={`/admin/agreements?agreement=${encodeURIComponent(created.agreement.id)}`}
-            className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-emerald-700 text-white hover:bg-emerald-800"
+            className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-[#005A00] text-white hover:bg-[#005A00]"
           >
             Open in Agreements →
           </Link>
           <Link
             href="/admin/ads/orders"
-            className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"
+            className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-[#00E200]/50 bg-white text-[#005A00] hover:bg-[#E0FBE0]"
           >
             View in Ad Orders →
           </Link>
@@ -204,7 +204,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-4 rounded-md border border-blue-200 bg-blue-50/40 p-4 space-y-3"
+      className="mt-4 rounded-md border border-[#D9CFF0] bg-[#F6F3FB]/40 p-4 space-y-3"
     >
       <div className="flex items-baseline justify-between">
         <h3 className="text-sm font-semibold text-gray-900">
@@ -391,7 +391,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
       </div>
 
       {/* Preview total */}
-      <div className="flex items-baseline justify-between border-t border-blue-200 pt-2">
+      <div className="flex items-baseline justify-between border-t border-[#D9CFF0] pt-2">
         <span className="text-xs text-gray-700">Total</span>
         <span className="text-base font-semibold text-gray-900">
           ${(previewCents / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -399,7 +399,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
       </div>
 
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+        <div className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-3 py-2 text-xs text-[#661102]">
           {error}
         </div>
       )}
@@ -408,7 +408,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
         <button
           type="submit"
           disabled={submitting || !packageId || previewCents <= 0}
-          className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-orange-600 text-white hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
+          className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-[#301D5D] text-white hover:bg-[#42277C] disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
         >
           {submitting ? 'Booking…' : 'Book it'}
         </button>

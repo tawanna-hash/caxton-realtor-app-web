@@ -143,7 +143,7 @@ function PubTabs({ active, onChange }: { active: PubTab['id']; onChange: (id: Pu
             className={
               'inline-flex items-center gap-2 -mb-px px-3 py-2 text-sm border-b-2 transition-colors ' +
               (isActive
-                ? 'border-orange-600 text-orange-700 font-semibold'
+                ? 'border-[#301D5D] text-[#42277C] font-semibold'
                 : soon
                   ? 'border-transparent text-gray-400 cursor-not-allowed'
                   : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300')
@@ -152,7 +152,7 @@ function PubTabs({ active, onChange }: { active: PubTab['id']; onChange: (id: Pu
           >
             <span>{t.label}</span>
             {soon && (
-              <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-amber-100 text-amber-800">
+              <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-[#FEF8CC] text-[#645600]">
                 Launching Soon
               </span>
             )}
@@ -185,7 +185,7 @@ function AudienceSection({ activePub }: { activePub: PubTab }) {
           </div>
         </div>
       ) : (
-        <div className="rounded-md bg-amber-50 ring-1 ring-amber-200 p-5 text-sm text-amber-900">
+        <div className="rounded-md bg-[#FEF8CC] ring-1 ring-[#FAD800]/30 p-5 text-sm text-[#645600]">
           Audience stats for {activePub.label} will be published closer to launch.
         </div>
       )}
@@ -223,7 +223,7 @@ function ExpansionSection() {
             <div className="text-base font-semibold text-gray-900">{p.name}</div>
             <div className="text-xs text-gray-700 mt-1">{p.channels}</div>
             <div className="mt-auto pt-3">
-              <span className={'inline-block rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ' + (p.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')}>
+              <span className={'inline-block rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ' + (p.status === 'active' ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#FEF8CC] text-[#645600]')}>
                 {p.status === 'active' ? 'Active' : 'Launching Soon'}
               </span>
             </div>
@@ -319,14 +319,14 @@ function PackagesSection() {
 
 function PackageCard({ pkg }: { pkg: Package }) {
   return (
-    <div className={'rounded-md ring-1 p-4 ' + (pkg.premium ? 'bg-brand-700 text-white ring-brand-700' : pkg.popular ? 'bg-orange-50 ring-orange-200' : 'bg-gray-50 ring-gray-200')}>
+    <div className={'rounded-md ring-1 p-4 ' + (pkg.premium ? 'bg-brand-700 text-white ring-brand-700' : pkg.popular ? 'bg-[#F6F3FB] ring-[#D9CFF0]' : 'bg-gray-50 ring-gray-200')}>
       <div className="flex items-start justify-between">
         <div>
           <div className={'text-xs font-semibold uppercase tracking-wider ' + (pkg.premium ? 'text-white/80' : 'text-gray-700')}>{pkg.tagline}</div>
           <div className={'text-lg font-semibold mt-1 ' + (pkg.premium ? 'text-white' : 'text-gray-900')}>{pkg.name}</div>
         </div>
         {pkg.popular && !pkg.premium && (
-          <span className="inline-block rounded bg-orange-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-orange-900">Most Popular</span>
+          <span className="inline-block rounded bg-[#D9CFF0] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#1B1726]">Most Popular</span>
         )}
       </div>
       <ul className={'mt-3 space-y-1 text-sm ' + (pkg.premium ? 'text-white/90' : 'text-gray-700')}>
@@ -363,13 +363,13 @@ function DigitalSlotsSection({
         </div>
         <Link
           href={mode === 'public' ? '/advertise/placements' : '/admin/ads/placements'}
-          className="text-sm text-blue-700 hover:underline"
+          className="text-sm text-[#42277C] hover:underline"
         >
           {mode === 'public' ? 'View placement guide' : 'View wireframes'} {'\u2192'}
         </Link>
       </div>
       {slots.length === 0 ? (
-        <div className="mt-4 rounded-md bg-amber-50 ring-1 ring-amber-200 p-4 text-sm text-amber-900">No digital placements are configured for {activePub.label} yet.</div>
+        <div className="mt-4 rounded-md bg-[#FEF8CC] ring-1 ring-[#FAD800]/30 p-4 text-sm text-[#645600]">No digital placements are configured for {activePub.label} yet.</div>
       ) : (
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -392,7 +392,7 @@ function DigitalSlotsSection({
                   </td>
                   <td className="px-3 py-2 align-top text-gray-900">{ZONE_LABEL[s.zone]}</td>
                   <td className="px-3 py-2 align-top">
-                    <span className={'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ' + (s.tier === 'premium' ? 'bg-amber-50 text-amber-900 ring-amber-200' : 'bg-gray-50 text-gray-700 ring-gray-200')}>
+                    <span className={'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ' + (s.tier === 'premium' ? 'bg-[#FEF8CC] text-[#645600] ring-[#FAD800]/30' : 'bg-gray-50 text-gray-700 ring-gray-200')}>
                       {s.tier}
                     </span>
                   </td>
@@ -466,7 +466,7 @@ function EblastsSection({ activePub }: { activePub: PubTab }) {
       </div>
 
       {availableForActive.length === 0 ? (
-        <div className="rounded-md bg-amber-50 ring-1 ring-amber-200 p-4 text-sm text-amber-900">No e-blast packages are available on {activePub.label} yet.</div>
+        <div className="rounded-md bg-[#FEF8CC] ring-1 ring-[#FAD800]/30 p-4 text-sm text-[#645600]">No e-blast packages are available on {activePub.label} yet.</div>
       ) : (
         <div className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-4">
           <div className="text-base font-semibold text-gray-900 mb-3">{activePub.label}</div>

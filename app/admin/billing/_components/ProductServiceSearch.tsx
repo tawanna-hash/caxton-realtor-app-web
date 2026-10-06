@@ -80,7 +80,7 @@ export function ProductServiceSearch({
       {open && (
         <div id={listboxId} role="listbox" className="absolute left-0 right-0 top-full z-[70] mt-1 max-h-64 overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-xl">
           {loading && <div className="px-3 py-3 text-sm text-gray-500">Loading products and services…</div>}
-          {!loading && loadError && <div className="px-3 py-3 text-sm text-red-600">{loadError}</div>}
+          {!loading && loadError && <div className="px-3 py-3 text-sm text-[#661102]">{loadError}</div>}
           {!loading && !loadError && matches.length === 0 && (
             <div className="px-3 py-3 text-sm text-gray-500">No matching product or service.</div>
           )}

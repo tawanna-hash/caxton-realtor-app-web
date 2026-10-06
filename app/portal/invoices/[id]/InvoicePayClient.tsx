@@ -158,7 +158,7 @@ export default function InvoicePayClient({
   return (
     <div className="space-y-6">
       {justCanceled && !alreadyPaid && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-lg border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 text-sm text-[#645600]">
           Payment was canceled. You can try again below.
         </div>
       )}
@@ -270,7 +270,7 @@ export default function InvoicePayClient({
       </article>
 
       {alreadyPaid ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 text-center text-emerald-800 print:hidden">
+        <div className="rounded-lg border border-[#00E200]/30 bg-[#E0FBE0] px-4 py-4 text-center text-[#005A00] print:hidden">
           <div className="text-lg font-semibold">Thank you — this invoice is paid.</div>
           {invoice.paid_at && <div className="mt-1 text-sm">Paid on {fmtDate(invoice.paid_at)}</div>}
         </div>
@@ -281,7 +281,7 @@ export default function InvoicePayClient({
       ) : (
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm print:hidden">
           {error && (
-            <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <div className="mb-4 rounded-lg border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">
               {error}
             </div>
           )}

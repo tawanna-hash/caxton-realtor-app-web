@@ -608,7 +608,7 @@ function SubscribeForm({
                   htmlFor={`${formId}-state`}
                   className="block text-sm font-medium text-gray-900 mb-1"
                 >
-                  State <span className="text-red-600">*</span>
+                  State <span className="text-[#661102]">*</span>
                 </label>
                 <select
                   id={`${formId}-state`}
@@ -698,7 +698,7 @@ function SubscribeForm({
           {errorMessage && (
             <div
               role="alert"
-              className="border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-900"
+              className="border-l-4 border-[#661102] bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]"
             >
               {errorMessage}
             </div>
@@ -779,7 +779,7 @@ function FormField({
         htmlFor={id}
         className="block text-sm font-medium text-gray-900 mb-1"
       >
-        {label} {required && <span className="text-red-600">*</span>}
+        {label} {required && <span className="text-[#661102]">*</span>}
         {suffix && (
           <span className="text-gray-500 font-normal ml-2">{suffix}</span>
         )}

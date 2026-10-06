@@ -650,7 +650,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
           </div>
           <div className="flex items-center gap-3">
             {restoredDraft && (
-              <span className="text-xs text-emerald-700">Draft restored</span>
+              <span className="text-xs text-[#005A00]">Draft restored</span>
             )}
             <button
               type="button"
@@ -851,7 +851,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                   </div>
                   {originalMessage && (
                     <div
-                      className="mt-2 flex items-center justify-between gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900"
+                      className="mt-2 flex items-center justify-between gap-3 rounded-md border border-[#00E200]/30 bg-[#E0FBE0] px-3 py-2 text-xs text-[#005A00]"
                       role="status"
                     >
                       <span>Rewrite applied to this draft.</span>
@@ -859,7 +859,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                         type="button"
                         data-testid="crm-rewrite-undo"
                         onClick={undoRewrite}
-                        className="shrink-0 font-semibold underline decoration-emerald-400 underline-offset-2 hover:text-emerald-700"
+                        className="shrink-0 font-semibold underline decoration-[#00E200] underline-offset-2 hover:text-[#005A00]"
                       >
                         Undo
                       </button>
@@ -932,7 +932,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                       </div>
 
                       {rewriteError && (
-                        <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+                        <div className="mt-3 rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-3 py-2 text-xs text-[#661102]" role="alert">
                           {rewriteError}
                         </div>
                       )}
@@ -1070,7 +1070,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                       <a href={a.url} target="_blank" rel="noreferrer" className="text-purple-700 hover:underline">{a.filename}</a>
                       {a.size ? <span className="ml-2 text-gray-500">{(a.size / 1024).toFixed(0)} KB</span> : null}
                     </div>
-                    <button type="button" onClick={() => removeAttachment(i)} className="text-red-600 hover:underline">remove</button>
+                    <button type="button" onClick={() => removeAttachment(i)} className="text-[#661102] hover:underline">remove</button>
                   </div>
                 ))}
                 <div className="flex items-center gap-2">
@@ -1190,7 +1190,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
             </section>
 
             {submitErr && (
-              <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              <div className="mb-4 rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">
                 {submitErr}
               </div>
             )}
@@ -1205,9 +1205,9 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
               <div className="mt-0.5 font-serif text-3xl text-gray-900">
                 {previewLoading && selectedRecipientIds === null ? '…' : recipientCount}
               </div>
-              {previewErr && <div className="mt-1 text-xs text-red-600">{previewErr}</div>}
+              {previewErr && <div className="mt-1 text-xs text-[#661102]">{previewErr}</div>}
               {!previewErr && serverCount != null && serverCount !== localAudience.length && (
-                <div className="mt-1 text-xs text-amber-700">
+                <div className="mt-1 text-xs text-[#645600]">
                   server: {serverCount} · local rows shown: {localAudience.length}
                 </div>
               )}

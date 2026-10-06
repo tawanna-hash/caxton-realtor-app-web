@@ -426,7 +426,7 @@ export default function AdminAnalyticsPage() {
               value={publication}
               onChange={onPublicationChange}
               aria-busy={loading}
-              className={`h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 ${loading ? 'opacity-60' : ''}`}
+              className={`h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8] ${loading ? 'opacity-60' : ''}`}
             >
               {PUBLICATION_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
@@ -438,7 +438,7 @@ export default function AdminAnalyticsPage() {
               value={timeframe}
               onChange={onTimeframeChange}
               aria-busy={loading}
-              className={`h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 ${loading ? 'opacity-60' : ''}`}
+              className={`h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8] ${loading ? 'opacity-60' : ''}`}
             >
               {TIMEFRAME_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
@@ -458,7 +458,7 @@ export default function AdminAnalyticsPage() {
 
         {/* Data freshness banner */}
         {report && !error ? (
-          <div className="rounded-md px-4 py-2.5 flex items-center gap-3 text-sm border border-emerald-300 bg-emerald-50 text-emerald-900">
+          <div className="rounded-md px-4 py-2.5 flex items-center gap-3 text-sm border border-[#00E200]/50 bg-[#E0FBE0] text-[#005A00]">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <polyline points="20 6 9 17 4 12" />
             </svg>
@@ -470,7 +470,7 @@ export default function AdminAnalyticsPage() {
         ) : null}
 
         {error ? (
-          <div className="rounded-md px-4 py-2.5 flex items-start gap-3 text-sm border border-red-400 bg-red-50 text-red-900">
+          <div className="rounded-md px-4 py-2.5 flex items-start gap-3 text-sm border border-[#FF2A04] bg-[#FFEAE6] text-[#661102]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 mt-0.5">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
@@ -483,7 +483,7 @@ export default function AdminAnalyticsPage() {
         ) : null}
 
         {report && report.warnings.length > 0 ? (
-          <div className="rounded-md px-4 py-2.5 flex items-start gap-3 text-sm border border-amber-300 bg-amber-50 text-amber-900">
+          <div className="rounded-md px-4 py-2.5 flex items-start gap-3 text-sm border border-[#FAD800]/50 bg-[#FEF8CC] text-[#645600]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 mt-0.5">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" />
@@ -514,9 +514,9 @@ export default function AdminAnalyticsPage() {
             const trend: Trend = item?.trend ?? 'flat';
             const path = SPARKLINE_PATHS[trend];
             const changeColor = item?.change.startsWith('+')
-              ? 'text-emerald-600'
+              ? 'text-[#005A00]'
               : item?.change.startsWith('-')
-                ? 'text-red-600'
+                ? 'text-[#661102]'
                 : 'text-gray-500';
 
             return (
@@ -527,8 +527,8 @@ export default function AdminAnalyticsPage() {
                 disabled={!item}
                 className={`min-w-0 border-r border-gray-200 bg-white px-4 py-2 text-left transition last:border-r-0 disabled:cursor-default disabled:opacity-60 ${
                   isActive
-                    ? 'bg-orange-50 ring-1 ring-inset ring-orange-500'
-                    : 'hover:bg-orange-50/40'
+                    ? 'bg-[#F6F3FB] ring-1 ring-inset ring-[#7059A8]'
+                    : 'hover:bg-[#F6F3FB]/40'
                 }`}
               >
                 {loading || !item ? (
@@ -583,7 +583,7 @@ export default function AdminAnalyticsPage() {
                           <tr
                             key={row.url}
                             onClick={() => togglePage(row.url)}
-                            className={`cursor-pointer transition ${isActive ? 'bg-orange-50 text-orange-900' : 'hover:bg-orange-50/40'}`}
+                            className={`cursor-pointer transition ${isActive ? 'bg-[#F6F3FB] text-[#1B1726]' : 'hover:bg-[#F6F3FB]/40'}`}
                           >
                             <td className="py-2.5 pl-2 font-mono text-xs truncate max-w-[200px]" title={row.url}>{row.url}</td>
                             <td className="py-2.5 text-right font-mono">{row.views}</td>
@@ -630,7 +630,7 @@ export default function AdminAnalyticsPage() {
                           <tr
                             key={row.name}
                             onClick={() => toggleEvent(row.name)}
-                            className={`cursor-pointer transition ${isActive ? 'bg-orange-50 text-orange-900' : 'hover:bg-orange-50/40'}`}
+                            className={`cursor-pointer transition ${isActive ? 'bg-[#F6F3FB] text-[#1B1726]' : 'hover:bg-[#F6F3FB]/40'}`}
                           >
                             <td className="py-2.5 pl-2 font-mono text-xs">{row.name}</td>
                             <td className="py-2.5 text-right font-mono">{row.count}</td>
@@ -685,7 +685,7 @@ export default function AdminAnalyticsPage() {
                         <tr
                           key={row.source}
                           onClick={() => toggleSource(row.source)}
-                          className={`cursor-pointer transition ${isActive ? 'bg-orange-50 text-orange-900' : 'hover:bg-orange-50/40'}`}
+                          className={`cursor-pointer transition ${isActive ? 'bg-[#F6F3FB] text-[#1B1726]' : 'hover:bg-[#F6F3FB]/40'}`}
                         >
                           <td className="py-2.5 pl-2 font-mono text-xs">{row.source}</td>
                           <td className="py-2.5 text-right font-mono">{row.visits}</td>
@@ -716,7 +716,7 @@ export default function AdminAnalyticsPage() {
             <button
               type="button"
               onClick={resetFilters}
-              className="text-xs text-gray-500 hover:text-orange-700 underline"
+              className="text-xs text-gray-500 hover:text-[#42277C] underline"
             >
               Reset funnel filters
             </button>
@@ -732,7 +732,7 @@ export default function AdminAnalyticsPage() {
                   onClick={() => toggleConversion(evt)}
                   className={`rounded-full border px-3 py-1.5 text-xs font-mono transition ${
                     isOn
-                      ? 'border-orange-300 bg-orange-50 text-orange-900'
+                      ? 'border-[#B9ADD6] bg-[#F6F3FB] text-[#1B1726]'
                       : 'bg-white text-gray-500 border-gray-200'
                   }`}
                 >
@@ -748,7 +748,7 @@ export default function AdminAnalyticsPage() {
         <div className="rounded-md border border-gray-200 bg-white p-5 flex flex-col xl:sticky xl:top-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-orange-600">Report Compiler</h2>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#301D5D]">Report Compiler</h2>
               <p className="text-[10px] text-gray-500 mt-0.5">
                 Live prompt with real data &mdash; paste into Claude for the client deliverable
               </p>
@@ -757,7 +757,7 @@ export default function AdminAnalyticsPage() {
               type="button"
               onClick={handleCopy}
               className={`font-medium px-3 py-1.5 rounded-md text-xs transition active:scale-95 text-white ${
-                copied ? 'bg-emerald-600' : 'bg-orange-600 hover:bg-orange-700'
+                copied ? 'bg-[#005A00]' : 'bg-[#301D5D] hover:bg-[#42277C]'
               }`}
             >
               {copied ? '✓ Copied' : 'Copy'}
@@ -766,7 +766,7 @@ export default function AdminAnalyticsPage() {
           <textarea
             readOnly
             value={promptText}
-            className="h-[560px] w-full resize-none rounded border border-gray-200 bg-gray-50 p-3 font-mono text-xs leading-relaxed text-gray-700 outline-none focus:border-orange-500 select-all"
+            className="h-[560px] w-full resize-none rounded border border-gray-200 bg-gray-50 p-3 font-mono text-xs leading-relaxed text-gray-700 outline-none focus:border-[#7059A8] select-all"
           />
           <p className="text-[10px] text-gray-400 mt-3">
             Every clickable element + filter on this page updates this prompt with real PostHog data.
@@ -799,7 +799,7 @@ function Card({ title, subtitle, hint, titleBadge, headerRight, children }: Card
           <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 flex-wrap">
             {title}
             {titleBadge ? (
-              <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase rounded-md bg-amber-100 text-amber-800">
+              <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase rounded-md bg-[#FEF8CC] text-[#645600]">
                 {titleBadge}
               </span>
             ) : null}
@@ -809,7 +809,7 @@ function Card({ title, subtitle, hint, titleBadge, headerRight, children }: Card
         {headerRight ? (
           <div className="self-start sm:self-auto">{headerRight}</div>
         ) : hint ? (
-          <span className="self-start text-xs font-medium text-orange-700 sm:self-auto">
+          <span className="self-start text-xs font-medium text-[#42277C] sm:self-auto">
             {hint}
           </span>
         ) : null}
@@ -835,7 +835,7 @@ function PageRowCard({ row, isActive, onSelect }: { row: PageRow; isActive: bool
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full space-y-1.5 p-3 text-left transition ${isActive ? 'bg-orange-50 text-orange-900' : 'hover:bg-orange-50/40'}`}
+      className={`w-full space-y-1.5 p-3 text-left transition ${isActive ? 'bg-[#F6F3FB] text-[#1B1726]' : 'hover:bg-[#F6F3FB]/40'}`}
     >
       <div className="truncate font-mono text-xs" title={row.url}>{row.url}</div>
       <div className="flex items-center justify-between gap-3 text-xs text-gray-500">
@@ -851,7 +851,7 @@ function EventRowCard({ row, isActive, onSelect }: { row: EventRow; isActive: bo
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full space-y-1.5 p-3 text-left transition ${isActive ? 'bg-orange-50 text-orange-900' : 'hover:bg-orange-50/40'}`}
+      className={`w-full space-y-1.5 p-3 text-left transition ${isActive ? 'bg-[#F6F3FB] text-[#1B1726]' : 'hover:bg-[#F6F3FB]/40'}`}
     >
       <div className="truncate font-mono text-xs">{row.name}</div>
       <div className="flex items-center justify-between gap-3 text-xs text-gray-500">
@@ -867,7 +867,7 @@ function SourceRowCard({ row, isActive, onSelect }: { row: SourceRow; isActive: 
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full space-y-1.5 p-3 text-left transition ${isActive ? 'bg-orange-50 text-orange-900' : 'hover:bg-orange-50/40'}`}
+      className={`w-full space-y-1.5 p-3 text-left transition ${isActive ? 'bg-[#F6F3FB] text-[#1B1726]' : 'hover:bg-[#F6F3FB]/40'}`}
     >
       <div className="truncate font-mono text-xs">{row.source}</div>
       <div className="grid grid-cols-3 gap-2 text-xs text-gray-500">

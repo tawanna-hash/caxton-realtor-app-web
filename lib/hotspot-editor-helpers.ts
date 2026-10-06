@@ -69,15 +69,15 @@ export const TYPE_ICONS: Record<HotspotType, string> = {
 
 /** Color tint for each type. Matches HotspotLayer.tsx so the editor and reader agree. */
 export const TYPE_COLORS: Record<HotspotType, { fill: string; stroke: string; text: string }> = {
-  link:   { fill: 'rgba(59, 130, 246, 0.20)', stroke: 'rgb(59, 130, 246)', text: 'text-blue-700' },
-  video:  { fill: 'rgba(239, 68, 68, 0.20)',  stroke: 'rgb(239, 68, 68)',  text: 'text-red-700' },
+  link:   { fill: 'rgba(59, 130, 246, 0.20)', stroke: 'rgb(59, 130, 246)', text: 'text-[#42277C]' },
+  video:  { fill: 'rgba(239, 68, 68, 0.20)',  stroke: 'rgb(239, 68, 68)',  text: 'text-[#661102]' },
   image:  { fill: 'rgba(168, 85, 247, 0.20)', stroke: 'rgb(168, 85, 247)', text: 'text-purple-700' },
-  phone:  { fill: 'rgba(34, 197, 94, 0.20)',  stroke: 'rgb(34, 197, 94)',  text: 'text-green-700' },
-  email:  { fill: 'rgba(245, 158, 11, 0.20)', stroke: 'rgb(245, 158, 11)', text: 'text-amber-700' },
-  form:   { fill: 'rgba(20, 184, 166, 0.20)', stroke: 'rgb(20, 184, 166)', text: 'text-teal-700' },
-  mls:    { fill: 'rgba(99, 102, 241, 0.20)', stroke: 'rgb(99, 102, 241)', text: 'text-indigo-700' },
-  audio:  { fill: 'rgba(236, 72, 153, 0.20)', stroke: 'rgb(236, 72, 153)', text: 'text-pink-700' },
-  reveal: { fill: 'rgba(251, 146, 60, 0.20)', stroke: 'rgb(251, 146, 60)', text: 'text-orange-700' },
+  phone:  { fill: 'rgba(34, 197, 94, 0.20)',  stroke: 'rgb(34, 197, 94)',  text: 'text-[#005A00]' },
+  email:  { fill: 'rgba(245, 158, 11, 0.20)', stroke: 'rgb(245, 158, 11)', text: 'text-[#645600]' },
+  form:   { fill: 'rgba(20, 184, 166, 0.20)', stroke: 'rgb(20, 184, 166)', text: 'text-[#005A00]' },
+  mls:    { fill: 'rgba(99, 102, 241, 0.20)', stroke: 'rgb(99, 102, 241)', text: 'text-[#42277C]' },
+  audio:  { fill: 'rgba(236, 72, 153, 0.20)', stroke: 'rgb(236, 72, 153)', text: 'text-[#42277C]' },
+  reveal: { fill: 'rgba(251, 146, 60, 0.20)', stroke: 'rgb(251, 146, 60)', text: 'text-[#42277C]' },
 };
 
 /** Clamp a rectangle to fit inside [0,1] in both dimensions. */

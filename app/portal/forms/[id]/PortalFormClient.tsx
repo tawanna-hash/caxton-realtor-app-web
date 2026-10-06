@@ -62,11 +62,11 @@ export default function PortalFormClient({
 
   if (done) {
     return (
-      <div className="rounded-md border border-emerald-200 bg-emerald-50 p-6">
-        <div className="font-serif text-xl text-emerald-900">
+      <div className="rounded-md border border-[#00E200]/30 bg-[#E0FBE0] p-6">
+        <div className="font-serif text-xl text-[#005A00]">
           Thank you — your response is recorded.
         </div>
-        <p className="text-emerald-800 text-sm mt-1">You can close this tab.</p>
+        <p className="text-[#005A00] text-sm mt-1">You can close this tab.</p>
       </div>
     );
   }
@@ -77,7 +77,7 @@ export default function PortalFormClient({
         <label key={field.key} className="block">
           <div className="text-sm font-medium text-gray-700 mb-1">
             {field.label}
-            {field.required && <span className="text-red-600"> *</span>}
+            {field.required && <span className="text-[#661102]"> *</span>}
           </div>
           {field.type === 'textarea' ? (
             <textarea
@@ -109,7 +109,7 @@ export default function PortalFormClient({
       ))}
 
       {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-sm">
+        <div className="rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] px-3 py-2 text-sm">
           {error}
         </div>
       )}

@@ -147,7 +147,7 @@ export default function GiveawayDetailPage() {
   if (!giveaway) {
     return (
       <div className="max-w-5xl mx-auto px-6 py-12">
-        <div className="text-sm text-red-600">{error || 'Giveaway not found'}</div>
+        <div className="text-sm text-[#661102]">{error || 'Giveaway not found'}</div>
       </div>
     );
   }
@@ -183,14 +183,14 @@ export default function GiveawayDetailPage() {
           {canDelete && (
             <button
               onClick={handleDelete}
-              className="text-xs uppercase tracking-wider text-red-600 hover:text-red-700 px-3 py-2 rounded-md"
+              className="text-xs uppercase tracking-wider text-[#661102] hover:text-[#661102] px-3 py-2 rounded-md"
             >
               Delete Draft
             </button>
           )}
           {winnerName ? (
-            <div className="text-sm bg-blue-50 border border-blue-200 px-4 py-2 rounded-md">
-              <span className="text-blue-700 text-xs uppercase tracking-wider">Winner:</span>{' '}
+            <div className="text-sm bg-[#F6F3FB] border border-[#D9CFF0] px-4 py-2 rounded-md">
+              <span className="text-[#42277C] text-xs uppercase tracking-wider">Winner:</span>{' '}
               <span className="font-medium text-brand-700">{winnerName}</span>
             </div>
           ) : (
@@ -207,7 +207,7 @@ export default function GiveawayDetailPage() {
       </div>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3 rounded-md">{error}</div>
+        <div className="text-sm text-[#661102] bg-[#FFEAE6] border border-[#FFEAE6] px-4 py-3 rounded-md">{error}</div>
       )}
 
       <WinnersSection giveawayId={id} endsAtPassed={endsAtPassed} onChange={loadGiveaway} />
@@ -325,7 +325,7 @@ function FieldRow({
   return (
     <div>
       <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">
-        {label} {required && <span className="text-red-500">*</span>}
+        {label} {required && <span className="text-[#661102]">*</span>}
       </label>
       {children}
     </div>
@@ -408,7 +408,7 @@ function RulesSection({
       </div>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 mb-4 rounded-md">{error}</div>
+        <div className="text-sm text-[#661102] bg-[#FFEAE6] border border-[#FFEAE6] px-3 py-2 mb-4 rounded-md">{error}</div>
       )}
 
       {rules.length === 0 && !adding && (
@@ -438,16 +438,16 @@ function RulesSection({
               <div className="flex items-center gap-3 flex-shrink-0">
                 <span className="text-xs text-gray-500">{tix} ticket{tix === 1 ? '' : 's'}</span>
                 {deadline && (
-                  <span className="text-[10px] uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-100 px-2 py-0.5 rounded-md">
+                  <span className="text-[10px] uppercase tracking-wider bg-[#F6F3FB] text-[#42277C] border border-[#EFEAF8] px-2 py-0.5 rounded-md">
                     Until {new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 )}
                 {isRequired && (
-                  <span className="text-[10px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-100 px-2 py-0.5 rounded-md">
+                  <span className="text-[10px] uppercase tracking-wider bg-[#FFEAE6] text-[#661102] border border-[#FFEAE6] px-2 py-0.5 rounded-md">
                     Required
                   </span>
                 )}
-                <button onClick={() => handleDelete(ruleId)} className="text-xs text-red-600 hover:text-red-700">
+                <button onClick={() => handleDelete(ruleId)} className="text-xs text-[#661102] hover:text-[#661102]">
                   Remove
                 </button>
               </div>
@@ -670,12 +670,12 @@ function EntriesSection({
           </button>
         </div>
         {addMsg && (
-          <p className="text-xs text-green-700 bg-green-50 border border-green-100 px-3 py-2 rounded-md">{addMsg}</p>
+          <p className="text-xs text-[#005A00] bg-[#E0FBE0] border border-[#E0FBE0] px-3 py-2 rounded-md">{addMsg}</p>
         )}
       </form>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 mb-4 rounded-md">{error}</div>
+        <div className="text-sm text-[#661102] bg-[#FFEAE6] border border-[#FFEAE6] px-3 py-2 mb-4 rounded-md">{error}</div>
       )}
 
       {loading && <p className="text-sm text-gray-500">Loading entries...</p>}
@@ -704,7 +704,7 @@ function EntriesSection({
                     <span><strong className="text-brand-700">{tickets}</strong> ticket{tickets === 1 ? '' : 's'}</span>
                     <button
                       onClick={() => handleDelete(rid, name)}
-                      className="text-red-600 hover:text-red-700 font-medium"
+                      className="text-[#661102] hover:text-[#661102] font-medium"
                     >
                       Remove
                     </button>

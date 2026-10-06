@@ -207,7 +207,7 @@ export default function FastEmailRealtorsClient() {
         <button
           disabled={busy !== null}
           onClick={() => act(row.id, 'reject')}
-          className="rounded-md border border-red-300 px-2.5 py-1 text-xs text-red-700 disabled:opacity-50"
+          className="rounded-md border border-[#FF2A04]/50 px-2.5 py-1 text-xs text-[#661102] disabled:opacity-50"
         >
           Reject
         </button>
@@ -246,7 +246,7 @@ export default function FastEmailRealtorsClient() {
       </section>
 
       {notice && (
-        <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        <div className="rounded-md border border-[#D9CFF0] bg-[#F6F3FB] px-4 py-3 text-sm text-[#1B1726]">
           {notice}
         </div>
       )}
@@ -279,7 +279,7 @@ export default function FastEmailRealtorsClient() {
           <button
             onClick={deleteSelected}
             disabled={busy !== null}
-            className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 disabled:opacity-50"
+            className="rounded-md border border-[#FF2A04]/50 px-4 py-2 text-sm font-medium text-[#661102] disabled:opacity-50"
           >
             Delete selected ({selected.size})
           </button>
@@ -330,7 +330,7 @@ export default function FastEmailRealtorsClient() {
                     <dt className="text-gray-500">Email</dt>
                     <dd className="text-gray-700 break-all">
                       {row.email ? (
-                        <a className="text-blue-700 hover:underline" href={`mailto:${row.email}`}>
+                        <a className="text-[#42277C] hover:underline" href={`mailto:${row.email}`}>
                           {row.email}
                         </a>
                       ) : (
@@ -347,7 +347,7 @@ export default function FastEmailRealtorsClient() {
                     <dd className="text-gray-700 break-all">
                       {row.website ? (
                         <a
-                          className="text-blue-700 hover:underline"
+                          className="text-[#42277C] hover:underline"
                           href={websiteHref(row.website)}
                           target="_blank"
                           rel="noreferrer"
@@ -423,7 +423,7 @@ export default function FastEmailRealtorsClient() {
                   <td className="px-3 py-3">
                     {row.email && (
                       <a
-                        className="block text-blue-700 hover:underline"
+                        className="block text-[#42277C] hover:underline"
                         href={`mailto:${row.email}`}
                       >
                         {row.email}
@@ -434,7 +434,7 @@ export default function FastEmailRealtorsClient() {
                   <td className="px-3 py-3">
                     {row.website ? (
                       <a
-                        className="block max-w-48 truncate text-blue-700 hover:underline"
+                        className="block max-w-48 truncate text-[#42277C] hover:underline"
                         href={websiteHref(row.website)}
                         target="_blank"
                         rel="noreferrer"

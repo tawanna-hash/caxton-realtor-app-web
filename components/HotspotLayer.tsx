@@ -151,7 +151,7 @@ export default function HotspotLayer({
               href={cfg.url}
               target={!preview && cfg.open_in === 'same_tab' ? '_self' : '_blank'}
               rel="noopener noreferrer"
-              className={`${baseClass} hover:bg-blue-400/30 focus:bg-blue-400/40`}
+              className={`${baseClass} hover:bg-[#7059A8]/30 focus:bg-[#7059A8]/40`}
               style={style}
               aria-label={ariaLabel}
               onPointerDown={() => {
@@ -174,7 +174,7 @@ export default function HotspotLayer({
               href={h.config.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`${baseClass} hover:bg-indigo-400/30 focus:bg-indigo-400/40`}
+              className={`${baseClass} hover:bg-[#7059A8]/30 focus:bg-[#7059A8]/40`}
               style={style}
               aria-label={ariaLabel}
               onPointerDown={() => recordClick(h.id)}
@@ -187,7 +187,7 @@ export default function HotspotLayer({
             <a
               key={h.id}
               href={`tel:${h.config.number}`}
-              className={`${baseClass} hover:bg-green-400/30 focus:bg-green-400/40`}
+              className={`${baseClass} hover:bg-[#00E200]/30 focus:bg-[#00E200]/40`}
               style={style}
               aria-label={ariaLabel}
               onPointerDown={() => recordClick(h.id)}
@@ -229,7 +229,7 @@ export default function HotspotLayer({
             <a
               key={h.id}
               href={href}
-              className={`${baseClass} hover:bg-amber-400/30 focus:bg-amber-400/40`}
+              className={`${baseClass} hover:bg-[#FAD800]/30 focus:bg-[#FAD800]/40`}
               style={style}
               aria-label={ariaLabel}
               onPointerDown={() => recordClick(h.id)}

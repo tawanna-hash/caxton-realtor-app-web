@@ -124,9 +124,9 @@ export default function CommunityGuideContent() {
         {/* Browser frame */}
         <div className="rounded-lg border border-gray-300 shadow-sm overflow-hidden bg-white">
           <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 border-b border-gray-200">
-            <span className="h-3 w-3 rounded-full bg-red-400" />
-            <span className="h-3 w-3 rounded-full bg-yellow-400" />
-            <span className="h-3 w-3 rounded-full bg-green-400" />
+            <span className="h-3 w-3 rounded-full bg-[#FF2A04]" />
+            <span className="h-3 w-3 rounded-full bg-[#FAD800]" />
+            <span className="h-3 w-3 rounded-full bg-[#00E200]" />
             <span className="ml-3 text-xs text-gray-500 font-mono truncate">
               realtynewsnow.app/communities/6
             </span>
@@ -189,14 +189,14 @@ export default function CommunityGuideContent() {
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
                           {p.isModel && (
-                            <span className="absolute left-2 top-2 rounded-full bg-orange-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+                            <span className="absolute left-2 top-2 rounded-full bg-[#301D5D] px-2 py-0.5 text-[10px] font-semibold text-white">
                               Model Home
                             </span>
                           )}
                         </div>
                         <div className="p-3">
                           <p className="text-sm font-semibold text-gray-900">{p.name}</p>
-                          <p className="mt-0.5 text-sm font-medium text-orange-600">{p.priceDisplay}</p>
+                          <p className="mt-0.5 text-sm font-medium text-[#301D5D]">{p.priceDisplay}</p>
                           <p className="mt-1 text-xs text-gray-600">
                             {[`${p.stories} stories`, `${p.beds} bed`, `${p.baths} bath`, `${p.sqftDisplay} sq.ft.`].join(' · ')}
                           </p>
@@ -214,7 +214,7 @@ export default function CommunityGuideContent() {
                   <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm text-gray-700">
                     {EXAMPLE.amenities.map((a) => (
                       <li key={a} className="flex items-center gap-2">
-                        <span className="text-orange-600">•</span>
+                        <span className="text-[#301D5D]">•</span>
                         {a}
                       </li>
                     ))}
@@ -269,7 +269,7 @@ export default function CommunityGuideContent() {
                   <ol className="mt-3 space-y-1 text-sm text-gray-700">
                     {EXAMPLE.salesOffice.directions.map((d, i) => (
                       <li key={i} className="flex gap-2">
-                        <span className="font-medium text-orange-600">{i + 1}.</span>
+                        <span className="font-medium text-[#301D5D]">{i + 1}.</span>
                         <span>{d}</span>
                       </li>
                     ))}
@@ -326,7 +326,7 @@ export default function CommunityGuideContent() {
                     lat {EXAMPLE.salesOffice.lat}, lng {EXAMPLE.salesOffice.lng}{' '}
                     <FieldBadge name="salesOffice.lat / lng" />
                   </p>
-                  <span className="mt-2 inline-flex items-center rounded-md border border-orange-600 px-3 py-1.5 text-xs font-medium text-orange-600">
+                  <span className="mt-2 inline-flex items-center rounded-md border border-[#301D5D] px-3 py-1.5 text-xs font-medium text-[#301D5D]">
                     Get Directions →
                   </span>
                 </div>
@@ -483,7 +483,7 @@ export default function CommunityGuideContent() {
             </li>
           ))}
         </ol>
-        <div className="mt-5 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="mt-5 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 text-sm text-[#645600]">
           <strong className="font-semibold">Pitfalls:</strong> a community row
           needs <code className="text-xs bg-white/60 px-1 py-0.5 rounded">homeType=&apos;community&apos;</code> —
           the public communities route AND the prune filter both key off it, so

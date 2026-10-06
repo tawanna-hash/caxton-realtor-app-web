@@ -580,14 +580,14 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
 
         {/* Drafts banner */}
         {draftCount > 0 && (
-          <div className="px-4 py-2 bg-amber-50 border-t border-amber-200 flex items-center gap-3">
-            <span className="text-sm text-amber-900">
+          <div className="px-4 py-2 bg-[#FEF8CC] border-t border-[#FAD800]/30 flex items-center gap-3">
+            <span className="text-sm text-[#645600]">
               <strong>{draftCount}</strong> draft{draftCount === 1 ? '' : 's'} not yet published.
             </span>
             <button
               type="button"
               onClick={publishAllDrafts}
-              className="text-xs font-medium px-3 py-1 bg-amber-900 text-white rounded-md hover:bg-amber-800"
+              className="text-xs font-medium px-3 py-1 bg-[#645600] text-white rounded-md hover:bg-[#645600]"
             >
               Publish all drafts
             </button>
@@ -788,9 +788,9 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
 // ============================================================
 function SaveIndicator({ saveState, lastSavedAt }: { saveState: SaveState; lastSavedAt: Date | null }) {
   if (saveState === 'saving') return <span className="text-xs text-gray-500">Saving…</span>;
-  if (saveState === 'error') return <span className="text-xs text-red-600">Save failed</span>;
+  if (saveState === 'error') return <span className="text-xs text-[#661102]">Save failed</span>;
   if (saveState === 'saved' && lastSavedAt) {
-    return <span className="text-xs text-green-700">Saved {formatRelativeTime(lastSavedAt)}</span>;
+    return <span className="text-xs text-[#005A00]">Saved {formatRelativeTime(lastSavedAt)}</span>;
   }
   return null;
 }
@@ -1167,7 +1167,7 @@ function DraggableHotspot({
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onRequestDelete(); }}
-            className="px-2 py-1 text-xs font-medium bg-white border border-red-300 text-red-700 rounded-md shadow-sm hover:bg-red-50"
+            className="px-2 py-1 text-xs font-medium bg-white border border-[#FF2A04]/50 text-[#661102] rounded-md shadow-sm hover:bg-[#FFEAE6]"
           >
             Delete
           </button>
@@ -1208,7 +1208,7 @@ function DeleteConfirmDialog({
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 whitespace-nowrap"
+            className="px-4 py-2 text-sm font-medium text-white bg-[#661102] rounded-md hover:bg-[#661102] whitespace-nowrap"
           >
             Delete
           </button>
@@ -1239,7 +1239,7 @@ function ImportPdfLinksDialog({
           Auto-populate hotspots from three sources: <strong>embedded PDF links</strong>, a <strong>text-layer scan</strong> for emails / phone numbers / plain URLs, and <strong>QR-code decode</strong> on the page images. Each finding becomes a draft hotspot you can review and publish.
         </p>
         {existingPdfImportCount > 0 && (
-          <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3 mb-4">
+          <p className="text-sm text-[#645600] bg-[#FEF8CC] border border-[#FAD800]/30 rounded-md p-3 mb-4">
             <strong>{existingPdfImportCount}</strong> existing PDF-imported hotspot{existingPdfImportCount === 1 ? '' : 's'} will be replaced. Manually-drawn hotspots are preserved.
           </p>
         )}
@@ -1471,7 +1471,7 @@ function SidebarRow({
   const isLogoMatch = isPdfImport && (hotspot.label ?? '').startsWith('Logo · ');
   return (
     <div
-      className={`px-3 py-2 text-xs flex items-start gap-2 cursor-pointer hover:bg-gray-50 ${selected ? 'bg-blue-50' : ''}`}
+      className={`px-3 py-2 text-xs flex items-start gap-2 cursor-pointer hover:bg-gray-50 ${selected ? 'bg-[#F6F3FB]' : ''}`}
       onClick={onSelect}
     >
       {/* Numbered chip — matches the pin on the canvas box. */}
@@ -1496,7 +1496,7 @@ function SidebarRow({
             )}
             {isEditedImport && (
               <span
-                className="px-1 py-[1px] text-[9px] font-semibold uppercase tracking-wide bg-emerald-600 text-white rounded shrink-0"
+                className="px-1 py-[1px] text-[9px] font-semibold uppercase tracking-wide bg-[#005A00] text-white rounded shrink-0"
                 title="Extracted from the PDF and hand-edited — safe from future Extract-all runs"
               >
                 Edited

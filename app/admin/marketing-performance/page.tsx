@@ -117,7 +117,7 @@ function Delta({ cur, prev, goodWhen }: { cur: number; prev: number | null; good
   if (Math.abs(ch) < 0.005) return <span className="text-xs font-medium text-gray-500">→ 0% <span className="font-normal text-gray-400">vs prior</span></span>;
   const good = (ch > 0) === (goodWhen === 'up');
   return (
-    <span className={`text-xs font-medium ${good ? 'text-green-700' : 'text-red-700'}`}>
+    <span className={`text-xs font-medium ${good ? 'text-[#005A00]' : 'text-[#661102]'}`}>
       {ch > 0 ? '↑' : '↓'} {Math.abs(ch * 100).toFixed(1)}% <span className="font-normal text-gray-400">vs prior</span>
     </span>
   );
@@ -292,7 +292,7 @@ export default function MarketingPerformancePage() {
       </header>
 
       {error && (
-        <div role="alert" className="flex items-center justify-between rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
+        <div role="alert" className="flex items-center justify-between rounded border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-2 text-sm text-[#661102]">
           <span>{error}</span>
           <button type="button" onClick={reload} className="font-medium underline">Retry</button>
         </div>
@@ -374,7 +374,7 @@ export default function MarketingPerformancePage() {
           </section>
 
           {data.warnings.length > 0 && (
-            <div className="rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+            <div className="rounded border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-2 text-sm text-[#645600]">
               {data.warnings.map((w) => <p key={w}>{w}</p>)}
             </div>
           )}
@@ -716,7 +716,7 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
               {busy ? 'Saving…' : 'Save spend'}
             </button>
             <p className="text-xs text-gray-400">Saving the same month and channel replaces the earlier amount.</p>
-            {msg && <p className={`text-xs ${msg.kind === 'ok' ? 'text-green-700' : 'text-red-700'}`}>{msg.text}</p>}
+            {msg && <p className={`text-xs ${msg.kind === 'ok' ? 'text-[#005A00]' : 'text-[#661102]'}`}>{msg.text}</p>}
           </div>
         </Card>
         <Card title={`Entries (${entries.length})`}>
@@ -738,7 +738,7 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
                       <td className="py-2 pr-3 text-right font-medium tabular-nums">{fmtCents(e.amount_cents, true)}</td>
                       <td className="max-w-[220px] truncate py-2 pr-3 text-gray-500" title={e.notes ?? ''}>{e.notes || '—'}</td>
                       <td className="py-2 text-right">
-                        <button type="button" onClick={() => void remove(e.id)} disabled={busy} className="text-xs font-medium text-red-700 hover:underline disabled:opacity-50">Delete</button>
+                        <button type="button" onClick={() => void remove(e.id)} disabled={busy} className="text-xs font-medium text-[#661102] hover:underline disabled:opacity-50">Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -817,8 +817,8 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
   };
 
   const status = (ok: boolean, label: string) => (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${ok ? 'bg-green-50 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${ok ? 'bg-green-600' : 'bg-gray-400'}`} />{label}
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${ok ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-gray-100 text-gray-600'}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${ok ? 'bg-[#005A00]' : 'bg-gray-400'}`} />{label}
     </span>
   );
 
@@ -859,8 +859,8 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
                   </ul>
                 )}
               </fieldset>
-              {(propError || sources.ga4.error) && <p className="text-xs text-red-700">{propError || sources.ga4.error}</p>}
-              <button type="button" onClick={() => void disconnect()} disabled={busy} className="text-xs font-medium text-red-700 hover:underline">Disconnect</button>
+              {(propError || sources.ga4.error) && <p className="text-xs text-[#661102]">{propError || sources.ga4.error}</p>}
+              <button type="button" onClick={() => void disconnect()} disabled={busy} className="text-xs font-medium text-[#661102] hover:underline">Disconnect</button>
             </div>
           )}
         </Card>
@@ -880,7 +880,7 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
           ) : (
             <div className="space-y-1 text-sm text-gray-600">
               <p>Add <code className="rounded bg-gray-100 px-1 text-xs">MAILCHIMP_API_KEY</code> to the Vercel project (Production), then redeploy.</p>
-              {sources.mailchimp.error && <p className="text-xs text-red-700">{sources.mailchimp.error}</p>}
+              {sources.mailchimp.error && <p className="text-xs text-[#661102]">{sources.mailchimp.error}</p>}
             </div>
           )}
         </Card>

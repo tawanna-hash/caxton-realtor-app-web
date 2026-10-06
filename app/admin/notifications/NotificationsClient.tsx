@@ -150,7 +150,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
         <button
           type="button"
           onClick={() => { setEditing(null); setOpen(true); }}
-          className="inline-flex h-9 items-center justify-center rounded border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-700"
+          className="inline-flex h-9 items-center justify-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#42277C]"
         >
           New notification
         </button>
@@ -224,7 +224,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
                             type="button"
                             onClick={() => cancelNotification(n)}
                             disabled={busyId === n.id}
-                            className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+                            className="text-xs font-medium text-[#661102] hover:underline disabled:opacity-50"
                           >
                             {busyId === n.id ? 'Cancelling...' : 'Cancel'}
                           </button>
@@ -285,7 +285,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
                         type="button"
                         onClick={() => cancelNotification(n)}
                         disabled={busyId === n.id}
-                        className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+                        className="text-xs font-medium text-[#661102] hover:underline disabled:opacity-50"
                       >
                         {busyId === n.id ? 'Cancelling...' : 'Cancel'}
                       </button>

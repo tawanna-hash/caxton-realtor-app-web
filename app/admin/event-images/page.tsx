@@ -433,9 +433,9 @@ export default function AdminEventImagesPage() {
       </section>
 
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center justify-between">
+        <div className="mb-4 rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102] flex items-center justify-between">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600"><X size={16} /></button>
+          <button onClick={() => setError(null)} className="text-[#661102] hover:text-[#661102]"><X size={16} /></button>
         </div>
       )}
 
@@ -444,7 +444,7 @@ export default function AdminEventImagesPage() {
         <div className="mb-4 flex items-center gap-3 bg-brand-50 border border-brand-200 rounded-md px-4 py-3">
           <span className="text-sm font-medium text-brand-900">{selectedPhotos.size} selected</span>
           <button onClick={handleBulkDelete} disabled={bulkDeleting}
-            className="inline-flex items-center gap-1.5 bg-red-600 text-white px-3 py-1.5 text-xs font-medium rounded-md hover:bg-red-700 disabled:opacity-40">
+            className="inline-flex items-center gap-1.5 bg-[#661102] text-white px-3 py-1.5 text-xs font-medium rounded-md hover:bg-[#661102] disabled:opacity-40">
             <Trash2 size={14} /> Delete Selected
           </button>
           <button onClick={clearSelection} className="text-xs text-gray-600 hover:text-gray-900">Clear</button>
@@ -484,7 +484,7 @@ export default function AdminEventImagesPage() {
         </div>
         <div className="mt-4">
           <button type="submit"
-            className="inline-flex items-center gap-2 bg-orange-600 text-white px-5 py-2 text-sm font-medium hover:bg-orange-700 rounded-md transition-colors">
+            className="inline-flex items-center gap-2 bg-[#301D5D] text-white px-5 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors">
             <Plus size={16} /> Create Folder &amp; Upload
           </button>
           <p className="mt-2 text-xs text-gray-400">Creates a folder for the selected month and scrolls to the upload section.</p>
@@ -554,7 +554,7 @@ export default function AdminEventImagesPage() {
             )}
             {bulkProgress && !bulkUploading && (
               <div className={`mt-4 rounded-md px-4 py-2 text-sm ${
-                bulkProgress.failed > 0 ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-green-50 text-green-700 border border-green-200'
+                bulkProgress.failed > 0 ? 'bg-[#FEF8CC] text-[#645600] border border-[#FAD800]/30' : 'bg-[#E0FBE0] text-[#005A00] border border-[#00E200]/30'
               }`}>
                 Uploaded {bulkProgress.uploaded} of {bulkProgress.total} images
                 {bulkProgress.failed > 0 && ` (${bulkProgress.failed} failed)`}
@@ -614,7 +614,7 @@ export default function AdminEventImagesPage() {
                     </button>
                     {/* Delete folder */}
                     <button onClick={() => handleDeleteFolder(group.key, group.label)} disabled={bulkDeleting}
-                      className="text-red-400 hover:text-red-600 p-1 disabled:opacity-40" title="Delete entire folder">
+                      className="text-[#661102] hover:text-[#661102] p-1 disabled:opacity-40" title="Delete entire folder">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -729,7 +729,7 @@ export default function AdminEventImagesPage() {
                               </div>
                               {/* Delete */}
                               <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id}
-                                className="absolute top-2 right-2 bg-white/90 hover:bg-white text-red-600 p-1.5 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40"
+                                className="absolute top-2 right-2 bg-white/90 hover:bg-white text-[#661102] p-1.5 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40"
                                 title="Delete">
                                 <Trash2 size={14} />
                               </button>

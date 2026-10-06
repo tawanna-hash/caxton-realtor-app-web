@@ -114,9 +114,9 @@ export default function MoveInReadyGuideContent() {
         {/* Browser frame */}
         <div className="rounded-lg border border-gray-300 shadow-sm overflow-hidden bg-white">
           <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 border-b border-gray-200">
-            <span className="h-3 w-3 rounded-full bg-red-400" />
-            <span className="h-3 w-3 rounded-full bg-yellow-400" />
-            <span className="h-3 w-3 rounded-full bg-green-400" />
+            <span className="h-3 w-3 rounded-full bg-[#FF2A04]" />
+            <span className="h-3 w-3 rounded-full bg-[#FAD800]" />
+            <span className="h-3 w-3 rounded-full bg-[#00E200]" />
             <span className="ml-3 text-xs text-gray-500 font-mono truncate">
               realtynewsnow.app/inventory/199
             </span>
@@ -384,7 +384,7 @@ export default function MoveInReadyGuideContent() {
             </li>
           ))}
         </ol>
-        <div className="mt-5 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="mt-5 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 text-sm text-[#645600]">
           <strong className="font-semibold">Pitfall:</strong> Cloudflare-protected
           builders (MI Homes, KB Home, Newmark, Santa Rita Ranch) often block the
           scraper — that is a fetch problem, not a data problem. Also remember:

@@ -19,16 +19,16 @@ function fmtMoneyFromCents(cents: number): string {
 
 const CARD_ACCENT: Record<string, { badge: string; ring: string }> = {
   realtyline: {
-    badge: 'bg-blue-100 text-blue-800 border-blue-200',
-    ring: 'ring-blue-100',
+    badge: 'bg-[#EFEAF8] text-[#301D5D] border-[#D9CFF0]',
+    ring: 'ring-[#EFEAF8]',
   },
   newsline: {
-    badge: 'bg-amber-100 text-amber-800 border-amber-200',
-    ring: 'ring-amber-100',
+    badge: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30',
+    ring: 'ring-[#FEF8CC]',
   },
   'realtyline-houston': {
-    badge: 'bg-teal-100 text-teal-800 border-teal-200',
-    ring: 'ring-teal-100',
+    badge: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
+    ring: 'ring-[#E0FBE0]',
   },
   'realtyline-dallas': {
     badge: 'bg-purple-100 text-purple-800 border-purple-200',
@@ -96,7 +96,7 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
           <dd
             className={
               'tabular-nums font-medium ' +
-              (snapshot.bounceCount > 0 ? 'text-red-700' : 'text-gray-900')
+              (snapshot.bounceCount > 0 ? 'text-[#661102]' : 'text-gray-900')
             }
           >
             {fmtNumber(snapshot.bounceCount)}
@@ -164,7 +164,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
     <div className="space-y-6">
       <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-orange-700" aria-hidden="true" />
+            <CalendarDays className="h-4 w-4 text-[#42277C]" aria-hidden="true" />
             <h2 className="text-sm font-semibold text-gray-950">Date Radar</h2>
             <span className="ml-auto text-xs text-gray-500">Next 14 days</span>
           </div>
@@ -174,13 +174,13 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                 <li key={item.id}>
                   <Link
                     href={item.href}
-                    className="flex items-center gap-3 py-3 transition hover:text-orange-700"
+                    className="flex items-center gap-3 py-3 transition hover:text-[#42277C]"
                   >
                     <span
                       className={
                         'flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-[10px] font-semibold uppercase ' +
                         (item.tone === 'warning'
-                          ? 'bg-amber-100 text-amber-800'
+                          ? 'bg-[#FEF8CC] text-[#645600]'
                           : 'bg-gray-100 text-gray-700')
                       }
                     >
@@ -209,14 +209,14 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
 
       {/* Attention strip */}
       {data.attention.length > 0 && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-amber-900">
+        <div className="rounded-md border border-[#FAD800]/50 bg-[#FEF8CC] px-4 py-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#645600]">
             <span className="font-semibold">Attention:</span>
             {data.attention.map((item, i) => (
               <Link
                 key={i}
                 href={item.href}
-                className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium hover:bg-amber-100"
+                className="inline-flex items-center gap-1 rounded-md border border-[#FAD800]/50 bg-white px-2.5 py-1 text-xs font-medium hover:bg-[#FEF8CC]"
               >
                 {item.label}
               </Link>

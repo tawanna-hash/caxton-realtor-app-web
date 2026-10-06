@@ -228,7 +228,7 @@ export default function AuthorPicker({
               </button>
             </>
           )}
-          {error && <p role="alert" className="mt-2 text-xs text-red-700">{error}</p>}
+          {error && <p role="alert" className="mt-2 text-xs text-[#661102]">{error}</p>}
         </div>
       )}
     </div>

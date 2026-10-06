@@ -60,7 +60,7 @@ export default function RnnPlatinumPaywall({
               'Review and publish controls',
             ].map((feature) => (
               <li key={feature} className="flex items-start gap-3">
-                <Check className="mt-0.5 shrink-0 text-emerald-600" size={17} />
+                <Check className="mt-0.5 shrink-0 text-[#005A00]" size={17} />
                 {feature}
               </li>
             ))}
@@ -84,7 +84,7 @@ export default function RnnPlatinumPaywall({
                 ? 'No credit card required. Your trial begins immediately.'
                 : 'Complimentary access can also be granted by Realty News Now.'}
             </p>
-            {error && <p role="alert" className="mt-3 text-center text-sm text-red-700">{error}</p>}
+            {error && <p role="alert" className="mt-3 text-center text-sm text-[#661102]">{error}</p>}
           </div>
         </div>
       </section>

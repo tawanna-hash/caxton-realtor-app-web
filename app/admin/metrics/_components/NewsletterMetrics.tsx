@@ -29,7 +29,7 @@ function MiniBars({ series }: { series: Array<{ date: string; count: number }> }
         return (
           <div
             key={s.date}
-            className="flex-1 rounded-sm bg-orange-600/80"
+            className="flex-1 rounded-sm bg-[#301D5D]/80"
             style={{ height: `${Math.max(2, pct)}%` }}
             title={`${s.date}: ${s.count}`}
           />
@@ -82,7 +82,7 @@ export function NewsletterMetrics({ days }: { days: number }) {
         </h2>
         <a
           href="/admin/newsletter"
-          className="text-xs font-medium text-orange-700 hover:underline"
+          className="text-xs font-medium text-[#42277C] hover:underline"
         >
           View list &rarr;
         </a>
@@ -93,8 +93,8 @@ export function NewsletterMetrics({ days }: { days: number }) {
       )}
 
       {error && (
-        <div className="border border-red-300 bg-red-50 px-4 py-3 rounded-md">
-          <p className="text-sm text-red-900">{error}</p>
+        <div className="border border-[#FF2A04]/50 bg-[#FFEAE6] px-4 py-3 rounded-md">
+          <p className="text-sm text-[#661102]">{error}</p>
         </div>
       )}
 

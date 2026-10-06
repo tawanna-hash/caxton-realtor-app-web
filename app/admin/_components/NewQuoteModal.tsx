@@ -992,22 +992,22 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         : 'Print: invoiced monthly, net-20 (card or check).';
     return (
       <ModalShell onClose={handleClose} title="Quote drafted">
-        <div className="border border-green-200 bg-green-50 rounded-md p-4">
-          <p className="text-sm font-semibold text-green-900">
+        <div className="border border-[#00E200]/30 bg-[#E0FBE0] rounded-md p-4">
+          <p className="text-sm font-semibold text-[#005A00]">
             {createdInvoice.number ?? createdInvoice.id}
-            <span className="ml-2 text-xs font-normal text-green-800">
+            <span className="ml-2 text-xs font-normal text-[#005A00]">
               · agreement {createdAgreement.id.slice(0, 8)}
             </span>
           </p>
-          <p className="text-xs text-green-900 mt-1">
+          <p className="text-xs text-[#005A00] mt-1">
             ${(createdInvoice.amount_cents / 100).toFixed(2)} · status {createdInvoice.status}.
           </p>
           {createdBundle && createdBundle.length > 1 && (
-            <div className="mt-3 border-t border-green-200 pt-3">
-              <p className="text-[11px] uppercase tracking-wider text-green-800 font-semibold mb-1">
+            <div className="mt-3 border-t border-[#00E200]/30 pt-3">
+              <p className="text-[11px] uppercase tracking-wider text-[#005A00] font-semibold mb-1">
                 Bundle lines
               </p>
-              <ul className="text-xs text-green-900 space-y-1">
+              <ul className="text-xs text-[#005A00] space-y-1">
                 {createdBundle.map((b, i) => (
                   <li key={b.agreement.id} className="flex items-center justify-between">
                     <span><span className="font-mono mr-2">#{i + 1}</span>{b.invoice.number ?? b.invoice.id}</span>
@@ -1017,9 +1017,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               </ul>
             </div>
           )}
-          <p className="text-xs text-green-800 mt-1 italic">{paymentTerms}</p>
+          <p className="text-xs text-[#005A00] mt-1 italic">{paymentTerms}</p>
           {sent && (
-            <p className="text-xs text-green-900 mt-2 font-medium">
+            <p className="text-xs text-[#005A00] mt-2 font-medium">
               ✓ Quote email sent — client will receive a sign link.
             </p>
           )}
@@ -1050,13 +1050,13 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
             </button>
             <a
               href={`/admin/agreements?id=${encodeURIComponent(createdAgreement.id)}`}
-              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-green-300 bg-white text-green-900 hover:bg-green-100"
+              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-[#00E200]/50 bg-white text-[#005A00] hover:bg-[#E0FBE0]"
             >
               Open agreement
             </a>
             <a
               href={`/admin/invoices?focus=${encodeURIComponent(createdInvoice.id)}`}
-              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-green-300 bg-white text-green-900 hover:bg-green-100"
+              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-[#00E200]/50 bg-white text-[#005A00] hover:bg-[#E0FBE0]"
             >
               Open in Invoices
             </a>
@@ -1068,7 +1068,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               Close
             </button>
           </div>
-          {error && <p className="text-xs text-red-700 mt-2">Error: {error}</p>}
+          {error && <p className="text-xs text-[#661102] mt-2">Error: {error}</p>}
         </div>
       </ModalShell>
     );
@@ -1415,7 +1415,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     />
                   </label>
                   {runEnd < runStart && (
-                    <div className="col-span-2 text-xs text-red-600">
+                    <div className="col-span-2 text-xs text-[#661102]">
                       End date must be on or after start date.
                     </div>
                   )}
@@ -1445,7 +1445,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                               if (ioPosPremActive) setIoAdPremium(String(pagePositionPremium(looked.rate)));
                             }
                           }}
-                          className="w-4 h-4 accent-blue-600" />
+                          className="w-4 h-4 accent-[#301D5D]" />
                         {s}
                       </label>
                     ))}
@@ -1465,7 +1465,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                               if (ioPosPremActive) setIoAdPremium(String(pagePositionPremium(looked.rate)));
                             }
                           }}
-                          className="w-4 h-4 accent-blue-600" />
+                          className="w-4 h-4 accent-[#301D5D]" />
                         {f} {FREQ_PKG_AG[f] ? `· ${FREQ_PKG_AG[f]}` : ''}
                       </label>
                     ))}
@@ -1483,7 +1483,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         setIoAdRateBase(e.target.value);
                         setIoRateUserEdited(true);
                       }}
-                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                       placeholder="0.00" min="0" step="0.01"
                     />
                     {!ioRateUserEdited && ioAdRate && (
@@ -1496,7 +1496,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     <div className="text-xs text-gray-600 mb-1">Discount ($)</div>
                     <input type="number" value={ioDiscount}
                       onChange={(e) => setIoDiscount(e.target.value)}
-                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                       placeholder="0.00" min="0" step="0.01" />
                   </label>
                   <div>
@@ -1509,7 +1509,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     ) : (
                       <input type="number" value={ioAdPremium}
                         onChange={(e) => setIoAdPremium(e.target.value)}
-                        className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                         placeholder="0.00" min="0" step="0.01" />
                     )}
                   </div>
@@ -1527,7 +1527,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     <div className="text-xs text-gray-600 mb-1">Page Position</div>
                     <input value={ioPagePosition}
                       onChange={(e) => setIoPagePosition(e.target.value)}
-                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                       placeholder="e.g. Inside front cover" />
                   </label>
                   <div className="flex items-end pb-1">
@@ -1540,7 +1540,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                           if (active && base > 0) setIoAdPremium(String(pagePositionPremium(base)));
                           else if (!active) setIoAdPremium('');
                         }}
-                        className="w-4 h-4 accent-blue-600" />
+                        className="w-4 h-4 accent-[#301D5D]" />
                       Apply 20% premium
                     </label>
                   </div>
@@ -1554,7 +1554,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         <input type="checkbox" id={`nq_agm_${m.k}`}
                           checked={!!ioTimingMonths[m.k]}
                           onChange={(e) => setIoTimingMonths({ ...ioTimingMonths, [m.k]: e.target.checked })}
-                          className="w-3.5 h-3.5 accent-blue-600 flex-shrink-0" />
+                          className="w-3.5 h-3.5 accent-[#301D5D] flex-shrink-0" />
                         <label htmlFor={`nq_agm_${m.k}`} className="text-sm min-w-[80px] cursor-pointer">{m.l}</label>
                         <input
                           value={ioTimingYears[m.k] ?? ''}
@@ -1724,12 +1724,12 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
 
           {/* App-channel collision warning banner (warn but allow) */}
           {channel === 'app' && appCollisions.length > 0 && (
-            <div className="mt-3 border border-yellow-300 bg-yellow-50 rounded-md px-3 py-2">
-              <p className="text-xs font-semibold text-yellow-900">
+            <div className="mt-3 border border-[#FAD800]/50 bg-[#FEF8CC] rounded-md px-3 py-2">
+              <p className="text-xs font-semibold text-[#645600]">
                 ⚠ Overlaps {appCollisions.length} existing booking
                 {appCollisions.length > 1 ? 's' : ''} for this slot
               </p>
-              <ul className="mt-1 space-y-0.5 text-[11px] text-yellow-900">
+              <ul className="mt-1 space-y-0.5 text-[11px] text-[#645600]">
                 {appCollisions.slice(0, 3).map((c, i) => (
                   <li key={i}>
                     · {c.advertiser_name ?? 'Unknown partner'} — {c.start_date} → {c.end_date}
@@ -1739,7 +1739,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   <li className="italic">…and {appCollisions.length - 3} more</li>
                 )}
               </ul>
-              <p className="mt-1 text-[11px] text-yellow-800 italic">
+              <p className="mt-1 text-[11px] text-[#645600] italic">
                 You can still draft this quote — this is a heads-up, not a block.
               </p>
             </div>
@@ -1889,7 +1889,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         type="button"
                         onClick={() => removeBundleLine(line.id)}
                         disabled={submitting}
-                        className="text-red-600 hover:text-red-700 text-xs"
+                        className="text-[#661102] hover:text-[#661102] text-xs"
                         aria-label="Remove line"
                       >
                         Remove
@@ -1942,8 +1942,8 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   className={
                     'ml-2 px-1.5 py-0.5 rounded text-[10px] font-semibold ' +
                     (discountPct > 0
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-orange-100 text-orange-800')
+                      ? 'bg-[#E0FBE0] text-[#005A00]'
+                      : 'bg-[#EFEAF8] text-[#301D5D]')
                   }
                 >
                   {discountPct > 0 ? `${discountPct}% off` : `+${Math.abs(discountPct)}% over`}
@@ -1957,7 +1957,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         </div>
 
         {error && (
-          <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+          <p className="text-xs text-[#661102] bg-[#FFEAE6] border border-[#FF2A04]/30 rounded-md px-3 py-2">
             {error}
           </p>
         )}

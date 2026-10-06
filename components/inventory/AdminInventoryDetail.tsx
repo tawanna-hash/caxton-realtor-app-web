@@ -338,7 +338,7 @@ export default function AdminInventoryDetail({
       {errorMessage && (
         <div
           role="alert"
-          className="mb-4 border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-900"
+          className="mb-4 border-l-4 border-[#661102] bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]"
         >
           {errorMessage}
         </div>
@@ -346,7 +346,7 @@ export default function AdminInventoryDetail({
       {successMessage && (
         <div
           role="status"
-          className="mb-4 border-l-4 border-green-600 bg-green-50 px-4 py-3 text-sm text-green-900"
+          className="mb-4 border-l-4 border-[#005A00] bg-[#E0FBE0] px-4 py-3 text-sm text-[#005A00]"
         >
           {successMessage}
         </div>
@@ -460,7 +460,7 @@ export default function AdminInventoryDetail({
                   type="button"
                   onClick={() => changeStatus('active')}
                   disabled={busy}
-                  className="px-4 py-3 text-sm font-semibold border-2 border-green-700 bg-green-700 text-white hover:bg-green-800 hover:border-green-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="px-4 py-3 text-sm font-semibold border-2 border-[#005A00] bg-[#005A00] text-white hover:bg-[#005A00] hover:border-[#005A00] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   &#10003; Approve
                 </button>
@@ -468,7 +468,7 @@ export default function AdminInventoryDetail({
                   type="button"
                   onClick={() => changeStatus('rejected')}
                   disabled={busy}
-                  className="px-4 py-3 text-sm font-semibold border-2 border-red-700 bg-white text-red-700 hover:bg-red-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="px-4 py-3 text-sm font-semibold border-2 border-[#661102] bg-white text-[#661102] hover:bg-[#FFEAE6] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   &#10007; Reject
                 </button>
@@ -687,18 +687,18 @@ export default function AdminInventoryDetail({
             </div>
           </section>
 
-          <section className="border border-red-200 bg-red-50 px-5 py-5 rounded-md">
-            <h2 className="text-sm uppercase tracking-[0.15em] text-red-700 font-medium mb-2">
+          <section className="border border-[#FF2A04]/30 bg-[#FFEAE6] px-5 py-5 rounded-md">
+            <h2 className="text-sm uppercase tracking-[0.15em] text-[#661102] font-medium mb-2">
               Danger Zone
             </h2>
-            <p className="text-sm text-red-900 font-light mb-3">
+            <p className="text-sm text-[#661102] font-light mb-3">
               Permanently delete this submission. The flyer PDF and thumbnail JPG will be orphaned and can be cleaned up later.
             </p>
             <button
               type="button"
               onClick={deleteRow}
               disabled={busy}
-              className="px-4 py-2 text-sm font-medium text-red-900 border border-red-300 bg-white hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
+              className="px-4 py-2 text-sm font-medium text-[#661102] border border-[#FF2A04]/50 bg-white hover:bg-[#FFEAE6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
             >
               Delete submission
             </button>

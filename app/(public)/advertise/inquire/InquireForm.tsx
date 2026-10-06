@@ -168,20 +168,20 @@ export default function InquireForm({
     const digitalRedirecting = channel === 'digital' && !!slot;
     return (
       <div
-        className="border border-green-200 bg-green-50 p-6 rounded-md"
+        className="border border-[#00E200]/30 bg-[#E0FBE0] p-6 rounded-md"
         role="status"
         aria-live="polite"
       >
-        <p className="text-base font-semibold text-green-900 mb-1">
+        <p className="text-base font-semibold text-[#005A00] mb-1">
           Thanks, {firstName} — we&apos;ve got it.
         </p>
         {digitalRedirecting ? (
           <>
-            <p className="text-sm text-green-900">
+            <p className="text-sm text-[#005A00]">
               Our ads team has been notified. Taking you to package options
               and secure payment&hellip;
             </p>
-            <p className="text-xs text-green-800 mt-3">
+            <p className="text-xs text-[#005A00] mt-3">
               Not redirecting?{' '}
               <a
                 href={
@@ -202,7 +202,7 @@ export default function InquireForm({
             </p>
           </>
         ) : (
-          <p className="text-sm text-green-900">
+          <p className="text-sm text-[#005A00]">
             Our ads team has been notified and will follow up within one
             business day with a quote, availability, and creative specs for
             your {AD_CHANNEL_LABEL[channel].toLowerCase()} inquiry.
@@ -347,7 +347,7 @@ export default function InquireForm({
           htmlFor="name"
           className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5"
         >
-          Your name <span className="text-red-600">*</span>
+          Your name <span className="text-[#661102]">*</span>
         </label>
         <input
           id="name"
@@ -366,7 +366,7 @@ export default function InquireForm({
             htmlFor="email"
             className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5"
           >
-            Email <span className="text-red-600">*</span>
+            Email <span className="text-[#661102]">*</span>
           </label>
           <input
             id="email"
@@ -419,7 +419,7 @@ export default function InquireForm({
           className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5"
         >
           Tell us what you&apos;re looking for{' '}
-          <span className="text-red-600">*</span>
+          <span className="text-[#661102]">*</span>
         </label>
         <textarea
           id="message"
@@ -453,7 +453,7 @@ export default function InquireForm({
       </div>
 
       {status === 'error' && errorMsg && (
-        <p className="text-sm text-red-700">{errorMsg}</p>
+        <p className="text-sm text-[#661102]">{errorMsg}</p>
       )}
 
       <button

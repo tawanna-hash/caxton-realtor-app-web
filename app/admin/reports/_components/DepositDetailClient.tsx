@@ -9,7 +9,7 @@ import { isNative } from '@/lib/native/runtime';
 import { printCurrentPage } from '@/lib/native/print';
 
 const CONTROL =
-  'rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500';
+  'rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-[#7059A8] focus:outline-none focus:ring-1 focus:ring-[#7059A8]';
 
 function sourceLabel(source: string | null): string {
   const value = (source ?? '').trim();
@@ -112,7 +112,7 @@ export default function DepositDetailClient({
           <button
             type="button"
             onClick={() => { void printReport(); }}
-            className="min-h-11 rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
+            className="min-h-11 rounded-md bg-[#301D5D] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
           >
             Print / Save PDF
           </button>

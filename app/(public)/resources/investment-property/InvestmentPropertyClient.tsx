@@ -244,7 +244,7 @@ export default function InvestmentPropertyClient() {
               </button>
             </div>
             <p
-              className={`text-4xl mb-1 ${cashFlowPositive ? 'text-gray-900' : 'text-rose-700'}`}
+              className={`text-4xl mb-1 ${cashFlowPositive ? 'text-gray-900' : 'text-[#661102]'}`}
             >
               {fmtUSD(result.monthlyCashFlow)}
             </p>
@@ -299,7 +299,7 @@ export default function InvestmentPropertyClient() {
             </div>
 
             <hr className="border-gray-200 my-3" />
-            <div className={`flex items-center justify-between text-base font-semibold ${cashFlowPositive ? 'text-gray-900' : 'text-rose-700'}`}>
+            <div className={`flex items-center justify-between text-base font-semibold ${cashFlowPositive ? 'text-gray-900' : 'text-[#661102]'}`}>
               <span>Annual cash flow</span>
               <span>{fmtUSD(result.annualCashFlow)}</span>
             </div>
@@ -360,8 +360,8 @@ function RuleBadge({ met, label }: { met: boolean; label: string }) {
     <span
       className={`text-[11px] px-2.5 py-1 rounded-full border ${
         met
-          ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-          : 'border-rose-200 bg-rose-50 text-rose-800'
+          ? 'border-[#00E200]/30 bg-[#E0FBE0] text-[#005A00]'
+          : 'border-[#FF2A04]/30 bg-[#FFEAE6] text-[#661102]'
       }`}
     >
       {met ? '✓ ' : '✗ '}{label}
@@ -389,7 +389,7 @@ function SubRow({
       <span>{label}</span>
       <span
         className={`${bold ? '' : 'font-medium'} ${
-          negative ? 'text-rose-700' : 'text-gray-900'
+          negative ? 'text-[#661102]' : 'text-gray-900'
         }`}
       >
         {fmtUSD(value)}

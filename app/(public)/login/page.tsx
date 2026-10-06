@@ -105,7 +105,7 @@ function LoginInner() {
                 {showPw ? 'Hide' : 'Show'}
               </button>
             </div>
-          {err && <p className="text-sm text-red-600">{err}</p>}
+          {err && <p className="text-sm text-[#661102]">{err}</p>}
           <button
             type="submit"
             disabled={busy || !email || !password}

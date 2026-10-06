@@ -44,22 +44,22 @@ function styleFor(status: EmailBadgeStatus): BadgeStyle {
   switch (status) {
     case 'valid':
       return {
-        bg: 'bg-emerald-50', fg: 'text-emerald-700', border: 'border-emerald-200',
+        bg: 'bg-[#E0FBE0]', fg: 'text-[#005A00]', border: 'border-[#00E200]/30',
         icon: <span aria-hidden>✓</span>, label: 'Valid',
       };
     case 'invalid':
       return {
-        bg: 'bg-rose-50', fg: 'text-rose-700', border: 'border-rose-200',
+        bg: 'bg-[#FFEAE6]', fg: 'text-[#661102]', border: 'border-[#FF2A04]/30',
         icon: <span aria-hidden>✗</span>, label: 'Invalid',
       };
     case 'risky':
       return {
-        bg: 'bg-amber-50', fg: 'text-amber-800', border: 'border-amber-200',
+        bg: 'bg-[#FEF8CC]', fg: 'text-[#645600]', border: 'border-[#FAD800]/30',
         icon: <span aria-hidden>△</span>, label: 'Risky',
       };
     case 'unknown':
       return {
-        bg: 'bg-sky-50', fg: 'text-sky-700', border: 'border-sky-200',
+        bg: 'bg-[#E3F7FF]', fg: 'text-[#285766]', border: 'border-[#64D9FF]/30',
         icon: <span aria-hidden>?</span>, label: 'Unknown',
       };
     case 'pending':

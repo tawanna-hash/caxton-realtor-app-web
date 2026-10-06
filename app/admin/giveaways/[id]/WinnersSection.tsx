@@ -65,7 +65,7 @@ export default function WinnersSection({ giveawayId, endsAtPassed, onChange }: {
 
   if (winners.length === 0) return null;
   const badge = (w: Winner) =>
-    w.email_status === 'sent' ? 'bg-green-50 text-green-700' : w.email_status === 'failed' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-600';
+    w.email_status === 'sent' ? 'bg-[#E0FBE0] text-[#005A00]' : w.email_status === 'failed' ? 'bg-[#FFEAE6] text-[#661102]' : 'bg-gray-100 text-gray-600';
   const label = (w: Winner) => (w.email_status === 'sent' ? 'Email sent' : w.email_status === 'failed' ? 'Email failed' : 'Not recorded');
 
   return (
@@ -77,7 +77,7 @@ export default function WinnersSection({ giveawayId, endsAtPassed, onChange }: {
             <div>
               <div className="font-medium text-gray-900">{`${w.first_name} ${w.last_name}`.trim() || w.email}</div>
               <div className="text-xs text-gray-500">{w.email}</div>
-              {w.email_error && <div className="text-xs text-red-600">{w.email_error}</div>}
+              {w.email_error && <div className="text-xs text-[#661102]">{w.email_error}</div>}
             </div>
             <div className="flex items-center gap-3">
               <span className={`text-xs px-2 py-0.5 rounded ${badge(w)}`}>{label(w)}</span>
@@ -103,8 +103,8 @@ export default function WinnersSection({ giveawayId, endsAtPassed, onChange }: {
           {announcedAt ? `Announced ${new Date(announcedAt).toLocaleDateString()}` : busy === 'announce' ? 'Sending...' : 'Notify other entrants'}
         </button>
       </div>
-      {msg && <div className="text-sm text-green-700">{msg}</div>}
-      {err && <div className="text-sm text-red-600">{err}</div>}
+      {msg && <div className="text-sm text-[#005A00]">{msg}</div>}
+      {err && <div className="text-sm text-[#661102]">{err}</div>}
     </section>
   );
 }

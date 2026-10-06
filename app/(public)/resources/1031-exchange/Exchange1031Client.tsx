@@ -130,11 +130,11 @@ export default function Exchange1031Client() {
             />
           </FieldGroup>
 
-          <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-amber-900 mb-2">
+          <div className="rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#645600] mb-2">
               Before Day 0
             </p>
-            <p className="text-sm text-amber-900 leading-relaxed">
+            <p className="text-sm text-[#645600] leading-relaxed">
               The exchanger must have a written exchange agreement in place
               with a <strong>qualified intermediary (QI)</strong> before
               closing. Proceeds CANNOT touch the seller&apos;s hands or the
@@ -180,14 +180,14 @@ export default function Exchange1031Client() {
                 />
                 {/* 45-day marker — 45/180 = 25% */}
                 <div
-                  className="absolute inset-y-0 w-px bg-rose-500"
+                  className="absolute inset-y-0 w-px bg-[#FF2A04]"
                   style={{ left: '25%' }}
                   title="Day 45"
                 />
               </div>
               <div className="flex justify-between text-[10px] text-gray-600 mt-1">
                 <span>Day 0</span>
-                <span className="text-rose-700 font-medium" style={{ marginLeft: '12%' }}>Day 45</span>
+                <span className="text-[#661102] font-medium" style={{ marginLeft: '12%' }}>Day 45</span>
                 <span>Day 180</span>
               </div>
             </div>
@@ -268,19 +268,19 @@ function DeadlineCard({
     <div
       className={`rounded-md border px-3 py-3 ${
         missed
-          ? 'border-rose-200 bg-rose-50'
+          ? 'border-[#FF2A04]/30 bg-[#FFEAE6]'
           : 'border-white bg-white/70'
       }`}
     >
-      <p className={`text-[10px] uppercase tracking-wider font-semibold ${missed ? 'text-rose-800' : 'text-gray-600'}`}>
+      <p className={`text-[10px] uppercase tracking-wider font-semibold ${missed ? 'text-[#661102]' : 'text-gray-600'}`}>
         {label}
       </p>
       <p
-        className={`text-base ${missed ? 'text-rose-800' : 'text-gray-900'}`}
+        className={`text-base ${missed ? 'text-[#661102]' : 'text-gray-900'}`}
       >
         {fmtDateLong(date)}
       </p>
-      <p className={`text-xs mt-0.5 ${missed ? 'text-rose-700' : upcoming ? 'text-gray-700' : 'text-gray-500'}`}>
+      <p className={`text-xs mt-0.5 ${missed ? 'text-[#661102]' : upcoming ? 'text-gray-700' : 'text-gray-500'}`}>
         {missed ? `passed ${fmtDays(days)}` : fmtDays(days)}
       </p>
     </div>
@@ -292,10 +292,10 @@ function MilestoneRow({ milestone }: { milestone: ExchangeMilestone }) {
   const today = milestone.daysFromToday === 0;
   const deadline = milestone.isDeadline;
 
-  const dotColor = deadline ? 'bg-rose-600' : past ? 'bg-gray-400' : 'bg-brand-700';
-  const labelColor = deadline ? 'text-rose-800' : 'text-gray-900';
+  const dotColor = deadline ? 'bg-[#661102]' : past ? 'bg-gray-400' : 'bg-brand-700';
+  const labelColor = deadline ? 'text-[#661102]' : 'text-gray-900';
   const badgeBg = deadline
-    ? 'bg-rose-100 text-rose-800 border-rose-200'
+    ? 'bg-[#FFEAE6] text-[#661102] border-[#FF2A04]/30'
     : 'bg-gray-100 text-gray-700 border-gray-200';
 
   return (
@@ -333,10 +333,10 @@ function statusToneFor(status: string) {
       };
     case 'Identification period':
       return {
-        border: 'border-amber-200',
-        bg: 'bg-amber-50',
-        label: 'text-amber-800',
-        text: 'text-amber-900',
+        border: 'border-[#FAD800]/30',
+        bg: 'bg-[#FEF8CC]',
+        label: 'text-[#645600]',
+        text: 'text-[#645600]',
       };
     case 'Exchange period':
       return {
@@ -347,10 +347,10 @@ function statusToneFor(status: string) {
       };
     case 'Expired':
       return {
-        border: 'border-rose-200',
-        bg: 'bg-rose-50',
-        label: 'text-rose-800',
-        text: 'text-rose-900',
+        border: 'border-[#FF2A04]/30',
+        bg: 'bg-[#FFEAE6]',
+        label: 'text-[#661102]',
+        text: 'text-[#661102]',
       };
     default:
       return {

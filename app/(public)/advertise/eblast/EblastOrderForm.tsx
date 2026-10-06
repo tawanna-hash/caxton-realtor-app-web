@@ -196,19 +196,19 @@ export default function EblastOrderForm({
 
   if (success) {
     return (
-      <section className="rounded-md border border-emerald-200 bg-emerald-50 p-6 sm:p-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-800">
+      <section className="rounded-md border border-[#00E200]/30 bg-[#E0FBE0] p-6 sm:p-8">
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#005A00]">
           Order received
         </p>
-        <h2 className="mt-2 text-2xl font-bold text-emerald-950">
+        <h2 className="mt-2 text-2xl font-bold text-[#005A00]">
           Your e-Blast Is Pending Schedule Confirmation.
         </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-emerald-900">
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#005A00]">
           Your order and payment details were received. We sent confirmation to{' '}
           {email}. Our team will review the campaign details and confirm your
           send date by email.
         </p>
-        <p className="mt-4 text-xs text-emerald-800">
+        <p className="mt-4 text-xs text-[#005A00]">
           Confirmation #{success.agreementId.slice(0, 8)}
         </p>
       </section>
@@ -240,7 +240,7 @@ export default function EblastOrderForm({
                   <span className="flex items-start justify-between gap-2 text-sm font-semibold">
                     <span>{pub.label}</span>
                     {!pub.checkoutEnabled && (
-                      <span className="shrink-0 rounded-md bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-800">
+                      <span className="shrink-0 rounded-md bg-[#EFEAF8] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#301D5D]">
                         Coming soon
                       </span>
                     )}
@@ -507,7 +507,7 @@ export default function EblastOrderForm({
         {error && (
           <div
             role="alert"
-            className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+            className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] p-4 text-sm text-[#661102]"
           >
             {error}
           </div>
@@ -525,7 +525,7 @@ export default function EblastOrderForm({
         <ul className="mt-5 space-y-2 text-sm text-violet-50">
           {features.map((feature) => (
             <li key={feature} className="flex gap-2">
-              <span aria-hidden="true" className="text-orange-300">
+              <span aria-hidden="true" className="text-[#B9ADD6]">
                 •
               </span>
               <span>{feature}</span>
@@ -566,7 +566,7 @@ function Section({
   return (
     <section className="rounded-md border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.14em] text-gray-600">
-        <span className="mr-2 text-orange-600">{number}</span>
+        <span className="mr-2 text-[#301D5D]">{number}</span>
         {title}
       </h2>
       {children}
