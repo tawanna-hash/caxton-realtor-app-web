@@ -15,6 +15,9 @@ type Consent = 'opted_in' | 'pending' | 'opted_out' | 'none';
 type Party = { key: string; name: string; role: string; email: string; phone: string };
 type Item = { id: string; at: string; kind: 'email' | 'sms'; out: boolean; title: string; body: string; status: string; error: string | null };
 
+function Tip({ text }: { text: string }) {
+  return <span title={text} aria-label={text} className="inline-flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full border border-[#E6E5EC] text-[10px] font-medium leading-none text-[#7A7787]">i</span>;
+}
 const btn = 'inline-flex items-center rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white disabled:opacity-45';
 const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[14px] text-[#1B1726]';
 const lab = 'mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]';
@@ -205,7 +208,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             })}
           </div>
           <label className="block"><span className={lab}>Other (Custom Request)</span><input className={field} placeholder="For example: Signed HOA receipt" maxLength={200} value={askOther} onChange={(e) => setAskOther(e.target.value)} /></label>
-          <p className="text-[12px] font-medium text-[#7A7787]">Each checked item becomes a pending request on this deal. The message lists them and links to the secure upload page. Uploads are tracked in Documents and the Audit Trail.</p>
+          <Tip text="Each checked item becomes a pending request on this deal. The message lists them and links to the secure upload page. Uploads are tracked in Documents and the Audit Trail." />
         </div>
       )}
     </div>
@@ -219,7 +222,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
           {files.map((f) => <div key={f.filename} className="flex items-center justify-between gap-3 rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] text-[#1B1726]"><span className="break-all">{f.filename} <span className="text-[12px] font-medium text-[#7A7787]">{Math.round(f.size / 1024)} KB</span></span><button type="button" className="text-[12px] font-medium text-[#7A7787] underline underline-offset-2 hover:!bg-transparent hover:!text-[#301D5D]" onClick={() => setFiles((l) => l.filter((x) => x.filename !== f.filename))}>Remove</button></div>)}
         </div>
       )}
-      <p className="mt-1 text-[12px] font-medium text-[#7A7787]">Up to 5 files, 3 MB in total.</p>
+      <Tip text="Up to 5 files, 3 MB in total." />
     </div>
   );
   const composerInner = !party ? null : (
@@ -251,7 +254,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
                       {cc.filter((c) => !parties.some((p) => p.email.toLowerCase() === c.toLowerCase())).map((c) => <button key={c} type="button" onClick={() => setCc((l) => l.filter((x) => x !== c))} className="!rounded-full !border !border-[#301D5D] !bg-[#EFEAF8] !px-3 !py-1 text-[12px] font-medium !text-[#1B1726] hover:!bg-[#EFEAF8]" title="Remove">{c} ×</button>)}
                       <input className="min-w-[180px] flex-1 rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] text-[#1B1726]" placeholder="Add another email" value={ccInput} onChange={(e) => setCcInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const v = ccInput.trim(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && !cc.includes(v)) { setCc((l) => [...l, v]); setCcInput(''); } } }} />
                     </div>
-                    <p className="mt-1 text-[12px] font-medium text-[#7A7787]">You are always copied. Press Enter to add an email.</p>
+                    <Tip text="You are always copied. Press Enter to add an email." />
                   </div>
                   <label className="block"><span className={lab}>Subject</span>
                     <div className="flex items-center overflow-hidden rounded-lg border border-[#E6E5EC] bg-white">
@@ -264,7 +267,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             {requestUI}
             {attachUI}
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[12px] font-medium text-[#7A7787]">Goes to {party.email}. You are copied and replies go to your email. The subject starts with the property address.</span>
+              <Tip text={`Goes to ${party.email}. You are copied and replies go to your email. The subject starts with the property address.`} />
               <span className="flex gap-2"><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !body} onClick={clearAll}>Clear</button>
               <button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !targets.length || !subject.trim() || !body.trim()} onClick={() => void sendEmail()}>Send Email</button></span>
             </div>
@@ -281,7 +284,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             <SpellHelper text={body} onChange={setBody} ignore={spellIgnore} />
             {requestUI}
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[12px] font-medium text-[#7A7787]">Sent to {party.phone}. The property address and a STOP line are added.</span>
+              <Tip text={`Sent to ${party.phone}. The property address and a STOP line are added.`} />
               <span className="flex gap-2"><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !body} onClick={clearAll}>Clear</button><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !targets.length || !body.trim()} onClick={() => void sendText()}>Send Text</button></span>
             </div>
           </div>
@@ -341,13 +344,13 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
       <button type="button" className={btn} onClick={() => setChanging((v) => !v)} aria-expanded={changing}>
         Layout: {({ inbox: 'Inbox With Deal Rail', timeline: 'One Deal Timeline', strip: 'People Strip With Chat', threads: 'Thread List And Panel', split: 'Compose And History Split' } as const)[layout]}
       </button>
-      <span className="text-[12px] font-medium text-[#7A7787]">Saved to your account. Change it any time.</span>
+      <Tip text="Saved to your account. Change it any time." />
     </div>
   );
   const picker = (changing || needsChoice) && (
     <div className="ds-card mb-4 px-4 py-4">
       <h2 className="text-[14px] font-semibold text-[#1B1726]">{needsChoice ? 'Choose How Messages Looks' : 'Messages Layout'}</h2>
-      <p className="mb-3 mt-0.5 text-[12px] font-medium text-[#7A7787]">Pick the layout you like. You can change it later from here or in Settings.</p>
+      
       <MessageLayoutPicker value={layoutChoice ?? layoutSaved} onPick={(v) => void saveLayout(v)} disabled={busy} />
     </div>
   );
@@ -361,7 +364,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
                 return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-full !border !px-2 !py-0.5 !text-[10px] !leading-4 font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#7A7787]">{p.role}</span></button>;
               })}
             </div>
-            <p className="mt-2 text-[12px] font-medium text-[#7A7787]">Each person gets their own copy. Texts go only to people who agreed to texts.</p>
+            <Tip text="Each person gets their own copy. Texts go only to people who agreed to texts." />
           </div>
   );
   let body_: React.ReactNode;
