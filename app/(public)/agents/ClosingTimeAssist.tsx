@@ -357,7 +357,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                   const doc = deal.documents.find((d) => d.id === u.docId);
                   return (
                     <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 border border-slate-200 px-3 py-2 text-sm">
-                      <span className="min-w-0 truncate"><span className="font-semibold text-slate-900">{doc?.label ?? 'Document'}</span> · {u.filename} · {Math.max(1, Math.round(u.sizeBytes / 1024))} KB{u.reviewed ? '' : ' · new'}</span>
+                      <span className="min-w-0 truncate"><span className="font-semibold text-slate-900">{doc?.label ?? (u.docId === 'other' ? 'General Upload' : 'Document')}</span> · {u.filename} · {Math.max(1, Math.round(u.sizeBytes / 1024))} KB{u.reviewed ? '' : ' · new'}</span>
                       <span className="flex gap-2">
                         <a className={btn} href={`/api/closing-time/assist/upload/${u.id}`}>Download</a>
                         {data.connected?.storage.map((st) => <button key={st.slug} type="button" disabled={busy} className={btn} onClick={() => void saveFile(u.id, st.slug)}>Save to {st.name}</button>)}
@@ -374,7 +374,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                 <ul className="mt-2 space-y-2">
                   {data.uploads.filter((u) => u.archived).map((u) => (
                     <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 border border-slate-200 bg-slate-50 px-3 py-2">
-                      <span className="min-w-0 truncate text-slate-600"><span className="font-semibold">{deal.documents.find((d) => d.id === u.docId)?.label ?? 'Document'}</span> · {u.filename} · {new Date(u.createdAt).toLocaleDateString('en-US')}</span>
+                      <span className="min-w-0 truncate text-slate-600"><span className="font-semibold">{deal.documents.find((d) => d.id === u.docId)?.label ?? (u.docId === 'other' ? 'General Upload' : 'Document')}</span> · {u.filename} · {new Date(u.createdAt).toLocaleDateString('en-US')}</span>
                       <a className={btn} href={`/api/closing-time/assist/upload/${u.id}`}>Download</a>
                     </li>
                   ))}

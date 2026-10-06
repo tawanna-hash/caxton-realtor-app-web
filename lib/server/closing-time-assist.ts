@@ -359,11 +359,11 @@ export async function savePortalUpload(token: string, docId: string, file: { nam
   const row = rows[0];
   if (!row) return { ok: false, error: 'Invalid link' };
   const deal = await loadDeal(row.realtor_id, row.deal_id);
-  const doc = deal?.documents.find((d) => d.id === docId && d.status !== 'not_needed');
+  const doc = docId === 'other' ? { label: 'General Upload' } : deal?.documents.find((d) => d.id === docId && d.status !== 'not_needed');
   if (!doc) return { ok: false, error: 'That document is not requested.' };
   const count = await query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM closing_time_portal_uploads WHERE realtor_id=$1 AND deal_id=$2 AND created_at > NOW() - INTERVAL '1 day'`, [row.realtor_id, row.deal_id]);
   if ((count[0]?.n ?? 0) >= 25) return { ok: false, error: 'Upload limit reached for today. Contact your agent.' };
-  await query(`UPDATE closing_time_portal_uploads SET archived=TRUE WHERE realtor_id=$1 AND deal_id=$2 AND doc_id=$3 AND archived=FALSE`, [row.realtor_id, row.deal_id, docId]);
+  if (docId !== 'other') await query(`UPDATE closing_time_portal_uploads SET archived=TRUE WHERE realtor_id=$1 AND deal_id=$2 AND doc_id=$3 AND archived=FALSE`, [row.realtor_id, row.deal_id, docId]);
   await query(`INSERT INTO closing_time_portal_uploads (id, realtor_id, deal_id, doc_id, filename, content_type, size_bytes, data_b64) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
     [randomUUID(), row.realtor_id, row.deal_id, docId, file.name.replace(/[^\w.\- ]+/g, '_').slice(0, 200) || 'upload', file.type, file.bytes.length, file.bytes.toString('base64')]);
   const agent = await query<{ email: string }>(`SELECT COALESCE(NULLIF((SELECT w2.workspace->'notificationPreferences'->>'notificationEmail' FROM agent_command_center_workspaces w2 WHERE w2.realtor_id=realtors.id),''), realtors.email) AS email FROM realtors WHERE id=$1`, [row.realtor_id]);

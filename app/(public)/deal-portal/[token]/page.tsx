@@ -1,12 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import UploadButton from './UploadButton';
+import UploadDrop from './UploadDrop';
 import { getPortalView } from '@/lib/server/closing-time-assist';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Your Closing Progress', robots: { index: false, follow: false } };
 
-const statusLabel: Record<string, string> = { requested: 'Requested', received: 'Received', reviewed: 'Reviewed' };
 const parts = (d: string) => new Date(`${d}T12:00:00Z`);
 const short = (d: string) => parts(d).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
 const weekday = (d: string, w: 'short' | 'long' = 'short') => parts(d).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: w });
@@ -30,7 +29,7 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
   const stats: [string, string][] = [
     [view.daysToClosing === null ? '-' : String(view.daysToClosing), 'Days To Closing'],
     [nextDays === null || nextDays < 0 ? '-' : String(nextDays), 'Days To Next Deadline'],
-    [String(view.documents.length), 'Documents'],
+    [String(view.forms.length), 'Forms To View'],
   ];
 
   return (
@@ -88,7 +87,7 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
             </section>
           )}
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4">
             <section className={card}>
               <h2 className="border-b border-[#E6E5EC] px-4 py-3.5 text-[14px] font-semibold text-[#1B1726]">All Deadlines</h2>
               <ul className="px-4">
@@ -108,23 +107,6 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
               </ul>
             </section>
 
-            <section className={card}>
-              <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3.5">
-                <h2 className="text-[14px] font-semibold text-[#1B1726]">Documents</h2>
-                <span className="text-[12px] font-medium text-[#7A7787]">{view.documents.length} Total</span>
-              </div>
-              <ul className="px-4">
-                {view.documents.map((d) => (
-                  <li key={d.id} className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] py-3 last:border-0">
-                    <span className="text-[14px] font-medium text-[#1B1726]">{d.label}</span>
-                    {d.status === 'requested'
-                      ? <UploadButton token={token} docId={d.id} />
-                      : <span className="flex items-center gap-3"><span className="text-[12px] font-medium text-[#301D5D]">{statusLabel[d.status] ?? d.status}</span><UploadButton token={token} docId={d.id} label="Upload New" /></span>}
-                  </li>
-                ))}
-                {!view.documents.length && <li className="py-3 text-[#7A7787]">No documents requested yet.</li>}
-              </ul>
-            </section>
           </div>
 
           {view.forms.length > 0 && (
@@ -144,19 +126,7 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
             </section>
           )}
 
-          {view.todos.length > 0 && (
-            <section className={card}>
-              <h2 className="border-b border-[#E6E5EC] px-4 py-3.5 text-[14px] font-semibold text-[#1B1726]">What We Need From You</h2>
-              <ul className="px-4">
-                {view.todos.map((t) => (
-                  <li key={t.title} className="flex justify-between gap-3 border-b border-[#E6E5EC] py-3 last:border-0">
-                    <span className="text-[14px] font-medium text-[#1B1726]">{t.title}</span>
-                    {t.dueDate && <span className="text-[12px] font-medium text-[#301D5D]">By {short(t.dueDate)}</span>}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+          <UploadDrop token={token} />
 
           <div className="rounded-[10px] border border-[#E6E5EC] bg-[#F6F3FB] p-4">
             <span className="font-semibold text-[#1B1726]">A Note On Wiring Money.</span> Never wire funds from emailed instructions alone. Call the title company on its published number to verify. Real instructions do not change at the last minute.
