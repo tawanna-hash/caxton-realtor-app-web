@@ -183,7 +183,7 @@ function Tab({
       // the all-caps labels; flex-1 still distributes width evenly.
       className="flex flex-col items-center justify-center flex-1 min-w-0 px-0 gap-1 min-h-[44px] transition-transform duration-75 active:scale-95"
       style={{
-        color: active ? accent : '#9ca3af',
+        color: active ? accent : '#6B7280',
         WebkitTapHighlightColor: 'transparent',
       }}
     >

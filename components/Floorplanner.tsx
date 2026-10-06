@@ -797,7 +797,7 @@ function ToolButton({
       disabled={disabled}
       onClick={onClick}
       className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center transition-colors ${
-        active ? 'bg-[#FAD800] text-gray-900' : 'bg-white/10 text-white hover:bg-white/20'
+        active ? 'bg-[#FAD800] text-gray-900' : 'bg-white/10 text-[#1B1726] hover:bg-white/20'
       } ${disabled ? 'opacity-30 pointer-events-none' : ''}`}
     >
       {children}

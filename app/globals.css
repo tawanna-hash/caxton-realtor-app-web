@@ -1504,7 +1504,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-step.is-current .ds-step-dot { border: 2px solid #2F7D5B; background: #fff; }
 #agent-desk .ds-step-label { display: block; font-size: 0.8125rem; font-weight: 400; color: #6B6A75; line-height: 1.3; }
 #agent-desk .ds-step.is-current .ds-step-label { color: var(--d-ink); font-weight: 500; }
-#agent-desk .ds-step-sub { display: block; min-height: 1rem; margin-top: 0.125rem; font-size: 0.75rem; color: #A3A2AD; }
+#agent-desk .ds-step-sub { display: block; min-height: 1rem; margin-top: 0.125rem; font-size: 0.75rem; color: #7A7787; }
 #agent-desk .ds-step.is-current .ds-step-sub { color: var(--d-ink); }
 #agent-desk .ds-avatar { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 9999px; background: var(--d-lav-soft); color: var(--d-purple); font-size: 0.6875rem; font-weight: 600; margin-right: 0.625rem; }
 

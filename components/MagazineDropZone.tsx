@@ -208,7 +208,7 @@ export default function MagazineDropZone({
     return (
       <div className="border border-[#00E200]/30 bg-[#E0FBE0] rounded-md p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#00E200] flex items-center justify-center text-white">
+          <div className="w-10 h-10 rounded-full bg-[#00E200] flex items-center justify-center text-[#1B1726]">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
