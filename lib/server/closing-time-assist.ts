@@ -160,8 +160,8 @@ export async function removePortal(realtorId: string, dealId: string) {
 
 export type PortalView = {
   property: string; stage: string; closingDate: string; agentName: string; agentEmail: string;
-  clientFirstName: string; clientSide: 'buyer' | 'seller'; daysToClosing: number | null; titleCompany: string;
-  steps: { label: string; date: string; state: 'done' | 'current' | 'upcoming' }[];
+  clientFirstName: string; clientNames: string; clientSide: 'buyer' | 'seller'; daysToClosing: number | null; titleCompany: string;
+  steps: { label: string; date: string; note: string; state: 'done' | 'current' | 'upcoming' }[];
   timeline: { id: string; label: string; date: string; done: boolean; note: string }[];
   forms: { family: string; label: string }[];
   documents: { id: string; label: string; status: string }[];
@@ -205,22 +205,23 @@ export async function getPortalView(token: string): Promise<PortalView | null> {
   const timeline = dealTimeline(deal).map((i) => ({ id: i.id, label: i.label, date: i.date, done: i.date < today || Boolean(deal.documentChecks?.[`dl:${i.id}`]), note: explain(i.id) }));
   const dateOf = (id: string) => timeline.find((i) => i.id === id)?.date ?? '';
   const eff = deal.effectiveDate, em = dateOf('earnest-money-delivery'), opt = dateOf('option-period-ends'), close = deal.closingDate;
+  const noteOf = (id: string) => timeline.find((i) => i.id === id)?.note ?? '';
   const raw = [
-    { label: 'Under Contract', date: eff, done: Boolean(eff) && today >= eff },
-    { label: 'Earnest Money', date: em, done: Boolean(em) && today > em },
-    { label: 'Option Period', date: opt, done: Boolean(opt) && today > opt },
-    { label: 'Closing Prep', date: '', done: Boolean(close) && today >= close },
-    { label: 'Closing', date: close, done: Boolean(close) && today > close },
+    { label: 'Under Contract', date: eff, note: 'Your contract is in effect.', done: Boolean(eff) && today >= eff },
+    { label: 'Earnest Money', date: em, note: noteOf('earnest-money-delivery'), done: Boolean(em) && today > em },
+    { label: 'Option Period', date: opt, note: noteOf('option-period-ends'), done: Boolean(opt) && today > opt },
+    { label: 'Closing Prep', date: '', note: 'Final preparations before closing day.', done: Boolean(close) && today >= close },
+    { label: 'Closing', date: close, note: noteOf('closing-date'), done: Boolean(close) && today > close },
   ];
   const cur = raw.findIndex((x) => !x.done);
-  const steps = raw.map((x, i) => ({ label: x.label, date: x.date, state: (x.done ? 'done' : i === cur ? 'current' : 'upcoming') as 'done' | 'current' | 'upcoming' }));
+  const steps = raw.map((x, i) => ({ label: x.label, date: x.date, note: x.note, state: (x.done ? 'done' : i === cur ? 'current' : 'upcoming') as 'done' | 'current' | 'upcoming' }));
   return {
     property: (deal.propertyAddress || '').trim() || `${deal.title || 'Deal'} (address not entered)`,
     stage: label[deal.status],
     closingDate: deal.closingDate,
     agentName: [row.first_name, row.last_name].filter(Boolean).join(' '),
     agentEmail: row.email,
-    clientFirstName, clientSide, titleCompany,
+    clientFirstName, clientNames: names, clientSide, titleCompany,
     daysToClosing: deal.closingDate && deal.closingDate >= today ? days(deal.closingDate) : null,
     steps, timeline,
     forms: portalForms(deal).map((v) => ({ family: v.formFamily, label: v.title })),
