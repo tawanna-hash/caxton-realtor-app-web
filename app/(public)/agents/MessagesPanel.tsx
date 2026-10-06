@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import MessageLayoutPicker, { type MessageLayout } from './MessageLayoutPicker';
+import { dealFolders } from './purchase-documents';
 import { messagingPeople } from '@/lib/closing-time-people';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 
@@ -50,7 +51,21 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   const [flt, setFlt] = useState<'all' | 'email' | 'sms' | 'replies'>('all');
   const [threadsTab, setThreadsTab] = useState<'all' | 'needs' | 'waiting'>('all');
   const [openThread, setOpenThread] = useState<string>('');
+  const [cc, setCc] = useState<string[]>([]);
+  const [ccInput, setCcInput] = useState('');
+  const [asks, setAsks] = useState<string[]>([]);
+  const [askOther, setAskOther] = useState('');
+  const [askOpen, setAskOpen] = useState(false);
 
+  const askGroups = useMemo(() => {
+    if (!deal) return { required: [] as string[], optional: [] as string[], forms: [] as string[] };
+    const docs = dealFolders(deal).flatMap((f) => f.docs);
+    const added = (id: string) => Boolean(deal.documentChecks?.[`add:${id}`]);
+    const req = docs.filter((d) => d.kind === 'required' || added(d.id));
+    const rest = docs.filter((d) => d.kind !== 'required' && !added(d.id) && d.kind !== 'reference');
+    const uniq = (l: string[]) => Array.from(new Set(l));
+    return { required: uniq(req.map((d) => d.label)), optional: uniq(rest.filter((d) => !d.formFamily).map((d) => d.label)), forms: uniq(rest.filter((d) => d.formFamily).map((d) => d.label)) };
+  }, [deal]);
   const phonesParam = parties.map((p) => p.phone).filter(Boolean).join(',');
   useEffect(() => {
     let live = true;
@@ -91,7 +106,9 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   const sendEmail = async () => {
     const list = targets.filter((p) => p.email);
     if (!list.length) return;
-    if (await post({ action: 'email', dealId: scope, subject, body, to: list.map((p) => ({ name: p.name, email: p.email })) })) { setBody(''); setSubject(''); setMsg(`Email sent to ${list.map((p) => p.name).join(', ')}.`); }
+    const ccList = cc.filter((c) => !list.some((p) => p.email.toLowerCase() === c.toLowerCase()));
+    const requests = [...asks, ...(askOther.trim() ? [askOther.trim()] : [])].map((label) => ({ label }));
+    if (await post({ action: 'email', dealId: scope, subject, body, to: list.map((p) => ({ name: p.name, email: p.email })), ...(ccList.length ? { cc: ccList } : {}), ...(requests.length ? { requests } : {}) })) { setBody(''); setSubject(''); setCc([]); setAsks([]); setAskOther(''); setAskOpen(false); setMsg(`Email sent to ${list.map((p) => p.name).join(', ')}${requests.length ? `. ${requests.length} request${requests.length === 1 ? '' : 's'} added to the portal` : ''}.`); }
   };
   const sendText = async () => {
     const sent: string[] = []; const skipped: string[] = [];
@@ -157,10 +174,46 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
       {mode === 'email' && (
         party.email ? (
           <div className="space-y-3">
-            <label className="block"><span className={lab}>Subject</span><input className={field} value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={200} /></label>
+            <div>
+                    <span className={lab}>Cc</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {parties.filter((p) => p.email && p.key !== party.key).map((p) => {
+                        const on = cc.some((c) => c.toLowerCase() === p.email.toLowerCase());
+                        return <button key={p.key} type="button" onClick={() => setCc((c) => on ? c.filter((x) => x.toLowerCase() !== p.email.toLowerCase()) : [...c, p.email])} className={`!rounded-lg !border text-[12px] font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name}</button>;
+                      })}
+                      {cc.filter((c) => !parties.some((p) => p.email.toLowerCase() === c.toLowerCase())).map((c) => <button key={c} type="button" onClick={() => setCc((l) => l.filter((x) => x !== c))} className="!rounded-lg !border !border-[#301D5D] !bg-[#EFEAF8] text-[12px] font-medium !text-[#1B1726] hover:!bg-[#EFEAF8]" title="Remove">{c} ×</button>)}
+                      <input className="min-w-[180px] flex-1 rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] text-[#1B1726]" placeholder="Add another email" value={ccInput} onChange={(e) => setCcInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const v = ccInput.trim(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && !cc.includes(v)) { setCc((l) => [...l, v]); setCcInput(''); } } }} />
+                    </div>
+                    <p className="mt-1 text-[12px] font-medium text-[#7A7787]">You are always copied. Press Enter to add an email.</p>
+                  </div>
+                  <label className="block"><span className={lab}>Subject</span>
+                    <div className="flex items-center overflow-hidden rounded-lg border border-[#E6E5EC] bg-white">
+                      {!contact && <span className="shrink-0 border-r border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-[13px] font-medium text-[#4A4757]">{(deal?.propertyAddress || deal?.title || '').trim()} -</span>}
+                      <input className="min-w-0 flex-1 px-3 py-2 text-[14px] text-[#1B1726] outline-none" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={150} />
+                    </div>
+                  </label>
+                  {!contact && deal && (
+                    <div>
+                      <button type="button" className={btn} onClick={() => setAskOpen((v) => !v)} aria-expanded={askOpen}>{askOpen ? 'Hide Requests' : `Request Documents Or Forms${asks.length || askOther.trim() ? ` (${asks.length + (askOther.trim() ? 1 : 0)})` : ''}`}</button>
+                      {askOpen && (
+                        <div className="mt-3 space-y-4 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-4 py-3">
+                          {([['Required Documents', askGroups.required], ['Optional Documents', askGroups.optional], ['Forms', askGroups.forms]] as const).map(([title, list]) => list.length > 0 && (
+                            <div key={title}>
+                              <span className={lab}>{title}</span>
+                              <div className="grid gap-1 sm:grid-cols-2">
+                                {list.map((l) => <label key={l} className="flex items-start gap-2 text-[13px] text-[#1B1726]"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={asks.includes(l)} onChange={() => setAsks((a) => a.includes(l) ? a.filter((x) => x !== l) : [...a, l])} /><span>{l}</span></label>)}
+                              </div>
+                            </div>
+                          ))}
+                          <label className="block"><span className={lab}>Other (Custom Request)</span><input className={field} placeholder="For example: Signed HOA receipt" maxLength={200} value={askOther} onChange={(e) => setAskOther(e.target.value)} /></label>
+                          <p className="text-[12px] font-medium text-[#7A7787]">Each checked item becomes a pending request on this deal. The email lists them and links to the secure upload page. Uploads are tracked in Documents and the Audit Trail.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
             <label className="block"><span className={lab}>Message</span><textarea className={field} rows={5} value={body} onChange={(e) => setBody(e.target.value)} /></label>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[12px] font-medium text-[#7A7787]">Goes to {party.email}. You are copied and replies go to your email. The property address is added to the subject.</span>
+              <span className="text-[12px] font-medium text-[#7A7787]">Goes to {party.email}. You are copied and replies go to your email. The subject starts with the property address.</span>
               <button type="button" className={btn} disabled={busy || !subject.trim() || !body.trim()} onClick={() => void sendEmail()}>Send Email</button>
             </div>
           </div>
@@ -204,7 +257,8 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   const dayOf = (iso: string) => new Date(iso).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
   // Threads: one per person and email subject, plus one text thread per person.
-  const normSubject = (t: string) => t.replace(/^(\s*(re|fwd?|fw)\s*:\s*)+/i, '').replace(/\s+-\s+[^-]*$/, '').trim().toLowerCase();
+  const addr = (deal?.propertyAddress || deal?.title || '').trim().toLowerCase();
+  const normSubject = (t: string) => { let v = t.replace(/^(\s*(re|fwd?|fw)\s*:\s*)+/i, '').trim().toLowerCase(); if (addr) v = v.replace(`${addr} - `, '').replace(` - ${addr}`, ''); return v; };
   type Thread = { id: string; person: Party; title: string; channel: string; items: Item[]; at: string; lastOut: boolean };
   const threads: Thread[] = [];
   for (const p of parties) {

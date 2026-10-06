@@ -17,7 +17,9 @@ const person = { name: z.string().trim().min(1).max(200), phone: z.string().trim
 const action = z.discriminatedUnion('action', [
   z.object({ action: z.literal('send'), dealId, ...person, body: z.string().trim().min(1).max(900) }),
   z.object({ action: z.literal('email'), dealId, subject: z.string().trim().min(1).max(200), body: z.string().trim().min(1).max(10000),
-    to: z.array(z.object({ name: z.string().trim().min(1).max(200), email: z.string().trim().email().max(320) })).min(1).max(10) }),
+    to: z.array(z.object({ name: z.string().trim().min(1).max(200), email: z.string().trim().email().max(320) })).min(1).max(10),
+    cc: z.array(z.string().trim().email().max(320)).max(10).optional(),
+    requests: z.array(z.object({ label: z.string().trim().min(1).max(200), note: z.string().trim().max(500).optional() })).max(15).optional() }),
   z.object({ action: z.literal('mailbox_read'), on: z.boolean() }),
   z.object({ action: z.literal('mailbox_check') }),
   z.object({ action: z.literal('message_layout'), value: z.enum(['inbox', 'timeline', 'strip', 'threads']) }),
@@ -60,7 +62,7 @@ export const POST = withErrorHandling(async (req: Request): Promise<Response> =>
   const sender = { realtorId: user.realtorId, email: user.email };
   if (input.action === 'email') {
     const me = await query<{ first_name: string | null; last_name: string | null }>(`SELECT first_name, last_name FROM realtors WHERE id=$1`, [user.realtorId]);
-    return priv(await sendDealEmail(user.realtorId, input.dealId, property, { name: [me[0]?.first_name, me[0]?.last_name].filter(Boolean).join(' '), email: user.email }, input));
+    return priv(await sendDealEmail(user.realtorId, input.dealId, property, { name: [me[0]?.first_name, me[0]?.last_name].filter(Boolean).join(' '), email: user.email }, input, new URL(req.url).origin));
   }
   if (input.action === 'send') return priv(await sendDealText(sender, input.dealId, property, input));
   if (input.action === 'confirm_agreed') return priv(await attestDealConsent(sender, input.dealId, input));

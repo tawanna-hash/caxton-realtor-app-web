@@ -143,22 +143,37 @@ export async function listDealEmails(realtorId: string, dealId: string): Promise
 const esc = (v: string) => v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c));
 
 /** Emails from the deal's Messages tab. Replies go to the agent's own email; they are not threaded back here. */
-export async function sendDealEmail(realtorId: string, dealId: string, property: string, agent: { name: string; email: string }, input: { to: { name: string; email: string }[]; subject: string; body: string }): Promise<{ ok: boolean; sent: number; error?: string }> {
+export async function sendDealEmail(realtorId: string, dealId: string, property: string, agent: { name: string; email: string }, input: { to: { name: string; email: string }[]; subject: string; body: string; cc?: string[]; requests?: { label: string; note?: string }[] }, origin = ''): Promise<{ ok: boolean; sent: number; error?: string; requested?: number }> {
   if (await isLocked(realtorId, dealId)) return { ok: false, sent: 0, error: LOCKED_MESSAGE };
   await ensure();
-  const subject = (dealId === CONTACT_SCOPE || input.subject.includes(property) ? input.subject : `${input.subject} - ${property}`).slice(0, 200);
-  const html = `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:600px">${input.body.split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}<p style="color:#7A7787;font-size:12px">${dealId === CONTACT_SCOPE ? '' : `Regarding ${esc(property)}. `}Reply to this email to reach ${esc(agent.name || 'your agent')}.</p></div>`;
+  const bare = input.subject.trim();
+  // Every deal email starts with the property address.
+  const subject = (dealId === CONTACT_SCOPE || bare.toLowerCase().startsWith(property.toLowerCase()) ? bare : `${property} - ${bare}`).slice(0, 200);
+  const ccList = Array.from(new Set([agent.email, ...(input.cc ?? [])].map((e) => (e ?? '').trim().toLowerCase()).filter(Boolean)));
   let sent = 0; let lastError = '';
+  let requested = 0;
   for (const to of input.to) {
-    const r = await sendEmail({ to: to.email, cc: agent.email || undefined, replyTo: agent.email || undefined, subject, html }).catch((e) => ({ ok: false, error: String(e) }));
+    let text = input.body;
+    const asks = dealId === CONTACT_SCOPE ? [] : (input.requests ?? []).filter((r) => r.label.trim());
+    const made: string[] = [];
+    if (asks.length) {
+      const { createDocRequest, setPortalLink, markDocRequestEmailed } = await import('@/lib/server/closing-time-assist');
+      for (const r of asks) made.push(await createDocRequest(realtorId, dealId, { label: r.label.trim(), note: (r.note ?? '').trim(), personName: to.name }));
+      const token = await setPortalLink(realtorId, dealId, to.name, {});
+      text += `\n\nPlease provide:\n${asks.map((r) => `- ${r.label.trim()}${r.note?.trim() ? ` (${r.note.trim()})` : ''}`).join('\n')}${token && origin ? `\n\nUpload here: ${origin}/deal-portal/${token}` : ''}`;
+      requested += made.length;
+      for (const id of made) await markDocRequestEmailed(realtorId, id).catch(() => undefined);
+    }
+    const html = `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:600px">${text.split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}${dealId === CONTACT_SCOPE ? '' : `<p style="color:#7A7787;font-size:12px">Regarding ${esc(property)}</p>`}</div>`;
+    const r = await sendEmail({ to: to.email, cc: ccList.filter((c) => c !== to.email.toLowerCase()), replyTo: agent.email || undefined, subject, html }).catch((e) => ({ ok: false, error: String(e) }));
     const ok = (r as { ok?: boolean }).ok !== false;
     if (!ok) lastError = (r as { error?: string }).error ?? 'Send failed';
     await query(`INSERT INTO closing_time_emails (id, realtor_id, deal_id, person_name, to_email, subject, body, status, error) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-      [randomUUID(), realtorId, dealId, to.name.slice(0, 200), to.email, subject, input.body.slice(0, 10000), ok ? 'sent' : 'failed', ok ? null : lastError]);
+      [randomUUID(), realtorId, dealId, to.name.slice(0, 200), to.email, subject, text.slice(0, 10000), ok ? 'sent' : 'failed', ok ? null : lastError]);
     await note(realtorId, dealId, to.name, 'email', ok ? `Email sent to ${to.name} <${to.email}>: ${subject}` : `Email to ${to.name} <${to.email}> could not be sent: ${lastError}`);
     if (ok) sent += 1;
   }
-  return sent ? { ok: true, sent } : { ok: false, sent, error: lastError || 'Send failed' };
+  return sent ? { ok: true, sent, requested } : { ok: false, sent, error: lastError || 'Send failed' };
 }
 
 /** Everything exchanged with one person across all deals, including closed ones, plus messages sent from Contacts. */
