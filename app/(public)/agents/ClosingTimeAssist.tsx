@@ -39,7 +39,6 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const [editing, setEditing] = useState<Record<string, Partial<FollowUp>>>({});
   const [checklistText, setChecklistText] = useState('');
   const [showChecklist, setShowChecklist] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [extDays, setExtDays] = useState(3);
   const [newClosing, setNewClosing] = useState('');
   const [notice, setNotice] = useState('');
@@ -134,7 +133,6 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
     if (r?.status) setNotice(`Status: ${r.status}.`);
   };
 
-  const portalUrl = data?.portalToken ? `${window.location.origin}/deal-portal/${data.portalToken}` : '';
   const partyByRole = (role: string) => data?.parties.find((p) => p.role === role);
   const drafts = data?.followUps.filter((f) => f.status === 'draft') ?? [];
   const sent = data?.followUps.filter((f) => f.status === 'sent').slice(0, 5) ?? [];
@@ -182,24 +180,6 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
               <input type="date" className={`${input} max-w-[170px]`} value={newClosing} onChange={(e) => setNewClosing(e.target.value)} aria-label="New closing date" />
               <a className={`${btn} ${newClosing ? '' : 'pointer-events-none opacity-45'}`} href={`/api/closing-time/assist/amendment?dealId=${encodeURIComponent(deal.id)}&type=closing&newDate=${newClosing}`}>Closing Date Amendment (PDF)</a>
             </div>
-          </section>
-
-          <section aria-label="Client portal" className="rounded-md border border-gray-200 bg-white p-5">
-            <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Client Progress Link</h4>
-            <p className="mt-2 text-sm text-slate-600">A read-only page for your client with key dates, documents, and open to-dos. No sign-in needed. It never shows your notes or form data.</p>
-            {!data.portalToken ? (
-              <button type="button" disabled={busy} className={`${btnPrimary} mt-3`} onClick={() => void post({ action: 'portal', dealId: deal.id })}>Create Link</button>
-            ) : (
-              <div className="mt-3 space-y-2">
-                <input readOnly value={portalUrl} className={input} aria-label="Client progress link" onFocus={(e) => e.currentTarget.select()} />
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" className={btn} onClick={() => { void navigator.clipboard.writeText(portalUrl); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>{copied ? 'Copied' : 'Copy Link'}</button>
-                  <a className={btn} href={portalUrl} target="_blank" rel="noreferrer">Preview</a>
-                  <button type="button" disabled={busy} className={btn} onClick={() => void post({ action: 'portal', dealId: deal.id, reset: true })}>Reset Link</button>
-                  <button type="button" disabled={busy} className={btn} onClick={() => void post({ action: 'portal', dealId: deal.id, disable: true })}>Turn Off</button>
-                </div>
-              </div>
-            )}
           </section>
 
           <section aria-label="Deal contacts" className="rounded-md border border-gray-200 bg-white p-5">
