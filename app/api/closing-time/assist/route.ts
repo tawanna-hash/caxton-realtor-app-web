@@ -12,6 +12,7 @@ import { cancelSignRequest, deleteSignLayout, saveSignLayout, saveSignSettings }
 import { BUILTIN, SIGN_PROVIDERS, refreshEnvelope, sendForSignature, signingState } from '@/lib/server/closing-time-signing';
 import { query } from '@/lib/server/db/neon';
 import { sendEmail } from '@/lib/email';
+import { logDealEvent, markEventsAudited } from '@/lib/server/closing-time-events';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,6 +32,7 @@ const action = z.discriminatedUnion('action', [
   z.object({ action: z.literal('request_document'), dealId, label: z.string().trim().min(1).max(200), note: z.string().trim().max(500).optional(), email: z.boolean(),
     people: z.array(z.object({ name: z.string().trim().min(1).max(200), email: z.string().trim().max(320) })).min(1).max(10) }),
   z.object({ action: z.literal('request_logged'), id: z.string().uuid(), event: z.enum(['requested', 'uploaded', 'received']) }),
+  z.object({ action: z.literal('events_audited'), ids: z.array(z.string().uuid()).max(100) }),
   z.object({ action: z.literal('request_received'), id: z.string().uuid() }),
   z.object({ action: z.literal('request_cancel'), id: z.string().uuid() }),
   z.object({ action: z.literal('upload_reviewed'), id: z.string().uuid() }),
@@ -130,12 +132,13 @@ export const POST = withErrorHandling(async (req: Request): Promise<Response> =>
           const esc = (v: string) => v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c));
           const sent = await sendEmail({ to: person.email, replyTo: user.email, subject: `Document needed: ${input.label} - ${property}`,
             html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p>Hello ${esc(person.name.split(/\s+/)[0])},</p><p>Your agent needs <strong>${esc(input.label)}</strong> for ${esc(property)}.</p>${input.note ? `<p>${esc(input.note)}</p>` : ''}<p><a href="${href}" style="display:inline-block;padding:10px 16px;background:#301D5D;color:#ffffff;text-decoration:none;border-radius:8px">Open Your Client Portal</a></p><p style="color:#7A7787;font-size:13px">This link is private to you. Upload the document in the Requested From You section. Reply to this email with any questions.</p></div>` }).catch(() => ({ ok: false }));
-          if ((sent as { ok?: boolean })?.ok !== false) { await markDocRequestEmailed(user.realtorId, id); emailed += 1; }
+          if ((sent as { ok?: boolean })?.ok !== false) { await markDocRequestEmailed(user.realtorId, id); emailed += 1; await logDealEvent(user.realtorId, input.dealId, 'email', `Document request emailed to ${person.name} <${person.email}>: ${input.label}`); }
         }
       }
       return priv({ ok: true, emailed, requests: await listDocRequests(user.realtorId, input.dealId) });
     }
     case 'request_logged': await markDocRequestLogged(user.realtorId, input.id, input.event); return priv({ ok: true });
+    case 'events_audited': await markEventsAudited(user.realtorId, input.ids); return priv({ ok: true });
     case 'request_received': await setDocRequestStatus(user.realtorId, input.id, 'received'); return priv({ ok: true });
     case 'request_cancel': await setDocRequestStatus(user.realtorId, input.id, 'cancelled'); return priv({ ok: true });
     case 'upload_reviewed': await markUploadReviewed(user.realtorId, input.id); return priv({ ok: true });

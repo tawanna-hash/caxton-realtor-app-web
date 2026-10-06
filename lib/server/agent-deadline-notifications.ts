@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { logDeadlineDelivery } from '@/lib/server/closing-time-events';
 import {
   agentCommandCenterWorkspaceSchema,
   type AgentDeal,
@@ -203,6 +204,7 @@ async function markDeliverySent(id: string, providerMessageId?: string): Promise
      WHERE id = $1::uuid`,
     [id, providerMessageId ?? null],
   );
+  await logDeadlineDelivery(id);
 }
 
 async function releaseDelivery(id: string, failureReason: string): Promise<void> {

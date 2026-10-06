@@ -31,6 +31,7 @@ function matchingDocs(label: string, groups: readonly Group[]) {
 export default function DocumentRequestsCard({ deal, locked, documentGroups, onUpdate, headless }: { deal: AgentDeal; locked: boolean; documentGroups: readonly Group[]; onUpdate: <K extends keyof AgentDeal>(key: K, value: AgentDeal[K]) => void; headless?: boolean }) {
   const [reqs, setReqs] = useState<Req[] | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
+  const [events, setEvents] = useState<{ id: string; message: string; createdAt: string }[]>([]);
   const [open, setOpen] = useState(false);
   const [preset, setPreset] = useState(PRESETS[0]);
   const [custom, setCustom] = useState('');
@@ -58,6 +59,7 @@ export default function DocumentRequestsCard({ deal, locked, documentGroups, onU
   useEffect(() => {
     if (!reqs || locked) return;
     const d = latest.current;
+    const doneEvents: string[] = [];
     const have = new Set(d.activity.map((a) => a.id));
     const add: { id: string; message: string; createdAt: string }[] = [];
     const marks: { id: string; event: 'requested' | 'uploaded' | 'received' }[] = [];
@@ -79,18 +81,24 @@ export default function DocumentRequestsCard({ deal, locked, documentGroups, onU
         ev('received', `Marked received: ${r.label}${who}${docs.length ? `. Checklist checked: ${docs.map((i) => i.label).join(', ')}` : ''}`, r.receivedAt);
       }
     }
-    if (!marks.length) return;
+    for (const e of events) {
+      const id = `evt-${e.id}`;
+      if (!have.has(id)) add.push({ id, message: e.message, createdAt: e.createdAt });
+      doneEvents.push(e.id);
+    }
+    if (!marks.length && !doneEvents.length) return;
     pendingChecks.current = checks;
     if (add.length) onUpdate('activity', [...d.activity, ...add].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).slice(-300));
     else onUpdate('documentChecks', { ...d.documentChecks, ...checks });
+    if (doneEvents.length) void fetch('/api/closing-time/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'events_audited', ids: doneEvents }) });
     for (const m of marks) void fetch('/api/closing-time/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'request_logged', ...m }) });
-  }, [reqs, locked, documentGroups, onUpdate]);
+  }, [reqs, events, locked, documentGroups, onUpdate]);
 
   useEffect(() => {
     let live = true;
     fetch(`/api/closing-time/assist?dealId=${encodeURIComponent(deal.id)}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((b) => { if (live) { setReqs(b ? (b.docRequests as Req[]) : []); setUploads(b ? (b.uploads as Upload[]) : []); } })
+      .then((b) => { if (live) { setReqs(b ? (b.docRequests as Req[]) : []); setUploads(b ? (b.uploads as Upload[]) : []); setEvents(b ? ((b.auditEvents ?? []) as { id: string; message: string; createdAt: string }[]) : []); } })
       .catch(() => { if (live) setReqs([]); });
     return () => { live = false; };
   }, [deal.id, deal.updatedAt, tick]);

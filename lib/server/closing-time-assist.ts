@@ -1,5 +1,6 @@
 import { portalForms } from '@/lib/server/portal-forms';
 import { randomBytes, randomUUID } from 'crypto';
+import { logDealEvent, listUnauditedEvents } from '@/lib/server/closing-time-events';
 import { agentCommandCenterWorkspaceSchema, type AgentDeal } from '@/lib/agent-command-center-workspace';
 import { dealRisks, dealTimeline } from '@/lib/closing-time-risks';
 import { sendEmail } from '@/lib/email';
@@ -133,6 +134,7 @@ export async function listAssist(realtorId: string, dealId: string) {
     portalToken: portal[0]?.token ?? null,
     portalLinks: await listPortalLinks(realtorId, dealId),
     docRequests: await listDocRequests(realtorId, dealId),
+    auditEvents: await listUnauditedEvents(realtorId, dealId),
     checklist: checklist[0]?.steps?.length ? checklist[0].steps : DEFAULT_CHECKLIST,
     customChecklist: Boolean(checklist[0]?.steps?.length),
     uploads: uploads.map((u) => ({ id: u.id, docId: u.doc_id, filename: u.filename, sizeBytes: u.size_bytes, createdAt: iso(u.created_at), reviewed: u.reviewed, archived: u.archived, uploader: u.uploader, storedIn: u.stored_in, storedPath: u.stored_path, storedUrl: u.stored_url })),
@@ -146,10 +148,12 @@ export async function addParty(realtorId: string, dealId: string, p: { role: Par
   await ensureAssistSchema();
   await query(`INSERT INTO closing_time_parties (id, realtor_id, deal_id, role, name, email) VALUES ($1,$2,$3,$4,$5,$6)`,
     [randomUUID(), realtorId, dealId, p.role, p.name.trim().slice(0, 200), p.email.trim().toLowerCase().slice(0, 320)]);
+  await logDealEvent(realtorId, dealId, 'person', `Person added: ${p.name.trim() || p.email.trim()} (${p.role})`);
 }
 export async function removeParty(realtorId: string, partyId: string) {
   await ensureAssistSchema();
-  await query(`DELETE FROM closing_time_parties WHERE id=$1 AND realtor_id=$2`, [partyId, realtorId]);
+  const gone = await query<{ deal_id: string; name: string; email: string; role: string }>(`DELETE FROM closing_time_parties WHERE id=$1 AND realtor_id=$2 RETURNING deal_id, name, email, role`, [partyId, realtorId]);
+  if (gone[0]) await logDealEvent(realtorId, gone[0].deal_id, 'person', `Person removed: ${gone[0].name || gone[0].email} (${gone[0].role})`);
 }
 
 export async function saveChecklist(realtorId: string, steps: ChecklistStep[]) {
@@ -381,12 +385,13 @@ export async function approveFollowUp(realtorId: string, id: string): Promise<{ 
     return { ok: false, error: 'Add a recipient email first' };
   }
   const own = await import('./closing-time-connected').then((m) => m.sendFromAgentMailbox(realtorId, { to: f.to_email, subject: f.subject, text: f.body })).catch(() => null);
-  if (own?.ok) return { ok: true };
+  if (own?.ok) { await logDealEvent(realtorId, f.deal_id, 'email', `Email sent from your own mailbox to ${f.to_email}: ${f.subject}`); return { ok: true }; }
   const sent = await sendEmail({ to: f.to_email, cc: agent.email || undefined, replyTo: agent.email || undefined, subject: f.subject, html: htmlBody(f.body) });
   if (!sent.ok) {
     await query(`UPDATE closing_time_followups SET status='draft', sent_at=NULL WHERE id=$1`, [id]);
     return { ok: false, error: sent.error ?? 'Send failed' };
   }
+  await logDealEvent(realtorId, f.deal_id, 'email', `Email sent to ${f.to_email}: ${f.subject}`);
   return { ok: true };
 }
 
@@ -450,6 +455,7 @@ export async function savePortalUpload(token: string, docId: string, file: { nam
   if ((count[0]?.n ?? 0) >= 25) return { ok: false, error: 'Upload limit reached for today. Contact your agent.' };
   if (docId !== 'other' && !request) await query(`UPDATE closing_time_portal_uploads SET archived=TRUE WHERE realtor_id=$1 AND deal_id=$2 AND doc_id=$3 AND archived=FALSE`, [row.realtor_id, row.deal_id, docId]);
   const id = randomUUID();
+  if (!request) await logDealEvent(row.realtor_id, row.deal_id, 'upload', `${row.person || 'Client'} uploaded ${file.name.replace(/[^\w.\- ]+/g, '_').slice(0, 120)} (${doc.label})`);
   await query(`INSERT INTO closing_time_portal_uploads (id, realtor_id, deal_id, doc_id, filename, content_type, size_bytes, data_b64, uploader) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
     [id, row.realtor_id, row.deal_id, docId, file.name.replace(/[^\w.\- ]+/g, '_').slice(0, 200) || 'upload', file.type, file.bytes.length, file.bytes.toString('base64'), row.person]);
   if (request && request.status === 'pending') await query(`UPDATE closing_time_doc_requests SET status='uploaded', uploaded_at=NOW() WHERE id=$1 AND status='pending'`, [request.id]);
@@ -463,8 +469,9 @@ export async function notifyAgentOfUpload(realtorId: string, dealId: string, inf
   if (!agent[0]?.email) return;
   const property = deal?.propertyAddress || deal?.title || 'your deal';
   const who = info.uploader || 'Your client';
-  void sendEmail({ to: agent[0].email, subject: `New upload from ${who}: ${info.label} - ${property}`,
-    html: htmlBody(`${who} uploaded "${info.filename}" (${info.label}) for ${property}.\n\n${info.storedNote}`) });
+  const alert = await sendEmail({ to: agent[0].email, subject: `New upload from ${who}: ${info.label} - ${property}`,
+    html: htmlBody(`${who} uploaded "${info.filename}" (${info.label}) for ${property}.\n\n${info.storedNote}`) }).catch(() => ({ ok: false }));
+  if (alert.ok) await logDealEvent(realtorId, dealId, 'notification', `Notification email sent to you: new upload from ${who} (${info.filename}). ${info.storedNote}`);
 }
 
 /** Marks an upload as filed in the agent's storage and removes the copy held in the database. */
@@ -526,7 +533,8 @@ export async function runSignatureReminders(now = new Date()): Promise<{ sent: n
     const property = (deal.propertyAddress || '').trim() || `${deal.title || 'Deal'} (address not entered)`;
     if (g.reminders_sent >= 3) {
       await query(`UPDATE closing_time_signatures SET status='escalated' WHERE id=$1 AND status='open'`, [g.id]);
-      await sendEmail({ to: agent.email, subject: `Signature still missing: ${g.document} - ${property}`, html: htmlBody(`${g.to_name || g.to_email} has not signed "${g.document}" after 3 automatic reminders. Please follow up personally.`) });
+      const esc = await sendEmail({ to: agent.email, subject: `Signature still missing: ${g.document} - ${property}`, html: htmlBody(`${g.to_name || g.to_email} has not signed "${g.document}" after 3 automatic reminders. Please follow up personally.`) });
+      if (esc.ok) await logDealEvent(g.realtor_id, g.deal_id, 'notification', `Notification email sent to you: ${g.to_name || g.to_email} still has not signed ${g.document}`);
       out.escalated += 1;
       continue;
     }
@@ -543,6 +551,7 @@ export async function runSignatureReminders(now = new Date()): Promise<{ sent: n
     const sent = await sendEmail({ to: g.to_email, cc: agent.email || undefined, replyTo: agent.email || undefined, subject, html: htmlBody(body) });
     if (sent.ok) {
       out.sent += 1;
+      await logDealEvent(g.realtor_id, g.deal_id, 'email', `Signature reminder emailed to ${g.to_email}: ${g.document}`);
       await query(`INSERT INTO closing_time_followups (id, realtor_id, deal_id, kind, to_name, to_email, subject, body, status, sent_at) VALUES ($1,$2,$3,'signature',$4,$5,$6,$7,'sent',NOW())`,
         [randomUUID(), g.realtor_id, g.deal_id, g.to_name, g.to_email, subject, body]);
     } else {

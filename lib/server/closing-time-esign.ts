@@ -3,6 +3,7 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { getAgentAccountDetails } from '@/lib/server/agent-account-details';
 import { stampBrokerageFooter } from '@/lib/server/brokerage-footer-pdf';
 import { query } from '@/lib/server/db/neon';
+import { logDealEvent } from '@/lib/server/closing-time-events';
 import { sendEmail } from '@/lib/email';
 import { ensureAssistSchema, getUpload, requireDeal } from '@/lib/server/closing-time-assist';
 import { getCalculatorBranding } from '@/lib/server/calculator-branding-store';
@@ -167,6 +168,7 @@ export async function createSignRequest(realtorId: string, input: BuiltinInput):
   await Promise.all(links.map(async ({ to, token }) => {
     const r = await sendEmail({ to: to.email, replyTo: me[0]?.email || undefined, subject, html: mail(`Hello ${to.name},\n\n${agentName} has sent you "${docName}" for ${property} to review and sign electronically.\n\nThe link is private to you and expires in ${set.expireDays} days.`, { href: `${input.origin}/sign/${token}`, label: 'Review And Sign' }, brand) });
     if (!r.ok) failed.push(to.email);
+    else await logDealEvent(realtorId, input.dealId, 'email', `Signature request emailed to ${to.name} <${to.email}>: ${docName}`);
   }));
   if (failed.length === links.length) { await query(`UPDATE closing_time_sign_requests SET status='cancelled' WHERE id=$1`, [reqId]); await query(`UPDATE closing_time_envelopes SET status='cancelled' WHERE external_id=$1`, [reqId]); throw new Error('The signing emails could not be sent. Try again.'); }
   return `Sent "${docName}" for secure signature to ${input.signers.map((s) => s.email).join(', ')}.${failed.length ? ` These emails failed: ${failed.join(', ')}.` : ''}`;
@@ -234,6 +236,7 @@ export async function submitSignature(token: string, body: { consent: boolean; m
   }
   const claimed = await query<{ id: string }>(`UPDATE closing_time_sign_signers SET status='signed', consent_at=NOW(), signed_at=NOW(), ip=$2, user_agent=$3, marks=$4::jsonb WHERE id=$1 AND status='pending' RETURNING id`, [me.id, ctx.ip, ctx.ua.slice(0, 300), JSON.stringify(marks)]);
   if (!claimed[0]) return { ok: false, error: 'You have already responded.' };
+  await logDealEvent(req.realtor_id, req.deal_id, 'signature', `Document signed: ${req.document} signed by ${me.name} <${me.email}>`);
   await addEvent(req.id, { at: new Date().toISOString(), who: `${me.name} <${me.email}>`, event: 'Agreed to sign electronically and signed', ip: ctx.ip });
   const remaining = await query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM closing_time_sign_signers WHERE request_id=$1 AND status<>'signed'`, [req.id]);
   if ((remaining[0]?.n ?? 1) === 0) { await finalize(req.id); return { ok: true, completed: true }; }
@@ -249,6 +252,7 @@ export async function declineSignature(token: string, reason: string, ctx: { ip:
   await query(`UPDATE closing_time_sign_requests SET status='declined' WHERE id=$1`, [req.id]);
   await query(`UPDATE closing_time_envelopes SET status='declined', updated_at=NOW() WHERE external_id=$1`, [req.id]);
   await addEvent(req.id, { at: new Date().toISOString(), who: `${me.name} <${me.email}>`, event: 'Declined to sign', ip: ctx.ip });
+  await logDealEvent(req.realtor_id, req.deal_id, 'signature', `Signature declined: ${me.name} <${me.email}> declined ${req.document}${reason ? ` (${reason.slice(0, 200)})` : ''}`);
   if (req.agent_email) void sendEmail({ to: req.agent_email, subject: `Declined: ${req.document} - ${req.property}`, html: mail(`${me.name} (${me.email}) declined to sign "${req.document}" for ${req.property}.${reason ? `\n\nReason: ${reason.slice(0, 500)}` : ''}`) });
   return { ok: true };
 }
@@ -325,6 +329,7 @@ async function finalize(reqId: string): Promise<void> {
   const brand: Brand = { name: req.opts.brandName || req.agent_name, logo: req.opts.logo ?? '', accent: req.opts.accent ?? '#301D5D' };
   const withFile = req.opts.attach ?? true;
   const to = [...signers.map((s) => s.email), ...(req.agent_email && (req.opts.emailRequester ?? true) ? [req.agent_email] : [])];
+  await logDealEvent(req.realtor_id, req.deal_id, 'signature', `All signers completed ${req.document}; signed copy emailed to ${Array.from(new Set(to)).join(', ')}`);
   await sendEmail({ to: Array.from(new Set(to)), subject: `Completed: ${req.document} - ${req.property}`, html: mail(`Everyone has signed "${req.document}" for ${req.property}. ${withFile ? 'The signed copy, with its certificate page, is attached.' : 'Open your original signing link to download the signed copy.'}`, undefined, brand), ...(withFile ? { attachments: attach } : {}) }).catch(() => undefined);
 }
 
@@ -354,8 +359,8 @@ export async function listSignRequests(realtorId: string, dealId: string) {
 
 export async function runSignReminders(origin: string): Promise<{ sent: number; errors: string[] }> {
   await ensure();
-  const rows = await query<{ rid: string; sid: string; idx: number; name: string; email: string; nonce: string | null; sent: number; document: string; property: string; agent_name: string; agent_email: string; opts: Partial<SignSettings> & { logo?: string } }>(
-    `SELECT r.id AS rid, s.id AS sid, s.idx, s.name, s.email, s.nonce, s.reminders_sent AS sent, r.document, r.property, r.agent_name, r.agent_email, r.opts
+  const rows = await query<{ realtor_id: string; deal_id: string; rid: string; sid: string; idx: number; name: string; email: string; nonce: string | null; sent: number; document: string; property: string; agent_name: string; agent_email: string; opts: Partial<SignSettings> & { logo?: string } }>(
+    `SELECT r.realtor_id, r.deal_id, r.id AS rid, s.id AS sid, s.idx, s.name, s.email, s.nonce, s.reminders_sent AS sent, r.document, r.property, r.agent_name, r.agent_email, r.opts
      FROM closing_time_sign_requests r JOIN closing_time_sign_signers s ON s.request_id=r.id
      WHERE r.status='sent' AND r.expires_at > NOW() AND s.status='pending' AND s.nonce IS NOT NULL
        AND COALESCE((r.opts->>'remindEvery')::int,0) > 0
@@ -367,6 +372,7 @@ export async function runSignReminders(origin: string): Promise<{ sent: number; 
       const brand: Brand = { name: r.opts.brandName || r.agent_name, logo: r.opts.logo ?? '', accent: r.opts.accent ?? '#301D5D' };
       const res = await sendEmail({ to: r.email, replyTo: r.agent_email || undefined, subject: `Reminder: please sign ${r.document} - ${r.property}`, html: mail(`Hello ${r.name},\n\nThis is a reminder that ${r.agent_name} is waiting for your signature on "${r.document}" for ${r.property}.`, { href: `${origin}/sign/${tokenFor(r.rid, r.idx, r.nonce!)}`, label: 'Review And Sign' }, brand) });
       if (!res.ok) { errors.push(r.email); continue; }
+      await logDealEvent(r.realtor_id, r.deal_id, 'email', `Signature reminder emailed to ${r.name} <${r.email}>: ${r.document}`);
       await query(`UPDATE closing_time_sign_signers SET reminders_sent = reminders_sent + 1, last_reminded_at = NOW() WHERE id=$1`, [r.sid]);
       await addEvent(r.rid, { at: new Date().toISOString(), who: 'System', event: `Reminder ${r.sent + 1} sent to ${r.email}` });
       sent += 1;
