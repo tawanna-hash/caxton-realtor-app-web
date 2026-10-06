@@ -1658,7 +1658,6 @@ input[type='date']::-webkit-calendar-picker-indicator {
   #agent-desk input:not([type='checkbox']):not([type='radio']):not([type='file']),
   #agent-desk textarea,
   #agent-desk select { font-size: 16px; }
-  #agent-desk { overflow-wrap: anywhere; }
   #agent-desk table { font-size: 13px; }
 }
 
@@ -1678,4 +1677,11 @@ input[type='date']::-webkit-calendar-picker-indicator {
   #agent-desk .ds-table-wrap.ds-cards tbody td:first-child::before { content: none; }
   #agent-desk .ds-table-wrap.ds-cards tbody td[colspan] { display: block; text-align: center; }
   #agent-desk .ds-table-wrap.ds-cards tbody td[colspan]::before { content: none; }
+}
+
+/* Phones: deal tabs wrap as whole words, never letter by letter. */
+@media (max-width: 767px) {
+  #agent-desk .ds-dealnav { gap: 0.25rem 0.75rem; }
+  #agent-desk .ds-dealnav-group { flex-wrap: wrap; padding-right: 0.75rem; }
+  #agent-desk .ds-dealnav button { white-space: nowrap; flex: none; }
 }
