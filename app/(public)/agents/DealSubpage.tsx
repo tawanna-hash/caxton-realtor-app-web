@@ -56,6 +56,28 @@ const btnPrimary = 'inline-flex h-[34px] items-center gap-1.5 rounded-lg bg-[#30
 
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '?';
 
+type PartyView = { name: string; role: string; company?: string; email: string; phone: string };
+/** One person on a deal, identical on Snapshot (desktop and mobile) and the People tab: full contact details, nothing truncated. */
+function PartyLine({ p, textHref: textLink, onRemove }: { p: PartyView; textHref: string; onRemove?: () => void }) {
+  return (
+    <div className="flex items-start gap-3 border-b border-[#F1F0F5] px-4 py-3 last:border-0">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EFEAF8] text-xs font-semibold text-[#301D5D]" aria-hidden="true">{initials(p.name)}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block break-words text-sm font-semibold text-slate-900">{p.name}</span>
+        <span className="block break-words text-xs font-medium text-slate-500">{[p.role, p.company && p.company !== p.name ? p.company : ''].filter(Boolean).join(' · ')}</span>
+        {p.email ? <span className="mt-0.5 block break-all text-xs text-slate-500">{p.email}</span> : null}
+        {p.phone ? <span className="block break-words text-xs text-slate-500">{p.phone}</span> : null}
+      </span>
+      <span className="flex shrink-0 items-center gap-3 pt-1 text-slate-400">
+        {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : <Mail className="h-4 w-4 opacity-40" aria-hidden="true" />}
+        {p.phone ? <a href={textLink} aria-label={`Text ${p.name}`} className="hover:text-[#301D5D]"><MessageSquare className="h-4 w-4" aria-hidden="true" /></a> : null}
+        {p.phone ? <a href={`tel:${p.phone.replace(/[^+\d]/g, '')}`} aria-label={`Call ${p.name}`} className="hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : <Phone className="h-4 w-4 opacity-40" aria-hidden="true" />}
+        {onRemove ? <button type="button" aria-label={`Remove ${p.name}`} className="hover:text-[#9A3D2B]" onClick={onRemove}><Trash2 className="h-4 w-4" aria-hidden="true" /></button> : null}
+      </span>
+    </div>
+  );
+}
+
 function newId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
 }
@@ -230,7 +252,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
   const clients = [deal.buyerNames, deal.sellerNames].filter(Boolean);
   const people = deal.clientContacts;
   const allPeople = dealPeople(deal);
-  const derived = dealPeople(deal).filter((p) => p.fromContract && !deal.clientContacts.some((c) => c.name.trim().toLowerCase() === p.name.trim().toLowerCase()));
   const docById = new Map(deal.documents.map((d) => [d.id, d]));
   const prefs = deal.preferences;
   const setPref = (key: keyof AgentDeal['preferences'], value: string) => onUpdate('preferences', { ...prefs, [key]: value });
@@ -306,20 +327,8 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 <>
           <h3 className="ds-side-title">Parties</h3>
           <div className="ds-card ds-list">
-            {allPeople.length === 0 && <p className="text-sm text-slate-500">No parties added.</p>}
-            {allPeople.map((p) => (
-              <div key={`${p.role}-${p.name}`} className="ds-list-row">
-                <span className="ds-avatar" aria-hidden="true">{initials(p.name)}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block break-words text-sm font-semibold text-slate-900">{p.name}</span>
-                  <span className="mt-0.5 inline-block rounded-full bg-[#EFEAF8] px-2 py-0.5 text-[11px] font-medium capitalize text-[#301D5D]">{p.role}</span>
-                  {p.email ? <span className="mt-1 block break-all text-xs text-slate-500">{p.email}</span> : null}
-                  {p.phone ? <span className="block break-words text-xs text-slate-500">{p.phone}</span> : null}
-                </span>
-                {p.phone ? <a href={`tel:${p.phone.replace(/[^+\d]/g, '')}`} aria-label={`Call ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : null}
-                {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : null}
-              </div>
-            ))}
+            {allPeople.length === 0 && <p className="px-4 py-3 text-sm text-slate-500">No parties added.</p>}
+            {allPeople.map((p) => <PartyLine key={`${p.role}-${p.name}`} p={p} textHref={textHref(p.phone, p.name, deal.propertyAddress || deal.title)} />)}
             <button type="button" onClick={() => onOpenView('d-people')} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left text-xs text-slate-500">Manage People</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
           </div>
 </>
@@ -580,39 +589,9 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     const stat = (label: string, value: string, tone?: string) => (
       <div className="min-w-0"><p className="ds-eyebrow">{label}</p><p className={`mt-1 text-xl font-semibold ${tone ?? 'text-slate-900'}`}>{value}</p></div>
     );
-    type PartyRow = { id: string; name: string; role: string; sub: string; email: string; phone: string; menu?: boolean };
-    const clientRe = /buyer|seller|client|tenant|landlord|owner/i;
-    const sideRe = /agent|coordinator|broker|realtor/i;
-    const known = new Set(deal.clientContacts.map((p) => p.name.trim().toLowerCase()));
-    const fromNames = (names: string, role: string): PartyRow[] => (names || '').split(/\s*(?:&|,|\band\b)\s*/i).map((n) => n.trim()).filter((n) => n && !known.has(n.toLowerCase())).map((n) => ({ id: `n-${role}-${n}`, name: n, role, sub: 'Your client', email: '', phone: '' }));
-    const yourSide: PartyRow[] = [
-      ...deal.clientContacts.filter((p) => !p.role || clientRe.test(p.role) || sideRe.test(p.role)).map((p) => ({ id: p.id, name: p.name, role: p.role || 'Client', sub: !p.role || clientRe.test(p.role) ? 'Your client' : (p.email ?? ''), email: p.email ?? '', phone: p.phone ?? '', menu: Boolean(p.role && sideRe.test(p.role)) })),
-      ...fromNames(deal.buyerNames, 'Buyer'),
-      ...fromNames(deal.sellerNames, 'Seller'),
-    ];
-    const external: PartyRow[] = [
-      ...deal.clientContacts.filter((p) => p.role && !clientRe.test(p.role) && !sideRe.test(p.role)).map((p) => ({ id: p.id, name: p.name, role: p.role as string, sub: p.email ?? '', email: p.email ?? '', phone: p.phone ?? '' })),
-      ...deal.serviceProviders.map((p) => ({ id: p.id, name: p.name, role: p.category, sub: p.email ?? '', email: p.email ?? '', phone: p.phone ?? '' })),
-    ];
-    const roleTone = () => ['border-[#E6E5EC] bg-[#F6F3FB] text-[#301D5D]', 'bg-[#EFEAF8] text-[#301D5D]'];
-    const partyRow = (p: PartyRow) => {
-      const [, avatar] = roleTone();
-      return (
-        <div key={p.id} className="flex items-start gap-3 border-b border-[#F1F0F5] py-3 last:border-0">
-          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatar}`} aria-hidden="true">{initials(p.name)}</span>
-          <span className="min-w-0 flex-1">
-            <span className="flex flex-wrap items-center gap-1.5"><span className="text-sm font-semibold text-slate-900">{p.name}</span><span className="text-xs font-medium text-slate-500">{p.role}</span></span>
-            {p.sub ? <span className="mt-0.5 block truncate text-xs text-slate-500">{p.sub}</span> : null}
-          </span>
-          <span className="flex shrink-0 items-center gap-3 pt-1 text-slate-400">
-            {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : <Mail className="h-4 w-4 opacity-40" aria-hidden="true" />}
-            {p.phone ? <a href={textHref(p.phone, p.name, deal.propertyAddress || deal.title)} aria-label={`Text ${p.name}`} className="hover:text-[#301D5D]"><MessageSquare className="h-4 w-4" aria-hidden="true" /></a> : null}
-            {p.phone ? <a href={`tel:${p.phone}`} aria-label={`Call ${p.name}`} className="hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : <Phone className="h-4 w-4 opacity-40" aria-hidden="true" />}
-            {p.menu ? <MoreHorizontal className="h-4 w-4" aria-hidden="true" /> : null}
-          </span>
-        </div>
-      );
-    };
+    const clientsList = allPeople.filter((p) => p.kind === 'client');
+    const othersList = allPeople.filter((p) => p.kind !== 'client');
+    const partyRow = (p: PartyView) => <PartyLine key={`${p.role}-${p.name}`} p={p} textHref={textHref(p.phone, p.name, deal.propertyAddress || deal.title)} />;
     const partiesCard = (
       <div className="ds-card self-start">
         <div className="flex items-center justify-between gap-2">
@@ -620,10 +599,10 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           <button type="button" onClick={() => onOpenView('d-people')}>Add</button>
         </div>
         <div className="mt-3">
-          {yourSide.length === 0 ? <p className="text-xs text-slate-500">No parties added.</p> : yourSide.map(partyRow)}
+          {clientsList.length === 0 ? <p className="text-xs text-slate-500">No parties added.</p> : clientsList.map(partyRow)}
         </div>
-        {external.length > 0 && <p className="ds-eyebrow mt-3 border-t border-[#F1F0F5] pt-3">External Parties</p>}
-        {external.length > 0 && <div className="mt-1">{external.map(partyRow)}</div>}
+        {othersList.length > 0 && <p className="ds-eyebrow mt-3 border-t border-[#F1F0F5] pt-3">External Parties</p>}
+        {othersList.length > 0 && <div className="mt-1">{othersList.map(partyRow)}</div>}
       </div>
     );
     return (
@@ -700,11 +679,8 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           )}
 
           {tab === 'overview' && (() => {
-            const clientRole = /buyer|seller|client|tenant|landlord|owner|agent|coordinator/i;
-            const named = new Set(people.map((p) => p.name.trim().toLowerCase()));
-            const clientNames = [[deal.buyerNames, 'Buyer'], [deal.sellerNames, 'Seller']].flatMap(([names, role]) => (names || '').split(/\s*(?:&|,|\band\b)\s*/i).map((n) => n.trim()).filter((n) => n && !named.has(n.toLowerCase())).map((n) => ({ id: `n-${role}-${n}`, name: n, role, email: '', phone: '', sub: 'Your client' })));
-            const yourSide = [...people.filter((p) => !p.role || clientRole.test(p.role)).map((p) => ({ id: p.id, name: p.name, role: p.role || 'Client', email: p.email ?? '', phone: p.phone ?? '', sub: /buyer|seller|client|tenant|landlord|owner/i.test(p.role ?? '') || !p.role ? 'Your client' : (p.email ?? '') })), ...clientNames];
-            const external = people.filter((p) => p.role && !clientRole.test(p.role)).map((p) => ({ id: p.id, name: p.name, role: p.role as string, email: p.email ?? '', phone: p.phone ?? '', sub: p.email ?? '' }));
+            const yourSide = allPeople.filter((p) => p.kind === 'client');
+            const external = allPeople.filter((p) => p.kind !== 'client');
             const soon = nextDeadline && nextDeadline.date <= new Date(Date.parse(`${today}T12:00:00Z`) + 3 * 86400000).toISOString().slice(0, 10);
             const attentionRows: { key: string; eyebrow: string; title: string; detail: string; tone: 'red' | 'amber'; go: string }[] = [
               ...openTasks.filter((t) => t.dueDate && t.dueDate <= today).map((t) => ({ key: t.id, eyebrow: 'Task', title: t.title, detail: t.dueDate < today ? `Overdue · ${formatDate(t.dueDate)}` : 'Due today', tone: (t.dueDate < today ? 'red' : 'amber') as 'red' | 'amber', go: 'tasks' })),
@@ -727,18 +703,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             const footLink = (label: string, go: string) => (
               <button type="button" onClick={() => onOpenView(go)} className="flex w-full items-center justify-between px-4 py-3 text-xs text-slate-500 hover:text-slate-900">{label} <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
             );
-            const partyRow = (p: { id: string; name: string; role: string; email: string; phone: string; sub: string }) => (
-              <div key={p.id} className="flex items-center gap-2.5 px-4 py-2.5">
-                <span className="ds-avatar !mr-0" aria-hidden="true">{initials(p.name)}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-1.5"><span className="truncate text-sm font-semibold text-slate-900">{p.name}</span><span className="rounded-full bg-[#EFEAF8] px-2 py-0.5 text-[11px] font-medium capitalize text-[#301D5D]">{p.role}</span></span>
-                  {p.sub ? <span className="block truncate text-xs text-slate-500">{p.sub}</span> : null}
-                </span>
-                {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : null}
-                {p.phone ? <a href={textHref(p.phone, p.name, deal.propertyAddress || deal.title)} aria-label={`Text ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><MessageSquare className="h-4 w-4" aria-hidden="true" /></a> : null}
-                {p.phone ? <a href={`tel:${p.phone}`} aria-label={`Call ${p.name}`} className="text-slate-400 hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : null}
-              </div>
-            );
+            const partyRow = (p: PartyView) => <PartyLine key={`${p.role}-${p.name}`} p={p} textHref={textHref(p.phone, p.name, deal.propertyAddress || deal.title)} />;
             return (
               <div className="space-y-4">
                 <div className="ds-snap-grid">
@@ -988,21 +953,11 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   </form>
                 )}
                 <div className="ds-card ds-list mt-3">
-                  {people.length === 0 && derived.length === 0 && <p className="text-sm text-slate-500">No people added yet.</p>}
-                  {derived.map((p) => (
-                    <div key={`c-${p.role}-${p.name}`} className="ds-list-row">
-                      <UserRound className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-                      <span className="min-w-0 flex-1"><span className="block font-medium text-slate-900">{p.name}</span><span className="block truncate text-xs text-slate-500">{[p.role, p.company && p.company !== p.name ? p.company : '', p.email, p.phone].filter(Boolean).join(' · ')}</span></span>
-                      <span className="text-xs text-slate-400">From Contract</span>
-                    </div>
-                  ))}
-                  {people.map((person) => (
-                    <div key={person.id} className="ds-list-row">
-                      <UserRound className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-                      <span className="min-w-0 flex-1"><span className="block font-medium text-slate-900">{person.name}</span><span className="block truncate text-xs text-slate-500">{[person.role, person.email, person.phone].filter(Boolean).join(' · ')}</span></span>
-                      {!locked && <button type="button" aria-label={`Remove ${person.name}`} className="text-slate-400 hover:text-[#9A3D2B]" onClick={() => onUpdate('clientContacts', people.filter((p) => p.id !== person.id))}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}
-                    </div>
-                  ))}
+                  {allPeople.length === 0 && <p className="px-4 py-3 text-sm text-slate-500">No people added yet.</p>}
+                  {allPeople.map((p) => {
+                    const manual = people.find((c) => c.name.trim().toLowerCase() === p.name.trim().toLowerCase());
+                    return <PartyLine key={`${p.role}-${p.name}`} p={p} textHref={textHref(p.phone, p.name, deal.propertyAddress || deal.title)} onRemove={manual && !locked ? () => onUpdate('clientContacts', people.filter((c) => c.id !== manual.id)) : undefined} />;
+                  })}
                 </div>
               </section>
 
