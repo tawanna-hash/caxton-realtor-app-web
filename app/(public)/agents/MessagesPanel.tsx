@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { TREC_FORM_LIBRARY } from '@/lib/trec-forms-library';
 import MessageLayoutPicker, { type MessageLayout } from './MessageLayoutPicker';
 import { dealFolders } from './purchase-documents';
 import { messagingPeople } from '@/lib/closing-time-people';
@@ -56,6 +57,9 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   const [asks, setAsks] = useState<string[]>([]);
   const [askOther, setAskOther] = useState('');
   const [askOpen, setAskOpen] = useState(false);
+  const [askSearch, setAskSearch] = useState('');
+  const [files, setFiles] = useState<{ filename: string; content: string; contentType: string; size: number }[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const askGroups = useMemo(() => {
     if (!deal) return { required: [] as string[], optional: [] as string[], forms: [] as string[] };
@@ -102,22 +106,36 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
 
   const layout: MessageLayout = contact ? 'inbox' : (layoutChoice ?? layoutSaved ?? 'inbox');
   const needsChoice = !contact && loaded && !layoutSaved && !layoutChoice;
+  const addFiles = async (list: FileList | null) => {
+    if (!list) return;
+    const next = [...files];
+    for (const file of Array.from(list)) {
+      if (next.length >= 5) { setMsg('Up to 5 files.'); break; }
+      if (next.some((f) => f.filename === file.name)) continue;
+      if (next.reduce((n, f) => n + f.size, 0) + file.size > 3 * 1024 * 1024) { setMsg('Attachments are limited to 3 MB in total. Use the upload request for larger files.'); break; }
+      const content = await new Promise<string>((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result).split(',')[1] ?? ''); r.onerror = () => reject(r.error); r.readAsDataURL(file); });
+      next.push({ filename: file.name, content, contentType: file.type || 'application/octet-stream', size: file.size });
+    }
+    setFiles(next);
+    if (fileRef.current) fileRef.current.value = '';
+  };
   const targets = layout === 'timeline' && !contact ? parties.filter((p) => (recips.length ? recips : party ? [party.key] : []).includes(p.key)) : party ? [party] : [];
   const sendEmail = async () => {
     const list = targets.filter((p) => p.email);
     if (!list.length) return;
     const ccList = cc.filter((c) => !list.some((p) => p.email.toLowerCase() === c.toLowerCase()));
     const requests = [...asks, ...(askOther.trim() ? [askOther.trim()] : [])].map((label) => ({ label }));
-    if (await post({ action: 'email', dealId: scope, subject, body, to: list.map((p) => ({ name: p.name, email: p.email })), ...(ccList.length ? { cc: ccList } : {}), ...(requests.length ? { requests } : {}) })) { setBody(''); setSubject(''); setCc([]); setAsks([]); setAskOther(''); setAskOpen(false); setMsg(`Email sent to ${list.map((p) => p.name).join(', ')}${requests.length ? `. ${requests.length} request${requests.length === 1 ? '' : 's'} added to the portal` : ''}.`); }
+    if (await post({ action: 'email', dealId: scope, subject, body, to: list.map((p) => ({ name: p.name, email: p.email })), ...(ccList.length ? { cc: ccList } : {}), ...(requests.length ? { requests } : {}), ...(files.length ? { attachments: files.map((f) => ({ filename: f.filename, content: f.content, contentType: f.contentType })) } : {}) })) { setBody(''); setSubject(''); setCc([]); setFiles([]); setAsks([]); setAskOther(''); setAskOpen(false); setMsg(`Email sent to ${list.map((p) => p.name).join(', ')}${requests.length ? `. ${requests.length} request${requests.length === 1 ? '' : 's'} added to the portal` : ''}.`); }
   };
   const sendText = async () => {
+    const textAsks = [...asks, ...(askOther.trim() ? [askOther.trim()] : [])].map((label) => ({ label }));
     const sent: string[] = []; const skipped: string[] = [];
     for (const p of targets) {
       const d = digits(p.phone); const e = d.length === 10 ? `+1${d}` : d.length === 11 && d.startsWith('1') ? `+${d}` : '';
       if (!e || consent[e] !== 'opted_in') { skipped.push(p.name); continue; }
-      if (await post({ action: 'send', dealId: scope, name: p.name, phone: p.phone, body })) sent.push(p.name); else return;
+      if (await post({ action: 'send', dealId: scope, name: p.name, phone: p.phone, body, ...(textAsks.length ? { requests: textAsks } : {}) })) sent.push(p.name); else return;
     }
-    if (sent.length) { setBody(''); setMsg(`Text sent to ${sent.join(', ')}.${skipped.length ? ` Skipped ${skipped.join(', ')}: no agreement to texts yet.` : ''}`); }
+    if (sent.length) { setBody(''); setAsks([]); setAskOther(''); setAskOpen(false); setMsg(`Text sent to ${sent.join(', ')}.${skipped.length ? ` Skipped ${skipped.join(', ')}: no agreement to texts yet.` : ''}`); }
     else if (skipped.length) setMsg(`${skipped.join(', ')} has not agreed to texts yet.`);
   };
   const saveLayout = async (v: MessageLayout) => { setLayoutChoice(v); setChanging(false); await post({ action: 'message_layout', value: v }); };
@@ -156,6 +174,45 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
       {list.map((i) => bubble(i))}
     </div>
   );
+  const lib = TREC_FORM_LIBRARY.reduce<Record<string, string[]>>((m, f) => { (m[f.category] ??= []).push(`${f.formNumber} ${f.title}`); return m; }, {});
+  const askCount = asks.length + (askOther.trim() ? 1 : 0);
+  const requestUI = !contact && deal && (
+    <div>
+      <button type="button" className={btn} onClick={() => setAskOpen((v) => !v)} aria-expanded={askOpen}>{askOpen ? 'Hide Requests' : `Request Documents Or Forms${askCount ? ` (${askCount})` : ''}`}</button>
+      {askOpen && (
+        <div className="mt-3 space-y-4 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-4 py-3">
+          <input className={field} placeholder="Search documents and forms" value={askSearch} onChange={(e) => setAskSearch(e.target.value)} />
+          <div className="max-h-72 space-y-4 overflow-auto pr-1">
+            {([['Required Documents', askGroups.required], ['Optional Documents', askGroups.optional], ...Object.entries(lib).map(([c, l]) => [`TREC Forms: ${c}`, l] as const)] as const).map(([title, list]) => {
+              const shownList = list.filter((l) => !askSearch.trim() || l.toLowerCase().includes(askSearch.trim().toLowerCase()));
+              return shownList.length > 0 && (
+                <div key={title}>
+                  <span className={lab}>{title}</span>
+                  <div className="grid gap-1 sm:grid-cols-2">
+                    {shownList.map((l) => <label key={l} className="flex items-start gap-2 text-[13px] text-[#1B1726]"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={asks.includes(l)} onChange={() => setAsks((a) => a.includes(l) ? a.filter((x) => x !== l) : [...a, l])} /><span>{l}</span></label>)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <label className="block"><span className={lab}>Other (Custom Request)</span><input className={field} placeholder="For example: Signed HOA receipt" maxLength={200} value={askOther} onChange={(e) => setAskOther(e.target.value)} /></label>
+          <p className="text-[12px] font-medium text-[#7A7787]">Each checked item becomes a pending request on this deal. The message lists them and links to the secure upload page. Uploads are tracked in Documents and the Audit Trail.</p>
+        </div>
+      )}
+    </div>
+  );
+  const attachUI = (
+    <div>
+      <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => void addFiles(e.target.files)} />
+      <button type="button" className={btn} onClick={() => fileRef.current?.click()}>Attach Files</button>
+      {files.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {files.map((f) => <div key={f.filename} className="flex items-center justify-between gap-3 rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] text-[#1B1726]"><span className="break-all">{f.filename} <span className="text-[12px] font-medium text-[#7A7787]">{Math.round(f.size / 1024)} KB</span></span><button type="button" className="text-[12px] font-medium text-[#7A7787] underline underline-offset-2 hover:!bg-transparent hover:!text-[#301D5D]" onClick={() => setFiles((l) => l.filter((x) => x.filename !== f.filename))}>Remove</button></div>)}
+        </div>
+      )}
+      <p className="mt-1 text-[12px] font-medium text-[#7A7787]">Up to 5 files, 3 MB in total.</p>
+    </div>
+  );
   const composerInner = !party ? null : (
     <div className="px-4 py-4">
       <h3 className="mb-2 text-[14px] font-semibold text-[#1B1726]">{mode === 'email' ? 'New Email' : 'New Text'}</h3>
@@ -192,26 +249,9 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
                       <input className="min-w-0 flex-1 px-3 py-2 text-[14px] text-[#1B1726] outline-none" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={150} />
                     </div>
                   </label>
-                  {!contact && deal && (
-                    <div>
-                      <button type="button" className={btn} onClick={() => setAskOpen((v) => !v)} aria-expanded={askOpen}>{askOpen ? 'Hide Requests' : `Request Documents Or Forms${asks.length || askOther.trim() ? ` (${asks.length + (askOther.trim() ? 1 : 0)})` : ''}`}</button>
-                      {askOpen && (
-                        <div className="mt-3 space-y-4 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-4 py-3">
-                          {([['Required Documents', askGroups.required], ['Optional Documents', askGroups.optional], ['Forms', askGroups.forms]] as const).map(([title, list]) => list.length > 0 && (
-                            <div key={title}>
-                              <span className={lab}>{title}</span>
-                              <div className="grid gap-1 sm:grid-cols-2">
-                                {list.map((l) => <label key={l} className="flex items-start gap-2 text-[13px] text-[#1B1726]"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={asks.includes(l)} onChange={() => setAsks((a) => a.includes(l) ? a.filter((x) => x !== l) : [...a, l])} /><span>{l}</span></label>)}
-                              </div>
-                            </div>
-                          ))}
-                          <label className="block"><span className={lab}>Other (Custom Request)</span><input className={field} placeholder="For example: Signed HOA receipt" maxLength={200} value={askOther} onChange={(e) => setAskOther(e.target.value)} /></label>
-                          <p className="text-[12px] font-medium text-[#7A7787]">Each checked item becomes a pending request on this deal. The email lists them and links to the secure upload page. Uploads are tracked in Documents and the Audit Trail.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
             <label className="block"><span className={lab}>Message</span><textarea className={field} rows={5} value={body} onChange={(e) => setBody(e.target.value)} /></label>
+            {requestUI}
+            {attachUI}
             <div className="flex items-center justify-between gap-3">
               <span className="text-[12px] font-medium text-[#7A7787]">Goes to {party.email}. You are copied and replies go to your email. The subject starts with the property address.</span>
               <button type="button" className={btn} disabled={busy || !subject.trim() || !body.trim()} onClick={() => void sendEmail()}>Send Email</button>
@@ -226,6 +266,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
         : state === 'opted_in' ? (
           <div className="space-y-3">
             <label className="block"><span className={lab}>Text</span><textarea className={field} rows={3} maxLength={900} value={body} onChange={(e) => setBody(e.target.value)} /></label>
+            {requestUI}
             <div className="flex items-center justify-between gap-3">
               <span className="text-[12px] font-medium text-[#7A7787]">Sent to {party.phone}. The property address and a STOP line are added.</span>
               <button type="button" className={btn} disabled={busy || !body.trim()} onClick={() => void sendText()}>Send Text</button>

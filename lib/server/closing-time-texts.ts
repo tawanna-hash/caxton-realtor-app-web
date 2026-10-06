@@ -20,6 +20,10 @@ function ensure(): Promise<void> {
     await query(`CREATE TABLE IF NOT EXISTS closing_time_emails (
       id UUID PRIMARY KEY, realtor_id UUID NOT NULL, deal_id TEXT NOT NULL, person_name TEXT NOT NULL DEFAULT '', to_email TEXT NOT NULL,
       subject TEXT NOT NULL, body TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'sent', error TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+    for (const [t, cols] of [
+      ['closing_time_emails', ['realtor_id UUID', 'deal_id TEXT', 'person_name TEXT', 'to_email TEXT', 'subject TEXT', 'body TEXT', 'status TEXT', 'error TEXT', 'created_at TIMESTAMPTZ DEFAULT NOW()']],
+      ['closing_time_texts', ['realtor_id UUID', 'deal_id TEXT', 'person_name TEXT', 'phone TEXT', 'direction TEXT', 'body TEXT', 'status TEXT', 'telnyx_id TEXT', 'error TEXT', 'created_at TIMESTAMPTZ DEFAULT NOW()']],
+    ] as const) for (const c of cols) await query(`ALTER TABLE ${t} ADD COLUMN IF NOT EXISTS ${c}`);
     await query(`ALTER TABLE closing_time_emails ADD COLUMN IF NOT EXISTS direction TEXT NOT NULL DEFAULT 'outbound', ADD COLUMN IF NOT EXISTS external_id TEXT`);
     await query(`CREATE UNIQUE INDEX IF NOT EXISTS closing_time_emails_ext_idx ON closing_time_emails (realtor_id, external_id) WHERE external_id IS NOT NULL`);
     await query(`CREATE TABLE IF NOT EXISTS closing_time_contact_activity (
@@ -94,15 +98,33 @@ export async function attestDealConsent(s: Sender, dealId: string, p: { name: st
   return { ok: true };
 }
 
-export async function sendDealText(s: Sender, dealId: string, property: string, p: { name: string; phone: string; body: string }): Promise<{ ok: boolean; error?: string }> {
+export async function sendDealText(s: Sender, dealId: string, property: string, p: { name: string; phone: string; body: string; requests?: { label: string }[] }, origin = ''): Promise<{ ok: boolean; error?: string }> {
   if (await isLocked(s.realtorId, dealId)) return { ok: false, error: LOCKED_MESSAGE };
   if (!smsAllowedFor(s.email)) return { ok: false, error: 'Texting is not available for this account yet.' };
   const phone = toE164(p.phone);
   if (!phone) return { ok: false, error: 'Add a valid mobile number first.' };
-  const body = `${property}: ${p.body.trim().slice(0, 900)}${STOP_LINE}`; // for contact messages the caller passes the agent's name here
+  const asks = dealId === CONTACT_SCOPE ? [] : (p.requests ?? []).filter((r) => r.label.trim());
+  const made: string[] = [];
+  let ask = '';
+  if (asks.length) {
+    const { createDocRequest, setPortalLink } = await import('@/lib/server/closing-time-assist');
+    for (const r of asks) made.push(await createDocRequest(s.realtorId, dealId, { label: r.label.trim(), note: '', personName: p.name }));
+    const token = await setPortalLink(s.realtorId, dealId, p.name, {});
+    ask = ` Please provide: ${asks.map((r) => r.label.trim()).join('; ')}.${token && origin ? ` Upload here: ${origin}/deal-portal/${token}` : ''}`;
+  }
+  const body = `${property}: ${p.body.trim().slice(0, 900)}${ask}${STOP_LINE}`; // for contact messages the caller passes the agent's name here
   let result;
-  try { result = await sendSms(DEAL_TEXT_AUDIENCE, body, [phone]); } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Text failed' }; }
+  try { result = await sendSms(DEAL_TEXT_AUDIENCE, body, [phone]); } catch (e) {
+    const { setDocRequestStatus } = await import('@/lib/server/closing-time-assist');
+    for (const id of made) await setDocRequestStatus(s.realtorId, id, 'cancelled').catch(() => undefined);
+    return { ok: false, error: e instanceof Error ? e.message : 'Text failed' };
+  }
+  if (!result.sent.length && made.length) {
+    const { setDocRequestStatus } = await import('@/lib/server/closing-time-assist');
+    for (const id of made) await setDocRequestStatus(s.realtorId, id, 'cancelled').catch(() => undefined);
+  }
   if (result.sent.length) {
+    if (made.length) { const { markDocRequestEmailed } = await import('@/lib/server/closing-time-assist'); for (const id of made) await markDocRequestEmailed(s.realtorId, id).catch(() => undefined); }
     await store(s.realtorId, dealId, p.name, phone, body, 'queued', result.sent[0].id, null);
     await note(s.realtorId, dealId, p.name, 'text', `Text sent to ${p.name} (${phone}): ${p.body.trim().slice(0, 200)}`);
     return { ok: true };
@@ -143,7 +165,7 @@ export async function listDealEmails(realtorId: string, dealId: string): Promise
 const esc = (v: string) => v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c));
 
 /** Emails from the deal's Messages tab. Replies go to the agent's own email; they are not threaded back here. */
-export async function sendDealEmail(realtorId: string, dealId: string, property: string, agent: { name: string; email: string }, input: { to: { name: string; email: string }[]; subject: string; body: string; cc?: string[]; requests?: { label: string; note?: string }[] }, origin = ''): Promise<{ ok: boolean; sent: number; error?: string; requested?: number }> {
+export async function sendDealEmail(realtorId: string, dealId: string, property: string, agent: { name: string; email: string }, input: { to: { name: string; email: string }[]; subject: string; body: string; cc?: string[]; requests?: { label: string; note?: string }[]; attachments?: { filename: string; content: string; contentType?: string }[] }, origin = ''): Promise<{ ok: boolean; sent: number; error?: string; requested?: number }> {
   if (await isLocked(realtorId, dealId)) return { ok: false, sent: 0, error: LOCKED_MESSAGE };
   await ensure();
   const bare = input.subject.trim();
@@ -165,9 +187,10 @@ export async function sendDealEmail(realtorId: string, dealId: string, property:
       for (const id of made) await markDocRequestEmailed(realtorId, id).catch(() => undefined);
     }
     const html = `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:600px">${text.split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}${dealId === CONTACT_SCOPE ? '' : `<p style="color:#7A7787;font-size:12px">Regarding ${esc(property)}</p>`}</div>`;
-    const r = await sendEmail({ to: to.email, cc: ccList.filter((c) => c !== to.email.toLowerCase()), replyTo: agent.email || undefined, subject, html }).catch((e) => ({ ok: false, error: String(e) }));
+    const r = await sendEmail({ to: to.email, cc: ccList.filter((c) => c !== to.email.toLowerCase()), replyTo: agent.email || undefined, subject, html, ...(input.attachments?.length ? { attachments: input.attachments } : {}) }).catch((e) => ({ ok: false, error: String(e) }));
     const ok = (r as { ok?: boolean }).ok !== false;
     if (!ok) lastError = (r as { error?: string }).error ?? 'Send failed';
+    if (input.attachments?.length) text += `\n\nAttached: ${input.attachments.map((a) => a.filename).join(', ')}`;
     await query(`INSERT INTO closing_time_emails (id, realtor_id, deal_id, person_name, to_email, subject, body, status, error) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
       [randomUUID(), realtorId, dealId, to.name.slice(0, 200), to.email, subject, text.slice(0, 10000), ok ? 'sent' : 'failed', ok ? null : lastError]);
     await note(realtorId, dealId, to.name, 'email', ok ? `Email sent to ${to.name} <${to.email}>: ${subject}` : `Email to ${to.name} <${to.email}> could not be sent: ${lastError}`);
