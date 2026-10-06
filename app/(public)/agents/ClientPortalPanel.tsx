@@ -15,11 +15,26 @@ const card = 'rounded-[10px] border border-[#E6E5EC] bg-white';
 const lab = 'text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]';
 const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
 
+type Link = { key: string; name: string; token: string };
+type Person = { key: string; name: string; email: string };
+const keyOf = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 200);
+const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
+
+function clientsOf(deal: AgentDeal): Person[] {
+  const clientRe = /buyer|seller|client|tenant|landlord|owner/i;
+  const people: Person[] = [];
+  const add = (name: string, email: string) => { const key = keyOf(name); if (key && !people.some((p) => p.key === key)) people.push({ key, name: name.trim(), email }); };
+  (deal.clientContacts ?? []).filter((p) => !p.role || clientRe.test(p.role)).forEach((p) => add(p.name, p.email ?? ''));
+  const names = deal.agentSide === 'listing' ? deal.sellerNames : deal.buyerNames;
+  (names || '').split(/\s*(?:&|,|\/|\band\b)\s*/i).forEach((n) => add(n, ''));
+  return people;
+}
+
 export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
-  const [token, setToken] = useState<string | null | undefined>(undefined);
-  const [view, setView] = useState<View | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [links, setLinks] = useState<Link[] | undefined>(undefined);
+  const [viewData, setView] = useState<View | null>(null);
+  const [busy, setBusy] = useState('');
+  const [copied, setCopied] = useState('');
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -27,45 +42,66 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
       const res = await fetch(`/api/closing-time/assist?dealId=${encodeURIComponent(deal.id)}`, { cache: 'no-store' });
       const body = await res.json();
       if (!res.ok) { setError(body.error ?? 'Not available yet. Wait for the deal to finish saving.'); return; }
-      setToken(body.portalToken ?? null); setError('');
+      setLinks(body.portalLinks ?? []); setError('');
     } catch { setError('Could not load the client portal.'); }
   }, [deal.id]);
-  useEffect(() => { void load(); }, [load]);
   useEffect(() => {
-    if (!token) { setView(null); return; }
     let live = true;
-    fetch(`/api/deal-portal/${token}/view`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((v) => { if (live) setView(v); }).catch(() => undefined);
+    fetch(`/api/closing-time/assist?dealId=${encodeURIComponent(deal.id)}`, { cache: 'no-store' })
+      .then(async (res) => {
+        const body = await res.json();
+        if (!live) return;
+        if (!res.ok) { setError(body.error ?? 'Not available yet. Wait for the deal to finish saving.'); return; }
+        setLinks(body.portalLinks ?? []); setError('');
+      })
+      .catch(() => { if (live) setError('Could not load the client portal.'); });
     return () => { live = false; };
-  }, [token, deal.updatedAt]);
+  }, [deal.id, deal.updatedAt]);
 
-  const act = async (extra: Record<string, unknown>) => {
-    setBusy(true); setError('');
+  const previewToken = links?.[0]?.token ?? null;
+  useEffect(() => {
+    if (!previewToken) return;
+    let live = true;
+    fetch(`/api/deal-portal/${previewToken}/view`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((v) => { if (live) setView(v); }).catch(() => undefined);
+    return () => { live = false; };
+  }, [previewToken, deal.updatedAt]);
+
+  const act = async (person: Person, extra: Record<string, unknown>) => {
+    setBusy(person.key); setError('');
     try {
-      const res = await fetch('/api/closing-time/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'portal', dealId: deal.id, ...extra }) });
+      const res = await fetch('/api/closing-time/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'portal_link', dealId: deal.id, name: person.name, ...extra }) });
       if (!res.ok) setError((await res.json()).error ?? 'Something went wrong.');
       await load();
     } catch { setError('Something went wrong.'); }
-    setBusy(false);
+    setBusy('');
   };
 
-  const url = token ? `${window.location.origin}/deal-portal/${token}` : '';
+  const view = previewToken ? viewData : null;
+  const people = clientsOf(deal);
+  const linkFor = (p: Person) => links?.find((l) => l.key === p.key);
+  const urlOf = (l: Link) => `${window.location.origin}/deal-portal/${l.token}`;
   const side = deal.agentSide === 'listing' ? 'seller' : 'buyer';
   const names = view?.clientNames || (side === 'seller' ? deal.sellerNames : deal.buyerNames) || 'Your Clients';
-  const contacts = deal.clientContacts ?? [];
   const done = view?.steps.filter((s) => s.state === 'done').length ?? 0;
 
   return (
     <div className="space-y-4">
       <div>
         <h2 className="text-[22px] font-semibold text-[#1B1726]">Client Portal</h2>
-        <p className="mt-1 text-[14px] text-[#4A4757]">One private link for everyone on this deal. No sign-in needed.</p>
+        <p className="mt-1 text-[14px] text-[#4A4757]">Each person gets their own private link. No sign-in needed.</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={`${card} p-4`}>
           <h3 className="text-[14px] font-semibold text-[#1B1726]">Preview</h3>
-          <div className="mt-3">
-            {token ? <a className={`${btn} w-full justify-center`} href={url} target="_blank" rel="noreferrer">View As Client</a> : <p className="text-[14px] text-[#4A4757]">Create the link to preview the client view.</p>}
+          <div className="mt-3 space-y-2">
+            {people.map((p) => {
+              const l = linkFor(p);
+              return l
+                ? <a key={p.key} className={`${btn} w-full justify-center`} href={urlOf(l)} target="_blank" rel="noreferrer">View As {firstName(p.name)}</a>
+                : <span key={p.key} className="block rounded-lg border border-dashed border-[#E6E5EC] px-3 py-1.5 text-center text-[13px] font-medium text-[#7A7787]">View As {firstName(p.name)} (Create Link First)</span>;
+            })}
+            {people.length === 0 && <p className="text-[14px] text-[#4A4757]">Add the buyers or sellers on the People tab first.</p>}
           </div>
           <p className="mt-3 text-[14px] text-[#4A4757]">{names}&apos;s view of this deal: progress, deadlines, forms and uploads.</p>
           <div className="mt-3 grid grid-cols-2 gap-3">
@@ -76,30 +112,32 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
 
         <section className={`${card} p-4`}>
           <h3 className="text-[14px] font-semibold text-[#1B1726]">Share With {names}</h3>
-          <p className="mt-2 text-[14px] text-[#4A4757]">Copy the link and send it however you like: email, text or WhatsApp. Everyone on the deal uses the same link, and nothing needs a password. Clients see only what is listed below.</p>
-          {token === undefined && !error && <p className="mt-3 text-[12px] font-medium text-[#7A7787]">Loading</p>}
-          {token === null && <div className="mt-3"><button type="button" disabled={busy} className={btn} onClick={() => void act({})}>Create Link</button></div>}
-          {token && (
-            <div className="mt-3 space-y-3">
-              {contacts.length > 0 && (
-                <ul className="rounded-lg border border-[#E6E5EC] px-3">
-                  {contacts.map((c) => (
-                    <li key={c.id} className="border-b border-[#E6E5EC] py-2 last:border-0">
-                      <div className="text-[14px] font-medium text-[#1B1726]">{c.name}</div>
-                      <div className="text-[12px] font-medium text-[#7A7787]">{c.email || 'No email'}</div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <div className="flex gap-2">
-                <input readOnly value={url} aria-label="Client portal link" onFocus={(e) => e.currentTarget.select()} className="min-w-0 flex-1 rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#1B1726]" />
-                <button type="button" className={btn} onClick={() => { void navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>{copied ? 'Copied' : 'Copy'}</button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button type="button" disabled={busy} className={btn} onClick={() => { if (window.confirm('Reset the link? The old link will stop working.')) void act({ reset: true }); }}>Reset Link</button>
-                <button type="button" disabled={busy} className={btn} onClick={() => { if (window.confirm('Turn off the link? Clients will no longer be able to open it.')) void act({ disable: true }); }}>Turn Off</button>
-              </div>
-            </div>
+          <p className="mt-2 text-[14px] text-[#4A4757]">Copy a personal link for each person and send it however you like: email, text or WhatsApp. Anyone with a link sees the deal, so send each link only to that person. Resetting or turning off a link stops it from working.</p>
+          {links === undefined && !error && <p className="mt-3 text-[12px] font-medium text-[#7A7787]">Loading</p>}
+          {links !== undefined && (
+            <ul className="mt-3 rounded-lg border border-[#E6E5EC] px-3">
+              {people.map((p) => {
+                const l = linkFor(p);
+                return (
+                  <li key={p.key} className="border-b border-[#E6E5EC] py-3 last:border-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="text-[14px] font-medium text-[#1B1726]">{p.name}</div>
+                        <div className="truncate text-[12px] font-medium text-[#7A7787]">{p.email || 'No email'}</div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {!l && <button type="button" disabled={busy === p.key} className={btn} onClick={() => void act(p, {})}>Create Link</button>}
+                        {l && <button type="button" className={btn} onClick={() => { void navigator.clipboard.writeText(urlOf(l)); setCopied(p.key); setTimeout(() => setCopied(''), 1500); }}>{copied === p.key ? 'Copied' : 'Copy Link'}</button>}
+                        {l && <button type="button" disabled={busy === p.key} className={btn} onClick={() => { if (window.confirm(`Reset ${firstName(p.name)}'s link? The old link will stop working.`)) void act(p, { reset: true }); }}>Reset</button>}
+                        {l && <button type="button" disabled={busy === p.key} className={btn} onClick={() => { if (window.confirm(`Turn off ${firstName(p.name)}'s link?`)) void act(p, { disable: true }); }}>Turn Off</button>}
+                      </div>
+                    </div>
+                    {l && <input readOnly value={urlOf(l)} aria-label={`${p.name} link`} onFocus={(e) => e.currentTarget.select()} className="mt-2 w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[12px] font-medium text-[#4A4757]" />}
+                  </li>
+                );
+              })}
+              {people.length === 0 && <li className="py-3 text-[14px] text-[#4A4757]">No clients on this deal yet.</li>}
+            </ul>
           )}
           {error && <p role="alert" className="mt-3 text-[12px] font-medium text-[#9A3D2B]">{error}</p>}
         </section>
@@ -110,8 +148,8 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
           <h3 className="text-[14px] font-semibold text-[#1B1726]">What {names} See</h3>
           {view && <span className="text-[12px] font-medium text-[#7A7787]">{done}/{view.steps.length}</span>}
         </div>
-        {!token && <p className="p-4 text-[14px] text-[#4A4757]">Create the link to see exactly what clients see.</p>}
-        {token && !view && <p className="p-4 text-[12px] font-medium text-[#7A7787]">Loading</p>}
+        {!previewToken && <p className="p-4 text-[14px] text-[#4A4757]">Create a link to see exactly what clients see.</p>}
+        {previewToken && !view && <p className="p-4 text-[12px] font-medium text-[#7A7787]">Loading</p>}
         {view && (
           <div className="p-4">
             <ol>

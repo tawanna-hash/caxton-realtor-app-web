@@ -45,6 +45,9 @@ export function ensureAssistSchema(): Promise<void> {
     await query(`CREATE TABLE IF NOT EXISTS closing_time_portals (
       realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE, deal_id TEXT NOT NULL,
       token TEXT NOT NULL UNIQUE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY (realtor_id, deal_id))`);
+    await query(`CREATE TABLE IF NOT EXISTS closing_time_portal_people (
+      realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE, deal_id TEXT NOT NULL, person_key TEXT NOT NULL,
+      name TEXT NOT NULL DEFAULT '', token TEXT NOT NULL UNIQUE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY (realtor_id, deal_id, person_key))`);
     await query(`CREATE TABLE IF NOT EXISTS closing_time_checklists (
       realtor_id UUID PRIMARY KEY REFERENCES realtors(id) ON DELETE CASCADE, steps JSONB NOT NULL DEFAULT '[]'::jsonb,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
@@ -117,6 +120,7 @@ export async function listAssist(realtorId: string, dealId: string) {
       status: f.status as FollowUp['status'], createdAt: iso(f.created_at), sentAt: f.sent_at ? iso(f.sent_at) : null,
     })),
     portalToken: portal[0]?.token ?? null,
+    portalLinks: await listPortalLinks(realtorId, dealId),
     checklist: checklist[0]?.steps?.length ? checklist[0].steps : DEFAULT_CHECKLIST,
     customChecklist: Boolean(checklist[0]?.steps?.length),
     uploads: uploads.map((u) => ({ id: u.id, docId: u.doc_id, filename: u.filename, sizeBytes: u.size_bytes, createdAt: iso(u.created_at), reviewed: u.reviewed, archived: u.archived })),
@@ -140,6 +144,42 @@ export async function saveChecklist(realtorId: string, steps: ChecklistStep[]) {
   await ensureAssistSchema();
   await query(`INSERT INTO closing_time_checklists (realtor_id, steps) VALUES ($1,$2::jsonb)
     ON CONFLICT (realtor_id) DO UPDATE SET steps=EXCLUDED.steps, updated_at=NOW()`, [realtorId, JSON.stringify(steps)]);
+}
+
+export type PortalLink = { key: string; name: string; token: string };
+export const personKey = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 200);
+
+/** Finds the deal behind a portal token: a per-person link first, then a legacy shared deal link. */
+async function resolvePortalToken(token: string): Promise<{ realtor_id: string; deal_id: string; person: string } | null> {
+  if (!/^[A-Za-z0-9_-]{40,64}$/.test(token)) return null;
+  await ensureAssistSchema();
+  const person = await query<{ realtor_id: string; deal_id: string; name: string }>(`SELECT realtor_id, deal_id, name FROM closing_time_portal_people WHERE token=$1 LIMIT 1`, [token]);
+  if (person[0]) return { realtor_id: person[0].realtor_id, deal_id: person[0].deal_id, person: person[0].name };
+  const shared = await query<{ realtor_id: string; deal_id: string }>(`SELECT realtor_id, deal_id FROM closing_time_portals WHERE token=$1 LIMIT 1`, [token]);
+  return shared[0] ? { ...shared[0], person: '' } : null;
+}
+
+export async function listPortalLinks(realtorId: string, dealId: string): Promise<PortalLink[]> {
+  await ensureAssistSchema();
+  const rows = await query<{ person_key: string; name: string; token: string }>(`SELECT person_key, name, token FROM closing_time_portal_people WHERE realtor_id=$1 AND deal_id=$2 ORDER BY created_at`, [realtorId, dealId]);
+  return rows.map((r) => ({ key: r.person_key, name: r.name, token: r.token }));
+}
+
+/** Creates, resets, or turns off one person's private link. Creating the first one retires the old shared deal link. */
+export async function setPortalLink(realtorId: string, dealId: string, name: string, opts: { reset?: boolean; disable?: boolean }): Promise<string | null> {
+  await ensureAssistSchema();
+  const key = personKey(name);
+  if (!key) throw new Error('Add the person\'s name first.');
+  if (opts.disable) { await query(`DELETE FROM closing_time_portal_people WHERE realtor_id=$1 AND deal_id=$2 AND person_key=$3`, [realtorId, dealId, key]); return null; }
+  if (!opts.reset) {
+    const existing = await query<{ token: string }>(`SELECT token FROM closing_time_portal_people WHERE realtor_id=$1 AND deal_id=$2 AND person_key=$3`, [realtorId, dealId, key]);
+    if (existing[0]) return existing[0].token;
+  }
+  const token = randomBytes(32).toString('base64url');
+  await query(`INSERT INTO closing_time_portal_people (realtor_id, deal_id, person_key, name, token) VALUES ($1,$2,$3,$4,$5)
+    ON CONFLICT (realtor_id, deal_id, person_key) DO UPDATE SET token=EXCLUDED.token, name=EXCLUDED.name, created_at=NOW()`, [realtorId, dealId, key, name.trim().slice(0, 200), token]);
+  await query(`DELETE FROM closing_time_portals WHERE realtor_id=$1 AND deal_id=$2`, [realtorId, dealId]);
+  return token;
 }
 
 export async function getOrCreatePortalToken(realtorId: string, dealId: string, reset = false): Promise<string> {
@@ -170,29 +210,26 @@ export type PortalView = {
 
 /** Resolves a portal token to its agent and deal (null for an unknown or malformed token). */
 export async function getPortalDeal(token: string): Promise<{ realtorId: string; deal: AgentDeal } | null> {
-  if (!/^[A-Za-z0-9_-]{40,64}$/.test(token)) return null;
-  await ensureAssistSchema();
-  const rows = await query<{ realtor_id: string; deal_id: string }>(`SELECT realtor_id, deal_id FROM closing_time_portals WHERE token=$1 LIMIT 1`, [token]);
-  if (!rows[0]) return null;
-  const deal = await loadDeal(rows[0].realtor_id, rows[0].deal_id);
-  return deal ? { realtorId: rows[0].realtor_id, deal } : null;
+  const row = await resolvePortalToken(token);
+  if (!row) return null;
+  const deal = await loadDeal(row.realtor_id, row.deal_id);
+  return deal ? { realtorId: row.realtor_id, deal } : null;
 }
 
 /** Read-only client view. Only client-safe fields are exposed: no notes, form data, or activity. */
 export async function getPortalView(token: string): Promise<PortalView | null> {
-  if (!/^[A-Za-z0-9_-]{40,64}$/.test(token)) return null;
-  await ensureAssistSchema();
-  const rows = await query<{ realtor_id: string; deal_id: string; first_name: string | null; last_name: string | null; email: string }>(
-    `SELECT p.realtor_id, p.deal_id, r.first_name, r.last_name, COALESCE(NULLIF((SELECT w2.workspace->'notificationPreferences'->>'notificationEmail' FROM agent_command_center_workspaces w2 WHERE w2.realtor_id=p.realtor_id),''), r.email) AS email FROM closing_time_portals p JOIN realtors r ON r.id=p.realtor_id WHERE p.token=$1 LIMIT 1`, [token]);
-  const row = rows[0];
-  if (!row) return null;
+  const link = await resolvePortalToken(token);
+  if (!link) return null;
+  const agentRows = await query<{ first_name: string | null; last_name: string | null; email: string }>(
+    `SELECT r.first_name, r.last_name, COALESCE(NULLIF((SELECT w2.workspace->'notificationPreferences'->>'notificationEmail' FROM agent_command_center_workspaces w2 WHERE w2.realtor_id=r.id),''), r.email) AS email FROM realtors r WHERE r.id=$1 LIMIT 1`, [link.realtor_id]);
+  const row = { realtor_id: link.realtor_id, deal_id: link.deal_id, first_name: agentRows[0]?.first_name ?? null, last_name: agentRows[0]?.last_name ?? null, email: agentRows[0]?.email ?? '' };
   const deal = await loadDeal(row.realtor_id, row.deal_id);
   if (!deal) return null;
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
   const label: Record<AgentDeal['status'], string> = { prep: 'Getting started', active: 'Under contract', closing: 'Heading to closing', completed: 'Closed' };
   const clientSide: 'buyer' | 'seller' = deal.agentSide === 'listing' ? 'seller' : 'buyer';
   const names = (clientSide === 'seller' ? deal.sellerNames : deal.buyerNames) || '';
-  const clientFirstName = (names.split(/\s*(?:&|,|\band\b|\/)\s*/i)[0] || '').trim().split(/\s+/)[0] ?? '';
+  const clientFirstName = ((link.person || names.split(/\s*(?:&|,|\band\b|\/)\s*/i)[0] || '').trim().split(/\s+/)[0]) ?? '';
   const titleCompany = (deal.contractDetails?.titleCompany || deal.formFields?.p02_f038 || '').trim();
   const days = (to: string) => Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86_400_000);
   const explain = (id: string): string => {
@@ -352,12 +389,9 @@ const UPLOAD_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'ima
 
 /** Client upload through the portal link. Only attaches to a document the agent already requested. */
 export async function savePortalUpload(token: string, docId: string, file: { name: string; type: string; bytes: Buffer }): Promise<{ ok: boolean; error?: string }> {
-  if (!/^[A-Za-z0-9_-]{40,64}$/.test(token)) return { ok: false, error: 'Invalid link' };
   if (!UPLOAD_TYPES.has(file.type)) return { ok: false, error: 'Upload a PDF or a photo (JPG, PNG, HEIC, WebP).' };
   if (file.bytes.length === 0 || file.bytes.length > MAX_UPLOAD_BYTES) return { ok: false, error: 'File must be under 4 MB.' };
-  await ensureAssistSchema();
-  const rows = await query<{ realtor_id: string; deal_id: string }>(`SELECT realtor_id, deal_id FROM closing_time_portals WHERE token=$1`, [token]);
-  const row = rows[0];
+  const row = await resolvePortalToken(token);
   if (!row) return { ok: false, error: 'Invalid link' };
   const deal = await loadDeal(row.realtor_id, row.deal_id);
   const doc = docId === 'other' ? { label: 'General Upload' } : deal?.documents.find((d) => d.id === docId && d.status !== 'not_needed');
