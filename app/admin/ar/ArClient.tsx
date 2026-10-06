@@ -1085,12 +1085,12 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={selectedIncome.chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <defs><linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#059669" stopOpacity={0.2} /><stop offset="95%" stopColor="#059669" stopOpacity={0} /></linearGradient></defs>
+                  <defs><linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#005A00" stopOpacity={0.2} /><stop offset="95%" stopColor="#005A00" stopOpacity={0} /></linearGradient></defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                   <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(value) => `$${value}`} width={48} />
                   <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Income']} />
-                  <Area type="monotone" dataKey="amount" stroke="#059669" strokeWidth={2} fill="url(#incomeFill)" />
+                  <Area type="monotone" dataKey="amount" stroke="#005A00" strokeWidth={2} fill="url(#incomeFill)" />
                   {compareLastYear && (
                     <Area
                       type="monotone"

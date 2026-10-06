@@ -289,7 +289,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
       {/* KPI strip */}
       <div className="mailing-summary-strip grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
         <Kpi label="Total" value={initialCounts.total} accent={accent} />
-        <Kpi label="Valid" value={initialCounts.valid} accent="#059669" />
+        <Kpi label="Valid" value={initialCounts.valid} accent="#005A00" />
         <Kpi label="Invalid" value={initialCounts.invalid} accent="#e11d48" />
         <Kpi label="Risky" value={initialCounts.risky} accent="#d97706" />
         <Kpi label="Unknown" value={initialCounts.unknown} accent="#301D5D" />

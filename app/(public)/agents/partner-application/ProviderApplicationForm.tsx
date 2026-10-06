@@ -120,7 +120,7 @@ export default function ProviderApplicationForm() {
             </div>
 
             <fieldset className="mt-7">
-              <legend className="text-sm font-semibold text-slate-800">Service categories <span className="text-[#B45309]">*</span></legend>
+              <legend className="text-sm font-semibold text-slate-800">Service categories <span className="text-[#645600]">*</span></legend>
               <p className="mt-1 text-xs text-slate-500">Choose up to four categories.</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {REFERRAL_PROVIDER_CATEGORIES.map((category) => {
@@ -159,5 +159,5 @@ export default function ProviderApplicationForm() {
 }
 
 function Field({ label, required, className = '', children }: { label: string; required?: boolean; className?: string; children: React.ReactNode }) {
-  return <label className={`block ${className}`}><span className="mb-2 block text-sm font-semibold text-slate-800">{label}{required && <span className="text-[#B45309]"> *</span>}</span>{children}</label>;
+  return <label className={`block ${className}`}><span className="mb-2 block text-sm font-semibold text-slate-800">{label}{required && <span className="text-[#645600]"> *</span>}</span>{children}</label>;
 }

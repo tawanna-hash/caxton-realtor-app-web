@@ -139,7 +139,7 @@ export default function NativeNetworkBanner() {
         // Sit above BottomNav (h-16 = 64px + safe area).
         bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
         zIndex: 9990,
-        background: isOffline ? '#7F1D1D' : '#065F46',
+        background: isOffline ? '#7F1D1D' : '#005A00',
         color: '#fff',
         borderRadius: 12,
         padding: '10px 14px',

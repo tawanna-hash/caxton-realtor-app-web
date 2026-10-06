@@ -603,7 +603,7 @@ export function renderPartnerStatementEmail(
     .join('');
   const messageHtml = escapeHtml(personalMessage).replaceAll('\n', '<br>');
   const payAllHtml = statement.overduePaymentLinkUrl
-    ? `<div style="margin:0 0 22px;padding:16px;background:#fff7ed;border:1px solid #fed7aa;text-align:center">
+    ? `<div style="margin:0 0 22px;padding:16px;background:#FFF3E0;border:1px solid #FFF3E0;text-align:center">
         <div style="font-size:13px;font-weight:700;color:#301D5D;margin-bottom:10px">Total overdue: ${statementMoney(statement.overdueCents)}</div>
         <a href="${escapeHtml(statement.overduePaymentLinkUrl)}" style="display:inline-block;background:#301D5D;color:#fff;padding:10px 16px;border-radius:4px;text-decoration:none;font-weight:700">Pay all overdue invoices</a>
       </div>`

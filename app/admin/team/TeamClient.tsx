@@ -40,7 +40,7 @@ function StatusPill({ active }: { active: boolean }) {
     <span
       className="inline-block text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded"
       style={{
-        backgroundColor: active ? '#dcfce7' : '#f3f4f6',
+        backgroundColor: active ? '#E0FBE0' : '#f3f4f6',
         color: active ? '#005A00' : '#6b7280',
       }}
     >

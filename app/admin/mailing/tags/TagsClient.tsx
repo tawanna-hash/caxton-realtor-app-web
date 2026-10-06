@@ -28,11 +28,11 @@ type TagStyle = { bg: string; fg: string; label?: string };
 // so this page is the visual source-of-truth for tag colors.
 function styleFor(t: string): TagStyle {
   switch (t) {
-    case 'active-advertiser': return { bg: '#ffedd5', fg: '#42277C', label: 'Active Partner' };
-    case 'non-advertiser':    return { bg: '#fed7aa', fg: '#301D5D', label: 'Non-Advertiser' };
+    case 'active-advertiser': return { bg: '#FFF3E0', fg: '#42277C', label: 'Active Partner' };
+    case 'non-advertiser':    return { bg: '#FFF3E0', fg: '#301D5D', label: 'Non-Advertiser' };
     case 'manual':            return { bg: '#ede9fe', fg: '#301D5D', label: 'Manual' };
-    case 'REALTOR':           return { bg: '#dcfce7', fg: '#005A00' };
-    case 'Loan Officer':      return { bg: '#fef3c7', fg: '#d97706' };
+    case 'REALTOR':           return { bg: '#E0FBE0', fg: '#005A00' };
+    case 'Loan Officer':      return { bg: '#FEF8CC', fg: '#d97706' };
     case 'Business Development': return { bg: '#e2e8f0', fg: '#475569' };
     default:                  return { bg: '#f3f4f6', fg: '#374151' };
   }

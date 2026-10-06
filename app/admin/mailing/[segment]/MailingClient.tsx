@@ -1623,11 +1623,11 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
         let fg = '#374151';
         if (t === 'active-advertiser') {
           label = 'Active Partner';
-          bg = '#ffedd5';
+          bg = '#FFF3E0';
           fg = '#42277C';
         } else if (t === 'non-advertiser') {
           label = 'Non-Advertiser';
-          bg = '#fed7aa';
+          bg = '#FFF3E0';
           fg = '#301D5D';
         } else if (t === 'manual') {
           label = 'Manual';
@@ -1635,11 +1635,11 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
           fg = '#301D5D';
         } else if (t === 'REALTOR') {
           label = 'REALTOR';
-          bg = '#dcfce7';
+          bg = '#E0FBE0';
           fg = '#005A00';
         } else if (t === 'Loan Officer') {
           label = 'Loan Officer';
-          bg = '#fef3c7';
+          bg = '#FEF8CC';
           fg = '#d97706';
         } else if (t === 'Business Development') {
           label = 'Business Development';
@@ -2368,11 +2368,11 @@ function EditDrawer({
 // it just becomes a new tag in the library on save.
 
 const TAG_STYLES: Record<string, { bg: string; fg: string; label?: string }> = {
-  'active-advertiser':    { bg: '#ffedd5', fg: '#42277C', label: 'Active Partner' },
-  'non-advertiser':       { bg: '#fed7aa', fg: '#301D5D', label: 'Non-Advertiser' },
+  'active-advertiser':    { bg: '#FFF3E0', fg: '#42277C', label: 'Active Partner' },
+  'non-advertiser':       { bg: '#FFF3E0', fg: '#301D5D', label: 'Non-Advertiser' },
   'manual':               { bg: '#ede9fe', fg: '#301D5D', label: 'Manual' },
-  'REALTOR':              { bg: '#dcfce7', fg: '#005A00' },
-  'Loan Officer':         { bg: '#fef3c7', fg: '#d97706' },
+  'REALTOR':              { bg: '#E0FBE0', fg: '#005A00' },
+  'Loan Officer':         { bg: '#FEF8CC', fg: '#d97706' },
   'Business Development': { bg: '#e2e8f0', fg: '#475569' },
 };
 
