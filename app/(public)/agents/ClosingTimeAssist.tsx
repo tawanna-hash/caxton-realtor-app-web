@@ -37,7 +37,11 @@ function EmailRepliesSetting({ dealId, mail }: { dealId: string; mail: string })
   const load = useCallback(async () => {
     try { const r = await fetch(`/api/closing-time/texts?dealId=${encodeURIComponent(dealId)}&phones=`, { cache: 'no-store' }); const b = await r.json(); setM(b.mailbox ?? null); } catch { /* ignore */ }
   }, [dealId]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let live = true;
+    fetch(`/api/closing-time/texts?dealId=${encodeURIComponent(dealId)}&phones=`, { cache: 'no-store' }).then((r) => r.json()).then((b) => { if (live) setM(b.mailbox ?? null); }).catch(() => undefined);
+    return () => { live = false; };
+  }, [dealId]);
   const act = async (payload: Record<string, unknown>) => {
     setBusy(true);
     try { await fetch('/api/closing-time/texts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }); await load(); } finally { setBusy(false); }
