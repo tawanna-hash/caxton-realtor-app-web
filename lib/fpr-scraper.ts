@@ -7,8 +7,8 @@
 // HTML response — no client-side fetch is needed. We grab the page with a
 // plain fetch() and extract two variables:
 //
-//   var rapcalSourceEvents  = { "events": [...] };  // blue cards   (#ea580c)
-//   var rapcalSourceClasses = { "events": [...] };  // purple cards (#7a1f7e)
+//   var rapcalSourceEvents  = { "events": [...] };  // blue cards   (#301D5D)
+//   var rapcalSourceClasses = { "events": [...] };  // purple cards (#5B3FA0)
 //
 // Both are valid JSON once the {...} body is sliced out. A third variable,
 // rapcalSourceEventsAndClasses, uses an unquoted `events` key (not valid
@@ -238,16 +238,16 @@ function resolveLocation(code: string): {
 /**
  * Derive event category from card color and the Committee flag.
  *   - Committee:"Y"   → "Committees" (overrides color)
- *   - color #ea580c   → "Events"
- *   - color #7a1f7e   → "Classes"
+ *   - color #301D5D   → "Events"
+ *   - color #5B3FA0   → "Classes"
  * Anything else → "" (caller falls back to leaving it blank).
  */
 function deriveCategory(color: string | null, committee: string | null): string {
   if (committee && committee.trim().toUpperCase() === 'Y') return 'Committees';
   if (!color) return '';
   const c = color.toLowerCase();
-  if (c === '#ea580c') return 'Events';
-  if (c === '#7a1f7e') return 'Classes';
+  if (c === '#301D5D') return 'Events';
+  if (c === '#5B3FA0') return 'Classes';
   return '';
 }
 

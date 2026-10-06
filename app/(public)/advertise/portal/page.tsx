@@ -60,7 +60,7 @@ export default function SelfServicePortalPage() {
         {/* Product paths */}
         <section className="grid gap-5 md:grid-cols-2 mb-12">
           {/* App and web placements card */}
-          <article className="relative rounded-md overflow-hidden bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#5a0e5f] text-white p-7 md:p-8 shadow-lg">
+          <article className="relative rounded-md overflow-hidden bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#301D5D] text-white p-7 md:p-8 shadow-lg">
             {/* From-$X chip */}
             <span className="absolute top-5 right-5 inline-flex items-center rounded-md bg-[#EFEAF8] px-3 py-1 text-xs font-semibold text-[#1B1726]">
               From ${minPrice}
@@ -125,7 +125,7 @@ export default function SelfServicePortalPage() {
             </Link>
           </article>
 
-          <article className="relative overflow-hidden rounded-md bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#5a0e5f] p-7 text-white shadow-lg md:p-8">
+          <article className="relative overflow-hidden rounded-md bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#301D5D] p-7 text-white shadow-lg md:p-8">
             <span className="absolute right-5 top-5 inline-flex items-center rounded-md bg-[#EFEAF8] px-3 py-1 text-xs font-semibold text-[#1B1726]">
               From ${eblastStartingPrice.toLocaleString()}
             </span>

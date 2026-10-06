@@ -365,7 +365,7 @@ export default async function CommunityDetailPage(
         <aside className="lg:col-span-2">
           <Link
             href={`/builders/${builderSlug}`}
-            className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#5a0e5f] bg-[#5a0e5f] text-white rounded-md hover:bg-[#301D5D] hover:border-[#301D5D] transition-colors"
+            className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#301D5D] bg-[#301D5D] text-white rounded-md hover:bg-[#301D5D] hover:border-[#301D5D] transition-colors"
           >
             {row.builderName}
           </Link>
@@ -376,7 +376,7 @@ export default async function CommunityDetailPage(
             </h1>
             {status && <StatusBadge status={status} />}
             {adultOnly && (
-              <span className="inline-flex items-center rounded-full bg-[#5a0e5f] px-2.5 py-0.5 text-xs font-semibold text-white">
+              <span className="inline-flex items-center rounded-full bg-[#301D5D] px-2.5 py-0.5 text-xs font-semibold text-white">
                 Adult Only
               </span>
             )}

@@ -32,7 +32,7 @@ export default async function SignPage({ params }: PageProps) {
           </h1>
           <p className="text-sm text-gray-600">
             This signing link has expired or is not valid. Please contact{' '}
-            <a href="mailto:tawanna@realtynewsnow.app" className="text-[#5a0e5f] hover:underline">
+            <a href="mailto:tawanna@realtynewsnow.app" className="text-[#301D5D] hover:underline">
               tawanna@realtynewsnow.app
             </a>{' '}
             to request a new link.
@@ -129,7 +129,7 @@ export default async function SignPage({ params }: PageProps) {
           </p>
           <a
             href="mailto:tawanna@realtynewsnow.app?subject=Updated%20Renewal%20Agreement%20Request"
-            className="inline-block mt-6 px-5 py-2.5 rounded-md bg-[#5a0e5f] text-white text-sm font-medium hover:opacity-90"
+            className="inline-block mt-6 px-5 py-2.5 rounded-md bg-[#301D5D] text-white text-sm font-medium hover:opacity-90"
           >
             Request an Updated Renewal
           </a>
@@ -152,7 +152,7 @@ export default async function SignPage({ params }: PageProps) {
           </p>
           <a
             href={`/api/admin/agreements/${agreementId}/pdf`}
-            className="inline-block mt-4 px-4 py-2 rounded-md bg-[#5a0e5f] text-white text-sm hover:opacity-90"
+            className="inline-block mt-4 px-4 py-2 rounded-md bg-[#301D5D] text-white text-sm hover:opacity-90"
           >
             Download PDF
           </a>

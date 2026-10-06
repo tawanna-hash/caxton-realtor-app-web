@@ -88,7 +88,7 @@ export default async function MailingHubPage() {
       label: 'App Subscribers — RealtyLine Austin',
       href: '/admin/subscribers?market=austin',
       caption: 'RealtyLine Austin email signups from realtynewsnow.app.',
-      accent: '#ea580c',
+      accent: '#301D5D',
       initial: 'A',
     },
     {
@@ -105,14 +105,14 @@ export default async function MailingHubPage() {
       label: 'SABOR Members',
       href: '/admin/mailing/sabor-members',
       caption: 'San Antonio Board of REALTORS mirror.',
-      accent: '#ea580c',
+      accent: '#301D5D',
       initial: 'S',
     },
     {
       label: 'App Subscribers — Newsline San Antonio',
       href: '/admin/subscribers?market=san_antonio',
       caption: 'Newsline San Antonio email signups from realtynewsnow.app.',
-      accent: '#ea580c',
+      accent: '#301D5D',
       initial: 'N',
     },
     {
@@ -176,11 +176,11 @@ export default async function MailingHubPage() {
           </Link>
           <Link
             href="/admin/mailing/publication/newsline"
-            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#c2410c] text-[#c2410c] text-xs font-semibold hover:bg-[#c2410c] hover:text-white transition"
+            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#42277C] text-[#42277C] text-xs font-semibold hover:bg-[#42277C] hover:text-white transition"
           >
             <span>Newsline (San Antonio)</span>
             <span
-              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#c2410c]/10 text-[#c2410c] group-hover/dl:bg-white/20 group-hover/dl:text-white"
+              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#42277C]/10 text-[#42277C] group-hover/dl:bg-white/20 group-hover/dl:text-white"
               title={`${newslineCount.toLocaleString()} unique deliverable emails`}
             >
               {newslineCount.toLocaleString()}
@@ -234,10 +234,10 @@ export default async function MailingHubPage() {
       <div className="mailing-summary-strip grid grid-cols-2 lg:grid-cols-6">
         <KpiCard label="Segments total"      value={counts.total}                       sub="all mailing segments" />
         <KpiCard label="RealtyLine ATX Print" value={counts['realtyline-atx-print']}    sub="partners + REALTORS" accent="#301D5D" />
-        <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="partners + non-partners + manual" accent="#c2410c" />
+        <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="partners + non-partners + manual" accent="#42277C" />
         <KpiCard label="ABOR Members"        value={sources.aborMembers}                sub="UnlockMLS holding"   accent="#6b7280" />
-        <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#ea580c" />
-        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="email signups"  accent="#ea580c" />
+        <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#301D5D" />
+        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="email signups"  accent="#301D5D" />
       </div>
 
       {/* Segment tiles — split by publication */}

@@ -543,7 +543,7 @@ export default function AdminAnalyticsPage() {
                     </div>
                     <svg viewBox="0 0 100 20" className="mt-1 h-5 w-full" preserveAspectRatio="none">
                       <path d={`${path} L100,20 L0,20 Z`} fill="rgba(234, 88, 12, 0.08)" />
-                      <path d={path} stroke="#ea580c" strokeWidth="1.75" fill="none" />
+                      <path d={path} stroke="#301D5D" strokeWidth="1.75" fill="none" />
                     </svg>
                   </>
                 )}

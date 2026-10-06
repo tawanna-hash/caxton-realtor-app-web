@@ -903,13 +903,13 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       {/* KPI strip */}
       <div className="mailing-summary-strip grid grid-cols-2 md:grid-cols-5">
         <KpiCard label="In segment"    value={stats?.total    ?? 0} sub="all contacts"             accent={accent} />
-        <KpiCard label="Verified"      value={stats?.verified ?? 0} sub="address or email valid"   accent="#f97316" />
-        <KpiCard label="Pending"       value={stats?.pending  ?? 0} sub="needs verification"       accent="#f97316" />
+        <KpiCard label="Verified"      value={stats?.verified ?? 0} sub="address or email valid"   accent="#7059A8" />
+        <KpiCard label="Pending"       value={stats?.pending  ?? 0} sub="needs verification"       accent="#7059A8" />
         <KpiCard
           label="Within 60 mi"
           value={stats?.near ?? 0}
           sub={isSaborSegment(segment) ? 'near SABOR' : 'near ABoR or Five Points'}
-          accent="#ea580c"
+          accent="#301D5D"
           action={(stats?.near ?? 0) > 0 ? {
             label: 'Export CSV',
             onClick: () => {
@@ -933,8 +933,8 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       {/* Filter chips + search */}
       <div className="flex items-center gap-2 flex-wrap">
         <FilterChip active={filter === 'all'}      onClick={() => setFilter('all')}      label="All"      count={stats?.total ?? 0} />
-        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={stats?.verified ?? 0} accent="#f97316" />
-        <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={stats?.pending ?? 0}  accent="#f97316" />
+        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={stats?.verified ?? 0} accent="#7059A8" />
+        <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={stats?.pending ?? 0}  accent="#7059A8" />
 
         {(segment === 'realtyline-atx-print' || segment === 'newsline-sa-print') && (
           <>
@@ -950,14 +950,14 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               onClick={() => { setTagFilter('active-advertiser'); setOffset(0); }}
               label="Active Partner"
               count={tagFilter === 'active-advertiser' ? total : 0}
-              accent="#c2410c"
+              accent="#42277C"
             />
             <FilterChip
               active={tagFilter === 'non-advertiser'}
               onClick={() => { setTagFilter('non-advertiser'); setOffset(0); }}
               label="Non-Advertiser"
               count={tagFilter === 'non-advertiser' ? total : 0}
-              accent="#9a3412"
+              accent="#301D5D"
             />
             {segment === 'newsline-sa-print' && (
               <FilterChip
@@ -983,7 +983,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               onClick={() => { setTagFilter('REALTOR'); setOffset(0); }}
               label="REALTOR"
               count={tagFilter === 'REALTOR' ? total : 0}
-              accent="#16a34a"
+              accent="#005A00"
             />
             <FilterChip
               active={tagFilter === 'Loan Officer'}
@@ -1624,11 +1624,11 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
         if (t === 'active-advertiser') {
           label = 'Active Partner';
           bg = '#ffedd5';
-          fg = '#c2410c';
+          fg = '#42277C';
         } else if (t === 'non-advertiser') {
           label = 'Non-Advertiser';
           bg = '#fed7aa';
-          fg = '#9a3412';
+          fg = '#301D5D';
         } else if (t === 'manual') {
           label = 'Manual';
           bg = '#ede9fe';
@@ -1636,7 +1636,7 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
         } else if (t === 'REALTOR') {
           label = 'REALTOR';
           bg = '#dcfce7';
-          fg = '#16a34a';
+          fg = '#005A00';
         } else if (t === 'Loan Officer') {
           label = 'Loan Officer';
           bg = '#fef3c7';
@@ -2350,7 +2350,7 @@ function EditDrawer({
             type="button"
             disabled={saving}
             onClick={save}
-            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#5a0e5f] disabled:opacity-50 whitespace-nowrap"
+            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#301D5D] disabled:opacity-50 whitespace-nowrap"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>
@@ -2368,10 +2368,10 @@ function EditDrawer({
 // it just becomes a new tag in the library on save.
 
 const TAG_STYLES: Record<string, { bg: string; fg: string; label?: string }> = {
-  'active-advertiser':    { bg: '#ffedd5', fg: '#c2410c', label: 'Active Partner' },
-  'non-advertiser':       { bg: '#fed7aa', fg: '#9a3412', label: 'Non-Advertiser' },
+  'active-advertiser':    { bg: '#ffedd5', fg: '#42277C', label: 'Active Partner' },
+  'non-advertiser':       { bg: '#fed7aa', fg: '#301D5D', label: 'Non-Advertiser' },
   'manual':               { bg: '#ede9fe', fg: '#301D5D', label: 'Manual' },
-  'REALTOR':              { bg: '#dcfce7', fg: '#16a34a' },
+  'REALTOR':              { bg: '#dcfce7', fg: '#005A00' },
   'Loan Officer':         { bg: '#fef3c7', fg: '#d97706' },
   'Business Development': { bg: '#e2e8f0', fg: '#475569' },
 };
@@ -3220,7 +3220,7 @@ function BulkEditDialog({
             type="button"
             onClick={save}
             disabled={saving || !anyEnabled}
-            className="px-4 py-2 text-sm rounded-md bg-brand-700 text-white hover:bg-[#5a0e5f] disabled:opacity-50 whitespace-nowrap"
+            className="px-4 py-2 text-sm rounded-md bg-brand-700 text-white hover:bg-[#301D5D] disabled:opacity-50 whitespace-nowrap"
           >
             {saving ? 'Applying…' : `Apply to ${ids.length}`}
           </button>

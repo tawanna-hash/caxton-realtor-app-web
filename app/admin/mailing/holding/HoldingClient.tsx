@@ -604,13 +604,13 @@ export default function HoldingClient() {
       {/* KPI strip */}
       <div className="mailing-summary-strip grid grid-cols-2 md:grid-cols-5">
         <KpiCard label="Total members"  value={counts?.total    ?? 0} sub="awaiting review" />
-        <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#f97316" />
-        <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#f97316" />
+        <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#7059A8" />
+        <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#7059A8" />
         <KpiCard
           label="Within 60 mi"
           value={counts?.near ?? 0}
           sub="near ABoR or Five Points"
-          accent="#ea580c"
+          accent="#301D5D"
           action={(counts?.near ?? 0) > 0 ? {
             label: 'Export CSV',
             onClick: () => {
@@ -626,8 +626,8 @@ export default function HoldingClient() {
       {/* Filter chips + search */}
       <div className="flex items-center gap-2 flex-wrap">
         <FilterChip active={filter === 'all'}      onClick={() => setFilter('all')}      label="All"      count={counts?.total ?? 0} />
-        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#f97316" />
-        <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={counts?.pending ?? 0}  accent="#f97316" />
+        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#7059A8" />
+        <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={counts?.pending ?? 0}  accent="#7059A8" />
 
         <div className="flex-1" />
 
@@ -1428,7 +1428,7 @@ function EditDrawer({
             type="button"
             disabled={saving}
             onClick={save}
-            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#5a0e5f] disabled:opacity-50 whitespace-nowrap"
+            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#301D5D] disabled:opacity-50 whitespace-nowrap"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>

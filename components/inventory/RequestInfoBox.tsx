@@ -13,7 +13,7 @@
 // Both paths fire `inventory_request_info_clicked` so the admin metrics
 // dashboard can count requests per builder regardless of destination.
 //
-// Plum-themed (#5a0e5f) header so it reads as a primary call-to-action.
+// Plum-themed (#301D5D) header so it reads as a primary call-to-action.
 
 import { useState } from 'react';
 import { trackEvent } from '@/app/posthog-provider';
@@ -31,7 +31,7 @@ type Props = {
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
 const INPUT_CLS =
-  'w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#5a0e5f] focus:outline-none focus:ring-1 focus:ring-[#5a0e5f]';
+  'w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#301D5D] focus:outline-none focus:ring-1 focus:ring-[#301D5D]';
 const LABEL_CLS = 'block text-xs font-medium uppercase tracking-[0.08em] text-gray-600 mb-1';
 
 export default function RequestInfoBox({
@@ -59,9 +59,9 @@ export default function RequestInfoBox({
     return (
       <div
         id="request-info"
-        className="scroll-mt-24 border border-[#5a0e5f]/20 rounded-lg overflow-hidden"
+        className="scroll-mt-24 border border-[#301D5D]/20 rounded-lg overflow-hidden"
       >
-        <div className="bg-[#5a0e5f] px-4 py-3">
+        <div className="bg-[#301D5D] px-4 py-3">
           <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
             Request More Information
           </h2>
@@ -79,7 +79,7 @@ export default function RequestInfoBox({
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackRequestInfo('builder_contact_form')}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#5a0e5f] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#301D5D] transition-colors"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#301D5D] transition-colors"
           >
             Request more information
             <span aria-hidden="true" className="text-base leading-none">↗</span>
@@ -138,9 +138,9 @@ export default function RequestInfoBox({
   return (
     <div
       id="request-info"
-      className="scroll-mt-24 border border-[#5a0e5f]/20 rounded-lg overflow-hidden"
+      className="scroll-mt-24 border border-[#301D5D]/20 rounded-lg overflow-hidden"
     >
-      <div className="bg-[#5a0e5f] px-4 py-3">
+      <div className="bg-[#301D5D] px-4 py-3">
         <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
           Request More Information
         </h2>
@@ -151,14 +151,14 @@ export default function RequestInfoBox({
 
       {status === 'success' ? (
         <div className="px-4 py-6 text-center">
-          <p className="text-sm font-medium text-[#5a0e5f]">Thanks — your request was sent.</p>
+          <p className="text-sm font-medium text-[#301D5D]">Thanks — your request was sent.</p>
           <p className="mt-1 text-xs text-gray-500">
             A member of our team will reach out shortly.
           </p>
           <button
             type="button"
             onClick={() => setStatus('idle')}
-            className="mt-3 text-xs font-medium text-[#5a0e5f] hover:underline"
+            className="mt-3 text-xs font-medium text-[#301D5D] hover:underline"
           >
             Send another
           </button>
@@ -251,7 +251,7 @@ export default function RequestInfoBox({
             <input
               name="is_realtor"
               type="checkbox"
-              className="h-4 w-4 rounded border-gray-300 text-[#5a0e5f] focus:ring-[#5a0e5f]"
+              className="h-4 w-4 rounded border-gray-300 text-[#301D5D] focus:ring-[#301D5D]"
             />
             I am a Realtor
           </label>
@@ -265,7 +265,7 @@ export default function RequestInfoBox({
           <button
             type="submit"
             disabled={status === 'submitting'}
-            className="w-full rounded-md bg-[#5a0e5f] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#301D5D] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full rounded-md bg-[#301D5D] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#301D5D] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {status === 'submitting' ? 'Sending…' : 'Submit'}
           </button>

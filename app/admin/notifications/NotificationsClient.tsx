@@ -46,9 +46,9 @@ function StatusPill({ status }: { status: string }) {
   const map: Record<string, { bg: string; fg: string; label: string }> = {
     draft:     { bg: '#e5e7eb', fg: '#374151', label: 'Draft' },
     scheduled: { bg: '#fef3c7', fg: '#92400e', label: 'Scheduled' },
-    sending:   { bg: '#ffedd5', fg: '#9a3412', label: 'Sending' },
-    sent:      { bg: '#dcfce7', fg: '#166534', label: 'Sent' },
-    cancelled: { bg: '#fee2e2', fg: '#991b1b', label: 'Cancelled' },
+    sending:   { bg: '#ffedd5', fg: '#301D5D', label: 'Sending' },
+    sent:      { bg: '#dcfce7', fg: '#005A00', label: 'Sent' },
+    cancelled: { bg: '#fee2e2', fg: '#661102', label: 'Cancelled' },
   };
   const s = map[status] || map.draft;
   return (

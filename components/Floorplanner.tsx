@@ -568,11 +568,11 @@ export default function Floorplanner({
                           y1={a.a.y}
                           x2={a.b.x}
                           y2={a.b.y}
-                          stroke="#2563eb"
+                          stroke="#5B3FA0"
                           strokeWidth={strokeW}
                         />
-                        <circle cx={a.a.x} cy={a.a.y} r={4 / transform.scale} fill="#2563eb" />
-                        <circle cx={a.b.x} cy={a.b.y} r={4 / transform.scale} fill="#2563eb" />
+                        <circle cx={a.a.x} cy={a.a.y} r={4 / transform.scale} fill="#5B3FA0" />
+                        <circle cx={a.b.x} cy={a.b.y} r={4 / transform.scale} fill="#5B3FA0" />
                         <g
                           transform={`translate(${mid.x} ${mid.y}) scale(${1 / transform.scale}) ${
                             mirror ? 'scale(-1,1)' : ''
@@ -600,7 +600,7 @@ export default function Floorplanner({
                     cx={pendingMeasureStart.x}
                     cy={pendingMeasureStart.y}
                     r={4 / transform.scale}
-                    fill="#2563eb"
+                    fill="#5B3FA0"
                   />
                 )}
               </svg>

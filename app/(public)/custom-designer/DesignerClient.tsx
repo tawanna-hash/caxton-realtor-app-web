@@ -180,7 +180,7 @@ const DESIGNER_SIGNATURE_STORAGE_KEY = 'rnn:custom-designer-signature';
 const DESIGNER_SIGNATURE_TEMPLATE_STORAGE_KEY = 'rnn:custom-designer-signature-template';
 const DESIGNER_SIGNATURE_COLUMNS_STORAGE_KEY = 'rnn:custom-designer-signature-columns';
 const APP_BRAND_PRIMARY = '#301D5D';
-const APP_BRAND_SECONDARY = '#7a1f7e';
+const APP_BRAND_SECONDARY = '#5B3FA0';
 const API = getApiBase();
 
 type AccountBrandingResponse = {
@@ -861,7 +861,7 @@ export default function DesignerClient() {
                   max={product === 'signature' ? 22 : 36}
                   value={fontSize}
                   onChange={(event) => setFontSize(Number(event.target.value))}
-                  className="studio-control accent-[#7a1f7e]"
+                  className="studio-control accent-[#5B3FA0]"
                 />
               </Control>
               <Control label={`Text size (${bodyFontSize}px)`}>
@@ -871,7 +871,7 @@ export default function DesignerClient() {
                   max={product === 'signature' ? 16 : 18}
                   value={bodyFontSize}
                   onChange={(event) => setBodyFontSize(Number(event.target.value))}
-                  className="studio-control accent-[#7a1f7e]"
+                  className="studio-control accent-[#5B3FA0]"
                 />
               </Control>
             </div>
@@ -880,10 +880,10 @@ export default function DesignerClient() {
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <Control label={`Eyebrow size (${eyebrowFontSize}px)`}>
-                    <input type="range" min={7} max={16} value={eyebrowFontSize} onChange={(event) => setEyebrowFontSize(Number(event.target.value))} className="studio-control accent-[#7a1f7e]" />
+                    <input type="range" min={7} max={16} value={eyebrowFontSize} onChange={(event) => setEyebrowFontSize(Number(event.target.value))} className="studio-control accent-[#5B3FA0]" />
                   </Control>
                   <Control label={`Subheadline size (${subheadlineFontSize}px)`}>
-                    <input type="range" min={9} max={24} value={subheadlineFontSize} onChange={(event) => setSubheadlineFontSize(Number(event.target.value))} className="studio-control accent-[#7a1f7e]" />
+                    <input type="range" min={9} max={24} value={subheadlineFontSize} onChange={(event) => setSubheadlineFontSize(Number(event.target.value))} className="studio-control accent-[#5B3FA0]" />
                   </Control>
                   <Control label={`Headline spacing (${headlineLetterSpacing}px)`}>
                     <input type="number" min={-3} max={12} step={0.1} value={headlineLetterSpacing} onChange={(event) => setHeadlineLetterSpacing(Number(event.target.value))} className="studio-control" />
@@ -1194,12 +1194,12 @@ export default function DesignerClient() {
         }
         .custom-designer-preview [data-type-role][contenteditable='true'] {
           cursor: text;
-          caret-color: #7a1f7e;
+          caret-color: #5B3FA0;
           user-select: text;
         }
         .custom-designer-preview .designer-selected-element {
           position: relative;
-          outline: 2px solid #7a1f7e !important;
+          outline: 2px solid #5B3FA0 !important;
           outline-offset: 3px;
           box-shadow: 0 0 0 5px rgba(122, 31, 126, 0.2);
         }
@@ -1382,7 +1382,7 @@ function SignatureArtboard({
           title="Drag to resize this box"
           draggable={false}
           onPointerDown={(event) => onResizeStart(artboardKey, event)}
-          className="absolute -right-2 top-1/2 z-20 flex h-14 w-4 -translate-y-1/2 touch-none cursor-col-resize items-center justify-center rounded-full border border-[#7a1f7e] bg-white text-[#7a1f7e] shadow-md"
+          className="absolute -right-2 top-1/2 z-20 flex h-14 w-4 -translate-y-1/2 touch-none cursor-col-resize items-center justify-center rounded-full border border-[#5B3FA0] bg-white text-[#5B3FA0] shadow-md"
         >
           <span className="h-7 w-0.5 rounded bg-current" />
         </button>

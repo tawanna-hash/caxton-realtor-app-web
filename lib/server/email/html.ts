@@ -51,7 +51,7 @@ export const BRAND = {
   cardBorder: '#e5e7eb',
   warningBg: '#fff7ed',
   warningBorder: '#fed7aa',
-  warningText: '#9a3412',
+  warningText: '#301D5D',
   fontStack: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
   signatureLine: '— The RealtyLine Austin & Newsline San Antonio team',
 } as const;

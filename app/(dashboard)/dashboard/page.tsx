@@ -1857,7 +1857,7 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
           <div className="w-9 h-9 rounded-full bg-white border border-[#fb923c] flex items-center justify-center">
             <span className="text-xs font-medium text-[#fb923c]">{initials}</span>
           </div>
-          <span className="text-sm uppercase tracking-[0.2em] font-semibold text-[#c2410c]">Sponsored</span>
+          <span className="text-sm uppercase tracking-[0.2em] font-semibold text-[#42277C]">Sponsored</span>
           <span className="flex-1" />
           <span className="text-sm text-gray-400 italic font-light">{ad.page}</span>
         </div>

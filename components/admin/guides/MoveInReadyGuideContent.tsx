@@ -171,7 +171,7 @@ export default function MoveInReadyGuideContent() {
               <aside className="space-y-5">
                 <div>
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#5a0e5f] bg-[#5a0e5f] text-white rounded-md">
+                    <span className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#301D5D] bg-[#301D5D] text-white rounded-md">
                       {EXAMPLE.builderName}
                     </span>
                     <FieldBadge name="builderName" />
@@ -252,7 +252,7 @@ export default function MoveInReadyGuideContent() {
                 <h3 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
                   Floorplan <FieldBadge name="extraDetails._floorplanUrl" />
                 </h3>
-                <span className="text-xs text-[#5a0e5f]">Open full screen →</span>
+                <span className="text-xs text-[#301D5D]">Open full screen →</span>
               </div>
               <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] flex items-center justify-center text-xs text-gray-400">
                 floorplan viewer — image URL → zoomable; ml3ds-icon.com → iframe
@@ -264,7 +264,7 @@ export default function MoveInReadyGuideContent() {
                 <h3 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
                   Location <FieldBadge name="extraDetails._latitude + _longitude" />
                 </h3>
-                <span className="text-xs text-[#5a0e5f]">Get directions →</span>
+                <span className="text-xs text-[#301D5D]">Get directions →</span>
               </div>
               <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] flex items-center justify-center text-xs text-gray-400">
                 Google Maps embed (q=lat,lng) — renders when both _latitude &amp; _longitude are set
@@ -277,7 +277,7 @@ export default function MoveInReadyGuideContent() {
                   3D Tour <FieldBadge name="extraDetails._virtualTourUrl" />{' '}
                   <span className="text-gray-400 normal-case tracking-normal font-normal">(optional)</span>
                 </h3>
-                <span className="text-xs text-[#5a0e5f]">Open in new tab →</span>
+                <span className="text-xs text-[#301D5D]">Open in new tab →</span>
               </div>
               <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] flex items-center justify-center text-xs text-gray-400">
                 3D tour iframe — renders only when _virtualTourUrl is set

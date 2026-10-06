@@ -55,7 +55,7 @@ export async function handleBounceAlert(params: {
   try {
     const html = `
       <div style="font-family: system-ui, -apple-system, sans-serif; color:#111827; max-width:560px;">
-        <h2 style="color:#b91c1c; margin:0 0 12px;">Email bounced</h2>
+        <h2 style="color:#661102; margin:0 0 12px;">Email bounced</h2>
         <p style="margin:0 0 8px;">A marketing/outreach email hard-bounced and will not reach the recipient.</p>
         <table style="border-collapse:collapse; margin-top:12px; font-size:14px;">
           <tr><td style="padding:4px 12px 4px 0; color:#6b7280;">Recipient</td><td><strong>${escapeHtml(toAddress)}</strong></td></tr>
@@ -63,7 +63,7 @@ export async function handleBounceAlert(params: {
           <tr><td style="padding:4px 12px 4px 0; color:#6b7280;">Bounce type</td><td>${escapeHtml(bounceType ?? 'unknown')}</td></tr>
           <tr><td style="padding:4px 12px 4px 0; color:#6b7280;">Resend ID</td><td style="font-family:monospace; font-size:12px;">${escapeHtml(emailId)}</td></tr>
         </table>
-        <p style="margin:16px 0 0;"><a href="https://realtynewsnow.app/admin/crm" style="color:#ea580c;">Open CRM</a> — the advertiser row will show a red Bounced badge.</p>
+        <p style="margin:16px 0 0;"><a href="https://realtynewsnow.app/admin/crm" style="color:#301D5D;">Open CRM</a> — the advertiser row will show a red Bounced badge.</p>
       </div>
     `;
     await sendEmail({

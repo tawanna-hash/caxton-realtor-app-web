@@ -281,7 +281,7 @@ export default function CommunityGuideContent() {
               <aside className="space-y-5">
                 <div>
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#5a0e5f] bg-[#5a0e5f] text-white rounded-md">
+                    <span className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#301D5D] bg-[#301D5D] text-white rounded-md">
                       {EXAMPLE.builderName}
                     </span>
                     <FieldBadge name="builderName" />

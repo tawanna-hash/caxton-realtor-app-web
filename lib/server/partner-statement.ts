@@ -591,12 +591,12 @@ export function renderPartnerStatementEmail(
       return `<tr>
         <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb">${escapeHtml(invoice.number ?? invoice.id.slice(0, 8))}</td>
         <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb">${statementDate(invoice.issued_at)}</td>
-        <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb">${statementDate(invoice.due_date)}${invoice.is_overdue ? '<br><span style="color:#dc2626;font-size:11px;font-weight:600">Overdue</span>' : ''}</td>
+        <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb">${statementDate(invoice.due_date)}${invoice.is_overdue ? '<br><span style="color:#661102;font-size:11px;font-weight:600">Overdue</span>' : ''}</td>
         <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb;text-align:right">${statementMoney(invoice.total_cents)}</td>
         <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb;text-align:right">${statementMoney(invoice.amount_paid_cents)}</td>
         <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:600">${statementMoney(invoice.balance_cents)}</td>
         <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb;text-align:right">
-          ${link ? `<a href="${escapeHtml(link)}" style="display:inline-block;background:#ea580c;color:#fff;padding:7px 11px;border-radius:4px;text-decoration:none;font-weight:600;white-space:nowrap">Pay invoice</a>` : ''}
+          ${link ? `<a href="${escapeHtml(link)}" style="display:inline-block;background:#301D5D;color:#fff;padding:7px 11px;border-radius:4px;text-decoration:none;font-weight:600;white-space:nowrap">Pay invoice</a>` : ''}
         </td>
       </tr>`;
     })
@@ -604,8 +604,8 @@ export function renderPartnerStatementEmail(
   const messageHtml = escapeHtml(personalMessage).replaceAll('\n', '<br>');
   const payAllHtml = statement.overduePaymentLinkUrl
     ? `<div style="margin:0 0 22px;padding:16px;background:#fff7ed;border:1px solid #fed7aa;text-align:center">
-        <div style="font-size:13px;font-weight:700;color:#9a3412;margin-bottom:10px">Total overdue: ${statementMoney(statement.overdueCents)}</div>
-        <a href="${escapeHtml(statement.overduePaymentLinkUrl)}" style="display:inline-block;background:#ea580c;color:#fff;padding:10px 16px;border-radius:4px;text-decoration:none;font-weight:700">Pay all overdue invoices</a>
+        <div style="font-size:13px;font-weight:700;color:#301D5D;margin-bottom:10px">Total overdue: ${statementMoney(statement.overdueCents)}</div>
+        <a href="${escapeHtml(statement.overduePaymentLinkUrl)}" style="display:inline-block;background:#301D5D;color:#fff;padding:10px 16px;border-radius:4px;text-decoration:none;font-weight:700">Pay all overdue invoices</a>
       </div>`
     : '';
 

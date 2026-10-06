@@ -70,7 +70,7 @@ const PUB_LABEL: Record<Pub, string> = {
 };
 const PUB_ACCENT: Record<Pub, string> = {
   realtyline: '#301D5D',
-  newsline: '#c2410c',
+  newsline: '#42277C',
   'realtyline-houston': '#301D5D',
   'realtyline-dallas': '#301D5D',
 };
@@ -292,7 +292,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
         <Kpi label="Valid" value={initialCounts.valid} accent="#059669" />
         <Kpi label="Invalid" value={initialCounts.invalid} accent="#e11d48" />
         <Kpi label="Risky" value={initialCounts.risky} accent="#d97706" />
-        <Kpi label="Unknown" value={initialCounts.unknown} accent="#ea580c" />
+        <Kpi label="Unknown" value={initialCounts.unknown} accent="#301D5D" />
         <Kpi label="Pending" value={initialCounts.pending} accent="#475569" />
         <Kpi label="Unverified" value={initialCounts.unverified} accent="#6b7280" />
       </div>

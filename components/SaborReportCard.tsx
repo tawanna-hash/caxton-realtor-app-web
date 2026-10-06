@@ -74,9 +74,9 @@ function dirGlyph(d: DeltaDirection | undefined): string {
 }
 
 function dirColor(d: DeltaDirection | undefined): string {
-  if (d === 'down') return '#b91c1c';
+  if (d === 'down') return '#661102';
   if (d === 'flat') return '#6b7280';
-  if (d === 'up') return '#16a34a';
+  if (d === 'up') return '#005A00';
   return '#6b7280';
 }
 
@@ -151,7 +151,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
     >
       <div className="bg-white mx-3 my-3 rounded-md overflow-hidden shadow-sm">
         {/* Brand top strip */}
-        <div className="h-1" style={{ background: `linear-gradient(90deg, ${NEWSLINE} 0%, #7a1f7e 100%)` }} />
+        <div className="h-1" style={{ background: `linear-gradient(90deg, ${NEWSLINE} 0%, #5B3FA0 100%)` }} />
 
         <div className="px-4 pt-4 pb-4">
           {/* Eyebrow row + EN/ES toggle */}

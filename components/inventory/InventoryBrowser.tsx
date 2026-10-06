@@ -396,7 +396,7 @@ function EmptyState({
         <button
           onClick={onClear}
           className="mt-4 inline-flex items-center px-4 py-2 rounded-md text-xs font-semibold uppercase tracking-wider text-white"
-          style={{ backgroundColor: '#5a0e5f' }}
+          style={{ backgroundColor: '#301D5D' }}
         >
           Clear filters
         </button>

@@ -12,7 +12,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-const ACCENT = '#dc2626';
+const ACCENT = '#661102';
 
 export type SignatureMethod = 'type' | 'draw' | 'upload';
 

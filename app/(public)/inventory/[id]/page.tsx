@@ -243,7 +243,7 @@ function DetailView({
             <div className="mb-3 flex items-center gap-2">
               <Link
                 href={`/builders/${builderSlug}`}
-                className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#5a0e5f] bg-[#5a0e5f] text-white rounded-md hover:bg-[#301D5D] hover:border-[#301D5D] transition-colors"
+                className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#301D5D] bg-[#301D5D] text-white rounded-md hover:bg-[#301D5D] hover:border-[#301D5D] transition-colors"
               >
                 {builderForPill}
               </Link>
@@ -355,7 +355,7 @@ function DetailView({
               href={floorplanUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-[#5a0e5f] hover:underline"
+              className="text-xs text-[#301D5D] hover:underline"
             >
               Open full screen
             </a>
@@ -387,7 +387,7 @@ function DetailView({
               href={virtualTourUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-[#5a0e5f] hover:underline"
+              className="text-xs text-[#301D5D] hover:underline"
             >
               Open in new tab
             </a>
@@ -415,7 +415,7 @@ function DetailView({
               href={`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-[#5a0e5f] hover:underline"
+              className="text-xs text-[#301D5D] hover:underline"
             >
               Get directions
             </a>

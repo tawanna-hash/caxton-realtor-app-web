@@ -392,7 +392,7 @@ function PitiBar({ piti }: { piti: PitiBreakdown }) {
   const total = piti.total || 1;
   const segs = [
     { key: 'pi', label: 'P&I', value: piti.principalAndInterest, color: '#301D5D' },
-    { key: 'tax', label: 'Tax', value: piti.propertyTax, color: '#c2410c' },
+    { key: 'tax', label: 'Tax', value: piti.propertyTax, color: '#42277C' },
     { key: 'ins', label: 'Ins', value: piti.insurance, color: '#fdba74' },
     { key: 'pmi', label: 'PMI', value: piti.pmi, color: '#fb923c' },
     { key: 'hoa', label: 'HOA', value: piti.hoa, color: '#9ca3af' },

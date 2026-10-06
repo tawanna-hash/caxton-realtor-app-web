@@ -70,7 +70,7 @@ export async function notifyProposalApproved(ag: Agreement): Promise<void> {
 
       <p style="margin: 24px 0 8px;">
         <a href="${reviewUrl}"
-           style="display: inline-block; background: #ea580c; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 500;">
+           style="display: inline-block; background: #301D5D; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 500;">
           Open in admin &amp; send final agreement
         </a>
       </p>

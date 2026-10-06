@@ -242,8 +242,8 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                   >
                     <defs>
                       <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#ea580c" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="#ea580c" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#301D5D" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#301D5D" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -269,7 +269,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                     <Area
                       type="monotone"
                       dataKey="clicks"
-                      stroke="#ea580c"
+                      stroke="#301D5D"
                       strokeWidth={2}
                       fill={`url(#${gradientId})`}
                     />

@@ -50,7 +50,7 @@ export default function AdvertisePrintPage() {
               key={pkg.id}
               className={`relative flex flex-col border rounded-md p-5 ${
                 pkg.premium
-                  ? 'border-[#c2410c] bg-[#FEF8CC]/30'
+                  ? 'border-[#42277C] bg-[#FEF8CC]/30'
                   : pkg.popular
                   ? 'border-brand-700'
                   : 'border-gray-200'
@@ -62,7 +62,7 @@ export default function AdvertisePrintPage() {
                 </span>
               )}
               {pkg.premium && (
-                <span className="absolute -top-3 left-5 px-2 py-0.5 rounded-full bg-[#c2410c] text-white text-[10px] font-semibold uppercase tracking-wider">
+                <span className="absolute -top-3 left-5 px-2 py-0.5 rounded-full bg-[#42277C] text-white text-[10px] font-semibold uppercase tracking-wider">
                   Premium
                 </span>
               )}

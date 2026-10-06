@@ -129,7 +129,7 @@ interface RenderOptions {
 
 function renderEmail(opts: RenderOptions): string {
   const brand = opts.brand ?? 'realtyline';
-  const accent = brand === 'newsline' ? '#0e7490' : '#301D5D';
+  const accent = brand === 'newsline' ? '#5B3FA0' : '#301D5D';
   const wordmark = brand === 'newsline' ? 'Newsline' : brand === 'caxton' ? 'Caxton' : 'RealtyLine';
   const tagline = brand === 'newsline'
     ? 'San Antonio real estate news'

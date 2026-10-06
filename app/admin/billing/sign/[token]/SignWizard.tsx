@@ -40,7 +40,7 @@ import {
 } from '@/lib/publications';
 
 // Admin palette purple — matches /admin dashboards and CRM.
-const ACCENT = '#5a0e5f';
+const ACCENT = '#301D5D';
 
 // Format a line-item run window compactly. Accepts ISO YYYY-MM-DD strings.
 // For print → uses month-and-year granularity ("Aug 2026 – Oct 2026").
@@ -1191,7 +1191,7 @@ export default function SignWizard({
                       return (
                         <label
                           key={m.id}
-                          className={`flex items-center gap-2 border rounded-md px-3 py-2 text-sm cursor-pointer border-gray-300 ${checked ? 'bg-[#faf5fb] border-[#5a0e5f]' : ''}`}
+                          className={`flex items-center gap-2 border rounded-md px-3 py-2 text-sm cursor-pointer border-gray-300 ${checked ? 'bg-[#faf5fb] border-[#301D5D]' : ''}`}
                         >
                           <input
                             type="checkbox"
