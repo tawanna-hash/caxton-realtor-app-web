@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TREC_FORM_LIBRARY } from '@/lib/trec-forms-library';
+import SpellHelper from './SpellHelper';
 import MessageLayoutPicker, { type MessageLayout } from './MessageLayoutPicker';
 import { dealFolders } from './purchase-documents';
 import { messagingPeople } from '@/lib/closing-time-people';
@@ -107,6 +108,8 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
 
   const layout: MessageLayout = contact ? 'inbox' : (layoutChoice ?? layoutSaved ?? 'inbox');
   const needsChoice = !contact && loaded && !layoutSaved && !layoutChoice;
+  const spellIgnore = [deal?.propertyAddress ?? '', deal?.title ?? '', ...parties.map((p) => p.name)];
+  const clearAll = () => { setBody(''); setSubject(''); setAsks([]); setAskOther(''); setFiles([]); setCc([]); setAskOpen(false); setMsg(''); };
   const addFiles = async (list: FileList | null) => {
     if (!list) return;
     const next = [...files];
@@ -257,11 +260,13 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
                     </div>
                   </label>
             <label className="block"><span className={lab}>Message</span><textarea className={field} rows={5} value={body} onChange={(e) => setBody(e.target.value)} /></label>
+            <SpellHelper text={body} onChange={setBody} ignore={spellIgnore} />
             {requestUI}
             {attachUI}
             <div className="flex items-center justify-between gap-3">
               <span className="text-[12px] font-medium text-[#7A7787]">Goes to {party.email}. You are copied and replies go to your email. The subject starts with the property address.</span>
-              <button type="button" className={btn} disabled={busy || !subject.trim() || !body.trim()} onClick={() => void sendEmail()}>Send Email</button>
+              <span className="flex gap-2"><button type="button" className={btn} disabled={busy || !(body || subject || asks.length || askOther || files.length || cc.length)} onClick={clearAll}>Clear</button>
+              <button type="button" className={btn} disabled={busy || !subject.trim() || !body.trim()} onClick={() => void sendEmail()}>Send Email</button></span>
             </div>
           </div>
         ) : <p className="text-[13px] text-[#4A4757]">No email on file for {party.name}. Add one on the People tab.</p>
@@ -273,10 +278,11 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
         : state === 'opted_in' ? (
           <div className="space-y-3">
             <label className="block"><span className={lab}>Text</span><textarea className={field} rows={3} maxLength={900} value={body} onChange={(e) => setBody(e.target.value)} /></label>
+            <SpellHelper text={body} onChange={setBody} ignore={spellIgnore} />
             {requestUI}
             <div className="flex items-center justify-between gap-3">
               <span className="text-[12px] font-medium text-[#7A7787]">Sent to {party.phone}. The property address and a STOP line are added.</span>
-              <button type="button" className={btn} disabled={busy || !body.trim()} onClick={() => void sendText()}>Send Text</button>
+              <span className="flex gap-2"><button type="button" className={btn} disabled={busy || !(body || asks.length || askOther)} onClick={clearAll}>Clear</button><button type="button" className={btn} disabled={busy || !body.trim()} onClick={() => void sendText()}>Send Text</button></span>
             </div>
           </div>
         ) : (
