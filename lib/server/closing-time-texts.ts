@@ -3,6 +3,7 @@ import { query } from '@/lib/server/db/neon';
 import { smsAllowedFor } from '@/lib/server/agent-deadline-notifications';
 import { consentState, recordConsent, sendOptInRequest, sendSms, toE164, type ConsentState } from '@/lib/server/sms';
 import { sendEmail } from '@/lib/email';
+import { DEFAULT_EMAIL_SENDER } from '@/lib/email-sender';
 import { requireDeal } from '@/lib/server/closing-time-assist';
 import { logDealEvent } from '@/lib/server/closing-time-events';
 
@@ -171,6 +172,11 @@ export async function sendDealEmail(realtorId: string, dealId: string, property:
   const bare = input.subject.trim();
   // Every deal email starts with the property address.
   const subject = (dealId === CONTACT_SCOPE || bare.toLowerCase().startsWith(property.toLowerCase()) ? bare : `${property} - ${bare}`).slice(0, 200);
+  const { getAgentAccountDetails } = await import('@/lib/server/agent-account-details');
+  const details = await getAgentAccountDetails(realtorId).catch(() => null);
+  const clean = (v: string) => v.replace(/[<>\"\r\n]/g, ' ').replace(/\s+/g, ' ').trim();
+  const senderName = [clean(agent.name || ''), clean(details?.brokerage ?? '')].filter(Boolean).join(' / ');
+  const from = senderName ? `"${senderName}" <${DEFAULT_EMAIL_SENDER}>` : undefined;
   const ccList = Array.from(new Set([agent.email, ...(input.cc ?? [])].map((e) => (e ?? '').trim().toLowerCase()).filter(Boolean)));
   let sent = 0; let lastError = '';
   let requested = 0;
@@ -187,7 +193,7 @@ export async function sendDealEmail(realtorId: string, dealId: string, property:
       for (const id of made) await markDocRequestEmailed(realtorId, id).catch(() => undefined);
     }
     const html = `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:600px">${text.split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}${dealId === CONTACT_SCOPE ? '' : `<p style="color:#7A7787;font-size:12px">Regarding ${esc(property)}</p>`}</div>`;
-    const r = await sendEmail({ to: to.email, cc: ccList.filter((c) => c !== to.email.toLowerCase()), replyTo: agent.email || undefined, subject, html, ...(input.attachments?.length ? { attachments: input.attachments } : {}) }).catch((e) => ({ ok: false, error: String(e) }));
+    const r = await sendEmail({ to: to.email, cc: ccList.filter((c) => c !== to.email.toLowerCase()), ...(from ? { from } : {}), replyTo: agent.email || undefined, subject, html, ...(input.attachments?.length ? { attachments: input.attachments } : {}) }).catch((e) => ({ ok: false, error: String(e) }));
     const ok = (r as { ok?: boolean }).ok !== false;
     if (!ok) lastError = (r as { error?: string }).error ?? 'Send failed';
     if (input.attachments?.length) text += `\n\nAttached: ${input.attachments.map((a) => a.filename).join(', ')}`;
