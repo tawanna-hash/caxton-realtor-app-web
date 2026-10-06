@@ -9,7 +9,7 @@
 //   - Container: bg-black/85, backdrop-blur-md, rounded-md
 //   - Each button: stacked icon + uppercase label, min-w-[52px]
 //   - Icon: 16x16
-//   - Label: text-[9px], uppercase, tracking-wider
+//   - Label: text-[10px], uppercase, tracking-wider
 //
 // Positioning is the caller's responsibility — pass a `bottomOffsetClass`
 // (e.g. 'bottom-[80px]', 'bottom-[148px]') that clears any sticky CTA / bottom
@@ -79,7 +79,7 @@ const BTN_CLS =
 const TAP_STYLE: React.CSSProperties = { WebkitTapHighlightColor: 'transparent' };
 
 const LABEL_CLS =
-  'text-[9px] uppercase tracking-wider mt-0.5 font-medium whitespace-nowrap';
+  'text-[10px] uppercase tracking-wider mt-0.5 font-medium whitespace-nowrap';
 
 function IconSvg({ children }: { children: React.ReactNode }) {
   return (

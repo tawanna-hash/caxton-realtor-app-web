@@ -199,7 +199,7 @@ function Tab({
           past the viewport on 375px iPhone SE. Prior version relied on tight
           tracking + short labels to fit; that broke the moment a wider tab
           (Builders / Devs at 81px) was added. */}
-      <span className="text-[10px] font-medium uppercase tracking-tight whitespace-nowrap max-w-full truncate">
+      <span className="text-[11px] font-medium uppercase tracking-tight whitespace-nowrap max-w-full truncate">
         {label}
       </span>
     </button>

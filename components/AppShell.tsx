@@ -377,7 +377,7 @@ export default function AppShell({
                       <polyline points="6 9 12 15 18 9" />
                     </svg>
                   </span>
-                  <span className="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-medium">
+                  <span className="text-[11px] uppercase tracking-[0.15em] text-gray-500 font-medium">
                     Realty News Now
                   </span>
                 </button>
@@ -403,7 +403,7 @@ export default function AppShell({
                         }
                       }}
                       aria-current={active ? 'page' : undefined}
-                      className={`px-3 py-1.5 text-xs uppercase tracking-[0.15em] rounded-md transition ${
+                      className={`inline-flex min-h-[40px] items-center px-3 py-2 text-xs uppercase tracking-[0.15em] rounded-md transition ${
                         active
                           ? 'text-gray-900 bg-gray-100 font-medium'
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
