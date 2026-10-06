@@ -26,8 +26,9 @@ function partiesOf(deal: AgentDeal): Party[] {
     out.push({ key: k, name: name.trim(), role, email, phone });
   };
   (deal.clientContacts ?? []).forEach((c) => add(c.name, c.role || 'Client', c.email ?? '', c.phone ?? ''));
-  const names = deal.agentSide === 'listing' ? deal.sellerNames : deal.buyerNames;
-  (names || '').split(/\s*(?:&|,|\/|\band\b)\s*/i).forEach((n) => add(n, deal.agentSide === 'listing' ? 'Seller' : 'Buyer', '', ''));
+  const split = (v: string) => (v || '').split(/\s*(?:&|,|\/|\band\b)\s*/i);
+  split(deal.buyerNames).forEach((n) => add(n, 'Buyer', '', ''));
+  split(deal.sellerNames).forEach((n) => add(n, 'Seller', '', ''));
   (deal.serviceProviders ?? []).forEach((s) => add(s.name, s.category || 'Provider', s.email ?? '', s.phone ?? ''));
   return out;
 }
