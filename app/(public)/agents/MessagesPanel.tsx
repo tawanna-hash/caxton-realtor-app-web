@@ -49,6 +49,15 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   const [tick, setTick] = useState(0);
   const [layoutSaved, setLayoutSaved] = useState<MessageLayout | null>(() => { try { const v = typeof window !== 'undefined' ? window.localStorage.getItem('ct-msg-layout') : null; return (v as MessageLayout | null) || null; } catch { return null; } });
   const layoutFrozen = useRef(false);
+  const [isPhone, setIsPhone] = useState(false);
+  const [phoneThread, setPhoneThread] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const on = () => setIsPhone(mq.matches);
+    on();
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
   const [layoutChoice, setLayoutChoice] = useState<MessageLayout | null>(null);
   const [changing, setChanging] = useState(false);
   const [recips, setRecips] = useState<string[]>([]);
@@ -107,8 +116,8 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
     } catch { setMsg('Something went wrong.'); return false; } finally { setBusy(false); }
   };
 
-  const layout: MessageLayout = contact ? 'inbox' : (layoutChoice ?? layoutSaved ?? 'inbox');
-  const needsChoice = !contact && loaded && !layoutSaved && !layoutChoice;
+  const layout: MessageLayout = contact || isPhone ? 'inbox' : (layoutChoice ?? layoutSaved ?? 'inbox');
+  const needsChoice = !contact && !isPhone && loaded && !layoutSaved && !layoutChoice;
   const spellIgnore = [deal?.propertyAddress ?? '', deal?.title ?? '', ...parties.map((p) => p.name)];
   const clearAll = () => { setBody(''); };
   const addFiles = async (list: FileList | null) => {
@@ -164,7 +173,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   );
   const roleOf = (name: string) => parties.find((p) => key(p.name) === key(name))?.role ?? '';
   const personButton = (p: Party, extra = '') => (
-    <button key={p.key} type="button" onClick={() => { setSel(p.key); setMsg(''); }} className={`${extra} !text-left transition hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${p.key === sel ? '!bg-[#EFEAF8]' : '!bg-white'}`}>
+    <button key={p.key} type="button" onClick={() => { setSel(p.key); setMsg(''); setPhoneThread(true); }} className={`${extra} !text-left transition hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${p.key === sel ? '!bg-[#EFEAF8]' : '!bg-white'}`}>
       {namePill(p.name, p.role, p.key === sel)}
       <span className="mt-1 block text-[12px] font-medium text-[#7A7787]">{last(p)}</span>
     </button>
@@ -337,7 +346,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
     { label: 'Closing Checklist', subject: 'Closing checklist', body: `Hi ${party?.name.split(' ')[0] ?? ''}, here is what we need to finish before closing. I will walk you through each step.` },
   ];
 
-  const chip = !contact && (
+  const chip = !contact && !isPhone && (
     <div className="mb-3 flex flex-wrap items-center gap-3">
       <button type="button" className={btn} onClick={() => setChanging((v) => !v)} aria-expanded={changing}>
         Layout: {({ inbox: 'Inbox With Deal Rail', timeline: 'One Deal Timeline', strip: 'People Strip With Chat', threads: 'Thread List And Panel', split: 'Compose And History Split' } as const)[layout]}
@@ -454,6 +463,19 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
           {!current && openThread !== 'new' && <div className="ds-card px-4 py-6 text-[13px] text-[#4A4757]">Open a thread to read it and reply, or start a new message.</div>}
           {(current || openThread === 'new') && composerCard}
         </div>
+      </div>
+    );
+  } else if (isPhone && !contact) {
+    body_ = phoneThread ? (
+      <div className="space-y-3">
+        <button type="button" className={`${btn} !px-3 !py-2 !text-[14px]`} onClick={() => setPhoneThread(false)}>{'\u2039'} People</button>
+        {threadCard}
+        {composerCard}
+      </div>
+    ) : (
+      <div className="ds-card">
+        <h2 className="border-b border-[#E6E5EC] px-4 py-3 text-[16px] font-semibold text-[#1B1726]">People On This Deal</h2>
+        {parties.map((p) => personButton(p, 'block w-full border-b border-[#E6E5EC] px-4 py-4 last:border-0'))}
       </div>
     );
   } else {
