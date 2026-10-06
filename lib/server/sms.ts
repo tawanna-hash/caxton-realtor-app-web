@@ -114,3 +114,46 @@ export async function sendSms(audience: string, text: string, numbers: string[])
   }
   return out;
 }
+
+/**
+ * One opt-in request text. It does not need prior consent, but never goes to a number that opted out.
+ * It creates a pending consent row, so a YES reply (handled by the webhook) records the opt-in.
+ */
+export async function sendOptInRequest(audience: string, text: string, rawNumber: string): Promise<{ ok: boolean; id?: string | null; error?: string }> {
+  const key = process.env.TELNYX_API_KEY;
+  const profile = process.env.TELNYX_MESSAGING_PROFILE_ID;
+  const from = process.env.TELNYX_FROM_NUMBER;
+  if (!key || !profile || !from) return { ok: false, error: 'Telnyx environment variables are not set' };
+  const phone = toE164(rawNumber);
+  if (!phone) return { ok: false, error: 'Invalid phone number' };
+  await ensureSmsTables();
+  const out = await query(`SELECT 1 FROM sms_consent WHERE phone = $1 AND opt_out_at IS NOT NULL LIMIT 1`, [phone]);
+  if (out.length > 0) return { ok: false, error: 'This number opted out of texts' };
+  await exec(`INSERT INTO sms_consent (phone, audience) VALUES ($1, $2) ON CONFLICT (phone, audience) DO NOTHING`, [phone, audience]);
+  try {
+    const resp = await fetch('https://api.telnyx.com/v2/messages', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to: phone, text, messaging_profile_id: profile, type: 'SMS' }),
+    });
+    const data = (await resp.json()) as { data?: { id?: string }; errors?: unknown };
+    if (!resp.ok) return { ok: false, error: JSON.stringify(data.errors ?? data) };
+    const id = data.data?.id ?? null;
+    await exec(`INSERT INTO sms_messages (telnyx_id, direction, phone, audience, body, status) VALUES ($1, 'outbound', $2, $3, $4, 'queued') ON CONFLICT (telnyx_id) DO NOTHING`, [id, phone, audience, text]);
+    return { ok: true, id };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+}
+
+export type ConsentState = 'opted_in' | 'pending' | 'opted_out' | 'none';
+export async function consentState(audience: string, rawNumber: string): Promise<ConsentState> {
+  const phone = toE164(rawNumber);
+  if (!phone) return 'none';
+  await ensureSmsTables();
+  const any = await query(`SELECT 1 FROM sms_consent WHERE phone = $1 AND opt_out_at IS NOT NULL LIMIT 1`, [phone]);
+  if (any.length > 0) return 'opted_out';
+  const rows = await query<{ opt_in_at: string | null }>(`SELECT opt_in_at FROM sms_consent WHERE phone = $1 AND audience = $2`, [phone, audience]);
+  if (!rows[0]) return 'none';
+  return rows[0].opt_in_at ? 'opted_in' : 'pending';
+}

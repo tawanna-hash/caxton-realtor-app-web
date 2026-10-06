@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createPublicKey, verify } from 'node:crypto';
 import { exec } from '@/lib/server/db/neon';
 import { logger } from '@/lib/server/logger';
+import { attachInboundText, updateTextStatus } from '@/lib/server/closing-time-texts';
 import { ensureSmsTables, START_WORDS, STOP_WORDS, toE164 } from '@/lib/server/sms';
 
 export const runtime = 'nodejs';
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
           `INSERT INTO sms_messages (telnyx_id, direction, phone, body, status)
            VALUES ($1, 'inbound', $2, $3, 'received') ON CONFLICT (telnyx_id) DO NOTHING`,
           [p.id ?? null, phone, text]);
+        await attachInboundText(phone, text, p.id ?? null);
         if (STOP_WORDS.has(word)) {
           // STOP applies to the number, so it covers every audience.
           const upd = await exec(
@@ -92,6 +94,7 @@ export async function POST(req: NextRequest) {
       await exec(
         `UPDATE sms_messages SET status = $2, error = $3, updated_at = NOW() WHERE telnyx_id = $1`,
         [p.id ?? null, status, err]);
+      await updateTextStatus(p.id ?? null, status, err);
     }
   } catch (err) {
     // Still return 200 so Telnyx doesn't retry endlessly; the error is logged.
