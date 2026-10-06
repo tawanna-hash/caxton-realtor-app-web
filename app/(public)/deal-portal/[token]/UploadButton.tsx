@@ -17,7 +17,7 @@ export default function UploadButton({ token, docId, label = 'Upload' }: { token
       setState('done');
     } catch { setError('Upload failed. Try again.'); setState('idle'); }
   }
-  if (state === 'done') return <span className="text-xs font-semibold text-[#437A22]">Sent to your agent</span>;
+  if (state === 'done') return <span className="text-xs font-medium text-[#301D5D]">Sent to your agent</span>;
   return (
     <span className="flex flex-col items-end gap-1">
       <label className="inline-flex min-h-[36px] cursor-pointer items-center rounded-md border border-[#301D5D] bg-white px-3 text-xs font-bold text-[#301D5D] hover:bg-[#F8F5FF]">

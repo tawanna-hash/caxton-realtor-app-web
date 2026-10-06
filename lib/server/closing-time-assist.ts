@@ -159,7 +159,9 @@ export async function removePortal(realtorId: string, dealId: string) {
 
 export type PortalView = {
   property: string; stage: string; closingDate: string; agentName: string; agentEmail: string;
-  timeline: { label: string; date: string; done: boolean }[];
+  clientFirstName: string; clientSide: 'buyer' | 'seller'; daysToClosing: number | null; titleCompany: string;
+  steps: { label: string; date: string; state: 'done' | 'current' | 'upcoming' }[];
+  timeline: { id: string; label: string; date: string; done: boolean; note: string }[];
   documents: { id: string; label: string; status: string }[];
   todos: { title: string; dueDate: string }[];
 };
@@ -174,15 +176,41 @@ export async function getPortalView(token: string): Promise<PortalView | null> {
   if (!row) return null;
   const deal = await loadDeal(row.realtor_id, row.deal_id);
   if (!deal) return null;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
   const label: Record<AgentDeal['status'], string> = { prep: 'Getting started', active: 'Under contract', closing: 'Heading to closing', completed: 'Closed' };
+  const clientSide: 'buyer' | 'seller' = deal.agentSide === 'listing' ? 'seller' : 'buyer';
+  const names = (clientSide === 'seller' ? deal.sellerNames : deal.buyerNames) || '';
+  const clientFirstName = (names.split(/\s*(?:&|,|\band\b|\/)\s*/i)[0] || '').trim().split(/\s+/)[0] ?? '';
+  const titleCompany = (deal.contractDetails?.titleCompany || deal.formFields?.p02_f038 || '').trim();
+  const days = (to: string) => Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86_400_000);
+  const explain = (id: string): string => {
+    if (id === 'earnest-money-delivery') return `Earnest money goes to ${titleCompany || 'the title company'}. Call them on a number you trust before sending any funds.`;
+    if (id === 'option-fee-delivery') return 'The option fee is delivered under the contract terms. Your agent will confirm where it goes.';
+    if (id === 'option-period-ends') return 'Your option period ends on this date. Finish inspections before it.';
+    if (id === 'closing-date') return clientSide === 'seller' ? 'Closing day: you sign and the sale funds.' : 'Closing day: you sign, the loan funds, and you get the keys.';
+    return '';
+  };
+  const timeline = dealTimeline(deal).map((i) => ({ id: i.id, label: i.label, date: i.date, done: i.date < today || Boolean(deal.documentChecks?.[`dl:${i.id}`]), note: explain(i.id) }));
+  const dateOf = (id: string) => timeline.find((i) => i.id === id)?.date ?? '';
+  const eff = deal.effectiveDate, em = dateOf('earnest-money-delivery'), opt = dateOf('option-period-ends'), close = deal.closingDate;
+  const raw = [
+    { label: 'Under Contract', date: eff, done: Boolean(eff) && today >= eff },
+    { label: 'Earnest Money', date: em, done: Boolean(em) && today > em },
+    { label: 'Option Period', date: opt, done: Boolean(opt) && today > opt },
+    { label: 'Closing Prep', date: '', done: Boolean(close) && today >= close },
+    { label: 'Closing', date: close, done: Boolean(close) && today > close },
+  ];
+  const cur = raw.findIndex((x) => !x.done);
+  const steps = raw.map((x, i) => ({ label: x.label, date: x.date, state: (x.done ? 'done' : i === cur ? 'current' : 'upcoming') as 'done' | 'current' | 'upcoming' }));
   return {
     property: (deal.propertyAddress || '').trim() || `${deal.title || 'Deal'} (address not entered)`,
     stage: label[deal.status],
     closingDate: deal.closingDate,
     agentName: [row.first_name, row.last_name].filter(Boolean).join(' '),
     agentEmail: row.email,
-    timeline: dealTimeline(deal).map((i) => ({ label: i.label, date: i.date, done: i.date < today })),
+    clientFirstName, clientSide, titleCompany,
+    daysToClosing: deal.closingDate && deal.closingDate >= today ? days(deal.closingDate) : null,
+    steps, timeline,
     documents: deal.documents.filter((d) => d.status !== 'not_needed').map((d) => ({ id: d.id, label: d.label, status: d.status })),
     todos: deal.tasks.filter((t) => !t.complete).slice(0, 20).map((t) => ({ title: t.title, dueDate: t.dueDate })),
   };
