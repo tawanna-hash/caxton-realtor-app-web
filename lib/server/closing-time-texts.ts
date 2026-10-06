@@ -45,6 +45,7 @@ const LOCKED_MESSAGE = 'This deal is closed and its record is locked. Messaging 
 async function isLocked(realtorId: string, dealId: string): Promise<boolean> {
   try { return (await requireDeal(realtorId, dealId)).auditLocked === true; } catch { return false; }
 }
+export const CONTACT_SCOPE = 'contact';
 export { LOCKED_MESSAGE, isLocked };
 
 const STOP_LINE = ' Reply STOP to opt out.';
@@ -85,7 +86,7 @@ export async function sendDealText(s: Sender, dealId: string, property: string, 
   if (!smsAllowedFor(s.email)) return { ok: false, error: 'Texting is not available for this account yet.' };
   const phone = toE164(p.phone);
   if (!phone) return { ok: false, error: 'Add a valid mobile number first.' };
-  const body = `${property}: ${p.body.trim().slice(0, 900)}${STOP_LINE}`;
+  const body = `${property}: ${p.body.trim().slice(0, 900)}${STOP_LINE}`; // for contact messages the caller passes the agent's name here
   let result;
   try { result = await sendSms(DEAL_TEXT_AUDIENCE, body, [phone]); } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Text failed' }; }
   if (result.sent.length) {
@@ -105,9 +106,10 @@ export async function attachInboundText(phone: string, body: string, telnyxId: s
     const last = await query<{ realtor_id: string; deal_id: string; person_name: string }>(`SELECT realtor_id, deal_id, person_name FROM closing_time_texts WHERE phone=$1 AND direction='outbound' ORDER BY created_at DESC LIMIT 1`, [phone]);
     const l = last[0];
     if (!l) return;
-    if (await isLocked(l.realtor_id, l.deal_id)) return; // closed and locked: replies are no longer recorded
-    await query(`INSERT INTO closing_time_texts (id, realtor_id, deal_id, person_name, phone, direction, body, status, telnyx_id) VALUES ($1,$2,$3,$4,$5,'inbound',$6,'received',$7)`, [randomUUID(), l.realtor_id, l.deal_id, l.person_name, phone, body.slice(0, 1600), telnyxId]);
-    await logDealEvent(l.realtor_id, l.deal_id, 'text', `Text received from ${l.person_name} (${phone}): ${body.slice(0, 200)}`);
+    // Once the deal is closed and locked its record stays unchanged; later replies go to the person's contact thread instead.
+    const target = (await isLocked(l.realtor_id, l.deal_id)) ? CONTACT_SCOPE : l.deal_id;
+    await query(`INSERT INTO closing_time_texts (id, realtor_id, deal_id, person_name, phone, direction, body, status, telnyx_id) VALUES ($1,$2,$3,$4,$5,'inbound',$6,'received',$7)`, [randomUUID(), l.realtor_id, target, l.person_name, phone, body.slice(0, 1600), telnyxId]);
+    await logDealEvent(l.realtor_id, target, 'text', `Text received from ${l.person_name} (${phone}): ${body.slice(0, 200)}`);
   } catch { /* ignore */ }
 }
 
@@ -131,8 +133,8 @@ const esc = (v: string) => v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 export async function sendDealEmail(realtorId: string, dealId: string, property: string, agent: { name: string; email: string }, input: { to: { name: string; email: string }[]; subject: string; body: string }): Promise<{ ok: boolean; sent: number; error?: string }> {
   if (await isLocked(realtorId, dealId)) return { ok: false, sent: 0, error: LOCKED_MESSAGE };
   await ensure();
-  const subject = (input.subject.includes(property) ? input.subject : `${input.subject} - ${property}`).slice(0, 200);
-  const html = `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:600px">${input.body.split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}<p style="color:#7A7787;font-size:12px">Regarding ${esc(property)}. Reply to this email to reach ${esc(agent.name || 'your agent')}.</p></div>`;
+  const subject = (dealId === CONTACT_SCOPE || input.subject.includes(property) ? input.subject : `${input.subject} - ${property}`).slice(0, 200);
+  const html = `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:600px">${input.body.split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}<p style="color:#7A7787;font-size:12px">${dealId === CONTACT_SCOPE ? '' : `Regarding ${esc(property)}. `}Reply to this email to reach ${esc(agent.name || 'your agent')}.</p></div>`;
   let sent = 0; let lastError = '';
   for (const to of input.to) {
     const r = await sendEmail({ to: to.email, cc: agent.email || undefined, replyTo: agent.email || undefined, subject, html }).catch((e) => ({ ok: false, error: String(e) }));
@@ -144,4 +146,19 @@ export async function sendDealEmail(realtorId: string, dealId: string, property:
     if (ok) sent += 1;
   }
   return sent ? { ok: true, sent } : { ok: false, sent, error: lastError || 'Send failed' };
+}
+
+/** Everything exchanged with one person across all deals, including closed ones, plus messages sent from Contacts. */
+export async function listContactMessages(realtorId: string, p: { name: string; email: string; phone: string }): Promise<{ texts: DealText[]; emails: DealEmail[] }> {
+  await ensure();
+  const phone = toE164(p.phone) ?? '';
+  const name = p.name.trim().toLowerCase();
+  const t = await query<{ id: string; person_name: string; phone: string; direction: string; body: string; status: string; error: string | null; created_at: Date | string }>(
+    `SELECT id, person_name, phone, direction, body, status, error, created_at FROM closing_time_texts WHERE realtor_id=$1 AND (lower(person_name)=$2 OR ($3<>'' AND phone=$3)) ORDER BY created_at ASC LIMIT 500`, [realtorId, name, phone]);
+  const e = await query<{ id: string; person_name: string; to_email: string; subject: string; body: string; status: string; error: string | null; created_at: Date | string }>(
+    `SELECT id, person_name, to_email, subject, body, status, error, created_at FROM closing_time_emails WHERE realtor_id=$1 AND (lower(person_name)=$2 OR ($3<>'' AND lower(to_email)=$3)) ORDER BY created_at ASC LIMIT 300`, [realtorId, name, p.email.trim().toLowerCase()]);
+  return {
+    texts: t.map((r) => ({ id: r.id, personName: r.person_name, phone: r.phone, direction: r.direction as DealText['direction'], body: r.body, status: r.status, error: r.error, createdAt: new Date(r.created_at).toISOString() })),
+    emails: e.map((r) => ({ id: r.id, personName: r.person_name, toEmail: r.to_email, subject: r.subject, body: r.body, status: r.status, error: r.error, createdAt: new Date(r.created_at).toISOString() })),
+  };
 }

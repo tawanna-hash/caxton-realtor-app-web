@@ -34,8 +34,9 @@ function partiesOf(deal: AgentDeal): Party[] {
 }
 
 /** Messages on a deal: email and text with each person on it, kept in one thread per person and written to the Audit Trail. */
-export default function MessagesPanel({ deal }: { deal: AgentDeal }) {
-  const parties = useMemo(() => partiesOf(deal), [deal]);
+export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; contact?: { name: string; email: string; phone: string; role: string } }) {
+  const scope = contact ? 'contact' : (deal?.id ?? '');
+  const parties = useMemo<Party[]>(() => (contact ? [{ key: key(contact.name), name: contact.name, role: contact.role || 'Contact', email: contact.email, phone: contact.phone }] : deal ? partiesOf(deal) : []), [deal, contact]);
   const [sel, setSel] = useState<string>(parties[0]?.key ?? '');
   const [mode, setMode] = useState<'email' | 'sms'>('email');
   const [texts, setTexts] = useState<Text[]>([]);
@@ -53,14 +54,14 @@ export default function MessagesPanel({ deal }: { deal: AgentDeal }) {
   const phonesParam = parties.map((p) => p.phone).filter(Boolean).join(',');
   useEffect(() => {
     let live = true;
-    const run = () => fetch(`/api/closing-time/texts?dealId=${encodeURIComponent(deal.id)}&phones=${encodeURIComponent(phonesParam)}`, { cache: 'no-store' })
+    const run = () => fetch(`/api/closing-time/texts?dealId=${encodeURIComponent(scope)}&phones=${encodeURIComponent(phonesParam)}${contact ? `&name=${encodeURIComponent(contact.name)}&email=${encodeURIComponent(contact.email)}&phone=${encodeURIComponent(contact.phone)}` : ''}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((b) => { if (live && b) { setAllowed(b.allowed); setLocked(b.locked === true); setTexts(b.texts ?? []); setEmails(b.emails ?? []); setConsent(b.consent ?? {}); setLoaded(true); } })
       .catch(() => undefined);
     run();
     const t = setInterval(run, 20000);
     return () => { live = false; clearInterval(t); };
-  }, [deal.id, phonesParam, tick]);
+  }, [scope, phonesParam, tick, contact]);
 
   const party = parties.find((p) => p.key === sel) ?? null;
   const e164 = party?.phone ? (digits(party.phone).length === 10 ? `+1${digits(party.phone)}` : digits(party.phone).length === 11 && digits(party.phone).startsWith('1') ? `+${digits(party.phone)}` : '') : '';
@@ -86,11 +87,11 @@ export default function MessagesPanel({ deal }: { deal: AgentDeal }) {
 
   const sendEmail = async () => {
     if (!party?.email) return;
-    if (await post({ action: 'email', dealId: deal.id, subject, body, to: [{ name: party.name, email: party.email }] })) { setBody(''); setSubject(''); setMsg(`Email sent to ${party.name}.`); }
+    if (await post({ action: 'email', dealId: scope, subject, body, to: [{ name: party.name, email: party.email }] })) { setBody(''); setSubject(''); setMsg(`Email sent to ${party.name}.`); }
   };
   const sendText = async () => {
     if (!party) return;
-    if (await post({ action: 'send', dealId: deal.id, name: party.name, phone: party.phone, body })) { setBody(''); setMsg(`Text sent to ${party.name}.`); }
+    if (await post({ action: 'send', dealId: scope, name: party.name, phone: party.phone, body })) { setBody(''); setMsg(`Text sent to ${party.name}.`); }
   };
 
   if (!parties.length) return <div className="ds-card px-4 py-6 text-sm text-slate-600">Add the people on this deal on the People tab to message them here.</div>;
@@ -98,8 +99,8 @@ export default function MessagesPanel({ deal }: { deal: AgentDeal }) {
   const last = (p: Party) => { const l = itemsFor(p).at(-1); return l ? `${l.kind === 'sms' ? 'Text' : 'Email'} · ${stamp(l.at)}` : 'No messages yet'; };
 
   return (
-    <div className="grid gap-4 md:grid-cols-[260px_1fr]">
-      <div className="ds-card">
+    <div className={contact ? 'grid gap-4' : 'grid gap-4 md:grid-cols-[260px_1fr]'}>
+      {!contact && <div className="ds-card">
         <h2 className="border-b border-[#E6E5EC] px-4 py-3 text-[14px] font-semibold text-[#1B1726]">People On This Deal</h2>
         {parties.map((p) => (
           <button key={p.key} type="button" onClick={() => { setSel(p.key); setMsg(''); }} className={`block w-full border-b border-[#E6E5EC] px-4 py-3 text-left last:border-0 ${p.key === sel ? 'bg-[#F6F3FB]' : 'bg-white hover:bg-[#F6F3FB]'}`}>
@@ -107,7 +108,7 @@ export default function MessagesPanel({ deal }: { deal: AgentDeal }) {
             <span className="block text-[12px] font-medium text-[#7A7787]">{p.role} · {last(p)}</span>
           </button>
         ))}
-      </div>
+      </div>}
 
       <div className="ds-card">
         {party && (
@@ -167,8 +168,8 @@ export default function MessagesPanel({ deal }: { deal: AgentDeal }) {
                   <div className="space-y-3">
                     <p className="text-[13px] text-[#4A4757]">{state === 'pending' ? `Waiting for ${party.name} to reply YES.` : `${party.name} has not agreed to texts yet.`} Texts can only go to people who agreed.</p>
                     <div className="flex flex-wrap gap-2">
-                      {state === 'none' && <button type="button" className={btn} disabled={busy} onClick={() => void post({ action: 'opt_in_request', dealId: deal.id, name: party.name, phone: party.phone })}>Send Opt-In Request</button>}
-                      <button type="button" className={btn} disabled={busy} onClick={() => { if (window.confirm(`Confirm that ${party.name} agreed to receive texts about this deal?`)) void post({ action: 'confirm_agreed', dealId: deal.id, name: party.name, phone: party.phone }); }}>Confirm They Agreed</button>
+                      {state === 'none' && <button type="button" className={btn} disabled={busy} onClick={() => void post({ action: 'opt_in_request', dealId: scope, name: party.name, phone: party.phone })}>Send Opt-In Request</button>}
+                      <button type="button" className={btn} disabled={busy} onClick={() => { if (window.confirm(`Confirm that ${party.name} agreed to receive texts about this deal?`)) void post({ action: 'confirm_agreed', dealId: scope, name: party.name, phone: party.phone }); }}>Confirm They Agreed</button>
                     </div>
                   </div>
                 )

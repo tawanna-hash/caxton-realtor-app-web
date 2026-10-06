@@ -1182,6 +1182,7 @@ export default function ClosingTime({
     });
   };
   const [contactsTab, setContactsTab] = useState<'clients' | 'external'>('clients');
+  const [messagingContact, setMessagingContact] = useState<{ name: string; email: string; phone: string; role: string } | null>(null);
   const [contactsFilter, setContactsFilter] = useState<'all' | 'active' | 'past'>('all');
   const [contactsQuery, setContactsQuery] = useState('');
   const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
@@ -2701,6 +2702,16 @@ export default function ClosingTime({
                 if (Number.isNaN(days)) return '—';
                 return days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
               };
+              if (messagingContact) {
+                return (
+                  <div className="ds-page ds-compact" data-testid="contact-messages">
+                    <button type="button" className="mb-3 text-[13px] font-medium text-[#301D5D] underline underline-offset-2" onClick={() => setMessagingContact(null)}>Back To Contacts</button>
+                    <h2 className="ds-title">Messages With {messagingContact.name}</h2>
+                    <p className="ds-subtitle">Everything exchanged with this person on every deal, plus new messages. This stays open after a deal is closed and locked.</p>
+                    <MessagesPanel key={messagingContact.name} contact={messagingContact} />
+                  </div>
+                );
+              }
               return (
                 <div className="ds-page ds-compact" data-testid="contacts-page">
                   <p className="ds-eyebrow">CRM</p>
@@ -2720,9 +2731,9 @@ export default function ClosingTime({
                   </div>
                   <div className="ds-table-wrap mt-3">
                     <table className="w-full text-left text-sm">
-                      <thead><tr><th className="px-4 py-2">Name</th><th>{contactsTab === 'clients' ? 'Stage' : 'Role'}</th><th>Email</th><th>Phone</th><th>Deal</th><th className="pr-4">Last Touch</th></tr></thead>
+                      <thead><tr><th className="px-4 py-2">Name</th><th>{contactsTab === 'clients' ? 'Stage' : 'Role'}</th><th>Email</th><th>Phone</th><th>Deal</th><th>Last Touch</th><th className="pr-4"><span className="sr-only">Message</span></th></tr></thead>
                       <tbody>
-                        {list.length === 0 && <tr><td colSpan={6} className="px-4 py-6 text-sm text-slate-500">No contacts found.</td></tr>}
+                        {list.length === 0 && <tr><td colSpan={7} className="px-4 py-6 text-sm text-slate-500">No contacts found.</td></tr>}
                         {list.map((c) => {
                           const first = deals.find((d) => d.id === c.dealIds[0]);
                           return (
@@ -2734,7 +2745,8 @@ export default function ClosingTime({
                               <td>{c.email || '—'}</td>
                               <td>{c.phone || '—'}</td>
                               <td className="max-w-[220px] truncate">{first ? (first.propertyAddress || first.title) : '—'}{c.dealIds.length > 1 ? ` +${c.dealIds.length - 1}` : ''}</td>
-                              <td className="pr-4 whitespace-nowrap">{touch(c.last)}</td>
+                              <td className="whitespace-nowrap">{touch(c.last)}</td>
+                              <td className="pr-4"><button type="button" className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-1 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white" onClick={(e) => { e.stopPropagation(); setMessagingContact({ name: c.name, email: c.email, phone: c.phone, role: c.role || (c.client ? 'Client' : 'Contact') }); }}>Message</button></td>
                             </tr>
                           );
                         })}

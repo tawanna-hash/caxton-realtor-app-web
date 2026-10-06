@@ -4,7 +4,7 @@ import { requireUser } from '@/lib/server/auth/user';
 import { withErrorHandling } from '@/lib/server/error';
 import { requireDeal } from '@/lib/server/closing-time-assist';
 import { smsAllowedFor } from '@/lib/server/agent-deadline-notifications';
-import { attestDealConsent, consentFor, listDealEmails, listDealTexts, sendDealEmail, sendDealOptIn, sendDealText } from '@/lib/server/closing-time-texts';
+import { CONTACT_SCOPE, attestDealConsent, listContactMessages, consentFor, listDealEmails, listDealTexts, sendDealEmail, sendDealOptIn, sendDealText } from '@/lib/server/closing-time-texts';
 import { query } from '@/lib/server/db/neon';
 
 export const runtime = 'nodejs';
@@ -25,20 +25,29 @@ export const GET = withErrorHandling(async (req: Request): Promise<Response> => 
   const user = await requireUser();
   const url = new URL(req.url);
   const id = dealId.parse(url.searchParams.get('dealId'));
+  const phones = (url.searchParams.get('phones') ?? '').split(',').filter(Boolean);
+  const allowed = smsAllowedFor(user.email);
+  if (id === CONTACT_SCOPE) {
+    // Contacts stay open after a deal is closed and locked: this is the ongoing thread with a current or past client.
+    const who = { name: url.searchParams.get('name') ?? '', email: url.searchParams.get('email') ?? '', phone: url.searchParams.get('phone') ?? '' };
+    const m = await listContactMessages(user.realtorId, who);
+    return priv({ allowed, locked: false, texts: allowed ? m.texts : [], emails: m.emails, consent: allowed ? await consentFor(phones) : {} });
+  }
   const deal = await requireDeal(user.realtorId, id);
   const locked = deal.auditLocked === true;
   const emails = await listDealEmails(user.realtorId, id);
-  const allowed = smsAllowedFor(user.email);
   if (!allowed) return priv({ allowed: false, locked, texts: [], emails, consent: {} });
-  const phones = (url.searchParams.get('phones') ?? '').split(',').filter(Boolean);
   return priv({ allowed: true, locked, texts: await listDealTexts(user.realtorId, id), emails, consent: await consentFor(phones) });
 });
 
 export const POST = withErrorHandling(async (req: Request): Promise<Response> => {
   const user = await requireUser();
   const input = action.parse(await req.json());
-  const deal = await requireDeal(user.realtorId, input.dealId);
-  const property = (deal.propertyAddress || deal.title || 'Your deal').trim();
+  const isContact = input.dealId === CONTACT_SCOPE;
+  const deal = isContact ? null : await requireDeal(user.realtorId, input.dealId);
+  const meRow = await query<{ first_name: string | null; last_name: string | null }>(`SELECT first_name, last_name FROM realtors WHERE id=$1`, [user.realtorId]);
+  const agentLabel = [meRow[0]?.first_name, meRow[0]?.last_name].filter(Boolean).join(' ');
+  const property = isContact ? (agentLabel || 'Your agent') : (deal?.propertyAddress || deal?.title || 'Your deal').trim();
   const sender = { realtorId: user.realtorId, email: user.email };
   if (input.action === 'email') {
     const me = await query<{ first_name: string | null; last_name: string | null }>(`SELECT first_name, last_name FROM realtors WHERE id=$1`, [user.realtorId]);
