@@ -2501,19 +2501,19 @@ export default function ClosingTime({
                 const NavIcon = NAV_ICONS[view.id] ?? FileText;
                 return (
                   <li key={view.id}>
-                    <button type="button" aria-current={active ? 'page' : undefined} onClick={() => setWorkspacePage(1)} className="ds-navbtn">
+                    <button type="button" aria-current={active ? 'page' : undefined} onClick={() => setWorkspacePage(1)} className="ds-navbtn" aria-label={view.label} title={view.label}>
                       <NavIcon className="ct-navicon" aria-hidden="true" /><span>Today</span>
                     </button>
                   </li>
                 );
               })}
               <li>
-                <button type="button" aria-current={effectiveView === 'contacts' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('contacts'); }} className="ds-navbtn">
+                <button type="button" aria-current={effectiveView === 'contacts' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('contacts'); }} className="ds-navbtn" aria-label="Contacts" title="Contacts">
                   <Users className="ct-navicon" aria-hidden="true" /><span>Contacts</span>
                 </button>
               </li>
               <li>
-                <button type="button" aria-current={effectiveView === 'deals' || effectiveView === 'deal-page' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('deals'); }} className="ds-navbtn">
+                <button type="button" aria-current={effectiveView === 'deals' || effectiveView === 'deal-page' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('deals'); }} className="ds-navbtn" aria-label="Deals" title="Deals">
                   <ListTodo className="ct-navicon" aria-hidden="true" /><span>Deals</span>
                 </button>
               </li>
@@ -2524,7 +2524,7 @@ export default function ClosingTime({
             </div>
             <ul className="ds-nav-top ds-nav-closings">
               <li>
-                <button type="button" aria-current={effectiveView === 'closings' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('closings'); }} className="ds-navbtn">
+                <button type="button" aria-current={effectiveView === 'closings' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('closings'); }} className="ds-navbtn" aria-label="Closings" title="Closings">
                   <Landmark className="ct-navicon" aria-hidden="true" /><span>Closings</span>
                 </button>
               </li>
@@ -2537,6 +2537,7 @@ export default function ClosingTime({
                     aria-current={templateDeal.id === activeDealId && workspacePage === 2 && DEAL_TABS.some((t) => t.id === effectiveView) ? 'true' : undefined}
                     onClick={() => { setActiveDealId(templateDeal.id); setWorkspacePage(2); if (!DEAL_TABS.some((t) => t.id === deskView)) setDeskView('d-overview'); setFormsStatusDealId(templateDeal.id); }}
                     className="ds-deal"
+                    aria-label="Template" title="Template"
                   >
                     <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#7059A8]" aria-hidden="true" />
                     <span className="min-w-0">
@@ -2559,6 +2560,8 @@ export default function ClosingTime({
                       aria-current={selected ? 'true' : undefined}
                       onClick={() => { setActiveDealId(deal.id); setWorkspacePage(2); if (!DEAL_TABS.some((t) => t.id === deskView)) setDeskView('d-overview'); setFormsStatusDealId(deal.id); }}
                       className="ds-deal"
+                      aria-label={deal.propertyAddress || deal.title}
+                      title={deal.propertyAddress || deal.title}
                     >
                       <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${tone}`} aria-hidden="true" />
                       <span className="min-w-0">
@@ -2586,14 +2589,14 @@ export default function ClosingTime({
                 const NavIcon = NAV_ICONS[view.id] ?? FileText;
                 return (
                   <li key={view.id}>
-                    <button type="button" aria-current={active ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView(view.id); }} className="ds-navbtn">
+                    <button type="button" aria-current={active ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView(view.id); }} className="ds-navbtn" aria-label={view.label} title={view.label}>
                       <NavIcon className="ct-navicon" aria-hidden="true" /><span>{view.label}</span>
                     </button>
                   </li>
                 );
               })}
               <li>
-                <button type="button" aria-expanded={resourcesOpen || effectiveView === 'utilities' || effectiveView === 'referral'} onClick={() => setResourcesOpen((open) => !open)} className="ds-navbtn">
+                <button type="button" aria-expanded={resourcesOpen || effectiveView === 'utilities' || effectiveView === 'referral'} onClick={() => setResourcesOpen((open) => !open)} className="ds-navbtn" aria-label="Resources" title="Resources">
                   <BookOpen className="ct-navicon" aria-hidden="true" /><span>Resources</span>
                   <ChevronRight className={`ml-auto h-3.5 w-3.5 transition-transform ${resourcesOpen || effectiveView === 'utilities' || effectiveView === 'referral' ? 'rotate-90' : ''}`} aria-hidden="true" />
                 </button>
@@ -2613,7 +2616,7 @@ export default function ClosingTime({
                 )}
               </li>
               <li>
-                <button type="button" aria-current={effectiveView === 'coordinator' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('coordinator'); }} className="ds-navbtn">
+                <button type="button" aria-current={effectiveView === 'coordinator' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('coordinator'); }} className="ds-navbtn" aria-label="Settings" title="Settings">
                   <SettingsIcon className="ct-navicon" aria-hidden="true" /><span>Settings</span>
                 </button>
               </li>

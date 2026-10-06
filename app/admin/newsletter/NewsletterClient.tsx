@@ -264,6 +264,7 @@ export default function NewsletterClient() {
           )}
         </div>
         <select
+          aria-label="Filter by publication"
           value={publication}
           onChange={(e) => {
             setPublication(e.target.value as '' | PubId);
@@ -278,6 +279,7 @@ export default function NewsletterClient() {
           <option value="realtyline-dallas">RealtyLine Dallas/Ft. Worth</option>
         </select>
         <select
+          aria-label="Filter by status"
           value={status}
           onChange={(e) => {
             setStatus(e.target.value as '' | 'active' | 'unsubscribed');
@@ -290,6 +292,7 @@ export default function NewsletterClient() {
           <option value="unsubscribed">Unsubscribed</option>
         </select>
         <select
+          aria-label="Filter by verification"
           value={verified}
           onChange={(e) => {
             setVerified(e.target.value as '' | 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending' | 'unverified');

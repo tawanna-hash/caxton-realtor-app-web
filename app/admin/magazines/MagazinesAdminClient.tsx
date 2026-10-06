@@ -208,9 +208,9 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
   return (
     <div className="content-admin-shell">
       <div className="w-full">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <PageTitle size="md">Magazines</PageTitle>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={handleRealtyLineArchiveImport}

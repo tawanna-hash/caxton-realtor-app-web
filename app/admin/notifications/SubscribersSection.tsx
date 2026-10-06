@@ -270,6 +270,7 @@ export default function SubscribersSection() {
                     </td>
                     <td className="px-4 py-3">
                       <select
+                        aria-label="Market"
                         value={sub.market || ''}
                         onChange={(e) => updateMarket(sub, e.target.value as Market)}
                         disabled={!sub.active || busy === sub.id}
@@ -350,6 +351,7 @@ export default function SubscribersSection() {
                 </dl>
                 <div className="flex items-center justify-between gap-2 pt-1">
                   <select
+                    aria-label="Market"
                     value={sub.market || ''}
                     onChange={(e) => updateMarket(sub, e.target.value as Market)}
                     disabled={!sub.active || busy === sub.id}

@@ -1685,3 +1685,9 @@ input[type='date']::-webkit-calendar-picker-indicator {
   #agent-desk .ds-dealnav-group { flex-wrap: wrap; padding-right: 0.75rem; }
   #agent-desk .ds-dealnav button { white-space: nowrap; flex: none; }
 }
+
+/* Phones: list rows wrap their chip and action buttons onto a second line instead of overflowing. */
+@media (max-width: 767px) {
+  #agent-desk .ds-list-row { flex-wrap: wrap; }
+  #agent-desk .ds-list-row > .min-w-0.flex-1 { flex: 1 1 calc(100% - 2.5rem); }
+}

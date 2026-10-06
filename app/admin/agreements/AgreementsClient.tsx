@@ -422,7 +422,7 @@ export default function AgreementsClient({
             placeholder="Search partner, ad size&hellip;"
             className="h-9 min-w-[240px] flex-1 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
           />
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100">
+          <select aria-label="Filter by status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100">
             <option value="all">All statuses</option>
             {AG_STATUS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
@@ -455,7 +455,7 @@ export default function AgreementsClient({
             <div className="flex items-center gap-2">
               <label className="flex items-center gap-2">
                 Rows
-                <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                <select aria-label="Rows per page" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
                   className="h-9 rounded border border-gray-300 bg-white px-2 text-xs">
                   {[25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
                 </select>
