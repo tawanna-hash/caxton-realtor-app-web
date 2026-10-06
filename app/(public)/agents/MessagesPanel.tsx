@@ -153,17 +153,22 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
       <div className="text-[12px] font-medium text-[#7A7787]">{i.out ? (STATUS[i.status] ?? i.status) : 'Received'}{i.error ? `: ${i.error.slice(0, 120)}` : ''}</div>
     </div>
   );
+  const pillBase = 'inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-medium';
+  const namePill = (name: string, role: string, on = false) => (
+    <span className={`${pillBase} ${on ? 'border-[#301D5D] bg-[#EFEAF8] text-[#1B1726]' : 'border-[#E6E5EC] bg-white text-[#1B1726]'}`}><span className="break-words">{name}</span>{role ? <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]">{role}</span> : null}</span>
+  );
+  const roleOf = (name: string) => parties.find((p) => key(p.name) === key(name))?.role ?? '';
   const personButton = (p: Party, extra = '') => (
     <button key={p.key} type="button" onClick={() => { setSel(p.key); setMsg(''); }} className={`${extra} !text-left transition hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${p.key === sel ? '!bg-[#EFEAF8]' : '!bg-white'}`}>
-      <span className="block text-[14px] font-medium text-[#1B1726]">{p.name}</span>
-      <span className="block text-[12px] font-medium text-[#7A7787]">{p.role} · {last(p)}</span>
+      {namePill(p.name, p.role, p.key === sel)}
+      <span className="mt-1 block text-[12px] font-medium text-[#7A7787]">{last(p)}</span>
     </button>
   );
   const header = party && (
     <div className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] px-4 py-3">
       <div>
-        <div className="text-[14px] font-semibold text-[#1B1726]">{party.name}</div>
-        <div className="text-[12px] font-medium text-[#7A7787]">{[party.email, party.phone].filter(Boolean).join(' · ') || 'No email or phone on file. Add them on the People tab.'}</div>
+        <div>{namePill(party.name, party.role, true)}</div>
+        <div className="mt-1 text-[12px] font-medium text-[#7A7787]">{[party.email, party.phone].filter(Boolean).join(' · ') || 'No email or phone on file. Add them on the People tab.'}</div>
       </div>
     </div>
   );
@@ -237,9 +242,9 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
                     <div className="flex flex-wrap items-center gap-2">
                       {parties.filter((p) => p.email && p.key !== party.key).map((p) => {
                         const on = cc.some((c) => c.toLowerCase() === p.email.toLowerCase());
-                        return <button key={p.key} type="button" onClick={() => setCc((c) => on ? c.filter((x) => x.toLowerCase() !== p.email.toLowerCase()) : [...c, p.email])} className={`!rounded-lg !border text-[12px] font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name}</button>;
+                        return <button key={p.key} type="button" onClick={() => setCc((c) => on ? c.filter((x) => x.toLowerCase() !== p.email.toLowerCase()) : [...c, p.email])} className={`!rounded-full !border !px-3 !py-1 text-[12px] font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[11px] uppercase tracking-[0.06em] text-[#7A7787]">{p.role}</span></button>;
                       })}
-                      {cc.filter((c) => !parties.some((p) => p.email.toLowerCase() === c.toLowerCase())).map((c) => <button key={c} type="button" onClick={() => setCc((l) => l.filter((x) => x !== c))} className="!rounded-lg !border !border-[#301D5D] !bg-[#EFEAF8] text-[12px] font-medium !text-[#1B1726] hover:!bg-[#EFEAF8]" title="Remove">{c} ×</button>)}
+                      {cc.filter((c) => !parties.some((p) => p.email.toLowerCase() === c.toLowerCase())).map((c) => <button key={c} type="button" onClick={() => setCc((l) => l.filter((x) => x !== c))} className="!rounded-full !border !border-[#301D5D] !bg-[#EFEAF8] !px-3 !py-1 text-[12px] font-medium !text-[#1B1726] hover:!bg-[#EFEAF8]" title="Remove">{c} ×</button>)}
                       <input className="min-w-[180px] flex-1 rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] text-[#1B1726]" placeholder="Add another email" value={ccInput} onChange={(e) => setCcInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const v = ccInput.trim(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && !cc.includes(v)) { setCc((l) => [...l, v]); setCcInput(''); } } }} />
                     </div>
                     <p className="mt-1 text-[12px] font-medium text-[#7A7787]">You are always copied. Press Enter to add an email.</p>
@@ -346,7 +351,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             <div className="flex flex-wrap gap-2">
               {parties.map((p) => {
                 const on = recipKeys.includes(p.key);
-                return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r.length ? r : [sel]; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-lg !border text-[13px] font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name}</button>;
+                return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r.length ? r : [sel]; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-full !border !px-3 !py-1 text-[13px] font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[11px] uppercase tracking-[0.06em] text-[#7A7787]">{p.role}</span></button>;
               })}
             </div>
             <p className="mt-2 text-[12px] font-medium text-[#7A7787]">Each person gets their own copy. Texts go only to people who agreed to texts.</p>
@@ -370,7 +375,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
               <div className="flex gap-3 border-b border-[#F1F0F5] py-2.5 last:border-0">
                 <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#E6E5EC] text-[11px] font-semibold text-[#7059A8]">{i.kind === 'email' ? '@' : 'T'}</span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-semibold text-[#1B1726]">{i.out ? `You to ${i.who}` : i.who} <span className="text-[12px] font-medium text-[#7A7787]">{i.kind === 'email' ? 'email' : 'text'} · {stamp(i.at)} · {i.out ? (STATUS[i.status] ?? i.status) : 'Received'}</span></div>
+                  <div className="text-[13px] font-semibold text-[#1B1726]">{i.out ? 'You to ' : ''}{namePill(i.who, roleOf(i.who))} <span className="text-[12px] font-medium text-[#7A7787]">{i.kind === 'email' ? 'email' : 'text'} · {stamp(i.at)} · {i.out ? (STATUS[i.status] ?? i.status) : 'Received'}</span></div>
                   {i.kind === 'email' && <div className="text-[13px] font-medium text-[#1B1726]">{i.title}</div>}
                   <div className="whitespace-pre-wrap break-words text-[14px] text-[#4A4757]">{i.body}</div>
                 </div>
@@ -426,7 +431,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
           {visibleThreads.length === 0 && <p className="px-4 py-4 text-xs text-slate-500">{loaded ? 'No threads yet. Use New Message to start one.' : 'Loading messages.'}</p>}
           {visibleThreads.map((t) => (
             <button key={t.id} type="button" onClick={() => { setSel(t.person.key); setOpenThread(t.id); setMsg(''); }} className={`block w-full border-b border-[#E6E5EC] px-4 py-3 !text-left last:border-0 hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${openThread === t.id ? '!bg-[#EFEAF8]' : '!bg-white'}`}>
-              <span className="flex items-start justify-between gap-3"><span className="min-w-0"><span className="block break-words text-[14px] font-semibold text-[#1B1726]">{t.title}</span><span className="block break-words text-[12px] font-medium text-[#7A7787]">{t.items[t.items.length - 1].body.slice(0, 90)}</span></span><span className="shrink-0 text-right text-[12px] font-medium text-[#7A7787]"><span className="block">{t.person.name}</span><span className="block">{t.channel} · {stamp(t.at)}</span></span></span>
+              <span className="flex items-start justify-between gap-3"><span className="min-w-0"><span className="block break-words text-[14px] font-semibold text-[#1B1726]">{t.title}</span><span className="block break-words text-[12px] font-medium text-[#7A7787]">{t.items[t.items.length - 1].body.slice(0, 90)}</span></span><span className="shrink-0 text-right text-[12px] font-medium text-[#7A7787]"><span className="block">{namePill(t.person.name, t.person.role)}</span><span className="block">{t.channel} · {stamp(t.at)}</span></span></span>
             </button>
           ))}
         </div>
@@ -437,7 +442,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
               <select className={field} value={sel} onChange={(e) => setSel(e.target.value)}>{parties.map((p) => <option key={p.key} value={p.key}>{p.name} ({p.role})</option>)}</select>
             </div>
           )}
-          {current && <div className="ds-card"><div className="border-b border-[#E6E5EC] px-4 py-3"><div className="text-[14px] font-semibold text-[#1B1726]">{current.title}</div><div className="text-[12px] font-medium text-[#7A7787]">{current.person.name}</div></div>{threadBody(current.items)}</div>}
+          {current && <div className="ds-card"><div className="border-b border-[#E6E5EC] px-4 py-3"><div className="text-[14px] font-semibold text-[#1B1726]">{current.title}</div><div className="mt-1">{namePill(current.person.name, current.person.role)}</div></div>{threadBody(current.items)}</div>}
           {!current && openThread !== 'new' && <div className="ds-card px-4 py-6 text-[13px] text-[#4A4757]">Open a thread to read it and reply, or start a new message.</div>}
           {(current || openThread === 'new') && composerCard}
         </div>
