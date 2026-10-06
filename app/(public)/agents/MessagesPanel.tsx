@@ -45,7 +45,8 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [tick, setTick] = useState(0);
-  const [layoutSaved, setLayoutSaved] = useState<MessageLayout | null>(null);
+  const [layoutSaved, setLayoutSaved] = useState<MessageLayout | null>(() => { try { const v = typeof window !== 'undefined' ? window.localStorage.getItem('ct-msg-layout') : null; return (v as MessageLayout | null) || null; } catch { return null; } });
+  const layoutFrozen = useRef(false);
   const [layoutChoice, setLayoutChoice] = useState<MessageLayout | null>(null);
   const [changing, setChanging] = useState(false);
   const [recips, setRecips] = useState<string[]>([]);
@@ -75,7 +76,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
     let live = true;
     const run = () => fetch(`/api/closing-time/texts?dealId=${encodeURIComponent(scope)}&phones=${encodeURIComponent(phonesParam)}${contact ? `&name=${encodeURIComponent(contact.name)}&email=${encodeURIComponent(contact.email)}&phone=${encodeURIComponent(contact.phone)}` : ''}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((b) => { if (live && b) { setAllowed(b.allowed); setLocked(b.locked === true); setMailbox(b.mailbox ?? null); setLayoutSaved((b.mailbox?.layout as MessageLayout | null) ?? null); setActivity(b.activity ?? []); setTexts(b.texts ?? []); setEmails(b.emails ?? []); setConsent(b.consent ?? {}); setLoaded(true); } })
+      .then((b) => { if (live && b) { setAllowed(b.allowed); setLocked(b.locked === true); setMailbox(b.mailbox ?? null); if (!layoutFrozen.current) { layoutFrozen.current = true; const sv = (b.mailbox?.layout as MessageLayout | null) ?? null; if (sv) { setLayoutSaved(sv); try { window.localStorage.setItem('ct-msg-layout', sv); } catch { /* ignore */ } } } setActivity(b.activity ?? []); setTexts(b.texts ?? []); setEmails(b.emails ?? []); setConsent(b.consent ?? {}); setLoaded(true); } })
       .catch(() => undefined);
     run();
     const t = setInterval(run, 20000);
@@ -138,7 +139,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
     if (sent.length) { setBody(''); setAsks([]); setAskOther(''); setAskOpen(false); setMsg(`Text sent to ${sent.join(', ')}.${skipped.length ? ` Skipped ${skipped.join(', ')}: no agreement to texts yet.` : ''}`); }
     else if (skipped.length) setMsg(`${skipped.join(', ')} has not agreed to texts yet.`);
   };
-  const saveLayout = async (v: MessageLayout) => { setLayoutChoice(v); setChanging(false); await post({ action: 'message_layout', value: v }); };
+  const saveLayout = async (v: MessageLayout) => { try { window.localStorage.setItem('ct-msg-layout', v); } catch { /* ignore */ } layoutFrozen.current = true; setLayoutChoice(v); setChanging(false); await post({ action: 'message_layout', value: v }); };
 
   if (!parties.length) return <div className="ds-card px-4 py-6 text-sm text-slate-600">Add the people on this deal on the People tab to message them here.</div>;
   const items = party ? itemsFor(party) : [];
