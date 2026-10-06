@@ -1652,3 +1652,12 @@ input[type='date']::-webkit-calendar-picker-indicator {
   background: #301D5D; color: #fff; font: 500 12px/1.4 Inter, system-ui, sans-serif;
   padding: 8px 10px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .12s ease;
 }
+
+/* Phones: keep Closing Time usable without zooming or sideways scrolling. */
+@media (max-width: 640px) {
+  #agent-desk input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  #agent-desk textarea,
+  #agent-desk select { font-size: 16px; }
+  #agent-desk { overflow-wrap: anywhere; }
+  #agent-desk table { font-size: 13px; }
+}

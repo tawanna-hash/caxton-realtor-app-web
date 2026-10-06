@@ -255,8 +255,8 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
                     <Tip text="You are always copied. Press Enter to add an email." />
                   </div>
                   <label className="block"><span className={lab}>Subject</span>
-                    <div className="flex items-center overflow-hidden rounded-lg border border-[#E6E5EC] bg-white">
-                      {!contact && <span className="shrink-0 border-r border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-[13px] font-medium text-[#4A4757]">{(deal?.propertyAddress || deal?.title || '').trim()} -</span>}
+                    <div className="flex flex-col overflow-hidden rounded-lg border border-[#E6E5EC] bg-white sm:flex-row sm:items-center">
+                      {!contact && <span className="shrink-0 border-b border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-[13px] font-medium text-[#4A4757] sm:border-b-0 sm:border-r">{(deal?.propertyAddress || deal?.title || '').trim()} -</span>}
                       <input className="min-w-0 flex-1 px-3 py-2 text-[14px] text-[#1B1726] outline-none" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={150} />
                     </div>
                   </label>
@@ -264,7 +264,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             <SpellHelper text={body} onChange={setBody} ignore={spellIgnore} />
             {requestUI}
             {attachUI}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <Tip text={`Goes to ${party.email}. You are copied and replies go to your email. The subject starts with the property address.`} />
               <span className="flex gap-2"><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !body} onClick={clearAll}>Clear</button>
               <button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !targets.length || !subject.trim() || !body.trim()} onClick={() => void sendEmail()}>Send Email</button></span>
@@ -281,7 +281,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             <label className="block"><span className={lab}>Text</span><textarea className={field} rows={3} maxLength={900} value={body} onChange={(e) => setBody(e.target.value)} /></label>
             <SpellHelper text={body} onChange={setBody} ignore={spellIgnore} />
             {requestUI}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <Tip text={`Sent to ${party.phone}. The property address and a STOP line are added.`} />
               <span className="flex gap-2"><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !body} onClick={clearAll}>Clear</button><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !targets.length || !body.trim()} onClick={() => void sendText()}>Send Text</button></span>
             </div>
