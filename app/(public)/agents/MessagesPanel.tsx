@@ -5,7 +5,7 @@ import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 
 type Text = { id: string; personName: string; phone: string; direction: 'outbound' | 'inbound'; body: string; status: string; error: string | null; createdAt: string };
 type Email = { direction?: 'outbound' | 'inbound'; id: string; personName: string; toEmail: string; subject: string; body: string; status: string; error: string | null; createdAt: string };
-type Mailbox = { connected: string | null; readReplies: boolean; lastChecked: string | null; lastError: string | null };
+type Mailbox = { watching?: number; connected: string | null; readReplies: boolean; lastChecked: string | null; lastError: string | null };
 type Consent = 'opted_in' | 'pending' | 'opted_out' | 'none';
 type Party = { key: string; name: string; role: string; email: string; phone: string };
 type Item = { id: string; at: string; kind: 'email' | 'sms'; out: boolean; title: string; body: string; status: string; error: string | null };
@@ -149,6 +149,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
                       {mailbox.readReplies && (
                         <div className="mt-1 flex flex-wrap items-center gap-3 pl-6">
                           <span>{mailbox.lastChecked ? `Last checked ${stamp(mailbox.lastChecked)}` : 'Not checked yet'}</span>
+                          <span>{mailbox.watching ? `Watching ${mailbox.watching} email ${mailbox.watching === 1 ? 'address' : 'addresses'} from your deals` : 'No email addresses on your deals yet, so there is nothing to look for'}</span>
                           <button type="button" className="underline underline-offset-2 hover:text-[#301D5D]" disabled={busy} onClick={() => void post({ action: 'mailbox_check' })}>Check Now</button>
                           {mailbox.lastError && <span className="text-[#9A3D2B]">{mailbox.lastError}</span>}
                         </div>

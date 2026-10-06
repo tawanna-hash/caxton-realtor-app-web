@@ -19,14 +19,15 @@ function ensure(): Promise<void> {
   return ready;
 }
 
-export type MailboxState = { connected: string | null; readReplies: boolean; lastChecked: string | null; lastError: string | null };
+export type MailboxState = { watching: number; connected: string | null; readReplies: boolean; lastChecked: string | null; lastError: string | null };
 
 export async function mailboxState(realtorId: string): Promise<MailboxState> {
   await ensure();
   const acct = await accountFor(realtorId, MAIL_SLUGS);
   const rows = await query<{ read_replies: boolean; last_checked: Date | string | null; last_error: string | null }>(`SELECT read_replies, last_checked, last_error FROM closing_time_mailbox WHERE realtor_id=$1`, [realtorId]);
   const r = rows[0];
-  return { connected: acct ? (acct.appSlug === 'gmail' ? 'Gmail' : 'Outlook') : null, readReplies: r?.read_replies ?? false, lastChecked: r?.last_checked ? new Date(r.last_checked).toISOString() : null, lastError: r?.last_error ?? null };
+  const watching = r?.read_replies ? (await addressBook(realtorId).catch(() => new Map())).size : 0;
+  return { watching, connected: acct ? (acct.appSlug === 'gmail' ? 'Gmail' : 'Outlook') : null, readReplies: r?.read_replies ?? false, lastChecked: r?.last_checked ? new Date(r.last_checked).toISOString() : null, lastError: r?.last_error ?? null };
 }
 
 export async function setReadReplies(realtorId: string, on: boolean): Promise<void> {
