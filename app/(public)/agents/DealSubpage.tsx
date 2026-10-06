@@ -1,5 +1,6 @@
 'use client';
 
+import { dealPeople } from '@/lib/closing-time-people';
 import { blankFieldAlerts } from '@/lib/blank-field-alerts';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AlertCircle, Check, Phone, Sparkles, ChevronLeft, ChevronRight, Clock, FileText, MoreHorizontal, Mail, MessageSquare, Plus, Trash2, UserRound, X } from 'lucide-react';
@@ -228,6 +229,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 
   const clients = [deal.buyerNames, deal.sellerNames].filter(Boolean);
   const people = deal.clientContacts;
+  const derived = dealPeople(deal).filter((p) => p.fromContract && !deal.clientContacts.some((c) => c.name.trim().toLowerCase() === p.name.trim().toLowerCase()));
   const docById = new Map(deal.documents.map((d) => [d.id, d]));
   const prefs = deal.preferences;
   const setPref = (key: keyof AgentDeal['preferences'], value: string) => onUpdate('preferences', { ...prefs, [key]: value });
@@ -982,9 +984,14 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   </form>
                 )}
                 <div className="ds-card ds-list mt-3">
-                  {people.length === 0 && clients.length === 0 && <p className="text-sm text-slate-500">No people added yet.</p>}
-                  {people.length === 0 && deal.buyerNames && <div className="ds-list-row"><UserRound className="h-4 w-4 text-slate-400" aria-hidden="true" /><span className="flex-1">{deal.buyerNames}</span><span className="text-xs text-slate-500">Buyer</span></div>}
-                  {people.length === 0 && deal.sellerNames && <div className="ds-list-row"><UserRound className="h-4 w-4 text-slate-400" aria-hidden="true" /><span className="flex-1">{deal.sellerNames}</span><span className="text-xs text-slate-500">Seller</span></div>}
+                  {people.length === 0 && derived.length === 0 && <p className="text-sm text-slate-500">No people added yet.</p>}
+                  {derived.map((p) => (
+                    <div key={`c-${p.role}-${p.name}`} className="ds-list-row">
+                      <UserRound className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                      <span className="min-w-0 flex-1"><span className="block font-medium text-slate-900">{p.name}</span><span className="block truncate text-xs text-slate-500">{[p.role, p.company && p.company !== p.name ? p.company : '', p.email, p.phone].filter(Boolean).join(' · ')}</span></span>
+                      <span className="text-xs text-slate-400">From Contract</span>
+                    </div>
+                  ))}
                   {people.map((person) => (
                     <div key={person.id} className="ds-list-row">
                       <UserRound className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
