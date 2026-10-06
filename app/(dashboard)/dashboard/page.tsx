@@ -1854,8 +1854,8 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
     <article ref={ref} className="bg-[#f9fafb] border-b border-[#e5e7eb]">
       <div className="px-4 py-5">
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-9 h-9 rounded-full bg-white border border-[#fb923c] flex items-center justify-center">
-            <span className="text-xs font-medium text-[#fb923c]">{initials}</span>
+          <div className="w-9 h-9 rounded-full bg-white border border-[#7059A8] flex items-center justify-center">
+            <span className="text-xs font-medium text-[#7059A8]">{initials}</span>
           </div>
           <span className="text-sm uppercase tracking-[0.2em] font-semibold text-[#42277C]">Sponsored</span>
           <span className="flex-1" />

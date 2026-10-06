@@ -74,7 +74,7 @@ export default function ProviderApplicationForm() {
     return (
       <main id="agent-desk" className="min-h-screen bg-white px-5 py-14 sm:px-8">
         <div className="mx-auto max-w-2xl border border-[#D8D0C2] bg-white p-8 shadow-[0_18px_45px_rgba(40,25,77,0.08)] sm:p-12">
-          <CheckCircle2 className="rnn-heading-icon text-[#5B824D]" aria-hidden="true" />
+          <CheckCircle2 className="rnn-heading-icon text-[#005A00]" aria-hidden="true" />
           <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Application received</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">You&apos;re in the Review Queue.</h1>
           <p className="mt-5 text-base leading-7 text-slate-600">Thank you for sharing your company details. The Realty News Now team will review your application and contact you using the information provided.</p>

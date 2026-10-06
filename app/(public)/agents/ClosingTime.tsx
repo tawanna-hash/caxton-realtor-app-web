@@ -409,7 +409,7 @@ function ReadinessChecklist({
         {description ? <p className="mt-1 text-xs leading-5 text-slate-600">{description}</p> : null}
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {hasFile ? (
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-[#EAF6EC] px-2 py-1 text-xs font-bold text-[#1F7A3D]">
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-[#E0FBE0] px-2 py-1 text-xs font-bold text-[#005A00]">
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
               {document.fileName || 'File Attached'}
             </span>
@@ -492,7 +492,7 @@ function ReadinessChecklist({
       </div>
 
       {documentUploadError ? (
-        <p className="mt-4 flex items-center gap-2 rounded-md border border-[#E0A9A0] bg-[#FBEFEC] px-3 py-2 text-xs font-semibold text-[#661102]">
+        <p className="mt-4 flex items-center gap-2 rounded-md border border-[#FF2A04] bg-[#FFEAE6] px-3 py-2 text-xs font-semibold text-[#661102]">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           {documentUploadError}
         </p>
@@ -521,13 +521,13 @@ function ReadinessChecklist({
           <ul className="mt-3 space-y-2">
             {reviewAlerts.slice(0, 4).map((alert) => (
               <li key={alert} className="flex gap-2 text-sm leading-5 text-slate-600">
-                <AlertTriangle className="rnn-inline-icon text-[#B6402C]" aria-hidden="true" />
+                <AlertTriangle className="rnn-inline-icon text-[#661102]" aria-hidden="true" />
                 {alert}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="mt-2 flex items-center gap-2 text-sm text-[#38643A]">
+          <p className="mt-2 flex items-center gap-2 text-sm text-[#005A00]">
             <CheckCircle2 className="rnn-inline-icon" aria-hidden="true" />
             No worksheet alerts for your active deals.
           </p>
@@ -2454,7 +2454,7 @@ export default function ClosingTime({
                                 <button type="button" disabled={reviewState.status === 'sending' || !brokerFooter.brokerEmail.trim()} className="ds-review-btn" onClick={() => void submitForBrokerReview()}>
                                   {reviewState.status === 'sending' ? 'Sending...' : 'Send To Broker'}
                                 </button>
-                                {reviewState.message && <p role="status" className={`text-xs ${reviewState.status === 'error' ? 'text-[#661102]' : 'text-[#1F7A3D]'}`}>{reviewState.message}</p>}
+                                {reviewState.message && <p role="status" className={`text-xs ${reviewState.status === 'error' ? 'text-[#661102]' : 'text-[#005A00]'}`}>{reviewState.message}</p>}
                               </div>
                             </div>
                           )}
@@ -3210,7 +3210,7 @@ export default function ClosingTime({
         <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
             ['Agent deals', activeDealCount, ClipboardCheck, 'bg-[#F8F5FF] text-[#301D5D]'],
-            ['Closing in 30 days', closingSoonCount, CalendarDays, 'bg-[#FFF9E7] text-[#855D10]'],
+            ['Closing in 30 days', closingSoonCount, CalendarDays, 'bg-[#FEF8CC] text-[#645600]'],
             ['Review alerts', reviewAlerts.length, AlertTriangle, 'bg-[#FFEAE6] text-[#661102]'],
             ['Overdue tasks', overdueTaskCount, ListTodo, 'bg-[#F2EEE7] text-[#4C3B67]'],
           ].map(([label, value, Icon, tone]) => {
@@ -3303,7 +3303,7 @@ export default function ClosingTime({
                         </span>
                       )}
                       {deal.reminders.length > 0 && (
-                        <span className="inline-flex rounded-md bg-[#FFF9E7] px-2 py-1 text-xs font-bold text-[#855D10]">
+                        <span className="inline-flex rounded-md bg-[#FEF8CC] px-2 py-1 text-xs font-bold text-[#645600]">
                           {openReminders} open / {doneReminders} done reminders
                         </span>
                       )}
@@ -3385,7 +3385,7 @@ export default function ClosingTime({
                           const openCount = deal.reminders.filter((reminder) => !reminder.complete).length;
                           const doneCount = deal.reminders.length - openCount;
                           return (
-                            <span className="inline-flex rounded-md bg-[#FFF9E7] px-2 py-1 text-xs font-bold text-[#855D10]">
+                            <span className="inline-flex rounded-md bg-[#FEF8CC] px-2 py-1 text-xs font-bold text-[#645600]">
                               {openCount} open / {doneCount} done
                             </span>
                           );
@@ -3546,8 +3546,8 @@ export default function ClosingTime({
               </div>
               <div className="mt-5 space-y-2">
                 {!activeDeal.tasks.length && !activeDeal.reminders.length ? <p className="border border-dashed border-slate-300 bg-[#FCFBF9] p-4 text-sm text-slate-600">Use deadline presets (7d, 3d, 1d, due) in the review step or add a custom action here.</p> : <>
-                  {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border border-[#E7C769] bg-[#FFF9E7] p-3"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#A97A1A] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}>{reminder.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#855D10]">{formatDate(reminder.reminderDate)}</span></div>)}
-                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-[#FFEAE6] text-[#661102]' : task.priority === 'high' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-slate-100 text-slate-600'} capitalize`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#B6402C]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#661102]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
+                  {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border border-[#FAD800] bg-[#FEF8CC] p-3"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#645600] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}>{reminder.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#645600]">{formatDate(reminder.reminderDate)}</span></div>)}
+                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-[#FFEAE6] text-[#661102]' : task.priority === 'high' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-slate-100 text-slate-600'} capitalize`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#661102]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#661102]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
                 </>}
               </div>
             </div>
@@ -3610,7 +3610,7 @@ export default function ClosingTime({
               </p>
             )}
             {Boolean(activeDeal.closeoutOutcome) && !isDealFullyComplete(activeDeal) && (
-              <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#9A6B1A]">
+              <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#645600]">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 Outcome set to {activeDeal.closeoutOutcome}, but this deal stays in Deals In Progress and unlocked until every task, reminder, and readiness document is marked complete.
               </p>
@@ -3620,7 +3620,7 @@ export default function ClosingTime({
               <input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" />
               <input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" placeholder="Closeout note" />
             </div>
-            <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#E7C769] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
+            <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#FAD800] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
           </section>
           </>
         )}

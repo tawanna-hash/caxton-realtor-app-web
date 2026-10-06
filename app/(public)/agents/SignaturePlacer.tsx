@@ -5,7 +5,7 @@ import SignPdfPages from '@/components/SignPdfPages';
 import Tip from './Tip';
 
 export type PlacedField = { signer: number; type: 'signature' | 'date'; page: number; x: number; y: number; w: number; h: number };
-const COLORS = ['#301D5D', '#661102', '#1B6B5C', '#8A5A00', '#2F5DA8', '#7A2F7A'];
+const COLORS = ['#301D5D', '#661102', '#005A00', '#645600', '#5B3FA0', '#5B3FA0'];
 const SIZE = { signature: { w: 0.3, h: 0.055 }, date: { w: 0.18, h: 0.03 } };
 
 export default function SignaturePlacer({ data, signers, fields, onChange, onClose }: { data: Uint8Array; signers: string[]; fields: PlacedField[]; onChange: (f: PlacedField[]) => void; onClose: () => void }) {

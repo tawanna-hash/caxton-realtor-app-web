@@ -23,7 +23,7 @@ function formatDate(value: string): string {
 }
 
 function deadlineTone(deadline: TrecDeadline): string {
-  if (deadline.category === 'money') return 'border-[#E7C769] bg-[#FFF9E7]';
+  if (deadline.category === 'money') return 'border-[#FAD800] bg-[#FEF8CC]';
   if (deadline.category === 'option') return 'border-[#CFC4E8] bg-[#F8F5FF]';
   return 'border-slate-200 bg-white';
 }

@@ -393,8 +393,8 @@ function PitiBar({ piti }: { piti: PitiBreakdown }) {
   const segs = [
     { key: 'pi', label: 'P&I', value: piti.principalAndInterest, color: '#301D5D' },
     { key: 'tax', label: 'Tax', value: piti.propertyTax, color: '#42277C' },
-    { key: 'ins', label: 'Ins', value: piti.insurance, color: '#fdba74' },
-    { key: 'pmi', label: 'PMI', value: piti.pmi, color: '#fb923c' },
+    { key: 'ins', label: 'Ins', value: piti.insurance, color: '#7059A8' },
+    { key: 'pmi', label: 'PMI', value: piti.pmi, color: '#7059A8' },
     { key: 'hoa', label: 'HOA', value: piti.hoa, color: '#9ca3af' },
   ].filter((s) => s.value > 0);
   return (
@@ -689,7 +689,7 @@ function StatCard({
   return (
     <div
       className={`rounded-md border p-5 ${
-        accent ? 'border-[#fb923c]/40 bg-[#fb923c]/5' : 'border-gray-200 bg-white'
+        accent ? 'border-[#7059A8]/40 bg-[#7059A8]/5' : 'border-gray-200 bg-white'
       }`}
     >
       <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</p>

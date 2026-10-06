@@ -75,7 +75,7 @@ export default function BrokeragesAdminPage() {
             {b.members.map((m) => (
               <li key={m.realtorId} className="flex items-center justify-between border border-slate-100 px-2 py-1">
                 <span>{m.name || m.email} · {m.email} · {m.role}</span>
-                <button type="button" className="text-xs font-bold text-[#9A3D2B] underline" onClick={() => void post({ action: 'remove_member', brokerageId: b.id, realtorId: m.realtorId })}>Remove</button>
+                <button type="button" className="text-xs font-bold text-[#661102] underline" onClick={() => void post({ action: 'remove_member', brokerageId: b.id, realtorId: m.realtorId })}>Remove</button>
               </li>
             ))}
           </ul>

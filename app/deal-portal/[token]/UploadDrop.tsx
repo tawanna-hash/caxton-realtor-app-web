@@ -46,7 +46,7 @@ export default function UploadDrop({ token }: { token: string }) {
             {items.map((item, i) => (
               <li key={`${item.name}-${i}`} className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] py-2 text-[14px] last:border-0">
                 <span className="min-w-0 truncate font-medium text-[#1B1726]">{item.name}</span>
-                <span className="shrink-0 text-[12px] font-medium" style={{ color: item.state === 'error' ? '#9A3D2B' : '#301D5D' }}>
+                <span className="shrink-0 text-[12px] font-medium" style={{ color: item.state === 'error' ? '#661102' : '#301D5D' }}>
                   {item.state === 'busy' ? 'Uploading' : item.state === 'done' ? 'Sent To Your Agent' : item.message}
                 </span>
               </li>

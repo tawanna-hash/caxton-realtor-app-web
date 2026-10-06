@@ -27,7 +27,7 @@ function DrawPad({ onDone, onCancel }: { onDone: (png: string) => void; onCancel
   return (
     <div>
       <canvas ref={ref} width={600} height={200} className="w-full touch-none rounded-md border border-slate-300 bg-white" aria-label="Draw your signature"
-        onPointerDown={(e) => { drawing.current = true; e.currentTarget.setPointerCapture(e.pointerId); const c = e.currentTarget.getContext('2d'); if (!c) return; const p = pos(e); c.lineWidth = 3; c.lineCap = 'round'; c.strokeStyle = '#0d1a59'; c.beginPath(); c.moveTo(p.x, p.y); }}
+        onPointerDown={(e) => { drawing.current = true; e.currentTarget.setPointerCapture(e.pointerId); const c = e.currentTarget.getContext('2d'); if (!c) return; const p = pos(e); c.lineWidth = 3; c.lineCap = 'round'; c.strokeStyle = '#301D5D'; c.beginPath(); c.moveTo(p.x, p.y); }}
         onPointerMove={(e) => { if (!drawing.current) return; const c = e.currentTarget.getContext('2d'); if (!c) return; const p = pos(e); c.lineTo(p.x, p.y); c.stroke(); setDirty(true); }}
         onPointerUp={() => { drawing.current = false; }} />
       <div className="mt-3 flex flex-wrap gap-2">
@@ -139,14 +139,14 @@ export default function SignClient({ token }: { token: string }) {
           const m = marks[f.id];
           return (
             <button key={f.id} type="button" style={style} disabled={!consent} onClick={() => { setEditing(f.id); setMode(view.methods.type ? 'type' : view.methods.draw ? 'draw' : 'upload'); }}
-              className={`absolute flex items-center justify-center overflow-hidden border-2 text-xs font-bold ${m ? 'border-[#005A00] bg-white' : 'border-[#9A3D2B] bg-[#FFF5F2] text-[#9A3D2B] animate-pulse'} disabled:animate-none disabled:opacity-60`} aria-label="Signature box">
-              {m ? (m.kind !== 'typed' ? <SigImg src={m.value} /> : <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(12px,3.2vw,22px)', color: '#0d1a59' }}>{m.value}</span>) : 'Sign here'}
+              className={`absolute flex items-center justify-center overflow-hidden border-2 text-xs font-bold ${m ? 'border-[#005A00] bg-white' : 'border-[#661102] bg-[#FFF5F2] text-[#661102] animate-pulse'} disabled:animate-none disabled:opacity-60`} aria-label="Signature box">
+              {m ? (m.kind !== 'typed' ? <SigImg src={m.value} /> : <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(12px,3.2vw,22px)', color: '#301D5D' }}>{m.value}</span>) : 'Sign here'}
             </button>
           );
         })} />
       </div>
 
-      {error && <p className="mt-3 text-sm font-semibold text-[#9A3D2B]" role="alert">{error}</p>}
+      {error && <p className="mt-3 text-sm font-semibold text-[#661102]" role="alert">{error}</p>}
       {!consent && <p className="mt-3 text-sm text-slate-600">Check the box above to start signing.</p>}
 
       <div className="sticky bottom-0 mt-6 flex flex-wrap items-center gap-3 border-t border-slate-200 bg-white/95 py-3">
@@ -167,7 +167,7 @@ export default function SignClient({ token }: { token: string }) {
             {mode === 'upload' && view.methods.upload ? (
               <div className="mt-4">
                 <input type="file" accept="image/png,image/jpeg" aria-label="Signature image" className="block text-sm" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; setUpErr(''); fitImage(file, (png) => apply({ kind: 'uploaded', value: png }), () => setUpErr('That image could not be used. Try a smaller PNG or JPG.')); }} />
-                {upErr && <p className="mt-2 text-sm text-[#9A3D2B]" role="alert">{upErr}</p>}
+                {upErr && <p className="mt-2 text-sm text-[#661102]" role="alert">{upErr}</p>}
                 <button type="button" className={`${btn} mt-3 border border-slate-300 text-slate-700`} onClick={() => setEditing(null)}>Cancel</button>
               </div>
             ) : (mode === 'draw' && view.methods.draw) || (!view.methods.type && view.methods.draw) ? (
@@ -175,7 +175,7 @@ export default function SignClient({ token }: { token: string }) {
             ) : (
               <div className="mt-4">
                 <input value={typed} onChange={(e) => setTyped(e.target.value)} maxLength={80} aria-label="Type your full name" className="min-h-[44px] w-full rounded-md border border-slate-300 px-3" />
-                <p className="mt-3 rounded-md border border-slate-200 p-4 text-center text-3xl text-[#0d1a59]" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>{typed || ' '}</p>
+                <p className="mt-3 rounded-md border border-slate-200 p-4 text-center text-3xl text-[#301D5D]" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>{typed || ' '}</p>
                 <div className="mt-3 flex gap-2"><button type="button" className={`${btn} border border-slate-300 text-slate-700`} onClick={() => setEditing(null)}>Cancel</button><button type="button" disabled={typed.trim().length < 2} className={`${btn} bg-[#301D5D] text-white`} onClick={() => apply({ kind: 'typed', value: typed.trim() })}>Use This Signature</button></div>
               </div>
             )}
@@ -189,7 +189,7 @@ export default function SignClient({ token }: { token: string }) {
             <h2 className="text-lg font-semibold text-slate-950">Decline to sign</h2>
             <p className="mt-2 text-sm text-slate-600">This stops the request for everyone. You can tell the sender why (optional).</p>
             <textarea value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} rows={3} className="mt-3 w-full rounded-md border border-slate-300 p-2 text-sm" aria-label="Reason" />
-            <div className="mt-3 flex gap-2"><button type="button" className={`${btn} border border-slate-300 text-slate-700`} onClick={() => setDeclining(false)}>Go Back</button><button type="button" disabled={busy} className={`${btn} bg-[#9A3D2B] text-white`} onClick={async () => { const r = await post({ action: 'decline', reason }); if (r) { setDeclining(false); setDone('declined'); } }}>Decline</button></div>
+            <div className="mt-3 flex gap-2"><button type="button" className={`${btn} border border-slate-300 text-slate-700`} onClick={() => setDeclining(false)}>Go Back</button><button type="button" disabled={busy} className={`${btn} bg-[#661102] text-white`} onClick={async () => { const r = await post({ action: 'decline', reason }); if (r) { setDeclining(false); setDone('declined'); } }}>Decline</button></div>
           </div>
         </div>
       )}

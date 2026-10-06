@@ -207,7 +207,7 @@ ${brand.tagline}`;
   <h1 style="font-size: 28px; font-weight: 600; color: #301D5D; margin: 0 0 24px 0; line-height: 1.2;">Congratulations &mdash; you won!</h1>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Hi ${esc(input.firstName)},</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Your name was randomly drawn from the <strong>${esc(input.giveawayTitle)}</strong>, and you've been selected to receive:</p>
-  <p style="font-size: 22px; font-weight: 600; color: #301D5D; padding: 20px; background: #f9fafb; border-left: 4px solid #fb923c; margin: 24px 0;">${esc(prizeHtml)}</p>
+  <p style="font-size: 22px; font-weight: 600; color: #301D5D; padding: 20px; background: #f9fafb; border-left: 4px solid #7059A8; margin: 24px 0;">${esc(prizeHtml)}</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">We'll be in touch within the next few business days to coordinate getting your prize to you. Watch for an email or call from the ${esc(brand.name)} team.</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Thanks for being part of the ${esc(brand.name)} community.</p>
   <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -415,7 +415,7 @@ ${brand.tagline}`;
   <h1 style="font-size: 26px; font-weight: 600; color: #301D5D; margin: 0 0 24px 0; line-height: 1.2;">Winners announced</h1>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Hi ${esc(input.firstName)},</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Thank you for entering the <strong>${esc(input.giveawayTitle)}</strong>. The drawing is complete and the winners of the ${esc(input.prize)} have been selected:</p>
-  <p style="font-size: 18px; font-weight: 600; color: #301D5D; padding: 16px 20px; background: #f9fafb; border-left: 4px solid #fb923c; margin: 24px 0;">${esc(names)}</p>
+  <p style="font-size: 18px; font-weight: 600; color: #301D5D; padding: 16px 20px; background: #f9fafb; border-left: 4px solid #7059A8; margin: 24px 0;">${esc(names)}</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Winners have been notified by email. We have more giveaways coming, so keep an eye on your inbox and the ${esc(brand.name)} app.</p>
   <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">${esc(brand.name)}<br/><span style="font-style: italic;">${esc(brand.tagline)}</span></p>
 </body>
@@ -456,7 +456,7 @@ ${brand.tagline}`.trim();
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Hi ${esc(input.firstName)},</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">This is a correction to the winner email you received earlier. It listed the prize incorrectly and came from the wrong sender name.</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">The correct details: you are one of the winners of the <strong>${esc(input.giveawayTitle)}</strong>, and you will receive:</p>
-  <p style="font-size: 22px; font-weight: 600; color: #301D5D; padding: 20px; background: #f9fafb; border-left: 4px solid #fb923c; margin: 24px 0;">${esc(prizeShort.charAt(0).toUpperCase() + prizeShort.slice(1))}</p>
+  <p style="font-size: 22px; font-weight: 600; color: #301D5D; padding: 20px; background: #f9fafb; border-left: 4px solid #7059A8; margin: 24px 0;">${esc(prizeShort.charAt(0).toUpperCase() + prizeShort.slice(1))}</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;"><strong>Please reply to this email with a valid mobile number so we can make contact.</strong></p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">We apologize for the confusion.</p>
   <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">${esc(brand.name)}</p>

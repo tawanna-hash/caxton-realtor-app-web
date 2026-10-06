@@ -60,9 +60,9 @@ interface MarketingPerformance {
 }
 
 const CHANNELS: Array<{ id: Channel; label: string; color: string; hint: string }> = [
-  { id: 'organic', label: 'Organic', color: '#2F7D6D', hint: 'Search, referral & AI assistants' },
-  { id: 'paid',    label: 'Paid',    color: '#3A5FA8', hint: 'Paid search, paid social, display' },
-  { id: 'social',  label: 'Social',  color: '#C0762B', hint: 'Organic social' },
+  { id: 'organic', label: 'Organic', color: '#005A00', hint: 'Search, referral & AI assistants' },
+  { id: 'paid',    label: 'Paid',    color: '#5B3FA0', hint: 'Paid search, paid social, display' },
+  { id: 'social',  label: 'Social',  color: '#7059A8', hint: 'Organic social' },
   { id: 'email',   label: 'Email',   color: '#8C4F9E', hint: 'Campaign email clicks & sends' },
   { id: 'direct',  label: 'Direct',  color: '#6B7280', hint: 'Direct / unattributed' },
 ];
@@ -488,8 +488,8 @@ export default function MarketingPerformancePage() {
                 right={<Seg label="Pipeline stages" value={funnelView} onChange={setFunnelView} options={[{ v: 'lower', l: 'MQL → Conv.' }, { v: 'upper', l: 'Impr. → Sessions' }]} />}>
                 <Lines fmt={fmtInt}
                   series={funnelView === 'lower'
-                    ? [{ key: 'mqls', label: 'MQLs', color: BRAND }, { key: 'sqls', label: 'SQLs', color: '#3A5FA8' }, { key: 'conversions', label: 'Conversions', color: '#C0762B' }]
-                    : [{ key: 'impressions', label: 'Impressions', color: BRAND }, { key: 'sessions', label: 'Sessions', color: '#3A5FA8' }]}
+                    ? [{ key: 'mqls', label: 'MQLs', color: BRAND }, { key: 'sqls', label: 'SQLs', color: '#5B3FA0' }, { key: 'conversions', label: 'Conversions', color: '#7059A8' }]
+                    : [{ key: 'impressions', label: 'Impressions', color: BRAND }, { key: 'sessions', label: 'Sessions', color: '#5B3FA0' }]}
                   data={view.perMonth(view.sel).map((t, i) => ({ label: monthLabel(view.monthsSel[i]), ...t }))} />
               </Card>
             </div>

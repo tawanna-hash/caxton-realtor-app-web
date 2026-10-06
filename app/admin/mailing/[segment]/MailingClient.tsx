@@ -990,7 +990,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               onClick={() => { setTagFilter('Loan Officer'); setOffset(0); }}
               label="Loan Officer"
               count={tagFilter === 'Loan Officer' ? total : 0}
-              accent="#d97706"
+              accent="#645600"
             />
             <FilterChip
               active={tagFilter === 'Business Development'}
@@ -1640,7 +1640,7 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
         } else if (t === 'Loan Officer') {
           label = 'Loan Officer';
           bg = '#FEF8CC';
-          fg = '#d97706';
+          fg = '#645600';
         } else if (t === 'Business Development') {
           label = 'Business Development';
           bg = '#e2e8f0';
@@ -2372,7 +2372,7 @@ const TAG_STYLES: Record<string, { bg: string; fg: string; label?: string }> = {
   'non-advertiser':       { bg: '#FFF3E0', fg: '#301D5D', label: 'Non-Advertiser' },
   'manual':               { bg: '#ede9fe', fg: '#301D5D', label: 'Manual' },
   'REALTOR':              { bg: '#E0FBE0', fg: '#005A00' },
-  'Loan Officer':         { bg: '#FEF8CC', fg: '#d97706' },
+  'Loan Officer':         { bg: '#FEF8CC', fg: '#645600' },
   'Business Development': { bg: '#e2e8f0', fg: '#475569' },
 };
 

@@ -48,7 +48,7 @@ function Row({ token, req }: { token: string; req: Req }) {
         </div>
       </div>
       {names.length > 0 && <div className="mt-1 text-[12px] font-medium text-[#7A7787]">Sent to your agent: {names.join(', ')}</div>}
-      {error && <div role="alert" className="mt-1 text-[12px] font-medium text-[#9A3D2B]">{error}</div>}
+      {error && <div role="alert" className="mt-1 text-[12px] font-medium text-[#661102]">{error}</div>}
     </li>
   );
 }

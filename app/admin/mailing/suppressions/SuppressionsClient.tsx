@@ -42,7 +42,7 @@ const REASON_LABEL: Record<string, string> = {
 const REASON_COLOR: Record<string, string> = {
   admin_delete: '#661102',
   admin_bulk_delete: '#661102',
-  holding_reject: '#d97706',
+  holding_reject: '#645600',
   manual: '#475569',
 };
 

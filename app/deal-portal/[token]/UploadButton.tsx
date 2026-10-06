@@ -24,7 +24,7 @@ export default function UploadButton({ token, docId, label = 'Upload' }: { token
         {state === 'busy' ? 'Uploading' : label}
         <input type="file" accept="application/pdf,image/*" className="sr-only" disabled={state === 'busy'} onChange={(e) => void onPick(e.target.files?.[0])} />
       </label>
-      {error && <span className="text-xs text-[#9A3D2B]" role="alert">{error}</span>}
+      {error && <span className="text-xs text-[#661102]" role="alert">{error}</span>}
     </span>
   );
 }

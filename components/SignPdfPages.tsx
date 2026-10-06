@@ -59,7 +59,7 @@ export default function SignPdfPages({ url, data, width, overlay, onPageClick }:
     })();
     return () => { live = false; };
   }, [url, data]);
-  if (error) return <p className="text-sm text-[#9A3D2B]" role="alert">{error}</p>;
+  if (error) return <p className="text-sm text-[#661102]" role="alert">{error}</p>;
   if (!doc) return <p className="text-sm text-slate-500">Loading document.</p>;
   return (
     <div>

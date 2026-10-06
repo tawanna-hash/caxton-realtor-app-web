@@ -218,7 +218,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
                   <label
                     key={template.id}
                     className={`cursor-pointer rounded px-3 py-1.5 text-xs font-bold transition ${
-                      selected ? 'bg-white text-[#153f83] shadow-sm' : 'bg-[#087fb3] text-white hover:bg-[#0876a6]'
+                      selected ? 'bg-white text-[#5B3FA0] shadow-sm' : 'bg-[#087fb3] text-white hover:bg-[#0876a6]'
                     }`}
                   >
                     <input
@@ -311,7 +311,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Live PDF canvas</p>
                 <p className="mt-1 text-sm text-gray-600">Changes appear here instantly.</p>
               </div>
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#153f83] shadow-sm">
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#5B3FA0] shadow-sm">
                 {FOOTER_TEMPLATE_META[form.footer_template].label}
               </span>
             </div>

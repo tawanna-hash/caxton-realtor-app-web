@@ -344,7 +344,7 @@ function FieldGroup({ title, children }: { title: string; children: React.ReactN
 
 function RatioTile({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className={`rounded-md border px-3 py-2 ${accent ? 'border-[#fb923c]/40 bg-[#fb923c]/5' : 'border-gray-200 bg-gray-50'}`}>
+    <div className={`rounded-md border px-3 py-2 ${accent ? 'border-[#7059A8]/40 bg-[#7059A8]/5' : 'border-gray-200 bg-gray-50'}`}>
       <p className="text-[10px] uppercase tracking-wider text-gray-500">{label}</p>
       <p
         className="text-lg text-gray-900"
