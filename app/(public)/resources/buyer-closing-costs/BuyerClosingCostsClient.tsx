@@ -5,7 +5,7 @@
 // Buyer-side closing-cost estimator. Mirrors CD page-2 sections A/B/C/E/F
 // plus credits, and surfaces the all-in cash-to-close number.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
 import {
   computeBuyerClosing,
@@ -162,6 +162,23 @@ export default function BuyerClosingCostsClient({ onSaveToDeal, dealLabel }: { o
     filename: `buyer-closing-${closingDate}`,
   });
 
+  // Opened from a deal: file the estimate automatically a few seconds after the numbers change.
+  const reportKey = onSaveToDeal ? JSON.stringify((({ meta: _meta, ...rest }) => rest)(buildReport())) : '';
+  const firstKey = useRef<string | null>(null);
+  const saveRef = useRef(onSaveToDeal);
+  saveRef.current = onSaveToDeal;
+  useEffect(() => {
+    if (!onSaveToDeal) return;
+    if (firstKey.current === null) { firstKey.current = reportKey; return; }
+    if (reportKey === firstKey.current) return;
+    const timer = setTimeout(async () => {
+      setSaveState('saving');
+      try { await saveRef.current?.(await createCalcReportFile(buildReport())); setSaveState('saved'); } catch { setSaveState('error'); }
+    }, 3000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportKey]);
+
   return (
     <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
       <header className="mb-10 print:mb-4">
@@ -178,10 +195,10 @@ export default function BuyerClosingCostsClient({ onSaveToDeal, dealLabel }: { o
               }}
               className="h-9 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D] disabled:opacity-60"
             >
-              {saveState === 'saving' ? 'Saving…' : 'Save To Deal Documents'}
+              {saveState === 'saving' ? 'Saving…' : 'Save Now'}
             </button>
             <span className="text-[13px] text-[#7A7787]" role="status">
-              {saveState === 'saved' ? `Saved to ${dealLabel ?? 'the deal'} documents. Save again to replace it.` : saveState === 'error' ? 'Could not save. Try again in a moment.' : `Files this estimate in ${dealLabel ?? 'the deal'} documents.`}
+              {saveState === 'saved' ? `Saved to ${dealLabel ?? 'the deal'} documents. Changes save automatically.` : saveState === 'error' ? 'Could not save. Try again in a moment.' : `Saves to ${dealLabel ?? 'the deal'} documents automatically when you change a number.`}
             </span>
           </div>
         )}

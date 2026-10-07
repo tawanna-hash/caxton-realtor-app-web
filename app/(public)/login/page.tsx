@@ -67,17 +67,20 @@ function LoginInner() {
     }
   }
 
+  const [onClosingTimeHost, setOnClosingTimeHost] = useState(false);
+  useEffect(() => { setOnClosingTimeHost(/(^|\.)itsalmostclosingtime\.com$/i.test(window.location.hostname)); }, []);
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
         <p className="text-sm uppercase tracking-[0.2em] text-brand-700 font-medium mb-2 text-center">
-          Realty News Now
+          {onClosingTimeHost ? 'It\u2019s Almost Closing Time!' : 'Realty News Now'}
         </p>
         <h1 className="text-2xl font-semibold text-gray-900 text-center mb-2">
           Sign in or Create an Account
         </h1>
         <p className="text-sm text-gray-500 font-light text-center mb-6">
-          Sign in to access your market feed.
+          {onClosingTimeHost ? 'Sign in to your deal workspace.' : 'Sign in to access your market feed.'}
         </p>
 
         <form onSubmit={submit} className="space-y-3">
