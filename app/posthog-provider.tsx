@@ -13,6 +13,12 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (initialized) return;
     if (typeof window === "undefined") return;
+    // Start analytics after the page is interactive so its scripts (recorder, surveys) do not block first load.
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let idleId: number | undefined;
+    const boot = () => {
+    if (initialized) return;
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
     if (!key) {
@@ -82,6 +88,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener('storage', (e) => {
       if (e.key === 'caxton_pub') registerActivePublication();
     });
+    posthog.capture('$pageview', { $current_url: window.location.href });
+    };
+    if (w.requestIdleCallback) idleId = w.requestIdleCallback(boot, { timeout: 4000 });
+    else timer = setTimeout(boot, 2500);
+    return () => { if (timer) clearTimeout(timer); if (idleId !== undefined && w.cancelIdleCallback) w.cancelIdleCallback(idleId); };
   }, []);
 
   useEffect(() => {

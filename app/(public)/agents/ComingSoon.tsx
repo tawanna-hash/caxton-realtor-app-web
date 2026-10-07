@@ -29,7 +29,7 @@ export default function ComingSoon() {
 
       <main>
         <section className="mx-auto max-w-5xl px-6 py-16">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7A7787]">For Texas Real Estate Agents</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#5F5B6E]">For Texas Real Estate Agents</p>
           <h1 className="mt-3 max-w-2xl font-serif text-4xl leading-tight text-[#301D5D]">Every Deadline, Form And Signature, From Contract To Closing</h1>
           <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-[#4A4757]">
             Closing Time is a deal workspace for Texas real estate agents. It tracks contract deadlines, organizes forms and documents, collects signatures, schedules closings and keeps clients, lenders and title companies on the same page.
@@ -64,7 +64,7 @@ export default function ComingSoon() {
           <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2 text-[13px]">
             {LINKS.map(([label, href]) => <a key={href} href={href} className="text-[#301D5D] underline">{label}</a>)}
           </nav>
-          <p className="mt-4 text-[13px] text-[#7A7787]">
+          <p className="mt-4 text-[13px] text-[#5F5B6E]">
             Closing Time is operated by Caxton Publications, Inc., Austin, Texas. Contact: <a className="underline" href="mailto:tawanna@itsalmostclosingtime.com">tawanna@itsalmostclosingtime.com</a>. Closing Time is not affiliated with the Texas Real Estate Commission or Texas REALTORS and does not provide legal advice.
           </p>
         </div>
