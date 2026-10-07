@@ -1793,3 +1793,8 @@ input::placeholder, textarea::placeholder { color: var(--astro-text-placeholder)
 
 /* Back-to-top sits above the Help button instead of covering it. */
 body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 16px; }
+
+@media (max-width: 640px) {
+  body:has(.ct-help-btn) button[aria-label="Back to top"] { width: 36px !important; height: 36px !important; bottom: 64px; right: 8px; opacity: 0.85; }
+  body:has(.ct-help-btn) button[aria-label="Back to top"] svg { width: 16px; height: 16px; }
+}
