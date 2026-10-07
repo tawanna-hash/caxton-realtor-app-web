@@ -3259,6 +3259,7 @@ export default function ClosingTime({
                 <div className="ds-page">
                   <DealSubpage
                     key={`${deal?.id ?? 'none'}-${effectiveView}`}
+                    readiness={deal ? readinessCounts(deal) : undefined}
                     section={effectiveView === 'd-documents' ? 'documents' : effectiveView === 'd-people' ? 'people' : 'overview'}
                     deal={deal ?? undefined}
                     today={today}
