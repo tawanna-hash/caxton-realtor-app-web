@@ -1720,3 +1720,11 @@ table:not([role='presentation']) tbody tr:hover > td { background: #F6F3FB; }
 /* Astro icon sizes: 16px small, 20px default, 24px large. Smaller line icons step up to 16px. */
 svg:is(.h-3, .h-3\.5):not([class*='h-2']) { height: 16px; }
 svg:is(.w-3, .w-3\.5):not([class*='w-2']) { width: 16px; }
+
+/* On/off switches: keep the track and knob shape regardless of the global button style. */
+button[role='switch'] { min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 9999px !important; background: #D9D7E0 !important; box-shadow: none !important; }
+button[role='switch'][aria-checked='true'] { background: #301D5D !important; }
+button[role='switch']:hover { background: #C9C5D6 !important; }
+button[role='switch'][aria-checked='true']:hover { background: #42277C !important; }
+button[role='switch'] > span { background: #fff !important; border-radius: 9999px !important; }
+button[role='switch']:focus-visible { outline: 2px solid #5B3FA0; outline-offset: 2px; }
