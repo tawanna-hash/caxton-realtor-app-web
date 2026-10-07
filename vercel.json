@@ -211,6 +211,10 @@
     {
       "path": "/api/cron/mailchimp-utm",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/closing-time-backups",
+      "schedule": "0 9 1 * *"
     }
   ]
 }
