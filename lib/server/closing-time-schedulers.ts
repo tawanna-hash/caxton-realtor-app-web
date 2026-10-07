@@ -22,7 +22,7 @@ export async function agentOf(realtorId: string): Promise<{ name: string; email:
  * create the event on the chosen booking calendar, and drive reminder and follow-up emails.
  */
 
-export const RESERVED = new Set(['manage', 's', 'api', 'admin']);
+export const RESERVED = new Set(['manage', 's', 'api', 'admin', 'all']);
 
 let ready: Promise<void> | null = null;
 function ensure(): Promise<void> {
@@ -274,6 +274,7 @@ export async function resolveBooking(slug: string, alias: string): Promise<Resol
   const list = (title: string, items: SchedRow[]): Resolved => ({ kind: 'list', title, slug: link[0].slug, agentName: merge(items[0]?.config).yourName, items: items.map((s) => ({ href: href(s), name: merge(s.config).name, lengths: merge(s.config).lengths, welcome: merge(s.config).welcome })) });
   const hit = all.find((s) => s.alias === alias);
   if (hit) return { kind: 'scheduler', scheduler: await toPublic(hit, link[0].slug) };
+  if (alias === 'all') return all.length ? list('All Meeting Types', all) : { kind: 'none' };
   if (alias) {
     const combo = await query<{ title: string; scheduler_ids: string[] }>(`SELECT title, scheduler_ids FROM closing_time_scheduler_combos WHERE realtor_id=$1 AND deal_id=$2 AND alias=$3`, [realtor_id, deal_id, alias]);
     if (!combo[0]) return null;
