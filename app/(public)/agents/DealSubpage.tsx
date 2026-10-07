@@ -500,8 +500,8 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
             {open.length > 0 && (
               <ul className="mt-3 divide-y divide-[#E6E5EC]">
                 {open.map((a) => (
-                  <li key={a.id} className="flex items-center justify-between gap-3 py-2">
-                    <span className="min-w-0 text-sm text-slate-900"><span className="block truncate font-medium">{a.label}</span><span className="block text-xs text-slate-500">{a.blank} Of {a.total} Blank</span></span>
+                  <li key={a.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2">
+                    <span className="min-w-0 flex-1 basis-40 text-sm text-slate-900"><span className="block break-words font-medium">{a.label}</span><span className="block text-xs text-slate-500">{a.blank} Of {a.total} Blank</span></span>
                     <span className="flex shrink-0 gap-2">
                       <button type="button" onClick={() => onOpenView(a.view)}>Review</button>
                       <button type="button" onClick={() => onUpdate('ignoredBlankAlerts', [...ignoredIds, a.id])}>Ignore</button>

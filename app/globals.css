@@ -1785,7 +1785,7 @@ input::placeholder, textarea::placeholder { color: var(--astro-text-placeholder)
 
 /* Contract page on phones: 16px inputs stop iOS zoom, 44px touch targets, no sideways scroll. */
 @media (max-width: 640px) {
-  #agent-desk [data-testid="contract-page"] input, #agent-desk [data-testid="contract-page"] textarea { font-size: 16px !important; }
+  #agent-desk [data-testid="contract-page"] input:not(.cf-label), #agent-desk [data-testid="contract-page"] textarea { font-size: 16px !important; }
   #agent-desk [data-testid="contract-page"] [role="tab"] { min-height: 44px; }
   #agent-desk [data-testid="contract-page"] summary button, #agent-desk [data-testid="contract-page"] section button { min-height: 40px; }
   #agent-desk [data-testid="contract-page"] { overflow-x: hidden; }
