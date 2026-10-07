@@ -524,12 +524,6 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           </div>
         );
       })()}
-      {effectiveAgentSide(deal) !== 'listing' && !deal.documentChecks['pd-buyer-rep-agreement'] && (
-        <div className="ds-card">
-          <p className="text-sm font-semibold text-slate-900">Representation Agreement Needed</p>
-          <p className="mt-1 text-sm text-slate-600">Texas requires a signed written agreement with the buyer before touring a residential property or making an offer. Mark it received on the Documents page once it is signed.</p>
-        </div>
-      )}
       <div className="ds-card">
         <p className="text-sm font-semibold text-slate-900">Key Deadlines</p>
         <Tip text="Enter the signed contract's effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules." />

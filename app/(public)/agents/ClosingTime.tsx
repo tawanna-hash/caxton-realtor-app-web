@@ -2269,7 +2269,6 @@ export default function ClosingTime({
     <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <label className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
         <span className="block text-sm font-bold text-slate-900">Signed Contract / Effective Date</span>
-        <span className="mt-1 block text-xs leading-5 text-slate-500 sm:min-h-[84px]">TREC rule: use the contract&apos;s effective date after final acceptance. This is day zero; deadline counting begins on the following calendar day.</span>
         <input
           type="date"
           value={activeDeal.effectiveDate}
@@ -2291,7 +2290,6 @@ export default function ClosingTime({
       {CALCULATED_TIMELINE_FIELDS.map(({ key, deadlineId, label, rule }) => (
         <label key={key} className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
           <span className="block text-sm font-bold text-slate-900">{label}</span>
-          <span className="mt-1 block text-xs leading-5 text-slate-500 sm:min-h-[84px]">TREC rule: {rule}</span>
           <input
             type="date"
             value={activeDeadlines.find((deadline) => deadline.id === deadlineId)?.date ?? ''}
@@ -2303,7 +2301,6 @@ export default function ClosingTime({
       ))}
       <label className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
         <span className="block text-sm font-bold text-slate-900">Closing Date</span>
-        <span className="mt-1 block text-xs leading-5 text-slate-500 sm:min-h-[84px]">TREC rule: use the negotiated closing date stated in Paragraph 9; TREC does not supply a default number of days.</span>
         <input
           type="date"
           value={activeDeal.closingDate}
