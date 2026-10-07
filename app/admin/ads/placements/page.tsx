@@ -56,7 +56,7 @@ function PlacementRow({ slot }: { slot: AppAdSlot }) {
       : '/wk';
 
   return (
-    <article className="grid min-w-[980px] grid-cols-[210px_minmax(220px,1fr)_150px_190px_170px] border-b border-gray-200 last:border-b-0 hover:bg-[#f5f6f9]/30">
+    <article className="grid min-w-[980px] grid-cols-[210px_minmax(220px,1fr)_150px_190px_170px] border-b border-gray-200 last:border-b-0 hover:bg-[#F6F3FB]/30">
       <div className="h-36 border-r border-gray-200 bg-gray-50 p-3">
         {hasWireframe(slot.slug) ? (
           <PlacementWireframe slug={slot.slug} />
@@ -95,7 +95,7 @@ function PlacementRow({ slot }: { slot: AppAdSlot }) {
           <Link
             href={`/advertise/checkout/${slot.slug}?pub=realtyline`}
             target="_blank"
-            className="inline-flex items-center gap-1 font-medium text-[#1c3f5e] hover:underline"
+            className="inline-flex items-center gap-1 font-medium text-[#42277C] hover:underline"
           >
             Open checkout <ExternalLink className="h-3 w-3" aria-hidden="true" />
           </Link>

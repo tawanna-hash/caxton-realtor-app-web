@@ -81,21 +81,21 @@ export default async function MailingHubPage() {
       label: 'ABOR Members',
       href: '/admin/mailing/holding',
       caption: 'Austin Board of REALTORS — staging & review queue.',
-      accent: '#51555b',
+      accent: '#4A4757',
       initial: 'A',
     },
     {
       label: 'App Subscribers — RealtyLine Austin',
       href: '/admin/subscribers?market=austin',
       caption: 'RealtyLine Austin email signups from realtynewsnow.app.',
-      accent: '#005a8f',
+      accent: '#301D5D',
       initial: 'A',
     },
     {
       label: 'Manual Subscribe',
       href: '/subscribe',
       caption: 'Add a RealtyLine Austin subscriber by hand (public form).',
-      accent: '#005a8f',
+      accent: '#301D5D',
       initial: 'M',
     },
   ];
@@ -105,21 +105,21 @@ export default async function MailingHubPage() {
       label: 'SABOR Members',
       href: '/admin/mailing/sabor-members',
       caption: 'San Antonio Board of REALTORS mirror.',
-      accent: '#005a8f',
+      accent: '#301D5D',
       initial: 'S',
     },
     {
       label: 'App Subscribers — Newsline San Antonio',
       href: '/admin/subscribers?market=san_antonio',
       caption: 'Newsline San Antonio email signups from realtynewsnow.app.',
-      accent: '#005a8f',
+      accent: '#301D5D',
       initial: 'N',
     },
     {
       label: 'Manual Subscribe',
       href: '/subscribe',
       caption: 'Add a Newsline San Antonio subscriber by hand (public form).',
-      accent: '#005a8f',
+      accent: '#301D5D',
       initial: 'M',
     },
   ];
@@ -129,7 +129,7 @@ export default async function MailingHubPage() {
       label: 'App Subscribers — RealtyLine Houston',
       href: '/admin/subscribers?market=houston',
       caption: 'Houston app and email subscribers.',
-      accent: '#005a8f',
+      accent: '#301D5D',
       initial: 'H',
     },
   ];
@@ -139,7 +139,7 @@ export default async function MailingHubPage() {
       label: 'App Subscribers — RealtyLine Dallas/Ft. Worth',
       href: '/admin/subscribers?market=dallas',
       caption: 'Dallas/Ft. Worth app and email subscribers.',
-      accent: '#005a8f',
+      accent: '#301D5D',
       initial: 'D',
     },
   ];
@@ -176,11 +176,11 @@ export default async function MailingHubPage() {
           </Link>
           <Link
             href="/admin/mailing/publication/newsline"
-            className="group/dl inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[#1c3f5e] text-[#1c3f5e] text-xs font-semibold hover:bg-[#1c3f5e] hover:text-white transition"
+            className="group/dl inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[#42277C] text-[#42277C] text-xs font-semibold hover:bg-[#42277C] hover:text-white transition"
           >
             <span>Newsline (San Antonio)</span>
             <span
-              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#1c3f5e]/10 text-[#1c3f5e] group-hover/dl:bg-white/20 group-hover/dl:text-white"
+              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#42277C]/10 text-[#42277C] group-hover/dl:bg-white/20 group-hover/dl:text-white"
               title={`${newslineCount.toLocaleString()} unique deliverable emails`}
             >
               {newslineCount.toLocaleString()}
@@ -233,11 +233,11 @@ export default async function MailingHubPage() {
       {/* KPI strip */}
       <div className="mailing-summary-strip grid grid-cols-2 lg:grid-cols-6">
         <KpiCard label="Segments total"      value={counts.total}                       sub="all mailing segments" />
-        <KpiCard label="RealtyLine ATX Print" value={counts['realtyline-atx-print']}    sub="partners + REALTORS" accent="#005a8f" />
-        <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="partners + non-partners + manual" accent="#1c3f5e" />
-        <KpiCard label="ABOR Members"        value={sources.aborMembers}                sub="UnlockMLS holding"   accent="#51555b" />
-        <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#005a8f" />
-        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="email signups"  accent="#005a8f" />
+        <KpiCard label="RealtyLine ATX Print" value={counts['realtyline-atx-print']}    sub="partners + REALTORS" accent="#301D5D" />
+        <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="partners + non-partners + manual" accent="#42277C" />
+        <KpiCard label="ABOR Members"        value={sources.aborMembers}                sub="UnlockMLS holding"   accent="#4A4757" />
+        <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#301D5D" />
+        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="email signups"  accent="#301D5D" />
       </div>
 
       {/* Segment tiles — split by publication */}
@@ -257,7 +257,7 @@ export default async function MailingHubPage() {
             <Link
               key={s.slug}
               href={`/admin/mailing/${s.slug}`}
-              className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-[#98bdd3] hover:bg-[#f5f6f9]/30"
+              className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-[#B9ADD6] hover:bg-[#F6F3FB]/30"
             >
               <div className="flex items-start justify-between mb-3">
                 <div
@@ -275,7 +275,7 @@ export default async function MailingHubPage() {
               </div>
               <div className="text-sm font-semibold text-gray-900">{s.label}</div>
               <p className="mt-1 text-xs leading-5 text-gray-600">{s.caption}</p>
-              <div className="mt-2 text-xs font-medium text-[#1c3f5e]">
+              <div className="mt-2 text-xs font-medium text-[#42277C]">
                 Open list
               </div>
             </Link>
@@ -331,7 +331,7 @@ export default async function MailingHubPage() {
           <Link
             key={t.href}
             href={t.href}
-            className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-[#98bdd3] hover:bg-[#f5f6f9]/30"
+            className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-[#B9ADD6] hover:bg-[#F6F3FB]/30"
           >
             <div className="flex items-start justify-between mb-3">
               <div
@@ -343,7 +343,7 @@ export default async function MailingHubPage() {
             </div>
             <div className="text-sm font-semibold text-gray-900">{t.label}</div>
             <p className="mt-1 text-xs leading-5 text-gray-600">{t.caption}</p>
-            <div className="mt-2 text-xs font-medium text-[#1c3f5e]">
+            <div className="mt-2 text-xs font-medium text-[#42277C]">
               Open page
             </div>
           </Link>
@@ -407,7 +407,7 @@ function KpiCard({
     <div className="rounded-md border border-gray-200 bg-white p-4">
       <div
         className="h-7 w-7 rounded-md mb-3"
-        style={{ backgroundColor: accent ? `${accent}15` : '#f5f6f9' }}
+        style={{ backgroundColor: accent ? `${accent}15` : '#F6F3FB' }}
       />
       <div className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
       <div className="mt-1">

@@ -104,7 +104,7 @@ function rowHtml({ agreement: ag, bucket, daysUntil, expDate }: DigestRow, siteU
     badgeColor = '#661102';
   } else if (bucket === 'heads_up_45') {
     badgeText = '45 days out';
-    badgeColor = '#005a8f';
+    badgeColor = '#301D5D';
   } else if (daysUntil === 0) {
     badgeText = 'Expires today';
     badgeColor = '#661102';
@@ -113,25 +113,25 @@ function rowHtml({ agreement: ag, bucket, daysUntil, expDate }: DigestRow, siteU
     badgeColor = '#661102';
   } else {
     badgeText = `${daysUntil} days left`;
-    badgeColor = '#005a8f';
+    badgeColor = '#301D5D';
   }
 
   return `
     <tr>
-      <td style="padding:12px 16px;border-bottom:1px solid #d4d8dd;vertical-align:top">
-        <div style="font-weight:600;color:#292a2d;font-size:15px">${company}</div>
-        ${rep ? `<div style="color:#51555b;font-size:13px;margin-top:2px">${rep}${email ? ` &middot; ${escapeHtml(email)}` : ''}</div>` : email ? `<div style="color:#51555b;font-size:13px;margin-top:2px">${escapeHtml(email)}</div>` : ''}
+      <td style="padding:12px 16px;border-bottom:1px solid #E6E5EC;vertical-align:top">
+        <div style="font-weight:600;color:#1B1726;font-size:15px">${company}</div>
+        ${rep ? `<div style="color:#4A4757;font-size:13px;margin-top:2px">${rep}${email ? ` &middot; ${escapeHtml(email)}` : ''}</div>` : email ? `<div style="color:#4A4757;font-size:13px;margin-top:2px">${escapeHtml(email)}</div>` : ''}
       </td>
-      <td style="padding:12px 16px;border-bottom:1px solid #d4d8dd;vertical-align:top;color:#292a2d;font-size:13px">
+      <td style="padding:12px 16px;border-bottom:1px solid #E6E5EC;vertical-align:top;color:#1B1726;font-size:13px">
         <div>${adSize}</div>
-        <div style="color:#51555b;margin-top:2px">${freq} &middot; ${rate}</div>
+        <div style="color:#4A4757;margin-top:2px">${freq} &middot; ${rate}</div>
       </td>
-      <td style="padding:12px 16px;border-bottom:1px solid #d4d8dd;vertical-align:top;color:#292a2d;font-size:13px">
+      <td style="padding:12px 16px;border-bottom:1px solid #E6E5EC;vertical-align:top;color:#1B1726;font-size:13px">
         <div>${escapeHtml(humanDate(expDate))}</div>
         <div style="color:${badgeColor};font-weight:600;margin-top:2px">${badgeText}</div>
       </td>
-      <td style="padding:12px 16px;border-bottom:1px solid #d4d8dd;vertical-align:top">
-        <a href="${link}" style="display:inline-block;padding:8px 14px;background:#292a2d;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;font-weight:500">Open in admin</a>
+      <td style="padding:12px 16px;border-bottom:1px solid #E6E5EC;vertical-align:top">
+        <a href="${link}" style="display:inline-block;padding:8px 14px;background:#1B1726;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;font-weight:500">Open in admin</a>
       </td>
     </tr>`;
 }
@@ -142,19 +142,19 @@ function sectionHtml(title: string, subtitle: string, rows: DigestRow[], siteUrl
   return `
     <tr>
       <td style="padding:20px 24px 8px 24px">
-        <div style="font-size:14px;font-weight:600;color:#292a2d">${title}</div>
-        <div style="font-size:12px;color:#51555b;margin-top:2px">${subtitle}</div>
+        <div style="font-size:14px;font-weight:600;color:#1B1726">${title}</div>
+        <div style="font-size:12px;color:#4A4757;margin-top:2px">${subtitle}</div>
       </td>
     </tr>
     <tr>
       <td>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse">
           <thead>
-            <tr style="background:#f5f6f9">
-              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#51555b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #d4d8dd">Advertiser</th>
-              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#51555b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #d4d8dd">Ad</th>
-              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#51555b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #d4d8dd">Expires</th>
-              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#51555b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #d4d8dd"></th>
+            <tr style="background:#F6F3FB">
+              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#4A4757;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #E6E5EC">Advertiser</th>
+              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#4A4757;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #E6E5EC">Ad</th>
+              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#4A4757;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #E6E5EC">Expires</th>
+              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#4A4757;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #E6E5EC"></th>
             </tr>
           </thead>
           <tbody>${body}</tbody>
@@ -180,19 +180,19 @@ function renderEmailHtml(
 
   return `<!doctype html>
 <html>
-<body style="margin:0;padding:24px;background:#f5f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="max-width:720px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #d4d8dd">
+<body style="margin:0;padding:24px;background:#F6F3FB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="max-width:720px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #E6E5EC">
     <tr>
-      <td style="padding:20px 24px;background:#292a2d;color:#fff">
+      <td style="padding:20px 24px;background:#1B1726;color:#fff">
         <div style="font-size:18px;font-weight:600">Agreement lifecycle digest</div>
-        <div style="font-size:13px;color:#7b8089;margin-top:4px">${total} agreement${total === 1 ? '' : 's'} need attention &middot; ${headerSub}</div>
+        <div style="font-size:13px;color:#7A7787;margin-top:4px">${total} agreement${total === 1 ? '' : 's'} need attention &middot; ${headerSub}</div>
       </td>
     </tr>
     ${sectionHtml('Just expired', 'Status flipped to expired this morning. Decide whether to renew or release the slot.', expired, siteUrl)}
     ${sectionHtml('Final 30 days', 'Daily countdown until expiration. Reach out now to lock in a renewal.', countdown, siteUrl)}
     ${sectionHtml('45-day heads-up', 'Renewal window opens here. First contact for renewal goes out around now.', headsUp, siteUrl)}
     <tr>
-      <td style="padding:16px 24px;background:#f5f6f9;color:#51555b;font-size:12px;text-align:center">
+      <td style="padding:16px 24px;background:#F6F3FB;color:#4A4757;font-size:12px;text-align:center">
         Sent by /api/cron/agreement-lifecycle &middot; ${escapeHtml(siteUrl)}
       </td>
     </tr>

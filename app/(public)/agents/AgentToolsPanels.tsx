@@ -51,7 +51,7 @@ const QUICK_TOOLS = [
     description: 'Build a clean Texas closing estimate before the conversation turns into numbers.',
     icon: Landmark,
     tone: 'bg-white text-slate-900 border-slate-200',
-    iconTone: 'bg-[#daeeff] text-[#005a8f]',
+    iconTone: 'bg-[#EFEAF8] text-[#301D5D]',
   },
   {
     href: '/resources/commission-calculator',
@@ -60,7 +60,7 @@ const QUICK_TOOLS = [
     description: 'Model sides, splits, flat fees, and referrals before you write.',
     icon: Calculator,
     tone: 'bg-white text-slate-900 border-slate-200',
-    iconTone: 'bg-[#daeeff] text-[#005a8f]',
+    iconTone: 'bg-[#EFEAF8] text-[#301D5D]',
   },
   {
     href: '/resources/buyer-closing-costs',
@@ -69,7 +69,7 @@ const QUICK_TOOLS = [
     description: 'Set expectations with an easy buyer closing-cost breakdown.',
     icon: Home,
     tone: 'bg-white text-slate-900 border-slate-200',
-    iconTone: 'bg-[#daeeff] text-[#005a8f]',
+    iconTone: 'bg-[#EFEAF8] text-[#301D5D]',
   },
 ] as const;
 
@@ -100,7 +100,7 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
               <p className="ds-subtitle">Client-ready tools, one click away.</p>
             </div>
             {!onOpenTool && (
-              <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#005a8f] hover:text-[#1c3f5e]">
+              <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#42277C]">
                 See Every Agent Tool
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
@@ -117,7 +117,7 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
                     key={tool.href}
                     type="button"
                     onClick={() => { trackEvent('agent_command_center_tool_opened', { tool: tool.title }); onOpenTool(deskView); }}
-                    className={`ds-tool-row group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition hover:bg-[#f5f6f9] sm:p-4 ${tool.tone}`}
+                    className={`ds-tool-row group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition hover:bg-[#F6F3FB] sm:p-4 ${tool.tone}`}
                   >
                     <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tool.iconTone}`}>
                       <Icon className="h-5 w-5" aria-hidden="true" />
@@ -138,7 +138,7 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
                   key={tool.href}
                   href={tool.href}
                   onClick={() => trackEvent('agent_command_center_tool_opened', { tool: tool.title })}
-                  className={`group rounded-xl border p-4 transition hover:bg-[#f5f6f9] md:min-h-[200px] ${tool.tone}`}
+                  className={`group rounded-xl border p-4 transition hover:bg-[#F6F3FB] md:min-h-[200px] ${tool.tone}`}
                 >
                   <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${tool.iconTone}`}>
                     <Icon className="h-5 w-5" aria-hidden="true" />
@@ -209,7 +209,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
                 </div>
                 <Link
                   href="/partners"
-                  className="inline-flex h-[42px] shrink-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 transition hover:bg-[#f5f6f9]"
+                  className="inline-flex h-[42px] shrink-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 transition hover:bg-[#F6F3FB]"
                 >
                   All Partners <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
@@ -228,8 +228,8 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
                       }}
                       className={`h-[36px] rounded-full border px-4 text-sm font-medium transition ${
                         selected
-                          ? 'border-[#005a8f] bg-[#005a8f] text-white'
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-[#005a8f] hover:text-[#005a8f]'
+                          ? 'border-[#301D5D] bg-[#301D5D] text-white'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-[#301D5D] hover:text-[#301D5D]'
                       }`}
                     >
                       {category.label}
@@ -244,23 +244,23 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
                     <Link
                       href={`/partners/${provider.slug}`}
                       key={provider.id}
-                      className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:bg-[#f5f6f9]"
+                      className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:bg-[#F6F3FB]"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#daeeff] text-[#005a8f]">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFEAF8] text-[#301D5D]">
                           <Building2 className="h-5 w-5" aria-hidden="true" />
                         </div>
-                        <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-1 group-hover:text-[#005a8f]" aria-hidden="true" />
+                        <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-1 group-hover:text-[#301D5D]" aria-hidden="true" />
                       </div>
                       <p className="mt-4 text-sm font-semibold text-slate-950">{provider.name}</p>
-                      <p className="mt-1 text-xs font-medium text-[#1c3f5e]">{provider.industry || 'Local Service Partner'}</p>
+                      <p className="mt-1 text-xs font-medium text-[#42277C]">{provider.industry || 'Local Service Partner'}</p>
                       {provider.tagline && <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-600">{provider.tagline}</p>}
                     </Link>
                   ))}
                 </div>
               ) : (
                 <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-6">
-                  <Wrench className="rnn-heading-icon text-[#1c3f5e]" aria-hidden="true" />
+                  <Wrench className="rnn-heading-icon text-[#42277C]" aria-hidden="true" />
                   <p className="mt-4 text-sm font-semibold text-slate-950">This Service Category Is Growing</p>
                   <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
                     No market-matched partners with this service are available yet. Check back as the local network expands.
@@ -269,7 +269,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
               )}
 
               <p className="mt-6 flex gap-2 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-500">
-                <ShieldCheck className="rnn-inline-icon text-[#1c3f5e]" aria-hidden="true" />
+                <ShieldCheck className="rnn-inline-icon text-[#42277C]" aria-hidden="true" />
                 Partner listings are featured or paid placements where applicable, not an endorsement. Independently verify fit, availability, insurance, licensing, and terms before referring a client.
               </p>
             </div>

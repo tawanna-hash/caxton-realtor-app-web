@@ -4,7 +4,7 @@
 //
 // Global floating back-to-top arrow. Renders on every page via the root
 // layout. Appears after the user scrolls down 400px and smooth-scrolls
-// to top on click. Styled in brand purple (#005a8f).
+// to top on click. Styled in brand purple (#301D5D).
 //
 // Hidden on admin pages (path starts with /admin) where floating overlays
 // would interfere with tables and forms.
@@ -12,7 +12,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
-const BRAND_PURPLE = '#005a8f';
+const BRAND_PURPLE = '#301D5D';
 const SCROLL_THRESHOLD = 400;
 
 export default function BackToTopButton() {

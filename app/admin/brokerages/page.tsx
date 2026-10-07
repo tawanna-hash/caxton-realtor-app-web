@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 type Member = { realtorId: string; role: string; email: string; name: string };
 type Brokerage = { id: string; name: string; slug: string; emailDomains: string[]; ssoEntryPoint: string; ssoIdpIssuer: string; ssoCert: string; ssoEnabled: boolean; members: Member[] };
 const inputCls = 'w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-sm';
-const btnCls = 'rounded-md bg-[#005a8f] px-3 py-2 text-xs font-bold text-white disabled:opacity-45';
+const btnCls = 'rounded-md bg-[#301D5D] px-3 py-2 text-xs font-bold text-white disabled:opacity-45';
 const blank = { name: '', slug: '', emailDomains: '', ssoEntryPoint: '', ssoIdpIssuer: '', ssoCert: '', ssoEnabled: false };
 
 export default function BrokeragesAdminPage() {
@@ -35,7 +35,7 @@ export default function BrokeragesAdminPage() {
         <h1 className="text-2xl font-bold text-slate-950">Closing Time Brokerages</h1>
         <p className="mt-1 text-sm text-slate-600">Create a brokerage, add its agents and an office admin, and optionally turn on single sign-on. Office admins see the dashboard at /agents/closing-time/office.</p>
       </div>
-      {msg && <p className="text-sm font-semibold text-[#005a8f]" role="status">{msg}</p>}
+      {msg && <p className="text-sm font-semibold text-[#301D5D]" role="status">{msg}</p>}
 
       <section className="space-y-3 border border-slate-200 bg-white p-4">
         <h2 className="font-semibold text-slate-950">{form.id ? 'Edit brokerage' : 'New brokerage'}</h2>
@@ -63,7 +63,7 @@ export default function BrokeragesAdminPage() {
               <h2 className="font-semibold text-slate-950">{b.name}</h2>
               <p className="text-xs text-slate-500">Domains: {b.emailDomains.join(', ') || 'none'} · SSO {b.ssoEnabled ? 'on' : 'off'}</p>
             </div>
-            <button type="button" className="text-xs font-bold text-[#005a8f] underline" onClick={() => setForm({ id: b.id, name: b.name, slug: b.slug, emailDomains: b.emailDomains.join(', '), ssoEntryPoint: b.ssoEntryPoint, ssoIdpIssuer: b.ssoIdpIssuer, ssoCert: b.ssoCert, ssoEnabled: b.ssoEnabled })}>Edit</button>
+            <button type="button" className="text-xs font-bold text-[#301D5D] underline" onClick={() => setForm({ id: b.id, name: b.name, slug: b.slug, emailDomains: b.emailDomains.join(', '), ssoEntryPoint: b.ssoEntryPoint, ssoIdpIssuer: b.ssoIdpIssuer, ssoCert: b.ssoCert, ssoEnabled: b.ssoEnabled })}>Edit</button>
           </div>
           <div className="space-y-1 break-all text-xs text-slate-600">
             <p>Give the brokerage&apos;s IT team: Entity ID <code>https://realtynewsnow.app/api/sso/saml/{b.slug}</code></p>

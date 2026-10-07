@@ -139,7 +139,7 @@ function AutoDetails({ className, children }: { className?: string; children: Re
   return <details ref={ref} className={className}>{children}</details>;
 }
 
-const fieldCls = 'h-9 w-full rounded-md border border-[#d4d8dd] bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#005a8f]';
+const fieldCls = 'h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#301D5D]';
 
 type ContractSection = (typeof CONTRACT_MAP_SECTIONS)[number];
 
@@ -409,7 +409,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
     const leads = leadsFor(section);
     const items = orderedItems(section);
     return (
-                <div data-grid={section.id} className={`grid gap-x-4 gap-y-3 ${bordered ? 'border-t border-[#f5f6f9] px-[1.125rem] py-4' : ''} sm:grid-cols-2 lg:grid-cols-4`}>
+                <div data-grid={section.id} className={`grid gap-x-4 gap-y-3 ${bordered ? 'border-t border-[#F6F3FB] px-[1.125rem] py-4' : ''} sm:grid-cols-2 lg:grid-cols-4`}>
                   {leads && leads.map(([label, value, set]) => (
                     <div key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-4' : ''}`}>
                       <span className="block pb-1">{labelInput(`lead:${label}`, label)}</span>
@@ -420,14 +420,14 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     const key = item.key;
                     const isPicked = picked?.section === section.id && picked.key === key;
                     const cellAttrs = { onClick: cellClick(section, key), title: picked ? 'Click to place here' : 'Click to pick up and move' };
-                    const pickCls = isPicked ? ' rounded-md bg-[#f5f6f9] ring-2 ring-[#005a8f]' : picked?.section === section.id ? ' cursor-pointer rounded-md hover:bg-[#f5f6f9]' : ' cursor-pointer';
+                    const pickCls = isPicked ? ' rounded-md bg-[#F6F3FB] ring-2 ring-[#301D5D]' : picked?.section === section.id ? ' cursor-pointer rounded-md hover:bg-[#F6F3FB]' : ' cursor-pointer';
                     const xBtn = (label: string, onClick: () => void) => (
-                      <button type="button" aria-label={label} title={label} onClick={onClick} className="!flex !h-4 !w-4 shrink-0 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-300 hover:!text-[#005a8f]"><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
+                      <button type="button" aria-label={label} title={label} onClick={onClick} className="!flex !h-4 !w-4 shrink-0 !items-center !justify-center !border-0 !bg-transparent !p-0 text-slate-300 hover:!text-[#301D5D]"><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
                     );
                     if (item.kind === 'gap') {
                       const live = picked?.section === section.id;
                       return (
-                        <div key={key} {...cellAttrs} className={`group/cell relative hidden min-h-[4.5rem] rounded-md sm:block ${live ? 'cursor-pointer border border-dashed border-[#98bdd3] hover:bg-[#f5f6f9]' : ''}`}>
+                        <div key={key} {...cellAttrs} className={`group/cell relative hidden min-h-[4.5rem] rounded-md sm:block ${live ? 'cursor-pointer border border-dashed border-[#B9ADD6] hover:bg-[#F6F3FB]' : ''}`}>
                           {!live && <span className="absolute right-0 top-0 opacity-0 group-hover/cell:opacity-100">{xBtn('Remove blank space', () => saveOrder(section, (rawDeal.contractFieldOrder?.[section.id] ?? []).filter((k) => k !== key)))}</span>}
                         </div>
                       );
@@ -452,7 +452,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                         <div key={key} {...cellAttrs} className={`min-w-0${pickCls}`}>
                           <div className="flex items-center justify-between gap-3">
                             <label className="flex min-w-0 flex-1 items-start gap-2 text-sm text-slate-900">
-                              <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#005a8f]" />
+                              <input type="checkbox" checked={value === 'true'} onChange={(e) => setForm({ [fl.id]: e.target.checked ? 'true' : '' })} className="mt-0.5 h-4 w-4 accent-[#301D5D]" />
                               {labelInput(fl.id, fl.label)}
                             </label>
                             <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(section, fl.id))}</span>
@@ -466,7 +466,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                           {labelInput(fl.id, fl.label)}
                           <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(section, fl.id))}</span>
                         </div>
-                        <span className="flex items-center gap-1 rounded-md border border-[#d4d8dd] bg-white px-2 focus-within:border-[#005a8f]">
+                        <span className="flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
                           {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
                           <input value={value} aria-label={labelOf(fl.id, fl.label)} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
                         </span>
@@ -474,7 +474,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                     );
                   })}
                   {picked?.section === section.id && Array.from({ length: ((4 - (items.length % 4)) % 4) + 4 }).map((_, i) => (
-                    <div key={`end-${i}`} onClick={() => { placeAt(section, picked.key, `end:${i}`); setPicked(null); }} title="Click to place here" className="hidden min-h-[4.5rem] cursor-pointer rounded-md border border-dashed border-[#98bdd3] hover:bg-[#f5f6f9] lg:block" />
+                    <div key={`end-${i}`} onClick={() => { placeAt(section, picked.key, `end:${i}`); setPicked(null); }} title="Click to place here" className="hidden min-h-[4.5rem] cursor-pointer rounded-md border border-dashed border-[#B9ADD6] hover:bg-[#F6F3FB] lg:block" />
                   ))}
                   {!bordered && (
                     <div className="flex items-end">
@@ -487,12 +487,12 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
 
   const cashBody = (
     <>
-        <div className="flex items-center justify-between gap-4 border-b border-[#f5f6f9] px-[1.125rem] py-3">
+        <div className="flex items-center justify-between gap-4 border-b border-[#F6F3FB] px-[1.125rem] py-3">
           <div>
             <p className="text-sm font-medium text-slate-900">Earnest Money In Escrow</p>
             <Tip text="Shown to the client as the deposit held in escrow" />
           </div>
-          <label className="flex w-36 items-center gap-1 rounded-md border border-[#d4d8dd] px-2 text-sm text-slate-500 focus-within:border-[#005a8f]">$
+          <label className="flex w-36 items-center gap-1 rounded-md border border-[#E6E5EC] px-2 text-sm text-slate-500 focus-within:border-[#301D5D]">$
             <input value={deal.earnestInEscrow || asNumber(deal.contractDetails.earnestMoney)} onChange={(e) => onPatch({ earnestInEscrow: e.target.value })} inputMode="decimal" aria-label="Earnest money in escrow" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
           </label>
         </div>
@@ -501,25 +501,25 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
             <p className="text-sm font-medium text-slate-900">Estimated Cash To Close</p>
             <Tip text="Shown on the client's closing page" />
           </div>
-          <ul className="mt-2 divide-y divide-[#f5f6f9]">
+          <ul className="mt-2 divide-y divide-[#F6F3FB]">
             {lines.map((line) => (
               <li key={line.id} className="py-3">
                 <div className="flex items-center gap-2">
                   <input value={line.label} onChange={(e) => updateLine(line.id, { label: e.target.value })} aria-label="Line label" placeholder="Line Item" className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
-                  <select value={line.sign} onChange={(e) => updateLine(line.id, { sign: e.target.value === '-' ? '-' : '+' })} aria-label="Add or subtract" className="h-9 w-14 rounded-md border border-[#d4d8dd] bg-white px-2 text-sm text-slate-900">
+                  <select value={line.sign} onChange={(e) => updateLine(line.id, { sign: e.target.value === '-' ? '-' : '+' })} aria-label="Add or subtract" className="h-9 w-14 rounded-md border border-[#E6E5EC] bg-white px-2 text-sm text-slate-900">
                     <option value="+">+</option>
                     <option value="-">−</option>
                   </select>
-                  <label className="flex w-32 items-center gap-1 rounded-md border border-[#d4d8dd] px-2 text-sm text-slate-500 focus-within:border-[#005a8f]">$
+                  <label className="flex w-32 items-center gap-1 rounded-md border border-[#E6E5EC] px-2 text-sm text-slate-500 focus-within:border-[#301D5D]">$
                     <input value={line.amount} onChange={(e) => updateLine(line.id, { amount: e.target.value })} inputMode="decimal" aria-label="Amount" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
                   </label>
-                  <button type="button" aria-label="Clear line" onClick={() => removeLine(line.id)} className="!border-0 !bg-transparent !px-2 text-slate-400 hover:!text-[#005a8f]"><Trash2 className="h-4 w-4" aria-hidden="true" /></button>
+                  <button type="button" aria-label="Clear line" onClick={() => removeLine(line.id)} className="!border-0 !bg-transparent !px-2 text-slate-400 hover:!text-[#301D5D]"><Trash2 className="h-4 w-4" aria-hidden="true" /></button>
                 </div>
                 <input value={line.note} onChange={(e) => updateLine(line.id, { note: e.target.value })} aria-label="Note shown to client" placeholder="Optional note the client sees under this line" className="mt-1 h-7 w-full bg-transparent text-xs text-slate-500 outline-none placeholder:text-slate-300" />
               </li>
             ))}
           </ul>
-          <div className="flex items-center justify-between border-t border-[#f5f6f9] pt-3">
+          <div className="flex items-center justify-between border-t border-[#F6F3FB] pt-3">
             <button type="button" onClick={addLine}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Line</button>
             <p className="text-sm font-semibold text-slate-900">Cash To Close {money(total)}</p>
           </div>
@@ -537,7 +537,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
             const filled = visibleFields.filter((fl) => getVal(fl.id).trim()).length;
             return (
               <Fragment key={section.id}>
-              <AutoDetails className="group overflow-hidden rounded-2xl border border-[#d4d8dd] bg-white">
+              <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
                 <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900">
                   <span>{section.title}</span>
                   <span className="flex items-center gap-3">
@@ -550,18 +550,18 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                 {renderSectionBody(section, true)}
               </AutoDetails>
               {section.id === 'property' && (
-                <AutoDetails className="group overflow-hidden rounded-2xl border border-[#d4d8dd] bg-white">
+                <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
                   <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span><span className="flex items-center gap-3"><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setArrange((v) => !v); setKdPicked(null); }}>{arrange ? 'Done Arranging' : 'Arrange'}</button><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId('key-details'); }}>Quick Entry</button></span></summary>
-                  <div className="border-t border-[#f5f6f9]">
+                  <div className="border-t border-[#F6F3FB]">
       <section className="overflow-hidden bg-white" aria-label="Contract Terms">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4">
           {kdItems.map((key) => {
             const t = terms.find((x) => x.id === key);
             if (!t) {
               return arrange ? (
-                <div key={key} onClick={() => kdClick(key)} title="Click to place here" className={`hidden min-h-[76px] cursor-pointer border-b border-r border-[#d4d8dd] sm:block ${kdPicked ? 'bg-[#f5f6f9] outline-dashed outline-1 -outline-offset-4 outline-[#98bdd3] hover:bg-[#f5f6f9]' : ''}`} />
+                <div key={key} onClick={() => kdClick(key)} title="Click to place here" className={`hidden min-h-[76px] cursor-pointer border-b border-r border-[#E6E5EC] sm:block ${kdPicked ? 'bg-[#F6F3FB] outline-dashed outline-1 -outline-offset-4 outline-[#B9ADD6] hover:bg-[#F6F3FB]' : ''}`} />
               ) : (
-                <div key={key} className="hidden min-h-[76px] border-b border-r border-[#d4d8dd] sm:block" aria-hidden="true" />
+                <div key={key} className="hidden min-h-[76px] border-b border-r border-[#E6E5EC] sm:block" aria-hidden="true" />
               );
             }
             return (
@@ -569,7 +569,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                 key={t.id}
                 type="button"
                 onClick={() => { if (arrange) { kdClick(t.id); return; } setIsNew(false); setEditing(t); }}
-                className={`!block !h-auto !rounded-none !border-0 !border-b !border-r !border-[#d4d8dd] !bg-white !px-[1.125rem] !py-4 text-left hover:!bg-[#f5f6f9] ${kdPicked === t.id ? '!bg-[#f5f6f9] outline outline-2 -outline-offset-2 outline-[#005a8f]' : ''}`}
+                className={`!block !h-auto !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white !px-[1.125rem] !py-4 text-left hover:!bg-[#F6F3FB] ${kdPicked === t.id ? '!bg-[#F6F3FB] outline outline-2 -outline-offset-2 outline-[#301D5D]' : ''}`}
               >
                 <span className="flex items-baseline justify-between gap-2">
                   <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{t.term}</span>
@@ -583,12 +583,12 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
           <button
             type="button"
             onClick={() => { setIsNew(true); setEditing({ id: newId('term'), term: '', ref: '', value: '', note: '' }); }}
-            className="!flex !h-auto min-h-[76px] !items-center !justify-center !gap-1 !rounded-none !border-0 !border-b !border-r !border-[#d4d8dd] !bg-white !px-[1.125rem] !py-4 text-sm text-slate-500 hover:!bg-[#f5f6f9]"
+            className="!flex !h-auto min-h-[76px] !items-center !justify-center !gap-1 !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white !px-[1.125rem] !py-4 text-sm text-slate-500 hover:!bg-[#F6F3FB]"
           >
             <Plus className="h-4 w-4" aria-hidden="true" /> Add Term
           </button>
           {Array.from({ length: (4 - ((kdItems.length + 1) % 4)) % 4 + (arrange && kdPicked ? 4 : 0) }, (_, i) => (
-            <div key={`f${i}`} onClick={() => { if (arrange && kdPicked) { const next = placeKeys(kdItems, kdPicked, `end:${i + 1}`); if (next) kdSave(next); setKdPicked(null); } }} title={arrange && kdPicked ? 'Click to place here' : undefined} className={`hidden min-h-[76px] border-b border-r border-[#d4d8dd] lg:block ${arrange && kdPicked ? 'cursor-pointer bg-[#f5f6f9] outline-dashed outline-1 -outline-offset-4 outline-[#98bdd3] hover:bg-[#f5f6f9]' : 'bg-[#f5f6f9]'}`} aria-hidden="true" />
+            <div key={`f${i}`} onClick={() => { if (arrange && kdPicked) { const next = placeKeys(kdItems, kdPicked, `end:${i + 1}`); if (next) kdSave(next); setKdPicked(null); } }} title={arrange && kdPicked ? 'Click to place here' : undefined} className={`hidden min-h-[76px] border-b border-r border-[#E6E5EC] lg:block ${arrange && kdPicked ? 'cursor-pointer bg-[#F6F3FB] outline-dashed outline-1 -outline-offset-4 outline-[#B9ADD6] hover:bg-[#F6F3FB]' : 'bg-[#F6F3FB]'}`} aria-hidden="true" />
           ))}
         </div>
       </section>
@@ -599,8 +599,8 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
               </Fragment>
             );
           })}
-          <section className="overflow-hidden rounded-2xl border border-[#d4d8dd] bg-white" aria-label="Estimated Cash To Close">
-        <div className="flex items-center justify-between border-b border-[#d4d8dd] px-[1.125rem] py-4">
+          <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Estimated Cash To Close">
+        <div className="flex items-center justify-between border-b border-[#E6E5EC] px-[1.125rem] py-4">
           <p className="text-sm font-semibold text-slate-900">Estimated Cash To Close</p>
           <button type="button" onClick={() => setQuickId('cash')}>Quick Entry</button>
         </div>
@@ -627,12 +627,12 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-label={`${title} quick entry`} onClick={() => setQuickId(null)}>
             <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between border-b border-[#d4d8dd] px-[1.125rem] py-4">
+              <div className="flex items-center justify-between border-b border-[#E6E5EC] px-[1.125rem] py-4">
                 <p className="text-sm font-semibold text-slate-900">{title}</p>
-                <button type="button" aria-label="Close" onClick={() => setQuickId(null)} className="!border-0 !bg-transparent text-slate-500 hover:!text-[#005a8f]"><X className="h-4 w-4" aria-hidden="true" /></button>
+                <button type="button" aria-label="Close" onClick={() => setQuickId(null)} className="!border-0 !bg-transparent text-slate-500 hover:!text-[#301D5D]"><X className="h-4 w-4" aria-hidden="true" /></button>
               </div>
               <div className="px-[1.125rem] py-4">{body}</div>
-              <div className="flex justify-end border-t border-[#d4d8dd] px-[1.125rem] py-3"><button type="button" onClick={() => setQuickId(null)}>Done</button></div>
+              <div className="flex justify-end border-t border-[#E6E5EC] px-[1.125rem] py-3"><button type="button" onClick={() => setQuickId(null)}>Done</button></div>
             </div>
           </div>
         );
@@ -640,7 +640,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-label={isNew ? 'Add a Term' : 'Edit Term'} onClick={() => setEditing(null)}>
           <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-[#d4d8dd] px-6 py-4">
+            <div className="flex items-center justify-between border-b border-[#E6E5EC] px-6 py-4">
               <p className="text-sm font-semibold text-slate-900">{isNew ? 'Add A Term' : 'Edit Term'}</p>
               <button type="button" aria-label="Close" onClick={() => setEditing(null)} className="!border-0 !bg-transparent !px-1"><X className="h-4 w-4" aria-hidden="true" /></button>
             </div>
@@ -655,10 +655,10 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
                 <input value={editing.value} onChange={(e) => setEditing({ ...editing, value: e.target.value })} placeholder="$642,000" className={`${fieldCls} mt-1 font-normal`} />
               </label>
               <label className="block text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 sm:col-span-2">Note
-                <textarea value={editing.note} onChange={(e) => setEditing({ ...editing, note: e.target.value })} rows={3} placeholder="Repair credit added by Addendum B." className="mt-1 w-full rounded-md border border-[#d4d8dd] bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-[#005a8f]" />
+                <textarea value={editing.note} onChange={(e) => setEditing({ ...editing, note: e.target.value })} rows={3} placeholder="Repair credit added by Addendum B." className="mt-1 w-full rounded-md border border-[#E6E5EC] bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-[#301D5D]" />
               </label>
             </div>
-            <div className="flex items-center justify-between gap-2 border-t border-[#d4d8dd] px-6 py-4">
+            <div className="flex items-center justify-between gap-2 border-t border-[#E6E5EC] px-6 py-4">
               {isNew ? <span /> : <button type="button" onClick={() => { clearTerm(editing); setEditing(null); }}>{editing.id.startsWith('tpl-') ? 'Clear' : 'Delete'}</button>}
               <div className="flex gap-2">
                 <button type="button" onClick={() => setEditing(null)}>Cancel</button>

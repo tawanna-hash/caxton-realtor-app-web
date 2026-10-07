@@ -36,9 +36,9 @@ const STATUS_LABEL: Record<AdInquiryStatus, string> = {
 };
 
 const STATUS_BADGE_CLASS: Record<AdInquiryStatus, string> = {
-  new: 'bg-[#daeeff] text-[#005a8f]',
+  new: 'bg-[#EFEAF8] text-[#301D5D]',
   replied: 'bg-[#FEF8CC] text-[#645600]',
-  quoted: 'bg-[#daeeff] text-[#1c3f5e]',
+  quoted: 'bg-[#EFEAF8] text-[#42277C]',
   won: 'bg-[#E0FBE0] text-[#005A00]',
   lost: 'bg-gray-100 text-gray-700',
   spam: 'bg-[#FFEAE6] text-[#661102]',
@@ -48,7 +48,7 @@ const CHANNEL_BADGE_CLASS: Record<AdChannel, string> = {
   print: 'bg-[#FFEAE6] text-[#661102] border-[#FF2A04]/30',
   digital: 'bg-[#E3F7FF] text-[#285766] border-[#64D9FF]/30',
   email: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
-  app: 'bg-[#daeeff] text-[#1c3f5e] border-[#98bdd3]',
+  app: 'bg-[#EFEAF8] text-[#42277C] border-[#B9ADD6]',
 };
 
 interface InboxResponse {
@@ -222,14 +222,14 @@ export default function InquiriesInbox() {
                 onClick={() => setUrl({ channel: c === 'all' ? null : c, id: null })}
                 className={`h-9 border-b-2 text-sm font-medium transition ${
                   active
-                    ? 'border-[#005a8f] text-[#1c3f5e]'
+                    ? 'border-[#301D5D] text-[#42277C]'
                     : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300'
                 }`}
                 aria-current={active ? 'page' : undefined}
               >
                 {label}
                 {count > 0 && (
-                  <span className="ml-2 inline-block rounded-full bg-[#005a8f] px-2 py-0.5 text-xs font-semibold text-white">
+                  <span className="ml-2 inline-block rounded-full bg-[#301D5D] px-2 py-0.5 text-xs font-semibold text-white">
                     {count}
                   </span>
                 )}
@@ -247,7 +247,7 @@ export default function InquiriesInbox() {
             onClick={() => setUrl({ status: null })}
             className={`px-3 py-2 rounded-full text-xs font-medium border transition ${
               activeStatus === 'all'
-                ? 'bg-[#005a8f] text-white border-[#005a8f]'
+                ? 'bg-[#301D5D] text-white border-[#301D5D]'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
             }`}
           >
@@ -262,7 +262,7 @@ export default function InquiriesInbox() {
                 onClick={() => setUrl({ status: s })}
                 className={`px-3 py-2 rounded-full text-xs font-medium border transition ${
                   active
-                    ? 'bg-[#005a8f] text-white border-[#005a8f]'
+                    ? 'bg-[#301D5D] text-white border-[#301D5D]'
                     : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                 }`}
               >
@@ -274,7 +274,7 @@ export default function InquiriesInbox() {
         <button
           type="button"
           onClick={() => setNewQuoteOpen(true)}
-          className="ml-auto inline-flex h-9 items-center whitespace-nowrap rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white hover:bg-[#1c3f5e]"
+          className="ml-auto inline-flex h-9 items-center whitespace-nowrap rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]"
         >
           Create New Proposal
         </button>
@@ -284,7 +284,7 @@ export default function InquiriesInbox() {
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search name, email, company…"
-            className="h-9 w-72 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#2f7aa7] focus:ring-2 focus:ring-[#daeeff]"
+            className="h-9 w-72 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]"
           />
         </div>
       </div>
@@ -316,7 +316,7 @@ export default function InquiriesInbox() {
                       type="button"
                       onClick={() => setUrl({ id: row.id })}
                       className={`w-full px-4 py-3 text-left transition hover:bg-gray-50 ${
-                        selected ? 'bg-[#f5f6f9]/60' : ''
+                        selected ? 'bg-[#F6F3FB]/60' : ''
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-1">
@@ -331,7 +331,7 @@ export default function InquiriesInbox() {
                           {STATUS_LABEL[row.status]}
                         </span>
                         {row.takeover && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-[#daeeff] text-[#005a8f]">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-[#EFEAF8] text-[#301D5D]">
                             Takeover
                           </span>
                         )}

@@ -204,7 +204,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-4 rounded-md border border-[#bbc1c9] bg-[#f5f6f9]/40 p-4 space-y-3"
+      className="mt-4 rounded-md border border-[#D9CFF0] bg-[#F6F3FB]/40 p-4 space-y-3"
     >
       <div className="flex items-baseline justify-between">
         <h3 className="text-sm font-semibold text-gray-900">
@@ -391,7 +391,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
       </div>
 
       {/* Preview total */}
-      <div className="flex items-baseline justify-between border-t border-[#bbc1c9] pt-2">
+      <div className="flex items-baseline justify-between border-t border-[#D9CFF0] pt-2">
         <span className="text-xs text-gray-700">Total</span>
         <span className="text-base font-semibold text-gray-900">
           ${(previewCents / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -408,7 +408,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
         <button
           type="submit"
           disabled={submitting || !packageId || previewCents <= 0}
-          className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-[#005a8f] text-white hover:bg-[#1c3f5e] disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
+          className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-[#301D5D] text-white hover:bg-[#42277C] disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
         >
           {submitting ? 'Booking…' : 'Book it'}
         </button>

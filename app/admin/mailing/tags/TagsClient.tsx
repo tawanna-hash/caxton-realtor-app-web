@@ -12,7 +12,7 @@ import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
 import { Pager, PAGE_SIZE_OPTIONS } from '@/app/admin/_components/Pager';
 
-const ACCENT = '#005a8f';
+const ACCENT = '#301D5D';
 
 type TagRow = {
   tag: string;
@@ -28,13 +28,13 @@ type TagStyle = { bg: string; fg: string; label?: string };
 // so this page is the visual source-of-truth for tag colors.
 function styleFor(t: string): TagStyle {
   switch (t) {
-    case 'active-advertiser': return { bg: '#FFF3E0', fg: '#1c3f5e', label: 'Active Partner' };
-    case 'non-advertiser':    return { bg: '#FFF3E0', fg: '#005a8f', label: 'Non-Advertiser' };
-    case 'manual':            return { bg: '#daeeff', fg: '#005a8f', label: 'Manual' };
+    case 'active-advertiser': return { bg: '#FFF3E0', fg: '#42277C', label: 'Active Partner' };
+    case 'non-advertiser':    return { bg: '#FFF3E0', fg: '#301D5D', label: 'Non-Advertiser' };
+    case 'manual':            return { bg: '#EFEAF8', fg: '#301D5D', label: 'Manual' };
     case 'REALTOR':           return { bg: '#E0FBE0', fg: '#005A00' };
     case 'Loan Officer':      return { bg: '#FEF8CC', fg: '#645600' };
-    case 'Business Development': return { bg: '#d4d8dd', fg: '#51555b' };
-    default:                  return { bg: '#f5f6f9', fg: '#292a2d' };
+    case 'Business Development': return { bg: '#E6E5EC', fg: '#4A4757' };
+    default:                  return { bg: '#F6F3FB', fg: '#1B1726' };
   }
 }
 
@@ -49,8 +49,8 @@ function TagChip({ tag }: { tag: string }) {
     <span
       className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium"
       style={{
-        background: isProvenance ? '#f5f6f9' : s.bg,
-        color: isProvenance ? '#51555b' : s.fg,
+        background: isProvenance ? '#F6F3FB' : s.bg,
+        color: isProvenance ? '#4A4757' : s.fg,
       }}
     >
       {s.label || tag}
@@ -231,7 +231,7 @@ export default function TagsClient() {
                     <button
                       onClick={() => void doRename(r.tag, renaming.to)}
                       disabled={isBusy}
-                      className="rounded bg-[#005a8f] px-2 py-1 text-xs font-semibold text-white hover:bg-[#1c3f5e] disabled:opacity-50"
+                      className="rounded bg-[#301D5D] px-2 py-1 text-xs font-semibold text-white hover:bg-[#42277C] disabled:opacity-50"
                     >
                       {isBusy ? 'Saving…' : 'Save'}
                     </button>
@@ -319,7 +319,7 @@ export default function TagsClient() {
                           <button
                             onClick={() => void doRename(r.tag, renaming.to)}
                             disabled={isBusy}
-                            className="rounded bg-[#005a8f] px-2 py-1 text-xs font-semibold text-white hover:bg-[#1c3f5e] disabled:opacity-50"
+                            className="rounded bg-[#301D5D] px-2 py-1 text-xs font-semibold text-white hover:bg-[#42277C] disabled:opacity-50"
                           >
                             {isBusy ? 'Saving…' : 'Save'}
                           </button>

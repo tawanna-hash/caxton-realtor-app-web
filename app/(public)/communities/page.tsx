@@ -60,7 +60,7 @@ export default async function Page({ searchParams }: PageProps) {
         <main className="min-h-screen bg-white">
           <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
             <header className="mb-6">
-              <div className="text-xs uppercase tracking-[0.18em] text-[#005a8f] font-medium">
+              <div className="text-xs uppercase tracking-[0.18em] text-[#301D5D] font-medium">
                 {builder}
               </div>
               <PageTitle size="md" className="mt-2">

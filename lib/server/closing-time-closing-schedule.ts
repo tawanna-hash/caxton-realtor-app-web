@@ -40,8 +40,8 @@ const esc = (v: string) => v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const validEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const token = () => randomBytes(24).toString('base64url');
 const whenText = (d: Date) => new Intl.DateTimeFormat('en-US', { timeZone: CLOSING_TZ, weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(d);
-const shell = (inner: string) => `<div style="font-family:Inter,Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:560px">${inner}</div>`;
-const button = (href: string, label: string) => `<p><a href="${esc(href)}" style="display:inline-block;background:#005a8f;color:#fff;text-decoration:none;font-weight:600;padding:11px 22px;border-radius:8px">${esc(label)}</a></p>`;
+const shell = (inner: string) => `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px">${inner}</div>`;
+const button = (href: string, label: string) => `<p><a href="${esc(href)}" style="display:inline-block;background:#301D5D;color:#fff;text-decoration:none;font-weight:600;padding:11px 22px;border-radius:8px">${esc(label)}</a></p>`;
 
 function icsText(id: string, start: Date, end: Date, title: string, location: string, description: string): string {
   const stamp = (d: Date) => d.toISOString().replaceAll(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
@@ -94,7 +94,7 @@ export async function createRequest(realtorId: string, dealId: string, input: { 
   const agent = await agentOf(realtorId); const property = dealLabel(deal);
   const link = `${input.origin}/book/closing/title/${tt}`;
   await sendEmail({ to: input.titleEmail.trim(), cc: validEmail(agent.email) ? agent.email : undefined, replyTo: validEmail(agent.email) ? agent.email : undefined, subject: `${property}: Closing Times Needed`,
-    html: shell(`<p>Hello${input.titleName.trim() ? ` ${esc(input.titleName.trim().split(/\s+/)[0])}` : ''},</p><p>${esc(agent.name)} is scheduling the closing for <strong>${esc(property)}</strong>. Please enter the dates and times your office can host the closing. The buyer or seller will then choose from your list.</p>${button(link, 'Enter Available Times')}<p style="color:#51555b;font-size:13px">This private link works only for this closing.</p>`) }).catch(() => undefined);
+    html: shell(`<p>Hello${input.titleName.trim() ? ` ${esc(input.titleName.trim().split(/\s+/)[0])}` : ''},</p><p>${esc(agent.name)} is scheduling the closing for <strong>${esc(property)}</strong>. Please enter the dates and times your office can host the closing. The buyer or seller will then choose from your list.</p>${button(link, 'Enter Available Times')}<p style="color:#4A4757;font-size:13px">This private link works only for this closing.</p>`) }).catch(() => undefined);
   await logDealEvent(realtorId, dealId, 'email', `Closing times requested from title company <${input.titleEmail.trim()}> for ${property}`);
 }
 
@@ -146,7 +146,7 @@ export async function submitTimes(tok: string, input: { slots: { date: string; t
   const lines = slots.slice(0, 20).map((s) => `<li>${esc(whenText(new Date(s.startUtc)))}</li>`).join('');
   for (const c of row.choosers) {
     await sendEmail({ to: c.email, cc: validEmail(agent.email) ? agent.email : undefined, replyTo: validEmail(agent.email) ? agent.email : undefined, subject: `${property}: Choose Your Closing Time`,
-      html: shell(`<p>Hello ${esc(c.name.split(/\s+/)[0] || 'there')},</p><p>${esc(row.title_name || 'The title company')} has offered these times to close on <strong>${esc(property)}</strong>:</p><ul>${lines}</ul>${button(link, 'Choose A Closing Time')}<p style="color:#51555b;font-size:13px">Only one person needs to choose. Everyone on the deal is emailed once a time is picked.</p>`) }).catch(() => undefined);
+      html: shell(`<p>Hello ${esc(c.name.split(/\s+/)[0] || 'there')},</p><p>${esc(row.title_name || 'The title company')} has offered these times to close on <strong>${esc(property)}</strong>:</p><ul>${lines}</ul>${button(link, 'Choose A Closing Time')}<p style="color:#4A4757;font-size:13px">Only one person needs to choose. Everyone on the deal is emailed once a time is picked.</p>`) }).catch(() => undefined);
   }
   await logDealEvent(row.realtor_id, row.deal_id, 'email', `Title company offered ${slots.length} closing time${slots.length === 1 ? '' : 's'}; ${row.choosers.map((c) => c.email).join(', ')} emailed to choose`);
 }
@@ -167,7 +167,7 @@ export async function chooseTime(tok: string, index: number): Promise<{ label: s
   for (const p of all) {
     await sendEmail({ to: p.email, replyTo: validEmail(agent.email) ? agent.email : undefined, subject: `${property}: Closing Scheduled ${label}`,
       attachments: [{ filename: 'closing.ics', content: ics, contentType: 'text/calendar' }],
-      html: shell(`<p>Hello ${esc(p.name.split(/\s+/)[0] || 'there')},</p><p>The closing for <strong>${esc(property)}</strong> is scheduled.</p><p><strong>${esc(label)}</strong>${row.location ? `<br>${esc(row.location)}` : ''}${row.title_name ? `<br>${esc(row.title_name)}` : ''}</p>${row.note ? `<p>${esc(row.note)}</p>` : ''}<p style="color:#51555b;font-size:13px">The attached file adds the closing to your calendar.</p>`) }).catch(() => undefined);
+      html: shell(`<p>Hello ${esc(p.name.split(/\s+/)[0] || 'there')},</p><p>The closing for <strong>${esc(property)}</strong> is scheduled.</p><p><strong>${esc(label)}</strong>${row.location ? `<br>${esc(row.location)}` : ''}${row.title_name ? `<br>${esc(row.title_name)}` : ''}</p>${row.note ? `<p>${esc(row.note)}</p>` : ''}<p style="color:#4A4757;font-size:13px">The attached file adds the closing to your calendar.</p>`) }).catch(() => undefined);
   }
   await logDealEvent(row.realtor_id, row.deal_id, 'closing', `Closing scheduled for ${label}; confirmation emailed to ${all.map((p) => p.email).join(', ')}`);
   return { label };

@@ -28,11 +28,11 @@ export default function EditionSignup() {
               aria-pressed={selected}
               className="text-left border-2 px-4 py-3 rounded-md transition-all"
               style={{
-                borderColor: selected ? '#005a8f' : '#bbc1c9',
+                borderColor: selected ? '#301D5D' : '#D9CFF0',
                 backgroundColor: selected ? '#301D5D10' : '#ffffff',
               }}
             >
-              <p className="text-base font-semibold" style={{ color: selected ? '#005a8f' : '#292a2d' }}>
+              <p className="text-base font-semibold" style={{ color: selected ? '#301D5D' : '#1B1726' }}>
                 {e.city}
               </p>
             </button>

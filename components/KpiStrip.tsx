@@ -108,7 +108,7 @@ function Tile({
   valueSmall?: boolean;
 }) {
   const inner = (
-    <div className="h-full min-w-0 border-r border-gray-200 bg-white px-4 py-2 transition last:border-r-0 hover:bg-[#f5f6f9]/40">
+    <div className="h-full min-w-0 border-r border-gray-200 bg-white px-4 py-2 transition last:border-r-0 hover:bg-[#F6F3FB]/40">
       {loading ? (
         <div className="animate-pulse">
           <div className="h-2.5 bg-gray-200 rounded-md w-24" />

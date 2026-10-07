@@ -75,7 +75,7 @@ const BRANDS: Record<string, BrandConfig> = {
   realtyline: {
     pub_key: 'realtyline',
     pub_display: 'RealtyLine Austin',
-    primary_hex: '#005a8f',
+    primary_hex: '#301D5D',
     tagline: 'Putting A Face On Real Estate',
   },
   newsline: {
@@ -87,7 +87,7 @@ const BRANDS: Record<string, BrandConfig> = {
   caxton: {
     pub_key: 'caxton',
     pub_display: 'Realty News Now',
-    primary_hex: '#005a8f',
+    primary_hex: '#301D5D',
     tagline: 'Putting A Face On Real Estate',
   },
 };

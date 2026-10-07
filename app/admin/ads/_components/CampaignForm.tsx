@@ -229,14 +229,14 @@ export function CampaignForm({ initial }: Props) {
             <button
               type="button"
               onClick={() => setCreativeMode('existing')}
-              className={`px-3 py-1 rounded-md ${creativeMode === 'existing' ? 'bg-[#005a8f] text-white' : 'bg-gray-100 text-gray-800'}`}
+              className={`px-3 py-1 rounded-md ${creativeMode === 'existing' ? 'bg-[#301D5D] text-white' : 'bg-gray-100 text-gray-800'}`}
             >
               Use existing
             </button>
             <button
               type="button"
               onClick={() => setCreativeMode('upload')}
-              className={`px-3 py-1 rounded-md ${creativeMode === 'upload' ? 'bg-[#005a8f] text-white' : 'bg-gray-100 text-gray-800'}`}
+              className={`px-3 py-1 rounded-md ${creativeMode === 'upload' ? 'bg-[#301D5D] text-white' : 'bg-gray-100 text-gray-800'}`}
             >
               Upload new
             </button>
@@ -367,7 +367,7 @@ export function CampaignForm({ initial }: Props) {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-[#005a8f] px-4 py-2 text-white font-medium hover:bg-[#1c3f5e] disabled:opacity-50 text-sm whitespace-nowrap"
+          className="rounded-md bg-[#301D5D] px-4 py-2 text-white font-medium hover:bg-[#42277C] disabled:opacity-50 text-sm whitespace-nowrap"
         >
           {submitting ? 'Saving...' : isEdit ? 'Save changes' : 'Create campaign'}
         </button>

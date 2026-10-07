@@ -33,8 +33,8 @@ import { ARTICLE_CATEGORIES, articleCategoriesForPublication, canonicalArticleCa
 const API = getApiBase();
 
 const PUBS = [
-  { id: 'realtyline', name: 'RealtyLine', city: 'Austin', tagline: 'Putting A Face on Real Estate since 1995', color: '#005a8f' },
-  { id: 'newsline', name: 'Newsline San Antonio', city: 'San Antonio', tagline: 'Founded 1982 - Relaunched 2025', color: '#005a8f' },
+  { id: 'realtyline', name: 'RealtyLine', city: 'Austin', tagline: 'Putting A Face on Real Estate since 1995', color: '#301D5D' },
+  { id: 'newsline', name: 'Newsline San Antonio', city: 'San Antonio', tagline: 'Founded 1982 - Relaunched 2025', color: '#301D5D' },
 ];
 
 // BUG-09 / share-404 fix: Share URLs must deep-link into the app. The WP
@@ -456,8 +456,8 @@ function AuthGate({
 
   const info = PUBS.find((p) => p.id === pub) || PUBS[0];
 
-  const ic = 'w-full px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 placeholder:text-[#bbc1c9]';
-  const sc = 'w-full px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 appearance-none placeholder:text-[#bbc1c9]';
+  const ic = 'w-full px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 placeholder:text-[#D9CFF0]';
+  const sc = 'w-full px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 appearance-none placeholder:text-[#D9CFF0]';
 
   async function handleSignup() {
     setLoading(true);
@@ -727,7 +727,7 @@ function AuthGate({
                 <input type="text" placeholder={licenseType === 'TREC #' ? 'TREC License Number (optional)' : 'NMLS ID Number (optional)'} value={licenseNum} onChange={(e) => setLicenseNum(e.target.value)} className={ic} autoComplete="off" autoCapitalize="characters" inputMode={licenseType === 'TREC #' ? 'numeric' : 'text'} />
 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3 mt-6">Your Information</p>
                 <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} className={ic} autoComplete="name" autoCapitalize="words" />
-                <select value={title} onChange={(e) => setTitle(e.target.value)} className={sc + (!title ? ' text-[#bbc1c9]' : ' text-gray-900')}>
+                <select value={title} onChange={(e) => setTitle(e.target.value)} className={sc + (!title ? ' text-[#D9CFF0]' : ' text-gray-900')}>
                   <option value="">Select Title / Role</option>
                   {TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
@@ -791,7 +791,7 @@ function AuthGate({
                           if (e.target.checked) setSubs([...subs, s.id]);
                           else setSubs(subs.filter((x) => x !== s.id));
                         }}
-                        className="mt-1 w-4 h-4 accent-[#005a8f]"
+                        className="mt-1 w-4 h-4 accent-[#301D5D]"
                       />
                       <div className="flex-1">
                         <p className="text-base text-gray-900 font-medium">{s.label}</p>
@@ -807,7 +807,7 @@ function AuthGate({
                   <select
                     value={bdayMonth}
                     onChange={(e) => setBdayMonth(e.target.value)}
-                    className={'px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 appearance-none placeholder:text-[#bbc1c9] flex-1 min-w-0' + (!bdayMonth ? ' text-[#bbc1c9]' : ' text-gray-900')}
+                    className={'px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 appearance-none placeholder:text-[#D9CFF0] flex-1 min-w-0' + (!bdayMonth ? ' text-[#D9CFF0]' : ' text-gray-900')}
                   >
                     <option value="">Month</option>
                     {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -815,7 +815,7 @@ function AuthGate({
                   <select
                     value={bdayDay}
                     onChange={(e) => setBdayDay(e.target.value)}
-                    className={'px-3 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 appearance-none placeholder:text-[#bbc1c9] w-20 shrink-0' + (!bdayDay ? ' text-[#bbc1c9]' : ' text-gray-900')}
+                    className={'px-3 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 appearance-none placeholder:text-[#D9CFF0] w-20 shrink-0' + (!bdayDay ? ' text-[#D9CFF0]' : ' text-gray-900')}
                   >
                     <option value="">Day</option>
                     {DAYS.map((d) => <option key={d} value={String(d)}>{d}</option>)}
@@ -875,7 +875,7 @@ function AuthGate({
         <div className="min-h-full flex flex-col items-center justify-center">
           <div className="w-full max-w-md px-4">
             <div className="rounded-2xl border border-[#e5dfec] bg-white px-6 py-8 shadow-[0_18px_55px_rgba(48,29,93,0.10)] sm:px-8">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#005a8f] text-sm font-bold tracking-wide text-white">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#301D5D] text-sm font-bold tracking-wide text-white">
                 RNN
               </div>
               <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.24em]" style={{ color: info.color }}>
@@ -903,7 +903,7 @@ function AuthGate({
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-4 text-base text-gray-900 outline-none transition focus:border-[#005a8f] focus:ring-2 focus:ring-[#005a8f]/10"
+                className="mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-4 text-base text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/10"
                 autoComplete="username"
               />
 
@@ -916,7 +916,7 @@ function AuthGate({
                   onClick={() => {
                     if (typeof window !== 'undefined') window.location.href = '/auth/forgot-password';
                   }}
-                  className="text-xs font-medium text-[#005a8f] hover:underline"
+                  className="text-xs font-medium text-[#301D5D] hover:underline"
                 >
                   Forgot password?
                 </button>
@@ -928,7 +928,7 @@ function AuthGate({
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-4 pr-16 text-base text-gray-900 outline-none transition focus:border-[#005a8f] focus:ring-2 focus:ring-[#005a8f]/10"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-4 pr-16 text-base text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/10"
                   autoComplete="current-password"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') void handlePasswordLogin();
@@ -945,7 +945,7 @@ function AuthGate({
                   void handlePasswordLogin();
                 }}
                 disabled={loading || !email || !password}
-                className="mb-3 w-full rounded-lg bg-[#005a8f] py-4 text-base font-semibold text-white transition hover:bg-[#241646] disabled:cursor-not-allowed disabled:opacity-40"
+                className="mb-3 w-full rounded-lg bg-[#301D5D] py-4 text-base font-semibold text-white transition hover:bg-[#241646] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {loading ? 'Signing in…' : 'Sign in'}
               </button>
@@ -955,7 +955,7 @@ function AuthGate({
                   if (isPubKey(pub)) setMode('signup');
                   else onNeedMarket();
                 }}
-                className="w-full rounded-lg border border-[#005a8f] py-4 text-base font-semibold text-[#005a8f] transition hover:bg-[#f7f5fa]"
+                className="w-full rounded-lg border border-[#301D5D] py-4 text-base font-semibold text-[#301D5D] transition hover:bg-[#f7f5fa]"
               >
                 Create an account
               </button>
@@ -971,7 +971,7 @@ function AuthGate({
                   void haptics.light();
                   onAuth({ guest: true });
                 }}
-                className="w-full py-2 text-center text-sm font-semibold text-gray-600 hover:text-[#005a8f]"
+                className="w-full py-2 text-center text-sm font-semibold text-gray-600 hover:text-[#301D5D]"
               >
                 Continue as a guest
               </button>
@@ -1851,13 +1851,13 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
   const initials = ad.biz.split(' ').map((w: string) => w[0]).join('');
 
   return (
-    <article ref={ref} className="bg-[#f5f6f9] border-b border-[#d4d8dd]">
+    <article ref={ref} className="bg-[#F6F3FB] border-b border-[#E6E5EC]">
       <div className="px-4 py-4">
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-9 h-9 rounded-full bg-white border border-[#2f7aa7] flex items-center justify-center">
-            <span className="text-xs font-medium text-[#2f7aa7]">{initials}</span>
+          <div className="w-9 h-9 rounded-full bg-white border border-[#7059A8] flex items-center justify-center">
+            <span className="text-xs font-medium text-[#7059A8]">{initials}</span>
           </div>
-          <span className="text-sm uppercase tracking-[0.2em] font-semibold text-[#1c3f5e]">Sponsored</span>
+          <span className="text-sm uppercase tracking-[0.2em] font-semibold text-[#42277C]">Sponsored</span>
           <span className="flex-1" />
           <span className="text-sm text-gray-400 italic font-light">{ad.page}</span>
         </div>
@@ -2210,7 +2210,7 @@ function ShareRow({ article, pubColor, onCopied }: { article: any; pubColor: str
   };
 
   const iconClass = "w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors";
-  const iconColor = "#292a2d";
+  const iconColor = "#1B1726";
 
   return (
     <div className="flex flex-wrap gap-2 items-center pt-2 pb-1">

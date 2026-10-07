@@ -94,7 +94,7 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
           <Check className="mx-auto text-[#005A00]" size={38} />
           <h1 className="mt-4 text-2xl font-semibold text-gray-950">Thank You for Sharing</h1>
           <p className="mt-3 text-base leading-7 text-gray-600">Your testimonial has been sent to {profile?.display_name} for review.</p>
-          {profile?.website_url && <a href={profile.website_url} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-md bg-[#005a8f] px-4 text-sm font-semibold text-white">Return to {profile.display_name}&apos;s website</a>}
+          {profile?.website_url && <a href={profile.website_url} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white">Return to {profile.display_name}&apos;s website</a>}
         </div>
       </main>
     );
@@ -109,10 +109,10 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
             // eslint-disable-next-line @next/next/no-img-element
             <img src={profile.headshot_url} alt={profile.display_name} className="mx-auto h-20 w-20 rounded-full object-cover" />
           )}
-          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#005a8f]">Client testimonial</p>
+          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">Client testimonial</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-gray-950">Share your experience with {profile?.display_name}</h1>
           {(profile?.professional_title || profile?.company) && <p className="mt-2 text-sm text-gray-600">{[profile.professional_title, profile.company].filter(Boolean).join(' · ')}</p>}
-          {profile?.website_url && <a href={profile.website_url} className="mt-3 inline-block text-sm font-semibold text-[#005a8f] underline underline-offset-4">Visit {profile.display_name}&apos;s website</a>}
+          {profile?.website_url && <a href={profile.website_url} className="mt-3 inline-block text-sm font-semibold text-[#301D5D] underline underline-offset-4">Visit {profile.display_name}&apos;s website</a>}
         </header>
 
         <form onSubmit={submit} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-8">
@@ -144,7 +144,7 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
             <legend className="text-sm font-semibold text-gray-800">Testimonial format</legend>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {(['text', 'audio', 'video'] as const).map((value) => (
-                <button key={value} type="button" onClick={() => setFormat(value)} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-4 text-sm font-medium capitalize ${format === value ? 'border-[#005a8f] bg-[#005a8f]/5 text-[#005a8f]' : 'border-gray-300 text-gray-600'}`}>
+                <button key={value} type="button" onClick={() => setFormat(value)} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-4 text-sm font-medium capitalize ${format === value ? 'border-[#301D5D] bg-[#301D5D]/5 text-[#301D5D]' : 'border-gray-300 text-gray-600'}`}>
                   {value === 'video' ? <Video size={16} /> : value === 'audio' ? <AudioLines size={16} /> : <FileText size={16} />}{value}
                 </button>
               ))}
@@ -162,12 +162,12 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
           <label className="mt-4 block text-sm font-medium text-gray-700">Original review URL, optional<input type="url" name="sourceUrl" className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
 
           <label className="mt-6 flex items-start gap-3 text-sm leading-6 text-gray-600">
-            <input required name="consent" type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[#005a8f]" />
+            <input required name="consent" type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[#301D5D]" />
             I confirm this testimonial reflects my experience and may be displayed publicly after review.
           </label>
           <input name="website" tabIndex={-1} autoComplete="off" className="sr-only" aria-hidden="true" />
 
-          <button disabled={saving} className="mt-6 min-h-12 w-full rounded-md bg-[#005a8f] px-4 text-sm font-semibold text-white hover:bg-[#241547] disabled:opacity-50">
+          <button disabled={saving} className="mt-6 min-h-12 w-full rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#241547] disabled:opacity-50">
             {saving ? 'Submitting…' : 'Submit testimonial'}
           </button>
           <p className="mt-4 text-center text-xs leading-5 text-gray-500">Your submission is reviewed before it appears publicly.</p>

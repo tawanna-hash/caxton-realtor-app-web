@@ -75,7 +75,7 @@ export function Pager({
         value={pageSize}
         disabled={disabled}
         onChange={(e) => onPageSizeChange?.(parseInt(e.target.value, 10))}
-        className="h-9 rounded border border-gray-300 bg-white px-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#2f7aa7] disabled:opacity-50"
+        className="h-9 rounded border border-gray-300 bg-white px-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#7059A8] disabled:opacity-50"
       >
         {pageSizeOptions!.map((n) => (
           <option key={n} value={n}>
@@ -102,9 +102,9 @@ export function Pager({
   }
 
   const baseBtn =
-    'inline-flex h-9 min-w-9 items-center justify-center rounded border border-gray-300 bg-white px-3 text-xs text-gray-700 hover:bg-[#f5f6f9] disabled:cursor-not-allowed disabled:opacity-40';
+    'inline-flex h-9 min-w-9 items-center justify-center rounded border border-gray-300 bg-white px-3 text-xs text-gray-700 hover:bg-[#F6F3FB] disabled:cursor-not-allowed disabled:opacity-40';
   const activeBtn =
-    'inline-flex h-9 min-w-9 items-center justify-center rounded border border-[#005a8f] bg-[#005a8f] px-3 text-xs font-semibold text-white';
+    'inline-flex h-9 min-w-9 items-center justify-center rounded border border-[#301D5D] bg-[#301D5D] px-3 text-xs font-semibold text-white';
 
   return (
     <div className={`flex items-center justify-between gap-3 flex-wrap ${className}`}>

@@ -19,7 +19,7 @@ const CHANNEL_TABS: readonly ChannelTab[] = ['all', ...AD_CHANNELS] as const;
 
 const STATUS_BADGE: Record<TearsheetStatus, string> = {
   pending: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30',
-  ready:   'bg-[#f5f6f9] text-[#1c3f5e] border-[#bbc1c9]',
+  ready:   'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
   sent:    'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
 };
 
@@ -201,7 +201,7 @@ export default function TearsheetsTable() {
                   <dt className="text-gray-500">File</dt>
                   <dd>
                     {t.file_url ? (
-                      <a href={t.file_url} target="_blank" rel="noreferrer" className="text-[#005a8f] hover:underline">View</a>
+                      <a href={t.file_url} target="_blank" rel="noreferrer" className="text-[#301D5D] hover:underline">View</a>
                     ) : (
                       <span className="text-gray-400">No file</span>
                     )}
@@ -261,7 +261,7 @@ export default function TearsheetsTable() {
                           href={t.file_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-[#005a8f] hover:underline text-xs"
+                          className="text-[#301D5D] hover:underline text-xs"
                         >
                           View
                         </a>

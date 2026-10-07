@@ -301,7 +301,7 @@ function MilestoneRow({ milestone }: { milestone: ExchangeMilestone }) {
   return (
     <li className="relative pl-7">
       <span
-        className={`absolute left-0 top-1.5 h-3 w-3 rounded-full ${dotColor} ${today ? 'ring-4 ring-[#2f7aa7]/30' : ''}`}
+        className={`absolute left-0 top-1.5 h-3 w-3 rounded-full ${dotColor} ${today ? 'ring-4 ring-[#7059A8]/30' : ''}`}
         aria-hidden
       />
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -340,8 +340,8 @@ function statusToneFor(status: string) {
       };
     case 'Exchange period':
       return {
-        border: 'border-[#2f7aa7]/40',
-        bg: 'bg-[#2f7aa7]/5',
+        border: 'border-[#7059A8]/40',
+        bg: 'bg-[#7059A8]/5',
         label: 'text-brand-700',
         text: 'text-brand-700',
       };

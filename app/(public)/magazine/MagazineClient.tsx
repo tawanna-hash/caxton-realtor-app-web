@@ -25,10 +25,10 @@ type Pub = PubKey;
 // Houston/Dallas use RealtyLine navy; they share the magazine surface with
 // the rest of the RealtyLine family until they have their own issues.
 const PUBS_INFO: Record<Pub, { name: string; city: string; color: string }> = {
-  realtyline: { name: 'RealtyLine', city: 'Austin', color: '#005a8f' },
-  newsline: { name: 'Newsline San Antonio', city: 'San Antonio', color: '#005a8f' },
-  'realtyline-houston': { name: 'RealtyLine Houston', city: 'Houston', color: '#005a8f' },
-  'realtyline-dallas': { name: 'RealtyLine Dallas/FTW', city: 'Dallas', color: '#005a8f' },
+  realtyline: { name: 'RealtyLine', city: 'Austin', color: '#301D5D' },
+  newsline: { name: 'Newsline San Antonio', city: 'San Antonio', color: '#301D5D' },
+  'realtyline-houston': { name: 'RealtyLine Houston', city: 'Houston', color: '#301D5D' },
+  'realtyline-dallas': { name: 'RealtyLine Dallas/FTW', city: 'Dallas', color: '#301D5D' },
 };
 
 function readPub(): Pub {

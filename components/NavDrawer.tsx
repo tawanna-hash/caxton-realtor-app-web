@@ -329,23 +329,23 @@ export default function NavDrawer({
             <Link
               href="/agents"
               onClick={onClose}
-              className="group block border border-white/20 bg-white p-4 text-[#005a8f] shadow-xl shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[#FFF8E6]"
+              className="group block border border-white/20 bg-white p-4 text-[#301D5D] shadow-xl shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[#FFF8E6]"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xl font-semibold leading-tight tracking-[-0.025em] text-[#005a8f]">Closing Time</p>
-                  <p className="mt-2 text-sm font-semibold leading-5 text-[#1c3f5e]">Keep Ahead of Contract Deadlines</p>
+                  <p className="text-xl font-semibold leading-tight tracking-[-0.025em] text-[#301D5D]">Closing Time</p>
+                  <p className="mt-2 text-sm font-semibold leading-5 text-[#42277C]">Keep Ahead of Contract Deadlines</p>
                 </div>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#005a8f] text-[#F4D06F] transition group-hover:translate-x-0.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#301D5D] text-[#F4D06F] transition group-hover:translate-x-0.5">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M5 12h14M13 6l6 6-6 6" />
                   </svg>
                 </span>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-[0.11em] text-[#1c3f5e]">
-                <span className="rounded-md bg-[#daeeff] px-3 py-1">TREC Forms</span>
-                <span className="rounded-md bg-[#daeeff] px-3 py-1">Run Numbers</span>
-                <span className="rounded-md bg-[#daeeff] px-3 py-1">Find Partners</span>
+              <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-[0.11em] text-[#42277C]">
+                <span className="rounded-md bg-[#EFEAF8] px-3 py-1">TREC Forms</span>
+                <span className="rounded-md bg-[#EFEAF8] px-3 py-1">Run Numbers</span>
+                <span className="rounded-md bg-[#EFEAF8] px-3 py-1">Find Partners</span>
               </div>
             </Link>
           </div>

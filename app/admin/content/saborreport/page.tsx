@@ -667,7 +667,7 @@ export default function SaborMlsAdminPage() {
                     <p className="text-xs text-gray-500 mt-1">{r.headline_label_en || ''}</p>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <button onClick={() => startEdit(r)} className="text-sm text-[#005a8f] hover:underline">Edit</button>
+                    <button onClick={() => startEdit(r)} className="text-sm text-[#301D5D] hover:underline">Edit</button>
                     <button onClick={() => remove(r.id)} className="text-sm text-[#661102] hover:underline">Delete</button>
                   </div>
                 </li>
@@ -681,7 +681,7 @@ export default function SaborMlsAdminPage() {
         .input {
           width: 100%;
           padding: 8px 12px;
-          border: 1px solid #bbc1c9;
+          border: 1px solid #D9CFF0;
           border-radius: 6px;
           font-size: 14px;
           background: white;
@@ -779,7 +779,7 @@ function StatRow({
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '8px 12px',
-  border: '1px solid #bbc1c9',
+  border: '1px solid #D9CFF0',
   borderRadius: 6,
   fontSize: 14,
   background: 'white',

@@ -30,7 +30,7 @@ type Props = {
   accentColor?: string;
 };
 
-export default function BiometricToggle({ accentColor = '#005a8f' }: Props) {
+export default function BiometricToggle({ accentColor = '#301D5D' }: Props) {
   // Default to a sentinel that hides the row until we know more. On web we
   // never run the probe — the component just returns null below.
   const [avail, setAvail] = useState<BiometricAvailability | null>(null);
@@ -128,7 +128,7 @@ export default function BiometricToggle({ accentColor = '#005a8f' }: Props) {
           onClick={() => void onToggle()}
           disabled={busy}
           className="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-50"
-          style={{ backgroundColor: enabled ? accentColor : '#bbc1c9' }}
+          style={{ backgroundColor: enabled ? accentColor : '#D9CFF0' }}
         >
           <span
             className="inline-block h-5 w-5 rounded-full bg-white shadow transition-transform"

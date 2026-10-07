@@ -189,8 +189,8 @@ export default function GiveawayDetailPage() {
             </button>
           )}
           {winnerName ? (
-            <div className="text-sm bg-[#f5f6f9] border border-[#bbc1c9] px-4 py-2 rounded-md">
-              <span className="text-[#1c3f5e] text-xs uppercase tracking-wider">Winner:</span>{' '}
+            <div className="text-sm bg-[#F6F3FB] border border-[#D9CFF0] px-4 py-2 rounded-md">
+              <span className="text-[#42277C] text-xs uppercase tracking-wider">Winner:</span>{' '}
               <span className="font-medium text-brand-700">{winnerName}</span>
             </div>
           ) : (
@@ -438,7 +438,7 @@ function RulesSection({
               <div className="flex items-center gap-3 flex-shrink-0">
                 <span className="text-xs text-gray-500">{tix} ticket{tix === 1 ? '' : 's'}</span>
                 {deadline && (
-                  <span className="text-[10px] uppercase tracking-wider bg-[#f5f6f9] text-[#1c3f5e] border border-[#daeeff] px-2 py-0.5 rounded-md">
+                  <span className="text-[10px] uppercase tracking-wider bg-[#F6F3FB] text-[#42277C] border border-[#EFEAF8] px-2 py-0.5 rounded-md">
                     Until {new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 )}

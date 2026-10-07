@@ -567,7 +567,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             type="button"
             onClick={() => setShowExtractDialog(true)}
             disabled={extracting}
-            className="px-3 py-2 text-sm font-medium text-white bg-[#005a8f] rounded-md hover:bg-[#1c3f5e] disabled:opacity-50"
+            className="px-3 py-2 text-sm font-medium text-white bg-[#301D5D] rounded-md hover:bg-[#42277C] disabled:opacity-50"
             title="Auto-populate hotspots: embedded PDF links, page-text scan (emails/phones/URLs), QR codes, and logo matches. Manual and edited-import hotspots are preserved."
           >
             {extracting
@@ -1257,7 +1257,7 @@ function ImportPdfLinksDialog({
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium text-white bg-[#005a8f] rounded-md hover:bg-[#1c3f5e] whitespace-nowrap"
+            className="px-4 py-2 text-sm font-medium text-white bg-[#301D5D] rounded-md hover:bg-[#42277C] whitespace-nowrap"
           >
             Extract now
           </button>
@@ -1471,7 +1471,7 @@ function SidebarRow({
   const isLogoMatch = isPdfImport && (hotspot.label ?? '').startsWith('Logo · ');
   return (
     <div
-      className={`px-3 py-2 text-xs flex items-start gap-2 cursor-pointer hover:bg-gray-50 ${selected ? 'bg-[#f5f6f9]' : ''}`}
+      className={`px-3 py-2 text-xs flex items-start gap-2 cursor-pointer hover:bg-gray-50 ${selected ? 'bg-[#F6F3FB]' : ''}`}
       onClick={onSelect}
     >
       {/* Numbered chip — matches the pin on the canvas box. */}
@@ -1488,7 +1488,7 @@ function SidebarRow({
             <span aria-hidden>{TYPE_ICONS[hotspot.type]}</span>
             {isLogoMatch && (
               <span
-                className="px-1 py-[1px] text-[9px] font-semibold uppercase tracking-wide bg-[#005a8f] text-white rounded shrink-0"
+                className="px-1 py-[1px] text-[9px] font-semibold uppercase tracking-wide bg-[#301D5D] text-white rounded shrink-0"
                 title="Auto-published from logo detection — verify it points to the right advertiser"
               >
                 Review

@@ -274,10 +274,10 @@ export default function RentVsBuyClient() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="w-10 text-right text-[#2f7aa7] font-medium">Rent</span>
+                      <span className="w-10 text-right text-[#7059A8] font-medium">Rent</span>
                       <div className="flex-1 h-3.5 bg-gray-100 rounded-md overflow-hidden">
                         <div
-                          className="h-full bg-[#2f7aa7]"
+                          className="h-full bg-[#7059A8]"
                           style={{ width: `${Math.max(0, rentWidth)}%` }}
                         />
                       </div>
@@ -296,12 +296,12 @@ export default function RentVsBuyClient() {
             {result.rows.map((r) => {
               const isBreakeven = r.year === result.breakevenYear;
               return (
-                <div key={r.year} className={`p-3 ${isBreakeven ? 'bg-[#2f7aa7]/10' : ''}`}>
+                <div key={r.year} className={`p-3 ${isBreakeven ? 'bg-[#7059A8]/10' : ''}`}>
                   <div className="flex items-baseline justify-between gap-3">
                     <div className="text-sm font-medium text-gray-700">
                       Year {r.year}
                       {isBreakeven && (
-                        <span className="ml-2 text-[10px] text-[#2f7aa7] font-semibold uppercase">
+                        <span className="ml-2 text-[10px] text-[#7059A8] font-semibold uppercase">
                           breakeven
                         </span>
                       )}
@@ -353,13 +353,13 @@ export default function RentVsBuyClient() {
                     <tr
                       key={r.year}
                       className={`border-t border-gray-100 ${
-                        isBreakeven ? 'bg-[#2f7aa7]/10' : ''
+                        isBreakeven ? 'bg-[#7059A8]/10' : ''
                       }`}
                     >
                       <td className="px-3 py-2 text-gray-700">
                         {r.year}
                         {isBreakeven && (
-                          <span className="ml-2 text-[10px] text-[#2f7aa7] font-semibold uppercase">
+                          <span className="ml-2 text-[10px] text-[#7059A8] font-semibold uppercase">
                             breakeven
                           </span>
                         )}
@@ -419,7 +419,7 @@ function SummaryCard({
   return (
     <div
       className={`rounded-md border p-4 ${
-        accent ? 'border-[#2f7aa7]/40 bg-[#2f7aa7]/5' : 'border-gray-200 bg-white'
+        accent ? 'border-[#7059A8]/40 bg-[#7059A8]/5' : 'border-gray-200 bg-white'
       }`}
     >
       <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</p>

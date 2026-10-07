@@ -478,7 +478,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
         s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
       const emailHtml = `
 <!DOCTYPE html>
-<html><body style="font-family: -apple-system, system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #292a2d;">
+<html><body style="font-family: -apple-system, system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1B1726;">
 <h1 style="margin: 0 0 16px; font-size: 22px;">New ${escape(kind)} submission</h1>
 <p style="margin: 0 0 8px; font-size: 14px;"><strong>Builder:</strong> ${escape(row.builderName)}</p>
 <p style="margin: 0 0 8px; font-size: 14px;"><strong>Title:</strong> ${escape(row.title)}</p>
@@ -487,8 +487,8 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
 <p style="margin: 0 0 8px; font-size: 14px;"><strong>Submitter:</strong> ${escape(row.submittedByName)} &lt;${escape(row.submittedByEmail)}&gt;</p>
 ${row.submittedByPhone ? `<p style="margin: 0 0 8px; font-size: 14px;"><strong>Phone:</strong> ${escape(row.submittedByPhone)}</p>` : ''}
 ${row.description ? `<p style="margin: 16px 0 8px; font-size: 14px;"><strong>Description:</strong></p><p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5;">${escape(row.description)}</p>` : ''}
-<p style="margin: 20px 0 8px;"><a href="${escape(pdfUrl ?? '')}" style="color: #005a8f; font-weight: 500;">View flyer PDF →</a></p>
-<p style="margin: 24px 0 0; font-size: 13px; color: #51555b;">Review at <a href="https://app.myrealtyline.com/admin/inventory" style="color: #005a8f;">/admin/inventory</a></p>
+<p style="margin: 20px 0 8px;"><a href="${escape(pdfUrl ?? '')}" style="color: #301D5D; font-weight: 500;">View flyer PDF →</a></p>
+<p style="margin: 24px 0 0; font-size: 13px; color: #4A4757;">Review at <a href="https://app.myrealtyline.com/admin/inventory" style="color: #301D5D;">/admin/inventory</a></p>
 </body></html>`;
 
       const emailResult = await getEmailProvider().send({

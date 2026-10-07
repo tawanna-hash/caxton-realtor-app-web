@@ -278,7 +278,7 @@ function AdminReportsPageInner() {
                 className={[
                   'px-1 pb-3 text-sm font-medium border-b-2 transition-colors',
                   isActive
-                    ? 'border-[#005a8f] text-gray-900'
+                    ? 'border-[#301D5D] text-gray-900'
                     : 'border-transparent text-gray-500 hover:text-gray-700',
                 ].join(' ')}
                 aria-current={isActive ? 'page' : undefined}
@@ -338,7 +338,7 @@ function AdminReportsPageInner() {
                   className={[
                     'px-3 text-sm font-medium transition-colors',
                     !isFirst ? 'border-l border-gray-200' : '',
-                    isActive ? 'bg-[#005a8f] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                    isActive ? 'bg-[#301D5D] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
                   ].filter(Boolean).join(' ')}
                 >
                   {opt.label}
@@ -353,7 +353,7 @@ function AdminReportsPageInner() {
             type="button"
             onClick={generateReport}
             disabled={!selectedArticleId || reportLoading}
-            className="inline-flex h-9 items-center rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1c3f5e] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {reportLoading ? 'Generating…' : 'Generate report'}
           </button>
@@ -419,7 +419,7 @@ function AdminReportsPageInner() {
                   <button
                     type="button"
                     onClick={copyHtml}
-                    className="inline-flex h-9 items-center rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1c3f5e]"
+                    className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
                   >
                     Copy HTML
                   </button>
@@ -526,7 +526,7 @@ function AdminReportsPageInner() {
                   className={[
                     'px-3 text-sm font-medium transition-colors',
                     !isFirst ? 'border-l border-gray-200' : '',
-                    isActive ? 'bg-[#005a8f] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                    isActive ? 'bg-[#301D5D] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
                   ].filter(Boolean).join(' ')}
                 >
                   {opt.label}
@@ -541,7 +541,7 @@ function AdminReportsPageInner() {
             type="button"
             onClick={generateEventReport}
             disabled={!selectedEventId || eventReportLoading}
-            className="inline-flex h-9 items-center rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1c3f5e] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {eventReportLoading ? 'Generating…' : 'Generate report'}
           </button>
@@ -606,7 +606,7 @@ function AdminReportsPageInner() {
                   <button
                     type="button"
                     onClick={copyHtml}
-                    className="inline-flex h-9 items-center rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1c3f5e]"
+                    className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
                   >
                     Copy HTML
                   </button>

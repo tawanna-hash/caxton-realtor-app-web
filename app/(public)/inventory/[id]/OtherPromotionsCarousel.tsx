@@ -140,7 +140,7 @@ export default function OtherPromotionsCarousel({
             className="group flex-shrink-0 w-40 sm:w-48 snap-start"
           >
             <FlyerThumb flyerPdfUrl={p.flyerPdfUrl} title={p.title} />
-            <p className="mt-2 text-xs font-medium text-gray-800 leading-snug line-clamp-2 group-hover:text-[#005a8f] transition-colors">
+            <p className="mt-2 text-xs font-medium text-gray-800 leading-snug line-clamp-2 group-hover:text-[#301D5D] transition-colors">
               {p.title}
             </p>
           </Link>

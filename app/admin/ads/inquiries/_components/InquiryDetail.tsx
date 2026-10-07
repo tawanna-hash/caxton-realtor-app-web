@@ -143,7 +143,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
         <div className="flex gap-2">
           <dt className="w-20 text-gray-500">Email</dt>
           <dd className="font-mono text-xs break-all">
-            <a href={`mailto:${inquiry.email}`} className="text-[#1c3f5e] hover:underline">
+            <a href={`mailto:${inquiry.email}`} className="text-[#42277C] hover:underline">
               {inquiry.email}
             </a>
           </dd>
@@ -152,7 +152,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
           <div className="flex gap-2">
             <dt className="w-20 text-gray-500">Phone</dt>
             <dd>
-              <a href={`tel:${inquiry.phone}`} className="text-[#1c3f5e] hover:underline">
+              <a href={`tel:${inquiry.phone}`} className="text-[#42277C] hover:underline">
                 {inquiry.phone}
               </a>
             </dd>
@@ -254,7 +254,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             onChange={(e) =>
               patch({ takeover: e.target.checked }, 'Takeover updated')
             }
-            className="mt-0.5 h-4 w-4 rounded-md border-gray-300 text-[#005a8f] focus:ring-[#2f7aa7]"
+            className="mt-0.5 h-4 w-4 rounded-md border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
           />
           <span className="text-sm">
             <span className="font-medium text-gray-900">Take over manually</span>
@@ -280,7 +280,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             value={assignee}
             onChange={(e) => setAssignee(e.target.value)}
             placeholder="e.g. tawanna@realtynewsnow.app"
-            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7] focus:border-transparent"
+            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8] focus:border-transparent"
           />
           <button
             type="button"
@@ -309,7 +309,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
           placeholder="Context for the team — left blank by default."
-          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7] focus:border-transparent"
+          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8] focus:border-transparent"
         />
         <div className="flex justify-end mt-2">
           <button
@@ -336,7 +336,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
       <div className="flex flex-wrap items-center gap-2 pt-3 mt-4 border-t border-gray-100">
         <a
           href={replyHref}
-          className="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium bg-[#005a8f] text-white hover:bg-[#1c3f5e]"
+          className="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium bg-[#301D5D] text-white hover:bg-[#42277C]"
         >
           Reply by email
         </a>

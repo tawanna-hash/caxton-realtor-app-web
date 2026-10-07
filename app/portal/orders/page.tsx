@@ -28,7 +28,7 @@ type AgreementRow = {
 
 const STATUS_TONE: Record<string, string> = {
   active: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
-  signed: 'bg-[#f5f6f9] text-[#1c3f5e] border-[#bbc1c9]',
+  signed: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
   sent: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30',
   draft: 'bg-gray-100 text-gray-700 border-gray-200',
   expired: 'bg-gray-50 text-gray-500 border-gray-200',
@@ -112,7 +112,7 @@ export default async function PortalOrders() {
           </p>
           <Link
             href="/advertise/portal"
-            className="inline-flex items-center gap-2 rounded-md bg-[#005a8f] px-4 py-3 text-sm font-semibold text-white hover:bg-[#1c3f5e] transition"
+            className="inline-flex items-center gap-2 rounded-md bg-[#301D5D] px-4 py-3 text-sm font-semibold text-white hover:bg-[#42277C] transition"
           >
             Browse ad placements
             <span aria-hidden>{'\u2192'}</span>
@@ -157,7 +157,7 @@ export default async function PortalOrders() {
                           href={r.signed_document}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#1c3f5e] hover:underline"
+                          className="text-[#42277C] hover:underline"
                         >
                           View PDF
                         </Link>
@@ -202,7 +202,7 @@ export default async function PortalOrders() {
                         href={r.signed_document}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-[#1c3f5e] hover:underline"
+                        className="text-sm text-[#42277C] hover:underline"
                       >
                         View PDF
                       </Link>
@@ -227,7 +227,7 @@ export default async function PortalOrders() {
         </p>
         <Link
           href="/advertise/portal"
-          className="text-sm font-semibold text-[#005a8f] hover:text-[#1c3f5e]"
+          className="text-sm font-semibold text-[#301D5D] hover:text-[#42277C]"
         >
           Browse placements {'\u2192'}
         </Link>

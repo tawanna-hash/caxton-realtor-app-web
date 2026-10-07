@@ -74,12 +74,12 @@ const MARKETS: Market[] = [
 
 function ProviderRow({ provider }: { provider: Provider }) {
   return (
-    <li className="flex items-center justify-between gap-3 border-b border-[#f5f6f9] px-4 py-3 last:border-0">
+    <li className="flex items-center justify-between gap-3 border-b border-[#F6F3FB] px-4 py-3 last:border-0">
       <span className="min-w-0">
         <span className="block text-sm font-semibold text-slate-900">{provider.name}</span>
         {provider.note ? <span className="block text-xs text-slate-500">{provider.note}</span> : null}
       </span>
-      <a href={`tel:${provider.phone.replace(/[^0-9]/g, '')}`} className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-[#005a8f] hover:underline" aria-label={`Call ${provider.name}`}>
+      <a href={`tel:${provider.phone.replace(/[^0-9]/g, '')}`} className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-[#301D5D] hover:underline" aria-label={`Call ${provider.name}`}>
         <Phone className="h-3.5 w-3.5" aria-hidden="true" />{provider.phone}
       </a>
     </li>
@@ -104,8 +104,8 @@ export default function UtilitiesPanel() {
       <div className="grid gap-3 md:grid-cols-2">
         {market.categories.map((category) => (
           <div key={category.title} className="ds-card !p-0 self-start">
-            <p className="border-b border-[#d4d8dd] px-4 py-3 text-sm font-semibold text-slate-900">{category.title}</p>
-            {category.note ? <p className="border-b border-[#f5f6f9] bg-[#f5f6f9] px-4 py-3 text-xs leading-5 text-slate-600">{category.note}</p> : null}
+            <p className="border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">{category.title}</p>
+            {category.note ? <p className="border-b border-[#F6F3FB] bg-[#F6F3FB] px-4 py-3 text-xs leading-5 text-slate-600">{category.note}</p> : null}
             <ul>{category.providers.map((provider) => <ProviderRow key={provider.name} provider={provider} />)}</ul>
           </div>
         ))}

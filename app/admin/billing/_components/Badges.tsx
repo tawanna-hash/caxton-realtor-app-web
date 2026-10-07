@@ -17,7 +17,7 @@ export function Kpi({
   const borderCls = accent === 'rose' ? 'border-l-4 border-l-[#FF2A04]'
     : accent === 'amber' ? 'border-l-4 border-l-[#FAD800]'
     : accent === 'emerald' ? 'border-l-4 border-l-[#00E200]'
-    : accent === 'blue' ? 'border-l-4 border-l-[#2f7aa7]'
+    : accent === 'blue' ? 'border-l-4 border-l-[#7059A8]'
     : '';
   return (
     <div

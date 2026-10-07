@@ -44,8 +44,8 @@ export function DrawerFooter({
   tone?: 'blue' | 'orange';
 }) {
   const submitColor = tone === 'orange'
-    ? 'bg-[#005a8f] hover:bg-[#1c3f5e]'
-    : 'bg-[#005a8f] hover:bg-[#1c3f5e]';
+    ? 'bg-[#301D5D] hover:bg-[#42277C]'
+    : 'bg-[#301D5D] hover:bg-[#42277C]';
 
   return (
     <div className="sticky bottom-0 -mx-4 flex items-center justify-end gap-2 border-t border-gray-200 bg-white px-4 py-4 sm:-mx-6 sm:px-6">

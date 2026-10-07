@@ -151,7 +151,7 @@ export default function PublicationSettingsForm({ initialSettings }: Props) {
                       value={value}
                       onChange={(e) => setDraft((prev) => ({ ...prev, [pub]: e.target.value }))}
                       placeholder="G-XXXXXXX"
-                      className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#2f7aa7] focus:border-[#2f7aa7]"
+                      className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#7059A8] focus:border-[#7059A8]"
                       autoComplete="off"
                       spellCheck={false}
                     />
@@ -161,7 +161,7 @@ export default function PublicationSettingsForm({ initialSettings }: Props) {
                       type="button"
                       onClick={() => handleSave(pub)}
                       disabled={isSaving || !dirty}
-                      className="bg-[#005a8f] hover:bg-[#1c3f5e] disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium"
+                      className="bg-[#301D5D] hover:bg-[#42277C] disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium"
                     >
                       {isSaving ? 'Saving…' : 'Save'}
                     </button>

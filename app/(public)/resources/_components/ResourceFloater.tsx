@@ -257,7 +257,7 @@ function PrintBrandFooter({ template, brand }: BrandFooter) {
       aria-label="REALTOR contact information"
       className={`hidden ds-signature print:fixed print:inset-x-0 print:bottom-0 print:z-50 print:bg-white print:px-8 print:py-3 print:text-gray-900 ${
         template === 'minimal-rows'
-          ? 'print:flex print:items-center print:gap-4 print:border-t-2 print:border-[#005a8f]'
+          ? 'print:flex print:items-center print:gap-4 print:border-t-2 print:border-[#301D5D]'
           : 'print:grid print:grid-cols-[72px_minmax(0,1fr)_100px] print:items-center print:gap-4 print:border-t print:border-gray-300'
       }`}
     >

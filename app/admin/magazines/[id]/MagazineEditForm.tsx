@@ -236,7 +236,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-3xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
-          <Link href="/admin/magazines" className="text-sm text-[#005a8f] hover:underline">
+          <Link href="/admin/magazines" className="text-sm text-[#301D5D] hover:underline">
             ← Back to magazines
           </Link>
           {savedVisible && <span className="text-xs text-[#005A00]">Saved ✓</span>}
@@ -317,7 +317,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
           <button
             type="submit"
             disabled={busy === 'meta'}
-            className="bg-[#005a8f] hover:bg-[#1c3f5e] text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 whitespace-nowrap"
+            className="bg-[#301D5D] hover:bg-[#42277C] text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 whitespace-nowrap"
           >
             {busy === 'meta' ? 'Saving…' : 'Save metadata'}
           </button>
@@ -344,7 +344,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
                 disabled={busy !== null}
                 className="text-sm"
               />
-              {busy === 'cover' && <p className="text-xs text-[#005a8f] mt-1">Uploading…</p>}
+              {busy === 'cover' && <p className="text-xs text-[#301D5D] mt-1">Uploading…</p>}
             </div>
           </div>
         </div>
@@ -367,7 +367,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
             disabled={busy !== null}
             className="text-sm"
           />
-          {busy === 'pdf' && <p className="text-xs text-[#005a8f] mt-1">Uploading…</p>}
+          {busy === 'pdf' && <p className="text-xs text-[#301D5D] mt-1">Uploading…</p>}
           <div className="mt-3 pt-3 border-t border-gray-100">
             <button
               onClick={handleReExtract}
@@ -386,7 +386,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
             <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium">
               Pages ({pageUrls.length})
             </h2>
-            <label className="cursor-pointer text-sm bg-[#005a8f] hover:bg-[#1c3f5e] text-white px-3 py-2 rounded-md">
+            <label className="cursor-pointer text-sm bg-[#301D5D] hover:bg-[#42277C] text-white px-3 py-2 rounded-md">
               + Add pages
               <input
                 type="file"
@@ -402,7 +402,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
               />
             </label>
           </div>
-          {busy === 'pages' && <p className="text-xs text-[#005a8f] mb-2">Working…</p>}
+          {busy === 'pages' && <p className="text-xs text-[#301D5D] mb-2">Working…</p>}
           {pageUrls.length === 0 ? (
             <p className="text-sm text-gray-400 italic">No pages uploaded yet.</p>
           ) : (

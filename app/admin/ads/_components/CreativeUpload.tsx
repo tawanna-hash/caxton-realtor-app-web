@@ -111,14 +111,14 @@ export function CreativeUpload({ advertiserName, clickUrl, altText, onUploaded, 
           disabled={busy || disabled}
           className="block w-full text-sm text-gray-900
                      file:mr-4 file:h-9 file:px-4 file:rounded
-                     file:border file:border-[#1c3f5e] file:text-sm file:font-semibold
-                     file:bg-[#005a8f] file:text-white
-                     hover:file:bg-[#1c3f5e]
+                     file:border file:border-[#42277C] file:text-sm file:font-semibold
+                     file:bg-[#301D5D] file:text-white
+                     hover:file:bg-[#42277C]
                      disabled:opacity-50"
         />
       </label>
       {progress && (
-        <p className="text-sm text-[#1c3f5e]" aria-live="polite">{progress}</p>
+        <p className="text-sm text-[#42277C]" aria-live="polite">{progress}</p>
       )}
       {error && (
         <p className="text-sm text-[#661102]" role="alert">{error}</p>

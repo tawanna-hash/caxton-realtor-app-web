@@ -224,12 +224,12 @@ export function emailHtml(deal: AgentDeal, deadline: DealDeadline, offset: numbe
   const timing = offset === 0 ? 'today' : `in ${offset} day${offset === 1 ? '' : 's'}`;
   const siteUrl = CLOSING_TIME_ORIGIN;
   return `
-    <div style="font-family:Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:640px;margin:auto">
-      <p style="margin:0 0 8px;color:#2f7aa7;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Closing Time</p>
-      <h1 style="margin:0 0 16px;font-size:24px;color:#005a8f">${deadlineLabel}: ${timing}</h1>
+    <div style="font-family:Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:640px;margin:auto">
+      <p style="margin:0 0 8px;color:#7059A8;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Closing Time</p>
+      <h1 style="margin:0 0 16px;font-size:24px;color:#301D5D">${deadlineLabel}: ${timing}</h1>
       <p style="margin:0 0 8px"><strong>Property:</strong> ${label}</p>
       <p style="margin:0 0 24px">Due ${escapeHtml(formatDeadlineDate(deadline.date))}.</p>
-      <a href="${siteUrl}/agents/closing-time" style="display:inline-block;background:#005a8f;color:#ffffff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700">Open Closing Time</a>
+      <a href="${siteUrl}/agents/closing-time" style="display:inline-block;background:#301D5D;color:#ffffff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700">Open Closing Time</a>
     </div>
   `;
 }
@@ -281,13 +281,13 @@ export function urgentEmailHtml(deal: AgentDeal, deadline: DealDeadline, items: 
   const siteUrl = CLOSING_TIME_ORIGIN;
   const rows = items.slice(0, 12).map((item) => `<li style="margin:0 0 4px">${escapeHtml(item.label)}: ${item.blank} blank</li>`).join('');
   return `
-    <div style="font-family:Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:640px;margin:auto">
-      <p style="margin:0 0 8px;color:#2f7aa7;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Closing Time</p>
-      <h1 style="margin:0 0 16px;font-size:24px;color:#005a8f">Urgent: Review Blank Fields Before ${escapeHtml(deadline.label)}</h1>
+    <div style="font-family:Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:640px;margin:auto">
+      <p style="margin:0 0 8px;color:#7059A8;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Closing Time</p>
+      <h1 style="margin:0 0 16px;font-size:24px;color:#301D5D">Urgent: Review Blank Fields Before ${escapeHtml(deadline.label)}</h1>
       <p style="margin:0 0 8px"><strong>Property:</strong> ${escapeHtml(dealLabel(deal))}</p>
       <p style="margin:0 0 12px">${escapeHtml(deadline.label)} is due tomorrow, ${escapeHtml(formatDeadlineDate(deadline.date))}. These items still have blank fields. Review each one or ignore it if the blanks are intentional.</p>
       <ul style="margin:0 0 24px;padding-left:20px">${rows}</ul>
-      <a href="${siteUrl}/agents/closing-time" style="display:inline-block;background:#005a8f;color:#ffffff;padding:12px 18px;border-radius:999px;text-decoration:none">Open Closing Time</a>
+      <a href="${siteUrl}/agents/closing-time" style="display:inline-block;background:#301D5D;color:#ffffff;padding:12px 18px;border-radius:999px;text-decoration:none">Open Closing Time</a>
     </div>
   `;
 }

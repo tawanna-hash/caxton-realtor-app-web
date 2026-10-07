@@ -246,58 +246,58 @@ function notificationEmailHtml(p: SubscribePayload, usps: AddressCheckResult): s
   const norm = usps.normalized;
   return `
 <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
-  <h2 style="color: #005a8f; margin: 0 0 16px;">New print subscription — ${escapeHtml(pubLabel(p.publication))}</h2>
-  <p style="color: #51555b; font-size: 14px; margin: 0 0 24px;">
+  <h2 style="color: #301D5D; margin: 0 0 16px;">New print subscription — ${escapeHtml(pubLabel(p.publication))}</h2>
+  <p style="color: #4A4757; font-size: 14px; margin: 0 0 24px;">
     Submitted at ${new Date().toISOString()}
   </p>
   <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
-    <tr><td style="padding: 6px 12px 6px 0; color: #51555b; vertical-align: top;">Name</td><td style="padding: 6px 0;"><strong>${escapeHtml(p.name)}</strong></td></tr>
-    <tr><td style="padding: 6px 12px 6px 0; color: #51555b; vertical-align: top;">Company</td><td style="padding: 6px 0;">${escapeHtml(p.company)}</td></tr>
-    <tr><td style="padding: 6px 12px 6px 0; color: #51555b; vertical-align: top;">Title</td><td style="padding: 6px 0;">${escapeHtml(p.title)}</td></tr>
-    <tr><td style="padding: 6px 12px 6px 0; color: #51555b; vertical-align: top;">Email</td><td style="padding: 6px 0;"><a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a></td></tr>
-    <tr><td style="padding: 6px 12px 6px 0; color: #51555b; vertical-align: top;">Mobile</td><td style="padding: 6px 0;">${escapeHtml(p.mobile)}</td></tr>
-    ${p.licenseType ? `<tr><td style="padding: 6px 12px 6px 0; color: #51555b; vertical-align: top;">License</td><td style="padding: 6px 0;">${escapeHtml(p.licenseType)} — ${escapeHtml(p.licenseNumber || '')}</td></tr>` : ''}
-    <tr><td style="padding: 6px 12px 6px 0; color: #51555b; vertical-align: top;">Birthday</td><td style="padding: 6px 0;">${p.birthdayMonth}/${p.birthdayDay}</td></tr>
-    <tr><td style="padding: 18px 12px 6px 0; color: #51555b; vertical-align: top;">Mailing address</td><td style="padding: 18px 0 6px 0;">
+    <tr><td style="padding: 6px 12px 6px 0; color: #4A4757; vertical-align: top;">Name</td><td style="padding: 6px 0;"><strong>${escapeHtml(p.name)}</strong></td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #4A4757; vertical-align: top;">Company</td><td style="padding: 6px 0;">${escapeHtml(p.company)}</td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #4A4757; vertical-align: top;">Title</td><td style="padding: 6px 0;">${escapeHtml(p.title)}</td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #4A4757; vertical-align: top;">Email</td><td style="padding: 6px 0;"><a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a></td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #4A4757; vertical-align: top;">Mobile</td><td style="padding: 6px 0;">${escapeHtml(p.mobile)}</td></tr>
+    ${p.licenseType ? `<tr><td style="padding: 6px 12px 6px 0; color: #4A4757; vertical-align: top;">License</td><td style="padding: 6px 0;">${escapeHtml(p.licenseType)} — ${escapeHtml(p.licenseNumber || '')}</td></tr>` : ''}
+    <tr><td style="padding: 6px 12px 6px 0; color: #4A4757; vertical-align: top;">Birthday</td><td style="padding: 6px 0;">${p.birthdayMonth}/${p.birthdayDay}</td></tr>
+    <tr><td style="padding: 18px 12px 6px 0; color: #4A4757; vertical-align: top;">Mailing address</td><td style="padding: 18px 0 6px 0;">
       <strong>${escapeHtml(p.name)}</strong><br/>
       ${escapeHtml(p.street)}${p.address2 ? '<br/>' + escapeHtml(p.address2) : ''}<br/>
       ${escapeHtml(p.city)}, ${escapeHtml(p.state)} ${escapeHtml(p.zip)}
     </td></tr>
-    <tr><td style="padding: 6px 12px 6px 0; color: #51555b; vertical-align: top;">Address check (Google)</td><td style="padding: 6px 0;">
+    <tr><td style="padding: 6px 12px 6px 0; color: #4A4757; vertical-align: top;">Address check (Google)</td><td style="padding: 6px 0;">
       ${usps.ok
-        ? `<span style="color: #005a8f;">✓ Verified</span>${norm ? `<br/><small style="color: #51555b;">Normalized: ${escapeHtml(norm.streetAddress)}, ${escapeHtml(norm.city)}, ${escapeHtml(norm.state)} ${escapeHtml(norm.ZIPCode)}${norm.ZIPPlus4 ? '-' + escapeHtml(norm.ZIPPlus4) : ''}</small>` : ''}`
-        : `<span style="color: #661102;">⚠ ${escapeHtml(usps.error || 'Could not verify')}</span><br/><small style="color: #51555b;">Review address before mailing.</small>`
+        ? `<span style="color: #301D5D;">✓ Verified</span>${norm ? `<br/><small style="color: #4A4757;">Normalized: ${escapeHtml(norm.streetAddress)}, ${escapeHtml(norm.city)}, ${escapeHtml(norm.state)} ${escapeHtml(norm.ZIPCode)}${norm.ZIPPlus4 ? '-' + escapeHtml(norm.ZIPPlus4) : ''}</small>` : ''}`
+        : `<span style="color: #661102;">⚠ ${escapeHtml(usps.error || 'Could not verify')}</span><br/><small style="color: #4A4757;">Review address before mailing.</small>`
       }
     </td></tr>
   </table>
-  <p style="color: #7b8089; font-size: 12px; margin: 32px 0 0; padding-top: 16px; border-top: 1px solid #d4d8dd;">
+  <p style="color: #7A7787; font-size: 12px; margin: 32px 0 0; padding-top: 16px; border-top: 1px solid #E6E5EC;">
     Realty News Now subscription system — Caxton Publications, Inc.
   </p>
 </div>`.trim();
 }
 
 function confirmationEmailHtml(p: SubscribePayload, usps: AddressCheckResult): string {
-  const accent = p.publication === 'realtyline' ? '#005a8f' : '#005a8f';
+  const accent = p.publication === 'realtyline' ? '#301D5D' : '#301D5D';
   const norm = usps.normalized;
   return `
 <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px;">
-  <p style="color: #51555b; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 8px;">${escapeHtml(pubLabel(p.publication))}</p>
-  <h1 style="color: #292a2d; margin: 0 0 20px; font-size: 28px;">You're on the list, ${escapeHtml(p.firstName)}.</h1>
-  <p style="color: #292a2d; font-size: 16px; line-height: 1.6;">
+  <p style="color: #4A4757; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 8px;">${escapeHtml(pubLabel(p.publication))}</p>
+  <h1 style="color: #1B1726; margin: 0 0 20px; font-size: 28px;">You're on the list, ${escapeHtml(p.firstName)}.</h1>
+  <p style="color: #1B1726; font-size: 16px; line-height: 1.6;">
     Thanks for subscribing to <strong>${escapeHtml(pubLabel(p.publication))}</strong>. We've received your request and we'll mail your first issue within the next few weeks.
   </p>
-  <div style="background: #f5f6f9; border-left: 4px solid ${accent}; padding: 16px 20px; margin: 24px 0;">
-    <p style="color: #51555b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px;">Mailing to</p>
-    <p style="color: #292a2d; font-size: 15px; line-height: 1.5; margin: 0;">
+  <div style="background: #F6F3FB; border-left: 4px solid ${accent}; padding: 16px 20px; margin: 24px 0;">
+    <p style="color: #4A4757; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px;">Mailing to</p>
+    <p style="color: #1B1726; font-size: 15px; line-height: 1.5; margin: 0;">
       <strong>${escapeHtml(p.name)}</strong><br/>
       ${norm ? escapeHtml(norm.streetAddress) : escapeHtml(p.street)}${(norm?.secondaryAddress || p.address2) ? '<br/>' + escapeHtml(norm?.secondaryAddress || p.address2 || '') : ''}<br/>
       ${escapeHtml(norm?.city || p.city)}, ${escapeHtml(norm?.state || p.state)} ${escapeHtml(norm?.ZIPCode || p.zip)}${norm?.ZIPPlus4 ? '-' + escapeHtml(norm.ZIPPlus4) : ''}
     </p>
   </div>
-  <p style="color: #292a2d; font-size: 16px; line-height: 1.6;">
+  <p style="color: #1B1726; font-size: 16px; line-height: 1.6;">
     Need to update your information or unsubscribe? Just reply to this email and we'll take care of it.
   </p>
-  <p style="color: #7b8089; font-size: 12px; margin: 40px 0 0; padding-top: 20px; border-top: 1px solid #d4d8dd;">
+  <p style="color: #7A7787; font-size: 12px; margin: 40px 0 0; padding-top: 20px; border-top: 1px solid #E6E5EC;">
     Realty News Now<br/>
     a Caxton Publications, Inc. brand<br/>
     P.O. Box 81366, Austin, TX 78708-1366<br/>

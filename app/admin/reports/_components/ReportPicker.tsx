@@ -102,7 +102,7 @@ export default function ReportPicker({
           onKeyDown={handleKey}
           placeholder={placeholder}
           aria-label="Search list"
-          className="h-9 w-full rounded border border-gray-300 bg-white pl-8 pr-8 text-sm outline-none focus:border-[#2f7aa7] focus:ring-1 focus:ring-[#2f7aa7]"
+          className="h-9 w-full rounded border border-gray-300 bg-white pl-8 pr-8 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
         />
         {/* Magnifying glass */}
         <svg
@@ -173,10 +173,10 @@ export default function ReportPicker({
                 className={[
                   'w-full text-left px-3 py-3 flex items-center gap-3 transition-colors',
                   isSelected
-                    ? 'bg-[#f5f6f9]'
+                    ? 'bg-[#F6F3FB]'
                     : isActive
-                      ? 'bg-[#f5f6f9]/40'
-                      : 'bg-white hover:bg-[#f5f6f9]/40',
+                      ? 'bg-[#F6F3FB]/40'
+                      : 'bg-white hover:bg-[#F6F3FB]/40',
                 ].join(' ')}
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
@@ -214,7 +214,7 @@ export default function ReportPicker({
                 {isSelected && (
                   <svg
                     viewBox="0 0 20 20"
-                    className="shrink-0 w-4 h-4 text-[#1c3f5e]"
+                    className="shrink-0 w-4 h-4 text-[#42277C]"
                     aria-hidden="true"
                   >
                     <path

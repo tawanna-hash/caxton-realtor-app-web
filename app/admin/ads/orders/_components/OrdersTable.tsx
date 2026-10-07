@@ -34,7 +34,7 @@ const SOURCES: readonly OrderSource[] = ['campaign', 'agreement'] as const;
 const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
   sent: 'bg-[#FEF8CC] text-[#645600]',
-  signed: 'bg-[#daeeff] text-[#005a8f]',
+  signed: 'bg-[#EFEAF8] text-[#301D5D]',
   active: 'bg-[#E0FBE0] text-[#005A00]',
   expired: 'bg-gray-100 text-gray-700',
   cancelled: 'bg-[#FFEAE6] text-[#661102]',
@@ -45,7 +45,7 @@ const CHANNEL_BADGE_CLASS: Record<AdChannel, string> = {
   print: 'bg-[#FFEAE6] text-[#661102] border-[#FF2A04]/30',
   digital: 'bg-[#E3F7FF] text-[#285766] border-[#64D9FF]/30',
   email: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
-  app: 'bg-[#daeeff] text-[#1c3f5e] border-[#98bdd3]',
+  app: 'bg-[#EFEAF8] text-[#42277C] border-[#B9ADD6]',
 };
 
 const SOURCE_LABEL: Record<OrderSource, string> = {
@@ -245,7 +245,7 @@ export default function OrdersTable() {
                 onClick={() => setUrl({ channel: c === 'all' ? null : c })}
                 className={`py-3 border-b-2 text-sm font-medium transition ${
                   active
-                    ? 'border-[#005a8f] text-[#1c3f5e]'
+                    ? 'border-[#301D5D] text-[#42277C]'
                     : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300'
                 }`}
                 aria-current={active ? 'page' : undefined}
@@ -324,7 +324,7 @@ export default function OrdersTable() {
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search partner, slot, size…"
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-[#2f7aa7] focus:border-transparent"
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-[#7059A8] focus:border-transparent"
           />
         </div>
       </div>
@@ -369,7 +369,7 @@ export default function OrdersTable() {
                     <div className="text-sm font-medium tabular-nums text-gray-900">
                       {fmtCents(row.amount_cents)}
                     </div>
-                    <Link href={detailHref(row)} className="text-xs text-[#1c3f5e] hover:underline">
+                    <Link href={detailHref(row)} className="text-xs text-[#42277C] hover:underline">
                       Open
                     </Link>
                   </div>
@@ -391,7 +391,7 @@ export default function OrdersTable() {
                     {row.paid_at ? (
                       <span className="text-[#005A00] font-medium">Paid {fmtDate(row.paid_at)}</span>
                     ) : row.stripe_payment_link_url ? (
-                      <a href={row.stripe_payment_link_url} target="_blank" rel="noopener noreferrer" className="text-[#1c3f5e] hover:underline">
+                      <a href={row.stripe_payment_link_url} target="_blank" rel="noopener noreferrer" className="text-[#42277C] hover:underline">
                         Stripe link ↗
                       </a>
                     ) : (
@@ -483,7 +483,7 @@ export default function OrdersTable() {
                           href={row.stripe_payment_link_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#1c3f5e] hover:underline"
+                          className="text-[#42277C] hover:underline"
                         >
                           Stripe link ↗
                         </a>
@@ -505,7 +505,7 @@ export default function OrdersTable() {
                       )}
                       <Link
                         href={detailHref(row)}
-                        className="text-[#1c3f5e] hover:underline text-xs"
+                        className="text-[#42277C] hover:underline text-xs"
                       >
                         Open
                       </Link>

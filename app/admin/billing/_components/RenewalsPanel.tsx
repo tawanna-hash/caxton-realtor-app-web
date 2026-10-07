@@ -58,7 +58,7 @@ export function RenewalsPanel({
             key={t.key}
             onClick={() => { onTabChange(t.key); setPage(1); }}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
-              activeTab === t.key ? 'border-[#005a8f] text-[#1c3f5e]' : 'border-transparent text-gray-500 hover:text-gray-700'
+              activeTab === t.key ? 'border-[#301D5D] text-[#42277C]' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             {t.label} <span className="ml-1 text-xs text-gray-400">({t.count})</span>
@@ -86,7 +86,7 @@ export function RenewalsPanel({
               {expiringPage.map((r) => {
                 const days = getDaysUntil(r.exp_date ?? r.end_date);
                 return (
-                  <div key={r.id} className="hover:bg-[#f5f6f9]/30">
+                  <div key={r.id} className="hover:bg-[#F6F3FB]/30">
                     {/* Desktop */}
                     <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-3 items-center">
                       <button onClick={() => onOpen(r)} className="col-span-2 text-left text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</button>
@@ -104,7 +104,7 @@ export function RenewalsPanel({
                           onClick={() => onSendRenewal?.(r)}
                         >Email</button>
                         <button
-                          className="rounded bg-[#005a8f] px-2 py-1 text-xs text-white hover:bg-[#1c3f5e]"
+                          className="rounded bg-[#301D5D] px-2 py-1 text-xs text-white hover:bg-[#42277C]"
                           onClick={() => onRenew(r)}
                         >Renew</button>
                       </div>
@@ -133,7 +133,7 @@ export function RenewalsPanel({
                           onClick={() => onSendRenewal?.(r)}
                         >Email</button>
                         <button
-                          className="rounded bg-[#005a8f] px-2 py-1 text-xs text-white hover:bg-[#1c3f5e]"
+                          className="rounded bg-[#301D5D] px-2 py-1 text-xs text-white hover:bg-[#42277C]"
                           onClick={() => onRenew(r)}
                         >Renew</button>
                       </div>
@@ -163,7 +163,7 @@ export function RenewalsPanel({
             ? <div className="p-8 text-center text-sm text-gray-500">No renewals yet.</div>
             : <div className="divide-y divide-gray-100">
               {renewalsPage.map((r) => (
-                <button key={r.id} onClick={() => onOpen(r)} className="block w-full text-left hover:bg-[#f5f6f9]/30">
+                <button key={r.id} onClick={() => onOpen(r)} className="block w-full text-left hover:bg-[#F6F3FB]/30">
                   {/* Desktop */}
                   <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-3 items-center">
                     <div className="col-span-2 text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</div>
@@ -258,7 +258,7 @@ export function RenewalsPanel({
                           />
                           <div className="flex gap-1 justify-end">
                             <button className="text-xs px-2 py-0.5 rounded-md border border-gray-300 text-gray-600" onClick={() => setNoteId(null)}>Cancel</button>
-                            <button className="rounded bg-[#005a8f] px-2 py-0.5 text-xs text-white" onClick={async () => {
+                            <button className="rounded bg-[#301D5D] px-2 py-0.5 text-xs text-white" onClick={async () => {
                               await onReminderAction(r.id, { note: noteText });
                               setNoteId(null); setNoteText('');
                             }}>Save</button>
@@ -271,7 +271,7 @@ export function RenewalsPanel({
                           {r.status === 'Pending' && <>
                             <button className="px-2 py-0.5 text-xs rounded-md bg-[#005A00] text-white hover:bg-[#005A00]"
                               onClick={() => onReminderAction(r.id, { status: 'Completed' })}>Complete</button>
-                            <button className="px-2 py-0.5 text-xs rounded-md border border-[#98bdd3] text-[#1c3f5e] hover:bg-[#f5f6f9]"
+                            <button className="px-2 py-0.5 text-xs rounded-md border border-[#B9ADD6] text-[#42277C] hover:bg-[#F6F3FB]"
                               onClick={() => { setNoteId(r.id); setNoteText(r.note ?? ''); }}>Note</button>
                             <button className="px-2 py-0.5 text-xs rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50"
                               onClick={() => onReminderAction(r.id, { status: 'Dismissed' })}>Dismiss</button>

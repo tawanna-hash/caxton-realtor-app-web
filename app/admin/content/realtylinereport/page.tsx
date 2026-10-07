@@ -356,7 +356,7 @@ export default function RealtyLineMlsAdminPage() {
                 type="button"
                 onClick={onPickFile}
                 disabled={importing}
-                className="text-xs font-medium px-3 py-2 border border-[#1c3f5e] bg-[#005a8f] text-white rounded-md hover:bg-[#1c3f5e] transition disabled:opacity-60"
+                className="text-xs font-medium px-3 py-2 border border-[#42277C] bg-[#301D5D] text-white rounded-md hover:bg-[#42277C] transition disabled:opacity-60"
               >
                 {importing ? 'Extracting\u2026' : 'Upload graphic to autopopulate'}
               </button>
@@ -671,7 +671,7 @@ export default function RealtyLineMlsAdminPage() {
                     <p className="text-xs text-gray-500 mt-1">{r.headline_label_en || ''}</p>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <button onClick={() => startEdit(r)} className="text-sm text-[#005a8f] hover:underline">Edit</button>
+                    <button onClick={() => startEdit(r)} className="text-sm text-[#301D5D] hover:underline">Edit</button>
                     <button onClick={() => remove(r.id)} className="text-sm text-[#661102] hover:underline">Delete</button>
                   </div>
                 </li>
@@ -685,7 +685,7 @@ export default function RealtyLineMlsAdminPage() {
         .input {
           width: 100%;
           padding: 8px 12px;
-          border: 1px solid #bbc1c9;
+          border: 1px solid #D9CFF0;
           border-radius: 6px;
           font-size: 14px;
           background: white;
@@ -783,7 +783,7 @@ function StatRow({
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '8px 12px',
-  border: '1px solid #bbc1c9',
+  border: '1px solid #D9CFF0',
   borderRadius: 6,
   fontSize: 14,
   background: 'white',

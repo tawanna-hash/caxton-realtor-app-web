@@ -328,7 +328,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                       <button
                         onClick={() => startEdit(c)}
                         disabled={busy}
-                        className="text-xs font-medium text-[#1c3f5e] hover:underline disabled:opacity-50"
+                        className="text-xs font-medium text-[#42277C] hover:underline disabled:opacity-50"
                       >
                         Edit
                       </button>

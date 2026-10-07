@@ -173,7 +173,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
           </div>
           {showRotationNotice && (
             <span
-              className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#f5f6f9] text-[#1c3f5e] border border-[#bbc1c9] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+              className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#F6F3FB] text-[#42277C] border border-[#D9CFF0] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
               title="Rotates with up to 5 active campaigns. 6s dwell, 2s cross-fade."
             >
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -185,7 +185,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
           )}
         </div>
         {showRotationNotice && (
-          <div className="text-[11px] text-[#1c3f5e]">
+          <div className="text-[11px] text-[#42277C]">
             Shared placement · up to 5 partners cycle · 6-second view + 2-second fade
           </div>
         )}
@@ -249,7 +249,7 @@ export default function PublicAdvertisePlacementsPage() {
           before you check out.
         </p>
         <p className="text-sm text-gray-600 leading-relaxed max-w-3xl mt-3">
-          Slots marked <span className="inline-flex items-center gap-1 align-middle rounded-full bg-[#f5f6f9] text-[#1c3f5e] border border-[#bbc1c9] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+          Slots marked <span className="inline-flex items-center gap-1 align-middle rounded-full bg-[#F6F3FB] text-[#42277C] border border-[#D9CFF0] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M21 12a9 9 0 1 1-3-6.7" />
               <polyline points="21 3 21 9 15 9" />

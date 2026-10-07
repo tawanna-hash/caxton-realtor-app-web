@@ -97,13 +97,13 @@ export interface FooterPalette {
 }
 
 const PALETTE_NAVY: FooterPalette = {
-  primary: [48, 29, 93],       // #005a8f RealtyLine Austin
+  primary: [48, 29, 93],       // #301D5D RealtyLine Austin
   primarySoft: [220, 226, 238],
-  accent: [196, 163, 90],     // #005a8f gold
+  accent: [196, 163, 90],     // #301D5D gold
 };
 
 const PALETTE_PLUM: FooterPalette = {
-  primary: [48, 29, 93],       // #005a8f Newsline San Antonio
+  primary: [48, 29, 93],       // #301D5D Newsline San Antonio
   primarySoft: [232, 220, 234],
   accent: [196, 163, 90],     // shared gold
 };

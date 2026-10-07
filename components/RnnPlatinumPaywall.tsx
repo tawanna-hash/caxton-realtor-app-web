@@ -39,8 +39,8 @@ export default function RnnPlatinumPaywall({
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:py-16">
-      <section className="overflow-hidden rounded-2xl border border-[#005a8f]/15 bg-white shadow-sm">
-        <div className="bg-[#005a8f] px-6 py-8 text-white sm:px-8">
+      <section className="overflow-hidden rounded-2xl border border-[#301D5D]/15 bg-white shadow-sm">
+        <div className="bg-[#301D5D] px-6 py-8 text-white sm:px-8">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15">
             <Crown size={24} />
           </div>
@@ -70,7 +70,7 @@ export default function RnnPlatinumPaywall({
               type="button"
               disabled={(!trialAvailable && !checkoutAvailable) || loading}
               onClick={() => void begin(trialAvailable ? 'trial' : 'checkout')}
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#005a8f] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-55"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-55"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
               {trialAvailable

@@ -23,7 +23,7 @@ const CHANNEL_TABS: readonly ChannelTab[] = ['all', ...AD_CHANNELS] as const;
 const STATUS_BADGE: Record<IoStatus, string> = {
   draft:        'bg-gray-100 text-gray-700 border-gray-200',
   sent:         'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
-  acknowledged: 'bg-[#f5f6f9] text-[#1c3f5e] border-[#bbc1c9]',
+  acknowledged: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
   active:       'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
   fulfilled:    'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
   cancelled:    'bg-gray-100 text-gray-500 border-gray-200',
@@ -270,10 +270,10 @@ export default function IosTable() {
                     PDF
                   </a>
                   {io.status === 'draft' && (
-                    <button type="button" disabled={busyId === io.id} onClick={() => sendIo(io.id)} className="text-xs px-2 py-1 rounded border border-[#98bdd3] bg-[#f5f6f9] text-[#1c3f5e] hover:bg-[#daeeff] disabled:opacity-50">Send</button>
+                    <button type="button" disabled={busyId === io.id} onClick={() => sendIo(io.id)} className="text-xs px-2 py-1 rounded border border-[#B9ADD6] bg-[#F6F3FB] text-[#42277C] hover:bg-[#EFEAF8] disabled:opacity-50">Send</button>
                   )}
                   {io.status === 'sent' && (
-                    <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'acknowledged')} className="text-xs px-2 py-1 rounded border border-[#98bdd3] bg-[#f5f6f9] text-[#1c3f5e] hover:bg-[#daeeff] disabled:opacity-50">Ack</button>
+                    <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'acknowledged')} className="text-xs px-2 py-1 rounded border border-[#B9ADD6] bg-[#F6F3FB] text-[#42277C] hover:bg-[#EFEAF8] disabled:opacity-50">Ack</button>
                   )}
                   {io.status === 'acknowledged' && (
                     <button type="button" disabled={busyId === io.id} onClick={() => transition(io.id, 'active')} className="text-xs px-2 py-1 rounded border border-[#00E200]/50 bg-[#E0FBE0] text-[#005A00] hover:bg-[#E0FBE0] disabled:opacity-50">Activate</button>
@@ -346,7 +346,7 @@ export default function IosTable() {
                             type="button"
                             disabled={busyId === io.id}
                             onClick={() => sendIo(io.id)}
-                            className="text-xs px-2 py-1 rounded border border-[#98bdd3] bg-[#f5f6f9] text-[#1c3f5e] hover:bg-[#daeeff] disabled:opacity-50"
+                            className="text-xs px-2 py-1 rounded border border-[#B9ADD6] bg-[#F6F3FB] text-[#42277C] hover:bg-[#EFEAF8] disabled:opacity-50"
                           >
                             Send
                           </button>
@@ -356,7 +356,7 @@ export default function IosTable() {
                             type="button"
                             disabled={busyId === io.id}
                             onClick={() => transition(io.id, 'acknowledged')}
-                            className="text-xs px-2 py-1 rounded border border-[#98bdd3] bg-[#f5f6f9] text-[#1c3f5e] hover:bg-[#daeeff] disabled:opacity-50"
+                            className="text-xs px-2 py-1 rounded border border-[#B9ADD6] bg-[#F6F3FB] text-[#42277C] hover:bg-[#EFEAF8] disabled:opacity-50"
                           >
                             Ack
                           </button>

@@ -76,7 +76,7 @@ export function MetricList<T>({
           </thead>
           <tbody>
             {pageRows.map((row, i) => (
-              <tr key={keyFn(row, i)} className="border-t border-gray-100 hover:bg-[#f5f6f9]/40">
+              <tr key={keyFn(row, i)} className="border-t border-gray-100 hover:bg-[#F6F3FB]/40">
                 {columns.map((c) => {
                   const align =
                     c.align ?? (c.role === 'value' ? 'right' : 'left');

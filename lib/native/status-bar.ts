@@ -9,7 +9,7 @@
 //
 // Default (matches capacitor.config.ts plugin defaults):
 //   style:  LIGHT   (light text on dark background — for the brand purple)
-//   color:  #005a8f (Caxton purple)
+//   color:  #301D5D (Caxton purple)
 //
 // Callers:
 //   - `setStatusBarTheme('dark')`  → dark text on light bar (white pages)
@@ -23,7 +23,7 @@ import { isNative } from './runtime';
 
 export type StatusBarTheme = 'light' | 'dark' | 'auto';
 
-const DEFAULT_BRAND = '#005a8f';
+const DEFAULT_BRAND = '#301D5D';
 const DEFAULT_LIGHT_BG = '#FFFFFF';
 
 function resolveAuto(): 'light' | 'dark' {

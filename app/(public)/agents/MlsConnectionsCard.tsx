@@ -78,10 +78,10 @@ export default function MlsConnectionsCard() {
   }, [query, selected]);
 
   return (
-    <div data-section-key="mls" className="min-w-0 rounded-xl border border-[#d4d8dd] bg-white p-[1.125rem] lg:col-span-2">
+    <div data-section-key="mls" className="min-w-0 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem] lg:col-span-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-semibold text-gray-900">MLS Connections</h3>
-        <span className="ds-chip bg-[#daeeff] text-[#005a8f]">{selected.length} Selected</span>
+        <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{selected.length} Selected</span>
       </div>
       <Tip text="Choose the MLS services you belong to. You sign in to your own MLS account. Closing Time does not store your MLS password." />
       <label className="relative mt-4 block">

@@ -5,8 +5,8 @@ import { T, addDays, timeLabel, tzLabel, zoned, type Lang } from '@/lib/schedule
 import type { PublicScheduler } from '@/lib/server/closing-time-schedulers';
 
 type Slot = { start: number; time: string };
-const card = 'rounded-xl border border-[#d4d8dd] bg-white';
-const field = 'w-full rounded-lg border border-[#d4d8dd] bg-white px-3 py-3 text-[14px] text-[#292a2d] focus:border-[#005a8f] focus:outline-none';
+const card = 'rounded-xl border border-[#E6E5EC] bg-white';
+const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-3 text-[14px] text-[#1B1726] focus:border-[#301D5D] focus:outline-none';
 
 export default function BookingClient({ scheduler }: { scheduler: PublicScheduler }) {
   const cfg = scheduler.config;
@@ -68,12 +68,12 @@ export default function BookingClient({ scheduler }: { scheduler: PublicSchedule
   const header = (
     <>
       {cfg.hasBanner && <img src={`/api/book/s/${scheduler.id}/image/banner`} alt="" className="h-36 w-full rounded-t-xl object-cover sm:h-44" />}
-      <div className="flex items-center gap-3 border-b border-[#d4d8dd] px-6 py-4">
+      <div className="flex items-center gap-3 border-b border-[#E6E5EC] px-6 py-4">
         {cfg.hasAvatar && <img src={`/api/book/s/${scheduler.id}/image/avatar`} alt="" className="h-12 w-12 rounded-full object-cover" />}
         <div className="min-w-0">
-          {scheduler.agentName && <div className="text-[13px] font-medium text-[#51555b]">{scheduler.agentName}</div>}
-          <h1 className="text-[20px] font-semibold leading-tight text-[#292a2d]">{cfg.name}</h1>
-          {scheduler.property && <div className="text-[13px] text-[#51555b]">{scheduler.property}</div>}
+          {scheduler.agentName && <div className="text-[13px] font-medium text-[#4A4757]">{scheduler.agentName}</div>}
+          <h1 className="text-[20px] font-semibold leading-tight text-[#1B1726]">{cfg.name}</h1>
+          {scheduler.property && <div className="text-[13px] text-[#4A4757]">{scheduler.property}</div>}
         </div>
       </div>
     </>
@@ -81,18 +81,18 @@ export default function BookingClient({ scheduler }: { scheduler: PublicSchedule
 
   if (done && pick) {
     return (
-      <main className="mx-auto max-w-[640px] px-4 py-8 font-[Inter,system-ui,sans-serif] text-[14px] text-[#51555b]">
+      <main className="mx-auto max-w-[640px] px-4 py-8 font-[Inter,system-ui,sans-serif] text-[14px] text-[#4A4757]">
         <div className={card}>
           {header}
           <div className="p-6">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E0FBE0] text-[18px] text-[#005A00]" aria-hidden="true">✓</div>
-            <h2 className="mt-3 text-[20px] font-semibold text-[#292a2d]">{t.booked}</h2>
-            <p className="mt-1 text-[15px] font-medium text-[#292a2d]">{dayLong(day)}, {timeLabel(pick.time, cfg.timeFormat)} · {length} {t.min}</p>
-            <p className="text-[13px] text-[#51555b]">{tzLabel(cfg.timezone)}</p>
-            {done.meetingUrl && <p className="mt-2 break-all"><a className="text-[#005a8f] underline" href={done.meetingUrl}>{done.meetingUrl}</a></p>}
+            <h2 className="mt-3 text-[20px] font-semibold text-[#1B1726]">{t.booked}</h2>
+            <p className="mt-1 text-[15px] font-medium text-[#1B1726]">{dayLong(day)}, {timeLabel(pick.time, cfg.timeFormat)} · {length} {t.min}</p>
+            <p className="text-[13px] text-[#4A4757]">{tzLabel(cfg.timezone)}</p>
+            {done.meetingUrl && <p className="mt-2 break-all"><a className="text-[#301D5D] underline" href={done.meetingUrl}>{done.meetingUrl}</a></p>}
             <p className="mt-3">{t.sentTo} {email}.</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <a href={`/api/book/manage/${done.token}/ics`} className="inline-flex min-h-[44px] items-center rounded-lg border border-[#d4d8dd] bg-white px-4 text-[13px] font-medium text-[#292a2d] hover:border-[#005a8f]">{t.addCal}</a>
+              <a href={`/api/book/manage/${done.token}/ics`} className="inline-flex min-h-[44px] items-center rounded-lg border border-[#E6E5EC] bg-white px-4 text-[13px] font-medium text-[#1B1726] hover:border-[#301D5D]">{t.addCal}</a>
             </div>
           </div>
         </div>
@@ -101,68 +101,68 @@ export default function BookingClient({ scheduler }: { scheduler: PublicSchedule
   }
 
   return (
-    <main className="mx-auto max-w-[960px] px-4 py-8 font-[Inter,system-ui,sans-serif] text-[14px] text-[#51555b]">
+    <main className="mx-auto max-w-[960px] px-4 py-8 font-[Inter,system-ui,sans-serif] text-[14px] text-[#4A4757]">
       <div className={card}>
         {header}
         <div className="grid gap-0 md:grid-cols-[260px_1fr]">
-          <aside className="border-b border-[#d4d8dd] p-6 md:border-b-0 md:border-r">
-            <p className="text-[14px] text-[#292a2d]">{cfg.welcome || t.welcome}</p>
-            <div className="mt-4 text-[11px] font-medium uppercase tracking-[0.06em] text-[#51555b]">{t.duration}</div>
+          <aside className="border-b border-[#E6E5EC] p-6 md:border-b-0 md:border-r">
+            <p className="text-[14px] text-[#1B1726]">{cfg.welcome || t.welcome}</p>
+            <div className="mt-4 text-[11px] font-medium uppercase tracking-[0.06em] text-[#4A4757]">{t.duration}</div>
             <div className="mt-1 flex flex-wrap gap-2">
               {cfg.lengths.map((l) => (
                 <button key={l} type="button" onClick={() => { setLength(l); setSlots(null); setPick(null); }}
-                  className={`min-h-[40px] rounded-full border px-3 text-[13px] font-medium ${l === length ? 'border-[#005a8f] bg-[#f5f6f9] text-[#005a8f]' : 'border-[#d4d8dd] bg-white text-[#292a2d] hover:border-[#005a8f]'}`}>{l} {t.min}</button>
+                  className={`min-h-[40px] rounded-full border px-3 text-[13px] font-medium ${l === length ? 'border-[#301D5D] bg-[#F6F3FB] text-[#301D5D]' : 'border-[#E6E5EC] bg-white text-[#1B1726] hover:border-[#301D5D]'}`}>{l} {t.min}</button>
               ))}
             </div>
-            <p className="mt-4 text-[12px] text-[#51555b]">{t.timesIn} {tzLabel(cfg.timezone)}</p>
+            <p className="mt-4 text-[12px] text-[#4A4757]">{t.timesIn} {tzLabel(cfg.timezone)}</p>
           </aside>
 
           {!pick ? (
             <section className="grid gap-6 p-6 lg:grid-cols-[1fr_200px]">
               <div>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-[15px] font-semibold text-[#292a2d]">{t.selectDate}</h2>
+                  <h2 className="text-[15px] font-semibold text-[#1B1726]">{t.selectDate}</h2>
                   <div className="flex items-center gap-1">
-                    <button type="button" aria-label="Previous month" disabled={month <= today.slice(0, 7)} onClick={() => shift(-1)} className="h-9 w-9 rounded-full text-[18px] text-[#005a8f] hover:bg-[#f5f6f9] disabled:opacity-30">‹</button>
-                    <span className="min-w-[130px] text-center text-[14px] font-medium text-[#292a2d]">{new Date(`${month}-01T12:00:00Z`).toLocaleDateString(locale, { timeZone: 'UTC', month: 'long', year: 'numeric' })}</span>
-                    <button type="button" aria-label="Next month" disabled={month >= lastMonth} onClick={() => shift(1)} className="h-9 w-9 rounded-full text-[18px] text-[#005a8f] hover:bg-[#f5f6f9] disabled:opacity-30">›</button>
+                    <button type="button" aria-label="Previous month" disabled={month <= today.slice(0, 7)} onClick={() => shift(-1)} className="h-9 w-9 rounded-full text-[18px] text-[#301D5D] hover:bg-[#F6F3FB] disabled:opacity-30">‹</button>
+                    <span className="min-w-[130px] text-center text-[14px] font-medium text-[#1B1726]">{new Date(`${month}-01T12:00:00Z`).toLocaleDateString(locale, { timeZone: 'UTC', month: 'long', year: 'numeric' })}</span>
+                    <button type="button" aria-label="Next month" disabled={month >= lastMonth} onClick={() => shift(1)} className="h-9 w-9 rounded-full text-[18px] text-[#301D5D] hover:bg-[#F6F3FB] disabled:opacity-30">›</button>
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-7 gap-1 text-center">
-                  {heads.map((h) => <div key={h} className="py-1 text-[11px] font-medium uppercase text-[#51555b]">{h}</div>)}
+                  {heads.map((h) => <div key={h} className="py-1 text-[11px] font-medium uppercase text-[#4A4757]">{h}</div>)}
                   {grid.map((d, i) => {
                     if (!d) return <div key={`b${i}`} />;
                     const open = Boolean(slots?.[d]?.length);
                     return (
                       <button key={d} type="button" disabled={!open} onClick={() => setDay(d)}
-                        className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full text-[14px] ${d === day ? 'bg-[#005a8f] font-semibold text-white' : open ? 'bg-[#f5f6f9] font-semibold text-[#005a8f] hover:bg-[#daeeff]' : 'text-[#B9B7C2]'}`}>{Number(d.slice(8))}</button>
+                        className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full text-[14px] ${d === day ? 'bg-[#301D5D] font-semibold text-white' : open ? 'bg-[#F6F3FB] font-semibold text-[#301D5D] hover:bg-[#EFEAF8]' : 'text-[#B9B7C2]'}`}>{Number(d.slice(8))}</button>
                     );
                   })}
                 </div>
-                {slots && !Object.keys(slots).length && <p className="mt-3 text-[13px] text-[#51555b]">{t.noDates}</p>}
-                {!slots && <p className="mt-3 text-[12px] text-[#51555b]">…</p>}
+                {slots && !Object.keys(slots).length && <p className="mt-3 text-[13px] text-[#4A4757]">{t.noDates}</p>}
+                {!slots && <p className="mt-3 text-[12px] text-[#4A4757]">…</p>}
               </div>
               <div>
-                <h2 className="text-[15px] font-semibold text-[#292a2d]">{day ? dayLong(day) : t.selectTime}</h2>
+                <h2 className="text-[15px] font-semibold text-[#1B1726]">{day ? dayLong(day) : t.selectTime}</h2>
                 <div className="mt-3 max-h-[380px] space-y-2 overflow-y-auto pr-1">
                   {day && (slots?.[day] ?? []).map((s) => (
-                    <button key={s.start} type="button" onClick={() => setPick(s)} className="min-h-[44px] w-full rounded-lg border border-[#005a8f] bg-white text-[14px] font-semibold text-[#005a8f] hover:bg-[#005a8f] hover:text-white">{timeLabel(s.time, cfg.timeFormat)}</button>
+                    <button key={s.start} type="button" onClick={() => setPick(s)} className="min-h-[44px] w-full rounded-lg border border-[#301D5D] bg-white text-[14px] font-semibold text-[#301D5D] hover:bg-[#301D5D] hover:text-white">{timeLabel(s.time, cfg.timeFormat)}</button>
                   ))}
-                  {day && !(slots?.[day] ?? []).length && <p className="text-[13px] text-[#51555b]">{t.noTimes}</p>}
+                  {day && !(slots?.[day] ?? []).length && <p className="text-[13px] text-[#4A4757]">{t.noTimes}</p>}
                 </div>
               </div>
             </section>
           ) : (
             <section className="p-6">
-              <button type="button" onClick={() => setPick(null)} className="text-[13px] font-medium text-[#005a8f]">‹ {t.back}</button>
-              <h2 className="mt-2 text-[15px] font-semibold text-[#292a2d]">{t.details}</h2>
-              <p className="text-[14px] font-medium text-[#292a2d]">{dayLong(day)}, {timeLabel(pick.time, cfg.timeFormat)} · {length} {t.min}</p>
+              <button type="button" onClick={() => setPick(null)} className="text-[13px] font-medium text-[#301D5D]">‹ {t.back}</button>
+              <h2 className="mt-2 text-[15px] font-semibold text-[#1B1726]">{t.details}</h2>
+              <p className="text-[14px] font-medium text-[#1B1726]">{dayLong(day)}, {timeLabel(pick.time, cfg.timeFormat)} · {length} {t.min}</p>
               <div className="mt-4 grid max-w-[480px] gap-3">
-                <label className="block"><span className="mb-1 block text-[13px] font-medium text-[#292a2d]">{t.name} *</span><input className={field} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" /></label>
-                <label className="block"><span className="mb-1 block text-[13px] font-medium text-[#292a2d]">{t.email} *</span><input type="email" className={field} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></label>
+                <label className="block"><span className="mb-1 block text-[13px] font-medium text-[#1B1726]">{t.name} *</span><input className={field} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" /></label>
+                <label className="block"><span className="mb-1 block text-[13px] font-medium text-[#1B1726]">{t.email} *</span><input type="email" className={field} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></label>
                 {cfg.questions.map((q) => (
                   <label key={q.id} className="block">
-                    <span className="mb-1 block text-[13px] font-medium text-[#292a2d]">{q.label}{q.required ? ' *' : ''}</span>
+                    <span className="mb-1 block text-[13px] font-medium text-[#1B1726]">{q.label}{q.required ? ' *' : ''}</span>
                     {q.type === 'textarea'
                       ? <textarea rows={3} className={field} value={answers[q.id] ?? ''} onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))} />
                       : <input type={q.type === 'phone' ? 'tel' : 'text'} className={field} value={answers[q.id] ?? ''} onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))} />}
@@ -170,7 +170,7 @@ export default function BookingClient({ scheduler }: { scheduler: PublicSchedule
                 ))}
                 {error && <p role="alert" className="text-[13px] font-medium text-[#661102]">{error}</p>}
                 <button type="button" disabled={busy || !name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || cfg.questions.some((q) => q.required && !(answers[q.id] ?? '').trim())}
-                  onClick={() => void submit()} className="min-h-[44px] rounded-lg bg-[#005a8f] px-4 text-[14px] font-semibold text-white hover:bg-[#1c3f5e] disabled:opacity-45">{busy ? t.booking : t.confirm}</button>
+                  onClick={() => void submit()} className="min-h-[44px] rounded-lg bg-[#301D5D] px-4 text-[14px] font-semibold text-white hover:bg-[#42277C] disabled:opacity-45">{busy ? t.booking : t.confirm}</button>
               </div>
             </section>
           )}

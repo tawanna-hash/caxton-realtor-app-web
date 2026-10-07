@@ -227,7 +227,7 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
             </Link>
             <Link
               href="/admin/magazines/new"
-              className="bg-[#005a8f] hover:bg-[#1c3f5e] text-white px-4 py-2 rounded-md font-medium text-sm"
+              className="bg-[#301D5D] hover:bg-[#42277C] text-white px-4 py-2 rounded-md font-medium text-sm"
             >
               + New Issue
             </Link>
@@ -353,13 +353,13 @@ function Column({
                 <div className="flex items-center gap-4 mt-3 flex-wrap">
                   <Link
                     href={`/admin/magazines/${m.id}`}
-                    className="text-sm text-[#005a8f] hover:underline"
+                    className="text-sm text-[#301D5D] hover:underline"
                   >
                     Edit
                   </Link>
                   <Link
                     href={`/admin/magazines/${m.id}/hotspots`}
-                    className="text-sm text-[#005a8f] hover:underline"
+                    className="text-sm text-[#301D5D] hover:underline"
                   >
                     Hotspots
                   </Link>
@@ -372,7 +372,7 @@ function Column({
                   </button>
                   <button
                     onClick={() => onCopyShare(m.id)}
-                    className="text-sm text-[#005a8f] hover:underline"
+                    className="text-sm text-[#301D5D] hover:underline"
                     title="Copy public share link for social media"
                   >
                     {copiedKey === `share:${m.id}` ? 'Copied!' : 'Copy Share Link'}
@@ -408,7 +408,7 @@ function Column({
                                 href={url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs text-[#005a8f] hover:underline truncate max-w-[180px]"
+                                className="text-xs text-[#301D5D] hover:underline truncate max-w-[180px]"
                                 title={url}
                               >
                                 View

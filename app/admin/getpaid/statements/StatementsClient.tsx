@@ -22,7 +22,7 @@ export type StatementPartnerRow = {
 };
 
 const CONTROL =
-  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#2f7aa7] focus:ring-1 focus:ring-[#2f7aa7]';
+  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]';
 type SortKey = 'partner' | 'email' | 'invoices' | 'overdue' | 'outstanding';
 type SortDir = 'asc' | 'desc';
 type StatementHistory = { id: string; recipient_email: string; subject: string; sent_at: string; outstanding_cents: number };
@@ -104,7 +104,7 @@ function StatementCard({
         </div>
         <div>
           <div className="text-gray-400">Overdue</div>
-          <div className="font-medium text-[#1c3f5e]">{partner.overdue_cents ? formatCents(partner.overdue_cents) : '—'}</div>
+          <div className="font-medium text-[#42277C]">{partner.overdue_cents ? formatCents(partner.overdue_cents) : '—'}</div>
         </div>
         <div>
           <div className="text-gray-400">Last sent</div>
@@ -119,7 +119,7 @@ function StatementCard({
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-3 text-xs">
-        <Link href={`/admin/getpaid/statements/${partner.advertiser_id}`} className="font-medium text-[#1c3f5e] hover:underline">
+        <Link href={`/admin/getpaid/statements/${partner.advertiser_id}`} className="font-medium text-[#42277C] hover:underline">
           View
         </Link>
         <StatementEmailButton
@@ -239,10 +239,10 @@ export default function StatementsClient({
         </div>
         <div className="mt-2 flex h-4 overflow-hidden rounded-sm bg-gray-200" aria-hidden="true">
           <div
-            className="bg-[#005a8f]"
+            className="bg-[#301D5D]"
             style={{ width: `${totalOutstanding ? (totalOverdue / totalOutstanding) * 100 : 0}%` }}
           />
-          <div className="flex-1 bg-[#98bdd3]" />
+          <div className="flex-1 bg-[#B9ADD6]" />
         </div>
       </section>
 
@@ -309,7 +309,7 @@ export default function StatementsClient({
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filtered.map((partner) => (
-                <tr key={partner.advertiser_id} className="hover:bg-[#f5f6f9]/40">
+                <tr key={partner.advertiser_id} className="hover:bg-[#F6F3FB]/40">
                   <td className="truncate px-3 py-3 font-medium text-gray-900">
                     {partner.advertiser_name}
                   </td>
@@ -322,7 +322,7 @@ export default function StatementsClient({
                   <td className="px-2 py-3 text-right text-gray-700">
                     {Number(partner.open_invoice_count).toLocaleString()}
                   </td>
-                  <td className="px-2 py-3 text-right font-medium text-[#1c3f5e]">
+                  <td className="px-2 py-3 text-right font-medium text-[#42277C]">
                     {partner.overdue_cents ? formatCents(partner.overdue_cents) : '—'}
                   </td>
                   <td className="px-2 py-3 text-right font-medium text-gray-900">
@@ -339,7 +339,7 @@ export default function StatementsClient({
                   <td className="whitespace-nowrap px-3 py-3 text-right">
                     <Link
                       href={`/admin/getpaid/statements/${partner.advertiser_id}`}
-                      className="font-medium text-[#1c3f5e] hover:underline"
+                      className="font-medium text-[#42277C] hover:underline"
                     >
                       View
                     </Link>

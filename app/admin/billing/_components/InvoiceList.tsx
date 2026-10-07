@@ -43,7 +43,7 @@ export function InvoiceList({
               tabIndex={0}
               onClick={() => onOpen(r)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(r); } }}
-              className={`group relative w-full text-left hover:bg-[#f5f6f9]/40 cursor-pointer ${isPaid ? 'bg-[#E0FBE0]/30' : ''}`}
+              className={`group relative w-full text-left hover:bg-[#F6F3FB]/40 cursor-pointer ${isPaid ? 'bg-[#E0FBE0]/30' : ''}`}
             >
               {/* Desktop */}
               <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-3">

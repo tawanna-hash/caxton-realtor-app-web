@@ -22,10 +22,10 @@ type User = {
 // Brand colors per publication. Falls back to RealtyLine navy.
 // Houston/Dallas inherit RealtyLine navy as they're under the same umbrella.
 const ACCENT: Record<Pub, string> = {
-  realtyline: '#005a8f',
-  newsline: '#005a8f',
-  'realtyline-houston': '#005a8f',
-  'realtyline-dallas': '#005a8f',
+  realtyline: '#301D5D',
+  newsline: '#301D5D',
+  'realtyline-houston': '#301D5D',
+  'realtyline-dallas': '#301D5D',
 };
 
 function readPub(): Pub {

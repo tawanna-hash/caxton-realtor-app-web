@@ -47,7 +47,7 @@ export default function SelfServicePortalPage() {
       <div className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
         {/* Header */}
         <header className="mb-8 text-center">
-          <p className="text-xs uppercase tracking-[0.2em] text-[#1c3f5e] font-semibold mb-3">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#42277C] font-semibold mb-3">
             Two ways to work with us
           </p>
           <PageTitle size="md">Choose your path</PageTitle>
@@ -60,9 +60,9 @@ export default function SelfServicePortalPage() {
         {/* Product paths */}
         <section className="grid gap-4 md:grid-cols-2 mb-12">
           {/* App and web placements card */}
-          <article className="relative rounded-md overflow-hidden bg-gradient-to-br from-[#005a8f] via-[#005a8f] to-[#005a8f] text-white p-6 md:p-8 shadow-lg">
+          <article className="relative rounded-md overflow-hidden bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#301D5D] text-white p-6 md:p-8 shadow-lg">
             {/* From-$X chip */}
-            <span className="absolute top-5 right-5 inline-flex items-center rounded-md bg-[#daeeff] px-3 py-1 text-xs font-semibold text-[#292a2d]">
+            <span className="absolute top-5 right-5 inline-flex items-center rounded-md bg-[#EFEAF8] px-3 py-1 text-xs font-semibold text-[#1B1726]">
               From ${minPrice}
             </span>
 
@@ -87,7 +87,7 @@ export default function SelfServicePortalPage() {
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-3">
               App &amp; Web Placements
             </h2>
-            <p className="text-[#daeeff]/90 text-sm md:text-base font-light leading-relaxed mb-6">
+            <p className="text-[#EFEAF8]/90 text-sm md:text-base font-light leading-relaxed mb-6">
               Buy ad placements directly, choose your market + go live in as
               few as 2 business days. No sales call required.
             </p>
@@ -108,14 +108,14 @@ export default function SelfServicePortalPage() {
                       />
                     </svg>
                   </span>
-                  <span className="text-[#daeeff]">{line}</span>
+                  <span className="text-[#EFEAF8]">{line}</span>
                 </li>
               ))}
             </ul>
 
             <Link
               href="/advertise/placements"
-              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#005a8f] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1c3f5e] active:scale-[0.98] md:text-base"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#301D5D] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#42277C] active:scale-[0.98] md:text-base"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               Browse Products
@@ -125,8 +125,8 @@ export default function SelfServicePortalPage() {
             </Link>
           </article>
 
-          <article className="relative overflow-hidden rounded-md bg-gradient-to-br from-[#005a8f] via-[#005a8f] to-[#005a8f] p-6 text-white shadow-lg md:p-8">
-            <span className="absolute right-5 top-5 inline-flex items-center rounded-md bg-[#daeeff] px-3 py-1 text-xs font-semibold text-[#292a2d]">
+          <article className="relative overflow-hidden rounded-md bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#301D5D] p-6 text-white shadow-lg md:p-8">
+            <span className="absolute right-5 top-5 inline-flex items-center rounded-md bg-[#EFEAF8] px-3 py-1 text-xs font-semibold text-[#1B1726]">
               From ${eblastStartingPrice.toLocaleString()}
             </span>
             <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-md bg-white/10 text-white">
@@ -147,7 +147,7 @@ export default function SelfServicePortalPage() {
             <h2 className="mb-3 text-2xl font-bold tracking-tight text-white md:text-3xl">
               e-Blast Ordering
             </h2>
-            <p className="mb-6 text-sm font-light leading-relaxed text-[#daeeff]/90 md:text-base">
+            <p className="mb-6 text-sm font-light leading-relaxed text-[#EFEAF8]/90 md:text-base">
               Reach RealtyLine Austin, Newsline San Antonio, or both audiences
               with a dedicated email campaign.
             </p>
@@ -167,13 +167,13 @@ export default function SelfServicePortalPage() {
                       />
                     </svg>
                   </span>
-                  <span className="text-[#daeeff]">{line}</span>
+                  <span className="text-[#EFEAF8]">{line}</span>
                 </li>
               ))}
             </ul>
             <Link
               href="/advertise/eblast"
-              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#005a8f] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1c3f5e] active:scale-[0.98] md:text-base"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#301D5D] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#42277C] active:scale-[0.98] md:text-base"
             >
               Order an e-Blast
               <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">

@@ -63,9 +63,9 @@ export default function CustomFormsPanel({ section, label, dealContext }: { sect
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); void upload(e.dataTransfer.files); }}
-        className={`flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-8 text-center ${dragOver ? 'border-[#005a8f] bg-[#daeeff]' : 'border-slate-300 bg-white'}`}
+        className={`flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-8 text-center ${dragOver ? 'border-[#301D5D] bg-[#EFEAF8]' : 'border-slate-300 bg-white'}`}
       >
-        <Upload className="h-6 w-6 text-[#2f7aa7]" aria-hidden="true" />
+        <Upload className="h-6 w-6 text-[#7059A8]" aria-hidden="true" />
         <p className="text-sm font-medium text-slate-900">{uploading ? 'Uploading…' : `Drop ${label.toLowerCase()} PDFs here`}</p>
         <Tip text="PDF only, up to 15 MB each" />
         <button type="button" disabled={uploading} onClick={() => inputRef.current?.click()}>Upload PDF</button>
@@ -78,7 +78,7 @@ export default function CustomFormsPanel({ section, label, dealContext }: { sect
         {forms.map((form) => (
           <article key={form.id} className="flex min-w-0 flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4">
             <div className="flex min-w-0 items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#daeeff] text-[#005a8f]"><FileText className="h-5 w-5" aria-hidden="true" /></span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFEAF8] text-[#301D5D]"><FileText className="h-5 w-5" aria-hidden="true" /></span>
               <div className="min-w-0">
                 <h3 className="break-words text-sm font-semibold leading-5 text-slate-950">{form.title}</h3>
                 <p className="mt-1 text-xs text-slate-500">{formatSize(form.size)} · Added {new Date(form.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
@@ -93,10 +93,10 @@ export default function CustomFormsPanel({ section, label, dealContext }: { sect
             {!form.fillable && <Tip text="This PDF has no fillable fields, so it can be opened and downloaded but not filled in." />}
             <div className="flex flex-wrap gap-2">
               {form.fillable && (
-                <a href={`/agents/closing-time?form=${encodeURIComponent(`custom-${form.id}`)}#trec-form-workspace`} className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#005a8f] px-3 text-sm font-bold text-white"><PencilLine className="h-4 w-4" aria-hidden="true" />Open &amp; Fill</a>
+                <a href={`/agents/closing-time?form=${encodeURIComponent(`custom-${form.id}`)}#trec-form-workspace`} className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#301D5D] px-3 text-sm font-bold text-white"><PencilLine className="h-4 w-4" aria-hidden="true" />Open &amp; Fill</a>
               )}
-              <a href={form.url} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#f5f6f9]"><ExternalLink className="h-4 w-4" aria-hidden="true" />Open</a>
-              <a href={form.url} download={form.filename} className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#f5f6f9]"><Download className="h-4 w-4" aria-hidden="true" />Download</a>
+              <a href={form.url} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F6F3FB]"><ExternalLink className="h-4 w-4" aria-hidden="true" />Open</a>
+              <a href={form.url} download={form.filename} className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F6F3FB]"><Download className="h-4 w-4" aria-hidden="true" />Download</a>
               <button type="button" aria-label={`Remove ${form.title}`} onClick={() => void remove(form)}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>
             </div>
           </article>

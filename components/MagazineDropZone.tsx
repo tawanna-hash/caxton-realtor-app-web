@@ -208,7 +208,7 @@ export default function MagazineDropZone({
     return (
       <div className="border border-[#00E200]/30 bg-[#E0FBE0] rounded-md p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#00E200] flex items-center justify-center text-[#292a2d]">
+          <div className="w-10 h-10 rounded-full bg-[#00E200] flex items-center justify-center text-[#1B1726]">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
@@ -240,16 +240,16 @@ export default function MagazineDropZone({
         onDragLeave={handleDragLeave}
         className={`w-full border-2 border-dashed rounded-md p-8 text-center transition-colors ${
           isDragging
-            ? 'border-[#2f7aa7] bg-[#f5f6f9]'
+            ? 'border-[#7059A8] bg-[#F6F3FB]'
             : busy
-              ? 'border-[#98bdd3] bg-[#f5f6f9]/50 cursor-wait'
+              ? 'border-[#B9ADD6] bg-[#F6F3FB]/50 cursor-wait'
               : 'border-gray-300 hover:border-gray-400 bg-gray-50 cursor-pointer'
         }`}
         disabled={busy}
       >
         {busy ? (
           <div>
-            <div className="w-10 h-10 mx-auto mb-3 border-3 border-[#2f7aa7] border-t-transparent rounded-full animate-spin" />
+            <div className="w-10 h-10 mx-auto mb-3 border-3 border-[#7059A8] border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-gray-700">{progress || 'Processing…'}</p>
           </div>
         ) : (
@@ -271,7 +271,7 @@ export default function MagazineDropZone({
               Drop a PDF here
             </p>
             <p className="text-xs text-gray-500">
-              or <span className="text-[#005a8f] underline">click to choose a file</span>
+              or <span className="text-[#301D5D] underline">click to choose a file</span>
             </p>
             <p className="text-[10px] text-gray-400 mt-3">
               We&apos;ll read the cover from page 1 and fill in the issue label automatically.

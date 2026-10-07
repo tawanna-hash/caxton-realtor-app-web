@@ -318,7 +318,7 @@ export async function getPortalView(token: string): Promise<PortalView | null> {
 }
 
 function esc(v: string) { return v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c)); }
-const htmlBody = (text: string) => `<div style="font-family:Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:640px">${esc(text).replace(/\n/g, '<br>')}</div>`;
+const htmlBody = (text: string) => `<div style="font-family:Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:640px">${esc(text).replace(/\n/g, '<br>')}</div>`;
 
 async function agentIdentity(realtorId: string) {
   const r = await query<{ first_name: string | null; last_name: string | null; email: string }>(`SELECT first_name, last_name, COALESCE(NULLIF((SELECT w2.workspace->'notificationPreferences'->>'notificationEmail' FROM agent_command_center_workspaces w2 WHERE w2.realtor_id=realtors.id),''), realtors.email) AS email FROM realtors WHERE id=$1`, [realtorId]);
@@ -418,12 +418,12 @@ export async function runDailySummaries(today: string): Promise<{ sent: number; 
         ...upcoming.map((u) => `<li>${esc(u.label)}: ${esc(u.date)}</li>`),
         ...(drafts[0]?.n ? [`<li>${drafts[0].n} follow-up draft${drafts[0].n === 1 ? '' : 's'} waiting for your approval</li>`] : []),
       ];
-      if (lines.length) sections.push(`<h3 style="margin:18px 0 6px;color:#005a8f">${esc((deal.propertyAddress || '').trim() || `${deal.title || 'Deal'} (address not entered)`)}</h3><ul style="margin:0;padding-left:18px">${lines.join('')}</ul>`);
+      if (lines.length) sections.push(`<h3 style="margin:18px 0 6px;color:#301D5D">${esc((deal.propertyAddress || '').trim() || `${deal.title || 'Deal'} (address not entered)`)}</h3><ul style="margin:0;padding-left:18px">${lines.join('')}</ul>`);
     }
     if (!sections.length) continue;
     const claim = await query<{ realtor_id: string }>(`INSERT INTO closing_time_daily_summaries (realtor_id, summary_date) VALUES ($1,$2::date) ON CONFLICT DO NOTHING RETURNING realtor_id`, [row.realtor_id, today]);
     if (!claim[0]) continue;
-    const html = `<div style="font-family:Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:640px;margin:auto"><p style="margin:0 0 8px;color:#2f7aa7;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Closing Time daily summary</p>${sections.join('')}<p style="margin-top:24px"><a href="${site}/agents/closing-time" style="display:inline-block;background:#005a8f;color:#fff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700">Open Closing Time</a></p></div>`;
+    const html = `<div style="font-family:Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:640px;margin:auto"><p style="margin:0 0 8px;color:#7059A8;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Closing Time daily summary</p>${sections.join('')}<p style="margin-top:24px"><a href="${site}/agents/closing-time" style="display:inline-block;background:#301D5D;color:#fff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700">Open Closing Time</a></p></div>`;
     const sent = await sendEmail({ to: row.email, subject: 'Closing Time: your deals today', html });
     if (sent.ok) out.sent += 1;
     else {

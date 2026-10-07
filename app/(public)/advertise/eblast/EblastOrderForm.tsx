@@ -240,14 +240,14 @@ export default function EblastOrderForm({
                   <span className="flex items-start justify-between gap-2 text-sm font-semibold">
                     <span>{pub.label}</span>
                     {!pub.checkoutEnabled && (
-                      <span className="shrink-0 rounded-md bg-[#daeeff] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#005a8f]">
+                      <span className="shrink-0 rounded-md bg-[#EFEAF8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#301D5D]">
                         Coming soon
                       </span>
                     )}
                   </span>
                   <span
                     className={`mt-1 block text-xs ${
-                      active ? 'text-[#daeeff]' : 'text-gray-500'
+                      active ? 'text-[#EFEAF8]' : 'text-gray-500'
                     }`}
                   >
                     {pub.audience}
@@ -277,7 +277,7 @@ export default function EblastOrderForm({
                   aria-pressed={active}
                   className={`w-full rounded-md border p-4 text-left transition ${
                     active
-                      ? 'border-brand-700 bg-[#daeeff] ring-1 ring-brand-700'
+                      ? 'border-brand-700 bg-[#EFEAF8] ring-1 ring-brand-700'
                       : 'border-gray-200 bg-white hover:border-brand-700'
                   }`}
                 >
@@ -515,17 +515,17 @@ export default function EblastOrderForm({
       </div>
 
       <aside className="rounded-md bg-brand-700 p-4 text-white lg:sticky lg:top-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#98bdd3]">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#B9ADD6]">
           Order summary
         </p>
         <h2 className="mt-2 text-xl font-bold">{selectedPackage?.name}</h2>
-        <p className="mt-1 text-sm text-[#daeeff]">
+        <p className="mt-1 text-sm text-[#EFEAF8]">
           {EBLAST_ORDER_MARKETS.find((pub) => pub.id === publication)?.label}
         </p>
-        <ul className="mt-4 space-y-2 text-sm text-[#daeeff]">
+        <ul className="mt-4 space-y-2 text-sm text-[#EFEAF8]">
           {features.map((feature) => (
             <li key={feature} className="flex gap-2">
-              <span aria-hidden="true" className="text-[#98bdd3]">
+              <span aria-hidden="true" className="text-[#B9ADD6]">
                 •
               </span>
               <span>{feature}</span>
@@ -534,11 +534,11 @@ export default function EblastOrderForm({
         </ul>
         <dl className="mt-6 space-y-2 border-t border-white/20 pt-4 text-sm">
           <div className="flex justify-between gap-3">
-            <dt className="text-[#98bdd3]">Package</dt>
+            <dt className="text-[#B9ADD6]">Package</dt>
             <dd className="tabular-nums">{formatUsd(baseCents)}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-[#98bdd3]">3% processing</dt>
+            <dt className="text-[#B9ADD6]">3% processing</dt>
             <dd className="tabular-nums">{formatUsd(surchargeCents)}</dd>
           </div>
           <div className="flex justify-between gap-3 border-t border-white/20 pt-3 text-lg font-bold">
@@ -546,7 +546,7 @@ export default function EblastOrderForm({
             <dd className="tabular-nums">{formatUsd(totalCents)}</dd>
           </div>
         </dl>
-        <p className="mt-4 text-xs leading-relaxed text-[#98bdd3]">
+        <p className="mt-4 text-xs leading-relaxed text-[#B9ADD6]">
           Secure payment by card or eligible bank account through Stripe.
         </p>
       </aside>
@@ -566,7 +566,7 @@ function Section({
   return (
     <section className="rounded-md border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.14em] text-gray-600">
-        <span className="mr-2 text-[#005a8f]">{number}</span>
+        <span className="mr-2 text-[#301D5D]">{number}</span>
         {title}
       </h2>
       {children}

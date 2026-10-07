@@ -55,7 +55,7 @@ export const PUBLICATIONS: readonly Publication[] = [
     market: 'Austin',
     label: 'RealtyLine Austin',
     filterLabel: 'RealtyLine',
-    pillStyle: 'bg-[#005a8f]/10 text-[#005a8f] border-[#005a8f]/20',
+    pillStyle: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
   },
   {
     id: 'san_antonio',
@@ -63,7 +63,7 @@ export const PUBLICATIONS: readonly Publication[] = [
     market: 'San Antonio',
     label: 'Newsline San Antonio',
     filterLabel: 'Newsline San Antonio',
-    pillStyle: 'bg-[#005a8f]/10 text-[#005a8f] border-[#005a8f]/20',
+    pillStyle: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
   },
   {
     id: 'houston',
@@ -71,7 +71,7 @@ export const PUBLICATIONS: readonly Publication[] = [
     market: 'Houston',
     label: 'RealtyLine Houston',
     filterLabel: 'Houston',
-    pillStyle: 'bg-[#005a8f]/10 text-[#005a8f] border-[#005a8f]/20',
+    pillStyle: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
   },
   {
     id: 'dallas',
@@ -79,7 +79,7 @@ export const PUBLICATIONS: readonly Publication[] = [
     market: 'Dallas/Ft. Worth',
     label: 'RealtyLine Dallas/Ft. Worth',
     filterLabel: 'Dallas/Ft. Worth',
-    pillStyle: 'bg-[#005a8f]/10 text-[#005a8f] border-[#005a8f]/20',
+    pillStyle: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
   },
 ] as const;
 

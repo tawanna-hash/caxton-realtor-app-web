@@ -3,13 +3,13 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const AD_OPS_CONTROL =
-  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#2f7aa7] focus:ring-2 focus:ring-[#daeeff]';
+  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]';
 
 export const AD_OPS_PRIMARY =
-  'inline-flex h-9 items-center justify-center gap-2 rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1c3f5e] focus:outline-none focus:ring-2 focus:ring-[#98bdd3] disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex h-9 items-center justify-center gap-2 rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#42277C] focus:outline-none focus:ring-2 focus:ring-[#B9ADD6] disabled:cursor-not-allowed disabled:opacity-50';
 
 export const AD_OPS_SECONDARY =
-  'inline-flex h-9 items-center justify-center gap-2 rounded border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#daeeff]';
+  'inline-flex h-9 items-center justify-center gap-2 rounded border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#EFEAF8]';
 
 export function AdOpsPagination({
   count,

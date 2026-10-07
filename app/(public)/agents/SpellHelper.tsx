@@ -46,19 +46,19 @@ export default function SpellHelper({ text, onChange, ignore = [] }: { text: str
     return () => { live = false; clearTimeout(t); };
   }, [text, ignoreKey]);
 
-  if (failed) return <p className="text-[12px] font-medium text-[#51555b]">Spell check could not load.</p>;
+  if (failed) return <p className="text-[12px] font-medium text-[#4A4757]">Spell check could not load.</p>;
   if (!issues.length) return null;
   const fix = (word: string, to: string) => onChange(text.replace(new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g'), to));
   return (
-    <div className="rounded-lg border border-[#d4d8dd] bg-[#f5f6f9] px-3 py-2">
-      <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#51555b]">Possible Spelling Mistakes</span>
+    <div className="rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2">
+      <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#4A4757]">Possible Spelling Mistakes</span>
       <ul className="mt-1 space-y-1">
         {issues.map((i) => (
-          <li key={i.word} className="flex flex-wrap items-center gap-2 text-[13px] text-[#292a2d]">
-            <span className="font-medium line-through decoration-[#2f7aa7]">{i.word}</span>
-            {i.fixes.length === 0 && <span className="text-[12px] text-[#51555b]">No suggestion</span>}
+          <li key={i.word} className="flex flex-wrap items-center gap-2 text-[13px] text-[#1B1726]">
+            <span className="font-medium line-through decoration-[#7059A8]">{i.word}</span>
+            {i.fixes.length === 0 && <span className="text-[12px] text-[#4A4757]">No suggestion</span>}
             {i.fixes.map((f) => (
-              <button key={f} type="button" onClick={() => fix(i.word, f)} className="!rounded-full !border !border-[#d4d8dd] !bg-white !px-2 !py-0.5 !text-[11px] !font-medium !leading-4 !text-[#005a8f] hover:!bg-[#daeeff]">{f}</button>
+              <button key={f} type="button" onClick={() => fix(i.word, f)} className="!rounded-full !border !border-[#E6E5EC] !bg-white !px-2 !py-0.5 !text-[11px] !font-medium !leading-4 !text-[#301D5D] hover:!bg-[#EFEAF8]">{f}</button>
             ))}
           </li>
         ))}

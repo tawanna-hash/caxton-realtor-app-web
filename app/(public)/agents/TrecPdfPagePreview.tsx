@@ -167,7 +167,7 @@ export default function TrecPdfPagePreview({
       {status === 'error' && (
         <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 p-6 text-center">
           <p className="text-sm font-semibold text-slate-800">The form preview could not load.</p>
-          <a href={pdfUrl} target="_blank" rel="noreferrer" className="rounded-md bg-[#005a8f] px-4 py-2 text-sm font-bold text-white">
+          <a href={pdfUrl} target="_blank" rel="noreferrer" className="rounded-md bg-[#301D5D] px-4 py-2 text-sm font-bold text-white">
             Open official form
           </a>
         </div>
@@ -191,10 +191,10 @@ export default function TrecPdfPagePreview({
               onClick={() => onFieldChange(field.id, isChecked ? '' : 'true')}
               aria-label={`${field.label}, official form page ${field.page}`}
               title={field.label}
-              className={`absolute z-20 flex cursor-pointer items-center justify-center rounded-[2px] border focus:outline-none focus:ring-2 focus:ring-[#005a8f] focus:ring-offset-1 ${
+              className={`absolute z-20 flex cursor-pointer items-center justify-center rounded-[2px] border focus:outline-none focus:ring-2 focus:ring-[#301D5D] focus:ring-offset-1 ${
                 isChecked
-                  ? 'border-[#005a8f] bg-[#005a8f] text-white'
-                  : 'border-[#2f7aa7] bg-[#daeeff]/90 text-transparent hover:bg-[#E3DBF3]'
+                  ? 'border-[#301D5D] bg-[#301D5D] text-white'
+                  : 'border-[#7059A8] bg-[#EFEAF8]/90 text-transparent hover:bg-[#E3DBF3]'
               }`}
               style={{ left, top, width, height }}
             >
@@ -210,7 +210,7 @@ export default function TrecPdfPagePreview({
             onChange={(event) => onFieldChange(field.id, event.target.value)}
             aria-label={`${field.label}, official form page ${field.page}`}
             title={field.label}
-            className="absolute z-20 border border-[#2f7aa7]/65 bg-[#daeeff]/85 px-[2px] font-sans text-slate-950 outline-none transition hover:bg-[#E3DBF3] focus:border-[#005a8f] focus:bg-[#f5f6f9] focus:ring-2 focus:ring-[#005a8f]"
+            className="absolute z-20 border border-[#7059A8]/65 bg-[#EFEAF8]/85 px-[2px] font-sans text-slate-950 outline-none transition hover:bg-[#E3DBF3] focus:border-[#301D5D] focus:bg-[#F6F3FB] focus:ring-2 focus:ring-[#301D5D]"
             style={{
               left,
               top,

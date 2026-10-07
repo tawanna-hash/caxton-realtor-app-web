@@ -359,8 +359,8 @@ export default async function StatementPage({
         </section>
 
         {overdueCents > 0 && (
-          <section className="mb-4 border border-[#bbc1c9] bg-[#f5f6f9] px-4 py-4 text-center print:hidden">
-            <div className="font-semibold text-[#292a2d]">
+          <section className="mb-4 border border-[#D9CFF0] bg-[#F6F3FB] px-4 py-4 text-center print:hidden">
+            <div className="font-semibold text-[#1B1726]">
               Pay all overdue invoices: {money(overdueCents)}
             </div>
             {overduePaymentLinkUrl ? (
@@ -368,7 +368,7 @@ export default async function StatementPage({
                 href={overduePaymentLinkUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-2 inline-flex rounded bg-[#005a8f] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1c3f5e]"
+                className="mt-2 inline-flex rounded bg-[#301D5D] px-4 py-2 text-xs font-semibold text-white hover:bg-[#42277C]"
               >
                 Pay all overdue invoices
               </a>
@@ -400,7 +400,7 @@ export default async function StatementPage({
                     href={invoice.stripe_payment_link_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="font-semibold text-[#1c3f5e] underline print:text-neutral-900 print:no-underline"
+                    className="font-semibold text-[#42277C] underline print:text-neutral-900 print:no-underline"
                   >
                     {invoice.number ?? invoice.id.slice(0, 8)}
                   </a>
@@ -408,7 +408,7 @@ export default async function StatementPage({
                   <div>
                     <Link
                       href={`/admin/invoices/${invoice.id}/preview`}
-                      className="font-semibold text-[#1c3f5e] underline print:text-neutral-900 print:no-underline"
+                      className="font-semibold text-[#42277C] underline print:text-neutral-900 print:no-underline"
                     >
                       {invoice.number ?? invoice.id.slice(0, 8)}
                     </Link>

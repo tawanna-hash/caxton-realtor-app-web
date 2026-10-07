@@ -24,7 +24,7 @@ const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 border-gray-200 rounded-md',
   active: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30 rounded-md',
   closed: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30 rounded-md',
-  announced: 'bg-[#f5f6f9] text-[#1c3f5e] border-[#bbc1c9]',
+  announced: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
 };
 
 function formatDate(s?: string) {
@@ -102,7 +102,7 @@ export default function GiveawaysPage() {
         </div>
         <Link
           href="/admin/giveaways/new"
-          className="bg-[#005a8f] text-white px-4 py-2 text-sm font-medium hover:bg-[#1c3f5e] rounded-md transition-colors"
+          className="bg-[#301D5D] text-white px-4 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors"
         >
           + Create Giveaway
         </Link>

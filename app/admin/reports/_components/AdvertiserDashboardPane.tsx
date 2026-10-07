@@ -171,7 +171,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                 className={
                   'px-3 py-2 text-xs font-medium rounded-md ' +
                   (preset === p
-                    ? 'bg-[#005a8f] text-white'
+                    ? 'bg-[#301D5D] text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')
                 }
               >
@@ -199,7 +199,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
             title={advertiser.contact_email
               ? 'Preview and send the performance report email'
               : 'Add a contact email on the Partners page to send a report'}
-            className="px-3 py-2 text-xs font-medium rounded-md bg-[#005a8f] text-white hover:bg-[#1c3f5e] disabled:opacity-40"
+            className="px-3 py-2 text-xs font-medium rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-40"
           >
             Send report email
           </button>
@@ -242,19 +242,19 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                   >
                     <defs>
                       <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#005a8f" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="#005a8f" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#301D5D" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#301D5D" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#d4d8dd" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E6E5EC" />
                     <XAxis
                       dataKey="date"
-                      tick={{ fontSize: 11, fill: '#51555b' }}
+                      tick={{ fontSize: 11, fill: '#4A4757' }}
                       tickFormatter={formatDate}
                       minTickGap={20}
                     />
                     <YAxis
-                      tick={{ fontSize: 11, fill: '#51555b' }}
+                      tick={{ fontSize: 11, fill: '#4A4757' }}
                       allowDecimals={false}
                     />
                     <Tooltip
@@ -262,14 +262,14 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                       contentStyle={{
                         fontSize: 12,
                         background: 'white',
-                        border: '1px solid #d4d8dd',
+                        border: '1px solid #E6E5EC',
                         borderRadius: 4,
                       }}
                     />
                     <Area
                       type="monotone"
                       dataKey="clicks"
-                      stroke="#005a8f"
+                      stroke="#301D5D"
                       strokeWidth={2}
                       fill={`url(#${gradientId})`}
                     />
@@ -338,7 +338,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                       </tr>
                     )}
                     {pageHotspots.map((h) => (
-                      <tr key={h.hotspot_id} className="border-b border-gray-100 hover:bg-[#f5f6f9]/40">
+                      <tr key={h.hotspot_id} className="border-b border-gray-100 hover:bg-[#F6F3FB]/40">
                         <td className="px-4 py-2">
                           <div className="text-gray-900">{h.magazine_label}</div>
                           <div className="text-xs text-gray-500">Page {h.page_idx + 1}</div>

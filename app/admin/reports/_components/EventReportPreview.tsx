@@ -29,15 +29,15 @@ export function buildEventReportHtml(report: EventReport, overrides: ReportOverr
   const title = resolveTitle(report, overrides);
 
   const sharesRows = report.shares.length === 0
-    ? `<tr><td colspan=\"2\" style=\"padding: 8px 12px; color: #51555b; font-size: 13px; font-style: italic;\">No shares in this period</td></tr>`
+    ? `<tr><td colspan=\"2\" style=\"padding: 8px 12px; color: #4A4757; font-size: 13px; font-style: italic;\">No shares in this period</td></tr>`
     : report.shares.map(s => `
         <tr>
-          <td style=\"padding: 8px 12px; border-bottom: 1px solid #f5f6f9; font-size: 13px; color: #292a2d;\">${EVENT_CHANNEL_LABELS[s.channel] ?? s.channel}</td>
-          <td style=\"padding: 8px 12px; border-bottom: 1px solid #f5f6f9; font-size: 13px; color: #292a2d; text-align: right; font-weight: 500;\">${s.total.toLocaleString()}</td>
+          <td style=\"padding: 8px 12px; border-bottom: 1px solid #F6F3FB; font-size: 13px; color: #1B1726;\">${EVENT_CHANNEL_LABELS[s.channel] ?? s.channel}</td>
+          <td style=\"padding: 8px 12px; border-bottom: 1px solid #F6F3FB; font-size: 13px; color: #1B1726; text-align: right; font-weight: 500;\">${s.total.toLocaleString()}</td>
         </tr>`).join('');
 
   const noteBlock = overrides.editorial_note.trim()
-    ? `<p style=\"margin: 0 0 24px 0; padding: 12px 16px; background: #f5f6f9; border-left: 3px solid ${brand.primary_hex}; font-size: 14px; color: #292a2d; line-height: 1.5;\">${overrides.editorial_note.replace(/</g, '&lt;')}</p>`
+    ? `<p style=\"margin: 0 0 24px 0; padding: 12px 16px; background: #F6F3FB; border-left: 3px solid ${brand.primary_hex}; font-size: 14px; color: #1B1726; line-height: 1.5;\">${overrides.editorial_note.replace(/</g, '&lt;')}</p>`
     : '';
 
   // Conversion rate: registrations / card_clicks
@@ -46,61 +46,61 @@ export function buildEventReportHtml(report: EventReport, overrides: ReportOverr
     : 0;
 
   return `
-<div style=\"max-width: 600px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #292a2d; background: #ffffff;\">
+<div style=\"max-width: 600px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1B1726; background: #ffffff;\">
   <div style=\"background: ${brand.primary_hex}; padding: 20px 24px; color: #ffffff;\">
     <p style=\"margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.7;\">${brand.pub_display}</p>
     <h1 style=\"margin: 6px 0 0 0; font-size: 22px; font-weight: 600;\">Event Engagement Report</h1>
   </div>
 
   <div style=\"padding: 24px;\">
-    <h2 style=\"margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #292a2d;\">${title.replace(/</g, '&lt;')}</h2>
-    <p style=\"margin: 0 0 20px 0; font-size: 13px; color: #51555b;\">Last ${report.range_days} ${pluralize(report.range_days, 'day')}</p>
+    <h2 style=\"margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #1B1726;\">${title.replace(/</g, '&lt;')}</h2>
+    <p style=\"margin: 0 0 20px 0; font-size: 13px; color: #4A4757;\">Last ${report.range_days} ${pluralize(report.range_days, 'day')}</p>
 
     ${noteBlock}
 
     <div style=\"display: table; width: 100%; margin-bottom: 24px;\">
       <div style=\"display: table-row;\">
-        <div style=\"display: table-cell; padding: 16px 12px; border: 1px solid #d4d8dd; border-radius: 4px; text-align: center; width: 50%;\">
-          <p style=\"margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #51555b;\">Card clicks</p>
+        <div style=\"display: table-cell; padding: 16px 12px; border: 1px solid #E6E5EC; border-radius: 4px; text-align: center; width: 50%;\">
+          <p style=\"margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #4A4757;\">Card clicks</p>
           <p style=\"margin: 6px 0 0 0; font-size: 28px; font-weight: 700; color: ${brand.primary_hex};\">${report.card_clicks.toLocaleString()}</p>
         </div>
         <div style=\"display: table-cell; width: 12px;\"></div>
-        <div style=\"display: table-cell; padding: 16px 12px; border: 1px solid #d4d8dd; border-radius: 4px; text-align: center; width: 50%;\">
-          <p style=\"margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #51555b;\">Registrations</p>
-          <p style=\"margin: 6px 0 0 0; font-size: 28px; font-weight: 700; color: ${brand.primary_hex};\">${report.registrations.toLocaleString()} ${convPct > 0 ? `<span style=\"font-size: 13px; font-weight: 400; color: #51555b;\">(${convPct}%)</span>` : ''}</p>
+        <div style=\"display: table-cell; padding: 16px 12px; border: 1px solid #E6E5EC; border-radius: 4px; text-align: center; width: 50%;\">
+          <p style=\"margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #4A4757;\">Registrations</p>
+          <p style=\"margin: 6px 0 0 0; font-size: 28px; font-weight: 700; color: ${brand.primary_hex};\">${report.registrations.toLocaleString()} ${convPct > 0 ? `<span style=\"font-size: 13px; font-weight: 400; color: #4A4757;\">(${convPct}%)</span>` : ''}</p>
         </div>
       </div>
     </div>
 
-    <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #292a2d;\">Engagement Actions</h3>
-    <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #d4d8dd; border-radius: 4px; overflow: hidden;\">
+    <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1B1726;\">Engagement Actions</h3>
+    <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #E6E5EC; border-radius: 4px; overflow: hidden;\">
       <tbody>
         <tr>
-          <td style=\"padding: 8px 12px; border-bottom: 1px solid #f5f6f9; font-size: 13px; color: #292a2d;\">Added to calendar</td>
-          <td style=\"padding: 8px 12px; border-bottom: 1px solid #f5f6f9; font-size: 13px; color: #292a2d; text-align: right; font-weight: 500;\">${report.calendar_adds.toLocaleString()}</td>
+          <td style=\"padding: 8px 12px; border-bottom: 1px solid #F6F3FB; font-size: 13px; color: #1B1726;\">Added to calendar</td>
+          <td style=\"padding: 8px 12px; border-bottom: 1px solid #F6F3FB; font-size: 13px; color: #1B1726; text-align: right; font-weight: 500;\">${report.calendar_adds.toLocaleString()}</td>
         </tr>
         <tr>
-          <td style=\"padding: 8px 12px; border-bottom: 1px solid #f5f6f9; font-size: 13px; color: #292a2d;\">Got directions</td>
-          <td style=\"padding: 8px 12px; border-bottom: 1px solid #f5f6f9; font-size: 13px; color: #292a2d; text-align: right; font-weight: 500;\">${report.directions_clicks.toLocaleString()}</td>
+          <td style=\"padding: 8px 12px; border-bottom: 1px solid #F6F3FB; font-size: 13px; color: #1B1726;\">Got directions</td>
+          <td style=\"padding: 8px 12px; border-bottom: 1px solid #F6F3FB; font-size: 13px; color: #1B1726; text-align: right; font-weight: 500;\">${report.directions_clicks.toLocaleString()}</td>
         </tr>
         <tr>
-          <td style=\"padding: 8px 12px; font-size: 13px; color: #292a2d;\">Shares</td>
-          <td style=\"padding: 8px 12px; font-size: 13px; color: #292a2d; text-align: right; font-weight: 500;\">${report.shares_total.toLocaleString()}</td>
+          <td style=\"padding: 8px 12px; font-size: 13px; color: #1B1726;\">Shares</td>
+          <td style=\"padding: 8px 12px; font-size: 13px; color: #1B1726; text-align: right; font-weight: 500;\">${report.shares_total.toLocaleString()}</td>
         </tr>
       </tbody>
     </table>
 
     ${report.shares_total > 0 ? `
-      <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #292a2d;\">Shares by Channel</h3>
-      <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #d4d8dd; border-radius: 4px; overflow: hidden;\">
+      <h3 style=\"margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1B1726;\">Shares by Channel</h3>
+      <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #E6E5EC; border-radius: 4px; overflow: hidden;\">
         <tbody>
           ${sharesRows}
         </tbody>
       </table>
     ` : ''}
 
-    <hr style=\"border: none; border-top: 1px solid #d4d8dd; margin: 24px 0;\" />
-    <p style=\"margin: 0; font-size: 11px; color: #7b8089; line-height: 1.5;\">
+    <hr style=\"border: none; border-top: 1px solid #E6E5EC; margin: 24px 0;\" />
+    <p style=\"margin: 0; font-size: 11px; color: #7A7787; line-height: 1.5;\">
       ${brand.pub_display} \u2022 \u00a9 ${new Date().getFullYear()} Realty News Now<br/>
       ${brand.tagline} \u2022 Report generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
     </p>

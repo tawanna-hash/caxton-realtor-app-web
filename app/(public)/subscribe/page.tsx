@@ -69,7 +69,7 @@ export default function SubscribePage() {
                 label={m.city}
                 sublabel={m.prelaunch ? (locked ? 'Coming soon' : 'Email \u00b7 Coming soon') : m.hasPrint ? 'Print + Email' : 'Email'}
                 selected={market === m.id}
-                activeColor="#005a8f"
+                activeColor="#301D5D"
                 disabled={locked}
                 onClick={() => setMarket(m.id)}
               />
@@ -98,9 +98,9 @@ export default function SubscribePage() {
                   onClick={() => setMode(m)}
                   className="px-4 py-2 rounded-full border text-sm font-medium transition-colors"
                   style={{
-                    borderColor: selected ? '#005a8f' : '#bbc1c9',
-                    backgroundColor: selected ? '#005a8f' : '#ffffff',
-                    color: selected ? '#ffffff' : '#292a2d',
+                    borderColor: selected ? '#301D5D' : '#D9CFF0',
+                    backgroundColor: selected ? '#301D5D' : '#ffffff',
+                    color: selected ? '#ffffff' : '#1B1726',
                   }}
                 >
                   {m === 'print' ? 'Print Magazine' : 'Weekly Email'}
@@ -114,7 +114,7 @@ export default function SubscribePage() {
           <SubscribeForm
             publication="RealtyLine"
             market="Austin"
-            accentColor="#005a8f"
+            accentColor="#301D5D"
             formId="realtyline"
             active={true}
             onActivate={() => {}}
@@ -125,7 +125,7 @@ export default function SubscribePage() {
           <SubscribeForm
             publication="Newsline San Antonio"
             market="San Antonio"
-            accentColor="#005a8f"
+            accentColor="#301D5D"
             formId="newslinesa"
             active={true}
             onActivate={() => {}}
@@ -194,13 +194,13 @@ function PickerButton({
       aria-disabled={disabled}
       className="text-left border-2 px-4 py-4 transition-all rounded-md disabled:cursor-not-allowed"
       style={{
-        borderColor: selected ? activeColor : disabled ? '#d4d8dd' : '#bbc1c9',
-        backgroundColor: selected ? `${activeColor}10` : disabled ? '#f5f6f9' : '#ffffff',
+        borderColor: selected ? activeColor : disabled ? '#E6E5EC' : '#D9CFF0',
+        backgroundColor: selected ? `${activeColor}10` : disabled ? '#F6F3FB' : '#ffffff',
       }}
     >
       <p
         className="text-base font-semibold"
-        style={{ color: selected ? activeColor : disabled ? '#7b8089' : '#292a2d' }}
+        style={{ color: selected ? activeColor : disabled ? '#7A7787' : '#1B1726' }}
       >
         {label}
       </p>
@@ -288,7 +288,7 @@ function SubscribeForm({
   }
 
   function blurBorder(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) {
-    e.currentTarget.style.borderColor = '#bbc1c9';
+    e.currentTarget.style.borderColor = '#D9CFF0';
   }
 
   async function handleSubmit(e: FormEvent) {

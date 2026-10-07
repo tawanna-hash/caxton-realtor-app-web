@@ -311,14 +311,14 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
           <button
             type="button"
             onClick={() => setComposerOpen(true)}
-            className="inline-flex h-9 items-center rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white hover:bg-[#1c3f5e]"
+            className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]"
           >
             Compose email
           </button>
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="inline-flex h-9 items-center rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white hover:bg-[#1c3f5e]"
+            className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]"
           >
             New partner
           </button>
@@ -401,11 +401,11 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
       <div className="mt-4 flex gap-2 border-b border-gray-200" role="tablist" aria-label="CRM view">
         <button type="button" role="tab" aria-selected={view === 'audience'}
           onClick={() => setView('audience')}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'audience' ? 'border-[#005a8f] text-[#1c3f5e]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'audience' ? 'border-[#301D5D] text-[#42277C]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >Audience</button>
         <button type="button" role="tab" aria-selected={view === 'sent'}
           onClick={() => setView('sent')}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'sent' ? 'border-[#005a8f] text-[#1c3f5e]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'sent' ? 'border-[#301D5D] text-[#42277C]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >Sent</button>
       </div>
 
@@ -420,14 +420,14 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search partners"
             data-testid="input-partner-search"
-            className="h-9 flex-1 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#2f7aa7] focus:ring-2 focus:ring-[#daeeff]"
+            className="h-9 flex-1 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]"
           />
           <label htmlFor="partner-sort" className="sr-only">Sort partners</label>
           <select
             id="partner-sort"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#2f7aa7] focus:ring-2 focus:ring-[#daeeff] sm:w-auto"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8] sm:w-auto"
             aria-label="Sort partners"
             data-testid="select-partner-sort"
           >
@@ -689,7 +689,7 @@ function CrmRow({
       <button
         type="button"
         onClick={onOpen}
-        className="rounded bg-[#005a8f] px-2 py-1 text-xs font-medium text-white hover:bg-[#1c3f5e]"
+        className="rounded bg-[#301D5D] px-2 py-1 text-xs font-medium text-white hover:bg-[#42277C]"
       >
         Edit
       </button>
@@ -699,7 +699,7 @@ function CrmRow({
   return (
     <>
       {/* Desktop grid ≥ sm — unchanged layout */}
-      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-3 text-xs items-center hover:bg-[#f5f6f9]/40 transition">
+      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-3 text-xs items-center hover:bg-[#F6F3FB]/40 transition">
         <div className="col-span-4">{contactCell}</div>
         <div className="col-span-1">
           <StatusBadge status={row.status ?? 'prospect'} />
@@ -713,7 +713,7 @@ function CrmRow({
       </div>
 
       {/* Mobile card < sm */}
-      <div className="sm:hidden px-4 py-3 space-y-2 hover:bg-[#f5f6f9]/40 transition">
+      <div className="sm:hidden px-4 py-3 space-y-2 hover:bg-[#F6F3FB]/40 transition">
         {contactCell}
         <div className="flex items-center gap-2 flex-wrap">
           <StatusBadge status={row.status ?? 'prospect'} />
@@ -743,11 +743,11 @@ function formatShortDate(iso: string | null | undefined): string {
 
 function publicationTone(key: PublicationKey): string {
   switch (key) {
-    case 'san_antonio': return 'bg-[#daeeff] text-[#1c3f5e] border-[#98bdd3]';
+    case 'san_antonio': return 'bg-[#EFEAF8] text-[#42277C] border-[#B9ADD6]';
     case 'houston':     return 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30';
     case 'dallas':      return 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30';
     case 'austin':
-    default:            return 'bg-[#f5f6f9] text-[#005a8f] border-[#bbc1c9]';
+    default:            return 'bg-[#F6F3FB] text-[#301D5D] border-[#D9CFF0]';
   }
 }
 
@@ -779,7 +779,7 @@ function StatusChip({
   label: string; active: boolean; count: number; tone?: string; onClick: () => void;
 }) {
   const base = active
-    ? 'bg-[#005a8f] text-white border-[#005a8f]'
+    ? 'bg-[#301D5D] text-white border-[#301D5D]'
     : tone || 'bg-white text-gray-700 border-gray-300';
   return (
     <button
@@ -1213,7 +1213,7 @@ function EditDrawer({
               id={`crm-display-name-${row.id}`}
               value={displayName}
               onChange={(e) => updateCompanyName(e.target.value)}
-              className="mt-0.5 w-full rounded border border-transparent bg-transparent px-0 text-xl text-gray-900 outline-none transition hover:border-gray-300 hover:px-2 focus:border-[#2f7aa7] focus:px-2 focus:ring-2 focus:ring-[#daeeff]"
+              className="mt-0.5 w-full rounded border border-transparent bg-transparent px-0 text-xl text-gray-900 outline-none transition hover:border-gray-300 hover:px-2 focus:border-[#7059A8] focus:px-2 focus:ring-2 focus:ring-[#EFEAF8]"
               placeholder="Partner company name"
               autoComplete="organization"
             />
@@ -1379,7 +1379,7 @@ function EditDrawer({
                         type="button"
                         onClick={addIndustry}
                         disabled={industryBusy || !newIndustryLabel.trim()}
-                        className="shrink-0 rounded-md bg-[#005a8f] px-3 py-2 text-sm font-medium text-white hover:bg-[#1c3f5e] disabled:opacity-40"
+                        className="shrink-0 rounded-md bg-[#301D5D] px-3 py-2 text-sm font-medium text-white hover:bg-[#42277C] disabled:opacity-40"
                       >
                         Add
                       </button>
@@ -1415,7 +1415,7 @@ function EditDrawer({
                         type="checkbox"
                         checked={publications.includes(p.id)}
                         onChange={() => togglePublication(p.id)}
-                        className="h-4 w-4 rounded-md border-gray-300 text-[#005a8f] focus:ring-[#2f7aa7]"
+                        className="h-4 w-4 rounded-md border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
                       />
                       <span>{p.label}</span>
                     </label>
@@ -1464,7 +1464,7 @@ function EditDrawer({
               </div>
               <Link
                 href={`/admin/reports?tab=advertisers&advertiserId=${row.id}`}
-                className="inline-block text-xs text-[#005a8f] hover:underline"
+                className="inline-block text-xs text-[#301D5D] hover:underline"
               >
                 Open analytics dashboard
               </Link>
@@ -1669,7 +1669,7 @@ function EditDrawer({
                     href={submissionUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs text-[#005a8f] underline"
+                    className="text-xs text-[#301D5D] underline"
                   >
                     Open form in new tab ↗
                   </a>
@@ -1744,7 +1744,7 @@ function EditDrawer({
                 className={`px-4 py-2 rounded-md text-white text-sm disabled:opacity-50 whitespace-nowrap ${
                   deleteRequested
                     ? 'bg-[#661102] hover:bg-[#661102]'
-                    : 'bg-[#005a8f] hover:bg-[#1c3f5e]'
+                    : 'bg-[#301D5D] hover:bg-[#42277C]'
                 }`}
               >
                 {deleting ? 'Deleting...' : saving ? 'Saving...' : deleteRequested ? 'Save & delete' : 'Save changes'}
@@ -1757,7 +1757,7 @@ function EditDrawer({
   );
 }
 
-const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]';
+const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -1837,7 +1837,7 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
       {!hasAgreement && !hasAnyBilling ? (
         <p className="text-xs text-gray-500 italic">
           No agreement linked yet. Create or sign one from{' '}
-          <a href="/admin/agreements" className="text-[#005a8f] hover:underline">/admin/agreements</a>{' '}
+          <a href="/admin/agreements" className="text-[#301D5D] hover:underline">/admin/agreements</a>{' '}
           and it will appear here automatically.
         </p>
       ) : (
@@ -1846,9 +1846,9 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
             Read-only mirror of the partner&rsquo;s most recent active-ish agreement.
             To edit, open{' '}
             {row.current_agreement_id ? (
-              <a href={`/admin/agreements?id=${row.current_agreement_id}`} className="text-[#005a8f] hover:underline">/admin/agreements</a>
+              <a href={`/admin/agreements?id=${row.current_agreement_id}`} className="text-[#301D5D] hover:underline">/admin/agreements</a>
             ) : (
-              <a href="/admin/agreements" className="text-[#005a8f] hover:underline">/admin/agreements</a>
+              <a href="/admin/agreements" className="text-[#301D5D] hover:underline">/admin/agreements</a>
             )}
             {' '}&mdash; saves there flow back here.
           </p>
@@ -1992,7 +1992,7 @@ function CreateAdvertiserModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
               placeholder="e.g. La Cima"
               disabled={saving}
               autoFocus
@@ -2008,7 +2008,7 @@ function CreateAdvertiserModal({
                     checked={publications.includes(opt.id)}
                     onChange={() => togglePublication(opt.id)}
                     disabled={saving}
-                    className="h-4 w-4 rounded-md border-gray-300 text-[#005a8f] focus:ring-[#2f7aa7]"
+                    className="h-4 w-4 rounded-md border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
                   />
                   <span>{opt.label}</span>
                 </label>
@@ -2022,7 +2022,7 @@ function CreateAdvertiserModal({
               value={status}
               onChange={(e) => setStatus(e.target.value as AdvertiserStatus)}
               disabled={saving}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
             >
               <option value="prospect">Prospect</option>
               <option value="advertiser">Partner</option>
@@ -2035,7 +2035,7 @@ function CreateAdvertiserModal({
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
               placeholder="contact@example.com"
               disabled={saving}
             />
@@ -2046,7 +2046,7 @@ function CreateAdvertiserModal({
               type="email"
               value={billingEmail}
               onChange={(e) => setBillingEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
               placeholder="billing@example.com"
               disabled={saving}
             />
@@ -2065,7 +2065,7 @@ function CreateAdvertiserModal({
           </button>
           <button
             onClick={save}
-            className="px-4 py-2 rounded-md bg-[#005a8f] text-white hover:bg-[#1c3f5e] disabled:opacity-50 text-sm whitespace-nowrap"
+            className="px-4 py-2 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50 text-sm whitespace-nowrap"
             disabled={saving || !name.trim()}
           >
             {saving ? 'Creating...' : 'Create'}

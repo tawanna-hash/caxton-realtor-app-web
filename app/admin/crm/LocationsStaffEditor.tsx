@@ -13,7 +13,7 @@ import type { AdvertiserLocation, AdvertiserStaff } from '@/lib/advertisers';
 import { formatPhoneInput } from '@/lib/format-phone';
 import AdvertiserImageUploader from '@/components/AdvertiserImageUploader';
 
-const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]';
+const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]';
 
 type Props = {
   advertiserId: number;
@@ -447,7 +447,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search locations & staff — name, title, city, email, phone…"
-            className="w-full pl-8 pr-8 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+            className="w-full pl-8 pr-8 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
           />
           {search && (
             <button
@@ -484,7 +484,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             className={`px-3 py-2 rounded-md text-sm font-medium border transition-colors ${
               syncing
                 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
-                : 'bg-[#005a8f] text-white border-[#1c3f5e] hover:bg-[#1c3f5e]'
+                : 'bg-[#301D5D] text-white border-[#42277C] hover:bg-[#42277C]'
             }`}
           >
             {syncing ? 'Syncing...' : 'Sync now'}
@@ -496,7 +496,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
           className={`text-xs px-3 py-2 rounded-md ${
             syncMsg.startsWith('Sync failed')
               ? 'bg-[#FFEAE6] text-[#661102] border border-[#FF2A04]/30'
-              : 'bg-[#f5f6f9] text-[#1c3f5e] border border-[#bbc1c9]'
+              : 'bg-[#F6F3FB] text-[#42277C] border border-[#D9CFF0]'
           }`}
         >
           {syncMsg}
@@ -531,7 +531,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
           importing
             ? 'border-gray-200 bg-gray-100 cursor-wait'
             : dragOver
-              ? 'border-[#2f7aa7] bg-[#f5f6f9]'
+              ? 'border-[#7059A8] bg-[#F6F3FB]'
               : 'border-gray-300 bg-gray-50/60 hover:border-gray-400 hover:bg-gray-100'
         }`}
       >
@@ -546,7 +546,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className={importing ? 'text-gray-400' : dragOver ? 'text-[#005a8f]' : 'text-gray-500'}
+            className={importing ? 'text-gray-400' : dragOver ? 'text-[#301D5D]' : 'text-gray-500'}
             aria-hidden="true"
           >
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -566,7 +566,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
           className={`text-xs px-3 py-2 rounded-md ${
             importMsg.startsWith('Import failed')
               ? 'bg-[#FFEAE6] text-[#661102] border border-[#FF2A04]/30'
-              : 'bg-[#f5f6f9] text-[#1c3f5e] border border-[#bbc1c9]'
+              : 'bg-[#F6F3FB] text-[#42277C] border border-[#D9CFF0]'
           }`}
         >
           {importMsg}
@@ -697,7 +697,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                     <a
                       href={`mailto:${loc.email}`}
                       title={`Email ${loc.email}`}
-                      className="text-[#005a8f] hover:text-[#005a8f] text-base px-1 rounded-md"
+                      className="text-[#301D5D] hover:text-[#301D5D] text-base px-1 rounded-md"
                       tabIndex={-1}
                     >
                       ✉
@@ -785,7 +785,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                     <a
                       href={`mailto:${s.email}`}
                       title={`Email ${s.email}`}
-                      className="text-[#005a8f] hover:text-[#005a8f] text-base px-1 rounded-md"
+                      className="text-[#301D5D] hover:text-[#301D5D] text-base px-1 rounded-md"
                       tabIndex={-1}
                     >
                       ✉
@@ -822,7 +822,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                           onClick={() => toggleStaffLocation(s.id, loc.id)}
                           className={`text-xs px-2 py-1 rounded-md border ${
                             checked
-                              ? 'bg-[#005a8f] text-white border-[#005a8f]'
+                              ? 'bg-[#301D5D] text-white border-[#301D5D]'
                               : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                           }`}
                         >

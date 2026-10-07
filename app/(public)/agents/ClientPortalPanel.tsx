@@ -11,9 +11,9 @@ type View = {
   forms: { family: string; label: string }[];
 };
 
-const btn = 'inline-flex items-center rounded-lg border border-[#d4d8dd] bg-white px-3 py-2 text-[13px] font-medium text-[#292a2d] transition hover:border-[#005a8f] hover:bg-[#005a8f] hover:text-white disabled:opacity-45';
-const card = 'rounded-[10px] border border-[#d4d8dd] bg-white';
-const lab = 'text-[11px] font-medium uppercase tracking-[0.06em] text-[#51555b]';
+const btn = 'inline-flex items-center rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white disabled:opacity-45';
+const card = 'rounded-[10px] border border-[#E6E5EC] bg-white';
+const lab = 'text-[11px] font-medium uppercase tracking-[0.06em] text-[#4A4757]';
 const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
 
 type Link = { key: string; name: string; token: string };
@@ -88,43 +88,43 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-[22px] font-semibold text-[#292a2d]">Client Portal</h2>
-        <p className="mt-1 text-[14px] text-[#51555b]">Each person gets their own private link. No sign-in needed.</p>
+        <h2 className="text-[22px] font-semibold text-[#1B1726]">Client Portal</h2>
+        <p className="mt-1 text-[14px] text-[#4A4757]">Each person gets their own private link. No sign-in needed.</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={`${card} p-4`}>
-          <h3 className="text-[14px] font-semibold text-[#292a2d]">Preview</h3>
+          <h3 className="text-[14px] font-semibold text-[#1B1726]">Preview</h3>
           <div className="mt-3 space-y-2">
             {people.map((p) => {
               const l = linkFor(p);
               return l
                 ? <a key={p.key} className={`${btn} w-full justify-center`} href={urlOf(l)} target="_blank" rel="noreferrer">View As {firstName(p.name)}</a>
-                : <span key={p.key} className="block rounded-lg border border-dashed border-[#d4d8dd] px-3 py-2 text-center text-[13px] font-medium text-[#51555b]">View As {firstName(p.name)} (Create Link First)</span>;
+                : <span key={p.key} className="block rounded-lg border border-dashed border-[#E6E5EC] px-3 py-2 text-center text-[13px] font-medium text-[#4A4757]">View As {firstName(p.name)} (Create Link First)</span>;
             })}
-            {people.length === 0 && <p className="text-[14px] text-[#51555b]">Add the buyers or sellers on the People tab first.</p>}
+            {people.length === 0 && <p className="text-[14px] text-[#4A4757]">Add the buyers or sellers on the People tab first.</p>}
           </div>
-          <p className="mt-3 text-[14px] text-[#51555b]">{names}&apos;s view of this deal: progress, deadlines, forms and uploads.</p>
+          <p className="mt-3 text-[14px] text-[#4A4757]">{names}&apos;s view of this deal: progress, deadlines, forms and uploads.</p>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-[#f5f6f9] p-3"><div className="text-[24px] font-semibold text-[#292a2d]">{view ? `${done}/${view.steps.length}` : '-'}</div><div className="text-[12px] font-medium text-[#51555b]">Milestones</div></div>
-            <div className="rounded-lg bg-[#f5f6f9] p-3"><div className="text-[24px] font-semibold text-[#292a2d]">{view ? view.forms.length : '-'}</div><div className="text-[12px] font-medium text-[#51555b]">Forms To View</div></div>
+            <div className="rounded-lg bg-[#F6F3FB] p-3"><div className="text-[24px] font-semibold text-[#1B1726]">{view ? `${done}/${view.steps.length}` : '-'}</div><div className="text-[12px] font-medium text-[#4A4757]">Milestones</div></div>
+            <div className="rounded-lg bg-[#F6F3FB] p-3"><div className="text-[24px] font-semibold text-[#1B1726]">{view ? view.forms.length : '-'}</div><div className="text-[12px] font-medium text-[#4A4757]">Forms To View</div></div>
           </div>
         </section>
 
         <section className={`${card} p-4`}>
-          <h3 className="text-[14px] font-semibold text-[#292a2d]">Share With {names}</h3>
-          <p className="mt-2 text-[14px] text-[#51555b]">Copy a personal link for each person and send it however you like: email, text or WhatsApp. Anyone with a link sees the deal, so send each link only to that person. Resetting or turning off a link stops it from working.</p>
-          {links === undefined && !error && <p className="mt-3 text-[12px] font-medium text-[#51555b]">Loading</p>}
+          <h3 className="text-[14px] font-semibold text-[#1B1726]">Share With {names}</h3>
+          <p className="mt-2 text-[14px] text-[#4A4757]">Copy a personal link for each person and send it however you like: email, text or WhatsApp. Anyone with a link sees the deal, so send each link only to that person. Resetting or turning off a link stops it from working.</p>
+          {links === undefined && !error && <p className="mt-3 text-[12px] font-medium text-[#4A4757]">Loading</p>}
           {links !== undefined && (
-            <ul className="mt-3 rounded-lg border border-[#d4d8dd] px-3">
+            <ul className="mt-3 rounded-lg border border-[#E6E5EC] px-3">
               {people.map((p) => {
                 const l = linkFor(p);
                 return (
-                  <li key={p.key} className="border-b border-[#d4d8dd] py-3 last:border-0">
+                  <li key={p.key} className="border-b border-[#E6E5EC] py-3 last:border-0">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="text-[14px] font-medium text-[#292a2d]">{p.name}</div>
-                        <div className="truncate text-[12px] font-medium text-[#51555b]">{p.email || 'No email'}</div>
+                        <div className="text-[14px] font-medium text-[#1B1726]">{p.name}</div>
+                        <div className="truncate text-[12px] font-medium text-[#4A4757]">{p.email || 'No email'}</div>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {!l && <button type="button" disabled={busy === p.key} className={btn} onClick={() => void act(p, {})}>Create Link</button>}
@@ -133,11 +133,11 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
                         {l && <button type="button" disabled={busy === p.key} className={btn} onClick={() => { if (window.confirm(`Turn off ${firstName(p.name)}'s link?`)) void act(p, { disable: true }); }}>Turn Off</button>}
                       </div>
                     </div>
-                    {l && <input readOnly value={urlOf(l)} aria-label={`${p.name} link`} onFocus={(e) => e.currentTarget.select()} className="mt-2 w-full rounded-lg border border-[#d4d8dd] bg-white px-3 py-2 text-[12px] font-medium text-[#51555b]" />}
+                    {l && <input readOnly value={urlOf(l)} aria-label={`${p.name} link`} onFocus={(e) => e.currentTarget.select()} className="mt-2 w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[12px] font-medium text-[#4A4757]" />}
                   </li>
                 );
               })}
-              {people.length === 0 && <li className="py-3 text-[14px] text-[#51555b]">No clients on this deal yet.</li>}
+              {people.length === 0 && <li className="py-3 text-[14px] text-[#4A4757]">No clients on this deal yet.</li>}
             </ul>
           )}
           {error && <p role="alert" className="mt-3 text-[12px] font-medium text-[#661102]">{error}</p>}
@@ -145,31 +145,31 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
       </div>
 
       <section className={card}>
-        <div className="flex items-center justify-between border-b border-[#d4d8dd] px-4 py-4">
-          <h3 className="text-[14px] font-semibold text-[#292a2d]">What {names} See</h3>
-          {view && <span className="text-[12px] font-medium text-[#51555b]">{done}/{view.steps.length}</span>}
+        <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-4">
+          <h3 className="text-[14px] font-semibold text-[#1B1726]">What {names} See</h3>
+          {view && <span className="text-[12px] font-medium text-[#4A4757]">{done}/{view.steps.length}</span>}
         </div>
-        {!previewToken && <p className="p-4 text-[14px] text-[#51555b]">Create a link to see exactly what clients see.</p>}
-        {previewToken && !view && <p className="p-4 text-[12px] font-medium text-[#51555b]">Loading</p>}
+        {!previewToken && <p className="p-4 text-[14px] text-[#4A4757]">Create a link to see exactly what clients see.</p>}
+        {previewToken && !view && <p className="p-4 text-[12px] font-medium text-[#4A4757]">Loading</p>}
         {view && (
           <div className="p-4">
             <ol>
               {view.steps.map((s, i) => (
                 <li key={s.label} className="relative pb-5 pl-8 last:pb-0">
-                  {i < view.steps.length - 1 && <span className="absolute bottom-0 left-[7px] top-5 w-[2px] bg-[#d4d8dd]" aria-hidden="true" />}
-                  <span className="absolute left-0 top-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 text-[9px] text-white" style={{ borderColor: s.state === 'upcoming' ? '#d4d8dd' : '#005a8f', background: s.state === 'done' ? '#005a8f' : '#fff' }} aria-hidden="true">{s.state === 'done' ? '✓' : ''}</span>
+                  {i < view.steps.length - 1 && <span className="absolute bottom-0 left-[7px] top-5 w-[2px] bg-[#E6E5EC]" aria-hidden="true" />}
+                  <span className="absolute left-0 top-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 text-[9px] text-white" style={{ borderColor: s.state === 'upcoming' ? '#E6E5EC' : '#301D5D', background: s.state === 'done' ? '#301D5D' : '#fff' }} aria-hidden="true">{s.state === 'done' ? '✓' : ''}</span>
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className={`text-[14px] ${s.state === 'upcoming' ? 'font-medium text-[#51555b]' : 'font-semibold text-[#292a2d]'}`}>{s.label}</span>
-                    {s.date && <span className="text-[12px] font-medium text-[#51555b]">{s.state === 'done' ? 'Done' : 'Expected'} {fmt(s.date)}</span>}
+                    <span className={`text-[14px] ${s.state === 'upcoming' ? 'font-medium text-[#4A4757]' : 'font-semibold text-[#1B1726]'}`}>{s.label}</span>
+                    {s.date && <span className="text-[12px] font-medium text-[#4A4757]">{s.state === 'done' ? 'Done' : 'Expected'} {fmt(s.date)}</span>}
                   </div>
-                  {s.note && <p className="text-[12px] font-medium text-[#51555b]">{s.note}</p>}
+                  {s.note && <p className="text-[12px] font-medium text-[#4A4757]">{s.note}</p>}
                 </li>
               ))}
             </ol>
             {view.forms.length > 0 && (
-              <div className="mt-4 border-t border-[#d4d8dd] pt-4">
+              <div className="mt-4 border-t border-[#E6E5EC] pt-4">
                 <div className={lab}>Forms Clients Can View</div>
-                <ul className="mt-2 text-[14px] font-medium text-[#292a2d]">{view.forms.map((f) => <li key={f.family} className="py-0.5">{f.label}</li>)}</ul>
+                <ul className="mt-2 text-[14px] font-medium text-[#1B1726]">{view.forms.map((f) => <li key={f.family} className="py-0.5">{f.label}</li>)}</ul>
               </div>
             )}
             <Tip text="Clients can also upload documents. Never shown: your notes, activity or internal checklists." />

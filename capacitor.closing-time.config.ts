@@ -14,10 +14,10 @@ const config: CapacitorConfig = {
     iosScheme: 'https',
     allowNavigation: ['itsalmostclosingtime.com', '*.itsalmostclosingtime.com'],
   },
-  ios: { contentInset: 'always', scrollEnabled: true, limitsNavigationsToAppBoundDomains: false, backgroundColor: '#005a8f' },
+  ios: { contentInset: 'always', scrollEnabled: true, limitsNavigationsToAppBoundDomains: false, backgroundColor: '#301D5D' },
   plugins: {
-    SplashScreen: { launchShowDuration: 1500, launchAutoHide: true, backgroundColor: '#005a8f', showSpinner: false, splashFullScreen: true, splashImmersive: true },
-    StatusBar: { style: 'LIGHT', backgroundColor: '#005a8f', overlaysWebView: false },
+    SplashScreen: { launchShowDuration: 1500, launchAutoHide: true, backgroundColor: '#301D5D', showSpinner: false, splashFullScreen: true, splashImmersive: true },
+    StatusBar: { style: 'LIGHT', backgroundColor: '#301D5D', overlaysWebView: false },
   },
 };
 

@@ -66,7 +66,7 @@ export const ZONE_LABELS: Record<AdZone, string> = {
 
 export const TIER_COLORS: Record<AdTier, string> = {
   premium: 'bg-[#FEF8CC] text-[#645600] ring-1 ring-[#FAD800]/50 rounded-md',
-  standard: 'bg-[#daeeff] text-[#005a8f] ring-1 ring-[#98bdd3]',
+  standard: 'bg-[#EFEAF8] text-[#301D5D] ring-1 ring-[#B9ADD6]',
   house: 'bg-gray-100 text-gray-700 ring-1 ring-gray-300 rounded-md',
 };
 

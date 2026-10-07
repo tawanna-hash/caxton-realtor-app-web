@@ -61,7 +61,7 @@ function bodyToHtml(body: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
   const paragraphs = escaped.split(/\n{2,}/).map((p) =>
-    `<p style="margin:0 0 14px 0; line-height:1.55; color:#292a2d;">${p.replace(/\n/g, '<br>')}</p>`,
+    `<p style="margin:0 0 14px 0; line-height:1.55; color:#1B1726;">${p.replace(/\n/g, '<br>')}</p>`,
   );
   return paragraphs.join('\n');
 }
@@ -88,21 +88,21 @@ function sanitizeHtml(html: string): string {
 function inlineStyleHtml(html: string): string {
   const REPLACEMENTS: Array<[RegExp, string]> = [
     // Paragraphs.
-    [/<p(\s[^>]*)?>/gi, '<p$1 style="margin:0 0 14px 0;line-height:1.55;color:#292a2d;">'],
+    [/<p(\s[^>]*)?>/gi, '<p$1 style="margin:0 0 14px 0;line-height:1.55;color:#1B1726;">'],
     // Headings.
-    [/<h2(\s[^>]*)?>/gi, '<h2$1 style="font-family:Georgia,serif;font-size:22px;font-weight:600;line-height:1.3;margin:18px 0 10px;color:#292a2d;">'],
-    [/<h3(\s[^>]*)?>/gi, '<h3$1 style="font-family:Georgia,serif;font-size:18px;font-weight:600;line-height:1.3;margin:16px 0 8px;color:#292a2d;">'],
-    [/<h1(\s[^>]*)?>/gi, '<h1$1 style="font-family:Georgia,serif;font-size:26px;font-weight:600;line-height:1.25;margin:18px 0 10px;color:#292a2d;">'],
+    [/<h2(\s[^>]*)?>/gi, '<h2$1 style="font-family:Georgia,serif;font-size:22px;font-weight:600;line-height:1.3;margin:18px 0 10px;color:#1B1726;">'],
+    [/<h3(\s[^>]*)?>/gi, '<h3$1 style="font-family:Georgia,serif;font-size:18px;font-weight:600;line-height:1.3;margin:16px 0 8px;color:#1B1726;">'],
+    [/<h1(\s[^>]*)?>/gi, '<h1$1 style="font-family:Georgia,serif;font-size:26px;font-weight:600;line-height:1.25;margin:18px 0 10px;color:#1B1726;">'],
     // Lists.
-    [/<ul(\s[^>]*)?>/gi, '<ul$1 style="margin:8px 0 14px 20px;padding:0;list-style:disc;color:#292a2d;">'],
-    [/<ol(\s[^>]*)?>/gi, '<ol$1 style="margin:8px 0 14px 20px;padding:0;list-style:decimal;color:#292a2d;">'],
+    [/<ul(\s[^>]*)?>/gi, '<ul$1 style="margin:8px 0 14px 20px;padding:0;list-style:disc;color:#1B1726;">'],
+    [/<ol(\s[^>]*)?>/gi, '<ol$1 style="margin:8px 0 14px 20px;padding:0;list-style:decimal;color:#1B1726;">'],
     [/<li(\s[^>]*)?>/gi, '<li$1 style="margin:4px 0;line-height:1.5;">'],
     // Links.
-    [/<a(\s[^>]*?)>/gi, '<a$1 style="color:#005a8f;text-decoration:underline;">'],
+    [/<a(\s[^>]*?)>/gi, '<a$1 style="color:#301D5D;text-decoration:underline;">'],
     // Blockquote.
-    [/<blockquote(\s[^>]*)?>/gi, '<blockquote$1 style="margin:8px 0 14px;padding:8px 14px;border-left:3px solid #005a8f;background:#fafafa;color:#51555b;font-style:italic;">'],
+    [/<blockquote(\s[^>]*)?>/gi, '<blockquote$1 style="margin:8px 0 14px;padding:8px 14px;border-left:3px solid #301D5D;background:#fafafa;color:#4A4757;font-style:italic;">'],
     // Horizontal rule.
-    [/<hr(\s[^>]*)?\/?\s*>/gi, '<hr style="border:0;border-top:1px solid #d4d8dd;margin:18px 0;" />'],
+    [/<hr(\s[^>]*)?\/?\s*>/gi, '<hr style="border:0;border-top:1px solid #E6E5EC;margin:18px 0;" />'],
     // Emphasis.
     [/<strong(\s[^>]*)?>/gi, '<strong$1 style="font-weight:600;">'],
     [/<b(\s[^>]*)?>/gi, '<b$1 style="font-weight:600;">'],
@@ -129,7 +129,7 @@ interface RenderOptions {
 
 function renderEmail(opts: RenderOptions): string {
   const brand = opts.brand ?? 'realtyline';
-  const accent = brand === 'newsline' ? '#005a8f' : '#005a8f';
+  const accent = brand === 'newsline' ? '#301D5D' : '#301D5D';
   const wordmark = brand === 'newsline' ? 'Newsline' : brand === 'caxton' ? 'Caxton' : 'RealtyLine';
   const tagline = brand === 'newsline'
     ? 'San Antonio real estate news'
@@ -172,9 +172,9 @@ function renderEmail(opts: RenderOptions): string {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(opts.subject)}</title>
 </head>
-<body style="margin:0;padding:0;background:#f5f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#F6F3FB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
 ${preheader}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6f9;padding:24px 0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F3FB;padding:24px 0;">
   <tr><td align="center">
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
       <tr><td style="background:${accent};padding:20px 28px;color:#fff;">
@@ -184,10 +184,10 @@ ${preheader}
       <tr><td style="padding:28px;">
         ${bodyWithAttachments}
       </td></tr>
-      <tr><td style="padding:16px 28px 24px;border-top:1px solid #d4d8dd;font-size:12px;color:#51555b;line-height:1.6;">
+      <tr><td style="padding:16px 28px 24px;border-top:1px solid #E6E5EC;font-size:12px;color:#4A4757;line-height:1.6;">
         <div>You're receiving this email because you're connected with ${wordmark}.</div>
         <div style="margin-top:6px;">
-          <a href="${opts.unsubscribeUrl}" style="color:#51555b;text-decoration:underline;">Unsubscribe</a>
+          <a href="${opts.unsubscribeUrl}" style="color:#4A4757;text-decoration:underline;">Unsubscribe</a>
           &nbsp;·&nbsp; Caxton Publications, Austin, TX, USA
         </div>
         ${pixel}

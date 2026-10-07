@@ -23,10 +23,10 @@ export type Series = { key: string; label: string; color: string; dashed?: boole
 type Row = Record<string, string | number | null>;
 type Fmt = (v: number) => string;
 
-const AXIS = { stroke: '#7b8089', fontSize: 11, tickLine: false } as const;
+const AXIS = { stroke: '#7A7787', fontSize: 11, tickLine: false } as const;
 const TOOLTIP_STYLE = {
   backgroundColor: '#fff',
-  border: '1px solid #d4d8dd',
+  border: '1px solid #E6E5EC',
   borderRadius: 6,
   fontSize: 12,
 } as const;
@@ -40,7 +40,7 @@ export function StackedBars({ data, series, fmt, height = 280 }: { data: Row[]; 
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
         <CartesianGrid stroke="#f0f0f0" vertical={false} />
-        <XAxis dataKey="label" {...AXIS} axisLine={{ stroke: '#d4d8dd' }} />
+        <XAxis dataKey="label" {...AXIS} axisLine={{ stroke: '#E6E5EC' }} />
         <YAxis {...AXIS} axisLine={false} width={56} tickFormatter={(v) => fmt(num(v))} />
         <Tooltip
           contentStyle={TOOLTIP_STYLE}
@@ -61,7 +61,7 @@ export function Lines({ data, series, fmt, height = 280, legend = true }: { data
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
         <CartesianGrid stroke="#f0f0f0" vertical={false} />
-        <XAxis dataKey="label" {...AXIS} axisLine={{ stroke: '#d4d8dd' }} />
+        <XAxis dataKey="label" {...AXIS} axisLine={{ stroke: '#E6E5EC' }} />
         <YAxis {...AXIS} axisLine={false} width={56} tickFormatter={(v) => fmt(num(v))} />
         <Tooltip
           contentStyle={TOOLTIP_STYLE}
@@ -83,7 +83,7 @@ export function Lines({ data, series, fmt, height = 280, legend = true }: { data
 
 export function Donut({ data, fmt, height = 200 }: { data: Array<{ key: string; label: string; value: number; color: string }>; fmt: Fmt; height?: number }) {
   const total = data.reduce((a, d) => a + d.value, 0);
-  const shown = total > 0 ? data : [{ key: 'none', label: 'No data', value: 1, color: '#d4d8dd' }];
+  const shown = total > 0 ? data : [{ key: 'none', label: 'No data', value: 1, color: '#E6E5EC' }];
   return (
     <div className="relative" style={{ height }}>
       <ResponsiveContainer width="100%" height={height}>

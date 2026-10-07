@@ -110,7 +110,7 @@ export function CatalogList({ spaces, campaigns }: Props) {
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/admin/ads/placements?q=${encodeURIComponent(space.slug)}`}
-                    className="font-medium text-gray-900 hover:text-[#1c3f5e] hover:underline truncate"
+                    className="font-medium text-gray-900 hover:text-[#42277C] hover:underline truncate"
                   >
                     {space.display_name}
                   </Link>
@@ -163,9 +163,9 @@ export function CatalogList({ spaces, campaigns }: Props) {
             {visible.map((space) => {
               const active = activeBySlug.get(space.slug) ?? 0;
               return (
-                <tr key={space.slug} className="hover:bg-[#f5f6f9]/40">
+                <tr key={space.slug} className="hover:bg-[#F6F3FB]/40">
                   <td className="px-4 py-3">
-                    <Link href={`/admin/ads/placements?q=${encodeURIComponent(space.slug)}`} className="font-medium text-gray-900 hover:text-[#1c3f5e] hover:underline">
+                    <Link href={`/admin/ads/placements?q=${encodeURIComponent(space.slug)}`} className="font-medium text-gray-900 hover:text-[#42277C] hover:underline">
                       {space.display_name}
                     </Link>
                     <div className="mt-0.5 truncate font-mono text-[11px] text-gray-500">{space.slug}</div>

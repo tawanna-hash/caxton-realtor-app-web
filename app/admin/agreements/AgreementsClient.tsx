@@ -61,7 +61,7 @@ function SummaryMetric({
     </>
   );
   return onClick ? (
-    <button type="button" onClick={onClick} className="min-w-0 px-3 py-1 text-left hover:bg-[#f5f6f9]">
+    <button type="button" onClick={onClick} className="min-w-0 px-3 py-1 text-left hover:bg-[#F6F3FB]">
       {content}
     </button>
   ) : (
@@ -302,8 +302,8 @@ export default function AgreementsClient({
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) { void handleUploadFile(f); } e.target.value = ''; }}
                 />
                 <button onClick={handleUploadClick} title="Upload manually signed agreement (pdf, jpeg)" className="inline-flex h-9 items-center whitespace-nowrap rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 hover:bg-gray-50">Upload signed</button>
-                <button onClick={() => setNewQuoteOpen(true)} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white hover:bg-[#1c3f5e]">New proposal</button>
-                <button onClick={() => setCreateAg(true)} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white hover:bg-[#1c3f5e]">New agreement</button>
+                <button onClick={() => setNewQuoteOpen(true)} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">New proposal</button>
+                <button onClick={() => setCreateAg(true)} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">New agreement</button>
               </>
           }
         </div>
@@ -401,11 +401,11 @@ export default function AgreementsClient({
               key={t}
               onClick={() => { setTab(t); setStatusFilter('all'); }}
               className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
-                tab === t ? 'border-[#005a8f] text-[#1c3f5e]' : 'border-transparent text-gray-500 hover:text-gray-700'
+                tab === t ? 'border-[#301D5D] text-[#42277C]' : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               {label}
-              <span className={`ml-2 text-xs ${tab === t ? 'text-[#005a8f]' : 'text-gray-400'}`}>
+              <span className={`ml-2 text-xs ${tab === t ? 'text-[#301D5D]' : 'text-gray-400'}`}>
                 ({count})
               </span>
             </button>
@@ -420,9 +420,9 @@ export default function AgreementsClient({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search partner, ad size&hellip;"
-            className="h-9 min-w-[240px] flex-1 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#2f7aa7] focus:ring-2 focus:ring-[#daeeff]"
+            className="h-9 min-w-[240px] flex-1 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]"
           />
-          <select aria-label="Filter by status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#2f7aa7] focus:ring-2 focus:ring-[#daeeff]">
+          <select aria-label="Filter by status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]">
             <option value="all">All statuses</option>
             {AG_STATUS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>

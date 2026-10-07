@@ -123,7 +123,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
     }
   }
 
-  const accent = info?.color ?? '#005a8f';
+  const accent = info?.color ?? '#301D5D';
 
   return (
     <nav
@@ -183,7 +183,7 @@ function Tab({
       // the all-caps labels; flex-1 still distributes width evenly.
       className="flex flex-col items-center justify-center flex-1 min-w-0 px-0 gap-1 min-h-[44px] transition-transform duration-75 active:scale-95"
       style={{
-        color: active ? accent : '#51555b',
+        color: active ? accent : '#4A4757',
         WebkitTapHighlightColor: 'transparent',
       }}
     >

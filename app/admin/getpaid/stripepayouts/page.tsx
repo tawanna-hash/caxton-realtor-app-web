@@ -27,7 +27,7 @@ type PageProps = {
 };
 
 const CONTROL =
-  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#2f7aa7] focus:ring-2 focus:ring-[#daeeff]';
+  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]';
 
 function payoutHref(
   params: Awaited<PageProps['searchParams']>,
@@ -229,7 +229,7 @@ export default async function StripePayoutsPage({ searchParams }: PageProps) {
         </label>
         <button
           type="submit"
-          className="inline-flex h-9 items-center justify-center rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1c3f5e] focus:outline-none focus:ring-2 focus:ring-[#98bdd3]"
+          className="inline-flex h-9 items-center justify-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#42277C] focus:outline-none focus:ring-2 focus:ring-[#B9ADD6]"
         >
           Apply
         </button>
@@ -253,7 +253,7 @@ export default async function StripePayoutsPage({ searchParams }: PageProps) {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {pageRows.map((row) => (
-                <tr key={row.id} className="hover:bg-[#f5f6f9]/40">
+                <tr key={row.id} className="hover:bg-[#F6F3FB]/40">
                   <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">{row.batch_date}</td>
                   <td className="whitespace-nowrap px-3 py-3 text-right font-semibold text-gray-900">{formatCents(Number(row.amount_cents))}</td>
                   <td className="px-3 py-3 text-right text-gray-700">{formatCents(row.fees_cents)}</td>

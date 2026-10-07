@@ -5,7 +5,7 @@ import SignPdfPages from '@/components/SignPdfPages';
 import Tip from './Tip';
 
 export type PlacedField = { signer: number; type: 'signature' | 'date'; page: number; x: number; y: number; w: number; h: number };
-const COLORS = ['#005a8f', '#661102', '#005A00', '#645600', '#005a8f', '#005a8f'];
+const COLORS = ['#301D5D', '#661102', '#005A00', '#645600', '#301D5D', '#301D5D'];
 const SIZE = { signature: { w: 0.3, h: 0.055 }, date: { w: 0.18, h: 0.03 } };
 
 export default function SignaturePlacer({ data, signers, fields, onChange, onClose }: { data: Uint8Array; signers: string[]; fields: PlacedField[]; onChange: (f: PlacedField[]) => void; onClose: () => void }) {
@@ -21,7 +21,7 @@ export default function SignaturePlacer({ data, signers, fields, onChange, onClo
         <label className="flex items-center gap-1">Field
           <select className="min-h-[36px] rounded-md border border-slate-300 px-2" value={type} onChange={(e) => setType(e.target.value as 'signature' | 'date')}><option value="signature">Signature</option><option value="date">Date</option></select></label>
         <Tip text="Click the page to place it. Click a placed field to remove it." />
-        <button type="button" className="ml-auto min-h-[36px] rounded-md bg-[#005a8f] px-4 font-bold text-white" onClick={onClose}>Done</button>
+        <button type="button" className="ml-auto min-h-[36px] rounded-md bg-[#301D5D] px-4 font-bold text-white" onClick={onClose}>Done</button>
       </div>
       {missing.length > 0 && <p className="bg-[#FEF8CC] px-3 py-2 text-xs text-[#645600]">Still needs a signature field: {missing.join(', ')}</p>}
       <div className="min-h-0 flex-1 overflow-auto bg-slate-100 p-4">

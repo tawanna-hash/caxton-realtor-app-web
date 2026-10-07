@@ -79,7 +79,7 @@ export function TrendingMetrics({ days }: { days: number }) {
         </h2>
         <a
           href="/admin/content/trending"
-          className="text-xs font-medium text-[#1c3f5e] hover:underline"
+          className="text-xs font-medium text-[#42277C] hover:underline"
         >
           Manage &rarr;
         </a>

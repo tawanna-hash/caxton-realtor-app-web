@@ -1024,7 +1024,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
             </p>
           )}
           {testSent && (
-            <p className="text-xs text-[#1c3f5e] mt-2 font-medium">
+            <p className="text-xs text-[#42277C] mt-2 font-medium">
               ✓ Test email sent to you — check your inbox.
             </p>
           )}
@@ -1034,7 +1034,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                 type="button"
                 onClick={handleSend}
                 disabled={sending || sendingTest}
-                className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium bg-[#005a8f] text-white hover:bg-[#1c3f5e] disabled:opacity-60"
+                className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-60"
               >
                 {sending ? 'Sending…' : 'Send Quote to Client'}
               </button>
@@ -1043,7 +1043,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               type="button"
               onClick={handleSendTest}
               disabled={sending || sendingTest}
-              className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium border border-[#98bdd3] bg-white text-[#005a8f] hover:bg-[#daeeff] disabled:opacity-60"
+              className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium border border-[#B9ADD6] bg-white text-[#301D5D] hover:bg-[#EFEAF8] disabled:opacity-60"
               title="Send the notification email to yourself. Does not touch partner record."
             >
               {sendingTest ? 'Sending…' : 'Email me a test'}
@@ -1102,7 +1102,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       <div key={line.id || `pending-${i}`} className="border border-gray-200 rounded-md p-3 bg-gray-50">
                         <div className="flex items-center justify-between mb-1">
                           <div className="text-xs">
-                            <span className="font-mono text-[#005a8f] mr-2">#{i + 1}</span>
+                            <span className="font-mono text-[#301D5D] mr-2">#{i + 1}</span>
                             <span className="font-semibold text-gray-900">{line.packageLabel}</span>
                             <span className="ml-2 uppercase text-[10px] tracking-wider text-gray-500">{line.channel}</span>
                           </div>
@@ -1167,7 +1167,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     type="button"
                     onClick={() => { setShowReview(false); void handleSubmit(new Event('submit') as unknown as React.FormEvent); }}
                     disabled={submitting}
-                    className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium bg-[#005a8f] text-white hover:bg-[#1c3f5e] disabled:opacity-60"
+                    className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-60"
                   >
                     {submitting ? 'Drafting…' : 'Draft & Send'}
                   </button>
@@ -1185,7 +1185,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
             <button
               type="button"
               onClick={() => setCreateNew((v) => !v)}
-              className="text-xs text-[#005a8f] hover:underline"
+              className="text-xs text-[#301D5D] hover:underline"
             >
               {createNew ? '← Use existing' : '+ Create new advertiser'}
             </button>
@@ -1204,17 +1204,17 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                 className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
               />
               {selectedAdvertiser ? (
-                <div className="mt-2 flex items-center justify-between border border-[#98bdd3] bg-[#daeeff] rounded-md px-2 py-2">
+                <div className="mt-2 flex items-center justify-between border border-[#B9ADD6] bg-[#EFEAF8] rounded-md px-2 py-2">
                   <div className="text-xs">
-                    <span className="font-semibold text-[#1c3f5e]">
+                    <span className="font-semibold text-[#42277C]">
                       {selectedAdvertiser.name}
                     </span>
-                    <span className="text-[#1c3f5e] ml-2">
+                    <span className="text-[#42277C] ml-2">
                       {selectedAdvertiser.contact_email ?? 'no email'}
                     </span>
                     {selectedAdvertiser.billing_email &&
                     selectedAdvertiser.billing_email !== selectedAdvertiser.contact_email ? (
-                      <span className="block text-[#005a8f]">
+                      <span className="block text-[#301D5D]">
                         Billing: {selectedAdvertiser.billing_email}
                       </span>
                     ) : null}
@@ -1222,7 +1222,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   <button
                     type="button"
                     onClick={() => setSelectedAdvertiserId(null)}
-                    className="text-xs text-[#005a8f] hover:underline"
+                    className="text-xs text-[#301D5D] hover:underline"
                   >
                     Change
                   </button>
@@ -1239,7 +1239,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         <button
                           type="button"
                           onClick={() => setSelectedAdvertiserId(a.id)}
-                          className="w-full text-left px-2 py-2 hover:bg-[#daeeff]"
+                          className="w-full text-left px-2 py-2 hover:bg-[#EFEAF8]"
                         >
                           <span className="font-medium text-gray-900">{a.name}</span>
                           <span className="ml-2 text-xs text-gray-500">
@@ -1374,7 +1374,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     onClick={() => setRunMode('quantity')}
                     className={
                       runMode === 'quantity'
-                        ? 'px-3 py-1 bg-[#005a8f] text-white'
+                        ? 'px-3 py-1 bg-[#301D5D] text-white'
                         : 'px-3 py-1 bg-white text-gray-700 hover:bg-gray-100'
                     }
                   >
@@ -1385,7 +1385,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     onClick={() => setRunMode('dates')}
                     className={
                       runMode === 'dates'
-                        ? 'px-3 py-1 bg-[#005a8f] text-white'
+                        ? 'px-3 py-1 bg-[#301D5D] text-white'
                         : 'px-3 py-1 bg-white text-gray-700 hover:bg-gray-100'
                     }
                   >
@@ -1401,7 +1401,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       type="date"
                       value={runStart}
                       onChange={(e) => setRunStart(e.target.value)}
-                      className="mt-1 w-full px-2 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+                      className="mt-1 w-full px-2 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                     />
                   </label>
                   <label className="text-xs text-gray-600">
@@ -1411,7 +1411,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       value={runEnd}
                       min={runStart}
                       onChange={(e) => setRunEnd(e.target.value)}
-                      className="mt-1 w-full px-2 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+                      className="mt-1 w-full px-2 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                     />
                   </label>
                   {runEnd < runStart && (
@@ -1445,7 +1445,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                               if (ioPosPremActive) setIoAdPremium(String(pagePositionPremium(looked.rate)));
                             }
                           }}
-                          className="w-4 h-4 accent-[#005a8f]" />
+                          className="w-4 h-4 accent-[#301D5D]" />
                         {s}
                       </label>
                     ))}
@@ -1465,7 +1465,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                               if (ioPosPremActive) setIoAdPremium(String(pagePositionPremium(looked.rate)));
                             }
                           }}
-                          className="w-4 h-4 accent-[#005a8f]" />
+                          className="w-4 h-4 accent-[#301D5D]" />
                         {f} {FREQ_PKG_AG[f] ? `· ${FREQ_PKG_AG[f]}` : ''}
                       </label>
                     ))}
@@ -1483,7 +1483,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         setIoAdRateBase(e.target.value);
                         setIoRateUserEdited(true);
                       }}
-                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                       placeholder="0.00" min="0" step="0.01"
                     />
                     {!ioRateUserEdited && ioAdRate && (
@@ -1496,7 +1496,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     <div className="text-xs text-gray-600 mb-1">Discount ($)</div>
                     <input type="number" value={ioDiscount}
                       onChange={(e) => setIoDiscount(e.target.value)}
-                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                       placeholder="0.00" min="0" step="0.01" />
                   </label>
                   <div>
@@ -1509,7 +1509,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     ) : (
                       <input type="number" value={ioAdPremium}
                         onChange={(e) => setIoAdPremium(e.target.value)}
-                        className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+                        className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                         placeholder="0.00" min="0" step="0.01" />
                     )}
                   </div>
@@ -1527,7 +1527,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     <div className="text-xs text-gray-600 mb-1">Page Position</div>
                     <input value={ioPagePosition}
                       onChange={(e) => setIoPagePosition(e.target.value)}
-                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                       placeholder="e.g. Inside front cover" />
                   </label>
                   <div className="flex items-end pb-1">
@@ -1540,7 +1540,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                           if (active && base > 0) setIoAdPremium(String(pagePositionPremium(base)));
                           else if (!active) setIoAdPremium('');
                         }}
-                        className="w-4 h-4 accent-[#005a8f]" />
+                        className="w-4 h-4 accent-[#301D5D]" />
                       Apply 20% premium
                     </label>
                   </div>
@@ -1554,7 +1554,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         <input type="checkbox" id={`nq_agm_${m.k}`}
                           checked={!!ioTimingMonths[m.k]}
                           onChange={(e) => setIoTimingMonths({ ...ioTimingMonths, [m.k]: e.target.checked })}
-                          className="w-3.5 h-3.5 accent-[#005a8f] flex-shrink-0" />
+                          className="w-3.5 h-3.5 accent-[#301D5D] flex-shrink-0" />
                         <label htmlFor={`nq_agm_${m.k}`} className="text-sm min-w-[80px] cursor-pointer">{m.l}</label>
                         <input
                           value={ioTimingYears[m.k] ?? ''}
@@ -1794,7 +1794,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   className={
                     'px-2 py-0.5 rounded-md border ' +
                     (overrideMode === m
-                      ? 'bg-[#005a8f] text-white border-[#005a8f]'
+                      ? 'bg-[#301D5D] text-white border-[#301D5D]'
                       : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50')
                   }
                 >
@@ -1838,16 +1838,16 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         </section>
 
         {/* Bundle: multi-line quote builder */}
-        <div className="rounded-md border border-[#98bdd3] bg-[#daeeff]/40 p-3 mb-3">
+        <div className="rounded-md border border-[#B9ADD6] bg-[#EFEAF8]/40 p-3 mb-3">
               <div className="flex items-center justify-between mb-2">
-                <div className="text-xs font-semibold uppercase tracking-wider text-[#1c3f5e]">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[#42277C]">
                   Bundle (multi-line quote)
                 </div>
                 <button
                   type="button"
                   onClick={addCurrentLineToBundle}
                   disabled={submitting || previewCents <= 0}
-                  className="px-3 py-1 text-xs rounded-md bg-[#005a8f] text-white hover:bg-[#005a8f] disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="px-3 py-1 text-xs rounded-md bg-[#301D5D] text-white hover:bg-[#301D5D] disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   + Add current as another line
                 </button>
@@ -1861,10 +1861,10 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   {bundleLines.map((line, i) => (
                     <div
                       key={line.id}
-                      className="flex items-center justify-between text-xs bg-white border border-[#daeeff] rounded px-2 py-2"
+                      className="flex items-center justify-between text-xs bg-white border border-[#EFEAF8] rounded px-2 py-2"
                     >
                       <div className="flex-1 min-w-0">
-                        <span className="font-mono text-[#005a8f] mr-2">#{i + 1}</span>
+                        <span className="font-mono text-[#301D5D] mr-2">#{i + 1}</span>
                         <span className="font-medium text-gray-800">{line.packageLabel}</span>
                         <span className="text-gray-500 ml-2">
                           {line.channel === 'print' && `${line.months ?? 1}mo`}
@@ -1880,7 +1880,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         type="button"
                         onClick={() => reviseBundleLine(line.id)}
                         disabled={submitting}
-                        className="text-[#005a8f] hover:text-[#1c3f5e] text-xs mr-3"
+                        className="text-[#301D5D] hover:text-[#42277C] text-xs mr-3"
                         aria-label="Revise line"
                       >
                         Revise
@@ -1897,9 +1897,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     </div>
                   ))}
                   {previewCents > 0 && (
-                    <div className="flex items-center justify-between text-xs bg-[#daeeff]/50 border border-[#98bdd3] rounded px-2 py-2">
+                    <div className="flex items-center justify-between text-xs bg-[#EFEAF8]/50 border border-[#B9ADD6] rounded px-2 py-2">
                       <div className="flex-1 min-w-0">
-                        <span className="font-mono text-[#005a8f] mr-2">#{bundleLines.length + 1}</span>
+                        <span className="font-mono text-[#301D5D] mr-2">#{bundleLines.length + 1}</span>
                         <span className="italic text-gray-600">Current selection (will be added on Save)</span>
                       </div>
                       <div className="text-gray-800 font-semibold">
@@ -1907,9 +1907,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       </div>
                     </div>
                   )}
-                  <div className="flex items-center justify-between border-t border-[#98bdd3] pt-2 mt-2">
+                  <div className="flex items-center justify-between border-t border-[#B9ADD6] pt-2 mt-2">
                     <div className="text-xs font-semibold text-gray-700">Grand total</div>
-                    <div className="text-sm font-bold text-[#1c3f5e]">
+                    <div className="text-sm font-bold text-[#42277C]">
                       ${(bundleGrandTotalCents / 100).toFixed(2)}
                     </div>
                   </div>
@@ -1922,12 +1922,12 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               )}
             </div>
         {/* Preview */}
-        <div className="space-y-1 px-3 py-2 rounded-md bg-[#daeeff] border border-[#daeeff]">
+        <div className="space-y-1 px-3 py-2 rounded-md bg-[#EFEAF8] border border-[#EFEAF8]">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-[#1c3f5e]">Rack total</span>
+            <span className="text-xs text-[#42277C]">Rack total</span>
             <span
               className={
-                'text-xs text-[#1c3f5e] ' +
+                'text-xs text-[#42277C] ' +
                 (overrideMode !== 'off' && discountPct !== 0 ? 'line-through opacity-70' : '')
               }
             >
@@ -1935,7 +1935,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[#1c3f5e]">
+            <span className="text-xs font-medium text-[#42277C]">
               Quoted total
               {overrideMode !== 'off' && discountPct !== 0 && (
                 <span
@@ -1943,14 +1943,14 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     'ml-2 px-2 py-0.5 rounded text-[10px] font-semibold ' +
                     (discountPct > 0
                       ? 'bg-[#E0FBE0] text-[#005A00]'
-                      : 'bg-[#daeeff] text-[#005a8f]')
+                      : 'bg-[#EFEAF8] text-[#301D5D]')
                   }
                 >
                   {discountPct > 0 ? `${discountPct}% off` : `+${Math.abs(discountPct)}% over`}
                 </span>
               )}
             </span>
-            <span className="text-sm font-semibold text-[#1c3f5e]">
+            <span className="text-sm font-semibold text-[#42277C]">
               ${(effectiveCents / 100).toFixed(2)}
             </span>
           </div>
@@ -1973,7 +1973,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
           <button
             type="submit"
             disabled={!canSubmit}
-            className="px-4 py-2 rounded-md text-sm font-medium bg-[#005a8f] text-white hover:bg-[#1c3f5e] disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+            className="px-4 py-2 rounded-md text-sm font-medium bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {submitting ? 'Drafting…' : 'Draft quote'}
           </button>

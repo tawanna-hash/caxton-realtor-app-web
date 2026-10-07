@@ -484,7 +484,7 @@ export default function AdminEventImagesPage() {
         </div>
         <div className="mt-4">
           <button type="submit"
-            className="inline-flex items-center gap-2 bg-[#005a8f] text-white px-4 py-2 text-sm font-medium hover:bg-[#1c3f5e] rounded-md transition-colors">
+            className="inline-flex items-center gap-2 bg-[#301D5D] text-white px-4 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors">
             <Plus size={16} /> Create Folder &amp; Upload
           </button>
           <p className="mt-2 text-xs text-gray-400">Creates a folder for the selected month and scrolls to the upload section.</p>

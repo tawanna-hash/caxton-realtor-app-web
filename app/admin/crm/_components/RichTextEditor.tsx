@@ -229,7 +229,7 @@ export default function RichTextEditor({
       <style jsx>{`
         .rte-surface:empty::before {
           content: attr(data-placeholder);
-          color: #7b8089;
+          color: #7A7787;
           pointer-events: none;
         }
         .rte-surface :global(h2) {
@@ -238,7 +238,7 @@ export default function RichTextEditor({
           font-weight: 600;
           line-height: 1.3;
           margin: 0.75em 0 0.4em;
-          color: #292a2d;
+          color: #1B1726;
         }
         .rte-surface :global(h3) {
           font-family: Georgia, serif;
@@ -246,7 +246,7 @@ export default function RichTextEditor({
           font-weight: 600;
           line-height: 1.3;
           margin: 0.6em 0 0.3em;
-          color: #292a2d;
+          color: #1B1726;
         }
         .rte-surface :global(p) {
           margin: 0 0 0.85em;
@@ -259,20 +259,20 @@ export default function RichTextEditor({
         .rte-surface :global(ol) { list-style: decimal; }
         .rte-surface :global(li) { margin: 0.2em 0; }
         .rte-surface :global(a) {
-          color: var(--color-brand-700, #005a8f);
+          color: var(--color-brand-700, #301D5D);
           text-decoration: underline;
         }
         .rte-surface :global(blockquote) {
           margin: 0.5em 0 0.85em;
           padding: 0.4em 0.9em;
-          border-left: 3px solid var(--color-brand-700, #005a8f);
+          border-left: 3px solid var(--color-brand-700, #301D5D);
           background: #fafafa;
-          color: #51555b;
+          color: #4A4757;
           font-style: italic;
         }
         .rte-surface :global(hr) {
           border: 0;
-          border-top: 1px solid #d4d8dd;
+          border-top: 1px solid #E6E5EC;
           margin: 1.2em 0;
         }
       `}</style>

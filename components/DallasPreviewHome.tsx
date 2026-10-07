@@ -13,7 +13,7 @@ import type { CalendarEvent } from '@/lib/events-store';
 import type { DfwMarketReport } from '@/lib/dfw-markets';
 import DfwReportCard from '@/components/DfwReportCard';
 
-const BRAND = '#005a8f';
+const BRAND = '#301D5D';
 
 const CATS = [
   'All',

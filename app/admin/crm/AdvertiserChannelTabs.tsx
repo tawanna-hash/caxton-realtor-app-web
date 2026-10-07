@@ -71,7 +71,7 @@ const CHANNEL_ACCENT: Record<AdChannel, string> = {
   print: 'text-[#661102] border-[#FF2A04]',
   digital: 'text-[#285766] border-[#64D9FF]',
   email: 'text-[#005A00] border-[#00E200]',
-  app: 'text-[#005a8f] border-[#2f7aa7]',
+  app: 'text-[#301D5D] border-[#7059A8]',
 };
 
 const STATUS_BADGE: Record<string, string> = {
@@ -81,8 +81,8 @@ const STATUS_BADGE: Record<string, string> = {
   sent: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
   draft: 'bg-gray-100 text-gray-700 border-gray-200',
   new: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30',
-  replied: 'bg-[#f5f6f9] text-[#1c3f5e] border-[#bbc1c9]',
-  quoted: 'bg-[#f5f6f9] text-[#1c3f5e] border-[#bbc1c9]',
+  replied: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
+  quoted: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
   won: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
   lost: 'bg-gray-100 text-gray-600 border-gray-200',
   expired: 'bg-gray-100 text-gray-600 border-gray-200',
@@ -461,7 +461,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                           </div>
                         </div>
                         {rowTs.length > 0 && (
-                          <div className="ml-4 pl-3 border-l-2 border-[#98bdd3] space-y-1">
+                          <div className="ml-4 pl-3 border-l-2 border-[#B9ADD6] space-y-1">
                             {rowTs.map((t) => (
                               <div key={t.id} className="flex items-center gap-2 text-xs text-gray-600">
                                 <span className="text-gray-400">Tearsheet:</span>
@@ -478,7 +478,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                                     href={t.file_url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-[#005a8f] hover:underline"
+                                    className="text-[#301D5D] hover:underline"
                                   >
                                     View
                                   </a>
@@ -644,7 +644,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                       href={`/api/admin/insertion-orders/${io.id}/pdf`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs text-[#005a8f] hover:underline"
+                      className="text-xs text-[#301D5D] hover:underline"
                     >
                       PDF
                     </a>
@@ -760,7 +760,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                         href={t.file_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-xs text-[#005a8f] hover:underline"
+                        className="text-xs text-[#301D5D] hover:underline"
                       >
                         View
                       </a>

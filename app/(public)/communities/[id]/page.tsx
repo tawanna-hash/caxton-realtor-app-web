@@ -77,7 +77,7 @@ export async function generateMetadata(
 
 function StatusBadge({ status }: { status: 'coming-soon' | 'close-out' }) {
   const map = {
-    'coming-soon': { label: 'Coming Soon', cls: 'bg-[#005a8f]' },
+    'coming-soon': { label: 'Coming Soon', cls: 'bg-[#301D5D]' },
     'close-out': { label: 'Close Out', cls: 'bg-[#661102]' },
   } as const;
   const { label, cls } = map[status];
@@ -190,7 +190,7 @@ export default async function CommunityDetailPage(
                       {...(p.url
                         ? { href: p.url, target: '_blank', rel: 'noopener noreferrer' }
                         : {})}
-                      className="group overflow-hidden rounded-md border border-neutral-200 bg-white no-underline transition hover:border-[#2f7aa7] hover:shadow-sm dark:border-neutral-700 dark:bg-neutral-900"
+                      className="group overflow-hidden rounded-md border border-neutral-200 bg-white no-underline transition hover:border-[#7059A8] hover:shadow-sm dark:border-neutral-700 dark:bg-neutral-900"
                     >
                       <div className="relative aspect-[4/3] bg-neutral-100 dark:bg-neutral-800">
                         {p.imageUrl ? (
@@ -206,7 +206,7 @@ export default async function CommunityDetailPage(
                           </div>
                         )}
                         {p.isModel && (
-                          <span className="absolute left-2 top-2 rounded-full bg-[#005a8f] px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+                          <span className="absolute left-2 top-2 rounded-full bg-[#301D5D] px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
                             Model Home
                           </span>
                         )}
@@ -216,7 +216,7 @@ export default async function CommunityDetailPage(
                           {p.name}
                         </h3>
                         {p.priceDisplay && (
-                          <p className="mt-0.5 text-sm font-medium text-[#005a8f]">
+                          <p className="mt-0.5 text-sm font-medium text-[#301D5D]">
                             {p.priceDisplay}
                           </p>
                         )}
@@ -226,7 +226,7 @@ export default async function CommunityDetailPage(
                           </p>
                         )}
                         {p.url && (
-                          <span className="mt-2 inline-block text-xs font-medium text-[#005a8f] group-hover:underline">
+                          <span className="mt-2 inline-block text-xs font-medium text-[#301D5D] group-hover:underline">
                             View floor plan
                           </span>
                         )}
@@ -246,7 +246,7 @@ export default async function CommunityDetailPage(
               <ul className="mt-4 grid grid-cols-2 gap-2 text-sm text-neutral-700 dark:text-neutral-300 sm:grid-cols-3">
                 {amenities.map((a) => (
                   <li key={a} className="flex items-center gap-2">
-                    <span className="text-[#005a8f]">•</span>
+                    <span className="text-[#301D5D]">•</span>
                     {a}
                   </li>
                 ))}
@@ -291,7 +291,7 @@ export default async function CommunityDetailPage(
                           href={s.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#005a8f] hover:underline"
+                          className="text-[#301D5D] hover:underline"
                         >
                           Website
                         </a>
@@ -341,7 +341,7 @@ export default async function CommunityDetailPage(
               )}
               {sales.phone && (
                 <p className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
-                  <a href={`tel:${sales.phone}`} className="text-[#005a8f] hover:underline">
+                  <a href={`tel:${sales.phone}`} className="text-[#301D5D] hover:underline">
                     {sales.phone}
                   </a>
                   {sales.specialistName && <span className="ml-2">· {sales.specialistName}</span>}
@@ -351,7 +351,7 @@ export default async function CommunityDetailPage(
                 <ol className="mt-3 space-y-1 text-sm text-neutral-700 dark:text-neutral-300">
                   {sales.directions.map((d, i) => (
                     <li key={i} className="flex gap-2">
-                      <span className="font-medium text-[#005a8f]">{i + 1}.</span>
+                      <span className="font-medium text-[#301D5D]">{i + 1}.</span>
                       <span>{d}</span>
                     </li>
                   ))}
@@ -365,7 +365,7 @@ export default async function CommunityDetailPage(
         <aside className="lg:col-span-2">
           <Link
             href={`/builders/${builderSlug}`}
-            className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-2 border border-[#005a8f] bg-[#005a8f] text-white rounded-md hover:bg-[#005a8f] hover:border-[#005a8f] transition-colors"
+            className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-2 border border-[#301D5D] bg-[#301D5D] text-white rounded-md hover:bg-[#301D5D] hover:border-[#301D5D] transition-colors"
           >
             {row.builderName}
           </Link>
@@ -376,7 +376,7 @@ export default async function CommunityDetailPage(
             </h1>
             {status && <StatusBadge status={status} />}
             {adultOnly && (
-              <span className="inline-flex items-center rounded-full bg-[#005a8f] px-3 py-0.5 text-xs font-semibold text-white">
+              <span className="inline-flex items-center rounded-full bg-[#301D5D] px-3 py-0.5 text-xs font-semibold text-white">
                 Adult Only
               </span>
             )}
@@ -424,7 +424,7 @@ export default async function CommunityDetailPage(
                     href={mapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center rounded-md border border-[#005a8f] px-3 py-2 text-xs font-medium text-[#005a8f] hover:bg-[#f5f6f9] dark:hover:bg-[#292a2d]"
+                    className="mt-2 inline-flex items-center rounded-md border border-[#301D5D] px-3 py-2 text-xs font-medium text-[#301D5D] hover:bg-[#F6F3FB] dark:hover:bg-[#1B1726]"
                   >
                     Get Directions
                   </a>
@@ -437,7 +437,7 @@ export default async function CommunityDetailPage(
             <div className="mt-4">
               <a
                 href={`tel:${sales.phone}`}
-                className="inline-flex items-center rounded-md bg-[#005a8f] px-4 py-2 text-sm font-medium text-white hover:bg-[#1c3f5e]"
+                className="inline-flex items-center rounded-md bg-[#301D5D] px-4 py-2 text-sm font-medium text-white hover:bg-[#42277C]"
               >
                 {sales.phone}
               </a>

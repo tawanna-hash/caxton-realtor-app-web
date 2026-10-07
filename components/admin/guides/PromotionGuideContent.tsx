@@ -186,7 +186,7 @@ export default function PromotionGuideContent() {
                   <span className="inline-flex items-center rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white">
                     {EXAMPLE.builderName}
                   </span>{' '}
-                  <span className="inline-flex items-center rounded-full bg-[#005a8f] px-3 py-1 text-xs font-semibold text-white">
+                  <span className="inline-flex items-center rounded-full bg-[#301D5D] px-3 py-1 text-xs font-semibold text-white">
                     Promotion
                   </span>
                   <div className="mt-1">
@@ -214,7 +214,7 @@ export default function PromotionGuideContent() {
                   <h4 className="text-xs uppercase tracking-[0.15em] text-gray-500 font-medium mb-1">
                     Offer type <FieldBadge name="promoType" />
                   </h4>
-                  <span className="inline-flex items-center rounded-md bg-[#f5f6f9] border border-[#bbc1c9] px-3 py-1 text-xs font-medium text-[#1c3f5e]">
+                  <span className="inline-flex items-center rounded-md bg-[#F6F3FB] border border-[#D9CFF0] px-3 py-1 text-xs font-medium text-[#42277C]">
                     {EXAMPLE.promoType} (broker bonus)
                   </span>
                 </div>

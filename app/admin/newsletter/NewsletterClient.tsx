@@ -247,7 +247,7 @@ export default function NewsletterClient() {
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search email..."
-            className="h-9 flex-1 rounded border border-gray-300 px-3 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#005a8f]"
+            className="h-9 flex-1 rounded border border-gray-300 px-3 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#301D5D]"
           />
           {q && (
             <button
@@ -321,21 +321,21 @@ export default function NewsletterClient() {
       {!loading && !error && data && (
         <>
           {mounted && selectedIds.size > 0 && (
-            <div className="flex items-center gap-2 px-4 py-3 mb-3 rounded-md bg-[#f5f6f9] border border-[#bbc1c9]">
-              <span className="text-sm text-[#292a2d] font-medium">{selectedIds.size} selected on this page</span>
+            <div className="flex items-center gap-2 px-4 py-3 mb-3 rounded-md bg-[#F6F3FB] border border-[#D9CFF0]">
+              <span className="text-sm text-[#1B1726] font-medium">{selectedIds.size} selected on this page</span>
               <div className="flex-1" />
               <button
                 type="button"
                 onClick={handleExport}
                 disabled={exporting}
-                className="px-3 py-2 rounded-md border border-[#98bdd3] text-[#1c3f5e] text-xs font-medium hover:bg-[#daeeff] disabled:opacity-50"
+                className="px-3 py-2 rounded-md border border-[#B9ADD6] text-[#42277C] text-xs font-medium hover:bg-[#EFEAF8] disabled:opacity-50"
               >
                 {exporting ? 'Exporting…' : 'Export CSV (full)'}
               </button>
               <button
                 type="button"
                 onClick={clearSelection}
-                className="px-3 py-2 rounded-md text-[#1c3f5e] text-xs hover:text-[#292a2d]"
+                className="px-3 py-2 rounded-md text-[#42277C] text-xs hover:text-[#1B1726]"
               >
                 Clear
               </button>

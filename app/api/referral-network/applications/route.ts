@@ -93,16 +93,16 @@ export async function POST(req: NextRequest) {
       subject: `[Referral Network] Application from ${data.companyName}`,
       replyTo: data.email,
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:620px;padding:24px;color:#292a2d">
-          <p style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#2f7aa7;margin:0 0 10px">Referral Network application</p>
-          <h1 style="font-size:24px;color:#005a8f;margin:0 0 20px">${escapeHtml(data.companyName)}</h1>
-          <p style="margin:0 0 18px"><a href="https://realtynewsnow.app/admin/referral-network" style="color:#005a8f;font-weight:700">Review application #${application.id} in admin</a></p>
+        <div style="font-family:Arial,sans-serif;max-width:620px;padding:24px;color:#1B1726">
+          <p style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#7059A8;margin:0 0 10px">Referral Network application</p>
+          <h1 style="font-size:24px;color:#301D5D;margin:0 0 20px">${escapeHtml(data.companyName)}</h1>
+          <p style="margin:0 0 18px"><a href="https://realtynewsnow.app/admin/referral-network" style="color:#301D5D;font-weight:700">Review application #${application.id} in admin</a></p>
           <table style="border-collapse:collapse;width:100%;font-size:14px">
-            <tr><td style="padding:7px 12px 7px 0;color:#51555b;width:140px">Contact</td><td style="padding:7px 0">${escapeHtml(data.contactName)}</td></tr>
-            <tr><td style="padding:7px 12px 7px 0;color:#51555b">Email</td><td style="padding:7px 0"><a href="mailto:${escapeHtml(data.email)}">${escapeHtml(data.email)}</a></td></tr>
-            <tr><td style="padding:7px 12px 7px 0;color:#51555b">Phone</td><td style="padding:7px 0">${escapeHtml(data.phone)}</td></tr>
-            <tr><td style="padding:7px 12px 7px 0;color:#51555b">Services</td><td style="padding:7px 0">${escapeHtml(data.categories.join(', '))}</td></tr>
-            <tr><td style="padding:7px 12px 7px 0;color:#51555b">Service areas</td><td style="padding:7px 0">${escapeHtml(data.serviceAreas)}</td></tr>
+            <tr><td style="padding:7px 12px 7px 0;color:#4A4757;width:140px">Contact</td><td style="padding:7px 0">${escapeHtml(data.contactName)}</td></tr>
+            <tr><td style="padding:7px 12px 7px 0;color:#4A4757">Email</td><td style="padding:7px 0"><a href="mailto:${escapeHtml(data.email)}">${escapeHtml(data.email)}</a></td></tr>
+            <tr><td style="padding:7px 12px 7px 0;color:#4A4757">Phone</td><td style="padding:7px 0">${escapeHtml(data.phone)}</td></tr>
+            <tr><td style="padding:7px 12px 7px 0;color:#4A4757">Services</td><td style="padding:7px 0">${escapeHtml(data.categories.join(', '))}</td></tr>
+            <tr><td style="padding:7px 12px 7px 0;color:#4A4757">Service areas</td><td style="padding:7px 0">${escapeHtml(data.serviceAreas)}</td></tr>
           </table>
         </div>
       `,

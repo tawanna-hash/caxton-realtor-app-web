@@ -16,7 +16,7 @@ const MAX_BYTES = 3 * 1024 * 1024;
 const sha = (b: Buffer | string) => createHash('sha256').update(b).digest('hex');
 const esc = (v: string) => v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c));
 export type SignSettings = { expireDays: number; remindEvery: number; maxReminders: number; draw: boolean; type: boolean; upload: boolean; notice: string; redirectUrl: string; attach: boolean; emailRequester: boolean; accent: string; brandName: string };
-export const DEFAULT_SIGN_SETTINGS: SignSettings = { expireDays: 30, remindEvery: 3, maxReminders: 3, draw: true, type: true, upload: false, notice: '', redirectUrl: '', attach: true, emailRequester: true, accent: '#005a8f', brandName: '' };
+export const DEFAULT_SIGN_SETTINGS: SignSettings = { expireDays: 30, remindEvery: 3, maxReminders: 3, draw: true, type: true, upload: false, notice: '', redirectUrl: '', attach: true, emailRequester: true, accent: '#301D5D', brandName: '' };
 type Brand = { name: string; logo: string; accent: string };
 const int = (v: unknown, lo: number, hi: number, d: number) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
 export function cleanSettings(raw: Partial<SignSettings>): SignSettings {
@@ -31,7 +31,7 @@ export function cleanSettings(raw: Partial<SignSettings>): SignSettings {
     accent: /^#[0-9a-fA-F]{6}$/.test(String(raw.accent ?? '')) ? String(raw.accent) : d.accent, brandName: String(raw.brandName ?? '').trim().slice(0, 80),
   };
 }
-const mail = (text: string, link?: { href: string; label: string }, brand?: Brand) => `<div style="font-family:Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:600px">${brand?.logo ? `<p style="margin:0 0 16px"><img src="${esc(brand.logo)}" alt="${esc(brand.name)}" style="max-height:48px;max-width:200px"></p>` : brand?.name ? `<p style="margin:0 0 16px;font-weight:bold;font-size:16px">${esc(brand.name)}</p>` : ''}${esc(text).replace(/\n/g, '<br>')}${link ? `<p style="margin:24px 0"><a href="${link.href}" style="background:${brand?.accent ?? '#005a8f'};color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold">${esc(link.label)}</a></p>` : ''}<p style="margin:24px 0 0;font-size:12px;color:#51555b">Sent with Closing Time Secure Sign</p></div>`;
+const mail = (text: string, link?: { href: string; label: string }, brand?: Brand) => `<div style="font-family:Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:600px">${brand?.logo ? `<p style="margin:0 0 16px"><img src="${esc(brand.logo)}" alt="${esc(brand.name)}" style="max-height:48px;max-width:200px"></p>` : brand?.name ? `<p style="margin:0 0 16px;font-weight:bold;font-size:16px">${esc(brand.name)}</p>` : ''}${esc(text).replace(/\n/g, '<br>')}${link ? `<p style="margin:24px 0"><a href="${link.href}" style="background:${brand?.accent ?? '#301D5D'};color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold">${esc(link.label)}</a></p>` : ''}<p style="margin:24px 0 0;font-size:12px;color:#4A4757">Sent with Closing Time Secure Sign</p></div>`;
 
 function tokenFor(reqId: string, idx: number, nonce: string): string {
   const secret = process.env.JWT_SECRET;
@@ -200,7 +200,7 @@ export async function getSignView(token: string) {
     fields: req.fields.filter((x) => x.signer === me.idx), signedBy: all.filter((s) => s.status === 'signed').length, total: all.length,
     fingerprint: req.original_sha,
     methods: { draw: req.opts.draw ?? true, type: req.opts.type ?? true, upload: req.opts.upload ?? false },
-    notice: req.opts.notice ?? '', accent: req.opts.accent ?? '#005a8f', brandName: req.opts.brandName ?? '', logo: req.opts.logo ?? '',
+    notice: req.opts.notice ?? '', accent: req.opts.accent ?? '#301D5D', brandName: req.opts.brandName ?? '', logo: req.opts.logo ?? '',
     redirectUrl: req.opts.redirectUrl ?? '',
   };
 }
@@ -326,7 +326,7 @@ async function finalize(reqId: string): Promise<void> {
   await query(`INSERT INTO closing_time_portal_uploads (id, realtor_id, deal_id, doc_id, filename, content_type, size_bytes, data_b64, reviewed) VALUES ($1,$2,$3,'signed',$4,'application/pdf',$5,$6,TRUE)`,
     [randomUUID(), req.realtor_id, req.deal_id, `${req.document.replace(/[^\w.\- ]+/g, '_').slice(0, 150)} - signed.pdf`, out.length, out.toString('base64')]);
   const attach = [{ filename: `${req.document} - signed.pdf`, content: out.toString('base64'), contentType: 'application/pdf' }];
-  const brand: Brand = { name: req.opts.brandName || req.agent_name, logo: req.opts.logo ?? '', accent: req.opts.accent ?? '#005a8f' };
+  const brand: Brand = { name: req.opts.brandName || req.agent_name, logo: req.opts.logo ?? '', accent: req.opts.accent ?? '#301D5D' };
   const withFile = req.opts.attach ?? true;
   const to = [...signers.map((s) => s.email), ...(req.agent_email && (req.opts.emailRequester ?? true) ? [req.agent_email] : [])];
   await logDealEvent(req.realtor_id, req.deal_id, 'signature', `All signers completed ${req.document}; signed copy emailed to ${Array.from(new Set(to)).join(', ')}`);
@@ -369,7 +369,7 @@ export async function runSignReminders(origin: string): Promise<{ sent: number; 
   let sent = 0; const errors: string[] = [];
   for (const r of rows) {
     try {
-      const brand: Brand = { name: r.opts.brandName || r.agent_name, logo: r.opts.logo ?? '', accent: r.opts.accent ?? '#005a8f' };
+      const brand: Brand = { name: r.opts.brandName || r.agent_name, logo: r.opts.logo ?? '', accent: r.opts.accent ?? '#301D5D' };
       const res = await sendEmail({ to: r.email, replyTo: r.agent_email || undefined, subject: `Reminder: please sign ${r.document} - ${r.property}`, html: mail(`Hello ${r.name},\n\nThis is a reminder that ${r.agent_name} is waiting for your signature on "${r.document}" for ${r.property}.`, { href: `${origin}/sign/${tokenFor(r.rid, r.idx, r.nonce!)}`, label: 'Review And Sign' }, brand) });
       if (!res.ok) { errors.push(r.email); continue; }
       await logDealEvent(r.realtor_id, r.deal_id, 'email', `Signature reminder emailed to ${r.name} <${r.email}>: ${r.document}`);

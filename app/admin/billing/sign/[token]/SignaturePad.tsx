@@ -92,7 +92,7 @@ function DrawCanvas({
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.lineWidth = 2.2;
-        ctx.strokeStyle = '#292a2d';
+        ctx.strokeStyle = '#1B1726';
       }
     }
     resize();

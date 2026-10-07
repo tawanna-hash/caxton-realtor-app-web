@@ -8,7 +8,7 @@ import type { InvoiceStatus } from '@/lib/invoices';
 export const AG_STATUS: { value: AgreementStatus; label: string; tone: string }[] = [
   { value: 'draft',     label: 'Draft',     tone: 'bg-gray-100 text-gray-700 border-gray-200' },
   { value: 'sent',      label: 'Sent',      tone: 'bg-[#E3F7FF] text-[#285766] border-[#64D9FF]/30' },
-  { value: 'signed',    label: 'Signed',    tone: 'bg-[#f5f6f9] text-[#1c3f5e] border-[#bbc1c9]' },
+  { value: 'signed',    label: 'Signed',    tone: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]' },
   { value: 'active',    label: 'Active',    tone: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30' },
   { value: 'expired',   label: 'Expired',   tone: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30' },
   { value: 'cancelled', label: 'Cancelled', tone: 'bg-[#FFEAE6] text-[#661102] border-[#FF2A04]/30' },
@@ -39,6 +39,6 @@ export const PAY_MODES: { value: PaymentMode; label: string }[] = [
 
 // Shared input-class shortcuts used by both drawers.
 export const INPUT =
-  'w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]';
+  'w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]';
 export const INPUT_READONLY =
   'w-full px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-600 cursor-not-allowed';

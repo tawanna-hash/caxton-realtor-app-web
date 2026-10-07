@@ -27,13 +27,13 @@ function DrawPad({ onDone, onCancel }: { onDone: (png: string) => void; onCancel
   return (
     <div>
       <canvas ref={ref} width={600} height={200} className="w-full touch-none rounded-md border border-slate-300 bg-white" aria-label="Draw your signature"
-        onPointerDown={(e) => { drawing.current = true; e.currentTarget.setPointerCapture(e.pointerId); const c = e.currentTarget.getContext('2d'); if (!c) return; const p = pos(e); c.lineWidth = 3; c.lineCap = 'round'; c.strokeStyle = '#005a8f'; c.beginPath(); c.moveTo(p.x, p.y); }}
+        onPointerDown={(e) => { drawing.current = true; e.currentTarget.setPointerCapture(e.pointerId); const c = e.currentTarget.getContext('2d'); if (!c) return; const p = pos(e); c.lineWidth = 3; c.lineCap = 'round'; c.strokeStyle = '#301D5D'; c.beginPath(); c.moveTo(p.x, p.y); }}
         onPointerMove={(e) => { if (!drawing.current) return; const c = e.currentTarget.getContext('2d'); if (!c) return; const p = pos(e); c.lineTo(p.x, p.y); c.stroke(); setDirty(true); }}
         onPointerUp={() => { drawing.current = false; }} />
       <div className="mt-3 flex flex-wrap gap-2">
         <button type="button" className={`${btn} border border-slate-300 text-slate-700`} onClick={() => { const c = ref.current; c?.getContext('2d')?.clearRect(0, 0, c.width, c.height); setDirty(false); }}>Clear</button>
         <button type="button" className={`${btn} border border-slate-300 text-slate-700`} onClick={onCancel}>Cancel</button>
-        <button type="button" disabled={!dirty} className={`${btn} bg-[#005a8f] text-white`} onClick={() => ref.current && onDone(ref.current.toDataURL('image/png'))}>Use This Signature</button>
+        <button type="button" disabled={!dirty} className={`${btn} bg-[#301D5D] text-white`} onClick={() => ref.current && onDone(ref.current.toDataURL('image/png'))}>Use This Signature</button>
       </div>
     </div>
   );
@@ -91,7 +91,7 @@ export default function SignClient({ token }: { token: string }) {
     } finally { setBusy(false); }
   };
 
-  if (missing) return <main className="mx-auto max-w-xl px-4 py-16"><h1 className="text-2xl font-bold text-[#005a8f]">This link is not valid</h1><p className="mt-2 text-slate-600">Ask the sender for a new signing link.</p></main>;
+  if (missing) return <main className="mx-auto max-w-xl px-4 py-16"><h1 className="text-2xl font-bold text-[#301D5D]">This link is not valid</h1><p className="mt-2 text-slate-600">Ask the sender for a new signing link.</p></main>;
   if (!view) return <main className="mx-auto max-w-xl px-4 py-16 text-slate-500">Loading.</main>;
 
   const message: Record<string, string> = {
@@ -107,10 +107,10 @@ export default function SignClient({ token }: { token: string }) {
     const text = done === 'signed' ? 'Thank you. You have signed. You will get the completed copy by email once everyone has signed.' : done === 'declined' ? 'You declined to sign. The sender has been told.' : message[view.state];
     return (
       <main className="mx-auto max-w-xl px-4 py-12">
-        <h1 className="text-2xl font-bold text-[#005a8f]">{view.document}</h1>
+        <h1 className="text-2xl font-bold text-[#301D5D]">{view.document}</h1>
         <p className="mt-1 text-sm text-slate-600">{view.property}</p>
         <p className="mt-6 border border-slate-200 bg-white p-4 text-slate-900" role="status">{text}</p>
-        {view.state === 'completed' && <a className={`${btn} mt-4 inline-flex items-center bg-[#005a8f] text-white`} href={`/api/sign/${token}/pdf?download=1`}>Download Signed Copy</a>}
+        {view.state === 'completed' && <a className={`${btn} mt-4 inline-flex items-center bg-[#301D5D] text-white`} href={`/api/sign/${token}/pdf?download=1`}>Download Signed Copy</a>}
       </main>
     );
   }
@@ -121,7 +121,7 @@ export default function SignClient({ token }: { token: string }) {
     <main className="mx-auto max-w-3xl px-4 py-8">
       {view.logo && <SigLogo src={view.logo} alt={view.brandName} />}
       <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: view.accent }}>{view.brandName ? `${view.brandName} · ` : ''}Closing Time Secure Sign</p>
-      <h1 className="mt-1 text-2xl font-bold text-[#005a8f]">{view.document}</h1>
+      <h1 className="mt-1 text-2xl font-bold text-[#301D5D]">{view.document}</h1>
       <p className="mt-1 text-sm text-slate-600">{view.property} · sent by {view.agentName} · for {view.signerName}</p>
 
       {view.notice && <p className="mt-4 border-l-4 bg-white p-3 text-sm text-slate-800" style={{ borderColor: view.accent }}>{view.notice}</p>}
@@ -135,12 +135,12 @@ export default function SignClient({ token }: { token: string }) {
       <div className="mt-6">
         <SignPdfPages url={`/api/sign/${token}/pdf`} width={width} overlay={(page) => view.fields.filter((f) => f.page === page).map((f) => {
           const style = { left: `${f.x * 100}%`, top: `${f.y * 100}%`, width: `${f.w * 100}%`, height: `${f.h * 100}%` };
-          if (f.type === 'date') return <div key={f.id} style={style} className="absolute flex items-center border border-dashed border-[#2f7aa7]/60 bg-[#f5f6f9]/70 px-1 text-xs text-slate-700">{today}</div>;
+          if (f.type === 'date') return <div key={f.id} style={style} className="absolute flex items-center border border-dashed border-[#7059A8]/60 bg-[#F6F3FB]/70 px-1 text-xs text-slate-700">{today}</div>;
           const m = marks[f.id];
           return (
             <button key={f.id} type="button" style={style} disabled={!consent} onClick={() => { setEditing(f.id); setMode(view.methods.type ? 'type' : view.methods.draw ? 'draw' : 'upload'); }}
               className={`absolute flex items-center justify-center overflow-hidden border-2 text-xs font-bold ${m ? 'border-[#005A00] bg-white' : 'border-[#661102] bg-[#FFF5F2] text-[#661102] animate-pulse'} disabled:animate-none disabled:opacity-60`} aria-label="Signature box">
-              {m ? (m.kind !== 'typed' ? <SigImg src={m.value} /> : <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(12px,3.2vw,22px)', color: '#005a8f' }}>{m.value}</span>) : 'Sign here'}
+              {m ? (m.kind !== 'typed' ? <SigImg src={m.value} /> : <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(12px,3.2vw,22px)', color: '#301D5D' }}>{m.value}</span>) : 'Sign here'}
             </button>
           );
         })} />
@@ -160,9 +160,9 @@ export default function SignClient({ token }: { token: string }) {
           <div className="w-full max-w-md rounded-lg bg-white p-4 shadow-xl">
             <h2 className="text-lg font-semibold text-slate-950">Add your signature</h2>
             <div className="mt-3 flex gap-2">
-              {view.methods.type && <button type="button" className={`${btn} ${mode === 'type' ? 'bg-[#005a8f] text-white' : 'border border-slate-300 text-slate-700'}`} onClick={() => setMode('type')}>Type</button>}
-              {view.methods.draw && <button type="button" className={`${btn} ${mode === 'draw' ? 'bg-[#005a8f] text-white' : 'border border-slate-300 text-slate-700'}`} onClick={() => setMode('draw')}>Draw</button>}
-              {view.methods.upload && <button type="button" className={`${btn} ${mode === 'upload' ? 'bg-[#005a8f] text-white' : 'border border-slate-300 text-slate-700'}`} onClick={() => setMode('upload')}>Upload Image</button>}
+              {view.methods.type && <button type="button" className={`${btn} ${mode === 'type' ? 'bg-[#301D5D] text-white' : 'border border-slate-300 text-slate-700'}`} onClick={() => setMode('type')}>Type</button>}
+              {view.methods.draw && <button type="button" className={`${btn} ${mode === 'draw' ? 'bg-[#301D5D] text-white' : 'border border-slate-300 text-slate-700'}`} onClick={() => setMode('draw')}>Draw</button>}
+              {view.methods.upload && <button type="button" className={`${btn} ${mode === 'upload' ? 'bg-[#301D5D] text-white' : 'border border-slate-300 text-slate-700'}`} onClick={() => setMode('upload')}>Upload Image</button>}
             </div>
             {mode === 'upload' && view.methods.upload ? (
               <div className="mt-4">
@@ -175,8 +175,8 @@ export default function SignClient({ token }: { token: string }) {
             ) : (
               <div className="mt-4">
                 <input value={typed} onChange={(e) => setTyped(e.target.value)} maxLength={80} aria-label="Type your full name" className="min-h-[44px] w-full rounded-md border border-slate-300 px-3" />
-                <p className="mt-3 rounded-md border border-slate-200 p-4 text-center text-3xl text-[#005a8f]" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>{typed || ' '}</p>
-                <div className="mt-3 flex gap-2"><button type="button" className={`${btn} border border-slate-300 text-slate-700`} onClick={() => setEditing(null)}>Cancel</button><button type="button" disabled={typed.trim().length < 2} className={`${btn} bg-[#005a8f] text-white`} onClick={() => apply({ kind: 'typed', value: typed.trim() })}>Use This Signature</button></div>
+                <p className="mt-3 rounded-md border border-slate-200 p-4 text-center text-3xl text-[#301D5D]" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>{typed || ' '}</p>
+                <div className="mt-3 flex gap-2"><button type="button" className={`${btn} border border-slate-300 text-slate-700`} onClick={() => setEditing(null)}>Cancel</button><button type="button" disabled={typed.trim().length < 2} className={`${btn} bg-[#301D5D] text-white`} onClick={() => apply({ kind: 'typed', value: typed.trim() })}>Use This Signature</button></div>
               </div>
             )}
           </div>

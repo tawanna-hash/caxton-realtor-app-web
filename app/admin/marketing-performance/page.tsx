@@ -61,10 +61,10 @@ interface MarketingPerformance {
 
 const CHANNELS: Array<{ id: Channel; label: string; color: string; hint: string }> = [
   { id: 'organic', label: 'Organic', color: '#005A00', hint: 'Search, referral & AI assistants' },
-  { id: 'paid',    label: 'Paid',    color: '#005a8f', hint: 'Paid search, paid social, display' },
-  { id: 'social',  label: 'Social',  color: '#2f7aa7', hint: 'Organic social' },
+  { id: 'paid',    label: 'Paid',    color: '#301D5D', hint: 'Paid search, paid social, display' },
+  { id: 'social',  label: 'Social',  color: '#7059A8', hint: 'Organic social' },
   { id: 'email',   label: 'Email',   color: '#8C4F9E', hint: 'Campaign email clicks & sends' },
-  { id: 'direct',  label: 'Direct',  color: '#51555b', hint: 'Direct / unattributed' },
+  { id: 'direct',  label: 'Direct',  color: '#4A4757', hint: 'Direct / unattributed' },
 ];
 const CH = Object.fromEntries(CHANNELS.map((c) => [c.id, c])) as Record<Channel, (typeof CHANNELS)[number]>;
 const METRICS: Metric[] = ['impressions', 'sessions', 'mqls', 'sqls', 'conversions', 'revenue_cents', 'spend_cents'];
@@ -72,7 +72,7 @@ const METRIC_LABEL: Record<Metric, string> = {
   impressions: 'Impressions', sessions: 'Sessions', mqls: 'MQLs', sqls: 'SQLs',
   conversions: 'Conversions', revenue_cents: 'Revenue', spend_cents: 'Spend',
 };
-const BRAND = '#005a8f';
+const BRAND = '#301D5D';
 
 type RangeKey = '3' | '6' | '12' | 'ytd' | 'all' | 'custom';
 
@@ -345,13 +345,13 @@ export default function MarketingPerformancePage() {
                   return (
                     <button key={c.id} type="button" onClick={() => toggleChannel(c.id)} aria-pressed={on} title={c.hint}
                       className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${on ? 'border-gray-300 bg-gray-50 text-gray-900' : 'border-gray-200 bg-white text-gray-400'}`}>
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: on ? c.color : '#bbc1c9' }} />
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: on ? c.color : '#D9CFF0' }} />
                       {c.label}
                     </button>
                   );
                 })}
                 <button type="button" onClick={() => toggleChannel('all')} aria-pressed={channels.size === CHANNELS.length}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium ${channels.size === CHANNELS.length ? 'border-[#005a8f] bg-[#005a8f] text-white' : 'border-gray-200 text-gray-500'}`}>
+                  className={`rounded-full border px-3 py-1 text-xs font-medium ${channels.size === CHANNELS.length ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-gray-200 text-gray-500'}`}>
                   All
                 </button>
               </div>
@@ -361,7 +361,7 @@ export default function MarketingPerformancePage() {
               {ga4Ready ? (
                 <Seg label="Traffic source" value={src} onChange={setTrafficSource} options={[{ v: 'posthog', l: 'PostHog' }, { v: 'ga4', l: 'GA4' }]} />
               ) : (
-                <p className="py-1 text-xs text-gray-500">PostHog · <a href="#connections" className="font-medium text-[#005a8f] underline">Connect GA4</a></p>
+                <p className="py-1 text-xs text-gray-500">PostHog · <a href="#connections" className="font-medium text-[#301D5D] underline">Connect GA4</a></p>
               )}
             </div>
             <div className="ml-auto text-right text-xs text-gray-500">
@@ -401,7 +401,7 @@ export default function MarketingPerformancePage() {
                 </p>
                 <div className="mt-1 flex items-center justify-between gap-2">
                   {'needsSpend' in k && k.needsSpend && !hasSpend
-                    ? <a href="#spend" className="text-xs font-medium text-[#005a8f] underline">Add spend</a>
+                    ? <a href="#spend" className="text-xs font-medium text-[#301D5D] underline">Add spend</a>
                     : <Delta cur={k.v} prev={view.prevAvailable ? k.p : null} goodWhen={k.good} />}
                   <Sparkline values={view.perMonth(view.sel).map(k.spark)} />
                 </div>
@@ -488,8 +488,8 @@ export default function MarketingPerformancePage() {
                 right={<Seg label="Pipeline stages" value={funnelView} onChange={setFunnelView} options={[{ v: 'lower', l: 'MQL → Conv.' }, { v: 'upper', l: 'Impr. → Sessions' }]} />}>
                 <Lines fmt={fmtInt}
                   series={funnelView === 'lower'
-                    ? [{ key: 'mqls', label: 'MQLs', color: BRAND }, { key: 'sqls', label: 'SQLs', color: '#005a8f' }, { key: 'conversions', label: 'Conversions', color: '#2f7aa7' }]
-                    : [{ key: 'impressions', label: 'Impressions', color: BRAND }, { key: 'sessions', label: 'Sessions', color: '#005a8f' }]}
+                    ? [{ key: 'mqls', label: 'MQLs', color: BRAND }, { key: 'sqls', label: 'SQLs', color: '#301D5D' }, { key: 'conversions', label: 'Conversions', color: '#7059A8' }]
+                    : [{ key: 'impressions', label: 'Impressions', color: BRAND }, { key: 'sessions', label: 'Sessions', color: '#301D5D' }]}
                   data={view.perMonth(view.sel).map((t, i) => ({ label: monthLabel(view.monthsSel[i]), ...t }))} />
               </Card>
             </div>
@@ -502,7 +502,7 @@ export default function MarketingPerformancePage() {
               <div className="rounded-md border border-dashed border-gray-300 bg-white px-6 py-8 text-center">
                 <p className="text-sm font-medium text-gray-900">No spend recorded for this range</p>
                 <p className="mt-1 text-sm text-gray-500">CAC, ROAS, and cost per lead need monthly spend by channel.</p>
-                <a href="#spend" className="mt-3 inline-block rounded-md bg-[#005a8f] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1c3f5e]">Add spend</a>
+                <a href="#spend" className="mt-3 inline-block rounded-md bg-[#301D5D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#42277C]">Add spend</a>
               </div>
             ) : (
               <>
@@ -555,7 +555,7 @@ export default function MarketingPerformancePage() {
                 <Lines height={320} fmt={(x) => fmtMetric(trendMetric, x)}
                   series={[
                     { key: 'cur', label: 'Selected period', color: BRAND },
-                    ...(view.prevAvailable ? [{ key: 'prev', label: 'Prior period', color: '#7b8089', dashed: true }] : []),
+                    ...(view.prevAvailable ? [{ key: 'prev', label: 'Prior period', color: '#7A7787', dashed: true }] : []),
                   ]}
                   data={view.perMonth(view.sel).map((t, i) => ({
                     label: monthLabel(view.monthsSel[i]),
@@ -712,7 +712,7 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
               <input value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={500} placeholder="e.g. Meta boosted posts" className="mt-1 w-full rounded border border-gray-300 px-2 py-2" />
             </label>
             <button type="button" onClick={() => void save()} disabled={busy || !amount.trim()}
-              className="w-full rounded-md bg-[#005a8f] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1c3f5e] disabled:cursor-not-allowed disabled:opacity-50">
+              className="w-full rounded-md bg-[#301D5D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#42277C] disabled:cursor-not-allowed disabled:opacity-50">
               {busy ? 'Saving…' : 'Save spend'}
             </button>
             <p className="text-xs text-gray-400">Saving the same month and channel replaces the earlier amount.</p>
@@ -839,7 +839,7 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
           ) : !sources.ga4.connected ? (
             <div className="space-y-2">
               <p className="text-sm text-gray-600">Read-only access to GA4 sessions, pageviews, and key events by channel.</p>
-              <a href="/api/admin/ga4-auth/start" className="inline-block rounded-md bg-[#005a8f] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1c3f5e]">Connect Google Analytics</a>
+              <a href="/api/admin/ga4-auth/start" className="inline-block rounded-md bg-[#301D5D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#42277C]">Connect Google Analytics</a>
             </div>
           ) : (
             <div className="space-y-2 text-sm">
@@ -851,7 +851,7 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
                     {props.map((p) => (
                       <li key={p.id}>
                         <label className="flex items-center gap-2">
-                          <input type="checkbox" disabled={busy} checked={selectedIds.includes(p.id)} onChange={() => void toggle(p.id)} className="h-4 w-4 accent-[#005a8f]" />
+                          <input type="checkbox" disabled={busy} checked={selectedIds.includes(p.id)} onChange={() => void toggle(p.id)} className="h-4 w-4 accent-[#301D5D]" />
                           <span>{p.name} <span className="text-xs text-gray-400">({p.id})</span></span>
                         </label>
                       </li>

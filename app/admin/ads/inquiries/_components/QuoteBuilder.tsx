@@ -190,7 +190,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
               type="button"
               onClick={handleSend}
               disabled={sending}
-              className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium bg-[#005a8f] text-white hover:bg-[#1c3f5e] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {sending ? 'Sending…' : 'Send Quote to Client'}
             </button>
@@ -253,7 +253,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
             setSize('');
           }}
           disabled={submitting}
-          className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+          className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
         >
           <option value="">— Pick a package —</option>
           {isPrint &&
@@ -285,7 +285,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
               value={size}
               onChange={(e) => setSize(e.target.value)}
               disabled={submitting}
-              className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+              className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
             >
               {selectedPrintPackage.sizes.map((s) => (
                 <option key={s.size} value={s.size}>
@@ -311,7 +311,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
                 setMonths(Math.max(1, Math.min(24, Number(e.target.value) || 1)))
               }
               disabled={submitting}
-              className="w-24 border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+              className="w-24 border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
             />
           </div>
         </>
@@ -330,7 +330,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
             value={publication}
             onChange={(e) => setPublication(e.target.value as PublicationScope)}
             disabled={submitting}
-            className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+            className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
           >
             {PUBLICATION_IDS.map((id) => (
               <option key={id} value={id}>{PUBLICATION_LABELS_WITH_BOTH[id]}</option>
@@ -358,7 +358,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
               setSends(Math.max(1, Math.min(24, Number(e.target.value) || 1)))
             }
             disabled={submitting}
-            className="w-24 border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+            className="w-24 border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
           />
         </div>
       )}
@@ -377,7 +377,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
             disabled={submitting}
-            className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+            className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
           />
         </div>
         <div className="self-end">
@@ -402,7 +402,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
           onChange={(e) => setMemo(e.target.value)}
           disabled={submitting}
           placeholder="Defaults to: Quote drafted from ad inquiry …"
-          className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
+          className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
         />
       </div>
 
@@ -414,7 +414,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
         <button
           type="submit"
           disabled={submitting || !packageId || previewCents <= 0}
-          className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-[#005a8f] text-white hover:bg-[#1c3f5e] disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
+          className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-[#301D5D] text-white hover:bg-[#42277C] disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
         >
           {submitting ? 'Drafting…' : 'Draft quote'}
         </button>

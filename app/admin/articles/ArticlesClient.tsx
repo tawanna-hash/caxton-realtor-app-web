@@ -308,7 +308,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             type="button"
             onClick={handleSync}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-md bg-[#005a8f] px-4 py-2 text-sm font-medium text-white hover:bg-[#1c3f5e] disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
+            className="inline-flex items-center gap-2 rounded-md bg-[#301D5D] px-4 py-2 text-sm font-medium text-white hover:bg-[#42277C] disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
           >
             {busy ? (
               <>

@@ -39,14 +39,14 @@ export default function TrecFormActions({
       {menu && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} aria-hidden="true" />
-          <div role="menu" style={{ top: menu.top, right: menu.right }} className="fixed z-50 w-[300px] max-w-[calc(100vw-16px)] rounded-2xl border border-[#d4d8dd] bg-white p-2 shadow-lg">
+          <div role="menu" style={{ top: menu.top, right: menu.right }} className="fixed z-50 w-[300px] max-w-[calc(100vw-16px)] rounded-2xl border border-[#E6E5EC] bg-white p-2 shadow-lg">
             <button type="button" role="menuitem" onClick={() => { setMenu(null); onUpload(family, 'file'); }} className="ds-upload-opt">
               <span className="ds-upload-ico"><FileUp className="h-4 w-4" aria-hidden="true" /></span>Choose PDF or Image
             </button>
             <button type="button" role="menuitem" onClick={() => { setMenu(null); onUpload(family, 'photo'); }} className="ds-upload-opt">
               <span className="ds-upload-ico"><Camera className="h-4 w-4" aria-hidden="true" /></span>Take a Photo
             </button>
-            <p className="border-t border-[#f5f6f9] px-3 pb-2 pt-3 text-xs leading-5 text-slate-500">PDF, PNG, JPG, or WEBP · 15 MB maximum. PDFs are kept privately with the deal; images are used for extraction only.</p>
+            <p className="border-t border-[#F6F3FB] px-3 pb-2 pt-3 text-xs leading-5 text-slate-500">PDF, PNG, JPG, or WEBP · 15 MB maximum. PDFs are kept privately with the deal; images are used for extraction only.</p>
           </div>
         </>
       )}

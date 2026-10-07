@@ -154,7 +154,7 @@ export default function EventClickLog({ eventId, days }: { eventId: string; days
             </thead>
             <tbody>
               {pageRows.map((c, i) => (
-                <tr key={`${c.visitor_id}-${c.occurred_at}-${i}`} className="border-b border-gray-100 last:border-0 hover:bg-[#f5f6f9]/40">
+                <tr key={`${c.visitor_id}-${c.occurred_at}-${i}`} className="border-b border-gray-100 last:border-0 hover:bg-[#F6F3FB]/40">
                   <td className="py-2 pr-4 text-gray-900 whitespace-nowrap">
                     {new Date(c.occurred_at).toLocaleString()}
                   </td>

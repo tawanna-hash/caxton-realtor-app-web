@@ -86,7 +86,7 @@ function lastMonths(n: number): string[] {
 
 const inputCls = 'w-full rounded-md border border-gray-300 px-3 py-2 text-sm';
 const btnCls = 'rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50';
-const primaryCls = 'rounded-md bg-[#005a8f] px-4 py-2 text-sm font-medium text-white hover:bg-[#241646] disabled:opacity-50';
+const primaryCls = 'rounded-md bg-[#301D5D] px-4 py-2 text-sm font-medium text-white hover:bg-[#241646] disabled:opacity-50';
 
 export default function DfwReportAdminPage() {
   const { admin, loading: authLoading } = useAdmin();
@@ -278,7 +278,7 @@ export default function DfwReportAdminPage() {
               type="button"
               onClick={() => switchBoard(b)}
               aria-pressed={board === b}
-              className={`rounded-full px-4 py-2 ${board === b ? 'bg-[#005a8f] text-white' : 'text-gray-700'}`}
+              className={`rounded-full px-4 py-2 ${board === b ? 'bg-[#301D5D] text-white' : 'text-gray-700'}`}
             >
               {DFW_BOARDS[b].area} ({b === 'metrotex' ? 'MetroTex' : 'GFWAR'})
             </button>

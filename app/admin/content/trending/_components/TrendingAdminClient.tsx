@@ -22,7 +22,7 @@ function itemStatus(it: TrendingItem): StatusFilter {
 function statusBadge(s: StatusFilter): { label: string; className: string } {
   switch (s) {
     case 'live':      return { label: 'Live',      className: 'bg-[#E0FBE0] text-[#005A00]' };
-    case 'scheduled': return { label: 'Scheduled', className: 'bg-[#daeeff] text-[#005a8f]' };
+    case 'scheduled': return { label: 'Scheduled', className: 'bg-[#EFEAF8] text-[#301D5D]' };
     case 'draft':     return { label: 'Draft',     className: 'bg-gray-100 text-gray-700' };
     case 'expired':   return { label: 'Expired',   className: 'bg-[#FFEAE6] text-[#661102]' };
     default:          return { label: 'Unknown',   className: 'bg-gray-100 text-gray-700' };
@@ -205,7 +205,7 @@ export default function TrendingAdminClient() {
           <button
             type="button"
             onClick={() => setCreatingNew(true)}
-            className="inline-flex h-9 items-center px-4 rounded border border-[#1c3f5e] bg-[#005a8f] text-sm text-white hover:bg-[#1c3f5e] font-semibold shadow-sm"
+            className="inline-flex h-9 items-center px-4 rounded border border-[#42277C] bg-[#301D5D] text-sm text-white hover:bg-[#42277C] font-semibold shadow-sm"
           >
             + New trending
           </button>
@@ -217,7 +217,7 @@ export default function TrendingAdminClient() {
 
       {!loading && !error && filtered.length === 0 && (
         <div className="content-admin-empty">
-          <div className="mb-3 text-sm font-semibold uppercase tracking-widest text-[#005a8f]">Trending</div>
+          <div className="mb-3 text-sm font-semibold uppercase tracking-widest text-[#301D5D]">Trending</div>
           <div className="text-sm font-medium text-gray-900 mb-1">No trending items</div>
           <div className="text-xs text-gray-600 mb-4">
             {items.length === 0 ? 'Create your first item to get started.' : 'No items match your filters.'}
@@ -226,7 +226,7 @@ export default function TrendingAdminClient() {
             <button
               type="button"
               onClick={() => setCreatingNew(true)}
-              className="text-sm px-3 py-2 rounded-md bg-[#005a8f] text-white hover:bg-[#1c3f5e] font-medium"
+              className="text-sm px-3 py-2 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] font-medium"
             >
               + New trending
             </button>

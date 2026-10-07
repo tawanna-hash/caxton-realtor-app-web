@@ -15,7 +15,7 @@
 import { useState } from 'react';
 import { monthLabel, type DfwBoard, type DfwMarketReport, type DfwMetrics } from '@/lib/dfw-markets';
 
-const NEWSLINE = '#005a8f';
+const NEWSLINE = '#301D5D';
 
 type Dir = 'up' | 'down' | 'flat' | undefined;
 
@@ -45,7 +45,7 @@ function dirGlyph(d: Dir): string {
 function dirColor(d: Dir): string {
   if (d === 'down') return '#661102';
   if (d === 'up') return '#005A00';
-  return '#51555b';
+  return '#4A4757';
 }
 
 // "$900,962,309" -> "$900.96M", "$1,402,000,000" -> "$1.40B" (ABOR card style).
@@ -124,7 +124,7 @@ export default function DfwReportCard({ report, id }: { report: DfwMarketReport;
   return (
     <article id={id} className="bg-white border-b border-gray-200" aria-label={`${boardShort} MLS Summary ${area} ${monthLabel(report.month)}`}>
       <div className="bg-white mx-3 my-3 rounded-md overflow-hidden shadow-sm">
-        <div className="h-1" style={{ background: `linear-gradient(90deg, ${NEWSLINE} 0%, #005a8f 100%)` }} />
+        <div className="h-1" style={{ background: `linear-gradient(90deg, ${NEWSLINE} 0%, #301D5D 100%)` }} />
         <div className="px-4 pt-4 pb-4">
           <div className="flex items-center justify-between mb-2">
             <span
@@ -171,7 +171,7 @@ export default function DfwReportCard({ report, id }: { report: DfwMarketReport;
           )}
 
           {stats.length > 0 && (
-            <div className="grid grid-cols-3 gap-x-3 gap-y-3 py-3 mb-3" style={{ borderTop: '1px dashed #d4d8dd' }}>
+            <div className="grid grid-cols-3 gap-x-3 gap-y-3 py-3 mb-3" style={{ borderTop: '1px dashed #E6E5EC' }}>
               {stats.map((s) => {
                 const d = dirOf(s.delta);
                 return (
@@ -191,7 +191,7 @@ export default function DfwReportCard({ report, id }: { report: DfwMarketReport;
             </div>
           )}
 
-          <p className="text-[11px] leading-snug text-gray-500 pt-3" style={{ borderTop: '1px dashed #d4d8dd' }}>
+          <p className="text-[11px] leading-snug text-gray-500 pt-3" style={{ borderTop: '1px dashed #E6E5EC' }}>
             {footerLead}{' '}
             <a href={source} target="_blank" rel="noopener noreferrer" className="underline font-medium" style={{ color: NEWSLINE }}>
               {footerLink}
