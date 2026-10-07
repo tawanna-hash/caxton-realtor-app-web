@@ -70,7 +70,7 @@ export function chicagoToUtc(date: string, time: string): Date {
   return new Date(guess + (guess - asChicago));
 }
 
-async function agentOf(realtorId: string): Promise<{ name: string; email: string }> {
+export async function agentOf(realtorId: string): Promise<{ name: string; email: string }> {
   const rows = await query<{ first_name: string | null; last_name: string | null; email: string }>(
     `SELECT r.first_name, r.last_name, COALESCE(NULLIF((SELECT w.workspace->'notificationPreferences'->>'notificationEmail' FROM agent_command_center_workspaces w WHERE w.realtor_id=r.id),''), r.email) AS email FROM realtors r WHERE r.id=$1 LIMIT 1`, [realtorId]);
   return { name: [rows[0]?.first_name, rows[0]?.last_name].filter(Boolean).join(' ') || 'Your agent', email: rows[0]?.email ?? '' };

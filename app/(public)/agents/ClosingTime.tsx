@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
 import ClientPortalPanel from './ClientPortalPanel';
 import SchedulingPollPanel from './SchedulingPollPanel';
+import SchedulersPanel from './SchedulersPanel';
 import { dealPeople } from '@/lib/closing-time-people';
 import MessagesPanel from './MessagesPanel';
 import IntegrationsPanel from './IntegrationsPanel';
@@ -2963,7 +2964,7 @@ export default function ClosingTime({
             {effectiveView === 'utilities' && <UtilitiesPanel />}
             {effectiveView === 'd-messages' && activeDeal && <div className="ds-page"><MessagesPanel key={activeDeal.id} deal={activeDeal} /></div>}
             {effectiveView === 'd-portal' && activeDeal && <div className="ds-page"><ClientPortalPanel key={activeDeal.id} deal={activeDeal} /></div>}
-            {effectiveView === 'd-schedule' && activeDeal && <div className="ds-page"><SchedulingPollPanel key={activeDeal.id} deal={activeDeal} /></div>}
+            {effectiveView === 'd-schedule' && activeDeal && <div className="ds-page space-y-8"><SchedulersPanel key={activeDeal.id} deal={activeDeal} onOpenIntegrations={() => setDeskView('integrations')} /><SchedulingPollPanel key={`${activeDeal.id}-polls`} deal={activeDeal} /></div>}
             {['d-overview', 'd-documents', 'd-people'].includes(effectiveView) && (() => {
               const deal = activeDeal;
               const health = deal ? (() => {
