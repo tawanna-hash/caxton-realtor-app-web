@@ -106,6 +106,8 @@ const nextConfig: NextConfig = {
   },
 
   experimental: {
+    // Inline the page's CSS into the HTML so styles no longer block the first paint (PageSpeed: render-blocking requests).
+    inlineCss: true,
     // Client Router Cache staleTimes: how long a page segment can be reused
     // without triggering a fresh server request when revisited via <Link>.
     staleTimes: {
