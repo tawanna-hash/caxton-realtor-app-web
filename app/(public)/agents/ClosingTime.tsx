@@ -684,7 +684,7 @@ function ReadinessChecklist({
   };
 
   return (
-    <div className="ds-page" data-testid="readiness-check" data-section-key="readiness">
+    <div className="ds-page min-w-0 max-w-full" data-testid="readiness-check" data-section-key="readiness">
       <div className="rounded-2xl border border-[#E6E5EC] bg-white">
         <div className="px-[1.125rem] py-4">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7A7787]">Readiness Check</p>
@@ -744,7 +744,7 @@ function ReadinessChecklist({
         {reviewAlerts.length ? (
           <ul className="mt-2 space-y-2">
             {reviewAlerts.slice(0, 4).map((alert) => (
-              <li key={alert} className="flex gap-2 text-sm leading-5 text-[#4A4757]">
+              <li key={alert} className="flex min-w-0 gap-2 break-words text-sm leading-5 text-[#4A4757]">
                 <AlertTriangle className="rnn-inline-icon text-[#661102]" aria-hidden="true" />
                 {alert}
               </li>
@@ -3809,7 +3809,7 @@ export default function ClosingTime({
 
         {workspacePage === 2 && activeDeal && (
           <>
-          <div className="mt-6 grid gap-6">
+          <div className="mt-6 grid min-w-0 gap-6">
             <div {...collapsible('tasks')} className="rounded-2xl border border-[#E6E5EC] bg-white">
               <div className="flex items-center gap-3 px-[1.125rem] py-4">
                 <div>

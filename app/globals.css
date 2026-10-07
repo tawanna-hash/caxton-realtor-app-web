@@ -1790,3 +1790,6 @@ input::placeholder, textarea::placeholder { color: var(--astro-text-placeholder)
   #agent-desk [data-testid="contract-page"] summary button, #agent-desk [data-testid="contract-page"] section button { min-height: 40px; }
   #agent-desk [data-testid="contract-page"] { overflow-x: hidden; }
 }
+
+/* Back-to-top sits above the Help button instead of covering it. */
+body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 16px; }
