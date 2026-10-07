@@ -8,6 +8,7 @@ import SchedulersPanel from './SchedulersPanel';
 import { dealPeople } from '@/lib/closing-time-people';
 import { readKeepScroll, useKeepScroll } from '@/lib/keep-scroll';
 import MessagesPanel from './MessagesPanel';
+import HelpTips from './HelpTips';
 import IntegrationsPanel from './IntegrationsPanel';
 import AlertSetupContent from './AlertSetupContent';
 import UtilitiesPanel from './UtilitiesPanel';
@@ -2630,6 +2631,7 @@ export default function ClosingTime({
             </ul>
           </aside>
           <div className="ds-mainwrap min-w-0">
+            <HelpTips />
             {((effectiveView !== 'overview' && effectiveView !== 'deal-page') || DEAL_TABS.some((t) => t.id === effectiveView)) && (
               <div className="ds-toolbar">
             {effectiveView !== 'overview' && effectiveView !== 'deal-page' && (() => {

@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "@astrouxds/tokens/dist/css/base.reference.css";
+@import "@astrouxds/tokens/dist/css/base.system.css";
+@import "@astrouxds/tokens/dist/css/base.component.css";
+@import "@astrouxds/tokens/dist/css/theme.light.css";
 
 /* The app is built for a light surface only (bg-white, text-gray-900).
    `color-scheme: light` above pins UA defaults, but it does NOT stop
@@ -1752,3 +1756,17 @@ body { background-color: var(--astro-bg-base); color: var(--astro-text); }
 @media (max-width: 639px) { #agent-desk .ds-main { margin: 16px 8px 24px; } }
 @media (min-width: 640px) { #agent-desk .ds-page { padding-inline: 0; } }
 input::placeholder, textarea::placeholder { color: var(--astro-text-placeholder); }
+
+/* Closing Time help button and tips list (Astro light theme) */
+.ct-help-btn { position: fixed; right: 16px; bottom: 16px; z-index: 40; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; background: var(--astro-interactive); color: #fff; border: 0; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.ct-help-btn:hover { background: var(--astro-interactive-hover); }
+@media (max-width: 639px) { .ct-help-btn .ct-help-label { display: none; } .ct-help-btn { width: 44px; padding: 0; justify-content: center; } }
+.ct-help-scrim { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.35); display: flex; align-items: flex-end; justify-content: flex-end; padding: 16px; }
+.ct-help-panel { width: min(440px, 100%); max-height: min(80vh, 640px); display: flex; flex-direction: column; gap: 12px; background: #fff; border: 1px solid #7b8089; border-radius: 4px; padding: 16px; box-shadow: 0 4px 4px 1px rgba(0,0,0,0.35); }
+.ct-help-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ct-help-head h2 { font-size: 16px; font-weight: 600; color: var(--astro-text); }
+.ct-help-head button { height: 36px; padding: 0 12px; border: 1px solid var(--astro-interactive); color: var(--astro-interactive); background: #fff; border-radius: 4px; font-size: 14px; }
+.ct-help-panel input { height: 40px; border: 1px solid #7b8089; border-radius: 4px; padding: 0 12px; font-size: 14px; }
+.ct-help-panel ul { overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.ct-help-panel li { display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 4px; background: var(--astro-bg-base-header); font-size: 14px; color: var(--astro-text-secondary); }
+.ct-help-panel li strong { color: var(--astro-text); font-weight: 600; }

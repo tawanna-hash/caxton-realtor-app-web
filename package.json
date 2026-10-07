@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@aparajita/capacitor-biometric-auth": "^10.0.0",
+    "@astrouxds/tokens": "^1.14.0",
     "@auth/core": "0.41.2",
     "@capacitor/android": "^7.6.7",
     "@capacitor/app": "^7.1.2",

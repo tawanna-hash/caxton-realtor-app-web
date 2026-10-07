@@ -55,6 +55,8 @@ const CSRF_ALLOWED_HOSTS = [
   'newslinesa.com',
   '.newslinesa.com',
   'app.myrealtyline.com',
+  'itsalmostclosingtime.com',
+  '.itsalmostclosingtime.com',
   // Vercel preview deploys land on *.vercel.app
   '.vercel.app',
 ];
@@ -262,6 +264,14 @@ export async function proxy(req: NextRequest) {
   //    short-circuit with a 403 before any other work.
   const csrf = handleCsrf(req);
   if (csrf) return csrf;
+
+  // 1b. Closing Time's own domain: the home page is the Closing Time desk.
+  const host = (req.headers.get('host') ?? '').toLowerCase().split(':')[0];
+  if ((host === 'itsalmostclosingtime.com' || host === 'www.itsalmostclosingtime.com') && pathname === '/') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/agents/closing-time';
+    return NextResponse.rewrite(url);
+  }
 
   // 2. Publication permalink handling — applies to every page route.
   const pubRedirect = handlePubPermalink(req);
