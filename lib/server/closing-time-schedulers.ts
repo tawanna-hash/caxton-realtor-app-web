@@ -377,20 +377,20 @@ export async function createBooking(id: string, input: { start: number; length: 
     await query(`UPDATE closing_time_scheduler_bookings SET meeting_url=$2 WHERE id=$1`, [bookingId, meetingUrl]);
   }
 
+  // The booker is usually a subscriber: use the name and brokerage affiliation on their profile.
+  const sub = await query<{ first_name: string | null; last_name: string | null; brokerage_name: string | null }>(`SELECT first_name, last_name, brokerage_name FROM realtors WHERE LOWER(email)=LOWER($1) LIMIT 1`, [input.email]).catch(() => []);
+  const subName = [sub[0]?.first_name, sub[0]?.last_name].filter(Boolean).join(' ').trim();
+  const who = `${subName || input.name}${sub[0]?.brokerage_name?.trim() ? ` of ${sub[0].brokerage_name.trim()}` : ''}`;
   const when = whenText(start, cfg);
   const ics = Buffer.from(bookingIcsText({ id: bookingId, start, end, title, location: meetingUrl || property, description })).toString('base64');
   const manage = `${input.origin}/book/manage/${token}`;
   const es = cfg.language === 'es';
   await sendEmail({ to: input.email, cc: guests.length ? guests : undefined, replyTo: agent.email || undefined, subject: `${es ? 'Confirmado' : 'Confirmed'}: ${cfg.name} - ${when}`,
     attachments: [{ filename: 'invite.ics', content: ics, contentType: 'text/calendar' }],
-    html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p>${es ? 'Hola' : 'Hello'} ${esc(input.name.split(/\s+/)[0])},</p>`
-      + `<p>${es ? 'Su cita está confirmada' : 'You are booked'}: <strong>${esc(cfg.name)}</strong> ${es ? 'con' : 'with'} ${esc(cfg.yourName || agent.name)}.</p><p><strong>${esc(when)}</strong> · ${len} min</p>`
+    html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p>${es ? 'Hola' : 'Hello'} ${esc((sub[0]?.first_name?.trim() || input.name.split(/\s+/)[0]))},</p>`
+      + `<p>${es ? 'Su cita está confirmada' : 'You are booked'}: <strong>${esc(cfg.name)}</strong> ${es ? 'con' : 'with'} ${esc(cfg.yourName || agent.name)}.</p><p><strong>${esc(when)}</strong> · ${len} min</p><p>${es ? 'Reservado por' : 'Booked by'} ${esc(who)}</p>`
       + (meetingUrl ? `<p><a href="${esc(meetingUrl)}">${esc(meetingUrl)}</a></p>` : property ? `<p>${esc(property)}</p>` : '')
       + `<p style="color:#7A7787;font-size:13px">${es ? 'El archivo adjunto agrega la cita a su calendario.' : 'The attached file adds this to your calendar.'} <a href="${manage}">${es ? 'Cancelar esta cita' : 'Cancel this booking'}</a></p></div>` }).catch(() => undefined);
-  // The booker is usually a subscriber: use the name and brokerage affiliation on their profile.
-  const sub = await query<{ first_name: string | null; last_name: string | null; brokerage_name: string | null }>(`SELECT first_name, last_name, brokerage_name FROM realtors WHERE LOWER(email)=LOWER($1) LIMIT 1`, [input.email]).catch(() => []);
-  const subName = [sub[0]?.first_name, sub[0]?.last_name].filter(Boolean).join(' ').trim();
-  const who = `${subName || input.name}${sub[0]?.brokerage_name?.trim() ? ` of ${sub[0].brokerage_name.trim()}` : ''}`;
   if (validEmail(agent.email)) {
     await sendEmail({ to: agent.email, replyTo: input.email, subject: `New booking: Meet With ${who}`,
       attachments: cfg.bookingCalendar === 'closing_time' || !cfg.bookingCalendar ? [{ filename: 'booking.ics', content: ics, contentType: 'text/calendar' }] : undefined,
