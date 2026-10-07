@@ -5,6 +5,7 @@ import { dealRisks, dealTimeline } from '@/lib/closing-time-risks';
 import { ApiError } from '@/lib/server/error';
 import { query } from '@/lib/server/db/neon';
 import { ensureAssistSchema } from '@/lib/server/closing-time-assist';
+import { CLOSING_TIME_ORIGIN } from '@/lib/closing-time-origin';
 
 export type Brokerage = {
   id: string; name: string; slug: string; emailDomains: string[];
@@ -129,7 +130,7 @@ export async function getBrokerageBySlug(slug: string): Promise<Brokerage | null
   return rows[0] ? toB(rows[0]) : null;
 }
 
-function siteOrigin(): string { return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app'; }
+function siteOrigin(): string { return CLOSING_TIME_ORIGIN; }
 export const spEntityId = (slug: string) => `${siteOrigin()}/api/sso/saml/${slug}`;
 export const spAcsUrl = (slug: string) => `${siteOrigin()}/api/sso/saml/${slug}/acs`;
 

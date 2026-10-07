@@ -50,8 +50,8 @@ const sections: Section[] = [
     title: 'Android Phone',
     icon: <Smartphone className={iconClass} aria-hidden="true" />,
     steps: [
-      <>Open realtynewsnow.app in <strong>Chrome</strong>, sign in, go to Closing Time, and tap <strong>Connect This Device</strong>. Tap <strong>Allow</strong> when asked.</>,
-      <>Open <strong>Settings → Apps → Chrome → Notifications</strong> and make sure notifications are on for realtynewsnow.app.</>,
+      <>Open itsalmostclosingtime.com in <strong>Chrome</strong>, sign in, go to Closing Time, and tap <strong>Connect This Device</strong>. Tap <strong>Allow</strong> when asked.</>,
+      <>Open <strong>Settings → Apps → Chrome → Notifications</strong> and make sure notifications are on for itsalmostclosingtime.com.</>,
       <>Turn off <strong>Do Not Disturb</strong>, or add Chrome as an exception.</>,
       <>If alerts stop, open <strong>Settings → Apps → Chrome → Battery</strong> and set it to <strong>Unrestricted</strong>.</>,
     ],
@@ -64,10 +64,10 @@ const sections: Section[] = [
     icon: <Laptop className={iconClass} aria-hidden="true" />,
     steps: [
       <>In the browser you use (Chrome, Comet, Edge, or Safari), open Closing Time, click <strong>Connect This Device</strong>, and click <strong>Allow</strong>.</>,
-      <>Open <strong>System Settings → Notifications</strong> and select your browser (for example <strong>Google Chrome</strong>, <strong>Comet</strong>, or <strong>Safari</strong>). For Safari, also look for <strong>realtynewsnow.app</strong>.</>,
+      <>Open <strong>System Settings → Notifications</strong> and select your browser (for example <strong>Google Chrome</strong>, <strong>Comet</strong>, or <strong>Safari</strong>). For Safari, also look for <strong>itsalmostclosingtime.com</strong>.</>,
       <>Turn on <strong>Allow Notifications</strong>, set the alert style to <strong>Alerts</strong> (stays until dismissed) or <strong>Banners</strong>, and turn on <strong>Show In Notification Center</strong> and <strong>Play Sound</strong>.</>,
       <>If your browser is not in the list, quit and reopen it, then click Connect This Device again and approve any macOS prompt.</>,
-      <>Check the site is allowed inside the browser: Chrome/Comet/Edge <strong>Settings → Privacy → Site Settings → Notifications</strong>; Safari <strong>Settings → Websites → Notifications</strong>. realtynewsnow.app should say <strong>Allow</strong>.</>,
+      <>Check the site is allowed inside the browser: Chrome/Comet/Edge <strong>Settings → Privacy → Site Settings → Notifications</strong>; Safari <strong>Settings → Websites → Notifications</strong>. itsalmostclosingtime.com should say <strong>Allow</strong>.</>,
       <>Turn off <strong>Focus</strong> in Control Center, or add your browser to the allowed apps.</>,
     ],
     note: <>The browser has to be open (it can run in the background) to receive alerts on a computer.</>,
@@ -81,7 +81,7 @@ const sections: Section[] = [
       <>In Chrome or Edge, open Closing Time, click <strong>Connect This Device</strong>, and click <strong>Allow</strong>.</>,
       <>Open <strong>Settings → System → Notifications</strong>, turn notifications on, and make sure your browser is turned on in the app list.</>,
       <>Turn off <strong>Do Not Disturb</strong>, or add your browser to priority notifications.</>,
-      <>In the browser, open <strong>Settings → Privacy → Site Settings → Notifications</strong> and confirm realtynewsnow.app is set to <strong>Allow</strong>.</>,
+      <>In the browser, open <strong>Settings → Privacy → Site Settings → Notifications</strong> and confirm itsalmostclosingtime.com is set to <strong>Allow</strong>.</>,
     ],
   },
   {
@@ -100,7 +100,7 @@ const sections: Section[] = [
 
 const troubleshooting: ReactNode[] = [
   <>Sign in with the same account on every device. Alerts only go to devices connected while signed in as you.</>,
-  <>If the button says <strong>Notifications Blocked</strong>, allow notifications for realtynewsnow.app in your browser&apos;s site settings, reload, and click Connect This Device again.</>,
+  <>If the button says <strong>Notifications Blocked</strong>, allow notifications for itsalmostclosingtime.com in your browser&apos;s site settings, reload, and click Connect This Device again.</>,
   <>On iPhone, if alerts stop, fully close the Realty News Now app and reopen it while signed in. This reconnects your phone.</>,
   <>Tap an alert to go straight to Closing Time.</>,
   <>New phone or computer? Connect it again. Alert access does not transfer between devices.</>,
