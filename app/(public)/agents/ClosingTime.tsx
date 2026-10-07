@@ -17,7 +17,6 @@ import AutomationsPanel from './AutomationsPanel';
 import SecurityPanel from './SecurityPanel';
 import TestimonialRequest from './TestimonialRequest';
 import DocumentToolsPanel from './DocumentToolsPanel';
-import LegalGate from './LegalGate';
 import TestimonialHubClient from '@/app/(public)/testimonial-hub/TestimonialHubClient';
 import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './AgentToolsPanels';
 
@@ -2509,7 +2508,6 @@ export default function ClosingTime({
 
   return (
     <main id="agent-desk" className="min-h-screen bg-white">
-      <LegalGate />
       <div className="w-full">
         <div className="grid grid-cols-[64px_minmax(0,1fr)] items-start sm:grid-cols-[200px_minmax(0,1fr)] lg:grid-cols-[232px_minmax(0,1fr)]">
           <aside aria-label="Deals" className="sticky top-16 flex min-w-0 flex-col lg:top-24 ds-rail">
