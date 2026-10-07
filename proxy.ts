@@ -31,6 +31,7 @@
  * `salt = options.cookies.sessionToken.name`).
  */
 
+import { closingTimeCsp, newNonce } from '@/lib/csp';
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 import { ADMIN_SESSION_COOKIE_NAME } from './lib/auth/cookie-names';
@@ -264,6 +265,25 @@ function handlePubPermalink(req: NextRequest): NextResponse | null {
 export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
+  // Closing Time domain: per-request nonce CSP (enforced). Next.js reads the nonce from the request CSP header
+  // and stamps it on its own scripts; the response carries the same policy.
+  const ctHost = (req.headers.get('host') ?? '').toLowerCase().split(':')[0] === 'itsalmostclosingtime.com';
+  const ctNonce = ctHost ? newNonce() : '';
+  const ctCsp = ctHost
+    ? closingTimeCsp(ctNonce, pathname.startsWith('/api/agent-command-center/contracts/original') ? "'self'" : "'none'")
+    : '';
+  const ctHeaders = new Headers(req.headers);
+  if (ctHost) {
+    ctHeaders.set('x-nonce', ctNonce);
+    ctHeaders.set('content-security-policy', ctCsp);
+  }
+  const withCsp = (res: NextResponse) => {
+    if (ctHost) res.headers.set('Content-Security-Policy', ctCsp);
+    return res;
+  };
+  const passThrough = () => withCsp(NextResponse.next({ request: { headers: ctHeaders } }));
+  const rewriteTo = (url: URL) => withCsp(NextResponse.rewrite(url, { request: { headers: ctHeaders } }));
+
   // 1. CSRF gate on protected API routes — runs first because it can
   //    short-circuit with a 403 before any other work.
   const csrf = handleCsrf(req);
@@ -279,14 +299,14 @@ export async function proxy(req: NextRequest) {
   if ((host === 'itsalmostclosingtime.com' || host === 'www.itsalmostclosingtime.com') && pathname === '/') {
     const url = req.nextUrl.clone();
     url.pathname = '/closing-time-home';
-    return NextResponse.rewrite(url);
+    return rewriteTo(url);
   }
 
   // 1b-2. Closing Time legal pages on its own domain.
   if ((host === 'itsalmostclosingtime.com' || host === 'www.itsalmostclosingtime.com') && ['/privacy', '/terms', '/disclaimer', '/sms'].includes(pathname)) {
     const url = req.nextUrl.clone();
     url.pathname = '/closing-time-legal' + pathname;
-    return NextResponse.rewrite(url);
+    return rewriteTo(url);
   }
 
   // 1c. Closing Time lives on its own domain; the old address forwards there.
@@ -301,11 +321,11 @@ export async function proxy(req: NextRequest) {
   // 3. Admin auth gate (only when on /admin/*).
   // Signed public share of the Gmail event review queue — bypass the admin gate.
   if (pathname.startsWith('/admin/events/gmail/shared/')) {
-    return NextResponse.next();
+    return passThrough();
   }
   if (pathname.startsWith('/admin')) {
     if (isPublicAdminPath(pathname)) {
-      return NextResponse.next();
+      return passThrough();
     }
 
     const realtorSecret = process.env.JWT_SECRET;
@@ -322,7 +342,7 @@ export async function proxy(req: NextRequest) {
     const token = req.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
     const adminId = token ? await resolveAdminId(token, realtorSecret, adminSecret) : null;
     if (adminId) {
-      return NextResponse.next();
+      return passThrough();
     }
 
     // Redirect to /admin/login?next=<original path + query>
@@ -336,7 +356,7 @@ export async function proxy(req: NextRequest) {
   // 4. Public website routes are intentionally open. Authentication is
   // enforced only by the admin gate above and by account-specific API/page
   // handlers that protect private records.
-  return NextResponse.next();
+  return passThrough();
 }
 
 // Matcher covers:
