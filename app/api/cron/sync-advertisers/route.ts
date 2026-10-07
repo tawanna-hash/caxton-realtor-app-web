@@ -23,7 +23,7 @@ function authorized(req: Request): boolean {
   const auth = req.headers.get('authorization') ?? '';
   if (auth === `Bearer ${secret}`) return true;
   // Vercel adds this header on scheduled invocations.
-  return req.headers.get('x-vercel-cron') === '1';
+  return false; // x-vercel-cron is spoofable; only the CRON_SECRET bearer is trusted
 }
 
 async function _GET(req: Request) {

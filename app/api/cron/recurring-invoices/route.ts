@@ -19,7 +19,7 @@ function authorized(req: Request): boolean {
   if (!secret) return false;
   const auth = req.headers.get('authorization') ?? '';
   if (auth === `Bearer ${secret}`) return true;
-  return req.headers.get('x-vercel-cron') === '1';
+  return false; // x-vercel-cron is spoofable; only the CRON_SECRET bearer is trusted
 }
 
 export async function GET(req: Request) {

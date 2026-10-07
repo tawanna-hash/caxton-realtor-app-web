@@ -24,7 +24,6 @@ export const dynamic = 'force-dynamic';
 const RETAIN_DAYS_PAST_EXPIRY = 30;
 
 function isAuthorized(req: NextRequest): boolean {
-  if (req.headers.get('x-vercel-cron') === '1') return true;
   const auth = req.headers.get('authorization');
   const secret = process.env.CRON_SECRET;
   if (secret && auth === `Bearer ${secret}`) return true;

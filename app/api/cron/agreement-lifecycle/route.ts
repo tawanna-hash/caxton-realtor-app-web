@@ -38,7 +38,7 @@ function authorized(req: Request): boolean {
   const auth = req.headers.get('authorization') ?? '';
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret && auth === `Bearer ${cronSecret}`) return true;
-  return req.headers.get('x-vercel-cron') === '1';
+  return false; // x-vercel-cron is spoofable; only the CRON_SECRET bearer is trusted
 }
 
 function getDaysUntil(iso: string | null | undefined): number | null {

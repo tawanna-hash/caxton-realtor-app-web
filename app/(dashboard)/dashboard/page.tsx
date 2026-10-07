@@ -2529,7 +2529,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
   const headline = decodeHtmlEntities(article.head || article.title || '');
   const author = article.author;
   const dateLong = formatArticleDate(article.dateIso || article.publishedAt);
-  const cleanedHtml = cleanArticleHtml(article.contentHtml || article.content || (article.excerpt ? `<p>${article.excerpt}</p>` : ""));
+  const cleanedHtml = cleanArticleHtml(article.contentHtml || article.content || (article.excerpt ? `<p>${String(article.excerpt).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c))}</p>` : ""));
   const articleId = String(article.id || '');
 
   // Split body into 3 chunks for two mid-article rectangle ad slots.

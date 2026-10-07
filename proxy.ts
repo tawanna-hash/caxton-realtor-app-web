@@ -188,10 +188,10 @@ async function resolveAdminId(
   adminSecret: string | undefined,
 ): Promise<string | null> {
   if (adminSecret && adminSecret.length >= 32) {
-    const viaAdmin = await verifiedAdminId(token, adminSecret);
-    if (viaAdmin) return viaAdmin;
-    if (adminSecret === realtorSecret) return null;
+    return verifiedAdminId(token, adminSecret);
   }
+  // No dedicated admin secret: production refuses; dev reuses the realtor secret.
+  if (process.env.NODE_ENV === 'production') return null;
   return verifiedAdminId(token, realtorSecret);
 }
 

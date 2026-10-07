@@ -9,7 +9,7 @@ function authorized(req: Request): boolean {
   const auth = req.headers.get('authorization') ?? '';
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret && auth === `Bearer ${cronSecret}`) return true;
-  return req.headers.get('x-vercel-cron') === '1';
+  return false; // x-vercel-cron is spoofable; only the CRON_SECRET bearer is trusted
 }
 
 // Monthly snapshot of every Closing Time workspace that has deals. Keeps the last 12 per agent.

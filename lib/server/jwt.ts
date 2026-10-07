@@ -110,8 +110,6 @@ export function verifyAdminSessionToken(token: string): AdminSessionPayload | nu
   // Try the admin secret first. If ADMIN_JWT_SECRET isn't set, this is the
   // same as JWT_SECRET and the fallback is a no-op.
   const adminSecret = getAdminSecret();
-  const realtorSecret = getRealtorSecret();
-
   const trySecret = (secret: Secret): AdminSessionPayload | null => {
     try {
       const decoded = jwt.verify(token, secret, VERIFY_OPTIONS) as Partial<AdminSessionPayload>;
@@ -128,12 +126,8 @@ export function verifyAdminSessionToken(token: string): AdminSessionPayload | nu
     }
   };
 
-  const viaAdmin = trySecret(adminSecret);
-  if (viaAdmin) return viaAdmin;
-  // Fallback: tokens signed with the realtor secret before the rotation
-  // landed. Only triggered when adminSecret !== realtorSecret.
-  if (adminSecret !== realtorSecret) {
-    return trySecret(realtorSecret);
-  }
-  return null;
+  // Admin sessions are signed only with the dedicated admin secret. The old JWT_SECRET
+  // fallback was removed: every session signed with it has expired (7-day lifetime), and
+  // accepting it let a realtor-level secret leak escalate to admin access.
+  return trySecret(adminSecret);
 }
