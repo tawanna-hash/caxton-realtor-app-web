@@ -16,7 +16,7 @@ type Combo = { id: string; alias: string; title: string; schedulerIds: string[] 
 type Data = { slug: string; schedulers: Sched[]; combos: Combo[]; bookings: Booking[]; account: { provider: string; name: string } | null; calendars: { id: string; name: string; primary?: boolean }[]; accountEmail: string; agentName: string };
 
 const card = 'rounded-2xl border border-[#d4d8dd] bg-white';
-const field = 'w-full rounded-lg border border-[#d4d8dd] bg-white px-3 py-2 text-[14px] text-[#292a2d] focus:border-[#005a8f] focus:outline-none disabled:bg-[#f5f6f9] disabled:text-[#9A98A6]';
+const field = 'w-full rounded-lg border border-[#d4d8dd] bg-white px-3 py-2 text-[14px] text-[#292a2d] focus:border-[#005a8f] focus:outline-none disabled:bg-[#f5f6f9] disabled:text-[#7b8089]';
 const label = 'block text-[14px] font-semibold text-[#292a2d]';
 const hint = 'mt-0.5 text-[13px] text-[#51555b]';
 const pill = 'inline-flex items-center gap-2 rounded-full border border-[#d4d8dd] bg-white px-4 py-2 text-[13px] font-medium text-[#292a2d] transition hover:border-[#005a8f]';
@@ -229,7 +229,7 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
                       <a className={pill} href={urlOf(s.alias)} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />Open</a>
                       <button type="button" className={pill} onClick={() => setEditing({ id: s.id, config: s.config, hasBanner: s.hasBanner, hasAvatar: s.hasAvatar })}><Pencil className="h-3.5 w-3.5" aria-hidden="true" />Edit</button>
                       <button type="button" role="switch" aria-checked={s.active} aria-label={`${s.config.name} on or off`} onClick={() => void post({ action: 'active', id: s.id, active: !s.active })}
-                        className={`ct-switch relative h-6 w-11 rounded-full transition ${s.active ? 'bg-[#005a8f]' : 'bg-[#D9D7E0]'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${s.active ? 'left-[22px]' : 'left-0.5'}`} /></button>
+                        className={`ct-switch relative h-6 w-11 rounded-full transition ${s.active ? 'bg-[#005a8f]' : 'bg-[#d4d8dd]'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${s.active ? 'left-[22px]' : 'left-0.5'}`} /></button>
                       <button type="button" aria-label={`Delete ${s.config.name}`} className="p-1 text-[#51555b] hover:text-[#661102]" onClick={() => { if (window.confirm(`Delete ${s.config.name}? Its booking page stops working and its bookings are removed.`)) void post({ action: 'delete', id: s.id }, 'Scheduler deleted.'); }}><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </li>
@@ -377,7 +377,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
         <p className={hint}>Check availability on up to 6 other calendars, optional.</p>
         <div className="relative mt-2">
           <button type="button" disabled={!data.calendars.length} onClick={() => setCalOpen((o) => !o)} className={`${field} flex items-center justify-between text-left`} aria-expanded={calOpen}>
-            <span className={c.additionalCalendars.length ? 'text-[#292a2d]' : 'text-[#9A98A6]'}>{c.additionalCalendars.length ? c.additionalCalendars.map((a) => a.name).join(', ') : data.calendars.length ? 'Select Calendar' : 'No connected calendars'}</span>
+            <span className={c.additionalCalendars.length ? 'text-[#292a2d]' : 'text-[#7b8089]'}>{c.additionalCalendars.length ? c.additionalCalendars.map((a) => a.name).join(', ') : data.calendars.length ? 'Select Calendar' : 'No connected calendars'}</span>
             <ChevronDown className="h-4 w-4 shrink-0 text-[#51555b]" aria-hidden="true" />
           </button>
           {calOpen && (
@@ -458,8 +458,8 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
             const h = c.hours[d.key];
             return (
               <div key={d.key} className="flex items-center gap-2">
-                <button type="button" role="switch" aria-checked={h.on} aria-label={d.long} onClick={() => setDay(d.key, { on: !h.on })} className={`ct-switch relative h-5 w-9 shrink-0 rounded-full transition ${h.on ? 'bg-[#005a8f]' : 'bg-[#D9D7E0]'}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${h.on ? 'left-[18px]' : 'left-0.5'}`} /></button>
-                <span className={`w-10 text-[14px] font-medium ${h.on ? 'text-[#292a2d]' : 'text-[#9A98A6]'}`}>{d.label}</span>
+                <button type="button" role="switch" aria-checked={h.on} aria-label={d.long} onClick={() => setDay(d.key, { on: !h.on })} className={`ct-switch relative h-5 w-9 shrink-0 rounded-full transition ${h.on ? 'bg-[#005a8f]' : 'bg-[#d4d8dd]'}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${h.on ? 'left-[18px]' : 'left-0.5'}`} /></button>
+                <span className={`w-10 text-[14px] font-medium ${h.on ? 'text-[#292a2d]' : 'text-[#7b8089]'}`}>{d.label}</span>
                 <select disabled={!h.on} aria-label={`${d.long} start`} className={`${field} flex-1`} value={h.start} onChange={(e) => setDay(d.key, { start: e.target.value })}>{TIMES.map((t) => <option key={t} value={t}>{timeLabel(t, c.timeFormat)}</option>)}</select>
                 <select disabled={!h.on} aria-label={`${d.long} end`} className={`${field} flex-1`} value={h.end} onChange={(e) => setDay(d.key, { end: e.target.value })}>{[...TIMES.slice(1), '23:59'].map((t) => <option key={t} value={t}>{timeLabel(t, c.timeFormat)}</option>)}</select>
               </div>
@@ -652,7 +652,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
                 <button type="button" className={`flex w-full items-center gap-3 px-4 ${open ? 'border-b border-[#f5f6f9] py-4' : 'py-3'} text-left`} aria-expanded={open} onClick={() => { if (i < step || !stepError(step)) { setError(''); setStep(i); } else setError(stepError(step)); }}>
                   <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold ${open ? 'bg-[#005a8f] text-white' : 'bg-[#f5f6f9] text-[#51555b]'}`}>{i + 1}</span>
                   <span className={`flex-1 ${open ? 'text-[16px] font-semibold' : 'text-[14px] font-semibold'} text-[#292a2d]`}>{title}{OPTIONAL.has(i) && <span className="ml-1 font-normal text-[#51555b]"> (optional)</span>}</span>
-                  {!open && <ChevronRight className="h-4 w-4 text-[#9A98A6]" aria-hidden="true" />}
+                  {!open && <ChevronRight className="h-4 w-4 text-[#7b8089]" aria-hidden="true" />}
                 </button>
                 {open && (
                   <div className="p-4">

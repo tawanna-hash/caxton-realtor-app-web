@@ -239,7 +239,7 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
                 </div>
                 <div className="shrink-0 text-right">
                   <StatusBadge status={row.status} />
-                  {isSeries && <div className="mt-1 text-[11px] text-purple-700">Recurring</div>}
+                  {isSeries && <div className="mt-1 text-[11px] text-[#005a8f]">Recurring</div>}
                 </div>
               </div>
               <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
@@ -331,7 +331,7 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
                   </td>
                   <td className="px-3 py-2">
                     <StatusBadge status={row.status} />
-                    {isSeries && <div className="mt-1 text-xs text-purple-700">Recurring</div>}
+                    {isSeries && <div className="mt-1 text-xs text-[#005a8f]">Recurring</div>}
                   </td>
                   <td className="px-3 py-2 tabular-nums">
                     {row.recipient_count ?? '—'}

@@ -3691,7 +3691,7 @@ export default function ClosingTime({
                     contractCameraInputRef.current?.click();
                     setIsCameraOpen(false);
                   }}
-                  className="inline-flex h-[42px] items-center justify-center rounded-md border border-[#2f7aa7] bg-white px-4 text-sm font-bold text-[#005a8f] transition hover:bg-violet-50"
+                  className="inline-flex h-[42px] items-center justify-center rounded-md border border-[#2f7aa7] bg-white px-4 text-sm font-bold text-[#005a8f] transition hover:bg-[#daeeff]"
                 >
                   Device Camera
                 </button>

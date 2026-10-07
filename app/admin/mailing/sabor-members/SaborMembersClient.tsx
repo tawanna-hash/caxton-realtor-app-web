@@ -1214,7 +1214,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
     const firstLine = row.email_notes.split(/\r?\n/)[0].slice(0, 200);
     flags.push({
       label: '✎ Notes',
-      cls:   'bg-purple-100 text-purple-800 ring-1 ring-purple-200',
+      cls:   'bg-[#daeeff] text-[#1c3f5e] ring-1 ring-[#98bdd3]',
       title: firstLine || 'Email notes',
     });
   }

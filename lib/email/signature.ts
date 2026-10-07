@@ -31,15 +31,15 @@ function buildSignatureHtml(): string {
 
       <div style="padding-top:7px;font-size:11px;line-height:17px;color:#51555b;">
         <a href="https://realtyline.us" target="_blank" style="color:#51555b;text-decoration:none;">RealtyLine Austin</a>
-        <span style="color:#9b96a2;">&nbsp;&bull;&nbsp;</span>
+        <span style="color:#7b8089;">&nbsp;&bull;&nbsp;</span>
         <a href="https://newslinesa.com" target="_blank" style="color:#51555b;text-decoration:none;">Newsline San Antonio</a>
-        <span style="color:#9b96a2;">&nbsp;&bull;&nbsp;</span>
+        <span style="color:#7b8089;">&nbsp;&bull;&nbsp;</span>
         <a href="https://realtynewsnow.app" target="_blank" style="color:#51555b;text-decoration:none;">Realty News Now App</a>
       </div>
 
       <div style="padding-top:6px;font-size:11px;line-height:17px;color:#51555b;">
         <a href="mailto:tawanna@realtynewsnow.app" style="color:#51555b;text-decoration:none;">tawanna@realtynewsnow.app</a>
-        <span style="color:#9b96a2;">&nbsp; | &nbsp;</span>
+        <span style="color:#7b8089;">&nbsp; | &nbsp;</span>
         <a href="tel:+15129650057" style="color:#51555b;text-decoration:none;">(512) 965-0057</a><br>
         P.O. Box 81366, Austin, TX 78708
       </div>

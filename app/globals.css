@@ -986,7 +986,7 @@ input[type='date']:focus {
 }
 
 input[type='date']:hover:not(:disabled):not([readonly]) {
-  border-color: #94a3b8 !important;
+  border-color: #7b8089 !important;
 }
 
 input[type='date']:disabled,
@@ -1592,15 +1592,15 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-dealnav-group { position: relative; display: flex; align-items: stretch; gap: 0.125rem; padding-right: 1.25rem; }
 #agent-desk .ds-dealnav-group:not(:last-child)::after { content: ''; position: absolute; right: 0; top: 50%; height: 1.125rem; width: 1px; transform: translateY(-50%); background: var(--d-line); }
 #agent-desk .ds-dealnav-group:last-child { padding-right: 0; }
-#agent-desk .ds-dealnav-label { align-self: center; margin-right: 0.375rem; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #A3A2AD; }
-#agent-desk .ds-dealnav button { height: 2rem; min-height: 0; padding: 0 0.625rem; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: #5B5870; font-size: 0.8125rem; font-weight: 500; margin-bottom: -1px; }
+#agent-desk .ds-dealnav-label { align-self: center; margin-right: 0.375rem; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #7b8089; }
+#agent-desk .ds-dealnav button { height: 2rem; min-height: 0; padding: 0 0.625rem; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: #51555b; font-size: 0.8125rem; font-weight: 500; margin-bottom: -1px; }
 #agent-desk .ds-dealnav button:hover { background: transparent; color: #005a8f; border-bottom-color: #bbc1c9; }
 #agent-desk .ds-dealnav button[aria-current='page'] { background: transparent; color: #005a8f; font-weight: 600; border-bottom-color: #005a8f; }
 
 #agent-desk .ds-dealnav-menu { position: absolute; left: 0; top: 100%; z-index: 20; min-width: 10rem; padding: 0.25rem; background: #fff; border: 1px solid var(--d-line); border-radius: 10px; display: flex; flex-direction: column; }
 #agent-desk .ds-dealnav .ds-dealnav-menu button { height: 2rem; margin: 0; width: 100%; justify-content: flex-start; text-align: left; border: 0; border-radius: 6px; padding: 0 0.625rem; }
 #agent-desk .ds-dealnav .ds-dealnav-menu button:hover { background: #daeeff; color: #005a8f; border: 0; }
-#agent-desk .ds-dealnav button[aria-expanded] { background: transparent; border: 0; border-bottom: 2px solid transparent; color: #5B5870; }
+#agent-desk .ds-dealnav button[aria-expanded] { background: transparent; border: 0; border-bottom: 2px solid transparent; color: #51555b; }
 #agent-desk .ds-dealnav button[aria-expanded='true'] { color: #005a8f; }
 #agent-desk .ds-dealnav button[aria-expanded][aria-current='page'] { border-bottom-color: #005a8f; color: #005a8f; font-weight: 600; }
 
@@ -1726,7 +1726,7 @@ svg:is(.h-3, .h-3\.5):not([class*='h-2']) { height: 16px; }
 svg:is(.w-3, .w-3\.5):not([class*='w-2']) { width: 16px; }
 
 /* On/off switches: keep the track and knob shape regardless of the global button style. */
-button.ct-switch { min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 9999px !important; background: #D9D7E0 !important; box-shadow: none !important; }
+button.ct-switch { min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 9999px !important; background: #d4d8dd !important; box-shadow: none !important; }
 button.ct-switch[aria-checked='true'] { background: #005a8f !important; }
 button.ct-switch:hover { background: #C9C5D6 !important; }
 button.ct-switch[aria-checked='true']:hover { background: #1c3f5e !important; }
@@ -1770,3 +1770,6 @@ input::placeholder, textarea::placeholder { color: var(--astro-text-placeholder)
 .ct-help-panel ul { overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .ct-help-panel li { display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 4px; background: var(--astro-bg-base-header); font-size: 14px; color: var(--astro-text-secondary); }
 .ct-help-panel li strong { color: var(--astro-text); font-weight: 600; }
+/* Foldable widths (about 450 to 950px): keep deal tabs on one line each and wrap whole tabs, never words */
+#agent-desk .ds-dealnav button { white-space: nowrap; flex: none; }
+#agent-desk .ds-dealnav-group { flex-wrap: wrap; }

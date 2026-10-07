@@ -567,7 +567,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             type="button"
             onClick={() => setShowExtractDialog(true)}
             disabled={extracting}
-            className="px-3 py-2 text-sm font-medium text-white bg-purple-700 rounded-md hover:bg-purple-800 disabled:opacity-50"
+            className="px-3 py-2 text-sm font-medium text-white bg-[#005a8f] rounded-md hover:bg-[#1c3f5e] disabled:opacity-50"
             title="Auto-populate hotspots: embedded PDF links, page-text scan (emails/phones/URLs), QR codes, and logo matches. Manual and edited-import hotspots are preserved."
           >
             {extracting
@@ -1257,7 +1257,7 @@ function ImportPdfLinksDialog({
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium text-white bg-purple-700 rounded-md hover:bg-purple-800 whitespace-nowrap"
+            className="px-4 py-2 text-sm font-medium text-white bg-[#005a8f] rounded-md hover:bg-[#1c3f5e] whitespace-nowrap"
           >
             Extract now
           </button>
@@ -1488,7 +1488,7 @@ function SidebarRow({
             <span aria-hidden>{TYPE_ICONS[hotspot.type]}</span>
             {isLogoMatch && (
               <span
-                className="px-1 py-[1px] text-[9px] font-semibold uppercase tracking-wide bg-purple-600 text-white rounded shrink-0"
+                className="px-1 py-[1px] text-[9px] font-semibold uppercase tracking-wide bg-[#005a8f] text-white rounded shrink-0"
                 title="Auto-published from logo detection — verify it points to the right advertiser"
               >
                 Review

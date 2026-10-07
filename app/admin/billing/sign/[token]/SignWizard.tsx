@@ -267,7 +267,7 @@ function EditableField({
         readOnly={readOnly}
         maxLength={maxLength}
         inputMode={inputMode}
-        className={`w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 ${
+        className={`w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7] ${
           readOnly ? 'bg-gray-100 text-gray-600 cursor-default' : ''
         }`}
       />
@@ -330,13 +330,13 @@ function QuoteSummaryCard({
   const cadence = ag.frequency?.trim() || null;
 
   return (
-    <div className="rounded-md border border-purple-200 bg-purple-50/40">
-      <div className="px-4 py-2 border-b border-purple-200 bg-purple-50 rounded-t-md">
-        <span className="text-xs font-semibold uppercase tracking-wider text-purple-900">
+    <div className="rounded-md border border-[#98bdd3] bg-[#daeeff]/40">
+      <div className="px-4 py-2 border-b border-[#98bdd3] bg-[#daeeff] rounded-t-md">
+        <span className="text-xs font-semibold uppercase tracking-wider text-[#1c3f5e]">
           {channelLabel}
         </span>
       </div>
-      <dl className="divide-y divide-purple-100 text-sm">
+      <dl className="divide-y divide-[#daeeff] text-sm">
         <SummaryRow label="Placement" value={slot} />
         {cadence && <SummaryRow label="Cadence" value={cadence} />}
         <SummaryRow label="Start date" value={startDate} />
@@ -618,7 +618,7 @@ export default function SignWizard({
             value={values[index] ?? ''}
             onChange={(event) => onChange(index, event.target.value)}
             required={index === 0}
-            className="mt-1 w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+            className="mt-1 w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
           />
         </label>
       ))}
@@ -1137,7 +1137,7 @@ export default function SignWizard({
                 onChange={(e) => setCompanyName(e.target.value)}
                 required
                 autoComplete="organization"
-                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Update the company name exactly as it should appear on the agreement and insertion order.
@@ -1153,7 +1153,7 @@ export default function SignWizard({
                   <div className="flex flex-wrap gap-3">
                     {AD_SIZES.map((sz) => (
                       <label key={sz} className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="pAdSize" value={sz} checked={adSize === sz} onChange={() => { setAdSize(sz); setRateUserEdited(false); }} className="accent-purple-600" />
+                        <input type="radio" name="pAdSize" value={sz} checked={adSize === sz} onChange={() => { setAdSize(sz); setRateUserEdited(false); }} className="accent-[#005a8f]" />
                         <span className="text-sm text-gray-800">{sz}</span>
                       </label>
                     ))}
@@ -1165,7 +1165,7 @@ export default function SignWizard({
                   <div className="flex flex-wrap gap-3">
                     {FREQUENCIES.map((f) => (
                       <label key={f} className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="pFreq" value={f} checked={frequency === f} onChange={() => { setFrequency(f); setRateUserEdited(false); }} className="accent-purple-600" />
+                        <input type="radio" name="pFreq" value={f} checked={frequency === f} onChange={() => { setFrequency(f); setRateUserEdited(false); }} className="accent-[#005a8f]" />
                         <span className="text-sm text-gray-800">{f}</span>
                       </label>
                     ))}
@@ -1175,10 +1175,10 @@ export default function SignWizard({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <Eyebrow>Page Position</Eyebrow>
-                    <input type="text" value={pagePosition} onChange={(e) => setPagePosition(e.target.value)} placeholder="e.g. Inside front cover" className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                    <input type="text" value={pagePosition} onChange={(e) => setPagePosition(e.target.value)} placeholder="e.g. Inside front cover" className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]" />
                   </div>
                   <label className="flex items-center gap-2 cursor-pointer pb-2">
-                    <input type="checkbox" checked={applyPagePremium} onChange={(e) => setApplyPagePremium(e.target.checked)} className="w-4 h-4 accent-purple-600" />
+                    <input type="checkbox" checked={applyPagePremium} onChange={(e) => setApplyPagePremium(e.target.checked)} className="w-4 h-4 accent-[#005a8f]" />
                     <span className="text-sm text-gray-700">Apply 20% Premium</span>
                   </label>
                 </div>
@@ -1197,7 +1197,7 @@ export default function SignWizard({
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleMarket(m.id)}
-                            className="accent-purple-600"
+                            className="accent-[#005a8f]"
                           />
                           <span>{m.label}</span>
                         </label>
@@ -1212,7 +1212,7 @@ export default function SignWizard({
                 <h2 className="text-lg text-gray-900">Your Quoted Placement</h2>
                 <p className="text-sm text-gray-600">The details below were prepared by your sales rep. Review and approve this insertion order before the final signature step.</p>
                 {lineItems.filter((item) => item.channel === 'email').map((item) => (
-                  <div key={`email-dates-${item.line_no}`} className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
+                  <div key={`email-dates-${item.line_no}`} className="rounded-md border border-[#98bdd3] bg-[#daeeff]/40 p-4">
                     <div className="text-sm font-medium text-gray-900 mb-2">{item.package_label} send dates</div>
                     {renderEmailDateFields(
                       [
@@ -1225,7 +1225,7 @@ export default function SignWizard({
                   </div>
                 ))}
                 {lineItems.length === 0 && channel === 'email' && (
-                  <div className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
+                  <div className="rounded-md border border-[#98bdd3] bg-[#daeeff]/40 p-4">
                     <div className="text-sm font-medium text-gray-900 mb-2">e-Blast send dates</div>
                     {renderEmailDateFields(
                       [placementStart, ...singleEmailAlternates],
@@ -1262,12 +1262,12 @@ export default function SignWizard({
               </>
             )}
 
-            <div className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
+            <div className="rounded-md border border-[#98bdd3] bg-[#daeeff]/40 p-4">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-purple-900">Indicative total</div>
-                <div className="text-xl font-bold text-purple-900">${indicativeTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <div className="text-sm font-semibold text-[#1c3f5e]">Indicative total</div>
+                <div className="text-xl font-bold text-[#1c3f5e]">${indicativeTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               </div>
-              <div className="text-xs text-purple-800/70 mt-1">
+              <div className="text-xs text-[#1c3f5e]/70 mt-1">
                 {isPrint
                   ? `${adSize || '—'} · ${frequency || '—'}${numMarkets > 1 ? ` · ${numMarkets} markets` : ''} · expires ${expDate || '—'}`
                   : 'Final price is confirmed in the agreement.'}
@@ -1427,14 +1427,14 @@ export default function SignWizard({
           {error && <div className="text-sm text-[#661102] bg-[#FFEAE6] rounded-md p-3">{error}</div>}
 
           {lineItems.length > 0 ? (
-            <div className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
-              <div className="text-xs font-semibold uppercase tracking-wider text-purple-900 mb-3">
+            <div className="rounded-md border border-[#98bdd3] bg-[#daeeff]/40 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wider text-[#1c3f5e] mb-3">
                 Bundled quote · {lineItems.length} line items
               </div>
 
               {/* Placement start dates — one per app/e-Blast line (ends auto-compute). */}
               {hasDateEditableLines && (
-                <div className="mb-3 pb-3 border-b border-purple-100 space-y-2">
+                <div className="mb-3 pb-3 border-b border-[#daeeff] space-y-2">
                   {editableLineItems.map((li) => (
                     <div key={li.line_no}>
                       <div className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">
@@ -1459,7 +1459,7 @@ export default function SignWizard({
                             type="date"
                             value={lineStarts[li.line_no] ?? ''}
                             onChange={(e) => setLineStart(li.line_no, e.target.value)}
-                            className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                            className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
                           />
                         </>
                       )}
@@ -1472,7 +1472,7 @@ export default function SignWizard({
                 {displayLines.map((li) => (
                   <li
                     key={li.id}
-                    className="flex items-start justify-between border-b border-purple-100 pb-2 last:border-b-0 last:pb-0"
+                    className="flex items-start justify-between border-b border-[#daeeff] pb-2 last:border-b-0 last:pb-0"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900">{li.package_label}</div>
@@ -1489,9 +1489,9 @@ export default function SignWizard({
                   </li>
                 ))}
               </ul>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-purple-300">
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#98bdd3]">
                 <div className="text-sm font-semibold text-gray-800">Grand total</div>
-                <div className="text-base font-bold text-purple-900">
+                <div className="text-base font-bold text-[#1c3f5e]">
                   ${(lineItems.reduce((s, l) => s + l.amount_cents, 0) / 100).toFixed(2)}
                 </div>
               </div>
@@ -1499,7 +1499,7 @@ export default function SignWizard({
           ) : (
             <div className="space-y-4">
               {singleLineEditable && (
-                <div className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
+                <div className="rounded-md border border-[#98bdd3] bg-[#daeeff]/40 p-4">
                   {channel === 'email' ? (
                     renderEmailDateFields(
                       [placementStart, ...singleEmailAlternates],
@@ -1523,7 +1523,7 @@ export default function SignWizard({
                         type="date"
                         value={placementStart}
                         onChange={(e) => setPlacementStart(e.target.value)}
-                        className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                        className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
                       />
                     </>
                   )}
@@ -1571,7 +1571,7 @@ export default function SignWizard({
                       setAdSize(s);
                       setRateUserEdited(false);
                     }}
-                    className="accent-purple-600"
+                    className="accent-[#005a8f]"
                   />
                   <span className="text-sm text-gray-800">{s}</span>
                 </label>
@@ -1594,7 +1594,7 @@ export default function SignWizard({
                       setFrequency(f);
                       setRateUserEdited(false);
                     }}
-                    className="accent-purple-600"
+                    className="accent-[#005a8f]"
                   />
                   <span className="text-sm text-gray-800">{f}</span>
                 </label>
@@ -1652,7 +1652,7 @@ export default function SignWizard({
                 type="checkbox"
                 checked={applyPagePremium}
                 onChange={(e) => setApplyPagePremium(e.target.checked)}
-                className="w-4 h-4 accent-purple-600"
+                className="w-4 h-4 accent-[#005a8f]"
               />
               <span className="text-sm text-gray-700">Apply 20% Premium</span>
             </label>
@@ -1680,7 +1680,7 @@ export default function SignWizard({
                           },
                         }));
                       }}
-                      className="w-4 h-4 accent-purple-600 flex-shrink-0"
+                      className="w-4 h-4 accent-[#005a8f] flex-shrink-0"
                     />
                     <label htmlFor={`month-${m.k}`} className="text-sm text-gray-700 w-20 flex-shrink-0 cursor-pointer">
                       {m.l}
@@ -1698,7 +1698,7 @@ export default function SignWizard({
                           [m.k]: { ...prev[m.k]!, checked: prev[m.k]?.checked ?? false, year: yr },
                         }));
                       }}
-                      className="w-16 px-2 py-1 rounded-md border border-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-purple-400 disabled:bg-gray-100 disabled:text-gray-400"
+                      className="w-16 px-2 py-1 rounded-md border border-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-[#2f7aa7] disabled:bg-gray-100 disabled:text-gray-400"
                     />
                   </div>
                 );
@@ -1752,7 +1752,7 @@ export default function SignWizard({
                     value={b}
                     checked={billTo === b}
                     onChange={() => setBillTo(b)}
-                    className="accent-purple-600"
+                    className="accent-[#005a8f]"
                   />
                   <span className="text-sm text-gray-800">{b}</span>
                 </label>
@@ -1798,7 +1798,7 @@ export default function SignWizard({
                       value={p}
                       checked={paymentType === p}
                       onChange={() => setPaymentType(p)}
-                      className="accent-purple-600"
+                      className="accent-[#005a8f]"
                     />
                     <span className="text-sm text-gray-800">{p}</span>
                   </label>
@@ -1900,7 +1900,7 @@ export default function SignWizard({
             type="checkbox"
             checked={termsAccepted}
             onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-0.5 w-4 h-4 accent-purple-600 flex-shrink-0"
+            className="mt-0.5 w-4 h-4 accent-[#005a8f] flex-shrink-0"
             required
           />
           <span className="text-sm text-gray-700">
@@ -1922,7 +1922,7 @@ export default function SignWizard({
             value={signDate}
             onChange={(e) => setSignDate(e.target.value)}
             disabled={!termsAccepted}
-            className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:bg-gray-100"
+            className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7] disabled:bg-gray-100"
           />
         </div>
 

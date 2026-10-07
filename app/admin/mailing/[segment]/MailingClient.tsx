@@ -1631,7 +1631,7 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
           fg = '#005a8f';
         } else if (t === 'manual') {
           label = 'Manual';
-          bg = '#ede9fe';
+          bg = '#daeeff';
           fg = '#005a8f';
         } else if (t === 'REALTOR') {
           label = 'REALTOR';
@@ -1809,7 +1809,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
     const firstLine = row.email_notes.split(/\r?\n/)[0].slice(0, 200);
     flags.push({
       label: '✎ Notes',
-      cls:   'bg-purple-100 text-purple-800 ring-1 ring-purple-200',
+      cls:   'bg-[#daeeff] text-[#1c3f5e] ring-1 ring-[#98bdd3]',
       title: firstLine || 'Email notes',
     });
   }
@@ -2370,7 +2370,7 @@ function EditDrawer({
 const TAG_STYLES: Record<string, { bg: string; fg: string; label?: string }> = {
   'active-advertiser':    { bg: '#FFF3E0', fg: '#1c3f5e', label: 'Active Partner' },
   'non-advertiser':       { bg: '#FFF3E0', fg: '#005a8f', label: 'Non-Advertiser' },
-  'manual':               { bg: '#ede9fe', fg: '#005a8f', label: 'Manual' },
+  'manual':               { bg: '#daeeff', fg: '#005a8f', label: 'Manual' },
   'REALTOR':              { bg: '#E0FBE0', fg: '#005A00' },
   'Loan Officer':         { bg: '#FEF8CC', fg: '#645600' },
   'Business Development': { bg: '#d4d8dd', fg: '#51555b' },

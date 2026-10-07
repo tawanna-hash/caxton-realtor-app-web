@@ -743,7 +743,7 @@ function formatShortDate(iso: string | null | undefined): string {
 
 function publicationTone(key: PublicationKey): string {
   switch (key) {
-    case 'san_antonio': return 'bg-purple-50 text-purple-800 border-purple-200';
+    case 'san_antonio': return 'bg-[#daeeff] text-[#1c3f5e] border-[#98bdd3]';
     case 'houston':     return 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30';
     case 'dallas':      return 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30';
     case 'austin':

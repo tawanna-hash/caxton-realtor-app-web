@@ -1065,7 +1065,7 @@ export function AgreementDrawer({
                 {lineItems.map((li) => (
                   <div key={li.line_no} className="space-y-2 p-3">
                     <div className="flex items-start justify-between gap-3">
-                      <span className="inline-block rounded border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-medium capitalize text-purple-700">
+                      <span className="inline-block rounded border border-[#98bdd3] bg-[#daeeff] px-2 py-0.5 text-xs font-medium capitalize text-[#005a8f]">
                         {li.channel ?? "—"}
                       </span>
                       <div className="whitespace-nowrap text-right text-sm font-medium text-gray-900">
@@ -1105,7 +1105,7 @@ export function AgreementDrawer({
                     {lineItems.map((li) => (
                       <tr key={li.line_no}>
                         <td className="px-3 py-2">
-                          <span className="inline-block rounded border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-medium capitalize text-purple-700">
+                          <span className="inline-block rounded border border-[#98bdd3] bg-[#daeeff] px-2 py-0.5 text-xs font-medium capitalize text-[#005a8f]">
                             {li.channel ?? "—"}
                           </span>
                         </td>
@@ -2047,7 +2047,7 @@ export function AgreementDrawer({
             <button
               onClick={sendTestEmail}
               disabled={saving}
-              className="px-4 py-2 rounded-md border border-purple-300 text-purple-700 text-sm hover:bg-purple-50 disabled:opacity-50 whitespace-nowrap"
+              className="px-4 py-2 rounded-md border border-[#98bdd3] text-[#005a8f] text-sm hover:bg-[#daeeff] disabled:opacity-50 whitespace-nowrap"
               title="Send the notification email to yourself (does not touch partner record)"
             >
               Email me a test

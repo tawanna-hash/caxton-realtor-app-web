@@ -31,8 +31,8 @@ const CARD_ACCENT: Record<string, { badge: string; ring: string }> = {
     ring: 'ring-[#E0FBE0]',
   },
   'realtyline-dallas': {
-    badge: 'bg-purple-100 text-purple-800 border-purple-200',
-    ring: 'ring-purple-100',
+    badge: 'bg-[#daeeff] text-[#1c3f5e] border-[#98bdd3]',
+    ring: 'ring-[#daeeff]',
   },
 };
 

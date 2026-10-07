@@ -262,7 +262,7 @@ function DeadlineMath({
                         key={preset.id}
                         type="button"
                         onClick={() => onAddReminderPreset(deadline, preset.daysBefore)}
-                        className="inline-flex min-h-8 items-center rounded-full border border-violet-200 bg-white px-2 text-[10px] font-semibold text-violet-800 hover:bg-violet-50"
+                        className="inline-flex min-h-8 items-center rounded-full border border-[#98bdd3] bg-white px-2 text-[10px] font-semibold text-[#1c3f5e] hover:bg-[#daeeff]"
                       >
                         {preset.id}
                       </button>
@@ -345,7 +345,7 @@ function DateRadar({
               <span className={date === isoToday() ? 'inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#005a8f] text-xs font-semibold text-white' : 'text-xs font-medium text-gray-700'}>{day}</span>
               <div className="mt-1 space-y-1">
                 {dateDeadlines.slice(0, 2).map((deadline) => <p key={deadline.id} title={deadline.label} className="truncate rounded bg-[#daeeff] px-1 py-0.5 text-[10px] font-medium text-[#292a2d]">{deadline.label}</p>)}
-                {dateReminders.slice(0, 1).map((reminder) => <p key={reminder.id} title={reminder.note ?? 'Reminder'} className="truncate rounded bg-violet-100 px-1 py-0.5 text-[10px] font-medium text-violet-900">Reminder</p>)}
+                {dateReminders.slice(0, 1).map((reminder) => <p key={reminder.id} title={reminder.note ?? 'Reminder'} className="truncate rounded bg-[#daeeff] px-1 py-0.5 text-[10px] font-medium text-[#1c3f5e]">Reminder</p>)}
                 {dateDeadlines.length + dateReminders.length > 3 && <p className="text-[10px] text-gray-500">+{dateDeadlines.length + dateReminders.length - 3} more</p>}
               </div>
             </div>
@@ -354,7 +354,7 @@ function DateRadar({
       </div>
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
         <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-[#2f7aa7]" />Calculated deadline</span>
-        <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-violet-500" />In-app reminder</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-[#2f7aa7]" />In-app reminder</span>
       </div>
     </section>
   );
@@ -896,11 +896,11 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
           </p>
         </div>
 
-        <div className="mt-4 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-4 sm:p-4">
+        <div className="mt-4 rounded-xl border border-[#98bdd3] bg-gradient-to-br from-[#daeeff] to-white p-4 sm:p-4">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.72fr)] lg:items-center">
             <div className="max-w-2xl">
-              <div className="flex items-center gap-2 text-sm font-semibold text-violet-950">
-                <Sparkles className="h-4 w-4 text-violet-700" aria-hidden="true" />
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#1c3f5e]">
+                <Sparkles className="h-4 w-4 text-[#005a8f]" aria-hidden="true" />
                 Upload executed contract to prefill the worksheet
               </div>
               <p className="mt-1 text-sm leading-6 text-gray-600">
@@ -922,21 +922,21 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               }}
               className={`rounded-xl border-2 border-dashed p-3 transition sm:p-4 ${
                 isContractDropActive
-                  ? 'border-violet-600 bg-violet-100'
-                  : 'border-violet-200 bg-white/80 hover:border-violet-400 hover:bg-violet-50/70'
+                  ? 'border-[#005a8f] bg-[#daeeff]'
+                  : 'border-[#98bdd3] bg-white/80 hover:border-[#2f7aa7] hover:bg-[#daeeff]/70'
               } ${extractionState === 'extracting' ? 'pointer-events-none opacity-70' : ''}`}
             >
               <label htmlFor="contractUpload" className="flex min-h-28 cursor-pointer flex-col items-center justify-center text-center">
                 {extractionState === 'extracting' ? (
-                  <LoaderCircle className="h-6 w-6 animate-spin text-violet-700" aria-hidden="true" />
+                  <LoaderCircle className="h-6 w-6 animate-spin text-[#005a8f]" aria-hidden="true" />
                 ) : (
-                  <FileUp className="h-6 w-6 text-violet-700" aria-hidden="true" />
+                  <FileUp className="h-6 w-6 text-[#005a8f]" aria-hidden="true" />
                 )}
-                <span className="mt-2 text-sm font-semibold text-violet-950">
+                <span className="mt-2 text-sm font-semibold text-[#1c3f5e]">
                   {extractionState === 'extracting' ? 'Reading contract…' : isContractDropActive ? 'Drop contract to upload' : 'Drag and drop your contract'}
                 </span>
                 <span className="mt-1 text-xs text-gray-600">
-                  or <span className="font-semibold text-violet-800 underline underline-offset-2">browse files</span>
+                  or <span className="font-semibold text-[#1c3f5e] underline underline-offset-2">browse files</span>
                 </span>
                 <span className="mt-2 text-xs text-gray-500">PDF, PNG, JPG, or WEBP · 15 MB maximum</span>
                 <input
@@ -1108,7 +1108,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
             />
             <section aria-label="Deadline reminders" className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2">
-                <Bell className="rnn-heading-icon text-violet-700" aria-hidden="true" />
+                <Bell className="rnn-heading-icon text-[#005a8f]" aria-hidden="true" />
                 <div>
                   <h2 className="text-lg font-semibold text-gray-950">Deadline Reminders</h2>
                   <p className="text-xs text-gray-500">Durable in-app reminders for this saved deal.</p>
@@ -1121,13 +1121,13 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               ) : (
                 <>
                   {selectedDeadline && (
-                    <div className="mt-4 rounded-lg border border-violet-200 bg-violet-50 p-3">
-                      <p className="text-sm font-semibold text-violet-950">Reminder for {selectedDeadline.label}</p>
+                    <div className="mt-4 rounded-lg border border-[#98bdd3] bg-[#daeeff] p-3">
+                      <p className="text-sm font-semibold text-[#1c3f5e]">Reminder for {selectedDeadline.label}</p>
                       <div className="mt-3 grid gap-3">
                         <Field id="reminderDate" label="Remind me on" value={reminderDate} onChange={setReminderDate} type="date" />
                         <Textarea id="reminderNote" label="Optional note" value={reminderNote} onChange={setReminderNote} placeholder="What needs attention?" />
                         <div className="flex gap-2">
-                          <button type="button" onClick={createReminder} disabled={reminderState === 'saving' || !reminderDate} className="inline-flex min-h-10 items-center justify-center rounded-full bg-violet-700 px-4 text-sm font-semibold text-white hover:bg-violet-800 disabled:opacity-60">
+                          <button type="button" onClick={createReminder} disabled={reminderState === 'saving' || !reminderDate} className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#005a8f] px-4 text-sm font-semibold text-white hover:bg-[#1c3f5e] disabled:opacity-60">
                             {reminderState === 'saving' ? 'Saving…' : 'Save reminder'}
                           </button>
                           <button type="button" onClick={() => setSelectedDeadlineId('')} className="inline-flex min-h-10 items-center justify-center rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
@@ -1150,7 +1150,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                               type="checkbox"
                               checked={reminder.isComplete}
                               onChange={(event) => updateReminder(reminder, event.target.checked)}
-                              className="mt-1 h-4 w-4 rounded border-gray-300 text-violet-700 focus:ring-violet-600"
+                              className="mt-1 h-4 w-4 rounded border-gray-300 text-[#005a8f] focus:ring-[#005a8f]"
                             />
                             <div className="min-w-0 flex-1">
                               <p className={reminder.isComplete ? 'text-sm font-medium text-gray-500 line-through' : 'text-sm font-semibold text-gray-900'}>
@@ -1193,7 +1193,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
 
             <div className="rounded-xl border border-gray-200 bg-white p-4">
               <div className="flex items-center gap-2">
-                <ClipboardCheck className="rnn-heading-icon text-violet-700" aria-hidden="true" />
+                <ClipboardCheck className="rnn-heading-icon text-[#005a8f]" aria-hidden="true" />
                 <div>
                   <h2 className="text-lg font-semibold text-gray-950">Tasks & Escalation</h2>
                   <p className="text-xs text-gray-500">Track accountable work against this transaction.</p>
@@ -1204,17 +1204,17 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               ) : (
                 <>
                   <div className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_140px_120px_auto]">
-                    <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Add a transaction task" className="min-h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-100" />
-                    <input value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} type="date" aria-label="Task due date" className="min-h-10 rounded-md border border-gray-300 px-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-100" />
-                    <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-10 rounded-md border border-gray-300 px-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-100">
+                    <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Add a transaction task" className="min-h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-[#005a8f] focus:ring-2 focus:ring-[#daeeff]" />
+                    <input value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} type="date" aria-label="Task due date" className="min-h-10 rounded-md border border-gray-300 px-2 text-sm outline-none focus:border-[#005a8f] focus:ring-2 focus:ring-[#daeeff]" />
+                    <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-10 rounded-md border border-gray-300 px-2 text-sm outline-none focus:border-[#005a8f] focus:ring-2 focus:ring-[#daeeff]">
                       <option value="normal">Normal</option><option value="high">High</option><option value="critical">Critical</option><option value="low">Low</option>
                     </select>
-                    <button type="button" onClick={addTask} disabled={!taskTitle.trim() || documentState === 'saving'} className="inline-flex min-h-10 items-center justify-center rounded-full bg-violet-700 px-4 text-sm font-semibold text-white hover:bg-violet-800 disabled:opacity-50">Add</button>
+                    <button type="button" onClick={addTask} disabled={!taskTitle.trim() || documentState === 'saving'} className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#005a8f] px-4 text-sm font-semibold text-white hover:bg-[#1c3f5e] disabled:opacity-50">Add</button>
                   </div>
                   <ul className="mt-4 space-y-2">
                     {tasks.length ? tasks.map((task) => (
                       <li key={task.id} className="flex items-center gap-3 rounded-md border border-gray-200 px-3 py-2">
-                        <input type="checkbox" checked={task.status === 'done'} onChange={(event) => updateTaskStatus(task, event.target.checked ? 'done' : 'todo')} aria-label={`Complete ${task.title}`} className="h-4 w-4 rounded border-gray-300 text-violet-700 focus:ring-violet-600" />
+                        <input type="checkbox" checked={task.status === 'done'} onChange={(event) => updateTaskStatus(task, event.target.checked ? 'done' : 'todo')} aria-label={`Complete ${task.title}`} className="h-4 w-4 rounded border-gray-300 text-[#005a8f] focus:ring-[#005a8f]" />
                         <span className={task.status === 'done' ? 'min-w-0 flex-1 text-sm text-gray-500 line-through' : 'min-w-0 flex-1 text-sm font-medium text-gray-900'}>{task.title}</span>
                         {task.dueDate && <span className="text-xs text-gray-500">{formatValue(task.dueDate)}</span>}
                         <span className={task.priority === 'critical' ? 'rounded-full bg-[#FFEAE6] px-2 py-0.5 text-[10px] font-semibold uppercase text-[#661102]' : task.priority === 'high' ? 'rounded-full bg-[#FEF8CC] px-2 py-0.5 text-[10px] font-semibold uppercase text-[#645600]' : 'rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-gray-600'}>{task.priority}</span>

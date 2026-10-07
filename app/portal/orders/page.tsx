@@ -112,7 +112,7 @@ export default async function PortalOrders() {
           </p>
           <Link
             href="/advertise/portal"
-            className="inline-flex items-center gap-2 rounded-md bg-purple-700 px-4 py-3 text-sm font-semibold text-white hover:bg-purple-800 transition"
+            className="inline-flex items-center gap-2 rounded-md bg-[#005a8f] px-4 py-3 text-sm font-semibold text-white hover:bg-[#1c3f5e] transition"
           >
             Browse ad placements
             <span aria-hidden>{'\u2192'}</span>
@@ -227,7 +227,7 @@ export default async function PortalOrders() {
         </p>
         <Link
           href="/advertise/portal"
-          className="text-sm font-semibold text-purple-700 hover:text-purple-900"
+          className="text-sm font-semibold text-[#005a8f] hover:text-[#1c3f5e]"
         >
           Browse placements {'\u2192'}
         </Link>

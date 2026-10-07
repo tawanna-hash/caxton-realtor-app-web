@@ -767,7 +767,7 @@ export default function DesignerClient() {
 
             <Control label="Canvas background image">
               <div className="flex gap-2">
-                <label className="flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-[#3f2a5f] bg-[#1b1130] px-3 text-xs font-semibold text-slate-300 hover:border-[#2f7aa7]">
+                <label className="flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-[#3f2a5f] bg-[#292a2d] px-3 text-xs font-semibold text-slate-300 hover:border-[#2f7aa7]">
                   <ImagePlus size={15} />
                   {background ? 'Replace image' : 'Upload image'}
                   <input ref={fileRef} type="file" accept="image/*" onChange={(event) => uploadBackground(event.target.files?.[0])} className="sr-only" />
@@ -809,7 +809,7 @@ export default function DesignerClient() {
                         key={brand.label}
                         type="button"
                         onClick={() => applyBrandTypography(index)}
-                        className="min-h-16 rounded-md border border-[#493368] bg-[#1b1130] px-2 py-2 text-left transition-colors hover:border-[#b184df] hover:bg-[#2a1747]"
+                        className="min-h-16 rounded-md border border-[#1c3f5e] bg-[#292a2d] px-2 py-2 text-left transition-colors hover:border-[#b184df] hover:bg-[#2a1747]"
                       >
                         <span className="block text-[11px] font-bold text-white">{brand.label}</span>
                         <span className="mt-1 block text-[9px] leading-tight text-slate-400">{brand.description}</span>
@@ -938,7 +938,7 @@ export default function DesignerClient() {
                         className={`min-h-10 rounded-md border px-2 py-2 text-[11px] font-semibold transition-colors ${
                           flyerSize === size.key
                             ? 'border-[#b184df] bg-[#351b59] text-white'
-                            : 'border-[#493368] bg-[#1b1130] text-slate-300 hover:border-[#2f7aa7] hover:text-white'
+                            : 'border-[#1c3f5e] bg-[#292a2d] text-slate-300 hover:border-[#2f7aa7] hover:text-white'
                         }`}
                       >
                         Preview {size.label}
@@ -1815,7 +1815,7 @@ function ArtworkUpload({
           event.preventDefault();
           onUpload(event.dataTransfer.files?.[0]);
         }}
-        className="rounded-md border border-dashed border-[#493368] bg-[#150d25] p-3 transition-colors hover:border-[#2f7aa7]"
+        className="rounded-md border border-dashed border-[#1c3f5e] bg-[#150d25] p-3 transition-colors hover:border-[#2f7aa7]"
       >
         {value && (
           <div className="mb-3 flex h-20 items-center justify-center rounded bg-white p-2">
@@ -1915,14 +1915,14 @@ function backgroundStyle(background: string) {
 function signatureMarkup(fields: SignatureFields, preset: number, primary: string, secondary: string, font: string, headlineFont: string, fontSize: number, bodyFontSize: number, fontWeight: number, background: string, order: ArtboardKey[], widths: FooterColumnWidths) {
   const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as SignatureFields;
   const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
-  const labelStyle = 'display:block;font-size:9px;line-height:1;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700;margin-bottom:16px';
+  const labelStyle = 'display:block;font-size:9px;line-height:1;text-transform:uppercase;letter-spacing:1px;color:#7b8089;font-weight:700;margin-bottom:16px';
   const cellStyle = 'vertical-align:middle;background:rgba(255,255,255,.95);border:1px solid #bbc1c9;border-radius:6px;padding:12px';
   const avatar = data.photo
     ? `<img src="${data.photo}" alt="${data.name} headshot" width="96" height="96" style="border-radius:50%;display:block;object-fit:cover;margin:auto">`
     : `<div style="width:96px;height:96px;border-radius:50%;background:#d4d8dd;margin:auto"></div>`;
   const legacyLogo = data.logo
     ? `<img src="${data.logo}" alt="${data.company} logo" width="150" style="display:block;max-height:80px;object-fit:contain;margin:auto">`
-    : `<div style="font-size:11px;text-align:center;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700">Company logo</div>`;
+    : `<div style="font-size:11px;text-align:center;text-transform:uppercase;letter-spacing:1px;color:#7b8089;font-weight:700">Company logo</div>`;
   const details = preset === 1
     ? `<span style="display:block;font-family:${headlineFont};font-size:${fontSize}px;font-weight:${fontWeight};color:#292a2d">${data.name}</span><span style="display:block;font-size:${bodyFontSize}px;color:${primary};font-weight:600;margin-top:4px">${data.title}</span><div style="border-top:1px solid #d4d8dd;padding-top:7px;margin-top:7px;font-size:${bodyFontSize}px"><strong style="color:#292a2d;font-size:${brokerSize}px">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}<span style="display:block;margin-top:3px">${data.email} · ${data.website}</span></div>`
     : `<div style="border-left:3px solid ${primary};padding-left:14px"><div style="font-family:${headlineFont};font-size:${fontSize}px;font-weight:${fontWeight};color:#292a2d;line-height:1.2">${data.name}</div><div style="font-size:${bodyFontSize}px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:${brokerSize}px;font-weight:700">${data.company}</div><div style="font-size:${bodyFontSize}px;margin-top:4px">☎ ${data.phone}</div><div style="font-size:${bodyFontSize}px;margin-top:2px">${data.email} · ${data.website}</div></div>`;
@@ -1998,7 +1998,7 @@ function flyerMarkup(
         ${photo(src, `Property ${index + 1}`, 'width:100%;height:96px')}
         <div style="font-size:11px;font-weight:600;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${title}</div>
         <div style="font-size:8px;color:#51555b;line-height:1.35;margin-top:2px">${meta}</div>
-        <div style="font-size:7px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;border-top:1px solid #d4d8dd;margin-top:8px;padding-top:4px">Property details</div>
+        <div style="font-size:7px;color:#7b8089;text-transform:uppercase;letter-spacing:.06em;border-top:1px solid #d4d8dd;margin-top:8px;padding-top:4px">Property details</div>
       </div>`).join('');
     return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:${secondary};display:flex;flex-direction:column;background:#fff;overflow:hidden">
       <div style="position:relative;height:43%;overflow:hidden;background:${secondary}">

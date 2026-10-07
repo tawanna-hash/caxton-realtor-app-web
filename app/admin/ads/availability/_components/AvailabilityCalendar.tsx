@@ -22,14 +22,14 @@ const CHANNEL_BADGE_CLASS: Record<AdChannel, string> = {
   print: 'bg-[#FFEAE6] text-[#661102] border-[#FF2A04]/30',
   digital: 'bg-[#E3F7FF] text-[#285766] border-[#64D9FF]/30',
   email: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
-  app: 'bg-purple-50 text-purple-800 border-purple-200',
+  app: 'bg-[#daeeff] text-[#1c3f5e] border-[#98bdd3]',
 };
 
 const CHANNEL_DOT_CLASS: Record<AdChannel, string> = {
   print: 'bg-[#FF2A04]',
   digital: 'bg-[#64D9FF]',
   email: 'bg-[#00E200]',
-  app: 'bg-purple-500',
+  app: 'bg-[#2f7aa7]',
 };
 
 interface ApiResponse {

@@ -372,7 +372,7 @@ function Column({
                   </button>
                   <button
                     onClick={() => onCopyShare(m.id)}
-                    className="text-sm text-purple-700 hover:underline"
+                    className="text-sm text-[#005a8f] hover:underline"
                     title="Copy public share link for social media"
                   >
                     {copiedKey === `share:${m.id}` ? 'Copied!' : 'Copy Share Link'}

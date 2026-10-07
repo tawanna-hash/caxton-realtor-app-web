@@ -71,7 +71,7 @@ const CHANNEL_ACCENT: Record<AdChannel, string> = {
   print: 'text-[#661102] border-[#FF2A04]',
   digital: 'text-[#285766] border-[#64D9FF]',
   email: 'text-[#005A00] border-[#00E200]',
-  app: 'text-purple-700 border-purple-500',
+  app: 'text-[#005a8f] border-[#2f7aa7]',
 };
 
 const STATUS_BADGE: Record<string, string> = {
@@ -461,7 +461,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                           </div>
                         </div>
                         {rowTs.length > 0 && (
-                          <div className="ml-4 pl-3 border-l-2 border-purple-200 space-y-1">
+                          <div className="ml-4 pl-3 border-l-2 border-[#98bdd3] space-y-1">
                             {rowTs.map((t) => (
                               <div key={t.id} className="flex items-center gap-2 text-xs text-gray-600">
                                 <span className="text-gray-400">Tearsheet:</span>

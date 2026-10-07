@@ -30,7 +30,7 @@ function styleFor(t: string): TagStyle {
   switch (t) {
     case 'active-advertiser': return { bg: '#FFF3E0', fg: '#1c3f5e', label: 'Active Partner' };
     case 'non-advertiser':    return { bg: '#FFF3E0', fg: '#005a8f', label: 'Non-Advertiser' };
-    case 'manual':            return { bg: '#ede9fe', fg: '#005a8f', label: 'Manual' };
+    case 'manual':            return { bg: '#daeeff', fg: '#005a8f', label: 'Manual' };
     case 'REALTOR':           return { bg: '#E0FBE0', fg: '#005A00' };
     case 'Loan Officer':      return { bg: '#FEF8CC', fg: '#645600' };
     case 'Business Development': return { bg: '#d4d8dd', fg: '#51555b' };

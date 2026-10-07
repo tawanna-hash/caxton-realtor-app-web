@@ -343,9 +343,9 @@ export default function NavDrawer({
                 </span>
               </div>
               <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-[0.11em] text-[#1c3f5e]">
-                <span className="rounded-md bg-[#F0EBF8] px-3 py-1">TREC Forms</span>
-                <span className="rounded-md bg-[#F0EBF8] px-3 py-1">Run Numbers</span>
-                <span className="rounded-md bg-[#F0EBF8] px-3 py-1">Find Partners</span>
+                <span className="rounded-md bg-[#daeeff] px-3 py-1">TREC Forms</span>
+                <span className="rounded-md bg-[#daeeff] px-3 py-1">Run Numbers</span>
+                <span className="rounded-md bg-[#daeeff] px-3 py-1">Find Partners</span>
               </div>
             </Link>
           </div>

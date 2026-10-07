@@ -273,7 +273,7 @@ export default function HotspotConfigModal({
             <h3 className="font-medium">Destination Preview</h3>
             <p className="mt-1 break-all text-gray-600">{hotspotDestination(config) || 'No destination yet'}</p>
             {problem && <p className="mt-1 text-xs text-[#645600]">{problem}</p>}
-            {destination && !problem && <a href={destination} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block font-medium text-purple-900 underline">Test Link</a>}
+            {destination && !problem && <a href={destination} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block font-medium text-[#1c3f5e] underline">Test Link</a>}
             <p className="mt-1 text-xs text-gray-500">Tests do not record clicks. Email and phone tests open your device’s app.</p>
           </section>
 
@@ -304,7 +304,7 @@ export default function HotspotConfigModal({
               onError={setError}
             />
             {type === 'link' && advertiserWebsite && <button type="button"
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-purple-900 hover:bg-gray-50"
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-[#1c3f5e] hover:bg-gray-50"
               onClick={() => {
                 const url = /^https?:\/\//i.test(advertiserWebsite) ? advertiserWebsite : `https://${advertiserWebsite}`;
                 try {

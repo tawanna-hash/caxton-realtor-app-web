@@ -87,7 +87,7 @@ export default function SelfServicePortalPage() {
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-3">
               App &amp; Web Placements
             </h2>
-            <p className="text-violet-100/90 text-sm md:text-base font-light leading-relaxed mb-6">
+            <p className="text-[#daeeff]/90 text-sm md:text-base font-light leading-relaxed mb-6">
               Buy ad placements directly, choose your market + go live in as
               few as 2 business days. No sales call required.
             </p>
@@ -108,7 +108,7 @@ export default function SelfServicePortalPage() {
                       />
                     </svg>
                   </span>
-                  <span className="text-violet-50">{line}</span>
+                  <span className="text-[#daeeff]">{line}</span>
                 </li>
               ))}
             </ul>
@@ -147,7 +147,7 @@ export default function SelfServicePortalPage() {
             <h2 className="mb-3 text-2xl font-bold tracking-tight text-white md:text-3xl">
               e-Blast Ordering
             </h2>
-            <p className="mb-6 text-sm font-light leading-relaxed text-violet-100/90 md:text-base">
+            <p className="mb-6 text-sm font-light leading-relaxed text-[#daeeff]/90 md:text-base">
               Reach RealtyLine Austin, Newsline San Antonio, or both audiences
               with a dedicated email campaign.
             </p>
@@ -167,7 +167,7 @@ export default function SelfServicePortalPage() {
                       />
                     </svg>
                   </span>
-                  <span className="text-violet-50">{line}</span>
+                  <span className="text-[#daeeff]">{line}</span>
                 </li>
               ))}
             </ul>

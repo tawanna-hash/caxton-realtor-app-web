@@ -247,7 +247,7 @@ export default function EblastOrderForm({
                   </span>
                   <span
                     className={`mt-1 block text-xs ${
-                      active ? 'text-violet-100' : 'text-gray-500'
+                      active ? 'text-[#daeeff]' : 'text-gray-500'
                     }`}
                   >
                     {pub.audience}
@@ -277,7 +277,7 @@ export default function EblastOrderForm({
                   aria-pressed={active}
                   className={`w-full rounded-md border p-4 text-left transition ${
                     active
-                      ? 'border-brand-700 bg-violet-50 ring-1 ring-brand-700'
+                      ? 'border-brand-700 bg-[#daeeff] ring-1 ring-brand-700'
                       : 'border-gray-200 bg-white hover:border-brand-700'
                   }`}
                 >
@@ -515,14 +515,14 @@ export default function EblastOrderForm({
       </div>
 
       <aside className="rounded-md bg-brand-700 p-4 text-white lg:sticky lg:top-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-200">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#98bdd3]">
           Order summary
         </p>
         <h2 className="mt-2 text-xl font-bold">{selectedPackage?.name}</h2>
-        <p className="mt-1 text-sm text-violet-100">
+        <p className="mt-1 text-sm text-[#daeeff]">
           {EBLAST_ORDER_MARKETS.find((pub) => pub.id === publication)?.label}
         </p>
-        <ul className="mt-4 space-y-2 text-sm text-violet-50">
+        <ul className="mt-4 space-y-2 text-sm text-[#daeeff]">
           {features.map((feature) => (
             <li key={feature} className="flex gap-2">
               <span aria-hidden="true" className="text-[#98bdd3]">
@@ -534,11 +534,11 @@ export default function EblastOrderForm({
         </ul>
         <dl className="mt-6 space-y-2 border-t border-white/20 pt-4 text-sm">
           <div className="flex justify-between gap-3">
-            <dt className="text-violet-200">Package</dt>
+            <dt className="text-[#98bdd3]">Package</dt>
             <dd className="tabular-nums">{formatUsd(baseCents)}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-violet-200">3% processing</dt>
+            <dt className="text-[#98bdd3]">3% processing</dt>
             <dd className="tabular-nums">{formatUsd(surchargeCents)}</dd>
           </div>
           <div className="flex justify-between gap-3 border-t border-white/20 pt-3 text-lg font-bold">
@@ -546,7 +546,7 @@ export default function EblastOrderForm({
             <dd className="tabular-nums">{formatUsd(totalCents)}</dd>
           </div>
         </dl>
-        <p className="mt-4 text-xs leading-relaxed text-violet-200">
+        <p className="mt-4 text-xs leading-relaxed text-[#98bdd3]">
           Secure payment by card or eligible bank account through Stripe.
         </p>
       </aside>

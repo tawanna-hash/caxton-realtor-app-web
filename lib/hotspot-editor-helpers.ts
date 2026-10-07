@@ -71,7 +71,7 @@ export const TYPE_ICONS: Record<HotspotType, string> = {
 export const TYPE_COLORS: Record<HotspotType, { fill: string; stroke: string; text: string }> = {
   link:   { fill: 'rgba(59, 130, 246, 0.20)', stroke: 'rgb(59, 130, 246)', text: 'text-[#1c3f5e]' },
   video:  { fill: 'rgba(239, 68, 68, 0.20)',  stroke: 'rgb(239, 68, 68)',  text: 'text-[#661102]' },
-  image:  { fill: 'rgba(168, 85, 247, 0.20)', stroke: 'rgb(168, 85, 247)', text: 'text-purple-700' },
+  image:  { fill: 'rgba(168, 85, 247, 0.20)', stroke: 'rgb(168, 85, 247)', text: 'text-[#005a8f]' },
   phone:  { fill: 'rgba(34, 197, 94, 0.20)',  stroke: 'rgb(34, 197, 94)',  text: 'text-[#005A00]' },
   email:  { fill: 'rgba(245, 158, 11, 0.20)', stroke: 'rgb(245, 158, 11)', text: 'text-[#645600]' },
   form:   { fill: 'rgba(20, 184, 166, 0.20)', stroke: 'rgb(20, 184, 166)', text: 'text-[#005A00]' },
