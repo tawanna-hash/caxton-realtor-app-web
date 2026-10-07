@@ -40,6 +40,7 @@ export default function Page() {
             'Telnyx for text messages.',
             'PostHog for product analytics.',
             'Google, Dropbox and similar services, only if you connect them.',
+            'Google\u2019s Gemini service, which reads a contract you choose to upload so it can suggest dates and terms. We use it only for that purpose and do not use your documents to train models.',
             'Stripe for payments, if you subscribe to a paid plan. We do not store card numbers.',
           ]} />
           <p>We may also disclose information when required by law, to protect rights and safety, or in a merger or sale of the business, with notice to you.</p>
