@@ -148,7 +148,7 @@ function PinnedDetails({ className, children }: { className?: string; children: 
   );
 }
 
-const fieldCls = 'h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#301D5D]';
+const fieldCls = 'h-10 w-full rounded-lg border border-transparent bg-[#F6F3FB] px-3 text-sm text-[#1B1726] outline-none transition placeholder:text-[#B5B3BE] hover:border-[#E6E5EC] focus:border-[#301D5D] focus:bg-white';
 
 type ContractSection = (typeof CONTRACT_MAP_SECTIONS)[number];
 
@@ -419,7 +419,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
     const leads = leadsFor(section);
     const items = orderedItems(section);
     return (
-                <div data-grid={section.id} className={`grid gap-x-4 gap-y-3 ${bordered ? 'border-t border-[#F6F3FB] px-[1.125rem] py-4' : ''} sm:grid-cols-2 lg:grid-cols-4`}>
+                <div data-grid={section.id} className={`grid gap-x-5 gap-y-5 ${bordered ? 'border-t border-[#F6F3FB] px-[1.125rem] py-5' : ''} sm:grid-cols-2 lg:grid-cols-4`}>
                   {leads && leads.map(([label, value, set]) => (
                     <div key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-4' : ''}`}>
                       <span className="block pb-1">{labelInput(`lead:${label}`, label)}</span>
@@ -456,7 +456,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
                     }
                     const fl = item.fl;
                     const value = getVal(fl.id);
-                    const placed = !hasOrder(section) && fl.pos ? `${POS_COL[fl.pos[0]]} ${POS_ROW[fl.pos[1]]}` : '';
+                    const placed = '';
                     if (fl.kind === 'c') {
                       return (
                         <div key={key} {...cellAttrs} className={`min-w-0${pickCls}`}>
@@ -476,9 +476,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
                           {labelInput(fl.id, fl.label)}
                           <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(section, fl.id))}</span>
                         </div>
-                        <span className="flex items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">
+                        <span className="flex items-center gap-1 rounded-lg border border-transparent bg-[#F6F3FB] px-3 transition hover:border-[#E6E5EC] focus-within:border-[#301D5D] focus-within:bg-white">
                           {fl.kind === 'm' && <span className="text-sm text-slate-400">$</span>}
-                          <input value={value} aria-label={labelOf(fl.id, fl.label)} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
+                          <input value={value} aria-label={labelOf(fl.id, fl.label)} onChange={(e) => setForm({ [fl.id]: e.target.value })} inputMode={fl.kind === 'm' || fl.kind === 'd' ? 'decimal' : undefined} className="h-10 min-w-0 flex-1 bg-transparent text-sm text-[#1B1726] outline-none" />
                         </span>
                       </div>
                     );
@@ -515,7 +515,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
             {lines.map((line) => (
               <li key={line.id} className="py-3">
                 <div className="flex items-center gap-2">
-                  <input value={line.label} onChange={(e) => updateLine(line.id, { label: e.target.value })} aria-label="Line label" placeholder="Line Item" className="h-9 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" />
+                  <input value={line.label} onChange={(e) => updateLine(line.id, { label: e.target.value })} aria-label="Line label" placeholder="Line Item" className="h-10 min-w-0 flex-1 bg-transparent text-sm text-[#1B1726] outline-none" />
                   <select value={line.sign} onChange={(e) => updateLine(line.id, { sign: e.target.value === '-' ? '-' : '+' })} aria-label="Add or subtract" className="h-9 w-14 rounded-md border border-[#E6E5EC] bg-white px-2 text-sm text-slate-900">
                     <option value="+">+</option>
                     <option value="-">−</option>
