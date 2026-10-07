@@ -15,6 +15,7 @@ import UtilitiesPanel from './UtilitiesPanel';
 import DataBackupsPanel from './DataBackupsPanel';
 import AutomationsPanel from './AutomationsPanel';
 import SecurityPanel from './SecurityPanel';
+import TestimonialRequest from './TestimonialRequest';
 import DocumentToolsPanel from './DocumentToolsPanel';
 import TestimonialHubClient from '@/app/(public)/testimonial-hub/TestimonialHubClient';
 import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './AgentToolsPanels';
@@ -3670,6 +3671,12 @@ export default function ClosingTime({
               <input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" />
               <input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" placeholder="Closeout note" />
             </div>
+            {activeDeal.closeoutOutcome === 'closed' && (
+              <TestimonialRequest
+                address={activeDeal.propertyAddress}
+                emails={activeDeal.clientContacts.map((c) => c.email.trim()).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))}
+              />
+            )}
             <ul className="mt-4 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#FAD800] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
           </section>
           </>
