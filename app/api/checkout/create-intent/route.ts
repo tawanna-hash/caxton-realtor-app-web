@@ -20,6 +20,7 @@
 //     baseCents, surchargeCents, description }
 
 import { NextRequest, NextResponse } from 'next/server';
+import { publicSubmitLimited } from '@/lib/server/rate-limit';
 import { z } from 'zod';
 import {
   getStripe,
@@ -134,6 +135,8 @@ export function computeAmountCents(
 }
 
 export async function POST(req: NextRequest) {
+  const limited = await publicSubmitLimited('checkout-intent');
+  if (limited) return limited as never;
   if (!isStripeConfigured()) {
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 });
   }

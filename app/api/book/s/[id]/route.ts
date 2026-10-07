@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { publicSubmitLimited } from '@/lib/server/rate-limit';
 import { z } from 'zod';
 import { createBooking, publicSlots } from '@/lib/server/closing-time-schedulers';
 
@@ -26,6 +27,8 @@ const body = z.object({
 
 /** Public booking. */
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const limited = await publicSubmitLimited('book');
+  if (limited) return limited as never;
   const { id } = await ctx.params;
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Enter your name and a valid email.' }, { status: 400 });

@@ -11,11 +11,14 @@
 //     the ad_creatives row only after a successful Stripe PaymentIntent.
 
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
+import { publicSubmitLimited } from '@/lib/server/rate-limit';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request): Promise<NextResponse> {
+  const limited = await publicSubmitLimited('upload-token');
+  if (limited) return limited as never;
   let body: HandleUploadBody;
   try {
     body = (await request.json()) as HandleUploadBody;

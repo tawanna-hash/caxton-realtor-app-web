@@ -12,6 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { publicSubmitLimited } from '@/lib/server/rate-limit';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/email';
 import { APP_AD_SLOTS } from '@/lib/media-kit';
@@ -63,6 +64,8 @@ function ratesRowHtml(slot: typeof APP_AD_SLOTS[number]): string {
 }
 
 export async function POST(req: NextRequest) {
+  const limited = await publicSubmitLimited('inquire');
+  if (limited) return limited as never;
   let body: unknown;
   try {
     body = await req.json();

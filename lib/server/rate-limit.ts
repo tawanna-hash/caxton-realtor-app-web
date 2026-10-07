@@ -22,7 +22,7 @@ import { ApiError } from './error';
 import { logger } from './logger';
 import { headers } from 'next/headers';
 
-type ConfigName = 'general' | 'auth' | 'adminAuth' | 'passwordReset' | 'magicLinkRequest' | 'signWizard';
+type ConfigName = 'general' | 'auth' | 'adminAuth' | 'passwordReset' | 'magicLinkRequest' | 'signWizard' | 'publicSubmit';
 
 const configs: Record<ConfigName, { tokens: number; windowMs: number; window: `${number}${'s' | 'm' | 'h'}` }> = {
   general:       { tokens: 100, windowMs:  60_000, window: '1m'  },
@@ -44,6 +44,8 @@ const configs: Record<ConfigName, { tokens: number; windowMs: number; window: `$
   // auth, but a leaked token shouldn't permit unlimited writes. 30/hr is
   // way above any legitimate signing flow which is ~5 patches + 1 sign.
   signWizard:    { tokens:  30, windowMs: 3_600_000, window: '1h' },
+  // Public forms and upload-token endpoints (inquiries, bookings, checkout uploads). Generous for people, tight for scripts.
+  publicSubmit:  { tokens:  20, windowMs: 600_000, window: '10m' },
 };
 
 let cachedRedis: Redis | null = null;
@@ -151,5 +153,19 @@ export async function rateLimit(name: ConfigName, extraKey?: string): Promise<vo
       remaining: 0,
       resetAt,
     });
+  }
+}
+
+
+/** For route handlers that do not use withErrorHandling: returns a 429 response when over the public-form limit, otherwise null. */
+export async function publicSubmitLimited(scope: string): Promise<Response | null> {
+  try {
+    await rateLimit('publicSubmit', scope);
+    return null;
+  } catch (e) {
+    if (e instanceof ApiError && e.statusCode === 429) {
+      return new Response(JSON.stringify({ error: 'Too many requests. Please wait a few minutes and try again.' }), { status: 429, headers: { 'content-type': 'application/json', 'retry-after': '300' } });
+    }
+    throw e;
   }
 }
