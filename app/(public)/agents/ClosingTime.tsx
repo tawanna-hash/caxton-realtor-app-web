@@ -2666,6 +2666,11 @@ export default function ClosingTime({
                 </button>
               </li>
             </ul>
+          <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1 px-2 pb-2 text-[11px] text-[#7A7787]">
+              <a className="underline" href="/privacy">Privacy</a>
+              <a className="underline" href="/terms">Terms</a>
+              <a className="underline" href="/disclaimer">Notices</a>
+            </div>
           </aside>
           <div className="ds-mainwrap min-w-0">
             <HelpTips />

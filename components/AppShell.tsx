@@ -96,10 +96,13 @@ export default function AppShell({
   children,
   variant = 'public',
   initialPub = 'realtyline',
+  chromeless = false,
 }: {
   children: React.ReactNode;
   variant?: 'admin' | 'public';
   initialPub?: Pub;
+  /** Closing Time domain: no Realty News Now header, footer, newsletter strip, ads or bottom tabs. */
+  chromeless?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -323,7 +326,7 @@ export default function AppShell({
   return (
     <div className="min-h-screen bg-white">
       {/* ======== TOP BAR ======== */}
-      <header className={`sticky top-0 z-40 ${isAdmin ? 'bg-brand-700 text-white' : 'bg-white text-gray-900 border-b border-gray-200'}`}>
+      {!chromeless && <header className={`sticky top-0 z-40 ${isAdmin ? 'bg-brand-700 text-white' : 'bg-white text-gray-900 border-b border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           {/* Left: hamburger */}
           <button
@@ -439,7 +442,7 @@ export default function AppShell({
             )}
           </div>
         </div>
-      </header>
+      </header>}
 
       {/* ======== DRAWER (extracted to NavDrawer in S18) ======== */}
       <NavDrawer
@@ -456,7 +459,7 @@ export default function AppShell({
       {/* ======== MARKET SWITCHER SHEET ========
           iOS HIG title-as-switcher pattern. Triggered from the header
           title for non-admin users; renders nothing while closed. */}
-      {!isAdmin && (
+      {!isAdmin && !chromeless && (
         <MarketSwitcherSheet
           open={marketSheetOpen}
           currentPub={pub}
@@ -484,7 +487,7 @@ export default function AppShell({
       <div className={isAdmin ? 'flex' : undefined}>
         {isAdmin && <AdminSidebar />}
         <main
-          className={`flex-1 min-w-0 ${isAdmin ? 'pb-0' : 'pb-20'}`}
+          className={`flex-1 min-w-0 ${isAdmin || chromeless ? 'pb-0' : 'pb-20'}`}
           data-admin-density={useCompactAdminDensity ? 'compact' : undefined}
           data-admin-ui={isAdmin ? 'true' : undefined}
         >
@@ -494,7 +497,7 @@ export default function AppShell({
           </SwipeBackShell>
         </main>
       </div>
-      {!isAdmin ? (
+      {!isAdmin && !chromeless ? (
         <>
           {/* The dashboard feed already includes its own signup form. */}
           {pathname !== '/dashboard' && pathname !== '/subscribe' && <NewsletterCTA source="public_footer" variant="flush" />}
@@ -511,7 +514,7 @@ export default function AppShell({
       ) : null}
       {/* Admin chrome stays admin-only — the public Footer (RealtyLine /
           Newsline San Antonio / Resources columns) was leaking onto every /admin page. */}
-      {!isAdmin && <Footer showAustinPartners={pub === 'realtyline' && !isSignInPage} />}
+      {!isAdmin && !chromeless && <Footer showAustinPartners={pub === 'realtyline' && !isSignInPage} />}
     </div>
   );
 }

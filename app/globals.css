@@ -1773,3 +1773,6 @@ input::placeholder, textarea::placeholder { color: var(--astro-text-placeholder)
 /* Foldable widths (about 450 to 950px): keep deal tabs on one line each and wrap whole tabs, never words */
 #agent-desk .ds-dealnav button { white-space: nowrap; flex: none; }
 #agent-desk .ds-dealnav-group { flex-wrap: wrap; }
+
+/* Closing Time left rail: own scroll, pinned to the full viewport (no site header above it). */
+#agent-desk .ds-rail { top: 0 !important; height: 100vh !important; height: 100dvh !important; overflow-y: auto !important; overscroll-behavior: contain; align-self: start; }
