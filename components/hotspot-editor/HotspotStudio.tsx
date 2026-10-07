@@ -15,7 +15,7 @@ type History = { label: string; before: Hotspot[]; after: Hotspot[] };
 type Scan = { page_idx: number; status: string; warnings: string[]; found: number };
 type Props = { magazine: Magazine; initialHotspots: Hotspot[]; prevIssues: { id: number; issue_label: string; hotspot_count: number }[] };
 const button = 'inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40';
-const primary = `${button} !border-[#301D5D] !bg-[#301D5D] !text-white hover:!bg-[#483074]`;
+const primary = `${button} !border-[#005a8f] !bg-[#005a8f] !text-white hover:!bg-[#483074]`;
 const input = 'min-h-9 rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-900';
 const icon = 'h-4 w-4';
 const zoomLevels = [.6, .8, 1, 1.25, 1.5, 2, 3];
@@ -350,7 +350,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <nav className="mb-1 text-xs text-gray-600"><Link href="/admin/magazines" className="underline">Magazines</Link> / <Link href={`/admin/magazines/${magazine.id}`} className="underline">{magazine.issue_label}</Link></nav>
-            <h1 className="flex items-center gap-2 text-xl font-semibold"><Layers className="h-5 w-5 text-[#7059A8]" /> Hotspot Studio</h1>
+            <h1 className="flex items-center gap-2 text-xl font-semibold"><Layers className="h-5 w-5 text-[#2f7aa7]" /> Hotspot Studio</h1>
             <p className="mt-1 text-sm text-gray-600">Upload → Detect → Review → Publish</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -365,7 +365,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-100 pt-3 text-sm">
           <span>{active.length} Hotspots</span><span className="text-[#645600]">{attention.length} Need Attention</span><span>{ready.length} Ready To Review</span><span>{active.filter(h => h.is_published).length} Published</span>
-          <button className="font-medium text-[#301D5D] underline" onClick={() => setChecklistOpen(!checklistOpen)}>Page Review Checklist</button>
+          <button className="font-medium text-[#005a8f] underline" onClick={() => setChecklistOpen(!checklistOpen)}>Page Review Checklist</button>
           <span role="status" className="ml-auto text-xs text-gray-600">{message || 'Ready'}</span>
         </div>
         {error && <div role="alert" className="mt-3 flex flex-wrap items-center gap-3 rounded-md border border-[#FAD800]/50 bg-[#FEF8CC] p-3 text-sm text-[#645600]"><span className="flex-1">{error}</span><button className="underline" disabled={blocked} onClick={() => { void refresh().then(() => { setHistory([]); setFuture([]); setError(''); }).catch(e => setError(e.message)); }}>Reload Saved Version</button><button aria-label="Dismiss message" onClick={() => setError('')}><X className={icon} /></button></div>}
@@ -427,7 +427,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
             </details>
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-gray-600">{listed.length} matching · {groups.length} pages</span>
-              <button className="text-xs font-medium text-[#301D5D] underline" onClick={() => setBulkOpen(!bulkOpen)} aria-expanded={bulkOpen}>{bulkOpen ? 'Close bulk actions' : 'Bulk actions'}</button>
+              <button className="text-xs font-medium text-[#005a8f] underline" onClick={() => setBulkOpen(!bulkOpen)} aria-expanded={bulkOpen}>{bulkOpen ? 'Close bulk actions' : 'Bulk actions'}</button>
             </div>
             {bulkOpen && <div className="flex flex-wrap items-center gap-2 rounded-md bg-gray-50 p-2">
               <label className="flex items-center gap-1 text-xs"><input type="checkbox" aria-label="Select all listed hotspots" checked={listed.length > 0 && listed.every(h => checked.includes(h.id))} onChange={e => setChecked(e.target.checked ? listed.map(h => h.id) : [])} />Select All</label>
@@ -451,7 +451,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
               {openPages.includes(group.pageIndex) && group.partners.map(partner => <div key={partner.name}>
               {(group.partners.length > 1 || partner.name !== 'Unassigned') && <h3 className="bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700">{partner.name === 'Unassigned' ? 'Other links' : partner.name}</h3>}
               {partner.rows.map(h => <div key={h.id} data-layer-id={h.id}
-                className={`border-b border-gray-100 px-3 py-3 ${selected === h.id ? 'bg-[#f2eef9] ring-1 ring-inset ring-[#7059A8]' : 'bg-white'}`}>
+                className={`border-b border-gray-100 px-3 py-3 ${selected === h.id ? 'bg-[#f2eef9] ring-1 ring-inset ring-[#2f7aa7]' : 'bg-white'}`}>
                 <div className="flex items-start gap-2">
                   {bulkOpen && <input type="checkbox" className="mt-1.5" aria-label={`Select ${h.label || `hotspot ${h.id}`}`} checked={checked.includes(h.id)} onChange={e => setChecked(ids => e.target.checked ? [...ids, h.id] : ids.filter(id => id !== h.id))} />}
                   <button className="min-w-0 flex-1 text-left" onClick={() => jump(h)} onDoubleClick={() => { if (!blocked) setEditing(h); }}>
@@ -463,10 +463,10 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
                   </button>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 pl-1 text-xs">
-                  <button className="font-medium text-[#301D5D] underline" disabled={blocked} onClick={() => { jump(h); setEditing(h); }}>Review</button>
-                  {filter === 'rejected' ? <button className="font-medium text-[#301D5D] underline" disabled={blocked} onClick={() => act([{ id: h.id, values: { is_deleted: false, review_status: 'pending', is_published: false } }], 'Restore draft')}>Restore</button> :
+                  <button className="font-medium text-[#005a8f] underline" disabled={blocked} onClick={() => { jump(h); setEditing(h); }}>Review</button>
+                  {filter === 'rejected' ? <button className="font-medium text-[#005a8f] underline" disabled={blocked} onClick={() => act([{ id: h.id, values: { is_deleted: false, review_status: 'pending', is_published: false } }], 'Restore draft')}>Restore</button> :
                     <>
-                      {reviewStatus(h) === 'pending' && !needsAttention(h) && <button className="font-medium text-[#301D5D] underline" disabled={blocked} onClick={() => act([{ id: h.id, values: { review_status: 'approved' } }], 'Approve hotspot')}>Approve</button>}
+                      {reviewStatus(h) === 'pending' && !needsAttention(h) && <button className="font-medium text-[#005a8f] underline" disabled={blocked} onClick={() => act([{ id: h.id, values: { review_status: 'approved' } }], 'Approve hotspot')}>Approve</button>}
                       <button className="font-medium text-gray-600 underline" disabled={blocked} onClick={() => {
                         if (h.is_published && !window.confirm('Remove this published hotspot from the reader? You can undo this change.')) return;
                         act([{ id: h.id, values: { review_status: 'rejected', is_published: false } }], 'Remove hotspot');

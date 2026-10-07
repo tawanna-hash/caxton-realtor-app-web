@@ -268,7 +268,7 @@ function SetupForm({
           type="button"
           disabled={!canSave}
           onClick={() => void save()}
-          className="rounded-md bg-[#301D5D] px-4 py-2 text-sm text-white hover:bg-[#42277C] disabled:opacity-50"
+          className="rounded-md bg-[#005a8f] px-4 py-2 text-sm text-white hover:bg-[#1c3f5e] disabled:opacity-50"
         >
           {saving ? 'Saving card…' : 'Save card'}
         </button>

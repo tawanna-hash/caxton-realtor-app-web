@@ -74,7 +74,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
               value={query}
               onChange={(event) => { setQuery(event.target.value); setPage(1); }}
               placeholder="Search by form name or number"
-              className="h-[40px] w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]"
+              className="h-[40px] w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-950 outline-none focus:border-[#005a8f]"
             />
           </label>
           <div className="flex flex-wrap gap-2" aria-label="Filter TREC forms by category">
@@ -85,8 +85,8 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
                 onClick={() => { setCategory(option); setPage(1); }}
                 className={`rounded-full border font-medium transition h-[36px] px-4 text-sm ${
                   category === option
-                    ? 'border-[#301D5D] bg-[#301D5D] text-white'
-                    : 'border-slate-300 bg-white text-slate-700 hover:border-[#7059A8] hover:bg-[#F8F5FF]'
+                    ? 'border-[#005a8f] bg-[#005a8f] text-white'
+                    : 'border-slate-300 bg-white text-slate-700 hover:border-[#2f7aa7] hover:bg-[#f5f6f9]'
                 }`}
               >
                 {option}
@@ -119,7 +119,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
                     <span className="block truncate text-sm font-medium text-slate-900">{form.formNumber} · {form.title}</span>
                     <span className="block text-xs text-slate-500">{form.category} · Effective {formatEffectiveDate(form.effectiveDate)}</span>
                   </span>
-                  <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{total > 0 ? (filled > 0 ? `Fillable · ${filled} of ${total}` : `Fillable · ${total} fields`) : 'Notice · Nothing to Fill'}</span>
+                  <span className="ds-chip bg-[#daeeff] text-[#005a8f]">{total > 0 ? (filled > 0 ? `Fillable · ${filled} of ${total}` : `Fillable · ${total} fields`) : 'Notice · Nothing to Fill'}</span>
                   <TrecFormActions
                     family={form.formFamily}
                     disabled={!dealContext.hasDeal || dealContext.locked}
@@ -144,12 +144,12 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
           {pagedForms.map((form) => (
             <article key={form.formFamily} className={`flex min-w-0 flex-col justify-between gap-4 rounded-xl border border-slate-200 p-4 ${'bg-white'}`}>
               <div className="flex min-w-0 items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFEAF8] text-[#5B3FA0]">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#daeeff] text-[#005a8f]">
                   <FileText className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-[#EFEAF8] px-2 py-0.5 text-xs font-semibold text-[#301D5D]">TREC {form.formNumber}</span>
+                    <span className="rounded-full bg-[#daeeff] px-2 py-0.5 text-xs font-semibold text-[#005a8f]">TREC {form.formNumber}</span>
                     <span className="text-xs font-semibold text-slate-500">{form.category}</span>
                   </div>
                   <h3 className="mt-2 text-sm font-semibold leading-5 text-slate-950">{form.title}</h3>
@@ -160,7 +160,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
                 <a
                   href={form.category === 'TR Forms' ? form.pdfUrl : `/agents/closing-time?form=${encodeURIComponent(form.formFamily)}#trec-form-workspace`}
                   {...(form.category === 'TR Forms' ? { target: '_blank', rel: 'noreferrer' } : {})}
-                  className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-3 text-sm font-bold text-white transition hover:bg-[#42277C]"
+                  className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-md bg-[#005a8f] px-3 text-sm font-bold text-white transition hover:bg-[#1c3f5e]"
                 >
                   <PencilLine className="h-4 w-4 shrink-0" aria-hidden="true" />
                   Open &amp; Fill
@@ -170,7 +170,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
                   download
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 transition hover:bg-[#F4F3F8]"
+                  className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 transition hover:bg-[#f5f6f9]"
                 >
                   <Download className="rnn-inline-icon" aria-hidden="true" />
                   Download
@@ -193,7 +193,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
               type="button"
               onClick={() => setPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#005a8f] hover:bg-[#f5f6f9] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back
             </button>
@@ -202,7 +202,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
               type="button"
               onClick={() => setPage(Math.min(pageCount, currentPage + 1))}
               disabled={currentPage === pageCount}
-              className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#005a8f] px-4 text-sm font-bold text-white transition hover:bg-[#1c3f5e] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -228,7 +228,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
             href="https://www.trec.texas.gov/agency-information/contracts"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-[44px] shrink-0 items-center justify-center rounded-md border border-[#301D5D] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white"
+            className="inline-flex h-[44px] shrink-0 items-center justify-center rounded-md border border-[#005a8f] bg-white px-4 text-sm font-bold text-[#005a8f] transition hover:bg-[#005a8f] hover:text-white"
           >
             TREC Quick Link
           </a>

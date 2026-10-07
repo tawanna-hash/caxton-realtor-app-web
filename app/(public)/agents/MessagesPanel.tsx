@@ -16,9 +16,9 @@ type Consent = 'opted_in' | 'pending' | 'opted_out' | 'none';
 type Party = { key: string; name: string; role: string; email: string; phone: string };
 type Item = { id: string; at: string; kind: 'email' | 'sms'; out: boolean; title: string; body: string; status: string; error: string | null };
 
-const btn = 'inline-flex items-center rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white disabled:opacity-45';
-const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[14px] text-[#1B1726]';
-const lab = 'mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]';
+const btn = 'inline-flex items-center rounded-lg border border-[#d4d8dd] bg-white px-3 py-2 text-[13px] font-medium text-[#292a2d] transition hover:border-[#005a8f] hover:bg-[#005a8f] hover:text-white disabled:opacity-45';
+const field = 'w-full rounded-lg border border-[#d4d8dd] bg-white px-3 py-2 text-[14px] text-[#292a2d]';
+const lab = 'mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-[#51555b]';
 const key = (n: string) => n.trim().toLowerCase().replace(/\s+/g, ' ');
 const digits = (v: string) => v.replace(/\D/g, '');
 const stamp = (iso: string) => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -160,29 +160,29 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   const last = (p: Party) => { const l = itemsFor(p).at(-1); return l ? `${l.kind === 'sms' ? 'Text' : 'Email'} · ${stamp(l.at)}` : 'No messages yet'; };
 
   const bubble = (i: Item, who?: string) => (
-    <div key={`${i.kind}-${i.id}`} className={`max-w-[85%] rounded-xl border px-3 py-2 ${i.out ? 'ml-auto border-[#E6E5EC] bg-[#F6F3FB]' : 'border-[#E6E5EC] bg-white'}`}>
-      <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]">{who ? `${who} · ` : ''}{i.kind === 'email' ? 'Email' : 'Text'} · {stamp(i.at)}</div>
-      {i.kind === 'email' && <div className="text-[13px] font-semibold text-[#1B1726]">{i.title}</div>}
-      <div className="whitespace-pre-wrap text-[14px] text-[#4A4757]">{i.body}</div>
-      <div className="text-[12px] font-medium text-[#7A7787]">{i.out ? (STATUS[i.status] ?? i.status) : 'Received'}{i.error ? `: ${i.error.slice(0, 120)}` : ''}</div>
+    <div key={`${i.kind}-${i.id}`} className={`max-w-[85%] rounded-xl border px-3 py-2 ${i.out ? 'ml-auto border-[#d4d8dd] bg-[#f5f6f9]' : 'border-[#d4d8dd] bg-white'}`}>
+      <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#51555b]">{who ? `${who} · ` : ''}{i.kind === 'email' ? 'Email' : 'Text'} · {stamp(i.at)}</div>
+      {i.kind === 'email' && <div className="text-[13px] font-semibold text-[#292a2d]">{i.title}</div>}
+      <div className="whitespace-pre-wrap text-[14px] text-[#51555b]">{i.body}</div>
+      <div className="text-[12px] font-medium text-[#51555b]">{i.out ? (STATUS[i.status] ?? i.status) : 'Received'}{i.error ? `: ${i.error.slice(0, 120)}` : ''}</div>
     </div>
   );
   const pillBase = 'inline-flex max-w-full items-center gap-2 rounded-full border px-2 py-0.5 text-[10px] leading-4 font-medium';
   const namePill = (name: string, role: string, on = false) => (
-    <span className={`${pillBase} ${on ? 'border-[#301D5D] bg-[#EFEAF8] text-[#1B1726]' : 'border-[#E6E5EC] bg-white text-[#1B1726]'}`}><span className="break-words">{name}</span>{role ? <span className="text-[8px] font-medium uppercase tracking-[0.06em] text-[#7A7787]">{role}</span> : null}</span>
+    <span className={`${pillBase} ${on ? 'border-[#005a8f] bg-[#daeeff] text-[#292a2d]' : 'border-[#d4d8dd] bg-white text-[#292a2d]'}`}><span className="break-words">{name}</span>{role ? <span className="text-[8px] font-medium uppercase tracking-[0.06em] text-[#51555b]">{role}</span> : null}</span>
   );
   const roleOf = (name: string) => parties.find((p) => key(p.name) === key(name))?.role ?? '';
   const personButton = (p: Party, extra = '') => (
-    <button key={p.key} type="button" onClick={() => { setSel(p.key); setMsg(''); setPhoneThread(true); }} className={`${extra} !text-left transition hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${p.key === sel ? '!bg-[#EFEAF8]' : '!bg-white'}`}>
+    <button key={p.key} type="button" onClick={() => { setSel(p.key); setMsg(''); setPhoneThread(true); }} className={`${extra} !text-left transition hover:!bg-[#daeeff] hover:!text-[#292a2d] ${p.key === sel ? '!bg-[#daeeff]' : '!bg-white'}`}>
       {namePill(p.name, p.role, p.key === sel)}
-      <span className="mt-1 block text-[12px] font-medium text-[#7A7787]">{last(p)}</span>
+      <span className="mt-1 block text-[12px] font-medium text-[#51555b]">{last(p)}</span>
     </button>
   );
   const header = party && (
-    <div className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] px-4 py-3">
+    <div className="flex items-center justify-between gap-3 border-b border-[#d4d8dd] px-4 py-3">
       <div>
         <div>{namePill(party.name, party.role, true)}</div>
-        <div className="mt-1 text-[12px] font-medium text-[#7A7787]">{[party.email, party.phone].filter(Boolean).join(' · ') || 'No email or phone on file. Add them on the People tab.'}</div>
+        <div className="mt-1 text-[12px] font-medium text-[#51555b]">{[party.email, party.phone].filter(Boolean).join(' · ') || 'No email or phone on file. Add them on the People tab.'}</div>
       </div>
     </div>
   );
@@ -199,7 +199,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
     <div>
       <button type="button" className={btn} onClick={() => setAskOpen((v) => !v)} aria-expanded={askOpen}>{askOpen ? 'Hide Requests' : `Request Documents Or Forms${askCount ? ` (${askCount})` : ''}`}</button>
       {askOpen && (
-        <div className="mt-3 space-y-4 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-4 py-3">
+        <div className="mt-3 space-y-4 rounded-lg border border-[#d4d8dd] bg-[#f5f6f9] px-4 py-3">
           <input className={field} placeholder="Search documents and forms" value={askSearch} onChange={(e) => setAskSearch(e.target.value)} />
           <div className="max-h-72 space-y-4 overflow-auto pr-1">
             {([['Required Documents', askGroups.required], ['Optional Documents', askGroups.optional], ...Object.entries(lib).map(([c, l]) => [`TREC Forms: ${c}`, l] as const)] as const).map(([title, list]) => {
@@ -208,7 +208,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
                 <div key={title}>
                   <span className={lab}>{title}</span>
                   <div className="grid gap-1 sm:grid-cols-2">
-                    {shownList.map((l) => <label key={l} className="flex items-start gap-2 text-[13px] text-[#1B1726]"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={asks.includes(l)} onChange={() => setAsks((a) => a.includes(l) ? a.filter((x) => x !== l) : [...a, l])} /><span>{l}</span></label>)}
+                    {shownList.map((l) => <label key={l} className="flex items-start gap-2 text-[13px] text-[#292a2d]"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#005a8f]" checked={asks.includes(l)} onChange={() => setAsks((a) => a.includes(l) ? a.filter((x) => x !== l) : [...a, l])} /><span>{l}</span></label>)}
                   </div>
                 </div>
               );
@@ -226,7 +226,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
       <button type="button" className={btn} onClick={() => fileRef.current?.click()}>Attach Files</button>
       {files.length > 0 && (
         <div className="mt-2 space-y-1">
-          {files.map((f) => <div key={f.filename} className="flex items-center justify-between gap-3 rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] text-[#1B1726]"><span className="break-all">{f.filename} <span className="text-[12px] font-medium text-[#7A7787]">{Math.round(f.size / 1024)} KB</span></span><button type="button" className="text-[12px] font-medium text-[#7A7787] underline underline-offset-2 hover:!bg-transparent hover:!text-[#301D5D]" onClick={() => setFiles((l) => l.filter((x) => x.filename !== f.filename))}>Remove</button></div>)}
+          {files.map((f) => <div key={f.filename} className="flex items-center justify-between gap-3 rounded-lg border border-[#d4d8dd] bg-white px-3 py-2 text-[13px] text-[#292a2d]"><span className="break-all">{f.filename} <span className="text-[12px] font-medium text-[#51555b]">{Math.round(f.size / 1024)} KB</span></span><button type="button" className="text-[12px] font-medium text-[#51555b] underline underline-offset-2 hover:!bg-transparent hover:!text-[#005a8f]" onClick={() => setFiles((l) => l.filter((x) => x.filename !== f.filename))}>Remove</button></div>)}
         </div>
       )}
       <Tip text="Up to 5 files, 3 MB in total." />
@@ -234,18 +234,18 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   );
   const composerInner = !party ? null : (
     <div className="px-4 py-4">
-      <h3 className="text-[14px] font-semibold text-[#1B1726]">{mode === 'email' ? 'New Email' : 'New Text'}</h3>
-      <p className="mb-3 mt-0.5 break-words text-[12px] font-medium text-[#7A7787]">To: {targets.length === 0 ? 'Select a contact above' : targets.map((p) => `${p.name}${mode === 'email' ? (p.email ? ` (${p.email})` : ' (no email)') : (p.phone ? ` (${p.phone})` : ' (no phone)')}`).join(', ')}</p>
+      <h3 className="text-[14px] font-semibold text-[#292a2d]">{mode === 'email' ? 'New Email' : 'New Text'}</h3>
+      <p className="mb-3 mt-0.5 break-words text-[12px] font-medium text-[#51555b]">To: {targets.length === 0 ? 'Select a contact above' : targets.map((p) => `${p.name}${mode === 'email' ? (p.email ? ` (${p.email})` : ' (no email)') : (p.phone ? ` (${p.phone})` : ' (no phone)')}`).join(', ')}</p>
       {mailbox && mailbox.connected && !mailbox.readReplies && (
-        <label className="mb-4 flex items-start gap-2 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-[12px] font-medium text-[#4A4757]">
-          <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={false} disabled={busy} onChange={() => void post({ action: 'mailbox_read', on: true })} />
+        <label className="mb-4 flex items-start gap-2 rounded-lg border border-[#d4d8dd] bg-[#f5f6f9] px-3 py-2 text-[12px] font-medium text-[#51555b]">
+          <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#005a8f]" checked={false} disabled={busy} onChange={() => void post({ action: 'mailbox_read', on: true })} />
           <span>Show email replies from {mailbox.connected}. Only replies to emails sent from here, or mail naming the property, from people on your deals. Once on, this is saved in Settings.</span>
         </label>
       )}
       {mailbox?.readReplies && mailbox.lastError && <p className="mb-4 text-[12px] font-medium text-[#661102]">{mailbox.lastError}</p>}
-      <div className="mb-3 flex gap-4 border-b border-[#E6E5EC]">
+      <div className="mb-3 flex gap-4 border-b border-[#d4d8dd]">
         {(['email', 'sms'] as const).map((m) => (
-          <button key={m} type="button" onClick={() => { setMode(m); setMsg(''); }} className={`-mb-px border-b-2 pb-2 text-[13px] font-medium !rounded-none !border-x-0 !border-t-0 !bg-transparent !px-0 hover:!bg-transparent hover:!text-[#301D5D] ${mode === m ? '!border-[#301D5D] !text-[#301D5D]' : '!border-transparent text-[#7A7787]'}`}>{m === 'email' ? 'Email' : 'Text'}</button>
+          <button key={m} type="button" onClick={() => { setMode(m); setMsg(''); }} className={`-mb-px border-b-2 pb-2 text-[13px] font-medium !rounded-none !border-x-0 !border-t-0 !bg-transparent !px-0 hover:!bg-transparent hover:!text-[#005a8f] ${mode === m ? '!border-[#005a8f] !text-[#005a8f]' : '!border-transparent text-[#51555b]'}`}>{m === 'email' ? 'Email' : 'Text'}</button>
         ))}
       </div>
       {mode === 'email' && (
@@ -256,17 +256,17 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
                     <div className="flex flex-wrap items-center gap-2">
                       {parties.filter((p) => p.email && p.key !== party.key).map((p) => {
                         const on = cc.some((c) => c.toLowerCase() === p.email.toLowerCase());
-                        return <button key={p.key} type="button" onClick={() => setCc((c) => on ? c.filter((x) => x.toLowerCase() !== p.email.toLowerCase()) : [...c, p.email])} className={`!rounded-full !border !px-2 !py-0.5 !text-[10px] !leading-4 font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#7A7787]">{p.role}</span></button>;
+                        return <button key={p.key} type="button" onClick={() => setCc((c) => on ? c.filter((x) => x.toLowerCase() !== p.email.toLowerCase()) : [...c, p.email])} className={`!rounded-full !border !px-2 !py-0.5 !text-[10px] !leading-4 font-medium hover:!bg-[#daeeff] hover:!text-[#292a2d] ${on ? '!border-[#005a8f] !bg-[#daeeff] !text-[#292a2d]' : '!border-[#d4d8dd] !bg-white !text-[#51555b]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#51555b]">{p.role}</span></button>;
                       })}
-                      {cc.filter((c) => !parties.some((p) => p.email.toLowerCase() === c.toLowerCase())).map((c) => <button key={c} type="button" onClick={() => setCc((l) => l.filter((x) => x !== c))} className="!rounded-full !border !border-[#301D5D] !bg-[#EFEAF8] !px-3 !py-1 text-[12px] font-medium !text-[#1B1726] hover:!bg-[#EFEAF8]" title="Remove">{c} ×</button>)}
-                      <input className="min-w-[180px] flex-1 rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] text-[#1B1726]" placeholder="Add another email" value={ccInput} onChange={(e) => setCcInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const v = ccInput.trim(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && !cc.includes(v)) { setCc((l) => [...l, v]); setCcInput(''); } } }} />
+                      {cc.filter((c) => !parties.some((p) => p.email.toLowerCase() === c.toLowerCase())).map((c) => <button key={c} type="button" onClick={() => setCc((l) => l.filter((x) => x !== c))} className="!rounded-full !border !border-[#005a8f] !bg-[#daeeff] !px-3 !py-1 text-[12px] font-medium !text-[#292a2d] hover:!bg-[#daeeff]" title="Remove">{c} ×</button>)}
+                      <input className="min-w-[180px] flex-1 rounded-lg border border-[#d4d8dd] bg-white px-3 py-2 text-[13px] text-[#292a2d]" placeholder="Add another email" value={ccInput} onChange={(e) => setCcInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const v = ccInput.trim(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && !cc.includes(v)) { setCc((l) => [...l, v]); setCcInput(''); } } }} />
                     </div>
                     <Tip text="You are always copied. Press Enter to add an email." />
                   </div>
                   <label className="block"><span className={lab}>Subject</span>
-                    <div className="flex flex-col overflow-hidden rounded-lg border border-[#E6E5EC] bg-white sm:flex-row sm:items-center">
-                      {!contact && <span className="shrink-0 border-b border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-[13px] font-medium text-[#4A4757] sm:border-b-0 sm:border-r">{(deal?.propertyAddress || deal?.title || '').trim()} -</span>}
-                      <input className="min-w-0 flex-1 px-3 py-2 text-[14px] text-[#1B1726] outline-none" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={150} />
+                    <div className="flex flex-col overflow-hidden rounded-lg border border-[#d4d8dd] bg-white sm:flex-row sm:items-center">
+                      {!contact && <span className="shrink-0 border-b border-[#d4d8dd] bg-[#f5f6f9] px-3 py-2 text-[13px] font-medium text-[#51555b] sm:border-b-0 sm:border-r">{(deal?.propertyAddress || deal?.title || '').trim()} -</span>}
+                      <input className="min-w-0 flex-1 px-3 py-2 text-[14px] text-[#292a2d] outline-none" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={150} />
                     </div>
                   </label>
             <label className="block"><span className={lab}>Message</span><textarea className={field} rows={5} value={body} onChange={(e) => setBody(e.target.value)} /></label>
@@ -279,12 +279,12 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
               <button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !targets.length || !subject.trim() || !body.trim()} onClick={() => void sendEmail()}>Send Email</button></span>
             </div>
           </div>
-        ) : <p className="text-[13px] text-[#4A4757]">No email on file for {party.name}. Add one on the People tab.</p>
+        ) : <p className="text-[13px] text-[#51555b]">No email on file for {party.name}. Add one on the People tab.</p>
       )}
       {mode === 'sms' && (
-        !allowed ? <p className="text-[13px] text-[#4A4757]">Texting is coming soon for your account.</p>
-        : !e164 ? <p className="text-[13px] text-[#4A4757]">No valid mobile number on file for {party.name}. Add one on the People tab.</p>
-        : state === 'opted_out' ? <p className="text-[13px] text-[#4A4757]">{party.name} opted out of texts. They can reply START to turn them back on.</p>
+        !allowed ? <p className="text-[13px] text-[#51555b]">Texting is coming soon for your account.</p>
+        : !e164 ? <p className="text-[13px] text-[#51555b]">No valid mobile number on file for {party.name}. Add one on the People tab.</p>
+        : state === 'opted_out' ? <p className="text-[13px] text-[#51555b]">{party.name} opted out of texts. They can reply START to turn them back on.</p>
         : state === 'opted_in' ? (
           <div className="space-y-3">
             <label className="block"><span className={lab}>Text</span><textarea className={field} rows={3} maxLength={900} value={body} onChange={(e) => setBody(e.target.value)} /></label>
@@ -297,7 +297,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-[13px] text-[#4A4757]">{state === 'pending' ? `Waiting for ${party.name} to reply YES.` : `${party.name} has not agreed to texts yet.`} Texts can only go to people who agreed.</p>
+            <p className="text-[13px] text-[#51555b]">{state === 'pending' ? `Waiting for ${party.name} to reply YES.` : `${party.name} has not agreed to texts yet.`} Texts can only go to people who agreed.</p>
             <div className="flex flex-wrap gap-2">
               {state === 'none' && <button type="button" className={btn} disabled={busy} onClick={() => void post({ action: 'opt_in_request', dealId: scope, name: party.name, phone: party.phone })}>Send Opt-In Request</button>}
               <button type="button" className={btn} disabled={busy} onClick={() => { if (window.confirm(`Confirm that ${party.name} agreed to receive texts about this deal?`)) void post({ action: 'confirm_agreed', dealId: scope, name: party.name, phone: party.phone }); }}>Confirm They Agreed</button>
@@ -305,12 +305,12 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
           </div>
         )
       )}
-      {msg && <p role="status" className="mt-3 text-[12px] font-medium text-[#4A4757]">{msg}</p>}
+      {msg && <p role="status" className="mt-3 text-[12px] font-medium text-[#51555b]">{msg}</p>}
     </div>
   );
   const composerCard = (
     <div className="ds-card">
-      {locked ? <p className="px-4 py-4 text-[13px] text-[#4A4757]">This deal is closed and its record is locked. Messaging has stopped. The history is kept for the audit record.</p> : composerInner}
+      {locked ? <p className="px-4 py-4 text-[13px] text-[#51555b]">This deal is closed and its record is locked. Messaging has stopped. The history is kept for the audit record.</p> : composerInner}
     </div>
   );
   const threadCard = party && <div className="ds-card">{header}{threadBody(items)}</div>;
@@ -356,7 +356,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   );
   const picker = (changing || needsChoice) && (
     <div className="ds-card mb-4 px-4 py-4">
-      <h2 className="text-[14px] font-semibold text-[#1B1726]">{needsChoice ? 'Choose How Messages Looks' : 'Messages Layout'}</h2>
+      <h2 className="text-[14px] font-semibold text-[#292a2d]">{needsChoice ? 'Choose How Messages Looks' : 'Messages Layout'}</h2>
       
       <MessageLayoutPicker value={layoutChoice ?? layoutSaved} onPick={(v) => void saveLayout(v)} disabled={busy} />
     </div>
@@ -368,7 +368,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             <div className="flex flex-wrap gap-2">
               {parties.map((p) => {
                 const on = recipKeys.includes(p.key);
-                return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-full !border !px-2 !py-0.5 !text-[10px] !leading-4 font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#7A7787]">{p.role}</span></button>;
+                return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-full !border !px-2 !py-0.5 !text-[10px] !leading-4 font-medium hover:!bg-[#daeeff] hover:!text-[#292a2d] ${on ? '!border-[#005a8f] !bg-[#daeeff] !text-[#292a2d]' : '!border-[#d4d8dd] !bg-white !text-[#51555b]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#51555b]">{p.role}</span></button>;
               })}
             </div>
             <Tip text="Each person gets their own copy. Texts go only to people who agreed to texts." />
@@ -379,22 +379,22 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
     body_ = (
       <div className="space-y-4">
         <div className="ds-card px-4 py-4">
-          <div className="mb-3 flex gap-4 border-b border-[#E6E5EC]">
+          <div className="mb-3 flex gap-4 border-b border-[#d4d8dd]">
             {([['all', 'All'], ['email', 'Emails'], ['sms', 'Texts'], ['replies', 'Replies']] as const).map(([k, l]) => (
-              <button key={k} type="button" onClick={() => setFlt(k)} className={`-mb-px !rounded-none !border-x-0 !border-t-0 !bg-transparent !px-0 pb-2 text-[13px] font-medium hover:!bg-transparent hover:!text-[#301D5D] ${flt === k ? '!border-[#301D5D] !text-[#301D5D]' : '!border-transparent text-[#7A7787]'}`}>{l}</button>
+              <button key={k} type="button" onClick={() => setFlt(k)} className={`-mb-px !rounded-none !border-x-0 !border-t-0 !bg-transparent !px-0 pb-2 text-[13px] font-medium hover:!bg-transparent hover:!text-[#005a8f] ${flt === k ? '!border-[#005a8f] !text-[#005a8f]' : '!border-transparent text-[#51555b]'}`}>{l}</button>
             ))}
           </div>
           {!loaded && <p className="text-xs text-slate-500">Loading messages.</p>}
           {loaded && shown.length === 0 && <p className="text-xs text-slate-500">No messages yet.</p>}
           {shown.map((i, n) => (
             <div key={`${i.kind}-${i.id}`}>
-              {(n === 0 || dayOf(shown[n - 1].at) !== dayOf(i.at)) && <div className="my-3 text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]">{dayOf(i.at)}</div>}
-              <div className="flex gap-3 border-b border-[#F1F0F5] py-3 last:border-0">
-                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#E6E5EC] text-[11px] font-semibold text-[#7059A8]">{i.kind === 'email' ? '@' : 'T'}</span>
+              {(n === 0 || dayOf(shown[n - 1].at) !== dayOf(i.at)) && <div className="my-3 text-[11px] font-medium uppercase tracking-[0.06em] text-[#51555b]">{dayOf(i.at)}</div>}
+              <div className="flex gap-3 border-b border-[#f5f6f9] py-3 last:border-0">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#d4d8dd] text-[11px] font-semibold text-[#2f7aa7]">{i.kind === 'email' ? '@' : 'T'}</span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-semibold text-[#1B1726]">{i.out ? 'You to ' : ''}{namePill(i.who, roleOf(i.who))} <span className="text-[12px] font-medium text-[#7A7787]">{i.kind === 'email' ? 'email' : 'text'} · {stamp(i.at)} · {i.out ? (STATUS[i.status] ?? i.status) : 'Received'}</span></div>
-                  {i.kind === 'email' && <div className="text-[13px] font-medium text-[#1B1726]">{i.title}</div>}
-                  <div className="whitespace-pre-wrap break-words text-[14px] text-[#4A4757]">{i.body}</div>
+                  <div className="text-[13px] font-semibold text-[#292a2d]">{i.out ? 'You to ' : ''}{namePill(i.who, roleOf(i.who))} <span className="text-[12px] font-medium text-[#51555b]">{i.kind === 'email' ? 'email' : 'text'} · {stamp(i.at)} · {i.out ? (STATUS[i.status] ?? i.status) : 'Received'}</span></div>
+                  {i.kind === 'email' && <div className="text-[13px] font-medium text-[#292a2d]">{i.title}</div>}
+                  <div className="whitespace-pre-wrap break-words text-[14px] text-[#51555b]">{i.body}</div>
                 </div>
               </div>
             </div>
@@ -422,7 +422,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
     body_ = (
       <div className="space-y-4">
         <div className="flex gap-3 overflow-auto pb-1">
-          {parties.map((p) => personButton(p, 'min-w-[170px] shrink-0 rounded-xl border border-[#E6E5EC] px-3 py-2'))}
+          {parties.map((p) => personButton(p, 'min-w-[170px] shrink-0 rounded-xl border border-[#d4d8dd] px-3 py-2'))}
         </div>
         {threadCard}
         {!locked && (
@@ -437,18 +437,18 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
     body_ = (
       <div className="grid gap-4 md:grid-cols-[1fr_380px]">
         <div className="ds-card">
-          <div className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] px-4 py-3">
+          <div className="flex items-center justify-between gap-3 border-b border-[#d4d8dd] px-4 py-3">
             <div className="flex gap-4">
               {([['all', 'All Threads'], ['needs', 'Needs Reply'], ['waiting', 'Waiting On Them']] as const).map(([k, l]) => (
-                <button key={k} type="button" onClick={() => setThreadsTab(k)} className={`!rounded-none !border-x-0 !border-t-0 !bg-transparent !px-0 text-[13px] font-medium hover:!bg-transparent hover:!text-[#301D5D] ${threadsTab === k ? '!border-[#301D5D] !text-[#301D5D]' : '!border-transparent text-[#7A7787]'}`}>{l}</button>
+                <button key={k} type="button" onClick={() => setThreadsTab(k)} className={`!rounded-none !border-x-0 !border-t-0 !bg-transparent !px-0 text-[13px] font-medium hover:!bg-transparent hover:!text-[#005a8f] ${threadsTab === k ? '!border-[#005a8f] !text-[#005a8f]' : '!border-transparent text-[#51555b]'}`}>{l}</button>
               ))}
             </div>
             <button type="button" className={btn} onClick={() => setOpenThread('new')}>New Message</button>
           </div>
           {visibleThreads.length === 0 && <p className="px-4 py-4 text-xs text-slate-500">{loaded ? 'No threads yet. Use New Message to start one.' : 'Loading messages.'}</p>}
           {visibleThreads.map((t) => (
-            <button key={t.id} type="button" onClick={() => { setSel(t.person.key); setOpenThread(t.id); setMsg(''); }} className={`block w-full border-b border-[#E6E5EC] px-4 py-3 !text-left last:border-0 hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${openThread === t.id ? '!bg-[#EFEAF8]' : '!bg-white'}`}>
-              <span className="flex items-start justify-between gap-3"><span className="min-w-0"><span className="block break-words text-[14px] font-semibold text-[#1B1726]">{t.title}</span><span className="block break-words text-[12px] font-medium text-[#7A7787]">{t.items[t.items.length - 1].body.slice(0, 90)}</span></span><span className="shrink-0 text-right text-[12px] font-medium text-[#7A7787]"><span className="block">{namePill(t.person.name, t.person.role)}</span><span className="block">{t.channel} · {stamp(t.at)}</span></span></span>
+            <button key={t.id} type="button" onClick={() => { setSel(t.person.key); setOpenThread(t.id); setMsg(''); }} className={`block w-full border-b border-[#d4d8dd] px-4 py-3 !text-left last:border-0 hover:!bg-[#daeeff] hover:!text-[#292a2d] ${openThread === t.id ? '!bg-[#daeeff]' : '!bg-white'}`}>
+              <span className="flex items-start justify-between gap-3"><span className="min-w-0"><span className="block break-words text-[14px] font-semibold text-[#292a2d]">{t.title}</span><span className="block break-words text-[12px] font-medium text-[#51555b]">{t.items[t.items.length - 1].body.slice(0, 90)}</span></span><span className="shrink-0 text-right text-[12px] font-medium text-[#51555b]"><span className="block">{namePill(t.person.name, t.person.role)}</span><span className="block">{t.channel} · {stamp(t.at)}</span></span></span>
             </button>
           ))}
         </div>
@@ -459,8 +459,8 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
               <select className={field} value={sel} onChange={(e) => setSel(e.target.value)}>{parties.map((p) => <option key={p.key} value={p.key}>{p.name} ({p.role})</option>)}</select>
             </div>
           )}
-          {current && <div className="ds-card"><div className="border-b border-[#E6E5EC] px-4 py-3"><div className="text-[14px] font-semibold text-[#1B1726]">{current.title}</div><div className="mt-1">{namePill(current.person.name, current.person.role)}</div></div>{threadBody(current.items)}</div>}
-          {!current && openThread !== 'new' && <div className="ds-card px-4 py-6 text-[13px] text-[#4A4757]">Open a thread to read it and reply, or start a new message.</div>}
+          {current && <div className="ds-card"><div className="border-b border-[#d4d8dd] px-4 py-3"><div className="text-[14px] font-semibold text-[#292a2d]">{current.title}</div><div className="mt-1">{namePill(current.person.name, current.person.role)}</div></div>{threadBody(current.items)}</div>}
+          {!current && openThread !== 'new' && <div className="ds-card px-4 py-6 text-[13px] text-[#51555b]">Open a thread to read it and reply, or start a new message.</div>}
           {(current || openThread === 'new') && composerCard}
         </div>
       </div>
@@ -474,8 +474,8 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
       </div>
     ) : (
       <div className="ds-card">
-        <h2 className="border-b border-[#E6E5EC] px-4 py-3 text-[16px] font-semibold text-[#1B1726]">People On This Deal</h2>
-        {parties.map((p) => personButton(p, 'block w-full border-b border-[#E6E5EC] px-4 py-4 last:border-0'))}
+        <h2 className="border-b border-[#d4d8dd] px-4 py-3 text-[16px] font-semibold text-[#292a2d]">People On This Deal</h2>
+        {parties.map((p) => personButton(p, 'block w-full border-b border-[#d4d8dd] px-4 py-4 last:border-0'))}
       </div>
     );
   } else {
@@ -483,17 +483,17 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
       <div className={contact ? 'grid gap-4' : 'grid gap-4 md:grid-cols-[260px_1fr] xl:grid-cols-[260px_1fr_220px]'}>
         {!contact && (
           <div className="ds-card">
-            <h2 className="border-b border-[#E6E5EC] px-4 py-3 text-[14px] font-semibold text-[#1B1726]">People On This Deal</h2>
-            {parties.map((p) => personButton(p, 'block w-full border-b border-[#E6E5EC] px-4 py-3 last:border-0'))}
+            <h2 className="border-b border-[#d4d8dd] px-4 py-3 text-[14px] font-semibold text-[#292a2d]">People On This Deal</h2>
+            {parties.map((p) => personButton(p, 'block w-full border-b border-[#d4d8dd] px-4 py-3 last:border-0'))}
           </div>
         )}
         <div className="space-y-4">{threadCard}{composerCard}</div>
         {!contact && party && (
           <div className="ds-card self-start px-4 py-4 max-xl:hidden">
-            <div className="mb-3"><span className={lab}>Closing</span><span className="text-[14px] font-medium text-[#1B1726]">{deal?.closingDate ? new Date(`${deal.closingDate.slice(0, 10)}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set'}</span></div>
-            <div className="mb-3"><span className={lab}>Role</span><span className="text-[14px] font-medium text-[#1B1726]">{party.role}</span></div>
-            <div className="mb-3"><span className={lab}>Texts</span><span className="text-[14px] font-medium text-[#1B1726]">{state === 'opted_in' ? 'Agreed' : state === 'pending' ? 'Waiting For Reply' : state === 'opted_out' ? 'Opted Out' : 'Not Asked'}</span></div>
-            <div><span className={lab}>Messages</span><span className="text-[14px] font-medium text-[#1B1726]">{items.length}</span></div>
+            <div className="mb-3"><span className={lab}>Closing</span><span className="text-[14px] font-medium text-[#292a2d]">{deal?.closingDate ? new Date(`${deal.closingDate.slice(0, 10)}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set'}</span></div>
+            <div className="mb-3"><span className={lab}>Role</span><span className="text-[14px] font-medium text-[#292a2d]">{party.role}</span></div>
+            <div className="mb-3"><span className={lab}>Texts</span><span className="text-[14px] font-medium text-[#292a2d]">{state === 'opted_in' ? 'Agreed' : state === 'pending' ? 'Waiting For Reply' : state === 'opted_out' ? 'Opted Out' : 'Not Asked'}</span></div>
+            <div><span className={lab}>Messages</span><span className="text-[14px] font-medium text-[#292a2d]">{items.length}</span></div>
           </div>
         )}
       </div>
@@ -507,12 +507,12 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
       {!needsChoice && body_}
       {contact && (
         <div className="ds-card">
-          <h2 className="border-b border-[#E6E5EC] px-4 py-3 text-[14px] font-semibold text-[#1B1726]">Activity Log</h2>
+          <h2 className="border-b border-[#d4d8dd] px-4 py-3 text-[14px] font-semibold text-[#292a2d]">Activity Log</h2>
           {activity.length === 0 && <p className="px-4 py-4 text-xs text-slate-500">Texts, emails, replies and consent changes with {contact.name} are listed here.</p>}
           {activity.map((a) => (
-            <div key={a.id} className="flex items-start justify-between gap-4 border-b border-[#E6E5EC] px-4 py-3 last:border-0">
-              <span className="text-[14px] text-[#4A4757]">{a.message}</span>
-              <span className="shrink-0 text-[12px] font-medium text-[#7A7787]">{stamp(a.createdAt)}</span>
+            <div key={a.id} className="flex items-start justify-between gap-4 border-b border-[#d4d8dd] px-4 py-3 last:border-0">
+              <span className="text-[14px] text-[#51555b]">{a.message}</span>
+              <span className="shrink-0 text-[12px] font-medium text-[#51555b]">{stamp(a.createdAt)}</span>
             </div>
           ))}
         </div>

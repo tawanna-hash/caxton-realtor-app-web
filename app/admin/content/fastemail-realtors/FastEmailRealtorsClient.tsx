@@ -246,7 +246,7 @@ export default function FastEmailRealtorsClient() {
       </section>
 
       {notice && (
-        <div className="rounded-md border border-[#D9CFF0] bg-[#F6F3FB] px-4 py-3 text-sm text-[#1B1726]">
+        <div className="rounded-md border border-[#bbc1c9] bg-[#f5f6f9] px-4 py-3 text-sm text-[#292a2d]">
           {notice}
         </div>
       )}
@@ -330,7 +330,7 @@ export default function FastEmailRealtorsClient() {
                     <dt className="text-gray-500">Email</dt>
                     <dd className="text-gray-700 break-all">
                       {row.email ? (
-                        <a className="text-[#42277C] hover:underline" href={`mailto:${row.email}`}>
+                        <a className="text-[#1c3f5e] hover:underline" href={`mailto:${row.email}`}>
                           {row.email}
                         </a>
                       ) : (
@@ -347,7 +347,7 @@ export default function FastEmailRealtorsClient() {
                     <dd className="text-gray-700 break-all">
                       {row.website ? (
                         <a
-                          className="text-[#42277C] hover:underline"
+                          className="text-[#1c3f5e] hover:underline"
                           href={websiteHref(row.website)}
                           target="_blank"
                           rel="noreferrer"
@@ -423,7 +423,7 @@ export default function FastEmailRealtorsClient() {
                   <td className="px-3 py-3">
                     {row.email && (
                       <a
-                        className="block text-[#42277C] hover:underline"
+                        className="block text-[#1c3f5e] hover:underline"
                         href={`mailto:${row.email}`}
                       >
                         {row.email}
@@ -434,7 +434,7 @@ export default function FastEmailRealtorsClient() {
                   <td className="px-3 py-3">
                     {row.website ? (
                       <a
-                        className="block max-w-48 truncate text-[#42277C] hover:underline"
+                        className="block max-w-48 truncate text-[#1c3f5e] hover:underline"
                         href={websiteHref(row.website)}
                         target="_blank"
                         rel="noreferrer"

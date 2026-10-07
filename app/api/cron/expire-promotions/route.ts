@@ -111,17 +111,17 @@ function digestHtml(rows: FlippedRow[], siteUrl: string): string {
       const exp = escapeHtml(humanDate(r.expires_at));
       return `
         <tr>
-          <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;vertical-align:top">
-            <div style="font-weight:600;color:#111827;font-size:15px">${builder}</div>
-            <div style="color:#4b5563;font-size:13px;margin-top:2px">${title}</div>
-            <div style="color:#6b7280;font-size:12px;margin-top:2px">${where} &middot; ${pub}</div>
+          <td style="padding:12px 16px;border-bottom:1px solid #d4d8dd;vertical-align:top">
+            <div style="font-weight:600;color:#292a2d;font-size:15px">${builder}</div>
+            <div style="color:#51555b;font-size:13px;margin-top:2px">${title}</div>
+            <div style="color:#51555b;font-size:12px;margin-top:2px">${where} &middot; ${pub}</div>
           </td>
-          <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;vertical-align:top;color:#374151;font-size:13px">
+          <td style="padding:12px 16px;border-bottom:1px solid #d4d8dd;vertical-align:top;color:#292a2d;font-size:13px">
             <div>${exp}</div>
             <div style="color:#661102;font-weight:600;margin-top:2px">Expired</div>
           </td>
-          <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;vertical-align:top">
-            <a href="${link}" style="display:inline-block;padding:8px 14px;background:#111827;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;font-weight:500">Open in admin</a>
+          <td style="padding:12px 16px;border-bottom:1px solid #d4d8dd;vertical-align:top">
+            <a href="${link}" style="display:inline-block;padding:8px 14px;background:#292a2d;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;font-weight:500">Open in admin</a>
           </td>
         </tr>`;
     })
@@ -129,22 +129,22 @@ function digestHtml(rows: FlippedRow[], siteUrl: string): string {
 
   return `<!doctype html>
 <html>
-<body style="margin:0;padding:24px;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="max-width:720px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb">
+<body style="margin:0;padding:24px;background:#f5f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="max-width:720px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #d4d8dd">
     <tr>
-      <td style="padding:20px 24px;background:#111827;color:#fff">
+      <td style="padding:20px 24px;background:#292a2d;color:#fff">
         <div style="font-size:18px;font-weight:600">Promotions auto-expired</div>
-        <div style="font-size:13px;color:#9ca3af;margin-top:4px">${rows.length} promotion${rows.length === 1 ? '' : 's'} hidden from public feed in the last 24 hours</div>
+        <div style="font-size:13px;color:#7b8089;margin-top:4px">${rows.length} promotion${rows.length === 1 ? '' : 's'} hidden from public feed in the last 24 hours</div>
       </td>
     </tr>
     <tr>
       <td>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse">
           <thead>
-            <tr style="background:#f9fafb">
-              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #e5e7eb">Promotion</th>
-              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #e5e7eb">Expired</th>
-              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #e5e7eb"></th>
+            <tr style="background:#f5f6f9">
+              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#51555b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #d4d8dd">Promotion</th>
+              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#51555b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #d4d8dd">Expired</th>
+              <th style="padding:10px 16px;text-align:left;font-size:12px;color:#51555b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #d4d8dd"></th>
             </tr>
           </thead>
           <tbody>${body}</tbody>
@@ -152,7 +152,7 @@ function digestHtml(rows: FlippedRow[], siteUrl: string): string {
       </td>
     </tr>
     <tr>
-      <td style="padding:16px 24px;background:#f9fafb;color:#6b7280;font-size:12px;text-align:center">
+      <td style="padding:16px 24px;background:#f5f6f9;color:#51555b;font-size:12px;text-align:center">
         Sent by /api/cron/expire-promotions &middot; ${escapeHtml(siteUrl)}
       </td>
     </tr>

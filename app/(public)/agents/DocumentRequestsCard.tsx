@@ -10,9 +10,9 @@ type Req = { id: string; label: string; note: string; personName: string; status
 type Upload = { id: string; docId: string; filename: string; storedIn: string; storedPath: string; storedUrl: string; archived: boolean };
 
 const PRESETS = ["Driver's License (Front And Back)", 'Pre-Approval Letter', 'Proof Of Funds', 'Homeowners Insurance Binder', 'Other'];
-const btn = 'inline-flex items-center rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white disabled:opacity-45';
-const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[14px] text-[#1B1726]';
-const lab = 'mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]';
+const btn = 'inline-flex items-center rounded-lg border border-[#d4d8dd] bg-white px-3 py-2 text-[13px] font-medium text-[#292a2d] transition hover:border-[#005a8f] hover:bg-[#005a8f] hover:text-white disabled:opacity-45';
+const field = 'w-full rounded-lg border border-[#d4d8dd] bg-white px-3 py-2 text-[14px] text-[#292a2d]';
+const lab = 'mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-[#51555b]';
 const when = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 const STATUS: Record<string, string> = { pending: 'Pending', uploaded: 'Needs Review', received: 'Received' };
 
@@ -132,14 +132,14 @@ export default function DocumentRequestsCard({ deal, locked, documentGroups, onU
   return (
     <div className="ds-card">
       <div className="flex items-center justify-between gap-3 px-4 py-3">
-        <span className="flex items-center gap-2 text-sm font-semibold text-slate-900"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Client Document Requests</span>
+        <span className="flex items-center gap-2 text-sm font-semibold text-slate-900"><FileText className="h-4 w-4 text-[#2f7aa7]" aria-hidden="true" />Client Document Requests</span>
         <span className="flex items-center gap-3">
           <span className="text-xs font-medium text-slate-500">{pending} Open</span>
           {!locked && <button type="button" className={btn} onClick={() => setOpen((v) => !v)}>{open ? 'Close' : 'Request Document'}</button>}
         </span>
       </div>
       {open && (
-        <div className="space-y-3 border-t border-[#E6E5EC] px-4 py-4">
+        <div className="space-y-3 border-t border-[#d4d8dd] px-4 py-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <label><span className={lab}>Document</span>
               <select className={field} value={preset} onChange={(e) => setPreset(e.target.value)}>{PRESETS.map((p) => <option key={p}>{p}</option>)}</select>
@@ -153,17 +153,17 @@ export default function DocumentRequestsCard({ deal, locked, documentGroups, onU
           </div>
           {preset === 'Other' && <label className="block"><span className={lab}>What Do You Need</span><input className={field} value={custom} onChange={(e) => setCustom(e.target.value)} maxLength={200} /></label>}
           <label className="block"><span className={lab}>Note To Client (Optional)</span><input className={field} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="For example: a clear photo of both sides" /></label>
-          <label className="flex items-center gap-2 text-[14px] text-[#4A4757]"><input type="checkbox" className="h-4 w-4 accent-[#301D5D]" checked={email} onChange={(e) => setEmail(e.target.checked)} />Email the request with their private portal link (only people with an email on file)</label>
+          <label className="flex items-center gap-2 text-[14px] text-[#51555b]"><input type="checkbox" className="h-4 w-4 accent-[#005a8f]" checked={email} onChange={(e) => setEmail(e.target.checked)} />Email the request with their private portal link (only people with an email on file)</label>
           <button type="button" disabled={busy} className={btn} onClick={() => void send()}>Send Request</button>
         </div>
       )}
-      {message && <p className="border-t border-[#E6E5EC] px-4 py-2 text-xs font-medium text-slate-600" role="status">{message}</p>}
+      {message && <p className="border-t border-[#d4d8dd] px-4 py-2 text-xs font-medium text-slate-600" role="status">{message}</p>}
       {reqs.length === 0 && !open && <Tip text="Ask a client for a document, like a driver's license, and track it here until you mark it received." />}
       {reqs.map((r) => {
         const files = uploads.filter((u) => u.docId === `req:${r.id}` && !u.archived);
         return (
           <div key={r.id} className="ds-list-row !items-start">
-            <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-[#301D5D]" aria-label={`Mark ${r.label} received`} checked={r.status === 'received'} disabled={locked || busy || r.status !== 'uploaded'} title={r.status === 'pending' ? 'Available after the client uploads' : undefined} onChange={() => void post({ action: 'request_received', id: r.id })} />
+            <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-[#005a8f]" aria-label={`Mark ${r.label} received`} checked={r.status === 'received'} disabled={locked || busy || r.status !== 'uploaded'} title={r.status === 'pending' ? 'Available after the client uploads' : undefined} onChange={() => void post({ action: 'request_received', id: r.id })} />
             <span className="min-w-0 flex-1">
               <span className="block text-sm text-slate-800">{r.label}{r.personName ? ` · ${r.personName}` : ''}</span>
               <span className="block text-xs text-slate-500">
@@ -172,7 +172,7 @@ export default function DocumentRequestsCard({ deal, locked, documentGroups, onU
               {r.note && <span className="block text-xs text-slate-500">{r.note}</span>}
               {files.map((u) => (
                 <span key={u.id} className="block text-xs text-slate-600">
-                  {u.filename} · {u.storedIn ? (u.storedUrl ? <a className="font-medium text-[#301D5D] underline underline-offset-2" href={u.storedUrl} target="_blank" rel="noreferrer">{u.storedPath || 'Open'}</a> : u.storedPath) : <a className="font-medium text-[#301D5D] underline underline-offset-2" href={`/api/closing-time/assist/upload/${u.id}`}>Held In Closing Time</a>}
+                  {u.filename} · {u.storedIn ? (u.storedUrl ? <a className="font-medium text-[#005a8f] underline underline-offset-2" href={u.storedUrl} target="_blank" rel="noreferrer">{u.storedPath || 'Open'}</a> : u.storedPath) : <a className="font-medium text-[#005a8f] underline underline-offset-2" href={`/api/closing-time/assist/upload/${u.id}`}>Held In Closing Time</a>}
                 </span>
               ))}
             </span>

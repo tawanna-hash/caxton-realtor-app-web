@@ -36,7 +36,7 @@ function publicationLabel(publication: string | null): string {
 }
 
 const CONTROL =
-  'rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-[#7059A8] focus:outline-none focus:ring-1 focus:ring-[#7059A8]';
+  'rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-[#2f7aa7] focus:outline-none focus:ring-1 focus:ring-[#2f7aa7]';
 
 function sourceLabel(source: string | null): string {
   const value = (source ?? '').trim();
@@ -184,11 +184,11 @@ export default function DepositReportClient({
           <button
             type="button"
             onClick={() => { void printSlip(); }}
-            className="min-h-11 rounded-md bg-[#301D5D] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
+            className="min-h-11 rounded-md bg-[#005a8f] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#1c3f5e]"
           >
             Print / Save PDF
           </button>
-          <button type="button" onClick={() => { setEmailOpen((open) => !open); setEmailStatus(''); }} className="col-span-2 min-h-11 rounded-md border border-[#301D5D] px-4 py-2 text-sm font-semibold text-[#42277C] hover:bg-[#F6F3FB]">
+          <button type="button" onClick={() => { setEmailOpen((open) => !open); setEmailStatus(''); }} className="col-span-2 min-h-11 rounded-md border border-[#005a8f] px-4 py-2 text-sm font-semibold text-[#1c3f5e] hover:bg-[#f5f6f9]">
             {emailOpen ? 'Cancel email' : 'Email deposit slip'}
           </button>
         </div>
@@ -200,7 +200,7 @@ export default function DepositReportClient({
             <input type="email" required value={recipient} onChange={(event) => setRecipient(event.target.value)} className={`${CONTROL} mt-1 min-h-11 w-full min-w-0`} />
           </label>
           <p className="mt-3 text-sm text-gray-600">Send the PDF for {rangeLabel}: {rows.length} checks, {formatCents(totalCents)}. Only recorded check payments are included.</p>
-          <button type="submit" disabled={emailSending} className="mt-3 min-h-11 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white disabled:opacity-50">
+          <button type="submit" disabled={emailSending} className="mt-3 min-h-11 rounded-md bg-[#005a8f] px-4 text-sm font-semibold text-white disabled:opacity-50">
             {emailSending ? 'Sending…' : `Send to ${recipient.trim() || 'recipient'}`}
           </button>
         </form>

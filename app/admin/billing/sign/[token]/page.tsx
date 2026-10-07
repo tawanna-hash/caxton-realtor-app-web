@@ -32,7 +32,7 @@ export default async function SignPage({ params }: PageProps) {
           </h1>
           <p className="text-sm text-gray-600">
             This signing link has expired or is not valid. Please contact{' '}
-            <a href="mailto:tawanna@realtynewsnow.app" className="text-[#301D5D] hover:underline">
+            <a href="mailto:tawanna@realtynewsnow.app" className="text-[#005a8f] hover:underline">
               tawanna@realtynewsnow.app
             </a>{' '}
             to request a new link.
@@ -115,8 +115,8 @@ export default async function SignPage({ params }: PageProps) {
       : '';
     return (
       <div className="min-h-screen flex items-center justify-center bg-white px-4">
-        <div className="bg-white rounded-md border border-[#D9CFF0] p-8 max-w-lg text-center shadow-sm">
-          <div className="text-xs font-bold tracking-[0.2em] uppercase text-[#42277C] mb-3">
+        <div className="bg-white rounded-md border border-[#bbc1c9] p-8 max-w-lg text-center shadow-sm">
+          <div className="text-xs font-bold tracking-[0.2em] uppercase text-[#1c3f5e] mb-3">
             Renewal offer expired
           </div>
           <h1 className="text-2xl font-semibold text-gray-900 mb-3">
@@ -129,7 +129,7 @@ export default async function SignPage({ params }: PageProps) {
           </p>
           <a
             href="mailto:tawanna@realtynewsnow.app?subject=Updated%20Renewal%20Agreement%20Request"
-            className="inline-block mt-6 px-4 py-3 rounded-md bg-[#301D5D] text-white text-sm font-medium hover:opacity-90"
+            className="inline-block mt-6 px-4 py-3 rounded-md bg-[#005a8f] text-white text-sm font-medium hover:opacity-90"
           >
             Request an Updated Renewal
           </a>
@@ -152,7 +152,7 @@ export default async function SignPage({ params }: PageProps) {
           </p>
           <a
             href={`/api/admin/agreements/${agreementId}/pdf`}
-            className="inline-block mt-4 px-4 py-2 rounded-md bg-[#301D5D] text-white text-sm hover:opacity-90"
+            className="inline-block mt-4 px-4 py-2 rounded-md bg-[#005a8f] text-white text-sm hover:opacity-90"
           >
             Download PDF
           </a>

@@ -35,7 +35,7 @@ function Highlight({
     return (
       <div className="relative">
         <div className="absolute -inset-0.5 rounded-md border-2 border-dashed border-[#00E200] pointer-events-none" />
-        <div className="absolute -top-2 left-2 z-10 rounded-md bg-[#00E200] px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#1B1726]">
+        <div className="absolute -top-2 left-2 z-10 rounded-md bg-[#00E200] px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#292a2d]">
           Ad{label ? ` \u2014 ${label}` : ''}
         </div>
         {children}

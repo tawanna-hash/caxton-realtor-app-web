@@ -26,7 +26,7 @@ function Logo({ item, size }: { item: Catalog; size: number }) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={item.logo} alt="" width={size} height={size} style={style} className="shrink-0 rounded-md object-contain" />;
   }
-  return <span style={style} className="flex shrink-0 items-center justify-center rounded-md bg-[#301D5D]/10 text-sm font-bold text-[#301D5D]" aria-hidden="true">{item.name.slice(0, 1)}</span>;
+  return <span style={style} className="flex shrink-0 items-center justify-center rounded-md bg-[#005a8f]/10 text-sm font-bold text-[#005a8f]" aria-hidden="true">{item.name.slice(0, 1)}</span>;
 }
 
 export default function IntegrationsPanel({ calendarTile }: { calendarTile?: ReactNode } = {}) {
@@ -113,7 +113,7 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
       <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">Each connection is yours alone. You sign in with the provider, and you can disconnect at any time.</p>
 
       {!configured && loaded && <p className="mt-4 border border-[#FAD800] bg-[#FEF8CC] p-3 text-sm text-[#645600]">Integrations are not turned on yet. They will be available here soon.</p>}
-      {message && <p role="status" className="mt-4 text-sm font-semibold text-[#301D5D]">{message}</p>}
+      {message && <p role="status" className="mt-4 text-sm font-semibold text-[#005a8f]">{message}</p>}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <label className="flex min-h-[40px] min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm">
@@ -132,7 +132,7 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
               const connected = accounts.some((a) => a.appSlug === item.slug);
               return (
                 <li key={item.slug}>
-                  <button type="button" onClick={() => setSelected(item)} className="flex min-h-[56px] w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 text-left hover:bg-[#FBFBFD]">
+                  <button type="button" onClick={() => setSelected(item)} className="flex min-h-[56px] w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 text-left hover:bg-[#f5f6f9]">
                     <Logo item={item} size={28} />
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950">{item.name}</span>
                     {connected && <span className="shrink-0 rounded-full bg-[#E0FBE0] px-2 py-0.5 text-xs font-semibold text-[#005A00]">Connected</span>}
@@ -159,7 +159,7 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
               {selectedAccount ? (
                 <button type="button" disabled={busy === selectedAccount.id} onClick={() => void disconnect(selectedAccount)} className="min-h-[40px] rounded-md border border-[#661102] px-4 text-sm font-bold text-[#661102] disabled:opacity-50">Disconnect</button>
               ) : (
-                <button type="button" disabled={!configured || busy === selected.slug} onClick={() => void connect(selected)} className="min-h-[40px] rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c] disabled:opacity-45">{busy === selected.slug ? 'Opening…' : `Connect ${selected.name}`}</button>
+                <button type="button" disabled={!configured || busy === selected.slug} onClick={() => void connect(selected)} className="min-h-[40px] rounded-md bg-[#005a8f] px-4 text-sm font-bold text-white hover:bg-[#1c3f5e] disabled:opacity-45">{busy === selected.slug ? 'Opening…' : `Connect ${selected.name}`}</button>
               )}
             </div>
           </div>

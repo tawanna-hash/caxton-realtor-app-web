@@ -52,14 +52,14 @@ Newsline San Antonio
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(subject)}</title>
 </head>
-<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 20px;">
+<body style="margin:0;padding:0;background:#f5f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6f9;padding:40px 20px;">
     <tr>
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
           <!-- Header -->
           <tr>
-            <td style="padding:32px 40px 16px;text-align:center;border-bottom:1px solid #f3f4f6;">
+            <td style="padding:32px 40px 16px;text-align:center;border-bottom:1px solid #f5f6f9;">
               <div style="font-size:18px;font-weight:600;color:#333;letter-spacing:0.3px;">Caxton Publications</div>
               <div style="font-size:13px;color:#888;margin-top:4px;">RealtyLine &nbsp;·&nbsp; Newsline San Antonio</div>
             </td>
@@ -71,14 +71,14 @@ Newsline San Antonio
               <p style="margin:0 0 24px;">${escapeHtml(intro)}</p>
               <p style="margin:0 0 32px;text-align:center;">
                 <a href="${escapeHtml(opts.loginUrl)}"
-                   style="display:inline-block;background:#42277C;color:#ffffff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
+                   style="display:inline-block;background:#1c3f5e;color:#ffffff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
                   ${isSignup ? 'Verify my email' : 'Sign in'}
                 </a>
               </p>
               <p style="margin:0 0 8px;color:#666;font-size:14px;">
                 Or copy and paste this URL into your browser:
               </p>
-              <p style="margin:0 0 24px;word-break:break-all;font-size:13px;color:#42277C;">
+              <p style="margin:0 0 24px;word-break:break-all;font-size:13px;color:#1c3f5e;">
                 ${escapeHtml(opts.loginUrl)}
               </p>
               <p style="margin:0;color:#888;font-size:13px;line-height:1.5;">
@@ -88,7 +88,7 @@ Newsline San Antonio
           </tr>
           <!-- Footer -->
           <tr>
-            <td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #f3f4f6;color:#888;font-size:12px;line-height:1.5;text-align:center;">
+            <td style="padding:24px 40px;background:#f5f6f9;border-top:1px solid #f5f6f9;color:#888;font-size:12px;line-height:1.5;text-align:center;">
               <div>© Caxton Publications, Inc.</div>
               <div style="margin-top:4px;font-style:italic;">Putting A Face on Real Estate since 1995</div>
             </td>
@@ -202,15 +202,15 @@ ${brand.tagline}`;
 
   const html = `<!doctype html>
 <html>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background: #fff; color: #301D5D;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background: #fff; color: #005a8f;">
   <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.25em; color: #888; margin: 0 0 8px 0;">${esc(brand.name)}</p>
-  <h1 style="font-size: 28px; font-weight: 600; color: #301D5D; margin: 0 0 24px 0; line-height: 1.2;">Congratulations &mdash; you won!</h1>
+  <h1 style="font-size: 28px; font-weight: 600; color: #005a8f; margin: 0 0 24px 0; line-height: 1.2;">Congratulations &mdash; you won!</h1>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Hi ${esc(input.firstName)},</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Your name was randomly drawn from the <strong>${esc(input.giveawayTitle)}</strong>, and you've been selected to receive:</p>
-  <p style="font-size: 22px; font-weight: 600; color: #301D5D; padding: 20px; background: #f9fafb; border-left: 4px solid #7059A8; margin: 24px 0;">${esc(prizeHtml)}</p>
+  <p style="font-size: 22px; font-weight: 600; color: #005a8f; padding: 20px; background: #f5f6f9; border-left: 4px solid #2f7aa7; margin: 24px 0;">${esc(prizeHtml)}</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">We'll be in touch within the next few business days to coordinate getting your prize to you. Watch for an email or call from the ${esc(brand.name)} team.</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Thanks for being part of the ${esc(brand.name)} community.</p>
-  <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+  <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #d4d8dd;">
     ${esc(brand.name)}<br/>
     <span style="font-style: italic;">${esc(brand.tagline)}</span>
   </p>
@@ -266,13 +266,13 @@ Newsline San Antonio
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(subject)}</title>
 </head>
-<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 20px;">
+<body style="margin:0;padding:0;background:#f5f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6f9;padding:40px 20px;">
     <tr>
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
           <tr>
-            <td style="padding:32px 40px 16px;text-align:center;border-bottom:1px solid #f3f4f6;">
+            <td style="padding:32px 40px 16px;text-align:center;border-bottom:1px solid #f5f6f9;">
               <div style="font-size:18px;font-weight:600;color:#333;letter-spacing:0.3px;">Caxton Publications Admin</div>
               <div style="font-size:13px;color:#888;margin-top:4px;">Password Reset</div>
             </td>
@@ -282,7 +282,7 @@ Newsline San Antonio
               <p style="margin:0 0 16px;">${escapeHtml(greeting)}</p>
               <p style="margin:0 0 24px;">${escapeHtml(intro)}</p>
               <p style="margin:0 0 24px;font-size:15px;">
-                <a href="${opts.resetUrl}" style="color:#301D5D;font-weight:600;text-decoration:underline;word-break:break-all;">${escapeHtml(opts.resetUrl)}</a>
+                <a href="${opts.resetUrl}" style="color:#005a8f;font-weight:600;text-decoration:underline;word-break:break-all;">${escapeHtml(opts.resetUrl)}</a>
               </p>
               <p style="margin:0;color:#888;font-size:13px;line-height:1.5;">
                 This link expires in ${opts.expiryMinutes} minutes. If you did not request a password reset, you can safely ignore this email — your password will not change.
@@ -290,7 +290,7 @@ Newsline San Antonio
             </td>
           </tr>
           <tr>
-            <td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #f3f4f6;color:#888;font-size:12px;line-height:1.5;text-align:center;">
+            <td style="padding:24px 40px;background:#f5f6f9;border-top:1px solid #f5f6f9;color:#888;font-size:12px;line-height:1.5;text-align:center;">
               <div>© Caxton Publications, Inc.</div>
               <div style="margin-top:4px;font-style:italic;">Putting A Face on Real Estate since 1995</div>
             </td>
@@ -344,13 +344,13 @@ Newsline San Antonio
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(subject)}</title>
 </head>
-<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 20px;">
+<body style="margin:0;padding:0;background:#f5f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6f9;padding:40px 20px;">
     <tr>
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
           <tr>
-            <td style="padding:32px 40px 16px;text-align:center;border-bottom:1px solid #f3f4f6;">
+            <td style="padding:32px 40px 16px;text-align:center;border-bottom:1px solid #f5f6f9;">
               <div style="font-size:18px;font-weight:600;color:#333;letter-spacing:0.3px;">Caxton Publications Admin</div>
               <div style="font-size:13px;color:#888;margin-top:4px;">Welcome — set your password</div>
             </td>
@@ -360,7 +360,7 @@ Newsline San Antonio
               <p style="margin:0 0 16px;">${escapeHtml(greeting)}</p>
               <p style="margin:0 0 24px;">${escapeHtml(intro)}</p>
               <p style="margin:0 0 24px;font-size:15px;">
-                <a href="${opts.setPasswordUrl}" style="color:#301D5D;font-weight:600;text-decoration:underline;word-break:break-all;">${escapeHtml(opts.setPasswordUrl)}</a>
+                <a href="${opts.setPasswordUrl}" style="color:#005a8f;font-weight:600;text-decoration:underline;word-break:break-all;">${escapeHtml(opts.setPasswordUrl)}</a>
               </p>
               <p style="margin:0;color:#888;font-size:13px;line-height:1.5;">
                 This link expires in ${opts.expiryHours} hours. If you weren't expecting this, please let ${escapeHtml(opts.invitedBy)} know — your account won't be able to sign in until a password is set.
@@ -368,7 +368,7 @@ Newsline San Antonio
             </td>
           </tr>
           <tr>
-            <td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #f3f4f6;color:#888;font-size:12px;line-height:1.5;text-align:center;">
+            <td style="padding:24px 40px;background:#f5f6f9;border-top:1px solid #f5f6f9;color:#888;font-size:12px;line-height:1.5;text-align:center;">
               <div>© Caxton Publications, Inc.</div>
               <div style="margin-top:4px;font-style:italic;">Putting A Face on Real Estate since 1995</div>
             </td>
@@ -410,14 +410,14 @@ ${brand.name}
 ${brand.tagline}`;
   const html = `<!doctype html>
 <html>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background: #fff; color: #301D5D;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background: #fff; color: #005a8f;">
   <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.25em; color: #888; margin: 0 0 8px 0;">${esc(brand.name)}</p>
-  <h1 style="font-size: 26px; font-weight: 600; color: #301D5D; margin: 0 0 24px 0; line-height: 1.2;">Winners announced</h1>
+  <h1 style="font-size: 26px; font-weight: 600; color: #005a8f; margin: 0 0 24px 0; line-height: 1.2;">Winners announced</h1>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Hi ${esc(input.firstName)},</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Thank you for entering the <strong>${esc(input.giveawayTitle)}</strong>. The drawing is complete and the winners of the ${esc(input.prize)} have been selected:</p>
-  <p style="font-size: 18px; font-weight: 600; color: #301D5D; padding: 16px 20px; background: #f9fafb; border-left: 4px solid #7059A8; margin: 24px 0;">${esc(names)}</p>
+  <p style="font-size: 18px; font-weight: 600; color: #005a8f; padding: 16px 20px; background: #f5f6f9; border-left: 4px solid #2f7aa7; margin: 24px 0;">${esc(names)}</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Winners have been notified by email. We have more giveaways coming, so keep an eye on your inbox and the ${esc(brand.name)} app.</p>
-  <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">${esc(brand.name)}<br/><span style="font-style: italic;">${esc(brand.tagline)}</span></p>
+  <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #d4d8dd;">${esc(brand.name)}<br/><span style="font-style: italic;">${esc(brand.tagline)}</span></p>
 </body>
 </html>`;
   return { subject, text, html };
@@ -450,16 +450,16 @@ ${brand.name}
 ${brand.tagline}`.trim();
   const html = `<!doctype html>
 <html>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background: #fff; color: #301D5D;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background: #fff; color: #005a8f;">
   <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.25em; color: #888; margin: 0 0 8px 0;">${esc(brand.name)}</p>
-  <h1 style="font-size: 26px; font-weight: 600; color: #301D5D; margin: 0 0 24px 0; line-height: 1.2;">Correction to your winner email</h1>
+  <h1 style="font-size: 26px; font-weight: 600; color: #005a8f; margin: 0 0 24px 0; line-height: 1.2;">Correction to your winner email</h1>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Hi ${esc(input.firstName)},</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">This is a correction to the winner email you received earlier. It listed the prize incorrectly and came from the wrong sender name.</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">The correct details: you are one of the winners of the <strong>${esc(input.giveawayTitle)}</strong>, and you will receive:</p>
-  <p style="font-size: 22px; font-weight: 600; color: #301D5D; padding: 20px; background: #f9fafb; border-left: 4px solid #7059A8; margin: 24px 0;">${esc(prizeShort.charAt(0).toUpperCase() + prizeShort.slice(1))}</p>
+  <p style="font-size: 22px; font-weight: 600; color: #005a8f; padding: 20px; background: #f5f6f9; border-left: 4px solid #2f7aa7; margin: 24px 0;">${esc(prizeShort.charAt(0).toUpperCase() + prizeShort.slice(1))}</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;"><strong>Please reply to this email with a valid mobile number so we can make contact.</strong></p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">We apologize for the confusion.</p>
-  <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">${esc(brand.name)}</p>
+  <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #d4d8dd;">${esc(brand.name)}</p>
 </body>
 </html>`;
   return { subject, text, html };

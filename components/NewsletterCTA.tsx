@@ -20,10 +20,10 @@ type Publication = PubKey;
 // newsletter Sign Up button matches the Read This Issue button on
 // the magazine spotlight and any other brand CTA on the page.
 const PUB_COLORS: Record<Publication, string> = {
-  realtyline: '#301D5D',
-  newsline: '#301D5D',
-  'realtyline-houston': '#301D5D',
-  'realtyline-dallas': '#301D5D',
+  realtyline: '#005a8f',
+  newsline: '#005a8f',
+  'realtyline-houston': '#005a8f',
+  'realtyline-dallas': '#005a8f',
 };
 
 type Props = {
@@ -141,7 +141,7 @@ export default function NewsletterCTA({
               // min-w-0 lets flex-1 actually shrink the input below its
               // intrinsic content width; without it, the placeholder + button
               // combined push the row past its max-w-md parent on 375px.
-              className="flex-1 min-w-0 px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-700/40 focus:border-brand-700 placeholder:text-[#d1d5db] disabled:opacity-60"
+              className="flex-1 min-w-0 px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-700/40 focus:border-brand-700 placeholder:text-[#bbc1c9] disabled:opacity-60"
             />
             <button
               onClick={handleSubmit}

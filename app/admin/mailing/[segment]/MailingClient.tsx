@@ -903,13 +903,13 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       {/* KPI strip */}
       <div className="mailing-summary-strip grid grid-cols-2 md:grid-cols-5">
         <KpiCard label="In segment"    value={stats?.total    ?? 0} sub="all contacts"             accent={accent} />
-        <KpiCard label="Verified"      value={stats?.verified ?? 0} sub="address or email valid"   accent="#7059A8" />
-        <KpiCard label="Pending"       value={stats?.pending  ?? 0} sub="needs verification"       accent="#7059A8" />
+        <KpiCard label="Verified"      value={stats?.verified ?? 0} sub="address or email valid"   accent="#2f7aa7" />
+        <KpiCard label="Pending"       value={stats?.pending  ?? 0} sub="needs verification"       accent="#2f7aa7" />
         <KpiCard
           label="Within 60 mi"
           value={stats?.near ?? 0}
           sub={isSaborSegment(segment) ? 'near SABOR' : 'near ABoR or Five Points'}
-          accent="#301D5D"
+          accent="#005a8f"
           action={(stats?.near ?? 0) > 0 ? {
             label: 'Export CSV',
             onClick: () => {
@@ -926,15 +926,15 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
           label="Outside 60 mi"
           value={stats?.far ?? 0}
           sub={segment === 'manual-newsline' ? 'beyond SABOR 60 mi' : 'out of both radii'}
-          accent="#9ca3af"
+          accent="#7b8089"
         />
       </div>
 
       {/* Filter chips + search */}
       <div className="flex items-center gap-2 flex-wrap">
         <FilterChip active={filter === 'all'}      onClick={() => setFilter('all')}      label="All"      count={stats?.total ?? 0} />
-        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={stats?.verified ?? 0} accent="#7059A8" />
-        <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={stats?.pending ?? 0}  accent="#7059A8" />
+        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={stats?.verified ?? 0} accent="#2f7aa7" />
+        <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={stats?.pending ?? 0}  accent="#2f7aa7" />
 
         {(segment === 'realtyline-atx-print' || segment === 'newsline-sa-print') && (
           <>
@@ -950,14 +950,14 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               onClick={() => { setTagFilter('active-advertiser'); setOffset(0); }}
               label="Active Partner"
               count={tagFilter === 'active-advertiser' ? total : 0}
-              accent="#42277C"
+              accent="#1c3f5e"
             />
             <FilterChip
               active={tagFilter === 'non-advertiser'}
               onClick={() => { setTagFilter('non-advertiser'); setOffset(0); }}
               label="Non-Advertiser"
               count={tagFilter === 'non-advertiser' ? total : 0}
-              accent="#301D5D"
+              accent="#005a8f"
             />
             {segment === 'newsline-sa-print' && (
               <FilterChip
@@ -965,7 +965,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                 onClick={() => { setTagFilter('manual'); setOffset(0); }}
                 label="Manual"
                 count={tagFilter === 'manual' ? total : 0}
-                accent="#301D5D"
+                accent="#005a8f"
               />
             )}
           </>
@@ -997,7 +997,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               onClick={() => { setTagFilter('Business Development'); setOffset(0); }}
               label="Business Development"
               count={tagFilter === 'Business Development' ? total : 0}
-              accent="#475569"
+              accent="#51555b"
             />
           </>
         )}
@@ -1054,8 +1054,8 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       )}
 
       {mounted && filterAll && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-md bg-[#F6F3FB] border border-[#D9CFF0]">
-          <span className="text-sm text-[#1B1726] font-medium">All {total.toLocaleString()} matching this filter selected.</span>
+        <div className="flex items-center gap-2 px-4 py-3 rounded-md bg-[#f5f6f9] border border-[#bbc1c9]">
+          <span className="text-sm text-[#292a2d] font-medium">All {total.toLocaleString()} matching this filter selected.</span>
           <div className="flex-1" />
           <MoveToMenu
             currentSegment={segment}
@@ -1074,7 +1074,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
           <button
             type="button"
             onClick={() => { setFilterAll(false); setSelectedIds(new Set()); }}
-            className="px-3 py-2 rounded-md text-[#42277C] text-xs hover:text-[#1B1726]"
+            className="px-3 py-2 rounded-md text-[#1c3f5e] text-xs hover:text-[#292a2d]"
           >
             Clear
           </button>
@@ -1082,12 +1082,12 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       )}
 
       {mounted && !filterAll && !hasFieldFilters && selectedIds.size > 0 && allSelected && total > rows.length && (
-        <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#F6F3FB] border border-[#EFEAF8] text-sm">
-          <span className="text-[#1B1726]">All {selectedIds.size} on this page selected.</span>
+        <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#f5f6f9] border border-[#daeeff] text-sm">
+          <span className="text-[#292a2d]">All {selectedIds.size} on this page selected.</span>
           <button
             type="button"
             onClick={() => { setFilterAll(true); setSelectedIds(new Set()); }}
-            className="text-[#42277C] font-medium underline underline-offset-2 hover:text-[#1B1726]"
+            className="text-[#1c3f5e] font-medium underline underline-offset-2 hover:text-[#292a2d]"
           >
             Select all {total.toLocaleString()} matching this filter
           </button>
@@ -1140,7 +1140,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         <div className="text-sm text-gray-600 italic">{busy}</div>
       )}
       {toast && (
-        <div className="px-4 py-3 rounded-md bg-[#F6F3FB] border border-[#D9CFF0] text-sm text-[#1B1726]">
+        <div className="px-4 py-3 rounded-md bg-[#f5f6f9] border border-[#bbc1c9] text-sm text-[#292a2d]">
           {toast}
         </div>
       )}
@@ -1175,7 +1175,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             checked={allSelected}
             onChange={(e) => handleSelectAll(e.target.checked)}
             aria-label="Select all rows"
-            className="h-4 w-4 rounded border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
+            className="h-4 w-4 rounded border-gray-300 text-[#005a8f] focus:ring-[#2f7aa7]"
           />
           <span>Select all ({selectedIds.size} of {rows.length})</span>
         </div>
@@ -1203,7 +1203,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                 checked={selectedIds.has(r.id)}
                 onChange={(e) => handleSelect(r.id, e.target.checked)}
                 aria-label={`Select ${fullName || r.email || r.id}`}
-                className="mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
+                className="mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-[#005a8f] focus:ring-[#2f7aa7]"
               />
               <div className="min-w-0 flex-1 space-y-2">
                 {isVisible('name') && (
@@ -1217,7 +1217,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                     <a
                       href={`mailto:${r.email}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-[#301D5D] hover:underline break-words"
+                      className="text-[#005a8f] hover:underline break-words"
                     >{r.email}</a>
                   </div>
                 )}
@@ -1370,7 +1370,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                         <a
                           href={`mailto:${r.email}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="text-[#301D5D] hover:text-[#301D5D] hover:underline"
+                          className="text-[#005a8f] hover:text-[#005a8f] hover:underline"
                         >
                           {r.email}
                         </a>
@@ -1579,7 +1579,7 @@ function KpiCard({
 }) {
   return (
     <div className={`relative rounded-md border border-gray-200 bg-white p-4 ${action ? 'transition-shadow hover:shadow-md' : ''}`}>
-      <div className="h-7 w-7 rounded-md mb-3" style={{ backgroundColor: accent ? `${accent}15` : '#f3f4f6' }} />
+      <div className="h-7 w-7 rounded-md mb-3" style={{ backgroundColor: accent ? `${accent}15` : '#f5f6f9' }} />
       <div className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
       <div className="mt-1">
         <div className="text-xs font-semibold text-gray-900">{label}</div>
@@ -1592,7 +1592,7 @@ function KpiCard({
           title={action.label}
           aria-label={action.label}
           className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-white shadow-sm hover:opacity-90"
-          style={{ backgroundColor: accent ?? '#301D5D' }}
+          style={{ backgroundColor: accent ?? '#005a8f' }}
         >
           {/* Download glyph (inline SVG, no icon lib dep) */}
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1619,20 +1619,20 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
     <div className="flex flex-wrap gap-1">
       {visible.map((t) => {
         let label = t;
-        let bg = '#e5e7eb';
-        let fg = '#374151';
+        let bg = '#d4d8dd';
+        let fg = '#292a2d';
         if (t === 'active-advertiser') {
           label = 'Active Partner';
           bg = '#FFF3E0';
-          fg = '#42277C';
+          fg = '#1c3f5e';
         } else if (t === 'non-advertiser') {
           label = 'Non-Advertiser';
           bg = '#FFF3E0';
-          fg = '#301D5D';
+          fg = '#005a8f';
         } else if (t === 'manual') {
           label = 'Manual';
           bg = '#ede9fe';
-          fg = '#301D5D';
+          fg = '#005a8f';
         } else if (t === 'REALTOR') {
           label = 'REALTOR';
           bg = '#E0FBE0';
@@ -1643,8 +1643,8 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
           fg = '#645600';
         } else if (t === 'Business Development') {
           label = 'Business Development';
-          bg = '#e2e8f0';
-          fg = '#475569';
+          bg = '#d4d8dd';
+          fg = '#51555b';
         }
         return (
           <span
@@ -1663,8 +1663,8 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
 function FilterChip({
   active, onClick, label, count, accent,
 }: { active: boolean; onClick: () => void; label: string; count: number; accent?: string }) {
-  const bg = active ? (accent ?? '#301D5D') : '#f3f4f6';
-  const fg = active ? 'white' : '#374151';
+  const bg = active ? (accent ?? '#005a8f') : '#f5f6f9';
+  const fg = active ? 'white' : '#292a2d';
   return (
     <button
       type="button"
@@ -1675,7 +1675,7 @@ function FilterChip({
       <span>{label}</span>
       <span
         className="px-2 rounded-full text-[10px]"
-        style={{ backgroundColor: active ? 'rgba(255,255,255,0.25)' : 'white', color: active ? 'white' : '#6b7280' }}
+        style={{ backgroundColor: active ? 'rgba(255,255,255,0.25)' : 'white', color: active ? 'white' : '#51555b' }}
       >
         {count.toLocaleString()}
       </span>
@@ -1760,7 +1760,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   if (row.email_role) {
     flags.push({
       label: 'Role',
-      cls:   'bg-[#EFEAF8] text-[#301D5D] ring-1 ring-[#D9CFF0]',
+      cls:   'bg-[#daeeff] text-[#005a8f] ring-1 ring-[#bbc1c9]',
       title: 'Role / generic mailbox (info@, admin@, support@…)',
     });
   }
@@ -1786,7 +1786,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   if (sig?.smtpTimedOut && !sig?.smtpConnected) {
     flags.push({
       label: '⏱ Timed out',
-      cls:   'bg-[#EFEAF8] text-[#301D5D] ring-1 ring-[#D9CFF0]',
+      cls:   'bg-[#daeeff] text-[#005a8f] ring-1 ring-[#bbc1c9]',
       title: `Mail server did not respond${sig.mxAttempts ? ` across ${sig.mxAttempts} MX host${sig.mxAttempts === 1 ? '' : 's'}` : ''} — domain may be misconfigured or rate-limiting us`,
     });
   }
@@ -2143,7 +2143,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-3 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
+                className="text-xs px-3 py-1 rounded-md bg-[#005a8f] text-white hover:bg-[#1c3f5e] disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify address'}
               </button>
@@ -2206,7 +2206,7 @@ function EditDrawer({
                   type="button"
                   disabled={emailBusy || overrideBusy || !form.email}
                   onClick={onVerifyEmail}
-                  className="text-xs px-3 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
+                  className="text-xs px-3 py-1 rounded-md bg-[#005a8f] text-white hover:bg-[#1c3f5e] disabled:opacity-50"
                 >
                   {emailBusy ? 'Verifying…' : 'Verify Email'}
                 </button>
@@ -2251,7 +2251,7 @@ function EditDrawer({
                 onChange={(e) => setOverrideReason(e.target.value)}
                 placeholder="Optional reason (e.g. confirmed via reply, Google Workspace)"
                 maxLength={500}
-                className="w-full mt-1 px-2 py-1 text-[11px] rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-[#301D5D]"
+                className="w-full mt-1 px-2 py-1 text-[11px] rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-[#005a8f]"
               />
             </div>
           </div>
@@ -2350,7 +2350,7 @@ function EditDrawer({
             type="button"
             disabled={saving}
             onClick={save}
-            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#301D5D] disabled:opacity-50 whitespace-nowrap"
+            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#005a8f] disabled:opacity-50 whitespace-nowrap"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>
@@ -2368,16 +2368,16 @@ function EditDrawer({
 // it just becomes a new tag in the library on save.
 
 const TAG_STYLES: Record<string, { bg: string; fg: string; label?: string }> = {
-  'active-advertiser':    { bg: '#FFF3E0', fg: '#42277C', label: 'Active Partner' },
-  'non-advertiser':       { bg: '#FFF3E0', fg: '#301D5D', label: 'Non-Advertiser' },
-  'manual':               { bg: '#ede9fe', fg: '#301D5D', label: 'Manual' },
+  'active-advertiser':    { bg: '#FFF3E0', fg: '#1c3f5e', label: 'Active Partner' },
+  'non-advertiser':       { bg: '#FFF3E0', fg: '#005a8f', label: 'Non-Advertiser' },
+  'manual':               { bg: '#ede9fe', fg: '#005a8f', label: 'Manual' },
   'REALTOR':              { bg: '#E0FBE0', fg: '#005A00' },
   'Loan Officer':         { bg: '#FEF8CC', fg: '#645600' },
-  'Business Development': { bg: '#e2e8f0', fg: '#475569' },
+  'Business Development': { bg: '#d4d8dd', fg: '#51555b' },
 };
 
 function tagStyle(tag: string) {
-  return TAG_STYLES[tag] ?? { bg: '#f3f4f6', fg: '#374151' };
+  return TAG_STYLES[tag] ?? { bg: '#f5f6f9', fg: '#292a2d' };
 }
 
 function TagsEditor({
@@ -2446,8 +2446,8 @@ function TagsEditor({
               key={t}
               className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium"
               style={{
-                background: isProvenance ? '#f3f4f6' : s.bg,
-                color: isProvenance ? '#6b7280' : s.fg,
+                background: isProvenance ? '#f5f6f9' : s.bg,
+                color: isProvenance ? '#51555b' : s.fg,
               }}
             >
               {s.label || t}
@@ -3220,7 +3220,7 @@ function BulkEditDialog({
             type="button"
             onClick={save}
             disabled={saving || !anyEnabled}
-            className="px-4 py-2 text-sm rounded-md bg-brand-700 text-white hover:bg-[#301D5D] disabled:opacity-50 whitespace-nowrap"
+            className="px-4 py-2 text-sm rounded-md bg-brand-700 text-white hover:bg-[#005a8f] disabled:opacity-50 whitespace-nowrap"
           >
             {saving ? 'Applying…' : `Apply to ${ids.length}`}
           </button>

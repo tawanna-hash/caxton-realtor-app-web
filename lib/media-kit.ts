@@ -884,7 +884,7 @@ export const POLICY_NOTES: PolicyNote[] = [
     body: 'Ad rates are based on CONSECUTIVE MONTHS and agreement must be signed in advance to receive frequency discounts.',
   },
   {
-    color: '#7059A8',
+    color: '#2f7aa7',
     title: 'Premium Position Guarantees',
     body: 'A 20% premium fee applies to inside front cover, page 3, inside back cover, center-spread, and back page.',
   },

@@ -1575,7 +1575,7 @@ function PageCanvas({
           href={o.url}
           target="_blank"
           rel="noopener noreferrer"
-          className={`absolute hover:bg-[#7059A8]/20 focus:bg-[#7059A8]/30 ${transitionClass}`}
+          className={`absolute hover:bg-[#2f7aa7]/20 focus:bg-[#2f7aa7]/30 ${transitionClass}`}
           style={{
             left: `${o.x}px`,
             top: `${o.y}px`,

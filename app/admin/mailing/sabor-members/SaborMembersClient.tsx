@@ -683,7 +683,7 @@ export default function SaborMembersClient() {
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Source</p>
-            <p className="font-serif text-lg mt-1" style={{ color: '#301D5D' }}>
+            <p className="font-serif text-lg mt-1" style={{ color: '#005a8f' }}>
               Public
             </p>
             <p className="text-xs text-gray-500 mt-0.5">realtytexas.com · no auth</p>
@@ -692,7 +692,7 @@ export default function SaborMembersClient() {
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Dispatch</p>
             <p
               className="font-serif text-lg mt-1"
-              style={{ color: syncStatus.gh_dispatch_configured ? '#301D5D' : '#661102' }}
+              style={{ color: syncStatus.gh_dispatch_configured ? '#005a8f' : '#661102' }}
             >
               {syncStatus.gh_dispatch_configured ? 'Configured' : 'Not configured'}
             </p>
@@ -704,13 +704,13 @@ export default function SaborMembersClient() {
       {/* KPI strip */}
       <div className="mailing-summary-strip grid grid-cols-2 md:grid-cols-5">
         <KpiCard label="Total members"  value={counts?.total    ?? 0} sub="awaiting review" />
-        <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#7059A8" />
-        <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#7059A8" />
+        <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#2f7aa7" />
+        <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#2f7aa7" />
         <KpiCard
           label="Within 60 mi"
           value={counts?.near ?? 0}
           sub="near SABOR HQ"
-          accent="#301D5D"
+          accent="#005a8f"
           action={(counts?.near ?? 0) > 0 ? {
             label: 'Export CSV',
             onClick: () => {
@@ -720,14 +720,14 @@ export default function SaborMembersClient() {
             },
           } : undefined}
         />
-        <KpiCard label="Outside 60 mi"  value={counts?.far      ?? 0} sub="beyond 60 mi" accent="#9ca3af" />
+        <KpiCard label="Outside 60 mi"  value={counts?.far      ?? 0} sub="beyond 60 mi" accent="#7b8089" />
       </div>
 
       {/* Filter chips + search */}
       <div className="flex items-center gap-2 flex-wrap">
         <FilterChip active={filter === 'all'}      onClick={() => setFilter('all')}      label="All"      count={counts?.total ?? 0} />
-        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#7059A8" />
-        <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={counts?.pending ?? 0}  accent="#7059A8" />
+        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#2f7aa7" />
+        <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={counts?.pending ?? 0}  accent="#2f7aa7" />
 
         <div className="flex-1" />
 
@@ -771,7 +771,7 @@ export default function SaborMembersClient() {
       )}
 
       {toast && (
-        <div className="px-4 py-3 rounded-md bg-[#F6F3FB] border border-[#D9CFF0] text-sm text-[#1B1726]">
+        <div className="px-4 py-3 rounded-md bg-[#f5f6f9] border border-[#bbc1c9] text-sm text-[#292a2d]">
           {toast}
         </div>
       )}
@@ -802,7 +802,7 @@ export default function SaborMembersClient() {
             checked={allSelected}
             onChange={(e) => handleSelectAll(e.target.checked)}
             aria-label="Select all rows"
-            className="h-4 w-4 rounded border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
+            className="h-4 w-4 rounded border-gray-300 text-[#005a8f] focus:ring-[#2f7aa7]"
           />
           <span>Select all ({selectedIds.size} of {rows.length})</span>
         </div>
@@ -830,7 +830,7 @@ export default function SaborMembersClient() {
                 checked={selectedIds.has(r.id)}
                 onChange={(e) => handleSelect(r.id, e.target.checked)}
                 aria-label={`Select ${fullName || r.email || r.id}`}
-                className="mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
+                className="mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-[#005a8f] focus:ring-[#2f7aa7]"
               />
               <div className="min-w-0 flex-1 space-y-2">
                 <div>
@@ -842,7 +842,7 @@ export default function SaborMembersClient() {
                     <a
                       href={`mailto:${r.email}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-[#301D5D] hover:underline break-words"
+                      className="text-[#005a8f] hover:underline break-words"
                     >{r.email}</a>
                   </div>
                 )}
@@ -952,7 +952,7 @@ export default function SaborMembersClient() {
                       <a
                         href={`mailto:${r.email}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="text-[#301D5D] hover:text-[#301D5D] hover:underline"
+                        className="text-[#005a8f] hover:text-[#005a8f] hover:underline"
                       >
                         {r.email}
                       </a>
@@ -1037,7 +1037,7 @@ function KpiCard({
 }) {
   return (
     <div className={`relative rounded-md border border-gray-200 bg-white p-4 ${action ? 'transition-shadow hover:shadow-md' : ''}`}>
-      <div className="h-7 w-7 rounded-md mb-3" style={{ backgroundColor: accent ? `${accent}15` : '#f3f4f6' }} />
+      <div className="h-7 w-7 rounded-md mb-3" style={{ backgroundColor: accent ? `${accent}15` : '#f5f6f9' }} />
       <div className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
       <div className="mt-1">
         <div className="text-xs font-semibold text-gray-900">{label}</div>
@@ -1050,7 +1050,7 @@ function KpiCard({
           title={action.label}
           aria-label={action.label}
           className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-white shadow-sm hover:opacity-90"
-          style={{ backgroundColor: accent ?? '#301D5D' }}
+          style={{ backgroundColor: accent ?? '#005a8f' }}
         >
           {/* Download glyph (inline SVG, no icon lib dep) */}
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1068,8 +1068,8 @@ function KpiCard({
 function FilterChip({
   active, onClick, label, count, accent,
 }: { active: boolean; onClick: () => void; label: string; count: number; accent?: string }) {
-  const bg = active ? (accent ?? '#301D5D') : '#f3f4f6';
-  const fg = active ? 'white' : '#374151';
+  const bg = active ? (accent ?? '#005a8f') : '#f5f6f9';
+  const fg = active ? 'white' : '#292a2d';
   return (
     <button
       type="button"
@@ -1080,7 +1080,7 @@ function FilterChip({
       <span>{label}</span>
       <span
         className="px-2 rounded-full text-[10px]"
-        style={{ backgroundColor: active ? 'rgba(255,255,255,0.25)' : 'white', color: active ? 'white' : '#6b7280' }}
+        style={{ backgroundColor: active ? 'rgba(255,255,255,0.25)' : 'white', color: active ? 'white' : '#51555b' }}
       >
         {count.toLocaleString()}
       </span>
@@ -1165,7 +1165,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   if (row.email_role) {
     flags.push({
       label: 'Role',
-      cls:   'bg-[#EFEAF8] text-[#301D5D] ring-1 ring-[#D9CFF0]',
+      cls:   'bg-[#daeeff] text-[#005a8f] ring-1 ring-[#bbc1c9]',
       title: 'Role / generic mailbox (info@, admin@, support@…)',
     });
   }
@@ -1191,7 +1191,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   if (sig?.smtpTimedOut && !sig?.smtpConnected) {
     flags.push({
       label: '⏱ Timed out',
-      cls:   'bg-[#EFEAF8] text-[#301D5D] ring-1 ring-[#D9CFF0]',
+      cls:   'bg-[#daeeff] text-[#005a8f] ring-1 ring-[#bbc1c9]',
       title: `Mail server did not respond${sig.mxAttempts ? ` across ${sig.mxAttempts} MX host${sig.mxAttempts === 1 ? '' : 's'}` : ''} — domain may be misconfigured or rate-limiting us`,
     });
   }
@@ -1407,7 +1407,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-3 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
+                className="text-xs px-3 py-1 rounded-md bg-[#005a8f] text-white hover:bg-[#1c3f5e] disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify address'}
               </button>
@@ -1435,7 +1435,7 @@ function EditDrawer({
                 type="button"
                 disabled={emailBusy || !form.email}
                 onClick={onVerifyEmail}
-                className="text-xs px-3 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
+                className="text-xs px-3 py-1 rounded-md bg-[#005a8f] text-white hover:bg-[#1c3f5e] disabled:opacity-50"
               >
                 {emailBusy ? 'Verifying…' : 'Verify Email'}
               </button>
@@ -1500,7 +1500,7 @@ function EditDrawer({
             type="button"
             disabled={saving}
             onClick={save}
-            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#301D5D] disabled:opacity-50 whitespace-nowrap"
+            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#005a8f] disabled:opacity-50 whitespace-nowrap"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>

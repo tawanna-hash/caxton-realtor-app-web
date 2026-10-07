@@ -8,8 +8,8 @@ export type SignRequestRow = { id: string; document: string; status: string; cre
 export type SignLayout = { id: string; name: string; roles: number };
 type Post = (payload: Record<string, unknown>) => Promise<{ message?: string } | null>;
 
-const btn = 'inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:opacity-45';
-const btnPrimary = 'inline-flex min-h-[36px] items-center rounded-md bg-[#301D5D] px-3 text-xs font-bold text-white transition hover:bg-[#42277c] disabled:opacity-45';
+const btn = 'inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#005a8f] hover:bg-[#f5f6f9] disabled:opacity-45';
+const btnPrimary = 'inline-flex min-h-[36px] items-center rounded-md bg-[#005a8f] px-3 text-xs font-bold text-white transition hover:bg-[#1c3f5e] disabled:opacity-45';
 const input = 'min-h-[36px] w-full rounded-md border border-slate-300 bg-white px-2 text-sm';
 const label = 'text-xs font-semibold text-slate-600';
 
@@ -56,7 +56,7 @@ export function SecureSignRequests({ requests, post, busy }: { requests: SignReq
   return (
     <div className="mt-3">
       <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Secure Sign Requests</p>
-      <div className="mt-1 flex flex-wrap gap-2" role="tablist">{FILTERS.map(([k, t]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`${btn} ${tab === k ? 'border-[#301D5D] bg-[#F8F5FF]' : ''}`} onClick={() => setTab(k)}>{t} {count(k)}</button>)}</div>
+      <div className="mt-1 flex flex-wrap gap-2" role="tablist">{FILTERS.map(([k, t]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`${btn} ${tab === k ? 'border-[#005a8f] bg-[#f5f6f9]' : ''}`} onClick={() => setTab(k)}>{t} {count(k)}</button>)}</div>
       {shown.length === 0 ? <p className="mt-2 text-sm text-slate-500">Nothing here.</p> : (
         <ul className="mt-2 divide-y divide-slate-100 border border-slate-200 text-sm">{shown.map((r) => (
           <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">

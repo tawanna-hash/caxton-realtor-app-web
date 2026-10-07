@@ -28,7 +28,7 @@ type AgreementRow = {
 
 const STATUS_TONE: Record<string, string> = {
   active: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
-  signed: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
+  signed: 'bg-[#f5f6f9] text-[#1c3f5e] border-[#bbc1c9]',
   sent: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30',
   draft: 'bg-gray-100 text-gray-700 border-gray-200',
   expired: 'bg-gray-50 text-gray-500 border-gray-200',
@@ -157,7 +157,7 @@ export default async function PortalOrders() {
                           href={r.signed_document}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#42277C] hover:underline"
+                          className="text-[#1c3f5e] hover:underline"
                         >
                           View PDF
                         </Link>
@@ -202,7 +202,7 @@ export default async function PortalOrders() {
                         href={r.signed_document}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-[#42277C] hover:underline"
+                        className="text-sm text-[#1c3f5e] hover:underline"
                       >
                         View PDF
                       </Link>

@@ -143,7 +143,7 @@ function PubTabs({ active, onChange }: { active: PubTab['id']; onChange: (id: Pu
             className={
               'inline-flex items-center gap-2 -mb-px px-3 py-2 text-sm border-b-2 transition-colors ' +
               (isActive
-                ? 'border-[#301D5D] text-[#42277C] font-semibold'
+                ? 'border-[#005a8f] text-[#1c3f5e] font-semibold'
                 : soon
                   ? 'border-transparent text-gray-400 cursor-not-allowed'
                   : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300')
@@ -319,14 +319,14 @@ function PackagesSection() {
 
 function PackageCard({ pkg }: { pkg: Package }) {
   return (
-    <div className={'rounded-md ring-1 p-4 ' + (pkg.premium ? 'bg-brand-700 text-white ring-brand-700' : pkg.popular ? 'bg-[#F6F3FB] ring-[#D9CFF0]' : 'bg-gray-50 ring-gray-200')}>
+    <div className={'rounded-md ring-1 p-4 ' + (pkg.premium ? 'bg-brand-700 text-white ring-brand-700' : pkg.popular ? 'bg-[#f5f6f9] ring-[#bbc1c9]' : 'bg-gray-50 ring-gray-200')}>
       <div className="flex items-start justify-between">
         <div>
           <div className={'text-xs font-semibold uppercase tracking-wider ' + (pkg.premium ? 'text-white/80' : 'text-gray-700')}>{pkg.tagline}</div>
           <div className={'text-lg font-semibold mt-1 ' + (pkg.premium ? 'text-white' : 'text-gray-900')}>{pkg.name}</div>
         </div>
         {pkg.popular && !pkg.premium && (
-          <span className="inline-block rounded bg-[#D9CFF0] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#1B1726]">Most Popular</span>
+          <span className="inline-block rounded bg-[#bbc1c9] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#292a2d]">Most Popular</span>
         )}
       </div>
       <ul className={'mt-3 space-y-1 text-sm ' + (pkg.premium ? 'text-white/90' : 'text-gray-700')}>
@@ -363,7 +363,7 @@ function DigitalSlotsSection({
         </div>
         <Link
           href={mode === 'public' ? '/advertise/placements' : '/admin/ads/placements'}
-          className="text-sm text-[#42277C] hover:underline"
+          className="text-sm text-[#1c3f5e] hover:underline"
         >
           {mode === 'public' ? 'View placement guide' : 'View wireframes'} {'\u2192'}
         </Link>

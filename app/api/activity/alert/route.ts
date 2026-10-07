@@ -80,7 +80,7 @@ export const POST = withErrorHandling(async (req: Request) => {
   const kindLabel = a.kind === 'form_submit' ? 'Form submitted' : 'Client error';
   const subject = `[Realty News Now] ${kindLabel}: ${a.title}`.slice(0, 180);
   const metaHtml = a.metadata
-    ? `<pre style="background:#f3f4f6;padding:12px;border-radius:6px;font-size:12px;overflow:auto">${escapeHtml(JSON.stringify(a.metadata, null, 2))}</pre>`
+    ? `<pre style="background:#f5f6f9;padding:12px;border-radius:6px;font-size:12px;overflow:auto">${escapeHtml(JSON.stringify(a.metadata, null, 2))}</pre>`
     : '';
 
   const html = `
@@ -90,7 +90,7 @@ export const POST = withErrorHandling(async (req: Request) => {
       ${a.detail ? `<p style="color:#333;line-height:1.5;margin:0 0 16px">${escapeHtml(a.detail)}</p>` : ''}
       <table style="font-size:13px;color:#444;border-collapse:collapse;width:100%">
         ${a.path ? `<tr><td style="padding:4px 12px 4px 0;color:#777;width:90px">Path</td><td style="padding:4px 0"><code>${escapeHtml(a.path)}</code></td></tr>` : ''}
-        ${a.url ? `<tr><td style="padding:4px 12px 4px 0;color:#777">URL</td><td style="padding:4px 0"><a href="${escapeHtml(a.url)}" style="color:#301D5D">${escapeHtml(a.url)}</a></td></tr>` : ''}
+        ${a.url ? `<tr><td style="padding:4px 12px 4px 0;color:#777">URL</td><td style="padding:4px 0"><a href="${escapeHtml(a.url)}" style="color:#005a8f">${escapeHtml(a.url)}</a></td></tr>` : ''}
         ${a.publication ? `<tr><td style="padding:4px 12px 4px 0;color:#777">Publication</td><td style="padding:4px 0">${escapeHtml(a.publication)}</td></tr>` : ''}
         ${a.email ? `<tr><td style="padding:4px 12px 4px 0;color:#777">User email</td><td style="padding:4px 0">${escapeHtml(a.email)}</td></tr>` : ''}
         <tr><td style="padding:4px 12px 4px 0;color:#777">When</td><td style="padding:4px 0">${escapeHtml(new Date().toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'medium', timeStyle: 'medium' }))} CT</td></tr>
@@ -98,7 +98,7 @@ export const POST = withErrorHandling(async (req: Request) => {
       ${metaHtml}
       <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
       <p style="color:#888;font-size:12px;margin:0">
-        Live dashboard: <a href="https://realtynewsnow.app/admin/activity" style="color:#301D5D">realtynewsnow.app/admin/activity</a><br>
+        Live dashboard: <a href="https://realtynewsnow.app/admin/activity" style="color:#005a8f">realtynewsnow.app/admin/activity</a><br>
         To stop these alerts, set <code>ACTIVITY_ALERT_TO=</code> empty in Vercel env.
       </p>
     </div>

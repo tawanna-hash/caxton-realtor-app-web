@@ -926,7 +926,7 @@ export const CONCESSION_DISPLAY: ConcessionDisplayGroup[] = [
   {
     program: 'conventional',
     programLabel: 'Conventional',
-    accent: '#301D5D',
+    accent: '#005a8f',
     scenarios: [
       {
         occupancyLabel: 'Primary & secondary home',
@@ -949,7 +949,7 @@ export const CONCESSION_DISPLAY: ConcessionDisplayGroup[] = [
   {
     program: 'fha',
     programLabel: 'FHA',
-    accent: '#42277C',
+    accent: '#1c3f5e',
     scenarios: [
       {
         occupancyLabel: 'Primary',
@@ -965,7 +965,7 @@ export const CONCESSION_DISPLAY: ConcessionDisplayGroup[] = [
   {
     program: 'va',
     programLabel: 'VA',
-    accent: '#42277C',
+    accent: '#1c3f5e',
     scenarios: [
       {
         occupancyLabel: 'Primary',
@@ -988,7 +988,7 @@ export const CONCESSION_DISPLAY: ConcessionDisplayGroup[] = [
   {
     program: 'usda',
     programLabel: 'USDA',
-    accent: '#301D5D',
+    accent: '#005a8f',
     scenarios: [
       {
         occupancyLabel: 'Primary',

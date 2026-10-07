@@ -502,7 +502,7 @@ export default function MagazineUploadForm() {
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-3xl mx-auto">
         <div className="mb-6">
-          <Link href="/admin/magazines" className="text-sm text-[#301D5D] hover:underline">
+          <Link href="/admin/magazines" className="text-sm text-[#005a8f] hover:underline">
             ← Back to magazines
           </Link>
           <PageTitle size="md">New Magazine Issue</PageTitle>
@@ -704,7 +704,7 @@ export default function MagazineUploadForm() {
             <button
               type="submit"
               disabled={running}
-              className="bg-[#301D5D] hover:bg-[#42277C] text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50 whitespace-nowrap"
+              className="bg-[#005a8f] hover:bg-[#1c3f5e] text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50 whitespace-nowrap"
             >
               {running ? 'Uploading…' : 'Create Issue'}
             </button>
@@ -733,7 +733,7 @@ export default function MagazineUploadForm() {
 
 function StatusDot({ status }: { status: StepStatus }) {
   if (status === 'done') return <span className="w-3 h-3 rounded-full bg-[#00E200] inline-block" />;
-  if (status === 'running') return <span className="w-3 h-3 rounded-full bg-[#7059A8] inline-block animate-pulse" />;
+  if (status === 'running') return <span className="w-3 h-3 rounded-full bg-[#2f7aa7] inline-block animate-pulse" />;
   if (status === 'error') return <span className="w-3 h-3 rounded-full bg-[#FF2A04] inline-block" />;
   return <span className="w-3 h-3 rounded-full bg-gray-300 inline-block" />;
 }

@@ -63,11 +63,11 @@ export const POST = withErrorHandling(async function POST(req: NextRequest) {
     ['Brokerage', body.footer?.brokerage], ['Brokerage Address', body.footer?.address],
     ['Agent ID', body.footer?.agentId], ['Agent Name', body.footer?.agentName],
   ].filter(([, v]) => v);
-  const html = `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;max-width:560px">
+  const html = `<div style="font-family:Inter,Arial,sans-serif;color:#292a2d;max-width:560px">
     <p>Hello ${esc(brokerName)},</p>
     <p>${esc(agentName)} submitted <strong>${esc(formNumber)}${body.title ? ` · ${esc(body.title)}` : ''}</strong> for your review. Property: ${esc(property)}.</p>
-    ${note ? `<p style="border-left:3px solid #301D5D;padding-left:12px">${esc(note)}</p>` : ''}
-    ${footerRows.length ? `<table style="font-size:13px;color:#4A4757">${footerRows.map(([k, v]) => `<tr><td style="padding-right:12px"><strong>${esc(k)}</strong></td><td>${esc(v)}</td></tr>`).join('')}</table>` : ''}
+    ${note ? `<p style="border-left:3px solid #005a8f;padding-left:12px">${esc(note)}</p>` : ''}
+    ${footerRows.length ? `<table style="font-size:13px;color:#51555b">${footerRows.map(([k, v]) => `<tr><td style="padding-right:12px"><strong>${esc(k)}</strong></td><td>${esc(v)}</td></tr>`).join('')}</table>` : ''}
     <p>The filled form is attached. Reply to this email to send your approval or changes to ${esc(agentName)}.</p>
   </div>`;
 

@@ -206,7 +206,7 @@ export default function AdvertiserImageUploader({
               href={value}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full h-full flex flex-col items-center justify-center gap-0.5 text-[10px] text-[#42277C] hover:text-[#1B1726] px-1 text-center break-all leading-tight rounded-md"
+              className="w-full h-full flex flex-col items-center justify-center gap-0.5 text-[10px] text-[#1c3f5e] hover:text-[#292a2d] px-1 text-center break-all leading-tight rounded-md"
               title={`Open ${fileExtFromUrl(value).toUpperCase() || 'file'}`}
             >
               <span className="text-base" aria-hidden>📄</span>
@@ -236,7 +236,7 @@ export default function AdvertiserImageUploader({
             className={`px-3 py-1 rounded-md text-xs font-medium border transition-colors ${
               uploading
                 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
-                : 'bg-[#301D5D] text-white border-[#42277C] hover:bg-[#42277C]'
+                : 'bg-[#005a8f] text-white border-[#1c3f5e] hover:bg-[#1c3f5e]'
             }`}
           >
             {uploading ? 'Uploading…' : value ? 'Replace' : 'Upload'}

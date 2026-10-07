@@ -15,9 +15,9 @@ export default function MessageLayoutPicker({ value, onPick, disabled }: { value
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {MESSAGE_LAYOUTS.map((l) => (
-        <button key={l.id} type="button" disabled={disabled} onClick={() => onPick(l.id)} className={`rounded-xl border px-4 py-3 text-left transition !bg-white hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${value === l.id ? '!border-[#301D5D] !bg-[#EFEAF8]' : 'border-[#E6E5EC]'}`}>
-          <span className="block text-[14px] font-semibold text-[#1B1726]">{l.name}{value === l.id ? ' (Current)' : ''}</span>
-          <span className="mt-0.5 block text-[12px] font-medium text-[#7A7787]">{l.text}</span>
+        <button key={l.id} type="button" disabled={disabled} onClick={() => onPick(l.id)} className={`rounded-xl border px-4 py-3 text-left transition !bg-white hover:!bg-[#daeeff] hover:!text-[#292a2d] ${value === l.id ? '!border-[#005a8f] !bg-[#daeeff]' : 'border-[#d4d8dd]'}`}>
+          <span className="block text-[14px] font-semibold text-[#292a2d]">{l.name}{value === l.id ? ' (Current)' : ''}</span>
+          <span className="mt-0.5 block text-[12px] font-medium text-[#51555b]">{l.text}</span>
         </button>
       ))}
     </div>

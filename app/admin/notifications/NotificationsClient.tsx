@@ -44,9 +44,9 @@ type Props = {
 
 function StatusPill({ status }: { status: string }) {
   const map: Record<string, { bg: string; fg: string; label: string }> = {
-    draft:     { bg: '#e5e7eb', fg: '#374151', label: 'Draft' },
+    draft:     { bg: '#d4d8dd', fg: '#292a2d', label: 'Draft' },
     scheduled: { bg: '#FEF8CC', fg: '#645600', label: 'Scheduled' },
-    sending:   { bg: '#FFF3E0', fg: '#301D5D', label: 'Sending' },
+    sending:   { bg: '#FFF3E0', fg: '#005a8f', label: 'Sending' },
     sent:      { bg: '#E0FBE0', fg: '#005A00', label: 'Sent' },
     cancelled: { bg: '#FFEAE6', fg: '#661102', label: 'Cancelled' },
   };
@@ -150,7 +150,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
         <button
           type="button"
           onClick={() => { setEditing(null); setOpen(true); }}
-          className="inline-flex h-9 items-center justify-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#42277C]"
+          className="inline-flex h-9 items-center justify-center rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1c3f5e]"
         >
           New notification
         </button>

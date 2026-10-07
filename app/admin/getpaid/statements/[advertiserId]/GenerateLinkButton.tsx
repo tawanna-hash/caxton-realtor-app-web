@@ -33,7 +33,7 @@ export default function GenerateLinkButton({ invoiceId }: { invoiceId: string })
         type="button"
         onClick={generate}
         disabled={busy}
-        className="font-semibold text-[#42277C] underline disabled:opacity-50"
+        className="font-semibold text-[#1c3f5e] underline disabled:opacity-50"
       >
         {busy ? 'Generating…' : 'Generate link'}
       </button>
@@ -52,7 +52,7 @@ export function GenerateStatementLinkButton({ action }: { action: () => Promise<
       <button
         type="button"
         disabled={pending}
-        className="inline-flex rounded bg-[#301D5D] px-4 py-2 text-xs font-semibold text-white hover:bg-[#42277C] disabled:opacity-50"
+        className="inline-flex rounded bg-[#005a8f] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1c3f5e] disabled:opacity-50"
         onClick={() => {
           setError('');
           startTransition(async () => {

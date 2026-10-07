@@ -141,12 +141,12 @@ function FeedScreen() {
           </span>
         </div>
       </div>
-      <div className="mx-3 flex items-center gap-3 border border-[#D9CFF0] bg-[#F6F3FB] p-3 shadow-sm">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-[#EFEAF8] text-[#42277C]">
+      <div className="mx-3 flex items-center gap-3 border border-[#bbc1c9] bg-[#f5f6f9] p-3 shadow-sm">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-[#daeeff] text-[#1c3f5e]">
           <Sparkles size={17} aria-hidden />
         </span>
         <div className="min-w-0">
-          <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#42277C]">Trending</p>
+          <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#1c3f5e]">Trending</p>
           <p className="truncate text-xs font-semibold text-gray-900">
             Central Texas housing activity signals a strong week ahead
           </p>
@@ -156,7 +156,7 @@ function FeedScreen() {
         <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Top stories</p>
         <div className="grid grid-cols-[1.35fr_.9fr] gap-2">
           <div className="border border-gray-200 bg-white p-3">
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-[#42277C]">Market News</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-[#1c3f5e]">Market News</span>
             <p className="mt-2 text-sm font-semibold leading-snug text-gray-900">
               What local REALTORS® should know this week
             </p>
@@ -239,7 +239,7 @@ function CalendarScreen() {
           }).format(date);
           return (
           <div key={event.id} className="grid grid-cols-[76px_1fr] border border-gray-200 bg-white">
-            <div className={`p-3 text-[9px] font-bold ${index === 0 ? 'bg-[#F6F3FB] text-[#42277C]' : 'bg-gray-50 text-gray-500'}`}>
+            <div className={`p-3 text-[9px] font-bold ${index === 0 ? 'bg-[#f5f6f9] text-[#1c3f5e]' : 'bg-gray-50 text-gray-500'}`}>
               <span className="block uppercase">{dateLabel}</span>
               <span className="mt-1 block font-medium">{timeLabel}</span>
             </div>
@@ -280,13 +280,13 @@ function BuildersScreen() {
           ['The Grove at Georgetown', 'From the $600s', '5 homes available'],
         ].map(([name, price, availability], index) => (
           <div key={name} className="flex gap-3 border border-gray-200 bg-white p-3">
-            <div className={`flex h-14 w-16 shrink-0 items-center justify-center ${index === 1 ? 'bg-[#F6F3FB] text-[#42277C]' : 'bg-brand-50 text-brand-700'}`}>
+            <div className={`flex h-14 w-16 shrink-0 items-center justify-center ${index === 1 ? 'bg-[#f5f6f9] text-[#1c3f5e]' : 'bg-brand-50 text-brand-700'}`}>
               <Building2 size={22} strokeWidth={1.5} aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold text-gray-900">{name}</p>
               <p className="mt-1 text-[10px] text-gray-500">{price}</p>
-              <p className="mt-1 text-[9px] font-semibold text-[#42277C]">{availability}</p>
+              <p className="mt-1 text-[9px] font-semibold text-[#1c3f5e]">{availability}</p>
             </div>
             <ArrowRight size={14} className="self-center text-gray-300" aria-hidden />
           </div>
@@ -395,12 +395,12 @@ function AdvertisingScreen() {
 
   return (
     <div className="px-3 py-4" data-tour-screen="advertising">
-      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#42277C]">Advertising opportunities</p>
+      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#1c3f5e]">Advertising opportunities</p>
       <h3 className="mt-1 text-lg font-semibold text-gray-900">Print, Digital & App</h3>
       <div className="mt-4 space-y-2">
         {opportunities.map(({ Icon, label, title, detail }, index) => (
           <div key={label} className={`flex gap-3 border p-3 ${index === 1 ? 'border-brand-200 bg-brand-50' : 'border-gray-200 bg-white'}`}>
-            <span className={`flex h-10 w-10 shrink-0 items-center justify-center ${index === 1 ? 'bg-brand-700 text-white' : 'bg-[#F6F3FB] text-[#42277C]'}`}>
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center ${index === 1 ? 'bg-brand-700 text-white' : 'bg-[#f5f6f9] text-[#1c3f5e]'}`}>
               <Icon size={18} strokeWidth={1.8} aria-hidden />
             </span>
             <div className="min-w-0">
@@ -463,10 +463,10 @@ function PlatinumScreen() {
     <div className="px-3 py-4" data-tour-screen="platinum">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#42277C]">Platinum Tools</p>
+          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#1c3f5e]">Platinum Tools</p>
           <h3 className="mt-1 text-lg font-semibold text-gray-900">Build Your Reputation</h3>
         </div>
-        <Star size={21} className="fill-[#EFEAF8] text-[#301D5D]" aria-hidden />
+        <Star size={21} className="fill-[#daeeff] text-[#005a8f]" aria-hidden />
       </div>
       <div className="mt-4 space-y-2">
         {[
@@ -477,7 +477,7 @@ function PlatinumScreen() {
           const ToolIcon = Icon as typeof MessageSquareQuote;
           return (
             <div key={String(title)} className={`flex gap-3 border p-3 ${index === 0 ? 'border-brand-200 bg-brand-50' : 'border-gray-200 bg-white'}`}>
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center ${index === 0 ? 'bg-brand-700 text-white' : 'bg-[#F6F3FB] text-[#42277C]'}`}>
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center ${index === 0 ? 'bg-brand-700 text-white' : 'bg-[#f5f6f9] text-[#1c3f5e]'}`}>
                 <ToolIcon size={17} strokeWidth={1.8} aria-hidden />
               </span>
               <div>
@@ -583,7 +583,7 @@ function AnnouncementScreen({ onStart }: { onStart: () => void }) {
 
       <section className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-8 sm:px-8 sm:py-14 lg:min-h-[calc(100dvh-77px)] lg:grid-cols-[minmax(340px,.82fr)_minmax(500px,1.18fr)] lg:gap-16 lg:py-12">
         <div className="order-1">
-          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#42277C]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#1c3f5e]">
             We are excited to announce
           </p>
           <h1 className="mt-4 max-w-xl font-serif text-[clamp(2.25rem,4.5vw,4.25rem)] leading-[1.01] tracking-[-0.035em] text-brand-700">
@@ -658,8 +658,8 @@ function AnnouncementScreen({ onStart }: { onStart: () => void }) {
             <div className="relative border border-brand-700/20 bg-white p-3 shadow-[0_28px_80px_rgba(48,29,93,0.2)] sm:p-4">
               <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
                 <BrandMark compact />
-                <span className="inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-[#42277C]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#301D5D]" aria-hidden />
+                <span className="inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-[#1c3f5e]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#005a8f]" aria-hidden />
                   Now available
                 </span>
               </div>
@@ -681,7 +681,7 @@ function AnnouncementScreen({ onStart }: { onStart: () => void }) {
                   <div className="absolute inset-0 bg-gradient-to-t from-brand-950/70 via-transparent to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4 sm:p-4">
                     <div>
-                      <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#D9CFF0]">Your market at a glance</p>
+                      <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#bbc1c9]">Your market at a glance</p>
                       <p className="mt-1 max-w-sm text-base font-semibold leading-snug text-white sm:text-xl">
                         News and resources built for Texas real estate professionals
                       </p>
@@ -857,7 +857,7 @@ export default function ProductTourClient() {
 
       <div className="h-1 bg-brand-100" aria-hidden>
         <div
-          className="tour-progress h-full bg-[#301D5D] transition-[width] duration-300 ease-out"
+          className="tour-progress h-full bg-[#005a8f] transition-[width] duration-300 ease-out"
           style={{ width: complete ? '100%' : `${((index + 1) / STEPS.length) * 100}%` }}
         />
       </div>
@@ -874,7 +874,7 @@ export default function ProductTourClient() {
                 aria-current={!complete && index === itemIndex ? 'step' : undefined}
                 className={`h-1.5 transition-[width,background-color] duration-300 ${
                   !complete && index === itemIndex
-                    ? 'w-10 bg-[#301D5D]'
+                    ? 'w-10 bg-[#005a8f]'
                     : itemIndex < index || complete
                       ? 'w-5 bg-brand-700'
                       : 'w-5 bg-brand-200 hover:bg-brand-300'
@@ -890,7 +890,7 @@ export default function ProductTourClient() {
             <p
               ref={announcedRef}
               tabIndex={-1}
-              className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#42277C] outline-none"
+              className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#1c3f5e] outline-none"
               aria-live="polite"
             >
               {complete ? 'Tour complete' : step.eyebrow}
@@ -976,7 +976,7 @@ export default function ProductTourClient() {
             ) : null}
           </div>
           <div className="relative z-10 mx-auto flex max-w-[620px] items-center justify-center gap-2 border border-b-0 border-brand-700/15 bg-white/80 px-3 py-2 text-center text-[9px] font-semibold uppercase tracking-[0.14em] text-brand-700 shadow-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#301D5D]" aria-hidden />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#005a8f]" aria-hidden />
             Interactive preview · Select any navigation tab
           </div>
           <AppPreview

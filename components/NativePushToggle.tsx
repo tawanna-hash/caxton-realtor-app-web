@@ -26,7 +26,7 @@ type Props = {
 
 type Status = 'loading' | 'prompt' | 'granted' | 'denied' | 'unsupported' | 'busy';
 
-export default function NativePushToggle({ accentColor = '#301D5D' }: Props) {
+export default function NativePushToggle({ accentColor = '#005a8f' }: Props) {
   // Lazy initializer so we can decide 'unsupported' synchronously without
   // an effect-time setState (which the React Compiler rule rejects).
   const [status, setStatus] = useState<Status>(() => (isNative() ? 'loading' : 'unsupported'));
@@ -127,7 +127,7 @@ export default function NativePushToggle({ accentColor = '#301D5D' }: Props) {
           onClick={() => void onToggle()}
           disabled={busy || blocked}
           className="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-50"
-          style={{ backgroundColor: enabled ? accentColor : '#d1d5db' }}
+          style={{ backgroundColor: enabled ? accentColor : '#bbc1c9' }}
         >
           <span
             className="inline-block h-5 w-5 rounded-full bg-white shadow transition-transform"

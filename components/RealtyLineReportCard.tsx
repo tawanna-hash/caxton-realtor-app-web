@@ -27,7 +27,7 @@ interface Props {
   variant?: 'hero' | 'inline';
 }
 
-const NEWSLINE = '#301D5D';
+const NEWSLINE = '#005a8f';
 
 // Baked-in May 2026 ABoR Central Texas Housing Market Report — used when
 // the API returns no row. Spanish strings use ASCII (no accents) to avoid
@@ -70,9 +70,9 @@ function dirGlyph(d: DeltaDirection | undefined): string {
 
 function dirColor(d: DeltaDirection | undefined): string {
   if (d === 'down') return '#661102';
-  if (d === 'flat') return '#6b7280';
+  if (d === 'flat') return '#51555b';
   if (d === 'up') return '#005A00';
-  return '#6b7280';
+  return '#51555b';
 }
 
 export default function RealtyLineReportCard({ variant = 'inline' }: Props) {
@@ -161,7 +161,7 @@ export default function RealtyLineReportCard({ variant = 'inline' }: Props) {
     >
       <div className="bg-white mx-3 my-3 rounded-md overflow-hidden shadow-sm">
         {/* Brand top strip */}
-        <div className="h-1" style={{ background: `linear-gradient(90deg, ${NEWSLINE} 0%, #5B3FA0 100%)` }} />
+        <div className="h-1" style={{ background: `linear-gradient(90deg, ${NEWSLINE} 0%, #005a8f 100%)` }} />
 
         <div className="px-4 pt-4 pb-4">
           {/* Eyebrow row + EN/ES toggle */}
@@ -225,7 +225,7 @@ export default function RealtyLineReportCard({ variant = 'inline' }: Props) {
           {/* Indicator stats — 3 cols on mobile to match the ABoR 3x3 grid */}
           <div
             className="grid grid-cols-3 gap-x-3 gap-y-3 py-3 mb-3"
-            style={{ borderTop: '1px dashed #e5e7eb' }}
+            style={{ borderTop: '1px dashed #d4d8dd' }}
           >
             {d.indicator_stats.map((s) => (
               <div key={s.key || s.label_en}>
@@ -252,7 +252,7 @@ export default function RealtyLineReportCard({ variant = 'inline' }: Props) {
               </p>
               <div
                 className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-3 py-3 mb-3"
-                style={{ borderTop: '1px dashed #e5e7eb' }}
+                style={{ borderTop: '1px dashed #d4d8dd' }}
               >
                 {d.listing_counts.map((s) => (
                   <div key={s.key || s.label_en}>
@@ -281,7 +281,7 @@ export default function RealtyLineReportCard({ variant = 'inline' }: Props) {
               </p>
               <div
                 className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-3 py-3 mb-3"
-                style={{ borderTop: '1px dashed #e5e7eb' }}
+                style={{ borderTop: '1px dashed #d4d8dd' }}
               >
                 {d.price_bands.map((b) => (
                   <div key={b.key || b.label_en}>
@@ -298,7 +298,7 @@ export default function RealtyLineReportCard({ variant = 'inline' }: Props) {
           {/* Member disclaimer / deep-link */}
           <p
             className="text-[11px] leading-snug text-gray-500 pt-3"
-            style={{ borderTop: '1px dashed #e5e7eb' }}
+            style={{ borderTop: '1px dashed #d4d8dd' }}
           >
             {sectionLabels.members}{' '}
             <a

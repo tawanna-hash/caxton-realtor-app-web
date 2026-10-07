@@ -1445,7 +1445,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                               if (ioPosPremActive) setIoAdPremium(String(pagePositionPremium(looked.rate)));
                             }
                           }}
-                          className="w-4 h-4 accent-[#301D5D]" />
+                          className="w-4 h-4 accent-[#005a8f]" />
                         {s}
                       </label>
                     ))}
@@ -1465,7 +1465,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                               if (ioPosPremActive) setIoAdPremium(String(pagePositionPremium(looked.rate)));
                             }
                           }}
-                          className="w-4 h-4 accent-[#301D5D]" />
+                          className="w-4 h-4 accent-[#005a8f]" />
                         {f} {FREQ_PKG_AG[f] ? `· ${FREQ_PKG_AG[f]}` : ''}
                       </label>
                     ))}
@@ -1483,7 +1483,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         setIoAdRateBase(e.target.value);
                         setIoRateUserEdited(true);
                       }}
-                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
+                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
                       placeholder="0.00" min="0" step="0.01"
                     />
                     {!ioRateUserEdited && ioAdRate && (
@@ -1496,7 +1496,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     <div className="text-xs text-gray-600 mb-1">Discount ($)</div>
                     <input type="number" value={ioDiscount}
                       onChange={(e) => setIoDiscount(e.target.value)}
-                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
+                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
                       placeholder="0.00" min="0" step="0.01" />
                   </label>
                   <div>
@@ -1509,7 +1509,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     ) : (
                       <input type="number" value={ioAdPremium}
                         onChange={(e) => setIoAdPremium(e.target.value)}
-                        className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
+                        className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
                         placeholder="0.00" min="0" step="0.01" />
                     )}
                   </div>
@@ -1527,7 +1527,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     <div className="text-xs text-gray-600 mb-1">Page Position</div>
                     <input value={ioPagePosition}
                       onChange={(e) => setIoPagePosition(e.target.value)}
-                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
+                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f7aa7]"
                       placeholder="e.g. Inside front cover" />
                   </label>
                   <div className="flex items-end pb-1">
@@ -1540,7 +1540,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                           if (active && base > 0) setIoAdPremium(String(pagePositionPremium(base)));
                           else if (!active) setIoAdPremium('');
                         }}
-                        className="w-4 h-4 accent-[#301D5D]" />
+                        className="w-4 h-4 accent-[#005a8f]" />
                       Apply 20% premium
                     </label>
                   </div>
@@ -1554,7 +1554,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         <input type="checkbox" id={`nq_agm_${m.k}`}
                           checked={!!ioTimingMonths[m.k]}
                           onChange={(e) => setIoTimingMonths({ ...ioTimingMonths, [m.k]: e.target.checked })}
-                          className="w-3.5 h-3.5 accent-[#301D5D] flex-shrink-0" />
+                          className="w-3.5 h-3.5 accent-[#005a8f] flex-shrink-0" />
                         <label htmlFor={`nq_agm_${m.k}`} className="text-sm min-w-[80px] cursor-pointer">{m.l}</label>
                         <input
                           value={ioTimingYears[m.k] ?? ''}
@@ -1943,7 +1943,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     'ml-2 px-2 py-0.5 rounded text-[10px] font-semibold ' +
                     (discountPct > 0
                       ? 'bg-[#E0FBE0] text-[#005A00]'
-                      : 'bg-[#EFEAF8] text-[#301D5D]')
+                      : 'bg-[#daeeff] text-[#005a8f]')
                   }
                 >
                   {discountPct > 0 ? `${discountPct}% off` : `+${Math.abs(discountPct)}% over`}

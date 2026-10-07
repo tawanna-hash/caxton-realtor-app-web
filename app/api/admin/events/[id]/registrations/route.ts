@@ -114,12 +114,12 @@ export async function POST(req: Request, ctx: Ctx) {
 
   const rows = registry.registrations.map((r) => `
     <tr>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${escapeHtml(r.full_name)}</td>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${escapeHtml(r.company)}</td>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${r.is_realtor ? 'Yes' : 'No'}</td>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${escapeHtml(r.license_number || '—')}</td>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${escapeHtml(r.email)}</td>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${escapeHtml(r.mobile)}</td>
+      <td style="padding:8px;border-bottom:1px solid #d4d8dd;">${escapeHtml(r.full_name)}</td>
+      <td style="padding:8px;border-bottom:1px solid #d4d8dd;">${escapeHtml(r.company)}</td>
+      <td style="padding:8px;border-bottom:1px solid #d4d8dd;">${r.is_realtor ? 'Yes' : 'No'}</td>
+      <td style="padding:8px;border-bottom:1px solid #d4d8dd;">${escapeHtml(r.license_number || '—')}</td>
+      <td style="padding:8px;border-bottom:1px solid #d4d8dd;">${escapeHtml(r.email)}</td>
+      <td style="padding:8px;border-bottom:1px solid #d4d8dd;">${escapeHtml(r.mobile)}</td>
     </tr>`).join('');
   const csv = buildCsv(registry.registrations);
   const safeFilename = registry.event.title
@@ -132,12 +132,12 @@ export async function POST(req: Request, ctx: Ctx) {
     subject: `Attendee registry — ${registry.event.title}`,
     html: `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:760px;margin:0 auto;padding:24px;">
-        <h1 style="margin:0;color:#301D5D;font-size:24px;">Attendee registry</h1>
-        <h2 style="margin:8px 0 6px;color:#111827;font-size:18px;">${escapeHtml(registry.event.title)}</h2>
-        <p style="margin:0 0 20px;color:#6b7280;">${registry.registrations.length} registered attendee${registry.registrations.length === 1 ? '' : 's'}</p>
+        <h1 style="margin:0;color:#005a8f;font-size:24px;">Attendee registry</h1>
+        <h2 style="margin:8px 0 6px;color:#292a2d;font-size:18px;">${escapeHtml(registry.event.title)}</h2>
+        <p style="margin:0 0 20px;color:#51555b;">${registry.registrations.length} registered attendee${registry.registrations.length === 1 ? '' : 's'}</p>
         <div style="overflow-x:auto;">
           <table style="width:100%;border-collapse:collapse;font-size:13px;">
-            <thead><tr style="background:#f3f4f6;text-align:left;">
+            <thead><tr style="background:#f5f6f9;text-align:left;">
               <th style="padding:8px;">Name</th><th style="padding:8px;">Company</th>
               <th style="padding:8px;">REALTOR</th><th style="padding:8px;">License</th>
               <th style="padding:8px;">Email</th><th style="padding:8px;">Mobile</th>
@@ -145,7 +145,7 @@ export async function POST(req: Request, ctx: Ctx) {
             <tbody>${rows}</tbody>
           </table>
         </div>
-        <p style="margin:20px 0 0;color:#9ca3af;font-size:12px;">A CSV copy is attached.</p>
+        <p style="margin:20px 0 0;color:#7b8089;font-size:12px;">A CSV copy is attached.</p>
       </div>`,
     attachments: [{
       filename: `${safeFilename}-attendees.csv`,

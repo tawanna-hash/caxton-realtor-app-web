@@ -11,7 +11,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #292a2d;
   /* Native iOS keyboard inset — kept at 0 on web and updated in real time
      by lib/native/keyboard.ts on iOS. Use with `padding-bottom:
      max(env(safe-area-inset-bottom), var(--kb-inset-bottom))` on any
@@ -43,16 +43,16 @@
      ========================================================================== */
 
   /* Purple — primary brand */
-  --rnn-purple-50:  #F6F3FB;
-  --rnn-purple-100: #EFEAF8;
-  --rnn-purple-200: #D9CFF0;
-  --rnn-purple-300: #B9ADD6;
-  --rnn-purple-400: #7059A8;
-  --rnn-purple-500: #5B3FA0;
-  --rnn-purple-600: #42277C;
-  --rnn-purple-700: #301D5D;
+  --rnn-purple-50:  #f5f6f9;
+  --rnn-purple-100: #daeeff;
+  --rnn-purple-200: #bbc1c9;
+  --rnn-purple-300: #98bdd3;
+  --rnn-purple-400: #2f7aa7;
+  --rnn-purple-500: #005a8f;
+  --rnn-purple-600: #1c3f5e;
+  --rnn-purple-700: #005a8f;
   --rnn-purple-800: #24164A;
-  --rnn-purple-900: #1B1726;
+  --rnn-purple-900: #292a2d;
 
   /* Blue */
   --rnn-blue-50:  #E3F7FF;
@@ -110,7 +110,7 @@
   --color-foreground: var(--foreground);
 
   /* ==========================================================================
-     Brand tokens (canonical) — use these instead of raw #301D5D hex literals.
+     Brand tokens (canonical) — use these instead of raw #005a8f hex literals.
      `bg-brand-700`, `text-brand-700`, `border-brand-700`, `ring-brand-700`,
      etc. all resolve to the brand purple. `brand` alone maps to 700.
      ========================================================================== */
@@ -128,7 +128,7 @@
 
   /* Ink scale — typographic neutrals matched to the brand. Use for body
      text + headings so they stay on-brand against light surfaces. */
-  --color-ink-900: #301D5D;
+  --color-ink-900: #005a8f;
   --color-ink-700: #4a3a7a;
   --color-ink-500: #6b5a96;
   --color-ink-400: #8c7eb3;
@@ -145,14 +145,14 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Brand override: collapse the darkest grays in Tailwind's palette to the
-     brand navy (#301D5D). Applies app-wide across RealtyLine + Newsline so all
+     brand navy (#005a8f). Applies app-wide across RealtyLine + Newsline so all
      primary text (headings, body, labels, buttons) reads as navy. Muted text
      (gray-500/400/300) is intentionally NOT remapped — hierarchy still works.
      If a component needs literal neutral dark gray, use `text-neutral-900`
-     or an arbitrary value like `text-[#171717]`. */
-  --color-gray-900: #301D5D;
-  --color-gray-800: #301D5D;
-  --color-gray-700: #301D5D;
+     or an arbitrary value like `text-[#292a2d]`. */
+  --color-gray-900: #005a8f;
+  --color-gray-800: #005a8f;
+  --color-gray-700: #005a8f;
 
   /* ==========================================================================
      Four-color lockdown — remap off-palette Tailwind hues into the allowed
@@ -441,13 +441,13 @@ body {
 input,
 textarea,
 select {
-  color: #171717;
+  color: #292a2d;
   background-color: #ffffff;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #9ca3af; /* gray-400 — visible but clearly a placeholder */
+  color: #7b8089; /* gray-400 — visible but clearly a placeholder */
 }
 
 /* Admin form fields use stronger contrast than public-facing forms. Keep
@@ -458,19 +458,19 @@ textarea::placeholder {
 [data-admin-ui='true'] textarea,
 [data-admin-ui='true'] select,
 [data-admin-ui='true'] select option {
-  color: #111827;
+  color: #292a2d;
 }
 
 [data-admin-ui='true'] input::placeholder,
 [data-admin-ui='true'] textarea::placeholder {
-  color: #4b5563;
+  color: #51555b;
   opacity: 1;
 }
 
 [data-admin-ui='true'] input:disabled,
 [data-admin-ui='true'] textarea:disabled,
 [data-admin-ui='true'] select:disabled {
-  color: #374151;
+  color: #292a2d;
 }
 
 /* ==========================================================================
@@ -618,7 +618,7 @@ textarea::placeholder {
   /* Reset page layout for paper */
   body {
     background: white !important;
-    color: #171717 !important;
+    color: #292a2d !important;
     font-size: 12pt;
     margin: 0;
     padding: 0;
@@ -654,7 +654,7 @@ textarea::placeholder {
 
   /* Brand purple headings for print */
   h1, h2, h3 {
-    color: #301D5D !important;
+    color: #005a8f !important;
   }
 
   /* Deposit report: use the full sheet and keep every detail column inside
@@ -957,7 +957,7 @@ input[type='date'] {
   max-width: 100% !important;
   -webkit-min-logical-width: 0 !important;
   margin: 0 !important;
-  border: 1px solid #cbd5e1 !important;
+  border: 1px solid #bbc1c9 !important;
   border-radius: 0.375rem !important;
   background-color: #fff !important;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23301d5d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E") !important;
@@ -965,7 +965,7 @@ input[type='date'] {
   background-position: right 0.7rem center !important;
   background-size: 1.125rem 1.125rem !important;
   padding: 0 2.25rem 0 0.75rem !important;
-  color: #0f172a !important;
+  color: #292a2d !important;
   color-scheme: light;
   font: inherit;
   font-size: 0.875rem !important;
@@ -976,7 +976,7 @@ input[type='date'] {
 }
 
 input[type='date']:focus {
-  border-color: #301d5d !important;
+  border-color: #005a8f !important;
   outline: 2px solid rgb(48 29 93 / 18%) !important;
   outline-offset: 1px !important;
 }
@@ -988,7 +988,7 @@ input[type='date']:hover:not(:disabled):not([readonly]) {
 input[type='date']:disabled,
 input[type='date'][readonly] {
   background-color: #f8fafc !important;
-  color: #475569 !important;
+  color: #51555b !important;
   cursor: default;
 }
 
@@ -1082,12 +1082,12 @@ input[type='date']::-webkit-calendar-picker-indicator {
 .article-body-rich,
 .caxton-article-prose {
   overflow-wrap: anywhere;
-  color: #301d5d;
+  color: #005a8f;
   font-size: 1.0625rem;
   line-height: 1.7;
 }
 .article-body-rich {
-  color: #301d5d;
+  color: #005a8f;
   font-size: 1rem;
   line-height: 1.7;
 }
@@ -1148,14 +1148,14 @@ input[type='date']::-webkit-calendar-picker-indicator {
 .caxton-article-prose li { margin-bottom: 0.35em; }
 .article-body-rich blockquote,
 .caxton-article-prose blockquote {
-  border-left: 3px solid #301d5d;
+  border-left: 3px solid #005a8f;
   padding-left: 1em;
   margin: 1.2em 0;
   font-style: italic;
 }
 .article-body-rich a,
 .caxton-article-prose a {
-  color: #301d5d;
+  color: #005a8f;
   text-decoration: underline;
 }
 .article-body-rich img,
@@ -1163,15 +1163,15 @@ input[type='date']::-webkit-calendar-picker-indicator {
 .article-body-rich figure,
 .caxton-article-prose figure { margin: 1.2em 0; }
 .article-body-rich figcaption,
-.caxton-article-prose figcaption { font-size: 0.85em; color: #6b7280; }
+.caxton-article-prose figcaption { font-size: 0.85em; color: #51555b; }
 .article-body-rich table,
 .caxton-article-prose table { border-collapse: collapse; width: 100%; margin: 1.2em 0; }
 .article-body-rich th,
 .article-body-rich td,
 .caxton-article-prose th,
-.caxton-article-prose td { border: 1px solid #d1d5db; padding: 0.5em; }
+.caxton-article-prose td { border: 1px solid #bbc1c9; padding: 0.5em; }
 .article-body-rich hr,
-.caxton-article-prose hr { border-top: 1px solid #d1d5db; margin: 1.5em 0; }
+.caxton-article-prose hr { border-top: 1px solid #bbc1c9; margin: 1.5em 0; }
 
 /* Reader, editor and preview share the dashboard's article typography. */
 .caxton-article-prose p { margin-bottom: 1.25rem; font-weight: 300; }
@@ -1179,22 +1179,22 @@ input[type='date']::-webkit-calendar-picker-indicator {
   font-size: 1.5rem;
   margin-top: 2rem;
   margin-bottom: 0.75rem;
-  color: #111827;
+  color: #292a2d;
   letter-spacing: -0.01em;
 }
 .caxton-article-prose h3 {
   font-size: 1.25rem;
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
-  color: #111827;
+  color: #292a2d;
 }
-.caxton-article-prose strong { font-weight: 600; color: #111827; }
+.caxton-article-prose strong { font-weight: 600; color: #292a2d; }
 .caxton-article-prose ul,
 .caxton-article-prose ol { margin-bottom: 1.25rem; font-weight: 300; }
 .caxton-article-prose li { margin-bottom: 0.4rem; }
 .caxton-article-prose a { text-underline-offset: 2px; }
 .caxton-article-prose img { margin: 1.5rem 0; border-radius: 4px; }
-.caxton-article-prose blockquote { color: #4b5563; }
+.caxton-article-prose blockquote { color: #51555b; }
 
 /* Collapsible cards (Closing Time / Agent Desk) */
 [data-collapsible][data-collapsed='closed'] > :not(:first-child) {
@@ -1242,26 +1242,26 @@ input[type='date']::-webkit-calendar-picker-indicator {
 /* Agent Desk: app-shell design. Inter, deep purple, light purple, soft gray, white.
    Scoped to #agent-desk. */
 #agent-desk {
-  --d-ink: #1B1726; --d-text: #4A4757; --d-muted: #7A7787;
-  --d-purple: #301D5D; --d-purple-hover: #42277C; --d-lav: #7059A8;
-  --d-lav-soft: #EFEAF8; --d-lav-wash: #F6F3FB;
+  --d-ink: #292a2d; --d-text: #51555b; --d-muted: #51555b;
+  --d-purple: #005a8f; --d-purple-hover: #1c3f5e; --d-lav: #2f7aa7;
+  --d-lav-soft: #daeeff; --d-lav-wash: #f5f6f9;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: var(--d-text);
 }
 #agent-desk *:not(svg):not(svg *) { font-family: inherit; }
 /* Normalize legacy palette (beige, slate) to the neutral scheme */
 #agent-desk [class*='border-[#D9D0BF]'], #agent-desk [class*='border-[#D8D0C2]'], #agent-desk .border-slate-200, #agent-desk .border-slate-300 { border-color: var(--d-line); }
 #agent-desk .border-slate-100, #agent-desk .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: var(--d-line-soft); }
-#agent-desk [class*='bg-[#F8F5FF]'] { background-color: var(--d-lav-wash); }
+#agent-desk [class*='bg-[#f5f6f9]'] { background-color: var(--d-lav-wash); }
 #agent-desk [class*='bg-[#FFFDF8]'], #agent-desk [class*='bg-[#FCFBF9]'], #agent-desk [class*='bg-[#F7F3EB]'], #agent-desk [class*='bg-[#F7F5F1]'], #agent-desk [class*='bg-[#ECE6DA]'] { background-color: #FFFFFF; }
 #agent-desk :is(h1, h2, h3, h4) { color: var(--d-ink); }
 #agent-desk .text-slate-950, #agent-desk .text-slate-900, #agent-desk .text-gray-900 { color: var(--d-ink); }
 #agent-desk .text-slate-700, #agent-desk .text-slate-600 { color: var(--d-text); }
 #agent-desk .text-slate-500, #agent-desk .text-slate-400, #agent-desk .text-gray-500 { color: var(--d-muted); }
-#agent-desk .uppercase[class*='text-[#7059A8]'], #agent-desk p.uppercase.text-gray-500 { color: var(--d-muted); font-weight: 600; letter-spacing: 0.08em; }
+#agent-desk .uppercase[class*='text-[#2f7aa7]'], #agent-desk p.uppercase.text-gray-500 { color: var(--d-muted); font-weight: 600; letter-spacing: 0.08em; }
 #agent-desk a:not([class*='bg-']):not([class*='border']) { color: var(--d-purple); }
 #agent-desk input[type='checkbox'], #agent-desk input[type='radio'] { accent-color: var(--d-purple); }
-#agent-desk button[class*='bg-[#301D5D]'], #agent-desk a[class*='bg-[#301D5D]'] { background-color: var(--d-purple); border-color: var(--d-purple); color: #FFFFFF; }
-#agent-desk button[class*='bg-[#301D5D]']:hover:not(:disabled) { background-color: var(--d-purple-hover); }
+#agent-desk button[class*='bg-[#005a8f]'], #agent-desk a[class*='bg-[#005a8f]'] { background-color: var(--d-purple); border-color: var(--d-purple); color: #FFFFFF; }
+#agent-desk button[class*='bg-[#005a8f]']:hover:not(:disabled) { background-color: var(--d-purple-hover); }
 #agent-desk button[aria-expanded] { background-color: #FFFFFF; border: 1px solid var(--d-line); color: var(--d-purple); }
 #agent-desk :is(input, select, textarea)::placeholder { color: #A3A0AF; }
 
@@ -1273,7 +1273,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 /* Agent Desk restyle v3: app shell (left rail + content), matching the reference app.
    Inter + deep purple / light purple / soft gray. Scoped to #agent-desk. */
 #agent-desk {
-  --d-line: #E6E5EC; --d-line-soft: #F1F0F5; --d-rail: #FBFBFD; --d-hover: #F4F3F8;
+  --d-line: #d4d8dd; --d-line-soft: #f5f6f9; --d-rail: #f5f6f9; --d-hover: #f5f6f9;
   background-color: #FFFFFF; font-size: 14px; -webkit-font-smoothing: antialiased;
 }
 /* Rail */
@@ -1313,7 +1313,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 @media (max-width: 639px) { #agent-desk .ds-main { margin: 0.75rem 0.5rem 2rem; padding: 1.25rem 1rem 1.75rem; border-radius: 12px; } #agent-desk .ds-toolbar { margin: 0.75rem 0.5rem 0; } }
 /* Legacy panels directly on the board: no second outline, just a hairline divider */
 #agent-desk .ds-main > section > div[class*='border-slate-200'], #agent-desk .ds-main > div[class*='border-slate-200'] { border-width: 0 0 1px; border-radius: 0; padding-left: 0; padding-right: 0; background: transparent; }
-#agent-desk .ds-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1rem; margin-bottom: 1.25rem; padding: 0.875rem 1.25rem; background: #F6F3FB; border: 1px solid var(--d-line); border-radius: 12px; }
+#agent-desk .ds-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1rem; margin-bottom: 1.25rem; padding: 0.875rem 1.25rem; background: #f5f6f9; border: 1px solid var(--d-line); border-radius: 12px; }
 #agent-desk .ds-header .ds-title { margin-top: 0.125rem; font-size: 1.375rem; }
 #agent-desk .ds-header .ds-subtitle { margin-top: 0.125rem; font-size: 0.8125rem; }
 #agent-desk .ds-eyebrow { margin: 0; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--d-muted); }
@@ -1327,10 +1327,10 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-stat-num { margin: 0.75rem 0 0; font-size: 1.75rem; line-height: 1; font-weight: 600; color: var(--d-ink); }
 #agent-desk .ds-stat-sub { margin: 0.375rem 0 0; font-size: 0.8125rem; color: var(--d-text); }
 #agent-desk .ds-stat-icon { display: inline-flex; height: 2rem; width: 2rem; flex: none; align-items: center; justify-content: center; border-radius: 8px; }
-#agent-desk .ds-i-purple { background: #EFEAF8; color: #5B3FA0; }
-#agent-desk .ds-i-green { background: #EFEAF8; color: #5B3FA0; }
-#agent-desk .ds-i-blue { background: #EFEAF8; color: #5B3FA0; }
-#agent-desk .ds-i-amber { background: #EFEAF8; color: #5B3FA0; }
+#agent-desk .ds-i-purple { background: #daeeff; color: #005a8f; }
+#agent-desk .ds-i-green { background: #daeeff; color: #005a8f; }
+#agent-desk .ds-i-blue { background: #daeeff; color: #005a8f; }
+#agent-desk .ds-i-amber { background: #daeeff; color: #005a8f; }
 #agent-desk:not(:has([data-desk-view='overview'])) .ds-stats { display: none; }
 
 /* Cards */
@@ -1351,9 +1351,9 @@ input[type='date']::-webkit-calendar-picker-indicator {
 
 /* Controls */
 #agent-desk button, #agent-desk a[class*='min-h-['] { border-radius: 8px; }
-#agent-desk button[class*='bg-[#301D5D]'], #agent-desk a[class*='bg-[#301D5D]'] { font-weight: 600; }
-#agent-desk button[class*='border']:not([class*='bg-[#301D5D]']):not([class*='border-b-2']) { border-color: var(--d-line); color: var(--d-ink); font-weight: 500; }
-#agent-desk button[class*='border']:not([class*='bg-[#301D5D]']):not([class*='border-b-2']):hover:not(:disabled) { background-color: var(--d-hover); border-color: #CFCDD8; }
+#agent-desk button[class*='bg-[#005a8f]'], #agent-desk a[class*='bg-[#005a8f]'] { font-weight: 600; }
+#agent-desk button[class*='border']:not([class*='bg-[#005a8f]']):not([class*='border-b-2']) { border-color: var(--d-line); color: var(--d-ink); font-weight: 500; }
+#agent-desk button[class*='border']:not([class*='bg-[#005a8f]']):not([class*='border-b-2']):hover:not(:disabled) { background-color: var(--d-hover); border-color: #d4d8dd; }
 #agent-desk :is(input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']), select, textarea) { border-color: var(--d-line); border-radius: 8px; }
 #agent-desk :is(input, select, textarea):focus { border-color: var(--d-purple); box-shadow: 0 0 0 3px rgb(48 29 93 / 0.12); }
 
@@ -1387,8 +1387,8 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-table-wrap tbody tr:first-child { border-top: 0; }
 #agent-desk .ds-table-wrap tbody tr:hover, #agent-desk .ds-table-wrap tbody tr:focus-visible { background: var(--d-rail); outline: none; }
 #agent-desk .ds-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.125rem 0.625rem; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
-#agent-desk .ds-chip-purple { background: var(--d-lav-soft); color: #5B3FA0; }
-#agent-desk .ds-bar { display: inline-block; width: 72px; height: 6px; border-radius: 999px; background: #E6E5EC; overflow: hidden; }
+#agent-desk .ds-chip-purple { background: var(--d-lav-soft); color: #005a8f; }
+#agent-desk .ds-bar { display: inline-block; width: 72px; height: 6px; border-radius: 999px; background: #d4d8dd; overflow: hidden; }
 #agent-desk .ds-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--d-purple); }
 
 /* Deal subpage */
@@ -1408,7 +1408,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-side-title { margin: 1.25rem 0 0.5rem; font-size: 0.9375rem; font-weight: 600; color: var(--d-ink); }
 #agent-desk .ds-side-title:first-child { margin-top: 0; }
 #agent-desk .ds-provider-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; min-height: 88px; padding: 0.75rem; text-align: center; border: 1px solid var(--d-line); border-radius: 12px; background: #fff; }
-#agent-desk .ds-provider-tile:hover { background: var(--d-rail); border-color: #CFCDD8; }
+#agent-desk .ds-provider-tile:hover { background: var(--d-rail); border-color: #d4d8dd; }
 
 /* Buttons: small, white, thin gray border, medium corners, dark purple on hover.
    Excludes navigation (rail, tabs, back links), tiles, chips and tiny icon toggles. */
@@ -1427,8 +1427,8 @@ input[type='date']::-webkit-calendar-picker-indicator {
   transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 #agent-desk :is(button, a[class*='min-h-['], a[class*='rounded-lg'][class*='px-'], a[class*='rounded-md'][class*='px-']):not(.ds-navbtn):not(.ds-deal):not(.ds-tab):not(.ds-back):not(.ds-provider-tile):not(.ds-link-row):not([role='tab']):not([aria-current]):not([class*='border-b-2']):not([class*='h-6 w-6']):not([class*='h-7 w-7']):not([class*='h-5 w-5']):not([class*='h-9 w-9']):hover:not(:disabled) {
-  background-color: #301D5D;
-  border-color: #301D5D;
+  background-color: #005a8f;
+  border-color: #005a8f;
   color: #FFFFFF;
 }
 #agent-desk :is(button, a):not(.ds-navbtn):not(.ds-deal):not(.ds-tab):disabled { opacity: 0.5; }
@@ -1452,18 +1452,18 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-embed :is(h1, h2, h3, .font-serif) { font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; color: var(--d-ink); }
 #agent-desk .ds-embed h1 { font-size: 1.75rem; line-height: 1.15; font-weight: 600; }
 #agent-desk .ds-embed :is(input, select, textarea) { border-color: var(--d-line); border-radius: 8px; }
-#agent-desk .ds-embed :is(input, select, textarea):focus { border-color: var(--d-purple); outline: none; box-shadow: 0 0 0 2px #EFEAF8; }
+#agent-desk .ds-embed :is(input, select, textarea):focus { border-color: var(--d-purple); outline: none; box-shadow: 0 0 0 2px #daeeff; }
 #agent-desk .ds-embed [class*='rounded'][class*='border'] { border-color: var(--d-line); border-radius: 12px; }
 
 /* Tool rows: white text on the dark hover */
 #agent-desk .ds-tool-row:hover :is(h3, p, span) { color: #FFFFFF !important; opacity: 1 !important; }
 /* Purple focus ring instead of the browser's blue */
-#agent-desk :focus-visible { outline: 2px solid #301D5D; outline-offset: 2px; }
+#agent-desk :focus-visible { outline: 2px solid #005a8f; outline-offset: 2px; }
 /* Email signature on desk calculators */
 @media screen {
   #agent-desk .ds-embed aside.ds-signature { display: flex !important; align-items: center; gap: 1rem; margin-top: 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--d-line); border-left: 3px solid var(--d-purple); border-radius: 12px; background: #fff; }
   #agent-desk .ds-embed aside.ds-signature img { flex: none; }
-  #agent-desk .ds-embed aside.ds-signature-empty { display: block !important; margin-top: 1.5rem; padding: 0.875rem 1.25rem; border: 1px dashed var(--d-line); border-radius: 12px; background: #F6F3FB; color: var(--d-muted); font-size: 0.8125rem; }
+  #agent-desk .ds-embed aside.ds-signature-empty { display: block !important; margin-top: 1.5rem; padding: 0.875rem 1.25rem; border: 1px dashed var(--d-line); border-radius: 12px; background: #f5f6f9; color: var(--d-muted); font-size: 0.8125rem; }
   #agent-desk .ds-embed aside.ds-signature-empty a { color: var(--d-purple); font-weight: 600; text-decoration: underline; }
 }
 
@@ -1488,7 +1488,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 @media (min-width: 768px) { #agent-desk .ds-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 #agent-desk .ds-stepper { display: flex; list-style: none; margin: 1.5rem 0 0; padding: 0; overflow-x: auto; }
 #agent-desk .ds-step { position: relative; flex: 1 1 0; min-width: 96px; padding-top: 2rem; text-align: center; }
-#agent-desk .ds-step::before, #agent-desk .ds-step::after { content: ''; position: absolute; top: 0.6875rem; height: 2px; background: #E6E5EC; }
+#agent-desk .ds-step::before, #agent-desk .ds-step::after { content: ''; position: absolute; top: 0.6875rem; height: 2px; background: #d4d8dd; }
 #agent-desk .ds-step::before { left: 0; right: 50%; }
 #agent-desk .ds-step::after { left: 50%; right: 0; }
 #agent-desk .ds-step.prev-done::before, #agent-desk .ds-step.is-done::after { background: #005A00; }
@@ -1504,7 +1504,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-step.is-current .ds-step-dot { border: 2px solid #005A00; background: #fff; }
 #agent-desk .ds-step-label { display: block; font-size: 0.8125rem; font-weight: 400; color: #6B6A75; line-height: 1.3; }
 #agent-desk .ds-step.is-current .ds-step-label { color: var(--d-ink); font-weight: 500; }
-#agent-desk .ds-step-sub { display: block; min-height: 1rem; margin-top: 0.125rem; font-size: 0.75rem; color: #7A7787; }
+#agent-desk .ds-step-sub { display: block; min-height: 1rem; margin-top: 0.125rem; font-size: 0.75rem; color: #51555b; }
 #agent-desk .ds-step.is-current .ds-step-sub { color: var(--d-ink); }
 #agent-desk .ds-avatar { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 9999px; background: var(--d-lav-soft); color: var(--d-purple); font-size: 0.6875rem; font-weight: 600; margin-right: 0.625rem; }
 
@@ -1514,7 +1514,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 /* Closings page + sidebar link */
 #agent-desk .ds-nav-closings { margin: 0 0 0.25rem; }
 #agent-desk .ds-closing-list { list-style: none; margin: 0.5rem 0 0; padding: 0; border: 1px solid var(--d-line); border-radius: 12px; background: #fff; overflow: hidden; }
-#agent-desk .ds-closing-list > li + li { border-top: 1px solid var(--d-line-soft, #F1F0F5); }
+#agent-desk .ds-closing-list > li + li { border-top: 1px solid var(--d-line-soft, #f5f6f9); }
 #agent-desk .ds-closing-row { display: flex; width: 100%; align-items: flex-start; gap: 0.75rem; padding: 0.875rem 1rem; background: #fff; border: 0; border-radius: 0; height: auto; text-align: left; }
 #agent-desk .ds-closing-row:hover { background: var(--d-lav-wash); color: inherit; }
 #agent-desk .ds-closing-row:hover :is(span) { color: inherit; }
@@ -1567,7 +1567,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-snap-grid { display: grid; gap: 0.75rem; margin-top: 0.5rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
 @media (min-width: 768px) { #agent-desk .ds-snap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1024px) { #agent-desk .ds-snap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) 220px; } }
-#agent-desk .ds-snap-row { display: flex; width: 100%; align-items: center; gap: 0.5rem; height: auto; padding: 0.75rem 1rem; border: 0; border-bottom: 1px solid #F1F0F5; border-radius: 0; background: #fff; color: var(--d-ink); text-align: left; }
+#agent-desk .ds-snap-row { display: flex; width: 100%; align-items: center; gap: 0.5rem; height: auto; padding: 0.75rem 1rem; border: 0; border-bottom: 1px solid #f5f6f9; border-radius: 0; background: #fff; color: var(--d-ink); text-align: left; }
 #agent-desk .ds-snap-row:hover { background: var(--d-lav-wash); color: var(--d-ink); }
 #agent-desk .ds-snap-row:hover :is(span) { color: inherit; }
 #agent-desk .ds-detail { border: 1px solid var(--d-line); border-radius: 12px; background: #fff; padding: 0.625rem 1rem; }
@@ -1590,15 +1590,15 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-dealnav-group:last-child { padding-right: 0; }
 #agent-desk .ds-dealnav-label { align-self: center; margin-right: 0.375rem; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #A3A2AD; }
 #agent-desk .ds-dealnav button { height: 2rem; min-height: 0; padding: 0 0.625rem; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: #5B5870; font-size: 0.8125rem; font-weight: 500; margin-bottom: -1px; }
-#agent-desk .ds-dealnav button:hover { background: transparent; color: #301D5D; border-bottom-color: #D9CFF0; }
-#agent-desk .ds-dealnav button[aria-current='page'] { background: transparent; color: #301D5D; font-weight: 600; border-bottom-color: #301D5D; }
+#agent-desk .ds-dealnav button:hover { background: transparent; color: #005a8f; border-bottom-color: #bbc1c9; }
+#agent-desk .ds-dealnav button[aria-current='page'] { background: transparent; color: #005a8f; font-weight: 600; border-bottom-color: #005a8f; }
 
 #agent-desk .ds-dealnav-menu { position: absolute; left: 0; top: 100%; z-index: 20; min-width: 10rem; padding: 0.25rem; background: #fff; border: 1px solid var(--d-line); border-radius: 10px; display: flex; flex-direction: column; }
 #agent-desk .ds-dealnav .ds-dealnav-menu button { height: 2rem; margin: 0; width: 100%; justify-content: flex-start; text-align: left; border: 0; border-radius: 6px; padding: 0 0.625rem; }
-#agent-desk .ds-dealnav .ds-dealnav-menu button:hover { background: #EFEAF8; color: #301D5D; border: 0; }
+#agent-desk .ds-dealnav .ds-dealnav-menu button:hover { background: #daeeff; color: #005a8f; border: 0; }
 #agent-desk .ds-dealnav button[aria-expanded] { background: transparent; border: 0; border-bottom: 2px solid transparent; color: #5B5870; }
-#agent-desk .ds-dealnav button[aria-expanded='true'] { color: #301D5D; }
-#agent-desk .ds-dealnav button[aria-expanded][aria-current='page'] { border-bottom-color: #301D5D; color: #301D5D; font-weight: 600; }
+#agent-desk .ds-dealnav button[aria-expanded='true'] { color: #005a8f; }
+#agent-desk .ds-dealnav button[aria-expanded][aria-current='page'] { border-bottom-color: #005a8f; color: #005a8f; font-weight: 600; }
 
 #agent-desk .ds-nav-child { margin: 0.125rem 0 0.25rem 1.5rem; padding: 0 0 0 0.5rem; list-style: none; border-left: 1px solid var(--d-line); }
 #agent-desk .ds-nav-child .ds-navbtn { font-size: 0.8125rem; }
@@ -1609,19 +1609,19 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-main[data-desk-view='integrations'] { display: flex; flex-direction: column; }
 #agent-desk .ds-main[data-desk-view='integrations'] > [data-section-key='integrations'] { order: -2; }
 #agent-desk .ds-main[data-desk-view='integrations'] > .ds-back { order: -1; align-self: flex-start; margin-top: 1rem; }
-#agent-desk .ds-cal-tile button { border-color: #E6E5EC; }
-#agent-desk .ds-cal-tile div button { border: 0; background: transparent; padding: 0; height: auto; min-height: 0; color: #301D5D; font-weight: 600; }
-#agent-desk .ds-cal-tile div button:hover { background: transparent; color: #301D5D; }
+#agent-desk .ds-cal-tile button { border-color: #d4d8dd; }
+#agent-desk .ds-cal-tile div button { border: 0; background: transparent; padding: 0; height: auto; min-height: 0; color: #005a8f; font-weight: 600; }
+#agent-desk .ds-cal-tile div button:hover { background: transparent; color: #005a8f; }
 
 /* Integrations tiles: light purple hover */
-#agent-desk [data-section-key='integrations'] li > button:hover:not(:disabled) { background-color: #EFEAF8 !important; border-color: #D9CFF0 !important; color: #301D5D !important; }
-#agent-desk .ds-cal-tile div button, #agent-desk .ds-cal-tile div button:hover:not(:disabled) { border: 0 !important; background: transparent !important; padding: 0 !important; height: auto !important; min-height: 0 !important; color: #301D5D !important; font-size: 0.75rem; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+#agent-desk [data-section-key='integrations'] li > button:hover:not(:disabled) { background-color: #daeeff !important; border-color: #bbc1c9 !important; color: #005a8f !important; }
+#agent-desk .ds-cal-tile div button, #agent-desk .ds-cal-tile div button:hover:not(:disabled) { border: 0 !important; background: transparent !important; padding: 0 !important; height: auto !important; min-height: 0 !important; color: #005a8f !important; font-size: 0.75rem; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 
 /* Documents: per-row Upload and Open, upload menu */
 #agent-desk .ds-row-btn { display: inline-flex; align-items: center; gap: 0.375rem; height: 2rem; padding: 0 0.75rem; font-size: 0.8125rem; font-weight: 500; white-space: nowrap; flex-shrink: 0; }
-#agent-desk .ds-upload-opt { display: flex; align-items: center; gap: 0.75rem; width: 100%; margin-bottom: 0.375rem; padding: 0.5rem 0.625rem; border: 1px solid #E6E5EC; border-radius: 12px; background: #fff; color: #1B1726; font-size: 0.9375rem; font-weight: 500; text-align: left; }
-#agent-desk .ds-upload-opt:hover:not(:disabled) { background: #EFEAF8 !important; border-color: #D9CFF0 !important; color: #301D5D !important; }
-#agent-desk .ds-upload-ico { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px; background: #F1EEF8; color: #5B3FA0; flex-shrink: 0; }
+#agent-desk .ds-upload-opt { display: flex; align-items: center; gap: 0.75rem; width: 100%; margin-bottom: 0.375rem; padding: 0.5rem 0.625rem; border: 1px solid #d4d8dd; border-radius: 12px; background: #fff; color: #292a2d; font-size: 0.9375rem; font-weight: 500; text-align: left; }
+#agent-desk .ds-upload-opt:hover:not(:disabled) { background: #daeeff !important; border-color: #bbc1c9 !important; color: #005a8f !important; }
+#agent-desk .ds-upload-ico { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px; background: #F1EEF8; color: #005a8f; flex-shrink: 0; }
 
 /* Agent Desk typography: one scale for every field, label and value */
 #agent-desk :is(input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']), select, textarea) { font-family: inherit; font-size: 0.875rem; font-weight: 500; font-style: normal; letter-spacing: normal; }
@@ -1649,7 +1649,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 .tip-host:not(input):not(textarea):not(select):hover { background-color: rgba(246, 243, 251, 0.7); }
 #tip-float {
   position: fixed; z-index: 2000; width: max-content; max-width: min(320px, 90vw);
-  background: #301D5D; color: #fff; font: 500 12px/1.4 Inter, system-ui, sans-serif;
+  background: #005a8f; color: #fff; font: 500 12px/1.4 Inter, system-ui, sans-serif;
   padding: 8px 10px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .12s ease;
 }
 
@@ -1701,17 +1701,17 @@ input[type='date']::-webkit-calendar-picker-indicator {
   #agent-desk :is(.ds-navbtn, .ds-tab, .ds-new, .ds-row-btn, .ds-back, .ds-deal) { min-height: 44px; }
 }
 
-#agent-desk .ds-dealnav-label { color: #7A7787; }
+#agent-desk .ds-dealnav-label { color: #51555b; }
 
 /* Astro layout and components: 4px corners, Astro table treatment, visible focus rings, 44px touch targets.
    Fonts (Inter, Georgia titles), the purple brand and rounded pills and badges are unchanged. */
 :is(.rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl):not(.rounded-full) { border-radius: 4px !important; }
 :is(button, input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']):not([role='switch']):not([class*='rounded-full']) { border-radius: 4px; }
 #agent-desk .ds-card, #agent-desk .ds-navbtn, #agent-desk .ds-deal, #agent-desk .ds-new { border-radius: 4px; }
-:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid #5B3FA0; outline-offset: 2px; }
-table:not([role='presentation']) thead th { background: #F6F3FB; color: #1B1726; font-weight: 600; border-bottom: 1px solid #D9CFF0; }
-table:not([role='presentation']) tbody td { border-bottom-color: #E6E5EC; }
-table:not([role='presentation']) tbody tr:hover > td { background: #F6F3FB; }
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid #005a8f; outline-offset: 2px; }
+table:not([role='presentation']) thead th { background: #f5f6f9; color: #292a2d; font-weight: 600; border-bottom: 1px solid #bbc1c9; }
+table:not([role='presentation']) tbody td { border-bottom-color: #d4d8dd; }
+table:not([role='presentation']) tbody tr:hover > td { background: #f5f6f9; }
 @media (pointer: coarse) {
   button:not([role='switch']):not([class*='rounded-full']), select, [role='button'],
   input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']) { min-height: 44px; }
@@ -1723,13 +1723,32 @@ svg:is(.w-3, .w-3\.5):not([class*='w-2']) { width: 16px; }
 
 /* On/off switches: keep the track and knob shape regardless of the global button style. */
 button.ct-switch { min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 9999px !important; background: #D9D7E0 !important; box-shadow: none !important; }
-button.ct-switch[aria-checked='true'] { background: #301D5D !important; }
+button.ct-switch[aria-checked='true'] { background: #005a8f !important; }
 button.ct-switch:hover { background: #C9C5D6 !important; }
-button.ct-switch[aria-checked='true']:hover { background: #42277C !important; }
+button.ct-switch[aria-checked='true']:hover { background: #1c3f5e !important; }
 button.ct-switch > span { background: #fff !important; border-radius: 9999px !important; }
-button.ct-switch:focus-visible { outline: 2px solid #5B3FA0; outline-offset: 2px; }
+button.ct-switch:focus-visible { outline: 2px solid #005a8f; outline-offset: 2px; }
 button.ct-switch { display: inline-block !important; flex-shrink: 0; }
 button.ct-switch.h-5 { height: 20px !important; }
 button.ct-switch.h-6 { height: 24px !important; }
 button.ct-switch.w-9 { width: 36px !important; }
 button.ct-switch.w-11 { width: 44px !important; }
+
+/* Astro UXDS light theme (tokens from @astrouxds/tokens theme.light.css). Fonts are unchanged. */
+:root, .light-theme {
+  --astro-bg-base: #eaeef4; --astro-bg-base-header: #f5f6f9; --astro-bg-surface: #ffffff; --astro-bg-surface-hover: #daeeff; --astro-bg-surface-selected: #cee9fc;
+  --astro-interactive: #005a8f; --astro-interactive-hover: #1c3f5e; --astro-interactive-muted: #2f7aa7;
+  --astro-text: #292a2d; --astro-text-secondary: #51555b; --astro-text-placeholder: #7b8089; --astro-text-error: #c8102e;
+  --astro-focus: #b534ce; --astro-border-error: #c8102e;
+  --astro-critical: #ff2a04; --astro-serious: #ffaf3d; --astro-caution: #fad800; --astro-normal: #00e200; --astro-standby: #64d9ff; --astro-off: #7b8089;
+  --astro-gutter: 24px; --astro-gutter-compact: 12px; --astro-margin: 24px;
+}
+body { background-color: var(--astro-bg-base); color: var(--astro-text); }
+#agent-desk { background: var(--astro-bg-base); }
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible, #agent-desk :focus-visible, button.ct-switch:focus-visible { outline: 2px solid var(--astro-focus); outline-offset: 2px; }
+#tip-float { background: #bbc1c9 !important; color: #000 !important; border: 0 !important; border-radius: 4px !important; }
+#agent-desk .ds-main { margin: var(--astro-margin); border-radius: 4px; background: var(--astro-bg-surface); }
+#agent-desk .ds-card { border-radius: 4px; }
+@media (max-width: 639px) { #agent-desk .ds-main { margin: 16px 8px 24px; } }
+@media (min-width: 640px) { #agent-desk .ds-page { padding-inline: 0; } }
+input::placeholder, textarea::placeholder { color: var(--astro-text-placeholder); }

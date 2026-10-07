@@ -293,7 +293,7 @@ export default function ActivityClient() {
               <Radio className="h-4 w-4" aria-hidden="true" />
               {paused ? 'Paused' : 'Live'}
             </span>
-            <button onClick={downloadCsv} className="inline-flex h-9 items-center gap-2 rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]">
+            <button onClick={downloadCsv} className="inline-flex h-9 items-center gap-2 rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1c3f5e]">
               <Download className="h-4 w-4" aria-hidden="true" /> Export CSV
             </button>
           </div>
@@ -319,7 +319,7 @@ export default function ActivityClient() {
                 key={b.id}
                 onClick={() => setBucket(b.id)}
                 className={`h-9 rounded border px-3 text-sm font-medium ${
-                  bucket === b.id ? 'border-[#42277C] bg-[#301D5D] text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                  bucket === b.id ? 'border-[#1c3f5e] bg-[#005a8f] text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 {b.label}
@@ -329,7 +329,7 @@ export default function ActivityClient() {
           <select
             value={minutes}
             onChange={(e) => setMinutes(Number(e.target.value))}
-            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
+            className="h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#2f7aa7] focus:ring-1 focus:ring-[#2f7aa7]"
           >
             {WINDOWS.map((w) => (
               <option key={w.minutes} value={w.minutes}>{w.label}</option>
@@ -338,19 +338,19 @@ export default function ActivityClient() {
           <label className="relative min-w-[210px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
             <span className="sr-only">Filter by path</span>
-            <input value={pathFilter} onChange={(e) => { setPathFilter(e.target.value); setPage(1); }} placeholder="Filter by path" className="h-9 w-full rounded border border-gray-300 bg-white pl-8 pr-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]" />
+            <input value={pathFilter} onChange={(e) => { setPathFilter(e.target.value); setPage(1); }} placeholder="Filter by path" className="h-9 w-full rounded border border-gray-300 bg-white pl-8 pr-3 text-sm outline-none focus:border-[#2f7aa7] focus:ring-1 focus:ring-[#2f7aa7]" />
           </label>
           <input
             value={cityFilter}
             onChange={(e) => setCityFilter(e.target.value)}
             placeholder="City (e.g. Grayton Beach)"
-            className="h-9 w-40 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
+            className="h-9 w-40 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#2f7aa7] focus:ring-1 focus:ring-[#2f7aa7]"
           />
           <input
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             placeholder="Search errors / text"
-            className="h-9 w-48 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
+            className="h-9 w-48 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#2f7aa7] focus:ring-1 focus:ring-[#2f7aa7]"
           />
           <button
             onClick={() => setPaused((p) => !p)}
@@ -387,7 +387,7 @@ export default function ActivityClient() {
             const badge = eventBadge(e.event);
             const isOpen = expanded === i;
             return (
-              <div key={`${e.timestamp}-${i}`} className="hover:bg-[#F6F3FB]/40">
+              <div key={`${e.timestamp}-${i}`} className="hover:bg-[#f5f6f9]/40">
                 <button
                   type="button"
                   onClick={() => setExpanded(isOpen ? null : i)}

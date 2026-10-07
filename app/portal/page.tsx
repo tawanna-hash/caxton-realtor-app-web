@@ -64,9 +64,9 @@ export default async function PortalHome() {
           What You Can Do Here
         </h2>
         <ul className="space-y-2 text-gray-700 text-sm">
-          <li>• <Link href="/portal/files" className="text-[#42277C] hover:underline">View files</Link> we&apos;ve shared with you (agreements, invoices, proofs, photos).</li>
-          <li>• <Link href="/portal/forms" className="text-[#42277C] hover:underline">Complete forms</Link> requested by your account manager.</li>
-          <li>• <Link href="/portal/account" className="text-[#42277C] hover:underline">Update your contact info</Link>.</li>
+          <li>• <Link href="/portal/files" className="text-[#1c3f5e] hover:underline">View files</Link> we&apos;ve shared with you (agreements, invoices, proofs, photos).</li>
+          <li>• <Link href="/portal/forms" className="text-[#1c3f5e] hover:underline">Complete forms</Link> requested by your account manager.</li>
+          <li>• <Link href="/portal/account" className="text-[#1c3f5e] hover:underline">Update your contact info</Link>.</li>
         </ul>
       </section>
     </div>

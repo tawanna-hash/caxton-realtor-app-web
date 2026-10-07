@@ -208,7 +208,7 @@ function ToolCard({
   return (
     <a
       href={href}
-      className="group block rounded-md border border-gray-200 bg-gradient-to-br from-[#301D5D]/5 to-white p-6 hover:border-brand-700 hover:shadow-md transition"
+      className="group block rounded-md border border-gray-200 bg-gradient-to-br from-[#005a8f]/5 to-white p-6 hover:border-brand-700 hover:shadow-md transition"
     >
       <div className="flex items-start justify-between gap-3 mb-3">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-700 bg-brand-700/10 px-2 py-0.5 rounded-md">

@@ -96,7 +96,7 @@ export default function FloorplanViewer({ src, alt = 'Floorplan' }: Props) {
           step={0.05}
           value={scale}
           onChange={(e) => setScale(clampScale(parseFloat(e.target.value)))}
-          className="w-28 accent-[#301D5D]"
+          className="w-28 accent-[#005a8f]"
           aria-label="Zoom level"
         />
         <button type="button" onClick={zoomIn} aria-label="Zoom in" className={BTN}>

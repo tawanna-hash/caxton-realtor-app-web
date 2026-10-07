@@ -283,7 +283,7 @@ function CategoryChip({
       style={
         active
           ? { backgroundColor: accent, borderColor: accent, color: '#fff' }
-          : { backgroundColor: '#fff', borderColor: '#d1d5db', color: '#374151' }
+          : { backgroundColor: '#fff', borderColor: '#bbc1c9', color: '#292a2d' }
       }
     >
       {label}

@@ -194,7 +194,7 @@ export default function TrendingTicker({ market, className = '' }: Props) {
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#42277C] bg-[#F6F3FB] px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#1c3f5e] bg-[#f5f6f9] px-2 py-0.5 rounded-full">
               <span aria-hidden>{current.icon_prefix || '🔥'}</span>
               Trending
             </span>
@@ -254,7 +254,7 @@ export default function TrendingTicker({ market, className = '' }: Props) {
           {items.map((it, i) => (
             <span
               key={it.id}
-              className={`h-1 rounded-full transition-all ${i === safeIndex ? 'w-4 bg-[#7059A8]' : 'w-1 bg-neutral-300'}`}
+              className={`h-1 rounded-full transition-all ${i === safeIndex ? 'w-4 bg-[#2f7aa7]' : 'w-1 bg-neutral-300'}`}
             />
           ))}
         </div>

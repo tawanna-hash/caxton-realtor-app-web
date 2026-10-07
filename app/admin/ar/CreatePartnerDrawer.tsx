@@ -191,7 +191,7 @@ export function CreatePartnerDrawer({ onClose, onSaved, onError }: Props) {
 
       <Section title="Notes and attachments">
         <Field label="Notes"><textarea className={`${INPUT} resize-y`} rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} /></Field>
-        <label className="block rounded-md border border-dashed border-[#D9CFF0] px-4 py-4 text-center text-sm text-[#42277C] hover:bg-[#F6F3FB]">
+        <label className="block rounded-md border border-dashed border-[#bbc1c9] px-4 py-4 text-center text-sm text-[#1c3f5e] hover:bg-[#f5f6f9]">
           Add attachment
           <input type="file" className="sr-only" />
           <span className="mt-1 block text-xs text-gray-500">Max file size: 20 MB</span>

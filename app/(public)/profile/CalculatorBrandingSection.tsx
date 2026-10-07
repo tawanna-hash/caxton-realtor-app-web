@@ -85,7 +85,7 @@ function formFromResponse(data: BrandingResponse): FormState {
 }
 
 const inputClass =
-  'mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15';
+  'mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 outline-none transition focus:border-[#005a8f] focus:ring-2 focus:ring-[#005a8f]/15';
 
 export default function CalculatorBrandingSection({ accentColor }: { accentColor: string }) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -218,7 +218,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
                   <label
                     key={template.id}
                     className={`cursor-pointer rounded px-3 py-2 text-xs font-bold transition ${
-                      selected ? 'bg-white text-[#5B3FA0] shadow-sm' : 'bg-[#087fb3] text-white hover:bg-[#0876a6]'
+                      selected ? 'bg-white text-[#005a8f] shadow-sm' : 'bg-[#087fb3] text-white hover:bg-[#0876a6]'
                     }`}
                   >
                     <input
@@ -311,7 +311,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Live PDF canvas</p>
                 <p className="mt-1 text-sm text-gray-600">Changes appear here instantly.</p>
               </div>
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#5B3FA0] shadow-sm">
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#005a8f] shadow-sm">
                 {FOOTER_TEMPLATE_META[form.footer_template].label}
               </span>
             </div>
@@ -374,7 +374,7 @@ function ImageUpload({
   round?: boolean;
 }) {
   return (
-    <label className="flex min-h-32 cursor-pointer items-center gap-4 rounded-md border border-dashed border-gray-300 p-4 transition hover:border-[#301D5D]">
+    <label className="flex min-h-32 cursor-pointer items-center gap-4 rounded-md border border-dashed border-gray-300 p-4 transition hover:border-[#005a8f]">
       {value ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -453,7 +453,7 @@ function BrandPreview({ form }: { form: FormState }) {
           <div className="flex min-w-0 flex-col justify-center px-4 py-4">
             <div>
               <p className="truncate text-lg font-bold text-slate-900">{name}</p>
-              <p className="truncate text-xs font-semibold text-[#301D5D]">{title}</p>
+              <p className="truncate text-xs font-semibold text-[#005a8f]">{title}</p>
             </div>
             <div className="mt-3 border-t border-gray-200 pt-3">
               <p className="truncate text-sm font-bold text-slate-900">{company}</p>
@@ -474,9 +474,9 @@ function BrandPreview({ form }: { form: FormState }) {
             {headshot}
           </div>
           <div className="flex min-w-0 items-center px-4 py-4">
-            <div className="w-full border-l-[3px] border-[#301D5D] pl-4">
+            <div className="w-full border-l-[3px] border-[#005a8f] pl-4">
               <p className="truncate text-lg font-bold text-slate-900">{name}</p>
-              <p className="truncate text-xs font-semibold text-[#301D5D]">{title}</p>
+              <p className="truncate text-xs font-semibold text-[#005a8f]">{title}</p>
               <p className="mt-1 truncate text-sm font-bold text-slate-900">{company}</p>
               <div className="mt-2">
                 {contactLines}

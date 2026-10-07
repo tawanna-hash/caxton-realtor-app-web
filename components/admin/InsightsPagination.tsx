@@ -30,7 +30,7 @@ export default function InsightsPagination({
           Rows
           <select
             aria-label="Rows per page"
-            className="h-8 rounded border border-gray-300 bg-white px-2 outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]"
+            className="h-8 rounded border border-gray-300 bg-white px-2 outline-none focus:border-[#2f7aa7] focus:ring-1 focus:ring-[#2f7aa7]"
             value={pageSize}
             onChange={(event) => onPageSizeChange(Number(event.target.value))}
           >

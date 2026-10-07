@@ -327,13 +327,13 @@ export default function TestimonialHubClient() {
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-8">
       <header className="flex flex-col gap-4 border-b border-gray-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">Subscriber tools</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#005a8f]">Subscriber tools</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950">Testimonial Hub</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
             Collect client feedback, organize your library, and publish a shareable proof page.
           </p>
         </div>
-        <button onClick={startNew} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 py-3 text-sm font-semibold text-white hover:bg-[#241547]">
+        <button onClick={startNew} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#005a8f] px-4 py-3 text-sm font-semibold text-white hover:bg-[#241547]">
           <Plus size={17} /> Add testimonial
         </button>
       </header>
@@ -351,7 +351,7 @@ export default function TestimonialHubClient() {
           { label: 'Archived', value: counts.archived, icon: Archive },
         ] satisfies Array<{ label: string; value: number; icon: LucideIcon }>).map(({ label, value, icon: Icon }) => (
           <div key={label} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <Icon size={18} className="text-[#301D5D]" />
+            <Icon size={18} className="text-[#005a8f]" />
             <div className="mt-4 text-2xl font-semibold text-gray-950">{value}</div>
             <div className="mt-1 text-sm text-gray-500">{label}</div>
           </div>
@@ -372,7 +372,7 @@ export default function TestimonialHubClient() {
               <Quote className="mx-auto text-gray-300" size={34} />
               <h3 className="mt-4 font-semibold text-gray-900">Your Best Client Stories Belong Here</h3>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">Add one yourself, or copy your collection link and send it to a client.</p>
-              <button onClick={startNew} className="mt-4 min-h-11 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white">Add your first testimonial</button>
+              <button onClick={startNew} className="mt-4 min-h-11 rounded-md bg-[#005a8f] px-4 text-sm font-semibold text-white">Add your first testimonial</button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -380,7 +380,7 @@ export default function TestimonialHubClient() {
                 <article key={item.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      {item.format === 'video' ? <Video size={17} className="text-[#301D5D]" /> : item.format === 'audio' ? <AudioLines size={17} className="text-[#301D5D]" /> : <FileText size={17} className="text-[#301D5D]" />}
+                      {item.format === 'video' ? <Video size={17} className="text-[#005a8f]" /> : item.format === 'audio' ? <AudioLines size={17} className="text-[#005a8f]" /> : <FileText size={17} className="text-[#005a8f]" />}
                       <span className={`rounded-full border px-3 py-1 text-xs font-medium capitalize ${statusClass(item.status)}`}>{item.status}</span>
                       {item.submitted_via === 'collection_link' && <span className="text-xs text-gray-500">Client submitted</span>}
                     </div>
@@ -421,7 +421,7 @@ export default function TestimonialHubClient() {
             <h2 className="text-base font-semibold text-gray-950">Profile Settings</h2>
             <label className="mt-4 flex items-center justify-between gap-3 text-sm font-medium text-gray-800">
               Published
-              <input type="checkbox" checked={profile.is_published} onChange={(event) => setProfile({ ...profile, is_published: event.target.checked })} className="h-5 w-5 accent-[#301D5D]" />
+              <input type="checkbox" checked={profile.is_published} onChange={(event) => setProfile({ ...profile, is_published: event.target.checked })} className="h-5 w-5 accent-[#005a8f]" />
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
               Display name
@@ -493,7 +493,7 @@ export default function TestimonialHubClient() {
                   type="button"
                   onClick={() => setProfile({ ...profile, featured_links: [...profile.featured_links, { label: '', url: '' }] })}
                   disabled={profile.featured_links.length >= 8}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-semibold text-[#301D5D] disabled:opacity-50"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-semibold text-[#005a8f] disabled:opacity-50"
                 >
                   <Plus size={15} /> Add link
                 </button>
@@ -510,7 +510,7 @@ export default function TestimonialHubClient() {
                 ))}
               </div>
             </div>
-            <button onClick={() => void saveProfile()} disabled={saving} className="mt-4 min-h-11 w-full rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white disabled:opacity-50">Save profile</button>
+            <button onClick={() => void saveProfile()} disabled={saving} className="mt-4 min-h-11 w-full rounded-md bg-[#005a8f] px-4 text-sm font-semibold text-white disabled:opacity-50">Save profile</button>
             {profile.is_published && (
               <a href={showcaseUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 <ExternalLink size={15} /> View public page
@@ -576,7 +576,7 @@ export default function TestimonialHubClient() {
               <fieldset className="sm:col-span-2">
                 <legend className="text-sm font-medium text-gray-700">Format</legend>
                 <div className="mt-2 flex gap-2">
-                  {(['text', 'audio', 'video'] as const).map((format) => <button key={format} type="button" onClick={() => setForm({ ...form, format })} className={`inline-flex min-h-11 items-center gap-2 rounded-md border px-4 text-sm font-medium capitalize ${form.format === format ? 'border-[#301D5D] bg-[#301D5D]/5 text-[#301D5D]' : 'border-gray-300 text-gray-600'}`}>{format === 'video' ? <Video size={16} /> : format === 'audio' ? <AudioLines size={16} /> : <FileText size={16} />}{format}</button>)}
+                  {(['text', 'audio', 'video'] as const).map((format) => <button key={format} type="button" onClick={() => setForm({ ...form, format })} className={`inline-flex min-h-11 items-center gap-2 rounded-md border px-4 text-sm font-medium capitalize ${form.format === format ? 'border-[#005a8f] bg-[#005a8f]/5 text-[#005a8f]' : 'border-gray-300 text-gray-600'}`}>{format === 'video' ? <Video size={16} /> : format === 'audio' ? <AudioLines size={16} /> : <FileText size={16} />}{format}</button>)}
                 </div>
               </fieldset>
               {form.format !== 'text' && <label className="sm:col-span-2 text-sm font-medium text-gray-700">{form.format === 'audio' ? 'Audio URL' : 'Video URL'}<input required type="url" value={form.videoUrl} onChange={(event) => setForm({ ...form, videoUrl: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" /></label>}
@@ -605,7 +605,7 @@ export default function TestimonialHubClient() {
               <label className="text-sm font-medium text-gray-700">Display order<input type="number" min={0} value={form.sortOrder} onChange={(event) => setForm({ ...form, sortOrder: Number(event.target.value) })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label>
               <div className="flex justify-end gap-2 border-t border-gray-200 pt-4 sm:col-span-2">
                 <button type="button" onClick={() => setShowEditor(false)} className="min-h-11 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700">Cancel</button>
-                <button disabled={saving} className="min-h-11 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white disabled:opacity-50">{saving ? 'Saving…' : 'Save testimonial'}</button>
+                <button disabled={saving} className="min-h-11 rounded-md bg-[#005a8f] px-4 text-sm font-semibold text-white disabled:opacity-50">{saving ? 'Saving…' : 'Save testimonial'}</button>
               </div>
             </form>
           </div>

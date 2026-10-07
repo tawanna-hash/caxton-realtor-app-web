@@ -49,7 +49,7 @@ export async function notifyProposalApproved(ag: Agreement): Promise<void> {
   const subject = `[Realty News Now] Insertion order approved — ${company.slice(0, 80)}`;
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
-      <h2 style="color: #301D5D; margin: 0 0 12px;">Insertion order approved — ready for final signature</h2>
+      <h2 style="color: #005a8f; margin: 0 0 12px;">Insertion order approved — ready for final signature</h2>
       <p style="color: #444; font-size: 14px; line-height: 1.5; margin: 0 0 16px;">
         <strong>${escapeHtml(company)}</strong> approved their advertising insertion order. Review their selections,
         then send the final agreement for signature.
@@ -70,7 +70,7 @@ export async function notifyProposalApproved(ag: Agreement): Promise<void> {
 
       <p style="margin: 24px 0 8px;">
         <a href="${reviewUrl}"
-           style="display: inline-block; background: #301D5D; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 500;">
+           style="display: inline-block; background: #005a8f; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 500;">
           Open in admin &amp; send final agreement
         </a>
       </p>

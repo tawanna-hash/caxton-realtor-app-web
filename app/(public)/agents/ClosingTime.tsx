@@ -406,7 +406,7 @@ function ReadinessChecklist({
     const isUploading = documentUploadBusyId === document.id;
     return (
     <div key={document.id} className="grid min-w-0 gap-3 border-t border-slate-200 px-4 py-4 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_140px] sm:items-center">
-      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${document.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`}>
+      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${document.complete ? 'border-[#005a8f] bg-[#005a8f] text-white' : 'border-slate-400 bg-white text-transparent'}`}>
         <Check className="h-3.5 w-3.5" aria-hidden="true" />
       </span>
       <div className="min-w-0">
@@ -419,7 +419,7 @@ function ReadinessChecklist({
               {document.fileName || 'File Attached'}
             </span>
           ) : null}
-          <label className="inline-flex min-h-[32px] cursor-pointer items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-600 hover:border-[#7059A8] hover:text-[#301D5D]">
+          <label className="inline-flex min-h-[32px] cursor-pointer items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-600 hover:border-[#2f7aa7] hover:text-[#005a8f]">
             {isUploading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <FileUp className="h-3.5 w-3.5" aria-hidden="true" />}
             {isUploading ? 'Uploading…' : hasFile ? 'Replace File' : 'Attach File'}
             <input
@@ -446,7 +446,7 @@ function ReadinessChecklist({
         value={document.status}
         onChange={(event) => updateDocument(document.id, event.target.value as AgentDocument['status'])}
         aria-label={`Status for ${document.label}`}
-        className="min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15"
+        className="min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#005a8f] focus:ring-2 focus:ring-[#005a8f]/15"
       >
         <option value="requested">Requested</option>
         <option value="received">Received</option>
@@ -459,7 +459,7 @@ function ReadinessChecklist({
 
   const { section: collapsible, toggleProps } = useCollapsibles();
   return (
-    <div {...collapsible('readiness', { mobileOpen: true })} className="rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem]">
+    <div {...collapsible('readiness', { mobileOpen: true })} className="rounded-xl border border-[#d4d8dd] bg-white p-[1.125rem]">
       <div className="flex items-center gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Readiness Check</p>
@@ -479,7 +479,7 @@ function ReadinessChecklist({
             <section key={group.id} className="overflow-hidden rounded-md border border-slate-200">
               <div className="flex items-center justify-between gap-3 bg-[#F7F5F1] px-4 py-3">
                 <h4 className="text-sm font-bold text-gray-900">{group.label}</h4>
-                <span className="shrink-0 rounded-md bg-white px-3 py-1 text-xs font-bold text-[#301D5D]">{completeCount} of {groupDocuments.length}</span>
+                <span className="shrink-0 rounded-md bg-white px-3 py-1 text-xs font-bold text-[#005a8f]">{completeCount} of {groupDocuments.length}</span>
               </div>
               <div>{groupDocuments.map(({ item, document }) => renderDocument(document, item.description))}</div>
             </section>
@@ -507,14 +507,14 @@ function ReadinessChecklist({
         <input
           value={documentName}
           onChange={(event) => setDocumentName(event.target.value)}
-          className="min-h-[44px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15"
+          className="min-h-[44px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none transition focus:border-[#005a8f] focus:ring-2 focus:ring-[#005a8f]/15"
           placeholder="Custom document request"
         />
         <button
           type="button"
           onClick={addDocument}
           disabled={!documentName.trim()}
-          className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F3EFFA] disabled:opacity-40"
+          className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-[#2f7aa7] bg-white px-4 text-sm font-bold text-[#005a8f] transition hover:bg-[#F3EFFA] disabled:opacity-40"
         >
           Request
         </button>
@@ -2234,7 +2234,7 @@ export default function ClosingTime({
                 </p>
                 <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-gray-900">What Needs Attention</h2>
               </div>
-              <span data-testid="text-dashboard-next-closing-countdown" className="bg-[#F8F5FF] px-3 py-2 text-xs font-bold text-[#301D5D]">
+              <span data-testid="text-dashboard-next-closing-countdown" className="bg-[#f5f6f9] px-3 py-2 text-xs font-bold text-[#005a8f]">
                 {nextClosingDays === null
                   ? 'No upcoming closings'
                   : nextClosingDays === 0
@@ -2254,13 +2254,13 @@ export default function ClosingTime({
                     <p className="text-sm font-semibold text-slate-900">{item.label}</p>
                     <p className="text-xs text-slate-500">{item.dealTitle}</p>
                   </div>
-                  <span className={`text-xs font-bold ${item.overdue ? 'text-[#661102]' : 'text-[#301D5D]'}`}>
+                  <span className={`text-xs font-bold ${item.overdue ? 'text-[#661102]' : 'text-[#005a8f]'}`}>
                     {item.overdue ? 'Overdue' : item.date === today ? 'Due Today' : formatDate(item.date)}
                   </span>
                 </div>
               ))}
             </div>
-            <Link href="/agents/closing-time" className="mt-4 inline-flex min-h-[44px] items-center bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277c]">
+            <Link href="/agents/closing-time" className="mt-4 inline-flex min-h-[44px] items-center bg-[#005a8f] px-4 text-sm font-bold text-white hover:bg-[#1c3f5e]">
               Open Agent Desk <ChevronRight className="ml-2 h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
@@ -2316,23 +2316,23 @@ export default function ClosingTime({
   ) : null);
 
   const renderExtractionReview = () => (extractionState === 'ready' && extractionDraft ? (
-    <section role="status" className="mt-4 border border-[#D9CFF0] bg-[#F6F3FB] p-4">
+    <section role="status" className="mt-4 border border-[#bbc1c9] bg-[#f5f6f9] p-4">
                       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                         <div>
-                          <p className="text-sm font-semibold text-[#301D5D]">Contract Suggestions Are Ready to Review</p>
+                          <p className="text-sm font-semibold text-[#005a8f]">Contract Suggestions Are Ready to Review</p>
                           <p className="mt-1 text-sm leading-6 text-slate-700">
                             {Object.values(extractionDraft.worksheet).filter(Boolean).length} operational facts, {Object.values(extractionDraft.formFields).filter(Boolean).length} official TREC fields, and {Object.values(extractionDraft.addenda).filter(Boolean).length} selected addenda were found. Review the preview before applying.
                           </p>
                         </div>
                         <div className="flex shrink-0 flex-wrap gap-2">
-                          <button type="button" onClick={applyExtraction} className="inline-flex min-h-[40px] items-center justify-center rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277C]">Apply to This Deal</button>
+                          <button type="button" onClick={applyExtraction} className="inline-flex min-h-[40px] items-center justify-center rounded-md bg-[#005a8f] px-4 text-sm font-bold text-white hover:bg-[#1c3f5e]">Apply to This Deal</button>
                           <button type="button" onClick={() => { clearContractPreview(); setExtractionDraft(null); setExtractionState('idle'); }} className="inline-flex min-h-[40px] items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-300">Discard</button>
                         </div>
                       </div>
                       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                        <div className="overflow-hidden border border-[#D9CFF0] bg-white">
-                          <div className="border-b border-[#E6E5EC] px-3 py-2">
-                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#301D5D]">Uploaded Contract</p>
+                        <div className="overflow-hidden border border-[#bbc1c9] bg-white">
+                          <div className="border-b border-[#d4d8dd] px-3 py-2">
+                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#005a8f]">Uploaded Contract</p>
                           </div>
                           {contractPreviewUrl ? (
                             <iframe
@@ -2346,9 +2346,9 @@ export default function ClosingTime({
                             </div>
                           )}
                         </div>
-                        <div className="max-h-[560px] overflow-y-auto border border-[#D9CFF0] bg-white">
-                          <div className="sticky top-0 z-10 border-b border-[#E6E5EC] bg-white px-3 py-2">
-                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#301D5D]">Proposed Entries</p>
+                        <div className="max-h-[560px] overflow-y-auto border border-[#bbc1c9] bg-white">
+                          <div className="sticky top-0 z-10 border-b border-[#d4d8dd] bg-white px-3 py-2">
+                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#005a8f]">Proposed Entries</p>
                             <Tip text="Compare each entry with the unchanged contract before applying." />
                           </div>
                           <div className="space-y-4 p-3">
@@ -2391,12 +2391,12 @@ export default function ClosingTime({
 
   const renderFormWindow = () => (!activeDeal ? null : (
     <>
-                    <div className="mt-6 rounded-md border border-[#E6E5EC] bg-[#F6F3FB] p-6 sm:p-8 lg:p-14">
+                    <div className="mt-6 rounded-md border border-[#d4d8dd] bg-[#f5f6f9] p-6 sm:p-8 lg:p-14">
                       {originalContract?.dealId === activeDeal.id && (
                         <div className="mx-auto mb-4 max-w-[1020px] border border-slate-300 bg-white p-3">
                           <button type="button" onClick={() => setShowSavedOriginal((value) => !value)}
                             aria-expanded={showSavedOriginal}
-                            className="text-sm font-bold text-[#301D5D] underline">
+                            className="text-sm font-bold text-[#005a8f] underline">
                             {showSavedOriginal ? 'Hide Original Contract' : 'View original uploaded contract (signatures in place)'}
                           </button>
                           {showSavedOriginal && <iframe
@@ -2409,7 +2409,7 @@ export default function ClosingTime({
                       <div className="mx-auto max-w-[1020px] overflow-hidden border border-slate-300 bg-white shadow-sm">
                         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2">
                           <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">{currentTrecFormVersion.formFamily.startsWith('custom-') ? `${currentTrecFormVersion.formNumber} form` : `Official TREC ${currentTrecFormVersion.formNumber}`} · Page {currentTrecPage}</p>
-                          <a href={`/api/agent-command-center/form-pdf?src=${encodeURIComponent(currentTrecFormVersion.pdfUrl)}&name=${encodeURIComponent(`TREC-${currentTrecFormVersion.formNumber.replace(/\s+/g, '-')}`)}`} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5B438C] underline underline-offset-2">Open Full Form</a>
+                          <a href={`/api/agent-command-center/form-pdf?src=${encodeURIComponent(currentTrecFormVersion.pdfUrl)}&name=${encodeURIComponent(`TREC-${currentTrecFormVersion.formNumber.replace(/\s+/g, '-')}`)}`} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#1c3f5e] underline underline-offset-2">Open Full Form</a>
                         </div>
                         <TrecPdfPagePreview
                           pdfUrl={currentTrecFormVersion.pdfUrl}
@@ -2429,12 +2429,12 @@ export default function ClosingTime({
                               aria-label={label}
                               title={label}
                               style={{ fontSize: '8pt' }}
-                              className="h-6 w-full min-w-0 rounded-md border border-slate-200 bg-[#F6F3FB] px-2 text-center text-slate-900 outline-none focus:border-[#301D5D]"
+                              className="h-6 w-full min-w-0 rounded-md border border-slate-200 bg-[#f5f6f9] px-2 text-center text-slate-900 outline-none focus:border-[#005a8f]"
                             />
                           ))}
                         </div>
                         {(['brokerage', 'address', 'agentId', 'agentName'] as const).some((key) => !brokerFooter[key].trim()) && (
-                          <p className="border-t border-slate-100 bg-white px-3 py-2 text-center text-[11px] text-slate-500">Fill these once in <button type="button" onClick={() => setDeskView('coordinator')} className="font-semibold text-[#301D5D] underline underline-offset-2">Settings</button> and they appear on every form.</p>
+                          <p className="border-t border-slate-100 bg-white px-3 py-2 text-center text-[11px] text-slate-500">Fill these once in <button type="button" onClick={() => setDeskView('coordinator')} className="font-semibold text-[#005a8f] underline underline-offset-2">Settings</button> and they appear on every form.</p>
                         )}
                         <div className="border-t border-slate-200 bg-white px-3 py-2">
                           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2447,13 +2447,13 @@ export default function ClosingTime({
                                 <label key={key} className="block min-w-0">
                                   <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</span>
                                   <input type={type} value={brokerFooter[key]} onChange={(event) => updateBrokerFooter(key, event.target.value)} placeholder={label}
-                                    className="h-7 w-full rounded-md border border-slate-200 bg-[#F6F3FB] px-2 text-xs text-slate-900 outline-none focus:border-[#301D5D]" />
+                                    className="h-7 w-full rounded-md border border-slate-200 bg-[#f5f6f9] px-2 text-xs text-slate-900 outline-none focus:border-[#005a8f]" />
                                 </label>
                               ))}
                               <label className="block sm:col-span-2">
                                 <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Message To Broker (Optional)</span>
                                 <textarea value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} rows={2} placeholder="Anything the broker should look at first"
-                                  className="w-full rounded-md border border-slate-200 bg-[#F6F3FB] px-2 py-1 text-xs text-slate-900 outline-none focus:border-[#301D5D]" />
+                                  className="w-full rounded-md border border-slate-200 bg-[#f5f6f9] px-2 py-1 text-xs text-slate-900 outline-none focus:border-[#005a8f]" />
                               </label>
                               <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
                                 <button type="button" disabled={reviewState.status === 'sending' || !brokerFooter.brokerEmail.trim()} className="ds-review-btn" onClick={() => void submitForBrokerReview()}>
@@ -2471,7 +2471,7 @@ export default function ClosingTime({
                         type="button"
                         onClick={() => setActiveTrecPage((page) => Math.max(1, page - 1))}
                         disabled={currentTrecPage === 1}
-                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#005a8f] hover:bg-[#f5f6f9] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                         Back
@@ -2484,7 +2484,7 @@ export default function ClosingTime({
                         type="button"
                         onClick={() => setActiveTrecPage((page) => Math.min(currentTrecFormVersion.pageCount, page + 1))}
                         disabled={currentTrecPage === currentTrecFormVersion.pageCount}
-                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex min-h-[42px] min-w-[112px] items-center justify-center gap-2 rounded-md bg-[#005a8f] px-4 text-sm font-bold text-white transition hover:bg-[#1c3f5e] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Next
                         <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -2546,7 +2546,7 @@ export default function ClosingTime({
                     className="ds-deal"
                     aria-label="Template" title="Template"
                   >
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#7059A8]" aria-hidden="true" />
+                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#2f7aa7]" aria-hidden="true" />
                     <span className="min-w-0">
                       <span className="block truncate text-sm">Template</span>
                       <span className="block truncate text-xs ds-sub">Edits Apply To New Contracts</span>
@@ -2716,7 +2716,7 @@ export default function ClosingTime({
               if (messagingContact) {
                 return (
                   <div className="ds-page ds-compact" data-testid="contact-messages">
-                    <button type="button" className="mb-3 text-[13px] font-medium text-[#301D5D] underline underline-offset-2" onClick={() => setMessagingContact(null)}>Back To Contacts</button>
+                    <button type="button" className="mb-3 text-[13px] font-medium text-[#005a8f] underline underline-offset-2" onClick={() => setMessagingContact(null)}>Back To Contacts</button>
                     <h2 className="ds-title">Messages With {messagingContact.name}</h2>
                     <p className="ds-subtitle">Everything exchanged with this person on every deal, plus new messages. This stays open after a deal is closed and locked.</p>
                     <MessagesPanel key={messagingContact.name} contact={messagingContact} />
@@ -2738,7 +2738,7 @@ export default function ClosingTime({
                         <button key={id} type="button" aria-pressed={contactsFilter === id} onClick={() => setContactsFilter(id)} className={contactsFilter === id ? 'ds-filter-on' : ''}>{id === 'all' ? 'All' : id === 'active' ? 'Active' : 'Past'}</button>
                       ))}
                     </div>
-                    <input value={contactsQuery} onChange={(e) => setContactsQuery(e.target.value)} placeholder={`Search ${contactsTab === 'clients' ? 'clients' : 'external contacts'}`} aria-label="Search contacts" className="h-8 min-w-[220px] flex-1 rounded-lg border border-[#E6E5EC] bg-white px-3 text-sm" />
+                    <input value={contactsQuery} onChange={(e) => setContactsQuery(e.target.value)} placeholder={`Search ${contactsTab === 'clients' ? 'clients' : 'external contacts'}`} aria-label="Search contacts" className="h-8 min-w-[220px] flex-1 rounded-lg border border-[#d4d8dd] bg-white px-3 text-sm" />
                   </div>
                   <div className="ds-table-wrap ds-cards mt-3">
                     <table className="w-full text-left text-sm">
@@ -2751,13 +2751,13 @@ export default function ClosingTime({
                             <tr key={c.key} tabIndex={0} onClick={() => { if (first) { setActiveDealId(first.id); setDealPageId(first.id); setDealPageTab('preferences'); setDeskView('deal-page'); } }}>
                               <td data-label="Name" className="px-4 py-3 font-medium text-slate-900">{c.name}</td>
                               <td data-label={contactsTab === 'clients' ? 'Stage' : 'Role'}>{contactsTab === 'clients'
-                                ? <span className={`ds-chip ${c.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{c.active ? 'Active Client' : 'Past Client'}</span>
+                                ? <span className={`ds-chip ${c.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#daeeff] text-[#005a8f]'}`}>{c.active ? 'Active Client' : 'Past Client'}</span>
                                 : <span className="capitalize">{c.role || '—'}</span>}</td>
                               <td data-label="Email">{c.email || '—'}</td>
                               <td data-label="Phone">{c.phone || '—'}</td>
                               <td data-label="Deal" className="max-w-[220px] truncate">{first ? (first.propertyAddress || first.title) : '—'}{c.dealIds.length > 1 ? ` +${c.dealIds.length - 1}` : ''}</td>
                               <td data-label="Last Touch" className="whitespace-nowrap">{touch(c.last)}</td>
-                              <td data-label="" className="pr-4"><button type="button" className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-1 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white" onClick={(e) => { e.stopPropagation(); setMessagingContact({ name: c.name, email: c.email, phone: c.phone, role: c.role || (c.client ? 'Client' : 'Contact') }); }}>Message</button></td>
+                              <td data-label="" className="pr-4"><button type="button" className="rounded-lg border border-[#d4d8dd] bg-white px-3 py-1 text-[13px] font-medium text-[#292a2d] transition hover:border-[#005a8f] hover:bg-[#005a8f] hover:text-white" onClick={(e) => { e.stopPropagation(); setMessagingContact({ name: c.name, email: c.email, phone: c.phone, role: c.role || (c.client ? 'Client' : 'Contact') }); }}>Message</button></td>
                             </tr>
                           );
                         })}
@@ -2787,7 +2787,7 @@ export default function ClosingTime({
                       <span className="min-w-0 flex-1 text-left">
                         <span className="flex flex-wrap items-center gap-2">
                           <span className="truncate text-sm font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
-                          <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{deal.dealType === 'purchase' && deal.agentSide === 'listing' ? 'Sell side' : (typeLabel[deal.dealType] ?? 'Deal')}</span>
+                          <span className="ds-chip bg-[#daeeff] text-[#005a8f]">{deal.dealType === 'purchase' && deal.agentSide === 'listing' ? 'Sell side' : (typeLabel[deal.dealType] ?? 'Deal')}</span>
                         </span>
                         <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
                           <span className="font-medium text-slate-900">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span>
@@ -2814,7 +2814,7 @@ export default function ClosingTime({
                     </div>
                     <button type="button" onClick={() => { setPickerStep('type'); setNewDealPickerOpen(true); }}><Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />New Contract</button>
                   </div>
-                  <p className="mt-6 text-sm font-semibold text-slate-900">In Flight <span className="ds-chip ml-1 bg-[#EFEAF8] text-[#301D5D]">{inFlight.length}</span></p>
+                  <p className="mt-6 text-sm font-semibold text-slate-900">In Flight <span className="ds-chip ml-1 bg-[#daeeff] text-[#005a8f]">{inFlight.length}</span></p>
                   <ul className="ds-closing-list">{inFlight.length === 0 ? <li className="px-4 py-4 text-sm text-slate-500">No closings in flight.</li> : inFlight.map(row)}</ul>
                   <p className="mt-6 text-sm font-semibold text-slate-900">Closed</p>
                   <ul className="ds-closing-list">{closedList.length === 0 ? <li className="px-4 py-4 text-sm text-slate-500">No closings completed yet.</li> : closedList.map(row)}</ul>
@@ -2854,7 +2854,7 @@ export default function ClosingTime({
                       <h2 className="ds-title">Deals</h2>
                       <p className="ds-subtitle">Every deal in one place, with where each one stands and what is due next.</p>
                     </div>
-                    <button type="button" onClick={() => { setPickerStep('type'); setNewDealPickerOpen(true); }} className="inline-flex h-[40px] items-center gap-2 rounded-lg bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
+                    <button type="button" onClick={() => { setPickerStep('type'); setNewDealPickerOpen(true); }} className="inline-flex h-[40px] items-center gap-2 rounded-lg bg-[#005a8f] px-4 text-sm font-semibold text-white hover:bg-[#1c3f5e]">
                       <Plus className="h-4 w-4" aria-hidden="true" /> New Deal
                     </button>
                   </div>
@@ -3035,13 +3035,13 @@ export default function ClosingTime({
             <div data-section-key="integrations" className="min-w-0"><IntegrationsPanel calendarTile={(
               <li className="ds-cal-tile">
                 {!calendarFeed ? (
-                  <button type="button" onClick={() => void loadCalendarFeed()} disabled={calendarFeedState === 'loading'} className="flex min-h-[56px] w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 text-left hover:bg-[#F6F3FB]">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#EFEAF8] text-[#301D5D]">{calendarFeedState === 'loading' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Link2 className="h-4 w-4" aria-hidden="true" />}</span>
+                  <button type="button" onClick={() => void loadCalendarFeed()} disabled={calendarFeedState === 'loading'} className="flex min-h-[56px] w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 text-left hover:bg-[#f5f6f9]">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#daeeff] text-[#005a8f]">{calendarFeedState === 'loading' ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Link2 className="h-4 w-4" aria-hidden="true" />}</span>
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950">Subscribe To Apple Calendar</span>
                   </button>
                 ) : (
                   <div className="flex min-h-[56px] w-full flex-col justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-[#301D5D]">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-[#005a8f]">
                       <a href={calendarFeed.webcalUrl} onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'apple' })} className="underline underline-offset-2">Open In Apple Calendar</a>
                       <button type="button" onClick={() => void copyCalendarFeed()} className="underline underline-offset-2">{calendarFeedCopied ? 'Copied' : 'Copy Link'}</button>
                     </div>
@@ -3053,24 +3053,24 @@ export default function ClosingTime({
             <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
           <section className={'mt-4 grid gap-4'} aria-label="Deal settings, alerts and calendar">
-            <div data-section-key="agent-details" className="min-w-0 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem] lg:col-span-2">
+            <div data-section-key="agent-details" className="min-w-0 rounded-xl border border-[#d4d8dd] bg-white p-[1.125rem] lg:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-lg font-semibold text-gray-900">Account: Brokerage And Agent Details</h3>
-                <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{(['brokerage', 'address', 'agentId', 'agentName'] as const).filter((key) => brokerFooter[key].trim()).length} of 4 required filled</span>
+                <span className="ds-chip bg-[#daeeff] text-[#005a8f]">{(['brokerage', 'address', 'agentId', 'agentName'] as const).filter((key) => brokerFooter[key].trim()).length} of 4 required filled</span>
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">Fill these in once. They appear along the bottom of every form and are stamped along the bottom of every page of any PDF you download, send to your broker or send for signature.</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {([['brokerage', 'Brokerage', 'text', true], ['address', 'Brokerage Address', 'text', true], ['agentId', 'Agent License Number', 'text', true], ['agentName', 'Agent Name', 'text', true], ['brokerName', 'Broker Name', 'text', false], ['brokerEmail', 'Broker Email', 'email', false]] as const).map(([key, label, type, required]) => (
                   <label key={key} className="block min-w-0">
                     <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}{required ? ' (required)' : ' (for broker review)'}</span>
-                    <input type={type} value={brokerFooter[key]} onChange={(event) => updateBrokerFooter(key, event.target.value)} placeholder={label} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#301D5D]" />
+                    <input type={type} value={brokerFooter[key]} onChange={(event) => updateBrokerFooter(key, event.target.value)} placeholder={label} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#005a8f]" />
                   </label>
                 ))}
               </div>
               <p className="mt-3 text-xs text-slate-500" role="status">{accountSave === 'saving' ? 'Saving to your account...' : accountSave === 'error' ? 'Could not save to your account. Your entries are kept on this browser. Try again.' : 'Saved to your account.'}</p>
             </div>
             <MlsConnectionsCard />
-            <div data-section-key="calendar-link" className="min-w-0 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem] lg:col-span-2">
+            <div data-section-key="calendar-link" className="min-w-0 rounded-xl border border-[#d4d8dd] bg-white p-[1.125rem] lg:col-span-2">
               <h3 className="text-lg font-semibold text-gray-900">Calendar Link</h3>
               <p className="mt-3 text-sm leading-6 text-slate-600">Your Apple Calendar subscription uses a private link. Anyone with it can view your deal dates. Reset it if it was shared by mistake. The old link stops working and you will need to subscribe again.</p>
               <button type="button" disabled={calendarFeedState === 'loading'} onClick={() => { if (window.confirm('Reset your calendar link? The old link will stop working.')) void loadCalendarFeed(true); }} className="mt-4 inline-flex min-h-[36px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700">
@@ -3078,19 +3078,19 @@ export default function ClosingTime({
               </button>
               {calendarFeed && calendarFeedState !== 'loading' && <Tip text="Use Open In Apple Calendar on the Integrations page to subscribe with the new link." />}
             </div>
-            <div {...collapsible('alerts')} className="min-w-0 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem] lg:col-span-2">
+            <div {...collapsible('alerts')} className="min-w-0 rounded-xl border border-[#d4d8dd] bg-white p-[1.125rem] lg:col-span-2">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-gray-900">Deadline Alerts</h3>
                 <CollapseToggle {...toggleProps('alerts', 'deadline alerts')} />
               </div>
               <div className="mt-4 space-y-3">
                 <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
-                  <input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" />
-                  <Mail className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" /> Send Deadline Alerts By Email
+                  <input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#005a8f]" />
+                  <Mail className="rnn-inline-icon text-[#2f7aa7]" aria-hidden="true" /> Send Deadline Alerts By Email
                 </label>
                 <label className="block text-xs font-semibold text-slate-600">
                   Send Emails To
-                  <input type="email" defaultValue={notificationPreferences.notificationEmail ?? ''} placeholder="Account Email" onBlur={(event) => { const value = event.target.value.trim(); if (value !== (notificationPreferences.notificationEmail ?? '') && (value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))) updateNotificationPreferences({ notificationEmail: value }); }} className="mt-1 block w-full max-w-sm rounded-md border border-[#E6E5EC] px-3 py-2 text-sm font-normal text-slate-800" />
+                  <input type="email" defaultValue={notificationPreferences.notificationEmail ?? ''} placeholder="Account Email" onBlur={(event) => { const value = event.target.value.trim(); if (value !== (notificationPreferences.notificationEmail ?? '') && (value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))) updateNotificationPreferences({ notificationEmail: value }); }} className="mt-1 block w-full max-w-sm rounded-md border border-[#d4d8dd] px-3 py-2 text-sm font-normal text-slate-800" />
                 </label>
                 <div className="space-y-2">
                   <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
@@ -3101,29 +3101,29 @@ export default function ClosingTime({
                       if (!res.ok) { event.target.checked = false; window.alert(res.status === 403 ? 'Text alerts are not available on this account yet.' : 'Enter your 10-digit US mobile number first.'); return; }
                       const data = (await res.json()) as { phone: string };
                       updateNotificationPreferences({ smsEnabled: true, smsPhone: data.phone });
-                    }} className="h-4 w-4 accent-[#301D5D]" />
+                    }} className="h-4 w-4 accent-[#005a8f]" />
                     Send Deadline Alerts By Text
                   </label>
-                  <input id="closing-time-sms-phone" type="tel" defaultValue={notificationPreferences.smsPhone} placeholder="Mobile Number" className="block w-full max-w-sm rounded-md border border-[#E6E5EC] px-3 py-2 text-sm font-normal text-slate-800" />
+                  <input id="closing-time-sms-phone" type="tel" defaultValue={notificationPreferences.smsPhone} placeholder="Mobile Number" className="block w-full max-w-sm rounded-md border border-[#d4d8dd] px-3 py-2 text-sm font-normal text-slate-800" />
                   <Tip text="Each text includes the property address. Message and data rates may apply. Reply STOP to opt out." />
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
-                    <input type="checkbox" checked={notificationPreferences.pushEnabled} onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" />
-                    <Smartphone className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" /> Send Browser Push Alerts
+                    <input type="checkbox" checked={notificationPreferences.pushEnabled} onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })} className="h-4 w-4 accent-[#005a8f]" />
+                    <Smartphone className="rnn-inline-icon text-[#2f7aa7]" aria-hidden="true" /> Send Browser Push Alerts
                   </label>
-                  <PushOptInButton realtorId={realtorId} label="Connect This Device" className="inline-flex min-h-[36px] items-center rounded-md border border-[#7059A8] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#F8F5FF]" />
+                  <PushOptInButton realtorId={realtorId} label="Connect This Device" className="inline-flex min-h-[36px] items-center rounded-md border border-[#2f7aa7] bg-white px-3 text-xs font-bold text-[#005a8f] transition hover:bg-[#f5f6f9]" />
                 </div>
                 <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 sm:flex sm:flex-wrap sm:gap-4">
                   {([[7, '7 Days Before'], [3, '3 Days Before'], [1, '1 Day Before'], [0, 'Due Today']] as const).map(([offset, label]) => (
                     <label key={offset} className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600">
-                      <input type="checkbox" checked={notificationPreferences.reminderOffsets.includes(offset)} disabled={notificationPreferences.reminderOffsets.length === 1 && notificationPreferences.reminderOffsets[0] === offset} onChange={() => toggleReminderOffset(offset)} className="h-3.5 w-3.5 accent-[#301D5D]" />
+                      <input type="checkbox" checked={notificationPreferences.reminderOffsets.includes(offset)} disabled={notificationPreferences.reminderOffsets.length === 1 && notificationPreferences.reminderOffsets[0] === offset} onChange={() => toggleReminderOffset(offset)} className="h-3.5 w-3.5 accent-[#005a8f]" />
                       {label}
                     </label>
                   ))}
                 </div>
               </div>
-              <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active deals. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
+              <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active deals. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#005a8f] underline underline-offset-2">Alert Setup Guide</Link></p>
             </div>
             {activeDeal && (
               <ClosingTimeAssist
@@ -3154,14 +3154,14 @@ export default function ClosingTime({
                   <p className="ds-subtitle">TREC contracts and your brokerage forms, in one place.</p>
                 </div>
                 <div className="ml-auto flex shrink-0 items-center gap-2">
-                  {formsLibraryTab === 'trec' && <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#301D5D] hover:text-white sm:inline-flex">TREC Quick Link</a>}
+                  {formsLibraryTab === 'trec' && <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#005a8f] hover:text-white sm:inline-flex">TREC Quick Link</a>}
                   <CollapseToggle {...toggleProps('trec-library', 'forms library')} />
                 </div>
               </div>
-              <div role="tablist" aria-label="Forms library pages" className="mt-4 flex gap-4 border-b border-[#E6E5EC]">
+              <div role="tablist" aria-label="Forms library pages" className="mt-4 flex gap-4 border-b border-[#d4d8dd]">
                 {([['trec', 'TREC Forms'], ['brokerage', 'Brokerage Forms']] as const).map(([id, label]) => (
                   <button key={id} type="button" role="tab" aria-selected={formsLibraryTab === id} onClick={() => setFormsLibraryTab(id)}
-                    className={`-mb-px border-b-2 px-0.5 pb-2 text-sm font-semibold ${formsLibraryTab === id ? 'border-[#301D5D] text-[#301D5D]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}>{label}</button>
+                    className={`-mb-px border-b-2 px-0.5 pb-2 text-sm font-semibold ${formsLibraryTab === id ? 'border-[#005a8f] text-[#005a8f]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}>{label}</button>
                 ))}
               </div>
               {formsLibraryTab === 'trec' && (
@@ -3216,7 +3216,7 @@ export default function ClosingTime({
           <>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            ['Agent deals', activeDealCount, ClipboardCheck, 'bg-[#F8F5FF] text-[#301D5D]'],
+            ['Agent deals', activeDealCount, ClipboardCheck, 'bg-[#f5f6f9] text-[#005a8f]'],
             ['Closing in 30 days', closingSoonCount, CalendarDays, 'bg-[#FEF8CC] text-[#645600]'],
             ['Review alerts', reviewAlerts.length, AlertTriangle, 'bg-[#FFEAE6] text-[#661102]'],
             ['Overdue tasks', overdueTaskCount, ListTodo, 'bg-[#F2EEE7] text-[#4C3B67]'],
@@ -3242,7 +3242,7 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && activeDeals.length > 0 && (
-          <section {...collapsible('active')} className="mt-6 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem]">
+          <section {...collapsible('active')} className="mt-6 rounded-xl border border-[#d4d8dd] bg-white p-[1.125rem]">
             <div className="flex items-center gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Active Deals</p>
@@ -3266,7 +3266,7 @@ export default function ClosingTime({
                       focusDeal(deal.id);
                       setFormsStatusDealId(deal.id);
                     }}
-                    className={`block w-full py-3 text-left transition hover:bg-[#F8F5FF] ${deal.id === activeDealId ? 'bg-[#F8F5FF]' : ''}`}
+                    className={`block w-full py-3 text-left transition hover:bg-[#f5f6f9] ${deal.id === activeDealId ? 'bg-[#f5f6f9]' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -3288,7 +3288,7 @@ export default function ClosingTime({
                       <div>
                         <div className="text-slate-400">Closing Date</div>
                         <div className="text-slate-700">{deal.closingDate ? formatDate(deal.closingDate) : '—'}</div>
-                        <div data-testid={`text-closing-countdown-${deal.id}`} className="mt-0.5 font-bold text-[#301D5D]">
+                        <div data-testid={`text-closing-countdown-${deal.id}`} className="mt-0.5 font-bold text-[#005a8f]">
                           {closingCountdownLabel(deal.closingDate, today)}
                         </div>
                       </div>
@@ -3299,7 +3299,7 @@ export default function ClosingTime({
                       ) : (
                         <span
                           title={dealFormVersions.map((version) => version.formNumber).join(', ')}
-                          className="inline-flex rounded-md bg-[#F8F5FF] px-2 py-1 text-xs font-bold text-[#5B438C]"
+                          className="inline-flex rounded-md bg-[#f5f6f9] px-2 py-1 text-xs font-bold text-[#1c3f5e]"
                         >
                           {dealFormVersions.length} form{dealFormVersions.length === 1 ? '' : 's'}
                         </span>
@@ -3342,7 +3342,7 @@ export default function ClosingTime({
                         focusDeal(deal.id);
                         setFormsStatusDealId(deal.id);
                       }}
-                      className={`cursor-pointer border-b border-slate-100 transition last:border-0 hover:bg-[#F8F5FF] ${deal.id === activeDealId ? 'bg-[#F8F5FF]' : ''}`}
+                      className={`cursor-pointer border-b border-slate-100 transition last:border-0 hover:bg-[#f5f6f9] ${deal.id === activeDealId ? 'bg-[#f5f6f9]' : ''}`}
                     >
                       <td className="py-3 pr-4">
                         <span className="block font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
@@ -3356,7 +3356,7 @@ export default function ClosingTime({
                       <td className="py-3 pr-4 text-slate-700">{deal.effectiveDate ? formatDate(deal.effectiveDate) : '—'}</td>
                       <td className="py-3 pr-4 text-slate-700">
                         {deal.closingDate ? formatDate(deal.closingDate) : '—'}
-                        <span data-testid={`text-closing-countdown-${deal.id}`} className="block text-xs font-bold text-[#301D5D]">
+                        <span data-testid={`text-closing-countdown-${deal.id}`} className="block text-xs font-bold text-[#005a8f]">
                           {closingCountdownLabel(deal.closingDate, today)}
                         </span>
                       </td>
@@ -3367,7 +3367,7 @@ export default function ClosingTime({
                           return (
                             <span
                               title={dealFormVersions.map((version) => version.formNumber).join(', ')}
-                              className="inline-flex rounded-md bg-[#F8F5FF] px-2 py-1 text-xs font-bold text-[#5B438C]"
+                              className="inline-flex rounded-md bg-[#f5f6f9] px-2 py-1 text-xs font-bold text-[#1c3f5e]"
                             >
                               {dealFormVersions.length} form{dealFormVersions.length === 1 ? '' : 's'}
                             </span>
@@ -3410,7 +3410,7 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && closedDeals.length > 0 && (
-          <section {...collapsible('closed')} className="mt-6 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem]">
+          <section {...collapsible('closed')} className="mt-6 rounded-xl border border-[#d4d8dd] bg-white p-[1.125rem]">
             <div className="flex items-center gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Closed & Audit</p>
@@ -3430,7 +3430,7 @@ export default function ClosingTime({
                       focusDeal(deal.id);
                       setFormsStatusDealId(deal.id);
                     }}
-                    className={`block w-full py-3 text-left transition hover:bg-[#F8F5FF] ${deal.id === activeDealId ? 'bg-[#F8F5FF]' : ''}`}
+                    className={`block w-full py-3 text-left transition hover:bg-[#f5f6f9] ${deal.id === activeDealId ? 'bg-[#f5f6f9]' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -3460,7 +3460,7 @@ export default function ClosingTime({
                       ) : (
                         <span
                           title={dealFormVersions.map((version) => version.formNumber).join(', ')}
-                          className="inline-flex rounded-md bg-[#F8F5FF] px-2 py-1 text-xs font-bold text-[#5B438C]"
+                          className="inline-flex rounded-md bg-[#f5f6f9] px-2 py-1 text-xs font-bold text-[#1c3f5e]"
                         >
                           {dealFormVersions.length} form{dealFormVersions.length === 1 ? '' : 's'}
                         </span>
@@ -3490,7 +3490,7 @@ export default function ClosingTime({
                         focusDeal(deal.id);
                         setFormsStatusDealId(deal.id);
                       }}
-                      className={`cursor-pointer border-b border-slate-100 transition last:border-0 hover:bg-[#F8F5FF] ${deal.id === activeDealId ? 'bg-[#F8F5FF]' : ''}`}
+                      className={`cursor-pointer border-b border-slate-100 transition last:border-0 hover:bg-[#f5f6f9] ${deal.id === activeDealId ? 'bg-[#f5f6f9]' : ''}`}
                     >
                       <td className="py-3 pr-4">
                         <span className="flex items-center gap-2 font-semibold text-slate-900">
@@ -3512,7 +3512,7 @@ export default function ClosingTime({
                           return (
                             <span
                               title={dealFormVersions.map((version) => version.formNumber).join(', ')}
-                              className="inline-flex rounded-md bg-[#F8F5FF] px-2 py-1 text-xs font-bold text-[#5B438C]"
+                              className="inline-flex rounded-md bg-[#f5f6f9] px-2 py-1 text-xs font-bold text-[#1c3f5e]"
                             >
                               {dealFormVersions.length} form{dealFormVersions.length === 1 ? '' : 's'}
                             </span>
@@ -3534,27 +3534,27 @@ export default function ClosingTime({
         {workspacePage === 2 && activeDeal && (
           <>
           <div className="mt-6 grid gap-6">
-            <div {...collapsible('tasks')} className="rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem]">
+            <div {...collapsible('tasks')} className="rounded-xl border border-[#d4d8dd] bg-white p-[1.125rem]">
               <div className="flex items-center gap-3">
                 <h3 className="text-xl font-semibold text-gray-900">Tasks and Reminders</h3>
                 <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
               </div>
               <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
-                <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
-                <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
-                <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-[44px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
-                <button type="button" onClick={addTask} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
+                <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#005a8f]" placeholder="Add a deal task" />
+                <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#005a8f]" />
+                <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-[44px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm outline-none focus:border-[#005a8f]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
+                <button type="button" onClick={addTask} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#005a8f] px-4 text-sm font-bold text-white"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
               </div>
               <div className="mt-4 grid min-w-0 gap-2 border-y border-slate-100 py-4 sm:grid-cols-2">
                 <select value={reminderDeadlineId} onChange={(event) => setReminderDeadlineId(event.target.value)} aria-label="Reminder deadline" className="min-h-[42px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm"><option value="">Custom Reminder Deadline</option>{activeDeadlines.map((deadline) => <option key={deadline.id} value={deadline.id}>{deadline.label}</option>)}</select>
                 <input type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} aria-label="Custom reminder date" className="min-h-[42px] min-w-0 w-full border border-slate-300 px-2 text-sm" />
                 <input value={reminderNote} onChange={(event) => setReminderNote(event.target.value)} aria-label="Custom reminder note" className="min-h-[42px] min-w-0 w-full border border-slate-300 px-3 text-sm" placeholder="Reminder note (optional)" />
-                <button type="button" onClick={addCustomReminder} disabled={!reminderDeadlineId || !reminderDate} className="inline-flex min-h-[42px] items-center justify-center rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-40">Add Reminder</button>
+                <button type="button" onClick={addCustomReminder} disabled={!reminderDeadlineId || !reminderDate} className="inline-flex min-h-[42px] items-center justify-center rounded-md border border-[#2f7aa7] px-4 text-sm font-bold text-[#005a8f] disabled:opacity-40">Add Reminder</button>
               </div>
               <div className="mt-4 space-y-2">
                 {!activeDeal.tasks.length && !activeDeal.reminders.length ? <p className="border border-dashed border-slate-300 bg-[#FCFBF9] p-4 text-sm text-slate-600">Use deadline presets (7d, 3d, 1d, due) in the review step or add a custom action here.</p> : <>
-                  {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border border-[#FAD800] bg-[#FEF8CC] p-3"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#645600] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}>{reminder.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#645600]">{formatDate(reminder.reminderDate)}</span></div>)}
-                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-[#FFEAE6] text-[#661102]' : task.priority === 'high' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-slate-100 text-slate-600'} capitalize`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#661102]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#661102]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
+                  {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border border-[#FAD800] bg-[#FEF8CC] p-3"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#005a8f] bg-[#005a8f] text-white' : 'border-[#645600] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}>{reminder.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#645600]">{formatDate(reminder.reminderDate)}</span></div>)}
+                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#005a8f] bg-[#005a8f] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-[#FFEAE6] text-[#661102]' : task.priority === 'high' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-slate-100 text-slate-600'} capitalize`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#661102]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#661102]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
                 </>}
               </div>
             </div>
@@ -3573,7 +3573,7 @@ export default function ClosingTime({
               documentUploadError={documentUploadError}
             />
           </div>
-          <section {...collapsible('audit')} className="mt-6 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem]">
+          <section {...collapsible('audit')} className="mt-6 rounded-xl border border-[#d4d8dd] bg-white p-[1.125rem]">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div>
@@ -3585,12 +3585,12 @@ export default function ClosingTime({
                 <CollapseToggle {...toggleProps('audit', 'audit')} className="ml-auto" />
               </div>
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => exportAuditPdf(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download PDF</button>
+                <button type="button" onClick={() => exportAuditPdf(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#2f7aa7] px-4 text-sm font-bold text-[#005a8f]"><Download className="h-4 w-4" aria-hidden="true" />Download PDF</button>
                 {isDealLocked(activeDeal) && (
-                  <button type="button" onClick={() => exportBackupRecord(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Download className="h-4 w-4" aria-hidden="true" />Download Backup Record</button>
+                  <button type="button" onClick={() => exportBackupRecord(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#005a8f] px-4 text-sm font-bold text-white"><Download className="h-4 w-4" aria-hidden="true" />Download Backup Record</button>
                 )}
                 {isDealLocked(activeDeal) && (
-                  <button type="button" onClick={() => void exportDealFolder(activeDeal)} disabled={dealFolderBusy} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
+                  <button type="button" onClick={() => void exportDealFolder(activeDeal)} disabled={dealFolderBusy} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#2f7aa7] px-4 text-sm font-bold text-[#005a8f] disabled:opacity-50">
                     {dealFolderBusy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FolderDown className="h-4 w-4" aria-hidden="true" />}
                     {dealFolderBusy ? 'Building Folder\u2026' : 'Download Folder'}
                   </button>
@@ -3604,11 +3604,11 @@ export default function ClosingTime({
               ) : null}
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              Under <a href="https://www.trec.texas.gov/how-long-does-license-holder-have-keep-financial-and-real-estate-transactions-file" target="_blank" rel="noreferrer" className="font-semibold text-[#301D5D] underline">TREC Rules 535.2(h) and 535.146</a>, a broker must keep transaction records and trust account logs for four years from the date of closing, contract termination, or the date of a deposit/withdrawal.
+              Under <a href="https://www.trec.texas.gov/how-long-does-license-holder-have-keep-financial-and-real-estate-transactions-file" target="_blank" rel="noreferrer" className="font-semibold text-[#005a8f] underline">TREC Rules 535.2(h) and 535.146</a>, a broker must keep transaction records and trust account logs for four years from the date of closing, contract termination, or the date of a deposit/withdrawal.
             </p>
             {/* Google Drive integration disabled — panel intentionally not rendered. */}
             {isDealLocked(activeDeal) && (
-              <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#5B438C]">
+              <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#1c3f5e]">
                 <Lock className="h-3.5 w-3.5" aria-hidden="true" />
                 {activeDeal.auditLocked && !(Boolean(activeDeal.closeoutOutcome && activeDeal.closeoutDate) && isDealFullyComplete(activeDeal))
                   ? 'Manually locked for audit retention.'
@@ -3689,7 +3689,7 @@ export default function ClosingTime({
                     contractCameraInputRef.current?.click();
                     setIsCameraOpen(false);
                   }}
-                  className="inline-flex h-[42px] items-center justify-center rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-violet-50"
+                  className="inline-flex h-[42px] items-center justify-center rounded-md border border-[#2f7aa7] bg-white px-4 text-sm font-bold text-[#005a8f] transition hover:bg-violet-50"
                 >
                   Device Camera
                 </button>
@@ -3697,7 +3697,7 @@ export default function ClosingTime({
                   type="button"
                   onClick={captureContractPhoto}
                   disabled={Boolean(cameraError)}
-                  className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white transition hover:bg-[#42277c] disabled:cursor-not-allowed disabled:opacity-45"
+                  className="inline-flex h-[42px] items-center justify-center gap-2 rounded-md bg-[#005a8f] px-4 text-sm font-bold text-white transition hover:bg-[#1c3f5e] disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   <Camera className="rnn-inline-icon" aria-hidden="true" />
                   Take Picture
@@ -3727,7 +3727,7 @@ export default function ClosingTime({
       {formModalOpen && activeDeal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-3 sm:p-6" role="dialog" aria-modal="true" aria-label={`${currentTrecFormVersion.formNumber} form`} onClick={() => setFormModalOpen(false)}>
           <div className="flex max-h-full w-full max-w-[1120px] flex-col overflow-hidden rounded-xl bg-white shadow-xl" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] px-4 py-3">
+            <div className="flex items-center justify-between gap-3 border-b border-[#d4d8dd] px-4 py-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{currentTrecFormVersion.formFamily.startsWith('custom-') ? 'Form' : 'TREC Form'}</p>
                 <h3 className="truncate text-base font-semibold text-slate-900">{currentTrecFormVersion.formNumber} · {currentTrecFormVersion.title}</h3>
@@ -3735,7 +3735,7 @@ export default function ClosingTime({
               <button type="button" aria-label="Close" onClick={() => setFormModalOpen(false)} className="text-slate-500 hover:text-slate-900"><X className="h-5 w-5" aria-hidden="true" /></button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-4">
-              {extractionState === 'extracting' && <p role="status" className="mb-3 border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-sm text-slate-700">Reading your upload...</p>}
+              {extractionState === 'extracting' && <p role="status" className="mb-3 border border-[#d4d8dd] bg-[#f5f6f9] px-3 py-2 text-sm text-slate-700">Reading your upload...</p>}
               {extractionState === 'error' && <p role="alert" className="mb-3 border border-[#FF2A04] bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">{extractionError || 'The upload could not be read. Use a clear PDF or image smaller than 15 MB, then try again.'}</p>}
               {renderExtractionReview()}
               {extractionWarnings.length > 0 && (

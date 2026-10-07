@@ -9,7 +9,7 @@ export const metadata = {
 export default function RnnPlatinumPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:py-14">
-      <section className="rounded-2xl bg-[#301D5D] px-6 py-8 text-white sm:px-8">
+      <section className="rounded-2xl bg-[#005a8f] px-6 py-8 text-white sm:px-8">
         <Crown size={30} />
         <p className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
           Open access
@@ -17,7 +17,7 @@ export default function RnnPlatinumPage() {
         <h1 className="mt-2 text-3xl font-semibold">Platinum Tools</h1>
         <p className="mt-3 max-w-xl text-sm leading-6 text-white/75">Your professional tools are ready.</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/testimonial-hub" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-[#301D5D]">
+          <Link href="/testimonial-hub" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-[#005a8f]">
             Open Testimonials HUB <ExternalLink size={15} />
           </Link>
           <Link href="/custom-designer" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-white/30 px-4 text-sm font-semibold text-white hover:bg-white/10">

@@ -192,7 +192,7 @@ export async function sendDealEmail(realtorId: string, dealId: string, property:
       requested += made.length;
       for (const id of made) await markDocRequestEmailed(realtorId, id).catch(() => undefined);
     }
-    const html = `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:600px">${text.split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}${dealId === CONTACT_SCOPE ? '' : `<p style="color:#7A7787;font-size:12px">Regarding ${esc(property)}</p>`}</div>`;
+    const html = `<div style="font-family:Inter,Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:600px">${text.split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}${dealId === CONTACT_SCOPE ? '' : `<p style="color:#51555b;font-size:12px">Regarding ${esc(property)}</p>`}</div>`;
     const r = await sendEmail({ to: to.email, cc: ccList.filter((c) => c !== to.email.toLowerCase()), ...(from ? { from } : {}), replyTo: agent.email || undefined, subject, html, ...(input.attachments?.length ? { attachments: input.attachments } : {}) }).catch((e) => ({ ok: false, error: String(e) }));
     const ok = (r as { ok?: boolean }).ok !== false;
     if (!ok) lastError = (r as { error?: string }).error ?? 'Send failed';

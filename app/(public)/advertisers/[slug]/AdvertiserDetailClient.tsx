@@ -46,7 +46,7 @@ type Props = {
   backHref: string;
 };
 
-const BRAND_PURPLE = '#301D5D';
+const BRAND_PURPLE = '#005a8f';
 
 function formatLocationAddress(l: AdvertiserLocation): string | null {
   const parts: string[] = [];

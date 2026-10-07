@@ -589,14 +589,14 @@ export function renderPartnerStatementEmail(
     .map((invoice) => {
       const link = invoice.stripe_payment_link_url;
       return `<tr>
-        <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb">${escapeHtml(invoice.number ?? invoice.id.slice(0, 8))}</td>
-        <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb">${statementDate(invoice.issued_at)}</td>
-        <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb">${statementDate(invoice.due_date)}${invoice.is_overdue ? '<br><span style="color:#661102;font-size:11px;font-weight:600">Overdue</span>' : ''}</td>
-        <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb;text-align:right">${statementMoney(invoice.total_cents)}</td>
-        <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb;text-align:right">${statementMoney(invoice.amount_paid_cents)}</td>
-        <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:600">${statementMoney(invoice.balance_cents)}</td>
-        <td style="padding:11px 8px;border-bottom:1px solid #e5e7eb;text-align:right">
-          ${link ? `<a href="${escapeHtml(link)}" style="display:inline-block;background:#301D5D;color:#fff;padding:7px 11px;border-radius:4px;text-decoration:none;font-weight:600;white-space:nowrap">Pay invoice</a>` : ''}
+        <td style="padding:11px 8px;border-bottom:1px solid #d4d8dd">${escapeHtml(invoice.number ?? invoice.id.slice(0, 8))}</td>
+        <td style="padding:11px 8px;border-bottom:1px solid #d4d8dd">${statementDate(invoice.issued_at)}</td>
+        <td style="padding:11px 8px;border-bottom:1px solid #d4d8dd">${statementDate(invoice.due_date)}${invoice.is_overdue ? '<br><span style="color:#661102;font-size:11px;font-weight:600">Overdue</span>' : ''}</td>
+        <td style="padding:11px 8px;border-bottom:1px solid #d4d8dd;text-align:right">${statementMoney(invoice.total_cents)}</td>
+        <td style="padding:11px 8px;border-bottom:1px solid #d4d8dd;text-align:right">${statementMoney(invoice.amount_paid_cents)}</td>
+        <td style="padding:11px 8px;border-bottom:1px solid #d4d8dd;text-align:right;font-weight:600">${statementMoney(invoice.balance_cents)}</td>
+        <td style="padding:11px 8px;border-bottom:1px solid #d4d8dd;text-align:right">
+          ${link ? `<a href="${escapeHtml(link)}" style="display:inline-block;background:#005a8f;color:#fff;padding:7px 11px;border-radius:4px;text-decoration:none;font-weight:600;white-space:nowrap">Pay invoice</a>` : ''}
         </td>
       </tr>`;
     })
@@ -604,8 +604,8 @@ export function renderPartnerStatementEmail(
   const messageHtml = escapeHtml(personalMessage).replaceAll('\n', '<br>');
   const payAllHtml = statement.overduePaymentLinkUrl
     ? `<div style="margin:0 0 22px;padding:16px;background:#FFF3E0;border:1px solid #FFF3E0;text-align:center">
-        <div style="font-size:13px;font-weight:700;color:#301D5D;margin-bottom:10px">Total overdue: ${statementMoney(statement.overdueCents)}</div>
-        <a href="${escapeHtml(statement.overduePaymentLinkUrl)}" style="display:inline-block;background:#301D5D;color:#fff;padding:10px 16px;border-radius:4px;text-decoration:none;font-weight:700">Pay all overdue invoices</a>
+        <div style="font-size:13px;font-weight:700;color:#005a8f;margin-bottom:10px">Total overdue: ${statementMoney(statement.overdueCents)}</div>
+        <a href="${escapeHtml(statement.overduePaymentLinkUrl)}" style="display:inline-block;background:#005a8f;color:#fff;padding:10px 16px;border-radius:4px;text-decoration:none;font-weight:700">Pay all overdue invoices</a>
       </div>`
     : '';
 
@@ -613,7 +613,7 @@ export function renderPartnerStatementEmail(
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #d4d4d4;padding-bottom:20px">
       <img src="${APP_BASE_URL}/brand/caxton-logo.jpg" width="112" alt="Caxton Publications Inc." style="height:auto;object-fit:contain">
       <div style="text-align:right;font-size:12px;line-height:1.45">
-        <div style="font-size:24px;letter-spacing:.06em;color:#171717">STATEMENT</div>
+        <div style="font-size:24px;letter-spacing:.06em;color:#292a2d">STATEMENT</div>
         <strong>Caxton Publications, Inc.</strong><br>PO Box 81366<br>Austin, Texas 78708-1366<br>United States
       </div>
     </div>
@@ -623,13 +623,13 @@ export function renderPartnerStatementEmail(
       <div style="text-align:right">United States dollar (USD)<br>As of ${statementDate(statement.asOf)}</div>
     </div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:22px;font-size:13px">
-      <tr><td style="padding:7px 9px;border-bottom:1px solid #e5e7eb">Overdue</td><td style="padding:7px 9px;border-bottom:1px solid #e5e7eb;text-align:right">${statementMoney(statement.overdueCents)}</td></tr>
-      <tr><td style="padding:7px 9px;border-bottom:1px solid #e5e7eb">Not yet due</td><td style="padding:7px 9px;border-bottom:1px solid #e5e7eb;text-align:right">${statementMoney(statement.notYetDueCents)}</td></tr>
+      <tr><td style="padding:7px 9px;border-bottom:1px solid #d4d8dd">Overdue</td><td style="padding:7px 9px;border-bottom:1px solid #d4d8dd;text-align:right">${statementMoney(statement.overdueCents)}</td></tr>
+      <tr><td style="padding:7px 9px;border-bottom:1px solid #d4d8dd">Not yet due</td><td style="padding:7px 9px;border-bottom:1px solid #d4d8dd;text-align:right">${statementMoney(statement.notYetDueCents)}</td></tr>
       <tr style="background:#f5f5f5;font-weight:700"><td style="padding:10px 9px">Outstanding balance (USD)</td><td style="padding:10px 9px;text-align:right">${statementMoney(statement.outstandingCents)}</td></tr>
     </table>
     ${payAllHtml}
     <table style="width:100%;border-collapse:collapse;font-size:12px">
-      <thead><tr style="background:#171717;color:#fff">
+      <thead><tr style="background:#292a2d;color:#fff">
         <th style="padding:9px 8px;text-align:left">Invoice #</th><th style="padding:9px 8px;text-align:left">Invoice date</th><th style="padding:9px 8px;text-align:left">Due date</th><th style="padding:9px 8px;text-align:right">Total</th><th style="padding:9px 8px;text-align:right">Paid</th><th style="padding:9px 8px;text-align:right">Due</th><th style="padding:9px 8px"></th>
       </tr></thead>
       <tbody>${rowsHtml}</tbody>

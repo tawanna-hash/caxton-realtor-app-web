@@ -47,7 +47,7 @@ function WorkflowTabs({ active, onChange }: { active: WorkflowTab; onChange: (ta
           type="button"
           key={tab}
           onClick={() => onChange(tab)}
-          className={`border-b-2 px-4 py-2 text-sm font-medium ${active === tab ? 'border-[#301D5D] text-[#42277C]' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+          className={`border-b-2 px-4 py-2 text-sm font-medium ${active === tab ? 'border-[#005a8f] text-[#1c3f5e]' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
         >
           {label}
         </button>
@@ -70,17 +70,17 @@ function EmailPreview({
       <div className="p-6">
         <Image src="/brand/caxton-logo.jpg" alt="Caxton Publications" width={150} height={170} className="mx-auto h-28 w-auto object-contain" />
       </div>
-      <div className="bg-[#F6F3FB] px-6 py-4">
+      <div className="bg-[#f5f6f9] px-6 py-4">
         <h3 className="text-lg font-semibold text-gray-900">{heading}</h3>
         <p className="mt-1 text-sm text-gray-600">{customer}</p>
         <div className="mt-4 text-xs uppercase tracking-wider text-gray-500">Amount</div>
         <div className="text-2xl font-semibold text-gray-900">{formatCents(amount)}</div>
       </div>
       <div className="space-y-4 px-6 py-4">
-        <button type="button" className="rounded-full bg-[#301D5D] px-8 py-3 text-sm font-semibold text-white hover:bg-[#42277C]">{actionLabel}</button>
+        <button type="button" className="rounded-full bg-[#005a8f] px-8 py-3 text-sm font-semibold text-white hover:bg-[#1c3f5e]">{actionLabel}</button>
         <p className="border-t border-gray-200 pt-4 text-sm text-gray-600">{message}</p>
       </div>
-      <div className="bg-[#F6F3FB] px-6 py-4 text-xs leading-5 text-gray-600">
+      <div className="bg-[#f5f6f9] px-6 py-4 text-xs leading-5 text-gray-600">
         <strong>Caxton Publications Inc.</strong><br />Austin, Texas
       </div>
     </div>
@@ -174,12 +174,12 @@ export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved
       {activeTab === 'edit' && (
         <>
       <Section title="Payment link type">
-        <label className={`block cursor-pointer rounded-lg border p-4 ${linkType === 'one-time' ? 'border-[#7059A8] bg-[#F6F3FB]' : 'border-gray-200'}`}>
+        <label className={`block cursor-pointer rounded-lg border p-4 ${linkType === 'one-time' ? 'border-[#2f7aa7] bg-[#f5f6f9]' : 'border-gray-200'}`}>
           <input type="radio" className="mr-2" checked={linkType === 'one-time'} onChange={() => setLinkType('one-time')} />
           <span className="font-medium text-gray-900">One-time payment link</span>
           <p className="ml-6 mt-1 text-xs text-gray-500">Works once with one client and expires after payment.</p>
         </label>
-        <label className={`block cursor-pointer rounded-lg border p-4 ${linkType === 'multi-use' ? 'border-[#7059A8] bg-[#F6F3FB]' : 'border-gray-200'}`}>
+        <label className={`block cursor-pointer rounded-lg border p-4 ${linkType === 'multi-use' ? 'border-[#2f7aa7] bg-[#f5f6f9]' : 'border-gray-200'}`}>
           <input type="radio" className="mr-2" checked={linkType === 'multi-use'} onChange={() => setLinkType('multi-use')} />
           <span className="font-medium text-gray-900">Multi-use payment link</span>
           <p className="ml-6 mt-1 text-xs text-gray-500">Reusable links will be enabled with product-based checkout.</p>
@@ -203,7 +203,7 @@ export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved
         {createdUrl && (
           <div className="rounded-md border border-[#00E200]/30 bg-[#E0FBE0] p-3">
             <div className="text-xs font-medium text-[#005A00]">Payment link created</div>
-            <a href={createdUrl} target="_blank" rel="noreferrer" className="mt-1 block break-all text-sm text-[#42277C] underline">{createdUrl}</a>
+            <a href={createdUrl} target="_blank" rel="noreferrer" className="mt-1 block break-all text-sm text-[#1c3f5e] underline">{createdUrl}</a>
           </div>
         )}
       </Section>

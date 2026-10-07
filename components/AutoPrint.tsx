@@ -12,7 +12,7 @@
 
 import { useEffect, useState } from 'react';
 
-const BRAND_PURPLE = '#301D5D';
+const BRAND_PURPLE = '#005a8f';
 
 export default function AutoPrint() {
   const [show, setShow] = useState(false);

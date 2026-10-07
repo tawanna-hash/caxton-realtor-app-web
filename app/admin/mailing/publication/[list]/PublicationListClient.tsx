@@ -69,10 +69,10 @@ const PUB_LABEL: Record<Pub, string> = {
   'realtyline-dallas': 'RealtyLine (Dallas/Ft. Worth)',
 };
 const PUB_ACCENT: Record<Pub, string> = {
-  realtyline: '#301D5D',
-  newsline: '#42277C',
-  'realtyline-houston': '#301D5D',
-  'realtyline-dallas': '#301D5D',
+  realtyline: '#005a8f',
+  newsline: '#1c3f5e',
+  'realtyline-houston': '#005a8f',
+  'realtyline-dallas': '#005a8f',
 };
 
 // Detail columns (key = field in row.d).
@@ -292,9 +292,9 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
         <Kpi label="Valid" value={initialCounts.valid} accent="#005A00" />
         <Kpi label="Invalid" value={initialCounts.invalid} accent="#661102" />
         <Kpi label="Risky" value={initialCounts.risky} accent="#645600" />
-        <Kpi label="Unknown" value={initialCounts.unknown} accent="#301D5D" />
-        <Kpi label="Pending" value={initialCounts.pending} accent="#475569" />
-        <Kpi label="Unverified" value={initialCounts.unverified} accent="#6b7280" />
+        <Kpi label="Unknown" value={initialCounts.unknown} accent="#005a8f" />
+        <Kpi label="Pending" value={initialCounts.pending} accent="#51555b" />
+        <Kpi label="Unverified" value={initialCounts.unverified} accent="#51555b" />
       </div>
 
       {/* Filter bar */}
@@ -373,7 +373,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
       )}
 
       {toast && (
-        <div className="rounded-md border border-[#D9CFF0] bg-[#F6F3FB] px-4 py-3 text-sm text-[#1B1726]">{toast}</div>
+        <div className="rounded-md border border-[#bbc1c9] bg-[#f5f6f9] px-4 py-3 text-sm text-[#292a2d]">{toast}</div>
       )}
       {error && (
         <div className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">

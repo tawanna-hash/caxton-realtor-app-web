@@ -19,7 +19,7 @@ type InvoiceSender =
   | 'hello@newslinesa.com';
 
 const CONTROL =
-  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]';
+  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none focus:border-[#2f7aa7] focus:ring-1 focus:ring-[#2f7aa7]';
 
 export default function StatementEmailButton({
   advertiserId,
@@ -76,8 +76,8 @@ export default function StatementEmailButton({
         }}
         className={
           compact
-            ? 'font-medium text-[#42277C] hover:underline'
-            : 'inline-flex h-9 items-center justify-center gap-2 rounded bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]'
+            ? 'font-medium text-[#1c3f5e] hover:underline'
+            : 'inline-flex h-9 items-center justify-center gap-2 rounded bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1c3f5e]'
         }
       >
         {!compact && <Mail className="h-4 w-4" aria-hidden="true" />}
@@ -152,7 +152,7 @@ export default function StatementEmailButton({
                 <label className="block text-xs font-medium text-gray-600">
                   Message
                   <textarea
-                    className="mt-1 min-h-48 w-full rounded border border-gray-300 p-3 text-sm leading-6 outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]"
+                    className="mt-1 min-h-48 w-full rounded border border-gray-300 p-3 text-sm leading-6 outline-none focus:border-[#2f7aa7] focus:ring-2 focus:ring-[#daeeff]"
                     value={message}
                     onChange={(event) => setMessage(event.target.value)}
                   />
@@ -197,7 +197,7 @@ export default function StatementEmailButton({
                 <button
                   type="button"
                   disabled={busy || !to.trim() || !subject.trim()}
-                  className="inline-flex h-9 items-center justify-center rounded bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C] disabled:opacity-50"
+                  className="inline-flex h-9 items-center justify-center rounded bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1c3f5e] disabled:opacity-50"
                   onClick={send}
                 >
                   {busy ? 'Refreshing links and sending…' : 'Send email + PDF'}

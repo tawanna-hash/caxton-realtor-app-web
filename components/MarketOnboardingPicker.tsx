@@ -136,7 +136,7 @@ export default function MarketOnboardingPicker() {
                     height="18"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#301D5D"
+                    stroke="#005a8f"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"

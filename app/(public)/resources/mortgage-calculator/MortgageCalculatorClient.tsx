@@ -391,11 +391,11 @@ function Row({ label, value }: { label: string; value: number }) {
 function PitiBar({ piti }: { piti: PitiBreakdown }) {
   const total = piti.total || 1;
   const segs = [
-    { key: 'pi', label: 'P&I', value: piti.principalAndInterest, color: '#301D5D' },
-    { key: 'tax', label: 'Tax', value: piti.propertyTax, color: '#42277C' },
-    { key: 'ins', label: 'Ins', value: piti.insurance, color: '#7059A8' },
-    { key: 'pmi', label: 'PMI', value: piti.pmi, color: '#7059A8' },
-    { key: 'hoa', label: 'HOA', value: piti.hoa, color: '#9ca3af' },
+    { key: 'pi', label: 'P&I', value: piti.principalAndInterest, color: '#005a8f' },
+    { key: 'tax', label: 'Tax', value: piti.propertyTax, color: '#1c3f5e' },
+    { key: 'ins', label: 'Ins', value: piti.insurance, color: '#2f7aa7' },
+    { key: 'pmi', label: 'PMI', value: piti.pmi, color: '#2f7aa7' },
+    { key: 'hoa', label: 'HOA', value: piti.hoa, color: '#7b8089' },
   ].filter((s) => s.value > 0);
   return (
     <div className="mt-5">
@@ -689,7 +689,7 @@ function StatCard({
   return (
     <div
       className={`rounded-md border p-4 ${
-        accent ? 'border-[#7059A8]/40 bg-[#7059A8]/5' : 'border-gray-200 bg-white'
+        accent ? 'border-[#2f7aa7]/40 bg-[#2f7aa7]/5' : 'border-gray-200 bg-white'
       }`}
     >
       <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</p>

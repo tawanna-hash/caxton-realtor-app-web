@@ -426,7 +426,7 @@ export default function AdminAnalyticsPage() {
               value={publication}
               onChange={onPublicationChange}
               aria-busy={loading}
-              className={`h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8] ${loading ? 'opacity-60' : ''}`}
+              className={`h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 outline-none focus:border-[#2f7aa7] focus:ring-1 focus:ring-[#2f7aa7] ${loading ? 'opacity-60' : ''}`}
             >
               {PUBLICATION_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
@@ -438,7 +438,7 @@ export default function AdminAnalyticsPage() {
               value={timeframe}
               onChange={onTimeframeChange}
               aria-busy={loading}
-              className={`h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8] ${loading ? 'opacity-60' : ''}`}
+              className={`h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 outline-none focus:border-[#2f7aa7] focus:ring-1 focus:ring-[#2f7aa7] ${loading ? 'opacity-60' : ''}`}
             >
               {TIMEFRAME_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
@@ -527,8 +527,8 @@ export default function AdminAnalyticsPage() {
                 disabled={!item}
                 className={`min-w-0 border-r border-gray-200 bg-white px-4 py-2 text-left transition last:border-r-0 disabled:cursor-default disabled:opacity-60 ${
                   isActive
-                    ? 'bg-[#F6F3FB] ring-1 ring-inset ring-[#7059A8]'
-                    : 'hover:bg-[#F6F3FB]/40'
+                    ? 'bg-[#f5f6f9] ring-1 ring-inset ring-[#2f7aa7]'
+                    : 'hover:bg-[#f5f6f9]/40'
                 }`}
               >
                 {loading || !item ? (
@@ -543,7 +543,7 @@ export default function AdminAnalyticsPage() {
                     </div>
                     <svg viewBox="0 0 100 20" className="mt-1 h-5 w-full" preserveAspectRatio="none">
                       <path d={`${path} L100,20 L0,20 Z`} fill="rgba(234, 88, 12, 0.08)" />
-                      <path d={path} stroke="#301D5D" strokeWidth="1.75" fill="none" />
+                      <path d={path} stroke="#005a8f" strokeWidth="1.75" fill="none" />
                     </svg>
                   </>
                 )}
@@ -583,7 +583,7 @@ export default function AdminAnalyticsPage() {
                           <tr
                             key={row.url}
                             onClick={() => togglePage(row.url)}
-                            className={`cursor-pointer transition ${isActive ? 'bg-[#F6F3FB] text-[#1B1726]' : 'hover:bg-[#F6F3FB]/40'}`}
+                            className={`cursor-pointer transition ${isActive ? 'bg-[#f5f6f9] text-[#292a2d]' : 'hover:bg-[#f5f6f9]/40'}`}
                           >
                             <td className="py-3 pl-2 font-mono text-xs truncate max-w-[200px]" title={row.url}>{row.url}</td>
                             <td className="py-3 text-right font-mono">{row.views}</td>
@@ -630,7 +630,7 @@ export default function AdminAnalyticsPage() {
                           <tr
                             key={row.name}
                             onClick={() => toggleEvent(row.name)}
-                            className={`cursor-pointer transition ${isActive ? 'bg-[#F6F3FB] text-[#1B1726]' : 'hover:bg-[#F6F3FB]/40'}`}
+                            className={`cursor-pointer transition ${isActive ? 'bg-[#f5f6f9] text-[#292a2d]' : 'hover:bg-[#f5f6f9]/40'}`}
                           >
                             <td className="py-3 pl-2 font-mono text-xs">{row.name}</td>
                             <td className="py-3 text-right font-mono">{row.count}</td>
@@ -685,7 +685,7 @@ export default function AdminAnalyticsPage() {
                         <tr
                           key={row.source}
                           onClick={() => toggleSource(row.source)}
-                          className={`cursor-pointer transition ${isActive ? 'bg-[#F6F3FB] text-[#1B1726]' : 'hover:bg-[#F6F3FB]/40'}`}
+                          className={`cursor-pointer transition ${isActive ? 'bg-[#f5f6f9] text-[#292a2d]' : 'hover:bg-[#f5f6f9]/40'}`}
                         >
                           <td className="py-3 pl-2 font-mono text-xs">{row.source}</td>
                           <td className="py-3 text-right font-mono">{row.visits}</td>
@@ -716,7 +716,7 @@ export default function AdminAnalyticsPage() {
             <button
               type="button"
               onClick={resetFilters}
-              className="text-xs text-gray-500 hover:text-[#42277C] underline"
+              className="text-xs text-gray-500 hover:text-[#1c3f5e] underline"
             >
               Reset funnel filters
             </button>
@@ -732,7 +732,7 @@ export default function AdminAnalyticsPage() {
                   onClick={() => toggleConversion(evt)}
                   className={`rounded-full border px-3 py-2 text-xs font-mono transition ${
                     isOn
-                      ? 'border-[#B9ADD6] bg-[#F6F3FB] text-[#1B1726]'
+                      ? 'border-[#98bdd3] bg-[#f5f6f9] text-[#292a2d]'
                       : 'bg-white text-gray-500 border-gray-200'
                   }`}
                 >
@@ -748,7 +748,7 @@ export default function AdminAnalyticsPage() {
         <div className="rounded-md border border-gray-200 bg-white p-4 flex flex-col xl:sticky xl:top-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#301D5D]">Report Compiler</h2>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#005a8f]">Report Compiler</h2>
               <p className="text-[10px] text-gray-500 mt-0.5">
                 Live prompt with real data &mdash; paste into Claude for the client deliverable
               </p>
@@ -757,7 +757,7 @@ export default function AdminAnalyticsPage() {
               type="button"
               onClick={handleCopy}
               className={`font-medium px-3 py-2 rounded-md text-xs transition active:scale-95 text-white ${
-                copied ? 'bg-[#005A00]' : 'bg-[#301D5D] hover:bg-[#42277C]'
+                copied ? 'bg-[#005A00]' : 'bg-[#005a8f] hover:bg-[#1c3f5e]'
               }`}
             >
               {copied ? '✓ Copied' : 'Copy'}
@@ -766,7 +766,7 @@ export default function AdminAnalyticsPage() {
           <textarea
             readOnly
             value={promptText}
-            className="h-[560px] w-full resize-none rounded border border-gray-200 bg-gray-50 p-3 font-mono text-xs leading-relaxed text-gray-700 outline-none focus:border-[#7059A8] select-all"
+            className="h-[560px] w-full resize-none rounded border border-gray-200 bg-gray-50 p-3 font-mono text-xs leading-relaxed text-gray-700 outline-none focus:border-[#2f7aa7] select-all"
           />
           <p className="text-[10px] text-gray-400 mt-3">
             Every clickable element + filter on this page updates this prompt with real PostHog data.
@@ -809,7 +809,7 @@ function Card({ title, subtitle, hint, titleBadge, headerRight, children }: Card
         {headerRight ? (
           <div className="self-start sm:self-auto">{headerRight}</div>
         ) : hint ? (
-          <span className="self-start text-xs font-medium text-[#42277C] sm:self-auto">
+          <span className="self-start text-xs font-medium text-[#1c3f5e] sm:self-auto">
             {hint}
           </span>
         ) : null}
@@ -835,7 +835,7 @@ function PageRowCard({ row, isActive, onSelect }: { row: PageRow; isActive: bool
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full space-y-2 p-3 text-left transition ${isActive ? 'bg-[#F6F3FB] text-[#1B1726]' : 'hover:bg-[#F6F3FB]/40'}`}
+      className={`w-full space-y-2 p-3 text-left transition ${isActive ? 'bg-[#f5f6f9] text-[#292a2d]' : 'hover:bg-[#f5f6f9]/40'}`}
     >
       <div className="truncate font-mono text-xs" title={row.url}>{row.url}</div>
       <div className="flex items-center justify-between gap-3 text-xs text-gray-500">
@@ -851,7 +851,7 @@ function EventRowCard({ row, isActive, onSelect }: { row: EventRow; isActive: bo
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full space-y-2 p-3 text-left transition ${isActive ? 'bg-[#F6F3FB] text-[#1B1726]' : 'hover:bg-[#F6F3FB]/40'}`}
+      className={`w-full space-y-2 p-3 text-left transition ${isActive ? 'bg-[#f5f6f9] text-[#292a2d]' : 'hover:bg-[#f5f6f9]/40'}`}
     >
       <div className="truncate font-mono text-xs">{row.name}</div>
       <div className="flex items-center justify-between gap-3 text-xs text-gray-500">
@@ -867,7 +867,7 @@ function SourceRowCard({ row, isActive, onSelect }: { row: SourceRow; isActive: 
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full space-y-2 p-3 text-left transition ${isActive ? 'bg-[#F6F3FB] text-[#1B1726]' : 'hover:bg-[#F6F3FB]/40'}`}
+      className={`w-full space-y-2 p-3 text-left transition ${isActive ? 'bg-[#f5f6f9] text-[#292a2d]' : 'hover:bg-[#f5f6f9]/40'}`}
     >
       <div className="truncate font-mono text-xs">{row.source}</div>
       <div className="grid grid-cols-3 gap-2 text-xs text-gray-500">

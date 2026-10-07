@@ -274,13 +274,13 @@ function KpiTile({ label, value, sub, href, accent = 'gray' }: KpiProps) {
     accent === 'green'
       ? 'ring-[#00E200]/30'
       : accent === 'orange'
-        ? 'ring-[#D9CFF0]'
+        ? 'ring-[#bbc1c9]'
         : 'ring-gray-200';
   const accentValueColor =
     accent === 'green'
       ? 'text-[#005A00]'
       : accent === 'orange'
-        ? 'text-[#42277C]'
+        ? 'text-[#1c3f5e]'
         : 'text-gray-900';
   return (
     <Link
@@ -336,7 +336,7 @@ function SectionCard({
           {title}
         </h3>
         {badge && (
-          <span className="inline-flex rounded-full bg-[#EFEAF8] text-[#301D5D] text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 ring-1 ring-[#D9CFF0]">
+          <span className="inline-flex rounded-full bg-[#daeeff] text-[#005a8f] text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 ring-1 ring-[#bbc1c9]">
             {badge}
           </span>
         )}
@@ -351,7 +351,7 @@ function SectionCard({
       <div
         className={
           'text-sm font-medium mt-3 ' +
-          (isNavy ? 'text-white' : 'text-[#42277C]')
+          (isNavy ? 'text-white' : 'text-[#1c3f5e]')
         }
       >
         {cta} {'\u2192'}

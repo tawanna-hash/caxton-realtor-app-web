@@ -1471,7 +1471,7 @@ function SidebarRow({
   const isLogoMatch = isPdfImport && (hotspot.label ?? '').startsWith('Logo · ');
   return (
     <div
-      className={`px-3 py-2 text-xs flex items-start gap-2 cursor-pointer hover:bg-gray-50 ${selected ? 'bg-[#F6F3FB]' : ''}`}
+      className={`px-3 py-2 text-xs flex items-start gap-2 cursor-pointer hover:bg-gray-50 ${selected ? 'bg-[#f5f6f9]' : ''}`}
       onClick={onSelect}
     >
       {/* Numbered chip — matches the pin on the canvas box. */}

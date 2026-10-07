@@ -298,7 +298,7 @@ export default function AvailabilityCalendar() {
                 onClick={() => setUrl({ channel: c === 'all' ? null : c })}
                 className={`h-9 rounded px-3 text-sm font-medium transition ${
                   active
-                    ? 'bg-[#F6F3FB] text-[#301D5D] ring-1 ring-[#D9CFF0]'
+                    ? 'bg-[#f5f6f9] text-[#005a8f] ring-1 ring-[#bbc1c9]'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }`}
                 aria-current={active ? 'page' : undefined}
@@ -397,10 +397,10 @@ export default function AvailabilityCalendar() {
               <div
                 key={iso}
                 className={`min-h-[5.5rem] border-b border-r border-gray-100 px-2 py-1 ${
-                  isToday ? 'bg-[#F6F3FB]/60' : 'bg-white'
+                  isToday ? 'bg-[#f5f6f9]/60' : 'bg-white'
                 }`}
               >
-                <div className={`text-xs font-medium ${isToday ? 'text-[#42277C]' : 'text-gray-700'}`}>
+                <div className={`text-xs font-medium ${isToday ? 'text-[#1c3f5e]' : 'text-gray-700'}`}>
                   {day}
                 </div>
                 <div className="mt-1 flex flex-col gap-0.5">
@@ -470,7 +470,7 @@ export default function AvailabilityCalendar() {
                   </div>
                   <Link
                     href={detailHref(b)}
-                    className="shrink-0 whitespace-nowrap text-xs font-medium text-[#42277C] hover:underline"
+                    className="shrink-0 whitespace-nowrap text-xs font-medium text-[#1c3f5e] hover:underline"
                   >
                     Open →
                   </Link>
@@ -502,7 +502,7 @@ export default function AvailabilityCalendar() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {monthBookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-[#F6F3FB]/40">
+                  <tr key={b.id} className="hover:bg-[#f5f6f9]/40">
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex items-center rounded border px-2 py-0.5 text-xs ${CHANNEL_BADGE_CLASS[b.channel]}`}
@@ -523,7 +523,7 @@ export default function AvailabilityCalendar() {
                     <td className="px-3 py-2 text-right">
                       <Link
                         href={detailHref(b)}
-                        className="text-xs font-medium text-[#42277C] hover:underline"
+                        className="text-xs font-medium text-[#1c3f5e] hover:underline"
                       >
                         Open →
                       </Link>

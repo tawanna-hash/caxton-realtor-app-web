@@ -274,7 +274,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
             </Link>
             <Link
               href={`/admin/inventory/new?kind=${kind}`}
-              className="shrink-0 bg-[#301D5D] text-white px-4 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors whitespace-nowrap"
+              className="shrink-0 bg-[#005a8f] text-white px-4 py-2 text-sm font-medium hover:bg-[#1c3f5e] rounded-md transition-colors whitespace-nowrap"
             >
               {copy.createLabel}
             </Link>
@@ -304,7 +304,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
                 className={
                   'px-4 py-2 text-sm font-medium rounded-md transition-colors ' +
                   (active
-                    ? 'bg-[#301D5D] text-white'
+                    ? 'bg-[#005a8f] text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
                 }
               >

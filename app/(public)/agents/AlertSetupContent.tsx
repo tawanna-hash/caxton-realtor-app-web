@@ -11,7 +11,7 @@ type Section = {
   note?: ReactNode;
 };
 
-const iconClass = 'h-5 w-5 shrink-0 text-[#7059A8]';
+const iconClass = 'h-5 w-5 shrink-0 text-[#2f7aa7]';
 
 const sections: Section[] = [
   {
@@ -20,7 +20,7 @@ const sections: Section[] = [
     title: 'Turn On Alerts In Closing Time',
     icon: <Bell className={iconClass} aria-hidden="true" />,
     steps: [
-      <>Sign in and open <Link href="/agents/closing-time" className="font-semibold text-[#301D5D] underline underline-offset-2">Closing Time</Link>.</>,
+      <>Sign in and open <Link href="/agents/closing-time" className="font-semibold text-[#005a8f] underline underline-offset-2">Closing Time</Link>.</>,
       <>In <strong>Deadline Alerts</strong>, check <strong>Send Deadline Alerts By Email</strong> and <strong>Send Browser Push Alerts</strong>.</>,
       <>Choose when you want to be alerted: <strong>7 Days Before</strong>, <strong>3 Days Before</strong>, <strong>1 Day Before</strong>, and/or <strong>Due Today</strong>.</>,
       <>Tap <strong>Connect This Device</strong> on every phone and computer you use, and tap <strong>Allow</strong> when asked. Each device has to be connected separately.</>,
@@ -120,14 +120,14 @@ export default function AlertSetupContent() {
           <a
             key={section.id}
             href={`#${section.id}`}
-            className="inline-flex min-h-[36px] items-center rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#F4F3F8]"
+            className="inline-flex min-h-[36px] items-center rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#f5f6f9]"
           >
             {section.title}
           </a>
         ))}
         <a
           href="#troubleshooting"
-          className="inline-flex min-h-[36px] items-center rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#F4F3F8]"
+          className="inline-flex min-h-[36px] items-center rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#f5f6f9]"
         >
           Troubleshooting
         </a>
@@ -139,14 +139,14 @@ export default function AlertSetupContent() {
             <div className="flex items-start gap-3">
               {section.icon}
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">{section.eyebrow}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2f7aa7]">{section.eyebrow}</p>
                 <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">{section.title}</h2>
               </div>
             </div>
             <ol className="mt-4 space-y-3">
               {section.steps.map((step, index) => (
                 <li key={index} className="flex gap-3 text-sm leading-6 text-slate-700">
-                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#F3EFFB] text-xs font-bold text-[#301D5D]">
+                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#F3EFFB] text-xs font-bold text-[#005a8f]">
                     {index + 1}
                   </span>
                   <span>{step}</span>
@@ -163,14 +163,14 @@ export default function AlertSetupContent() {
           <div className="flex items-start gap-3">
             <Wrench className={iconClass} aria-hidden="true" />
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7059A8]">Still Not Getting Alerts?</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2f7aa7]">Still Not Getting Alerts?</p>
               <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-slate-950">Troubleshooting</h2>
             </div>
           </div>
           <ul className="mt-4 space-y-3">
             {troubleshooting.map((item, index) => (
               <li key={index} className="flex gap-3 text-sm leading-6 text-slate-700">
-                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#7059A8]" aria-hidden="true" />
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#2f7aa7]" aria-hidden="true" />
                 <span>{item}</span>
               </li>
             ))}

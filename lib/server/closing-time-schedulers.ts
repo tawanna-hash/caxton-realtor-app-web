@@ -387,14 +387,14 @@ export async function createBooking(id: string, input: { start: number; length: 
   const es = cfg.language === 'es';
   await sendEmail({ to: input.email, cc: guests.length ? guests : undefined, replyTo: agent.email || undefined, subject: `${es ? 'Confirmado' : 'Confirmed'}: ${cfg.name} - ${when}`,
     attachments: [{ filename: 'invite.ics', content: ics, contentType: 'text/calendar' }],
-    html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p>${es ? 'Hola' : 'Hello'} ${esc((sub[0]?.first_name?.trim() || input.name.split(/\s+/)[0]))},</p>`
+    html: `<div style="font-family:Inter,Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:560px"><p>${es ? 'Hola' : 'Hello'} ${esc((sub[0]?.first_name?.trim() || input.name.split(/\s+/)[0]))},</p>`
       + `<p>${es ? 'Su cita está confirmada' : 'You are booked'}: <strong>${esc(cfg.name)}</strong> ${es ? 'con' : 'with'} ${esc(cfg.yourName || agent.name)}.</p><p><strong>${esc(when)}</strong> · ${len} min</p><p>${es ? 'Reservado por' : 'Booked by'} ${esc(who)}</p>`
       + (meetingUrl ? `<p><a href="${esc(meetingUrl)}">${esc(meetingUrl)}</a></p>` : property ? `<p>${esc(property)}</p>` : '')
-      + `<p style="color:#7A7787;font-size:13px">${es ? 'El archivo adjunto agrega la cita a su calendario.' : 'The attached file adds this to your calendar.'} <a href="${manage}">${es ? 'Cancelar esta cita' : 'Cancel this booking'}</a></p></div>` }).catch(() => undefined);
+      + `<p style="color:#51555b;font-size:13px">${es ? 'El archivo adjunto agrega la cita a su calendario.' : 'The attached file adds this to your calendar.'} <a href="${manage}">${es ? 'Cancelar esta cita' : 'Cancel this booking'}</a></p></div>` }).catch(() => undefined);
   if (validEmail(agent.email)) {
     await sendEmail({ to: agent.email, replyTo: input.email, subject: `New booking: Meet With ${who}`,
       attachments: cfg.bookingCalendar === 'closing_time' || !cfg.bookingCalendar ? [{ filename: 'booking.ics', content: ics, contentType: 'text/calendar' }] : undefined,
-      html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p><strong>${esc(who)}</strong> (${esc(input.email)}) booked <strong>${esc(cfg.name)}</strong>${property ? ` for ${esc(property)}` : ''}.</p><p><strong>${esc(when)}</strong> · ${len} min</p>${answers.map((a) => `<p style="margin:2px 0"><strong>${esc(a.label)}:</strong> ${esc(a.value)}</p>`).join('')}${meetingUrl ? `<p>${esc(meetingUrl)}</p>` : ''}</div>` }).catch(() => undefined);
+      html: `<div style="font-family:Inter,Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:560px"><p><strong>${esc(who)}</strong> (${esc(input.email)}) booked <strong>${esc(cfg.name)}</strong>${property ? ` for ${esc(property)}` : ''}.</p><p><strong>${esc(when)}</strong> · ${len} min</p>${answers.map((a) => `<p style="margin:2px 0"><strong>${esc(a.label)}:</strong> ${esc(a.value)}</p>`).join('')}${meetingUrl ? `<p>${esc(meetingUrl)}</p>` : ''}</div>` }).catch(() => undefined);
   }
   await logDealEvent(s.realtor_id, s.deal_id, 'booking', `${input.name} <${input.email}> booked ${cfg.name} for ${when}`);
   return { ok: true, token, redirectUrl: /^https:\/\//.test(cfg.redirectUrl) ? cfg.redirectUrl : '', meetingUrl };
@@ -437,7 +437,7 @@ async function cancelRow(b: BookingFull, by: 'invitee' | 'agent') {
   const agent = await agentOf(b.realtor_id);
   const to = by === 'invitee' ? agent.email : b.email;
   if (validEmail(to)) await sendEmail({ to, replyTo: by === 'invitee' ? b.email : agent.email || undefined, subject: `Cancelled: ${cfg.name} - ${when}`,
-    html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p>${by === 'invitee' ? `${esc(b.name)} cancelled` : `${esc(cfg.yourName || agent.name)} cancelled`} <strong>${esc(cfg.name)}</strong> on ${esc(when)}.</p></div>` }).catch(() => undefined);
+    html: `<div style="font-family:Inter,Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:560px"><p>${by === 'invitee' ? `${esc(b.name)} cancelled` : `${esc(cfg.yourName || agent.name)} cancelled`} <strong>${esc(cfg.name)}</strong> on ${esc(when)}.</p></div>` }).catch(() => undefined);
   await logDealEvent(b.realtor_id, b.deal_id, 'booking', `Booking cancelled by ${by === 'invitee' ? b.name : 'agent'}: ${cfg.name} on ${when}`);
 }
 
@@ -487,14 +487,14 @@ export async function runSchedulerWorkflows(now = Date.now()): Promise<{ reminde
       sent.add(i);
       await query(`UPDATE closing_time_scheduler_bookings SET reminders_sent=$2::jsonb WHERE id=$1`, [b.id, JSON.stringify([...sent])]);
       const ok = await sendEmail({ to: b.email, replyTo: agent.email || undefined, subject: fillTemplate(r.subject || 'Reminder: {subject} with {my_name}', vars),
-        html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p>${esc(fillTemplate(r.message || 'This is a reminder of your upcoming meeting.', vars)).replace(/\n/g, '<br>')}</p><p><strong>${esc(cfg.name)}</strong> · ${esc(when)}</p>${b.meeting_url ? `<p><a href="${esc(b.meeting_url)}">${esc(b.meeting_url)}</a></p>` : ''}<p style="color:#7A7787;font-size:13px"><a href="${base}/book/manage/${b.token}">Cancel this booking</a></p></div>` }).catch(() => ({ ok: false }));
+        html: `<div style="font-family:Inter,Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:560px"><p>${esc(fillTemplate(r.message || 'This is a reminder of your upcoming meeting.', vars)).replace(/\n/g, '<br>')}</p><p><strong>${esc(cfg.name)}</strong> · ${esc(when)}</p>${b.meeting_url ? `<p><a href="${esc(b.meeting_url)}">${esc(b.meeting_url)}</a></p>` : ''}<p style="color:#51555b;font-size:13px"><a href="${base}/book/manage/${b.token}">Cancel this booking</a></p></div>` }).catch(() => ({ ok: false }));
       if ((ok as { ok?: boolean }).ok !== false) { out.reminders += 1; await logDealEvent(b.realtor_id, b.deal_id, 'email', `Booking reminder emailed to ${b.name} <${b.email}>: ${cfg.name} on ${when}`); }
     }
     const f = cfg.followUp;
     if (f && !b.followup_sent && now >= end + offsetMs(f) && now < end + offsetMs(f) + 86_400_000) {
       await query(`UPDATE closing_time_scheduler_bookings SET followup_sent=TRUE WHERE id=$1`, [b.id]);
       const ok = await sendEmail({ to: b.email, replyTo: agent.email || undefined, subject: fillTemplate(f.subject || 'Thank you for meeting with {my_name}', vars),
-        html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p>${esc(fillTemplate(f.message || 'Thank you for your time. Reply to this email with any questions.', vars)).replace(/\n/g, '<br>')}</p></div>` }).catch(() => ({ ok: false }));
+        html: `<div style="font-family:Inter,Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:560px"><p>${esc(fillTemplate(f.message || 'Thank you for your time. Reply to this email with any questions.', vars)).replace(/\n/g, '<br>')}</p></div>` }).catch(() => ({ ok: false }));
       if ((ok as { ok?: boolean }).ok !== false) { out.followUps += 1; await logDealEvent(b.realtor_id, b.deal_id, 'email', `Booking follow-up emailed to ${b.name} <${b.email}>: ${cfg.name}`); }
     }
   }

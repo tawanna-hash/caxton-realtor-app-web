@@ -492,7 +492,7 @@ function AdvertiserPicker({
           <button
             type="button"
             onClick={() => setShowNewForm(true)}
-            className="text-xs text-[#301D5D] hover:underline whitespace-nowrap"
+            className="text-xs text-[#005a8f] hover:underline whitespace-nowrap"
           >
             + New partner…
           </button>
@@ -925,7 +925,7 @@ function BlobUpload({
             href={currentUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-[#301D5D] hover:underline truncate max-w-xs"
+            className="text-xs text-[#005a8f] hover:underline truncate max-w-xs"
           >
             {currentUrl.split('/').pop()}
           </a>

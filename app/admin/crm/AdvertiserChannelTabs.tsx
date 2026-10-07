@@ -81,8 +81,8 @@ const STATUS_BADGE: Record<string, string> = {
   sent: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
   draft: 'bg-gray-100 text-gray-700 border-gray-200',
   new: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30',
-  replied: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
-  quoted: 'bg-[#F6F3FB] text-[#42277C] border-[#D9CFF0]',
+  replied: 'bg-[#f5f6f9] text-[#1c3f5e] border-[#bbc1c9]',
+  quoted: 'bg-[#f5f6f9] text-[#1c3f5e] border-[#bbc1c9]',
   won: 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30',
   lost: 'bg-gray-100 text-gray-600 border-gray-200',
   expired: 'bg-gray-100 text-gray-600 border-gray-200',
@@ -478,7 +478,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                                     href={t.file_url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-[#301D5D] hover:underline"
+                                    className="text-[#005a8f] hover:underline"
                                   >
                                     View
                                   </a>
@@ -644,7 +644,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                       href={`/api/admin/insertion-orders/${io.id}/pdf`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs text-[#301D5D] hover:underline"
+                      className="text-xs text-[#005a8f] hover:underline"
                     >
                       PDF
                     </a>
@@ -760,7 +760,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                         href={t.file_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-xs text-[#301D5D] hover:underline"
+                        className="text-xs text-[#005a8f] hover:underline"
                       >
                         View
                       </a>

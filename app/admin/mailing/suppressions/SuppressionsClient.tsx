@@ -30,7 +30,7 @@ type ApiResponse = {
 };
 
 const DEFAULT_PAGE_SIZE = 100;
-const ACCENT = '#301D5D';
+const ACCENT = '#005a8f';
 
 const REASON_LABEL: Record<string, string> = {
   admin_delete: 'Admin delete',
@@ -43,7 +43,7 @@ const REASON_COLOR: Record<string, string> = {
   admin_delete: '#661102',
   admin_bulk_delete: '#661102',
   holding_reject: '#645600',
-  manual: '#475569',
+  manual: '#51555b',
 };
 
 export default function SuppressionsClient() {
@@ -259,7 +259,7 @@ export default function SuppressionsClient() {
         )}
         {!loading && rows.map((r) => {
           const reasonLabel = REASON_LABEL[r.reason] ?? r.reason;
-          const reasonColor = REASON_COLOR[r.reason] ?? '#475569';
+          const reasonColor = REASON_COLOR[r.reason] ?? '#51555b';
           let when = '—';
           try {
             when = formatDate.format(new Date(r.suppressed_at));
@@ -332,7 +332,7 @@ export default function SuppressionsClient() {
             {!loading &&
               rows.map((r) => {
                 const reasonLabel = REASON_LABEL[r.reason] ?? r.reason;
-                const reasonColor = REASON_COLOR[r.reason] ?? '#475569';
+                const reasonColor = REASON_COLOR[r.reason] ?? '#51555b';
                 let when = '—';
                 try {
                   when = formatDate.format(new Date(r.suppressed_at));

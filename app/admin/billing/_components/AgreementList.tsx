@@ -102,7 +102,7 @@ function AgreementRowLayout({ row: r, onOpen, onEmail }: {
   return (
     <>
       {/* Desktop */}
-      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-3 text-xs items-center hover:bg-[#F6F3FB]/40">
+      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-3 text-xs items-center hover:bg-[#f5f6f9]/40">
         <div className="col-span-3">{advertiserCell}</div>
         <button onClick={onOpen} className="col-span-2 text-left text-sm text-gray-700">
           <div>{typeLabel}</div>
@@ -121,7 +121,7 @@ function AgreementRowLayout({ row: r, onOpen, onEmail }: {
       </div>
 
       {/* Mobile card */}
-      <div className="sm:hidden px-4 py-3 space-y-2 hover:bg-[#F6F3FB]/40">
+      <div className="sm:hidden px-4 py-3 space-y-2 hover:bg-[#f5f6f9]/40">
         {advertiserCell}
         <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
           <dt className="text-gray-500 uppercase tracking-wider">Type</dt>

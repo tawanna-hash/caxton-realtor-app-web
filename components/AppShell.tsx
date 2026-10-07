@@ -46,9 +46,9 @@ import type { Pub } from '@/lib/publication';
 type User = { id?: string; email?: string } | null;
 
 const PUB_COLORS: Record<string, string> = {
-  realtyline: '#301D5D',
-  newsline: '#301D5D',
-  realtynewsnow: '#301D5D',
+  realtyline: '#005a8f',
+  newsline: '#005a8f',
+  realtynewsnow: '#005a8f',
 };
 
 // Top-bar links shown to public (non-admin) visitors on desktop (lg+).

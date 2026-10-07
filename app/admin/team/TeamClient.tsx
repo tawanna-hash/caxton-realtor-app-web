@@ -40,8 +40,8 @@ function StatusPill({ active }: { active: boolean }) {
     <span
       className="inline-block text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded"
       style={{
-        backgroundColor: active ? '#E0FBE0' : '#f3f4f6',
-        color: active ? '#005A00' : '#6b7280',
+        backgroundColor: active ? '#E0FBE0' : '#f5f6f9',
+        color: active ? '#005A00' : '#51555b',
       }}
     >
       {active ? 'Active' : 'Deactivated'}
@@ -201,7 +201,7 @@ export default function TeamClient({ initialAdmins }: Props) {
         <button
           type="button"
           onClick={() => { setAddOpen((v) => !v); setFormError(null); }}
-          className="inline-flex h-9 items-center justify-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#42277C]"
+          className="inline-flex h-9 items-center justify-center rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1c3f5e]"
         >
           {addOpen ? 'Cancel' : 'Add admin'}
         </button>
@@ -247,7 +247,7 @@ export default function TeamClient({ initialAdmins }: Props) {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex h-9 items-center justify-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#42277C] disabled:opacity-60"
+              className="inline-flex h-9 items-center justify-center rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1c3f5e] disabled:opacity-60"
             >
               {submitting ? 'Sending invite…' : 'Send invite'}
             </button>
@@ -283,7 +283,7 @@ export default function TeamClient({ initialAdmins }: Props) {
                         <td className="px-4 py-3">
                           <div className="font-medium text-gray-900">{a.fullName}</div>
                           {a.isOwner && (
-                            <div className="text-xs text-[#42277C] font-medium">Owner</div>
+                            <div className="text-xs text-[#1c3f5e] font-medium">Owner</div>
                           )}
                         </td>
                         <td className="px-4 py-3 text-gray-700">{a.email}</td>
@@ -358,7 +358,7 @@ export default function TeamClient({ initialAdmins }: Props) {
                                   type="button"
                                   disabled={editSubmitting}
                                   onClick={() => saveEdit(a)}
-                                  className="inline-flex h-9 items-center justify-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#42277C] disabled:opacity-60"
+                                  className="inline-flex h-9 items-center justify-center rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1c3f5e] disabled:opacity-60"
                                 >
                                   {editSubmitting ? 'Saving…' : 'Save'}
                                 </button>

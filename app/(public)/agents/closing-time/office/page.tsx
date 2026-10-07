@@ -19,7 +19,7 @@ export default async function OfficeDashboardPage() {
   const agents = await officeOverview(brokerage.id, today);
   const totals = agents.reduce((a, x) => ({ deals: a.deals + x.activeDeals, urgent: a.urgent + x.urgent, watch: a.watch + x.watch }), { deals: 0, urgent: 0, watch: 0 });
   return (
-    <main id="agent-desk" className="mx-auto my-6 max-w-5xl rounded-2xl border border-[#E6E5EC] bg-white px-4 py-8 sm:px-8 sm:py-8">
+    <main id="agent-desk" className="mx-auto my-6 max-w-5xl rounded-2xl border border-[#d4d8dd] bg-white px-4 py-8 sm:px-8 sm:py-8">
       <p className="ds-eyebrow">Office dashboard</p>
       <h1 className="ds-title">{brokerage.name}</h1>
       <div className="mt-4 grid grid-cols-3 gap-3 text-center">
@@ -28,12 +28,12 @@ export default async function OfficeDashboardPage() {
         <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-slate-950">{totals.watch}</p><p className="text-xs text-slate-600">To watch</p></div>
       </div>
       <div className="mt-4 flex gap-3 text-sm font-bold">
-        <a className="underline text-[#301D5D]" href="/api/closing-time/office/export">Export office deals (CSV)</a>
-        <Link className="underline text-[#301D5D]" href="/agents/closing-time">Back to Closing Time</Link>
+        <a className="underline text-[#005a8f]" href="/api/closing-time/office/export">Export office deals (CSV)</a>
+        <Link className="underline text-[#005a8f]" href="/agents/closing-time">Back to Closing Time</Link>
       </div>
       <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="bg-[#FBFBFD]">
+          <thead className="bg-[#f5f6f9]">
             <tr><th className="p-3">Agent</th><th className="p-3">Deals</th><th className="p-3">Urgent</th><th className="p-3">Watch</th><th className="p-3">Drafts</th><th className="p-3">Next date</th></tr>
           </thead>
           <tbody>

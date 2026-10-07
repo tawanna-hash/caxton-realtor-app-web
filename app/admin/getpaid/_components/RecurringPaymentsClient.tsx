@@ -25,9 +25,9 @@ type StatusFilter = 'all' | RecurringScheduleStatus;
 type FrequencyFilter = 'all' | RecurringFrequency;
 
 const CONTROL =
-  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]';
+  'h-9 rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#2f7aa7] focus:ring-1 focus:ring-[#2f7aa7]';
 const ORANGE_BUTTON =
-  'inline-flex h-9 items-center justify-center gap-2 rounded bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#42277C] focus:outline-none focus:ring-2 focus:ring-[#7059A8] focus:ring-offset-2';
+  'inline-flex h-9 items-center justify-center gap-2 rounded bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1c3f5e] focus:outline-none focus:ring-2 focus:ring-[#2f7aa7] focus:ring-offset-2';
 
 // Wrapping Date.now() in a named module-level function keeps the actual
 // call site outside the component body, satisfying the React Compiler's
@@ -106,7 +106,7 @@ function StatusCell({ status }: { status: RecurringScheduleStatus }) {
   if (status === 'paused') {
     return (
       <span className="inline-flex items-center gap-2 whitespace-nowrap text-gray-700">
-        <Clock3 className="h-4 w-4 text-[#301D5D]" aria-hidden="true" />
+        <Clock3 className="h-4 w-4 text-[#005a8f]" aria-hidden="true" />
         Paused
       </span>
     );
@@ -157,9 +157,9 @@ function RecurringPaymentCard({
       <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs">
         <StatusCell status={schedule.status} />
         <div className="flex items-center gap-4">
-          <button type="button" className="font-medium text-[#42277C] hover:underline" onClick={onEdit}>View/Edit</button>
+          <button type="button" className="font-medium text-[#1c3f5e] hover:underline" onClick={onEdit}>View/Edit</button>
           {schedule.status === 'active' ? (
-            <button type="button" className="font-medium text-[#42277C] hover:underline" onClick={onPause}>Pause</button>
+            <button type="button" className="font-medium text-[#1c3f5e] hover:underline" onClick={onPause}>Pause</button>
           ) : (
             <button type="button" className="font-medium text-[#661102] hover:underline" onClick={onDelete}>Permanent delete</button>
           )}
@@ -323,7 +323,7 @@ export function RecurringPaymentsClient({
             }}
           />
           <div
-            className="bg-[#7059A8]"
+            className="bg-[#2f7aa7]"
             style={{
               width: `${schedules.length ? (summary.pausedCount / schedules.length) * 100 : 0}%`,
             }}
@@ -422,7 +422,7 @@ export function RecurringPaymentsClient({
             </thead>
             <tbody className="divide-y divide-gray-200">
               {pageRows.map((schedule) => (
-                <tr key={schedule.id} className="hover:bg-[#F6F3FB]/40">
+                <tr key={schedule.id} className="hover:bg-[#f5f6f9]/40">
                   <td className="truncate px-3 py-3 font-medium text-gray-900" title={schedule.name}>
                     {schedule.name}
                   </td>
@@ -452,13 +452,13 @@ export function RecurringPaymentsClient({
                   <td className="whitespace-nowrap px-3 py-3 text-right">
                     <button
                       type="button"
-                      className="font-medium text-[#42277C] hover:underline"
+                      className="font-medium text-[#1c3f5e] hover:underline"
                       onClick={() => setEditingId(schedule.id)}
                     >
                       View/Edit
                     </button>
                     {schedule.status === 'active' ? (
-                      <button type="button" className="font-medium text-[#42277C] hover:underline" onClick={() => void pauseSchedule(schedule)}>Pause</button>
+                      <button type="button" className="font-medium text-[#1c3f5e] hover:underline" onClick={() => void pauseSchedule(schedule)}>Pause</button>
                     ) : (
                       <button type="button" className="font-medium text-[#661102] hover:underline" onClick={() => void permanentlyDelete(schedule)}>Permanent delete</button>
                     )}
@@ -480,7 +480,7 @@ export function RecurringPaymentsClient({
             {!schedules.length && (
               <button
                 type="button"
-                className="mt-4 text-sm font-medium text-[#42277C] hover:underline"
+                className="mt-4 text-sm font-medium text-[#1c3f5e] hover:underline"
                 onClick={() => setCreating(true)}
               >
                 Create recurring invoice

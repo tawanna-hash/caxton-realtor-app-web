@@ -113,9 +113,9 @@ function AdsPageInner() {
           </div>
         )}
         {error && (
-          <div role="alert" className="mb-3 flex flex-wrap items-center gap-3 rounded border border-[#D9CFF0] bg-[#F6F3FB] px-4 py-3 text-sm text-[#1B1726]">
+          <div role="alert" className="mb-3 flex flex-wrap items-center gap-3 rounded border border-[#bbc1c9] bg-[#f5f6f9] px-4 py-3 text-sm text-[#292a2d]">
             <span>{error}</span>
-            <button type="button" onClick={refetch} className="font-semibold text-[#301D5D] hover:underline">
+            <button type="button" onClick={refetch} className="font-semibold text-[#005a8f] hover:underline">
               Try again
             </button>
           </div>

@@ -69,16 +69,16 @@ export default function TimeSeriesChart({ data }: Props) {
     <div className="bg-white border border-gray-200 rounded-md p-4">
       <ResponsiveContainer width="100%" height={320}>
         <LineChart data={pivoted} margin={{ top: 12, right: 24, left: 8, bottom: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#d4d8dd" vertical={false} />
           <XAxis
             dataKey="day"
             tickFormatter={formatDay}
-            stroke="#6b7280"
+            stroke="#51555b"
             fontSize={12}
             tickMargin={8}
           />
           <YAxis
-            stroke="#6b7280"
+            stroke="#51555b"
             fontSize={12}
             tickMargin={8}
             allowDecimals={false}
@@ -86,7 +86,7 @@ export default function TimeSeriesChart({ data }: Props) {
           <Tooltip
             contentStyle={{
               backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              border: '1px solid #d4d8dd',
               borderRadius: '6px',
               fontSize: '13px',
             }}
@@ -106,7 +106,7 @@ export default function TimeSeriesChart({ data }: Props) {
               key={ev}
               type="monotone"
               dataKey={ev}
-              stroke={EVENT_COLORS[ev] ?? '#301D5D'}
+              stroke={EVENT_COLORS[ev] ?? '#005a8f'}
               strokeWidth={2}
               dot={{ r: 3 }}
               activeDot={{ r: 5 }}

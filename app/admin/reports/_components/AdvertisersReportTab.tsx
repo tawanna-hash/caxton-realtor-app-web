@@ -218,7 +218,7 @@ export default function AdvertisersReportTab() {
                     className={[
                       'px-3 text-sm border-r border-gray-300 last:border-r-0 transition-colors',
                       days === opt.value
-                        ? 'bg-[#301D5D] text-white'
+                        ? 'bg-[#005a8f] text-white'
                         : 'bg-white text-gray-700 hover:bg-gray-50',
                     ].join(' ')}
                   >
@@ -232,7 +232,7 @@ export default function AdvertisersReportTab() {
                 type="button"
                 onClick={selectAllSendable}
                 disabled={loading || sendable.length === 0}
-                className="text-xs text-[#42277C] hover:underline disabled:text-gray-400 disabled:no-underline"
+                className="text-xs text-[#1c3f5e] hover:underline disabled:text-gray-400 disabled:no-underline"
               >
                 Select all sendable
               </button>
@@ -270,7 +270,7 @@ export default function AdvertisersReportTab() {
                       onClick={() => handleRowClick(a)}
                       className={[
                         'flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors',
-                        isActive ? 'bg-[#F6F3FB]' : 'hover:bg-[#F6F3FB]/40',
+                        isActive ? 'bg-[#f5f6f9]' : 'hover:bg-[#f5f6f9]/40',
                       ].join(' ')}
                     >
                       <input
@@ -293,7 +293,7 @@ export default function AdvertisersReportTab() {
                         </p>
                       </div>
                       {isActive ? (
-                        <span className="text-[10px] uppercase tracking-wider font-medium text-[#42277C] shrink-0">
+                        <span className="text-[10px] uppercase tracking-wider font-medium text-[#1c3f5e] shrink-0">
                           Viewing
                         </span>
                       ) : null}
@@ -323,7 +323,7 @@ export default function AdvertisersReportTab() {
               type="button"
               onClick={handleSend}
               disabled={sending || selectedCount === 0}
-              className="inline-flex h-9 items-center rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C] disabled:opacity-40"
+              className="inline-flex h-9 items-center rounded border border-[#1c3f5e] bg-[#005a8f] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#1c3f5e] disabled:opacity-40"
             >
               {sending ? 'Sending…' : `Send ${selectedCount || ''} report${selectedCount === 1 ? '' : 's'}`}
             </button>

@@ -240,7 +240,7 @@ export default function EblastOrderForm({
                   <span className="flex items-start justify-between gap-2 text-sm font-semibold">
                     <span>{pub.label}</span>
                     {!pub.checkoutEnabled && (
-                      <span className="shrink-0 rounded-md bg-[#EFEAF8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#301D5D]">
+                      <span className="shrink-0 rounded-md bg-[#daeeff] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#005a8f]">
                         Coming soon
                       </span>
                     )}
@@ -525,7 +525,7 @@ export default function EblastOrderForm({
         <ul className="mt-4 space-y-2 text-sm text-violet-50">
           {features.map((feature) => (
             <li key={feature} className="flex gap-2">
-              <span aria-hidden="true" className="text-[#B9ADD6]">
+              <span aria-hidden="true" className="text-[#98bdd3]">
                 •
               </span>
               <span>{feature}</span>
@@ -566,7 +566,7 @@ function Section({
   return (
     <section className="rounded-md border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.14em] text-gray-600">
-        <span className="mr-2 text-[#301D5D]">{number}</span>
+        <span className="mr-2 text-[#005a8f]">{number}</span>
         {title}
       </h2>
       {children}

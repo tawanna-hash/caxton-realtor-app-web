@@ -19,8 +19,8 @@ function fmtMoneyFromCents(cents: number): string {
 
 const CARD_ACCENT: Record<string, { badge: string; ring: string }> = {
   realtyline: {
-    badge: 'bg-[#EFEAF8] text-[#301D5D] border-[#D9CFF0]',
-    ring: 'ring-[#EFEAF8]',
+    badge: 'bg-[#daeeff] text-[#005a8f] border-[#bbc1c9]',
+    ring: 'ring-[#daeeff]',
   },
   newsline: {
     badge: 'bg-[#FEF8CC] text-[#645600] border-[#FAD800]/30',
@@ -164,7 +164,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
     <div className="space-y-6">
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-[#42277C]" aria-hidden="true" />
+            <CalendarDays className="h-4 w-4 text-[#1c3f5e]" aria-hidden="true" />
             <h2 className="text-sm font-semibold text-gray-950">Date Radar</h2>
             <span className="ml-auto text-xs text-gray-500">Next 14 days</span>
           </div>
@@ -174,7 +174,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                 <li key={item.id}>
                   <Link
                     href={item.href}
-                    className="flex items-center gap-3 py-3 transition hover:text-[#42277C]"
+                    className="flex items-center gap-3 py-3 transition hover:text-[#1c3f5e]"
                   >
                     <span
                       className={

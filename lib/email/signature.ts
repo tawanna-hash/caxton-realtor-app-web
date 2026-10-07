@@ -25,22 +25,22 @@ function buildSignatureHtml(): string {
         <img src="${HEADSHOT_URL}" width="120" alt="Tawanna Verock" style="display:block;width:120px;height:auto;border:0;border-radius:8px;outline:none;text-decoration:none;">
       </a>
     </td>
-    <td valign="top" style="padding:0 0 0 18px;border-left:3px solid #301D5D;">
+    <td valign="top" style="padding:0 0 0 18px;border-left:3px solid #005a8f;">
       <div style="font-size:19px;line-height:23px;font-weight:700;letter-spacing:0.4px;color:#17131f;">TAWANNA VEROCK</div>
       <div style="padding-top:2px;font-size:12px;line-height:17px;font-weight:700;letter-spacing:0.2px;color:#6d28d9;">Co-Owner&nbsp; | &nbsp;Co-Publisher</div>
 
-      <div style="padding-top:7px;font-size:11px;line-height:17px;color:#4b4653;">
-        <a href="https://realtyline.us" target="_blank" style="color:#4b4653;text-decoration:none;">RealtyLine Austin</a>
+      <div style="padding-top:7px;font-size:11px;line-height:17px;color:#51555b;">
+        <a href="https://realtyline.us" target="_blank" style="color:#51555b;text-decoration:none;">RealtyLine Austin</a>
         <span style="color:#9b96a2;">&nbsp;&bull;&nbsp;</span>
-        <a href="https://newslinesa.com" target="_blank" style="color:#4b4653;text-decoration:none;">Newsline San Antonio</a>
+        <a href="https://newslinesa.com" target="_blank" style="color:#51555b;text-decoration:none;">Newsline San Antonio</a>
         <span style="color:#9b96a2;">&nbsp;&bull;&nbsp;</span>
-        <a href="https://realtynewsnow.app" target="_blank" style="color:#4b4653;text-decoration:none;">Realty News Now App</a>
+        <a href="https://realtynewsnow.app" target="_blank" style="color:#51555b;text-decoration:none;">Realty News Now App</a>
       </div>
 
-      <div style="padding-top:6px;font-size:11px;line-height:17px;color:#4b4653;">
-        <a href="mailto:tawanna@realtynewsnow.app" style="color:#4b4653;text-decoration:none;">tawanna@realtynewsnow.app</a>
+      <div style="padding-top:6px;font-size:11px;line-height:17px;color:#51555b;">
+        <a href="mailto:tawanna@realtynewsnow.app" style="color:#51555b;text-decoration:none;">tawanna@realtynewsnow.app</a>
         <span style="color:#9b96a2;">&nbsp; | &nbsp;</span>
-        <a href="tel:+15129650057" style="color:#4b4653;text-decoration:none;">(512) 965-0057</a><br>
+        <a href="tel:+15129650057" style="color:#51555b;text-decoration:none;">(512) 965-0057</a><br>
         P.O. Box 81366, Austin, TX 78708
       </div>
 

@@ -163,7 +163,7 @@ export default function AdminTestimonialsPage() {
             <Search size={16} className="pointer-events-none absolute left-3 top-3.5 text-gray-400" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search client, subscriber, or quote" className="h-9 w-full rounded border border-gray-300 pl-8 pr-3 text-sm" />
           </label>
-          <button className="h-9 rounded bg-[#301D5D] px-4 text-sm font-semibold text-white">Search</button>
+          <button className="h-9 rounded bg-[#005a8f] px-4 text-sm font-semibold text-white">Search</button>
         </form>
         <label>
           <span className="sr-only">Filter by status</span>
@@ -200,7 +200,7 @@ export default function AdminTestimonialsPage() {
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {item.format === 'video' ? <Video size={17} className="text-[#301D5D]" /> : item.format === 'audio' ? <AudioLines size={17} className="text-[#301D5D]" /> : <FileText size={17} className="text-[#301D5D]" />}
+                    {item.format === 'video' ? <Video size={17} className="text-[#005a8f]" /> : item.format === 'audio' ? <AudioLines size={17} className="text-[#005a8f]" /> : <FileText size={17} className="text-[#005a8f]" />}
                     <span className={`rounded-full border px-3 py-1 text-xs font-medium capitalize ${badge(item.status)}`}>{item.status}</span>
                     <span className="text-xs text-gray-500">{item.submitted_via === 'collection_link' ? 'Client submitted' : 'Subscriber added'}</span>
                   </div>
@@ -217,7 +217,7 @@ export default function AdminTestimonialsPage() {
                   <div className="text-xs font-medium uppercase tracking-wide text-gray-400">Subscriber</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">{item.owner_name}</div>
                   <div className="mt-0.5 break-all text-xs text-gray-500">{item.owner_email}</div>
-                  <Link href={`/testimonials/${item.owner_slug}`} target="_blank" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[#301D5D]"><ExternalLink size={15} /> Open showcase</Link>
+                  <Link href={`/testimonials/${item.owner_slug}`} target="_blank" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[#005a8f]"><ExternalLink size={15} /> Open showcase</Link>
                   <div className="mt-4 grid gap-2">
                     {item.status !== 'published' && <button disabled={busyId === item.id} onClick={() => void changeStatus(item, 'published')} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#005A00] px-3 text-sm font-semibold text-white disabled:opacity-50"><Check size={16} /> Publish</button>}
                     {item.status !== 'archived' && <button disabled={busyId === item.id} onClick={() => void changeStatus(item, 'archived')} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 disabled:opacity-50"><Archive size={16} /> Archive</button>}

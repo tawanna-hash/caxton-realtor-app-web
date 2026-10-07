@@ -253,7 +253,7 @@ export function invoiceEmailHtml({
       ${greeting}
       <p style="font-size:15px;line-height:1.6;white-space:pre-line">${escapeEmailHtml(message)}</p>
       <p style="margin:26px 0;text-align:center">
-      <a href="${consumeUrl}" style="display:inline-block;background:#301D5D;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:600">
+      <a href="${consumeUrl}" style="display:inline-block;background:#005a8f;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:600">
         View &amp; pay invoice ${escapeEmailHtml(number)}
       </a>
       </p>

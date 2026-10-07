@@ -29,7 +29,7 @@ export type OpenExternalResult =
   | { ok: true; method: 'in-app' | 'web' }
   | { ok: false; method: 'blocked' | 'unsupported' | 'error'; error?: unknown };
 
-const BRAND_TINT = '#301D5D';
+const BRAND_TINT = '#005a8f';
 
 function isValidExternalUrl(url: string): boolean {
   try {

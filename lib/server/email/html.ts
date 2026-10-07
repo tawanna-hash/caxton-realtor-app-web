@@ -40,18 +40,18 @@ export function escapeHtml(s: string | null | undefined): string {
 // Brand tokens. Keep in lockstep with the public site / admin chrome.
 // Bumping a value here updates every transactional email at once.
 export const BRAND = {
-  primary: '#301D5D',
-  primaryDark: '#301D5D',
-  text: '#301D5D',
+  primary: '#005a8f',
+  primaryDark: '#005a8f',
+  text: '#005a8f',
   bodyText: '#333',
   muted: '#666',
   faint: '#999',
   border: '#eee',
-  cardBg: '#f3f4f6',
-  cardBorder: '#e5e7eb',
+  cardBg: '#f5f6f9',
+  cardBorder: '#d4d8dd',
   warningBg: '#FFF3E0',
   warningBorder: '#FFF3E0',
-  warningText: '#301D5D',
+  warningText: '#005a8f',
   fontStack: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
   signatureLine: '— The RealtyLine Austin & Newsline San Antonio team',
 } as const;

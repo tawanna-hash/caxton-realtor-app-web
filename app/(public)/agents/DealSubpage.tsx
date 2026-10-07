@@ -51,8 +51,8 @@ export const TASK_TEMPLATES: { id: string; label: string; tasks: string[] }[] = 
 ];
 
 const input = 'h-[36px] w-full rounded-lg border border-slate-200 bg-white px-3 text-sm';
-const btn = 'inline-flex h-[34px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F4F3F8]';
-const btnPrimary = 'inline-flex h-[34px] items-center gap-2 rounded-lg bg-[#301D5D] px-3 text-sm font-semibold text-white hover:bg-[#42277C]';
+const btn = 'inline-flex h-[34px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#f5f6f9]';
+const btnPrimary = 'inline-flex h-[34px] items-center gap-2 rounded-lg bg-[#005a8f] px-3 text-sm font-semibold text-white hover:bg-[#1c3f5e]';
 
 
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '?';
@@ -61,8 +61,8 @@ type PartyView = { name: string; role: string; company?: string; email: string; 
 /** One person on a deal, identical on Snapshot (desktop and mobile) and the People tab: full contact details, nothing truncated. */
 function PartyLine({ p, textHref: textLink, onRemove }: { p: PartyView; textHref: string; onRemove?: () => void }) {
   return (
-    <div className="flex items-start gap-3 border-b border-[#F1F0F5] px-4 py-3 last:border-0">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EFEAF8] text-xs font-semibold text-[#301D5D]" aria-hidden="true">{initials(p.name)}</span>
+    <div className="flex items-start gap-3 border-b border-[#f5f6f9] px-4 py-3 last:border-0">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#daeeff] text-xs font-semibold text-[#005a8f]" aria-hidden="true">{initials(p.name)}</span>
       <span className="min-w-0 flex-1">
         <span className="block break-words text-sm font-semibold text-slate-900">{p.name}</span>
         <span className="block break-words text-xs font-medium text-slate-500">{[p.role, p.company && p.company !== p.name ? p.company : ''].filter(Boolean).join(' · ')}</span>
@@ -70,9 +70,9 @@ function PartyLine({ p, textHref: textLink, onRemove }: { p: PartyView; textHref
         {p.phone ? <span className="block break-words text-xs text-slate-500">{p.phone}</span> : null}
       </span>
       <span className="flex shrink-0 items-center gap-3 pt-1 text-slate-400">
-        {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="hover:text-[#301D5D]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : <Mail className="h-4 w-4 opacity-40" aria-hidden="true" />}
-        {p.phone ? <a href={textLink} aria-label={`Text ${p.name}`} className="hover:text-[#301D5D]"><MessageSquare className="h-4 w-4" aria-hidden="true" /></a> : null}
-        {p.phone ? <a href={`tel:${p.phone.replace(/[^+\d]/g, '')}`} aria-label={`Call ${p.name}`} className="hover:text-[#301D5D]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : <Phone className="h-4 w-4 opacity-40" aria-hidden="true" />}
+        {p.email ? <a href={`mailto:${p.email}`} aria-label={`Email ${p.name}`} className="hover:text-[#005a8f]"><Mail className="h-4 w-4" aria-hidden="true" /></a> : <Mail className="h-4 w-4 opacity-40" aria-hidden="true" />}
+        {p.phone ? <a href={textLink} aria-label={`Text ${p.name}`} className="hover:text-[#005a8f]"><MessageSquare className="h-4 w-4" aria-hidden="true" /></a> : null}
+        {p.phone ? <a href={`tel:${p.phone.replace(/[^+\d]/g, '')}`} aria-label={`Call ${p.name}`} className="hover:text-[#005a8f]"><Phone className="h-4 w-4" aria-hidden="true" /></a> : <Phone className="h-4 w-4 opacity-40" aria-hidden="true" />}
         {onRemove ? <button type="button" aria-label={`Remove ${p.name}`} className="hover:text-[#661102]" onClick={onRemove}><Trash2 className="h-4 w-4" aria-hidden="true" /></button> : null}
       </span>
     </div>
@@ -173,7 +173,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     const picked = pickedCard?.page === page && pickedCard.key === key;
     return {
       style: { order: keys.indexOf(key) } as const,
-      className: active ? `cursor-pointer rounded-xl ${picked ? 'ring-2 ring-[#301D5D]' : 'hover:ring-2 hover:ring-[#B9ADD6]'}` : '',
+      className: active ? `cursor-pointer rounded-xl ${picked ? 'ring-2 ring-[#005a8f]' : 'hover:ring-2 hover:ring-[#98bdd3]'}` : '',
       onClickCapture: active ? (e: React.MouseEvent) => {
         e.preventDefault(); e.stopPropagation();
         if (!pickedCard || pickedCard.page !== page) { setPickedCard({ page, key }); return; }
@@ -313,7 +313,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 <>
           <div className="ds-card !p-0 overflow-hidden">
             <div
-              className={`relative ${dragOver ? 'bg-[#EFEAF8] outline outline-2 -outline-offset-2 outline-[#301D5D]' : ''}`}
+              className={`relative ${dragOver ? 'bg-[#daeeff] outline outline-2 -outline-offset-2 outline-[#005a8f]' : ''}`}
               onDragOver={(e) => { if (locked) return; e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={(e) => { e.preventDefault(); setDragOver(false); if (!locked) void uploadPhoto(e.dataTransfer.files?.[0]); }}
@@ -321,7 +321,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               {deal.photoUrl
                 // eslint-disable-next-line @next/next/no-img-element
                 ? <img src={deal.photoUrl} alt={deal.propertyAddress || deal.title} className="h-44 w-full object-cover" />
-                : <div className="flex h-32 items-center justify-center bg-[#F6F3FB] text-sm text-slate-400">No photo</div>}
+                : <div className="flex h-32 items-center justify-center bg-[#f5f6f9] text-sm text-slate-400">No photo</div>}
               {!locked && (
                 <button type="button" onClick={() => photoInputRef.current?.click()} disabled={uploading}
                   className="absolute inset-x-3 bottom-3 rounded-md border border-dashed border-slate-300 bg-white/90 px-3 py-2 text-xs font-medium text-slate-600">
@@ -395,13 +395,13 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="ds-title !mt-0">{deal.propertyAddress || deal.title || 'New Contract'}</h2>
-            <span className="ds-chip bg-[#EFEAF8] text-[#301D5D] uppercase tracking-wide">{({ purchase: 'Residential', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Residential'}</span>
+            <span className="ds-chip bg-[#daeeff] text-[#005a8f] uppercase tracking-wide">{({ purchase: 'Residential', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Residential'}</span>
           </div>
-          {(headerPeople || priceText) && <p className="mt-1 text-[13px] font-medium text-[#7A7787]">{[headerPeople, priceText].filter(Boolean).join(' · ')}</p>}
+          {(headerPeople || priceText) && <p className="mt-1 text-[13px] font-medium text-[#51555b]">{[headerPeople, priceText].filter(Boolean).join(' · ')}</p>}
         </div>
         <div className="text-right">
-          <p className={`text-[14px] font-semibold ${isCritical ? textTone : 'text-[#1B1726]'}`}>{stageName} · {Math.min(stageIndex + 1, milestones.length)} of {milestones.length}</p>
-          <p className={`text-[13px] font-medium ${isCritical ? textTone : 'text-[#7A7787]'}`}>{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing Date Not Set'}</p>
+          <p className={`text-[14px] font-semibold ${isCritical ? textTone : 'text-[#292a2d]'}`}>{stageName} · {Math.min(stageIndex + 1, milestones.length)} of {milestones.length}</p>
+          <p className={`text-[13px] font-medium ${isCritical ? textTone : 'text-[#51555b]'}`}>{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing Date Not Set'}</p>
         </div>
       </div>
       {isCritical && (
@@ -410,16 +410,16 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         </p>
       )}
       <div className="mt-3 flex gap-[3px]" role="progressbar" aria-label="Deal progress" aria-valuemin={0} aria-valuemax={milestones.length} aria-valuenow={Math.min(stageIndex, milestones.length)} aria-valuetext={`${stageName}, step ${Math.min(stageIndex + 1, milestones.length)} of ${milestones.length}`}>
-        {milestones.map((m) => <span key={m.key} title={m.label} className={`h-2 flex-1 rounded-[3px] ${m.done ? 'bg-[#301D5D]' : m.current ? (isCritical ? barTone : 'bg-[#7059A8]') : 'bg-[#E6E5EC]'}`} />)}
+        {milestones.map((m) => <span key={m.key} title={m.label} className={`h-2 flex-1 rounded-[3px] ${m.done ? 'bg-[#005a8f]' : m.current ? (isCritical ? barTone : 'bg-[#2f7aa7]') : 'bg-[#d4d8dd]'}`} />)}
       </div>
-      <button type="button" aria-expanded={stagesOpen} onClick={() => setStagesOpen((v) => !v)} className="mt-2 !border-0 !bg-transparent !px-0 !py-0 text-[13px] font-medium text-[#7A7787] underline underline-offset-2 hover:!bg-transparent hover:!text-[#301D5D]">{stagesOpen ? 'Hide Stages' : 'Show All Stages'}</button>
+      <button type="button" aria-expanded={stagesOpen} onClick={() => setStagesOpen((v) => !v)} className="mt-2 !border-0 !bg-transparent !px-0 !py-0 text-[13px] font-medium text-[#51555b] underline underline-offset-2 hover:!bg-transparent hover:!text-[#005a8f]">{stagesOpen ? 'Hide Stages' : 'Show All Stages'}</button>
       {stagesOpen && (
         <ol className="mt-3 grid gap-x-8 gap-y-1 sm:grid-cols-2" aria-label="All deal stages">
           {milestones.map((m) => (
-            <li key={m.key} aria-current={m.current ? 'step' : undefined} className="flex items-center gap-2 py-1 text-[14px] text-[#1B1726]">
-              <span className={`flex h-3.5 w-3.5 flex-none items-center justify-center rounded-full border-2 ${m.done ? 'border-[#301D5D] bg-[#301D5D]' : m.current ? 'border-[#301D5D] bg-[#EFEAF8]' : 'border-[#D5D2DF]'}`}>{m.done ? <Check className="h-2.5 w-2.5 text-white" strokeWidth={4} aria-hidden="true" /> : null}</span>
+            <li key={m.key} aria-current={m.current ? 'step' : undefined} className="flex items-center gap-2 py-1 text-[14px] text-[#292a2d]">
+              <span className={`flex h-3.5 w-3.5 flex-none items-center justify-center rounded-full border-2 ${m.done ? 'border-[#005a8f] bg-[#005a8f]' : m.current ? 'border-[#005a8f] bg-[#daeeff]' : 'border-[#D5D2DF]'}`}>{m.done ? <Check className="h-2.5 w-2.5 text-white" strokeWidth={4} aria-hidden="true" /> : null}</span>
               <span className={m.current ? 'font-semibold' : ''}>{m.label}</span>
-              <span className="ml-auto text-[12px] font-medium text-[#7A7787]">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
+              <span className="ml-auto text-[12px] font-medium text-[#51555b]">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
             </li>
           ))}
         </ol>
@@ -445,8 +445,8 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     const tileNotStarted = Math.max(0, tileTotal - tileSubmitted - waitingOnSigner);
     const tilePct = tileTotal ? Math.round((tileSubmitted / tileTotal) * 100) : 0;
     const tile = (value: number, label: string) => (
-      <div className="rounded-lg bg-[#F6F3FB] px-4 py-3">
-        <p className="text-2xl font-semibold text-[#301D5D]">{value}</p>
+      <div className="rounded-lg bg-[#f5f6f9] px-4 py-3">
+        <p className="text-2xl font-semibold text-[#005a8f]">{value}</p>
         <p className="text-xs text-slate-500">{label}</p>
       </div>
     );
@@ -463,7 +463,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           {tile(waitingOnSigner, 'Waiting On Signer')}
           {tile(tileNotStarted, 'Not started')}
         </div>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={tilePct} aria-valuemin={0} aria-valuemax={100} aria-label="Required documents submitted"><div className="h-full bg-[#301D5D]" style={{ width: `${tilePct}%` }} /></div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#daeeff]" role="progressbar" aria-valuenow={tilePct} aria-valuemin={0} aria-valuemax={100} aria-label="Required documents submitted"><div className="h-full bg-[#005a8f]" style={{ width: `${tilePct}%` }} /></div>
         <p className="mt-2 text-xs text-slate-500">{tileSubmitted} of {tileTotal} submitted</p>
           <ul className="mt-4 space-y-3">
             {docFolders.map((folder) => {
@@ -492,11 +492,11 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         const urgentDeadline = (deadlines ?? []).find((d) => !deal.documentChecks?.[`dl:${d.id}`] && d.date && d.date >= today && d.date <= tomorrow);
         const urgent = open.length > 0 && Boolean(urgentDeadline);
         return (
-          <div className={urgent ? 'ds-card !border-[#301D5D]' : 'ds-card'} data-testid="blank-field-alerts" data-urgent={urgent ? 'true' : undefined}>
-            <p className={urgent ? 'text-sm font-semibold text-[#301D5D]' : 'text-sm font-semibold text-slate-900'}>{urgent ? 'Urgent: Review Blank Fields' : 'Blank Fields Need Your Attention'}</p>
+          <div className={urgent ? 'ds-card !border-[#005a8f]' : 'ds-card'} data-testid="blank-field-alerts" data-urgent={urgent ? 'true' : undefined}>
+            <p className={urgent ? 'text-sm font-semibold text-[#005a8f]' : 'text-sm font-semibold text-slate-900'}>{urgent ? 'Urgent: Review Blank Fields' : 'Blank Fields Need Your Attention'}</p>
             <p className="mt-1 text-sm text-slate-600">{urgent && urgentDeadline ? `${urgentDeadline.label} is ${urgentDeadline.date === today ? 'today' : 'tomorrow'}. Review each item or ignore it if the blanks are intentional.` : open.length > 0 ? 'Review each item or ignore it if the blanks are intentional.' : 'Everything left is ignored.'}</p>
             {open.length > 0 && (
-              <ul className="mt-3 divide-y divide-[#E6E5EC]">
+              <ul className="mt-3 divide-y divide-[#d4d8dd]">
                 {open.map((a) => (
                   <li key={a.id} className="flex items-center justify-between gap-3 py-2">
                     <span className="min-w-0 text-sm text-slate-900"><span className="block truncate font-medium">{a.label}</span><span className="block text-xs text-slate-500">{a.blank} Of {a.total} Blank</span></span>
@@ -509,7 +509,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               </ul>
             )}
             {ignored.length > 0 && (
-              <details className="mt-3 border-t border-[#E6E5EC] pt-2">
+              <details className="mt-3 border-t border-[#d4d8dd] pt-2">
                 <summary className="cursor-pointer text-xs text-slate-500">{ignored.length} Ignored</summary>
                 <ul className="mt-2">
                   {ignored.map((a) => (
@@ -529,18 +529,18 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         <Tip text="Enter the signed contract's effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules." />
         {timelineFields}
         {trackedDeadlines.length > 0 && (
-          <div className="mt-4 border-t border-[#E6E5EC] pt-3">
+          <div className="mt-4 border-t border-[#d4d8dd] pt-3">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-semibold text-slate-900">Deadline Tracking</p>
-              <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{trackedDeadlines.filter((item) => item.done).length} Of {trackedDeadlines.length} Done</span>
+              <span className="ds-chip bg-[#daeeff] text-[#005a8f]">{trackedDeadlines.filter((item) => item.done).length} Of {trackedDeadlines.length} Done</span>
             </div>
             <div className="grid sm:grid-cols-2 sm:gap-x-6">
             {trackedDeadlines.map((item) => {
               const diff = dayDiff(today, item.date);
-              const chip = item.done ? { text: 'Done', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
-                : diff < 0 ? { text: `Overdue ${-diff} Day${diff === -1 ? '' : 's'}`, cls: 'bg-[#301D5D] text-white' }
-                : diff === 0 ? { text: 'Due Today', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
-                : { text: `Due In ${diff} Day${diff === 1 ? '' : 's'}`, cls: diff <= 3 ? 'bg-[#EFEAF8] text-[#301D5D]' : 'bg-slate-100 text-slate-600' };
+              const chip = item.done ? { text: 'Done', cls: 'bg-[#daeeff] text-[#005a8f]' }
+                : diff < 0 ? { text: `Overdue ${-diff} Day${diff === -1 ? '' : 's'}`, cls: 'bg-[#005a8f] text-white' }
+                : diff === 0 ? { text: 'Due Today', cls: 'bg-[#daeeff] text-[#005a8f]' }
+                : { text: `Due In ${diff} Day${diff === 1 ? '' : 's'}`, cls: diff <= 3 ? 'bg-[#daeeff] text-[#005a8f]' : 'bg-slate-100 text-slate-600' };
               return (
                 <div key={item.id} className="ds-list-row">
                   <input type="checkbox" aria-label={`Mark ${item.label} done`} checked={item.done} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...deal.documentChecks, [`dl:${item.id}`]: e.target.checked })} />
@@ -553,7 +553,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               );
             })}
             </div>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#F6F3FB] px-3 py-3 text-xs text-slate-600">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#f5f6f9] px-3 py-3 text-xs text-slate-600">
               <span>
                 {alertChannels.length === 0 ? 'Alerts Are Off' : `Alerts By ${alertChannels.join(' And ')}`}
                 {alertChannels.length > 0 && alerts ? ` · ${[...alerts.reminderOffsets].sort((l, r) => r - l).map((o) => (o === 0 ? 'Due Today' : `${o}d`)).join(', ')}` : ''}
@@ -586,8 +586,8 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
     const tasksSoon = dueSoon + openReminders.filter((r) => r.reminderDate && r.reminderDate >= today && r.reminderDate <= weekEnd).length;
     const tasksPct = tasksTotal ? Math.round((tasksDone / tasksTotal) * 100) : 0;
     const taskTile = (value: number, label: string) => (
-      <div className="rounded-lg bg-[#F6F3FB] px-4 py-3">
-        <p className="text-2xl font-semibold text-[#301D5D]">{value}</p>
+      <div className="rounded-lg bg-[#f5f6f9] px-4 py-3">
+        <p className="text-2xl font-semibold text-[#005a8f]">{value}</p>
         <p className="text-xs text-slate-500">{label}</p>
       </div>
     );
@@ -602,7 +602,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           {taskTile(tasksOverdue, 'Overdue')}
           {taskTile(tasksSoon, 'Due In 7 Days')}
         </div>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={tasksPct} aria-valuemin={0} aria-valuemax={100} aria-label="Tasks and reminders completed"><div className="h-full bg-[#301D5D]" style={{ width: `${tasksPct}%` }} /></div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#daeeff]" role="progressbar" aria-valuenow={tasksPct} aria-valuemin={0} aria-valuemax={100} aria-label="Tasks and reminders completed"><div className="h-full bg-[#005a8f]" style={{ width: `${tasksPct}%` }} /></div>
         <p className="mt-2 text-xs text-slate-500">{tasksDone} of {tasksTotal} complete</p>
       </div>
     );
@@ -623,7 +623,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         <div className="mt-3">
           {clientsList.length === 0 ? <p className="text-xs text-slate-500">No parties added.</p> : clientsList.map(partyRow)}
         </div>
-        {othersList.length > 0 && <p className="ds-eyebrow mt-3 border-t border-[#F1F0F5] pt-3">External Parties</p>}
+        {othersList.length > 0 && <p className="ds-eyebrow mt-3 border-t border-[#f5f6f9] pt-3">External Parties</p>}
         {othersList.length > 0 && <div className="mt-1">{othersList.map(partyRow)}</div>}
       </div>
     );
@@ -658,7 +658,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             <select aria-label="Deal status" value={deal.workflowStatus} disabled={locked} onChange={(e) => onUpdate('workflowStatus', e.target.value as AgentDeal['workflowStatus'])} className="ds-select !h-[34px] !min-w-[170px]">
               {statuses.map((s) => <option key={s} value={s}>{statusLabels[s] ?? s}</option>)}
             </select>
-            <button type="button" className="text-sm font-medium text-[#301D5D] underline-offset-2 hover:underline" onClick={() => onOpenView('transaction')}>View Details</button>
+            <button type="button" className="text-sm font-medium text-[#005a8f] underline-offset-2 hover:underline" onClick={() => onOpenView('transaction')}>View Details</button>
           </div>
         </div>
         <span className={`ds-chip ${health.tone}`}>{health.label}</span>
@@ -672,7 +672,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="ds-title !mt-0">{deal.propertyAddress || deal.title}</h2>
-              <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{DEAL_TYPES.find((t) => t.id === deal.dealType)?.label ?? 'Deal'}</span>
+              <span className="ds-chip bg-[#daeeff] text-[#005a8f]">{DEAL_TYPES.find((t) => t.id === deal.dealType)?.label ?? 'Deal'}</span>
               <span className="ds-chip bg-slate-100 text-slate-600">{statusLabels[deal.workflowStatus] ?? deal.workflowStatus}</span>
             </div>
             <p className="ds-subtitle">{clients.length ? clients.join(' · ') : 'No clients added'}{deal.owner ? ` · ${deal.owner}` : ''}</p>
@@ -717,7 +717,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               { key: 'readiness', title: 'Readiness check', detail: `${requiredDone} of ${requiredIdList.length} required documents in`, chip: requiredDone === requiredIdList.length ? 'Complete' : 'In progress', go: 'readiness' },
             ];
             const cardHead = (icon: ReactNode, title: string, count: number, tone: string) => (
-              <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
+              <div className="flex items-center justify-between border-b border-[#d4d8dd] px-4 py-3">
                 <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">{icon} {title}</p>
                 <span className={`ds-chip ${tone}`}>{count}</span>
               </div>
@@ -732,7 +732,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   <div className="ds-card !p-0 self-start">
                     {cardHead(<AlertCircle className="h-4 w-4 text-[#645600]" aria-hidden="true" />, 'Needs Your Attention', attentionRows.length, 'bg-[#FEF8CC] text-[#645600]')}
                     {attentionRows.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing needs you right now.</p> : attentionRows.map((item) => (
-                      <div key={item.key} className="border-b border-[#F1F0F5] px-4 py-3">
+                      <div key={item.key} className="border-b border-[#f5f6f9] px-4 py-3">
                         <p className={`text-[11px] font-medium ${item.tone === 'red' ? 'text-[#661102]' : 'text-[#645600]'}`}>{item.eyebrow}</p>
                         <p className="mt-0.5 text-sm font-semibold text-slate-900">{item.title}</p>
                         <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
@@ -742,23 +742,23 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     {footLink('View all tasks', 'tasks')}
                   </div>
                   <div className="ds-card !p-0 self-start">
-                    {cardHead(<Sparkles className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />, 'The AI Is Handling', handling.length, 'bg-[#EFEAF8] text-[#301D5D]')}
+                    {cardHead(<Sparkles className="h-4 w-4 text-[#2f7aa7]" aria-hidden="true" />, 'The AI Is Handling', handling.length, 'bg-[#daeeff] text-[#005a8f]')}
                     {handling.map((item) => (
                       <button key={item.key} type="button" onClick={() => onOpenView(item.go)} className="ds-snap-row">
                         <span className="min-w-0 flex-1 text-left">
                           <span className="block text-sm font-semibold">{item.title}</span>
                           <span className="block text-xs opacity-70">{item.detail}</span>
                         </span>
-                        <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{item.chip}</span>
+                        <span className="ds-chip bg-[#daeeff] text-[#005a8f]">{item.chip}</span>
                       </button>
                     ))}
                   </div>
                   <div className="ds-card !p-0 self-start">
-                    {cardHead(<Clock className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />, 'Waiting On Others', waitingRows.length, 'bg-[#EFEAF8] text-[#301D5D]')}
+                    {cardHead(<Clock className="h-4 w-4 text-[#2f7aa7]" aria-hidden="true" />, 'Waiting On Others', waitingRows.length, 'bg-[#daeeff] text-[#005a8f]')}
                     {waitingRows.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing is pending.</p> : waitingRows.slice(0, 5).map((item) => (
                       <button key={item.key} type="button" onClick={() => onOpenView(item.go)} className="ds-snap-row">
                         <span className="min-w-0 flex-1 text-left">
-                          <span className="flex flex-wrap items-center gap-2"><span className="text-sm font-semibold">{item.title}</span><span className="rounded bg-[#EFEAF8] px-2 py-0.5 text-[11px] font-medium text-[#301D5D]">{item.chip}</span></span>
+                          <span className="flex flex-wrap items-center gap-2"><span className="text-sm font-semibold">{item.title}</span><span className="rounded bg-[#daeeff] px-2 py-0.5 text-[11px] font-medium text-[#005a8f]">{item.chip}</span></span>
                           <span className="block text-xs opacity-70">{item.detail}</span>
                         </span>
                       </button>
@@ -766,7 +766,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     {footLink(waitingRows.length > 5 ? `View all ${waitingRows.length}` : 'View Documents', 'd-documents')}
                   </div>
                   <div className="ds-card !p-0 self-start">
-                    <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
+                    <div className="flex items-center justify-between border-b border-[#d4d8dd] px-4 py-3">
                       <p className="text-sm font-semibold text-slate-900">Parties</p>
                       <button type="button" onClick={() => onOpenView('d-people')}><Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />Add</button>
                     </div>
@@ -811,12 +811,12 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               return match ? { label: match.label.replace(/\b([a-z])/g, (c) => c.toUpperCase()), date: match.date } : null;
             };
             const statusChip = (done: boolean, docId?: string) => {
-              if (done) return <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">Submitted</span>;
+              if (done) return <span className="ds-chip bg-[#daeeff] text-[#005a8f]">Submitted</span>;
               const due = docId ? dueFor(docId) : null;
               if (!due) return <span className="ds-chip bg-slate-100 text-slate-600">Not Submitted</span>;
               const diff = dayDiff(today, due.date);
               const text = diff < 0 ? `Overdue ${-diff} day${diff === -1 ? '' : 's'}` : diff === 0 ? 'Due today' : `Due in ${diff} day${diff === 1 ? '' : 's'}`;
-              return <span title={`${due.label} · ${formatDate(due.date)}`} className={`ds-chip ${diff < 0 ? 'bg-[#301D5D] text-white' : diff <= 3 ? 'bg-[#EFEAF8] text-[#301D5D]' : 'bg-slate-100 text-slate-600'}`}>{text}</span>;
+              return <span title={`${due.label} · ${formatDate(due.date)}`} className={`ds-chip ${diff < 0 ? 'bg-[#005a8f] text-white' : diff <= 3 ? 'bg-[#daeeff] text-[#005a8f]' : 'bg-slate-100 text-slate-600'}`}>{text}</span>;
             };
             const formStatus = (form: { total: number; filled: number }) => (form.total > 0 ? (form.filled > 0 ? `Fillable · ${form.filled} of ${form.total}` : `Fillable · ${form.total} fields`) : 'Notice · nothing to fill');
             const requiredRow = (doc: (typeof allDocs)[number]) => {
@@ -829,7 +829,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     <span className="block truncate text-sm text-slate-900">{doc.label}</span>
                     {(addedOptional || (!checks[doc.id] && dueFor(doc.id))) && <span className="block text-xs text-slate-500">{[addedOptional ? 'Added From Optional' : '', !checks[doc.id] && dueFor(doc.id) ? `${dueFor(doc.id)!.label} ${formatDate(dueFor(doc.id)!.date)}` : ''].filter(Boolean).join(' · ')}</span>}
                   </span>
-                  {form && <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{formStatus(form)}</span>}
+                  {form && <span className="ds-chip bg-[#daeeff] text-[#005a8f]">{formStatus(form)}</span>}
                   {statusChip(Boolean(checks[doc.id]), doc.id)}
                   {form && <TrecFormActions family={form.formFamily} disabled={locked} onOpen={(family) => onOpenTrecForm?.(family)} onUpload={(family, mode) => onUploadTrecForm?.(family, mode)} />}
                   {addedOptional && !locked && <button type="button" aria-label={`Move ${doc.label} back to optional`} className="text-xs text-slate-500 underline underline-offset-2 hover:text-slate-900" onClick={() => { const next = { ...checks }; delete next[`add:${doc.id}`]; delete next[doc.id]; onUpdate('documentChecks', next); }}>Remove</button>}
@@ -842,26 +842,26 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   <div>
                     <p className="ds-side-title !m-0">{dealTypeLabel} Documents</p>
                   </div>
-                  <span className="flex items-center gap-3"><span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{submittedCount} of {totalRequired} submitted</span>{arrangeButton('documents')}</span>
+                  <span className="flex items-center gap-3"><span className="ds-chip bg-[#daeeff] text-[#005a8f]">{submittedCount} of {totalRequired} submitted</span>{arrangeButton('documents')}</span>
                   {(
-                    <div className="grid w-full gap-3 border-t border-[#F1F0F5] pt-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid w-full gap-3 border-t border-[#f5f6f9] pt-3 sm:grid-cols-2 lg:grid-cols-4">
                       <label className="block min-w-0"><span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Contract Form</span>
-                        <select value={deal.contractForm} disabled={locked} onChange={(e) => onUpdate('contractForm', e.target.value as typeof deal.contractForm)} className="mt-1 h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-2 text-sm font-medium text-slate-900">
+                        <select value={deal.contractForm} disabled={locked} onChange={(e) => onUpdate('contractForm', e.target.value as typeof deal.contractForm)} className="mt-1 h-9 w-full rounded-md border border-[#d4d8dd] bg-white px-2 text-sm font-medium text-slate-900">
                           {CONTRACT_FORM_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select></label>
 {effectiveAgentSide(deal) !== 'listing' && (<label className="block min-w-0"><span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Representation Form</span>
-                        <select value={deal.buyerRepForm} disabled={locked} onChange={(e) => onUpdate('buyerRepForm', e.target.value as typeof deal.buyerRepForm)} className="mt-1 h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-2 text-sm font-medium text-slate-900">
+                        <select value={deal.buyerRepForm} disabled={locked} onChange={(e) => onUpdate('buyerRepForm', e.target.value as typeof deal.buyerRepForm)} className="mt-1 h-9 w-full rounded-md border border-[#d4d8dd] bg-white px-2 text-sm font-medium text-slate-900">
                           <option value="">Choose Form</option>
                           {BUYER_REP_FORM_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select></label>)}
                       <label className="block min-w-0"><span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Year Built</span>
-                        <input value={deal.yearBuilt} disabled={locked} inputMode="numeric" onChange={(e) => onUpdate('yearBuilt', e.target.value.replace(/\D/g, '').slice(0, 4))} className="mt-1 h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-2 text-sm font-medium text-slate-900" /></label>
+                        <input value={deal.yearBuilt} disabled={locked} inputMode="numeric" onChange={(e) => onUpdate('yearBuilt', e.target.value.replace(/\D/g, '').slice(0, 4))} className="mt-1 h-9 w-full rounded-md border border-[#d4d8dd] bg-white px-2 text-sm font-medium text-slate-900" /></label>
                       <label className="flex min-w-0 items-end gap-2 pb-2 text-sm font-medium text-slate-900"><input type="checkbox" checked={deal.hasHoa} disabled={locked} onChange={(e) => onUpdate('hasHoa', e.target.checked)} />Property Is In An HOA</label>
                     </div>
                   )}
                 </div>
-                {(() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'required'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
-                    <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Required Documents</span>
+                {(() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'required'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#d4d8dd] px-4 py-3 text-sm font-semibold text-slate-900">
+                    <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#2f7aa7]" aria-hidden="true" />Required Documents</span>
                     <span className="text-xs font-medium text-slate-500">{submittedCount} of {totalRequired}</span>
                   </div>}>
                   {requiredDocs.map(requiredRow)}
@@ -889,17 +889,17 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   if (linked.length === 0) return null;
                   const doneCount = linked.filter((item) => checks[`dl:${item.id}`]).length;
                   return (
-                    (() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'deadlines'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
-                        <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Deadline Completion</span>
+                    (() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'deadlines'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#d4d8dd] px-4 py-3 text-sm font-semibold text-slate-900">
+                        <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#2f7aa7]" aria-hidden="true" />Deadline Completion</span>
                         <span className="text-xs font-medium text-slate-500">{doneCount} Of {linked.length} Done</span>
                       </div>}>
                       {linked.map((item) => {
                         const done = Boolean(checks[`dl:${item.id}`]);
                         const diff = dayDiff(today, item.date);
-                        const chip = done ? { text: 'Done', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
-                          : diff < 0 ? { text: `Overdue ${-diff} Day${diff === -1 ? '' : 's'}`, cls: 'bg-[#301D5D] text-white' }
-                          : diff === 0 ? { text: 'Due Today', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
-                          : { text: `Due In ${diff} Day${diff === 1 ? '' : 's'}`, cls: diff <= 3 ? 'bg-[#EFEAF8] text-[#301D5D]' : 'bg-slate-100 text-slate-600' };
+                        const chip = done ? { text: 'Done', cls: 'bg-[#daeeff] text-[#005a8f]' }
+                          : diff < 0 ? { text: `Overdue ${-diff} Day${diff === -1 ? '' : 's'}`, cls: 'bg-[#005a8f] text-white' }
+                          : diff === 0 ? { text: 'Due Today', cls: 'bg-[#daeeff] text-[#005a8f]' }
+                          : { text: `Due In ${diff} Day${diff === 1 ? '' : 's'}`, cls: diff <= 3 ? 'bg-[#daeeff] text-[#005a8f]' : 'bg-slate-100 text-slate-600' };
                         const docLabels = allDocs.filter((doc) => item.docs.includes(doc.id) && (doc.kind === 'required' || isAdded(doc.id))).map((doc) => doc.label);
                         return (
                           <div key={item.id} className="ds-list-row">
@@ -916,23 +916,23 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                   );
                 })()}
                 {trecForms && (
-                  (() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'forms'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
-                      <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Additional Documents</span>
+                  (() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'forms'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#d4d8dd] px-4 py-3 text-sm font-semibold text-slate-900">
+                      <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#2f7aa7]" aria-hidden="true" />Additional Documents</span>
                       <span className="text-xs font-medium text-slate-500">{dealForms.length}</span>
                     </div>}>
                     {dealForms.length === 0 ? (
                       <p className="px-4 py-4 text-xs text-slate-500">No additional documents added. Add forms this deal needs from the Forms Library.</p>
                     ) : dealForms.map((form) => (
                       <div key={form.formFamily} className="ds-list-row">
-                        <button type="button" onClick={() => onOpenTrecForm?.(form.formFamily)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-slate-900 hover:text-[#301D5D]">{form.formNumber} · {form.title}</button>
-                        <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{formStatus(form)}</span>
+                        <button type="button" onClick={() => onOpenTrecForm?.(form.formFamily)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-slate-900 hover:text-[#005a8f]">{form.formNumber} · {form.title}</button>
+                        <span className="ds-chip bg-[#daeeff] text-[#005a8f]">{formStatus(form)}</span>
                         <TrecFormActions family={form.formFamily} disabled={locked} onOpen={(family) => onOpenTrecForm?.(family)} onUpload={(family, mode) => onUploadTrecForm?.(family, mode)} />
                       </div>
                     ))}
                   </AutoSection></div>); })()
                 )}
-                {(() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'optional'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
-                    <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Optional Documents</span>
+                {(() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'optional'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#d4d8dd] px-4 py-3 text-sm font-semibold text-slate-900">
+                    <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#2f7aa7]" aria-hidden="true" />Optional Documents</span>
                     <span className="text-xs font-medium text-slate-500">{optionalDocs.length}</span>
                   </div>}>
                   {optionalDocs.length === 0 && <p className="px-4 py-4 text-xs text-slate-500">Every optional document has been added.</p>}
@@ -991,7 +991,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     const count = deal.serviceProviders.filter((p) => p.category === category).length;
                     return (
                       <button key={category} type="button" onClick={() => setProviderCategory(category)} className="ds-provider-tile">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-[#5B3FA0]">{count ? `${count} Added` : 'Set Up'}</span>
+                        <span className="text-xs font-semibold uppercase tracking-wide text-[#005a8f]">{count ? `${count} Added` : 'Set Up'}</span>
                         <span className="text-sm font-medium text-slate-900">{titleCaseLabel(category)}</span>
                       </button>
                     );
@@ -1047,7 +1047,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               <h3 className="text-lg font-semibold text-slate-900">Trusted {titleCaseLabel(providerCategory)} Providers</h3>
               <button type="button" aria-label="Close" className="text-slate-500 hover:text-slate-900" onClick={() => setProviderCategory(null)}><X className="h-5 w-5" aria-hidden="true" /></button>
             </div>
-            <div className="mt-3 divide-y divide-[#F1F0F5]">
+            <div className="mt-3 divide-y divide-[#f5f6f9]">
               {deal.serviceProviders.filter((p) => p.category === providerCategory).map((p) => (
                 <div key={p.id} className="flex items-center gap-3 py-2 text-sm">
                   <span className="min-w-0 flex-1"><span className="block font-medium text-slate-900">{p.name}</span><span className="block truncate text-xs text-slate-500">{[p.phone, p.email].filter(Boolean).join(' · ')}</span></span>
@@ -1083,7 +1083,7 @@ function OffersShowings({ deal, locked, formatDate, onUpdate }: Pick<Props, 'dea
   return (
     <div className="ds-card">
       <p className="ds-side-title !mt-0">Offers &amp; showings</p>
-      <div className="mt-2 divide-y divide-[#F1F0F5]">
+      <div className="mt-2 divide-y divide-[#f5f6f9]">
         {items.length === 0 && <p className="py-2 text-sm text-slate-500">No offers or showings logged.</p>}
         {items.map((item) => (
           <div key={item.id} className="flex items-center gap-3 py-2 text-sm">

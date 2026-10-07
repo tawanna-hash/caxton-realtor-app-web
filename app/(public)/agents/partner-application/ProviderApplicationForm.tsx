@@ -31,7 +31,7 @@ const INITIAL_FORM: FormState = {
   insuranceCarrier: '', insuranceExpiresOn: '', coverageNotes: '', message: '', consent: false, websiteTrap: '',
 };
 
-const INPUT = 'min-h-[48px] w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15';
+const INPUT = 'min-h-[48px] w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 outline-none transition focus:border-[#005a8f] focus:ring-2 focus:ring-[#005a8f]/15';
 
 export default function ProviderApplicationForm() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
@@ -75,10 +75,10 @@ export default function ProviderApplicationForm() {
       <main id="agent-desk" className="min-h-screen bg-white px-4 py-14 sm:px-8">
         <div className="mx-auto max-w-2xl border border-[#D8D0C2] bg-white p-8 shadow-[0_18px_45px_rgba(40,25,77,0.08)] sm:p-12">
           <CheckCircle2 className="rnn-heading-icon text-[#005A00]" aria-hidden="true" />
-          <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Application received</p>
+          <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-[#2f7aa7]">Application received</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">You&apos;re in the Review Queue.</h1>
           <p className="mt-4 text-base leading-7 text-slate-600">Thank you for sharing your company details. The Realty News Now team will review your application and contact you using the information provided.</p>
-          <Link href="/agents" className="mt-8 inline-flex min-h-[46px] items-center gap-2 rounded-lg bg-[#301D5D] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#513A85]">
+          <Link href="/agents" className="mt-8 inline-flex min-h-[46px] items-center gap-2 rounded-lg bg-[#005a8f] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#513A85]">
             Return to Closing Time <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
@@ -89,16 +89,16 @@ export default function ProviderApplicationForm() {
   return (
     <main id="agent-desk" className="min-h-screen bg-white">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8 lg:py-14">
-        <Link href="/agents#referral-network" className="inline-flex min-h-[42px] items-center gap-2 text-sm font-bold text-[#301D5D] hover:text-[#5B438C]">
+        <Link href="/agents#referral-network" className="inline-flex min-h-[42px] items-center gap-2 text-sm font-bold text-[#005a8f] hover:text-[#1c3f5e]">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Closing Time
         </Link>
-        <div className="mt-6 grid overflow-hidden rounded-xl border border-[#E6E5EC] bg-white lg:grid-cols-[0.72fr_1.28fr]">
-          <aside className="border-r border-[#E6E5EC] bg-[#FBFBFD] p-6 text-slate-900 sm:p-8">
-            <ShieldCheck className="rnn-heading-icon text-[#301D5D]" aria-hidden="true" />
-            <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">Referral Network</p>
+        <div className="mt-6 grid overflow-hidden rounded-xl border border-[#d4d8dd] bg-white lg:grid-cols-[0.72fr_1.28fr]">
+          <aside className="border-r border-[#d4d8dd] bg-[#f5f6f9] p-6 text-slate-900 sm:p-8">
+            <ShieldCheck className="rnn-heading-icon text-[#005a8f]" aria-hidden="true" />
+            <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-[#005a8f]">Referral Network</p>
             <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">Put Your Service in Front of Local Agents.</h1>
             <p className="mt-4 text-sm leading-6 text-slate-600">Apply for a featured referral-network profile across the Realty News Now agent community. Your information is reviewed before anything is published.</p>
-            <ul className="mt-8 space-y-3 border-t border-[#E6E5EC] pt-6 text-sm leading-6 text-slate-600">
+            <ul className="mt-8 space-y-3 border-t border-[#d4d8dd] pt-6 text-sm leading-6 text-slate-600">
               <li>Service categories and local coverage</li>
               <li>License and insurance review fields</li>
               <li>Direct contact details for agent connection</li>
@@ -106,7 +106,7 @@ export default function ProviderApplicationForm() {
           </aside>
 
           <form onSubmit={submit} className="p-6 sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Provider application</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#2f7aa7]">Provider application</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Tell Us About Your Company.</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">Fields marked required are used for review. Do not submit sensitive documents or policy files through this form.</p>
 
@@ -125,13 +125,13 @@ export default function ProviderApplicationForm() {
               <div className="mt-3 flex flex-wrap gap-2">
                 {REFERRAL_PROVIDER_CATEGORIES.map((category) => {
                   const active = form.categories.includes(category);
-                  return <button key={category} type="button" onClick={() => toggleCategory(category)} className={`min-h-[42px] rounded-lg border px-4 py-2 text-sm font-semibold transition ${active ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-[#301D5D]'}`}>{category}</button>;
+                  return <button key={category} type="button" onClick={() => toggleCategory(category)} className={`min-h-[42px] rounded-lg border px-4 py-2 text-sm font-semibold transition ${active ? 'border-[#005a8f] bg-[#005a8f] text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-[#005a8f]'}`}>{category}</button>;
                 })}
               </div>
             </fieldset>
 
             <div className="mt-8 border-t border-slate-200 pt-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Credentials and coverage</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#2f7aa7]">Credentials and coverage</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">Optional details help the team complete an initial eligibility review. A completed application does not create a listing or endorsement.</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <Field label="License number"><input value={form.licenseNumber} onChange={(e) => setForm({ ...form, licenseNumber: e.target.value })} className={INPUT} /></Field>
@@ -146,9 +146,9 @@ export default function ProviderApplicationForm() {
 
             <Field label="Anything else the review team should know?" className="mt-7"><textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} rows={4} className={`${INPUT} py-3`} /></Field>
             <div className="hidden" aria-hidden="true"><label>Leave this blank<input tabIndex={-1} autoComplete="off" value={form.websiteTrap} onChange={(e) => setForm({ ...form, websiteTrap: e.target.value })} /></label></div>
-            <label className="mt-6 flex gap-3 text-sm leading-6 text-slate-600"><input required type="checkbox" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} className="mt-1 h-4 w-4 accent-[#301D5D]" /><span>I confirm the information is accurate and authorize Realty News Now to contact me about the referral network and featured-partner options.</span></label>
+            <label className="mt-6 flex gap-3 text-sm leading-6 text-slate-600"><input required type="checkbox" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} className="mt-1 h-4 w-4 accent-[#005a8f]" /><span>I confirm the information is accurate and authorize Realty News Now to contact me about the referral network and featured-partner options.</span></label>
             {error && <p role="alert" className="mt-4 rounded-md border border-[#FF2A04] bg-[#FFEAE6] p-3 text-sm text-[#661102]">{error}</p>}
-            <button disabled={status === 'submitting'} type="submit" className="mt-6 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg bg-[#301D5D] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#513A85] disabled:cursor-not-allowed disabled:opacity-60">
+            <button disabled={status === 'submitting'} type="submit" className="mt-6 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg bg-[#005a8f] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#513A85] disabled:cursor-not-allowed disabled:opacity-60">
               {status === 'submitting' ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Submitting Application</> : <>Submit for Review <ArrowRight className="h-4 w-4" aria-hidden="true" /></>}
             </button>
           </form>

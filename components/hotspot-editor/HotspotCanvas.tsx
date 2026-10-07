@@ -35,7 +35,7 @@ export default function HotspotCanvas({ pageIdx, pageUrl, hotspots, selectedId, 
       {preview ? <HotspotLayer hotspots={visible.map(toPublicHotspot)} displayWidth={size.width} displayHeight={size.height} preview /> :
         size.width > 0 && visible.map((h, rank) => {
           const selected = selectedId === h.id;
-          const color = TYPE_COLORS[h.type]?.stroke || '#7059a8';
+          const color = TYPE_COLORS[h.type]?.stroke || '#2f7aa7';
           return (
             <Rnd key={`${h.id}-${size.width}`} bounds="parent"
               size={{ width: Math.max(8, h.w_frac * size.width), height: Math.max(8, h.h_frac * size.height) }}
@@ -56,7 +56,7 @@ export default function HotspotCanvas({ pageIdx, pageUrl, hotspots, selectedId, 
                 } else onSelect(h.id);
               }}
               onDoubleClick={() => onEdit(h)}
-              style={{ zIndex: selected ? visible.length + 2 : rank + 1, border: `2px ${reviewStatus(h) === 'approved' ? 'solid' : 'dashed'} ${color}`, background: selected ? `${color.replace('rgb(', 'rgba(').replace(')', ', 0.12)')}` : 'transparent', outline: selected ? '2px solid #301D5D' : 'none', outlineOffset: 2, cursor: h.editor_locked ? 'default' : selected ? 'move' : 'pointer' }}
+              style={{ zIndex: selected ? visible.length + 2 : rank + 1, border: `2px ${reviewStatus(h) === 'approved' ? 'solid' : 'dashed'} ${color}`, background: selected ? `${color.replace('rgb(', 'rgba(').replace(')', ', 0.12)')}` : 'transparent', outline: selected ? '2px solid #005a8f' : 'none', outlineOffset: 2, cursor: h.editor_locked ? 'default' : selected ? 'move' : 'pointer' }}
               data-hotspot-id={h.id}>
               <button type="button" aria-label={`Select hotspot ${numbers.get(h.id)}`} onClick={e => { e.stopPropagation(); onSelect(h.id); }}
                 className="absolute -left-1 -top-5 min-w-6 rounded-sm px-1 text-xs font-semibold text-white"

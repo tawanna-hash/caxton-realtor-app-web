@@ -60,16 +60,16 @@ export async function GET(req: Request) {
       muted: '#b9b1c5',
       accent: '#d2bdff',
       button: '#f7f4fb',
-      buttonText: '#301d5d',
+      buttonText: '#005a8f',
     }
     : {
       background: '#faf8f4',
       card: '#ffffff',
       border: '#e5e0d8',
-      text: '#171717',
-      muted: '#6b7280',
-      accent: '#301d5d',
-      button: '#301d5d',
+      text: '#292a2d',
+      muted: '#51555b',
+      accent: '#005a8f',
+      button: '#005a8f',
       buttonText: '#ffffff',
     };
   const testimonials = layout === 'single'

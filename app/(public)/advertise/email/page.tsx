@@ -94,7 +94,7 @@ export default function AdvertiseEmailPage() {
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="text-base font-semibold text-gray-900">{row.label}</div>
                 {!row.checkoutEnabled && (
-                  <span className="rounded-md bg-[#EFEAF8] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#301D5D]">
+                  <span className="rounded-md bg-[#daeeff] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#005a8f]">
                     Coming soon
                   </span>
                 )}
@@ -123,7 +123,7 @@ export default function AdvertiseEmailPage() {
                           Order now
                         </Link>
                       ) : (
-                        <span className="mt-4 inline-flex items-center justify-center rounded-md border border-[#B9ADD6] bg-[#F6F3FB] px-4 py-2 text-sm font-medium text-[#301D5D]">
+                        <span className="mt-4 inline-flex items-center justify-center rounded-md border border-[#98bdd3] bg-[#f5f6f9] px-4 py-2 text-sm font-medium text-[#005a8f]">
                           Ordering coming soon
                         </span>
                       )}

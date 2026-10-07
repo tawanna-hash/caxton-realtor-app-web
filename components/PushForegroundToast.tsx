@@ -158,7 +158,7 @@ export default function PushForegroundToast() {
           flexShrink: 0,
           borderRadius: 7,
           background: '#fff',
-          color: '#301D5D',
+          color: '#005a8f',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

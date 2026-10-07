@@ -58,7 +58,7 @@ function fmt(dt: string | null): string {
 function StatusBadge({ status }: { status: string }) {
   const cls =
     status === 'sent' ? 'bg-[#E0FBE0] text-[#005A00]'
-      : status === 'scheduled' ? 'bg-[#EFEAF8] text-[#301D5D]'
+      : status === 'scheduled' ? 'bg-[#daeeff] text-[#005a8f]'
         : status === 'sending' ? 'bg-[#FEF8CC] text-[#645600]'
           : status === 'failed' ? 'bg-[#FFEAE6] text-[#661102]'
             : status === 'cancelled' ? 'bg-gray-200 text-gray-700'
@@ -184,12 +184,12 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
             <label className="block text-xs uppercase tracking-wide text-gray-500">Search subject</label>
             <input type="text" value={q} onChange={(e) => { setQ(e.target.value); setOffset(0); }}
               placeholder="Subject contains…"
-              className="mt-1 h-9 w-64 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]" />
+              className="mt-1 h-9 w-64 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#2f7aa7] focus:ring-2 focus:ring-[#daeeff]" />
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wide text-gray-500">Status</label>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setOffset(0); }}
-                    className="mt-1 h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]">
+                    className="mt-1 h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#2f7aa7] focus:ring-2 focus:ring-[#daeeff]">
               <option value="">Any</option>
               <option value="sent">Sent</option>
               <option value="scheduled">Scheduled</option>
@@ -201,7 +201,7 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
           <div>
             <label className="block text-xs uppercase tracking-wide text-gray-500">Type</label>
             <select value={recurring} onChange={(e) => { setRecurring(e.target.value as 'any' | 'series' | 'oneoff'); setOffset(0); }}
-                    className="mt-1 h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#7059A8] focus:ring-2 focus:ring-[#EFEAF8]">
+                    className="mt-1 h-9 rounded border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#2f7aa7] focus:ring-2 focus:ring-[#daeeff]">
               <option value="any">Any</option>
               <option value="oneoff">One-off</option>
               <option value="series">Recurring</option>
@@ -277,7 +277,7 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
                   type="button"
                   disabled={busyId === row.id || !onEditResend}
                   onClick={() => onEditResend?.(row)}
-                  className="rounded border border-[#B9ADD6] bg-[#F6F3FB] px-2 py-1 text-xs text-[#301D5D] hover:bg-[#EFEAF8] disabled:opacity-50"
+                  className="rounded border border-[#98bdd3] bg-[#f5f6f9] px-2 py-1 text-xs text-[#005a8f] hover:bg-[#daeeff] disabled:opacity-50"
                 >
                   Edit &amp; Resend
                 </button>
@@ -363,7 +363,7 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
                         title="Resend as-is to the original audience">Resend</button>
                       <button type="button" disabled={busyId === row.id || !onEditResend}
                         onClick={() => onEditResend?.(row)}
-                        className="rounded border border-[#B9ADD6] bg-[#F6F3FB] px-2 py-1 text-xs text-[#301D5D] hover:bg-[#EFEAF8] disabled:opacity-50"
+                        className="rounded border border-[#98bdd3] bg-[#f5f6f9] px-2 py-1 text-xs text-[#005a8f] hover:bg-[#daeeff] disabled:opacity-50"
                         title="Open composer prefilled with this email">Edit &amp; Resend</button>
                       {isSeries && (
                         <button type="button" disabled={busyId === row.id}

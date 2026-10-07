@@ -54,19 +54,19 @@ function renderMagicLinkHtml(
   const safeAdv = escapeHtml(advertiserName);
   const safePub = escapeHtml(publicationName);
   return `<!DOCTYPE html>
-<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:#301D5D;">
+<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:#005a8f;">
   <h1 style="font-size:18px;font-weight:600;margin:0 0 16px;">Your ${safeAdv} performance report</h1>
-  <p style="font-size:14px;line-height:1.6;margin:0 0 24px;color:#4b5563;">
+  <p style="font-size:14px;line-height:1.6;margin:0 0 24px;color:#51555b;">
     Click the button below to view your real-time performance report in ${safePub}.
     The link is valid for 24 hours.
   </p>
   <p style="margin:0 0 24px;">
     <a href="${magicLink}" style="display:inline-block;background:${primaryColor};color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:500;font-size:14px;">View report</a>
   </p>
-  <p style="font-size:12px;color:#6b7280;margin:0 0 8px;">Or paste this URL into your browser:</p>
-  <p style="font-size:12px;color:#6b7280;word-break:break-all;margin:0 0 24px;">${magicLink}</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:32px 0 16px;">
-  <p style="font-size:11px;color:#9ca3af;margin:0;">
+  <p style="font-size:12px;color:#51555b;margin:0 0 8px;">Or paste this URL into your browser:</p>
+  <p style="font-size:12px;color:#51555b;word-break:break-all;margin:0 0 24px;">${magicLink}</p>
+  <hr style="border:none;border-top:1px solid #d4d8dd;margin:32px 0 16px;">
+  <p style="font-size:11px;color:#7b8089;margin:0;">
     Sent by ${safePub}. If you didn&rsquo;t request this email, you can safely ignore it.
   </p>
 </body></html>`;

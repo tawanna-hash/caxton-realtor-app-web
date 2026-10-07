@@ -85,7 +85,7 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
   return (
     <main className="mx-auto max-w-[1300px] space-y-6 px-4 py-6 lg:px-8">
       <header>
-        <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Admin · Agent Center</p>
+        <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-[#2f7aa7]">Admin · Agent Center</p>
         <PageTitle size="md">TREC form versions</PageTitle>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
           Upload only official fillable PDFs published by TREC. Each form family keeps its own active revision, so the contract and attached addenda remain available together in the agent transaction packet.
@@ -98,21 +98,21 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
         <div className="mt-4 grid gap-4 lg:grid-cols-[0.8fr_1.3fr_1fr_1.4fr_auto] lg:items-end">
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-slate-800">TREC form number</span>
-            <input value={formNumber} onChange={(event) => setFormNumber(event.target.value)} className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Example: 20-20" />
+            <input value={formNumber} onChange={(event) => setFormNumber(event.target.value)} className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#005a8f]" placeholder="Example: 20-20" />
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-slate-800">Official form title</span>
-            <input value={title} onChange={(event) => setTitle(event.target.value)} className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Example: Third Party Financing Addendum" />
+            <input value={title} onChange={(event) => setTitle(event.target.value)} className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#005a8f]" placeholder="Example: Third Party Financing Addendum" />
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-slate-800">Effective date</span>
-            <input type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]" />
+            <input type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#005a8f]" />
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-slate-800">Official fillable PDF</span>
-            <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="block h-[46px] w-full rounded-md border border-slate-300 bg-white text-sm file:mr-3 file:h-[44px] file:border-0 file:border-r file:border-slate-300 file:bg-[#F7F3EB] file:px-4 file:text-sm file:font-bold file:text-[#301D5D]" />
+            <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="block h-[46px] w-full rounded-md border border-slate-300 bg-white text-sm file:mr-3 file:h-[44px] file:border-0 file:border-r file:border-slate-300 file:bg-[#F7F3EB] file:px-4 file:text-sm file:font-bold file:text-[#005a8f]" />
           </label>
-          <button type="button" onClick={() => void upload()} disabled={busy} className="inline-flex h-[46px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#241548] disabled:cursor-not-allowed disabled:opacity-60">
+          <button type="button" onClick={() => void upload()} disabled={busy} className="inline-flex h-[46px] items-center justify-center gap-2 rounded-md bg-[#005a8f] px-4 text-sm font-bold text-white hover:bg-[#1c3f5e] disabled:cursor-not-allowed disabled:opacity-60">
             {busy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileUp className="h-4 w-4" aria-hidden="true" />}
             Upload and activate
           </button>
@@ -141,7 +141,7 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
                   Review PDF <ExternalLink className="h-4 w-4" aria-hidden="true" />
                 </a>
                 {!version.isActive && (
-                  <button type="button" disabled={busy} onClick={() => void activate(version.id)} className="h-[40px] rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#241548] disabled:opacity-60">Make active</button>
+                  <button type="button" disabled={busy} onClick={() => void activate(version.id)} className="h-[40px] rounded-md bg-[#005a8f] px-4 text-sm font-bold text-white hover:bg-[#1c3f5e] disabled:opacity-60">Make active</button>
                 )}
               </div>
             </article>
@@ -158,7 +158,7 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
           {TREC_FORM_LIBRARY.map((form) => (
             <article key={form.formFamily} className="flex min-w-0 items-center justify-between gap-3 bg-white px-4 py-4">
               <div className="min-w-0">
-                <p className="text-xs font-bold text-[#7059A8]">TREC {form.formNumber}</p>
+                <p className="text-xs font-bold text-[#2f7aa7]">TREC {form.formNumber}</p>
                 <h3 className="mt-1 text-sm font-semibold leading-5 text-slate-950">{form.title}</h3>
                 <p className="mt-1 text-xs text-slate-500">{form.category} · Effective {form.effectiveDate}</p>
               </div>

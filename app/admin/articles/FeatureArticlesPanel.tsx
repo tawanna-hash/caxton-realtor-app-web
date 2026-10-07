@@ -214,7 +214,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
           partner&apos;s public detail page beneath their event photos.
         </p>
         <button onClick={openCreate}
-          className="shrink-0 inline-flex items-center gap-2 bg-[#301D5D] text-white px-4 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors whitespace-nowrap self-start">
+          className="shrink-0 inline-flex items-center gap-2 bg-[#005a8f] text-white px-4 py-2 text-sm font-medium hover:bg-[#1c3f5e] rounded-md transition-colors whitespace-nowrap self-start">
           <Plus size={16} /> Add Article
         </button>
       </div>

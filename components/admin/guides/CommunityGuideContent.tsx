@@ -189,14 +189,14 @@ export default function CommunityGuideContent() {
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
                           {p.isModel && (
-                            <span className="absolute left-2 top-2 rounded-full bg-[#301D5D] px-2 py-0.5 text-[10px] font-semibold text-white">
+                            <span className="absolute left-2 top-2 rounded-full bg-[#005a8f] px-2 py-0.5 text-[10px] font-semibold text-white">
                               Model Home
                             </span>
                           )}
                         </div>
                         <div className="p-3">
                           <p className="text-sm font-semibold text-gray-900">{p.name}</p>
-                          <p className="mt-0.5 text-sm font-medium text-[#301D5D]">{p.priceDisplay}</p>
+                          <p className="mt-0.5 text-sm font-medium text-[#005a8f]">{p.priceDisplay}</p>
                           <p className="mt-1 text-xs text-gray-600">
                             {[`${p.stories} stories`, `${p.beds} bed`, `${p.baths} bath`, `${p.sqftDisplay} sq.ft.`].join(' · ')}
                           </p>
@@ -214,7 +214,7 @@ export default function CommunityGuideContent() {
                   <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm text-gray-700">
                     {EXAMPLE.amenities.map((a) => (
                       <li key={a} className="flex items-center gap-2">
-                        <span className="text-[#301D5D]">•</span>
+                        <span className="text-[#005a8f]">•</span>
                         {a}
                       </li>
                     ))}
@@ -269,7 +269,7 @@ export default function CommunityGuideContent() {
                   <ol className="mt-3 space-y-1 text-sm text-gray-700">
                     {EXAMPLE.salesOffice.directions.map((d, i) => (
                       <li key={i} className="flex gap-2">
-                        <span className="font-medium text-[#301D5D]">{i + 1}.</span>
+                        <span className="font-medium text-[#005a8f]">{i + 1}.</span>
                         <span>{d}</span>
                       </li>
                     ))}
@@ -281,7 +281,7 @@ export default function CommunityGuideContent() {
               <aside className="space-y-4">
                 <div>
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-2 border border-[#301D5D] bg-[#301D5D] text-white rounded-md">
+                    <span className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-2 border border-[#005a8f] bg-[#005a8f] text-white rounded-md">
                       {EXAMPLE.builderName}
                     </span>
                     <FieldBadge name="builderName" />
@@ -326,7 +326,7 @@ export default function CommunityGuideContent() {
                     lat {EXAMPLE.salesOffice.lat}, lng {EXAMPLE.salesOffice.lng}{' '}
                     <FieldBadge name="salesOffice.lat / lng" />
                   </p>
-                  <span className="mt-2 inline-flex items-center rounded-md border border-[#301D5D] px-3 py-2 text-xs font-medium text-[#301D5D]">
+                  <span className="mt-2 inline-flex items-center rounded-md border border-[#005a8f] px-3 py-2 text-xs font-medium text-[#005a8f]">
                     Get Directions →
                   </span>
                 </div>

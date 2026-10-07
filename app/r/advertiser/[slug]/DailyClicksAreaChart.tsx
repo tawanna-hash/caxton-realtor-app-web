@@ -40,20 +40,20 @@ export default function DailyClicksAreaChart({
             <stop offset="100%" stopColor={primaryColor} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+        <CartesianGrid strokeDasharray="3 3" stroke="#d4d8dd" />
         <XAxis
           dataKey="date"
-          tick={{ fontSize: 11, fill: '#6b7280' }}
+          tick={{ fontSize: 11, fill: '#51555b' }}
           tickFormatter={formatDate}
           minTickGap={20}
         />
-        <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} allowDecimals={false} />
+        <YAxis tick={{ fontSize: 11, fill: '#51555b' }} allowDecimals={false} />
         <Tooltip
           labelFormatter={(label) => formatDate(String(label))}
           contentStyle={{
             fontSize: 12,
             background: 'white',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #d4d8dd',
             borderRadius: 4,
           }}
         />

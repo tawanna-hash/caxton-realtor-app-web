@@ -20,8 +20,8 @@ type Signing = { providers: { slug: string; name: string }[]; envelopes: Envelop
 type Data = { connected?: Connected; signing?: Signing; signatures: Sig[]; autoSignature: boolean; uploads: Upload[]; autoIntro: boolean; parties: Party[]; followUps: FollowUp[]; risks: Risk[]; portalToken: string | null; checklist: Step[]; customChecklist: boolean };
 
 const ROLES: Record<string, string> = { client: 'Client', lender: 'Lender', title: 'Title company', coop_agent: 'Co-op agent', other: 'Other' };
-const btn = 'inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#301D5D] hover:bg-[#F8F5FF] disabled:opacity-45';
-const btnPrimary = 'inline-flex min-h-[36px] items-center rounded-md bg-[#301D5D] px-3 text-xs font-bold text-white transition hover:bg-[#42277c] disabled:opacity-45';
+const btn = 'inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-[#005a8f] hover:bg-[#f5f6f9] disabled:opacity-45';
+const btnPrimary = 'inline-flex min-h-[36px] items-center rounded-md bg-[#005a8f] px-3 text-xs font-bold text-white transition hover:bg-[#1c3f5e] disabled:opacity-45';
 const input = 'min-h-[36px] w-full rounded-md border border-slate-300 bg-white px-2 text-sm';
 
 function stepsToText(steps: Step[]) { return steps.map((s) => `${s.title} | ${s.offsetDays} | ${s.anchor}`).join('\n'); }
@@ -59,7 +59,7 @@ function EmailRepliesSetting({ dealId, mail }: { dealId: string; mail: string })
         <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-6 text-xs text-slate-500">
           <span>{m.lastChecked ? `Last checked ${new Date(m.lastChecked).toLocaleString()}` : 'Not checked yet'}</span>
           <span>{m.watching ? `Watching ${m.watching} email ${m.watching === 1 ? 'address' : 'addresses'} from your deals` : 'No email addresses on your deals yet'}</span>
-          <button type="button" className="underline underline-offset-2 hover:text-[#301D5D]" disabled={busy} onClick={() => void act({ action: 'mailbox_check' })}>Check Now</button>
+          <button type="button" className="underline underline-offset-2 hover:text-[#005a8f]" disabled={busy} onClick={() => void act({ action: 'mailbox_check' })}>Check Now</button>
           {m.lastError && <span className="text-[#661102]">{m.lastError}</span>}
         </p>
       )}
@@ -103,8 +103,8 @@ function HoverTipsSetting() {
   return (
     <section aria-label="Hover tips" className="rounded-md border border-gray-200 bg-white p-4">
       <h4 className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Hover Tips</h4>
-      <label className="flex items-center gap-2 text-[13px] font-medium text-[#1B1726]">
-        <input type="checkbox" className="h-4 w-4 accent-[#301D5D]" checked={on} onChange={(e) => toggle(e.target.checked)} />
+      <label className="flex items-center gap-2 text-[13px] font-medium text-[#292a2d]">
+        <input type="checkbox" className="h-4 w-4 accent-[#005a8f]" checked={on} onChange={(e) => toggle(e.target.checked)} />
         <span>Show explanations when I hover over a field</span>
       </label>
     </section>
@@ -269,7 +269,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
               {data.parties.map((p) => (
                 <li key={p.id} className="flex w-full items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7059A8]">{ROLES[p.role] ?? p.role}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#2f7aa7]">{ROLES[p.role] ?? p.role}</p>
                     <p className="mt-0.5 break-words text-base font-semibold text-slate-900">{p.name || 'No name'}</p>
                     <p className="break-all text-sm text-slate-600">{p.email || 'No email'}</p>
                   </div>
@@ -350,7 +350,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                   </label>
                 )}
                 {data.connected.mail && <EmailRepliesSetting dealId={deal.id} mail={data.connected.mail} />}
-                {notice && <p role="status" className="font-semibold text-[#301D5D]">{notice}</p>}
+                {notice && <p role="status" className="font-semibold text-[#005a8f]">{notice}</p>}
               </div>
             )}
           </section>
