@@ -11,10 +11,13 @@ function collect(): Entry[] {
   document.querySelectorAll<HTMLElement>('span.sr-only').forEach((span) => {
     const host = (span.previousElementSibling ?? span.nextElementSibling ?? span.parentElement) as HTMLElement | null;
     if (!host || !host.classList.contains('tip-host')) return;
+    const rect = host.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return;
     const text = (span.textContent ?? '').trim();
     if (!text) return;
+    const heading = host.querySelector('h1,h2,h3,h4')?.textContent?.trim();
     const label = (host.getAttribute('aria-label') || host.getAttribute('placeholder') || (host as HTMLInputElement).name
-      || (host.innerText ?? '').trim().split('\n')[0] || 'Field').slice(0, 60);
+      || heading || (host.innerText ?? '').trim().split('\n')[0] || 'Field').slice(0, 60);
     const key = `${label}|${text}`;
     if (seen.has(key)) return;
     seen.add(key);

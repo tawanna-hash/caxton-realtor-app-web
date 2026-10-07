@@ -68,7 +68,11 @@ function LoginInner() {
   }
 
   const [onClosingTimeHost, setOnClosingTimeHost] = useState(false);
-  useEffect(() => { setOnClosingTimeHost(/(^|\.)itsalmostclosingtime\.com$/i.test(window.location.hostname)); }, []);
+  useEffect(() => {
+    const ct = /(^|\.)itsalmostclosingtime\.com$/i.test(window.location.hostname);
+    setOnClosingTimeHost(ct);
+    if (ct) document.title = "Sign In | It's Almost Closing Time!";
+  }, []);
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
@@ -137,7 +141,7 @@ function LoginInner() {
           <Link href="/auth/forgot-password" className="text-gray-500 underline">
             Forgot password?
           </Link>
-          <Link href="/subscribe" className="text-brand-700 font-medium underline">
+          <Link href={onClosingTimeHost ? '/auth/sign-up' : '/subscribe'} className="text-brand-700 font-medium underline">
             Create an account
           </Link>
         </div>

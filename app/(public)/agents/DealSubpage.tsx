@@ -243,6 +243,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
   };
   const [providerCategory, setProviderCategory] = useState<string | null>(null);
   const [showPersonForm, setShowPersonForm] = useState(false);
+  const [personErrors, setPersonErrors] = useState<{ name?: string; email?: string }>({});
 
   if (!deal) {
     return (
@@ -988,19 +989,25 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
                   {!locked && <button type="button" className={btnPrimary} onClick={() => setShowPersonForm((v) => !v)}><Plus className="h-4 w-4" aria-hidden="true" /> Add People</button>}
                 </div>
                 {showPersonForm && (
-                  <form className="ds-card mt-3 grid gap-3 sm:grid-cols-2" onSubmit={(e) => {
+                  <form noValidate className="ds-card mt-3 grid gap-3 sm:grid-cols-2" onSubmit={(e) => {
                     e.preventDefault();
                     const data = new FormData(e.currentTarget);
                     const name = String(data.get('name') ?? '').trim();
-                    if (!name) return;
+                    const emailVal = String(data.get('email') ?? '').trim();
+                    const errs: { name?: string; email?: string } = {};
+                    if (!name) errs.name = 'Enter A Name.';
+                    if (emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) errs.email = 'Enter A Valid Email, Like name@example.com.';
+                    setPersonErrors(errs);
+                    if (errs.name || errs.email) return;
                     onUpdate('clientContacts', [...people, { id: newId('person'), name, role: String(data.get('role') ?? ''), email: String(data.get('email') ?? ''), phone: String(data.get('phone') ?? '') }].slice(0, 20));
                     e.currentTarget.reset();
+                    setPersonErrors({});
                     setShowPersonForm(false);
                   }}>
-                    <input name="name" required placeholder="Name" aria-label="Name" className={input} />
-                    <input name="role" placeholder="Role (buyer, lender, title...)" aria-label="Role" className={input} />
-                    <input name="email" type="email" placeholder="Email" aria-label="Email" className={input} />
-                    <input name="phone" type="tel" placeholder="Phone" aria-label="Phone" className={input} />
+                    <label className="block min-w-0"><span className="block text-[11px] font-medium uppercase tracking-[0.08em] text-[#7A7787]">Name</span><input name="name" required placeholder="Full Name" aria-invalid={personErrors.name ? true : undefined} className={`${input} mt-1`} />{personErrors.name && <span role="alert" className="mt-1 block text-[13px] text-[#661102]">{personErrors.name}</span>}</label>
+                    <label className="block min-w-0"><span className="block text-[11px] font-medium uppercase tracking-[0.08em] text-[#7A7787]">Role</span><input name="role" placeholder="Buyer, Lender, Title..." className={`${input} mt-1`} /></label>
+                    <label className="block min-w-0"><span className="block text-[11px] font-medium uppercase tracking-[0.08em] text-[#7A7787]">Email</span><input name="email" type="email" placeholder="name@example.com" aria-invalid={personErrors.email ? true : undefined} className={`${input} mt-1`} />{personErrors.email && <span role="alert" className="mt-1 block text-[13px] text-[#661102]">{personErrors.email}</span>}</label>
+                    <label className="block min-w-0"><span className="block text-[11px] font-medium uppercase tracking-[0.08em] text-[#7A7787]">Phone</span><input name="phone" type="tel" placeholder="(512) 555-0100" className={`${input} mt-1`} /></label>
                     <div className="sm:col-span-2 flex justify-end gap-2"><button type="button" className={btn} onClick={() => setShowPersonForm(false)}>Cancel</button><button type="submit" className={btnPrimary}>Save</button></div>
                   </form>
                 )}

@@ -1281,6 +1281,7 @@ export default function ClosingTime({
   const [ready, setReady] = useState(false);
   const [syncState, setSyncState] = useState<SyncState>('loading');
   const [taskTitle, setTaskTitle] = useState('');
+  const [taskError, setTaskError] = useState('');
   const [taskDueDate, setTaskDueDate] = useState('');
   const [taskPriority, setTaskPriority] = useState<TrecTaskPriority>('normal');
   const [reminderDeadlineId, setReminderDeadlineId] = useState('');
@@ -1700,6 +1701,34 @@ export default function ClosingTime({
   };
 
   const activeDeal = deals.find((deal) => deal.id === activeDealId) ?? null;
+  // Page title follows the current section so browser tabs and history entries are distinguishable.
+  useEffect(() => {
+    const label = DESK_VIEWS.find((v) => v.id === effectiveView)?.label ?? (effectiveView === 'deal-page' ? 'Deal' : 'Agent Desk');
+    document.title = `${label}${activeDeal && effectiveView !== 'deals' ? ` · ${activeDeal.propertyAddress || activeDeal.title || 'Deal'}` : ''} | It's Almost Closing Time!`;
+  }, [effectiveView, activeDeal]);
+  // Browser Back/Forward move between sections instead of leaving the app.
+  const navStateRef = useRef<string>('');
+  useEffect(() => {
+    const snap = { deskView, workspacePage, dealPageId };
+    const key = JSON.stringify(snap);
+    if (navStateRef.current === key) return;
+    const first = navStateRef.current === '';
+    navStateRef.current = key;
+    try {
+      if (first) window.history.replaceState({ ct: snap }, '');
+      else window.history.pushState({ ct: snap }, '');
+    } catch { /* ignore */ }
+  }, [deskView, workspacePage, dealPageId]);
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      const st = (e.state as { ct?: { deskView: string; workspacePage: number; dealPageId: string | null } } | null)?.ct;
+      if (!st) return;
+      navStateRef.current = JSON.stringify(st);
+      setDeskView(st.deskView); setWorkspacePage(st.workspacePage as never); setDealPageId(st.dealPageId);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
   const isDealFullyComplete = (deal: AgentDeal) =>
     deal.tasks.every((task) => task.complete) &&
     deal.reminders.every((reminder) => reminder.complete) &&
@@ -2165,7 +2194,9 @@ export default function ClosingTime({
   };
 
   const addTask = () => {
-    if (!activeDeal || !taskTitle.trim()) return;
+    if (!activeDeal) return;
+    if (!taskTitle.trim()) { setTaskError('Enter A Task Name Before Adding.'); return; }
+    setTaskError('');
     const task: AgentTask = { id: getId('task'), title: taskTitle.trim(), dueDate: taskDueDate, priority: taskPriority, status: 'todo', complete: false };
     applyActiveAction(`Added ${taskPriority} priority task: ${task.title}`, { tasks: [...activeDeal.tasks, task] });
     setTaskTitle(''); setTaskDueDate(''); setTaskPriority('normal');
@@ -2740,6 +2771,7 @@ export default function ClosingTime({
 
   return (
     <main id="agent-desk" className="min-h-screen bg-white">
+      <h1 className="sr-only">Closing Time Agent Desk</h1>
       <div className="w-full">
         <div className="grid grid-cols-[64px_minmax(0,1fr)] items-start sm:grid-cols-[200px_minmax(0,1fr)] lg:grid-cols-[232px_minmax(0,1fr)]">
           <aside aria-label="Deals" className="sticky top-16 flex min-w-0 flex-col lg:top-24 ds-rail">
@@ -3826,11 +3858,12 @@ export default function ClosingTime({
                 <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
               </div>
               <div className="grid min-w-0 gap-3 border-y border-[#E6E5EC] bg-[#F6F3FB] px-[1.125rem] py-3 sm:grid-cols-[minmax(0,1fr)_150px_120px_auto]">
-                <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="h-10 min-w-0 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
+                <input value={taskTitle} onChange={(event) => { setTaskTitle(event.target.value); if (taskError) setTaskError(''); }} aria-label="Task name" aria-invalid={taskError ? true : undefined} aria-describedby={taskError ? 'task-name-error' : undefined} className="h-10 min-w-0 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
                 <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="h-10 min-w-0 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm outline-none focus:border-[#301D5D]" />
                 <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="h-10 min-w-0 w-full rounded-md border border-[#E6E5EC] bg-white px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
                 <button type="button" onClick={addTask} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#E6E5EC] bg-white px-4 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
               </div>
+              {taskError && <p id="task-name-error" role="alert" className="border-b border-[#E6E5EC] bg-[#FFEAE6] px-[1.125rem] py-2 text-[13px] text-[#661102]">{taskError}</p>}
               
               <div>
                 {!activeDeal.tasks.length && !activeDeal.reminders.length ? <p className="px-[1.125rem] py-6 text-sm text-[#7A7787]">Use deadline presets (7d, 3d, 1d, due) in the review step or add a custom action here.</p> : <>
