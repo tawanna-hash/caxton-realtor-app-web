@@ -308,12 +308,14 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
   const hasOrder = (section: ContractSection) => (rawDeal.contractFieldOrder?.[section.id] ?? []).length > 0;
   type FieldItem = { key: string; kind: 'map'; fl: ContractSection['fields'][number] } | { key: string; kind: 'custom'; cf: (typeof customFields)[number] } | { key: string; kind: 'gap' };
   const orderedItems = (section: ContractSection): FieldItem[] => {
-    const items: FieldItem[] = [
-      ...section.fields.filter((fl) => !hidden.includes(fl.id)).map((fl) => ({ key: fl.id, kind: 'map' as const, fl })),
-      ...customFields.filter((cf) => cf.section === section.id).map((cf) => ({ key: `cf:${cf.id}`, kind: 'custom' as const, cf })),
-    ];
+    const mapItems = section.fields.filter((fl) => !hidden.includes(fl.id)).map((fl) => ({ key: fl.id, kind: 'map' as const, fl }));
+    const customItems = customFields.filter((cf) => cf.section === section.id).map((cf) => ({ key: `cf:${cf.id}`, kind: 'custom' as const, cf }));
+    // Lender reads like Title Company: the lender and loan officer lead, then address, contact and escrow rows.
+    const items: FieldItem[] = section.id === 'lender' ? [...customItems, ...mapItems] : [...mapItems, ...customItems];
     const order = rawDeal.contractFieldOrder?.[section.id] ?? [];
     if (!order.length) return items;
+    // An older hand-placed layout with blank spacers is ignored for Lender unless Arrange is on.
+    if (section.id === 'lender' && !arrange && order.some((k) => k.startsWith('gap:'))) return items;
     for (const k of order) if (k.startsWith('gap:')) items.push({ key: k, kind: 'gap' });
     const idx = (k: string) => { const i = order.indexOf(k); return i === -1 ? order.length + items.findIndex((x) => x.key === k) : i; };
     return [...items].sort((x, y) => idx(x.key) - idx(y.key));
@@ -445,7 +447,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
                     if (item.kind === 'custom') {
                       const cf = item.cf;
                       return (
-                        <div key={key} {...cellAttrs} className={`block min-w-0${pickCls}`}>
+                        <div key={key} {...cellAttrs} className={`block min-w-0${section.id === 'lender' ? ' sm:col-span-2' : ''}${pickCls}`}>
                           <div className="flex items-center justify-between gap-3 pb-1">
                             <input value={cf.label} onChange={(e) => putCustom(customFields.map((x) => (x.id === cf.id ? { ...x, label: e.target.value } : x)))} aria-label="Field name" placeholder="Field Name" className="cf-label h-4 min-w-0 flex-1 bg-transparent text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 outline-none" />
                             <span className="flex items-center gap-3">{xBtn('Remove field', () => removeCustom(section, cf.id))}</span>
@@ -557,9 +559,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
               <Fragment key={section.id}>
               {tab === section.id && (
               <PinnedDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
-                <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900">
+                <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-[1.125rem] py-4 text-sm font-semibold text-slate-900">
                   <span>{section.title}</span>
-                  <span className="flex items-center gap-3">
+                  <span className="flex flex-wrap items-center gap-2">
                     {section.fields.length > 0 && <span className="text-xs font-normal text-slate-500">{filled} Of {visibleFields.length} Filled</span>}
                     {hiddenCount > 0 && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); restoreHidden(section); }}>Restore Fields ({hiddenCount})</button>}
                     <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); const d = e.currentTarget.closest('details'); if (d) d.open = true; putCustom([...customFields, { id: newId('cf'), section: section.id, label: 'New Field', value: '' }]); }}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Field</button>
@@ -571,7 +573,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
               )}
               {section.id === 'property' && tab === 'key-details' && (
                 <PinnedDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
-                  <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span><span className="flex items-center gap-3">{onOpenCalculator && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenCalculator('calc-commission'); }}>Commission Calculator</button>}<button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setArrange((v) => !v); setKdPicked(null); }}>{arrange ? 'Done Arranging' : 'Arrange'}</button><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId('key-details'); }}>Quick Entry</button></span></summary>
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span><span className="flex flex-wrap items-center gap-2">{onOpenCalculator && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenCalculator('calc-commission'); }}>Commission Calculator</button>}<button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setArrange((v) => !v); setKdPicked(null); }}>{arrange ? 'Done Arranging' : 'Arrange'}</button><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId('key-details'); }}>Quick Entry</button></span></summary>
                   <div className="border-t border-[#F6F3FB]">
       <section className="overflow-hidden bg-white" aria-label="Contract Terms">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4">
@@ -654,8 +656,8 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
           </div>
         ) : qs ? renderSectionBody(qs, false) : null;
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-label={`${title} quick entry`} onClick={() => setQuickId(null)}>
-            <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/30 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={`${title} quick entry`} onClick={() => setQuickId(null)}>
+            <div className="h-full w-full max-w-4xl overflow-y-auto bg-white shadow-xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between border-b border-[#E6E5EC] px-[1.125rem] py-4">
                 <p className="text-sm font-semibold text-slate-900">{title}</p>
                 <button type="button" aria-label="Close" onClick={() => setQuickId(null)} className="!border-0 !bg-transparent text-slate-500 hover:!text-[#301D5D]"><X className="h-4 w-4" aria-hidden="true" /></button>

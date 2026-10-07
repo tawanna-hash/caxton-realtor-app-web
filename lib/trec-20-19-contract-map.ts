@@ -46,9 +46,9 @@ export const CONTRACT_MAP_SECTIONS: ContractMapSection[] = [
     f('p08_f138', 'State', 't', undefined, [3, 6]), f('app:seller-broker.zip', 'ZIP', 't', undefined, [4, 6]),
   ] },
   { id: 'lender', title: 'Lender', fields: [
-    f('app:lender.escrow', 'Escrow Agent', 't', 2),
     f('app:lender.address', 'Address'), f('app:lender.city', 'City'), f('app:lender.state', 'State'), f('app:lender.zip', 'ZIP'),
     f('app:lender.address2', 'Address (Continued)'), f('app:lender.phone', 'Phone'), f('app:lender.fax', 'Fax'), f('app:lender.email', 'Email'),
+    f('app:lender.escrow', 'Escrow Agent', 't', 2),
   ] },
   { id: 'title-company', title: 'Title Company', fields: [
     f('p02_f038', 'Title Company', 't', 2), f('p02_f028', 'Escrow Agent', 't', 2),

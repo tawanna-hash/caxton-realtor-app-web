@@ -273,7 +273,7 @@ export async function proxy(req: NextRequest) {
   const host = (req.headers.get('host') ?? '').toLowerCase().split(':')[0];
   if ((host === 'itsalmostclosingtime.com' || host === 'www.itsalmostclosingtime.com') && pathname === '/') {
     const url = req.nextUrl.clone();
-    url.pathname = '/agents/closing-time';
+    url.pathname = '/closing-time-home';
     return NextResponse.rewrite(url);
   }
 

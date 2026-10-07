@@ -1782,3 +1782,11 @@ input::placeholder, textarea::placeholder { color: var(--astro-text-placeholder)
 #agent-desk [data-testid="contract-page"] .min-w-0:hover button[aria-label="Delete field"], #agent-desk [data-testid="contract-page"] .min-w-0:focus-within button[aria-label="Delete field"],
 #agent-desk [data-testid="contract-page"] .min-w-0:hover button[aria-label="Remove field"], #agent-desk [data-testid="contract-page"] .min-w-0:focus-within button[aria-label="Remove field"] { opacity: 1; }
 @media (hover: none) { #agent-desk [data-testid="contract-page"] button[aria-label="Delete field"], #agent-desk [data-testid="contract-page"] button[aria-label="Remove field"] { opacity: 1; } }
+
+/* Contract page on phones: 16px inputs stop iOS zoom, 44px touch targets, no sideways scroll. */
+@media (max-width: 640px) {
+  #agent-desk [data-testid="contract-page"] input, #agent-desk [data-testid="contract-page"] textarea { font-size: 16px !important; }
+  #agent-desk [data-testid="contract-page"] [role="tab"] { min-height: 44px; }
+  #agent-desk [data-testid="contract-page"] summary button, #agent-desk [data-testid="contract-page"] section button { min-height: 40px; }
+  #agent-desk [data-testid="contract-page"] { overflow-x: hidden; }
+}

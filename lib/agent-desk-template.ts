@@ -11,22 +11,7 @@ export const AGENT_DESK_TEMPLATE = {
     }
   ],
   "contractFieldOrder": {
-    "lender": [
-      "cf:cf-muv4mt3eki8d",
-      "app:lender.address",
-      "gap:g62azm",
-      "gap:ulvhyp",
-      "gap:ujf6f6",
-      "app:lender.city",
-      "gap:n0gojg",
-      "gap:0v7ser",
-      "gap:n2cyfy",
-      "app:lender.state",
-      "gap:4e6dzi",
-      "gap:nuir1m",
-      "gap:nr9kwf",
-      "app:lender.zip"
-    ]
+    "lender": []
   },
   "contractHiddenFields": [],
   "contractFieldLabels": {}
