@@ -95,6 +95,7 @@ const CommissionCalculatorClient = dynamic(() => import('../resources/commission
 const BuyerClosingCostsClient = dynamic(() => import('../resources/buyer-closing-costs/BuyerClosingCostsClient'), { ssr: false });
 import { effectiveAgentSide } from './purchase-documents';
 import DealSubpage, { TASK_TEMPLATES } from './DealSubpage';
+import DocumentRequestsCard from './DocumentRequestsCard';
 import { syncStoredFromForm } from './ContractPage';
 import { autofillDeal, buildAutofillIndex } from '@/lib/deal-autofill';
 import { AGENT_DESK_TEMPLATE, templateTaskIdsFor } from '@/lib/agent-desk-template';
@@ -2960,6 +2961,7 @@ export default function ClosingTime({
                 </div>
               );
             })()}
+            {activeDeal && ['audit', 'transaction', 'readiness', 'd-messages', 'd-portal', 'd-schedule'].includes(effectiveView) && <DocumentRequestsCard headless key={`sync-${activeDeal.id}`} deal={activeDeal} locked={isDealLocked(activeDeal)} documentGroups={DOCUMENT_GROUPS} onUpdate={updateActiveDeal} />}
             {effectiveView === 'utilities' && <UtilitiesPanel />}
             {effectiveView === 'd-messages' && activeDeal && <div className="ds-page"><MessagesPanel key={activeDeal.id} deal={activeDeal} /></div>}
             {effectiveView === 'd-portal' && activeDeal && <div className="ds-page"><ClientPortalPanel key={activeDeal.id} deal={activeDeal} /></div>}
