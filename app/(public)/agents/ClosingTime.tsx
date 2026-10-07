@@ -1989,6 +1989,25 @@ export default function ClosingTime({
     applyActiveAction(`Updated document request status to ${status.replace('_', ' ')}`, { documents: activeDeal.documents.map((document) => document.id === documentId ? { ...document, status, complete: status === 'received' || status === 'reviewed', updatedAt: now } : document) });
   };
 
+  // Files the Cash-To-Close estimate PDF in the active deal's documents (one entry, replaced on each save).
+  const saveCashToCloseToDocuments = async (file: File) => {
+    if (!activeDeal) throw new Error('No deal.');
+    const documentId = 'cash-to-close-estimate';
+    const form = new FormData();
+    form.set('file', new File([file], 'Cash-To-Close-Estimate.pdf', { type: 'application/pdf' }));
+    form.set('dealId', activeDeal.id);
+    form.set('documentId', documentId);
+    const response = await fetch('/api/agent-command-center/documents/upload', { method: 'POST', body: form });
+    const data = (await response.json().catch(() => null)) as { driveFileId?: string; fileName?: string; fileUploadedAt?: string } | null;
+    if (!response.ok || !data?.driveFileId) throw new Error('Upload failed.');
+    const now = new Date().toISOString();
+    const entry = { id: documentId, label: 'Cash To Close Estimate', status: 'received' as const, complete: true, requestedAt: now, updatedAt: now, driveFileId: data.driveFileId, fileName: data.fileName ?? 'Cash-To-Close-Estimate.pdf', fileUploadedAt: data.fileUploadedAt ?? now };
+    const exists = activeDeal.documents.some((d) => d.id === documentId);
+    applyActiveAction('Saved Cash To Close estimate to documents', {
+      documents: exists ? activeDeal.documents.map((d) => (d.id === documentId ? { ...d, ...entry, requestedAt: d.requestedAt } : d)) : [...activeDeal.documents, entry],
+    });
+  };
+
   const [documentUploadBusyId, setDocumentUploadBusyId] = useState<string | null>(null);
   const [documentUploadError, setDocumentUploadError] = useState<string>('');
 
@@ -3080,7 +3099,7 @@ export default function ClosingTime({
             {effectiveView === 'alert-setup' && <AlertSetupContent />}
             {effectiveView === 'calc-net-sheet' && <div className="ds-embed"><SellerNetSheetClient /></div>}
             {effectiveView === 'calc-commission' && <div className="ds-embed"><CommissionCalculatorClient /></div>}
-            {effectiveView === 'calc-cash' && <div className="ds-embed"><BuyerClosingCostsClient /></div>}
+            {effectiveView === 'calc-cash' && <div className="ds-embed"><BuyerClosingCostsClient onSaveToDeal={activeDeal ? saveCashToCloseToDocuments : undefined} dealLabel={activeDeal?.propertyAddress || activeDeal?.title || undefined} /></div>}
             <div data-section-key="integrations" className="min-w-0"><IntegrationsPanel calendarTile={(
               <li className="ds-cal-tile">
                 {!calendarFeed ? (

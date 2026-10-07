@@ -14,7 +14,7 @@ import {
 import { fmtUSD } from '@/lib/mortgage-math';
 import { NumberField, DateField } from '../_components/CalcInputs';
 import ResourceFloater from '../_components/ResourceFloater';
-import { reportTimestamp, type CalcReport } from '../_components/calcPdf';
+import { createCalcReportFile, reportTimestamp, type CalcReport } from '../_components/calcPdf';
 
 const EYEBROW = 'text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2';
 
@@ -24,7 +24,11 @@ function defaultClosing(): string {
   return d.toISOString().slice(0, 10);
 }
 
-export default function BuyerClosingCostsClient() {
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+
+// onSaveToDeal is passed only when the calculator is opened from a deal; it files the PDF in that deal's documents.
+export default function BuyerClosingCostsClient({ onSaveToDeal, dealLabel }: { onSaveToDeal?: (file: File) => Promise<void>; dealLabel?: string } = {}) {
+  const [saveState, setSaveState] = useState<SaveState>('idle');
   // Loan basics
   const [homePrice, setHomePrice] = useState(450000);
   const [downPct, setDownPct] = useState(20);
@@ -163,6 +167,24 @@ export default function BuyerClosingCostsClient() {
       <header className="mb-10 print:mb-4">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle size="md">Buyer Closing Costs</PageTitle>
+        {onSaveToDeal && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 print:hidden">
+            <button
+              type="button"
+              disabled={saveState === 'saving'}
+              onClick={async () => {
+                setSaveState('saving');
+                try { await onSaveToDeal(await createCalcReportFile(buildReport())); setSaveState('saved'); } catch { setSaveState('error'); }
+              }}
+              className="h-9 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D] disabled:opacity-60"
+            >
+              {saveState === 'saving' ? 'Saving…' : 'Save To Deal Documents'}
+            </button>
+            <span className="text-[13px] text-[#7A7787]" role="status">
+              {saveState === 'saved' ? `Saved to ${dealLabel ?? 'the deal'} documents. Save again to replace it.` : saveState === 'error' ? 'Could not save. Try again in a moment.' : `Files this estimate in ${dealLabel ?? 'the deal'} documents.`}
+            </span>
+          </div>
+        )}
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4 print:hidden">
           Estimate everything your buyer brings to the closing table. Lender
           fees, title services, prepaids, and escrow setup — sectioned to match
