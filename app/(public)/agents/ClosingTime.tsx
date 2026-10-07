@@ -13,6 +13,7 @@ import IntegrationsPanel from './IntegrationsPanel';
 import AlertSetupContent from './AlertSetupContent';
 import UtilitiesPanel from './UtilitiesPanel';
 import DataBackupsPanel from './DataBackupsPanel';
+import AutomationsPanel from './AutomationsPanel';
 import TestimonialHubClient from '@/app/(public)/testimonial-hub/TestimonialHubClient';
 import { ReferralNetworkPanel, WorkFasterPanel, type ReferralProvider } from './AgentToolsPanels';
 
@@ -50,7 +51,8 @@ const SETTINGS_VIEW = { id: 'coordinator', label: 'Settings', keys: ['assist', '
 const UTILITIES_VIEW = { id: 'utilities', label: 'Utilities', keys: [] as string[] };
 const DATA_VIEW = { id: 'data-backups', label: 'Data And Backups', keys: [] as string[] };
 const TESTIMONIALS_VIEW = { id: 'testimonials', label: 'Testimonials Hub', keys: [] as string[] };
-const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, SETTINGS_VIEW, UTILITIES_VIEW, DATA_VIEW, TESTIMONIALS_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
+const AUTOMATIONS_VIEW = { id: 'automations', label: 'Automations', keys: [] as string[] };
+const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, SETTINGS_VIEW, UTILITIES_VIEW, DATA_VIEW, TESTIMONIALS_VIEW, AUTOMATIONS_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug, 'my-schedule': CalendarClock };
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -1203,7 +1205,7 @@ export default function ClosingTime({
   const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
-  const RES_VIEW_ACTIVE = ['utilities', 'referral', 'testimonials', 'data-backups'].includes(effectiveView);
+  const RES_VIEW_ACTIVE = ['utilities', 'referral', 'testimonials', 'data-backups', 'automations'].includes(effectiveView);
   // Scheduling pages are working pages: a refresh keeps the exact scroll position there.
   useKeepScroll(effectiveView === 'my-schedule' || effectiveView === 'd-schedule', ready);
   useEffect(() => {
@@ -2635,6 +2637,11 @@ export default function ClosingTime({
                         <span>Data And Backups</span>
                       </button>
                     </li>
+                    <li>
+                      <button type="button" aria-current={effectiveView === 'automations' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('automations'); }} className="ds-navbtn">
+                        <span>Automations</span>
+                      </button>
+                    </li>
                   </ul>
                 )}
               </li>
@@ -2985,6 +2992,7 @@ export default function ClosingTime({
             {activeDeal && ['audit', 'transaction', 'readiness', 'd-messages', 'd-portal', 'd-schedule'].includes(effectiveView) && <DocumentRequestsCard headless key={`sync-${activeDeal.id}`} deal={activeDeal} locked={isDealLocked(activeDeal)} documentGroups={DOCUMENT_GROUPS} onUpdate={updateActiveDeal} />}
             {effectiveView === 'utilities' && <UtilitiesPanel />}
             {effectiveView === 'data-backups' && <DataBackupsPanel />}
+            {effectiveView === 'automations' && <AutomationsPanel />}
             {effectiveView === 'testimonials' && <div className="ds-page"><TestimonialHubClient /></div>}
             {effectiveView === 'd-messages' && activeDeal && <div className="ds-page"><MessagesPanel key={activeDeal.id} deal={activeDeal} /></div>}
             {effectiveView === 'd-portal' && activeDeal && <div className="ds-page"><ClientPortalPanel key={activeDeal.id} deal={activeDeal} /></div>}

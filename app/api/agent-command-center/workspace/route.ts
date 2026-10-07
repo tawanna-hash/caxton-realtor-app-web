@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { z } from 'zod';
 import { agentCommandCenterWorkspaceSchema } from '@/lib/agent-command-center-workspace';
 import { requireUser } from '@/lib/server/auth/user';
@@ -7,6 +7,7 @@ import {
   getAgentCommandCenterWorkspace,
   saveAgentCommandCenterWorkspace,
 } from '@/lib/server/agent-command-center-workspaces';
+import { diffDeals, dispatchDealEvents, hasActiveWebhooks } from '@/lib/server/closing-time-automation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,8 @@ export const GET = withErrorHandling(async (): Promise<Response> => {
 export const PUT = withErrorHandling(async (req: Request): Promise<Response> => {
   const user = await requireUser();
   const input = saveSchema.parse(await req.json());
+  const wantsEvents = await hasActiveWebhooks(user.realtorId).catch(() => false);
+  const before = wantsEvents ? (await getAgentCommandCenterWorkspace(user.realtorId))?.workspace ?? null : null;
   const result = await saveAgentCommandCenterWorkspace(
     user.realtorId,
     input.workspace,
@@ -51,6 +54,11 @@ export const PUT = withErrorHandling(async (req: Request): Promise<Response> => 
       version: result.current?.version ?? null,
       updatedAt: result.current?.updatedAt ?? null,
     }, 409);
+  }
+
+  if (wantsEvents) {
+    const events = diffDeals(before, result.record.workspace);
+    after(() => dispatchDealEvents(user.realtorId, events).catch(() => undefined));
   }
 
   return privateResponse({
