@@ -538,7 +538,7 @@ function ReadinessChecklist({
   };
 
   return (
-    <div className="ds-page" data-testid="readiness-check">
+    <div className="ds-page" data-testid="readiness-check" data-section-key="readiness">
       <div className="rounded-2xl border border-[#E6E5EC] bg-white">
         <div className="px-[1.125rem] py-4">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7A7787]">Readiness Check</p>
