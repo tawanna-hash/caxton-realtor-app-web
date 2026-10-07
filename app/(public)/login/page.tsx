@@ -38,6 +38,8 @@ function LoginInner() {
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [needCode, setNeedCode] = useState(false);
+  const [code, setCode] = useState('');
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,10 +51,11 @@ function LoginInner() {
         method: 'POST',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ email: email.trim(), password, ...(needCode ? { totp: code.trim() } : {}) }),
       });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
+        if (j?.details?.twoFactorRequired) setNeedCode(true);
         throw new Error(j.error || j.message || `Sign-in failed (${r.status})`);
       }
       router.push(next);
@@ -105,10 +108,22 @@ function LoginInner() {
                 {showPw ? 'Hide' : 'Show'}
               </button>
             </div>
+          {needCode && (
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              placeholder="6-digit code or recovery code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="w-full px-4 py-4 border border-gray-300 rounded-md text-base bg-white focus:outline-none focus:border-brand-700"
+            />
+          )}
           {err && <p className="text-sm text-[#661102]">{err}</p>}
           <button
             type="submit"
-            disabled={busy || !email || !password}
+            disabled={busy || !email || !password || (needCode && !code.trim())}
             className="w-full py-4 bg-brand-700 text-white text-base font-medium uppercase tracking-wider rounded-md disabled:opacity-40"
           >
             {busy ? 'Working…' : 'Sign In'}

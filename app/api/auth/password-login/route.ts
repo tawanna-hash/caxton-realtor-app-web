@@ -30,6 +30,7 @@ import { verifyCredentials } from '@/lib/server/auth/verify-credentials';
 import { SESSION_COOKIE_NAME } from '@/lib/auth/cookie-names';
 import { getRealtorMe } from '@/lib/server/realtors-store';
 import { logger } from '@/lib/server/logger';
+import { isTwoFactorEnabled, verifySignInCode } from '@/lib/server/two-factor';
 
 export const runtime = 'nodejs';
 
@@ -40,11 +41,20 @@ const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 export const POST = withErrorHandling(async (req: Request) => {
   await rateLimit('auth');
 
-  const input = passwordLoginSchema.parse(await req.json());
+  const raw = await req.json();
+  const input = passwordLoginSchema.parse(raw);
+  const totp = typeof (raw as { totp?: unknown })?.totp === 'string' ? (raw as { totp: string }).totp : '';
 
   const result = await verifyCredentials(input.email, input.password);
   if (!result) {
     throw new ApiError(401, INVALID_CREDENTIALS_MSG);
+  }
+
+  if (await isTwoFactorEnabled(result.realtorId)) {
+    if (!totp.trim()) throw new ApiError(401, 'Enter your 6-digit code', { twoFactorRequired: true });
+    if (!(await verifySignInCode(result.realtorId, totp))) {
+      throw new ApiError(401, 'That code is not right', { twoFactorRequired: true });
+    }
   }
 
   // salt must match authjs.ts's cookies.sessionToken.name exactly — Auth.js

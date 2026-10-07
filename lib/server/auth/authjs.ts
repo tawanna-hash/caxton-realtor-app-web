@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 
 import { getPool } from "@/lib/server/db/neon";
 import { verifyAndClaimInternalTrustToken } from "./internal-trust-token";
+import { isTwoFactorEnabled, verifySignInCode } from "@/lib/server/two-factor";
 import { verifyCredentials } from "./verify-credentials";
 import { realtorAdapter } from "./adapter";
 import { logger } from "@/lib/server/logger";
@@ -51,6 +52,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        totp: { label: "Two-step code", type: "text" },
       },
       async authorize(creds) {
         if (typeof creds?.email !== "string" || typeof creds?.password !== "string") {
@@ -58,6 +60,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
         const result = await verifyCredentials(creds.email, creds.password);
         if (!result) return null;
+
+        // Two-step sign-in: accounts that turned it on must present a valid code here too.
+        if (await isTwoFactorEnabled(result.realtorId)) {
+          const code = typeof creds.totp === "string" ? creds.totp : "";
+          if (!code || !(await verifySignInCode(result.realtorId, code))) return null;
+        }
 
         return {
           id: result.realtorId,
@@ -101,6 +109,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
         const realtor = rows[0];
         if (!realtor) return null;
+        // Link and reset flows cannot satisfy two-step sign-in. Those users sign in with password and code.
+        if (await isTwoFactorEnabled(realtor.id)) return null;
 
         return {
           id: realtor.id,
