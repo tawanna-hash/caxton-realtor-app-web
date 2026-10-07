@@ -80,7 +80,7 @@ function LoginInner() {
           Sign in or Create an Account
         </h1>
         <p className="text-sm text-gray-500 font-light text-center mb-6">
-          {onClosingTimeHost ? 'Sign in to your deal workspace.' : 'Sign in to access your market feed.'}
+          {onClosingTimeHost ? 'Sign in to your Agent Desk.' : 'Sign in to access your market feed.'}
         </p>
 
         <form onSubmit={submit} className="space-y-3">
