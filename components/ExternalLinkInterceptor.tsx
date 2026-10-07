@@ -39,6 +39,8 @@ const SAME_ORIGIN_HOSTS = new Set<string>([
   'www.realtynewsnow.com',
   'myrealtyline.com',
   'www.myrealtyline.com',
+  'itsalmostclosingtime.com',
+  'www.itsalmostclosingtime.com',
 ]);
 
 function isSameOriginHost(host: string): boolean {

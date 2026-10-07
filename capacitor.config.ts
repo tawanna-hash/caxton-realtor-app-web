@@ -29,6 +29,8 @@ const config: CapacitorConfig = {
       '*.realtynewsnow.app',
       'myrealtyline.com',
       '*.myrealtyline.com',
+      'itsalmostclosingtime.com',
+      '*.itsalmostclosingtime.com',
     ],
   },
   ios: {

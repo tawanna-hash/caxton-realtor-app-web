@@ -37,6 +37,8 @@ const ALLOWED_HOSTS = new Set([
   'www.realtynewsnow.app',
   'myrealtyline.com',
   'www.myrealtyline.com',
+  'itsalmostclosingtime.com',
+  'www.itsalmostclosingtime.com',
 ]);
 
 function resolveTarget(raw: unknown): string | null {
