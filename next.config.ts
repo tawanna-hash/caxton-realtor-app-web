@@ -134,6 +134,7 @@ const nextConfig: NextConfig = {
   // Redirect to the closest existing destination instead of a bare 404.
   async redirects() {
     return [
+      { source: "/rnn-platinum", destination: "/agents", permanent: true },
       // Sunset domains: newslinesa.com and realtyline.us (San Antonio /
       // Austin legacy publication sites) now point their DNS at this
       // Vercel project so they get a free, valid TLS cert instead of

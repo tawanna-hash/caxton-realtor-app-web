@@ -25,10 +25,6 @@ import {
   upsertStripeStatementPayments,
 } from '@/lib/server/stripe-payment-ledger-sync';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
-import {
-  syncStripePlatinumBySubscription,
-  syncStripePlatinumSubscription,
-} from '@/lib/server/platinum-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -101,15 +97,7 @@ export async function POST(req: NextRequest) {
       }
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        if (session.metadata?.source === 'rnn_platinum' && session.metadata.realtor_id) {
-          const subscriptionId = typeof session.subscription === 'string'
-            ? session.subscription
-            : session.subscription?.id;
-          if (subscriptionId) {
-            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-            await syncStripePlatinumSubscription(session.metadata.realtor_id, subscription);
-          }
-        } else if (
+        if (
           ['invoice_payment', 'statement_payment'].includes(session.metadata?.source ?? '') &&
           session.payment_status === 'paid'
         ) {
@@ -121,12 +109,6 @@ export async function POST(req: NextRequest) {
             await handlePaymentSucceeded(sql, paymentIntent);
           }
         }
-        break;
-      }
-      case 'customer.subscription.updated':
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription;
-        await syncStripePlatinumBySubscription(subscription);
         break;
       }
       default:

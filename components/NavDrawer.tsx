@@ -111,7 +111,7 @@ const DRAWER_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: 'Platinum Tools',
+    title: 'Agent Tools',
     items: [
       { label: 'Closing Time', href: '/agents' },
       { label: 'Testimonials HUB', href: '/testimonial-hub' },

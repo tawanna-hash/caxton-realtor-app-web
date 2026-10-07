@@ -1,7 +1,6 @@
 import { randomBytes, randomUUID } from 'crypto';
 import { exec, query } from '@/lib/server/db/neon';
 import { getRealtorMe } from '@/lib/server/realtors-store';
-import { ensurePlatinumSchema } from '@/lib/server/platinum-store';
 import type { PublicationId } from '@/lib/publications';
 
 export type TestimonialStatus = 'pending' | 'published' | 'archived';
@@ -298,14 +297,11 @@ export async function deleteOwnerTestimonial(id: string, realtorId: string): Pro
 }
 
 export async function findProfileByToken(token: string): Promise<TestimonialProfile | null> {
-  await Promise.all([ensureTestimonialsSchema(), ensurePlatinumSchema()]);
+  await ensureTestimonialsSchema();
   const rows = await query<TestimonialProfile>(
     `SELECT p.*
      FROM testimonial_profiles p
-     JOIN rnn_platinum_entitlements e ON e.realtor_id = p.realtor_id
      WHERE p.collection_token = $1
-       AND e.status = 'active'
-       AND (e.source = 'admin' OR e.current_period_end IS NULL OR e.current_period_end > NOW())
      LIMIT 1`,
     [token],
   );
@@ -316,15 +312,12 @@ export async function getPublicShowcase(slug: string): Promise<{
   profile: TestimonialProfile;
   testimonials: Testimonial[];
 } | null> {
-  await Promise.all([ensureTestimonialsSchema(), ensurePlatinumSchema()]);
+  await ensureTestimonialsSchema();
   const profiles = await query<TestimonialProfile>(
     `SELECT p.*
      FROM testimonial_profiles p
-     JOIN rnn_platinum_entitlements e ON e.realtor_id = p.realtor_id
      WHERE p.slug = $1
        AND p.is_published = true
-       AND e.status = 'active'
-       AND (e.source = 'admin' OR e.current_period_end IS NULL OR e.current_period_end > NOW())
      LIMIT 1`,
     [slug],
   );

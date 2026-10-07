@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requirePlatinumUser } from '@/lib/server/auth/platinum';
+import { requireUser } from '@/lib/server/auth/user';
 import { withErrorHandling } from '@/lib/server/error';
 import {
   getOrCreateTestimonialProfile,
@@ -13,7 +13,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const GET = withErrorHandling(async () => {
-  const user = await requirePlatinumUser();
+  const user = await requireUser();
   const [profile, testimonials] = await Promise.all([
     getOrCreateTestimonialProfile(user.realtorId),
     listOwnerTestimonials(user.realtorId),
@@ -22,7 +22,7 @@ export const GET = withErrorHandling(async () => {
 });
 
 export const PUT = withErrorHandling(async (req: Request) => {
-  const user = await requirePlatinumUser();
+  const user = await requireUser();
   const input = testimonialProfileSchema.parse(await req.json());
   const profile = await updateTestimonialProfile(user.realtorId, {
     ...input,
@@ -41,7 +41,7 @@ export const PUT = withErrorHandling(async (req: Request) => {
 });
 
 export const POST = withErrorHandling(async () => {
-  const user = await requirePlatinumUser();
+  const user = await requireUser();
   const profile = await rotateCollectionToken(user.realtorId);
   return NextResponse.json({ profile });
 });

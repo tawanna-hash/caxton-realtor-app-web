@@ -21,12 +21,12 @@ type ResourcesView = 'tools' | 'guides' | 'links';
 
 const VIEW_COPY: Record<ResourcesView, { eyebrow: string; title: string; description: string }> = {
   tools: {
-    eyebrow: 'REALTOR® Platinum Tools',
+    eyebrow: 'REALTOR® Agent Tools',
     title: 'Calculators & Quick References',
     description: 'Practical calculators and transaction references built for REALTORS®.',
   },
   guides: {
-    eyebrow: 'REALTOR® Platinum Tools',
+    eyebrow: 'REALTOR® Agent Tools',
     title: 'Downloadable Guides',
     description: 'REALTOR® checklists, workbooks, and field guides for buyer, seller, new-build, and marketing workflows.',
   },

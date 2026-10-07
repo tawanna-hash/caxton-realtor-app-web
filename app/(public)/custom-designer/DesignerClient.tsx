@@ -745,7 +745,7 @@ export default function DesignerClient() {
         <aside className="overflow-y-auto border-r border-[#3f2a5f] bg-[#120b22] p-4 text-slate-100 xl:max-h-[calc(100vh-64px)]">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#c9a7ef]">Platinum Tools</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#c9a7ef]">Agent Tools</p>
               <h1 className="text-lg font-extrabold tracking-tight">Design Engine Pro</h1>
             </div>
             <button type="button" onClick={reset} className="studio-secondary-button">

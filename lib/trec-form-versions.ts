@@ -5,7 +5,12 @@ import {
   type TrecFormFieldDefinition,
 } from './trec-20-19-fields';
 import { TREC_40_11_FIELDS, TREC_49_1_FIELDS } from './trec-addenda-fields';
-import { GENERATED_TREC_FORM_VERSIONS } from './trec-library-versions.generated';
+import { GENERATED_TREC_FORM_VERSIONS as ALL_GENERATED_TREC_FORM_VERSIONS } from './trec-library-versions.generated';
+import { TXR_FORMS_ENABLED } from './trec-forms-library';
+
+const GENERATED_TREC_FORM_VERSIONS = ALL_GENERATED_TREC_FORM_VERSIONS.filter(
+  (version) => TXR_FORMS_ENABLED || !/\/txr-/i.test(version.pdfUrl),
+);
 
 export type TrecFormVersion = {
   id: string;

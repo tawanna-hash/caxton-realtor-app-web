@@ -78,7 +78,7 @@ const STEPS: TourStep[] = [
   },
   {
     id: 'platinum',
-    eyebrow: 'Platinum Tools',
+    eyebrow: 'Agent Tools',
     title: 'Turn everyday client service into a branded experience',
     description:
       'Use testimonial tools, calculators, quick references, and downloadable guides designed for REALTORS®.',
@@ -463,7 +463,7 @@ function PlatinumScreen() {
     <div className="px-3 py-4" data-tour-screen="platinum">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#42277C]">Platinum Tools</p>
+          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#42277C]">Agent Tools</p>
           <h3 className="mt-1 text-lg font-semibold text-gray-900">Build Your Reputation</h3>
         </div>
         <Star size={21} className="fill-[#EFEAF8] text-[#301D5D]" aria-hidden />

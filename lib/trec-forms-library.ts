@@ -10,7 +10,11 @@ export type TrecFormLibraryItem = {
   local: boolean;
 };
 
-export const TREC_FORM_LIBRARY: TrecFormLibraryItem[] = [
+// Texas REALTORS (TXR) forms are disabled until a forms license is in place.
+// Set to true to bring the section back (also restore public/forms/trec-library/txr-*.pdf from private-forms/).
+export const TXR_FORMS_ENABLED = false;
+
+const ALL_FORM_LIBRARY: TrecFormLibraryItem[] = [
   { formFamily: '39', formNumber: '39-11', title: 'Amendment to Contract', effectiveDate: '2026-07-01', category: 'Contracts', pdfUrl: '/forms/trec-library/trec-39-11.pdf', local: true },
   { formFamily: '25', formNumber: '25-17', title: 'Farm and Ranch Contract', effectiveDate: '2026-07-01', category: 'Contracts', pdfUrl: '/forms/trec-library/trec-25-17.pdf', local: true },
   { formFamily: '24', formNumber: '24-20', title: 'New Home Contract (Completed Construction)', effectiveDate: '2026-07-01', category: 'Contracts', pdfUrl: '/forms/trec-library/trec-24-20.pdf', local: true },
@@ -205,10 +209,18 @@ export const TREC_FORM_LIBRARY: TrecFormLibraryItem[] = [
   { formFamily: 'OP-I', formNumber: 'OP-I', title: 'Texas Real Estate Consumer Notice Concerning Hazards or Deficiencies', effectiveDate: '2015-05-04', category: 'Other Forms', pdfUrl: '/forms/trec-library/trec-OP-I.pdf', local: true },
 ];
 
-export const TREC_FORM_LIBRARY_CATEGORIES: Array<'All Forms' | TrecFormLibraryCategory> = [
+export const TREC_FORM_LIBRARY: TrecFormLibraryItem[] = ALL_FORM_LIBRARY.filter(
+  (form) => TXR_FORMS_ENABLED || form.category !== 'TR Forms',
+);
+
+const ALL_CATEGORIES: Array<'All Forms' | TrecFormLibraryCategory> = [
   'All Forms',
   'Contracts',
   'Contract Addenda',
   'Other Forms',
   'TR Forms',
 ];
+
+export const TREC_FORM_LIBRARY_CATEGORIES = ALL_CATEGORIES.filter(
+  (category) => TXR_FORMS_ENABLED || category !== 'TR Forms',
+);
