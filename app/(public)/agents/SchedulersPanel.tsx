@@ -1,5 +1,6 @@
 'use client';
 
+import { messagingPeople } from '@/lib/closing-time-people';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AlertTriangle, ArrowLeft, ArrowRight, CalendarCheck, Check, ChevronDown, ChevronRight, Copy, ExternalLink, Image as ImageIcon, Info, Link2, Pencil, Plus, Trash2, UserRound, Users, X } from 'lucide-react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
@@ -272,15 +273,14 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
 
 type Party = { email: string; name: string; role: string };
 
-/** Everyone on the deal with an email: clients/contacts first, then service providers. */
+/** Everyone on the deal with an email, the same people shown on the People tab. The other side's principals are left out. */
 function dealParties(deal: AgentDeal): Party[] {
   const out: Party[] = []; const seen = new Set<string>();
-  const add = (email: string | undefined, name: string, role: string) => {
-    const e = (email ?? '').trim(); const k = e.toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || seen.has(k)) return; seen.add(k); out.push({ email: e, name: name.trim() || e, role: role.trim() });
-  };
-  for (const c of deal.clientContacts ?? []) add(c.email, c.name, c.role ?? 'Client');
-  for (const p of deal.serviceProviders ?? []) add(p.email, p.name, p.category);
+  for (const p of messagingPeople(deal)) {
+    const e = (p.email ?? '').trim(); const k = e.toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || seen.has(k)) continue;
+    seen.add(k); out.push({ email: e, name: p.name.trim() || e, role: p.role.trim() });
+  }
   return out;
 }
 
