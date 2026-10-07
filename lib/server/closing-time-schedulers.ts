@@ -22,7 +22,7 @@ export async function agentOf(realtorId: string): Promise<{ name: string; email:
  * create the event on the chosen booking calendar, and drive reminder and follow-up emails.
  */
 
-export const RESERVED = new Set(['manage', 's', 'api', 'admin', 'all']);
+export const RESERVED = new Set(['manage', 's', 'api', 'admin', 'all', 'closing']);
 
 let ready: Promise<void> | null = null;
 function ensure(): Promise<void> {
