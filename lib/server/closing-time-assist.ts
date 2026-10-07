@@ -7,6 +7,7 @@ import { sendEmail } from '@/lib/email';
 import { ApiError } from '@/lib/server/error';
 import { query } from '@/lib/server/db/neon';
 import { ensureAgentCommandCenterWorkspaceSchema, getAgentCommandCenterWorkspace } from '@/lib/server/agent-command-center-workspaces';
+import { CLOSING_TIME_ORIGIN } from '@/lib/closing-time-origin';
 
 /**
  * Closing Time coordinator tools: deal parties, approval-gated follow-up
@@ -401,7 +402,7 @@ export async function runDailySummaries(today: string): Promise<{ sent: number; 
   const out = { sent: 0, errors: [] as string[] };
   const rows = await query<{ realtor_id: string; email: string | null; first_name: string | null; workspace: unknown }>(
     `SELECT w.realtor_id, w.workspace, COALESCE(NULLIF(w.workspace->'notificationPreferences'->>'notificationEmail',''), r.email) AS email, r.first_name FROM agent_command_center_workspaces w JOIN realtors r ON r.id=w.realtor_id`);
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
+  const site = CLOSING_TIME_ORIGIN;
   for (const row of rows) {
     const parsed = agentCommandCenterWorkspaceSchema.safeParse(row.workspace);
     if (!parsed.success || !parsed.data.notificationPreferences.emailEnabled || !row.email) continue;

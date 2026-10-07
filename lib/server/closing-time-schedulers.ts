@@ -7,6 +7,7 @@ import { CALENDAR_SLUGS } from '@/lib/server/closing-time-connected';
 import { accountFor, proxyCall } from '@/lib/server/composio';
 import { sendEmail } from '@/lib/email';
 import { addDays, defaultConfig, fillTemplate, openSlots, slugify, timeLabel, zoned, type Busy, type SchedulerConfig } from '@/lib/scheduler-shared';
+import { CLOSING_TIME_ORIGIN } from '@/lib/closing-time-origin';
 
 /** Agent display name and notification email (falls back to the account email). */
 export async function agentOf(realtorId: string): Promise<{ name: string; email: string }> {
@@ -474,7 +475,7 @@ export async function runSchedulerWorkflows(now = Date.now()): Promise<{ reminde
      FROM closing_time_scheduler_bookings b JOIN closing_time_schedulers s ON s.id=b.scheduler_id
      WHERE b.status='booked' AND b.start_utc < NOW() + INTERVAL '8 days' AND b.end_utc > NOW() - INTERVAL '8 days' LIMIT 500`);
   const out = { reminders: 0, followUps: 0 };
-  const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://realtynewsnow.app';
+  const base = CLOSING_TIME_ORIGIN;
   for (const b of rows) {
     const cfg = merge(b.config);
     const start = new Date(b.start_utc).getTime(), end = new Date(b.end_utc).getTime();

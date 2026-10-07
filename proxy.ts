@@ -273,6 +273,11 @@ export async function proxy(req: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // 1c. Closing Time lives on its own domain; the old address forwards there.
+  if ((host === 'realtynewsnow.app' || host === 'www.realtynewsnow.app') && req.method === 'GET' && (pathname === '/agents/closing-time' || pathname.startsWith('/agents/closing-time/'))) {
+    return NextResponse.redirect(`https://itsalmostclosingtime.com${pathname}${search}`, 307);
+  }
+
   // 2. Publication permalink handling — applies to every page route.
   const pubRedirect = handlePubPermalink(req);
   if (pubRedirect) return pubRedirect;

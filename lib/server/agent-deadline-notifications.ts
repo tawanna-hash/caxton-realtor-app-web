@@ -13,6 +13,7 @@ import { BUILT_IN_TREC_FORM_VERSIONS } from '@/lib/trec-form-versions';
 import { sendSms, toE164 } from '@/lib/server/sms';
 import { sendPushToRealtor } from '@/lib/server/push';
 import { ensureAgentCommandCenterWorkspaceSchema } from '@/lib/server/agent-command-center-workspaces';
+import { CLOSING_TIME_ORIGIN } from '@/lib/closing-time-origin';
 
 type WorkspaceRecipientRow = {
   realtor_id: string;
@@ -221,7 +222,7 @@ export function emailHtml(deal: AgentDeal, deadline: DealDeadline, offset: numbe
   const label = escapeHtml(dealLabel(deal));
   const deadlineLabel = escapeHtml(deadline.label);
   const timing = offset === 0 ? 'today' : `in ${offset} day${offset === 1 ? '' : 's'}`;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
+  const siteUrl = CLOSING_TIME_ORIGIN;
   return `
     <div style="font-family:Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:640px;margin:auto">
       <p style="margin:0 0 8px;color:#2f7aa7;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Closing Time</p>
@@ -277,7 +278,7 @@ export function urgentText(deal: AgentDeal, deadline: DealDeadline, count: numbe
 }
 
 export function urgentEmailHtml(deal: AgentDeal, deadline: DealDeadline, items: Array<{ label: string; blank: number }>): string {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
+  const siteUrl = CLOSING_TIME_ORIGIN;
   const rows = items.slice(0, 12).map((item) => `<li style="margin:0 0 4px">${escapeHtml(item.label)}: ${item.blank} blank</li>`).join('');
   return `
     <div style="font-family:Arial,sans-serif;color:#292a2d;line-height:1.55;max-width:640px;margin:auto">
