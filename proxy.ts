@@ -68,6 +68,9 @@ const CSRF_PROTECTED_PREFIXES = [
   '/api/auth/logout',
   '/api/auth/set-password',
   '/api/auth/reset-password',
+  '/api/auth/two-factor',
+  '/api/closing-time/data',
+  '/api/closing-time/automation',
 ];
 const CSRF_PROTECTED_METHODS = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
 

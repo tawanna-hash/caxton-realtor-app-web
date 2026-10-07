@@ -8,7 +8,7 @@ const IN_PLACE = [
   ['Password storage', 'Passwords are stored as one-way bcrypt hashes. We never see or store your password.'],
   ['Two-step sign-in', 'Turn on an authenticator app code in Closing Time under Resources, Security. Recovery codes are provided and each works once.'],
   ['Sessions', 'Sign-in cookies are marked HTTP-only and secure, and cannot be read by page scripts.'],
-  ['Abuse protection', 'Sign-in and account requests are rate limited. State-changing requests are checked against allowed origins.'],
+  ['Abuse protection', 'Sign-in and account requests are rate limited. Requests that change security settings, API keys, webhooks, imports and backups are checked against allowed origins, and sign-in cookies use SameSite protection.'],
   ['Your own data only', 'Every request is tied to your signed-in account. API keys are shown once, stored as hashes, and can be revoked at any time.'],
   ['Signed webhooks', 'Every webhook message is signed with a secret only you hold, so your system can confirm it came from Closing Time.'],
   ['Audit trail', 'Deal changes, documents, requests and messages are recorded in a time-stamped activity history.'],

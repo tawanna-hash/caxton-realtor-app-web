@@ -34,6 +34,7 @@ export function ensureAutomationSchema(): Promise<void> {
         last_delivery_at TIMESTAMPTZ,
         last_status TEXT
       )`);
+    await query(`ALTER TABLE closing_time_webhooks ADD COLUMN IF NOT EXISTS flat BOOLEAN NOT NULL DEFAULT FALSE`);
     await query(`CREATE INDEX IF NOT EXISTS closing_time_webhooks_realtor_idx ON closing_time_webhooks (realtor_id)`);
     await query(`CREATE INDEX IF NOT EXISTS closing_time_api_keys_realtor_idx ON closing_time_api_keys (realtor_id)`);
   })().catch((e) => { schemaPromise = null; throw e; });
@@ -116,16 +117,16 @@ export function validateWebhookUrl(raw: string): string {
   return u.toString();
 }
 
-export async function createWebhook(realtorId: string, url: string, events: string[]): Promise<{ secret: string; summary: WebhookSummary }> {
+export async function createWebhook(realtorId: string, url: string, events: string[], flat = false): Promise<{ secret: string; summary: WebhookSummary }> {
   await ensureAutomationSchema();
   const count = await query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM closing_time_webhooks WHERE realtor_id = $1`, [realtorId]);
-  if ((count[0]?.n ?? 0) >= 10) throw new Error('Up to 10 webhooks. Delete one first.');
+  if ((count[0]?.n ?? 0) >= 25) throw new Error('Up to 25 webhooks. Delete one first.');
   const clean = validateWebhookUrl(url);
   await assertPublicHost(new URL(clean).hostname);
   const secret = `whsec_${randomBytes(24).toString('hex')}`;
   const rows = await query<{ id: string }>(
-    `INSERT INTO closing_time_webhooks (realtor_id, url, secret, events) VALUES ($1,$2,$3,$4) RETURNING id`,
-    [realtorId, clean, secret, events],
+    `INSERT INTO closing_time_webhooks (realtor_id, url, secret, events, flat) VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+    [realtorId, clean, secret, events, flat],
   );
   return { secret, summary: { id: rows[0].id, url: clean, events, active: true, lastDeliveryAt: null, lastStatus: null } };
 }
@@ -137,6 +138,12 @@ export async function listWebhooks(realtorId: string): Promise<WebhookSummary[]>
     [realtorId],
   );
   return rows.map((r) => ({ id: r.id, url: r.url, events: r.events, active: r.active, lastDeliveryAt: r.last_delivery_at ? new Date(r.last_delivery_at).toISOString() : null, lastStatus: r.last_status }));
+}
+
+export async function deleteWebhookById(realtorId: string, id: string): Promise<boolean> {
+  await ensureAutomationSchema();
+  const rows = await query<{ id: string }>(`DELETE FROM closing_time_webhooks WHERE id = $1 AND realtor_id = $2 RETURNING id`, [id, realtorId]);
+  return rows.length > 0;
 }
 
 export async function deleteWebhook(realtorId: string, id: string): Promise<void> {
@@ -186,8 +193,9 @@ export function diffDeals(before: AgentCommandCenterWorkspace | null, after: Age
   return out;
 }
 
-async function deliver(hook: { id: string; url: string; secret: string }, event: WebhookEvent, deal: AgentDeal): Promise<void> {
-  const body = JSON.stringify({ id: randomUUID(), event, created_at: new Date().toISOString(), data: publicDeal(deal) });
+async function deliver(hook: { id: string; url: string; secret: string; flat: boolean }, event: WebhookEvent, deal: AgentDeal): Promise<void> {
+  // flat hooks (REST hook subscriptions from automation tools) receive the deal object itself, matching the deals list.
+  const body = hook.flat ? JSON.stringify(publicDeal(deal)) : JSON.stringify({ id: randomUUID(), event, created_at: new Date().toISOString(), data: publicDeal(deal) });
   const ts = Math.floor(Date.now() / 1000);
   const signature = createHmac('sha256', hook.secret).update(`${ts}.${body}`).digest('hex');
   let status = 'error';
@@ -208,7 +216,7 @@ async function deliver(hook: { id: string; url: string; secret: string }, event:
 export async function dispatchDealEvents(realtorId: string, events: Array<{ event: WebhookEvent; deal: AgentDeal }>): Promise<void> {
   if (!events.length) return;
   await ensureAutomationSchema();
-  const hooks = await query<{ id: string; url: string; secret: string; events: string[] }>(
-    `SELECT id, url, secret, events FROM closing_time_webhooks WHERE realtor_id = $1 AND active`, [realtorId]);
+  const hooks = await query<{ id: string; url: string; secret: string; events: string[]; flat: boolean }>(
+    `SELECT id, url, secret, events, flat FROM closing_time_webhooks WHERE realtor_id = $1 AND active`, [realtorId]);
   await Promise.all(hooks.flatMap((h) => events.filter((e) => h.events.includes(e.event)).map((e) => deliver(h, e.event, e.deal))));
 }
