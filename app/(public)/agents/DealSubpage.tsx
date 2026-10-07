@@ -102,7 +102,7 @@ type Props = {
   onBack: () => void;
   onOpenView: (view: string) => void;
   /** Readiness Check items in, from the Readiness Check list itself. */
-  readiness?: { done: number; total: number };
+  readiness?: { done: number; total: number; groups: { label: string; done: number; total: number }[] };
   section?: Tab;
   stripOnly?: boolean;
   trecForms?: readonly { formFamily: string; formNumber: string; title: string; total: number; filled: number; selected: boolean }[];
@@ -750,6 +750,16 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
                         <span className="min-w-0 flex-1 text-left">
                           <span className="block text-sm font-semibold">{item.title}</span>
                           <span className="block text-xs opacity-70">{item.detail}</span>
+                          {item.key === 'readiness' && readiness ? (
+                            <>
+                              <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" aria-hidden="true"><span className="block h-full rounded-full bg-[#301D5D]" style={{ width: `${readiness.total ? Math.round((readiness.done / readiness.total) * 100) : 0}%` }} /></span>
+                              <span className="mt-2 block space-y-1">
+                                {readiness.groups.map((g) => (
+                                  <span key={g.label} className="flex items-center justify-between gap-3 text-xs"><span className="truncate opacity-70">{g.label}</span><span className={`font-medium ${g.done === g.total && g.total > 0 ? 'text-[#005A00]' : 'text-[#301D5D]'}`}>{g.done}/{g.total}</span></span>
+                                ))}
+                              </span>
+                            </>
+                          ) : null}
                         </span>
                         <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{item.chip}</span>
                       </button>
