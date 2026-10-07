@@ -290,6 +290,21 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
         description: 'MLS record showing the option or pending status.',
       },
       {
+        id: 'listing-mls-active',
+        label: "MLS Printout Showing Active Status",
+        description: "MLS record showing the listing as active (listing deals only).",
+      },
+      {
+        id: 'listing-consumer-protection-notice',
+        label: "Consumer Protection Notice Displayed",
+        description: "Notice displayed in the office, on the website and on social profiles (listing deals only).",
+      },
+      {
+        id: 'listing-t47',
+        label: "T-47 Residential Real Property Affidavit",
+        description: "Notarized affidavit; not needed with a new survey (listing deals only).",
+      },
+      {
         id: 'seller-general-warranty-deed',
         label: 'General Warranty Deed',
         description: 'Legal instrument executed at closing to transfer title securely.',
@@ -356,6 +371,11 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
         label: 'Commission Intake Form',
         description: 'Commission intake paperwork for the brokerage.',
       },
+      {
+        id: 'listing-commission-disbursement',
+        label: "Commission Disbursement Authorization",
+        description: "Signed authorization for the commission payout (listing deals only).",
+      },
     ],
   },
   {
@@ -388,7 +408,7 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
 
 // Which readiness items apply depends on whether the agent represents the buyer or the seller.
 const SIDE_HIDDEN_ITEMS: Record<'buyer' | 'listing', ReadonlySet<string>> = {
-  buyer: new Set(['seller-listing-agreement', 'seller-general-warranty-deed']),
+  buyer: new Set(['seller-listing-agreement', 'seller-general-warranty-deed', 'listing-mls-active', 'listing-consumer-protection-notice', 'listing-t47', 'listing-commission-disbursement']),
   listing: new Set(['buyer-representation-agreement']),
 };
 const sideKey = (side?: string): 'buyer' | 'listing' => (side === 'listing' ? 'listing' : 'buyer');
@@ -467,9 +487,26 @@ const READINESS_CHECK_LINKS: ReadonlyArray<readonly [string, string]> = [
   ['title-executed-contract-receipt', 'pd-executed-contract-receipt'],
   ['title-commission-intake', 'pd-commission-intake'],
 ];
+const LISTING_CHECK_IDS: Readonly<Record<string, string>> = {
+  'buyer-wire-fraud-alert': 'ld-wire-fraud-alert',
+  'buyer-walkthrough': 'ld-final-walkthrough',
+  'seller-mls-printout': 'ld-mls-pending',
+  'delivery-confirmation': 'ld-em-receipt',
+  survey: 'ld-survey',
+};
+const LISTING_ONLY_LINKS: ReadonlyArray<readonly [string, string]> = [
+  ['seller-listing-agreement', 'ld-listing-agreement'],
+  ['listing-mls-active', 'ld-mls-active'],
+  ['listing-consumer-protection-notice', 'ld-consumer-protection-notice'],
+  ['listing-t47', 'ld-t47'],
+  ['listing-commission-disbursement', 'ld-commission-disbursement'],
+];
+// Buyer-only readiness items have no listing-side checklist item.
+const BUYER_ONLY_READINESS = new Set(['buyer-representation-agreement', 'buyer-pre-approval-letter']);
 const readinessLinksFor = (deal: AgentDeal): ReadonlyArray<readonly [string, string]> => {
   if (effectiveAgentSide(deal) !== 'listing') return READINESS_CHECK_LINKS;
-  return READINESS_CHECK_LINKS.flatMap(([r, c]) => (r === 'buyer-wire-fraud-alert' ? [[r, 'ld-wire-fraud-alert'] as const] : r === 'buyer-walkthrough' ? [[r, 'ld-final-walkthrough'] as const] : r === 'seller-mls-printout' ? [] : [[r, c] as const]));
+  const shared = READINESS_CHECK_LINKS.filter(([r]) => !BUYER_ONLY_READINESS.has(r)).map(([r, c]) => [r, LISTING_CHECK_IDS[r] ?? c] as const);
+  return [...shared, ...LISTING_ONLY_LINKS];
 };
 const receivedDoc = (document: AgentDocument, now: string): AgentDocument => ({ ...document, status: document.status === 'reviewed' ? 'reviewed' : 'received', complete: true, updatedAt: now });
 const reopenedDoc = (document: AgentDocument, now: string): AgentDocument => ({ ...document, status: 'requested', complete: false, updatedAt: now });
