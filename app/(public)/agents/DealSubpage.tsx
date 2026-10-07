@@ -635,6 +635,25 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
           {snapshotTop.pressing}
           <div className="flex justify-end">{arrangeButton('snapshot')}</div>
           <div className="grid items-start gap-3 lg:grid-cols-4">
+            {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'docs'); const r = readiness; const pctDone = r && r.total ? Math.round((r.done / r.total) * 100) : 0; return (
+              <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 lg:col-span-2 ${p.className}`}>
+                <div className="ds-card">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-slate-900">Readiness</p>
+                    <button type="button" onClick={() => onOpenView('readiness')}>Open Readiness Check</button>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">{r ? `${r.done} of ${r.total} items in` : 'No readiness items yet.'}</p>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={pctDone} aria-valuemin={0} aria-valuemax={100} aria-label="Readiness progress"><div className="h-full rounded-full bg-[#301D5D]" style={{ width: `${pctDone}%` }} /></div>
+                  {r ? (
+                    <ul className="mt-4 space-y-2">
+                      {r.groups.map((g) => (
+                        <li key={g.label} className="flex items-center justify-between gap-3 text-xs"><span className="min-w-0 truncate text-slate-900">{g.label}</span><span className={`font-medium ${g.done === g.total && g.total > 0 ? 'text-[#005A00]' : 'text-[#301D5D]'}`}>{g.done}/{g.total}</span></li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              </div>
+            ); })()}
             {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'parties'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 ${p.className}`}>{partiesCard}</div>; })()}
             {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'property'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 ${p.className}`}>{sideBlocks.property}</div>; })()}
             {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'tasks'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 lg:col-span-2 ${p.className}`}>{tasksCard}</div>; })()}
