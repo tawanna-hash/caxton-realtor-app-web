@@ -13,7 +13,7 @@ export default function Page() {
       sections={[
         { title: 'Program', body: (<p>Closing Time Transaction Alerts. Closing Time is operated by Caxton Publications, Inc. Messages are sent for a licensed real estate agent who uses Closing Time to manage a transaction.</p>) },
         { title: 'Who Gets Texts And How They Agree', body: (<Ul items={[
-          <><strong>Agents:</strong> an agent turns on deadline alerts in Closing Time under Settings, Notifications, enters a mobile number and checks the box labeled Send Deadline Alerts By Text. Agreeing to text alerts is optional and not required to use Closing Time.</>,
+          <><strong>Agents:</strong> an agent turns on deadline alerts in Closing Time in the Deadline Alerts section, enters a mobile number and checks the box labeled Send Deadline Alerts By Text. Agreeing to text alerts is optional and not required to use Closing Time.</>,
           <><strong>People on a deal (clients, lenders, title companies):</strong> the agent can ask a person on the deal to agree to text updates. The person receives one text asking them to reply YES. No other text is sent to that person until they reply YES.</>,
         ]} />) },
         { title: 'Message Types And Frequency', body: (<p>Deadline reminders, scheduling and closing confirmations, document requests and deal updates. Frequency varies with the number of transactions, usually a few messages per deal per week. Message and data rates may apply.</p>) },
