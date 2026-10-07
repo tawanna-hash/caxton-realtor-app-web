@@ -3,7 +3,7 @@
 Realty News Now keeps `realtynewsnow.app` and its existing iOS and Android builds. Closing Time ships as its own app.
 
 ## What is ready in the repo
-- `capacitor.closing-time.config.ts`: separate shell that loads `https://itsalmostclosingtime.com`. Proposed appId `com.itsalmostclosingtime.app` (confirm; it is permanent once submitted).
+- `capacitor.closing-time.config.ts`: separate shell that loads `https://itsalmostclosingtime.com`. Confirmed appId `com.itsalmostclosingtime.app` (permanent once submitted).
 - The Realty News Now shell now also allows navigation to itsalmostclosingtime.com, so Closing Time links opened inside it stay in the app.
 - Store listing URLs for Closing Time (all load on the new domain, same codebase):
   - Marketing: https://itsalmostclosingtime.com

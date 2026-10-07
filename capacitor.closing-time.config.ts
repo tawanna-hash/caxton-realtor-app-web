@@ -2,8 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 // Closing Time - separate native shell. Loads https://itsalmostclosingtime.com.
 // The Realty News Now app (capacitor.config.ts) is unchanged and keeps loading realtynewsnow.app.
-// appId below is a proposal: confirm it before creating the App Store Connect / Play Console records,
-// because it cannot be changed after the first submission.
+// appId confirmed by the owner on 2026-10-06. It cannot be changed after the first submission.
 const config: CapacitorConfig = {
   appId: 'com.itsalmostclosingtime.app',
   appName: 'Closing Time',
