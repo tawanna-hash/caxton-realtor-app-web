@@ -28,7 +28,7 @@ function LoginInner() {
   }, []);
   const rawNext = params.get('next');
   const next =
-    rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') && !/[\\\x00-\x1f]]/.test(rawNext)
+    rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') && !/[\\\x00-\x1f]/.test(rawNext)
       ? rawNext
       : '/dashboard';
 
