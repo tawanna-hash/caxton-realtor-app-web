@@ -35,7 +35,7 @@ export function AdsTabs({ current, catalogCount, creativesCount }: Props) {
 
   return (
     <div className="border-b border-gray-300">
-      <nav className="-mb-px flex gap-5" aria-label="Inventory views">
+      <nav className="-mb-px flex gap-4" aria-label="Inventory views">
         {tabs.map((t) => {
           const isActive = current === t.key;
           return (
@@ -51,7 +51,7 @@ export function AdsTabs({ current, catalogCount, creativesCount }: Props) {
               aria-current={isActive ? 'page' : undefined}
             >
               {t.label}
-              <span className="ml-2 inline-block rounded bg-gray-100 px-1.5 py-0.5 text-xs tabular-nums text-gray-700">
+              <span className="ml-2 inline-block rounded bg-gray-100 px-2 py-0.5 text-xs tabular-nums text-gray-700">
                 {t.count}
               </span>
             </button>

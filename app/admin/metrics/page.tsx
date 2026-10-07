@@ -63,7 +63,7 @@ export default function AdminMetricsPage() {
     : 0;
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
         <p className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
@@ -145,7 +145,7 @@ export default function AdminMetricsPage() {
                   const pct = grandTotalLast7 > 0 ? (e.total / grandTotalLast7) * 100 : 0;
                   return (
                     <div key={e.event} className="px-4 py-3">
-                      <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-gray-900">
                           {EVENT_LABELS[e.event] ?? e.event}
                         </span>

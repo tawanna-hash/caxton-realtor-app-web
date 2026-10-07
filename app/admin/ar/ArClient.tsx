@@ -146,7 +146,7 @@ function UnpaidInvoiceCard({
           onOpen();
         }
       }}
-      className="cursor-pointer space-y-2.5 p-4 hover:bg-[#F6F3FB]/70 focus:bg-[#F6F3FB] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#7059A8]"
+      className="cursor-pointer space-y-3 p-4 hover:bg-[#F6F3FB]/70 focus:bg-[#F6F3FB] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#7059A8]"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -159,12 +159,12 @@ function UnpaidInvoiceCard({
       </div>
       <div className="flex items-center justify-between gap-3 text-xs">
         <span className="text-gray-500">{invoice.due_date ? shortDate(invoice.due_date) : 'No due date'}</span>
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
+        <span className="inline-flex items-center gap-2 whitespace-nowrap text-gray-700">
           {invoice.days > 0 ? <AlertCircle className="h-4 w-4 text-[#301D5D]" aria-hidden="true" /> : <CheckCircle2 className="h-4 w-4 text-[#005A00]" aria-hidden="true" />}
           {invoice.days > 0 ? `${invoice.days} days overdue` : 'Not due yet'}
         </span>
       </div>
-      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
+      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-3 text-xs">
         <button type="button" onClick={onEdit} onKeyDown={(event) => event.stopPropagation()} className="font-medium text-gray-700 hover:text-[#42277C] hover:underline">
           Edit
         </button>
@@ -191,7 +191,7 @@ function PaidInvoiceCard({ invoice, onOpen }: { invoice: InvoiceWithAdvertiser; 
           onOpen();
         }
       }}
-      className="cursor-pointer space-y-2.5 p-4 hover:bg-[#F6F3FB]/70 focus:bg-[#F6F3FB] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#7059A8]"
+      className="cursor-pointer space-y-3 p-4 hover:bg-[#F6F3FB]/70 focus:bg-[#F6F3FB] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#7059A8]"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -204,7 +204,7 @@ function PaidInvoiceCard({ invoice, onOpen }: { invoice: InvoiceWithAdvertiser; 
       </div>
       <div className="flex items-center justify-between gap-3 text-xs">
         <span className="text-gray-500">{invoice.paid_at ? shortDate(invoice.paid_at) : '—'}</span>
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
+        <span className="inline-flex items-center gap-2 whitespace-nowrap text-gray-700">
           <CheckCircle2 className="h-4 w-4 text-[#005A00]" aria-hidden="true" />
           Paid
         </span>
@@ -254,7 +254,7 @@ function ScheduleCard({
   onDelete: () => void;
 }) {
   return (
-    <div className="space-y-2.5 p-4">
+    <div className="space-y-3 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="truncate text-sm font-medium text-gray-900">{schedule.name}</div>
@@ -270,11 +270,11 @@ function ScheduleCard({
         <span>{frequencyLabel(schedule.frequency)}{schedule.interval_count > 1 ? ` (x${schedule.interval_count})` : ''}</span>
         <span className="whitespace-nowrap">Next: {new Date(schedule.next_run_at).toLocaleDateString()}</span>
       </div>
-      <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs ${schedule.status === 'active' ? 'text-[#005A00]' : schedule.status === 'paused' ? 'text-[#42277C]' : 'text-gray-600'}`}>
+      <span className={`inline-flex items-center gap-2 whitespace-nowrap text-xs ${schedule.status === 'active' ? 'text-[#005A00]' : schedule.status === 'paused' ? 'text-[#42277C]' : 'text-gray-600'}`}>
         <span className={`h-2 w-2 rounded-full ${schedule.status === 'active' ? 'bg-[#005A00]' : schedule.status === 'paused' ? 'bg-[#7059A8]' : 'bg-gray-400'}`} />
         {schedule.status}
       </span>
-      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
+      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-3 text-xs">
         <button type="button" onClick={onEdit} className="font-medium text-[#42277C] hover:underline">Edit</button>
         <button type="button" onClick={onPauseResume} disabled={busyId === schedule.id || schedule.status === 'ended'} className="font-medium text-[#42277C] hover:underline disabled:text-gray-400 disabled:no-underline">
           {schedule.status === 'active' ? 'Pause' : 'Resume'}
@@ -315,7 +315,7 @@ function Pagination({
   const first = count ? (page - 1) * pageSize + 1 : 0;
   const last = Math.min(page * pageSize, count);
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-300 bg-gray-50 px-4 py-2.5 text-xs text-gray-700">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-300 bg-gray-50 px-4 py-3 text-xs text-gray-700">
       <span>{count ? `${first}–${last} of ${count}` : '0 results'}</span>
       <div className="flex items-center gap-2">
         <label className="flex items-center gap-1">
@@ -731,7 +731,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   }, [reloadAll]);
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-3 px-5 py-5 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-3 px-4 py-4 lg:px-8">
       <header className="flex items-start justify-between gap-4">
         <div>
           <div className="mb-0.5 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Get Paid</div>
@@ -798,7 +798,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       </section>
 
       {!feedDismissed && overdueCount > 0 && (
-        <aside className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded border border-[#D9CFF0] bg-[#F6F3FB] px-4 py-2.5 text-sm text-gray-800">
+        <aside className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded border border-[#D9CFF0] bg-[#F6F3FB] px-4 py-3 text-sm text-gray-800">
           <AlertCircle className="h-4 w-4 shrink-0 text-[#301D5D]" aria-hidden="true" />
           <span className="font-semibold">Overdue invoices</span>
           <span className="text-gray-600">{formatCents(overdueTotal)} in reminders is ready to review.</span>
@@ -813,7 +813,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
           <span className="relative block">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
             <input
-              className={`${CONTROL} w-full pl-9 ${query ? 'pr-9' : ''}`}
+              className={`${CONTROL} w-full pl-8 ${query ? 'pr-8' : ''}`}
               placeholder="Invoice, partner, email, or schedule"
               value={query}
               onChange={(event) => { setQuery(event.target.value); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }}
@@ -915,17 +915,17 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                       }}
                       className="cursor-pointer hover:bg-[#F6F3FB]/70 focus:bg-[#F6F3FB] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#7059A8]"
                     >
-                      <td className="truncate px-4 py-2.5 font-semibold text-[#42277C] underline decoration-[#D9CFF0] underline-offset-2">{invoice.number ?? 'Draft'}</td>
-                      <td className="truncate px-3 py-2.5 text-gray-800">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(invoice.total_cents)}</td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-gray-600">{invoice.paid_at ? shortDate(invoice.paid_at) : '—'}</td>
-                      <td className="px-3 py-2.5">
-                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
+                      <td className="truncate px-4 py-3 font-semibold text-[#42277C] underline decoration-[#D9CFF0] underline-offset-2">{invoice.number ?? 'Draft'}</td>
+                      <td className="truncate px-3 py-3 text-gray-800">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-right font-medium tabular-nums text-gray-900">{formatCents(invoice.total_cents)}</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-gray-600">{invoice.paid_at ? shortDate(invoice.paid_at) : '—'}</td>
+                      <td className="px-3 py-3">
+                        <span className="inline-flex items-center gap-2 whitespace-nowrap text-gray-700">
                           <CheckCircle2 className="h-4 w-4 text-[#005A00]" aria-hidden="true" />
                           Paid
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 text-right">
+                      <td className="px-4 py-3 text-right">
                         <button type="button" onClick={(event) => { event.stopPropagation(); setEditInvoice(invoice); }} onKeyDown={(event) => event.stopPropagation()} className="font-medium text-gray-700 hover:text-[#42277C] hover:underline">
                           View
                         </button>
@@ -935,7 +935,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                 </tbody>
               </table>
             </div>
-            {paidPagination.rows.length === 0 && <div className="p-10 text-center text-sm text-gray-500">No paid invoices match these filters.</div>}
+            {paidPagination.rows.length === 0 && <div className="p-8 text-center text-sm text-gray-500">No paid invoices match these filters.</div>}
           </>
         ) : (
           <>
@@ -980,17 +980,17 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                       }}
                       className="cursor-pointer hover:bg-[#F6F3FB]/70 focus:bg-[#F6F3FB] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#7059A8]"
                     >
-                      <td className="truncate px-4 py-2.5 font-semibold text-[#42277C] underline decoration-[#D9CFF0] underline-offset-2">{invoice.number ?? 'Draft'}</td>
-                      <td className="truncate px-3 py-2.5 text-gray-800">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(invoice.balance_cents ?? invoice.total_cents)}</td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-gray-600">{invoice.due_date ? shortDate(invoice.due_date) : 'No due date'}</td>
-                      <td className="px-3 py-2.5">
-                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
+                      <td className="truncate px-4 py-3 font-semibold text-[#42277C] underline decoration-[#D9CFF0] underline-offset-2">{invoice.number ?? 'Draft'}</td>
+                      <td className="truncate px-3 py-3 text-gray-800">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-right font-medium tabular-nums text-gray-900">{formatCents(invoice.balance_cents ?? invoice.total_cents)}</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-gray-600">{invoice.due_date ? shortDate(invoice.due_date) : 'No due date'}</td>
+                      <td className="px-3 py-3">
+                        <span className="inline-flex items-center gap-2 whitespace-nowrap text-gray-700">
                           {invoice.days > 0 ? <AlertCircle className="h-4 w-4 text-[#301D5D]" aria-hidden="true" /> : <CheckCircle2 className="h-4 w-4 text-[#005A00]" aria-hidden="true" />}
                           {invoice.days > 0 ? `${invoice.days} days overdue` : 'Not due yet'}
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 text-right">
+                      <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-3">
                         <button type="button" onClick={(event) => { event.stopPropagation(); setEditInvoice(invoice); }} onKeyDown={(event) => event.stopPropagation()} className="font-medium text-gray-700 hover:text-[#42277C] hover:underline">
                           Edit
@@ -1008,13 +1008,13 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                 </tbody>
               </table>
             </div>
-            {unpaidPagination.rows.length === 0 && <div className="p-10 text-center text-sm text-gray-500">No unpaid invoices match these filters.</div>}
+            {unpaidPagination.rows.length === 0 && <div className="p-8 text-center text-sm text-gray-500">No unpaid invoices match these filters.</div>}
           </>
         )}
         <Pagination count={quickLook === 'paid' ? filteredPaid.length : filteredUnpaid.length} page={invoicePagination.currentPage} pageSize={pageSize} totalPages={invoicePagination.totalPages} onPageChange={setInvoicePage} onPageSizeChange={(size) => { setPageSize(size); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }} />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-2">
+      <section className="grid gap-4 xl:grid-cols-2">
         <div className="min-w-0 overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-300 px-4 py-3">
             <h2 className="text-sm font-semibold text-gray-900">Outstanding by Partner</h2>
@@ -1039,17 +1039,17 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
               <tbody className="divide-y divide-gray-200">
                 {partnerPagination.rows.map((advertiser) => (
                   <tr key={advertiser.name} className="hover:bg-[#F6F3FB]/40">
-                    <td className="truncate px-4 py-2.5 font-medium text-gray-800">{advertiser.name}</td>
-                    <td className="px-2 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(advertiser.total)}</td>
-                    <td className="px-2 py-2.5 text-right tabular-nums text-gray-600">{formatCents(advertiser.buckets.d1_30)}</td>
-                    <td className="px-2 py-2.5 text-right tabular-nums text-gray-600">{formatCents(advertiser.buckets.d31_60)}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums text-[#42277C]">{formatCents(advertiser.buckets.d61_90 + advertiser.buckets.d90_plus)}</td>
+                    <td className="truncate px-4 py-3 font-medium text-gray-800">{advertiser.name}</td>
+                    <td className="px-2 py-3 text-right font-medium tabular-nums text-gray-900">{formatCents(advertiser.total)}</td>
+                    <td className="px-2 py-3 text-right tabular-nums text-gray-600">{formatCents(advertiser.buckets.d1_30)}</td>
+                    <td className="px-2 py-3 text-right tabular-nums text-gray-600">{formatCents(advertiser.buckets.d31_60)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-[#42277C]">{formatCents(advertiser.buckets.d61_90 + advertiser.buckets.d90_plus)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {partnerPagination.rows.length === 0 && <div className="p-10 text-center text-sm text-gray-500">No outstanding partner balances match.</div>}
+          {partnerPagination.rows.length === 0 && <div className="p-8 text-center text-sm text-gray-500">No outstanding partner balances match.</div>}
           <Pagination count={filteredAdvertisers.length} page={partnerPagination.currentPage} pageSize={pageSize} totalPages={partnerPagination.totalPages} onPageChange={setPartnerPage} onPageSizeChange={(size) => { setPageSize(size); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }} />
         </div>
 
@@ -1145,12 +1145,12 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
             <tbody className="divide-y divide-gray-200">
               {schedulePagination.rows.map((schedule) => (
                 <tr key={schedule.id} className="hover:bg-[#F6F3FB]/40">
-                  <td className="px-4 py-2.5"><div className="truncate font-medium text-gray-900">{schedule.name}</div><div className="truncate text-gray-500">{schedule.advertiser_name ?? '—'} · {schedule.source === 'agreement' ? 'linked to agreement' : 'standalone'}</div></td>
-                  <td className="px-3 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(schedule.amount_cents + schedule.tax_cents)}</td>
-                  <td className="px-3 py-2.5 text-gray-600">{frequencyLabel(schedule.frequency)}{schedule.interval_count > 1 ? ` (x${schedule.interval_count})` : ''}</td>
-                  <td className="whitespace-nowrap px-3 py-2.5 text-gray-600">{new Date(schedule.next_run_at).toLocaleDateString()}</td>
-                  <td className="px-3 py-2.5"><span className={`inline-flex items-center gap-1.5 whitespace-nowrap ${schedule.status === 'active' ? 'text-[#005A00]' : schedule.status === 'paused' ? 'text-[#42277C]' : 'text-gray-600'}`}><span className={`h-2 w-2 rounded-full ${schedule.status === 'active' ? 'bg-[#005A00]' : schedule.status === 'paused' ? 'bg-[#7059A8]' : 'bg-gray-400'}`} />{schedule.status}</span></td>
-                  <td className="whitespace-nowrap px-4 py-2.5 text-right">
+                  <td className="px-4 py-3"><div className="truncate font-medium text-gray-900">{schedule.name}</div><div className="truncate text-gray-500">{schedule.advertiser_name ?? '—'} · {schedule.source === 'agreement' ? 'linked to agreement' : 'standalone'}</div></td>
+                  <td className="px-3 py-3 text-right font-medium tabular-nums text-gray-900">{formatCents(schedule.amount_cents + schedule.tax_cents)}</td>
+                  <td className="px-3 py-3 text-gray-600">{frequencyLabel(schedule.frequency)}{schedule.interval_count > 1 ? ` (x${schedule.interval_count})` : ''}</td>
+                  <td className="whitespace-nowrap px-3 py-3 text-gray-600">{new Date(schedule.next_run_at).toLocaleDateString()}</td>
+                  <td className="px-3 py-3"><span className={`inline-flex items-center gap-2 whitespace-nowrap ${schedule.status === 'active' ? 'text-[#005A00]' : schedule.status === 'paused' ? 'text-[#42277C]' : 'text-gray-600'}`}><span className={`h-2 w-2 rounded-full ${schedule.status === 'active' ? 'bg-[#005A00]' : schedule.status === 'paused' ? 'bg-[#7059A8]' : 'bg-gray-400'}`} />{schedule.status}</span></td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right">
                     <button type="button" onClick={() => setEditSchedule(schedule)} className="font-medium text-[#42277C] hover:underline">Edit</button>
                     <button type="button" onClick={() => handlePauseResume(schedule)} disabled={busyId === schedule.id || schedule.status === 'ended'} className="ml-3 font-medium text-[#42277C] hover:underline disabled:text-gray-400 disabled:no-underline">{schedule.status === 'active' ? 'Pause' : 'Resume'}</button>
                     <button type="button" onClick={() => handleGenerateNow(schedule)} disabled={busyId === schedule.id || schedule.status !== 'active'} className="ml-3 font-medium text-[#42277C] hover:underline disabled:text-gray-400 disabled:no-underline">Generate now</button>
@@ -1161,7 +1161,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
             </tbody>
           </table>
         </div>
-        {schedulePagination.rows.length === 0 && <div className="p-10 text-center text-sm text-gray-500">No recurring schedules match these filters.</div>}
+        {schedulePagination.rows.length === 0 && <div className="p-8 text-center text-sm text-gray-500">No recurring schedules match these filters.</div>}
         <Pagination count={filteredSchedules.length} page={schedulePagination.currentPage} pageSize={pageSize} totalPages={schedulePagination.totalPages} onPageChange={setSchedulePage} onPageSizeChange={(size) => { setPageSize(size); setInvoicePage(1); setPartnerPage(1); setSchedulePage(1); }} />
       </section>
 

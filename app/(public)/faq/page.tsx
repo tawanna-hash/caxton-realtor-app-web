@@ -29,7 +29,7 @@ export default function FaqPage() {
       </header>
 
       <section className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-4">
           Getting started
         </p>
 
@@ -79,10 +79,10 @@ export default function FaqPage() {
         </div>
       </section>
 
-      <hr className="border-gray-200 my-10" />
+      <hr className="border-gray-200 my-8" />
 
       <section className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-4">
           Notifications &amp; content
         </p>
 
@@ -123,10 +123,10 @@ export default function FaqPage() {
         </div>
       </section>
 
-      <hr className="border-gray-200 my-10" />
+      <hr className="border-gray-200 my-8" />
 
       <section className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-4">
           Your account
         </p>
 
@@ -185,10 +185,10 @@ export default function FaqPage() {
         </div>
       </section>
 
-      <hr className="border-gray-200 my-10" />
+      <hr className="border-gray-200 my-8" />
 
       <section className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-4">
           Troubleshooting
         </p>
 

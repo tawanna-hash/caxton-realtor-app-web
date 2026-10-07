@@ -126,7 +126,7 @@ export default async function AdvertiseDigitalPage() {
         </div>
       </header>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {availability.map(({ slot, inv, soldOut }) => {
           // No page-level pub filter anymore — the buyer picks the market on
           // the checkout page itself. Default the deep link to 'realtyline'
@@ -137,7 +137,7 @@ export default async function AdvertiseDigitalPage() {
           return (
             <article
               key={slot.slug}
-              className={`flex flex-col border rounded-md p-5 ${
+              className={`flex flex-col border rounded-md p-4 ${
                 soldOut ? 'border-gray-200 bg-gray-50/60' : 'border-gray-300 bg-white'
               }`}
             >
@@ -181,14 +181,14 @@ export default async function AdvertiseDigitalPage() {
                 {soldOut ? (
                   <Link
                     href={waitlistHref}
-                    className="inline-block w-full text-center border border-gray-300 text-gray-600 text-sm font-semibold py-2.5 rounded-md hover:bg-gray-100"
+                    className="inline-block w-full text-center border border-gray-300 text-gray-600 text-sm font-semibold py-3 rounded-md hover:bg-gray-100"
                   >
                     Join waitlist
                   </Link>
                 ) : (
                   <Link
                     href={checkoutHref}
-                    className="inline-block w-full text-center bg-brand-700 text-white text-sm font-semibold py-2.5 rounded-md hover:bg-brand-700"
+                    className="inline-block w-full text-center bg-brand-700 text-white text-sm font-semibold py-3 rounded-md hover:bg-brand-700"
                   >
                     Book this placement
                   </Link>

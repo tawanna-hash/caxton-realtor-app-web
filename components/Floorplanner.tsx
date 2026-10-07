@@ -706,7 +706,7 @@ export default function Floorplanner({
 
         {mode === 'measure' && pendingMeasureStart && !calibrating && (
           <div className="absolute inset-x-0 top-3 flex justify-center pointer-events-none">
-            <div className="bg-gray-900/90 border border-white/15 rounded-full px-3 py-1.5 text-xs text-white/80">
+            <div className="bg-gray-900/90 border border-white/15 rounded-full px-3 py-2 text-xs text-white/80">
               Tap the other end of the wall
             </div>
           </div>

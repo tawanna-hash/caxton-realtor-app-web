@@ -397,7 +397,7 @@ function Column({
                             type="button"
                             onClick={() => onGenerateGif(m, variant, !!url)}
                             disabled={busy || !hasPages}
-                            className="text-xs px-2.5 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="text-xs px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                             title={!hasPages ? 'Upload pages first' : url ? 'Regenerate GIF' : 'Generate GIF'}
                           >
                             {busy ? 'Generating…' : url ? `${VARIANT_LABEL[variant]} · Regenerate` : VARIANT_LABEL[variant]}

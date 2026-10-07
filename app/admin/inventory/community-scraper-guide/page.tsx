@@ -13,7 +13,7 @@ import CommunityGuideContent from '@/components/admin/guides/CommunityGuideConte
 
 export default function AdminCommunityScraperGuidePage() {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
+    <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">

@@ -210,7 +210,7 @@ export default function InquiriesInbox() {
     <div>
       {/* Channel tabs with unread (new) counts. */}
       <div className="mb-4 border-b border-gray-200">
-        <nav className="-mb-px flex flex-wrap gap-5" aria-label="Channel tabs">
+        <nav className="-mb-px flex flex-wrap gap-4" aria-label="Channel tabs">
           {CHANNEL_TABS.map((c) => {
             const active = activeChannel === c;
             const label = c === 'all' ? 'All channels' : AD_CHANNEL_LABEL[c];
@@ -241,11 +241,11 @@ export default function InquiriesInbox() {
 
       {/* Status pipeline + search row. */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setUrl({ status: null })}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+            className={`px-3 py-2 rounded-full text-xs font-medium border transition ${
               activeStatus === 'all'
                 ? 'bg-[#301D5D] text-white border-[#301D5D]'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -260,7 +260,7 @@ export default function InquiriesInbox() {
                 key={s}
                 type="button"
                 onClick={() => setUrl({ status: s })}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+                className={`px-3 py-2 rounded-full text-xs font-medium border transition ${
                   active
                     ? 'bg-[#301D5D] text-white border-[#301D5D]'
                     : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -315,7 +315,7 @@ export default function InquiriesInbox() {
                     <button
                       type="button"
                       onClick={() => setUrl({ id: row.id })}
-                      className={`w-full px-4 py-2.5 text-left transition hover:bg-gray-50 ${
+                      className={`w-full px-4 py-3 text-left transition hover:bg-gray-50 ${
                         selected ? 'bg-[#F6F3FB]/60' : ''
                       }`}
                     >
@@ -387,7 +387,7 @@ export default function InquiriesInbox() {
         </div>
 
         {/* Detail drawer */}
-        <div className="bg-white border border-gray-200 rounded-md p-5 lg:sticky lg:top-4 lg:self-start">
+        <div className="bg-white border border-gray-200 rounded-md p-4 lg:sticky lg:top-4 lg:self-start">
           {selectedInquiry ? (
             <InquiryDetail
               key={selectedInquiry.id}

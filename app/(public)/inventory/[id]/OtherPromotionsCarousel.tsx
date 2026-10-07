@@ -128,7 +128,7 @@ export default function OtherPromotionsCarousel({
 }) {
   if (promotions.length === 0) return null;
   return (
-    <section className="mt-10 border-t border-gray-200 pt-6">
+    <section className="mt-8 border-t border-gray-200 pt-6">
       <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-4">
         Other Promotions
       </h2>

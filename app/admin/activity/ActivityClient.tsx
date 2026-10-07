@@ -281,7 +281,7 @@ export default function ActivityClient() {
   const pageEvents = events.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Insights</div>
@@ -338,7 +338,7 @@ export default function ActivityClient() {
           <label className="relative min-w-[210px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
             <span className="sr-only">Filter by path</span>
-            <input value={pathFilter} onChange={(e) => { setPathFilter(e.target.value); setPage(1); }} placeholder="Filter by path" className="h-9 w-full rounded border border-gray-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]" />
+            <input value={pathFilter} onChange={(e) => { setPathFilter(e.target.value); setPage(1); }} placeholder="Filter by path" className="h-9 w-full rounded border border-gray-300 bg-white pl-8 pr-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]" />
           </label>
           <input
             value={cityFilter}

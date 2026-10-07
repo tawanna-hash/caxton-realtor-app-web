@@ -109,7 +109,7 @@ export default function DeleteAccountSection({ accentColor = '#301D5D', email }:
           onClick={close}
         >
           <div
-            className="w-full sm:max-w-md bg-white rounded-t-lg sm:rounded-lg shadow-xl p-5 space-y-4"
+            className="w-full sm:max-w-md bg-white rounded-t-lg sm:rounded-lg shadow-xl p-4 space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div>

@@ -159,12 +159,12 @@ export default function SuppressionsClient() {
           </span>{' '}
           of <span className="font-semibold">{total.toLocaleString()}</span>
         </div>
-        <label className="flex items-center gap-1.5 text-xs text-gray-600">
+        <label className="flex items-center gap-2 text-xs text-gray-600">
           <span>Rows</span>
           <select
             value={pageSize}
             onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
-            className="text-xs px-1.5 py-1 rounded border border-gray-300 bg-white"
+            className="text-xs px-2 py-1 rounded border border-gray-300 bg-white"
           >
             {PAGE_SIZE_OPTIONS.map((n) => (<option key={n} value={n}>{n}</option>))}
           </select>
@@ -230,7 +230,7 @@ export default function SuppressionsClient() {
           placeholder="Search by email…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="flex-1 min-w-[220px] max-w-md text-sm px-3 py-1.5 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
+          className="flex-1 min-w-[220px] max-w-md text-sm px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
         />
         <span className="ml-auto text-xs text-gray-500">
           {loading ? 'Loading…' : `Page ${safePage} of ${pageCount}`}
@@ -267,7 +267,7 @@ export default function SuppressionsClient() {
             /* ignore */
           }
           return (
-            <div key={r.email} className="px-3 py-3 space-y-1.5">
+            <div key={r.email} className="px-3 py-3 space-y-2">
               <div className="font-mono text-[13px] text-gray-900 break-all">{r.email}</div>
               <div className="text-sm text-gray-800">{snapshotName(r.source_snapshot) || '—'}</div>
               <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
@@ -289,7 +289,7 @@ export default function SuppressionsClient() {
                   type="button"
                   onClick={() => unsuppress(r.email)}
                   disabled={busyEmail === r.email}
-                  className="inline-flex items-center px-2.5 py-1 rounded-md border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center px-3 py-1 rounded-md border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {busyEmail === r.email ? 'Lifting…' : 'Unsuppress'}
                 </button>
@@ -359,7 +359,7 @@ export default function SuppressionsClient() {
                         type="button"
                         onClick={() => unsuppress(r.email)}
                         disabled={busyEmail === r.email}
-                        className="inline-flex items-center px-2.5 py-1 rounded-md border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center px-3 py-1 rounded-md border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {busyEmail === r.email ? 'Lifting…' : 'Unsuppress'}
                       </button>

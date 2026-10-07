@@ -201,7 +201,7 @@ export default function BiometricGate() {
           type="button"
           onClick={() => void runUnlock()}
           disabled={busy}
-          className="w-full max-w-xs py-3.5 text-base font-medium uppercase tracking-wider text-white bg-gray-900 disabled:opacity-50 rounded-md mb-3"
+          className="w-full max-w-xs py-4 text-base font-medium uppercase tracking-wider text-white bg-gray-900 disabled:opacity-50 rounded-md mb-3"
         >
           {busy ? 'Verifying…' : `Unlock with ${label}`}
         </button>

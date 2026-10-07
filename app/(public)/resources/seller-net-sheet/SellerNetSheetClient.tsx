@@ -184,8 +184,8 @@ export default function SellerNetSheetClient() {
 
       <div className="grid lg:grid-cols-5 gap-8">
         {/* ── Inputs (hidden on print) ───────────────────────────── */}
-        <div className="lg:col-span-3 space-y-5 print:hidden">
-          <div className="rounded-md border border-gray-200 bg-white p-5">
+        <div className="lg:col-span-3 space-y-4 print:hidden">
+          <div className="rounded-md border border-gray-200 bg-white p-4">
             <p className={EYEBROW}>Transaction info</p>
             <p className="text-xs text-gray-500 mb-4">
               Used to personalize the printed and downloaded net sheet.
@@ -371,7 +371,7 @@ export default function SellerNetSheetClient() {
         <div className="lg:col-span-2 print:col-span-5">
           <div className="lg:sticky lg:top-6 rounded-md border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
             {(sellerName.trim() || propertyAddress.trim() || agentName.trim()) && (
-              <div className="mb-5 pb-4 border-b border-gray-100 text-xs text-gray-600 space-y-0.5">
+              <div className="mb-4 pb-4 border-b border-gray-100 text-xs text-gray-600 space-y-0.5">
                 {sellerName.trim() && (
                   <p>
                     <span className="uppercase tracking-[0.15em] text-gray-400 mr-1">
@@ -414,7 +414,7 @@ export default function SellerNetSheetClient() {
             >
               {fmtUSD(result.netToSeller)}
             </p>
-            <p className="text-xs text-gray-500 mb-5">
+            <p className="text-xs text-gray-500 mb-4">
               From {fmtUSD(salePrice)} sale price · closing {closingDate}
             </p>
 
@@ -554,7 +554,7 @@ function NumberField({
             onChange(Number.isFinite(n) ? n : 0);
           }}
           className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-700/30 ${
-            prefix ? 'pl-7' : ''
+            prefix ? 'pl-6' : ''
           } ${suffix ? 'pr-8' : ''}`}
         />
         {suffix && (

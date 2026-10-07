@@ -34,7 +34,7 @@ function formatDate(s?: string) {
 
 function GiveawayCard({ giveaway }: { giveaway: Giveaway }) {
   return (
-    <div className="space-y-2.5 p-4">
+    <div className="space-y-3 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <Link href={`/admin/giveaways/${giveaway.id}`} className="truncate text-sm font-semibold text-brand-700 hover:underline">

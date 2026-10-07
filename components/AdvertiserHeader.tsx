@@ -136,7 +136,7 @@ function SocialList({
   if (data.social.YouTube) entries.push(['YouTube', data.social.YouTube]);
   if (entries.length === 0) return null;
   return (
-    <ul className="flex flex-wrap items-center gap-1.5" aria-label="Social links">
+    <ul className="flex flex-wrap items-center gap-2" aria-label="Social links">
       {entries.map(([label, href]) => (
         <SocialIconLink key={label} href={href} label={label} accent={accent} size={size} />
       ))}
@@ -154,13 +154,13 @@ function VisitWebsiteLink({
   size?: 'sm' | 'md' | 'lg';
 }) {
   const padding =
-    size === 'lg' ? 'px-5 py-2.5 text-base' : size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm';
+    size === 'lg' ? 'px-4 py-3 text-base' : size === 'sm' ? 'px-3 py-2 text-xs' : 'px-4 py-2 text-sm';
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center gap-1.5 ${padding} font-medium text-white rounded-md transition-opacity hover:opacity-90`}
+      className={`inline-flex items-center gap-2 ${padding} font-medium text-white rounded-md transition-opacity hover:opacity-90`}
       style={{ backgroundColor: accent }}
     >
       Visit website
@@ -274,7 +274,7 @@ function Ctas({
 
 function Current({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHeaderTheme }) {
   return (
-    <header className="flex items-start gap-5 sm:gap-7 mb-8 sm:mb-10">
+    <header className="flex items-start gap-4 sm:gap-6 mb-8 sm:mb-8">
       <LogoTile data={data} size={144} accent={theme.accent} />
       <div className="flex-1 min-w-0">
         <Identity data={data} theme={theme} size="lg" />
@@ -286,7 +286,7 @@ function Current({ data, theme }: { data: AdvertiserHeaderData; theme: Advertise
 
 function Borderless({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHeaderTheme }) {
   return (
-    <header className="flex items-start gap-6 mb-8 sm:mb-10">
+    <header className="flex items-start gap-6 mb-8 sm:mb-8">
       <LogoTile
         data={data}
         size={160}
@@ -308,7 +308,7 @@ function Banner({ data, theme }: { data: AdvertiserHeaderData; theme: Advertiser
   return (
     <header className="mb-8 sm:mb-10">
       <div
-        className="flex items-center justify-center py-10 rounded-md mb-6"
+        className="flex items-center justify-center py-8 rounded-md mb-6"
         style={{ backgroundColor: `${theme.accent}0D` }}
       >
         {data.avatar_url && isBrowserRenderableImage(data.avatar_url) ? (
@@ -327,7 +327,7 @@ function Banner({ data, theme }: { data: AdvertiserHeaderData; theme: Advertiser
 function Chip({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHeaderTheme }) {
   return (
     <header className="mb-8 sm:mb-10">
-      <div className="inline-flex items-center gap-3 pl-2 pr-5 py-2 border border-gray-200 rounded-full bg-white mb-4">
+      <div className="inline-flex items-center gap-3 pl-2 pr-4 py-2 border border-gray-200 rounded-full bg-white mb-4">
         <span className="w-10 h-10 rounded-full bg-white border border-gray-200 overflow-hidden flex items-center justify-center">
           {data.avatar_url && isBrowserRenderableImage(data.avatar_url) ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -361,7 +361,7 @@ function Chip({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHe
 
 function Tint({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHeaderTheme }) {
   return (
-    <header className="flex items-start gap-7 mb-8 sm:mb-10">
+    <header className="flex items-start gap-6 mb-8 sm:mb-8">
       <LogoTile data={data} size={176} bg="tint" border={false} shape="rounded-md" accent={theme.accent} />
       <div className="flex-1 min-w-0">
         <Identity data={data} theme={theme} size="lg" />
@@ -373,8 +373,8 @@ function Tint({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHe
 
 function Centered({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHeaderTheme }) {
   return (
-    <header className="text-center mb-8 sm:mb-10">
-      <div className="flex items-center justify-center mb-5">
+    <header className="text-center mb-8 sm:mb-8">
+      <div className="flex items-center justify-center mb-4">
         {data.avatar_url && isBrowserRenderableImage(data.avatar_url) ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={data.avatar_url} alt={`${data.name} logo`} className="max-h-28 w-auto object-contain" />
@@ -393,7 +393,7 @@ function Centered({ data, theme }: { data: AdvertiserHeaderData; theme: Advertis
         </p>
       )}
       {data.industry && <p className="text-sm text-gray-500 font-light mt-2">{data.industry}</p>}
-      <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
+      <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
         {data.website && <VisitWebsiteLink href={data.website} accent={theme.accent} />}
         <SocialList data={data} accent={theme.accent} />
       </div>

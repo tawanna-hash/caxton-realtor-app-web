@@ -145,7 +145,7 @@ function Dashboard({
                 type="button"
                 onClick={() => setPreset(p)}
                 className={
-                  'px-3 py-1.5 text-sm font-medium rounded-md ' +
+                  'px-3 py-2 text-sm font-medium rounded-md ' +
                   (preset === p
                     ? 'bg-gray-900 text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')
@@ -225,7 +225,7 @@ function Dashboard({
                             href={h.config_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-1.5 block truncate text-xs text-gray-500 hover:underline"
+                            className="mt-2 block truncate text-xs text-gray-500 hover:underline"
                             title={h.config_url}
                           >
                             {h.config_url.replace(/^https?:\/\//, '').slice(0, 50)}

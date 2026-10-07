@@ -89,7 +89,7 @@ export default function CommissionCalculatorClient() {
 
       <div className="grid lg:grid-cols-5 gap-8">
         {/* ── Inputs ─────────────────────────────────────────────── */}
-        <div className="lg:col-span-3 space-y-5">
+        <div className="lg:col-span-3 space-y-4">
           {/* Side toggle */}
           <div>
             <span className="block text-sm font-medium text-gray-800 mb-2">
@@ -178,12 +178,12 @@ export default function CommissionCalculatorClient() {
             >
               {fmtUSD(result.agentNet)}
             </p>
-            <p className="text-xs text-gray-500 mb-5">
+            <p className="text-xs text-gray-500 mb-4">
               {side === 'listing' ? 'Listing' : 'Buyer'} side ·{' '}
               {((result.agentNet / salePrice) * 100).toFixed(2)}% of sale
             </p>
 
-            <dl className="space-y-2.5 text-sm">
+            <dl className="space-y-3 text-sm">
               <Row label="Total commission" value={result.totalCommission} muted />
               <Row label={`Your side (${side})`} value={result.sideCommission} />
               {result.referralAmount > 0 && (
@@ -300,7 +300,7 @@ function NumberField({
             onChange(Number.isFinite(n) ? n : 0);
           }}
           className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-700/30 ${
-            prefix ? 'pl-7' : ''
+            prefix ? 'pl-6' : ''
           } ${suffix ? 'pr-8' : ''}`}
         />
         {suffix && (

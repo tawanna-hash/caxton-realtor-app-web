@@ -69,7 +69,7 @@ export default function MediaKit({ mode = 'admin' }: { mode?: 'admin' | 'public'
   const isPublic = mode === 'public';
 
   return (
-    <div className={isPublic ? "mx-auto max-w-6xl px-4 py-8" : "mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8 [&_section]:p-4 [&_table]:text-xs [&_th]:py-2.5 [&_td]:py-2.5"}>
+    <div className={isPublic ? "mx-auto max-w-6xl px-4 py-8" : "mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8 [&_section]:p-4 [&_table]:text-xs [&_th]:py-3 [&_td]:py-3"}>
       <div className="mb-4">
         {!isPublic && <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Sales</div>}
         <PageTitle size="md">{isPublic ? 'Advertising Media Kit — 2026' : 'Media Kit — 2026'}</PageTitle>
@@ -152,7 +152,7 @@ function PubTabs({ active, onChange }: { active: PubTab['id']; onChange: (id: Pu
           >
             <span>{t.label}</span>
             {soon && (
-              <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-[#FEF8CC] text-[#645600]">
+              <span className="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-[#FEF8CC] text-[#645600]">
                 Launching Soon
               </span>
             )}
@@ -173,7 +173,7 @@ function AudienceSection({ activePub }: { activePub: PubTab }) {
         <p className="text-sm text-gray-700 mt-1">Verified human engagement — Apple MPP and bot activity filtered from all open-rate reporting since June 2024.</p>
       </div>
       {pubStats ? (
-        <div className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-5">
+        <div className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-4">
           <div className="text-base font-semibold text-gray-900 mb-3">{pubStats.name}</div>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
             {pubStats.stats.map((s) => (
@@ -185,7 +185,7 @@ function AudienceSection({ activePub }: { activePub: PubTab }) {
           </div>
         </div>
       ) : (
-        <div className="rounded-md bg-[#FEF8CC] ring-1 ring-[#FAD800]/30 p-5 text-sm text-[#645600]">
+        <div className="rounded-md bg-[#FEF8CC] ring-1 ring-[#FAD800]/30 p-4 text-sm text-[#645600]">
           Audience stats for {activePub.label} will be published closer to launch.
         </div>
       )}
@@ -507,7 +507,7 @@ function EblastCard({ blast, pub }: { blast: EBlast; pub: MediaKitPub }) {
       <div className="text-sm text-gray-700">{blast.name}</div>
       <div className="mt-1 text-2xl font-bold text-brand-700">{fmtUSD(price)}<span className="text-base font-semibold">/send</span></div>
       {subs && <div className="text-xs text-gray-600 mt-0.5">Based on {subs}</div>}
-      <ul className="mt-3 space-y-1 text-sm text-gray-900 list-disc pl-5">
+      <ul className="mt-3 space-y-1 text-sm text-gray-900 list-disc pl-4">
         {features.map((f) => (<li key={f}>{f}</li>))}
       </ul>
     </div>

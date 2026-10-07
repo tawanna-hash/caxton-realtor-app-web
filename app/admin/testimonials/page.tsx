@@ -161,7 +161,7 @@ export default function AdminTestimonialsPage() {
           <label className="relative min-w-0 flex-1">
             <span className="sr-only">Search testimonials</span>
             <Search size={16} className="pointer-events-none absolute left-3 top-3.5 text-gray-400" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search client, subscriber, or quote" className="h-9 w-full rounded border border-gray-300 pl-9 pr-3 text-sm" />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search client, subscriber, or quote" className="h-9 w-full rounded border border-gray-300 pl-8 pr-3 text-sm" />
           </label>
           <button className="h-9 rounded bg-[#301D5D] px-4 text-sm font-semibold text-white">Search</button>
         </form>
@@ -196,24 +196,24 @@ export default function AdminTestimonialsPage() {
       ) : (
         <section aria-label="Testimonials" className="mt-6 space-y-4">
           {items.map((item) => (
-            <article key={item.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_240px]">
+            <article key={item.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     {item.format === 'video' ? <Video size={17} className="text-[#301D5D]" /> : item.format === 'audio' ? <AudioLines size={17} className="text-[#301D5D]" /> : <FileText size={17} className="text-[#301D5D]" />}
-                    <span className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${badge(item.status)}`}>{item.status}</span>
+                    <span className={`rounded-full border px-3 py-1 text-xs font-medium capitalize ${badge(item.status)}`}>{item.status}</span>
                     <span className="text-xs text-gray-500">{item.submitted_via === 'collection_link' ? 'Client submitted' : 'Subscriber added'}</span>
                   </div>
                   {item.rating && <div className="mt-3 flex gap-0.5 text-[#645600]">{Array.from({ length: item.rating }).map((_, index) => <Star key={index} size={14} fill="currentColor" />)}</div>}
                   <blockquote className="mt-3 max-w-4xl text-base leading-7 text-gray-800">“{item.quote}”</blockquote>
                   <div className="mt-4 text-sm font-semibold text-gray-950">{item.client_name}</div>
                   {(item.client_title || item.client_company) && <div className="mt-0.5 text-sm text-gray-500">{[item.client_title, item.client_company].filter(Boolean).join(', ')}</div>}
-                  <div className="mt-4 flex flex-wrap gap-1.5">
+                  <div className="mt-4 flex flex-wrap gap-2">
                     <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">{item.is_global ? 'Global' : item.markets.map((id) => PUBLICATIONS.find((publication) => publication.id === id)?.market).filter(Boolean).join(', ')}</span>
                     {item.tags.map((tag) => <span key={tag} className="rounded bg-gray-50 px-2 py-1 text-xs text-gray-500">#{tag}</span>)}
                   </div>
                 </div>
-                <aside className="border-t border-gray-100 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <aside className="border-t border-gray-100 pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
                   <div className="text-xs font-medium uppercase tracking-wide text-gray-400">Subscriber</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">{item.owner_name}</div>
                   <div className="mt-0.5 break-all text-xs text-gray-500">{item.owner_email}</div>

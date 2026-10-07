@@ -1122,7 +1122,7 @@ export default function SignWizard({
             <h1 className="text-2xl text-gray-900">Advertising Insertion Order</h1>
             <p className="text-sm text-gray-500 mt-1">This is not yet an agreement. Review the insertion order and approve it to continue.</p>
           </div>
-          <div className="bg-white rounded-md border border-gray-200 shadow-sm p-8 space-y-5">
+          <div className="bg-white rounded-md border border-gray-200 shadow-sm p-8 space-y-4">
             {error && <div className="text-sm text-[#661102] bg-[#FFEAE6] rounded-md p-3">{error}</div>}
 
             <div>
@@ -1414,7 +1414,7 @@ export default function SignWizard({
         nextLabel="Next →"
         saving={saving}
       >
-        <div className="space-y-5">
+        <div className="space-y-4">
           <Eyebrow>Insertion Order</Eyebrow>
           <h2 className="text-lg text-gray-900">Your Quoted Placement</h2>
           <p className="text-sm text-gray-600">
@@ -1548,7 +1548,7 @@ export default function SignWizard({
         nextLabel="Next →"
         saving={saving}
       >
-        <div className="space-y-5">
+        <div className="space-y-4">
           <Eyebrow>Insertion Order</Eyebrow>
           <h2 className="text-lg text-gray-900">
             Your Ad Details
@@ -1732,7 +1732,7 @@ export default function SignWizard({
         nextDisabled={ccNotReady}
         saving={saving}
       >
-        <div className="space-y-5">
+        <div className="space-y-4">
           <Eyebrow>Billing &amp; Payment</Eyebrow>
           <h2 className="text-lg text-gray-900">
             Billing Information
@@ -1876,7 +1876,7 @@ export default function SignWizard({
       nextDisabled={!canSign}
       saving={saving}
     >
-      <div className="space-y-5">
+      <div className="space-y-4">
         <Eyebrow>Terms &amp; Digital Signature</Eyebrow>
         <h2 className="text-lg text-gray-900">
           Review and Sign the Insertion Order

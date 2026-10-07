@@ -150,7 +150,7 @@ function RecipientCard({
   onToggle: () => void;
 }) {
   return (
-    <div className="flex items-start gap-2.5 p-2.5">
+    <div className="flex items-start gap-3 p-3">
       <input
         type="checkbox"
         checked={checked}
@@ -655,7 +655,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
             <button
               type="button"
               onClick={() => { clearDraft(); onClose(); }}
-              className="rounded-md px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-200"
+              className="rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-gray-200"
             >
               Discard
             </button>
@@ -672,7 +672,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         {/* Body: 2-column */}
         <div className="grid flex-1 grid-cols-1 gap-0 overflow-hidden lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* LEFT: form */}
-          <div className="flex flex-col overflow-y-auto px-6 py-5">
+          <div className="flex flex-col overflow-y-auto px-6 py-4">
             {/* Audience filters */}
             <section className="mb-5">
               <h3 className="text-sm font-semibold text-gray-900">Audience</h3>
@@ -681,7 +681,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
               <div className="mt-3 space-y-3">
                 <div>
                   <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Status</div>
-                  <div className="mt-1.5 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {STATUS_OPTIONS.map((opt) => {
                       const on = statuses.includes(opt.value);
                       return (
@@ -703,7 +703,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
 
                 <div>
                   <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Publication</div>
-                  <div className="mt-1.5 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {PUB_OPTIONS.map((p) => {
                       const on = publications.includes(p);
                       return (
@@ -734,7 +734,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                         setQuery(e.target.value);
                       }}
                       placeholder="name / company / email"
-                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                   <div>
@@ -747,7 +747,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                         setTag(e.target.value);
                       }}
                       placeholder="optional single tag"
-                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                 </div>
@@ -771,7 +771,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
             </section>
 
             {/* Compose */}
-            <section className="mb-5 border-t border-gray-200 pt-5">
+            <section className="mb-4 border-t border-gray-200 pt-4">
               <h3 className="text-sm font-semibold text-gray-900">Message</h3>
               <div className="mt-3 space-y-3">
                 <div>
@@ -791,7 +791,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     value={previewText}
                     onChange={(e) => setPreviewText(e.target.value)}
                     maxLength={150}
-                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
 
@@ -807,7 +807,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                           setRewriteOpen((current) => !current);
                           setRewriteError(null);
                         }}
-                        className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+                        className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors ${
                           rewriteOpen
                             ? 'border-purple-600 bg-purple-50 text-purple-700'
                             : 'border-purple-300 bg-white text-purple-700 hover:bg-purple-50'
@@ -818,7 +818,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                       <button
                         type="button"
                         onClick={insertSignatureNow}
-                        className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                        className="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs text-gray-700 hover:bg-gray-50"
                         title="Insert a signature placeholder — server injects the full block on send"
                       >
                         Insert Signature
@@ -827,7 +827,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                       <button
                         type="button"
                         onClick={() => setShowTokenMenu((s) => !s)}
-                        className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                        className="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs text-gray-700 hover:bg-gray-50"
                       >
                         Insert token ▾
                       </button>
@@ -838,7 +838,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                               key={t.key}
                               type="button"
                               onClick={() => insertToken(t.key)}
-                              className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-gray-50"
+                              className="flex w-full items-center justify-between rounded px-2 py-2 text-left text-xs hover:bg-gray-50"
                             >
                               <span className="font-mono text-purple-700">{t.key}</span>
                               <span className="text-gray-500">{t.label}</span>
@@ -924,7 +924,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                           data-testid="crm-rewrite-generate"
                           onClick={requestRewrite}
                           disabled={rewriteLoading}
-                          className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="rounded-md bg-purple-700 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {rewriteLoading ? 'Writing suggestion…' : rewriteSuggestion ? 'Try again' : 'Suggest rewrite'}
                         </button>
@@ -952,7 +952,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                           <div className="px-3 py-2">
                             <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Suggested body</div>
                             <div
-                              className="mt-1 max-h-56 overflow-y-auto text-sm leading-6 text-gray-800 [&_a]:text-purple-700 [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
+                              className="mt-1 max-h-56 overflow-y-auto text-sm leading-6 text-gray-800 [&_a]:text-purple-700 [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-3 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-4"
                               dangerouslySetInnerHTML={{ __html: rewriteSuggestion.body }}
                             />
                           </div>
@@ -965,7 +965,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                                 setRewriteOpen(false);
                                 setRewriteError(null);
                               }}
-                              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+                              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100"
                             >
                               Keep original
                             </button>
@@ -973,7 +973,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                               type="button"
                               data-testid="crm-rewrite-apply"
                               onClick={applyRewrite}
-                              className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-800"
+                              className="rounded-md bg-purple-700 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-800"
                             >
                               Apply suggestion
                             </button>
@@ -995,7 +995,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                       value={fromName}
                       onChange={(e) => setFromName(e.target.value)}
                       placeholder="e.g. Tawanna at RealtyLine"
-                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                   <div>
@@ -1003,7 +1003,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     <select
                       value={publicationScope}
                       onChange={(e) => setPublicationScope(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     >
                       <option value="all">Default (RealtyLine brand)</option>
                       <option value="realtyline">RealtyLine brand</option>
@@ -1018,7 +1018,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                       value={replyTo}
                       onChange={(e) => setReplyTo(e.target.value)}
                       placeholder="you@myrealtyline.com"
-                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                   <div>
@@ -1028,7 +1028,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                       value={replyToList}
                       onChange={(e) => setReplyToList(e.target.value)}
                       placeholder="a@x.com, b@y.com"
-                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                   <div>
@@ -1039,7 +1039,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                       onChange={(e) => setCc(e.target.value)}
                       placeholder="person@example.com"
                       autoComplete="off"
-                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                   <div>
@@ -1050,7 +1050,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                       onChange={(e) => setBcc(e.target.value)}
                       placeholder="private-copy@example.com"
                       autoComplete="off"
-                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
                 </div>
@@ -1058,14 +1058,14 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
             </section>
 
             {/* Attachments */}
-            <section className="mb-5 border-t border-gray-200 pt-5">
+            <section className="mb-4 border-t border-gray-200 pt-4">
               <h3 className="text-sm font-semibold text-gray-900">Attachments</h3>
               <p className="mt-0.5 text-xs text-gray-500">
                 Uploaded files automatically appear as download buttons in the email.
               </p>
               <div className="mt-2 space-y-2">
                 {attachments.map((a, i) => (
-                  <div key={a.url} className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs">
+                  <div key={a.url} className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs">
                     <div className="min-w-0 truncate">
                       <a href={a.url} target="_blank" rel="noreferrer" className="text-purple-700 hover:underline">{a.filename}</a>
                       {a.size ? <span className="ml-2 text-gray-500">{(a.size / 1024).toFixed(0)} KB</span> : null}
@@ -1093,7 +1093,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     value={attachmentLinkUrl}
                     onChange={(e) => setAttachmentLinkUrl(e.target.value)}
                     placeholder="https://…"
-                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
                 <div>
@@ -1103,14 +1103,14 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     value={attachmentLinkLabel}
                     onChange={(e) => setAttachmentLinkLabel(e.target.value)}
                     placeholder="Download media kit"
-                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
               </div>
             </section>
 
             {/* Schedule + recurrence */}
-            <section className="mb-5 border-t border-gray-200 pt-5">
+            <section className="mb-4 border-t border-gray-200 pt-4">
               <h3 className="text-sm font-semibold text-gray-900">Delivery</h3>
               <div className="mt-3 flex gap-4">
                 <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -1137,7 +1137,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     type="datetime-local"
                     value={scheduledFor}
                     onChange={(e) => setScheduledFor(e.target.value)}
-                    className="mt-1 w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    className="mt-1 w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
               )}
@@ -1151,7 +1151,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     max={365}
                     value={recurrenceIntervalDays}
                     onChange={(e) => setRecurrenceIntervalDays(e.target.value)}
-                    className="mt-1 w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    className="mt-1 w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
                 <div>
@@ -1160,14 +1160,14 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     type="datetime-local"
                     value={recurrenceUntil}
                     onChange={(e) => setRecurrenceUntil(e.target.value)}
-                    className="mt-1 w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    className="mt-1 w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
               </div>
             </section>
 
             {/* Test send */}
-            <section className="mb-5 border-t border-gray-200 pt-5">
+            <section className="mb-4 border-t border-gray-200 pt-4">
               <h3 className="text-sm font-semibold text-gray-900">Test Send</h3>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <input
@@ -1175,7 +1175,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                   value={testTo}
                   onChange={(e) => setTestTo(e.target.value)}
                   placeholder="your@email.com"
-                  className="w-72 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  className="w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                 />
                 <button
                   type="button"
@@ -1197,7 +1197,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
           </div>
 
           {/* RIGHT: preview + submit */}
-          <aside className="flex flex-col overflow-y-auto border-l border-gray-200 bg-gray-50 px-5 py-5">
+          <aside className="flex flex-col overflow-y-auto border-l border-gray-200 bg-gray-50 px-4 py-4">
             <h3 className="text-sm font-semibold text-gray-900">Preview</h3>
 
             <div className="mt-2 rounded-md border border-gray-200 bg-white px-3 py-2">
@@ -1217,14 +1217,14 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
               <button
                 type="button"
                 onClick={() => setSelectedRecipientIds(null)}
-                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100"
               >
                 Select all ({serverCount ?? localAudience.length})
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedRecipientIds([])}
-                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100"
               >
                 Clear all
               </button>

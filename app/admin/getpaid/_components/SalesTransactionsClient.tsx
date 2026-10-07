@@ -243,7 +243,7 @@ function SortableTh({
 function StatusCell({ invoice, referenceTime }: { invoice: InvoiceWithAdvertiser; referenceTime: number }) {
   if (invoice.is_overdue) {
     return (
-      <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
+      <span className="inline-flex items-center gap-2 whitespace-nowrap text-gray-700">
         <AlertCircle className="h-4 w-4 text-[#301D5D]" aria-hidden="true" />
         {statusLabel(invoice, referenceTime)}
       </span>
@@ -251,7 +251,7 @@ function StatusCell({ invoice, referenceTime }: { invoice: InvoiceWithAdvertiser
   }
   if (invoice.status === 'paid') {
     return (
-      <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
+      <span className="inline-flex items-center gap-2 whitespace-nowrap text-gray-700">
         <CheckCircle2 className="h-4 w-4 fill-[#005A00] text-white" aria-hidden="true" />
         Paid
       </span>
@@ -313,7 +313,7 @@ function TransactionCard({
   const memo = memoSummary(invoice);
   const canReceivePayment = !['paid', 'void'].includes(invoice.status);
   return (
-    <div className="space-y-2.5 p-4">
+    <div className="space-y-3 p-4">
       <div className="flex items-start gap-3">
         <input
           type="checkbox"
@@ -349,7 +349,7 @@ function TransactionCard({
         </div>
       </div>
       <div><StatusCell invoice={invoice} referenceTime={referenceTime} /></div>
-      <div className="relative flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
+      <div className="relative flex flex-wrap items-center gap-4 border-t border-gray-100 pt-3 text-xs">
         <button type="button" disabled={busy} className="min-h-11 font-medium text-[#42277C] hover:underline disabled:opacity-50" onClick={onView}>
           View/Edit
         </button>
@@ -377,14 +377,14 @@ function TransactionCard({
               <button
                 type="button"
                 key={action}
-                className={`flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-gray-50 ${
+                className={`flex w-full items-center justify-between px-3 py-2 text-left hover:bg-gray-50 ${
                   rowActionDisabled(action, invoice.status) ? 'cursor-not-allowed text-gray-400' : ''
                 }`}
                 disabled={rowActionDisabled(action, invoice.status)}
                 onClick={() => onRowAction(action)}
               >
                 <span>{label}</span>
-                {action === 'duplicate-ai' && <span className="rounded bg-[#EFEAF8] px-1.5 py-0.5 text-[10px] font-semibold text-[#42277C]">NEW</span>}
+                {action === 'duplicate-ai' && <span className="rounded bg-[#EFEAF8] px-2 py-0.5 text-[10px] font-semibold text-[#42277C]">NEW</span>}
               </button>
             ))}
           </div>
@@ -425,7 +425,7 @@ function EmailInvoiceDialog({
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-gray-950/45 p-4" role="dialog" aria-modal="true" aria-label={reminder ? 'Review invoice reminder' : `Send invoice ${invoice.number}`}>
       <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white shadow-2xl">
-        <div className="flex items-start justify-between border-b border-gray-200 px-6 py-5">
+        <div className="flex items-start justify-between border-b border-gray-200 px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">{reminder ? 'Review invoice reminder' : `Send Invoice ${invoice.number ?? ''}`}</h2>
             {reminder && <p className="mt-1 text-xs text-gray-500">Review and edit the reminder before sending.</p>}
@@ -440,7 +440,7 @@ function EmailInvoiceDialog({
                 <li>Customer since {new Date(invoice.created_at).getFullYear()}</li>
                 <li>{client}</li>
               </ul>
-              <div className="mt-5 font-semibold text-gray-900">About this invoice</div>
+              <div className="mt-4 font-semibold text-gray-900">About this invoice</div>
               <ul className="mt-2 space-y-1">
                 <li>Total amount: {formatCents(invoice.total_cents)}</li>
                 <li>Remaining balance: {formatCents(outstandingCents(invoice))}</li>
@@ -480,13 +480,13 @@ function EmailInvoiceDialog({
           </div>
           {!reminder && (
             <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
-              <div className="p-5 text-center">
+              <div className="p-4 text-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/brand/caxton-logo.jpg" alt="Caxton Publications" className="mx-auto h-24 w-auto object-contain" />
               </div>
               <div className="bg-[#F6F3FB] px-6 py-8 text-center">
                 <div className="text-xl font-semibold text-gray-900">Your invoice is ready!</div>
-                <div className="mt-5 text-xs uppercase tracking-wider text-gray-500">Balance due</div>
+                <div className="mt-4 text-xs uppercase tracking-wider text-gray-500">Balance due</div>
                 <div className="mt-1 text-3xl font-semibold text-gray-900">{formatCents(outstandingCents(invoice))}</div>
               </div>
             </div>
@@ -558,10 +558,10 @@ function ShareInvoiceDialog({
           </div>
           <button type="button" aria-label="Close invoice link" className="rounded p-1 text-gray-500 hover:bg-gray-100" onClick={onClose}>×</button>
         </div>
-        <div className="mt-5 min-h-10 rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+        <div className="mt-4 min-h-10 rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700">
           {loading ? 'Creating secure link…' : url || 'Link could not be created.'}
         </div>
-        <div className="mt-7 flex justify-end gap-2 border-t border-gray-200 pt-5">
+        <div className="mt-6 flex justify-end gap-2 border-t border-gray-200 pt-4">
           <button type="button" disabled={!url} className="rounded border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50" onClick={() => void copy()}>{copied ? 'Copied' : 'Copy link'}</button>
           <button type="button" className={ORANGE_BUTTON} onClick={onClose}>Done</button>
         </div>
@@ -987,7 +987,7 @@ export function SalesTransactionsClient({
   };
 
   return (
-    <div className="mx-auto max-w-[1500px] min-w-0 space-y-5 px-4 py-5 sm:px-5 sm:py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] min-w-0 space-y-4 px-4 py-4 sm:px-4 sm:py-6 lg:px-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
@@ -1111,7 +1111,7 @@ export function SalesTransactionsClient({
             <span className="relative block">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
               <input
-                className={`${CONTROL} w-full pl-9`}
+                className={`${CONTROL} w-full pl-8`}
                 type="search"
                 aria-label={invoiceWorkspace ? 'Search invoices' : 'Search clients and transactions'}
                 placeholder={invoiceWorkspace ? 'Search invoice number, client, email or memo' : 'Search'}
@@ -1148,7 +1148,7 @@ export function SalesTransactionsClient({
           </div>
         </div>
         {!invoiceWorkspace && <div className="flex flex-wrap items-center gap-1 text-xs">
-          <select aria-label="Status filter" className="rounded border-0 bg-transparent px-1 py-1.5 text-gray-600 outline-none hover:text-gray-900" value={status} onChange={(event) => updateFilter(() => setStatus(event.target.value as StatusFilter))}>
+          <select aria-label="Status filter" className="rounded border-0 bg-transparent px-1 py-2 text-gray-600 outline-none hover:text-gray-900" value={status} onChange={(event) => updateFilter(() => setStatus(event.target.value as StatusFilter))}>
             <option value="all">All statuses</option>
             <option value="draft">Draft</option>
             <option value="open">Open</option>
@@ -1157,7 +1157,7 @@ export function SalesTransactionsClient({
             <option value="void">Void</option>
           </select>
           <span className="text-gray-300">·</span>
-          <select aria-label="Errors filter" className="rounded border-0 bg-transparent px-1 py-1.5 text-gray-600 outline-none hover:text-gray-900" value={errors} onChange={(event) => updateFilter(() => setErrors(event.target.value as ErrorFilter))}>
+          <select aria-label="Errors filter" className="rounded border-0 bg-transparent px-1 py-2 text-gray-600 outline-none hover:text-gray-900" value={errors} onChange={(event) => updateFilter(() => setErrors(event.target.value as ErrorFilter))}>
             <option value="all">Errors</option>
             <option value="missing-email">Missing email</option>
             <option value="past-due">Past due</option>
@@ -1215,7 +1215,7 @@ export function SalesTransactionsClient({
                 const canReceivePayment = !['paid', 'void'].includes(invoice.status);
                 return (
                   <tr key={invoice.id} className="group hover:bg-[#F6F3FB]/40">
-                    <td className="px-3 py-2.5">
+                    <td className="px-3 py-3">
                       <input
                         type="checkbox"
                         aria-label={`Select ${invoice.number ?? 'transaction'}`}
@@ -1228,16 +1228,16 @@ export function SalesTransactionsClient({
                         })}
                       />
                     </td>
-                    <td className="whitespace-nowrap px-2 py-2.5 text-gray-700">{formatTransactionDate(transactionDate(invoice))}</td>
-                    <td className="whitespace-nowrap px-2 py-2.5 text-gray-700">{formatTransactionDate(invoice.issued_at)}</td>
-                    <td className="whitespace-nowrap px-2 py-2.5 text-gray-700">{formatTransactionDate(paymentReceivedDate(invoice))}</td>
-                    {!invoiceWorkspace && <td className="px-2 py-2.5 text-gray-700">{transactionTypeLabel(invoice)}</td>}
-                    <td className="truncate px-2 py-2.5 font-medium text-gray-800" title={invoice.number ?? 'Draft'}>{invoice.number ?? 'Draft'}</td>
-                    <td className="truncate px-2 py-2.5 text-gray-800" title={invoice.advertiser_name ?? invoice.bill_to_name ?? ''}>{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
-                    {!invoiceWorkspace && <td className="truncate px-2 py-2.5 text-gray-600" title={memo}>{memo}</td>}
-                    <td className="whitespace-nowrap px-2 py-2.5 text-right font-medium text-gray-800">{formatCents(invoice.total_cents)}</td>
-                    <td className="px-2 py-2.5"><StatusCell invoice={invoice} referenceTime={referenceTime} /></td>
-                    <td className="relative whitespace-nowrap px-2 py-2.5 text-right">
+                    <td className="whitespace-nowrap px-2 py-3 text-gray-700">{formatTransactionDate(transactionDate(invoice))}</td>
+                    <td className="whitespace-nowrap px-2 py-3 text-gray-700">{formatTransactionDate(invoice.issued_at)}</td>
+                    <td className="whitespace-nowrap px-2 py-3 text-gray-700">{formatTransactionDate(paymentReceivedDate(invoice))}</td>
+                    {!invoiceWorkspace && <td className="px-2 py-3 text-gray-700">{transactionTypeLabel(invoice)}</td>}
+                    <td className="truncate px-2 py-3 font-medium text-gray-800" title={invoice.number ?? 'Draft'}>{invoice.number ?? 'Draft'}</td>
+                    <td className="truncate px-2 py-3 text-gray-800" title={invoice.advertiser_name ?? invoice.bill_to_name ?? ''}>{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
+                    {!invoiceWorkspace && <td className="truncate px-2 py-3 text-gray-600" title={memo}>{memo}</td>}
+                    <td className="whitespace-nowrap px-2 py-3 text-right font-medium text-gray-800">{formatCents(invoice.total_cents)}</td>
+                    <td className="px-2 py-3"><StatusCell invoice={invoice} referenceTime={referenceTime} /></td>
+                    <td className="relative whitespace-nowrap px-2 py-3 text-right">
                       <button type="button" disabled={busy} className="font-medium text-[#42277C] hover:underline disabled:opacity-50" onClick={() => setEditingInvoice(invoice)}>View/Edit</button>
                       {canReceivePayment ? (
                         <button type="button" disabled={busy} className="ml-3 font-medium text-[#42277C] hover:underline disabled:opacity-50" onClick={() => setPaymentInvoice(invoice)}>Receive payment</button>
@@ -1268,7 +1268,7 @@ export function SalesTransactionsClient({
                             <button
                               type="button"
                               key={action}
-                              className={`flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-gray-50 ${
+                              className={`flex w-full items-center justify-between px-3 py-2 text-left hover:bg-gray-50 ${
                                 (action === 'delete' && invoice.status !== 'draft') ||
                                 ((['send', 'remind', 'share', 'void'].includes(action) && ['paid', 'void'].includes(invoice.status)) || (['remind', 'share'].includes(action) && invoice.status === 'draft'))
                                   ? 'cursor-not-allowed text-gray-400'
@@ -1281,7 +1281,7 @@ export function SalesTransactionsClient({
                               onClick={() => handleRowAction(invoice, action)}
                             >
                               <span>{label}</span>
-                              {action === 'duplicate-ai' && <span className="rounded bg-[#EFEAF8] px-1.5 py-0.5 text-[10px] font-semibold text-[#42277C]">NEW</span>}
+                              {action === 'duplicate-ai' && <span className="rounded bg-[#EFEAF8] px-2 py-0.5 text-[10px] font-semibold text-[#42277C]">NEW</span>}
                             </button>
                           ))}
                         </div>
@@ -1332,13 +1332,13 @@ export function SalesTransactionsClient({
       {activityInvoice && (
         <div className="fixed inset-0 z-[70] bg-gray-950/30" role="dialog" aria-modal="true" aria-label="Invoice activity" onMouseDown={(event) => { if (event.currentTarget === event.target) setActivityInvoice(null); }}>
           <aside className="ml-auto flex h-full w-full max-w-sm flex-col bg-white shadow-2xl">
-            <header className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+            <header className="flex items-center justify-between border-b border-gray-200 px-4 py-4">
               <div className="text-sm font-semibold text-gray-900">Invoice {activityInvoice.number ?? 'Draft'}</div>
               <button type="button" aria-label="Close activity" className="rounded p-1 text-gray-500 hover:bg-gray-100" onClick={() => setActivityInvoice(null)}>×</button>
             </header>
             <div className="flex-1 overflow-y-auto">
-              <section className="border-b border-gray-200 px-5 py-4">
-                <div className={`inline-flex items-center gap-1.5 text-xs font-medium ${activityInvoice.is_overdue ? 'text-[#42277C]' : activityInvoice.status === 'paid' ? 'text-[#005A00]' : 'text-gray-600'}`}>
+              <section className="border-b border-gray-200 px-4 py-4">
+                <div className={`inline-flex items-center gap-2 text-xs font-medium ${activityInvoice.is_overdue ? 'text-[#42277C]' : activityInvoice.status === 'paid' ? 'text-[#005A00]' : 'text-gray-600'}`}>
                   <span className={`h-2 w-2 rounded-full ${activityInvoice.is_overdue ? 'bg-[#301D5D]' : activityInvoice.status === 'paid' ? 'bg-[#005A00]' : 'bg-gray-400'}`} />
                   {statusLabel(activityInvoice, referenceTime)}
                 </div>
@@ -1350,14 +1350,14 @@ export function SalesTransactionsClient({
                 </div>
               </section>
 
-              <section className="border-b border-gray-200 px-5 py-4 text-sm">
+              <section className="border-b border-gray-200 px-4 py-4 text-sm">
                 <div className="font-semibold text-gray-900">{activityInvoice.advertiser_name ?? activityInvoice.bill_to_name ?? 'Customer'}</div>
                 {activityInvoice.bill_to_address && <div className="mt-3 whitespace-pre-line text-xs leading-5 text-gray-600">{activityInvoice.bill_to_address}</div>}
                 {activityInvoice.bill_to_email && <a href={`mailto:${activityInvoice.bill_to_email}`} className="mt-3 block break-all text-xs font-medium text-[#42277C] hover:underline">{activityInvoice.bill_to_email}</a>}
               </section>
 
               {!!activityInvoice.payments?.length && (
-                <section className="border-b border-gray-200 px-5 py-4">
+                <section className="border-b border-gray-200 px-4 py-4">
                   <h3 className="text-sm font-semibold text-gray-900">Payments</h3>
                   <div className="mt-3 space-y-3">
                     {activityInvoice.payments.map((payment) => (
@@ -1376,7 +1376,7 @@ export function SalesTransactionsClient({
                 </section>
               )}
 
-              <section className="border-b border-gray-200 px-5 py-4">
+              <section className="border-b border-gray-200 px-4 py-4">
                 <h3 className="text-sm font-semibold text-gray-900">Invoice Activity</h3>
                 <ol className="mt-4 space-y-0">
                   {[
@@ -1398,7 +1398,7 @@ export function SalesTransactionsClient({
                 </ol>
               </section>
 
-              <section className="border-b border-gray-200 px-5 py-4">
+              <section className="border-b border-gray-200 px-4 py-4">
                 <h3 className="text-sm font-semibold text-gray-900">Products and Services</h3>
                 <div className="mt-3 space-y-3">
                   {(activityInvoice.line_items?.length ? activityInvoice.line_items : [{ description: activityInvoice.memo ?? 'Invoice', qty: 1, unit_cents: activityInvoice.amount_cents }]).map((item, index) => (
@@ -1410,7 +1410,7 @@ export function SalesTransactionsClient({
                 </div>
               </section>
 
-              <section className="px-5 py-4">
+              <section className="px-4 py-4">
                 <h3 className="text-sm font-semibold text-gray-900">Attachments</h3>
                 <p className="mt-2 text-xs text-gray-500">No attachments on this invoice.</p>
               </section>

@@ -124,7 +124,7 @@ export default function PublicationSettingsForm({ initialSettings }: Props) {
           </Link>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-md p-5 mb-6">
+        <div className="bg-white border border-gray-200 rounded-md p-4 mb-6">
           <h2 className="text-base font-semibold text-gray-900 mb-1">Google Analytics</h2>
           <p className="text-sm text-gray-600 mb-4">
             Each magazine in a publication will fire GA4 events (page views and a
@@ -132,7 +132,7 @@ export default function PublicationSettingsForm({ initialSettings }: Props) {
             event on every page turn) into the property tied to its Measurement ID.
           </p>
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             {PUBLICATIONS.map((pub) => {
               const row = findRow(rows, pub);
               const value = draft[pub];
@@ -142,7 +142,7 @@ export default function PublicationSettingsForm({ initialSettings }: Props) {
               const justSaved = savedPub === pub;
               const err = errorByPub[pub];
               return (
-                <div key={pub} className="border-t border-gray-100 pt-5 first:border-t-0 first:pt-0">
+                <div key={pub} className="border-t border-gray-100 pt-4 first:border-t-0 first:pt-0">
                   <label className="block">
                     <span className="block text-sm font-medium text-gray-900">{PUB_LABEL[pub]}</span>
                     <span className="block text-xs text-gray-500 mt-0.5 mb-2">{PUB_HELP[pub]}</span>
@@ -161,7 +161,7 @@ export default function PublicationSettingsForm({ initialSettings }: Props) {
                       type="button"
                       onClick={() => handleSave(pub)}
                       disabled={isSaving || !dirty}
-                      className="bg-[#301D5D] hover:bg-[#42277C] disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-md text-sm font-medium"
+                      className="bg-[#301D5D] hover:bg-[#42277C] disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium"
                     >
                       {isSaving ? 'Saving…' : 'Save'}
                     </button>

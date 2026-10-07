@@ -89,7 +89,7 @@ function StatementCard({
   onSent: (sentAt: string) => void;
 }) {
   return (
-    <div className="space-y-2.5 p-4">
+    <div className="space-y-3 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="truncate text-sm font-medium text-gray-900">{partner.advertiser_name}</div>
@@ -118,7 +118,7 @@ function StatementCard({
           </div>
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
+      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-3 text-xs">
         <Link href={`/admin/getpaid/statements/${partner.advertiser_id}`} className="font-medium text-[#42277C] hover:underline">
           View
         </Link>
@@ -222,7 +222,7 @@ export default function StatementsClient({
   const filteredTotal = filtered.reduce((sum, partner) => sum + partner.outstanding_cents, 0);
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8">
       <header>
         <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
           Admin · Get Paid
@@ -268,7 +268,7 @@ export default function StatementsClient({
             />
             <input
               type="search"
-              className={`${CONTROL} w-full pl-9`}
+              className={`${CONTROL} w-full pl-8`}
               placeholder="Partner or billing email"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -310,25 +310,25 @@ export default function StatementsClient({
             <tbody className="divide-y divide-gray-200">
               {filtered.map((partner) => (
                 <tr key={partner.advertiser_id} className="hover:bg-[#F6F3FB]/40">
-                  <td className="truncate px-3 py-2.5 font-medium text-gray-900">
+                  <td className="truncate px-3 py-3 font-medium text-gray-900">
                     {partner.advertiser_name}
                   </td>
                   <td
-                    className="truncate px-2 py-2.5 text-gray-600"
+                    className="truncate px-2 py-3 text-gray-600"
                     title={partner.recipient_email ?? ''}
                   >
                     {partner.recipient_email ?? '— no email on file'}
                   </td>
-                  <td className="px-2 py-2.5 text-right text-gray-700">
+                  <td className="px-2 py-3 text-right text-gray-700">
                     {Number(partner.open_invoice_count).toLocaleString()}
                   </td>
-                  <td className="px-2 py-2.5 text-right font-medium text-[#42277C]">
+                  <td className="px-2 py-3 text-right font-medium text-[#42277C]">
                     {partner.overdue_cents ? formatCents(partner.overdue_cents) : '—'}
                   </td>
-                  <td className="px-2 py-2.5 text-right font-medium text-gray-900">
+                  <td className="px-2 py-3 text-right font-medium text-gray-900">
                     {formatCents(partner.outstanding_cents)}
                   </td>
-                  <td className="px-2 py-2.5 text-gray-600">
+                  <td className="px-2 py-3 text-gray-600">
                     {partner.last_sent_at ? (
                       <>
                         <div>{new Date(partner.last_sent_at).toLocaleDateString('en-US')}</div>
@@ -336,7 +336,7 @@ export default function StatementsClient({
                       </>
                     ) : '—'}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-2.5 text-right">
+                  <td className="whitespace-nowrap px-3 py-3 text-right">
                     <Link
                       href={`/admin/getpaid/statements/${partner.advertiser_id}`}
                       className="font-medium text-[#42277C] hover:underline"
@@ -391,7 +391,7 @@ export default function StatementsClient({
         </section>
       )}
 
-      <section aria-label="Payment links" className="space-y-3 border-t border-gray-200 pt-5">
+      <section aria-label="Payment links" className="space-y-3 border-t border-gray-200 pt-4">
         <button
           type="button"
           onClick={() => setPaymentLinksOpen((open) => !open)}

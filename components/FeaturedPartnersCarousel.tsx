@@ -16,11 +16,11 @@ export function FeaturedPartnersCarousel({ placement }: { placement: 'top' | 'fo
   return (
     <section
       aria-label="BRAND [12] PLUS PARTNERS"
-      className={top ? 'mb-8 border-b border-gray-200 bg-white pt-5 pb-6 sm:mb-10 sm:pt-6 sm:pb-8' : ''}
+      className={top ? 'mb-8 border-b border-gray-200 bg-white pt-4 pb-6 sm:mb-8 sm:pt-6 sm:pb-8' : ''}
     >
       <div className={top ? 'mx-auto max-w-7xl px-4 sm:px-6 lg:px-8' : ''}>
         {top && (
-          <h2 className="mb-5 text-center text-xs font-medium tracking-[0.2em] text-gray-500 sm:mb-6">
+          <h2 className="mb-4 text-center text-xs font-medium tracking-[0.2em] text-gray-500 sm:mb-6">
             BRAND [12] PLUS PARTNERS
           </h2>
         )}

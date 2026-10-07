@@ -96,9 +96,9 @@ export default function HotspotPerformance() {
                 <tbody className="divide-y divide-gray-100">
                   {data?.topAdvertisers.map((a) => (
                     <tr key={a.name} className="hover:bg-[#F6F3FB]/40">
-                      <td className="py-2.5 pl-2 truncate max-w-[180px]" title={a.name}>{a.name}</td>
-                      <td className="py-2.5 text-right font-mono text-gray-500">{a.hotspots}</td>
-                      <td className="py-2.5 text-right font-mono pr-2">{a.clicks.toLocaleString('en-US')}</td>
+                      <td className="py-3 pl-2 truncate max-w-[180px]" title={a.name}>{a.name}</td>
+                      <td className="py-3 text-right font-mono text-gray-500">{a.hotspots}</td>
+                      <td className="py-3 text-right font-mono pr-2">{a.clicks.toLocaleString('en-US')}</td>
                     </tr>
                   ))}
                   {!data?.topAdvertisers.length ? (
@@ -128,11 +128,11 @@ export default function HotspotPerformance() {
                     const context = `${h.publicationLabel} · ${h.issueLabel} · p.${h.page}`;
                     return (
                       <tr key={h.id} className="hover:bg-[#F6F3FB]/40">
-                        <td className="py-2.5 pl-2">
+                        <td className="py-3 pl-2">
                           <div className="truncate max-w-[220px]" title={primary}>{primary}</div>
                           <div className="text-[10px] text-gray-400 truncate max-w-[220px]" title={context}>{context}</div>
                         </td>
-                        <td className="py-2.5 text-right font-mono pr-2 align-top">{h.clicks.toLocaleString('en-US')}</td>
+                        <td className="py-3 text-right font-mono pr-2 align-top">{h.clicks.toLocaleString('en-US')}</td>
                       </tr>
                     );
                   })}

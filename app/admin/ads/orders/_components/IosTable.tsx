@@ -192,7 +192,7 @@ export default function IosTable() {
       {/* Status + search row */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <select
-          className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm"
+          className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm"
           value={activeStatus}
           onChange={(e) => setUrl({ status: e.target.value === 'all' ? null : e.target.value })}
         >
@@ -211,12 +211,12 @@ export default function IosTable() {
           onKeyDown={(e) => {
             if (e.key === 'Enter') setUrl({ q: qInput || null });
           }}
-          className="flex-1 min-w-[240px] rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm"
+          className="flex-1 min-w-[240px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
         />
         <button
           type="button"
           onClick={() => setUrl({ q: qInput || null })}
-          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50"
+          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm hover:bg-gray-50"
         >
           Search
         </button>
@@ -246,7 +246,7 @@ export default function IosTable() {
                         {IO_STATUS_LABEL[io.status]}
                       </span>
                     </div>
-                    <p className="font-medium text-gray-900 mt-1.5 truncate">{io.advertiser_name ?? '—'}</p>
+                    <p className="font-medium text-gray-900 mt-2 truncate">{io.advertiser_name ?? '—'}</p>
                   </div>
                   <div className="text-right shrink-0 text-sm font-medium tabular-nums text-gray-900">
                     {formatMoney(io.total_cents)}

@@ -10,8 +10,8 @@ type Req = { id: string; label: string; note: string; personName: string; status
 type Upload = { id: string; docId: string; filename: string; storedIn: string; storedPath: string; storedUrl: string; archived: boolean };
 
 const PRESETS = ["Driver's License (Front And Back)", 'Pre-Approval Letter', 'Proof Of Funds', 'Homeowners Insurance Binder', 'Other'];
-const btn = 'inline-flex items-center rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white disabled:opacity-45';
-const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[14px] text-[#1B1726]';
+const btn = 'inline-flex items-center rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white disabled:opacity-45';
+const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[14px] text-[#1B1726]';
 const lab = 'mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]';
 const when = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 const STATUS: Record<string, string> = { pending: 'Pending', uploaded: 'Needs Review', received: 'Received' };

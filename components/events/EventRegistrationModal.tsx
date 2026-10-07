@@ -11,7 +11,7 @@ type Props = {
 };
 
 const INPUT =
-  'w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15';
+  'w-full rounded-md border border-gray-300 bg-white px-3 py-3 text-base text-gray-900 outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/15';
 
 export function EventRegistrationModal({ eventId, eventTitle, color, onClose }: Props) {
   const [form, setForm] = useState({
@@ -57,9 +57,9 @@ export function EventRegistrationModal({ eventId, eventTitle, color, onClose }: 
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 sm:items-center sm:p-5">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 sm:items-center sm:p-4">
       <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-xl bg-white shadow-2xl sm:max-w-lg sm:rounded-xl">
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-gray-200 bg-white px-5 py-4">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-gray-200 bg-white px-4 py-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color }}>
               Event registration
@@ -87,20 +87,20 @@ export function EventRegistrationModal({ eventId, eventTitle, color, onClose }: 
             <button
               type="button"
               onClick={onClose}
-              className="mt-6 rounded-md px-5 py-2.5 text-sm font-semibold text-white"
+              className="mt-6 rounded-md px-4 py-3 text-sm font-semibold text-white"
               style={{ backgroundColor: color }}
             >
               Done
             </button>
           </div>
         ) : (
-          <form onSubmit={submit} className="space-y-4 px-5 py-5">
+          <form onSubmit={submit} className="space-y-4 px-4 py-4">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-gray-800">Name</span>
+              <span className="mb-2 block text-sm font-medium text-gray-800">Name</span>
               <input required value={form.fullName} onChange={(e) => set('fullName', e.target.value)} className={INPUT} autoComplete="name" />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-gray-800">Company</span>
+              <span className="mb-2 block text-sm font-medium text-gray-800">Company</span>
               <input required value={form.company} onChange={(e) => set('company', e.target.value)} className={INPUT} autoComplete="organization" />
             </label>
             <label className="flex items-center gap-3 rounded-md border border-gray-200 px-3 py-3">
@@ -108,16 +108,16 @@ export function EventRegistrationModal({ eventId, eventTitle, color, onClose }: 
               <span className="text-sm font-medium text-gray-800">I am a REALTOR®</span>
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-gray-800">Real estate license number <span className="font-normal text-gray-500">(optional)</span></span>
+              <span className="mb-2 block text-sm font-medium text-gray-800">Real estate license number <span className="font-normal text-gray-500">(optional)</span></span>
               <input value={form.licenseNumber} onChange={(e) => set('licenseNumber', e.target.value)} className={INPUT} autoComplete="off" />
             </label>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-gray-800">Email</span>
+                <span className="mb-2 block text-sm font-medium text-gray-800">Email</span>
                 <input required type="email" value={form.email} onChange={(e) => set('email', e.target.value)} className={INPUT} autoComplete="email" />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-gray-800">Mobile</span>
+                <span className="mb-2 block text-sm font-medium text-gray-800">Mobile</span>
                 <input required type="tel" value={form.mobile} onChange={(e) => set('mobile', e.target.value)} className={INPUT} autoComplete="tel" />
               </label>
             </div>

@@ -224,12 +224,12 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
         <div>
           Page <span className="font-semibold">{safePage}</span> of {pageCount}
         </div>
-        <label className="flex items-center gap-1.5 text-xs text-gray-600">
+        <label className="flex items-center gap-2 text-xs text-gray-600">
           <span>Rows</span>
           <select
             value={pageSize}
             onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
-            className="text-xs px-1.5 py-1 rounded border border-gray-300 bg-white"
+            className="text-xs px-2 py-1 rounded border border-gray-300 bg-white"
           >
             {PAGE_SIZE_OPTIONS.map((n) => (<option key={n} value={n}>{n}</option>))}
           </select>
@@ -304,12 +304,12 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
           placeholder="Search email, name, company, license #, ZIP…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="flex-1 min-w-[220px] max-w-md text-sm px-3 py-1.5 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
+          className="flex-1 min-w-[220px] max-w-md text-sm px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
         />
         <select
           value={verifFilter}
           onChange={(e) => setVerifFilter(e.target.value as VerifFilter)}
-          className="text-sm px-3 py-1.5 rounded-md border border-gray-300 bg-white"
+          className="text-sm px-3 py-2 rounded-md border border-gray-300 bg-white"
         >
           <option value="all">All verification</option>
           <option value="valid">Valid</option>
@@ -322,7 +322,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
         <select
           value={sourceFilter}
           onChange={(e) => setSourceFilter(e.target.value as SourceFilter)}
-          className="text-sm px-3 py-1.5 rounded-md border border-gray-300 bg-white"
+          className="text-sm px-3 py-2 rounded-md border border-gray-300 bg-white"
         >
           <option value="all">All sources</option>
           <option value="mailing_contacts">Mailing / Holding</option>
@@ -350,7 +350,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
                   return next;
                 });
               }}
-              className={`px-2 py-1.5 rounded-md border text-xs max-w-[14rem] ${fieldFilters[f.field] ? 'border-gray-900 bg-gray-50 font-medium' : 'border-gray-300 text-gray-700'}`}
+              className={`px-2 py-2 rounded-md border text-xs max-w-[14rem] ${fieldFilters[f.field] ? 'border-gray-900 bg-gray-50 font-medium' : 'border-gray-300 text-gray-700'}`}
             >
               <option value="">{f.label}: All</option>
               {(facets[f.field] ?? []).map((o) => (
@@ -364,7 +364,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
             <button
               type="button"
               onClick={() => setFieldFilters({})}
-              className="px-2 py-1.5 text-xs text-gray-600 hover:text-gray-900 underline underline-offset-2"
+              className="px-2 py-2 text-xs text-gray-600 hover:text-gray-900 underline underline-offset-2"
             >
               Clear filters
             </button>
@@ -397,7 +397,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
           const badgeStatus: EmailBadgeStatus =
             vs === 'unverified' ? null : (vs as EmailBadgeStatus);
           return (
-            <div key={r.email} className="px-3 py-3 space-y-1.5">
+            <div key={r.email} className="px-3 py-3 space-y-2">
               <div className="font-mono text-[13px] text-gray-900 break-all">{r.email}<button
                   type="button"
                   onClick={() => verifyRow(r.email)}
@@ -613,7 +613,7 @@ function EditModal({
           </div>
           <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-900 text-xl leading-none" aria-label="Close">×</button>
         </div>
-        <div className="grid grid-cols-2 gap-3 px-6 py-5">
+        <div className="grid grid-cols-2 gap-3 px-6 py-4">
           {EDIT_FIELDS.map((f) => (
             <label key={f.key} className={`block ${f.wide ? 'col-span-2' : ''}`}>
               <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-gray-500">{f.label}</span>
@@ -637,8 +637,8 @@ function EditModal({
         </div>
         {err && <div className="mx-6 mb-3 rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-3 py-2 text-xs text-[#661102]">{err}</div>}
         <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-gray-200 bg-white px-6 py-3">
-          <button type="button" onClick={onDelete} className="mr-auto rounded-md border border-[#FF2A04]/50 px-3 py-1.5 text-sm text-[#661102] hover:bg-[#FFEAE6]">Delete</button>
-          <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100">Cancel</button>
+          <button type="button" onClick={onDelete} className="mr-auto rounded-md border border-[#FF2A04]/50 px-3 py-2 text-sm text-[#661102] hover:bg-[#FFEAE6]">Delete</button>
+          <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-gray-100">Cancel</button>
           <button type="button" disabled={saving} onClick={save} className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
             {saving ? 'Saving…' : 'Save changes'}
           </button>

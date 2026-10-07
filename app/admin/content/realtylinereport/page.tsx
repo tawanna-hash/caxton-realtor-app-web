@@ -347,16 +347,16 @@ export default function RealtyLineMlsAdminPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Editor */}
-        <div className="lg:col-span-3 space-y-5">
+        <div className="lg:col-span-3 space-y-4">
           {/* Header */}
-          <div className="bg-white border border-gray-200 rounded-md p-5">
+          <div className="bg-white border border-gray-200 rounded-md p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">{editingId ? `Edit report #${editingId}` : 'New report'}</h2>
               <button
                 type="button"
                 onClick={onPickFile}
                 disabled={importing}
-                className="text-xs font-medium px-3 py-1.5 border border-[#42277C] bg-[#301D5D] text-white rounded-md hover:bg-[#42277C] transition disabled:opacity-60"
+                className="text-xs font-medium px-3 py-2 border border-[#42277C] bg-[#301D5D] text-white rounded-md hover:bg-[#42277C] transition disabled:opacity-60"
               >
                 {importing ? 'Extracting\u2026' : 'Upload graphic to autopopulate'}
               </button>
@@ -373,7 +373,7 @@ export default function RealtyLineMlsAdminPage() {
               <button
                 type="button"
                 onClick={prefillLabels}
-                className="text-xs font-medium px-3 py-1.5 border border-brand-700 text-brand-700 rounded-md hover:bg-brand-700 hover:text-white transition"
+                className="text-xs font-medium px-3 py-2 border border-brand-700 text-brand-700 rounded-md hover:bg-brand-700 hover:text-white transition"
               >
                 Pre-fill labels (EN + ES)
               </button>
@@ -435,7 +435,7 @@ export default function RealtyLineMlsAdminPage() {
           </div>
 
           {/* Headline */}
-          <div className="bg-white border border-gray-200 rounded-md p-5">
+          <div className="bg-white border border-gray-200 rounded-md p-4">
             <h2 className="font-semibold mb-4">Headline Number</h2>
 
             <div className="grid grid-cols-3 gap-4">
@@ -487,7 +487,7 @@ export default function RealtyLineMlsAdminPage() {
           </div>
 
           {/* Indicator stats */}
-          <div className="bg-white border border-gray-200 rounded-md p-5">
+          <div className="bg-white border border-gray-200 rounded-md p-4">
             <h2 className="font-semibold mb-1">Indicator Stats</h2>
             <p className="text-xs text-gray-500 mb-4">Median Sales Price, Closed Sales, New Listings, Months of Inventory, Active Listings, Pending Sales, Sales Dollar Volume, Average Days on Market, Average Close to List Price.</p>
             <div className="space-y-3">
@@ -503,13 +503,13 @@ export default function RealtyLineMlsAdminPage() {
           </div>
 
           {/* Listing counts (optional) */}
-          <div className="bg-white border border-gray-200 rounded-md p-5">
+          <div className="bg-white border border-gray-200 rounded-md p-4">
             <div className="flex items-center justify-between mb-1">
               <h2 className="font-semibold">Listing Counts (Optional)</h2>
               <button
                 type="button"
                 onClick={addListingRow}
-                className="text-xs font-medium px-3 py-1.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                className="text-xs font-medium px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
               >
                 + Add row
               </button>
@@ -539,13 +539,13 @@ export default function RealtyLineMlsAdminPage() {
           </div>
 
           {/* Price bands (optional) */}
-          <div className="bg-white border border-gray-200 rounded-md p-5">
+          <div className="bg-white border border-gray-200 rounded-md p-4">
             <div className="flex items-center justify-between mb-1">
               <h2 className="font-semibold">Price Bands (Optional)</h2>
               <button
                 type="button"
                 onClick={addBandRow}
-                className="text-xs font-medium px-3 py-1.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                className="text-xs font-medium px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
               >
                 + Add band
               </button>
@@ -598,7 +598,7 @@ export default function RealtyLineMlsAdminPage() {
           </div>
 
           {/* Footer fields + save */}
-          <div className="bg-white border border-gray-200 rounded-md p-5">
+          <div className="bg-white border border-gray-200 rounded-md p-4">
             <div className="grid grid-cols-2 gap-4">
               <Field label="Page count (optional)">
                 <input

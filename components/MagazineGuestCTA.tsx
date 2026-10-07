@@ -81,17 +81,17 @@ export default function MagazineGuestCTA({ brandColor }: { brandColor: string })
           <p className="text-xs text-gray-600 font-light mt-1 leading-snug">
             Sign in to access the partner directory, events calendar, builder communities, and the weekly feed.
           </p>
-          <div className="flex items-center gap-2 mt-2.5">
+          <div className="flex items-center gap-2 mt-3">
             <Link
               href="/auth/sign-up"
-              className="inline-flex items-center justify-center px-3.5 py-2 text-xs font-medium uppercase tracking-[0.1em] text-white rounded-md"
+              className="inline-flex items-center justify-center px-4 py-2 text-xs font-medium uppercase tracking-[0.1em] text-white rounded-md"
               style={{ backgroundColor: brandColor }}
             >
               Create account
             </Link>
             <Link
               href="/auth/sign-in"
-              className="inline-flex items-center justify-center px-3.5 py-2 text-xs font-medium uppercase tracking-[0.1em] text-gray-700 border border-gray-300 rounded-md hover:bg-white"
+              className="inline-flex items-center justify-center px-4 py-2 text-xs font-medium uppercase tracking-[0.1em] text-gray-700 border border-gray-300 rounded-md hover:bg-white"
             >
               Sign in
             </Link>

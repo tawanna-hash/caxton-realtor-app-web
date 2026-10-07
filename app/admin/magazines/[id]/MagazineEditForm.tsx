@@ -372,7 +372,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
             <button
               onClick={handleReExtract}
               disabled={busy !== null || !readerUrl}
-              className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-900 px-3 py-1.5 rounded-md disabled:opacity-50 font-medium"
+              className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-900 px-3 py-2 rounded-md disabled:opacity-50 font-medium"
             >
               {busy === 'extract' ? 'Extracting…' : hasTexts ? 'Re-extract page text' : 'Extract page text from PDF'}
             </button>
@@ -386,7 +386,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
             <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium">
               Pages ({pageUrls.length})
             </h2>
-            <label className="cursor-pointer text-sm bg-[#301D5D] hover:bg-[#42277C] text-white px-3 py-1.5 rounded-md">
+            <label className="cursor-pointer text-sm bg-[#301D5D] hover:bg-[#42277C] text-white px-3 py-2 rounded-md">
               + Add pages
               <input
                 type="file"
@@ -417,7 +417,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
                       <button
                         onClick={() => handleMovePage(idx, -1)}
                         disabled={idx === 0 || busy !== null}
-                        className="px-1.5 py-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                        className="px-2 py-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-30"
                         title="Move up"
                       >
                         ↑
@@ -425,7 +425,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
                       <button
                         onClick={() => handleMovePage(idx, 1)}
                         disabled={idx === pageUrls.length - 1 || busy !== null}
-                        className="px-1.5 py-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                        className="px-2 py-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-30"
                         title="Move down"
                       >
                         ↓

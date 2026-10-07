@@ -872,7 +872,7 @@ export function EventForm({
       )}
 
       {(mode === 'create' || mode === 'edit' || mode === 'public') && (
-        <div className="rounded-md border border-brand-700/40 bg-brand-50/40 p-4 sm:p-5">
+        <div className="rounded-md border border-brand-700/40 bg-brand-50/40 p-4 sm:p-4">
           <div className="flex items-start gap-3">
             <Sparkles size={18} className="mt-0.5 hidden shrink-0 text-brand-700 sm:block" />
             <div className="min-w-0 flex-1">
@@ -1103,7 +1103,7 @@ export function EventForm({
                 setScheduleDragActive(false);
                 if (!readingSchedule) void readScheduleUpload(Array.from(event.dataTransfer.files));
               }}
-              className={`flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-5 text-center transition-colors ${
+              className={`flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-4 text-center transition-colors ${
                 scheduleDragActive
                   ? 'border-brand-700 bg-brand-50'
                   : 'border-gray-300 bg-gray-50 hover:border-brand-700 hover:bg-brand-50/50'
@@ -1235,7 +1235,7 @@ export function EventForm({
                   type="button"
                   onClick={lookupVenue}
                   disabled={lookingUp || (!venueParts.venue.trim() && !venueParts.address.trim())}
-                  className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                 >
                   {lookingUp && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
                   Look up address
@@ -1325,7 +1325,7 @@ export function EventForm({
           </div>
           <div className="md:col-span-2">
             <label className={labelClass}>Additional Event Hosts</label>
-            <p className="mb-1.5 text-xs text-gray-500">
+            <p className="mb-2 text-xs text-gray-500">
               Extra hosts beyond the primary organizer above.
             </p>
             <PeopleListEditor
@@ -1364,7 +1364,7 @@ export function EventForm({
           </div>
           <div className="md:col-span-2">
             <label className={labelClass}>Additional Instructors</label>
-            <p className="mb-1.5 text-xs text-gray-500">
+            <p className="mb-2 text-xs text-gray-500">
               Extra instructors beyond the primary instructor above.
             </p>
             <PeopleListEditor
@@ -1405,7 +1405,7 @@ export function EventForm({
                 setSpeakerDragActive(false);
                 if (!readingSpeakers) void readSpeakerUpload(Array.from(event.dataTransfer.files));
               }}
-              className={`flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-5 text-center transition-colors ${
+              className={`flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-4 text-center transition-colors ${
                 speakerDragActive ? 'border-brand-700 bg-brand-50' : 'border-gray-300 bg-gray-50 hover:border-brand-700 hover:bg-brand-50/50'
               }`}
             >
@@ -1547,7 +1547,7 @@ export function EventForm({
           {mode !== 'public' && (
             <div className="md:col-span-2">
               <label className={labelClass}>Partners</label>
-              <p className="mb-1.5 text-xs text-gray-500">
+              <p className="mb-2 text-xs text-gray-500">
                 Tag one or more partners — the event will show on each partner&rsquo;s public page.
               </p>
               <PartnerMultiPicker
@@ -1656,11 +1656,11 @@ function PartnerMultiPicker({
   return (
     <div ref={wrapRef} className="relative">
       {selected.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-1.5">
+        <div className="mb-2 flex flex-wrap gap-2">
           {selected.map((p) => (
             <span
               key={p.id}
-              className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-700/30 px-2.5 py-1 text-xs font-medium text-brand-700"
+              className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-700/30 px-3 py-1 text-xs font-medium text-brand-700"
             >
               {p.name}
               <button
@@ -1706,7 +1706,7 @@ function PartnerMultiPicker({
                   <button
                     type="button"
                     onClick={() => toggle(p.id)}
-                    className={`w-full flex items-center gap-2 text-left px-3 py-1.5 text-xs hover:bg-gray-50 truncate ${
+                    className={`w-full flex items-center gap-2 text-left px-3 py-2 text-xs hover:bg-gray-50 truncate ${
                       checked ? 'text-brand-700 font-medium' : 'text-gray-800'
                     }`}
                   >
@@ -1746,7 +1746,7 @@ function PeopleListEditor({
   const add = () => {
     onChange([...people, { ...EMPTY_EVENT_PERSON }]);
   };
-  const smallField = 'w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500';
+  const smallField = 'w-full border border-gray-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500';
 
   return (
     <div className="space-y-3">
@@ -1789,7 +1789,7 @@ function PeopleListEditor({
             type="button"
             onClick={() => remove(index)}
             aria-label="Remove"
-            className="flex items-center justify-center rounded-md border border-gray-300 px-2 py-1.5 text-gray-500 hover:text-[#661102] hover:border-[#FF2A04]/50"
+            className="flex items-center justify-center rounded-md border border-gray-300 px-2 py-2 text-gray-500 hover:text-[#661102] hover:border-[#FF2A04]/50"
           >
             <X size={14} />
           </button>

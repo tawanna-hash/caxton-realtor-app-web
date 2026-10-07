@@ -48,7 +48,7 @@ export default function AdminQuickLinks() {
 
   return (
     <div className="no-print border-b border-gray-200 bg-white print:hidden">
-      <div className="mx-auto max-w-[1500px] px-5 py-3 lg:px-8">
+      <div className="mx-auto max-w-[1500px] px-4 py-3 lg:px-8">
         <section aria-label={`${group.label} Quick Links`} className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <div className="text-sm font-semibold text-gray-800">Quick Links</div>
           <nav className="flex flex-wrap items-center gap-2" aria-label={`${group.label} child pages`}>
@@ -60,7 +60,7 @@ export default function AdminQuickLinks() {
                   href={link.href}
                   aria-current={isActive ? 'page' : undefined}
                   className={
-                    'inline-flex min-h-9 items-center whitespace-nowrap rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ' +
+                    'inline-flex min-h-9 items-center whitespace-nowrap rounded-md border px-3 py-2 text-sm font-medium transition-colors ' +
                     (isActive
                       ? 'border-brand-700 bg-brand-700 text-white'
                       : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50')

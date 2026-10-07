@@ -174,7 +174,7 @@ export default function MortgageCalculatorClient() {
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition ${
+            className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition ${
               tab === t.id
                 ? 'border-brand-700 text-brand-700'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
@@ -267,7 +267,7 @@ function PaymentTab(p: PaymentTabProps) {
   return (
     <div className="grid lg:grid-cols-5 gap-8">
       {/* Inputs */}
-      <div className="lg:col-span-3 space-y-5">
+      <div className="lg:col-span-3 space-y-4">
         <NumberField
           label="Home price"
           value={p.homePrice}
@@ -353,11 +353,11 @@ function PaymentTab(p: PaymentTabProps) {
           >
             {fmtUSD(p.piti.total)}
           </p>
-          <p className="text-xs text-gray-500 mb-5">
+          <p className="text-xs text-gray-500 mb-4">
             Loan amount {fmtUSD(p.piti.loanAmount)} · LTV {fmtPct(p.piti.ltv, 0)}
           </p>
 
-          <dl className="space-y-2.5 text-sm">
+          <dl className="space-y-3 text-sm">
             <Row label="Principal & Interest" value={p.piti.principalAndInterest} />
             <Row label="Property tax" value={p.piti.propertyTax} />
             <Row label="Insurance" value={p.piti.insurance} />
@@ -499,7 +499,7 @@ function AffordabilityTab({ onReport }: { onReport: (fn: () => CalcReport) => vo
 
   return (
     <div className="grid lg:grid-cols-5 gap-8">
-      <div className="lg:col-span-3 space-y-5">
+      <div className="lg:col-span-3 space-y-4">
         <NumberField label="Annual gross income" value={income} onChange={setIncome} prefix="$" step={1000} />
         <div className="grid sm:grid-cols-2 gap-4">
           <NumberField label="Monthly debt payments" value={debts} onChange={setDebts} prefix="$" step={50} hint="Cars, student loans, credit cards" />
@@ -533,12 +533,12 @@ function AffordabilityTab({ onReport }: { onReport: (fn: () => CalcReport) => vo
           >
             {fmtUSD(result.maxHomePrice)}
           </p>
-          <p className="text-xs text-gray-500 mb-5">
+          <p className="text-xs text-gray-500 mb-4">
             Loan up to {fmtUSD(result.maxLoanAmount)} · binding constraint:{' '}
             <span className="font-medium">{result.bindingRatio}</span>
           </p>
 
-          <dl className="space-y-2.5 text-sm">
+          <dl className="space-y-3 text-sm">
             <Row label="Max monthly housing" value={result.maxMonthlyHousing} />
             <div className="flex items-center justify-between text-gray-700">
               <span>Front-end cap ({frontDti}%)</span>
@@ -614,7 +614,7 @@ function AmortizationTab(p: AmortizationTabProps) {
         <button
           type="button"
           onClick={downloadCsv}
-          className="text-xs px-3 py-1.5 border border-gray-300 rounded-md hover:border-brand-700 hover:text-brand-700 transition"
+          className="text-xs px-3 py-2 border border-gray-300 rounded-md hover:border-brand-700 hover:text-brand-700 transition"
         >
           Download CSV
         </button>
@@ -649,10 +649,10 @@ function AmortizationTab(p: AmortizationTabProps) {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
             <tr>
-              <th className="text-left px-4 py-2.5">Year</th>
-              <th className="text-right px-4 py-2.5">Principal Paid</th>
-              <th className="text-right px-4 py-2.5">Interest Paid</th>
-              <th className="text-right px-4 py-2.5">Ending Balance</th>
+              <th className="text-left px-4 py-3">Year</th>
+              <th className="text-right px-4 py-3">Principal Paid</th>
+              <th className="text-right px-4 py-3">Interest Paid</th>
+              <th className="text-right px-4 py-3">Ending Balance</th>
             </tr>
           </thead>
           <tbody>
@@ -688,7 +688,7 @@ function StatCard({
 }) {
   return (
     <div
-      className={`rounded-md border p-5 ${
+      className={`rounded-md border p-4 ${
         accent ? 'border-[#7059A8]/40 bg-[#7059A8]/5' : 'border-gray-200 bg-white'
       }`}
     >
@@ -735,7 +735,7 @@ function NumberField({ label, value, onChange, prefix, suffix, step = 1, hint }:
             onChange(Number.isFinite(n) ? n : 0);
           }}
           className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-700/30 ${
-            prefix ? 'pl-7' : ''
+            prefix ? 'pl-6' : ''
           } ${suffix ? 'pr-8' : ''}`}
         />
         {suffix && (

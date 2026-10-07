@@ -227,13 +227,13 @@ export default function AdvertiserImageUploader({
         )}
       </div>
 
-      <div className="flex-1 min-w-0 space-y-1.5">
-        <div className="flex flex-wrap gap-1.5">
+      <div className="flex-1 min-w-0 space-y-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={handlePick}
             disabled={uploading}
-            className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+            className={`px-3 py-1 rounded-md text-xs font-medium border transition-colors ${
               uploading
                 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
                 : 'bg-[#301D5D] text-white border-[#42277C] hover:bg-[#42277C]'
@@ -246,7 +246,7 @@ export default function AdvertiserImageUploader({
               type="button"
               onClick={() => onChange('')}
               disabled={uploading}
-              className="px-2.5 py-1 rounded-md text-xs font-medium border border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="px-3 py-1 rounded-md text-xs font-medium border border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               Remove
             </button>

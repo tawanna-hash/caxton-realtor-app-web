@@ -374,7 +374,7 @@ export default function AdminInventoryDetail({
                 href={row.flyerPdfUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-center px-4 py-2.5 border-t border-gray-200 text-sm font-medium text-gray-900 hover:bg-gray-50 transition-colors rounded-md"
+                className="block text-center px-4 py-3 border-t border-gray-200 text-sm font-medium text-gray-900 hover:bg-gray-50 transition-colors rounded-md"
               >
                 Open flyer PDF →
               </a>
@@ -396,10 +396,10 @@ export default function AdminInventoryDetail({
                   accept="image/jpeg,image/png,image/webp"
                   disabled={busy || uploadingThumbnail || uploadingFlyer}
                   onChange={(e) => onPickThumbnail(e.target.files?.[0])}
-                  className="block w-full text-xs text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:border file:border-gray-300 file:bg-white file:text-gray-700 hover:file:bg-gray-50 file:cursor-pointer"
+                  className="block w-full text-xs text-gray-700 file:mr-3 file:py-2 file:px-3 file:border file:border-gray-300 file:bg-white file:text-gray-700 hover:file:bg-gray-50 file:cursor-pointer"
                 />
                 {uploadingThumbnail && (
-                  <p className="text-xs text-gray-500 mt-1.5">Uploading thumbnail…</p>
+                  <p className="text-xs text-gray-500 mt-2">Uploading thumbnail…</p>
                 )}
               </div>
               <div>
@@ -412,10 +412,10 @@ export default function AdminInventoryDetail({
                   accept="application/pdf"
                   disabled={busy || uploadingThumbnail || uploadingFlyer}
                   onChange={(e) => onPickFlyer(e.target.files?.[0])}
-                  className="block w-full text-xs text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:border file:border-gray-300 file:bg-white file:text-gray-700 hover:file:bg-gray-50 file:cursor-pointer"
+                  className="block w-full text-xs text-gray-700 file:mr-3 file:py-2 file:px-3 file:border file:border-gray-300 file:bg-white file:text-gray-700 hover:file:bg-gray-50 file:cursor-pointer"
                 />
                 {uploadingFlyer && (
-                  <p className="text-xs text-gray-500 mt-1.5">Uploading flyer…</p>
+                  <p className="text-xs text-gray-500 mt-2">Uploading flyer…</p>
                 )}
               </div>
               <p className="text-xs text-gray-500 font-light pt-1">
@@ -450,7 +450,7 @@ export default function AdminInventoryDetail({
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <section className="border border-gray-200 bg-white px-5 py-5 rounded-md">
+          <section className="border border-gray-200 bg-white px-4 py-4 rounded-md">
             <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-3">
               Status
             </h2>
@@ -518,7 +518,7 @@ export default function AdminInventoryDetail({
             </div>
           </section>
 
-          <section className="border border-gray-200 bg-white px-5 py-5 rounded-md">
+          <section className="border border-gray-200 bg-white px-4 py-4 rounded-md">
             <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-4">
               Edit Details
             </h2>
@@ -679,7 +679,7 @@ export default function AdminInventoryDetail({
                   type="button"
                   onClick={saveEdits}
                   disabled={busy}
-                  className="px-6 py-2.5 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
+                  className="px-6 py-3 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
                 >
                   {busy ? 'Saving…' : 'Save edits'}
                 </button>
@@ -687,7 +687,7 @@ export default function AdminInventoryDetail({
             </div>
           </section>
 
-          <section className="border border-[#FF2A04]/30 bg-[#FFEAE6] px-5 py-5 rounded-md">
+          <section className="border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-4 rounded-md">
             <h2 className="text-sm uppercase tracking-[0.15em] text-[#661102] font-medium mb-2">
               Danger Zone
             </h2>

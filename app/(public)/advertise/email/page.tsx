@@ -48,7 +48,7 @@ export default function AdvertiseEmailPage() {
       </header>
 
       {/* Audience stat ribbon */}
-      <section className="mb-10 grid grid-cols-2 md:grid-cols-4 gap-3">
+      <section className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="border border-gray-200 px-4 py-4 rounded-md">
           <p className="text-2xl font-semibold text-brand-700 tracking-tight">
             44K+
@@ -90,7 +90,7 @@ export default function AdvertiseEmailPage() {
         ).map((row) => {
           const available = EBLASTS.filter((b) => !b.availablePubs || b.availablePubs.includes(row.id));
           return (
-            <div key={row.id} className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-5">
+            <div key={row.id} className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-4">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="text-base font-semibold text-gray-900">{row.label}</div>
                 {!row.checkoutEnabled && (
@@ -105,14 +105,14 @@ export default function AdvertiseEmailPage() {
                   const price = eb.priceByPub?.[row.id] ?? eb.price;
                   const features = eb.featuresByPub?.[row.id] ?? eb.features;
                   return (
-                    <article key={id} className="flex flex-col rounded-md border border-gray-200 bg-white p-5">
+                    <article key={id} className="flex flex-col rounded-md border border-gray-200 bg-white p-4">
                       <p className="text-sm text-gray-700">{eb.name}</p>
                       <p className="text-2xl font-bold text-brand-700 tabular-nums mt-1">
                         {fmtUsd(price)}
                         <span className="text-sm font-semibold ml-0.5">/send</span>
                       </p>
                       <p className="text-xs text-gray-600 mt-0.5">Based on {row.audience}</p>
-                      <ul className="text-sm text-gray-900 list-disc pl-5 mt-3 space-y-1 flex-1">
+                      <ul className="text-sm text-gray-900 list-disc pl-4 mt-3 space-y-1 flex-1">
                         {features.map((f) => (<li key={f}>{f}</li>))}
                       </ul>
                       {row.checkoutEnabled ? (
@@ -141,7 +141,7 @@ export default function AdvertiseEmailPage() {
           const pkg2 = EBLASTS.find((b) => b.name === 'e-Blast Package No. 2');
           if (!pkg1 || !pkg2) return null;
           return (
-            <div className="rounded-md bg-gray-900 text-white px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="rounded-md bg-gray-900 text-white px-4 py-4 flex flex-wrap items-center justify-between gap-3">
               <div className="text-sm font-semibold">Both Markets Bundle — 10% Off</div>
               <div className="text-sm flex flex-wrap gap-6">
                 <span>Package No. 1: <span className="text-brand-300 font-semibold">{fmtUsd(pkg1.priceByPub?.both ?? 0)}/send</span></span>
@@ -197,7 +197,7 @@ export default function AdvertiseEmailPage() {
         </p>
         <Link
           href="/advertise/inquire?channel=email"
-          className="inline-flex items-center justify-center px-5 py-2.5 border border-brand-700 text-brand-700 text-sm font-medium rounded-md hover:bg-brand-700 hover:text-white transition"
+          className="inline-flex items-center justify-center px-4 py-3 border border-brand-700 text-brand-700 text-sm font-medium rounded-md hover:bg-brand-700 hover:text-white transition"
         >
           Start an e-Blast inquiry
         </Link>

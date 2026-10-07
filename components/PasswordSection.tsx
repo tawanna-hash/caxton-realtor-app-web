@@ -70,7 +70,7 @@ export default function PasswordSection({ accentColor = '#301D5D', hasPassword }
   }
 
   return (
-    <div className="border border-gray-200 rounded-md p-5 bg-white">
+    <div className="border border-gray-200 rounded-md p-4 bg-white">
       <h3 className="text-base font-semibold text-gray-900 mb-1">
         {passwordExists ? 'Change password' : 'Set a password'}
       </h3>
@@ -93,35 +93,35 @@ export default function PasswordSection({ accentColor = '#301D5D', hasPassword }
 
       {passwordExists && (
         <>
-          <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Current password</label>
+          <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Current password</label>
           <input
             type={showPassword ? 'text' : 'password'}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm text-gray-900 mb-3"
+            className="w-full px-3 py-3 border border-gray-300 rounded-md text-sm text-gray-900 mb-3"
             autoComplete="current-password"
             disabled={loading}
           />
         </>
       )}
 
-      <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">New password</label>
+      <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">New password</label>
       <input
         type={showPassword ? 'text' : 'password'}
         value={newPassword}
         onChange={(e) => setNewPassword(e.target.value)}
-        className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm text-gray-900 mb-3"
+        className="w-full px-3 py-3 border border-gray-300 rounded-md text-sm text-gray-900 mb-3"
         autoComplete="new-password"
         disabled={loading}
         placeholder="At least 8 characters"
       />
 
-      <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Confirm new password</label>
+      <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Confirm new password</label>
       <input
         type={showPassword ? 'text' : 'password'}
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
-        className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm text-gray-900 mb-3"
+        className="w-full px-3 py-3 border border-gray-300 rounded-md text-sm text-gray-900 mb-3"
         autoComplete="new-password"
         disabled={loading}
       />

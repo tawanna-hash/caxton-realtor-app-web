@@ -35,7 +35,7 @@ export default async function PortalErrorPage({ searchParams }: PageProps) {
   const msg = MESSAGES[code ?? 'auth'] ?? MESSAGES.auth;
 
   return (
-    <div className="max-w-lg mx-auto rounded-md border border-gray-200 bg-white p-10 text-center">
+    <div className="max-w-lg mx-auto rounded-md border border-gray-200 bg-white p-8 text-center">
       <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">RealtyLine portal</div>
       <PageTitle size="md">
         {msg.title}
@@ -44,13 +44,13 @@ export default async function PortalErrorPage({ searchParams }: PageProps) {
       <div className="mt-6 flex flex-col sm:flex-row gap-2 items-center justify-center">
         <Link
           href="/auth/sign-in"
-          className="inline-block rounded-md bg-gray-900 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800"
+          className="inline-block rounded-md bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800"
         >
           Sign in again
         </Link>
         <Link
           href="/"
-          className="inline-block rounded-md border border-gray-300 text-gray-900 px-5 py-2 text-sm font-medium hover:bg-gray-50"
+          className="inline-block rounded-md border border-gray-300 text-gray-900 px-4 py-2 text-sm font-medium hover:bg-gray-50"
         >
           Return home
         </Link>

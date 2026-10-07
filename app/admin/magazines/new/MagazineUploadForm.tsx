@@ -508,7 +508,7 @@ export default function MagazineUploadForm() {
           <PageTitle size="md">New Magazine Issue</PageTitle>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-md p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-md p-6 space-y-4">
       {/* __DROPZONE_JSX_INSERTED__ */}
       <div className="mb-6">
         <MagazineDropZone
@@ -665,7 +665,7 @@ export default function MagazineUploadForm() {
                   value={renderDpi}
                   onChange={(e) => setRenderDpi(Number(e.target.value))}
                   disabled={running}
-                  className="border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-900 max-w-full"
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 max-w-full"
                 >
                   <option value={100}>100 DPI (small, fast)</option>
                   <option value={150}>150 DPI (legacy default)</option>
@@ -711,7 +711,7 @@ export default function MagazineUploadForm() {
           </div>
 
           {steps.length > 0 && (
-            <div className="mt-4 border-t border-gray-200 pt-4 space-y-1.5">
+            <div className="mt-4 border-t border-gray-200 pt-4 space-y-2">
               {steps.map((s, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
                   <StatusDot status={s.status} />

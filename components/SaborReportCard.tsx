@@ -157,7 +157,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
           {/* Eyebrow row + EN/ES toggle */}
           <div className="flex items-center justify-between mb-2">
             <span
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-[0.12em] uppercase"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.12em] uppercase"
               style={{ background: 'rgba(61,7,64,0.06)', color: NEWSLINE }}
             >
               <span aria-hidden>{'\u25CF'}</span>
@@ -168,7 +168,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
                 type="button"
                 onClick={() => setLang('en')}
                 aria-pressed={lang === 'en'}
-                className="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-[0.12em] uppercase transition"
+                className="px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.12em] uppercase transition"
                 style={{
                   background: lang === 'en' ? NEWSLINE : 'transparent',
                   color: lang === 'en' ? 'white' : NEWSLINE,
@@ -180,7 +180,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
                 type="button"
                 onClick={() => setLang('es')}
                 aria-pressed={lang === 'es'}
-                className="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-[0.12em] uppercase transition"
+                className="px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.12em] uppercase transition"
                 style={{
                   background: lang === 'es' ? NEWSLINE : 'transparent',
                   color: lang === 'es' ? 'white' : NEWSLINE,
@@ -198,7 +198,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
           <p className="text-[13px] text-gray-500 leading-snug mb-4">{subtitle}</p>
 
           {/* Hero stat */}
-          <div className="flex items-baseline gap-2.5">
+          <div className="flex items-baseline gap-3">
             <div className="text-[38px] font-bold leading-none" style={{ color: '#2c0530' }}>
               {d.headline_value}
             </div>
@@ -208,7 +208,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
               </div>
             )}
           </div>
-          <div className="text-[11px] uppercase tracking-[0.14em] text-gray-500 mt-1.5 mb-3.5">
+          <div className="text-[11px] uppercase tracking-[0.14em] text-gray-500 mt-2 mb-4">
             {headlineLabel}
           </div>
 

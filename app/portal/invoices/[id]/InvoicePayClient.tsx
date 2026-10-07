@@ -173,8 +173,8 @@ export default function InvoicePayClient({
         </button>
       </div>
 
-      <article className="mx-auto bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:w-full print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-10">
-        <header className="grid grid-cols-[1fr_auto] gap-8 border-b border-neutral-300 pb-5">
+      <article className="mx-auto bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:w-full print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-8">
+        <header className="grid grid-cols-[1fr_auto] gap-8 border-b border-neutral-300 pb-4">
           <div className="flex items-start gap-4">
             <Image
               src="/brand/caxton-logo.jpg"
@@ -195,7 +195,7 @@ export default function InvoicePayClient({
           </div>
         </header>
 
-        <section className="grid grid-cols-2 gap-8 py-5">
+        <section className="grid grid-cols-2 gap-8 py-4">
           <div>
             <div className="mb-1 text-[10px] uppercase tracking-wider text-neutral-500">Bill to</div>
             <div className="font-semibold">{invoice.bill_to_name ?? 'Customer'}</div>
@@ -213,7 +213,7 @@ export default function InvoicePayClient({
 
         <section className="mb-5">
           <div className="border-b border-neutral-300 pb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-600">Account summary</div>
-          <div className="grid grid-cols-[90px_1fr_auto] gap-x-3 border-b border-neutral-200 py-1.5">
+          <div className="grid grid-cols-[90px_1fr_auto] gap-x-3 border-b border-neutral-200 py-2">
             <div>{fmtDate(invoice.issued_at)}</div>
             <div>Balance Forward</div>
             <div className="text-right">{fmtUsd(accountSummary.balanceForwardCents)}</div>
@@ -253,7 +253,7 @@ export default function InvoicePayClient({
 
         {invoice.memo && <section className="mt-3 border-t border-neutral-200 pt-3"><div className="font-semibold">Notes</div><div className="mt-1 whitespace-pre-line">{invoice.memo}</div></section>}
 
-        <section className="mt-5 border-t border-neutral-300 pt-4">
+        <section className="mt-4 border-t border-neutral-300 pt-4">
           <h2 className="mb-3 font-semibold">Notes / Terms</h2>
           <div className="space-y-3 text-[9px] leading-[1.45]">
             <p>CAXTON PUBLICATIONS INC<br />RealtyLine Austin, Newsline San Antonio and Realty News Now App are dba&apos;s under Caxton Publications, Inc. The Services line item specifies the dab name to indicate where your ad is being placed and billed. Please note that placement in one company does not automatically include placement in the other. Each insertion is billed separately accordingly.</p>

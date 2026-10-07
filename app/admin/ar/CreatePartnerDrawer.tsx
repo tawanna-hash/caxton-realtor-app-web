@@ -165,7 +165,7 @@ export function CreatePartnerDrawer({ onClose, onSaved, onError }: Props) {
       </Section>
 
       <Section title="Communication permissions">
-        <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-5 text-center">
+        <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-4 text-center">
           <div className="text-sm font-medium text-gray-800">Enter an email to record client consent.</div>
           <p className="mt-1 text-xs text-gray-500">If this partner has opted in to receive email marketing communications, acknowledge it after adding an email.</p>
         </div>
@@ -191,7 +191,7 @@ export function CreatePartnerDrawer({ onClose, onSaved, onError }: Props) {
 
       <Section title="Notes and attachments">
         <Field label="Notes"><textarea className={`${INPUT} resize-y`} rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} /></Field>
-        <label className="block rounded-md border border-dashed border-[#D9CFF0] px-4 py-5 text-center text-sm text-[#42277C] hover:bg-[#F6F3FB]">
+        <label className="block rounded-md border border-dashed border-[#D9CFF0] px-4 py-4 text-center text-sm text-[#42277C] hover:bg-[#F6F3FB]">
           Add attachment
           <input type="file" className="sr-only" />
           <span className="mt-1 block text-xs text-gray-500">Max file size: 20 MB</span>

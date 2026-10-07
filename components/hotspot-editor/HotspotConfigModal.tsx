@@ -241,7 +241,7 @@ export default function HotspotConfigModal({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-4 space-y-5 max-h-[70vh] overflow-y-auto">
+        <div className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
           {hotspot.detection && <section className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm">
             <h3 className="font-medium">Detection Evidence</h3>
             <p className="mt-1 break-words text-gray-700">{hotspot.detection.evidence}</p>
@@ -508,7 +508,7 @@ function AdvertiserPicker({
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="e.g. Chicago Title"
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
+              className="w-full px-2 py-2 text-sm border border-gray-300 rounded-md"
               autoFocus
             />
           </div>
@@ -518,7 +518,7 @@ function AdvertiserPicker({
               <select
                 value={newPublication}
                 onChange={(e) => setNewPublication(e.target.value as PublicationScope)}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md bg-white"
+                className="w-full px-2 py-2 text-sm border border-gray-300 rounded-md bg-white"
               >
                 {PUBLICATIONS.map((publication) => (
                   <option key={publication.id} value={publication.id}>
@@ -535,7 +535,7 @@ function AdvertiserPicker({
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
                 placeholder="ads@example.com"
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
+                className="w-full px-2 py-2 text-sm border border-gray-300 rounded-md"
               />
             </div>
           </div>
@@ -543,7 +543,7 @@ function AdvertiserPicker({
             <button
               type="button"
               onClick={() => { setShowNewForm(false); setNewName(''); setNewEmail(''); }}
-              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
@@ -551,7 +551,7 @@ function AdvertiserPicker({
               type="button"
               onClick={handleCreate}
               disabled={creating || !newName.trim()}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 disabled:opacity-40"
+              className="px-3 py-2 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 disabled:opacity-40"
             >
               {creating ? 'Creating…' : 'Create + link'}
             </button>
@@ -699,14 +699,14 @@ function TypeSpecificForm({
             <button
               type="button"
               onClick={() => onChange({ ...config, source: 'embed', upload_url: undefined })}
-              className={`px-3 py-1.5 text-sm rounded-md ${config.source === 'embed' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'}`}
+              className={`px-3 py-2 text-sm rounded-md ${config.source === 'embed' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'}`}
             >
               Embed URL
             </button>
             <button
               type="button"
               onClick={() => onChange({ ...config, source: 'upload', embed_url: undefined })}
-              className={`px-3 py-1.5 text-sm border-l border-gray-300 ${config.source === 'upload' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'}`}
+              className={`px-3 py-2 text-sm border-l border-gray-300 ${config.source === 'upload' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'}`}
             >
               Upload file
             </button>
@@ -764,7 +764,7 @@ function TypeSpecificForm({
                 <button
                   type="button"
                   onClick={() => onChange({ ...config, images: config.images.filter((_, j) => j !== i) })}
-                  className="absolute top-1 right-1 px-1.5 py-0.5 text-xs bg-white border border-gray-300 rounded-md opacity-0 group-hover:opacity-100"
+                  className="absolute top-1 right-1 px-2 py-0.5 text-xs bg-white border border-gray-300 rounded-md opacity-0 group-hover:opacity-100"
                 >
                   Remove
                 </button>

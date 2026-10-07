@@ -63,7 +63,7 @@ const EXAMPLE = {
 
 function FieldBadge({ name }: { name: string }) {
   return (
-    <span className="inline-flex items-center rounded bg-brand-600/10 px-1.5 py-0.5 text-[10px] font-mono font-medium text-brand-700 border border-brand-600/20 align-middle">
+    <span className="inline-flex items-center rounded bg-brand-600/10 px-2 py-0.5 text-[10px] font-mono font-medium text-brand-700 border border-brand-600/20 align-middle">
       {name}
     </span>
   );
@@ -132,7 +132,7 @@ export default function CommunityGuideContent() {
             </span>
           </div>
 
-          <div className="p-5 sm:p-7">
+          <div className="p-4 sm:p-6">
             {/* 2-col layout matching the public page */}
             <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-8">
               {/* Left: gallery + about + home plans + amenities + schools + tax + sales */}
@@ -278,10 +278,10 @@ export default function CommunityGuideContent() {
               </div>
 
               {/* Right: summary sidebar */}
-              <aside className="space-y-5">
+              <aside className="space-y-4">
                 <div>
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#301D5D] bg-[#301D5D] text-white rounded-md">
+                    <span className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-2 border border-[#301D5D] bg-[#301D5D] text-white rounded-md">
                       {EXAMPLE.builderName}
                     </span>
                     <FieldBadge name="builderName" />
@@ -326,7 +326,7 @@ export default function CommunityGuideContent() {
                     lat {EXAMPLE.salesOffice.lat}, lng {EXAMPLE.salesOffice.lng}{' '}
                     <FieldBadge name="salesOffice.lat / lng" />
                   </p>
-                  <span className="mt-2 inline-flex items-center rounded-md border border-[#301D5D] px-3 py-1.5 text-xs font-medium text-[#301D5D]">
+                  <span className="mt-2 inline-flex items-center rounded-md border border-[#301D5D] px-3 py-2 text-xs font-medium text-[#301D5D]">
                     Get Directions →
                   </span>
                 </div>
@@ -429,7 +429,7 @@ export default function CommunityGuideContent() {
       {/* ── Two files to create ── */}
       <Section title="Two files to create per builder">
         <div className="grid md:grid-cols-2 gap-4">
-          <div className="rounded-md border border-gray-200 p-5 bg-white">
+          <div className="rounded-md border border-gray-200 p-4 bg-white">
             <h3 className="font-semibold text-gray-900 mb-1">1. Scraper Module</h3>
             <code className="text-xs text-brand-700 bg-brand-600/5 px-2 py-1 rounded inline-block">
               lib/scrapers/&lt;builder&gt;-communities.ts
@@ -445,7 +445,7 @@ export default function CommunityGuideContent() {
               Pure data layer — no DB writes. One row per community.
             </p>
           </div>
-          <div className="rounded-md border border-gray-200 p-5 bg-white">
+          <div className="rounded-md border border-gray-200 p-4 bg-white">
             <h3 className="font-semibold text-gray-900 mb-1">2. Cron Endpoint</h3>
             <code className="text-xs text-brand-700 bg-brand-600/5 px-2 py-1 rounded inline-block">
               app/api/cron/scrape-&lt;builder&gt;-communities/route.ts
@@ -483,7 +483,7 @@ export default function CommunityGuideContent() {
             </li>
           ))}
         </ol>
-        <div className="mt-5 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 text-sm text-[#645600]">
+        <div className="mt-4 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 text-sm text-[#645600]">
           <strong className="font-semibold">Pitfalls:</strong> a community row
           needs <code className="text-xs bg-white/60 px-1 py-0.5 rounded">homeType=&apos;community&apos;</code> —
           the public communities route AND the prune filter both key off it, so

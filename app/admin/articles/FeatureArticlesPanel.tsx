@@ -214,7 +214,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
           partner&apos;s public detail page beneath their event photos.
         </p>
         <button onClick={openCreate}
-          className="shrink-0 inline-flex items-center gap-2 bg-[#301D5D] text-white px-5 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors whitespace-nowrap self-start">
+          className="shrink-0 inline-flex items-center gap-2 bg-[#301D5D] text-white px-4 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors whitespace-nowrap self-start">
           <Plus size={16} /> Add Article
         </button>
       </div>
@@ -289,7 +289,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {a.status === 'draft' && (
-                        <span className="text-[10px] uppercase tracking-[0.15em] font-medium px-1.5 py-0.5 rounded-md bg-[#FEF8CC] text-[#645600] border border-[#FAD800]/30">
+                        <span className="text-[10px] uppercase tracking-[0.15em] font-medium px-2 py-0.5 rounded-md bg-[#FEF8CC] text-[#645600] border border-[#FAD800]/30">
                           Draft
                         </span>
                       )}
@@ -313,7 +313,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
                   )}
                   {a.articleUrl && (
                     <a href={a.articleUrl} target="_blank" rel="noopener noreferrer"
-                      className="mt-1.5 inline-flex items-center gap-1 text-xs text-brand-700 hover:text-brand-800 underline truncate max-w-full">
+                      className="mt-2 inline-flex items-center gap-1 text-xs text-brand-700 hover:text-brand-800 underline truncate max-w-full">
                       {a.articleUrl}
                     </a>
                   )}
@@ -329,7 +329,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
           onClick={() => !submitting && setShowForm(false)}>
           <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-lg w-full max-w-2xl my-8 p-6">
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-gray-900">
                 {editingId ? 'Edit Feature Article' : 'Add Feature Article'}
               </h2>
@@ -415,7 +415,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
 
             <div className="mt-6 flex items-center gap-3">
               <button type="submit" disabled={submitting}
-                className="inline-flex items-center gap-2 bg-brand-700 text-white px-5 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors disabled:opacity-40">
+                className="inline-flex items-center gap-2 bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors disabled:opacity-40">
                 {submitting ? 'Saving…' : editingId ? 'Save Changes' : 'Create Article'}
               </button>
               <button type="button" onClick={() => setShowForm(false)} disabled={submitting}
@@ -477,14 +477,14 @@ function AdvertiserPicker({
           <ul className="max-h-56 overflow-y-auto py-1">
             <li>
               <button type="button" onClick={() => { onChange(null); setOpen(false); }}
-                className="w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50">
+                className="w-full text-left px-3 py-2 text-xs text-gray-500 hover:bg-gray-50">
                 {placeholder}
               </button>
             </li>
             {filtered.map((a) => (
               <li key={a.id}>
                 <button type="button" onClick={() => { onChange(a.id); setOpen(false); }}
-                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 truncate ${a.id === value ? 'text-brand-700 font-medium' : 'text-gray-800'}`}>
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 truncate ${a.id === value ? 'text-brand-700 font-medium' : 'text-gray-800'}`}>
                   {a.name}
                 </button>
               </li>

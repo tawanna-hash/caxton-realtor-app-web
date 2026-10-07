@@ -26,7 +26,7 @@ export default function UploadDrop({ token }: { token: string }) {
 
   return (
     <section className="rounded-[10px] border border-[#E6E5EC] bg-white">
-      <h2 className="border-b border-[#E6E5EC] px-4 py-3.5 text-[14px] font-semibold text-[#1B1726]">Upload Documents</h2>
+      <h2 className="border-b border-[#E6E5EC] px-4 py-4 text-[14px] font-semibold text-[#1B1726]">Upload Documents</h2>
       <div className="p-4">
         <div
           role="button" tabIndex={0} aria-label="Upload documents"
@@ -35,7 +35,7 @@ export default function UploadDrop({ token }: { token: string }) {
           onDragOver={(e) => { e.preventDefault(); setOver(true); }}
           onDragLeave={() => setOver(false)}
           onDrop={(e) => { e.preventDefault(); setOver(false); pick(e.dataTransfer.files); }}
-          className={`flex cursor-pointer flex-col items-center justify-center rounded-[10px] border border-dashed px-4 py-10 text-center transition ${over ? 'border-[#301D5D] bg-[#EFEAF8]' : 'border-[#E6E5EC] bg-[#F6F3FB] hover:border-[#301D5D]'}`}
+          className={`flex cursor-pointer flex-col items-center justify-center rounded-[10px] border border-dashed px-4 py-8 text-center transition ${over ? 'border-[#301D5D] bg-[#EFEAF8]' : 'border-[#E6E5EC] bg-[#F6F3FB] hover:border-[#301D5D]'}`}
         >
           <span className="text-[14px] font-medium text-[#1B1726]">Drop Files Here Or Click To Choose</span>
           <span className="mt-1 text-[12px] font-medium text-[#7A7787]">PDF or photo, up to 4 MB each. Your agent is notified.</span>

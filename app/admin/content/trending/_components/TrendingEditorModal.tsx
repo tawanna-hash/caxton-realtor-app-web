@@ -278,14 +278,14 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
                   accept="image/*"
                   onChange={onFile}
                   disabled={uploading}
-                  className="block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-xs file:bg-white file:hover:bg-gray-50"
+                  className="block w-full text-xs text-gray-600 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-xs file:bg-white file:hover:bg-gray-50"
                 />
                 <input
                   type="text"
                   value={thumbnailUrl}
                   onChange={(e) => setThumbnailUrl(e.target.value)}
                   placeholder="Or paste an image URL"
-                  className="w-full text-xs border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
+                  className="w-full text-xs border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                 />
                 {uploading && <div className="text-xs text-gray-600">Uploading…</div>}
               </div>
@@ -363,7 +363,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
                   type="datetime-local"
                   value={publishedAt}
                   onChange={(e) => setPublishedAt(e.target.value)}
-                  className="text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
+                  className="text-sm border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
                 />
                 <div className="text-[11px] text-gray-500 mt-0.5">Leave blank to save as draft (not published).</div>
               </div>
@@ -375,7 +375,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
                 type="datetime-local"
                 value={expiresAt}
                 onChange={(e) => setExpiresAt(e.target.value)}
-                className="text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
+                className="text-sm border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
               />
               <div className="text-[11px] text-gray-500 mt-0.5">After this time, the item stops appearing.</div>
             </div>
@@ -388,7 +388,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
               type="number"
               value={sortOrder}
               onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
-              className="w-24 text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
+              className="w-24 text-sm border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
             />
             <div className="text-[11px] text-gray-500 mt-0.5">Lower numbers appear first. Use ↑/↓ in the list for quick swaps.</div>
           </div>
@@ -411,7 +411,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
             type="button"
             onClick={() => void save()}
             disabled={saving || uploading}
-            className="text-sm px-4 py-1.5 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50 font-medium"
+            className="text-sm px-4 py-2 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50 font-medium"
           >
             {saving ? 'Saving…' : (isEdit ? 'Save changes' : 'Create')}
           </button>

@@ -240,7 +240,7 @@ export default function EblastOrderForm({
                   <span className="flex items-start justify-between gap-2 text-sm font-semibold">
                     <span>{pub.label}</span>
                     {!pub.checkoutEnabled && (
-                      <span className="shrink-0 rounded-md bg-[#EFEAF8] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#301D5D]">
+                      <span className="shrink-0 rounded-md bg-[#EFEAF8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#301D5D]">
                         Coming soon
                       </span>
                     )}
@@ -376,7 +376,7 @@ export default function EblastOrderForm({
                 </button>
               </div>
             ) : (
-              <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-center hover:border-brand-700">
+              <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-4 text-center hover:border-brand-700">
                 <input
                   type="file"
                   className="sr-only"
@@ -472,7 +472,7 @@ export default function EblastOrderForm({
                 type="button"
                 disabled={!ready}
                 onClick={() => void preparePayment()}
-                className="min-h-12 w-full rounded-md bg-brand-700 px-5 py-3 font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-12 w-full rounded-md bg-brand-700 px-4 py-3 font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {ready
                   ? `Continue to secure payment · ${formatUsd(totalCents)}`
@@ -514,7 +514,7 @@ export default function EblastOrderForm({
         )}
       </div>
 
-      <aside className="rounded-md bg-brand-700 p-5 text-white lg:sticky lg:top-6">
+      <aside className="rounded-md bg-brand-700 p-4 text-white lg:sticky lg:top-6">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-200">
           Order summary
         </p>
@@ -522,7 +522,7 @@ export default function EblastOrderForm({
         <p className="mt-1 text-sm text-violet-100">
           {EBLAST_ORDER_MARKETS.find((pub) => pub.id === publication)?.label}
         </p>
-        <ul className="mt-5 space-y-2 text-sm text-violet-50">
+        <ul className="mt-4 space-y-2 text-sm text-violet-50">
           {features.map((feature) => (
             <li key={feature} className="flex gap-2">
               <span aria-hidden="true" className="text-[#B9ADD6]">
@@ -564,7 +564,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-md border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className="rounded-md border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.14em] text-gray-600">
         <span className="mr-2 text-[#301D5D]">{number}</span>
         {title}
@@ -675,7 +675,7 @@ function PaymentBlock({
         type="button"
         disabled={paying || !stripe || !elements}
         onClick={() => void pay()}
-        className="min-h-12 w-full rounded-md bg-brand-700 px-5 py-3 font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
+        className="min-h-12 w-full rounded-md bg-brand-700 px-4 py-3 font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {paying ? 'Processing payment…' : `Pay ${formatUsd(intent.amountCents)}`}
       </button>

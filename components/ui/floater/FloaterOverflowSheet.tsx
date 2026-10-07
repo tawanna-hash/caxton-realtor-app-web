@@ -83,12 +83,12 @@ export default function FloaterOverflowSheet({
       {/* Sheet */}
       <div className="relative w-full max-w-md bg-white rounded-t-2xl shadow-2xl pb-[env(safe-area-inset-bottom)]">
         {/* Grabber */}
-        <div className="flex justify-center pt-2.5 pb-1">
+        <div className="flex justify-center pt-3 pb-1">
           <span className="w-9 h-1 rounded-full bg-gray-300" aria-hidden />
         </div>
 
         {/* Title */}
-        <div className="px-5 pt-2 pb-3 border-b border-gray-100">
+        <div className="px-4 pt-2 pb-3 border-b border-gray-100">
           <h2 className="text-base font-semibold text-gray-900 text-center">
             {title}
           </h2>
@@ -99,7 +99,7 @@ export default function FloaterOverflowSheet({
           {actions.map((action) => {
             const aria = action.ariaLabel ?? action.label;
             const rowClass =
-              'w-full flex items-center gap-3 px-5 py-3.5 text-left text-gray-900 hover:bg-gray-50 active:bg-gray-100 transition';
+              'w-full flex items-center gap-3 px-4 py-4 text-left text-gray-900 hover:bg-gray-50 active:bg-gray-100 transition';
             const glyph = (
               <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-700">
                 <IconSvg size={18}>{action.icon}</IconSvg>
@@ -150,7 +150,7 @@ export default function FloaterOverflowSheet({
           })}
         </ul>
 
-        <div className="px-5 pb-3 pt-1">
+        <div className="px-4 pb-3 pt-1">
           <button
             type="button"
             onClick={onClose}

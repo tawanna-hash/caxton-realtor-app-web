@@ -176,7 +176,7 @@ export default function FlyerCarousel({ flyerPdfUrl, title }: Props) {
           href={flyerPdfUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex w-full items-center justify-center px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
+          className="flex w-full items-center justify-center px-4 py-3 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
         >
           Download flyer
         </a>
@@ -215,7 +215,7 @@ export default function FlyerCarousel({ flyerPdfUrl, title }: Props) {
         href={flyerPdfUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-3 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
+        className="mt-3 inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
       >
         Download flyer
       </a>

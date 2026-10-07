@@ -350,7 +350,7 @@ export default function CheckoutForm({
   return (
     <div className="space-y-6">
       {/* ── Pricing card ─────────────────────────────────── */}
-      <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+      <div className="rounded-md bg-white border border-gray-200 p-4 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           1 · Choose Your Run
         </h2>
@@ -409,11 +409,11 @@ export default function CheckoutForm({
                   >
                     {label}
                     {isComingSoon ? (
-                      <span className="ml-1.5 text-[10px] uppercase tracking-wider font-semibold text-[#645600] bg-[#FEF8CC] px-1.5 py-0.5 rounded-md">
+                      <span className="ml-2 text-[10px] uppercase tracking-wider font-semibold text-[#645600] bg-[#FEF8CC] px-2 py-0.5 rounded-md">
                         Coming soon
                       </span>
                     ) : taken ? (
-                      <span className="ml-1.5 text-[10px] uppercase tracking-wider font-semibold text-[#645600]">
+                      <span className="ml-2 text-[10px] uppercase tracking-wider font-semibold text-[#645600]">
                         sold
                       </span>
                     ) : null}
@@ -509,7 +509,7 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Contact ─────────────────────────────────────── */}
-      <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+      <div className="rounded-md bg-white border border-gray-200 p-4 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           2 · Your Info
         </h2>
@@ -530,7 +530,7 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Dates ───────────────────────────────────────── */}
-      <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+      <div className="rounded-md bg-white border border-gray-200 p-4 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           3 · Run Dates
         </h2>
@@ -556,7 +556,7 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Creative ────────────────────────────────────── */}
-      <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+      <div className="rounded-md bg-white border border-gray-200 p-4 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           4 · Creative
         </h2>
@@ -614,7 +614,7 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Terms ───────────────────────────────────────── */}
-      <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+      <div className="rounded-md bg-white border border-gray-200 p-4 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           5 · Agreement Terms
         </h2>
@@ -640,7 +640,7 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Payment ─────────────────────────────────────── */}
-      <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+      <div className="rounded-md bg-white border border-gray-200 p-4 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           6 · Payment
         </h2>

@@ -23,7 +23,7 @@ export function EventCard({ event, pubColor, onClick }: EventCardProps) {
       className="w-full bg-white border-b border-gray-200 hover:bg-gray-50 text-left transition-colors"
       style={sponsored ? { borderLeft: `4px solid ${pubColor}` } : undefined}
     >
-      <div className={`flex gap-4 ${isHero ? 'px-4 py-6' : 'px-4 py-5'}`}>
+      <div className={`flex gap-4 ${isHero ? 'px-4 py-6' : 'px-4 py-4'}`}>
         {/* Date block */}
         <div
           className={`flex-shrink-0 ${isHero ? 'w-20 h-20' : 'w-16 h-16'} flex flex-col items-center justify-center rounded-md`}

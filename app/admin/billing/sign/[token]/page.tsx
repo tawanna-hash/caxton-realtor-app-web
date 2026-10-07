@@ -25,7 +25,7 @@ export default async function SignPage({ params }: PageProps) {
   if (!parsed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="bg-white rounded-md border border-gray-200 p-10 max-w-md text-center">
+        <div className="bg-white rounded-md border border-gray-200 p-8 max-w-md text-center">
           <div className="text-3xl mb-3">⚠️</div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
             Link Expired or Invalid
@@ -115,7 +115,7 @@ export default async function SignPage({ params }: PageProps) {
       : '';
     return (
       <div className="min-h-screen flex items-center justify-center bg-white px-4">
-        <div className="bg-white rounded-md border border-[#D9CFF0] p-10 max-w-lg text-center shadow-sm">
+        <div className="bg-white rounded-md border border-[#D9CFF0] p-8 max-w-lg text-center shadow-sm">
           <div className="text-xs font-bold tracking-[0.2em] uppercase text-[#42277C] mb-3">
             Renewal offer expired
           </div>
@@ -129,7 +129,7 @@ export default async function SignPage({ params }: PageProps) {
           </p>
           <a
             href="mailto:tawanna@realtynewsnow.app?subject=Updated%20Renewal%20Agreement%20Request"
-            className="inline-block mt-6 px-5 py-2.5 rounded-md bg-[#301D5D] text-white text-sm font-medium hover:opacity-90"
+            className="inline-block mt-6 px-4 py-3 rounded-md bg-[#301D5D] text-white text-sm font-medium hover:opacity-90"
           >
             Request an Updated Renewal
           </a>
@@ -141,7 +141,7 @@ export default async function SignPage({ params }: PageProps) {
   if (ag.status === 'signed' || ag.status === 'active') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="bg-white rounded-md border border-[#00E200]/30 p-10 max-w-md text-center">
+        <div className="bg-white rounded-md border border-[#00E200]/30 p-8 max-w-md text-center">
           <div className="text-4xl mb-3">✓</div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
             Already Signed

@@ -85,7 +85,7 @@ export default function UnreadAdsBadge({
   if (variant === 'inline') {
     return (
       <span
-        className="ml-2 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-[#661102] text-white text-[10px] font-semibold leading-none"
+        className="ml-2 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-2 rounded-full bg-[#661102] text-white text-[10px] font-semibold leading-none"
         aria-label={`${count} new ${channel === 'all' ? 'ad inquiry' : channel} inquiries`}
       >
         {label}

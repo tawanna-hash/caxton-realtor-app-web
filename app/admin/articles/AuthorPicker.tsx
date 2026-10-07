@@ -208,13 +208,13 @@ export default function AuthorPicker({
                   <li key={author.name} role="option" aria-selected={name.toLowerCase() === author.name.toLowerCase()}>
                     <div className="flex items-center gap-1">
                       <button type="button" onClick={() => { onChange(author); setOpen(false); }}
-                        className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-gray-100 focus-visible:bg-gray-100">
+                        className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-gray-100 focus-visible:bg-gray-100">
                         <AuthorPhoto name={author.name} src={author.avatar} />
                         <span className="truncate">{author.name}</span>
                       </button>
                       <button type="button" aria-label={`Edit photo for ${author.name}`}
                         onClick={() => { setEditingName(author.name); setEditedAvatar(author.avatar || ''); setError(''); }}
-                        className="shrink-0 rounded-md px-2 py-1.5 text-xs text-brand-700 hover:bg-gray-100 focus-visible:bg-gray-100">
+                        className="shrink-0 rounded-md px-2 py-2 text-xs text-brand-700 hover:bg-gray-100 focus-visible:bg-gray-100">
                         Edit photo
                       </button>
                     </div>

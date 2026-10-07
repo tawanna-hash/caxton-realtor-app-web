@@ -82,7 +82,7 @@ export default function DallasPreviewHome({ surface }: { surface: 'news' | 'even
         </div>
         {events === null ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white border-b border-gray-200 px-4 py-5">
+            <div key={i} className="bg-white border-b border-gray-200 px-4 py-4">
               <div className="h-16 animate-pulse rounded-md bg-gray-100" />
             </div>
           ))
@@ -97,7 +97,7 @@ export default function DallasPreviewHome({ surface }: { surface: 'news' | 'even
             const t = orgOf(e.title);
             return (
               <article key={e.id} className="bg-white border-b border-gray-200">
-                <Link href={`/calendar/dallas/${e.id}`} className="px-4 py-5 flex gap-4 hover:bg-gray-50">
+                <Link href={`/calendar/dallas/${e.id}`} className="px-4 py-4 flex gap-4 hover:bg-gray-50">
                   <div className="flex-shrink-0 w-16 h-16 flex flex-col items-center justify-center rounded-md" style={{ backgroundColor: BRAND }}>
                     <span className="text-xs uppercase text-white/60 font-medium leading-none tracking-wider">{d.mo}</span>
                     <span className="text-xl font-medium text-white leading-none">{d.dy}</span>
@@ -133,8 +133,8 @@ export default function DallasPreviewHome({ surface }: { surface: 'news' | 'even
             aria-pressed={cat === c}
             className={
               cat === c
-                ? 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
-                : 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
+                ? 'flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
+                : 'flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
             }
           >
             {c}

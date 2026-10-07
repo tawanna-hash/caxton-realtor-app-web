@@ -112,7 +112,7 @@ export default function EditInventoryModal({ id, onClose, onChanged }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-2 py-6 sm:px-4 sm:py-10 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-2 py-6 sm:px-4 sm:py-8 overflow-y-auto"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -122,7 +122,7 @@ export default function EditInventoryModal({ id, onClose, onChanged }: Props) {
         className="relative bg-white rounded-md shadow-xl w-full max-w-6xl my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-white rounded-t-md">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white rounded-t-md">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
               Admin · Edit submission
@@ -154,9 +154,9 @@ export default function EditInventoryModal({ id, onClose, onChanged }: Props) {
           </button>
         </div>
 
-        <div className="px-4 sm:px-6 py-5">
+        <div className="px-4 sm:px-6 py-4">
           {loading && (
-            <p className="text-sm text-gray-500 font-light py-10 text-center">
+            <p className="text-sm text-gray-500 font-light py-8 text-center">
               Loading submission…
             </p>
           )}

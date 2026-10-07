@@ -321,7 +321,7 @@ function SectionCard({
   const content = (
     <div
       className={
-        'h-full rounded-md ring-1 p-5 transition hover:shadow-sm flex flex-col ' +
+        'h-full rounded-md ring-1 p-4 transition hover:shadow-sm flex flex-col ' +
         (isNavy
           ? 'bg-brand-700 text-white ring-brand-700 hover:bg-brand-800'
           : 'bg-white ring-gray-200 hover:ring-gray-300')

@@ -33,7 +33,7 @@ function parseTab(value: string | null): TabKey {
 export default function AdminReportsPage() {
   return (
     <Suspense fallback={
-      <div className="mx-auto max-w-[1500px] px-5 py-7 lg:px-8">
+      <div className="mx-auto max-w-[1500px] px-4 py-6 lg:px-8">
         <div className="text-sm text-gray-500">Loading reports…</div>
       </div>
     }>
@@ -246,7 +246,7 @@ function AdminReportsPageInner() {
   }
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8">
       <header>
         <p className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
           Admin · Insights
@@ -412,7 +412,7 @@ function AdminReportsPageInner() {
                   <button
                     type="button"
                     onClick={() => setArticleEditOpen(true)}
-                    className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-800"
+                    className="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-800"
                   >
                     Edit
                   </button>
@@ -599,7 +599,7 @@ function AdminReportsPageInner() {
                   <button
                     type="button"
                     onClick={() => setEventEditOpen(true)}
-                    className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-800"
+                    className="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-800"
                   >
                     Edit
                   </button>

@@ -146,7 +146,7 @@ export default function Exchange1031Client() {
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-800 mb-2">
               Identification rules (pick one)
             </p>
-            <ul className="text-sm text-gray-700 leading-relaxed space-y-1.5 list-disc list-inside marker:text-gray-400">
+            <ul className="text-sm text-gray-700 leading-relaxed space-y-2 list-disc list-inside marker:text-gray-400">
               <li><strong>3-property rule</strong> — identify up to 3 of any value.</li>
               <li><strong>200% rule</strong> — identify any number, total FMV ≤ 200% of relinquished sale price.</li>
               <li><strong>95% rule</strong> — identify any number, must close on 95%+ of total FMV.</li>
@@ -157,7 +157,7 @@ export default function Exchange1031Client() {
         {/* ── Result / Timeline ───────────────────────────────────── */}
         <div className="lg:col-span-3 print:col-span-5 space-y-6">
           {/* Status banner */}
-          <div className={`rounded-md border ${statusTone.border} ${statusTone.bg} p-5`}>
+          <div className={`rounded-md border ${statusTone.border} ${statusTone.bg} p-4`}>
             <div className="flex items-start justify-between mb-3">
               <div>
                 <p className={`text-[10px] uppercase tracking-wider font-semibold ${statusTone.label}`}>

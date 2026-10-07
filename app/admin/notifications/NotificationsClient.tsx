@@ -145,7 +145,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
 
   return (
     <>
-      <section className="mb-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <section className="mb-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div className="text-sm text-gray-600">{subscriberSummary}</div>
         <button
           type="button"
@@ -165,7 +165,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
 
       <section className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         {notifications.length === 0 ? (
-          <div className="p-10 text-center text-gray-500">
+          <div className="p-8 text-center text-gray-500">
             No notifications yet. Click <span className="font-medium">New notification</span> to send the first one.
           </div>
         ) : (

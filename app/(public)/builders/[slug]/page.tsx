@@ -161,7 +161,7 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <header className="mb-8">
           <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">
             {isDeveloper ? 'Developer' : 'Builder'}

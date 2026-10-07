@@ -16,13 +16,13 @@ export const metadata = {
 
 export default function NewsletterLandingPage() {
   return (
-    <div className="max-w-3xl mx-auto px-5 py-10">
+    <div className="max-w-3xl mx-auto px-4 py-8">
       <TrackPageView event="newsletter_page_viewed" />
       <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
         Weekly Email
       </p>
       <PageTitle size="md">The Weekly Email</PageTitle>
-      <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mb-10">
+      <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mb-8">
         Every Friday. One Email. Everything we published that week &mdash;
         local news, market reports, new magazine issues, events, builder and
         community updates, move-in ready homes, promotions, and giveaways

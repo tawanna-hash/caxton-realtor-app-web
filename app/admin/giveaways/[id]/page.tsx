@@ -213,8 +213,8 @@ export default function GiveawayDetailPage() {
       <WinnersSection giveawayId={id} endsAtPassed={endsAtPassed} onChange={loadGiveaway} />
 
       <section className="bg-white border border-gray-200 p-6 rounded-md">
-        <h2 className="text-sm uppercase tracking-wider text-gray-500 mb-5">Details</h2>
-        <form onSubmit={handleSave} className="space-y-5">
+        <h2 className="text-sm uppercase tracking-wider text-gray-500 mb-4">Details</h2>
+        <form onSubmit={handleSave} className="space-y-4">
           <FieldRow label="Title" required>
             <input
               type="text"
@@ -324,7 +324,7 @@ function FieldRow({
 }) {
   return (
     <div>
-      <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">
+      <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">
         {label} {required && <span className="text-[#661102]">*</span>}
       </label>
       {children}
@@ -398,7 +398,7 @@ function RulesSection({
 
   return (
     <section className="bg-white border border-gray-200 p-6 rounded-md">
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm uppercase tracking-wider text-gray-500">Rules ({rules.length})</h2>
         {!adding && (
           <button onClick={() => setAdding(true)} className="text-sm text-brand-700 font-medium hover:underline">
@@ -457,10 +457,10 @@ function RulesSection({
       </div>
 
       {adding && (
-        <form onSubmit={handleAdd} className="border-t border-gray-100 pt-5 space-y-4">
+        <form onSubmit={handleAdd} className="border-t border-gray-100 pt-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Action Type</label>
+              <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Action Type</label>
               <select
                 value={actionType}
                 onChange={(e) => setActionType(e.target.value)}
@@ -472,7 +472,7 @@ function RulesSection({
               </select>
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Display Label</label>
+              <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Display Label</label>
               <input
                 type="text"
                 value={label}
@@ -484,7 +484,7 @@ function RulesSection({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Target URL</label>
+              <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Target URL</label>
               <input
                 type="url"
                 value={targetUrl}
@@ -494,7 +494,7 @@ function RulesSection({
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Tickets</label>
+              <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Tickets</label>
               <input
                 type="number"
                 min={1}
@@ -514,7 +514,7 @@ function RulesSection({
             Required to enter
           </label>
           <div>
-            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Entry Deadline (optional)</label>
+            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Entry Deadline (optional)</label>
             <input
               type="datetime-local"
               value={deadlineAt}
@@ -628,15 +628,15 @@ function EntriesSection({
 
   return (
     <section className="bg-white border border-gray-200 p-6 rounded-md">
-      <h2 className="text-sm uppercase tracking-wider text-gray-500 mb-5">
+      <h2 className="text-sm uppercase tracking-wider text-gray-500 mb-4">
         Entries {total > 0 && <span className="text-brand-700 normal-case">({total})</span>}
       </h2>
 
       {/* Add entry form */}
-      <form onSubmit={handleAdd} className="border border-gray-100 p-4 mb-5 space-y-3 rounded-md">
+      <form onSubmit={handleAdd} className="border border-gray-100 p-4 mb-4 space-y-3 rounded-md">
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Subscriber Email</label>
+            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Subscriber Email</label>
             <input
               type="email"
               required
@@ -647,7 +647,7 @@ function EntriesSection({
             />
           </div>
           <div className="min-w-[180px]">
-            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Rule (optional)</label>
+            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Rule (optional)</label>
             <select
               value={ruleId}
               onChange={(e) => setRuleId(e.target.value)}

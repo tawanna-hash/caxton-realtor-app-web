@@ -538,7 +538,7 @@ function GmailEventsQueue() {
               type="button"
               onClick={handleBulkDelete}
               disabled={bulkBusy}
-              className="px-3 py-1.5 rounded-md text-white bg-[#661102] hover:bg-[#661102] text-xs font-medium disabled:opacity-50"
+              className="px-3 py-2 rounded-md text-white bg-[#661102] hover:bg-[#661102] text-xs font-medium disabled:opacity-50"
             >
               {bulkBusy ? 'Deleting…' : `Delete selected (${selectedIds.size})`}
             </button>
@@ -546,7 +546,7 @@ function GmailEventsQueue() {
               type="button"
               onClick={clearSelection}
               disabled={bulkBusy}
-              className="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-medium disabled:opacity-50"
+              className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-medium disabled:opacity-50"
             >
               Clear
             </button>

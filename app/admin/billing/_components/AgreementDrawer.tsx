@@ -974,7 +974,7 @@ export function AgreementDrawer({
                 amount_cents: existing!.amount_cents,
               })
             }
-            className="px-3 py-1.5 rounded-md bg-[#301D5D] text-white text-xs hover:bg-[#42277C]"
+            className="px-3 py-2 rounded-md bg-[#301D5D] text-white text-xs hover:bg-[#42277C]"
           >
             Generate invoice
           </button>
@@ -1577,7 +1577,7 @@ export function AgreementDrawer({
               <button
                 type="button"
                 onClick={() => setShowAddCard(true)}
-                className="rounded-md border border-[#B9ADD6] bg-white px-3 py-1.5 text-sm font-medium text-[#42277C] hover:bg-[#F6F3FB]"
+                className="rounded-md border border-[#B9ADD6] bg-white px-3 py-2 text-sm font-medium text-[#42277C] hover:bg-[#F6F3FB]"
               >
                 {stripeCardPresent ? "Update card on file" : "Add card on file"}
               </button>

@@ -136,7 +136,7 @@ function FeedScreen() {
           priority
         />
         <div className="absolute inset-x-0 top-0 p-4">
-          <span className="rounded-full bg-white/90 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-brand-700 shadow-sm">
+          <span className="rounded-full bg-white/90 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-brand-700 shadow-sm">
             Austin
           </span>
         </div>
@@ -157,7 +157,7 @@ function FeedScreen() {
         <div className="grid grid-cols-[1.35fr_.9fr] gap-2">
           <div className="border border-gray-200 bg-white p-3">
             <span className="text-[9px] font-semibold uppercase tracking-wider text-[#42277C]">Market News</span>
-            <p className="mt-1.5 text-sm font-semibold leading-snug text-gray-900">
+            <p className="mt-2 text-sm font-semibold leading-snug text-gray-900">
               What local REALTORS® should know this week
             </p>
             <p className="mt-2 text-[10px] leading-relaxed text-gray-500">A concise briefing built for your business day.</p>
@@ -222,7 +222,7 @@ function CalendarScreen() {
           <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Industry calendar</p>
           <h3 className="mt-1 text-lg font-semibold text-gray-900">Upcoming in Austin</h3>
         </div>
-        <span className="border border-gray-200 px-2.5 py-1.5 text-[10px] font-semibold text-gray-600">Live calendar</span>
+        <span className="border border-gray-200 px-3 py-2 text-[10px] font-semibold text-gray-600">Live calendar</span>
       </div>
       <div className="mt-4 space-y-2">
         {events.map((event, index) => {
@@ -263,11 +263,11 @@ function BuildersScreen() {
     <div className="px-3 py-4" data-tour-screen="builders">
       <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Local opportunity</p>
       <h3 className="mt-1 text-lg font-semibold text-gray-900">Builders & Communities</h3>
-      <div className="mt-3 flex gap-1.5 overflow-hidden">
+      <div className="mt-3 flex gap-2 overflow-hidden">
         {['All areas', 'Quick move-in', 'Promotions'].map((label, index) => (
           <span
             key={label}
-            className={`whitespace-nowrap px-2.5 py-1.5 text-[9px] font-semibold ${index === 0 ? 'bg-brand-700 text-white' : 'border border-gray-200 text-gray-500'}`}
+            className={`whitespace-nowrap px-3 py-2 text-[9px] font-semibold ${index === 0 ? 'bg-brand-700 text-white' : 'border border-gray-200 text-gray-500'}`}
           >
             {label}
           </span>
@@ -279,7 +279,7 @@ function BuildersScreen() {
           ['Lakeside Crossing', 'From the $400s', '8 homes available'],
           ['The Grove at Georgetown', 'From the $600s', '5 homes available'],
         ].map(([name, price, availability], index) => (
-          <div key={name} className="flex gap-3 border border-gray-200 bg-white p-2.5">
+          <div key={name} className="flex gap-3 border border-gray-200 bg-white p-3">
             <div className={`flex h-14 w-16 shrink-0 items-center justify-center ${index === 1 ? 'bg-[#F6F3FB] text-[#42277C]' : 'bg-brand-50 text-brand-700'}`}>
               <Building2 size={22} strokeWidth={1.5} aria-hidden />
             </div>
@@ -450,7 +450,7 @@ function AdvertisingScreen() {
           </a>
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between bg-brand-700 px-3 py-2.5 text-white">
+      <div className="mt-3 flex items-center justify-between bg-brand-700 px-3 py-3 text-white">
         <span className="text-[9px] font-medium">Build a cross-channel campaign</span>
         <ArrowRight size={14} aria-hidden />
       </div>
@@ -488,7 +488,7 @@ function PlatinumScreen() {
           );
         })}
       </div>
-      <div className="mt-3 flex items-center gap-2 bg-brand-700 px-3 py-2.5 text-white">
+      <div className="mt-3 flex items-center gap-2 bg-brand-700 px-3 py-3 text-white">
         <Check size={14} aria-hidden />
         <p className="text-[9px] font-medium">Tools designed for real client conversations</p>
       </div>
@@ -524,7 +524,7 @@ function AppPreview({
     <div className="relative mx-auto w-full max-w-[620px]">
       <div className="pointer-events-none absolute -inset-2 border border-brand-100 bg-white/45 sm:-inset-3" aria-hidden />
       <div className="relative overflow-hidden border border-gray-300 bg-white shadow-[0_24px_70px_rgba(48,29,93,0.18)]">
-        <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2.5">
+        <div className="flex items-center justify-between border-b border-gray-200 px-3 py-3">
           <button type="button" aria-label="Preview menu" onClick={() => onSelectTab('more')} className="p-1 text-gray-500">
             <Menu size={17} aria-hidden />
           </button>
@@ -568,7 +568,7 @@ function AnnouncementScreen({ onStart }: { onStart: () => void }) {
   return (
     <main className="min-h-dvh overflow-hidden bg-[#f4eee4] text-gray-900">
       <header className="border-b border-brand-700/15">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-8">
           <Link href="/" aria-label="Realty News Now home">
             <BrandMark />
           </Link>
@@ -581,7 +581,7 @@ function AnnouncementScreen({ onStart }: { onStart: () => void }) {
         </div>
       </header>
 
-      <section className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-10 sm:px-8 sm:py-14 lg:min-h-[calc(100dvh-77px)] lg:grid-cols-[minmax(340px,.82fr)_minmax(500px,1.18fr)] lg:gap-16 lg:py-12">
+      <section className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-8 sm:px-8 sm:py-14 lg:min-h-[calc(100dvh-77px)] lg:grid-cols-[minmax(340px,.82fr)_minmax(500px,1.18fr)] lg:gap-16 lg:py-12">
         <div className="order-1">
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#42277C]">
             We are excited to announce
@@ -589,13 +589,13 @@ function AnnouncementScreen({ onStart }: { onStart: () => void }) {
           <h1 className="mt-4 max-w-xl font-serif text-[clamp(2.25rem,4.5vw,4.25rem)] leading-[1.01] tracking-[-0.035em] text-brand-700">
             The Realty News Now App Is Here.
           </h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-gray-600">
+          <p className="mt-4 max-w-xl text-base leading-7 text-gray-600">
             We are excited to announce the Realty News Now app, bringing Texas real estate news, local market
             insights, industry events, trusted partners and professional tools together in one convenient
             experience. Stay informed, connected and ready for what&apos;s next wherever business takes you.
           </p>
 
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={onStart}
@@ -606,7 +606,7 @@ function AnnouncementScreen({ onStart }: { onStart: () => void }) {
             <span className="text-xs font-medium text-gray-500">6 guided stops · About 2 minutes</span>
           </div>
 
-          <div className="mt-8 border-t border-brand-700/15 pt-5">
+          <div className="mt-8 border-t border-brand-700/15 pt-4">
             <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.16em] text-gray-500">
               Download Realty News Now
             </p>
@@ -655,10 +655,10 @@ function AnnouncementScreen({ onStart }: { onStart: () => void }) {
         <div className="order-2">
           <div className="relative mx-auto max-w-[620px]">
             <div className="absolute -inset-3 border border-brand-700/10 bg-white/35 sm:-inset-5" aria-hidden />
-            <div className="relative border border-brand-700/20 bg-white p-3 shadow-[0_28px_80px_rgba(48,29,93,0.2)] sm:p-5">
+            <div className="relative border border-brand-700/20 bg-white p-3 shadow-[0_28px_80px_rgba(48,29,93,0.2)] sm:p-4">
               <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
                 <BrandMark compact />
-                <span className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-[#42277C]">
+                <span className="inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-[#42277C]">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#301D5D]" aria-hidden />
                   Now available
                 </span>
@@ -679,7 +679,7 @@ function AnnouncementScreen({ onStart }: { onStart: () => void }) {
                     className="object-cover object-bottom"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-brand-950/70 via-transparent to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4 sm:p-5">
+                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4 sm:p-4">
                     <div>
                       <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#D9CFF0]">Your market at a glance</p>
                       <p className="mt-1 max-w-sm text-base font-semibold leading-snug text-white sm:text-xl">
@@ -705,7 +705,7 @@ function AnnouncementScreen({ onStart }: { onStart: () => void }) {
                   return (
                     <div
                       key={String(label)}
-                      className={`flex min-h-16 items-center gap-2 px-2.5 ${
+                      className={`flex min-h-16 items-center gap-2 px-3 ${
                         itemIndex === 0 ? 'bg-brand-700 text-white' : 'border border-gray-200 bg-[#fbfaf8] text-brand-700'
                       }`}
                     >
@@ -829,7 +829,7 @@ export default function ProductTourClient() {
         }
       `}</style>
       <header className="border-b border-brand-700/15 bg-[#f4eee4]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-8">
           <Link href="/" aria-label="Realty News Now home">
             <BrandMark />
           </Link>
@@ -846,7 +846,7 @@ export default function ProductTourClient() {
             <button
               type="button"
               onClick={shareTour}
-              className="inline-flex min-h-11 items-center gap-2 bg-brand-700 px-3.5 text-xs font-semibold text-white transition-colors hover:bg-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
+              className="inline-flex min-h-11 items-center gap-2 bg-brand-700 px-4 text-xs font-semibold text-white transition-colors hover:bg-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
             >
               {copied ? <Check size={15} aria-hidden /> : <Share2 size={15} aria-hidden />}
               {copied ? 'Link copied' : 'Share tour'}
@@ -862,7 +862,7 @@ export default function ProductTourClient() {
         />
       </div>
 
-      <section className="mx-auto grid max-w-7xl items-center gap-8 px-5 py-7 sm:px-8 lg:min-h-[calc(100dvh-70px)] lg:grid-cols-[minmax(300px,.78fr)_minmax(500px,1.22fr)] lg:gap-14 lg:py-10">
+      <section className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-6 sm:px-8 lg:min-h-[calc(100dvh-70px)] lg:grid-cols-[minmax(300px,.78fr)_minmax(500px,1.22fr)] lg:gap-14 lg:py-8">
         <div className="order-2 lg:order-1">
           <div className="mb-6 flex items-center gap-2" aria-label={`Step ${index + 1} of ${STEPS.length}`}>
             {STEPS.map((item, itemIndex) => (
@@ -905,9 +905,9 @@ export default function ProductTourClient() {
             </p>
 
             {!complete ? (
-              <ul className="mt-5 space-y-2.5">
+              <ul className="mt-4 space-y-3">
                 {step.points.map((point) => (
-                  <li key={point} className="flex items-start gap-2.5 text-sm text-gray-700">
+                  <li key={point} className="flex items-start gap-3 text-sm text-gray-700">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center bg-brand-700 text-white">
                       <Check size={12} strokeWidth={2.5} aria-hidden />
                     </span>
@@ -916,16 +916,16 @@ export default function ProductTourClient() {
                 ))}
               </ul>
             ) : (
-              <div className="mt-7 flex flex-wrap gap-3">
+              <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   href="/auth/sign-up"
-                  className="inline-flex min-h-12 items-center gap-2 bg-brand-700 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
+                  className="inline-flex min-h-12 items-center gap-2 bg-brand-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
                 >
                   Explore the app <ArrowRight size={16} aria-hidden />
                 </Link>
                 <a
                   href="mailto:hello@myrealtyline.com?subject=Realty%20News%20Now%20Partner%20Inquiry"
-                  className="inline-flex min-h-12 items-center border border-brand-700/25 px-5 text-sm font-semibold text-brand-700 transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
+                  className="inline-flex min-h-12 items-center border border-brand-700/25 px-4 text-sm font-semibold text-brand-700 transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
                 >
                   Talk with our team
                 </a>
@@ -933,7 +933,7 @@ export default function ProductTourClient() {
             )}
           </div>
 
-          <div className="mt-7 flex items-center gap-3 border-t border-brand-700/15 pt-5">
+          <div className="mt-6 flex items-center gap-3 border-t border-brand-700/15 pt-4">
             <button
               type="button"
               onClick={previous}
@@ -946,7 +946,7 @@ export default function ProductTourClient() {
               <button
                 type="button"
                 onClick={replay}
-                className="inline-flex min-h-12 items-center gap-2 bg-brand-700 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-800"
+                className="inline-flex min-h-12 items-center gap-2 bg-brand-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-800"
               >
                 <RotateCcw size={16} aria-hidden /> Replay tour
               </button>
@@ -954,7 +954,7 @@ export default function ProductTourClient() {
               <button
                 type="button"
                 onClick={next}
-                className="inline-flex min-h-12 items-center gap-2 bg-brand-700 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-800"
+                className="inline-flex min-h-12 items-center gap-2 bg-brand-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-800"
               >
                 {index === STEPS.length - 1 ? 'Finish tour' : 'Next'}
                 <ArrowRight size={16} aria-hidden />
@@ -970,7 +970,7 @@ export default function ProductTourClient() {
           <div className="mb-4 flex items-center justify-between lg:hidden">
             <span className="text-[10px] font-bold uppercase tracking-[0.17em] text-gray-500">Live app preview</span>
             {!complete ? (
-              <button type="button" onClick={replay} className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700">
+              <button type="button" onClick={replay} className="inline-flex items-center gap-2 text-xs font-semibold text-brand-700">
                 <RotateCcw size={13} aria-hidden /> Replay
               </button>
             ) : null}

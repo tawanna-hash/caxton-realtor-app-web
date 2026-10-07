@@ -96,7 +96,7 @@ export default function SubscribePage() {
                   role="tab"
                   aria-selected={selected}
                   onClick={() => setMode(m)}
-                  className="px-5 py-2 rounded-full border text-sm font-medium transition-colors"
+                  className="px-4 py-2 rounded-full border text-sm font-medium transition-colors"
                   style={{
                     borderColor: selected ? '#301D5D' : '#d1d5db',
                     backgroundColor: selected ? '#301D5D' : '#ffffff',
@@ -192,7 +192,7 @@ function PickerButton({
       onClick={onClick}
       disabled={disabled}
       aria-disabled={disabled}
-      className="text-left border-2 px-5 py-4 transition-all rounded-md disabled:cursor-not-allowed"
+      className="text-left border-2 px-4 py-4 transition-all rounded-md disabled:cursor-not-allowed"
       style={{
         borderColor: selected ? activeColor : disabled ? '#e5e7eb' : '#d1d5db',
         backgroundColor: selected ? `${activeColor}10` : disabled ? '#f9fafb' : '#ffffff',
@@ -257,7 +257,7 @@ const US_STATES = [
 ];
 
 const fieldStyle =
-  'w-full border border-gray-300 px-4 py-2.5 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed';
+  'w-full border border-gray-300 px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed';
 
 function SubscribeForm({
   publication,
@@ -375,7 +375,7 @@ function SubscribeForm({
             setData(emptyForm);
             setSubmitted(false);
           }}
-          className="mt-5 text-sm font-medium underline underline-offset-2"
+          className="mt-4 text-sm font-medium underline underline-offset-2"
           style={{ color: accentColor }}
         >
           Subscribe another household
@@ -412,7 +412,7 @@ function SubscribeForm({
           </h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <FormField
             id={`${formId}-firstName`}
             label="First name"
@@ -490,7 +490,7 @@ function SubscribeForm({
           />
 
           {/* License (optional, for de-dup) */}
-          <fieldset className="space-y-4 border-t border-gray-200 pt-5">
+          <fieldset className="space-y-4 border-t border-gray-200 pt-4">
             <legend className="text-sm uppercase tracking-wider font-semibold text-gray-700 mb-2">
               License number
               <span className="text-gray-500 font-normal normal-case ml-2">
@@ -559,7 +559,7 @@ function SubscribeForm({
           </fieldset>
 
           {/* Mailing address fieldset */}
-          <fieldset className="space-y-4 border-t border-gray-200 pt-5">
+          <fieldset className="space-y-4 border-t border-gray-200 pt-4">
             <legend className="text-sm uppercase tracking-wider font-semibold text-gray-700 mb-2">
               Mailing address
             </legend>
@@ -654,7 +654,7 @@ function SubscribeForm({
           </fieldset>
 
           {/* Birthday fieldset */}
-          <fieldset className="space-y-4 border-t border-gray-200 pt-5">
+          <fieldset className="space-y-4 border-t border-gray-200 pt-4">
             <legend className="text-sm uppercase tracking-wider font-semibold text-gray-700 mb-2">
               Birthday
             </legend>

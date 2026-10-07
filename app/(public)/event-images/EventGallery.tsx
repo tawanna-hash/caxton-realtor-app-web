@@ -55,7 +55,7 @@ export default function EventGallery({ months }: Props) {
       <div className="flex flex-wrap gap-2 mb-8">
         <button
           onClick={() => setActiveMonth('all')}
-          className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+          className={`px-3 py-2 text-sm font-medium rounded-full transition-colors ${
             activeMonth === 'all'
               ? 'bg-gray-900 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -67,7 +67,7 @@ export default function EventGallery({ months }: Props) {
           <button
             key={m.monthKey}
             onClick={() => setActiveMonth(m.monthKey)}
-            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+            className={`px-3 py-2 text-sm font-medium rounded-full transition-colors ${
               activeMonth === m.monthKey
                 ? 'bg-gray-900 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'

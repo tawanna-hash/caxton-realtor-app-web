@@ -47,7 +47,7 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
   return (
     <div
       className={
-        'rounded-lg border bg-white p-5 shadow-sm ring-1 ' +
+        'rounded-lg border bg-white p-4 shadow-sm ring-1 ' +
         accent.ring +
         (isLive ? '' : ' opacity-60')
       }
@@ -134,19 +134,19 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
           <>
             <Link
               href={crmHref}
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-50"
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
             >
               Open CRM
             </Link>
             <Link
               href={`/admin/ads/campaigns?market=${snapshot.market}`}
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-50"
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
             >
               Campaigns
             </Link>
             <Link
               href={`/admin/magazines?publication=${snapshot.market}`}
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-50"
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
             >
               Issues
             </Link>
@@ -162,7 +162,7 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
 export default function DashboardClient({ data }: { data: DashboardData }) {
   return (
     <div className="space-y-6">
-      <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-[#42277C]" aria-hidden="true" />
             <h2 className="text-sm font-semibold text-gray-950">Date Radar</h2>
@@ -216,7 +216,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
               <Link
                 key={i}
                 href={item.href}
-                className="inline-flex items-center gap-1 rounded-md border border-[#FAD800]/50 bg-white px-2.5 py-1 text-xs font-medium hover:bg-[#FEF8CC]"
+                className="inline-flex items-center gap-1 rounded-md border border-[#FAD800]/50 bg-white px-3 py-1 text-xs font-medium hover:bg-[#FEF8CC]"
               >
                 {item.label}
               </Link>

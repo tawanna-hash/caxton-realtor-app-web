@@ -51,8 +51,8 @@ export const TASK_TEMPLATES: { id: string; label: string; tasks: string[] }[] = 
 ];
 
 const input = 'h-[36px] w-full rounded-lg border border-slate-200 bg-white px-3 text-sm';
-const btn = 'inline-flex h-[34px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F4F3F8]';
-const btnPrimary = 'inline-flex h-[34px] items-center gap-1.5 rounded-lg bg-[#301D5D] px-3 text-sm font-semibold text-white hover:bg-[#42277C]';
+const btn = 'inline-flex h-[34px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F4F3F8]';
+const btnPrimary = 'inline-flex h-[34px] items-center gap-2 rounded-lg bg-[#301D5D] px-3 text-sm font-semibold text-white hover:bg-[#42277C]';
 
 
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '?';
@@ -465,7 +465,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={tilePct} aria-valuemin={0} aria-valuemax={100} aria-label="Required documents submitted"><div className="h-full bg-[#301D5D]" style={{ width: `${tilePct}%` }} /></div>
         <p className="mt-2 text-xs text-slate-500">{tileSubmitted} of {tileTotal} submitted</p>
-          <ul className="mt-4 space-y-2.5">
+          <ul className="mt-4 space-y-3">
             {docFolders.map((folder) => {
               const total = folder.docs.length;
               const done = folder.docs.filter((d) => deal.documentChecks[d.id]).length;
@@ -529,7 +529,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
         <Tip text="Enter the signed contract's effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules." />
         {timelineFields}
         {trackedDeadlines.length > 0 && (
-          <div className="mt-5 border-t border-[#E6E5EC] pt-3">
+          <div className="mt-4 border-t border-[#E6E5EC] pt-3">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-semibold text-slate-900">Deadline Tracking</p>
               <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{trackedDeadlines.filter((item) => item.done).length} Of {trackedDeadlines.length} Done</span>
@@ -553,7 +553,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
               );
             })}
             </div>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#F6F3FB] px-3 py-2.5 text-xs text-slate-600">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#F6F3FB] px-3 py-3 text-xs text-slate-600">
               <span>
                 {alertChannels.length === 0 ? 'Alerts Are Off' : `Alerts By ${alertChannels.join(' And ')}`}
                 {alertChannels.length > 0 && alerts ? ` · ${[...alerts.reminderOffsets].sort((l, r) => r - l).map((o) => (o === 0 ? 'Due Today' : `${o}d`)).join(', ')}` : ''}
@@ -758,7 +758,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
                     {waitingRows.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing is pending.</p> : waitingRows.slice(0, 5).map((item) => (
                       <button key={item.key} type="button" onClick={() => onOpenView(item.go)} className="ds-snap-row">
                         <span className="min-w-0 flex-1 text-left">
-                          <span className="flex flex-wrap items-center gap-1.5"><span className="text-sm font-semibold">{item.title}</span><span className="rounded bg-[#EFEAF8] px-1.5 py-0.5 text-[11px] font-medium text-[#301D5D]">{item.chip}</span></span>
+                          <span className="flex flex-wrap items-center gap-2"><span className="text-sm font-semibold">{item.title}</span><span className="rounded bg-[#EFEAF8] px-2 py-0.5 text-[11px] font-medium text-[#301D5D]">{item.chip}</span></span>
                           <span className="block text-xs opacity-70">{item.detail}</span>
                         </span>
                       </button>
@@ -1042,7 +1042,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
 
       {providerCategory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label={`Trusted ${providerCategory.toLowerCase()} providers`} onClick={() => setProviderCategory(null)}>
-          <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg rounded-xl bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-lg font-semibold text-slate-900">Trusted {titleCaseLabel(providerCategory)} Providers</h3>
               <button type="button" aria-label="Close" className="text-slate-500 hover:text-slate-900" onClick={() => setProviderCategory(null)}><X className="h-5 w-5" aria-hidden="true" /></button>

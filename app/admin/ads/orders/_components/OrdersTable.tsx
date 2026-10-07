@@ -262,11 +262,11 @@ export default function OrdersTable() {
 
       {/* Filter row: source + status + search */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setUrl({ source: null })}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+            className={`px-3 py-2 rounded-full text-xs font-medium border transition ${
               activeSource === 'all'
                 ? 'bg-gray-900 text-white border-gray-900'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -279,7 +279,7 @@ export default function OrdersTable() {
               key={s}
               type="button"
               onClick={() => setUrl({ source: s })}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+              className={`px-3 py-2 rounded-full text-xs font-medium border transition ${
                 activeSource === s
                   ? 'bg-gray-900 text-white border-gray-900'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -290,11 +290,11 @@ export default function OrdersTable() {
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setUrl({ status: null })}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+            className={`px-3 py-2 rounded-full text-xs font-medium border transition ${
               activeStatus === 'all'
                 ? 'bg-gray-900 text-white border-gray-900'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -307,7 +307,7 @@ export default function OrdersTable() {
               key={s}
               type="button"
               onClick={() => setUrl({ status: s })}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border capitalize transition ${
+              className={`px-3 py-2 rounded-full text-xs font-medium border capitalize transition ${
                 activeStatus === s
                   ? 'bg-gray-900 text-white border-gray-900'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -324,7 +324,7 @@ export default function OrdersTable() {
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search partner, slot, size…"
-            className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-[#7059A8] focus:border-transparent"
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-[#7059A8] focus:border-transparent"
           />
         </div>
       </div>
@@ -358,7 +358,7 @@ export default function OrdersTable() {
                         {row.status}
                       </span>
                     </div>
-                    <p className="font-medium text-gray-900 mt-1.5 truncate">
+                    <p className="font-medium text-gray-900 mt-2 truncate">
                       {row.advertiser_name ?? '—'}
                     </p>
                     {row.advertiser_email && (
@@ -405,7 +405,7 @@ export default function OrdersTable() {
                       type="button"
                       onClick={() => approve(row.id)}
                       disabled={approvingId === row.id}
-                      className="inline-flex items-center rounded-md bg-[#005A00] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#005A00] disabled:opacity-50"
+                      className="inline-flex items-center rounded-md bg-[#005A00] px-3 py-1 text-xs font-semibold text-white hover:bg-[#005A00] disabled:opacity-50"
                     >
                       {approvingId === row.id ? 'Approving…' : 'Approve & go live'}
                     </button>
@@ -497,7 +497,7 @@ export default function OrdersTable() {
                           type="button"
                           onClick={() => approve(row.id)}
                           disabled={approvingId === row.id}
-                          className="mr-3 inline-flex items-center rounded-md bg-[#005A00] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#005A00] disabled:opacity-50"
+                          className="mr-3 inline-flex items-center rounded-md bg-[#005A00] px-3 py-1 text-xs font-semibold text-white hover:bg-[#005A00] disabled:opacity-50"
                           title="Approve this paid booking and take the ad live"
                         >
                           {approvingId === row.id ? 'Approving…' : 'Approve & go live'}

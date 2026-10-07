@@ -427,7 +427,7 @@ export default function AppShell({
                   router.push(target);
                 }}
                 aria-label="Return to app"
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs uppercase tracking-[0.1em] font-medium text-white/80 hover:text-white hover:bg-white/10 transition"
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs uppercase tracking-[0.1em] font-medium text-white/80 hover:text-white hover:bg-white/10 transition"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M3 12l6-6M3 12l6 6M3 12h18" />

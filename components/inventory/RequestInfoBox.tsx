@@ -69,7 +69,7 @@ export default function RequestInfoBox({
             Get details and availability straight from the builder&apos;s sales team.
           </p>
         </div>
-        <div className="px-4 py-5">
+        <div className="px-4 py-4">
           <p className="text-sm text-gray-700">
             Interested in {communityLabel}? Use {builderName}&apos;s contact page and their
             sales team will follow up directly.
@@ -79,7 +79,7 @@ export default function RequestInfoBox({
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackRequestInfo('builder_contact_form')}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#301D5D] transition-colors"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 py-3 text-sm font-semibold text-white hover:bg-[#301D5D] transition-colors"
           >
             Request more information
             <span aria-hidden="true" className="text-base leading-none">↗</span>
@@ -265,7 +265,7 @@ export default function RequestInfoBox({
           <button
             type="submit"
             disabled={status === 'submitting'}
-            className="w-full rounded-md bg-[#301D5D] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#301D5D] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full rounded-md bg-[#301D5D] px-4 py-3 text-sm font-semibold text-white hover:bg-[#301D5D] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {status === 'submitting' ? 'Sending…' : 'Submit'}
           </button>

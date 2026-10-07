@@ -35,7 +35,7 @@ function Highlight({
     return (
       <div className="relative">
         <div className="absolute -inset-0.5 rounded-md border-2 border-dashed border-[#00E200] pointer-events-none" />
-        <div className="absolute -top-2 left-2 z-10 rounded-md bg-[#00E200] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#1B1726]">
+        <div className="absolute -top-2 left-2 z-10 rounded-md bg-[#00E200] px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#1B1726]">
           Ad{label ? ` \u2014 ${label}` : ''}
         </div>
         {children}
@@ -60,7 +60,7 @@ function FeedWireframe({ active }: { active: string }) {
           </div>
         </Highlight>
       </div>
-      <div className="flex-1 px-2 py-2 space-y-1.5">
+      <div className="flex-1 px-2 py-2 space-y-2">
         <div className="h-7 bg-white rounded-md border border-gray-200" />
         <Highlight active={active === 'feed_inline_card'}>
           <div className="h-7 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
@@ -97,7 +97,7 @@ function ArticleWireframe({ active }: { active: string }) {
           </div>
         </Highlight>
       </div>
-      <div className="px-2 pt-1.5 text-[9px] font-bold text-gray-900 leading-tight">
+      <div className="px-2 pt-2 text-[9px] font-bold text-gray-900 leading-tight">
         City leaders unveil plan to improve public transit
       </div>
       <div className="px-2 text-gray-500">By Jane Doe · 5 min read</div>
@@ -150,7 +150,7 @@ function CalendarWireframe({ active }: { active: string }) {
           </div>
         </Highlight>
       </div>
-      <div className="flex-1 px-2 py-2 space-y-1.5">
+      <div className="flex-1 px-2 py-2 space-y-2">
         <div className="h-7 bg-white rounded-md border border-gray-200" />
         <Highlight active={active === 'calendar_event_sponsor'} label="Sponsored event">
           <div className="h-9 bg-[#FEF8CC] rounded-md border-2 border-[#FAD800] flex items-center justify-center text-[#645600]">
@@ -177,7 +177,7 @@ function AccountWireframe({ active }: { active: string }) {
           </div>
         </Highlight>
       </div>
-      <div className="flex-1 px-2 py-2 space-y-1.5">
+      <div className="flex-1 px-2 py-2 space-y-2">
         <div className="h-5 bg-white rounded-md border border-gray-200" />
         <div className="h-5 bg-white rounded-md border border-gray-200" />
         <div className="h-5 bg-white rounded-md border border-gray-200" />

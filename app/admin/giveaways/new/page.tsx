@@ -59,7 +59,7 @@ export default function NewGiveawayPage() {
       </div>
       <PageTitle size="md">Create Giveaway</PageTitle>
 
-      <form onSubmit={handleSubmit} className="bg-white border border-gray-200 p-6 space-y-5 rounded-md">
+      <form onSubmit={handleSubmit} className="bg-white border border-gray-200 p-6 space-y-4 rounded-md">
         <Field label="Title" required>
           <input
             type="text"
@@ -169,7 +169,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">
+      <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">
         {label} {required && <span className="text-[#661102]">*</span>}
         {hint && <span className="ml-2 normal-case tracking-normal text-gray-400">{hint}</span>}
       </label>

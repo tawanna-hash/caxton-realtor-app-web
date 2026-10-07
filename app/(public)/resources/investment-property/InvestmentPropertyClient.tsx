@@ -248,12 +248,12 @@ export default function InvestmentPropertyClient() {
             >
               {fmtUSD(result.monthlyCashFlow)}
             </p>
-            <p className="text-xs text-gray-500 mb-5">
+            <p className="text-xs text-gray-500 mb-4">
               {fmtUSD(result.annualCashFlow)} / yr · Loan {fmtUSD(result.loanAmount)} · Cash in {fmtUSD(result.totalCashInvested)}
             </p>
 
             {/* Headline ratios */}
-            <div className="grid grid-cols-2 gap-3 mb-5">
+            <div className="grid grid-cols-2 gap-3 mb-4">
               <RatioTile label="Cap rate" value={fmtPct(result.capRate)} accent />
               <RatioTile label="Cash-on-cash" value={fmtPct(result.cashOnCash)} accent />
               <RatioTile label="DSCR" value={result.dscr.toFixed(2)} />
@@ -261,7 +261,7 @@ export default function InvestmentPropertyClient() {
             </div>
 
             {/* Rule of thumb badges */}
-            <div className="flex flex-wrap gap-2 mb-5">
+            <div className="flex flex-wrap gap-2 mb-4">
               <RuleBadge
                 met={result.onePctRuleMet}
                 label={`1% rule (${(result.rentToPriceRatio * 100).toFixed(2)}%)`}
@@ -358,7 +358,7 @@ function RatioTile({ label, value, accent = false }: { label: string; value: str
 function RuleBadge({ met, label }: { met: boolean; label: string }) {
   return (
     <span
-      className={`text-[11px] px-2.5 py-1 rounded-full border ${
+      className={`text-[11px] px-3 py-1 rounded-full border ${
         met
           ? 'border-[#00E200]/30 bg-[#E0FBE0] text-[#005A00]'
           : 'border-[#FF2A04]/30 bg-[#FFEAE6] text-[#661102]'

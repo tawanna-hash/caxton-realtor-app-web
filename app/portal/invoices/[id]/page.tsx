@@ -83,7 +83,7 @@ export default async function InvoicePayPage({
   const totalAmountDueCents = balanceForwardCents + invoice.total_cents - paymentsCreditsCents;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 print:max-w-none print:px-0 print:py-0">
+    <div className="mx-auto max-w-3xl px-4 py-8 print:max-w-none print:px-0 print:py-0">
       <InvoicePayClient
         invoice={invoice}
         accountSummary={{

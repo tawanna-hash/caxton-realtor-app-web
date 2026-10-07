@@ -413,12 +413,12 @@ function ReadinessChecklist({
         {description ? <p className="mt-1 text-xs leading-5 text-slate-600">{description}</p> : null}
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {hasFile ? (
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-[#E0FBE0] px-2 py-1 text-xs font-bold text-[#005A00]">
+            <span className="inline-flex items-center gap-2 rounded-md bg-[#E0FBE0] px-2 py-1 text-xs font-bold text-[#005A00]">
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
               {document.fileName || 'File Attached'}
             </span>
           ) : null}
-          <label className="inline-flex min-h-[32px] cursor-pointer items-center gap-1.5 rounded-md border border-slate-300 px-2.5 text-xs font-bold text-slate-600 hover:border-[#7059A8] hover:text-[#301D5D]">
+          <label className="inline-flex min-h-[32px] cursor-pointer items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-600 hover:border-[#7059A8] hover:text-[#301D5D]">
             {isUploading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <FileUp className="h-3.5 w-3.5" aria-hidden="true" />}
             {isUploading ? 'Uploading…' : hasFile ? 'Replace File' : 'Attach File'}
             <input
@@ -467,7 +467,7 @@ function ReadinessChecklist({
         <CollapseToggle {...toggleProps('readiness', 'readiness checklist', { mobileOpen: true })} className="ml-auto" />
       </div>
 
-      <div className="mt-5 space-y-5">
+      <div className="mt-4 space-y-4">
         {readinessGroupsForSide(side).map((group) => {
           const groupDocuments = group.items
             .map((item) => ({ item, document: documents.find((document) => document.id === item.id) }))
@@ -478,7 +478,7 @@ function ReadinessChecklist({
             <section key={group.id} className="overflow-hidden rounded-md border border-slate-200">
               <div className="flex items-center justify-between gap-3 bg-[#F7F5F1] px-4 py-3">
                 <h4 className="text-sm font-bold text-gray-900">{group.label}</h4>
-                <span className="shrink-0 rounded-md bg-white px-2.5 py-1 text-xs font-bold text-[#301D5D]">{completeCount} of {groupDocuments.length}</span>
+                <span className="shrink-0 rounded-md bg-white px-3 py-1 text-xs font-bold text-[#301D5D]">{completeCount} of {groupDocuments.length}</span>
               </div>
               <div>{groupDocuments.map(({ item, document }) => renderDocument(document, item.description))}</div>
             </section>
@@ -502,7 +502,7 @@ function ReadinessChecklist({
         </p>
       ) : null}
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
         <input
           value={documentName}
           onChange={(event) => setDocumentName(event.target.value)}
@@ -513,13 +513,13 @@ function ReadinessChecklist({
           type="button"
           onClick={addDocument}
           disabled={!documentName.trim()}
-          className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-[#7059A8] bg-white px-5 text-sm font-bold text-[#301D5D] transition hover:bg-[#F3EFFA] disabled:opacity-40"
+          className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F3EFFA] disabled:opacity-40"
         >
           Request
         </button>
       </div>
 
-      <div className="mt-5 border-t border-slate-200 pt-5">
+      <div className="mt-4 border-t border-slate-200 pt-4">
         <p className="text-sm font-semibold text-slate-800">Operational Review Alerts</p>
         {reviewAlerts.length ? (
           <ul className="mt-3 space-y-2">
@@ -2221,7 +2221,7 @@ export default function ClosingTime({
   if (panelsOnly) {
     return (
       <section id="agent-deal-tools" className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 pt-5 sm:px-8">
+        <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-8">
           <div {...collapsible('attention')} className="border border-slate-200 bg-white p-4 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -2241,7 +2241,7 @@ export default function ClosingTime({
             </div>
             <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
               {radarItems.length === 0 ? (
-                <p className="py-5 text-sm text-slate-600">
+                <p className="py-4 text-sm text-slate-600">
                   {overviewDealCount === 0 ? 'No active deals yet.' : 'No upcoming items or recent overdue deadlines.'}
                 </p>
               ) : radarItems.slice(0, 5).map((item) => (
@@ -2266,7 +2266,7 @@ export default function ClosingTime({
   }
 
   const renderTimelineFields = () => (activeDeal ? (
-    <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <label className="flex min-w-0 flex-col rounded-md border border-slate-200 bg-white p-4">
         <span className="block text-sm font-bold text-slate-900">Signed Contract / Effective Date</span>
         <input
@@ -2337,7 +2337,7 @@ export default function ClosingTime({
                               className="h-[420px] w-full bg-slate-100 sm:h-[560px]"
                             />
                           ) : (
-                            <div className="flex h-[280px] items-center justify-center px-5 text-center text-sm text-slate-600">
+                            <div className="flex h-[280px] items-center justify-center px-4 text-center text-sm text-slate-600">
                               The temporary contract preview is no longer available.
                             </div>
                           )}
@@ -2347,7 +2347,7 @@ export default function ClosingTime({
                             <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#301D5D]">Proposed Entries</p>
                             <Tip text="Compare each entry with the unchanged contract before applying." />
                           </div>
-                          <div className="space-y-5 p-3">
+                          <div className="space-y-4 p-3">
                             {Object.entries(extractionDraft.worksheet).filter(([, value]) => Boolean(value)).length > 0 && (
                               <div>
                                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Workspace Summary and Timing</p>
@@ -2387,7 +2387,7 @@ export default function ClosingTime({
 
   const renderFormWindow = () => (!activeDeal ? null : (
     <>
-                    <div className="mt-7 rounded-md border border-[#E6E5EC] bg-[#F6F3FB] p-6 sm:p-10 lg:p-14">
+                    <div className="mt-6 rounded-md border border-[#E6E5EC] bg-[#F6F3FB] p-6 sm:p-8 lg:p-14">
                       {originalContract?.dealId === activeDeal.id && (
                         <div className="mx-auto mb-4 max-w-[1020px] border border-slate-300 bg-white p-3">
                           <button type="button" onClick={() => setShowSavedOriginal((value) => !value)}
@@ -2415,7 +2415,7 @@ export default function ClosingTime({
                           values={currentFormValues}
                           onFieldChange={updateTrecFormField}
                         />
-                        <div className="grid gap-1.5 border-t border-slate-200 bg-white px-3 py-2 sm:grid-cols-[1fr_1.6fr_0.7fr_1fr]" aria-label="Brokerage and agent details">
+                        <div className="grid gap-2 border-t border-slate-200 bg-white px-3 py-2 sm:grid-cols-[1fr_1.6fr_0.7fr_1fr]" aria-label="Brokerage and agent details">
                           {([['brokerage', 'Brokerage'], ['address', 'Brokerage Address'], ['agentId', 'Agent ID'], ['agentName', 'Agent Name']] as const).map(([key, label]) => (
                             <input
                               key={key}
@@ -2430,7 +2430,7 @@ export default function ClosingTime({
                           ))}
                         </div>
                         {(['brokerage', 'address', 'agentId', 'agentName'] as const).some((key) => !brokerFooter[key].trim()) && (
-                          <p className="border-t border-slate-100 bg-white px-3 py-1.5 text-center text-[11px] text-slate-500">Fill these once in <button type="button" onClick={() => setDeskView('coordinator')} className="font-semibold text-[#301D5D] underline underline-offset-2">Settings</button> and they appear on every form.</p>
+                          <p className="border-t border-slate-100 bg-white px-3 py-2 text-center text-[11px] text-slate-500">Fill these once in <button type="button" onClick={() => setDeskView('coordinator')} className="font-semibold text-[#301D5D] underline underline-offset-2">Settings</button> and they appear on every form.</p>
                         )}
                         <div className="border-t border-slate-200 bg-white px-3 py-2">
                           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2542,7 +2542,7 @@ export default function ClosingTime({
                     className="ds-deal"
                     aria-label="Template" title="Template"
                   >
-                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#7059A8]" aria-hidden="true" />
+                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#7059A8]" aria-hidden="true" />
                     <span className="min-w-0">
                       <span className="block truncate text-sm">Template</span>
                       <span className="block truncate text-xs ds-sub">Edits Apply To New Contracts</span>
@@ -2566,7 +2566,7 @@ export default function ClosingTime({
                       aria-label={deal.propertyAddress || deal.title}
                       title={deal.propertyAddress || deal.title}
                     >
-                      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${tone}`} aria-hidden="true" />
+                      <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${tone}`} aria-hidden="true" />
                       <span className="min-w-0">
                         <span className="block truncate text-sm">{deal.propertyAddress || deal.title}</span>
                         <span className="block truncate text-xs ds-sub">{closed ? 'Closed' : days === null ? 'Closing Date Not Set' : closingCountdownLabel(deal.closingDate, today)}</span>
@@ -2745,7 +2745,7 @@ export default function ClosingTime({
                           const first = deals.find((d) => d.id === c.dealIds[0]);
                           return (
                             <tr key={c.key} tabIndex={0} onClick={() => { if (first) { setActiveDealId(first.id); setDealPageId(first.id); setDealPageTab('preferences'); setDeskView('deal-page'); } }}>
-                              <td data-label="Name" className="px-4 py-2.5 font-medium text-slate-900">{c.name}</td>
+                              <td data-label="Name" className="px-4 py-3 font-medium text-slate-900">{c.name}</td>
                               <td data-label={contactsTab === 'clients' ? 'Stage' : 'Role'}>{contactsTab === 'clients'
                                 ? <span className={`ds-chip ${c.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{c.active ? 'Active Client' : 'Past Client'}</span>
                                 : <span className="capitalize">{c.role || '—'}</span>}</td>
@@ -2779,7 +2779,7 @@ export default function ClosingTime({
                 return (
                   <li key={deal.id}>
                     <button type="button" onClick={() => openDeal(deal)} className="ds-closing-row">
-                      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${dot}`} aria-hidden="true" />
+                      <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${dot}`} aria-hidden="true" />
                       <span className="min-w-0 flex-1 text-left">
                         <span className="flex flex-wrap items-center gap-2">
                           <span className="truncate text-sm font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
@@ -3036,7 +3036,7 @@ export default function ClosingTime({
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950">Subscribe To Apple Calendar</span>
                   </button>
                 ) : (
-                  <div className="flex min-h-[56px] w-full flex-col justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                  <div className="flex min-h-[56px] w-full flex-col justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-[#301D5D]">
                       <a href={calendarFeed.webcalUrl} onClick={() => trackEvent('closing_time_calendar_feed_subscribe', { app: 'apple' })} className="underline underline-offset-2">Open In Apple Calendar</a>
                       <button type="button" onClick={() => void copyCalendarFeed()} className="underline underline-offset-2">{calendarFeedCopied ? 'Copied' : 'Copy Link'}</button>
@@ -3048,7 +3048,7 @@ export default function ClosingTime({
             )} /></div>
             <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
-          <section className={'mt-5 grid gap-5'} aria-label="Deal settings, alerts and calendar">
+          <section className={'mt-4 grid gap-4'} aria-label="Deal settings, alerts and calendar">
             <div data-section-key="agent-details" className="min-w-0 rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem] lg:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-lg font-semibold text-gray-900">Account: Brokerage And Agent Details</h3>
@@ -3154,7 +3154,7 @@ export default function ClosingTime({
                   <CollapseToggle {...toggleProps('trec-library', 'forms library')} />
                 </div>
               </div>
-              <div role="tablist" aria-label="Forms library pages" className="mt-4 flex gap-5 border-b border-[#E6E5EC]">
+              <div role="tablist" aria-label="Forms library pages" className="mt-4 flex gap-4 border-b border-[#E6E5EC]">
                 {([['trec', 'TREC Forms'], ['brokerage', 'Brokerage Forms']] as const).map(([id, label]) => (
                   <button key={id} type="button" role="tab" aria-selected={formsLibraryTab === id} onClick={() => setFormsLibraryTab(id)}
                     className={`-mb-px border-b-2 px-0.5 pb-2 text-sm font-semibold ${formsLibraryTab === id ? 'border-[#301D5D] text-[#301D5D]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}>{label}</button>
@@ -3210,7 +3210,7 @@ export default function ClosingTime({
 
         {workspacePage === 1 && (
           <>
-        <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
             ['Agent deals', activeDealCount, ClipboardCheck, 'bg-[#F8F5FF] text-[#301D5D]'],
             ['Closing in 30 days', closingSoonCount, CalendarDays, 'bg-[#FEF8CC] text-[#645600]'],
@@ -3276,7 +3276,7 @@ export default function ClosingTime({
                     <div className="mt-2">
                       <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span>
                     </div>
-                    <div className="mt-2.5 grid grid-cols-2 gap-2 text-xs">
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <div className="text-slate-400">Effective Date</div>
                         <div className="text-slate-700">{deal.effectiveDate ? formatDate(deal.effectiveDate) : '—'}</div>
@@ -3289,7 +3289,7 @@ export default function ClosingTime({
                         </div>
                       </div>
                     </div>
-                    <div className="mt-2.5 flex flex-wrap gap-2">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       {dealFormVersions.length === 0 ? (
                         <span className="text-xs text-slate-400">No forms</span>
                       ) : (
@@ -3316,7 +3316,7 @@ export default function ClosingTime({
               })}
             </div>
             {/* Desktop table */}
-            <div className="mt-5 hidden overflow-x-auto md:block">
+            <div className="mt-4 hidden overflow-x-auto md:block">
               <table className="w-full min-w-[980px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
@@ -3430,7 +3430,7 @@ export default function ClosingTime({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <span className="flex items-center gap-1.5 truncate font-semibold text-slate-900">
+                        <span className="flex items-center gap-2 truncate font-semibold text-slate-900">
                           <Lock className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
                           <span className="truncate">{deal.propertyAddress || deal.title}</span>
                         </span>
@@ -3440,7 +3440,7 @@ export default function ClosingTime({
                       </div>
                       <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
                     </div>
-                    <div className="mt-2.5 grid grid-cols-2 gap-2 text-xs">
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <div className="text-slate-400">Outcome</div>
                         <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-bold capitalize text-slate-700">{deal.closeoutOutcome}</span>
@@ -3467,7 +3467,7 @@ export default function ClosingTime({
               })}
             </div>
             {/* Desktop table */}
-            <div className="mt-5 hidden overflow-x-auto md:block">
+            <div className="mt-4 hidden overflow-x-auto md:block">
               <table className="w-full min-w-[820px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
@@ -3489,7 +3489,7 @@ export default function ClosingTime({
                       className={`cursor-pointer border-b border-slate-100 transition last:border-0 hover:bg-[#F8F5FF] ${deal.id === activeDealId ? 'bg-[#F8F5FF]' : ''}`}
                     >
                       <td className="py-3 pr-4">
-                        <span className="flex items-center gap-1.5 font-semibold text-slate-900">
+                        <span className="flex items-center gap-2 font-semibold text-slate-900">
                           <Lock className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
                           {deal.propertyAddress || deal.title}
                         </span>
@@ -3535,7 +3535,7 @@ export default function ClosingTime({
                 <h3 className="text-xl font-semibold text-gray-900">Tasks and Reminders</h3>
                 <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
               </div>
-              <div className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2">
+              <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
                 <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
                 <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
                 <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-[44px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
@@ -3547,7 +3547,7 @@ export default function ClosingTime({
                 <input value={reminderNote} onChange={(event) => setReminderNote(event.target.value)} aria-label="Custom reminder note" className="min-h-[42px] min-w-0 w-full border border-slate-300 px-3 text-sm" placeholder="Reminder note (optional)" />
                 <button type="button" onClick={addCustomReminder} disabled={!reminderDeadlineId || !reminderDate} className="inline-flex min-h-[42px] items-center justify-center rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-40">Add Reminder</button>
               </div>
-              <div className="mt-5 space-y-2">
+              <div className="mt-4 space-y-2">
                 {!activeDeal.tasks.length && !activeDeal.reminders.length ? <p className="border border-dashed border-slate-300 bg-[#FCFBF9] p-4 text-sm text-slate-600">Use deadline presets (7d, 3d, 1d, due) in the review step or add a custom action here.</p> : <>
                   {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border border-[#FAD800] bg-[#FEF8CC] p-3"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#645600] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}>{reminder.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#645600]">{formatDate(reminder.reminderDate)}</span></div>)}
                   {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-[#FFEAE6] text-[#661102]' : task.priority === 'high' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-slate-100 text-slate-600'} capitalize`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#661102]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#661102]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
@@ -3618,12 +3618,12 @@ export default function ClosingTime({
                 Outcome set to {activeDeal.closeoutOutcome}, but this deal stays in Deals In Progress and unlocked until every task, reminder, and readiness document is marked complete.
               </p>
             )}
-            <div className="mt-5 grid gap-3 md:grid-cols-3">
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
               <select value={activeDeal.closeoutOutcome} onChange={(event) => updateActiveDeal('closeoutOutcome', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout outcome" className="min-h-[44px] border border-slate-300 bg-white px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"><option value="">Closeout Outcome</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select>
               <input type="date" value={activeDeal.closeoutDate} onChange={(event) => updateActiveDeal('closeoutDate', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout date" className="min-h-[44px] border border-slate-300 px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" />
               <input value={activeDeal.closeoutNote} onChange={(event) => updateActiveDeal('closeoutNote', event.target.value)} disabled={isDealLocked(activeDeal)} aria-label="Closeout note" className="min-h-[44px] border border-slate-300 px-3 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" placeholder="Closeout note" />
             </div>
-            <ul className="mt-5 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#FAD800] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
+            <ul className="mt-4 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#FAD800] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
           </section>
           </>
         )}
@@ -3723,14 +3723,14 @@ export default function ClosingTime({
       {formModalOpen && activeDeal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-3 sm:p-6" role="dialog" aria-modal="true" aria-label={`${currentTrecFormVersion.formNumber} form`} onClick={() => setFormModalOpen(false)}>
           <div className="flex max-h-full w-full max-w-[1120px] flex-col overflow-hidden rounded-xl bg-white shadow-xl" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] px-5 py-3">
+            <div className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] px-4 py-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{currentTrecFormVersion.formFamily.startsWith('custom-') ? 'Form' : 'TREC Form'}</p>
                 <h3 className="truncate text-base font-semibold text-slate-900">{currentTrecFormVersion.formNumber} · {currentTrecFormVersion.title}</h3>
               </div>
               <button type="button" aria-label="Close" onClick={() => setFormModalOpen(false)} className="text-slate-500 hover:text-slate-900"><X className="h-5 w-5" aria-hidden="true" /></button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-4">
               {extractionState === 'extracting' && <p role="status" className="mb-3 border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-sm text-slate-700">Reading your upload...</p>}
               {extractionState === 'error' && <p role="alert" className="mb-3 border border-[#FF2A04] bg-[#FFEAE6] px-3 py-2 text-sm text-[#661102]">{extractionError || 'The upload could not be read. Use a clear PDF or image smaller than 15 MB, then try again.'}</p>}
               {renderExtractionReview()}
@@ -3746,7 +3746,7 @@ export default function ClosingTime({
       )}
       {newDealPickerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label="Start a new deal" onClick={() => setNewDealPickerOpen(false)}>
-          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-xl bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-lg font-semibold text-slate-900">Start A New Deal</h3>
               <button type="button" aria-label="Close" onClick={() => setNewDealPickerOpen(false)} className="text-slate-500 hover:text-slate-900"><X className="h-5 w-5" aria-hidden="true" /></button>

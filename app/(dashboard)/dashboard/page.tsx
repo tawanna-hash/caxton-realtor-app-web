@@ -233,10 +233,10 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
         style={{ animationName: 'sheetUp' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-center pt-2.5 pb-1">
+        <div className="flex justify-center pt-3 pb-1">
           <span className="w-9 h-1 rounded-full bg-gray-300" aria-hidden />
         </div>
-        <div className="px-5 pt-2 pb-5">
+        <div className="px-4 pt-2 pb-4">
         {status === 'success' ? (
           <div className="text-center py-6">
             <p className="text-xl font-semibold text-gray-900 mb-2">You&rsquo;re on the list</p>
@@ -268,7 +268,7 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-3.5 border border-gray-300 rounded-md text-base"
+                className="w-full px-3 py-4 border border-gray-300 rounded-md text-base"
                 autoFocus
               />
               <input
@@ -276,7 +276,7 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
                 placeholder="Your name (optional)"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-3.5 border border-gray-300 rounded-md text-base"
+                className="w-full px-3 py-4 border border-gray-300 rounded-md text-base"
               />
               {/* Honeypot: hidden from humans, present to bots. */}
               <input
@@ -352,7 +352,7 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
               }}
             >
               {PUBS.map((pub) => (
-                <button key={pub.id} onClick={() => onSelect(pub.id)} className="w-full text-left px-4 py-5 border-b border-gray-100 bg-white hover:bg-gray-50">
+                <button key={pub.id} onClick={() => onSelect(pub.id)} className="w-full text-left px-4 py-4 border-b border-gray-100 bg-white hover:bg-gray-50">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: pub.color }}>
                       <span className="text-white text-base font-medium">{pub.id === 'realtyline' ? 'RL' : 'NS'}</span>
@@ -373,7 +373,7 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
                     setNotifyFor({ id: pub.id, name: pub.name });
                     trackEvent('coming_soon_market_click', { market: pub.id });
                   }}
-                  className="w-full text-left px-4 py-5 border-b border-gray-100 bg-gray-50 hover:bg-gray-100"
+                  className="w-full text-left px-4 py-4 border-b border-gray-100 bg-gray-50 hover:bg-gray-100"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-md flex items-center justify-center flex-shrink-0 opacity-60" style={{ backgroundColor: pub.color }}>
@@ -456,8 +456,8 @@ function AuthGate({
 
   const info = PUBS.find((p) => p.id === pub) || PUBS[0];
 
-  const ic = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 placeholder:text-[#d1d5db]';
-  const sc = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 appearance-none placeholder:text-[#d1d5db]';
+  const ic = 'w-full px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 placeholder:text-[#d1d5db]';
+  const sc = 'w-full px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 appearance-none placeholder:text-[#d1d5db]';
 
   async function handleSignup() {
     setLoading(true);
@@ -694,7 +694,7 @@ function AuthGate({
             'calc(env(safe-area-inset-bottom) + var(--kb-inset-bottom, 0px) + 40px)',
         }}
       >
-        <div className="min-h-full flex flex-col items-center py-10">
+        <div className="min-h-full flex flex-col items-center py-8">
           <div className="w-full max-w-md px-8">
             <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
             <h2 className="text-2xl text-gray-900 font-semibold text-center mb-8">Create Your Account</h2>
@@ -732,7 +732,7 @@ function AuthGate({
                   {TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
 
-                <button onClick={() => { void haptics.light(); setStep(2); }} disabled={!fullName} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mt-4 disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
+                <button onClick={() => { void haptics.light(); setStep(2); }} disabled={!fullName} className="w-full text-center py-4 text-base font-medium uppercase tracking-wider text-white mt-4 disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
                 <button onClick={() => setMode('login')} className="w-full text-center py-2 text-base text-gray-400 font-light mt-2">Back to sign in</button>
               </div>
             )}
@@ -757,12 +757,12 @@ function AuthGate({
                 <input type="text" placeholder="Suite / Unit (optional)" value={addr2} onChange={(e) => setAddr2(e.target.value)} className={ic} autoComplete="address-line2" />
                 <div className="flex gap-2">
                   <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className={ic + ' flex-1'} autoComplete="address-level2" />
-                  <input type="text" value="TX" disabled className="w-16 px-4 py-3.5 border border-gray-200 text-base font-light bg-gray-50 text-gray-400 mb-3 text-center rounded-md" />
-                  <input type="text" placeholder="Zip" value={zip} onChange={(e) => setZip(e.target.value)} className="w-24 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3" autoComplete="postal-code" inputMode="numeric" />
+                  <input type="text" value="TX" disabled className="w-16 px-4 py-4 border border-gray-200 text-base font-light bg-gray-50 text-gray-400 mb-3 text-center rounded-md" />
+                  <input type="text" placeholder="Zip" value={zip} onChange={(e) => setZip(e.target.value)} className="w-24 px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3" autoComplete="postal-code" inputMode="numeric" />
                 </div>
 
                 <div className="flex gap-2 mt-2">
-                  <button onClick={() => { void haptics.light(); setStep(1); }} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
+                  <button onClick={() => { void haptics.light(); setStep(1); }} className="flex-1 text-center py-4 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
                   <button onClick={() => {
                     const trimmedEmail = email.trim();
                     if (!trimmedEmail || !trimmedEmail.includes('@') || !trimmedEmail.includes('.')) { setError('Enter a valid email address'); void haptics.notify('error'); return; }
@@ -771,7 +771,7 @@ function AuthGate({
                     setError('');
                     void haptics.light();
                     setStep(3);
-                  }} disabled={!email || !password || !confirmPassword} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
+                  }} disabled={!email || !password || !confirmPassword} className="flex-1 text-center py-4 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
                 </div>
               </div>
             )}
@@ -807,7 +807,7 @@ function AuthGate({
                   <select
                     value={bdayMonth}
                     onChange={(e) => setBdayMonth(e.target.value)}
-                    className={'px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 appearance-none placeholder:text-[#d1d5db] flex-1 min-w-0' + (!bdayMonth ? ' text-[#d1d5db]' : ' text-gray-900')}
+                    className={'px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 appearance-none placeholder:text-[#d1d5db] flex-1 min-w-0' + (!bdayMonth ? ' text-[#d1d5db]' : ' text-gray-900')}
                   >
                     <option value="">Month</option>
                     {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -815,7 +815,7 @@ function AuthGate({
                   <select
                     value={bdayDay}
                     onChange={(e) => setBdayDay(e.target.value)}
-                    className={'px-3 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 appearance-none placeholder:text-[#d1d5db] w-20 shrink-0' + (!bdayDay ? ' text-[#d1d5db]' : ' text-gray-900')}
+                    className={'px-3 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 appearance-none placeholder:text-[#d1d5db] w-20 shrink-0' + (!bdayDay ? ' text-[#d1d5db]' : ' text-gray-900')}
                   >
                     <option value="">Day</option>
                     {DAYS.map((d) => <option key={d} value={String(d)}>{d}</option>)}
@@ -850,8 +850,8 @@ function AuthGate({
                 <p className="text-xs text-gray-400 font-light mb-4">By creating an account, you agree to receive communications from Caxton Publications, Inc. Your password lets you sign in anytime — no email link needed.</p>
 
                 <div className="flex gap-2">
-                  <button onClick={() => { void haptics.light(); setStep(2); }} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
-                  <button onClick={() => { void haptics.medium(); void handleSignup(); }} disabled={loading} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Sending...' : 'Create Account'}</button>
+                  <button onClick={() => { void haptics.light(); setStep(2); }} className="flex-1 text-center py-4 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
+                  <button onClick={() => { void haptics.medium(); void handleSignup(); }} disabled={loading} className="flex-1 text-center py-4 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Sending...' : 'Create Account'}</button>
                 </div>
               </div>
             )}
@@ -873,9 +873,9 @@ function AuthGate({
         }}
       >
         <div className="min-h-full flex flex-col items-center justify-center">
-          <div className="w-full max-w-md px-5">
+          <div className="w-full max-w-md px-4">
             <div className="rounded-2xl border border-[#e5dfec] bg-white px-6 py-8 shadow-[0_18px_55px_rgba(48,29,93,0.10)] sm:px-8">
-              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#301D5D] text-sm font-bold tracking-wide text-white">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#301D5D] text-sm font-bold tracking-wide text-white">
                 RNN
               </div>
               <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.24em]" style={{ color: info.color }}>
@@ -884,7 +884,7 @@ function AuthGate({
               <h1 className="text-center text-3xl font-semibold tracking-tight text-gray-900">
                 Welcome Back
               </h1>
-              <p className="mb-7 mt-2 text-center text-sm font-light leading-relaxed text-gray-500">
+              <p className="mb-6 mt-2 text-center text-sm font-light leading-relaxed text-gray-500">
                 Sign in for your saved profile, preferences, and subscriptions.
               </p>
 
@@ -894,7 +894,7 @@ function AuthGate({
                 </div>
               )}
 
-              <label className="mb-1.5 block text-sm font-medium text-gray-700" htmlFor="dashboard-login-email">
+              <label className="mb-2 block text-sm font-medium text-gray-700" htmlFor="dashboard-login-email">
                 Email address
               </label>
               <input
@@ -903,11 +903,11 @@ function AuthGate({
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-3.5 text-base text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/10"
+                className="mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-4 text-base text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/10"
                 autoComplete="username"
               />
 
-              <div className="mb-1.5 flex items-center justify-between">
+              <div className="mb-2 flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700" htmlFor="dashboard-login-password">
                   Password
                 </label>
@@ -928,7 +928,7 @@ function AuthGate({
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3.5 pr-16 text-base text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/10"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-4 pr-16 text-base text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/10"
                   autoComplete="current-password"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') void handlePasswordLogin();
@@ -945,7 +945,7 @@ function AuthGate({
                   void handlePasswordLogin();
                 }}
                 disabled={loading || !email || !password}
-                className="mb-3 w-full rounded-lg bg-[#301D5D] py-3.5 text-base font-semibold text-white transition hover:bg-[#241646] disabled:cursor-not-allowed disabled:opacity-40"
+                className="mb-3 w-full rounded-lg bg-[#301D5D] py-4 text-base font-semibold text-white transition hover:bg-[#241646] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {loading ? 'Signing in…' : 'Sign in'}
               </button>
@@ -955,12 +955,12 @@ function AuthGate({
                   if (isPubKey(pub)) setMode('signup');
                   else onNeedMarket();
                 }}
-                className="w-full rounded-lg border border-[#301D5D] py-3.5 text-base font-semibold text-[#301D5D] transition hover:bg-[#f7f5fa]"
+                className="w-full rounded-lg border border-[#301D5D] py-4 text-base font-semibold text-[#301D5D] transition hover:bg-[#f7f5fa]"
               >
                 Create an account
               </button>
 
-              <div className="my-5 flex items-center" aria-hidden="true">
+              <div className="my-4 flex items-center" aria-hidden="true">
                 <div className="h-px flex-1 bg-gray-200" />
                 <span className="px-3 text-xs uppercase tracking-[0.18em] text-gray-400">or</span>
                 <div className="h-px flex-1 bg-gray-200" />
@@ -1004,12 +1004,12 @@ function AuthGate({
             if (isPubKey(pub)) setMode('signup');
             else onNeedMarket();
           }}
-          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3"
+          className="w-full text-center py-4 text-base font-medium uppercase tracking-wider text-white mb-3"
           style={{ backgroundColor: info.color }}
         >
           Create Your Account
         </button>
-        <button onClick={() => setMode('login')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-3 rounded-md">I Already Have an Account</button>
+        <button onClick={() => setMode('login')} className="w-full text-center py-4 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-3 rounded-md">I Already Have an Account</button>
         <div className="flex items-center my-4" aria-hidden="true">
           <div className="flex-1 h-px bg-gray-200" />
           <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
@@ -1020,7 +1020,7 @@ function AuthGate({
             void haptics.light();
             onAuth({ guest: true });
           }}
-          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-gray-700 border border-gray-300 rounded-md"
+          className="w-full text-center py-4 text-base font-medium uppercase tracking-wider text-gray-700 border border-gray-300 rounded-md"
         >
           Continue as a Guest
         </button>
@@ -1707,7 +1707,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
         <DashboardHero pub={pub as "realtyline" | "newsline" | "realtyline-dallas" | "realtyline-houston"} />
       )}
       {user?.guest && (
-        <div className="px-4 py-2.5 bg-[#FEF8CC] border-b border-[#FAD800]/30 flex items-center justify-between">
+        <div className="px-4 py-3 bg-[#FEF8CC] border-b border-[#FAD800]/30 flex items-center justify-between">
           <p className="text-sm text-[#645600] font-light">Browsing as Guest</p>
           <button onClick={() => window.location.reload()} className="text-sm text-[#645600] font-medium underline">Sign In</button>
         </div>
@@ -1730,8 +1730,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
                 // don't get squeezed by sibling flex children and overflow the row.
                 className={
                   cat === c
-                    ? 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
-                    : 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
+                    ? 'flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
+                    : 'flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
                 }
               >
                 {c}
@@ -1774,7 +1774,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
               return [node];
             })}
             {!isLoadingFirstFetch && nextOlderArticle && (
-              <div className="px-4 py-5 border-b border-gray-200">
+              <div className="px-4 py-4 border-b border-gray-200">
                 <button
                   type="button"
                   onClick={showMoreNews}
@@ -1801,7 +1801,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
             const dy = (ev.date.split(' ')[1] || '').replace(',', '');
             return (
               <article key={ev.id} className="bg-white border-b border-gray-200">
-                <div className="px-4 py-5 flex gap-4">
+                <div className="px-4 py-4 flex gap-4">
                   <div className="flex-shrink-0 w-16 h-16 flex flex-col items-center justify-center rounded-md" style={{ backgroundColor: info.color }}>
                     <span className="text-xs uppercase text-white/60 font-medium leading-none tracking-wider">{mo}</span>
                     <span className="text-xl font-medium text-white leading-none">{dy}</span>
@@ -1852,7 +1852,7 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
 
   return (
     <article ref={ref} className="bg-[#f9fafb] border-b border-[#e5e7eb]">
-      <div className="px-4 py-5">
+      <div className="px-4 py-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-9 h-9 rounded-full bg-white border border-[#7059A8] flex items-center justify-center">
             <span className="text-xs font-medium text-[#7059A8]">{initials}</span>
@@ -1895,19 +1895,19 @@ function ArticleCard({ item, pub }: { item: any; pub: string }) {
       <button
         type="button"
         onClick={onTap}
-        className="block w-full text-left px-4 py-5 hover:bg-gray-50 transition-colors rounded-md"
+        className="block w-full text-left px-4 py-4 hover:bg-gray-50 transition-colors rounded-md"
       >
         {body}
       </button>
     );
   }
-  return <div className="px-4 py-5">{body}</div>;
+  return <div className="px-4 py-4">{body}</div>;
 }
 
 function ArticleSkeleton() {
   return (
     <article className="bg-white border-b border-gray-200">
-      <div className="px-4 py-5">
+      <div className="px-4 py-4">
         <div className="flex items-start gap-4">
           <div className="flex-1 min-w-0">
             <div className="h-3 w-20 bg-gray-200 mb-3 animate-pulse" />
@@ -2271,7 +2271,7 @@ function ReadNext({ allArticles, currentId, onSelect, pubColor }: { allArticles:
   if (others.length === 0) return null;
   return (
     <div className="mt-12 pt-8 border-t border-gray-200">
-      <p className="text-xs uppercase tracking-[0.2em] font-semibold text-gray-500 mb-5">Read Next</p>
+      <p className="text-xs uppercase tracking-[0.2em] font-semibold text-gray-500 mb-4">Read Next</p>
       <ul className="space-y-4">
         {others.map((a) => (
           <li key={a.id}>
@@ -2345,7 +2345,7 @@ function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onLatest }: { 
       className="fixed left-1/2 -translate-x-1/2 z-[60] pointer-events-none"
       style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
     >
-      <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
+      <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-2 shadow-lg">
         <ActionPillButton onClick={onBack} label="Back">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </ActionPillButton>
@@ -2368,7 +2368,7 @@ function ActionPillButton({ children, label, onClick, active }: { children: Reac
     <button
       onClick={onClick}
       aria-label={label}
-      className={`flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors ${active ? 'text-white bg-white/15' : 'text-white/85 hover:text-white active:bg-white/10'}`}
+      className={`flex flex-col items-center justify-center min-w-[60px] px-2 py-2 rounded-md transition-colors ${active ? 'text-white bg-white/15' : 'text-white/85 hover:text-white active:bg-white/10'}`}
     >
       {children}
       <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">{label}</span>
@@ -2552,7 +2552,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
 
       {/* Featured article ad — shown before the editorial image so paid
           placement remains the first content unit beneath the app header. */}
-      <div className="px-5">
+      <div className="px-4">
         <div className="max-w-2xl mx-auto">
           <AdLeaderboard pub={pub} articleId={articleId} />
         </div>
@@ -2580,8 +2580,8 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
           ~62px pill) plus the BottomNav underneath, with breathing room.
           Was pb-44 — the bar overlapped the last paragraph on short
           articles and the "Read on website" link (BUG-18). */}
-      <div className="px-5 pt-6 pb-52">
-        <div className="mx-auto flex max-w-[1040px] items-start justify-center gap-10">
+      <div className="px-4 pt-6 pb-52">
+        <div className="mx-auto flex max-w-[1040px] items-start justify-center gap-8">
           <main className="w-full min-w-0 max-w-2xl">
             {/* Eyebrow */}
             {(article.cat || article.category) && (
@@ -2662,7 +2662,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
 
             {/* Read on website fallback */}
             {article.link && (
-              <div className="mt-10 pt-6 border-t border-gray-200">
+              <div className="mt-8 pt-6 border-t border-gray-200">
                 <a
                   href={article.link}
                   target="_blank"

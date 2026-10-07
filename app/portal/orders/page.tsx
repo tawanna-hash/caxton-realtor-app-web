@@ -106,13 +106,13 @@ export default async function PortalOrders() {
           >
             No Orders Yet
           </h2>
-          <p className="text-gray-600 text-sm mb-5 max-w-md mx-auto">
+          <p className="text-gray-600 text-sm mb-4 max-w-md mx-auto">
             When you book a placement or sign an agreement, it shows up here with
             the flight dates, amount, and a copy of the signed PDF.
           </p>
           <Link
             href="/advertise/portal"
-            className="inline-flex items-center gap-2 rounded-md bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-800 transition"
+            className="inline-flex items-center gap-2 rounded-md bg-purple-700 px-4 py-3 text-sm font-semibold text-white hover:bg-purple-800 transition"
           >
             Browse ad placements
             <span aria-hidden>{'\u2192'}</span>
@@ -146,7 +146,7 @@ export default async function PortalOrders() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${tone}`}
+                        className={`inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-medium capitalize ${tone}`}
                       >
                         {r.status}
                       </span>
@@ -215,7 +215,7 @@ export default async function PortalOrders() {
         </section>
       )}
 
-      <section className="rounded-md border border-gray-200 bg-gray-50 p-5">
+      <section className="rounded-md border border-gray-200 bg-gray-50 p-4">
         <h2
           className="font-serif text-lg text-gray-900 mb-1"
         >

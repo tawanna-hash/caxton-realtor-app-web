@@ -98,12 +98,12 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
         }}
       >
         {/* Grabber */}
-        <div className="flex justify-center pt-2.5 pb-1">
+        <div className="flex justify-center pt-3 pb-1">
           <span className="w-9 h-1 rounded-full bg-gray-300" aria-hidden />
         </div>
 
         {/* Title */}
-        <div className="px-5 pt-2 pb-3 border-b border-gray-100">
+        <div className="px-4 pt-2 pb-3 border-b border-gray-100">
           <h2 className="text-base font-semibold text-gray-900 text-center">
             Switch Publication
           </h2>
@@ -118,7 +118,7 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
                 <button
                   type="button"
                   onClick={() => handlePick(p.id)}
-                  className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-gray-50 active:bg-gray-100 transition"
+                  className="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-gray-50 active:bg-gray-100 transition"
                 >
                   <span
                     className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold ${
@@ -156,7 +156,7 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
         {/* Coming soon */}
         {PUBLIC_PUB_COMING_SOON.length > 0 && (
         <div className="border-t border-gray-100 pt-2">
-          <p className="px-5 text-[11px] uppercase tracking-[0.15em] text-gray-400 font-medium pb-1">
+          <p className="px-4 text-[11px] uppercase tracking-[0.15em] text-gray-400 font-medium pb-1">
             Coming soon
           </p>
           <ul className="pb-1">
@@ -165,7 +165,7 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
                 <button
                   type="button"
                   onClick={() => handleNotify(p.id)}
-                  className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-gray-50 active:bg-gray-100 transition"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 active:bg-gray-100 transition"
                 >
                   <span className="w-9 h-9 rounded-full bg-gray-50 border border-dashed border-gray-300 text-gray-400 flex items-center justify-center text-xs font-semibold">
                     {p.monogram}
@@ -199,7 +199,7 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
         )}
 
         {/* Cancel */}
-        <div className="px-5 pt-2 pb-3 border-t border-gray-100">
+        <div className="px-4 pt-2 pb-3 border-t border-gray-100">
           <button
             type="button"
             onClick={onClose}

@@ -1333,7 +1333,7 @@ export default function InteractiveMagazineReader({
             paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
           }}
         >
-          <button onClick={onClose} aria-label="Close" className="text-white p-1.5 -ml-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center">
+          <button onClick={onClose} aria-label="Close" className="text-white p-2 -ml-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m15 18-6-6 6-6" />
             </svg>
@@ -1353,13 +1353,13 @@ export default function InteractiveMagazineReader({
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => setActionMode('search')} aria-label="Search" className="text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center" title="Search">
+            <button onClick={() => setActionMode('search')} aria-label="Search" className="text-white/80 hover:text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" title="Search">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3" />
               </svg>
             </button>
-            <button onClick={zoomOut} aria-label="Zoom out" aria-hidden={zoomIdx === 0} tabIndex={zoomIdx === 0 ? -1 : 0} className={`text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center ${zoomIdx === 0 ? 'invisible pointer-events-none' : ''}`}>
+            <button onClick={zoomOut} aria-label="Zoom out" aria-hidden={zoomIdx === 0} tabIndex={zoomIdx === 0 ? -1 : 0} className={`text-white/80 hover:text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${zoomIdx === 0 ? 'invisible pointer-events-none' : ''}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3M8 11h6" />
@@ -1374,7 +1374,7 @@ export default function InteractiveMagazineReader({
               onClick={() => setGrabActive((g) => !g)}
               aria-label={grabActive ? 'Disable grab tool (allow text selection)' : 'Enable grab tool (drag to move the page)'}
               aria-pressed={grabActive}
-              className={`p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors ${grabActive ? 'text-white bg-white/20 rounded' : 'text-white/80 hover:text-white'}`}
+              className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors ${grabActive ? 'text-white bg-white/20 rounded' : 'text-white/80 hover:text-white'}`}
               title={grabActive ? 'Grab tool ON — drag to move the page' : 'Grab tool OFF — click to enable drag-to-pan'}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1384,13 +1384,13 @@ export default function InteractiveMagazineReader({
                 <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
               </svg>
             </button>
-            <button onClick={zoomIn} aria-label="Zoom in" aria-hidden={zoomIdx === ZOOM_LEVELS.length - 1} tabIndex={zoomIdx === ZOOM_LEVELS.length - 1 ? -1 : 0} className={`text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center ${zoomIdx === ZOOM_LEVELS.length - 1 ? 'invisible pointer-events-none' : ''}`}>
+            <button onClick={zoomIn} aria-label="Zoom in" aria-hidden={zoomIdx === ZOOM_LEVELS.length - 1} tabIndex={zoomIdx === ZOOM_LEVELS.length - 1 ? -1 : 0} className={`text-white/80 hover:text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${zoomIdx === ZOOM_LEVELS.length - 1 ? 'invisible pointer-events-none' : ''}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3M11 8v6M8 11h6" />
               </svg>
             </button>
-            <button onClick={toggleFullscreen} aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} className="text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center" title="Fullscreen (F)">
+            <button onClick={toggleFullscreen} aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} className="text-white/80 hover:text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" title="Fullscreen (F)">
               {isFullscreen ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v4H4M16 3v4h4M8 21v-4H4M16 21v-4h4" /></svg>
               ) : (
@@ -1496,7 +1496,7 @@ export default function InteractiveMagazineReader({
       {actionMode === 'embed' && (
         <ActionPopup title="Embed code" onClose={() => setActionMode(null)}>
           <pre className="text-xs text-white/80 bg-white/5 p-3 overflow-x-auto whitespace-pre-wrap break-all">{`<iframe src="${shareUrl}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`}</pre>
-          <button onClick={handleCopyEmbed} className="mt-3 w-full py-2.5 bg-white/10 text-white text-sm uppercase tracking-wider rounded-md">
+          <button onClick={handleCopyEmbed} className="mt-3 w-full py-3 bg-white/10 text-white text-sm uppercase tracking-wider rounded-md">
             Copy Embed Code
           </button>
         </ActionPopup>

@@ -207,7 +207,7 @@ export default function AdvertiserDetailClient({
 
         {featureArticles.length > 0 && <FeatureArticlesSection articles={featureArticles} />}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 mb-8">
           {locations.length === 0 && address && (
             <section id="location" className="scroll-mt-4">
               <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
@@ -251,7 +251,7 @@ export default function AdvertiserDetailClient({
                       </h3>
                       {loc.is_primary && (
                         <span
-                          className="text-[10px] uppercase tracking-[0.15em] font-medium px-1.5 py-0.5 rounded-md"
+                          className="text-[10px] uppercase tracking-[0.15em] font-medium px-2 py-0.5 rounded-md"
                           style={{ background: `${theme.accent}15`, color: theme.accent }}
                         >
                           HQ
@@ -366,11 +366,11 @@ export default function AdvertiserDetailClient({
                         )}
                       </dl>
                       {assignedLocations.length > 0 && (
-                        <div className="mt-1.5 flex flex-wrap gap-1">
+                        <div className="mt-2 flex flex-wrap gap-1">
                           {assignedLocations.map((loc) => (
                             <span
                               key={loc.id}
-                              className="text-[10px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600"
+                              className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-md bg-gray-100 text-gray-600"
                             >
                               {toTitleCaseName(loc.label || loc.city || 'Office')}
                             </span>
@@ -386,11 +386,11 @@ export default function AdvertiserDetailClient({
         )}
 
         {communityMap && (
-          <section id="community-map" className="border-t border-gray-200 pt-8 mb-10 scroll-mt-4">
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight mb-5">
+          <section id="community-map" className="border-t border-gray-200 pt-8 mb-8 scroll-mt-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight mb-4">
               Community Map
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-[220px_1fr] gap-5 items-center rounded-md border border-gray-200 bg-gray-50 p-4 sm:p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-[220px_1fr] gap-4 items-center rounded-md border border-gray-200 bg-gray-50 p-4 sm:p-4">
               <a
                 href={communityMap.pdfUrl}
                 target="_blank"
@@ -440,9 +440,9 @@ export default function AdvertiserDetailClient({
 
 
         {(listings.length > 0 || promotions.length > 0) && (
-          <section id="listings" className="border-t border-gray-200 pt-8 mb-10 scroll-mt-4">
+          <section id="listings" className="border-t border-gray-200 pt-8 mb-8 scroll-mt-4">
             <h2
-              className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight mb-5"
+              className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight mb-4"
             >
               Move-In Ready &amp; Promotions
             </h2>
@@ -480,7 +480,7 @@ export default function AdvertiserDetailClient({
 
             <Link
               href={`/builders/${builderNameToSlug(a.name)}`}
-              className="inline-flex items-center gap-1 mt-5 text-sm font-medium text-gray-900 underline underline-offset-2 hover:no-underline"
+              className="inline-flex items-center gap-1 mt-4 text-sm font-medium text-gray-900 underline underline-offset-2 hover:no-underline"
             >
               View All From {a.name} →
             </Link>
@@ -525,7 +525,7 @@ function InventoryCardLink({
         <div className="flex-1 min-w-0">
           {row.kind === 'promotion' && (
             <span
-              className="inline-block text-[10px] uppercase tracking-wider font-semibold mb-1 px-1.5 py-0.5 rounded-md"
+              className="inline-block text-[10px] uppercase tracking-wider font-semibold mb-1 px-2 py-0.5 rounded-md"
               style={{ backgroundColor: `${accent}1a`, color: accent }}
             >
               Promotion
@@ -619,7 +619,7 @@ function SectionPills({
         <a
           key={pill.id}
           href={pill.href ?? `#${pill.id}`}
-          className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border transition-colors hover:bg-gray-50"
+          className="inline-flex items-center px-3 py-2 rounded-full text-xs font-medium border transition-colors hover:bg-gray-50"
           style={{
             color: accent,
             borderColor: `${accent}40`,
@@ -652,9 +652,9 @@ function EventPhotosSection({ months }: { months: EventPhotoMonth[] }) {
   const visibleMonths = months.slice(0, visibleCount);
 
   return (
-    <section id="event-photos" className="border-t border-gray-200 pt-8 mb-10 scroll-mt-4">
+    <section id="event-photos" className="border-t border-gray-200 pt-8 mb-8 scroll-mt-4">
       <h2
-        className="text-xl sm:text-2xl font-semibold tracking-tight mb-5"
+        className="text-xl sm:text-2xl font-semibold tracking-tight mb-4"
         style={{ color: BRAND_PURPLE }}
       >
         Event Photos
@@ -705,7 +705,7 @@ function EventPhotosSection({ months }: { months: EventPhotoMonth[] }) {
                             className="w-full h-full object-cover"
                           />
                         </span>
-                        <span className="block mt-1.5 text-xs font-medium text-gray-800 line-clamp-2">
+                        <span className="block mt-2 text-xs font-medium text-gray-800 line-clamp-2">
                           {photo.title}
                         </span>
                         {photo.description && (
@@ -732,7 +732,7 @@ function EventPhotosSection({ months }: { months: EventPhotoMonth[] }) {
             <button
               type="button"
               onClick={() => setVisibleCount((n) => n + MONTHS_PER_PAGE)}
-              className="px-5 py-2 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90"
+              className="px-4 py-2 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90"
               style={{ backgroundColor: BRAND_PURPLE }}
             >
               Load More
@@ -759,7 +759,7 @@ function TaggedEventsSection({
   return (
     <section id="events" className="mb-10 scroll-mt-4">
       <h2
-        className="text-xl sm:text-2xl font-semibold tracking-tight mb-5"
+        className="text-xl sm:text-2xl font-semibold tracking-tight mb-4"
         style={{ color: accent }}
       >
         Upcoming Events
@@ -813,9 +813,9 @@ function TaggedEventCard({ event, accent }: { event: CalendarEvent; accent: stri
 
 function FeatureArticlesSection({ articles }: { articles: FeatureArticle[] }) {
   return (
-    <section id="feature-articles" className="border-t border-gray-200 pt-8 mb-10 scroll-mt-4">
+    <section id="feature-articles" className="border-t border-gray-200 pt-8 mb-8 scroll-mt-4">
       <h2
-        className="text-xl sm:text-2xl font-semibold tracking-tight mb-5"
+        className="text-xl sm:text-2xl font-semibold tracking-tight mb-4"
         style={{ color: BRAND_PURPLE }}
       >
         Feature Articles

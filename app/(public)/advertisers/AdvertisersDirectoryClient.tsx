@@ -162,7 +162,7 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by name, category, or tagline"
-                className="w-full min-h-[44px] pl-9 pr-3 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
+                className="w-full min-h-[44px] pl-8 pr-3 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
               />
             </div>
           </label>
@@ -279,7 +279,7 @@ function CategoryChip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className="px-3 py-1.5 text-xs font-medium rounded-md border transition-colors whitespace-nowrap"
+      className="px-3 py-2 text-xs font-medium rounded-md border transition-colors whitespace-nowrap"
       style={
         active
           ? { backgroundColor: accent, borderColor: accent, color: '#fff' }

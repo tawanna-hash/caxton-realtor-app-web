@@ -77,7 +77,7 @@ function styleFor(status: EmailBadgeStatus): BadgeStyle {
 
 export default function EmailBadge({ status, title, size = 'xs', className = '' }: Props) {
   const s = styleFor(status);
-  const sz = size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-[10px] px-1.5 py-0.5';
+  const sz = size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-[10px] px-2 py-0.5';
   return (
     <span
       title={title || s.label}

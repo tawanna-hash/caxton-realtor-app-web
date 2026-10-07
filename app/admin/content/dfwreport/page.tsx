@@ -270,7 +270,7 @@ export default function DfwReportAdminPage() {
         Private preview — readers only see the numbers at /market-reports/dfw.
       </p>
 
-      <div className="mt-5 flex flex-wrap items-end gap-3">
+      <div className="mt-4 flex flex-wrap items-end gap-3">
         <div role="group" aria-label="Board" className="inline-flex rounded-full border border-gray-200 p-1 text-sm">
           {(['metrotex', 'gfwar'] as DfwBoard[]).map((b) => (
             <button
@@ -278,7 +278,7 @@ export default function DfwReportAdminPage() {
               type="button"
               onClick={() => switchBoard(b)}
               aria-pressed={board === b}
-              className={`rounded-full px-4 py-1.5 ${board === b ? 'bg-[#301D5D] text-white' : 'text-gray-700'}`}
+              className={`rounded-full px-4 py-2 ${board === b ? 'bg-[#301D5D] text-white' : 'text-gray-700'}`}
             >
               {DFW_BOARDS[b].area} ({b === 'metrotex' ? 'MetroTex' : 'GFWAR'})
             </button>

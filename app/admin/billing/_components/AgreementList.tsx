@@ -102,7 +102,7 @@ function AgreementRowLayout({ row: r, onOpen, onEmail }: {
   return (
     <>
       {/* Desktop */}
-      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2.5 text-xs items-center hover:bg-[#F6F3FB]/40">
+      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-3 text-xs items-center hover:bg-[#F6F3FB]/40">
         <div className="col-span-3">{advertiserCell}</div>
         <button onClick={onOpen} className="col-span-2 text-left text-sm text-gray-700">
           <div>{typeLabel}</div>

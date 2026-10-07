@@ -101,7 +101,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
   return (
     <div className="min-h-screen bg-white">
       <TrackPageView event="advertise_checkout_page_viewed" properties={{ slot: slug }} />
-      <div className="max-w-3xl mx-auto px-4 py-10 sm:py-14">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-14">
         <div className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             {slot.tier} placement · {slot.zone}
@@ -137,7 +137,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
           </ul>
         </div>
 
-        <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 mb-6 shadow-sm">
+        <div className="rounded-md bg-white border border-gray-200 p-4 sm:p-6 mb-6 shadow-sm">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
             Placement Summary
           </h2>
@@ -163,7 +163,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
           bookedPubs={bookedPubs}
         />
 
-        <p className="text-center text-xs text-gray-500 mt-10">
+        <p className="text-center text-xs text-gray-500 mt-8">
           Need help? Email{' '}
           <a href="mailto:hello@myrealtyline.com" className="underline">hello@myrealtyline.com</a>{' '}
           or call us — we&apos;ll book you manually.

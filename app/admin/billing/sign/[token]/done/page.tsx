@@ -16,7 +16,7 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-md border border-[#00E200]/30 shadow-sm p-10 text-center space-y-5">
+        <div className="bg-white rounded-md border border-[#00E200]/30 shadow-sm p-8 text-center space-y-4">
           <div className="text-5xl">✅</div>
 
           <div>

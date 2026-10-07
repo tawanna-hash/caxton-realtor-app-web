@@ -330,7 +330,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
                 key={t}
                 onClick={() => switchTab(t)}
                 className={
-                  'shrink-0 whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ' +
+                  'shrink-0 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 transition-colors ' +
                   (active
                     ? 'border-gray-900 text-gray-900'
                     : 'border-transparent text-gray-500 hover:text-gray-700')
@@ -343,7 +343,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
                 {t === 'pending' && !active && count != null && count > 0 && (
                   <span
                     aria-label={`${count} pending review`}
-                    className="ml-1.5 inline-block w-2 h-2 rounded-full bg-[#661102] align-middle"
+                    className="ml-2 inline-block w-2 h-2 rounded-full bg-[#661102] align-middle"
                   />
                 )}
               </button>
@@ -380,7 +380,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
                   setSortDir(d);
                   setPage(1);
                 }}
-                className="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-700/30"
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-700/30"
                 aria-label={`Sort ${copy.title}`}
               >
                 {SORT_OPTIONS.map((opt) => (
@@ -625,18 +625,18 @@ function Pager({
   if (hi < totalPages - 1) pages.push('ellipsis');
   if (totalPages > 1) pages.push(totalPages);
   const btnBase =
-    'min-w-[32px] px-2 py-1.5 text-sm rounded-md border transition-colors ';
+    'min-w-[32px] px-2 py-2 text-sm rounded-md border transition-colors ';
   const navBtn =
-    'px-3 py-1.5 text-sm rounded-md border border-gray-300 bg-white text-gray-700 ' +
+    'px-3 py-2 text-sm rounded-md border border-gray-300 bg-white text-gray-700 ' +
     'hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
       <div className="flex items-center gap-3 text-xs text-gray-500">
         <span>Showing {start}–{end} of {total}</span>
-        <label className="flex items-center gap-1.5">
+        <label className="flex items-center gap-2">
           Rows
           <select
-            className="h-7 rounded border border-gray-300 bg-white px-1.5 text-xs"
+            className="h-7 rounded border border-gray-300 bg-white px-2 text-xs"
             value={pageSize}
             onChange={(event) => onPageSizeChange(Number(event.target.value))}
           >

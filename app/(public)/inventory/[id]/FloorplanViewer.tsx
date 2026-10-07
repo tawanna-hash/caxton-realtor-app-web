@@ -85,7 +85,7 @@ export default function FloorplanViewer({ src, alt = 'Floorplan' }: Props) {
 
   return (
     <div ref={containerRef} className="rounded-lg border border-gray-200 bg-gray-50">
-      <div className="flex flex-wrap items-center gap-1 border-b border-gray-200 bg-white px-2 py-1.5">
+      <div className="flex flex-wrap items-center gap-1 border-b border-gray-200 bg-white px-2 py-2">
         <button type="button" onClick={zoomOut} aria-label="Zoom out" className={BTN}>
           −
         </button>

@@ -128,7 +128,7 @@ export default function DfwReportCard({ report, id }: { report: DfwMarketReport;
         <div className="px-4 pt-4 pb-4">
           <div className="flex items-center justify-between mb-2">
             <span
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-[0.12em] uppercase"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.12em] uppercase"
               style={{ background: 'rgba(61,7,64,0.06)', color: NEWSLINE }}
             >
               <span aria-hidden>{'\u25CF'}</span>
@@ -141,7 +141,7 @@ export default function DfwReportCard({ report, id }: { report: DfwMarketReport;
                   type="button"
                   onClick={() => setLang(l)}
                   aria-pressed={lang === l}
-                  className="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-[0.12em] uppercase transition"
+                  className="px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.12em] uppercase transition"
                   style={{ background: lang === l ? NEWSLINE : 'transparent', color: lang === l ? 'white' : NEWSLINE }}
                 >
                   {l.toUpperCase()}
@@ -158,7 +158,7 @@ export default function DfwReportCard({ report, id }: { report: DfwMarketReport;
 
           {heroValue && (
             <>
-              <div className="flex items-baseline gap-2.5">
+              <div className="flex items-baseline gap-3">
                 <div className="text-[38px] font-bold leading-none" style={{ color: '#2c0530' }}>{heroValue}</div>
                 {heroDelta && (
                   <div className="text-[13px] font-bold" style={{ color: dirColor(heroDir) }}>
@@ -166,7 +166,7 @@ export default function DfwReportCard({ report, id }: { report: DfwMarketReport;
                   </div>
                 )}
               </div>
-              <div className="text-[11px] uppercase tracking-[0.14em] text-gray-500 mt-1.5 mb-3.5">{heroLabel}</div>
+              <div className="text-[11px] uppercase tracking-[0.14em] text-gray-500 mt-2 mb-4">{heroLabel}</div>
             </>
           )}
 

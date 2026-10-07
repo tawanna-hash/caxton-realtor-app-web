@@ -41,7 +41,7 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
             <div className="text-[14px] font-semibold text-[#301D5D]">{view.agentName ? `${view.agentName}` : 'Your Agent'}</div>
             <div className={lab}>Client Portal</div>
           </div>
-          {view.agentEmail && <a className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white" href={`mailto:${view.agentEmail}`}>Email Your Agent</a>}
+          {view.agentEmail && <a className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white" href={`mailto:${view.agentEmail}`}>Email Your Agent</a>}
         </div>
 
         <div className="space-y-4 p-6">
@@ -61,7 +61,7 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
           </div>
 
           <section className={card}>
-            <h2 className="border-b border-[#E6E5EC] px-4 py-3.5 text-[14px] font-semibold text-[#1B1726]">Where Your Purchase Stands</h2>
+            <h2 className="border-b border-[#E6E5EC] px-4 py-4 text-[14px] font-semibold text-[#1B1726]">Where Your Purchase Stands</h2>
             <ol className="flex overflow-x-auto p-4">
               {view.steps.map((s) => (
                 <li key={s.label} className="relative min-w-[110px] flex-1 pt-[18px] text-[12px] font-medium" style={{ color: s.state === 'upcoming' ? '#7A7787' : '#301D5D' }}>
@@ -77,7 +77,7 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
           <RequestedDocs token={token} requests={view.requests} agentName={view.agentName} />
 
           {next && (
-            <section className={`${card} flex flex-wrap items-center gap-5 border-[#301D5D] p-4`}>
+            <section className={`${card} flex flex-wrap items-center gap-4 border-[#301D5D] p-4`}>
               <div>
                 <div className="text-[44px] font-semibold leading-none text-[#301D5D]">{short(next.date)}</div>
                 <div className="mt-1 text-[12px] font-medium text-[#7A7787]">{weekday(next.date, 'long')}</div>
@@ -92,7 +92,7 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
 
           <div className="grid gap-4">
             <section className={card}>
-              <h2 className="border-b border-[#E6E5EC] px-4 py-3.5 text-[14px] font-semibold text-[#1B1726]">All Deadlines</h2>
+              <h2 className="border-b border-[#E6E5EC] px-4 py-4 text-[14px] font-semibold text-[#1B1726]">All Deadlines</h2>
               <ul className="px-4">
                 {view.timeline.map((i) => (
                   <li key={i.id} className="flex gap-4 border-b border-[#E6E5EC] py-3 last:border-0">
@@ -114,7 +114,7 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
 
           {view.forms.length > 0 && (
             <section className={card}>
-              <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3.5">
+              <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-4">
                 <h2 className="text-[14px] font-semibold text-[#1B1726]">Deal Forms</h2>
                 <span className="text-[12px] font-medium text-[#7A7787]">View Only</span>
               </div>
@@ -122,7 +122,7 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
                 {view.forms.map((f) => (
                   <li key={f.family} className="flex items-center justify-between gap-3 border-b border-[#E6E5EC] py-3 last:border-0">
                     <span className="text-[14px] font-medium text-[#1B1726]">{f.label}</span>
-                    <a href={`/api/deal-portal/${token}/form/${encodeURIComponent(f.family)}`} target="_blank" rel="noreferrer" className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white">View</a>
+                    <a href={`/api/deal-portal/${token}/form/${encodeURIComponent(f.family)}`} target="_blank" rel="noreferrer" className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white">View</a>
                   </li>
                 ))}
               </ul>

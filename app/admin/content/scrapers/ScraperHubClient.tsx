@@ -235,7 +235,7 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                             type="button"
                             onClick={() => runScraper(s.path)}
                             disabled={status === 'running'}
-                            className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-50 ${
+                            className={`shrink-0 inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-md transition-colors disabled:opacity-50 ${
                               status === 'success'
                                 ? 'bg-[#E0FBE0] text-[#005A00] hover:bg-[#00E200]/30'
                                 : status === 'error'
@@ -255,11 +255,11 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                           </button>
                         )}
                       </div>
-                      <div className="mt-1.5 text-xs text-gray-600">{s.description}</div>
+                      <div className="mt-2 text-xs text-gray-600">{s.description}</div>
                       <div className="mt-1 text-[11px] text-gray-500">Schedule (CDT): {s.schedule}</div>
                       {r && (
                         <div className="mt-1 text-[11px] text-gray-500">
-                          <span className={`inline-block px-1.5 py-0.5 rounded ${badgeColor} font-medium mr-1.5`}>{r.status}</span>
+                          <span className={`inline-block px-2 py-0.5 rounded ${badgeColor} font-medium mr-2`}>{r.status}</span>
                           {r.rowCount} rows · {(() => {
                             const ago = Math.floor((Date.now() - new Date(r.lastRunAt).getTime()) / 60000);
                             return ago < 60 ? `${ago}m ago` : ago < 1440 ? `${Math.floor(ago/60)}h ago` : `${Math.floor(ago/1440)}d ago`;
@@ -275,10 +275,10 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 text-left text-gray-600">
                     <tr>
-                      <th className="px-4 py-2.5 font-medium">Scraper</th>
-                      <th className="px-4 py-2.5 font-medium">Description</th>
-                      <th className="px-4 py-2.5 font-medium whitespace-nowrap">Schedule (CDT)</th>
-                      <th className="px-4 py-2.5 font-medium text-right w-32">Action</th>
+                      <th className="px-4 py-3 font-medium">Scraper</th>
+                      <th className="px-4 py-3 font-medium">Description</th>
+                      <th className="px-4 py-3 font-medium whitespace-nowrap">Schedule (CDT)</th>
+                      <th className="px-4 py-3 font-medium text-right w-32">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -287,7 +287,7 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                       const status = st?.status ?? 'idle';
                       return (
                         <tr key={s.path} className="border-t border-gray-100">
-                          <td className="px-4 py-2.5">
+                          <td className="px-4 py-3">
                             <div className="font-medium text-gray-900">{s.name}</div>
                             <button
                               onClick={() => navigator.clipboard.writeText(`/api/cron/${s.path}`)}
@@ -297,7 +297,7 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                               /api/cron/{s.path}
                             </button>
                           </td>
-                          <td className="px-4 py-2.5 text-gray-600">
+                          <td className="px-4 py-3 text-gray-600">
                             <div>{s.description}</div>
                             {(() => {
                               const r = runMap.get(s.path);
@@ -308,15 +308,15 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                               const badgeColor = r.status === 'ok' ? 'text-[#005A00] bg-[#E0FBE0]' : r.status === 'error' ? 'text-[#661102] bg-[#FFEAE6]' : 'text-[#645600] bg-[#FEF8CC]';
                               return (
                                 <div className="text-xs text-gray-500 mt-0.5">
-                                  <span className={`inline-block px-1.5 py-0.5 rounded ${badgeColor} font-medium mr-1.5`}>{r.status}</span>
+                                  <span className={`inline-block px-2 py-0.5 rounded ${badgeColor} font-medium mr-2`}>{r.status}</span>
                                   {r.rowCount} rows · {agoText}
                                   {r.errorMessage && <div className="text-[#661102] mt-0.5">{r.errorMessage}</div>}
                                 </div>
                               );
                             })()}
                           </td>
-                          <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap">{s.schedule}</td>
-                          <td className="px-4 py-2.5 text-right">
+                          <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{s.schedule}</td>
+                          <td className="px-4 py-3 text-right">
                             {s.external ? (
                               <span className="text-xs text-gray-400">external</span>
                             ) : (
@@ -324,7 +324,7 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                                 type="button"
                               onClick={() => runScraper(s.path)}
                               disabled={status === 'running'}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-50 ${
+                              className={`inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-md transition-colors disabled:opacity-50 ${
                                 status === 'success'
                                   ? 'bg-[#E0FBE0] text-[#005A00] hover:bg-[#00E200]/30'
                                   : status === 'error'

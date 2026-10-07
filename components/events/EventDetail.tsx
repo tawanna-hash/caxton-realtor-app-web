@@ -139,7 +139,7 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
         </div>
       )}
 
-      <div className="px-5 pt-6 pb-48">
+      <div className="px-4 pt-6 pb-48">
         {/* Sponsored tag */}
         {sponsored && (
           <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: info.color }}>

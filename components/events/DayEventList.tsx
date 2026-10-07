@@ -27,7 +27,7 @@ export function DayEventList({ pub, date, events, onSelect }: DayEventListProps)
         <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold">{heading}</p>
       </div>
       {events.length === 0 ? (
-        <div className="px-4 py-10 text-center">
+        <div className="px-4 py-8 text-center">
           <p className="text-sm text-gray-400 font-light">No events on this day.</p>
         </div>
       ) : (

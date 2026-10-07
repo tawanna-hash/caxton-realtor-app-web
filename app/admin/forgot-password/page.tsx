@@ -46,12 +46,12 @@ export default function AdminForgotPasswordPage() {
             <p className="text-sm text-brand-700 mb-3">
               If that email is registered as an admin, we&apos;ve sent a password reset link. Check your inbox.
             </p>
-            <p className="text-sm text-gray-500 mb-5">
+            <p className="text-sm text-gray-500 mb-4">
               The link expires in 15 minutes.
             </p>
             <Link
               href="/admin/login"
-              className="block w-full text-center bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-brand-800 transition-colors"
+              className="block w-full text-center bg-brand-700 text-white py-3 text-sm font-medium tracking-wide hover:bg-brand-800 transition-colors"
             >
               Back to Sign In
             </Link>
@@ -59,7 +59,7 @@ export default function AdminForgotPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit} className="bg-white border border-gray-200 p-6 rounded-md space-y-4">
             <div>
-              <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Email</label>
+              <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Email</label>
               <input
                 type="email"
                 required
@@ -75,7 +75,7 @@ export default function AdminForgotPasswordPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-brand-800 disabled:opacity-60 transition-colors rounded-md"
+              className="w-full bg-brand-700 text-white py-3 text-sm font-medium tracking-wide hover:bg-brand-800 disabled:opacity-60 transition-colors rounded-md"
             >
               {submitting ? 'Sending...' : 'Send Reset Link'}
             </button>

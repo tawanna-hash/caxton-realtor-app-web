@@ -306,7 +306,7 @@ function ComingSoonModal({
         </p>
         <button
           onClick={onClose}
-          className="w-full py-2.5 bg-white/10 text-white text-sm uppercase tracking-wider rounded-md"
+          className="w-full py-3 bg-white/10 text-white text-sm uppercase tracking-wider rounded-md"
         >
           Close
         </button>

@@ -101,7 +101,7 @@ function PayoutCard({ row }: { row: PayoutRow }) {
         </div>
       </div>
       <div className="flex items-center justify-between gap-3 text-xs">
-        <span className="inline-flex items-center gap-1.5 text-gray-700">
+        <span className="inline-flex items-center gap-2 text-gray-700">
           {row.status === 'paid' && <CheckCircle2 className="h-4 w-4 fill-[#005A00] text-white" aria-hidden="true" />}
           {row.status.replaceAll('_', ' ')}
         </span>
@@ -157,7 +157,7 @@ export default async function StripePayoutsPage({ searchParams }: PageProps) {
   const latestPayout = filteredRows[0]?.batch_date ?? '—';
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
@@ -168,7 +168,7 @@ export default async function StripePayoutsPage({ searchParams }: PageProps) {
             Actual Stripe payouts by expected bank arrival date, including settlement fees and adjustments.
           </p>
         </div>
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-[#005A00]">
+        <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs font-medium text-[#005A00]">
           <CheckCircle2 className="h-4 w-4 fill-[#005A00] text-white" aria-hidden="true" />
           Stripe connected
         </span>
@@ -206,7 +206,7 @@ export default async function StripePayoutsPage({ searchParams }: PageProps) {
               name="q"
               defaultValue={params.q}
               placeholder="Search arrival date, payout ID, or status"
-              className={`${CONTROL} w-full pl-9`}
+              className={`${CONTROL} w-full pl-8`}
             />
           </span>
         </label>
@@ -254,17 +254,17 @@ export default async function StripePayoutsPage({ searchParams }: PageProps) {
             <tbody className="divide-y divide-gray-200">
               {pageRows.map((row) => (
                 <tr key={row.id} className="hover:bg-[#F6F3FB]/40">
-                  <td className="whitespace-nowrap px-4 py-2.5 font-medium text-gray-900">{row.batch_date}</td>
-                  <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold text-gray-900">{formatCents(Number(row.amount_cents))}</td>
-                  <td className="px-3 py-2.5 text-right text-gray-700">{formatCents(row.fees_cents)}</td>
-                  <td className="px-3 py-2.5 text-right text-gray-700">{Number(row.transactions).toLocaleString()}</td>
-                  <td className="px-3 py-2.5">
-                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
+                  <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">{row.batch_date}</td>
+                  <td className="whitespace-nowrap px-3 py-3 text-right font-semibold text-gray-900">{formatCents(Number(row.amount_cents))}</td>
+                  <td className="px-3 py-3 text-right text-gray-700">{formatCents(row.fees_cents)}</td>
+                  <td className="px-3 py-3 text-right text-gray-700">{Number(row.transactions).toLocaleString()}</td>
+                  <td className="px-3 py-3">
+                    <span className="inline-flex items-center gap-2 whitespace-nowrap text-gray-700">
                       {row.status === 'paid' && <CheckCircle2 className="h-4 w-4 fill-[#005A00] text-white" aria-hidden="true" />}
                       {row.status.replaceAll('_', ' ')}
                     </span>
                   </td>
-                  <td className="truncate px-3 py-2.5 font-mono text-xs text-gray-600" title={row.id}>{row.id}</td>
+                  <td className="truncate px-3 py-3 font-mono text-xs text-gray-600" title={row.id}>{row.id}</td>
                 </tr>
               ))}
             </tbody>

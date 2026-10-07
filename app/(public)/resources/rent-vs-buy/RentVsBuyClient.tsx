@@ -244,7 +244,7 @@ export default function RentVsBuyClient() {
 
         {/* ── Chart + Table ───────────────────────────────────────── */}
         <div className="lg:col-span-3">
-          <div className="rounded-md border border-gray-200 bg-white p-5 mb-6">
+          <div className="rounded-md border border-gray-200 bg-white p-4 mb-6">
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-brand-700 mb-4">
               Year-by-year — cumulative cost
             </p>
@@ -301,7 +301,7 @@ export default function RentVsBuyClient() {
                     <div className="text-sm font-medium text-gray-700">
                       Year {r.year}
                       {isBreakeven && (
-                        <span className="ml-1.5 text-[10px] text-[#7059A8] font-semibold uppercase">
+                        <span className="ml-2 text-[10px] text-[#7059A8] font-semibold uppercase">
                           breakeven
                         </span>
                       )}
@@ -356,19 +356,19 @@ export default function RentVsBuyClient() {
                         isBreakeven ? 'bg-[#7059A8]/10' : ''
                       }`}
                     >
-                      <td className="px-3 py-1.5 text-gray-700">
+                      <td className="px-3 py-2 text-gray-700">
                         {r.year}
                         {isBreakeven && (
-                          <span className="ml-1.5 text-[10px] text-[#7059A8] font-semibold uppercase">
+                          <span className="ml-2 text-[10px] text-[#7059A8] font-semibold uppercase">
                             breakeven
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-1.5 text-right text-gray-700">{fmtUSD(r.homeValue)}</td>
-                      <td className="px-3 py-1.5 text-right text-gray-700">{fmtUSD(r.loanBalance)}</td>
-                      <td className="px-3 py-1.5 text-right text-gray-900 font-medium">{fmtUSD(r.netEquity)}</td>
-                      <td className="px-3 py-1.5 text-right text-gray-900 font-medium">{fmtUSD(r.buyNetCost)}</td>
-                      <td className="px-3 py-1.5 text-right text-gray-900 font-medium">{fmtUSD(r.rentCost)}</td>
+                      <td className="px-3 py-2 text-right text-gray-700">{fmtUSD(r.homeValue)}</td>
+                      <td className="px-3 py-2 text-right text-gray-700">{fmtUSD(r.loanBalance)}</td>
+                      <td className="px-3 py-2 text-right text-gray-900 font-medium">{fmtUSD(r.netEquity)}</td>
+                      <td className="px-3 py-2 text-right text-gray-900 font-medium">{fmtUSD(r.buyNetCost)}</td>
+                      <td className="px-3 py-2 text-right text-gray-900 font-medium">{fmtUSD(r.rentCost)}</td>
                     </tr>
                   );
                 })}
@@ -418,7 +418,7 @@ function SummaryCard({
 }) {
   return (
     <div
-      className={`rounded-md border p-5 ${
+      className={`rounded-md border p-4 ${
         accent ? 'border-[#7059A8]/40 bg-[#7059A8]/5' : 'border-gray-200 bg-white'
       }`}
     >

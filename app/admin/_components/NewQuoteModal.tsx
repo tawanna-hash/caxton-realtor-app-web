@@ -1034,7 +1034,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                 type="button"
                 onClick={handleSend}
                 disabled={sending || sendingTest}
-                className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60"
+                className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60"
               >
                 {sending ? 'Sending…' : 'Send Quote to Client'}
               </button>
@@ -1043,27 +1043,27 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               type="button"
               onClick={handleSendTest}
               disabled={sending || sendingTest}
-              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-purple-300 bg-white text-purple-700 hover:bg-purple-50 disabled:opacity-60"
+              className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium border border-purple-300 bg-white text-purple-700 hover:bg-purple-50 disabled:opacity-60"
               title="Send the notification email to yourself. Does not touch partner record."
             >
               {sendingTest ? 'Sending…' : 'Email me a test'}
             </button>
             <a
               href={`/admin/agreements?id=${encodeURIComponent(createdAgreement.id)}`}
-              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-[#00E200]/50 bg-white text-[#005A00] hover:bg-[#E0FBE0]"
+              className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium border border-[#00E200]/50 bg-white text-[#005A00] hover:bg-[#E0FBE0]"
             >
               Open agreement
             </a>
             <a
               href={`/admin/invoices?focus=${encodeURIComponent(createdInvoice.id)}`}
-              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-[#00E200]/50 bg-white text-[#005A00] hover:bg-[#E0FBE0]"
+              className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium border border-[#00E200]/50 bg-white text-[#005A00] hover:bg-[#E0FBE0]"
             >
               Open in Invoices
             </a>
             <button
               type="button"
               onClick={handleClose}
-              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+              className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
             >
               Close
             </button>
@@ -1159,7 +1159,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     type="button"
                     onClick={() => setShowReview(false)}
                     disabled={submitting}
-                    className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-60"
+                    className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-60"
                   >
                     Back
                   </button>
@@ -1167,7 +1167,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     type="button"
                     onClick={() => { setShowReview(false); void handleSubmit(new Event('submit') as unknown as React.FormEvent); }}
                     disabled={submitting}
-                    className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60"
+                    className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60"
                   >
                     {submitting ? 'Drafting…' : 'Draft & Send'}
                   </button>
@@ -1201,10 +1201,10 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   setSelectedAdvertiserId(null);
                 }}
                 placeholder="Search by name or email…"
-                className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                className="w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
               />
               {selectedAdvertiser ? (
-                <div className="mt-2 flex items-center justify-between border border-purple-200 bg-purple-50 rounded-md px-2 py-1.5">
+                <div className="mt-2 flex items-center justify-between border border-purple-200 bg-purple-50 rounded-md px-2 py-2">
                   <div className="text-xs">
                     <span className="font-semibold text-purple-900">
                       {selectedAdvertiser.name}
@@ -1239,7 +1239,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         <button
                           type="button"
                           onClick={() => setSelectedAdvertiserId(a.id)}
-                          className="w-full text-left px-2 py-1.5 hover:bg-purple-50"
+                          className="w-full text-left px-2 py-2 hover:bg-purple-50"
                         >
                           <span className="font-medium text-gray-900">{a.name}</span>
                           <span className="ml-2 text-xs text-gray-500">
@@ -1267,7 +1267,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                  className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
                 />
               </label>
               <label className="text-xs text-gray-700">
@@ -1276,7 +1276,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
-                  className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                  className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
                 />
               </label>
               <label className="text-xs text-gray-700">
@@ -1286,7 +1286,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   value={newBillingEmail}
                   onChange={(e) => setNewBillingEmail(e.target.value)}
                   placeholder="Uses contact email if blank"
-                  className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                  className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
                 />
               </label>
               <label className="text-xs text-gray-700">
@@ -1295,7 +1295,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   type="tel"
                   value={newPhone}
                   onChange={(e) => setNewPhone(e.target.value)}
-                  className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                  className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
                 />
               </label>
               <label className="text-xs text-gray-700">
@@ -1303,7 +1303,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                 <select
                   value={newPublication}
                   onChange={(e) => setNewPublication(e.target.value as Publication)}
-                  className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
+                  className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-white"
                 >
                   {PUBLICATION_IDS.map((id) => (
                     <option key={id} value={id}>{PUBLICATION_LABELS_WITH_BOTH[id]}</option>
@@ -1326,7 +1326,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               <select
                 value={channel}
                 onChange={(e) => handleChannelChange(e.target.value as Channel)}
-                className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
+                className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-white"
               >
                 <option value="print">Print &amp; Digital e-Replica Issue</option>
                 <option value="email">E-Blast</option>
@@ -1338,7 +1338,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               <select
                 value={packageId}
                 onChange={(e) => handlePackageChange(e.target.value)}
-                className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
+                className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-white"
               >
                 {channel === 'print' &&
                   PACKAGES.map((p) => (
@@ -1401,7 +1401,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       type="date"
                       value={runStart}
                       onChange={(e) => setRunStart(e.target.value)}
-                      className="mt-1 w-full px-2 py-1.5 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      className="mt-1 w-full px-2 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
                     />
                   </label>
                   <label className="text-xs text-gray-600">
@@ -1411,7 +1411,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       value={runEnd}
                       min={runStart}
                       onChange={(e) => setRunEnd(e.target.value)}
-                      className="mt-1 w-full px-2 py-1.5 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      className="mt-1 w-full px-2 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
                     />
                   </label>
                   {runEnd < runStart && (
@@ -1594,7 +1594,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     max={24}
                     value={sends}
                     onChange={(e) => setSends(Math.max(1, Number(e.target.value) || 1))}
-                    className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                    className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
                   />
                 </label>
                 <label className="text-xs text-gray-700">
@@ -1602,7 +1602,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   <select
                     value={publication}
                     onChange={(e) => setPublication(e.target.value as Publication)}
-                    className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
+                    className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-white"
                   >
                     {PUBLICATION_IDS.map((id) => (
                       <option key={id} value={id}>{PUBLICATION_LABELS_WITH_BOTH[id]}</option>
@@ -1621,7 +1621,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         type="date"
                         value={ebDate1}
                         onChange={(e) => setEbDate1(e.target.value)}
-                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                        className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
                       />
                     </label>
                     <label className="text-xs text-gray-700">
@@ -1630,7 +1630,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         type="date"
                         value={ebDate2}
                         onChange={(e) => setEbDate2(e.target.value)}
-                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                        className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
                       />
                     </label>
                     <label className="text-xs text-gray-700">
@@ -1639,7 +1639,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         type="date"
                         value={ebDate3}
                         onChange={(e) => setEbDate3(e.target.value)}
-                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                        className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
                       />
                     </label>
                     <label className="text-xs text-gray-700">
@@ -1648,7 +1648,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         type="date"
                         value={ebDate4}
                         onChange={(e) => setEbDate4(e.target.value)}
-                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                        className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
                       />
                     </label>
                   </div>
@@ -1663,7 +1663,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   <select
                     value={appCadence}
                     onChange={(e) => setAppCadence(e.target.value as AppCadence)}
-                    className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
+                    className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-white"
                   >
                     <option value="weekly">Weekly</option>
                     <option value="monthly" disabled={monthlyUnavailable}>
@@ -1678,7 +1678,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     onChange={(e) =>
                       setAppMarkets(Number(e.target.value) as MarketCount)
                     }
-                    className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
+                    className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm bg-white"
                   >
                     <option value="1">1 market</option>
                     <option value="2">2 markets</option>
@@ -1697,7 +1697,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       onChange={(e) =>
                         setAppWeeks(Math.max(1, Number(e.target.value) || 1))
                       }
-                      className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                      className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
                     />
                   </label>
                 ) : (
@@ -1709,7 +1709,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       max={24}
                       value={months}
                       onChange={(e) => setMonths(Math.max(1, Number(e.target.value) || 1))}
-                      className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                      className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
                     />
                   </label>
                 )}
@@ -1757,7 +1757,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+              className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
             />
           </label>
         </section>
@@ -1847,7 +1847,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   type="button"
                   onClick={addCurrentLineToBundle}
                   disabled={submitting || previewCents <= 0}
-                  className="px-2.5 py-1 text-xs rounded-md bg-purple-600 text-white hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="px-3 py-1 text-xs rounded-md bg-purple-600 text-white hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   + Add current as another line
                 </button>
@@ -1857,11 +1857,11 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   Add the current selection as a line, then change channel/package to build a multi-item quote. On save, each line becomes its own agreement + sign link.
                 </div>
               ) : (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {bundleLines.map((line, i) => (
                     <div
                       key={line.id}
-                      className="flex items-center justify-between text-xs bg-white border border-purple-100 rounded px-2 py-1.5"
+                      className="flex items-center justify-between text-xs bg-white border border-purple-100 rounded px-2 py-2"
                     >
                       <div className="flex-1 min-w-0">
                         <span className="font-mono text-purple-700 mr-2">#{i + 1}</span>
@@ -1897,7 +1897,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     </div>
                   ))}
                   {previewCents > 0 && (
-                    <div className="flex items-center justify-between text-xs bg-purple-100/50 border border-purple-200 rounded px-2 py-1.5">
+                    <div className="flex items-center justify-between text-xs bg-purple-100/50 border border-purple-200 rounded px-2 py-2">
                       <div className="flex-1 min-w-0">
                         <span className="font-mono text-purple-700 mr-2">#{bundleLines.length + 1}</span>
                         <span className="italic text-gray-600">Current selection (will be added on Save)</span>
@@ -1940,7 +1940,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               {overrideMode !== 'off' && discountPct !== 0 && (
                 <span
                   className={
-                    'ml-2 px-1.5 py-0.5 rounded text-[10px] font-semibold ' +
+                    'ml-2 px-2 py-0.5 rounded text-[10px] font-semibold ' +
                     (discountPct > 0
                       ? 'bg-[#E0FBE0] text-[#005A00]'
                       : 'bg-[#EFEAF8] text-[#301D5D]')

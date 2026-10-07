@@ -95,7 +95,7 @@ export default function ProfileClient() {
 
   if (loading) {
     return (
-      <div className="px-5 py-10 max-w-md mx-auto">
+      <div className="px-4 py-8 max-w-md mx-auto">
         <p className="text-sm text-gray-400 font-light text-center">Loading your profile&hellip;</p>
       </div>
     );
@@ -109,7 +109,7 @@ export default function ProfileClient() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="px-5 py-6" style={{ backgroundColor: accent }}>
+      <div className="px-4 py-6" style={{ backgroundColor: accent }}>
         <p className="text-xs uppercase tracking-[0.2em] text-white/70">My Profile</p>
         <h1 className="text-lg text-white font-medium truncate">{fullName}</h1>
         {user.email && (
@@ -117,7 +117,7 @@ export default function ProfileClient() {
         )}
       </div>
 
-      <div className="p-5 space-y-5">
+      <div className="p-4 space-y-4">
         <PasswordSection accentColor={accent} hasPassword={!!user.hasPassword} />
 
         <DeleteAccountSection accentColor={accent} email={user.email ?? ''} />

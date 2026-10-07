@@ -194,7 +194,7 @@ export default function TeamClient({ initialAdmins }: Props) {
 
   return (
     <>
-      <section className="mb-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <section className="mb-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div className="text-sm text-gray-600">
           {admins.length} total · {activeCount} active
         </div>
@@ -216,7 +216,7 @@ export default function TeamClient({ initialAdmins }: Props) {
       {addOpen && (
         <form
           onSubmit={addAdmin}
-          className="mb-6 bg-white border border-gray-200 rounded-lg p-5 space-y-4"
+          className="mb-6 bg-white border border-gray-200 rounded-lg p-4 space-y-4"
         >
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
@@ -260,7 +260,7 @@ export default function TeamClient({ initialAdmins }: Props) {
 
       <section className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         {admins.length === 0 ? (
-          <div className="p-10 text-center text-gray-500">No admins yet.</div>
+          <div className="p-8 text-center text-gray-500">No admins yet.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

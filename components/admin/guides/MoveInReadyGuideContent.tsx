@@ -53,7 +53,7 @@ const EXAMPLE = {
 
 function FieldBadge({ name }: { name: string }) {
   return (
-    <span className="inline-flex items-center rounded bg-brand-600/10 px-1.5 py-0.5 text-[10px] font-mono font-medium text-brand-700 border border-brand-600/20 align-middle">
+    <span className="inline-flex items-center rounded bg-brand-600/10 px-2 py-0.5 text-[10px] font-mono font-medium text-brand-700 border border-brand-600/20 align-middle">
       {name}
     </span>
   );
@@ -122,7 +122,7 @@ export default function MoveInReadyGuideContent() {
             </span>
           </div>
 
-          <div className="p-5 sm:p-7">
+          <div className="p-4 sm:p-6">
             {/* 2-col layout matching the public page */}
             <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-8">
               {/* Left: gallery + description */}
@@ -168,10 +168,10 @@ export default function MoveInReadyGuideContent() {
               </div>
 
               {/* Right: summary sidebar */}
-              <aside className="space-y-5">
+              <aside className="space-y-4">
                 <div>
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#301D5D] bg-[#301D5D] text-white rounded-md">
+                    <span className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-2 border border-[#301D5D] bg-[#301D5D] text-white rounded-md">
                       {EXAMPLE.builderName}
                     </span>
                     <FieldBadge name="builderName" />
@@ -247,7 +247,7 @@ export default function MoveInReadyGuideContent() {
 
             {/* Full-width sections below the grid — match the real /inventory/[id] page.
                 All three are driven by _-prefixed extraDetails keys. */}
-            <div className="mt-10 border-t border-gray-200 pt-6">
+            <div className="mt-8 border-t border-gray-200 pt-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
                   Floorplan <FieldBadge name="extraDetails._floorplanUrl" />
@@ -259,7 +259,7 @@ export default function MoveInReadyGuideContent() {
               </div>
             </div>
 
-            <div className="mt-10 border-t border-gray-200 pt-6">
+            <div className="mt-8 border-t border-gray-200 pt-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
                   Location <FieldBadge name="extraDetails._latitude + _longitude" />
@@ -271,7 +271,7 @@ export default function MoveInReadyGuideContent() {
               </div>
             </div>
 
-            <div className="mt-10 border-t border-gray-200 pt-6">
+            <div className="mt-8 border-t border-gray-200 pt-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
                   3D Tour <FieldBadge name="extraDetails._virtualTourUrl" />{' '}
@@ -335,7 +335,7 @@ export default function MoveInReadyGuideContent() {
       {/* ── Two files to create ── */}
       <Section title="Two files to create per builder">
         <div className="grid md:grid-cols-2 gap-4">
-          <div className="rounded-md border border-gray-200 p-5 bg-white">
+          <div className="rounded-md border border-gray-200 p-4 bg-white">
             <h3 className="font-semibold text-gray-900 mb-1">1. Scraper Module</h3>
             <code className="text-xs text-brand-700 bg-brand-600/5 px-2 py-1 rounded inline-block">
               lib/scrapers/&lt;builder&gt;.ts
@@ -348,7 +348,7 @@ export default function MoveInReadyGuideContent() {
               . Pure data layer — no DB writes. One row per move-in-ready home.
             </p>
           </div>
-          <div className="rounded-md border border-gray-200 p-5 bg-white">
+          <div className="rounded-md border border-gray-200 p-4 bg-white">
             <h3 className="font-semibold text-gray-900 mb-1">2. Cron Endpoint</h3>
             <code className="text-xs text-brand-700 bg-brand-600/5 px-2 py-1 rounded inline-block">
               app/api/cron/scrape-&lt;builder&gt;/route.ts
@@ -384,7 +384,7 @@ export default function MoveInReadyGuideContent() {
             </li>
           ))}
         </ol>
-        <div className="mt-5 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 text-sm text-[#645600]">
+        <div className="mt-4 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 text-sm text-[#645600]">
           <strong className="font-semibold">Pitfall:</strong> Cloudflare-protected
           builders (MI Homes, KB Home, Newmark, Santa Rita Ranch) often block the
           scraper — that is a fetch problem, not a data problem. Also remember:

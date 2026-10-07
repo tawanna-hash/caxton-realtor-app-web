@@ -44,7 +44,7 @@ function ProductServiceCard({
   onDelete: () => void;
 }) {
   return (
-    <div className={`space-y-2.5 p-4 ${!product.is_active ? 'bg-gray-50/60' : ''}`}>
+    <div className={`space-y-3 p-4 ${!product.is_active ? 'bg-gray-50/60' : ''}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <button
@@ -76,11 +76,11 @@ function ProductServiceCard({
           <div className="truncate text-gray-700">{ITEM_TYPE_LABELS[product.item_type as ProductServiceType]}</div>
         </div>
       </div>
-      <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs ${product.is_active ? 'text-gray-700' : 'text-gray-500'}`}>
+      <span className={`inline-flex items-center gap-2 whitespace-nowrap text-xs ${product.is_active ? 'text-gray-700' : 'text-gray-500'}`}>
         <span className={`h-2 w-2 rounded-full ${product.is_active ? 'bg-[#005A00]' : 'bg-gray-400'}`} />
         {product.is_active ? 'Active' : 'Inactive'}
       </span>
-      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-2.5 text-xs">
+      <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-3 text-xs">
         <button type="button" onClick={onEdit} className="font-medium text-[#42277C] hover:underline">Edit</button>
         <button type="button" onClick={onToggleActive} className="font-medium text-[#42277C] hover:underline">
           {product.is_active ? 'Deactivate' : 'Activate'}
@@ -193,7 +193,7 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
   }, [reload]);
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Sales</div>
@@ -250,7 +250,7 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
               value={query}
               onChange={(event) => updateFilter(() => setQuery(event.target.value))}
               placeholder="Search name, SKU, category, or account"
-              className={`${CONTROL} w-full pl-9`}
+              className={`${CONTROL} w-full pl-8`}
             />
           </span>
         </label>
@@ -333,7 +333,7 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
                     </tr>
                     {items.map((product) => (
                       <tr key={product.id} className={`hover:bg-[#F6F3FB]/40 ${!product.is_active ? 'bg-gray-50/60 text-gray-500' : ''}`}>
-                        <td className="px-4 py-2.5">
+                        <td className="px-4 py-3">
                           <button
                             type="button"
                             onClick={() => setEditing(product)}
@@ -343,17 +343,17 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
                           </button>
                           {product.sales_description && <div className="mt-0.5 truncate text-xs text-gray-500" title={product.sales_description}>{product.sales_description}</div>}
                         </td>
-                        <td className="truncate px-3 py-2.5 font-mono text-gray-600" title={product.sku ?? undefined}>{product.sku ?? '—'}</td>
-                        <td className="px-3 py-2.5 text-gray-700">{marketLabel(product.market)}</td>
-                        <td className="px-3 py-2.5 text-gray-700">{ITEM_TYPE_LABELS[product.item_type as ProductServiceType]}</td>
-                        <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold text-gray-900">{formatProductPrice(product.price_cents)}</td>
-                        <td className="px-3 py-2.5">
-                          <span className={`inline-flex items-center gap-1.5 whitespace-nowrap ${product.is_active ? 'text-gray-700' : 'text-gray-500'}`}>
+                        <td className="truncate px-3 py-3 font-mono text-gray-600" title={product.sku ?? undefined}>{product.sku ?? '—'}</td>
+                        <td className="px-3 py-3 text-gray-700">{marketLabel(product.market)}</td>
+                        <td className="px-3 py-3 text-gray-700">{ITEM_TYPE_LABELS[product.item_type as ProductServiceType]}</td>
+                        <td className="whitespace-nowrap px-3 py-3 text-right font-semibold text-gray-900">{formatProductPrice(product.price_cents)}</td>
+                        <td className="px-3 py-3">
+                          <span className={`inline-flex items-center gap-2 whitespace-nowrap ${product.is_active ? 'text-gray-700' : 'text-gray-500'}`}>
                             <span className={`h-2 w-2 rounded-full ${product.is_active ? 'bg-[#005A00]' : 'bg-gray-400'}`} />
                             {product.is_active ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td className="whitespace-nowrap px-4 py-2.5 text-right">
+                        <td className="whitespace-nowrap px-4 py-3 text-right">
                           <button type="button" onClick={() => setEditing(product)} className="font-medium text-[#42277C] hover:underline">Edit</button>
                           <button type="button" onClick={() => void handleToggleActive(product)} className="ml-3 font-medium text-[#42277C] hover:underline">
                             {product.is_active ? 'Deactivate' : 'Activate'}

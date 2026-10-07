@@ -57,7 +57,7 @@ function PlacementRow({ slot }: { slot: AppAdSlot }) {
 
   return (
     <article className="grid min-w-[980px] grid-cols-[210px_minmax(220px,1fr)_150px_190px_170px] border-b border-gray-200 last:border-b-0 hover:bg-[#F6F3FB]/30">
-      <div className="h-36 border-r border-gray-200 bg-gray-50 p-2.5">
+      <div className="h-36 border-r border-gray-200 bg-gray-50 p-3">
         {hasWireframe(slot.slug) ? (
           <PlacementWireframe slug={slot.slug} />
         ) : (
@@ -65,10 +65,10 @@ function PlacementRow({ slot }: { slot: AppAdSlot }) {
         )}
       </div>
       <div className="min-w-0 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-sm font-semibold text-gray-900">{slot.name}</h2>
           {slot.rotates && (
-            <span className="rounded bg-[#E3F7FF] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#285766]">
+            <span className="rounded bg-[#E3F7FF] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#285766]">
               Rotates
             </span>
           )}
@@ -78,7 +78,7 @@ function PlacementRow({ slot }: { slot: AppAdSlot }) {
       </div>
       <div className="px-3 py-3 text-xs">
         <div className="font-medium text-gray-800">{ZONE_LABEL[slot.zone]}</div>
-        <span className={`mt-1.5 inline-flex rounded px-1.5 py-0.5 font-medium capitalize ${
+        <span className={`mt-2 inline-flex rounded px-2 py-0.5 font-medium capitalize ${
           slot.tier === 'premium' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-gray-100 text-gray-700'
         }`}>
           {slot.tier}
@@ -145,7 +145,7 @@ function PlacementsPageInner() {
   const zones = Object.entries(ZONE_LABEL) as Array<[AppAdSlot['zone'], string]>;
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Ad Ops</div>
@@ -181,7 +181,7 @@ function PlacementsPageInner() {
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
               <input
                 type="search"
-                className={`${AD_OPS_CONTROL} w-full pl-9`}
+                className={`${AD_OPS_CONTROL} w-full pl-8`}
                 placeholder="Name, slug, host page, or size"
                 value={query}
                 onChange={(event) => { setQuery(event.target.value); setPage(1); }}
@@ -216,7 +216,7 @@ function PlacementsPageInner() {
           {visible.map((slot) => <PlacementRow key={slot.slug} slot={slot} />)}
         </div>
         {visible.length === 0 && (
-          <div className="px-4 py-10 text-center text-sm text-gray-500">
+          <div className="px-4 py-8 text-center text-sm text-gray-500">
             No placements match these filters.
           </div>
         )}
@@ -234,7 +234,7 @@ function PlacementsPageInner() {
 
 export default function AdminAdsPlacementsPage() {
   return (
-    <Suspense fallback={<div className="mx-auto max-w-[1500px] px-5 py-7 text-sm text-gray-600 lg:px-8">Loading placements…</div>}>
+    <Suspense fallback={<div className="mx-auto max-w-[1500px] px-4 py-6 text-sm text-gray-600 lg:px-8">Loading placements…</div>}>
       <PlacementsPageInner />
     </Suspense>
   );

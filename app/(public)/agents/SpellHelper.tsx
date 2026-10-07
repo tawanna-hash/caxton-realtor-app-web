@@ -54,7 +54,7 @@ export default function SpellHelper({ text, onChange, ignore = [] }: { text: str
       <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]">Possible Spelling Mistakes</span>
       <ul className="mt-1 space-y-1">
         {issues.map((i) => (
-          <li key={i.word} className="flex flex-wrap items-center gap-1.5 text-[13px] text-[#1B1726]">
+          <li key={i.word} className="flex flex-wrap items-center gap-2 text-[13px] text-[#1B1726]">
             <span className="font-medium line-through decoration-[#7059A8]">{i.word}</span>
             {i.fixes.length === 0 && <span className="text-[12px] text-[#7A7787]">No suggestion</span>}
             {i.fixes.map((f) => (

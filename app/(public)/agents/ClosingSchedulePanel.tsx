@@ -6,7 +6,7 @@ type Person = { name: string; email: string; role: string };
 type Req = { id: string; status: 'awaiting_title' | 'awaiting_choice' | 'scheduled' | 'cancelled'; titleName: string; titleEmail: string; choosers: Person[]; slots: { startUtc: string }[]; location: string; chosenStart: string | null; createdAt: string };
 type Ctx = { property: string; title: { name: string; email: string } | null; choosers: Person[]; recipients: Person[]; otherSide: Person[]; requests: Req[] };
 const card = 'rounded-2xl border border-[#E6E5EC] bg-white';
-const pill = 'rounded-full border border-[#E6E5EC] bg-white px-3.5 py-1.5 text-[13px] font-medium text-[#1B1726] hover:!bg-[#EFEAF8] hover:!text-[#301D5D] disabled:opacity-50';
+const pill = 'rounded-full border border-[#E6E5EC] bg-white px-4 py-2 text-[13px] font-medium text-[#1B1726] hover:!bg-[#EFEAF8] hover:!text-[#301D5D] disabled:opacity-50';
 const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[14px] text-[#1B1726] outline-none focus:border-[#301D5D]';
 const when = (iso: string) => new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(new Date(iso));
 const STATUS: Record<Req['status'], string> = { awaiting_title: 'Waiting For Title Company', awaiting_choice: 'Waiting For Buyer Or Seller', scheduled: 'Scheduled', cancelled: 'Cancelled' };
@@ -55,14 +55,14 @@ export default function ClosingSchedulePanel({ dealId }: { dealId: string }) {
 
   return (
     <section className={card}>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F1F0F5] px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F1F0F5] px-4 py-4">
         <div>
           <h3 className="text-[16px] font-semibold text-[#1B1726]">Schedule The Closing</h3>
           <p className="text-[13px] text-[#7A7787]">The title company sets the available times, the buyer or seller picks one, and everyone is emailed.</p>
         </div>
         {!open && (!current || current.status === 'scheduled') && <button type="button" className={pill} onClick={start}>{current ? 'Reschedule' : 'Start'}</button>}
       </div>
-      <div className="space-y-3 p-5">
+      <div className="space-y-3 p-4">
         {(error || msg) && <p className={`text-[13px] ${error ? 'text-[#661102]' : 'text-[#005A00]'}`} role="status">{error || msg}</p>}
         {current && !open && (
           <div className="rounded-xl border border-[#E6E5EC] bg-[#FBFAFD] px-4 py-3 text-[14px] text-[#4A4757]">

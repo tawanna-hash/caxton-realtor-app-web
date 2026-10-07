@@ -73,7 +73,7 @@ export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesVi
         </div>
         <Link
           href="/custom-designer"
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-brand-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
         >
           Open Custom Designer
         </Link>
@@ -235,7 +235,7 @@ function GuideCard({ guide }: { guide: ResourceGuide }) {
       href={guide.href}
       target={isPlaceholder ? undefined : '_blank'}
       rel={isPlaceholder ? undefined : 'noopener noreferrer'}
-      className="block rounded-md border border-gray-200 bg-white p-5 hover:border-brand-700 hover:shadow-sm transition"
+      className="block rounded-md border border-gray-200 bg-white p-4 hover:border-brand-700 hover:shadow-sm transition"
       onClick={(e) => {
         if (isPlaceholder) e.preventDefault();
       }}
@@ -265,7 +265,7 @@ function LinkRow({ link }: { link: ResourceLink }) {
         href={link.href}
         target="_blank"
         rel="noopener noreferrer"
-        className="block px-5 py-4 hover:bg-gray-50 transition rounded-md"
+        className="block px-4 py-4 hover:bg-gray-50 transition rounded-md"
       >
         <div className="flex items-start justify-between gap-3">
           <div>

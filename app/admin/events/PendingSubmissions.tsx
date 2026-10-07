@@ -75,9 +75,9 @@ export default function PendingSubmissions({ onChanged }: { onChanged?: () => vo
               <p className="text-xs text-gray-500">{formatWhen(ev.startDate)}{ev.location ? ` · ${ev.location}` : ''}</p>
             </div>
             <div className="flex shrink-0 gap-2">
-              <Link href={`/admin/events/${ev.id}`} className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">Review</Link>
-              <button type="button" disabled={busyId === ev.id} onClick={() => act(ev, 'approve')} className="rounded-md bg-[#005A00] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#005A00] disabled:opacity-50">Approve</button>
-              <button type="button" disabled={busyId === ev.id} onClick={() => act(ev, 'delete')} className="rounded-md border border-[#FF2A04]/50 bg-white px-3 py-1.5 text-xs font-medium text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50">Delete</button>
+              <Link href={`/admin/events/${ev.id}`} className="rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">Review</Link>
+              <button type="button" disabled={busyId === ev.id} onClick={() => act(ev, 'approve')} className="rounded-md bg-[#005A00] px-3 py-2 text-xs font-medium text-white hover:bg-[#005A00] disabled:opacity-50">Approve</button>
+              <button type="button" disabled={busyId === ev.id} onClick={() => act(ev, 'delete')} className="rounded-md border border-[#FF2A04]/50 bg-white px-3 py-2 text-xs font-medium text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50">Delete</button>
             </div>
           </li>
         ))}

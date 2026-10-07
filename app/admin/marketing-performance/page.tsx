@@ -128,7 +128,7 @@ function Seg<T extends string>({ value, onChange, options, label }: { value: T; 
     <div role="group" aria-label={label} className="inline-flex rounded-md bg-gray-100 p-0.5">
       {options.map((o) => (
         <button key={o.v} type="button" onClick={() => onChange(o.v)} aria-pressed={value === o.v}
-          className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${value === o.v ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>
+          className={`rounded px-3 py-1 text-xs font-medium transition-colors ${value === o.v ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>
           {o.l}
         </button>
       ))}
@@ -275,7 +275,7 @@ export default function MarketingPerformancePage() {
   const hasSpend = (view?.cur.spend_cents ?? 0) > 0;
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-6 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-6 px-4 py-6 lg:px-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Insights</p>
@@ -286,7 +286,7 @@ export default function MarketingPerformancePage() {
         </div>
         <nav className="flex flex-wrap gap-1 text-sm" aria-label="Sections">
           {[['attribution', 'Attribution'], ['funnel', 'Funnel'], ['efficiency', 'Efficiency'], ['trends', 'Trends'], ['connections', 'Connections'], ['spend', 'Spend']].map(([id, l]) => (
-            <a key={id} href={`#${id}`} className="rounded px-2.5 py-1 font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">{l}</a>
+            <a key={id} href={`#${id}`} className="rounded px-3 py-1 font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">{l}</a>
           ))}
         </nav>
       </header>
@@ -312,7 +312,7 @@ export default function MarketingPerformancePage() {
         <>
           {/* Filters */}
           <section aria-label="Filters" className="sticky top-0 z-20 flex flex-wrap items-end gap-x-6 gap-y-3 rounded-md border border-gray-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Date range</p>
               <div className="flex flex-wrap items-center gap-2">
                 <Seg label="Date range" value={range} onChange={(v) => {
@@ -325,7 +325,7 @@ export default function MarketingPerformancePage() {
                   { v: '3', l: '3M' }, { v: '6', l: '6M' }, { v: '12', l: '12M' }, { v: 'ytd', l: 'YTD' }, { v: 'all', l: 'All data' }, { v: 'custom', l: 'Custom' },
                 ]} />
                 {range === 'custom' && (
-                  <div className="flex items-center gap-1.5 text-sm">
+                  <div className="flex items-center gap-2 text-sm">
                     <select aria-label="From month" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="rounded border border-gray-300 bg-white px-2 py-1 text-sm">
                       {data.months.map((m) => <option key={m} value={m}>{monthLabel(m, true)}</option>)}
                     </select>
@@ -337,26 +337,26 @@ export default function MarketingPerformancePage() {
                 )}
               </div>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Channels</p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {CHANNELS.map((c) => {
                   const on = channels.has(c.id);
                   return (
                     <button key={c.id} type="button" onClick={() => toggleChannel(c.id)} aria-pressed={on} title={c.hint}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${on ? 'border-gray-300 bg-gray-50 text-gray-900' : 'border-gray-200 bg-white text-gray-400'}`}>
+                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${on ? 'border-gray-300 bg-gray-50 text-gray-900' : 'border-gray-200 bg-white text-gray-400'}`}>
                       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: on ? c.color : '#d1d5db' }} />
                       {c.label}
                     </button>
                   );
                 })}
                 <button type="button" onClick={() => toggleChannel('all')} aria-pressed={channels.size === CHANNELS.length}
-                  className={`rounded-full border px-2.5 py-1 text-xs font-medium ${channels.size === CHANNELS.length ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-gray-200 text-gray-500'}`}>
+                  className={`rounded-full border px-3 py-1 text-xs font-medium ${channels.size === CHANNELS.length ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-gray-200 text-gray-500'}`}>
                   All
                 </button>
               </div>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Traffic source</p>
               {ga4Ready ? (
                 <Seg label="Traffic source" value={src} onChange={setTrafficSource} options={[{ v: 'posthog', l: 'PostHog' }, { v: 'ga4', l: 'GA4' }]} />
@@ -417,7 +417,7 @@ export default function MarketingPerformancePage() {
               <Card title="Channel mix">
                 <Donut fmt={(x) => fmtMetric(attrMetric, x)}
                   data={view.perChannel.map(({ c, t }) => ({ key: c, label: CH[c].label, value: t[attrMetric], color: CH[c].color }))} />
-                <ul className="mt-3 space-y-1.5">
+                <ul className="mt-3 space-y-2">
                   {[...view.perChannel].sort((a, b) => b.t[attrMetric] - a.t[attrMetric]).map(({ c, t }) => {
                     const total = view.cur[attrMetric];
                     return (
@@ -441,36 +441,36 @@ export default function MarketingPerformancePage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                    <th className="px-4 py-2.5">Channel</th>
-                    {['Impr.', 'Sessions', 'MQLs', 'SQLs', 'Conv.', 'Revenue', 'Spend', 'ROAS', 'CPL'].map((h) => <th key={h} className="px-4 py-2.5 text-right">{h}</th>)}
+                    <th className="px-4 py-3">Channel</th>
+                    {['Impr.', 'Sessions', 'MQLs', 'SQLs', 'Conv.', 'Revenue', 'Spend', 'ROAS', 'CPL'].map((h) => <th key={h} className="px-4 py-3 text-right">{h}</th>)}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 tabular-nums">
                   {[...view.perChannel].sort((a, b) => b.t.sessions - a.t.sessions).map(({ c, t }) => (
                     <tr key={c} className="hover:bg-gray-50">
-                      <td className="px-4 py-2.5"><span className="inline-flex items-center gap-2 font-medium text-gray-900"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: CH[c].color }} />{CH[c].label}</span></td>
-                      <td className="px-4 py-2.5 text-right">{fmtInt(t.impressions)}</td>
-                      <td className="px-4 py-2.5 text-right">{fmtInt(t.sessions)}</td>
-                      <td className="px-4 py-2.5 text-right">{fmtInt(t.mqls)}</td>
-                      <td className="px-4 py-2.5 text-right">{fmtInt(t.sqls)}</td>
-                      <td className="px-4 py-2.5 text-right">{fmtInt(t.conversions)}</td>
-                      <td className="px-4 py-2.5 text-right">{fmtCents(t.revenue_cents)}</td>
-                      <td className="px-4 py-2.5 text-right">{t.spend_cents > 0 ? fmtCents(t.spend_cents) : '—'}</td>
-                      <td className="px-4 py-2.5 text-right">{fmtX(div(t.revenue_cents, t.spend_cents))}</td>
-                      <td className="px-4 py-2.5 text-right">{t.spend_cents > 0 ? fmtCents(div(t.spend_cents, t.mqls), true) : '—'}</td>
+                      <td className="px-4 py-3"><span className="inline-flex items-center gap-2 font-medium text-gray-900"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: CH[c].color }} />{CH[c].label}</span></td>
+                      <td className="px-4 py-3 text-right">{fmtInt(t.impressions)}</td>
+                      <td className="px-4 py-3 text-right">{fmtInt(t.sessions)}</td>
+                      <td className="px-4 py-3 text-right">{fmtInt(t.mqls)}</td>
+                      <td className="px-4 py-3 text-right">{fmtInt(t.sqls)}</td>
+                      <td className="px-4 py-3 text-right">{fmtInt(t.conversions)}</td>
+                      <td className="px-4 py-3 text-right">{fmtCents(t.revenue_cents)}</td>
+                      <td className="px-4 py-3 text-right">{t.spend_cents > 0 ? fmtCents(t.spend_cents) : '—'}</td>
+                      <td className="px-4 py-3 text-right">{fmtX(div(t.revenue_cents, t.spend_cents))}</td>
+                      <td className="px-4 py-3 text-right">{t.spend_cents > 0 ? fmtCents(div(t.spend_cents, t.mqls), true) : '—'}</td>
                     </tr>
                   ))}
                   <tr className="border-t border-gray-200 font-semibold text-gray-900">
-                    <td className="px-4 py-2.5">Total</td>
-                    <td className="px-4 py-2.5 text-right">{fmtInt(view.cur.impressions)}</td>
-                    <td className="px-4 py-2.5 text-right">{fmtInt(view.cur.sessions)}</td>
-                    <td className="px-4 py-2.5 text-right">{fmtInt(view.cur.mqls)}</td>
-                    <td className="px-4 py-2.5 text-right">{fmtInt(view.cur.sqls)}</td>
-                    <td className="px-4 py-2.5 text-right">{fmtInt(view.cur.conversions)}</td>
-                    <td className="px-4 py-2.5 text-right">{fmtCents(view.cur.revenue_cents)}</td>
-                    <td className="px-4 py-2.5 text-right">{hasSpend ? fmtCents(view.cur.spend_cents) : '—'}</td>
-                    <td className="px-4 py-2.5 text-right">{fmtX(div(view.cur.revenue_cents, view.cur.spend_cents))}</td>
-                    <td className="px-4 py-2.5 text-right">{hasSpend ? fmtCents(div(view.cur.spend_cents, view.cur.mqls), true) : '—'}</td>
+                    <td className="px-4 py-3">Total</td>
+                    <td className="px-4 py-3 text-right">{fmtInt(view.cur.impressions)}</td>
+                    <td className="px-4 py-3 text-right">{fmtInt(view.cur.sessions)}</td>
+                    <td className="px-4 py-3 text-right">{fmtInt(view.cur.mqls)}</td>
+                    <td className="px-4 py-3 text-right">{fmtInt(view.cur.sqls)}</td>
+                    <td className="px-4 py-3 text-right">{fmtInt(view.cur.conversions)}</td>
+                    <td className="px-4 py-3 text-right">{fmtCents(view.cur.revenue_cents)}</td>
+                    <td className="px-4 py-3 text-right">{hasSpend ? fmtCents(view.cur.spend_cents) : '—'}</td>
+                    <td className="px-4 py-3 text-right">{fmtX(div(view.cur.revenue_cents, view.cur.spend_cents))}</td>
+                    <td className="px-4 py-3 text-right">{hasSpend ? fmtCents(div(view.cur.spend_cents, view.cur.mqls), true) : '—'}</td>
                   </tr>
                 </tbody>
               </table>
@@ -574,7 +574,7 @@ export default function MarketingPerformancePage() {
 
           <details className="rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
             <summary className="cursor-pointer font-medium text-gray-900">How these numbers are calculated</summary>
-            <ul className="mt-2 list-disc space-y-1 pl-5">
+            <ul className="mt-2 list-disc space-y-1 pl-4">
               <li><b>Impressions</b>: public-site pageviews (PostHog or GA4, per the Traffic source toggle) plus delivered campaign emails (in-app composer and Mailchimp) on the Email channel.</li>
               <li><b>Sessions</b>: PostHog sessions by channel type, or GA4 sessions by default channel group (Organic = search, referral, AI; Social = organic social; Paid = paid search/social/display).</li>
               <li><b>MQLs</b>: advertiser inquiries. <b>SQLs</b>: agreements that reached proposal sent or later. <b>Conversions</b>: signed agreements.</li>
@@ -629,7 +629,7 @@ function FunnelBars({ t }: { t: Totals }) {
               <span className="text-sm font-medium text-gray-700">{s.l}</span>
               <div className="h-8">
                 {v > 0 ? (
-                  <div className="flex h-full items-center rounded px-2.5 text-sm font-semibold tabular-nums text-white transition-[width] duration-500"
+                  <div className="flex h-full items-center rounded px-3 text-sm font-semibold tabular-nums text-white transition-[width] duration-500"
                     style={{ width: `${w}%`, backgroundColor: BRAND, opacity: 1 - i * 0.14 }}>
                     {fmtInt(v)}
                   </div>
@@ -693,23 +693,23 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
           <div className="space-y-3 text-sm">
             <label className="block">
               <span className="text-xs font-medium text-gray-500">Month</span>
-              <select value={month} onChange={(e) => setMonth(e.target.value)} className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5">
+              <select value={month} onChange={(e) => setMonth(e.target.value)} className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-2">
                 {[...months].reverse().map((m) => <option key={m} value={m}>{monthLabel(m, true)}</option>)}
               </select>
             </label>
             <label className="block">
               <span className="text-xs font-medium text-gray-500">Channel</span>
-              <select value={channel} onChange={(e) => setChannel(e.target.value as Channel)} className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5">
+              <select value={channel} onChange={(e) => setChannel(e.target.value as Channel)} className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-2">
                 {CHANNELS.map((c) => <option key={c.id} value={c.id}>{c.label} — {c.hint}</option>)}
               </select>
             </label>
             <label className="block">
               <span className="text-xs font-medium text-gray-500">Amount (USD)</span>
-              <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 tabular-nums" />
+              <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="mt-1 w-full rounded border border-gray-300 px-2 py-2 tabular-nums" />
             </label>
             <label className="block">
               <span className="text-xs font-medium text-gray-500">Notes (optional)</span>
-              <input value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={500} placeholder="e.g. Meta boosted posts" className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5" />
+              <input value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={500} placeholder="e.g. Meta boosted posts" className="mt-1 w-full rounded border border-gray-300 px-2 py-2" />
             </label>
             <button type="button" onClick={() => void save()} disabled={busy || !amount.trim()}
               className="w-full rounded-md bg-[#301D5D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#241548] disabled:cursor-not-allowed disabled:opacity-50">
@@ -734,7 +734,7 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
                   {entries.map((e) => (
                     <tr key={e.id}>
                       <td className="py-2 pr-3 text-gray-700">{monthLabel(e.month, true)}</td>
-                      <td className="py-2 pr-3"><span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: CH[e.channel].color }} />{CH[e.channel].label}</span></td>
+                      <td className="py-2 pr-3"><span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: CH[e.channel].color }} />{CH[e.channel].label}</span></td>
                       <td className="py-2 pr-3 text-right font-medium tabular-nums">{fmtCents(e.amount_cents, true)}</td>
                       <td className="max-w-[220px] truncate py-2 pr-3 text-gray-500" title={e.notes ?? ''}>{e.notes || '—'}</td>
                       <td className="py-2 text-right">
@@ -817,7 +817,7 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
   };
 
   const status = (ok: boolean, label: string) => (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${ok ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-gray-100 text-gray-600'}`}>
+    <span className={`inline-flex items-center gap-2 rounded-full px-2 py-0.5 text-xs font-medium ${ok ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-gray-100 text-gray-600'}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${ok ? 'bg-[#005A00]' : 'bg-gray-400'}`} />{label}
     </span>
   );
@@ -891,22 +891,22 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                <th className="px-4 py-2.5">Mailchimp month</th>
-                {['Campaigns', 'Sent', 'Delivered', 'Unique opens', 'Open rate', 'Unique clicks', 'Click rate', 'Unsubs'].map((h) => <th key={h} className="px-4 py-2.5 text-right">{h}</th>)}
+                <th className="px-4 py-3">Mailchimp month</th>
+                {['Campaigns', 'Sent', 'Delivered', 'Unique opens', 'Open rate', 'Unique clicks', 'Click rate', 'Unsubs'].map((h) => <th key={h} className="px-4 py-3 text-right">{h}</th>)}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 tabular-nums">
               {[...mailchimp].reverse().map((m) => (
                 <tr key={m.month}>
-                  <td className="px-4 py-2.5 font-medium text-gray-900">{monthLabel(m.month, true)}</td>
-                  <td className="px-4 py-2.5 text-right">{fmtInt(m.campaigns)}</td>
-                  <td className="px-4 py-2.5 text-right">{fmtInt(m.sent)}</td>
-                  <td className="px-4 py-2.5 text-right">{fmtInt(m.delivered)}</td>
-                  <td className="px-4 py-2.5 text-right">{fmtInt(m.uniqueOpens)}</td>
-                  <td className="px-4 py-2.5 text-right">{fmtPct(div(m.uniqueOpens, m.delivered))}</td>
-                  <td className="px-4 py-2.5 text-right">{fmtInt(m.uniqueClicks)}</td>
-                  <td className="px-4 py-2.5 text-right">{fmtPct(div(m.uniqueClicks, m.delivered))}</td>
-                  <td className="px-4 py-2.5 text-right">{fmtInt(m.unsubscribes)}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900">{monthLabel(m.month, true)}</td>
+                  <td className="px-4 py-3 text-right">{fmtInt(m.campaigns)}</td>
+                  <td className="px-4 py-3 text-right">{fmtInt(m.sent)}</td>
+                  <td className="px-4 py-3 text-right">{fmtInt(m.delivered)}</td>
+                  <td className="px-4 py-3 text-right">{fmtInt(m.uniqueOpens)}</td>
+                  <td className="px-4 py-3 text-right">{fmtPct(div(m.uniqueOpens, m.delivered))}</td>
+                  <td className="px-4 py-3 text-right">{fmtInt(m.uniqueClicks)}</td>
+                  <td className="px-4 py-3 text-right">{fmtPct(div(m.uniqueClicks, m.delivered))}</td>
+                  <td className="px-4 py-3 text-right">{fmtInt(m.unsubscribes)}</td>
                 </tr>
               ))}
             </tbody>

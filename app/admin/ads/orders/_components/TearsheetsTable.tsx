@@ -154,7 +154,7 @@ export default function TearsheetsTable() {
 
       <div className="flex items-center gap-2 mb-4">
         <select
-          className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm"
+          className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm"
           value={activeStatus}
           onChange={(e) => setUrl({ status: e.target.value === 'all' ? null : e.target.value })}
         >

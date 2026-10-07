@@ -193,21 +193,21 @@ export default function FastEmailRealtorsClient() {
         <button
           disabled={busy !== null}
           onClick={() => act(row.id, 'realtyline')}
-          className="rounded-md bg-brand-700 px-2.5 py-1 text-xs text-white disabled:opacity-50"
+          className="rounded-md bg-brand-700 px-3 py-1 text-xs text-white disabled:opacity-50"
         >
           Add to RealtyLine
         </button>
         <button
           disabled={busy !== null}
           onClick={() => act(row.id, 'san_antonio')}
-          className="rounded-md bg-brand-700 px-2.5 py-1 text-xs text-white disabled:opacity-50"
+          className="rounded-md bg-brand-700 px-3 py-1 text-xs text-white disabled:opacity-50"
         >
           Add to San Antonio
         </button>
         <button
           disabled={busy !== null}
           onClick={() => act(row.id, 'reject')}
-          className="rounded-md border border-[#FF2A04]/50 px-2.5 py-1 text-xs text-[#661102] disabled:opacity-50"
+          className="rounded-md border border-[#FF2A04]/50 px-3 py-1 text-xs text-[#661102] disabled:opacity-50"
         >
           Reject
         </button>
@@ -256,7 +256,7 @@ export default function FastEmailRealtorsClient() {
           <button
             key={key}
             onClick={() => setFilter(key)}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium ${
+            className={`rounded-md px-3 py-2 text-xs font-medium ${
               filter === key ? 'bg-brand-700 text-white' : 'bg-gray-100 text-gray-700'
             }`}
           >

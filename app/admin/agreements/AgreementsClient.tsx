@@ -286,7 +286,7 @@ export default function AgreementsClient({
   const pageRows = filteredAg.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Agreements</div>
@@ -386,7 +386,7 @@ export default function AgreementsClient({
         <div className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">{error}</div>
       )}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-md border border-[#00E200]/30 bg-[#E0FBE0] px-5 py-3 text-sm text-[#005A00] shadow-lg">
+        <div className="fixed bottom-6 right-6 z-50 rounded-md border border-[#00E200]/30 bg-[#E0FBE0] px-4 py-3 text-sm text-[#005A00] shadow-lg">
           {toast}
         </div>
       )}

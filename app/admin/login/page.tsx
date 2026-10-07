@@ -80,7 +80,7 @@ function AdminLoginForm() {
         </div>
         <form onSubmit={handleSubmit} className="bg-white border border-gray-200 p-6 space-y-4">
           <div>
-            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Email</label>
+            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Email</label>
             <input
               type="email"
               required
@@ -101,13 +101,13 @@ function AdminLoginForm() {
               }`}
             />
             {emailError && (
-              <p id="admin-email-error" className="mt-1.5 text-xs text-[#661102]">
+              <p id="admin-email-error" className="mt-2 text-xs text-[#661102]">
                 {emailError}
               </p>
             )}
           </div>
           <div>
-            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Password</label>
+            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}

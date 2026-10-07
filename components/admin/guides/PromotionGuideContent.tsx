@@ -30,7 +30,7 @@ const EXAMPLE = {
 
 function FieldBadge({ name }: { name: string }) {
   return (
-    <span className="inline-flex items-center rounded bg-brand-600/10 px-1.5 py-0.5 text-[10px] font-mono font-medium text-brand-700 border border-brand-600/20 align-middle">
+    <span className="inline-flex items-center rounded bg-brand-600/10 px-2 py-0.5 text-[10px] font-mono font-medium text-brand-700 border border-brand-600/20 align-middle">
       {name}
     </span>
   );
@@ -101,7 +101,7 @@ export default function PromotionGuideContent() {
             </span>
           </div>
 
-          <div className="p-5 sm:p-7">
+          <div className="p-4 sm:p-6">
             {/* 2-col layout matching the public page */}
             <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-8">
               {/* Left: hero + flyer carousel + about + other promotions */}
@@ -143,7 +143,7 @@ export default function PromotionGuideContent() {
                   </div>
                   <div className="mt-2 flex items-center gap-3">
                     <FieldBadge name="flyerPdfUrl · rasterized → carousel" />
-                    <span className="inline-flex items-center rounded-md bg-brand-700 px-3 py-1.5 text-xs font-medium text-white">
+                    <span className="inline-flex items-center rounded-md bg-brand-700 px-3 py-2 text-xs font-medium text-white">
                       ↓ Download flyer
                     </span>
                   </div>
@@ -180,7 +180,7 @@ export default function PromotionGuideContent() {
               </div>
 
               {/* Right: sidebar */}
-              <aside className="space-y-5">
+              <aside className="space-y-4">
                 {/* Builder pill + Promotion badge */}
                 <div>
                   <span className="inline-flex items-center rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white">
@@ -328,7 +328,7 @@ export default function PromotionGuideContent() {
       {/* ── Two files to create ── */}
       <Section title="Two files to create per builder">
         <div className="grid md:grid-cols-2 gap-4">
-          <div className="rounded-md border border-gray-200 p-5 bg-white">
+          <div className="rounded-md border border-gray-200 p-4 bg-white">
             <h3 className="font-semibold text-gray-900 mb-1">1. Scraper Module</h3>
             <code className="text-xs text-brand-700 bg-brand-600/5 px-2 py-1 rounded inline-block">
               lib/scrapers/&lt;builder&gt;-promotions.ts
@@ -343,7 +343,7 @@ export default function PromotionGuideContent() {
               <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">kind: &apos;promotion&apos;</code>. Pure data layer — no DB writes. One row per offer.
             </p>
           </div>
-          <div className="rounded-md border border-gray-200 p-5 bg-white">
+          <div className="rounded-md border border-gray-200 p-4 bg-white">
             <h3 className="font-semibold text-gray-900 mb-1">2. Cron Endpoint</h3>
             <code className="text-xs text-brand-700 bg-brand-600/5 px-2 py-1 rounded inline-block">
               app/api/cron/scrape-&lt;builder&gt;-promotions/route.ts
@@ -384,7 +384,7 @@ export default function PromotionGuideContent() {
             </li>
           ))}
         </ol>
-        <div className="mt-5 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 text-sm text-[#645600]">
+        <div className="mt-4 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] px-4 py-3 text-sm text-[#645600]">
           <strong className="font-semibold">Pitfalls:</strong> promotions do NOT
           auto-publish — the upsert only auto-activates kind=&apos;listing&apos;
           rows, so scraped promotions land{' '}

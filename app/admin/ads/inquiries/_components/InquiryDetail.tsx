@@ -218,10 +218,10 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
 
       {/* Status pipeline */}
       <div className="mb-4">
-        <p className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1.5">
+        <p className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-2">
           Status
         </p>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {STATUSES.map((s) => {
             const active = inquiry.status === s;
             return (
@@ -230,7 +230,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
                 type="button"
                 disabled={saving || active}
                 onClick={() => patch({ status: s }, 'Status updated')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+                className={`px-3 py-2 rounded-full text-xs font-medium border transition ${
                   active
                     ? 'bg-gray-900 text-white border-gray-900 cursor-default'
                     : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -280,7 +280,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             value={assignee}
             onChange={(e) => setAssignee(e.target.value)}
             placeholder="e.g. tawanna@realtynewsnow.app"
-            className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8] focus:border-transparent"
+            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8] focus:border-transparent"
           />
           <button
             type="button"
@@ -288,7 +288,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             onClick={() =>
               patch({ assignee: assignee.trim() || null }, 'Assignee saved')
             }
-            className="px-3 py-1.5 rounded-md text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="px-3 py-2 rounded-md text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Save
           </button>
@@ -316,7 +316,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             type="button"
             disabled={saving || notes === (inquiry.notes ?? '')}
             onClick={() => patch({ notes: notes.trim() || null }, 'Notes saved')}
-            className="px-3 py-1.5 rounded-md text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="px-3 py-2 rounded-md text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Save notes
           </button>
@@ -336,7 +336,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
       <div className="flex flex-wrap items-center gap-2 pt-3 mt-4 border-t border-gray-100">
         <a
           href={replyHref}
-          className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-[#301D5D] text-white hover:bg-[#42277C]"
+          className="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium bg-[#301D5D] text-white hover:bg-[#42277C]"
         >
           Reply by email
         </a>
@@ -345,7 +345,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             type="button"
             disabled={saving}
             onClick={() => patch({ status: 'replied' }, 'Marked replied')}
-            className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
+            className="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
           >
             Mark replied
           </button>

@@ -19,8 +19,8 @@ const card = 'rounded-2xl border border-[#E6E5EC] bg-white';
 const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[14px] text-[#1B1726] focus:border-[#301D5D] focus:outline-none disabled:bg-[#F7F6FA] disabled:text-[#9A98A6]';
 const label = 'block text-[14px] font-semibold text-[#1B1726]';
 const hint = 'mt-0.5 text-[13px] text-[#7A7787]';
-const pill = 'inline-flex items-center gap-1.5 rounded-full border border-[#E6E5EC] bg-white px-3.5 py-1.5 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D]';
-const primary = 'inline-flex items-center gap-1.5 rounded-full bg-[#301D5D] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#42277C] disabled:opacity-45';
+const pill = 'inline-flex items-center gap-2 rounded-full border border-[#E6E5EC] bg-white px-4 py-2 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D]';
+const primary = 'inline-flex items-center gap-2 rounded-full bg-[#301D5D] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#42277C] disabled:opacity-45';
 const STEPS = ['Select Calendars', 'Availability', 'Event Details', 'Appearance And Branding', 'Workflow'];
 const OPTIONAL = new Set([4]);
 const TIMES = Array.from({ length: 96 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`);
@@ -88,11 +88,11 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
 
       {data && (
         <>
-          <section className={`${card} p-5`}>
+          <section className={`${card} p-4`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <h3 className="text-[15px] font-semibold text-[#1B1726]">Connected Accounts</h3>
-                <span className="rounded-md bg-[#EFEAF8] px-1.5 text-[12px] font-semibold text-[#301D5D]">{data.account ? 1 : 0}</span>
+                <span className="rounded-md bg-[#EFEAF8] px-2 text-[12px] font-semibold text-[#301D5D]">{data.account ? 1 : 0}</span>
               </div>
               <div className="flex items-center gap-4 text-[13px] font-medium">
                 <button type="button" className="inline-flex items-center gap-1 text-[#301D5D] hover:underline" onClick={onOpenIntegrations}><Plus className="h-3.5 w-3.5" aria-hidden="true" />Add account</button>
@@ -101,12 +101,12 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {data.account && (
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#E6E5EC] px-3 py-1.5 text-[13px] font-medium text-[#1B1726]">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#E6E5EC] px-3 py-2 text-[13px] font-medium text-[#1B1726]">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#F6F3FB] text-[11px] font-bold text-[#301D5D]" aria-hidden="true">{data.account.provider === 'outlook' ? 'O' : 'G'}</span>
                   {data.accountEmail} · {data.account.name}
                 </span>
               )}
-              <button type="button" onClick={onOpenIntegrations} className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[#CFCDD8] px-3 py-1.5 text-[13px] font-medium text-[#4A4757] hover:border-[#301D5D]">
+              <button type="button" onClick={onOpenIntegrations} className="inline-flex items-center gap-2 rounded-full border border-dashed border-[#CFCDD8] px-3 py-2 text-[13px] font-medium text-[#4A4757] hover:border-[#301D5D]">
                 <Plus className="h-3.5 w-3.5" aria-hidden="true" />{data.account ? 'Add another account' : 'Connect Google or Outlook Calendar'}
               </button>
             </div>
@@ -114,7 +114,7 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
           </section>
 
           <section className={card}>
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#F1F0F5] p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#F1F0F5] p-4">
               <div className="flex items-start gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFEAF8] text-[#301D5D]"><Link2 className="h-5 w-5" aria-hidden="true" /></span>
                 <div>
@@ -124,7 +124,7 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
               </div>
               {editSlug === null && <button type="button" className={pill} onClick={() => setEditSlug(slug)}><Pencil className="h-3.5 w-3.5" aria-hidden="true" />Edit</button>}
             </div>
-            <div className="space-y-3 p-5">
+            <div className="space-y-3 p-4">
               {editSlug !== null ? (
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[14px] text-[#7A7787]">{host}/book/</span>
@@ -155,21 +155,21 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
               )}
               {!live && (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#F2E7A6] bg-[#FFFBEA] px-4 py-3">
-                  <div className="flex min-w-0 items-start gap-2.5">
+                  <div className="flex min-w-0 items-start gap-3">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#645600]" aria-hidden="true" />
                     <div>
                       <div className="text-[14px] font-semibold text-[#645600]">This link isn&apos;t live yet</div>
                       <p className="text-[13px] text-[#645600]">{data.schedulers.length ? 'All schedulers are turned off, so this URL does not lead to a booking page. Turn one on to start taking bookings.' : "You don't have any schedulers, so this URL doesn't lead to a booking page. Create one to start taking bookings."}</p>
                     </div>
                   </div>
-                  {!data.schedulers.length && <button type="button" className="inline-flex items-center gap-1.5 rounded-full border border-[#D9C96B] bg-white px-3.5 py-1.5 text-[13px] font-medium text-[#645600] hover:bg-[#FEF8CC]" onClick={startNew}><Plus className="h-3.5 w-3.5" aria-hidden="true" />Create scheduler</button>}
+                  {!data.schedulers.length && <button type="button" className="inline-flex items-center gap-2 rounded-full border border-[#D9C96B] bg-white px-4 py-2 text-[13px] font-medium text-[#645600] hover:bg-[#FEF8CC]" onClick={startNew}><Plus className="h-3.5 w-3.5" aria-hidden="true" />Create scheduler</button>}
                 </div>
               )}
             </div>
           </section>
 
           <section className={card}>
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F1F0F5] px-5 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F1F0F5] px-4 py-4">
               <h3 className="text-[16px] font-semibold text-[#1B1726]">Schedulers</h3>
               <div className="flex flex-wrap gap-2">
                 <button type="button" className={pill} aria-expanded={help} onClick={() => setHelp((h) => !h)}>Help</button>
@@ -178,14 +178,14 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
               </div>
             </div>
             {help && (
-              <div className="border-b border-[#F1F0F5] bg-[#FBFAFD] px-5 py-4 text-[13px] text-[#4A4757]">
+              <div className="border-b border-[#F1F0F5] bg-[#FBFAFD] px-4 py-4 text-[13px] text-[#4A4757]">
                 <p><strong className="text-[#1B1726]">Schedulers</strong> are booking pages. Set your hours and meeting lengths; people pick an open time and get a confirmation with a calendar file.</p>
                 <p className="mt-1.5">Open times skip your other bookings and anything busy on the calendars you select. One scheduler can use the root URL; the rest get an alias such as <code>/book/{slug}/inspection</code>.</p>
                 <p className="mt-1.5">A <strong className="text-[#1B1726]">combined link</strong> shows several schedulers on one page so people choose the meeting type first.</p>
               </div>
             )}
             {combo && (
-              <div className="space-y-3 border-b border-[#F1F0F5] px-5 py-4">
+              <div className="space-y-3 border-b border-[#F1F0F5] px-4 py-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block"><span className={label}>Page title</span><input className={`${field} mt-1`} value={combo.title} onChange={(e) => setCombo({ ...combo, title: e.target.value, alias: combo.id ? combo.alias : aliasify(e.target.value) })} placeholder="Book a time with me" /></label>
                   <label className="block"><span className={label}>Alias</span><div className="mt-1 flex items-center gap-1"><span className="text-[13px] text-[#7A7787]">/book/{slug}/</span><input className={field} value={combo.alias} onChange={(e) => setCombo({ ...combo, alias: aliasify(e.target.value) })} /></div></label>
@@ -206,20 +206,20 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
             )}
 
             {data.schedulers.length === 0 ? (
-              <div className="flex flex-col items-center px-5 py-12 text-center">
+              <div className="flex flex-col items-center px-4 py-12 text-center">
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#E1D9F2] bg-[#F3EEFB] text-[#301D5D]"><CalendarCheck className="h-7 w-7" aria-hidden="true" /></span>
                 <h4 className="mt-4 text-[22px] font-semibold text-[#1B1726]">No schedulers yet</h4>
                 <p className="mt-2 max-w-[440px] text-[15px] text-[#7A7787]">Create a scheduler — set your availability, meeting length, and let people book time with you automatically.</p>
-                <button type="button" className={`${primary} mt-5 px-6 py-2.5 text-[14px]`} onClick={startNew}><Plus className="h-4 w-4" aria-hidden="true" />Create your first scheduler</button>
+                <button type="button" className={`${primary} mt-4 px-6 py-3 text-[14px]`} onClick={startNew}><Plus className="h-4 w-4" aria-hidden="true" />Create your first scheduler</button>
               </div>
             ) : (
               <ul>
                 {data.schedulers.map((s) => (
-                  <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F1F0F5] px-5 py-4 last:border-0">
+                  <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F1F0F5] px-4 py-4 last:border-0">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-[15px] font-semibold text-[#1B1726]">{s.config.name}</span>
-                        <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${s.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#F1F0F5] text-[#7A7787]'}`}>{s.active ? 'On' : 'Off'}</span>
+                        <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${s.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#F1F0F5] text-[#7A7787]'}`}>{s.active ? 'On' : 'Off'}</span>
                       </div>
                       <div className="text-[13px] text-[#7A7787]">{s.config.lengths.map((l) => `${l} min`).join(' / ')} · {s.config.bookingCalendarName || 'Closing Time Calendar'} · {s.upcoming} upcoming</div>
                       <div className="mt-0.5 truncate text-[13px] text-[#4A4757]">{urlOf(s.alias)}</div>
@@ -237,7 +237,7 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
               </ul>
             )}
             {data.combos.length > 0 && (
-              <div className="border-t border-[#E6E5EC] px-5 py-4">
+              <div className="border-t border-[#E6E5EC] px-4 py-4">
                 <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]">Combined Links</div>
                 <ul className="mt-2 space-y-2">
                   {data.combos.map((c) => (
@@ -257,13 +257,13 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
 
           {data.bookings.length > 0 && (
             <section className={card}>
-              <h3 className="border-b border-[#F1F0F5] px-5 py-4 text-[16px] font-semibold text-[#1B1726]">Bookings</h3>
+              <h3 className="border-b border-[#F1F0F5] px-4 py-4 text-[16px] font-semibold text-[#1B1726]">Bookings</h3>
               <ul>
                 {data.bookings.map((b) => {
                   const past = b.past;
                   const when = new Date(b.start).toLocaleString('en-US', { timeZone: b.timezone, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: b.timeFormat === '12h' });
                   return (
-                    <li key={b.id} className={`flex flex-wrap items-start justify-between gap-3 border-b border-[#F1F0F5] px-5 py-3 last:border-0 ${b.status !== 'booked' || past ? 'opacity-60' : ''}`}>
+                    <li key={b.id} className={`flex flex-wrap items-start justify-between gap-3 border-b border-[#F1F0F5] px-4 py-3 last:border-0 ${b.status !== 'booked' || past ? 'opacity-60' : ''}`}>
                       <div className="min-w-0">
                         <div className="text-[14px] font-semibold text-[#1B1726]">{b.name} · {b.schedulerName}</div>
                         <div className="text-[13px] text-[#4A4757]">{when} ({b.timezone}){b.status !== 'booked' ? ' · Cancelled' : past ? ' · Done' : ''}</div>
@@ -362,7 +362,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
 
   const body: ReactNode[] = [
     // 1. Select Calendars
-    <div key="s1" className="space-y-5">
+    <div key="s1" className="space-y-4">
       <div>
         <span className={label}>Select Booking Calendar</span>
         <p className={hint}>Select the calendar you would like to use for scheduling.</p>
@@ -370,7 +370,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
           <option value="">Select a calendar</option>
           {calOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
         </select>
-        {!data.account && <p className="mt-1.5 text-[12px] text-[#7A7787]">Connect Google Calendar or Outlook in Integrations to book straight onto your calendar and check it for busy times.</p>}
+        {!data.account && <p className="mt-2 text-[12px] text-[#7A7787]">Connect Google Calendar or Outlook in Integrations to book straight onto your calendar and check it for busy times.</p>}
       </div>
       <div>
         <span className={label}>Additional Calendars</span>
@@ -409,7 +409,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
         <p className={hint}>Pick where this scheduler lives under your custom URL.</p>
         <div className="mt-2 space-y-2">
           <label className={`block cursor-pointer rounded-xl border p-4 ${c.urlMode === 'alias' ? 'border-[#301D5D] bg-[#F6F3FB]' : 'border-[#E6E5EC]'}`}>
-            <span className="flex items-center gap-2.5"><input type="radio" name="urlmode" checked={c.urlMode === 'alias'} onChange={() => set('urlMode', 'alias')} className="accent-[#301D5D]" /><span className="text-[14px] font-semibold text-[#1B1726]">Custom alias</span></span>
+            <span className="flex items-center gap-3"><input type="radio" name="urlmode" checked={c.urlMode === 'alias'} onChange={() => set('urlMode', 'alias')} className="accent-[#301D5D]" /><span className="text-[14px] font-semibold text-[#1B1726]">Custom alias</span></span>
             <span className="ml-6 block text-[13px] text-[#7A7787]">Choose a memorable name under your URL.</span>
             {c.urlMode === 'alias' && (
               <span className="ml-6 mt-2 block">
@@ -417,12 +417,12 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
                   <span className="text-[#7A7787]">{aliasPlaceholder}</span>
                   <input className="min-w-0 flex-1 py-2 font-mono text-[13px] text-[#1B1726] focus:outline-none" value={c.alias} onChange={(e) => set('alias', aliasify(e.target.value))} aria-label="Alias" />
                 </span>
-                {!c.alias && <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[12px] text-[#7A7787]"><Info className="h-3.5 w-3.5" aria-hidden="true" />Pick an alias for this scheduler.</span>}
+                {!c.alias && <span className="mt-2 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[12px] text-[#7A7787]"><Info className="h-3.5 w-3.5" aria-hidden="true" />Pick an alias for this scheduler.</span>}
               </span>
             )}
           </label>
           <label className={`block rounded-xl border p-4 ${rootTaken ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} ${c.urlMode === 'root' ? 'border-[#301D5D] bg-[#F6F3FB]' : 'border-[#E6E5EC]'}`}>
-            <span className="flex items-center gap-2.5"><input type="radio" name="urlmode" disabled={rootTaken} checked={c.urlMode === 'root'} onChange={() => set('urlMode', 'root')} className="accent-[#301D5D]" /><span className="text-[14px] font-semibold text-[#1B1726]">Use root URL</span></span>
+            <span className="flex items-center gap-3"><input type="radio" name="urlmode" disabled={rootTaken} checked={c.urlMode === 'root'} onChange={() => set('urlMode', 'root')} className="accent-[#301D5D]" /><span className="text-[14px] font-semibold text-[#1B1726]">Use root URL</span></span>
             <span className="ml-6 block text-[13px] text-[#7A7787]">{rootTaken ? 'Another scheduler already uses the root URL.' : 'Use your custom URL with no alias. You can only use the root for one scheduler.'}</span>
           </label>
         </div>
@@ -430,7 +430,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
     </div>,
 
     // 2. Availability
-    <div key="s2" className="space-y-5">
+    <div key="s2" className="space-y-4">
       <div>
         <span className={label}>Meeting Length</span>
         <p className={hint}>Select how long meetings should be for this scheduler.</p>
@@ -490,7 +490,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
     </div>,
 
     // 3. Event Details
-    <div key="s3" className="space-y-5">
+    <div key="s3" className="space-y-4">
       <div>
         <span className={label}>Event Subject</span>
         <p className={hint}>Use template variables: {['{invitee_name}', '{invitee_email}', '{my_name}', '{subject}'].map((v, i) => <span key={v}><code className="rounded bg-[#F1F0F5] px-1 text-[12px] text-[#1B1726]">{v}</code>{i < 3 ? ', ' : '.'}</span>)}</p>
@@ -573,7 +573,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
             <li key={q.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-[#E6E5EC] p-2">
               <input className={`${field} min-w-[180px] flex-1`} value={q.label} placeholder="Question" onChange={(e) => set('questions', c.questions.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
               <select className={`${field} w-auto`} value={q.type} onChange={(e) => set('questions', c.questions.map((x, j) => (j === i ? { ...x, type: e.target.value as typeof q.type } : x)))}><option value="text">Short answer</option><option value="textarea">Long answer</option><option value="phone">Phone</option></select>
-              <label className="flex items-center gap-1.5 text-[13px] text-[#1B1726]"><input type="checkbox" checked={q.required} onChange={(e) => set('questions', c.questions.map((x, j) => (j === i ? { ...x, required: e.target.checked } : x)))} />Required</label>
+              <label className="flex items-center gap-2 text-[13px] text-[#1B1726]"><input type="checkbox" checked={q.required} onChange={(e) => set('questions', c.questions.map((x, j) => (j === i ? { ...x, required: e.target.checked } : x)))} />Required</label>
               <button type="button" aria-label="Remove question" className="p-1 text-[#7A7787] hover:text-[#661102]" onClick={() => set('questions', c.questions.filter((_, j) => j !== i))}><X className="h-4 w-4" /></button>
             </li>
           ))}
@@ -583,7 +583,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
     </div>,
 
     // 4. Appearance And Branding
-    <div key="s4" className="space-y-5">
+    <div key="s4" className="space-y-4">
       <div>
         <span className={label}>Welcome text</span>
         <p className={hint}>Customize the welcome text that appears booking page</p>
@@ -599,15 +599,15 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
         <label className="block"><span className={label}>Booker&apos;s Locale</span><select className={`${field} mt-2`} value={c.bookerLocale} onChange={(e) => set('bookerLocale', e.target.value as SchedulerConfig['bookerLocale'])}><option value="auto">Auto</option><option value="en">English</option><option value="es">Spanish</option></select></label>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div><span className={label}>Time format:</span><div className="mt-2 flex gap-4 text-[14px] text-[#1B1726]">{(['12h', '24h'] as const).map((f) => <label key={f} className="flex items-center gap-1.5"><input type="radio" className="accent-[#301D5D]" checked={c.timeFormat === f} onChange={() => set('timeFormat', f)} />{f === '12h' ? '12h (am/pm)' : '24h'}</label>)}</div></div>
-        <div><span className={label}>First Day Of Week</span><div className="mt-2 flex gap-4 text-[14px] text-[#1B1726]">{(['sunday', 'monday'] as const).map((f) => <label key={f} className="flex items-center gap-1.5"><input type="radio" className="accent-[#301D5D]" checked={c.weekStart === f} onChange={() => set('weekStart', f)} />{f === 'sunday' ? 'Sunday' : 'Monday'}</label>)}</div></div>
+        <div><span className={label}>Time format:</span><div className="mt-2 flex gap-4 text-[14px] text-[#1B1726]">{(['12h', '24h'] as const).map((f) => <label key={f} className="flex items-center gap-2"><input type="radio" className="accent-[#301D5D]" checked={c.timeFormat === f} onChange={() => set('timeFormat', f)} />{f === '12h' ? '12h (am/pm)' : '24h'}</label>)}</div></div>
+        <div><span className={label}>First Day Of Week</span><div className="mt-2 flex gap-4 text-[14px] text-[#1B1726]">{(['sunday', 'monday'] as const).map((f) => <label key={f} className="flex items-center gap-2"><input type="radio" className="accent-[#301D5D]" checked={c.weekStart === f} onChange={() => set('weekStart', f)} />{f === 'sunday' ? 'Sunday' : 'Monday'}</label>)}</div></div>
       </div>
       <ImagePick title="Upload A Banner Image (optional)" icon={<ImageIcon className="h-4 w-4" />} has={banner === undefined ? initial.hasBanner : Boolean(banner)} file={banner} onPick={setBanner} />
       <ImagePick title="Upload An Avatar Image (optional)" icon={<UserRound className="h-4 w-4" />} round has={avatar === undefined ? initial.hasAvatar : Boolean(avatar)} file={avatar} onPick={setAvatar} />
     </div>,
 
     // 5. Workflow
-    <div key="s5" className="space-y-5">
+    <div key="s5" className="space-y-4">
       <p className="text-[14px] text-[#1B1726]">Automate what happens around a booked meeting: send reminder emails before it and a follow-up after it.</p>
       <div>
         <span className={label}>Reminder emails</span>
@@ -644,18 +644,18 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
         <button type="button" className="rounded-full border border-[#F1C9C1] px-3 py-1 text-[13px] font-medium text-[#661102] hover:bg-[#FFEAE6]" onClick={() => { if (window.confirm(initial.id ? 'Discard your changes?' : 'Cancel this scheduler?')) onClose(); }}>Cancel scheduler</button>
       </div>
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {STEPS.map((title, i) => {
             const open = i === step;
             return (
               <section key={title} className={card}>
-                <button type="button" className={`flex w-full items-center gap-3 px-5 ${open ? 'border-b border-[#F1F0F5] py-4' : 'py-3'} text-left`} aria-expanded={open} onClick={() => { if (i < step || !stepError(step)) { setError(''); setStep(i); } else setError(stepError(step)); }}>
+                <button type="button" className={`flex w-full items-center gap-3 px-4 ${open ? 'border-b border-[#F1F0F5] py-4' : 'py-3'} text-left`} aria-expanded={open} onClick={() => { if (i < step || !stepError(step)) { setError(''); setStep(i); } else setError(stepError(step)); }}>
                   <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold ${open ? 'bg-[#301D5D] text-white' : 'bg-[#F1F0F5] text-[#4A4757]'}`}>{i + 1}</span>
                   <span className={`flex-1 ${open ? 'text-[16px] font-semibold' : 'text-[14px] font-semibold'} text-[#1B1726]`}>{title}{OPTIONAL.has(i) && <span className="ml-1 font-normal text-[#7A7787]"> (optional)</span>}</span>
                   {!open && <ChevronRight className="h-4 w-4 text-[#9A98A6]" aria-hidden="true" />}
                 </button>
                 {open && (
-                  <div className="p-5">
+                  <div className="p-4">
                     {body[i]}
                     {error && <p role="alert" className="mt-4 text-[13px] font-medium text-[#661102]">{error}</p>}
                     <div className="mt-6 flex items-center justify-between">
@@ -676,16 +676,16 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
           )}
         </div>
 
-        <aside className={`${card} p-5 lg:sticky lg:top-4`}>
+        <aside className={`${card} p-4 lg:sticky lg:top-4`}>
           <h3 className="text-[15px] font-semibold text-[#1B1726]">{c.name.trim() || 'My scheduler'}</h3>
           <p className="mt-0.5 text-[13px] text-[#7A7787]">{c.bookingCalendar ? c.bookingCalendarName || 'Closing Time Calendar' : 'No calendar selected'}</p>
-          <div className="mt-3 flex items-center gap-1.5 truncate rounded-lg bg-[#F7F6FA] px-3 py-2 text-[13px] text-[#1B1726]"><Link2 className="h-3.5 w-3.5 shrink-0 text-[#7A7787]" aria-hidden="true" /><span className="truncate">{urlPreview}</span></div>
-          <dl className="mt-4 space-y-2.5 border-b border-[#F1F0F5] pb-4">
+          <div className="mt-3 flex items-center gap-2 truncate rounded-lg bg-[#F7F6FA] px-3 py-2 text-[13px] text-[#1B1726]"><Link2 className="h-3.5 w-3.5 shrink-0 text-[#7A7787]" aria-hidden="true" /><span className="truncate">{urlPreview}</span></div>
+          <dl className="mt-4 space-y-3 border-b border-[#F1F0F5] pb-4">
             {summaryRows.map(([k, v]) => <div key={k} className="flex justify-between gap-3 text-[13px]"><dt className="text-[#7A7787]">{k}</dt><dd className="text-right font-medium text-[#1B1726]">{v}</dd></div>)}
           </dl>
           <div className="pt-4">
             <div className="text-[14px] font-semibold text-[#1B1726]">Weekly hours</div>
-            <dl className="mt-2.5 space-y-2.5">
+            <dl className="mt-3 space-y-3">
               {onDays.map((d) => <div key={d.key} className="flex justify-between text-[13px]"><dt className="text-[#1B1726]">{d.label}</dt><dd className="text-[#4A4757]">{timeLabel(c.hours[d.key].start, c.timeFormat)} – {timeLabel(c.hours[d.key].end, c.timeFormat)}</dd></div>)}
               {!onDays.length && <p className="text-[13px] text-[#7A7787]">No days on</p>}
             </dl>

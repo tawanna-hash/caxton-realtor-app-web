@@ -49,7 +49,7 @@ export default function AboutPage() {
           always will be.
         </p>
 
-        <hr className="border-gray-200 my-10" />
+        <hr className="border-gray-200 my-8" />
 
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
@@ -105,9 +105,9 @@ export default function AboutPage() {
           </div>
         </div>
 
-        <hr className="border-gray-200 my-10" />
+        <hr className="border-gray-200 my-8" />
 
-        <div className="bg-gray-50 border-l-4 border-brand-700 px-6 py-5">
+        <div className="bg-gray-50 border-l-4 border-brand-700 px-6 py-4">
           <p className="text-base font-medium text-gray-900 mb-2">
             A note from our team
           </p>

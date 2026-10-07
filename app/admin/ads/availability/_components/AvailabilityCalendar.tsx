@@ -259,7 +259,7 @@ export default function AvailabilityCalendar() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <AdOpsMetrics
         label={`${monthLabel(year, month0)} booking summary`}
         items={[
@@ -280,7 +280,7 @@ export default function AvailabilityCalendar() {
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className={`${AD_OPS_CONTROL} w-full pl-9`}
+              className={`${AD_OPS_CONTROL} w-full pl-8`}
               placeholder="Partner, placement, publication, or status"
             />
           </span>
@@ -349,7 +349,7 @@ export default function AvailabilityCalendar() {
         {/* Legend */}
         <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
           {AD_CHANNELS.map((c) => (
-            <span key={c} className="flex items-center gap-1.5">
+            <span key={c} className="flex items-center gap-2">
               <span className={`inline-block w-2.5 h-2.5 rounded-full ${CHANNEL_DOT_CLASS[c]}`} />
               {AD_CHANNEL_LABEL[c]}
             </span>
@@ -377,7 +377,7 @@ export default function AvailabilityCalendar() {
         <div className="min-w-[760px]">
         <div className="grid grid-cols-7 bg-gray-50 text-xs font-medium text-gray-600 uppercase">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-            <div key={d} className="px-2 py-1.5 text-center border-b border-gray-200">
+            <div key={d} className="px-2 py-2 text-center border-b border-gray-200">
               {d}
             </div>
           ))}
@@ -396,7 +396,7 @@ export default function AvailabilityCalendar() {
             return (
               <div
                 key={iso}
-                className={`min-h-[5.5rem] border-b border-r border-gray-100 px-1.5 py-1 ${
+                className={`min-h-[5.5rem] border-b border-r border-gray-100 px-2 py-1 ${
                   isToday ? 'bg-[#F6F3FB]/60' : 'bg-white'
                 }`}
               >
@@ -408,7 +408,7 @@ export default function AvailabilityCalendar() {
                     <Link
                       key={`${b.id}-${iso}`}
                       href={detailHref(b)}
-                      className={`block truncate rounded-md px-1.5 py-0.5 text-[10px] border ${CHANNEL_BADGE_CLASS[b.channel]} hover:opacity-80`}
+                      className={`block truncate rounded-md px-2 py-0.5 text-[10px] border ${CHANNEL_BADGE_CLASS[b.channel]} hover:opacity-80`}
                       title={`${b.advertiser_name ?? 'Unknown partner'} — ${b.slot_or_size ?? ''}`}
                     >
                       {b.advertiser_name ?? '—'}
@@ -448,7 +448,7 @@ export default function AvailabilityCalendar() {
         {loading ? (
           <div className="px-4 py-8 text-center text-sm text-gray-600">Loading bookings…</div>
         ) : monthBookings.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-gray-600">
+          <div className="px-4 py-8 text-center text-sm text-gray-600">
             {query ? 'No bookings match this search.' : 'No bookings overlap this month.'}
           </div>
         ) : (
@@ -464,7 +464,7 @@ export default function AvailabilityCalendar() {
                     >
                       {AD_CHANNEL_LABEL[b.channel]}
                     </span>
-                    <p className="mt-1.5 truncate font-medium text-gray-900">
+                    <p className="mt-2 truncate font-medium text-gray-900">
                       {b.advertiser_name ?? '—'}
                     </p>
                   </div>
@@ -503,7 +503,7 @@ export default function AvailabilityCalendar() {
               <tbody className="divide-y divide-gray-100">
                 {monthBookings.map((b) => (
                   <tr key={b.id} className="hover:bg-[#F6F3FB]/40">
-                    <td className="px-4 py-2.5">
+                    <td className="px-4 py-3">
                       <span
                         className={`inline-flex items-center rounded border px-2 py-0.5 text-xs ${CHANNEL_BADGE_CLASS[b.channel]}`}
                       >

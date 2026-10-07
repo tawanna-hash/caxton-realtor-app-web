@@ -173,7 +173,7 @@ function EditableField({
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
         placeholder={placeholder}
-        className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-700 focus:border-brand-700"
+        className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-700 focus:border-brand-700"
       />
     </div>
   );
@@ -194,7 +194,7 @@ function EditableSelect({
       <select
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
-        className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand-700 focus:border-brand-700"
+        className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand-700 focus:border-brand-700"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -206,7 +206,7 @@ function EditableSelect({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white border border-gray-200 rounded-md p-5 mb-4">
+    <section className="bg-white border border-gray-200 rounded-md p-4 mb-4">
       <h2 className="text-sm font-semibold text-brand-700 uppercase tracking-wide mb-3">{title}</h2>
       <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6">{children}</dl>
     </section>
@@ -606,7 +606,7 @@ return (
           </Section>
 
           {!editing && (
-            <section className="bg-white border border-gray-200 rounded-md p-5 mt-8">
+            <section className="bg-white border border-gray-200 rounded-md p-4 mt-8">
               <h2 className="text-sm font-semibold text-brand-700 uppercase tracking-wide mb-4">Actions</h2>
 
               <div className="space-y-4">
@@ -620,7 +620,7 @@ return (
                       <button
                         onClick={() => setMagicLinkConfirm(false)}
                         disabled={sendingLink}
-                        className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="text-sm px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                       >
                         Cancel
                       </button>
@@ -635,7 +635,7 @@ return (
                   ) : (
                     <button
                       onClick={() => { setMagicLinkConfirm(true); setActionMsg(null); }}
-                      className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      className="text-sm px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                     >
                       Send magic link
                     </button>
@@ -657,14 +657,14 @@ return (
                       <button
                         onClick={() => setDeactivateConfirm(false)}
                         disabled={deactivating}
-                        className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="text-sm px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={doDeactivate}
                         disabled={deactivating}
-                        className="text-sm font-medium px-3 py-1.5 rounded-md bg-[#645600] text-white hover:bg-[#645600] disabled:opacity-50"
+                        className="text-sm font-medium px-3 py-2 rounded-md bg-[#645600] text-white hover:bg-[#645600] disabled:opacity-50"
                       >
                         {deactivating ? 'Deactivating…' : 'Confirm deactivate'}
                       </button>
@@ -672,7 +672,7 @@ return (
                   ) : (
                     <button
                       onClick={() => { setDeactivateConfirm(true); setActionMsg(null); }}
-                      className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      className="text-sm px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                     >
                       Deactivate
                     </button>
@@ -689,7 +689,7 @@ return (
                   </div>
                   <button
                     onClick={() => { setDeleteModalOpen(true); setDeleteConfirmText(''); setActionMsg(null); }}
-                    className="text-sm font-medium px-3 py-1.5 rounded-md border border-[#661102] text-[#661102] hover:bg-[#FFEAE6]"
+                    className="text-sm font-medium px-3 py-2 rounded-md border border-[#661102] text-[#661102] hover:bg-[#FFEAE6]"
                   >
                     Delete…
                   </button>
@@ -718,13 +718,13 @@ return (
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder={sub.email}
               autoFocus
-              className="mt-2 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#661102] focus:border-[#661102]"
+              className="mt-2 block w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#661102] focus:border-[#661102]"
             />
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="mt-4 flex justify-end gap-2">
               <button
                 onClick={() => { setDeleteModalOpen(false); setDeleteConfirmText(''); }}
                 disabled={deleting}
-                className="text-sm px-4 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="text-sm px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
                 Cancel
               </button>

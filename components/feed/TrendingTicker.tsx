@@ -194,7 +194,7 @@ export default function TrendingTicker({ market, className = '' }: Props) {
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#42277C] bg-[#F6F3FB] px-1.5 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#42277C] bg-[#F6F3FB] px-2 py-0.5 rounded-full">
               <span aria-hidden>{current.icon_prefix || '🔥'}</span>
               Trending
             </span>

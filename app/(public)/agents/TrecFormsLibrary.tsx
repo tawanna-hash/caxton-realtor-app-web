@@ -65,7 +65,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
 
   const libraryBody = (
     <>
-        <div className={`${embedded ? 'mt-4' : 'mt-7'} grid gap-3 lg:grid-cols-[minmax(260px,0.8fr)_1.2fr]`}>
+        <div className={`${embedded ? 'mt-4' : 'mt-6'} grid gap-3 lg:grid-cols-[minmax(260px,0.8fr)_1.2fr]`}>
           <label className="relative block">
             <span className="sr-only">Search TREC Forms</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
@@ -74,7 +74,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
               value={query}
               onChange={(event) => { setQuery(event.target.value); setPage(1); }}
               placeholder="Search by form name or number"
-              className="h-[40px] w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]"
+              className="h-[40px] w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]"
             />
           </label>
           <div className="flex flex-wrap gap-2" aria-label="Filter TREC forms by category">
@@ -83,7 +83,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
                 key={option}
                 type="button"
                 onClick={() => { setCategory(option); setPage(1); }}
-                className={`rounded-full border font-medium transition h-[36px] px-3.5 text-sm ${
+                className={`rounded-full border font-medium transition h-[36px] px-4 text-sm ${
                   category === option
                     ? 'border-[#301D5D] bg-[#301D5D] text-white'
                     : 'border-slate-300 bg-white text-slate-700 hover:border-[#7059A8] hover:bg-[#F8F5FF]'
@@ -142,7 +142,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
         ) : (
         <div className={`mt-4 grid gap-3 md:grid-cols-2 ${embedded ? 'max-h-[340px] overflow-y-auto overscroll-contain pr-1' : ''}`}>
           {pagedForms.map((form) => (
-            <article key={form.formFamily} className={`flex min-w-0 flex-col justify-between gap-5 rounded-xl border border-slate-200 p-5 ${'bg-white'}`}>
+            <article key={form.formFamily} className={`flex min-w-0 flex-col justify-between gap-4 rounded-xl border border-slate-200 p-4 ${'bg-white'}`}>
               <div className="flex min-w-0 items-start gap-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFEAF8] text-[#5B3FA0]">
                   <FileText className="h-5 w-5" aria-hidden="true" />

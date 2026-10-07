@@ -530,14 +530,14 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             <button
               type="button"
               onClick={() => setViewMode('single')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-l-md ${viewMode === 'single' ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`px-3 py-2 text-sm font-medium rounded-l-md ${viewMode === 'single' ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
             >
               Single
             </button>
             <button
               type="button"
               onClick={() => setViewMode('spread')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-r-md border-l border-gray-300 ${viewMode === 'spread' ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`px-3 py-2 text-sm font-medium rounded-r-md border-l border-gray-300 ${viewMode === 'spread' ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
             >
               Spread
             </button>
@@ -549,7 +549,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             <button
               type="button"
               onClick={() => setShowCopyDialog(true)}
-              className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Copy from previous
             </button>
@@ -558,7 +558,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             type="button"
             onClick={dedupeHotspots}
             disabled={extracting}
-            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+            className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
             title="Find hotspots on the same page that point to the same URL / email / phone, keep the best one, delete the rest."
           >
             Remove duplicates
@@ -567,7 +567,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             type="button"
             onClick={() => setShowExtractDialog(true)}
             disabled={extracting}
-            className="px-3 py-1.5 text-sm font-medium text-white bg-purple-700 rounded-md hover:bg-purple-800 disabled:opacity-50"
+            className="px-3 py-2 text-sm font-medium text-white bg-purple-700 rounded-md hover:bg-purple-800 disabled:opacity-50"
             title="Auto-populate hotspots: embedded PDF links, page-text scan (emails/phones/URLs), QR codes, and logo matches. Manual and edited-import hotspots are preserved."
           >
             {extracting
@@ -601,7 +601,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
           type="button"
           onClick={() => setCurrentPageIdx((i) => Math.max(0, i - (viewMode === 'spread' ? 2 : 1)))}
           disabled={currentPageIdx === 0}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+          className="px-3 py-2 text-sm border border-gray-300 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
         >
           ← Previous
         </button>
@@ -628,7 +628,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
           type="button"
           onClick={() => setCurrentPageIdx((i) => Math.min(magazine.page_count - 1, i + (viewMode === 'spread' ? 2 : 1)))}
           disabled={currentPageIdx >= magazine.page_count - 1}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+          className="px-3 py-2 text-sm border border-gray-300 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
         >
           Next →
         </button>
@@ -976,11 +976,11 @@ function EditorPage({
           bottom center; Extract-page runs the same four-pass pipeline as
           Extract-all but scoped to this page (edited-imports on the page
           survive, other pages are untouched). */}
-      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
         <button
           type="button"
           onClick={onCreate}
-          className="px-3 py-1.5 text-xs font-medium bg-gray-900 text-white rounded-md shadow-lg hover:bg-gray-800 whitespace-nowrap"
+          className="px-3 py-2 text-xs font-medium bg-gray-900 text-white rounded-md shadow-lg hover:bg-gray-800 whitespace-nowrap"
         >
           + Add hotspot to page {pageIdx + 1}
         </button>
@@ -989,7 +989,7 @@ function EditorPage({
           onClick={onExtract}
           disabled={extracting}
           title="Re-run the four extractor passes for this page only. Your edits on this page are preserved."
-          className="px-2.5 py-1.5 text-xs font-medium bg-white text-gray-800 border border-gray-300 rounded-md shadow-lg hover:bg-gray-50 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-2 text-xs font-medium bg-white text-gray-800 border border-gray-300 rounded-md shadow-lg hover:bg-gray-50 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {extracting ? 'Extracting…' : 'Extract page'}
         </button>
@@ -1147,7 +1147,7 @@ function DraggableHotspot({
           selected ? 'opacity-100' : 'opacity-0 group-hover/hotspot:opacity-100'
         } ${labelBelow ? '-bottom-6' : '-top-6'}`}
       >
-        <span className={`px-1.5 py-0.5 bg-white/95 border border-gray-300 rounded shadow-sm ${colors.text}`}>
+        <span className={`px-2 py-0.5 bg-white/95 border border-gray-300 rounded shadow-sm ${colors.text}`}>
           <span className="font-semibold">#{number}</span> · {TYPE_LABELS[hotspot.type]}
           {hotspot.label ? ` · ${hotspot.label}` : ''}
         </span>
@@ -1483,7 +1483,7 @@ function SidebarRow({
         {number}
       </span>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 justify-between">
+        <div className="flex items-center gap-2 justify-between">
           <span className={`font-medium ${colors.text} truncate flex items-center gap-1`} title={hotspot.label ?? undefined}>
             <span aria-hidden>{TYPE_ICONS[hotspot.type]}</span>
             {isLogoMatch && (
@@ -1518,14 +1518,14 @@ function SidebarRow({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onEdit(); }}
-              className="px-1.5 py-0.5 text-[10px] border border-gray-300 rounded hover:bg-white"
+              className="px-2 py-0.5 text-[10px] border border-gray-300 rounded hover:bg-white"
             >
               Edit
             </button>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onMoveZ('forward'); }}
-              className="px-1.5 py-0.5 text-[10px] border border-gray-300 rounded hover:bg-white"
+              className="px-2 py-0.5 text-[10px] border border-gray-300 rounded hover:bg-white"
               title="Bring forward"
             >
               ↑
@@ -1533,7 +1533,7 @@ function SidebarRow({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onMoveZ('backward'); }}
-              className="px-1.5 py-0.5 text-[10px] border border-gray-300 rounded hover:bg-white"
+              className="px-2 py-0.5 text-[10px] border border-gray-300 rounded hover:bg-white"
               title="Send backward"
             >
               ↓

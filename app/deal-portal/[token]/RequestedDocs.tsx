@@ -39,7 +39,7 @@ function Row({ token, req }: { token: string; req: Req }) {
           <span className="text-[12px] font-medium" style={{ color: status === 'pending' ? '#7A7787' : '#301D5D' }}>{STATUS[status]}</span>
           {status !== 'received' && (
             <>
-              <button type="button" disabled={busy} onClick={() => input.current?.click()} className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white disabled:opacity-45">
+              <button type="button" disabled={busy} onClick={() => input.current?.click()} className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white disabled:opacity-45">
                 {busy ? 'Uploading' : status === 'pending' ? 'Upload' : 'Upload More'}
               </button>
               <input ref={input} type="file" multiple accept="application/pdf,image/*" className="sr-only" onChange={(e) => { const list = e.target.files; if (list?.length) void send(Array.from(list)); e.target.value = ''; }} />
@@ -57,7 +57,7 @@ export default function RequestedDocs({ token, requests, agentName }: { token: s
   if (requests.length === 0) return null;
   return (
     <section className="rounded-[10px] border border-[#301D5D] bg-white">
-      <h2 className="border-b border-[#E6E5EC] px-4 py-3.5 text-[14px] font-semibold text-[#1B1726]">Requested From You</h2>
+      <h2 className="border-b border-[#E6E5EC] px-4 py-4 text-[14px] font-semibold text-[#1B1726]">Requested From You</h2>
       <ul className="px-4">{requests.map((r) => <Row key={r.id} token={token} req={r} />)}</ul>
     </section>
   );

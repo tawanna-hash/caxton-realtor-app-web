@@ -7,7 +7,7 @@ import SentPanel, { type SentRow } from '../_components/SentPanel';
 export default function CrmSentPage() {
   const router = useRouter();
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Sales</div>

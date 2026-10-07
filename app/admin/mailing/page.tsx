@@ -164,7 +164,7 @@ export default async function MailingHubPage() {
           </span>
           <Link
             href="/admin/mailing/publication/realtyline"
-            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
+            className="group/dl inline-flex items-center gap-2 px-3 py-2 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
           >
             <span>RealtyLine (Austin)</span>
             <span
@@ -176,7 +176,7 @@ export default async function MailingHubPage() {
           </Link>
           <Link
             href="/admin/mailing/publication/newsline"
-            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#42277C] text-[#42277C] text-xs font-semibold hover:bg-[#42277C] hover:text-white transition"
+            className="group/dl inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[#42277C] text-[#42277C] text-xs font-semibold hover:bg-[#42277C] hover:text-white transition"
           >
             <span>Newsline (San Antonio)</span>
             <span
@@ -188,7 +188,7 @@ export default async function MailingHubPage() {
           </Link>
           <Link
             href="/admin/mailing/publication/realtyline-houston"
-            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
+            className="group/dl inline-flex items-center gap-2 px-3 py-2 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
           >
             <span>RealtyLine Houston</span>
             <span
@@ -200,7 +200,7 @@ export default async function MailingHubPage() {
           </Link>
           <Link
             href="/admin/mailing/publication/realtyline-dallas"
-            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
+            className="group/dl inline-flex items-center gap-2 px-3 py-2 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
           >
             <span>RealtyLine Dallas/Ft. Worth</span>
             <span
@@ -283,7 +283,7 @@ export default async function MailingHubPage() {
         };
 
         return (
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div>
               <div className="mb-2 flex items-baseline gap-3">
                 <h2 className="text-sm font-semibold text-gray-900">RealtyLine Austin</h2>
@@ -349,7 +349,7 @@ export default async function MailingHubPage() {
           </Link>
         );
         return (
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div>
               <div className="mb-2 flex items-baseline gap-3">
                 <h2 className="text-sm font-semibold text-gray-900">RealtyLine Austin Audience Pages</h2>

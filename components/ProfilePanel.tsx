@@ -53,7 +53,7 @@ export default function ProfilePanel({ user, accentColor = '#301D5D', onClose }:
         aria-label="Profile"
       >
         <div
-          className="px-5 py-4 sticky top-0 z-10 flex items-center justify-between"
+          className="px-4 py-4 sticky top-0 z-10 flex items-center justify-between"
           style={{ backgroundColor: accentColor }}
         >
           <div className="min-w-0">
@@ -72,7 +72,7 @@ export default function ProfilePanel({ user, accentColor = '#301D5D', onClose }:
           </button>
         </div>
 
-        <div className="p-5 space-y-5">
+        <div className="p-4 space-y-4">
           <PasswordSection accentColor={accentColor} hasPassword={!!user?.hasPassword} />
 
           {/* Native-only: Face ID / Touch ID app-lock toggle. Renders

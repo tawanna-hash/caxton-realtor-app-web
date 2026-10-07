@@ -11,7 +11,7 @@ type View = {
   forms: { family: string; label: string }[];
 };
 
-const btn = 'inline-flex items-center rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white disabled:opacity-45';
+const btn = 'inline-flex items-center rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white disabled:opacity-45';
 const card = 'rounded-[10px] border border-[#E6E5EC] bg-white';
 const lab = 'text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]';
 const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
@@ -100,7 +100,7 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
               const l = linkFor(p);
               return l
                 ? <a key={p.key} className={`${btn} w-full justify-center`} href={urlOf(l)} target="_blank" rel="noreferrer">View As {firstName(p.name)}</a>
-                : <span key={p.key} className="block rounded-lg border border-dashed border-[#E6E5EC] px-3 py-1.5 text-center text-[13px] font-medium text-[#7A7787]">View As {firstName(p.name)} (Create Link First)</span>;
+                : <span key={p.key} className="block rounded-lg border border-dashed border-[#E6E5EC] px-3 py-2 text-center text-[13px] font-medium text-[#7A7787]">View As {firstName(p.name)} (Create Link First)</span>;
             })}
             {people.length === 0 && <p className="text-[14px] text-[#4A4757]">Add the buyers or sellers on the People tab first.</p>}
           </div>
@@ -133,7 +133,7 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
                         {l && <button type="button" disabled={busy === p.key} className={btn} onClick={() => { if (window.confirm(`Turn off ${firstName(p.name)}'s link?`)) void act(p, { disable: true }); }}>Turn Off</button>}
                       </div>
                     </div>
-                    {l && <input readOnly value={urlOf(l)} aria-label={`${p.name} link`} onFocus={(e) => e.currentTarget.select()} className="mt-2 w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-1.5 text-[12px] font-medium text-[#4A4757]" />}
+                    {l && <input readOnly value={urlOf(l)} aria-label={`${p.name} link`} onFocus={(e) => e.currentTarget.select()} className="mt-2 w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[12px] font-medium text-[#4A4757]" />}
                   </li>
                 );
               })}
@@ -145,7 +145,7 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
       </div>
 
       <section className={card}>
-        <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3.5">
+        <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-4">
           <h3 className="text-[14px] font-semibold text-[#1B1726]">What {names} See</h3>
           {view && <span className="text-[12px] font-medium text-[#7A7787]">{done}/{view.steps.length}</span>}
         </div>
@@ -167,7 +167,7 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
               ))}
             </ol>
             {view.forms.length > 0 && (
-              <div className="mt-5 border-t border-[#E6E5EC] pt-4">
+              <div className="mt-4 border-t border-[#E6E5EC] pt-4">
                 <div className={lab}>Forms Clients Can View</div>
                 <ul className="mt-2 text-[14px] font-medium text-[#1B1726]">{view.forms.map((f) => <li key={f.family} className="py-0.5">{f.label}</li>)}</ul>
               </div>

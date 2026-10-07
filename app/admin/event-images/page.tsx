@@ -444,7 +444,7 @@ export default function AdminEventImagesPage() {
         <div className="mb-4 flex items-center gap-3 bg-brand-50 border border-brand-200 rounded-md px-4 py-3">
           <span className="text-sm font-medium text-brand-900">{selectedPhotos.size} selected</span>
           <button onClick={handleBulkDelete} disabled={bulkDeleting}
-            className="inline-flex items-center gap-1.5 bg-[#661102] text-white px-3 py-1.5 text-xs font-medium rounded-md hover:bg-[#661102] disabled:opacity-40">
+            className="inline-flex items-center gap-2 bg-[#661102] text-white px-3 py-2 text-xs font-medium rounded-md hover:bg-[#661102] disabled:opacity-40">
             <Trash2 size={14} /> Delete Selected
           </button>
           <button onClick={clearSelection} className="text-xs text-gray-600 hover:text-gray-900">Clear</button>
@@ -484,7 +484,7 @@ export default function AdminEventImagesPage() {
         </div>
         <div className="mt-4">
           <button type="submit"
-            className="inline-flex items-center gap-2 bg-[#301D5D] text-white px-5 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors">
+            className="inline-flex items-center gap-2 bg-[#301D5D] text-white px-4 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors">
             <Plus size={16} /> Create Folder &amp; Upload
           </button>
           <p className="mt-2 text-xs text-gray-400">Creates a folder for the selected month and scrolls to the upload section.</p>
@@ -626,11 +626,11 @@ export default function AdminEventImagesPage() {
                           value={folderTitles[group.key] ?? group.photos[0]?.title ?? ''}
                           onChange={(e) => setFolderTitles((prev) => ({ ...prev, [group.key]: e.target.value }))}
                           placeholder="Rename all photos in this folder..."
-                          className="flex-1 text-xs border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                          className="flex-1 text-xs border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500"
                           onKeyDown={(e) => { if (e.key === 'Enter') saveFolderTitle(group, (e.target as HTMLInputElement).value); }} />
                         <button onClick={() => saveFolderTitle(group, folderTitles[group.key] ?? group.photos[0]?.title ?? '')}
                           disabled={bulkUploading}
-                          className="text-xs bg-brand-600 text-white px-3 py-1.5 rounded-md hover:bg-brand-700 disabled:opacity-40 whitespace-nowrap">
+                          className="text-xs bg-brand-600 text-white px-3 py-2 rounded-md hover:bg-brand-700 disabled:opacity-40 whitespace-nowrap">
                           Update All
                         </button>
                         <div className="sm:w-56">
@@ -729,7 +729,7 @@ export default function AdminEventImagesPage() {
                               </div>
                               {/* Delete */}
                               <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id}
-                                className="absolute top-2 right-2 bg-white/90 hover:bg-white text-[#661102] p-1.5 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40"
+                                className="absolute top-2 right-2 bg-white/90 hover:bg-white text-[#661102] p-2 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40"
                                 title="Delete">
                                 <Trash2 size={14} />
                               </button>
@@ -792,7 +792,7 @@ function AdvertiserPicker({
   const selected = advertisers.find((a) => a.id === value) ?? null;
   const q = query.trim().toLowerCase();
   const filtered = q ? advertisers.filter((a) => a.name.toLowerCase().includes(q)) : advertisers;
-  const sizing = compact ? 'text-xs px-2 py-1.5' : 'text-sm px-3 py-2';
+  const sizing = compact ? 'text-xs px-2 py-2' : 'text-sm px-3 py-2';
 
   return (
     <div ref={wrapRef} className="relative">
@@ -811,14 +811,14 @@ function AdvertiserPicker({
           <ul className="max-h-56 overflow-y-auto py-1">
             <li>
               <button type="button" onClick={() => { onChange(null); setOpen(false); }}
-                className="w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50">
+                className="w-full text-left px-3 py-2 text-xs text-gray-500 hover:bg-gray-50">
                 {placeholder}
               </button>
             </li>
             {filtered.map((a) => (
               <li key={a.id}>
                 <button type="button" onClick={() => { onChange(a.id); setOpen(false); }}
-                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 truncate ${a.id === value ? 'text-brand-700 font-medium' : 'text-gray-800'}`}>
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 truncate ${a.id === value ? 'text-brand-700 font-medium' : 'text-gray-800'}`}>
                   {a.name}
                 </button>
               </li>

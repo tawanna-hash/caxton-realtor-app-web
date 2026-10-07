@@ -12,7 +12,7 @@ export default async function BookingView({ slug, alias }: { slug: string; alias
   }
   if (r.kind === 'list') {
     return (
-      <main className="mx-auto max-w-[640px] px-4 py-10 font-[Inter,system-ui,sans-serif]">
+      <main className="mx-auto max-w-[640px] px-4 py-8 font-[Inter,system-ui,sans-serif]">
         <div className="rounded-xl border border-[#E6E5EC] bg-white p-6">
           {r.agentName && <div className="text-[14px] font-semibold text-[#301D5D]">{r.agentName}</div>}
           <h1 className="mt-1 text-[22px] font-semibold text-[#1B1726]">{r.title || T.en.choose}</h1>

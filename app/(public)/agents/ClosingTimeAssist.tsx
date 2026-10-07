@@ -80,7 +80,7 @@ function MessageLayoutSetting({ dealId }: { dealId: string }) {
     try { await fetch('/api/closing-time/texts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'message_layout', value: v }) }); } finally { setBusy(false); }
   };
   return (
-    <section aria-label="Messages layout" className="rounded-md border border-gray-200 bg-white p-5">
+    <section aria-label="Messages layout" className="rounded-md border border-gray-200 bg-white p-4">
       <h4 className="mb-1 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Messages Layout</h4>
       <Tip text="Choose how the Messages tab looks. You can also change it from the Messages tab." />
       <MessageLayoutPicker value={value} onPick={(v) => void pick(v)} disabled={busy} />
@@ -101,7 +101,7 @@ function HoverTipsSetting() {
     void fetch('/api/closing-time/preferences', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ hoverTips: v }) });
   };
   return (
-    <section aria-label="Hover tips" className="rounded-md border border-gray-200 bg-white p-5">
+    <section aria-label="Hover tips" className="rounded-md border border-gray-200 bg-white p-4">
       <h4 className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Hover Tips</h4>
       <label className="flex items-center gap-2 text-[13px] font-medium text-[#1B1726]">
         <input type="checkbox" className="h-4 w-4 accent-[#301D5D]" checked={on} onChange={(e) => toggle(e.target.checked)} />
@@ -230,8 +230,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
       <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">Risk alerts, follow-up drafts, a client progress link, and a closing checklist for this deal. Nothing is emailed to anyone until you approve that specific draft.</p>
       {error && <p className="mt-3 text-sm font-semibold text-[#661102]" role="alert">{error}</p>}
       {!data ? <p className="mt-4 text-sm text-slate-500">{error ? '' : 'Loading.'}</p> : (
-        <div className="mt-5 grid items-stretch gap-4 lg:grid-cols-2">
-          <section aria-label="Risks" className="rounded-md border border-gray-200 bg-white p-5">
+        <div className="mt-4 grid items-stretch gap-4 lg:grid-cols-2">
+          <section aria-label="Risks" className="rounded-md border border-gray-200 bg-white p-4">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Risk Alerts</h4>
             <label className="mt-2 flex items-center gap-2 text-xs text-slate-600">Extension Length
               <input type="number" min={1} max={30} value={extDays} onChange={(e) => setExtDays(Math.min(30, Math.max(1, Number(e.target.value) || 3)))} className="min-h-[32px] w-16 rounded-md border border-slate-300 px-2 text-sm" aria-label="Extension days" /> days
@@ -254,7 +254,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             )}
           </section>
 
-          <section aria-label="Amendment" className="rounded-md border border-gray-200 bg-white p-5">
+          <section aria-label="Amendment" className="rounded-md border border-gray-200 bg-white p-4">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Amendment (TREC 39-11)</h4>
             <p className="mt-2 text-sm text-slate-600">Pre-fills the official amendment with this property and one change. Signatures and the acceptance date stay blank. Review it, add any option fee or terms yourself, and send it for signatures. Check the new date against the contract.</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -263,7 +263,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             </div>
           </section>
 
-          <section aria-label="Deal contacts" className="rounded-md border border-gray-200 bg-white p-5">
+          <section aria-label="Deal contacts" className="rounded-md border border-gray-200 bg-white p-4">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Deal Contacts</h4>
             <ul className="mt-2 grid gap-2">
               {data.parties.map((p) => (
@@ -285,7 +285,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             </form>
           </section>
 
-          <section aria-label="Follow-ups" className="rounded-md border border-gray-200 bg-white p-5 lg:col-span-2">
+          <section aria-label="Follow-ups" className="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Follow-Up Drafts</h4>
             <div className="mt-2 flex flex-wrap gap-2">
               <button type="button" disabled={busy} className={btn} onClick={() => void post({ action: 'draft', dealId: deal.id, kind: 'intro' })}>Draft Intro To All Parties</button>
@@ -331,7 +331,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             {sent.length > 0 && <p className="mt-3 text-xs text-slate-500">Recently sent: {sent.map((f) => f.subject).join(' · ')}</p>}
           </section>
 
-          <section aria-label="Connected tools" className="rounded-md border border-gray-200 bg-white p-5">
+          <section aria-label="Connected tools" className="rounded-md border border-gray-200 bg-white p-4">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Connected Tools</h4>
             {!data.connected || (!data.connected.calendar && !data.connected.mail && data.connected.storage.length === 0) ? (
               <p className="mt-2 text-sm text-slate-500">Connect your calendar, email or document storage on the Integrations page to use them here.</p>
@@ -358,7 +358,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           {placer && <SignaturePlacer data={placer} signers={(data.parties ?? []).filter((p) => p.email && sigTo.includes(p.id)).map((p) => p.name || p.email)} fields={sigFields} onChange={setSigFields} onClose={() => setPlacer(null)} />}
           <MessageLayoutSetting dealId={deal.id} />
           <HoverTipsSetting />
-          <section aria-label="Automation" className="rounded-md border border-gray-200 bg-white p-5">
+          <section aria-label="Automation" className="rounded-md border border-gray-200 bg-white p-4">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Automation</h4>
             <label className="mt-3 flex items-start gap-2 text-sm text-slate-700">
               <input type="checkbox" className="mt-1" checked={data.autoSignature} disabled={busy} onChange={(e) => void post({ action: 'auto_signature', on: e.target.checked })} />
@@ -371,7 +371,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             <a className={`${btn} mt-3`} href={`/api/closing-time/assist/export?dealId=${encodeURIComponent(deal.id)}`}>Export File History (CSV)</a>
           </section>
 
-          <section aria-label="Send for signature" className="rounded-md border border-gray-200 bg-white p-5 lg:col-span-2">
+          <section aria-label="Send for signature" className="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Send For Signature</h4>
             {!data.signing || data.signing.providers.length === 0 ? (
               <p className="mt-2 text-sm text-slate-500">Send documents for signature from this deal.</p>
@@ -433,7 +433,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             {data.signing && <SecureSignRequests requests={data.signing.requests} post={post} busy={busy} />}
           </section>
 
-          <section aria-label="Client uploads" className="rounded-md border border-gray-200 bg-white p-5 lg:col-span-2">
+          <section aria-label="Client uploads" className="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Client Uploads</h4>
             {data.uploads.filter((u) => !u.archived).length === 0 ? <p className="mt-2 text-sm text-slate-500">Files your client uploads through the progress link appear here. You get an email each time.</p> : (
               <ul className="mt-2 space-y-2">
@@ -469,7 +469,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             )}
           </section>
 
-          <section aria-label="Signature tracking" className="rounded-md border border-gray-200 bg-white p-5 lg:col-span-2">
+          <section aria-label="Signature tracking" className="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Signatures Being Tracked</h4>
             {data.signatures.length === 0 ? <p className="mt-2 text-sm text-slate-500">Type a document name above and press Track Signature next to the person who owes it.</p> : (
               <ul className="mt-2 space-y-2">
@@ -483,7 +483,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             )}
           </section>
 
-          <section aria-label="Checklist" className="rounded-md border border-gray-200 bg-white p-5">
+          <section aria-label="Checklist" className="rounded-md border border-gray-200 bg-white p-4">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Closing Checklist</h4>
             <p className="mt-2 text-sm text-slate-600">{data.checklist.length} steps{data.customChecklist ? ' (your template)' : ' (starter template)'}. Applying adds each step as a dated task. It needs the effective or closing date.</p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -499,7 +499,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             )}
           </section>
 
-          <section aria-label="File history" className="rounded-md border border-gray-200 bg-white p-5">
+          <section aria-label="File history" className="rounded-md border border-gray-200 bg-white p-4">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">File History</h4>
             <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto text-sm text-slate-600">
               {[...deal.activity].reverse().slice(0, 30).map((a) => (

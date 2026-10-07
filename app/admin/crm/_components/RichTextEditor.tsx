@@ -147,7 +147,7 @@ export default function RichTextEditor({
   return (
     <div className="rounded-md border border-gray-300 bg-white overflow-hidden focus-within:border-brand-700 focus-within:ring-1 focus-within:ring-brand-700">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-200 bg-gray-50 px-2 py-1.5">
+      <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-200 bg-gray-50 px-2 py-2">
         <Group>
           <ToolBtn label="B" title="Bold (⌘B)" onClick={(e) => runCmd(e, 'bold')} bold />
           <ToolBtn label="I" title="Italic (⌘I)" onClick={(e) => runCmd(e, 'italic')} italic />
@@ -196,7 +196,7 @@ export default function RichTextEditor({
                       key={t.key}
                       type="button"
                       onClick={() => insertToken(t.key)}
-                      className="flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-xs hover:bg-gray-50"
+                      className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-xs hover:bg-gray-50"
                     >
                       <span className="text-gray-700">{t.label}</span>
                       <code className="text-[10px] text-gray-500">{t.key}</code>

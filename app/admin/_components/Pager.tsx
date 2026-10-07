@@ -69,7 +69,7 @@ export function Pager({
   // so it stays visible even when the table fits on one page.
   const showPerPage = !!pageSizeOptions && !!onPageSizeChange;
   const PerPageSelect = showPerPage ? (
-    <label className="flex items-center gap-1.5 text-xs text-gray-600">
+    <label className="flex items-center gap-2 text-xs text-gray-600">
       <span>Rows</span>
       <select
         value={pageSize}
@@ -102,9 +102,9 @@ export function Pager({
   }
 
   const baseBtn =
-    'inline-flex h-9 min-w-9 items-center justify-center rounded border border-gray-300 bg-white px-2.5 text-xs text-gray-700 hover:bg-[#F6F3FB] disabled:cursor-not-allowed disabled:opacity-40';
+    'inline-flex h-9 min-w-9 items-center justify-center rounded border border-gray-300 bg-white px-3 text-xs text-gray-700 hover:bg-[#F6F3FB] disabled:cursor-not-allowed disabled:opacity-40';
   const activeBtn =
-    'inline-flex h-9 min-w-9 items-center justify-center rounded border border-[#301D5D] bg-[#301D5D] px-2.5 text-xs font-semibold text-white';
+    'inline-flex h-9 min-w-9 items-center justify-center rounded border border-[#301D5D] bg-[#301D5D] px-3 text-xs font-semibold text-white';
 
   return (
     <div className={`flex items-center justify-between gap-3 flex-wrap ${className}`}>
@@ -123,7 +123,7 @@ export function Pager({
         </button>
         {pages.map((p, i) =>
           p === 'ellipsis' ? (
-            <span key={`e-${i}`} className="px-1.5 text-gray-400 select-none">
+            <span key={`e-${i}`} className="px-2 text-gray-400 select-none">
               …
             </span>
           ) : (

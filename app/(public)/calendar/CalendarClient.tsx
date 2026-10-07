@@ -141,7 +141,7 @@ export default function CalendarClient() {
                 type="button"
                 onClick={() => { setShowDallas(false); setSelectedDay(null); try { sessionStorage.removeItem('calendar_dallas_preview'); } catch {} }}
                 aria-pressed={!showDallas}
-                className={`rounded-full px-4 py-1.5 ${!showDallas ? 'bg-[#301D5D] text-white' : 'text-gray-700'}`}
+                className={`rounded-full px-4 py-2 ${!showDallas ? 'bg-[#301D5D] text-white' : 'text-gray-700'}`}
               >
                 {pub === 'newsline' ? 'San Antonio' : 'Austin'}
               </button>
@@ -149,7 +149,7 @@ export default function CalendarClient() {
                 type="button"
                 onClick={() => { setShowDallas(true); setSelectedDay(null); try { sessionStorage.setItem('calendar_dallas_preview', '1'); } catch {} }}
                 aria-pressed={showDallas}
-                className={`rounded-full px-4 py-1.5 ${showDallas ? 'bg-[#301D5D] text-white' : 'text-gray-700'}`}
+                className={`rounded-full px-4 py-2 ${showDallas ? 'bg-[#301D5D] text-white' : 'text-gray-700'}`}
               >
                 Dallas/Ft. Worth (Preview)
               </button>

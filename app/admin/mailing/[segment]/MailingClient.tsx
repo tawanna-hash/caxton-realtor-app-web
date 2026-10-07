@@ -828,10 +828,10 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
 
       {/* Secondary actions row */}
       <div className="flex flex-wrap items-center gap-2">
-        <button onClick={() => setShowAdd(true)} className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
+        <button onClick={() => setShowAdd(true)} className="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
           + Add contact
         </button>
-        <button onClick={() => setShowImport(true)} className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
+        <button onClick={() => setShowImport(true)} className="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
           Import
         </button>
         <ExportMenu disabled={busy !== null} onSelect={handleExport} />
@@ -843,7 +843,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             <button
               onClick={() => handleRefreshAddresses(false)}
               disabled={busy !== null}
-              className="px-3 py-1.5 text-sm rounded-md border border-brand-700 text-brand-700 hover:bg-brand-700/5 disabled:opacity-50"
+              className="px-3 py-2 text-sm rounded-md border border-brand-700 text-brand-700 hover:bg-brand-700/5 disabled:opacity-50"
               title="Walk every row and fill in blank address fields from the linked advertiser's locations (preferring each staff member's assigned location). Preserves admin edits."
             >
               Refresh addresses from partners
@@ -852,14 +852,14 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               <button
                 onClick={() => handleRefreshAddresses(false)}
                 disabled={busy !== null}
-                className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-50"
+                className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
               >
                 Fill blanks only (safe)
               </button>
               <button
                 onClick={() => handleRefreshAddresses(true)}
                 disabled={busy !== null}
-                className="block w-full text-left px-3 py-1.5 text-sm text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
+                className="block w-full text-left px-3 py-2 text-sm text-[#661102] hover:bg-[#FFEAE6] disabled:opacity-50"
               >
                 Force overwrite all
               </button>
@@ -1031,7 +1031,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                 });
                 setOffset(0); setSelectedIds(new Set()); setFilterAll(false);
               }}
-              className={`px-2 py-1.5 rounded-md border text-xs max-w-[14rem] ${fieldFilters[f.field] ? 'border-brand-700 bg-brand-700/5 text-brand-700 font-medium' : 'border-gray-300 text-gray-700'}`}
+              className={`px-2 py-2 rounded-md border text-xs max-w-[14rem] ${fieldFilters[f.field] ? 'border-brand-700 bg-brand-700/5 text-brand-700 font-medium' : 'border-gray-300 text-gray-700'}`}
             >
               <option value="">{f.label}: All</option>
               {facets[f.field].map((o) => (
@@ -1045,7 +1045,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             <button
               type="button"
               onClick={() => { setFieldFilters({}); setOffset(0); setSelectedIds(new Set()); }}
-              className="px-2 py-1.5 text-xs text-gray-600 hover:text-gray-900 underline underline-offset-2"
+              className="px-2 py-2 text-xs text-gray-600 hover:text-gray-900 underline underline-offset-2"
             >
               Clear filters
             </button>
@@ -1067,14 +1067,14 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             type="button"
             onClick={handleFilterDelete}
             disabled={busy !== null}
-            className="px-3 py-1.5 rounded-md border border-[#FF2A04]/50 text-[#661102] text-xs font-medium hover:bg-[#FFEAE6] disabled:opacity-50"
+            className="px-3 py-2 rounded-md border border-[#FF2A04]/50 text-[#661102] text-xs font-medium hover:bg-[#FFEAE6] disabled:opacity-50"
           >
             Delete {total.toLocaleString()}
           </button>
           <button
             type="button"
             onClick={() => { setFilterAll(false); setSelectedIds(new Set()); }}
-            className="px-3 py-1.5 rounded-md text-[#42277C] text-xs hover:text-[#1B1726]"
+            className="px-3 py-2 rounded-md text-[#42277C] text-xs hover:text-[#1B1726]"
           >
             Clear
           </button>
@@ -1108,7 +1108,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             type="button"
             onClick={() => setShowBulkEdit(true)}
             disabled={busy !== null}
-            className="px-3 py-1.5 rounded-md border border-brand-700 text-brand-700 text-xs font-medium hover:bg-brand-700/5 disabled:opacity-50"
+            className="px-3 py-2 rounded-md border border-brand-700 text-brand-700 text-xs font-medium hover:bg-brand-700/5 disabled:opacity-50"
           >
             Edit {selectedIds.size}
           </button>
@@ -1122,14 +1122,14 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             type="button"
             onClick={handleDelete}
             disabled={busy !== null}
-            className="px-3 py-1.5 rounded-md border border-[#FF2A04]/50 text-[#661102] text-xs font-medium hover:bg-[#FFEAE6] disabled:opacity-50"
+            className="px-3 py-2 rounded-md border border-[#FF2A04]/50 text-[#661102] text-xs font-medium hover:bg-[#FFEAE6] disabled:opacity-50"
           >
             Delete {selectedIds.size}
           </button>
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
-            className="px-3 py-1.5 rounded-md text-gray-600 text-xs hover:text-gray-900"
+            className="px-3 py-2 rounded-md text-gray-600 text-xs hover:text-gray-900"
           >
             Clear
           </button>
@@ -1205,7 +1205,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                 aria-label={`Select ${fullName || r.email || r.id}`}
                 className="mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
               />
-              <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="min-w-0 flex-1 space-y-2">
                 {isVisible('name') && (
                   <div>
                     <div className="text-sm font-medium text-gray-900 break-words">{fullName || '—'}</div>
@@ -1532,7 +1532,7 @@ function MoveToMenu({
         type="button"
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
-        className="px-3 py-1.5 rounded-md border border-brand-700 text-brand-700 text-xs font-medium hover:bg-brand-700/5 disabled:opacity-50 inline-flex items-center gap-1"
+        className="px-3 py-2 rounded-md border border-brand-700 text-brand-700 text-xs font-medium hover:bg-brand-700/5 disabled:opacity-50 inline-flex items-center gap-1"
       >
         Move {count} to
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1669,12 +1669,12 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className="px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-2"
+      className="px-3 py-2 rounded-md text-xs font-medium flex items-center gap-2"
       style={{ backgroundColor: bg, color: fg }}
     >
       <span>{label}</span>
       <span
-        className="px-1.5 rounded-full text-[10px]"
+        className="px-2 rounded-full text-[10px]"
         style={{ backgroundColor: active ? 'rgba(255,255,255,0.25)' : 'white', color: active ? 'white' : '#6b7280' }}
       >
         {count.toLocaleString()}
@@ -1719,7 +1719,7 @@ function VerifyCell({
     status === 'Invalid' ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#FFEAE6] text-[#661102]">✗ Invalid</span> :
                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Pending</span>;
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
       {pill}
       <button
         type="button"
@@ -1820,7 +1820,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
         <span
           key={f.label}
           title={f.title}
-          className={`inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-full font-medium ${f.cls}`}
+          className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-medium ${f.cls}`}
         >
           {f.label}
         </span>
@@ -1847,7 +1847,7 @@ function ProximityBadges({
     if (!nearS) {
       return (
         <span
-          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium ring-1 ring-gray-200"
+          className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium ring-1 ring-gray-200"
           title={`${dS.toFixed(1)} mi from SABOR (9110 IH-10 W, San Antonio)`}
         >
           <span>Outside 60 mi</span>
@@ -1857,7 +1857,7 @@ function ProximityBadges({
     }
     return (
       <span
-        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00] font-medium"
+        className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00] font-medium"
         title={`${dS.toFixed(1)} mi from SABOR HQ`}
       >
         <span>Near SABOR</span>
@@ -1890,7 +1890,7 @@ function ProximityBadges({
                      'Five Points';
     return (
       <span
-        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium ring-1 ring-gray-200"
+        className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium ring-1 ring-gray-200"
         title={`${closer.toFixed(1)} mi from nearest anchor (${anchor})`}
       >
         <span>Outside 60 mi</span>
@@ -1902,7 +1902,7 @@ function ProximityBadges({
     <div className="flex flex-col gap-1">
       {nearA && (
         <span
-          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00] font-medium"
+          className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00] font-medium"
           title={`${dA!.toFixed(1)} mi from ABoR HQ`}
         >
           <span>Near ABoR</span>
@@ -1911,7 +1911,7 @@ function ProximityBadges({
       )}
       {nearF && (
         <span
-          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#E3F7FF] text-[#285766] font-medium"
+          className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#E3F7FF] text-[#285766] font-medium"
           title={`${dF!.toFixed(1)} mi from Five Points Board of REALTORS`}
         >
           <span>Near Five Points</span>
@@ -2103,7 +2103,7 @@ function EditDrawer({
           </button>
         </div>
 
-        <div className="px-6 py-4 space-y-5">
+        <div className="px-6 py-4 space-y-4">
           {/* Verify summary */}
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-md border border-gray-200 bg-gray-50 p-3 space-y-2">
@@ -2143,7 +2143,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
+                className="text-xs px-3 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify address'}
               </button>
@@ -2168,7 +2168,7 @@ function EditDrawer({
                 )}
                 {isOverridden && (
                   <span
-                    className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-[#FEF8CC] text-[#645600] border border-[#FAD800]/50"
+                    className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-[#FEF8CC] text-[#645600] border border-[#FAD800]/50"
                     title={
                       `Manual override: ${overrideStatus}` +
                       (overrideByShort ? ` by ${overrideByShort}` : '') +
@@ -2201,12 +2201,12 @@ function EditDrawer({
                 {row.email ?? <span className="italic">no email</span>}
               </div>
               {/* Action row: probe + manual overrides */}
-              <div className="flex flex-wrap gap-1.5 pt-1">
+              <div className="flex flex-wrap gap-2 pt-1">
                 <button
                   type="button"
                   disabled={emailBusy || overrideBusy || !form.email}
                   onClick={onVerifyEmail}
-                  className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
+                  className="text-xs px-3 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
                 >
                   {emailBusy ? 'Verifying…' : 'Verify Email'}
                 </button>
@@ -2215,7 +2215,7 @@ function EditDrawer({
                     type="button"
                     disabled={emailBusy || overrideBusy || !form.email}
                     onClick={() => { void handleOverride('set', 'Valid'); }}
-                    className="text-xs px-2.5 py-1 rounded-md bg-[#005A00] text-white hover:bg-[#005A00] disabled:opacity-50"
+                    className="text-xs px-3 py-1 rounded-md bg-[#005A00] text-white hover:bg-[#005A00] disabled:opacity-50"
                     title="Manually mark this email as Valid (e.g. for Google Workspace inboxes that block SMTP probes from cloud IPs)"
                   >
                     {overrideBusy ? 'Working…' : 'Mark as Valid'}
@@ -2226,7 +2226,7 @@ function EditDrawer({
                     type="button"
                     disabled={emailBusy || overrideBusy || !form.email}
                     onClick={() => { void handleOverride('set', 'Invalid'); }}
-                    className="text-xs px-2.5 py-1 rounded-md bg-[#661102] text-white hover:bg-[#661102] disabled:opacity-50"
+                    className="text-xs px-3 py-1 rounded-md bg-[#661102] text-white hover:bg-[#661102] disabled:opacity-50"
                     title="Manually mark this email as Invalid"
                   >
                     {overrideBusy ? 'Working…' : 'Mark as Invalid'}
@@ -2237,7 +2237,7 @@ function EditDrawer({
                     type="button"
                     disabled={emailBusy || overrideBusy}
                     onClick={() => { void handleOverride('clear'); }}
-                    className="text-xs px-2.5 py-1 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 disabled:opacity-50"
+                    className="text-xs px-3 py-1 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 disabled:opacity-50"
                     title="Remove the manual override; effective status will revert to the SMTP probe verdict"
                   >
                     Clear override
@@ -2335,14 +2335,14 @@ function EditDrawer({
           <button
             type="button"
             onClick={onDelete}
-            className="mr-auto px-3 py-1.5 rounded-md border border-[#FF2A04]/50 text-sm text-[#661102] hover:bg-[#FFEAE6]"
+            className="mr-auto px-3 py-2 rounded-md border border-[#FF2A04]/50 text-sm text-[#661102] hover:bg-[#FFEAE6]"
           >
             Delete
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 rounded-md text-sm text-gray-600 hover:bg-gray-100"
+            className="px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-100"
           >
             Cancel
           </button>
@@ -2434,7 +2434,7 @@ function TagsEditor({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-1.5 min-h-[2rem] rounded-md border border-gray-300 px-2 py-1.5 bg-white">
+      <div className="flex flex-wrap gap-2 min-h-[2rem] rounded-md border border-gray-300 px-2 py-2 bg-white">
         {tags.length === 0 && (
           <span className="text-xs text-gray-400 self-center">No tags yet — start typing below.</span>
         )}
@@ -2492,7 +2492,7 @@ function TagsEditor({
                   key={t}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => addTag(t)}
-                  className="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-50"
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50"
                 >
                   <span
                     className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium"
@@ -2972,7 +2972,7 @@ function ColumnsDropdown({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50 flex items-center gap-1"
+        className="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50 flex items-center gap-1"
         title="Show or hide columns"
       >
         Columns
@@ -2987,7 +2987,7 @@ function ColumnsDropdown({
           {COLUMNS.map((c) => (
             <label
               key={c.id}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-50 ${
+              className={`flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 ${
                 c.alwaysOn ? 'opacity-60 cursor-not-allowed' : ''
               }`}
             >

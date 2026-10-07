@@ -107,7 +107,7 @@ export default async function AdvertisersDirectoryPage() {
           themes={themes}
         />
 
-        <div className="mt-10 border-t border-gray-200 pt-8">
+        <div className="mt-8 border-t border-gray-200 pt-8">
           <p className="text-sm text-gray-600 font-light leading-relaxed">
             Interested in advertising with us?{' '}
             <a

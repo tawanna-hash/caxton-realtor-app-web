@@ -150,7 +150,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-200 flex items-start justify-between gap-3 flex-wrap">
+      <div className="px-4 py-4 border-b border-gray-200 flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <p className="text-[10px] uppercase tracking-wider text-gray-500">
             Partner dashboard
@@ -169,7 +169,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                 type="button"
                 onClick={() => setPreset(p)}
                 className={
-                  'px-3 py-1.5 text-xs font-medium rounded-md ' +
+                  'px-3 py-2 text-xs font-medium rounded-md ' +
                   (preset === p
                     ? 'bg-[#301D5D] text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')
@@ -188,7 +188,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
             type="button"
             onClick={() => setDrawerOpen(true)}
             title="Edit the report's date range and personal message"
-            className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
+            className="px-3 py-2 text-xs font-medium rounded-md border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
           >
             Edit
           </button>
@@ -199,14 +199,14 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
             title={advertiser.contact_email
               ? 'Preview and send the performance report email'
               : 'Add a contact email on the Partners page to send a report'}
-            className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-40"
+            className="px-3 py-2 text-xs font-medium rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-40"
           >
             Send report email
           </button>
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="p-4">
         {error && (
           <div className="mb-4 p-3 bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] text-sm rounded-md">
             {error}
@@ -219,7 +219,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
 
         {data && (
           <>
-            <div className="mb-5 grid grid-cols-2 gap-y-3 bg-white lg:grid-cols-4">
+            <div className="mb-4 grid grid-cols-2 gap-y-3 bg-white lg:grid-cols-4">
               <StatCard label="Total clicks" value={data.summary.total_clicks.toLocaleString()} />
               <StatCard label="Unique sessions" value={data.summary.unique_sessions.toLocaleString()} />
               <StatCard label="Hotspots" value={data.summary.hotspot_count.toLocaleString()} />
@@ -232,7 +232,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
               />
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-md p-4 mb-5">
+            <div className="bg-white border border-gray-200 rounded-md p-4 mb-4">
               <h3 className="text-sm font-medium text-gray-700 mb-3">Clicks per Day</h3>
               <div className="w-full h-56">
                 <ResponsiveContainer width="100%" height="100%">

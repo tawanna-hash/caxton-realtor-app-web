@@ -19,19 +19,19 @@ export default async function OfficeDashboardPage() {
   const agents = await officeOverview(brokerage.id, today);
   const totals = agents.reduce((a, x) => ({ deals: a.deals + x.activeDeals, urgent: a.urgent + x.urgent, watch: a.watch + x.watch }), { deals: 0, urgent: 0, watch: 0 });
   return (
-    <main id="agent-desk" className="mx-auto my-6 max-w-5xl rounded-2xl border border-[#E6E5EC] bg-white px-5 py-8 sm:px-8 sm:py-10">
+    <main id="agent-desk" className="mx-auto my-6 max-w-5xl rounded-2xl border border-[#E6E5EC] bg-white px-4 py-8 sm:px-8 sm:py-8">
       <p className="ds-eyebrow">Office dashboard</p>
       <h1 className="ds-title">{brokerage.name}</h1>
-      <div className="mt-5 grid grid-cols-3 gap-3 text-center">
+      <div className="mt-4 grid grid-cols-3 gap-3 text-center">
         <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-slate-950">{totals.deals}</p><p className="text-xs text-slate-600">Active deals</p></div>
         <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-[#661102]">{totals.urgent}</p><p className="text-xs text-slate-600">Urgent risks</p></div>
         <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-2xl font-bold text-slate-950">{totals.watch}</p><p className="text-xs text-slate-600">To watch</p></div>
       </div>
-      <div className="mt-5 flex gap-3 text-sm font-bold">
+      <div className="mt-4 flex gap-3 text-sm font-bold">
         <a className="underline text-[#301D5D]" href="/api/closing-time/office/export">Export office deals (CSV)</a>
         <Link className="underline text-[#301D5D]" href="/agents/closing-time">Back to Closing Time</Link>
       </div>
-      <div className="mt-5 overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="bg-[#FBFBFD]">
             <tr><th className="p-3">Agent</th><th className="p-3">Deals</th><th className="p-3">Urgent</th><th className="p-3">Watch</th><th className="p-3">Drafts</th><th className="p-3">Next date</th></tr>

@@ -86,7 +86,7 @@ export default function MlsConnectionsCard() {
       <Tip text="Choose the MLS services you belong to. You sign in to your own MLS account. Closing Time does not store your MLS password." />
       <label className="relative mt-4 block">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-        <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by name or city" aria-label="Search Texas MLS services" className="h-9 w-full rounded-md border border-slate-300 pl-9 pr-3 text-sm" />
+        <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by name or city" aria-label="Search Texas MLS services" className="h-9 w-full rounded-md border border-slate-300 pl-8 pr-3 text-sm" />
       </label>
       <div className="mt-3 max-h-[420px] overflow-y-auto overscroll-contain rounded-md border border-slate-200">
         {rows.length === 0 && <p className="px-4 py-4 text-sm text-slate-500">No MLS matches that search.</p>}

@@ -96,7 +96,7 @@ export default function EditReportDrawer({
       {/* Drawer panel */}
       <div className="w-full max-w-md bg-white shadow-xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-200">
+        <div className="flex items-start justify-between gap-3 px-4 py-4 border-b border-gray-200">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-wider text-gray-500">
               Edit {noun} report
@@ -116,7 +116,7 @@ export default function EditReportDrawer({
         </div>
 
         {/* Form */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {kind === 'article' ? 'Article title' : 'Event title'}{' '}
@@ -166,7 +166,7 @@ export default function EditReportDrawer({
         </div>
 
         {/* Footer actions */}
-        <div className="border-t border-gray-200 px-5 py-4 flex items-center gap-3 flex-wrap">
+        <div className="border-t border-gray-200 px-4 py-4 flex items-center gap-3 flex-wrap">
           <button
             type="button"
             onClick={onCopyHtml}

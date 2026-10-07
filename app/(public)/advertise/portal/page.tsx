@@ -58,9 +58,9 @@ export default function SelfServicePortalPage() {
         </header>
 
         {/* Product paths */}
-        <section className="grid gap-5 md:grid-cols-2 mb-12">
+        <section className="grid gap-4 md:grid-cols-2 mb-12">
           {/* App and web placements card */}
-          <article className="relative rounded-md overflow-hidden bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#301D5D] text-white p-7 md:p-8 shadow-lg">
+          <article className="relative rounded-md overflow-hidden bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#301D5D] text-white p-6 md:p-8 shadow-lg">
             {/* From-$X chip */}
             <span className="absolute top-5 right-5 inline-flex items-center rounded-md bg-[#EFEAF8] px-3 py-1 text-xs font-semibold text-[#1B1726]">
               From ${minPrice}
@@ -92,14 +92,14 @@ export default function SelfServicePortalPage() {
               few as 2 business days. No sales call required.
             </p>
 
-            <ul className="space-y-2.5 mb-7 text-sm md:text-[15px]">
+            <ul className="space-y-3 mb-6 text-sm md:text-[15px]">
               {[
                 'Instant checkout \u2014 no call needed',
                 `${APP_AD_SLOTS.length} ad formats from $${minPrice}\u2013$${maxPrice.toLocaleString()}/wk`,
                 'Pick your market + preferred dates',
                 'Bundle and save',
               ].map((line) => (
-                <li key={line} className="flex items-start gap-2.5">
+                <li key={line} className="flex items-start gap-3">
                   <span className="shrink-0 w-5 h-5 rounded-full bg-[#00E200]/90 flex items-center justify-center mt-0.5">
                     <svg viewBox="0 0 20 20" className="w-3 h-3 text-white" aria-hidden="true">
                       <path
@@ -115,7 +115,7 @@ export default function SelfServicePortalPage() {
 
             <Link
               href="/advertise/placements"
-              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#301D5D] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#42277C] active:scale-[0.98] md:text-base"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#301D5D] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#42277C] active:scale-[0.98] md:text-base"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               Browse Products
@@ -125,7 +125,7 @@ export default function SelfServicePortalPage() {
             </Link>
           </article>
 
-          <article className="relative overflow-hidden rounded-md bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#301D5D] p-7 text-white shadow-lg md:p-8">
+          <article className="relative overflow-hidden rounded-md bg-gradient-to-br from-[#301D5D] via-[#301D5D] to-[#301D5D] p-6 text-white shadow-lg md:p-8">
             <span className="absolute right-5 top-5 inline-flex items-center rounded-md bg-[#EFEAF8] px-3 py-1 text-xs font-semibold text-[#1B1726]">
               From ${eblastStartingPrice.toLocaleString()}
             </span>
@@ -151,14 +151,14 @@ export default function SelfServicePortalPage() {
               Reach RealtyLine Austin, Newsline San Antonio, or both audiences
               with a dedicated email campaign.
             </p>
-            <ul className="mb-7 space-y-2.5 text-sm md:text-[15px]">
+            <ul className="mb-6 space-y-3 text-sm md:text-[15px]">
               {[
                 'Choose your audience and package',
                 'Request preferred send dates',
                 'Upload creative now or provide it later',
                 'Pay securely by card or eligible bank account',
               ].map((line) => (
-                <li key={line} className="flex items-start gap-2.5">
+                <li key={line} className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#00E200]/90">
                     <svg viewBox="0 0 20 20" className="h-3 w-3 text-white" aria-hidden="true">
                       <path
@@ -173,7 +173,7 @@ export default function SelfServicePortalPage() {
             </ul>
             <Link
               href="/advertise/eblast"
-              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#301D5D] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#42277C] active:scale-[0.98] md:text-base"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#301D5D] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#42277C] active:scale-[0.98] md:text-base"
             >
               Order an e-Blast
               <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">
@@ -209,12 +209,12 @@ export default function SelfServicePortalPage() {
             ].map((it) => (
               <div
                 key={it.step}
-                className="rounded-md border border-gray-200 bg-white p-5"
+                className="rounded-md border border-gray-200 bg-white p-4"
               >
                 <div className="w-7 h-7 rounded-full bg-brand-700 text-white text-sm font-semibold flex items-center justify-center mb-3">
                   {it.step}
                 </div>
-                <h4 className="text-base font-semibold text-gray-900 mb-1.5">
+                <h4 className="text-base font-semibold text-gray-900 mb-2">
                   {it.title}
                 </h4>
                 <p className="text-sm text-gray-600 font-light leading-relaxed">
@@ -226,7 +226,7 @@ export default function SelfServicePortalPage() {
         </section>
 
         {/* Existing advertiser sign-in callout */}
-        <section className="rounded-md border border-gray-200 bg-white p-6 md:p-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <section className="rounded-md border border-gray-200 bg-white p-6 md:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-1">
               Already booked with us?
@@ -238,7 +238,7 @@ export default function SelfServicePortalPage() {
           </div>
           <a
             href="/portal"
-            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border border-brand-700 px-5 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-700 hover:text-white"
+            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border border-brand-700 px-4 py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-700 hover:text-white"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             Open partner portal

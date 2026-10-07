@@ -173,7 +173,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   }
 
   return (
-    <div className="bg-gray-50 pt-10 pb-12">
+    <div className="bg-gray-50 pt-8 pb-12">
       <div className="px-4 mb-6">
         <PageTitle align="center">Issues Archive</PageTitle>
       </div>
@@ -181,23 +181,23 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
       <div className="flex items-center justify-center gap-8 mb-8 text-xs uppercase tracking-[0.2em] font-medium">
         <button
           onClick={() => setTab('current')}
-          className={tab === 'current' ? 'text-gray-900 border-b-2 border-gray-900 pb-1.5' : 'text-gray-400 pb-1.5'}
+          className={tab === 'current' ? 'text-gray-900 border-b-2 border-gray-900 pb-2' : 'text-gray-400 pb-2'}
         >
           Current Issue
         </button>
         <button
           onClick={() => setTab('all')}
-          className={tab === 'all' ? 'text-gray-900 border-b-2 border-gray-900 pb-1.5' : 'text-gray-400 pb-1.5'}
+          className={tab === 'all' ? 'text-gray-900 border-b-2 border-gray-900 pb-2' : 'text-gray-400 pb-2'}
         >
           All Issues
         </button>
       </div>
 
       {tab === 'current' ? (
-        <div className="px-5">{issueCard(current, true)}</div>
+        <div className="px-4">{issueCard(current, true)}</div>
       ) : (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="mb-8 grid grid-cols-1 gap-3 md:grid-cols-3">
             <label className="relative block">
               <span className="sr-only">Search issues</span>
               <svg
@@ -220,7 +220,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search issues by month or year"
-                className="min-h-12 w-full rounded-md border border-gray-300 bg-white py-3 pl-11 pr-4 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
+                className="min-h-12 w-full rounded-md border border-gray-300 bg-white py-3 pl-12 pr-4 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
               />
             </label>
             <label className="relative block">
@@ -228,7 +228,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
               <select
                 value={yearFilter}
                 onChange={(event) => setYearFilter(event.target.value)}
-                className="min-h-12 w-full appearance-none rounded-md border border-gray-300 bg-white px-4 py-3 pr-11 text-base text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
+                className="min-h-12 w-full appearance-none rounded-md border border-gray-300 bg-white px-4 py-3 pr-12 text-base text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
               >
                 <option value="all">All Years</option>
                 {availableYears.map((year) => (
@@ -257,7 +257,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
               <select
                 value={sortOrder}
                 onChange={(event) => setSortOrder(event.target.value as SortOrder)}
-                className="min-h-12 w-full appearance-none rounded-md border border-gray-300 bg-white px-4 py-3 pr-11 text-base text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
+                className="min-h-12 w-full appearance-none rounded-md border border-gray-300 bg-white px-4 py-3 pr-12 text-base text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
               >
                 <option value="newest">Newest to Oldest</option>
                 <option value="oldest">Oldest to Newest</option>
@@ -295,10 +295,10 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
               </button>
             </div>
           ) : (
-            <div className="space-y-10">
+            <div className="space-y-8">
               {issuesByYear.map((group) => (
                 <section key={group.year} aria-labelledby={`issues-${group.year}`}>
-                  <div className="mb-5 flex items-center gap-4">
+                  <div className="mb-4 flex items-center gap-4">
                     <h2
                       id={`issues-${group.year}`}
                       className="shrink-0 text-sm font-semibold tracking-[0.18em] text-gray-700"
@@ -310,7 +310,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
                       {group.issues.length} {group.issues.length === 1 ? 'issue' : 'issues'}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                     {group.issues.map((magazine) => issueCard(magazine))}
                   </div>
                 </section>

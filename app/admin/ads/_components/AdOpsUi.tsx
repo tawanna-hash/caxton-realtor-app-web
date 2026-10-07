@@ -30,13 +30,13 @@ export function AdOpsPagination({
   const last = Math.min(currentPage * pageSize, count);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-300 bg-gray-50 px-4 py-2.5 text-xs text-gray-700">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-300 bg-gray-50 px-4 py-3 text-xs text-gray-700">
       <span>{count ? `${first}–${last} of ${count}` : '0 results'}</span>
       <div className="flex items-center gap-2">
-        <label className="flex items-center gap-1.5">
+        <label className="flex items-center gap-2">
           Rows
           <select
-            className="h-7 rounded border border-gray-300 bg-white px-1.5"
+            className="h-7 rounded border border-gray-300 bg-white px-2"
             value={pageSize}
             onChange={(event) => onPageSizeChange(Number(event.target.value))}
           >

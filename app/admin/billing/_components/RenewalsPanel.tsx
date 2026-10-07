@@ -88,7 +88,7 @@ export function RenewalsPanel({
                 return (
                   <div key={r.id} className="hover:bg-[#F6F3FB]/30">
                     {/* Desktop */}
-                    <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2.5 items-center">
+                    <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-3 items-center">
                       <button onClick={() => onOpen(r)} className="col-span-2 text-left text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</button>
                       <div className="col-span-2 text-xs text-gray-600 truncate">{r.advertiser_email ?? '—'}</div>
                       <div className="col-span-2 text-xs text-gray-600 truncate">{r.company_name ?? '—'}</div>
@@ -165,7 +165,7 @@ export function RenewalsPanel({
               {renewalsPage.map((r) => (
                 <button key={r.id} onClick={() => onOpen(r)} className="block w-full text-left hover:bg-[#F6F3FB]/30">
                   {/* Desktop */}
-                  <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2.5 items-center">
+                  <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-3 items-center">
                     <div className="col-span-2 text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</div>
                     <div className="col-span-2 text-xs text-gray-600 truncate">{r.advertiser_email ?? '—'}</div>
                     <div className="col-span-2 text-xs text-gray-600 truncate">{r.company_name ?? '—'}</div>
@@ -224,7 +224,7 @@ export function RenewalsPanel({
                     ? 'text-[#645600]'
                     : 'text-gray-600';
                 return (
-                  <div key={r.id} className="flex flex-col space-y-2 px-4 py-2.5 hover:bg-gray-50/40 sm:grid sm:grid-cols-12 sm:items-start sm:gap-2 sm:space-y-0">
+                  <div key={r.id} className="flex flex-col space-y-2 px-4 py-3 hover:bg-gray-50/40 sm:grid sm:grid-cols-12 sm:items-start sm:gap-2 sm:space-y-0">
                     <div className="sm:col-span-2 text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}{r.company_name && <span className="sm:hidden text-xs text-gray-500 font-normal"> · {r.company_name}</span>}</div>
                     <div className="hidden sm:block sm:col-span-2 text-xs text-gray-600 truncate">{r.company_name ?? '—'}</div>
                     <div className="sm:hidden">

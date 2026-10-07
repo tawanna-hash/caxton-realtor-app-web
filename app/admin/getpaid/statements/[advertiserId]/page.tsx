@@ -219,7 +219,7 @@ export default async function StatementPage({
         </div>
       </div>
 
-      <section className="mb-5 overflow-hidden rounded border border-gray-200 bg-white print:hidden">
+      <section className="mb-4 overflow-hidden rounded border border-gray-200 bg-white print:hidden">
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
           <div>
             <h2 className="text-sm font-semibold text-gray-900">Statement Send History</h2>
@@ -249,7 +249,7 @@ export default async function StatementPage({
         {sendHistory.length > 0 && (
           <div className="max-h-72 divide-y divide-gray-100 overflow-auto md:hidden">
             {sendHistory.map((event) => (
-              <div key={event.id} className="space-y-1.5 px-4 py-3 text-xs">
+              <div key={event.id} className="space-y-2 px-4 py-3 text-xs">
                 <div className="flex items-start justify-between gap-3">
                   <div className="text-gray-700">
                     {new Date(event.sent_at).toLocaleString('en-US', {
@@ -288,7 +288,7 @@ export default async function StatementPage({
               <tbody className="divide-y divide-gray-100">
                 {sendHistory.map((event) => (
                   <tr key={event.id}>
-                    <td className="whitespace-nowrap px-4 py-2.5 text-gray-700">
+                    <td className="whitespace-nowrap px-4 py-3 text-gray-700">
                       {new Date(event.sent_at).toLocaleString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -299,10 +299,10 @@ export default async function StatementPage({
                       })}
                       {event.sent_by && <div className="text-[11px] text-gray-400">by {event.sent_by}</div>}
                     </td>
-                    <td className="px-3 py-2.5 text-gray-700" title={event.subject}>{event.recipient_email}</td>
-                    <td className="px-3 py-2.5 text-gray-600">{event.sender_email}</td>
-                    <td className="px-3 py-2.5 text-right text-gray-700">{event.invoice_count}</td>
-                    <td className="px-4 py-2.5 text-right font-medium text-gray-900">{money(event.outstanding_cents)}</td>
+                    <td className="px-3 py-3 text-gray-700" title={event.subject}>{event.recipient_email}</td>
+                    <td className="px-3 py-3 text-gray-600">{event.sender_email}</td>
+                    <td className="px-3 py-3 text-right text-gray-700">{event.invoice_count}</td>
+                    <td className="px-4 py-3 text-right font-medium text-gray-900">{money(event.outstanding_cents)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -311,8 +311,8 @@ export default async function StatementPage({
         )}
       </section>
 
-      <article className="bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-10">
-        <header className="grid grid-cols-[1fr_auto] gap-8 border-b border-neutral-300 pb-5">
+      <article className="bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-8">
+        <header className="grid grid-cols-[1fr_auto] gap-8 border-b border-neutral-300 pb-4">
           <Image
             src="/brand/caxton-logo.jpg"
             alt="Caxton Publications Inc."
@@ -331,7 +331,7 @@ export default async function StatementPage({
           </div>
         </header>
 
-        <section className="grid grid-cols-2 gap-8 py-5">
+        <section className="grid grid-cols-2 gap-8 py-4">
           <div>
             <div className="mb-1 text-[10px] uppercase tracking-wider text-neutral-500">Bill to</div>
             <div className="font-semibold">{billTo.bill_to_name ?? advertiser.name}</div>
@@ -348,7 +348,7 @@ export default async function StatementPage({
           <div className="border-b border-neutral-300 pb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-600">
             Outstanding invoices
           </div>
-          <div className="grid grid-cols-[1fr_auto] gap-x-3 border-b border-neutral-200 py-1.5">
+          <div className="grid grid-cols-[1fr_auto] gap-x-3 border-b border-neutral-200 py-2">
             <div>Overdue</div>
             <div className="text-right">{money(overdueCents)}</div>
             <div>Not yet due</div>
@@ -359,7 +359,7 @@ export default async function StatementPage({
         </section>
 
         {overdueCents > 0 && (
-          <section className="mb-5 border border-[#D9CFF0] bg-[#F6F3FB] px-4 py-4 text-center print:hidden">
+          <section className="mb-4 border border-[#D9CFF0] bg-[#F6F3FB] px-4 py-4 text-center print:hidden">
             <div className="font-semibold text-[#1B1726]">
               Pay all overdue invoices: {money(overdueCents)}
             </div>

@@ -324,8 +324,8 @@ export default function TestimonialHubClient() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <header className="flex flex-col gap-5 border-b border-gray-200 pb-7 sm:flex-row sm:items-end sm:justify-between">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-8">
+      <header className="flex flex-col gap-4 border-b border-gray-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">Subscriber tools</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950">Testimonial Hub</h1>
@@ -333,24 +333,24 @@ export default function TestimonialHubClient() {
             Collect client feedback, organize your library, and publish a shareable proof page.
           </p>
         </div>
-        <button onClick={startNew} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#241547]">
+        <button onClick={startNew} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 py-3 text-sm font-semibold text-white hover:bg-[#241547]">
           <Plus size={17} /> Add testimonial
         </button>
       </header>
 
       {(error || notice) && (
-        <div role="status" className={`mt-5 rounded-md border px-4 py-3 text-sm ${error ? 'border-[#FF2A04]/30 bg-[#FFEAE6] text-[#661102]' : 'border-[#00E200]/30 bg-[#E0FBE0] text-[#005A00]'}`}>
+        <div role="status" className={`mt-4 rounded-md border px-4 py-3 text-sm ${error ? 'border-[#FF2A04]/30 bg-[#FFEAE6] text-[#661102]' : 'border-[#00E200]/30 bg-[#E0FBE0] text-[#005A00]'}`}>
           {error || notice}
         </div>
       )}
 
-      <section aria-label="Testimonial totals" className="mt-7 grid gap-3 sm:grid-cols-3">
+      <section aria-label="Testimonial totals" className="mt-6 grid gap-3 sm:grid-cols-3">
         {([
           { label: 'Published', value: counts.published, icon: Check },
           { label: 'Awaiting review', value: counts.pending, icon: Quote },
           { label: 'Archived', value: counts.archived, icon: Archive },
         ] satisfies Array<{ label: string; value: number; icon: LucideIcon }>).map(({ label, value, icon: Icon }) => (
-          <div key={label} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div key={label} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <Icon size={18} className="text-[#301D5D]" />
             <div className="mt-4 text-2xl font-semibold text-gray-950">{value}</div>
             <div className="mt-1 text-sm text-gray-500">{label}</div>
@@ -372,16 +372,16 @@ export default function TestimonialHubClient() {
               <Quote className="mx-auto text-gray-300" size={34} />
               <h3 className="mt-4 font-semibold text-gray-900">Your Best Client Stories Belong Here</h3>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">Add one yourself, or copy your collection link and send it to a client.</p>
-              <button onClick={startNew} className="mt-5 min-h-11 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white">Add your first testimonial</button>
+              <button onClick={startNew} className="mt-4 min-h-11 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white">Add your first testimonial</button>
             </div>
           ) : (
             <div className="space-y-3">
               {items.map((item) => (
-                <article key={item.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <article key={item.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
                       {item.format === 'video' ? <Video size={17} className="text-[#301D5D]" /> : item.format === 'audio' ? <AudioLines size={17} className="text-[#301D5D]" /> : <FileText size={17} className="text-[#301D5D]" />}
-                      <span className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${statusClass(item.status)}`}>{item.status}</span>
+                      <span className={`rounded-full border px-3 py-1 text-xs font-medium capitalize ${statusClass(item.status)}`}>{item.status}</span>
                       {item.submitted_via === 'collection_link' && <span className="text-xs text-gray-500">Client submitted</span>}
                     </div>
                     <div className="flex gap-1">
@@ -397,7 +397,7 @@ export default function TestimonialHubClient() {
                   <blockquote className="mt-3 text-base leading-7 text-gray-800">“{item.quote}”</blockquote>
                   <div className="mt-4 text-sm font-semibold text-gray-950">{item.client_name}</div>
                   {(item.client_title || item.client_company) && <div className="mt-0.5 text-sm text-gray-500">{[item.client_title, item.client_company].filter(Boolean).join(', ')}</div>}
-                  <div className="mt-4 flex flex-wrap gap-1.5">
+                  <div className="mt-4 flex flex-wrap gap-2">
                     {item.tags.map((tag) => <span key={tag} className="rounded bg-gray-50 px-2 py-1 text-xs text-gray-500">#{tag}</span>)}
                   </div>
                 </article>
@@ -406,8 +406,8 @@ export default function TestimonialHubClient() {
           )}
         </div>
 
-        <aside className="space-y-5">
-          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <aside className="space-y-4">
+          <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <h2 className="text-base font-semibold text-gray-950">Collect Testimonials</h2>
             <p className="mt-2 text-sm leading-6 text-gray-500">Share this link with clients. New responses arrive as pending for review.</p>
             <div className="mt-4 break-all rounded-md bg-gray-50 p-3 text-xs leading-5 text-gray-600">{collectionUrl}</div>
@@ -417,7 +417,7 @@ export default function TestimonialHubClient() {
             </div>
           </section>
 
-          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <h2 className="text-base font-semibold text-gray-950">Profile Settings</h2>
             <label className="mt-4 flex items-center justify-between gap-3 text-sm font-medium text-gray-800">
               Published
@@ -425,30 +425,30 @@ export default function TestimonialHubClient() {
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
               Display name
-              <input value={profile.display_name} onChange={(event) => setProfile({ ...profile, display_name: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" />
+              <input value={profile.display_name} onChange={(event) => setProfile({ ...profile, display_name: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" />
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
               Username
-              <div className="mt-1.5 flex min-h-11 overflow-hidden rounded-md border border-gray-300 bg-white">
+              <div className="mt-2 flex min-h-11 overflow-hidden rounded-md border border-gray-300 bg-white">
                 <span className="flex items-center border-r border-gray-200 bg-gray-50 px-3 text-xs text-gray-500">/testimonials/</span>
                 <input value={profile.slug} onChange={(event) => setProfile({ ...profile, slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} className="min-w-0 flex-1 px-3 text-sm outline-none" />
               </div>
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
               Professional title
-              <input value={profile.professional_title ?? ''} onChange={(event) => setProfile({ ...profile, professional_title: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" />
+              <input value={profile.professional_title ?? ''} onChange={(event) => setProfile({ ...profile, professional_title: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" />
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
               Company
-              <input value={profile.company ?? ''} onChange={(event) => setProfile({ ...profile, company: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" />
+              <input value={profile.company ?? ''} onChange={(event) => setProfile({ ...profile, company: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" />
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
               Location
-              <input value={profile.location ?? ''} onChange={(event) => setProfile({ ...profile, location: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="Austin, Texas" />
+              <input value={profile.location ?? ''} onChange={(event) => setProfile({ ...profile, location: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="Austin, Texas" />
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
               Headshot URL
-              <input type="url" value={profile.headshot_url ?? ''} onChange={(event) => setProfile({ ...profile, headshot_url: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" />
+              <input type="url" value={profile.headshot_url ?? ''} onChange={(event) => setProfile({ ...profile, headshot_url: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" />
             </label>
             <label className="mt-2 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50">
               <Upload size={15} />
@@ -467,13 +467,13 @@ export default function TestimonialHubClient() {
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
               Short introduction
-              <textarea rows={3} value={profile.bio ?? ''} onChange={(event) => setProfile({ ...profile, bio: event.target.value })} className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <textarea rows={3} value={profile.bio ?? ''} onChange={(event) => setProfile({ ...profile, bio: event.target.value })} className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
               Subscriber website
-              <input type="url" value={profile.website_url ?? ''} onChange={(event) => setProfile({ ...profile, website_url: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://yourwebsite.com" />
+              <input type="url" value={profile.website_url ?? ''} onChange={(event) => setProfile({ ...profile, website_url: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://yourwebsite.com" />
             </label>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {([
                 ['Instagram', 'instagram_url', 'https://instagram.com/…'],
                 ['X / Twitter', 'x_url', 'https://x.com/…'],
@@ -482,7 +482,7 @@ export default function TestimonialHubClient() {
               ] as const).map(([label, key, placeholder]) => (
                 <label key={key} className="block text-sm font-medium text-gray-700">
                   {label}
-                  <input type="url" value={profile[key] ?? ''} onChange={(event) => setProfile({ ...profile, [key]: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder={placeholder} />
+                  <input type="url" value={profile[key] ?? ''} onChange={(event) => setProfile({ ...profile, [key]: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder={placeholder} />
                 </label>
               ))}
             </div>
@@ -493,7 +493,7 @@ export default function TestimonialHubClient() {
                   type="button"
                   onClick={() => setProfile({ ...profile, featured_links: [...profile.featured_links, { label: '', url: '' }] })}
                   disabled={profile.featured_links.length >= 8}
-                  className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-[#301D5D] disabled:opacity-50"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-semibold text-[#301D5D] disabled:opacity-50"
                 >
                   <Plus size={15} /> Add link
                 </button>
@@ -510,7 +510,7 @@ export default function TestimonialHubClient() {
                 ))}
               </div>
             </div>
-            <button onClick={() => void saveProfile()} disabled={saving} className="mt-5 min-h-11 w-full rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white disabled:opacity-50">Save profile</button>
+            <button onClick={() => void saveProfile()} disabled={saving} className="mt-4 min-h-11 w-full rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white disabled:opacity-50">Save profile</button>
             {profile.is_published && (
               <a href={showcaseUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 <ExternalLink size={15} /> View public page
@@ -518,7 +518,7 @@ export default function TestimonialHubClient() {
             )}
           </section>
 
-          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <h2 className="text-base font-semibold text-gray-950">Embed Anywhere</h2>
             <p className="mt-2 text-sm leading-6 text-gray-500">Paste this single line into your website. Newly published testimonials appear automatically without reloading the page.</p>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -527,7 +527,7 @@ export default function TestimonialHubClient() {
                 <select
                   value={embedLayout}
                   onChange={(event) => setEmbedLayout(event.target.value as typeof embedLayout)}
-                  className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
+                  className="mt-2 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
                   data-testid="select-testimonial-widget-layout"
                 >
                   <option value="grid">Card grid</option>
@@ -540,7 +540,7 @@ export default function TestimonialHubClient() {
                 <select
                   value={embedTheme}
                   onChange={(event) => setEmbedTheme(event.target.value as typeof embedTheme)}
-                  className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
+                  className="mt-2 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
                   data-testid="select-testimonial-widget-theme"
                 >
                   <option value="light">Light</option>
@@ -555,33 +555,33 @@ export default function TestimonialHubClient() {
       </section>
 
       {showEditor && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-5" role="dialog" aria-modal="true" aria-labelledby="testimonial-editor-title">
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="testimonial-editor-title">
           <div className="max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-t-2xl bg-white shadow-2xl sm:rounded-xl">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-4">
               <div>
                 <h2 id="testimonial-editor-title" className="text-lg font-semibold text-gray-950">{editingId ? 'Edit testimonial' : 'Add testimonial'}</h2>
                 <p className="mt-0.5 text-sm text-gray-500">Save text, audio, video, rating, and client attribution.</p>
               </div>
               <button onClick={() => setShowEditor(false)} aria-label="Close testimonial editor" className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100"><X size={20} /></button>
             </div>
-            <form onSubmit={saveTestimonial} className="grid gap-5 p-5 sm:grid-cols-2">
+            <form onSubmit={saveTestimonial} className="grid gap-4 p-4 sm:grid-cols-2">
               <label className="sm:col-span-2 text-sm font-medium text-gray-700">
                 Testimonial
-                <textarea required minLength={10} rows={5} value={form.quote} onChange={(event) => setForm({ ...form, quote: event.target.value })} className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-base" placeholder="What did your client say?" />
+                <textarea required minLength={10} rows={5} value={form.quote} onChange={(event) => setForm({ ...form, quote: event.target.value })} className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-base" placeholder="What did your client say?" />
               </label>
-              <label className="text-sm font-medium text-gray-700">Client name<input required value={form.clientName} onChange={(event) => setForm({ ...form, clientName: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label>
-              <label className="text-sm font-medium text-gray-700">Client company<input value={form.clientCompany} onChange={(event) => setForm({ ...form, clientCompany: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label>
-              <label className="text-sm font-medium text-gray-700">Client title<input value={form.clientTitle} onChange={(event) => setForm({ ...form, clientTitle: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label>
-              <label className="text-sm font-medium text-gray-700">Rating<select value={form.rating} onChange={(event) => setForm({ ...form, rating: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"><option value="">No rating</option>{[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}</select></label>
+              <label className="text-sm font-medium text-gray-700">Client name<input required value={form.clientName} onChange={(event) => setForm({ ...form, clientName: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label>
+              <label className="text-sm font-medium text-gray-700">Client company<input value={form.clientCompany} onChange={(event) => setForm({ ...form, clientCompany: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label>
+              <label className="text-sm font-medium text-gray-700">Client title<input value={form.clientTitle} onChange={(event) => setForm({ ...form, clientTitle: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label>
+              <label className="text-sm font-medium text-gray-700">Rating<select value={form.rating} onChange={(event) => setForm({ ...form, rating: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"><option value="">No rating</option>{[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}</select></label>
               <fieldset className="sm:col-span-2">
                 <legend className="text-sm font-medium text-gray-700">Format</legend>
                 <div className="mt-2 flex gap-2">
                   {(['text', 'audio', 'video'] as const).map((format) => <button key={format} type="button" onClick={() => setForm({ ...form, format })} className={`inline-flex min-h-11 items-center gap-2 rounded-md border px-4 text-sm font-medium capitalize ${form.format === format ? 'border-[#301D5D] bg-[#301D5D]/5 text-[#301D5D]' : 'border-gray-300 text-gray-600'}`}>{format === 'video' ? <Video size={16} /> : format === 'audio' ? <AudioLines size={16} /> : <FileText size={16} />}{format}</button>)}
                 </div>
               </fieldset>
-              {form.format !== 'text' && <label className="sm:col-span-2 text-sm font-medium text-gray-700">{form.format === 'audio' ? 'Audio URL' : 'Video URL'}<input required type="url" value={form.videoUrl} onChange={(event) => setForm({ ...form, videoUrl: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" /></label>}
+              {form.format !== 'text' && <label className="sm:col-span-2 text-sm font-medium text-gray-700">{form.format === 'audio' ? 'Audio URL' : 'Video URL'}<input required type="url" value={form.videoUrl} onChange={(event) => setForm({ ...form, videoUrl: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" /></label>}
               <div>
-                <label className="text-sm font-medium text-gray-700">Client photo URL<input type="url" value={form.imageUrl} onChange={(event) => setForm({ ...form, imageUrl: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" /></label>
+                <label className="text-sm font-medium text-gray-700">Client photo URL<input type="url" value={form.imageUrl} onChange={(event) => setForm({ ...form, imageUrl: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" /></label>
                 <label className="mt-2 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50">
                   <Upload size={15} />
                   {uploading === 'client' ? 'Uploading…' : 'Upload client photo'}
@@ -598,14 +598,14 @@ export default function TestimonialHubClient() {
                   />
                 </label>
               </div>
-              <label className="text-sm font-medium text-gray-700">Original source URL<input type="url" value={form.sourceUrl} onChange={(event) => setForm({ ...form, sourceUrl: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" /></label>
-              <label className="sm:col-span-2 text-sm font-medium text-gray-700">Transcript or notes<textarea rows={3} value={form.transcript} onChange={(event) => setForm({ ...form, transcript: event.target.value })} className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></label>
-              <label className="sm:col-span-2 text-sm font-medium text-gray-700">Tags<input value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="buyer, first-time homebuyer, relocation" /></label>
-              <label className="text-sm font-medium text-gray-700">Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as FormState['status'] })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"><option value="published">Published</option><option value="pending">Pending</option><option value="archived">Archived</option></select></label>
-              <label className="text-sm font-medium text-gray-700">Display order<input type="number" min={0} value={form.sortOrder} onChange={(event) => setForm({ ...form, sortOrder: Number(event.target.value) })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label>
-              <div className="flex justify-end gap-2 border-t border-gray-200 pt-5 sm:col-span-2">
+              <label className="text-sm font-medium text-gray-700">Original source URL<input type="url" value={form.sourceUrl} onChange={(event) => setForm({ ...form, sourceUrl: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" /></label>
+              <label className="sm:col-span-2 text-sm font-medium text-gray-700">Transcript or notes<textarea rows={3} value={form.transcript} onChange={(event) => setForm({ ...form, transcript: event.target.value })} className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></label>
+              <label className="sm:col-span-2 text-sm font-medium text-gray-700">Tags<input value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="buyer, first-time homebuyer, relocation" /></label>
+              <label className="text-sm font-medium text-gray-700">Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as FormState['status'] })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"><option value="published">Published</option><option value="pending">Pending</option><option value="archived">Archived</option></select></label>
+              <label className="text-sm font-medium text-gray-700">Display order<input type="number" min={0} value={form.sortOrder} onChange={(event) => setForm({ ...form, sortOrder: Number(event.target.value) })} className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label>
+              <div className="flex justify-end gap-2 border-t border-gray-200 pt-4 sm:col-span-2">
                 <button type="button" onClick={() => setShowEditor(false)} className="min-h-11 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700">Cancel</button>
-                <button disabled={saving} className="min-h-11 rounded-md bg-[#301D5D] px-5 text-sm font-semibold text-white disabled:opacity-50">{saving ? 'Saving…' : 'Save testimonial'}</button>
+                <button disabled={saving} className="min-h-11 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white disabled:opacity-50">{saving ? 'Saving…' : 'Save testimonial'}</button>
               </div>
             </form>
           </div>

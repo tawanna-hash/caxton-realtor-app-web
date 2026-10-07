@@ -97,7 +97,7 @@ function ArticleBodyEditor({
         <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={10}
           aria-label="Article body HTML" className={`${style} font-mono text-xs resize-y`} />
       ) : mode === 'feed' ? (
-        <div className="border border-gray-200 bg-white rounded-md px-4 py-5">
+        <div className="border border-gray-200 bg-white rounded-md px-4 py-4">
           <ArticleFeedCardBody category={category} headline={headline || 'Article headline'} summary={summary}
             imageUrl={imageUrl} date={publishedAt ? formatDate(publishedAt) : undefined} />
         </div>
@@ -107,7 +107,7 @@ function ArticleBodyEditor({
             /* eslint-disable-next-line @next/next/no-img-element */
             <img src={imageUrl} alt="" className="w-full h-auto max-h-[60vh] object-cover bg-gray-100" />
           )}
-          <main className="max-w-2xl mx-auto px-5 pt-6 pb-8">
+          <main className="max-w-2xl mx-auto px-4 pt-6 pb-8">
             {category && <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3 text-brand-700">{category}</p>}
             <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-tight mb-3">{headline || 'Article headline'}</h1>
             {(authorName || publishedAt) && (
@@ -398,7 +398,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             key={key}
             type="button"
             onClick={() => setFilter(key)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+            className={`px-3 py-2 rounded-full text-sm font-medium border transition-colors ${
               filter === key
                 ? 'bg-brand-700 text-white border-brand-700'
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -456,15 +456,15 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                   <div className="w-14 h-14 rounded-md bg-gray-100 flex-shrink-0" aria-hidden="true" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border ${PUB_STYLES[a.publication]}`}>
                       {PUB_LABEL[a.publication]}
                     </span>
                     {a.editedFields.length > 0 && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-[#E0FBE0] text-[#005A00] border border-[#00E200]/30">Edited</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#E0FBE0] text-[#005A00] border border-[#00E200]/30">Edited</span>
                     )}
                     {a.hidden && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">Hidden</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">Hidden</span>
                     )}
                   </div>
                   <p className="font-medium text-gray-900 mt-1 line-clamp-2">{a.head}</p>
@@ -529,12 +529,12 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-gray-900 line-clamp-2">{a.head}</p>
                             {a.editedFields.length > 0 && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-[#E0FBE0] text-[#005A00] border border-[#00E200]/30 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#E0FBE0] text-[#005A00] border border-[#00E200]/30 whitespace-nowrap">
                                 Edited
                               </span>
                             )}
                             {a.hidden && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">
                                 Hidden
                               </span>
                             )}
@@ -734,7 +734,7 @@ function EditModal({
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-6 py-4 space-y-4">
           <Field label="Title">
             <input
               type="text"
@@ -960,7 +960,7 @@ function CreateModal({
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-6 py-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Publication">
               <select
@@ -1172,7 +1172,7 @@ function ImageUpload({
           <div className="flex items-center gap-2 flex-wrap">
             <label
               htmlFor={inputId}
-              className={`inline-flex items-center gap-1.5 cursor-pointer px-3 py-2 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-xs font-medium text-gray-700 min-h-[44px] ${
+              className={`inline-flex items-center gap-2 cursor-pointer px-3 py-2 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-xs font-medium text-gray-700 min-h-[44px] ${
                 uploading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
@@ -1230,7 +1230,7 @@ function ImageUpload({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder="or paste image URL…"
-            className="w-full px-3 py-1.5 rounded-md border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
+            className="w-full px-3 py-2 rounded-md border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
           />
         </div>
       </div>

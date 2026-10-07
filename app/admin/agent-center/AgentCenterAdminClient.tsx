@@ -83,7 +83,7 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
   };
 
   return (
-    <main className="mx-auto max-w-[1300px] space-y-6 px-5 py-7 lg:px-8">
+    <main className="mx-auto max-w-[1300px] space-y-6 px-4 py-6 lg:px-8">
       <header>
         <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-[#7059A8]">Admin · Agent Center</p>
         <PageTitle size="md">TREC form versions</PageTitle>
@@ -92,10 +92,10 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
         </p>
       </header>
 
-      <section className="border border-[#D9D0BF] bg-[#FFFDF8] p-5 sm:p-6">
+      <section className="border border-[#D9D0BF] bg-[#FFFDF8] p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-slate-950">Add an Official Revision</h2>
         <p className="mt-1 text-sm leading-6 text-slate-600">The upload becomes active only for its matching form family. Previous revisions remain in history and are never overwritten.</p>
-        <div className="mt-5 grid gap-4 lg:grid-cols-[0.8fr_1.3fr_1fr_1.4fr_auto] lg:items-end">
+        <div className="mt-4 grid gap-4 lg:grid-cols-[0.8fr_1.3fr_1fr_1.4fr_auto] lg:items-end">
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-slate-800">TREC form number</span>
             <input value={formNumber} onChange={(event) => setFormNumber(event.target.value)} className="h-[46px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Example: 20-20" />
@@ -112,7 +112,7 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
             <span className="mb-2 block text-sm font-semibold text-slate-800">Official fillable PDF</span>
             <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="block h-[46px] w-full rounded-md border border-slate-300 bg-white text-sm file:mr-3 file:h-[44px] file:border-0 file:border-r file:border-slate-300 file:bg-[#F7F3EB] file:px-4 file:text-sm file:font-bold file:text-[#301D5D]" />
           </label>
-          <button type="button" onClick={() => void upload()} disabled={busy} className="inline-flex h-[46px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-5 text-sm font-bold text-white hover:bg-[#241548] disabled:cursor-not-allowed disabled:opacity-60">
+          <button type="button" onClick={() => void upload()} disabled={busy} className="inline-flex h-[46px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#241548] disabled:cursor-not-allowed disabled:opacity-60">
             {busy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileUp className="h-4 w-4" aria-hidden="true" />}
             Upload and activate
           </button>
@@ -122,12 +122,12 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
       </section>
 
       <section className="border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-5 py-4">
+        <div className="border-b border-slate-200 px-4 py-4">
           <h2 className="text-lg font-semibold text-slate-950">Version History</h2>
         </div>
         <div className="divide-y divide-slate-200">
           {versions.map((version) => (
-            <article key={version.id} className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <article key={version.id} className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-semibold text-slate-950">TREC {version.formNumber}</h3>
@@ -150,13 +150,13 @@ export default function AgentCenterAdminClient({ initialVersions }: { initialVer
       </section>
 
       <section className="border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-5 py-4">
+        <div className="border-b border-slate-200 px-4 py-4">
           <h2 className="text-lg font-semibold text-slate-950">Agent Download Library</h2>
           <p className="mt-1 text-sm leading-6 text-slate-600">All {TREC_FORM_LIBRARY.length} current TREC contract-library forms are available to signed-in agents. Upload a newer revision above to replace the active download for that form family without deleting its history.</p>
         </div>
         <div className="grid gap-px bg-slate-200 sm:grid-cols-2 xl:grid-cols-3">
           {TREC_FORM_LIBRARY.map((form) => (
-            <article key={form.formFamily} className="flex min-w-0 items-center justify-between gap-3 bg-white px-5 py-4">
+            <article key={form.formFamily} className="flex min-w-0 items-center justify-between gap-3 bg-white px-4 py-4">
               <div className="min-w-0">
                 <p className="text-xs font-bold text-[#7059A8]">TREC {form.formNumber}</p>
                 <h3 className="mt-1 text-sm font-semibold leading-5 text-slate-950">{form.title}</h3>

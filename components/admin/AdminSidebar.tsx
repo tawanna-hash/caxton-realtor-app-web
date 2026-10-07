@@ -121,7 +121,7 @@ export default function AdminSidebar() {
           type="button"
           onClick={toggleCollapsed}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className={`p-1.5 rounded-md text-white/70 hover:text-white hover:bg-white/10 transition ${collapsed ? 'mx-auto' : ''}`}
+          className={`p-2 rounded-md text-white/70 hover:text-white hover:bg-white/10 transition ${collapsed ? 'mx-auto' : ''}`}
         >
           {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
         </button>
@@ -161,7 +161,7 @@ export default function AdminSidebar() {
                 type="button"
                 onClick={() => toggleGroup(group.label)}
                 aria-expanded={isOpen}
-                className={`relative w-full flex items-center gap-2 my-0.5 px-2.5 py-2 rounded-md text-sm transition ${
+                className={`relative w-full flex items-center gap-2 my-0.5 px-3 py-2 rounded-md text-sm transition ${
                   isActive && !isOpen ? 'bg-white/10 text-white' : 'text-white/85 hover:text-white hover:bg-white/10'
                 }`}
               >
@@ -181,7 +181,7 @@ export default function AdminSidebar() {
                       <Link
                         key={link.href}
                         href={link.href}
-                        className={`flex items-center gap-1.5 py-1.5 px-2 rounded-md text-[13px] leading-tight transition ${
+                        className={`flex items-center gap-2 py-2 px-2 rounded-md text-[13px] leading-tight transition ${
                           linkActive
                             ? 'bg-white/15 text-white font-medium'
                             : 'text-white/70 hover:text-white hover:bg-white/10'

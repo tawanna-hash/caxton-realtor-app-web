@@ -38,9 +38,9 @@ export default function RnnPlatinumPaywall({
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-10 sm:py-16">
+    <main className="mx-auto max-w-5xl px-4 py-8 sm:py-16">
       <section className="overflow-hidden rounded-2xl border border-[#301D5D]/15 bg-white shadow-sm">
-        <div className="bg-[#301D5D] px-6 py-10 text-white sm:px-10">
+        <div className="bg-[#301D5D] px-6 py-8 text-white sm:px-8">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15">
             <Crown size={24} />
           </div>
@@ -50,7 +50,7 @@ export default function RnnPlatinumPaywall({
             Collect testimonials without requiring client accounts, publish a polished proof page, and embed your reviews on any website.
           </p>
         </div>
-        <div className="grid gap-8 px-6 py-8 sm:grid-cols-[1fr_auto] sm:items-center sm:px-10">
+        <div className="grid gap-8 px-6 py-8 sm:grid-cols-[1fr_auto] sm:items-center sm:px-8">
           <ul className="space-y-3 text-sm text-gray-700">
             {[
               'Your own no-login testimonial collection link',
@@ -70,7 +70,7 @@ export default function RnnPlatinumPaywall({
               type="button"
               disabled={(!trialAvailable && !checkoutAvailable) || loading}
               onClick={() => void begin(trialAvailable ? 'trial' : 'checkout')}
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-55"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-55"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
               {trialAvailable

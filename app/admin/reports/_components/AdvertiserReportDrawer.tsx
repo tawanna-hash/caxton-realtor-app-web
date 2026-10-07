@@ -192,7 +192,7 @@ export default function AdvertiserReportDrawer({
         className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-[640px] lg:w-[760px] bg-white shadow-2xl flex flex-col"
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-200 flex items-start justify-between gap-4">
+        <div className="px-4 py-4 border-b border-gray-200 flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-wider text-gray-500">
               {mode === 'view' ? 'Preview report' : 'Edit & send report'}
@@ -216,7 +216,7 @@ export default function AdvertiserReportDrawer({
 
         {/* Edit controls (edit mode only) */}
         {mode === 'edit' ? (
-          <div className="px-5 py-4 border-b border-gray-200 space-y-3 bg-gray-50">
+          <div className="px-4 py-4 border-b border-gray-200 space-y-3 bg-gray-50">
             <div>
               <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">
                 Reporting window
@@ -256,7 +256,7 @@ export default function AdvertiserReportDrawer({
                 type="button"
                 onClick={fetchPreview}
                 disabled={loadingPreview}
-                className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-40"
+                className="px-3 py-2 text-xs font-medium border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-40"
               >
                 {loadingPreview ? 'Refreshing…' : 'Refresh preview'}
               </button>
@@ -274,7 +274,7 @@ export default function AdvertiserReportDrawer({
               Loading preview…
             </div>
           ) : previewError ? (
-            <div className="p-5">
+            <div className="p-4">
               <div className="rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">
                 Failed to load preview: {previewError}
               </div>
@@ -291,7 +291,7 @@ export default function AdvertiserReportDrawer({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-200 bg-white">
+        <div className="px-4 py-4 border-t border-gray-200 bg-white">
           {sentRecipient ? (
             <div className="rounded-md border border-[#00E200]/30 bg-[#E0FBE0] px-4 py-3 text-sm text-[#005A00] flex items-center justify-between gap-3">
               <span>Report sent to {sentRecipient}.</span>

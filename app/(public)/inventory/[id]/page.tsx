@@ -243,7 +243,7 @@ function DetailView({
             <div className="mb-3 flex items-center gap-2">
               <Link
                 href={`/builders/${builderSlug}`}
-                className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#301D5D] bg-[#301D5D] text-white rounded-md hover:bg-[#301D5D] hover:border-[#301D5D] transition-colors"
+                className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-2 border border-[#301D5D] bg-[#301D5D] text-white rounded-md hover:bg-[#301D5D] hover:border-[#301D5D] transition-colors"
               >
                 {builderForPill}
               </Link>
@@ -330,7 +330,7 @@ function DetailView({
       )}
 
       {row.extraDetails && Object.keys(row.extraDetails).some((k) => !k.startsWith('_')) && (
-        <section className="mt-10 border-t border-gray-200 pt-6">
+        <section className="mt-8 border-t border-gray-200 pt-6">
           <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-4">
             Property Details
           </h2>
@@ -346,7 +346,7 @@ function DetailView({
       )}
 
       {floorplanUrl && (
-        <section className="mt-10 border-t border-gray-200 pt-6">
+        <section className="mt-8 border-t border-gray-200 pt-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
               Floorplan
@@ -378,7 +378,7 @@ function DetailView({
       )}
 
       {virtualTourUrl && (
-        <section className="mt-10 border-t border-gray-200 pt-6">
+        <section className="mt-8 border-t border-gray-200 pt-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
               3D Tour
@@ -406,7 +406,7 @@ function DetailView({
       )}
 
       {hasMap && (
-        <section className="mt-10 border-t border-gray-200 pt-6">
+        <section className="mt-8 border-t border-gray-200 pt-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
               Location

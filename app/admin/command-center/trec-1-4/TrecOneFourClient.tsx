@@ -137,7 +137,7 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="mt-1.5 block min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 shadow-sm outline-none placeholder:text-gray-400 focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]"
+        className="mt-2 block min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 shadow-sm outline-none placeholder:text-gray-400 focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]"
       />
       {hint && <span className="mt-1 block text-xs leading-5 text-gray-500">{hint}</span>}
     </label>
@@ -161,7 +161,7 @@ function Textarea({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         rows={4}
-        className="mt-1.5 block w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-950 shadow-sm outline-none placeholder:text-gray-400 focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]"
+        className="mt-2 block w-full rounded-md border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 shadow-sm outline-none placeholder:text-gray-400 focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]"
       />
       {hint && <span className="mt-1 block text-xs leading-5 text-gray-500">{hint}</span>}
     </label>
@@ -218,14 +218,14 @@ function DeadlineMath({
 }) {
   if (deadlines.length === 0) {
     return (
-      <div className="mt-5 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm leading-6 text-gray-600">
+      <div className="mt-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm leading-6 text-gray-600">
         Enter the contract&apos;s effective date to calculate the time-sensitive dates.
       </div>
     );
   }
 
   return (
-    <div className="mt-5 rounded-lg border border-[#D9CFF0] bg-[#F6F3FB]/60 p-4">
+    <div className="mt-4 rounded-lg border border-[#D9CFF0] bg-[#F6F3FB]/60 p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-gray-950">Deadline Math</h3>
@@ -309,7 +309,7 @@ function DateRadar({
     }, {});
 
   return (
-    <section aria-label="Date Radar" className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <section aria-label="Date Radar" className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <CalendarDays className="rnn-heading-icon text-[#42277C]" aria-hidden="true" />
@@ -341,7 +341,7 @@ function DateRadar({
           const dateDeadlines = eventsByDate[date] ?? [];
           const dateReminders = remindersByDate[date] ?? [];
           return (
-            <div key={date} className="min-h-20 border-b border-r border-gray-200 p-1.5">
+            <div key={date} className="min-h-20 border-b border-r border-gray-200 p-2">
               <span className={date === isoToday() ? 'inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#301D5D] text-xs font-semibold text-white' : 'text-xs font-medium text-gray-700'}>{day}</span>
               <div className="mt-1 space-y-1">
                 {dateDeadlines.slice(0, 2).map((deadline) => <p key={deadline.id} title={deadline.label} className="truncate rounded bg-[#EFEAF8] px-1 py-0.5 text-[10px] font-medium text-[#1B1726]">{deadline.label}</p>)}
@@ -840,8 +840,8 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
         <span>TREC 1–4 Deal Prep</span>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7">
-        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-start">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
           <div className="max-w-3xl">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#42277C]">
               <FileText className="h-4 w-4" aria-hidden="true" />
@@ -896,7 +896,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
           </p>
         </div>
 
-        <div className="mt-5 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-4 sm:p-5">
+        <div className="mt-4 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-4 sm:p-4">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.72fr)] lg:items-center">
             <div className="max-w-2xl">
               <div className="flex items-center gap-2 text-sm font-semibold text-violet-950">
@@ -984,13 +984,13 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
             </p>
           )}
           {extractionWarnings.length > 0 && (
-            <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-5 text-[#645600]">
+            <ul className="mt-3 list-disc space-y-1 pl-4 text-xs leading-5 text-[#645600]">
               {extractionWarnings.map((warning) => <li key={warning}>{warning}</li>)}
             </ul>
           )}
         </div>
 
-        <div className="mt-5 grid gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 lg:grid-cols-2">
+        <div className="mt-4 grid gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 lg:grid-cols-2">
           <Field
             id="dealTitle"
             label="Deal name"
@@ -1005,7 +1005,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               id="savedDeal"
               value={currentDealId ?? ''}
               onChange={(event) => selectDeal(event.target.value)}
-              className="mt-1.5 block min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 shadow-sm outline-none focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]"
+              className="mt-2 block min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 shadow-sm outline-none focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]"
             >
               <option value="">New unsaved deal</option>
               {savedDeals.map((deal) => <option key={deal.id} value={deal.id}>{deal.title}</option>)}
@@ -1016,7 +1016,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
           </label>
           <label htmlFor="workflowStatus" className="block">
             <span className="text-sm font-medium text-gray-900">Transaction stage</span>
-            <select id="workflowStatus" value={workflowStatus} onChange={(event) => setWorkflowStatus(event.target.value as TrecWorkflowStatus)} className="mt-1.5 block min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 shadow-sm outline-none focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]">
+            <select id="workflowStatus" value={workflowStatus} onChange={(event) => setWorkflowStatus(event.target.value as TrecWorkflowStatus)} className="mt-2 block min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 shadow-sm outline-none focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]">
               {TREC_DEAL_WORKFLOW_STATUSES.map((status) => <option key={status} value={status}>{TREC_DEAL_WORKFLOW_STATUS_LABELS[status]}</option>)}
             </select>
             <span className="mt-1 block text-xs leading-5 text-gray-500">Operational stage only. It does not change the contract.</span>
@@ -1034,7 +1034,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
           </p>
         )}
 
-        <div className="mt-5 grid gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:grid-cols-[minmax(0,300px)_1fr] sm:items-end">
+        <div className="mt-4 grid gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:grid-cols-[minmax(0,300px)_1fr] sm:items-end">
           <Field
             id="effectiveDate"
             label="Contract effective date"
@@ -1098,15 +1098,15 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
           </ol>
         </nav>
 
-        <main className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7">
-          <div className="mb-7 grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.8fr)]">
+        <main className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="mb-6 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.8fr)]">
             <DateRadar
               deadlines={deadlines}
               reminders={reminders}
               month={radarMonth}
               onMonthChange={changeRadarMonth}
             />
-            <section aria-label="Deadline reminders" className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <section aria-label="Deadline reminders" className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <Bell className="rnn-heading-icon text-violet-700" aria-hidden="true" />
                 <div>
@@ -1115,7 +1115,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 </div>
               </div>
               {!currentDealId ? (
-                <p className="mt-5 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm leading-6 text-gray-600">
+                <p className="mt-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm leading-6 text-gray-600">
                   Save this deal to create reminders. The reminder list will appear here whenever the transaction is reopened.
                 </p>
               ) : (
@@ -1137,7 +1137,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                   )}
                   {reminderState === 'error' && <p role="alert" className="mt-3 text-sm text-[#661102]">This reminder could not be saved. Try again.</p>}
                   {reminders.length === 0 ? (
-                    <p className="mt-5 text-sm leading-6 text-gray-600">Use “Remind me” beside any calculated deadline to add the first reminder.</p>
+                    <p className="mt-4 text-sm leading-6 text-gray-600">Use “Remind me” beside any calculated deadline to add the first reminder.</p>
                   ) : (
                     <ul className="mt-4 space-y-2">
                       {reminders.map((reminder) => {
@@ -1170,15 +1170,15 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               )}
             </section>
           </div>
-          <section aria-label="Transaction operations" className="mb-7 grid gap-5 xl:grid-cols-2">
-            <div className="rounded-xl border border-[#FAD800]/30 bg-[#FEF8CC]/50 p-5">
+          <section aria-label="Transaction operations" className="mb-6 grid gap-4 xl:grid-cols-2">
+            <div className="rounded-xl border border-[#FAD800]/30 bg-[#FEF8CC]/50 p-4">
               <div className="flex items-center gap-2">
                 <ShieldAlert className="rnn-heading-icon text-[#645600]" aria-hidden="true" />
                 <div>
                   <h2 className="text-lg font-semibold text-gray-950">Texas Timing Review</h2>
                   <p className="text-xs text-gray-600">Operational checks based on the values in this workspace.</p>
                 </div>
-                <span className="ml-auto rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-[#645600]">{validationAlerts.length} to review</span>
+                <span className="ml-auto rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#645600]">{validationAlerts.length} to review</span>
               </div>
               {validationAlerts.length ? (
                 <ul className="mt-4 space-y-2">
@@ -1191,7 +1191,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               )}
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
               <div className="flex items-center gap-2">
                 <ClipboardCheck className="rnn-heading-icon text-violet-700" aria-hidden="true" />
                 <div>
@@ -1227,15 +1227,15 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
           </section>
 
           {currentDealId && (
-            <section aria-label="Document requests and history" className="mb-7 grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <section aria-label="Document requests and history" className="mb-6 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
                 <div className="flex items-center gap-2">
                   <FileText className="rnn-heading-icon text-[#42277C]" aria-hidden="true" />
                   <div><h2 className="text-lg font-semibold text-gray-950">Document Request Center</h2><p className="text-xs text-gray-500">Status tracking only. Do not upload executed contracts here.</p></div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {TREC_DOCUMENT_CHECKLIST_TEMPLATES.flatMap((template) => template.items).map((item) => (
-                    <button key={item.id} type="button" onClick={() => addDocument(item.label)} disabled={documents.some((document) => document.displayName === item.label)} className="rounded-full border border-[#D9CFF0] bg-[#F6F3FB] px-3 py-1.5 text-xs font-semibold text-[#301D5D] hover:bg-[#EFEAF8] disabled:cursor-default disabled:opacity-40">{item.label}</button>
+                    <button key={item.id} type="button" onClick={() => addDocument(item.label)} disabled={documents.some((document) => document.displayName === item.label)} className="rounded-full border border-[#D9CFF0] bg-[#F6F3FB] px-3 py-2 text-xs font-semibold text-[#301D5D] hover:bg-[#EFEAF8] disabled:cursor-default disabled:opacity-40">{item.label}</button>
                   ))}
                 </div>
                 <div className="mt-3 flex gap-2">
@@ -1253,7 +1253,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                   )) : <li className="text-sm text-gray-600">Add a checklist item or custom request to start tracking.</li>}
                 </ul>
               </div>
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
                 <div className="flex items-center gap-3"><History className="rnn-heading-icon text-gray-700" aria-hidden="true" /><div><h2 className="text-lg font-semibold text-gray-950">Closeout & History</h2><p className="text-xs text-gray-500">Document the operational outcome and a dated activity trail.</p></div></div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <select value={outcome} onChange={(event) => setOutcome(event.target.value)} aria-label="Transaction outcome" className="min-h-10 rounded-md border border-gray-300 px-3 text-sm"><option value="">Outcome not set</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option><option value="withdrawn">Withdrawn</option><option value="expired">Expired</option></select>
@@ -1276,13 +1276,13 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 Record names exactly as they should appear on legal identification, then gather
                 the property facts and any included or excluded items.
               </p>
-              <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <Field id="buyerNames" label="Buyer name(s)" value={worksheet.buyerNames} onChange={(value) => update('buyerNames', value)} hint="Use legal names." />
                 <Field id="sellerNames" label="Seller name(s)" value={worksheet.sellerNames} onChange={(value) => update('sellerNames', value)} hint="Use legal names." />
                 <Field id="propertyAddress" label="Property address" value={worksheet.propertyAddress} onChange={(value) => update('propertyAddress', value)} placeholder="Street, city, state, ZIP" />
                 <Field id="county" label="County" value={worksheet.county} onChange={(value) => update('county', value)} />
               </div>
-              <div className="mt-5 grid gap-5">
+              <div className="mt-4 grid gap-4">
                 <Textarea id="legalDescription" label="Legal description" value={worksheet.legalDescription} onChange={(value) => update('legalDescription', value)} hint="Lot, block, subdivision and any needed legal-description detail." />
                 <Textarea id="improvementsAndAccessories" label="Included improvements & accessories" value={worksheet.improvementsAndAccessories} onChange={(value) => update('improvementsAndAccessories', value)} hint="For example: fixtures, built-in appliances, landscaping, curtains or blinds." />
                 <Textarea id="exclusions" label="Excluded items" value={worksheet.exclusions} onChange={(value) => update('exclusions', value)} hint="List items the parties intend not to convey." />
@@ -1297,12 +1297,12 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 Gather the agreed price components and align financing details with the lender and
                 any financing addendum before the official form is completed.
               </p>
-              <div className="mt-6 grid gap-5 sm:grid-cols-3">
+              <div className="mt-6 grid gap-4 sm:grid-cols-3">
                 <Field id="cashPortion" label="Cash portion" value={worksheet.cashPortion} onChange={(value) => update('cashPortion', value)} placeholder="$0.00" />
                 <Field id="loanAmount" label="Loan amount" value={worksheet.loanAmount} onChange={(value) => update('loanAmount', value)} placeholder="$0.00" />
                 <Field id="salesPrice" label="Total sales price" value={worksheet.salesPrice} onChange={(value) => update('salesPrice', value)} placeholder="$0.00" />
               </div>
-              <div className="mt-5 grid gap-5 sm:grid-cols-2">
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <Field id="financingType" label="Financing type" value={worksheet.financingType} onChange={(value) => update('financingType', value)} placeholder="Conventional, VA, cash, etc." />
                 <Field id="financingNotes" label="Financing addendum / lender notes" value={worksheet.financingNotes} onChange={(value) => update('financingNotes', value)} placeholder="Approval, appraisal or buyer obligations" />
               </div>
@@ -1316,7 +1316,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 Capture the amounts, holder and delivery dates. The effective date on the executed
                 contract drives critical deadlines, so confirm every timing item against the current official form.
               </p>
-              <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <Field id="earnestMoney" label="Earnest money amount" value={worksheet.earnestMoney} onChange={(value) => update('earnestMoney', value)} placeholder="$0.00" />
                 <Field id="titleCompany" label="Earnest money holder / title company" value={worksheet.titleCompany} onChange={(value) => update('titleCompany', value)} />
                 <Field id="earnestMoneyDeliveredDate" label="Earnest money delivered date" value={worksheet.earnestMoneyDeliveredDate} onChange={(value) => update('earnestMoneyDeliveredDate', value)} type="date" hint="Optional: record the actual delivery separately from the calculated deadline." />
@@ -1337,17 +1337,17 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 Consolidate the decisions and facts that shape due diligence, repair negotiation,
                 the closing date and possession.
               </p>
-              <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <Field id="titlePolicyPayer" label="Title policy payer" value={worksheet.titlePolicyPayer} onChange={(value) => update('titlePolicyPayer', value)} placeholder="Buyer, seller or negotiated" />
                 <Field id="surveyPlan" label="Survey plan" value={worksheet.surveyPlan} onChange={(value) => update('surveyPlan', value)} placeholder="Existing survey, new survey, etc." />
                 <Field id="closingDate" label="Target closing date" value={worksheet.closingDate} onChange={(value) => update('closingDate', value)} type="date" />
                 <Field id="possessionPlan" label="Possession plan" value={worksheet.possessionPlan} onChange={(value) => update('possessionPlan', value)} placeholder="Upon closing and funding, leaseback, etc." />
               </div>
-              <div className="mt-5 grid gap-5">
+              <div className="mt-4 grid gap-4">
                 <Textarea id="titleAndSurveyNotes" label="Title, survey & objections notes" value={worksheet.titleAndSurveyNotes} onChange={(value) => update('titleAndSurveyNotes', value)} hint="Flag commitments, survey facts, potential objections, easements or restrictions for review." />
                 <Textarea id="conditionAndRepairNotes" label="Property condition & repair notes" value={worksheet.conditionAndRepairNotes} onChange={(value) => update('conditionAndRepairNotes', value)} hint="Capture disclosure, inspection, utilities and lender-required repair items for negotiation and review." />
               </div>
-              <div className="mt-5 grid gap-5 sm:grid-cols-2">
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <Field id="financingDeadlineDays" label="Financing addendum days after effective date" value={worksheet.financingDeadlineDays} onChange={(value) => update('financingDeadlineDays', value)} type="number" placeholder="Set from executed addendum" />
                 <Field id="appraisalDeadlineDays" label="Appraisal deadline days after effective date" value={worksheet.appraisalDeadlineDays} onChange={(value) => update('appraisalDeadlineDays', value)} type="number" placeholder="Set from executed addendum" />
                 <Field id="titleCommitmentDays" label="Title commitment days after effective date" value={worksheet.titleCommitmentDays} onChange={(value) => update('titleCommitmentDays', value)} type="number" placeholder="Set from executed contract" />
@@ -1365,11 +1365,11 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 Use this page to prepare discussion points and verify attachments. Do not draft legal
                 language in special provisions; keep this workspace to factual notes for review.
               </p>
-              <div className="mt-6 grid gap-5">
+              <div className="mt-6 grid gap-4">
                 <Textarea id="specialProvisionsNotes" label="Clarification notes for review" value={worksheet.specialProvisionsNotes} onChange={(value) => update('specialProvisionsNotes', value)} hint="Use factual, non-legal discussion notes only." />
                 <Textarea id="settlementNotes" label="Settlement, expense, proration & other notes" value={worksheet.settlementNotes} onChange={(value) => update('settlementNotes', value)} hint="Consider expenses, warranties, HOA transfers, tax proration, casualty, escrow and FIRPTA questions." />
               </div>
-              <div className="mt-5 grid gap-5 sm:grid-cols-2">
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <Field id="notices" label="Notices & contact details" value={worksheet.notices} onChange={(value) => update('notices', value)} hint="Confirm email, addresses and phone numbers." />
                 <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-3 text-sm leading-6 text-gray-600">
                   <span className="font-medium text-gray-900">Effective date:</span>{' '}
@@ -1435,7 +1435,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
             </section>
           )}
 
-          <div className="mt-8 flex items-center justify-between gap-3 border-t border-gray-100 pt-5">
+          <div className="mt-8 flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
             <button
               type="button"
               onClick={() => setActiveStep((step) => Math.max(step - 1, 0))}
@@ -1449,13 +1449,13 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               <button
                 type="button"
                 onClick={() => setActiveStep((step) => Math.min(step + 1, STEPS.length - 1))}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#301D5D] px-5 text-sm font-semibold text-white hover:bg-[#42277C]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]"
               >
                 Continue
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </button>
             ) : (
-              <Link href="/admin/dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#301D5D] px-5 text-sm font-semibold text-white hover:bg-[#42277C]">
+              <Link href="/admin/dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
                 Return to Closing Time
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>

@@ -52,7 +52,7 @@ function ResetPasswordForm() {
         </p>
         <Link
           href="/admin/forgot-password"
-          className="block w-full text-center bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-brand-800 transition-colors"
+          className="block w-full text-center bg-brand-700 text-white py-3 text-sm font-medium tracking-wide hover:bg-brand-800 transition-colors"
         >
           Request a new reset link
         </Link>
@@ -117,7 +117,7 @@ function ResetPasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="bg-white border border-gray-200 p-6 space-y-4">
       <div>
-        <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">New Password</label>
+        <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">New Password</label>
         <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
@@ -138,7 +138,7 @@ function ResetPasswordForm() {
         </div>
       </div>
       <div>
-        <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Confirm New Password</label>
+        <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Confirm New Password</label>
         <input
           type={showPassword ? 'text' : 'password'}
           required
@@ -154,7 +154,7 @@ function ResetPasswordForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-brand-800 disabled:opacity-60 transition-colors rounded-md"
+        className="w-full bg-brand-700 text-white py-3 text-sm font-medium tracking-wide hover:bg-brand-800 disabled:opacity-60 transition-colors rounded-md"
       >
         {submitting ? 'Updating...' : 'Update Password'}
       </button>

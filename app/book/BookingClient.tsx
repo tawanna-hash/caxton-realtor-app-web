@@ -6,7 +6,7 @@ import type { PublicScheduler } from '@/lib/server/closing-time-schedulers';
 
 type Slot = { start: number; time: string };
 const card = 'rounded-xl border border-[#E6E5EC] bg-white';
-const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2.5 text-[14px] text-[#1B1726] focus:border-[#301D5D] focus:outline-none';
+const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-3 text-[14px] text-[#1B1726] focus:border-[#301D5D] focus:outline-none';
 
 export default function BookingClient({ scheduler }: { scheduler: PublicScheduler }) {
   const cfg = scheduler.config;
@@ -81,7 +81,7 @@ export default function BookingClient({ scheduler }: { scheduler: PublicSchedule
 
   if (done && pick) {
     return (
-      <main className="mx-auto max-w-[640px] px-4 py-10 font-[Inter,system-ui,sans-serif] text-[14px] text-[#4A4757]">
+      <main className="mx-auto max-w-[640px] px-4 py-8 font-[Inter,system-ui,sans-serif] text-[14px] text-[#4A4757]">
         <div className={card}>
           {header}
           <div className="p-6">
@@ -170,7 +170,7 @@ export default function BookingClient({ scheduler }: { scheduler: PublicSchedule
                 ))}
                 {error && <p role="alert" className="text-[13px] font-medium text-[#661102]">{error}</p>}
                 <button type="button" disabled={busy || !name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || cfg.questions.some((q) => q.required && !(answers[q.id] ?? '').trim())}
-                  onClick={() => void submit()} className="min-h-[44px] rounded-lg bg-[#301D5D] px-5 text-[14px] font-semibold text-white hover:bg-[#42277C] disabled:opacity-45">{busy ? t.booking : t.confirm}</button>
+                  onClick={() => void submit()} className="min-h-[44px] rounded-lg bg-[#301D5D] px-4 text-[14px] font-semibold text-white hover:bg-[#42277C] disabled:opacity-45">{busy ? t.booking : t.confirm}</button>
               </div>
             </section>
           )}

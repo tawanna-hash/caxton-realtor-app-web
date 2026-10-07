@@ -70,17 +70,17 @@ function EmailPreview({
       <div className="p-6">
         <Image src="/brand/caxton-logo.jpg" alt="Caxton Publications" width={150} height={170} className="mx-auto h-28 w-auto object-contain" />
       </div>
-      <div className="bg-[#F6F3FB] px-6 py-5">
+      <div className="bg-[#F6F3FB] px-6 py-4">
         <h3 className="text-lg font-semibold text-gray-900">{heading}</h3>
         <p className="mt-1 text-sm text-gray-600">{customer}</p>
         <div className="mt-4 text-xs uppercase tracking-wider text-gray-500">Amount</div>
         <div className="text-2xl font-semibold text-gray-900">{formatCents(amount)}</div>
       </div>
-      <div className="space-y-4 px-6 py-5">
-        <button type="button" className="rounded-full bg-[#301D5D] px-8 py-2.5 text-sm font-semibold text-white hover:bg-[#42277C]">{actionLabel}</button>
+      <div className="space-y-4 px-6 py-4">
+        <button type="button" className="rounded-full bg-[#301D5D] px-8 py-3 text-sm font-semibold text-white hover:bg-[#42277C]">{actionLabel}</button>
         <p className="border-t border-gray-200 pt-4 text-sm text-gray-600">{message}</p>
       </div>
-      <div className="bg-[#F6F3FB] px-6 py-5 text-xs leading-5 text-gray-600">
+      <div className="bg-[#F6F3FB] px-6 py-4 text-xs leading-5 text-gray-600">
         <strong>Caxton Publications Inc.</strong><br />Austin, Texas
       </div>
     </div>

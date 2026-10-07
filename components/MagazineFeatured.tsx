@@ -78,7 +78,7 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
     return (
       <button
         onClick={() => { trackEvent('magazine_featured_article_clicked', { magazine_id: magazine.id, article_id: article?.id, label }); onOpenArticle(article); }}
-        className="block w-full text-left group px-4 py-5 hover:bg-gray-50 transition-colors rounded-md"
+        className="block w-full text-left group px-4 py-4 hover:bg-gray-50 transition-colors rounded-md"
         aria-label={`Open ${title}`}
       >
         <ArticleFeedCardBody category={label} headline={title} summary={summary} imageUrl={img} />
@@ -92,7 +92,7 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
         Current Issue
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
         <button onClick={onOpenMagazine} className="block w-full group" aria-label={`Open ${magazine.issue_label}`}>
           <div className="relative w-full max-w-sm mx-auto md:mx-0 aspect-[17/22] overflow-hidden shadow-2xl group-hover:shadow-3xl transition-shadow bg-white">
             {magazine.cover_url ? (
@@ -105,13 +105,13 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
           <div className="mt-4 text-center md:text-left">
             <p className="text-2xl font-serif text-gray-900">{magazine.issue_label}</p>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mt-1">{magazine.page_count} pages</p>
-            <span className="mt-4 inline-block px-5 py-2.5 text-xs uppercase tracking-[0.2em] font-medium text-white rounded-md" style={{ backgroundColor: brandColor }}>
+            <span className="mt-4 inline-block px-4 py-3 text-xs uppercase tracking-[0.2em] font-medium text-white rounded-md" style={{ backgroundColor: brandColor }}>
               Read This Issue →
             </span>
           </div>
         </button>
 
-        <div className="space-y-10">
+        <div className="space-y-8">
           {editorsChoice && renderArticleCard(editorsChoice, "Editor's Choice", "text-2xl md:text-3xl", "line-clamp-3")}
           {featuredAdvertiser && renderArticleCard(featuredAdvertiser, "Featured Partner", "text-xl md:text-2xl", "line-clamp-2")}
           {!editorsChoice && !featuredAdvertiser && (

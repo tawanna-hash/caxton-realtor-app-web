@@ -1716,3 +1716,7 @@ table:not([role='presentation']) tbody tr:hover > td { background: #F6F3FB; }
   button:not([role='switch']):not([class*='rounded-full']), select, [role='button'],
   input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']) { min-height: 44px; }
 }
+
+/* Astro icon sizes: 16px small, 20px default, 24px large. Smaller line icons step up to 16px. */
+svg:is(.h-3, .h-3\.5):not([class*='h-2']) { height: 16px; }
+svg:is(.w-3, .w-3\.5):not([class*='w-2']) { width: 16px; }

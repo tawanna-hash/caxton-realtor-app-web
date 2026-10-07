@@ -241,14 +241,14 @@ function SubscribersInner() {
                 type="button"
                 onClick={exportSelected}
                 disabled={exporting}
-                className="px-3 py-1.5 rounded-md border border-[#B9ADD6] text-[#42277C] text-xs font-medium hover:bg-[#EFEAF8] disabled:opacity-50"
+                className="px-3 py-2 rounded-md border border-[#B9ADD6] text-[#42277C] text-xs font-medium hover:bg-[#EFEAF8] disabled:opacity-50"
               >
                 {exporting ? 'Exporting…' : 'Export CSV (full)'}
               </button>
               <button
                 type="button"
                 onClick={clearSelection}
-                className="px-3 py-1.5 rounded-md text-[#42277C] text-xs hover:text-[#1B1726]"
+                className="px-3 py-2 rounded-md text-[#42277C] text-xs hover:text-[#1B1726]"
               >
                 Clear
               </button>

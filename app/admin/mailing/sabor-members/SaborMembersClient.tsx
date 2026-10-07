@@ -748,7 +748,7 @@ export default function SaborMembersClient() {
             type="button"
             onClick={promote}
             disabled={busy !== null}
-            className="px-3 py-1.5 rounded-md bg-[#005A00] text-white text-xs font-medium hover:bg-[#005A00] disabled:opacity-50"
+            className="px-3 py-2 rounded-md bg-[#005A00] text-white text-xs font-medium hover:bg-[#005A00] disabled:opacity-50"
           >
             {busy === 'promote' ? 'Promoting…' : 'Promote to Mailing'}
           </button>
@@ -756,14 +756,14 @@ export default function SaborMembersClient() {
             type="button"
             onClick={reject}
             disabled={busy !== null}
-            className="px-3 py-1.5 rounded-md bg-[#661102] text-white text-xs font-medium hover:bg-[#661102] disabled:opacity-50"
+            className="px-3 py-2 rounded-md bg-[#661102] text-white text-xs font-medium hover:bg-[#661102] disabled:opacity-50"
           >
             {busy === 'reject' ? 'Rejecting…' : 'Reject'}
           </button>
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
-            className="px-3 py-1.5 rounded-md text-gray-600 text-xs hover:text-gray-900"
+            className="px-3 py-2 rounded-md text-gray-600 text-xs hover:text-gray-900"
           >
             Clear
           </button>
@@ -832,7 +832,7 @@ export default function SaborMembersClient() {
                 aria-label={`Select ${fullName || r.email || r.id}`}
                 className="mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-[#301D5D] focus:ring-[#7059A8]"
               />
-              <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="min-w-0 flex-1 space-y-2">
                 <div>
                   <div className="text-sm font-medium text-gray-900 break-words">{fullName || '—'}</div>
                   {r.title && <div className="text-[11px] text-gray-500">{toTitleCaseRole(r.title)}</div>}
@@ -1074,12 +1074,12 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className="px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-2"
+      className="px-3 py-2 rounded-md text-xs font-medium flex items-center gap-2"
       style={{ backgroundColor: bg, color: fg }}
     >
       <span>{label}</span>
       <span
-        className="px-1.5 rounded-full text-[10px]"
+        className="px-2 rounded-full text-[10px]"
         style={{ backgroundColor: active ? 'rgba(255,255,255,0.25)' : 'white', color: active ? 'white' : '#6b7280' }}
       >
         {count.toLocaleString()}
@@ -1124,7 +1124,7 @@ function VerifyCell({
     status === 'Invalid' ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#FFEAE6] text-[#661102]">✗ Invalid</span> :
                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Pending</span>;
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
       {pill}
       <button
         type="button"
@@ -1225,7 +1225,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
         <span
           key={f.label}
           title={f.title}
-          className={`inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-full font-medium ${f.cls}`}
+          className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-medium ${f.cls}`}
         >
           {f.label}
         </span>
@@ -1246,7 +1246,7 @@ function ProximityBadges({ row }: { row: MailingContactRow }) {
   if (!near) {
     return (
       <span
-        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium ring-1 ring-gray-200"
+        className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium ring-1 ring-gray-200"
         title={`${d!.toFixed(1)} mi from SABOR HQ`}
       >
         <span>Outside 60 mi</span>
@@ -1256,7 +1256,7 @@ function ProximityBadges({ row }: { row: MailingContactRow }) {
   }
   return (
     <span
-      className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00] font-medium"
+      className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00] font-medium"
       title={`${d!.toFixed(1)} mi from SABOR HQ (9110 IH-10 W, San Antonio)`}
     >
       <span>Within 60 mi</span>
@@ -1375,7 +1375,7 @@ function EditDrawer({
           </button>
         </div>
 
-        <div className="px-6 py-4 space-y-5">
+        <div className="px-6 py-4 space-y-4">
           {/* Verify summary */}
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-md border border-gray-200 bg-gray-50 p-3 space-y-2">
@@ -1407,7 +1407,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
+                className="text-xs px-3 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify address'}
               </button>
@@ -1435,7 +1435,7 @@ function EditDrawer({
                 type="button"
                 disabled={emailBusy || !form.email}
                 onClick={onVerifyEmail}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
+                className="text-xs px-3 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] disabled:opacity-50"
               >
                 {emailBusy ? 'Verifying…' : 'Verify Email'}
               </button>
@@ -1492,7 +1492,7 @@ function EditDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 rounded-md text-sm text-gray-600 hover:bg-gray-100"
+            className="px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-100"
           >
             Cancel
           </button>

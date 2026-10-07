@@ -198,7 +198,7 @@ export default function TrendingAdminClient() {
           <button
             type="button"
             onClick={() => void reload()}
-            className="text-sm px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50"
+            className="text-sm px-3 py-2 rounded-md border border-gray-300 bg-white hover:bg-gray-50"
           >
             Refresh
           </button>
@@ -226,7 +226,7 @@ export default function TrendingAdminClient() {
             <button
               type="button"
               onClick={() => setCreatingNew(true)}
-              className="text-sm px-3 py-1.5 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] font-medium"
+              className="text-sm px-3 py-2 rounded-md bg-[#301D5D] text-white hover:bg-[#42277C] font-medium"
             >
               + New trending
             </button>
@@ -270,11 +270,11 @@ export default function TrendingAdminClient() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className={`text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full ${badge.className}`}>
+                    <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full ${badge.className}`}>
                       {badge.label}
                     </span>
                     {it.markets.map((m) => (
-                      <span key={m} className="text-[10px] uppercase tracking-wider font-medium text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                      <span key={m} className="text-[10px] uppercase tracking-wider font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
                         {MARKET_LABELS[m]}
                       </span>
                     ))}
@@ -284,9 +284,9 @@ export default function TrendingAdminClient() {
                   {trendingStats[it.id] && (
                     <div className="mt-0.5 text-xs text-gray-500 tabular-nums">
                       <span title="Impressions">👁 {trendingStats[it.id].impressions.toLocaleString()}</span>
-                      <span className="mx-1.5 text-gray-300">·</span>
+                      <span className="mx-2 text-gray-300">·</span>
                       <span title="Clicks">👆 {trendingStats[it.id].clicks.toLocaleString()}</span>
-                      <span className="mx-1.5 text-gray-300">·</span>
+                      <span className="mx-2 text-gray-300">·</span>
                       <span title="Click-through rate">{trendingStats[it.id].ctr}%</span>
                     </div>
                   )}

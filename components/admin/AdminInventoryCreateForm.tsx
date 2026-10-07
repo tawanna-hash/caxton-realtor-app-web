@@ -22,8 +22,8 @@ const PUBLICATION_OPTIONS: { value: Publication; label: string }[] = [
 ];
 
 const fieldStyle =
-  'w-full border border-gray-300 px-4 py-2.5 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 transition-colors disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded-md';
-const labelStyle = 'block text-sm font-medium text-gray-900 mb-1.5';
+  'w-full border border-gray-300 px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 transition-colors disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded-md';
+const labelStyle = 'block text-sm font-medium text-gray-900 mb-2';
 const helpStyle = 'mt-1 text-xs text-gray-500 font-light';
 
 const MAX_PDF_BYTES = 25 * 1024 * 1024; // 25 MB
@@ -610,7 +610,7 @@ export default function AdminInventoryCreateForm() {
             type="button"
             onClick={handleAutoFill}
             disabled={extracting || submitting}
-            className="mt-2 inline-flex items-center gap-1.5 bg-brand-600 text-white px-4 py-2 text-sm font-medium hover:bg-brand-700 rounded-md transition-colors disabled:opacity-60"
+            className="mt-2 inline-flex items-center gap-2 bg-brand-600 text-white px-4 py-2 text-sm font-medium hover:bg-brand-700 rounded-md transition-colors disabled:opacity-60"
           >
             {extracting ? 'Extracting…' : 'Auto-fill from flyer'}
           </button>

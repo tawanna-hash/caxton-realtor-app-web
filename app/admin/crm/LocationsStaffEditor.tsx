@@ -447,7 +447,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search locations & staff — name, title, city, email, phone…"
-            className="w-full pl-9 pr-9 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
+            className="w-full pl-8 pr-8 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7059A8]"
           />
           {search && (
             <button
@@ -481,7 +481,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             type="button"
             onClick={handleWebsiteSync}
             disabled={syncing}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
+            className={`px-3 py-2 rounded-md text-sm font-medium border transition-colors ${
               syncing
                 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
                 : 'bg-[#301D5D] text-white border-[#42277C] hover:bg-[#42277C]'
@@ -527,7 +527,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             onPickImportFile();
           }
         }}
-        className={`rounded-md border-2 border-dashed px-4 py-5 text-center cursor-pointer transition-colors ${
+        className={`rounded-md border-2 border-dashed px-4 py-4 text-center cursor-pointer transition-colors ${
           importing
             ? 'border-gray-200 bg-gray-100 cursor-wait'
             : dragOver
@@ -535,7 +535,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
               : 'border-gray-300 bg-gray-50/60 hover:border-gray-400 hover:bg-gray-100'
         }`}
       >
-        <div className="flex flex-col items-center gap-1.5 pointer-events-none">
+        <div className="flex flex-col items-center gap-2 pointer-events-none">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="22"
@@ -812,7 +812,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
               {locations.length > 0 && (
                 <div className="pt-1">
                   <div className="text-xs text-gray-600 mb-1">Assigned to location(s)</div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {locations.map((loc) => {
                       const checked = s.location_ids.includes(loc.id);
                       return (

@@ -85,7 +85,7 @@ function LoginInner() {
             placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3.5 border border-gray-300 rounded-md text-base bg-white focus:outline-none focus:border-brand-700"
+            className="w-full px-4 py-4 border border-gray-300 rounded-md text-base bg-white focus:outline-none focus:border-brand-700"
           />
           <div className="relative">
               <input
@@ -95,7 +95,7 @@ function LoginInner() {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3.5 pr-16 border border-gray-300 rounded-md text-base bg-white focus:outline-none focus:border-brand-700"
+                className="w-full px-4 py-4 pr-16 border border-gray-300 rounded-md text-base bg-white focus:outline-none focus:border-brand-700"
               />
               <button
                 type="button"
@@ -109,7 +109,7 @@ function LoginInner() {
           <button
             type="submit"
             disabled={busy || !email || !password}
-            className="w-full py-3.5 bg-brand-700 text-white text-base font-medium uppercase tracking-wider rounded-md disabled:opacity-40"
+            className="w-full py-4 bg-brand-700 text-white text-base font-medium uppercase tracking-wider rounded-md disabled:opacity-40"
           >
             {busy ? 'Working…' : 'Sign In'}
           </button>

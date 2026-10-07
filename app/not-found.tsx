@@ -35,7 +35,7 @@ export default function NotFound() {
             Browse magazine
           </Link>
         </div>
-        <p className="mt-10 text-xs text-gray-500">
+        <p className="mt-8 text-xs text-gray-500">
           RealtyLine Austin · Published by Caxton Publications, Inc.
         </p>
       </div>

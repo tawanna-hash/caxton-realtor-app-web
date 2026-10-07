@@ -95,11 +95,11 @@ export default function WinnersSection({ giveawayId, endsAtPassed, onChange }: {
           onChange={(e) => setCount(Math.min(20, Math.max(1, parseInt(e.target.value, 10) || 1)))}
           className="w-16 border border-gray-300 px-2 py-1 text-sm rounded-md" />
         <button onClick={drawMore} disabled={!endsAtPassed || busy !== null}
-          className="bg-brand-700 text-white px-3 py-1.5 text-sm rounded-md disabled:opacity-40">
+          className="bg-brand-700 text-white px-3 py-2 text-sm rounded-md disabled:opacity-40">
           {busy === 'draw' ? 'Drawing...' : 'Draw winners'}
         </button>
         <button onClick={announce} disabled={!!announcedAt || busy !== null}
-          className="border border-gray-300 text-gray-800 px-3 py-1.5 text-sm rounded-md disabled:opacity-40">
+          className="border border-gray-300 text-gray-800 px-3 py-2 text-sm rounded-md disabled:opacity-40">
           {announcedAt ? `Announced ${new Date(announcedAt).toLocaleDateString()}` : busy === 'announce' ? 'Sending...' : 'Notify other entrants'}
         </button>
       </div>

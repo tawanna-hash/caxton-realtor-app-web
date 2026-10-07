@@ -74,7 +74,7 @@ export default function BillingAlertsBadge({
   if (variant === 'inline') {
     return (
       <span
-        className="ml-2 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-[#FAD800] text-[#1B1726] text-[10px] font-semibold leading-none"
+        className="ml-2 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-2 rounded-full bg-[#FAD800] text-[#1B1726] text-[10px] font-semibold leading-none"
         aria-label={ariaLabel}
       >
         {label}

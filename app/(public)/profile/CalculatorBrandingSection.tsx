@@ -85,7 +85,7 @@ function formFromResponse(data: BrandingResponse): FormState {
 }
 
 const inputClass =
-  'mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15';
+  'mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15';
 
 export default function CalculatorBrandingSection({ accentColor }: { accentColor: string }) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -182,7 +182,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
 
   if (loading) {
     return (
-      <section className="rounded-lg border border-gray-200 bg-white p-5">
+      <section className="rounded-lg border border-gray-200 bg-white p-4">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           Loading calculator branding…
@@ -196,7 +196,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
       id="calculator-branding"
       className="scroll-mt-24 overflow-hidden rounded-lg border border-gray-200 bg-white"
     >
-      <div className="border-b border-gray-200 px-5 py-4">
+      <div className="border-b border-gray-200 px-4 py-4">
         <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: accentColor }}>
           REALTOR® branding
         </p>
@@ -217,7 +217,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
                 return (
                   <label
                     key={template.id}
-                    className={`cursor-pointer rounded px-3 py-1.5 text-xs font-bold transition ${
+                    className={`cursor-pointer rounded px-3 py-2 text-xs font-bold transition ${
                       selected ? 'bg-white text-[#5B3FA0] shadow-sm' : 'bg-[#087fb3] text-white hover:bg-[#0876a6]'
                     }`}
                   >
@@ -238,7 +238,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
           <button
             type="submit"
             disabled={saving || uploading !== null}
-            className="flex min-h-10 items-center justify-center gap-2 rounded bg-[#79bd35] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#68aa2b] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex min-h-10 items-center justify-center gap-2 rounded bg-[#79bd35] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#68aa2b] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
             {saving ? 'Saving…' : 'Save design'}
@@ -246,7 +246,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
         </div>
 
         <div className="grid lg:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="space-y-5 border-r border-gray-200 bg-white p-4">
+          <aside className="space-y-4 border-r border-gray-200 bg-white p-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Images</p>
               <div className="mt-2 grid gap-2">
@@ -450,7 +450,7 @@ function BrandPreview({ form }: { form: FormState }) {
           <div className="flex items-center justify-center border-b border-gray-200 p-4 sm:border-b-0 sm:border-r">
             {headshot}
           </div>
-          <div className="flex min-w-0 flex-col justify-center px-5 py-4">
+          <div className="flex min-w-0 flex-col justify-center px-4 py-4">
             <div>
               <p className="truncate text-lg font-bold text-slate-900">{name}</p>
               <p className="truncate text-xs font-semibold text-[#301D5D]">{title}</p>
@@ -473,7 +473,7 @@ function BrandPreview({ form }: { form: FormState }) {
           <div className="flex items-center justify-center border-b border-gray-200 p-4 sm:border-b-0 sm:border-r">
             {headshot}
           </div>
-          <div className="flex min-w-0 items-center px-5 py-4">
+          <div className="flex min-w-0 items-center px-4 py-4">
             <div className="w-full border-l-[3px] border-[#301D5D] pl-4">
               <p className="truncate text-lg font-bold text-slate-900">{name}</p>
               <p className="truncate text-xs font-semibold text-[#301D5D]">{title}</p>

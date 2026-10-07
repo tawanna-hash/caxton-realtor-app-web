@@ -73,7 +73,7 @@ export default function PrintDeadlinesPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <header className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             {data.name}
@@ -144,7 +144,7 @@ export default function PrintDeadlinesPage() {
                       ? row.eReplicaRelease ?? '—'
                       : row[col];
                   return (
-                    <li key={row.month} className="flex items-baseline justify-between gap-3 px-4 py-2.5">
+                    <li key={row.month} className="flex items-baseline justify-between gap-3 px-4 py-3">
                       <span className="font-medium text-gray-900">
                         {row.month} {data.year}
                       </span>
@@ -183,14 +183,14 @@ export default function PrintDeadlinesPage() {
           </>
         )}
 
-        <section className="border-t border-gray-200 mt-10 pt-8">
+        <section className="border-t border-gray-200 mt-8 pt-8">
           <p className="text-base text-gray-700 mb-4">
             Ready to reserve space? We&apos;ll walk you through size, frequency,
             and creative specs.
           </p>
           <a
             href="/advertise/inquire?channel=print"
-            className="inline-flex items-center justify-center px-5 py-2.5 border border-brand-700 text-brand-700 text-sm font-medium rounded-md hover:bg-brand-700 hover:text-white transition"
+            className="inline-flex items-center justify-center px-4 py-3 border border-brand-700 text-brand-700 text-sm font-medium rounded-md hover:bg-brand-700 hover:text-white transition"
           >
             Start a print inquiry
           </a>

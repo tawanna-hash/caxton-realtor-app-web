@@ -14,7 +14,7 @@ type Change = { id: number; values: Partial<Hotspot> };
 type History = { label: string; before: Hotspot[]; after: Hotspot[] };
 type Scan = { page_idx: number; status: string; warnings: string[]; found: number };
 type Props = { magazine: Magazine; initialHotspots: Hotspot[]; prevIssues: { id: number; issue_label: string; hotspot_count: number }[] };
-const button = 'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40';
+const button = 'inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40';
 const primary = `${button} !border-[#301D5D] !bg-[#301D5D] !text-white hover:!bg-[#483074]`;
 const input = 'min-h-9 rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-900';
 const icon = 'h-4 w-4';
@@ -363,7 +363,7 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
             }}>Publish Approved ({approved.length})</button>
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-gray-100 pt-3 text-sm">
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-100 pt-3 text-sm">
           <span>{active.length} Hotspots</span><span className="text-[#645600]">{attention.length} Need Attention</span><span>{ready.length} Ready To Review</span><span>{active.filter(h => h.is_published).length} Published</span>
           <button className="font-medium text-[#301D5D] underline" onClick={() => setChecklistOpen(!checklistOpen)}>Page Review Checklist</button>
           <span role="status" className="ml-auto text-xs text-gray-600">{message || 'Ready'}</span>
@@ -442,14 +442,14 @@ export default function HotspotStudio({ magazine, initialHotspots, prevIssues }:
           </div>
 
           <div className="max-h-[52vh] overflow-y-auto">
-            {!listed.length && <p className="p-5 text-sm text-gray-500">{filter === 'attention' ? 'Nothing needs attention. Choose Approved to inspect published links.' : 'No hotspots match this view. Try another tab or search.'}</p>}
+            {!listed.length && <p className="p-4 text-sm text-gray-500">{filter === 'attention' ? 'Nothing needs attention. Choose Approved to inspect published links.' : 'No hotspots match this view. Try another tab or search.'}</p>}
             {groups.map(group => <div key={group.pageIndex}>
               <button className="flex w-full items-center justify-between bg-gray-100 px-4 py-2 text-left text-sm font-semibold hover:bg-gray-200" aria-expanded={openPages.includes(group.pageIndex)}
                 onClick={() => { setPage(group.pageIndex); setSelected(null); setChecked([]); setOpenPages(current => current.includes(group.pageIndex) ? current.filter(p => p !== group.pageIndex) : [...current, group.pageIndex]); }}>
                 <span>Page {group.pageIndex + 1}</span><span className="text-xs font-normal text-gray-600">{group.count} hotspots {openPages.includes(group.pageIndex) ? '−' : '+'}</span>
               </button>
               {openPages.includes(group.pageIndex) && group.partners.map(partner => <div key={partner.name}>
-              {(group.partners.length > 1 || partner.name !== 'Unassigned') && <h3 className="bg-gray-50 px-4 py-1.5 text-xs font-semibold text-gray-700">{partner.name === 'Unassigned' ? 'Other links' : partner.name}</h3>}
+              {(group.partners.length > 1 || partner.name !== 'Unassigned') && <h3 className="bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700">{partner.name === 'Unassigned' ? 'Other links' : partner.name}</h3>}
               {partner.rows.map(h => <div key={h.id} data-layer-id={h.id}
                 className={`border-b border-gray-100 px-3 py-3 ${selected === h.id ? 'bg-[#f2eef9] ring-1 ring-inset ring-[#7059A8]' : 'bg-white'}`}>
                 <div className="flex items-start gap-2">

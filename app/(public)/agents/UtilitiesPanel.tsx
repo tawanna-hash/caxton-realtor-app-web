@@ -79,7 +79,7 @@ function ProviderRow({ provider }: { provider: Provider }) {
         <span className="block text-sm font-semibold text-slate-900">{provider.name}</span>
         {provider.note ? <span className="block text-xs text-slate-500">{provider.note}</span> : null}
       </span>
-      <a href={`tel:${provider.phone.replace(/[^0-9]/g, '')}`} className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-[#301D5D] hover:underline" aria-label={`Call ${provider.name}`}>
+      <a href={`tel:${provider.phone.replace(/[^0-9]/g, '')}`} className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-[#301D5D] hover:underline" aria-label={`Call ${provider.name}`}>
         <Phone className="h-3.5 w-3.5" aria-hidden="true" />{provider.phone}
       </a>
     </li>
@@ -105,7 +105,7 @@ export default function UtilitiesPanel() {
         {market.categories.map((category) => (
           <div key={category.title} className="ds-card !p-0 self-start">
             <p className="border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">{category.title}</p>
-            {category.note ? <p className="border-b border-[#F1F0F5] bg-[#F6F3FB] px-4 py-2.5 text-xs leading-5 text-slate-600">{category.note}</p> : null}
+            {category.note ? <p className="border-b border-[#F1F0F5] bg-[#F6F3FB] px-4 py-3 text-xs leading-5 text-slate-600">{category.note}</p> : null}
             <ul>{category.providers.map((provider) => <ProviderRow key={provider.name} provider={provider} />)}</ul>
           </div>
         ))}

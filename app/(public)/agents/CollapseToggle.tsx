@@ -118,7 +118,7 @@ export function SectionPills({ labels, reveal }: { labels: Record<string, string
     }, 80);
   };
   return (
-    <nav aria-label="Jump to section" className="sticky top-0 z-30 -mx-5 mt-5 border-y border-slate-200 bg-[#F7F5F1]/95 px-5 py-2 backdrop-blur sm:-mx-8 sm:px-8">
+    <nav aria-label="Jump to section" className="sticky top-0 z-30 -mx-4 mt-4 border-y border-slate-200 bg-[#F7F5F1]/95 px-4 py-2 backdrop-blur sm:-mx-8 sm:px-8">
       <div className="flex gap-2 overflow-x-auto pb-1">
         {keys.map((key) => (
           <button key={key} type="button" onClick={() => go(key)} className="min-h-[36px] shrink-0 rounded-full border border-[#7059A8]/40 bg-white px-3 text-xs font-bold text-[#301D5D] hover:border-[#301D5D] hover:bg-[#F8F5FF]">

@@ -65,7 +65,7 @@ export default function ExportMenu({
         disabled={disabled}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+        className="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
       >
         {label} {'\u25be'}
       </button>
@@ -78,7 +78,7 @@ export default function ExportMenu({
             type="button"
             role="menuitem"
             onClick={() => pick('csv')}
-            className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50"
+            className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
           >
             CSV
           </button>
@@ -86,7 +86,7 @@ export default function ExportMenu({
             type="button"
             role="menuitem"
             onClick={() => pick('tsv')}
-            className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50"
+            className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
           >
             TSV
           </button>
@@ -94,7 +94,7 @@ export default function ExportMenu({
             type="button"
             role="menuitem"
             onClick={() => pick('json')}
-            className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50"
+            className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
           >
             JSON
           </button>

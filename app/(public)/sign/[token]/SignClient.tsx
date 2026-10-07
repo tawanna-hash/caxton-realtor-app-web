@@ -17,7 +17,7 @@ function SigImg({ src }: { src: string }) {
   return <img src={src} alt="Your signature" className="max-h-full max-w-full object-contain" />;
 }
 
-const btn = 'min-h-[44px] rounded-md px-5 text-sm font-bold disabled:opacity-45';
+const btn = 'min-h-[44px] rounded-md px-4 text-sm font-bold disabled:opacity-45';
 
 function DrawPad({ onDone, onCancel }: { onDone: (png: string) => void; onCancel: () => void }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -125,7 +125,7 @@ export default function SignClient({ token }: { token: string }) {
       <p className="mt-1 text-sm text-slate-600">{view.property} · sent by {view.agentName} · for {view.signerName}</p>
 
       {view.notice && <p className="mt-4 border-l-4 bg-white p-3 text-sm text-slate-800" style={{ borderColor: view.accent }}>{view.notice}</p>}
-      <section className="mt-5 border border-slate-200 bg-white p-4 text-sm text-slate-800">
+      <section className="mt-4 border border-slate-200 bg-white p-4 text-sm text-slate-800">
         <label className="flex items-start gap-3">
           <input type="checkbox" className="mt-1 h-5 w-5" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
           <span>I agree to use electronic records and signatures for this document. I understand my electronic signature has the same legal effect as a handwritten one, that I can ask the sender for a paper copy, and that I can stop at any time by declining.</span>
@@ -157,7 +157,7 @@ export default function SignClient({ token }: { token: string }) {
 
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label="Add your signature">
-          <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
+          <div className="w-full max-w-md rounded-lg bg-white p-4 shadow-xl">
             <h2 className="text-lg font-semibold text-slate-950">Add your signature</h2>
             <div className="mt-3 flex gap-2">
               {view.methods.type && <button type="button" className={`${btn} ${mode === 'type' ? 'bg-[#301D5D] text-white' : 'border border-slate-300 text-slate-700'}`} onClick={() => setMode('type')}>Type</button>}
@@ -185,7 +185,7 @@ export default function SignClient({ token }: { token: string }) {
 
       {declining && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label="Decline to sign">
-          <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
+          <div className="w-full max-w-md rounded-lg bg-white p-4 shadow-xl">
             <h2 className="text-lg font-semibold text-slate-950">Decline to sign</h2>
             <p className="mt-2 text-sm text-slate-600">This stops the request for everyone. You can tell the sender why (optional).</p>
             <textarea value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} rows={3} className="mt-3 w-full rounded-md border border-slate-300 p-2 text-sm" aria-label="Reason" />

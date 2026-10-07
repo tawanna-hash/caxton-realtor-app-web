@@ -227,7 +227,7 @@ export default function NavDrawer({
           <button
             onClick={onClose}
             aria-label="Close menu"
-            className="text-white/70 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition"
+            className="text-white/70 hover:text-white p-2 rounded-md hover:bg-white/10 transition"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -238,11 +238,11 @@ export default function NavDrawer({
         {/* Publication switcher — always visible (except admin) so users
             can change markets from any page, not only /dashboard. */}
         {!isAdmin && (
-          <div className="px-5 pt-6 pb-2">
+          <div className="px-4 pt-6 pb-2">
             <p className="text-[10px] uppercase tracking-[0.25em] text-white/40 font-medium mb-3">
               Select Your Market
             </p>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {PUB_ACTIVE.map((m) => {
                 const isCurrent = pub === m.id;
                 return (
@@ -286,7 +286,7 @@ export default function NavDrawer({
                       <p className="text-sm font-semibold text-white truncate">{m.label}</p>
                     </div>
                     {isCurrent && (
-                      <span className="text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full bg-[#00E200]/25 text-[#E0FBE0] flex-shrink-0">
+                      <span className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-[#00E200]/25 text-[#E0FBE0] flex-shrink-0">
                         Current
                       </span>
                     )}
@@ -315,7 +315,7 @@ export default function NavDrawer({
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-white/80 truncate">{m.label}</p>
                   </div>
-                  <span className="text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full bg-[#FAD800]/20 text-[#FEF8CC] flex-shrink-0">
+                  <span className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-[#FAD800]/20 text-[#FEF8CC] flex-shrink-0">
                     Coming Soon
                   </span>
                 </button>
@@ -325,7 +325,7 @@ export default function NavDrawer({
         )}
 
         {!isAdmin && (
-          <div className="px-5 pt-4">
+          <div className="px-4 pt-4">
             <Link
               href="/agents"
               onClick={onClose}
@@ -343,9 +343,9 @@ export default function NavDrawer({
                 </span>
               </div>
               <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-[0.11em] text-[#5B438C]">
-                <span className="rounded-md bg-[#F0EBF8] px-2.5 py-1">TREC Forms</span>
-                <span className="rounded-md bg-[#F0EBF8] px-2.5 py-1">Run Numbers</span>
-                <span className="rounded-md bg-[#F0EBF8] px-2.5 py-1">Find Partners</span>
+                <span className="rounded-md bg-[#F0EBF8] px-3 py-1">TREC Forms</span>
+                <span className="rounded-md bg-[#F0EBF8] px-3 py-1">Run Numbers</span>
+                <span className="rounded-md bg-[#F0EBF8] px-3 py-1">Find Partners</span>
               </div>
             </Link>
           </div>
@@ -354,7 +354,7 @@ export default function NavDrawer({
         {/* Sections. When on an admin route, surface the Admin section first
             so admin users don't have to scroll past Content/Subscribe/About to
             reach their day-to-day nav. */}
-        <div className="px-5 py-6 space-y-1">
+        <div className="px-4 py-6 space-y-1">
           {(() => {
             const onAdminRoute = isAdmin && pathname.startsWith('/admin');
             const ordered = onAdminRoute
@@ -382,7 +382,7 @@ export default function NavDrawer({
                 return (
                   <span
                     key={item.label}
-                    className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/30 font-medium cursor-default"
+                    className="block px-3 py-3 text-sm uppercase tracking-[0.1em] text-white/30 font-medium cursor-default"
                   >
                     {item.label}
                   </span>
@@ -405,7 +405,7 @@ export default function NavDrawer({
                       <Link
                         href={item.href}
                         onClick={onClose}
-                        className="flex-1 px-3 py-2.5 text-sm uppercase tracking-[0.1em] font-medium"
+                        className="flex-1 px-3 py-3 text-sm uppercase tracking-[0.1em] font-medium"
                       >
                         {item.label}
                       </Link>
@@ -475,7 +475,7 @@ export default function NavDrawer({
                   key={item.href + item.label}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center px-3 py-2.5 text-sm uppercase tracking-[0.1em] font-medium rounded-md transition ${
+                  className={`flex items-center px-3 py-3 text-sm uppercase tracking-[0.1em] font-medium rounded-md transition ${
                     isActive
                       ? 'text-white bg-white/15'
                       : 'text-white/80 hover:text-white hover:bg-white/10'
@@ -550,7 +550,7 @@ export default function NavDrawer({
                       } catch {}
                       router.push(target);
                     }}
-                    className="flex items-center gap-2 w-full text-left px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-md hover:text-white hover:bg-white/10 transition"
+                    className="flex items-center gap-2 w-full text-left px-3 py-3 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-md hover:text-white hover:bg-white/10 transition"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                       <path d="M3 12l6-6M3 12l6 6M3 12h18" />
@@ -560,7 +560,7 @@ export default function NavDrawer({
                 )}
                 <button
                   onClick={onLogout}
-                  className="block w-full text-left px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-md hover:text-white hover:bg-white/10 transition"
+                  className="block w-full text-left px-3 py-3 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-md hover:text-white hover:bg-white/10 transition"
                 >
                   Logout
                 </button>
@@ -574,7 +574,7 @@ export default function NavDrawer({
                 <Link
                   href="/auth/sign-in"
                   onClick={onClose}
-                  className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white font-medium rounded-md hover:bg-white/10 transition"
+                  className="block px-3 py-3 text-sm uppercase tracking-[0.1em] text-white font-medium rounded-md hover:bg-white/10 transition"
                 >
                   Login
                 </Link>
@@ -591,7 +591,7 @@ export default function NavDrawer({
               <Link
                 href="/admin/login"
                 onClick={onClose}
-                className="flex items-center gap-2 px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/60 font-medium rounded-md hover:bg-white/10 hover:text-white/90 transition"
+                className="flex items-center gap-2 px-3 py-3 text-sm uppercase tracking-[0.1em] text-white/60 font-medium rounded-md hover:bg-white/10 hover:text-white/90 transition"
               >
                 <svg
                   width="16"

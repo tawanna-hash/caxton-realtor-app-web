@@ -83,7 +83,7 @@ function StatusBadge({ status }: { status: 'coming-soon' | 'close-out' }) {
   const { label, cls } = map[status];
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white ${cls}`}
+      className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold text-white ${cls}`}
     >
       {label}
     </span>
@@ -365,7 +365,7 @@ export default async function CommunityDetailPage(
         <aside className="lg:col-span-2">
           <Link
             href={`/builders/${builderSlug}`}
-            className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#301D5D] bg-[#301D5D] text-white rounded-md hover:bg-[#301D5D] hover:border-[#301D5D] transition-colors"
+            className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-2 border border-[#301D5D] bg-[#301D5D] text-white rounded-md hover:bg-[#301D5D] hover:border-[#301D5D] transition-colors"
           >
             {row.builderName}
           </Link>
@@ -376,7 +376,7 @@ export default async function CommunityDetailPage(
             </h1>
             {status && <StatusBadge status={status} />}
             {adultOnly && (
-              <span className="inline-flex items-center rounded-full bg-[#301D5D] px-2.5 py-0.5 text-xs font-semibold text-white">
+              <span className="inline-flex items-center rounded-full bg-[#301D5D] px-3 py-0.5 text-xs font-semibold text-white">
                 Adult Only
               </span>
             )}
@@ -424,7 +424,7 @@ export default async function CommunityDetailPage(
                     href={mapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center rounded-md border border-[#301D5D] px-3 py-1.5 text-xs font-medium text-[#301D5D] hover:bg-[#F6F3FB] dark:hover:bg-[#1B1726]"
+                    className="mt-2 inline-flex items-center rounded-md border border-[#301D5D] px-3 py-2 text-xs font-medium text-[#301D5D] hover:bg-[#F6F3FB] dark:hover:bg-[#1B1726]"
                   >
                     Get Directions
                   </a>

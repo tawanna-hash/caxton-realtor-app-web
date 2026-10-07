@@ -105,8 +105,8 @@ export default async function InvoicePreviewPage({
         <PrintInvoiceButton />
       </div>
 
-      <article className="min-w-0 bg-white px-4 py-6 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-10 sm:py-8">
-        <header className="grid gap-3 border-b border-neutral-300 pb-5 sm:grid-cols-[1fr_auto] sm:gap-8">
+      <article className="min-w-0 bg-white px-4 py-6 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-8 sm:py-8">
+        <header className="grid gap-3 border-b border-neutral-300 pb-4 sm:grid-cols-[1fr_auto] sm:gap-8">
           <Image
             src="/brand/caxton-logo.jpg"
             alt="Caxton Publications Inc."
@@ -125,7 +125,7 @@ export default async function InvoicePreviewPage({
           </div>
         </header>
 
-        <section className="grid gap-4 py-5 sm:grid-cols-2 sm:gap-8">
+        <section className="grid gap-4 py-4 sm:grid-cols-2 sm:gap-8">
           <div>
             <div className="mb-1 text-[10px] uppercase tracking-wider text-neutral-500">Bill to</div>
             <div className="font-semibold">{invoice.bill_to_name ?? invoice.advertiser_name ?? 'Customer'}</div>
@@ -143,7 +143,7 @@ export default async function InvoicePreviewPage({
 
         <section className="mb-5">
           <div className="border-b border-neutral-300 pb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-600">Account summary</div>
-          <div className="grid grid-cols-[60px_minmax(0,1fr)_auto] gap-x-1 border-b border-neutral-200 py-1.5 sm:grid-cols-[90px_1fr_auto] sm:gap-x-3">
+          <div className="grid grid-cols-[60px_minmax(0,1fr)_auto] gap-x-1 border-b border-neutral-200 py-2 sm:grid-cols-[90px_1fr_auto] sm:gap-x-3">
             <div>{date(invoice.issued_at)}</div>
             <div>Balance Forward</div>
             <div className="text-right">{money(balanceForwardCents)}</div>
@@ -188,7 +188,7 @@ export default async function InvoicePreviewPage({
           </section>
         )}
 
-        <section className="mt-5 border-t border-neutral-300 pt-4">
+        <section className="mt-4 border-t border-neutral-300 pt-4">
           <h2 className="mb-3 font-semibold">Notes / Terms</h2>
           <div className="space-y-3 text-[9px] leading-[1.45]">
             <p>CAXTON PUBLICATIONS INC<br />RealtyLine Austin, Newsline San Antonio and Realty News Now App are dba&apos;s under Caxton Publications, Inc. The Services line item specifies the dab name to indicate where your ad is being placed and billed. Please note that placement in one company does not automatically include placement in the other. Each insertion is billed separately accordingly.</p>

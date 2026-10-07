@@ -215,11 +215,11 @@ export default function InquireForm({
   const disabled = status === 'submitting';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {/* Channel picker — pills. Always visible so the buyer can switch
           without going back to the rate card. */}
       <div>
-        <label className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5">
+        <label className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-2">
           Market
         </label>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Ad market">
@@ -264,7 +264,7 @@ export default function InquireForm({
         <div>
           <label
             htmlFor="slot"
-            className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5"
+            className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-2"
           >
             Placement <span className="text-gray-400">(optional)</span>
           </label>
@@ -283,7 +283,7 @@ export default function InquireForm({
               </option>
             ))}
           </select>
-          <p className="text-xs text-gray-600 mt-1.5">
+          <p className="text-xs text-gray-600 mt-2">
             Pick a specific placement to jump straight to checkout after you
             submit, or leave blank and we&apos;ll recommend one.
           </p>
@@ -294,7 +294,7 @@ export default function InquireForm({
         <div>
           <label
             htmlFor="package"
-            className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5"
+            className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-2"
           >
             Brand package <span className="text-gray-400">(optional)</span>
           </label>
@@ -320,7 +320,7 @@ export default function InquireForm({
         <div>
           <label
             htmlFor="package"
-            className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5"
+            className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-2"
           >
             e-Blast package <span className="text-gray-400">(optional)</span>
           </label>
@@ -345,7 +345,7 @@ export default function InquireForm({
       <div>
         <label
           htmlFor="name"
-          className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5"
+          className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-2"
         >
           Your name <span className="text-[#661102]">*</span>
         </label>
@@ -360,11 +360,11 @@ export default function InquireForm({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label
             htmlFor="email"
-            className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5"
+            className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-2"
           >
             Email <span className="text-[#661102]">*</span>
           </label>
@@ -381,7 +381,7 @@ export default function InquireForm({
         <div>
           <label
             htmlFor="phone"
-            className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5"
+            className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-2"
           >
             Phone
           </label>
@@ -399,7 +399,7 @@ export default function InquireForm({
       <div>
         <label
           htmlFor="company"
-          className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5"
+          className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-2"
         >
           Company / brokerage
         </label>
@@ -416,7 +416,7 @@ export default function InquireForm({
       <div>
         <label
           htmlFor="message"
-          className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5"
+          className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-2"
         >
           Tell us what you&apos;re looking for{' '}
           <span className="text-[#661102]">*</span>

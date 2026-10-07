@@ -117,7 +117,7 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
                     key={tool.href}
                     type="button"
                     onClick={() => { trackEvent('agent_command_center_tool_opened', { tool: tool.title }); onOpenTool(deskView); }}
-                    className={`ds-tool-row group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition hover:bg-[#FBFBFD] sm:p-5 ${tool.tone}`}
+                    className={`ds-tool-row group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition hover:bg-[#FBFBFD] sm:p-4 ${tool.tone}`}
                   >
                     <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tool.iconTone}`}>
                       <Icon className="h-5 w-5" aria-hidden="true" />
@@ -138,15 +138,15 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
                   key={tool.href}
                   href={tool.href}
                   onClick={() => trackEvent('agent_command_center_tool_opened', { tool: tool.title })}
-                  className={`group rounded-xl border p-5 transition hover:bg-[#FBFBFD] md:min-h-[200px] ${tool.tone}`}
+                  className={`group rounded-xl border p-4 transition hover:bg-[#FBFBFD] md:min-h-[200px] ${tool.tone}`}
                 >
                   <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${tool.iconTone}`}>
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
-                  <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60 sm:mt-7">{tool.eyebrow}</p>
+                  <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60 sm:mt-6">{tool.eyebrow}</p>
                   <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em]">{tool.title}</h3>
                   <p className="mt-3 text-sm leading-6 opacity-75">{tool.description}</p>
-                  <span className="mt-5 inline-flex items-center gap-1 text-sm font-bold">
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold">
                     Open Tool <ArrowRight className="h-4 w-4 " aria-hidden="true" />
                   </span>
                 </Link>
@@ -201,8 +201,8 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
               Find local service partners across title, appraisal, remodeling, A/C and heating, roofing, inspections, and lending. Discover who is visible in your market and take the next step with confidence.
             </p>
 
-            <div className="mt-5 border-t border-slate-200 pt-5">
-              <div className="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="mt-4 border-t border-slate-200 pt-4">
+              <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Find a Service</p>
                   <h3 className="mt-2 text-lg font-semibold tracking-[-0.02em] text-gray-900">{selectedCategoryRecord.description}</h3>
@@ -214,7 +214,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
                   All Partners <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </div>
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 {REFERRAL_CATEGORIES.map((category) => {
                   const selected = category.id === selectedCategory;
                   return (
@@ -226,7 +226,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
                         setProviderRotation(0);
                         trackEvent('agent_referral_network_category_selected', { category: category.id });
                       }}
-                      className={`h-[36px] rounded-full border px-3.5 text-sm font-medium transition ${
+                      className={`h-[36px] rounded-full border px-4 text-sm font-medium transition ${
                         selected
                           ? 'border-[#301D5D] bg-[#301D5D] text-white'
                           : 'border-slate-200 bg-white text-slate-700 hover:border-[#301D5D] hover:text-[#301D5D]'
@@ -268,7 +268,7 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
                 </div>
               )}
 
-              <p className="mt-6 flex gap-2 border-t border-slate-200 pt-5 text-xs leading-5 text-slate-500">
+              <p className="mt-6 flex gap-2 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-500">
                 <ShieldCheck className="rnn-inline-icon text-[#5B438C]" aria-hidden="true" />
                 Partner listings are featured or paid placements where applicable, not an endorsement. Independently verify fit, availability, insurance, licensing, and terms before referring a client.
               </p>

@@ -185,13 +185,13 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
             href={`/admin/agreements?agreement=${encodeURIComponent(created.agreement.id)}`}
-            className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-[#005A00] text-white hover:bg-[#005A00]"
+            className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium bg-[#005A00] text-white hover:bg-[#005A00]"
           >
             Open in Agreements →
           </Link>
           <Link
             href="/admin/ads/orders"
-            className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-[#00E200]/50 bg-white text-[#005A00] hover:bg-[#E0FBE0]"
+            className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium border border-[#00E200]/50 bg-white text-[#005A00] hover:bg-[#E0FBE0]"
           >
             View in Ad Orders →
           </Link>
@@ -224,7 +224,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
             setPackageId(e.target.value);
             setSize('');
           }}
-          className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
+          className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm bg-white"
         >
           <option value="">— pick —</option>
           {isPrint &&
@@ -252,7 +252,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
             <select
               value={size}
               onChange={(e) => setSize(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
+              className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm bg-white"
             >
               {selectedPrintPackage.sizes.map((s) => (
                 <option key={s.size} value={s.size}>
@@ -271,7 +271,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
               max={24}
               value={months}
               onChange={(e) => setMonths(Math.max(1, Number(e.target.value) || 1))}
-              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
+              className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm bg-white"
             />
           </div>
         </div>
@@ -286,7 +286,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
           <select
             value={publication}
             onChange={(e) => setPublication(e.target.value as PublicationScope)}
-            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
+            className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm bg-white"
           >
             {PUBLICATION_IDS.map((id) => (
               <option key={id} value={id}>{PUBLICATION_LABELS_WITH_BOTH[id]}</option>
@@ -308,7 +308,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
             max={24}
             value={sends}
             onChange={(e) => setSends(Math.max(1, Number(e.target.value) || 1))}
-            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
+            className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm bg-white"
           />
         </div>
       )}
@@ -323,7 +323,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
+            className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm bg-white"
           />
         </div>
         <div>
@@ -334,7 +334,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
+            className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm bg-white"
           />
         </div>
       </div>
@@ -347,7 +347,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
         <select
           value={paymentMode}
           onChange={(e) => setPaymentMode(e.target.value as PaymentMode)}
-          className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
+          className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm bg-white"
         >
           {(['link', 'invoice', 'check', 'card'] as PaymentMode[]).map((m) => (
             <option key={m} value={m}>
@@ -367,7 +367,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
             placeholder="https://buy.stripe.com/..."
             value={stripeLink}
             onChange={(e) => setStripeLink(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
+            className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm bg-white"
           />
           <p className="mt-1 text-[11px] text-gray-600">
             Create the link in Stripe Dashboard, then paste it here. The
@@ -385,7 +385,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
           rows={2}
           value={memo}
           onChange={(e) => setMemo(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
+          className="w-full rounded-md border border-gray-300 px-2 py-2 text-sm bg-white"
           placeholder="e.g. agreed terms on phone with Jane, will send creative tomorrow"
         />
       </div>

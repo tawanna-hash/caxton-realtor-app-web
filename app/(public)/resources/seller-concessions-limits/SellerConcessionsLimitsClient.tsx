@@ -86,7 +86,7 @@ export default function SellerConcessionsLimitsClient() {
         <div>
           <article className="rounded-md border border-gray-200 bg-white shadow-sm overflow-hidden">
             {/* Card header: eyebrow + title + listing-price input */}
-            <header className="px-6 md:px-8 pt-6 pb-5 border-b border-gray-100 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <header className="px-6 md:px-8 pt-6 pb-4 border-b border-gray-100 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-700 mb-2">
                   Seller Financing Guide
@@ -106,7 +106,7 @@ export default function SellerConcessionsLimitsClient() {
             </header>
 
             {/* Column labels */}
-            <div className="px-6 md:px-8 pt-5 grid grid-cols-12 gap-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+            <div className="px-6 md:px-8 pt-4 grid grid-cols-12 gap-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
               <div className="col-span-5">Loan &amp; coverage</div>
               <div className="col-span-4">Down payment</div>
               <div className="col-span-3 text-right">Max seller contribution</div>

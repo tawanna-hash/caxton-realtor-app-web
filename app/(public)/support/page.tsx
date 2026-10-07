@@ -24,7 +24,7 @@ export default function SupportPage() {
       </header>
 
       <section className="mb-12">
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-4">
           Email us
         </p>
         <div className="rounded-md border border-gray-200 bg-gray-50 p-6">
@@ -35,7 +35,7 @@ export default function SupportPage() {
           </p>
           <a
             href={`mailto:${SUPPORT_EMAIL}?subject=Realty%20News%20Now%20Support`}
-            className="inline-flex items-center px-5 py-2.5 rounded-md bg-brand-700 text-white font-medium hover:bg-brand-700 transition"
+            className="inline-flex items-center px-4 py-3 rounded-md bg-brand-700 text-white font-medium hover:bg-brand-700 transition"
           >
             {SUPPORT_EMAIL}
           </a>
@@ -46,7 +46,7 @@ export default function SupportPage() {
       </section>
 
       <section className="mb-12">
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-4">
           Common topics
         </p>
         <div className="space-y-6">
@@ -131,7 +131,7 @@ export default function SupportPage() {
       </section>
 
       <section className="mb-4">
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-4">
           More resources
         </p>
         <ul className="space-y-2 text-gray-700 font-light leading-relaxed">

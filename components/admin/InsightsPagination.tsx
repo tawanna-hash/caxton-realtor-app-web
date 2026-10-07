@@ -26,7 +26,7 @@ export default function InsightsPagination({
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-700">
       <span>{total ? `${first}–${last} of ${total}` : '0 results'}</span>
       <div className="flex items-center gap-2">
-        <label className="flex items-center gap-1.5">
+        <label className="flex items-center gap-2">
           Rows
           <select
             aria-label="Rows per page"
@@ -43,7 +43,7 @@ export default function InsightsPagination({
         <button
           type="button"
           aria-label="Previous page"
-          className="rounded p-1.5 hover:bg-gray-200 disabled:opacity-40"
+          className="rounded p-2 hover:bg-gray-200 disabled:opacity-40"
           disabled={currentPage <= 1}
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
         >
@@ -52,7 +52,7 @@ export default function InsightsPagination({
         <button
           type="button"
           aria-label="Next page"
-          className="rounded p-1.5 hover:bg-gray-200 disabled:opacity-40"
+          className="rounded p-2 hover:bg-gray-200 disabled:opacity-40"
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         >

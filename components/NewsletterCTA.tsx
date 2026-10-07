@@ -112,8 +112,8 @@ export default function NewsletterCTA({
   const color = buttonColor ?? PUB_COLORS[resolvedPub];
   const wrapperClass =
     variant === 'card'
-      ? 'bg-white border border-gray-200 rounded-md px-5 py-8 max-w-2xl mx-auto'
-      : 'bg-gray-100 border-y border-gray-200 px-5 py-8';
+      ? 'bg-white border border-gray-200 rounded-md px-4 py-8 max-w-2xl mx-auto'
+      : 'bg-gray-100 border-y border-gray-200 px-4 py-8';
 
   return (
     <div className={wrapperClass}>
@@ -141,12 +141,12 @@ export default function NewsletterCTA({
               // min-w-0 lets flex-1 actually shrink the input below its
               // intrinsic content width; without it, the placeholder + button
               // combined push the row past its max-w-md parent on 375px.
-              className="flex-1 min-w-0 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-700/40 focus:border-brand-700 placeholder:text-[#d1d5db] disabled:opacity-60"
+              className="flex-1 min-w-0 px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-700/40 focus:border-brand-700 placeholder:text-[#d1d5db] disabled:opacity-60"
             />
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="px-6 py-3.5 text-base font-medium uppercase tracking-wider text-white whitespace-nowrap disabled:opacity-60 rounded-md"
+              className="px-6 py-4 text-base font-medium uppercase tracking-wider text-white whitespace-nowrap disabled:opacity-60 rounded-md"
               style={{ backgroundColor: color }}
             >
               {submitting ? 'Signing\u2026' : 'Sign Up'}

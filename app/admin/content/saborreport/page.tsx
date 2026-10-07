@@ -383,15 +383,15 @@ export default function SaborMlsAdminPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Editor */}
-        <div className="lg:col-span-3 space-y-5">
+        <div className="lg:col-span-3 space-y-4">
           {/* Header */}
-          <div className="bg-white border border-gray-200 rounded-md p-5">
+          <div className="bg-white border border-gray-200 rounded-md p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">{editingId ? `Edit report #${editingId}` : 'New report'}</h2>
               <button
                 type="button"
                 onClick={prefillLabels}
-                className="text-xs font-medium px-3 py-1.5 border border-brand-700 text-brand-700 rounded-md hover:bg-brand-700 hover:text-white transition"
+                className="text-xs font-medium px-3 py-2 border border-brand-700 text-brand-700 rounded-md hover:bg-brand-700 hover:text-white transition"
               >
                 Pre-fill labels (EN + ES)
               </button>
@@ -399,7 +399,7 @@ export default function SaborMlsAdminPage() {
                 type="button"
                 onClick={onPickFile}
                 disabled={importing}
-                className="text-xs font-medium px-3 py-1.5 border border-brand-700 bg-brand-700 text-white rounded-md hover:bg-brand-800 transition disabled:opacity-60"
+                className="text-xs font-medium px-3 py-2 border border-brand-700 bg-brand-700 text-white rounded-md hover:bg-brand-800 transition disabled:opacity-60"
               >
                 {importing ? 'Extracting…' : 'Upload graphic to autopopulate'}
               </button>
@@ -473,7 +473,7 @@ export default function SaborMlsAdminPage() {
           </div>
 
           {/* Headline */}
-          <div className="bg-white border border-gray-200 rounded-md p-5">
+          <div className="bg-white border border-gray-200 rounded-md p-4">
             <h2 className="font-semibold mb-4">Headline Number</h2>
 
             <div className="grid grid-cols-3 gap-4">
@@ -525,7 +525,7 @@ export default function SaborMlsAdminPage() {
           </div>
 
           {/* Indicator stats */}
-          <div className="bg-white border border-gray-200 rounded-md p-5">
+          <div className="bg-white border border-gray-200 rounded-md p-4">
             <h2 className="font-semibold mb-1">Indicator Stats</h2>
             <p className="text-xs text-gray-500 mb-4">Days on Market, Price/SqFt, Close to List, Months of Inventory, Avg Rental, Total Sales, Avg Price, Median Price.</p>
             <div className="space-y-3">
@@ -541,7 +541,7 @@ export default function SaborMlsAdminPage() {
           </div>
 
           {/* Listing counts */}
-          <div className="bg-white border border-gray-200 rounded-md p-5">
+          <div className="bg-white border border-gray-200 rounded-md p-4">
             <h2 className="font-semibold mb-1">Listing Counts</h2>
             <p className="text-xs text-gray-500 mb-4">New, Active, Pending, Active Residential Rental.</p>
             <div className="space-y-3">
@@ -557,7 +557,7 @@ export default function SaborMlsAdminPage() {
           </div>
 
           {/* Price bands */}
-          <div className="bg-white border border-gray-200 rounded-md p-5">
+          <div className="bg-white border border-gray-200 rounded-md p-4">
             <h2 className="font-semibold mb-1">Price Bands (% of Sales)</h2>
             <p className="text-xs text-gray-500 mb-4">Share of closed sales by price tier.</p>
             <div className="space-y-3">
@@ -594,7 +594,7 @@ export default function SaborMlsAdminPage() {
           </div>
 
           {/* Footer fields + save */}
-          <div className="bg-white border border-gray-200 rounded-md p-5">
+          <div className="bg-white border border-gray-200 rounded-md p-4">
             <div className="grid grid-cols-2 gap-4">
               <Field label="Page count (optional)">
                 <input

@@ -291,7 +291,7 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
   const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 px-5 py-7 lg:px-8">
+    <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8">
       {/* Header ─────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
@@ -479,7 +479,7 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-gray-500">
+          <div className="px-4 py-8 text-center text-sm text-gray-500">
             No contacts match your filters.
           </div>
         ) : (
@@ -646,7 +646,7 @@ function CrmRow({
   const opensCell = row.last_bounced_at ? (
     <div className="flex flex-col leading-tight gap-0.5">
       <span
-        className="inline-flex items-center gap-1 rounded-full bg-[#FFEAE6] text-[#661102] border border-[#FF2A04]/50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit"
+        className="inline-flex items-center gap-1 rounded-full bg-[#FFEAE6] text-[#661102] border border-[#FF2A04]/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit"
         title={`Last bounce: ${row.last_bounce_type ?? 'unknown'} on ${formatShortDate(row.last_bounced_at)}`}
       >
         Bounced
@@ -663,7 +663,7 @@ function CrmRow({
   );
 
   const actionsCell = (
-    <div className="flex items-center justify-end gap-1.5 flex-wrap">
+    <div className="flex items-center justify-end gap-2 flex-wrap">
       <button
         type="button"
         onClick={onToggleLock}
@@ -699,7 +699,7 @@ function CrmRow({
   return (
     <>
       {/* Desktop grid ≥ sm — unchanged layout */}
-      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2.5 text-xs items-center hover:bg-[#F6F3FB]/40 transition">
+      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-3 text-xs items-center hover:bg-[#F6F3FB]/40 transition">
         <div className="col-span-4">{contactCell}</div>
         <div className="col-span-1">
           <StatusBadge status={row.status ?? 'prospect'} />
@@ -715,7 +715,7 @@ function CrmRow({
       {/* Mobile card < sm */}
       <div className="sm:hidden px-4 py-3 space-y-2 hover:bg-[#F6F3FB]/40 transition">
         {contactCell}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <StatusBadge status={row.status ?? 'prospect'} />
           <PublicationBadge publication={row.publication ?? 'austin'} />
         </div>
@@ -1408,7 +1408,7 @@ function EditDrawer({
           <Section title="Ad management">
             <div className="grid grid-cols-2 gap-3">
               <Field label="Publications">
-                <div className="flex flex-col gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2">
+                <div className="flex flex-col gap-2 rounded-md border border-gray-300 bg-white px-3 py-2">
                   {PUBLICATION_OPTIONS.map((p) => (
                     <label key={p.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                       <input
@@ -1555,7 +1555,7 @@ function EditDrawer({
                   type="button"
                   onClick={() => sendPortalLink('login')}
                   disabled={sendingLink || (!row.portal_email && !row.contact_email)}
-                  className="shrink-0 rounded-md bg-gray-900 text-white px-3 py-1.5 text-sm hover:bg-gray-800 disabled:opacity-50"
+                  className="shrink-0 rounded-md bg-gray-900 text-white px-3 py-2 text-sm hover:bg-gray-800 disabled:opacity-50"
                 >
                   {sendingLink ? 'Sending…' : 'Send portal link'}
                 </button>
@@ -1724,7 +1724,7 @@ function EditDrawer({
                 type="button"
                 onClick={() => setDeleteRequested((requested) => !requested)}
                 disabled={deleting || row.is_locked}
-                className={`px-3 py-1.5 rounded-md border text-xs disabled:opacity-50 ${
+                className={`px-3 py-2 rounded-md border text-xs disabled:opacity-50 ${
                   deleteRequested
                     ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
                     : 'border-[#FF2A04]/30 text-[#661102] hover:bg-[#FFEAE6]'
@@ -1862,7 +1862,7 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
                       {li.package_label && li.package_label.trim() ? li.package_label : (channelLabel(li.channel) || 'Line ' + li.line_no)}
                     </span>
                     {li.channel ? (
-                      <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{channelLabel(li.channel)}</span>
+                      <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-gray-100 text-gray-600">{channelLabel(li.channel)}</span>
                     ) : null}
                   </div>
                   <div className="mt-0.5 text-xs text-gray-600">
@@ -1980,11 +1980,11 @@ function CreateAdvertiserModal({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-lg rounded-md bg-white shadow-xl border border-gray-200">
-        <div className="px-5 py-4 border-b border-gray-200">
+        <div className="px-4 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">New Partner</h2>
           <p className="text-xs text-gray-500 mt-0.5">Create the contact record. You can fill in everything else from the edit drawer afterwards.</p>
         </div>
-        <div className="p-5 space-y-4">
+        <div className="p-4 space-y-4">
           <label className="block space-y-1">
             <span className="text-sm font-medium text-gray-700">Name</span>
             <input
@@ -2000,7 +2000,7 @@ function CreateAdvertiserModal({
           </label>
           <div className="block space-y-1">
             <span className="text-sm font-medium text-gray-700">Publications</span>
-            <div className="flex flex-col gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2">
+            <div className="flex flex-col gap-2 rounded-md border border-gray-300 bg-white px-3 py-2">
               {PUBLICATION_OPTIONS.map((opt) => (
                 <label key={opt.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                   <input
@@ -2055,7 +2055,7 @@ function CreateAdvertiserModal({
             </p>
           </label>
         </div>
-        <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
+        <div className="px-4 py-4 border-t border-gray-200 flex justify-end gap-2">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm whitespace-nowrap"

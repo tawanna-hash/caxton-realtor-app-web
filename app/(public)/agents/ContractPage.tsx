@@ -644,7 +644,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
               <p className="text-sm font-semibold text-slate-900">{isNew ? 'Add A Term' : 'Edit Term'}</p>
               <button type="button" aria-label="Close" onClick={() => setEditing(null)} className="!border-0 !bg-transparent !px-1"><X className="h-4 w-4" aria-hidden="true" /></button>
             </div>
-            <div className="grid gap-4 px-6 py-5 sm:grid-cols-2">
+            <div className="grid gap-4 px-6 py-4 sm:grid-cols-2">
               <label className="block text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Term
                 <input value={editing.term} onChange={(e) => setEditing({ ...editing, term: e.target.value })} placeholder="Purchase Price" className={`${fieldCls} mt-1 font-normal`} />
               </label>

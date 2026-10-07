@@ -97,17 +97,17 @@ function BundleSavingsSection() {
 
   return (
     <section className="mb-8 rounded-md border border-[#00E200]/30 bg-[#E0FBE0]/60 p-6 md:p-8">
-      <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-[#005A00]">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#005A00]">
         Bundle &amp; save
       </p>
       <h2 className="text-xl font-bold tracking-tight text-gray-900 md:text-2xl">
         Buy More Markets, Pay Less per Market
       </h2>
-      <p className="mt-1.5 max-w-2xl text-sm font-light text-gray-700">
+      <p className="mt-2 max-w-2xl text-sm font-light text-gray-700">
         Every placement scales down per market the more markets you buy. Below is a real example using our {sample.name}{' '}
         slot (${baseRate}/wk single market).
       </p>
-      <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         {ladder.map((row) => (
           <div key={row.markets} className="rounded-md border border-[#00E200]/30 bg-white p-4">
             <p className="min-h-[2.2em] text-[11px] font-medium uppercase leading-tight tracking-wider text-gray-500">
@@ -123,7 +123,7 @@ function BundleSavingsSection() {
               ${row.total.toLocaleString()}
               <span className="text-sm font-normal text-gray-500">/wk</span>
             </p>
-            <p className="mt-1.5 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-gray-500">
               {row.savingsPct > 0 ? (
                 <>
                   <span className="font-semibold text-[#005A00]">{row.savingsPct}% off</span>
@@ -257,7 +257,7 @@ export default function PublicAdvertisePlacementsPage() {
             Rotates
           </span> are shared placements: up to 5 active partners cycle through the same surface, with a 6-second view and a 2-second cross-fade between creatives.
         </p>
-        <div className="mt-5 flex flex-wrap gap-3 text-sm">
+        <div className="mt-4 flex flex-wrap gap-3 text-sm">
           <Link
             href="/advertise/digital"
             className="text-brand-700 underline font-semibold"
@@ -275,7 +275,7 @@ export default function PublicAdvertisePlacementsPage() {
 
       <BundleSavingsSection />
 
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sorted.map((slot) => (
           <PlacementCard key={slot.slug} slot={slot} />
         ))}

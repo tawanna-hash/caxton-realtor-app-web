@@ -13,7 +13,7 @@ export default async function ManageBooking({ params }: { params: Promise<{ toke
   if (!b) notFound();
   const t = T[b.language];
   return (
-    <main className="mx-auto max-w-[560px] px-4 py-10 font-[Inter,system-ui,sans-serif] text-[14px] text-[#4A4757]">
+    <main className="mx-auto max-w-[560px] px-4 py-8 font-[Inter,system-ui,sans-serif] text-[14px] text-[#4A4757]">
       <div className="rounded-xl border border-[#E6E5EC] bg-white p-6">
         {b.agentName && <div className="text-[14px] font-semibold text-[#301D5D]">{b.agentName}</div>}
         <h1 className="mt-1 text-[22px] font-semibold text-[#1B1726]">{b.schedulerName}</h1>
@@ -22,7 +22,7 @@ export default async function ManageBooking({ params }: { params: Promise<{ toke
         {b.status !== 'booked' ? (
           <div className="mt-4 rounded-lg bg-[#FFEAE6] px-3 py-2 text-[13px] font-medium text-[#661102]">{t.cancelled}</div>
         ) : (
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <a href={`/api/book/manage/${token}/ics`} className="inline-flex min-h-[44px] items-center rounded-lg border border-[#E6E5EC] bg-white px-4 text-[13px] font-medium text-[#1B1726] hover:border-[#301D5D]">{t.addCal}</a>
             {!b.past && <CancelButton token={token} label={t.cancel} done={t.cancelled} />}
           </div>

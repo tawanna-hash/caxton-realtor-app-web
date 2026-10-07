@@ -156,7 +156,7 @@ export default function DepositReportClient({
   };
 
   return (
-    <div className="mx-auto max-w-7xl min-w-0 px-4 py-5 sm:px-6 sm:py-6 print:max-w-none print:px-0 print:py-0">
+    <div className="mx-auto max-w-7xl min-w-0 px-4 py-4 sm:px-6 sm:py-6 print:max-w-none print:px-0 print:py-0">
       {/* Screen-only controls */}
       <div className="no-print mb-6 flex flex-wrap items-end justify-between gap-4 print:hidden">
         <div>
@@ -236,7 +236,7 @@ export default function DepositReportClient({
         </div>
 
         {rows.length === 0 ? (
-          <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-600">
+          <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
             No check payments were recorded between {shortDate(from)} and {shortDate(to)}.
           </div>
         ) : (

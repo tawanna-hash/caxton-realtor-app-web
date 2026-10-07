@@ -237,7 +237,7 @@ export default function InventoryBrowser({
 
       {/* Compact search bar: one wrapping row of small selects. */}
       <div className="sticky top-0 z-20 -mx-4 px-3 py-2 bg-white/95 backdrop-blur border-b border-gray-200 mb-3">
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <FilterSelect
             label="Builder"
             value={filters.builder ?? ''}
@@ -296,7 +296,7 @@ export default function InventoryBrowser({
         </div>
 
         {count > 0 && (
-          <div className="mt-1.5 flex items-center gap-2">
+          <div className="mt-2 flex items-center gap-2">
             <button
               onClick={clearAll}
               className="text-[11px] font-semibold uppercase tracking-wider text-brand-700 hover:text-brand-800"
@@ -355,7 +355,7 @@ function FilterSelect({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={label}
-        className="appearance-none text-[11px] font-medium rounded-md border border-gray-300 bg-white pl-2 pr-5 py-1 text-gray-700 max-w-[42vw] truncate focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+        className="appearance-none text-[11px] font-medium rounded-md border border-gray-300 bg-white pl-2 pr-4 py-1 text-gray-700 max-w-[42vw] truncate focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>

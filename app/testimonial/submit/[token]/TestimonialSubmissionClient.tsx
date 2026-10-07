@@ -77,7 +77,7 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
 
   if (error && !profile) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f4ee] px-5">
+      <main className="flex min-h-screen items-center justify-center bg-[#f7f4ee] px-4">
         <div className="max-w-md rounded-xl border border-[#FFEAE6] bg-white p-8 text-center shadow-sm">
           <Quote className="mx-auto text-gray-300" size={34} />
           <h1 className="mt-4 text-xl font-semibold text-gray-950">Link Unavailable</h1>
@@ -89,12 +89,12 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
 
   if (submitted) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f4ee] px-5">
-        <div className="max-w-lg rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-10">
+      <main className="flex min-h-screen items-center justify-center bg-[#f7f4ee] px-4">
+        <div className="max-w-lg rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-8">
           <Check className="mx-auto text-[#005A00]" size={38} />
-          <h1 className="mt-5 text-2xl font-semibold text-gray-950">Thank You for Sharing</h1>
+          <h1 className="mt-4 text-2xl font-semibold text-gray-950">Thank You for Sharing</h1>
           <p className="mt-3 text-base leading-7 text-gray-600">Your testimonial has been sent to {profile?.display_name} for review.</p>
-          {profile?.website_url && <a href={profile.website_url} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-[#301D5D] px-5 text-sm font-semibold text-white">Return to {profile.display_name}&apos;s website</a>}
+          {profile?.website_url && <a href={profile.website_url} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white">Return to {profile.display_name}&apos;s website</a>}
         </div>
       </main>
     );
@@ -115,18 +115,18 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
           {profile?.website_url && <a href={profile.website_url} className="mt-3 inline-block text-sm font-semibold text-[#301D5D] underline underline-offset-4">Visit {profile.display_name}&apos;s website</a>}
         </header>
 
-        <form onSubmit={submit} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
-          {error && <div role="alert" className="mb-5 rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">{error}</div>}
+        <form onSubmit={submit} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-8">
+          {error && <div role="alert" className="mb-4 rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-4 py-3 text-sm text-[#661102]">{error}</div>}
           <label className="block text-sm font-semibold text-gray-800">
             Your testimonial
             <textarea required minLength={10} name="quote" rows={6} className="mt-2 w-full rounded-md border border-gray-300 px-3 py-3 text-base leading-7" placeholder="What stood out about working together?" />
           </label>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-medium text-gray-700">Your name<input required name="clientName" className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
-            <label className="text-sm font-medium text-gray-700">Email, not published<input type="email" name="email" className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
-            <label className="text-sm font-medium text-gray-700">Title or role<input name="clientTitle" className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
-            <label className="text-sm font-medium text-gray-700">Company<input name="clientCompany" className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-medium text-gray-700">Your name<input required name="clientName" className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
+            <label className="text-sm font-medium text-gray-700">Email, not published<input type="email" name="email" className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
+            <label className="text-sm font-medium text-gray-700">Title or role<input name="clientTitle" className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
+            <label className="text-sm font-medium text-gray-700">Company<input name="clientCompany" className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
           </div>
 
           <fieldset className="mt-6">
@@ -152,14 +152,14 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
           </fieldset>
 
           {format !== 'text' && (
-            <div className="mt-5 space-y-4">
-              <label className="block text-sm font-medium text-gray-700">{format === 'audio' ? 'Audio URL' : 'Video URL'}<input required type="url" name="videoUrl" className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3" placeholder={format === 'audio' ? 'Hosted audio or podcast URL' : 'YouTube, Vimeo, or hosted video URL'} /></label>
-              <label className="block text-sm font-medium text-gray-700">Transcript or summary<textarea name="transcript" rows={3} className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2" /></label>
+            <div className="mt-4 space-y-4">
+              <label className="block text-sm font-medium text-gray-700">{format === 'audio' ? 'Audio URL' : 'Video URL'}<input required type="url" name="videoUrl" className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3" placeholder={format === 'audio' ? 'Hosted audio or podcast URL' : 'YouTube, Vimeo, or hosted video URL'} /></label>
+              <label className="block text-sm font-medium text-gray-700">Transcript or summary<textarea name="transcript" rows={3} className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2" /></label>
             </div>
           )}
 
-          <label className="mt-5 block text-sm font-medium text-gray-700">Photo URL, optional<input type="url" name="imageUrl" className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
-          <label className="mt-5 block text-sm font-medium text-gray-700">Original review URL, optional<input type="url" name="sourceUrl" className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
+          <label className="mt-4 block text-sm font-medium text-gray-700">Photo URL, optional<input type="url" name="imageUrl" className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
+          <label className="mt-4 block text-sm font-medium text-gray-700">Original review URL, optional<input type="url" name="sourceUrl" className="mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
 
           <label className="mt-6 flex items-start gap-3 text-sm leading-6 text-gray-600">
             <input required name="consent" type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[#301D5D]" />
@@ -167,7 +167,7 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
           </label>
           <input name="website" tabIndex={-1} autoComplete="off" className="sr-only" aria-hidden="true" />
 
-          <button disabled={saving} className="mt-7 min-h-12 w-full rounded-md bg-[#301D5D] px-5 text-sm font-semibold text-white hover:bg-[#241547] disabled:opacity-50">
+          <button disabled={saving} className="mt-6 min-h-12 w-full rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#241547] disabled:opacity-50">
             {saving ? 'Submitting…' : 'Submit testimonial'}
           </button>
           <p className="mt-4 text-center text-xs leading-5 text-gray-500">Your submission is reviewed before it appears publicly.</p>

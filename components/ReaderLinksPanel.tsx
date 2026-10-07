@@ -152,7 +152,7 @@ export default function ReaderLinksPanel({ hotspots, brandColor }: ReaderLinksPa
         onClick={() => setOpen((o) => !o)}
         aria-label={`${hotspots.length} interactive link${hotspots.length === 1 ? '' : 's'} on this page`}
         aria-expanded={open}
-        className="absolute right-3 bottom-24 z-20 flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/95 shadow-lg border border-black/10 text-xs font-medium text-gray-800 hover:bg-white transition-colors"
+        className="absolute right-3 bottom-24 z-20 flex items-center gap-2 px-3 py-2 rounded-full bg-white/95 shadow-lg border border-black/10 text-xs font-medium text-gray-800 hover:bg-white transition-colors"
         style={{ backdropFilter: 'blur(6px)' }}
       >
         <span aria-hidden>📎</span>
@@ -188,7 +188,7 @@ export default function ReaderLinksPanel({ hotspots, brandColor }: ReaderLinksPa
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-gray-500 hover:text-gray-800 -mr-1 p-1.5"
+                className="text-gray-500 hover:text-gray-800 -mr-1 p-2"
                 aria-label="Close"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

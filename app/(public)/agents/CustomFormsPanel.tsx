@@ -76,7 +76,7 @@ export default function CustomFormsPanel({ section, label, dealContext }: { sect
       {loaded && forms.length === 0 && <p className="mt-2 text-sm text-slate-500">Nothing here yet. Upload a form to add it.</p>}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         {forms.map((form) => (
-          <article key={form.id} className="flex min-w-0 flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5">
+          <article key={form.id} className="flex min-w-0 flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4">
             <div className="flex min-w-0 items-start gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFEAF8] text-[#5B3FA0]"><FileText className="h-5 w-5" aria-hidden="true" /></span>
               <div className="min-w-0">
@@ -93,10 +93,10 @@ export default function CustomFormsPanel({ section, label, dealContext }: { sect
             {!form.fillable && <Tip text="This PDF has no fillable fields, so it can be opened and downloaded but not filled in." />}
             <div className="flex flex-wrap gap-2">
               {form.fillable && (
-                <a href={`/agents/closing-time?form=${encodeURIComponent(`custom-${form.id}`)}#trec-form-workspace`} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#301D5D] px-3 text-sm font-bold text-white"><PencilLine className="h-4 w-4" aria-hidden="true" />Open &amp; Fill</a>
+                <a href={`/agents/closing-time?form=${encodeURIComponent(`custom-${form.id}`)}#trec-form-workspace`} className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#301D5D] px-3 text-sm font-bold text-white"><PencilLine className="h-4 w-4" aria-hidden="true" />Open &amp; Fill</a>
               )}
-              <a href={form.url} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F4F3F8]"><ExternalLink className="h-4 w-4" aria-hidden="true" />Open</a>
-              <a href={form.url} download={form.filename} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F4F3F8]"><Download className="h-4 w-4" aria-hidden="true" />Download</a>
+              <a href={form.url} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F4F3F8]"><ExternalLink className="h-4 w-4" aria-hidden="true" />Open</a>
+              <a href={form.url} download={form.filename} className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-[#F4F3F8]"><Download className="h-4 w-4" aria-hidden="true" />Download</a>
               <button type="button" aria-label={`Remove ${form.title}`} onClick={() => void remove(form)}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>
             </div>
           </article>

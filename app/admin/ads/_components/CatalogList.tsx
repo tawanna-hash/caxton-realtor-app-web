@@ -77,7 +77,7 @@ export function CatalogList({ spaces, campaigns }: Props) {
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
             <input
               type="search"
-              className={`${AD_OPS_CONTROL} w-full pl-9`}
+              className={`${AD_OPS_CONTROL} w-full pl-8`}
               placeholder="Placement, slug, size, or note"
               value={query}
               onChange={(event) => { setQuery(event.target.value); setPage(1); }}
@@ -121,7 +121,7 @@ export function CatalogList({ spaces, campaigns }: Props) {
                     {active ? `${active} live` : 'Available'}
                   </span>
                   {ROTATING_SLUGS.has(space.slug) && (
-                    <div className="mt-1 inline-block rounded bg-[#E3F7FF] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#285766]">
+                    <div className="mt-1 inline-block rounded bg-[#E3F7FF] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#285766]">
                       Rotates
                     </div>
                   )}
@@ -164,30 +164,30 @@ export function CatalogList({ spaces, campaigns }: Props) {
               const active = activeBySlug.get(space.slug) ?? 0;
               return (
                 <tr key={space.slug} className="hover:bg-[#F6F3FB]/40">
-                  <td className="px-4 py-2.5">
+                  <td className="px-4 py-3">
                     <Link href={`/admin/ads/placements?q=${encodeURIComponent(space.slug)}`} className="font-medium text-gray-900 hover:text-[#42277C] hover:underline">
                       {space.display_name}
                     </Link>
                     <div className="mt-0.5 truncate font-mono text-[11px] text-gray-500">{space.slug}</div>
                   </td>
-                  <td className="px-3 py-2.5 text-gray-700">{ZONE_LABELS[space.zone]}</td>
-                  <td className="px-3 py-2.5">
+                  <td className="px-3 py-3 text-gray-700">{ZONE_LABELS[space.zone]}</td>
+                  <td className="px-3 py-3">
                     <span className={`inline-flex rounded px-2 py-0.5 font-medium capitalize ${
                       space.tier === 'premium' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-gray-100 text-gray-700'
                     }`}>
                       {space.tier}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 text-gray-600">
+                  <td className="px-3 py-3 text-gray-600">
                     <div className="line-clamp-2">{formatSizes(space.sizes_json)}</div>
                     {space.notes && <div className="mt-0.5 line-clamp-1 text-gray-500">{space.notes}</div>}
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-4 py-3">
                     <span className={active ? 'font-medium text-[#005A00]' : 'text-gray-500'}>
                       {active ? `${active} live` : 'Available'}
                     </span>
                     {ROTATING_SLUGS.has(space.slug) && (
-                      <span className="ml-2 rounded bg-[#E3F7FF] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#285766]">
+                      <span className="ml-2 rounded bg-[#E3F7FF] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#285766]">
                         Rotates
                       </span>
                     )}
@@ -200,7 +200,7 @@ export function CatalogList({ spaces, campaigns }: Props) {
       </div>
 
       {visible.length === 0 && (
-        <div className="px-4 py-10 text-center text-sm text-gray-500">
+        <div className="px-4 py-8 text-center text-sm text-gray-500">
           No inventory matches these filters.
         </div>
       )}

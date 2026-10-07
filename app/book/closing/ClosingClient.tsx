@@ -27,7 +27,7 @@ export default function ClosingClient({ token }: { token: string }) {
     if (!r.ok) setErr(j.error || 'Something went wrong.'); else setDone(msg(j));
   }
 
-  const wrap = (children: React.ReactNode) => <main className="mx-auto max-w-[560px] px-4 py-10 font-[Inter,system-ui,sans-serif]"><div className={card}>{children}</div></main>;
+  const wrap = (children: React.ReactNode) => <main className="mx-auto max-w-[560px] px-4 py-8 font-[Inter,system-ui,sans-serif]"><div className={card}>{children}</div></main>;
   if (err && !d) return wrap(<p className="text-[15px] text-[#4A4757]">{err}</p>);
   if (!d) return wrap(<p className="text-[15px] text-[#7A7787]">Loading</p>);
   const head = (<><div className="text-[13px] font-semibold uppercase tracking-wide text-[#7A7787]">Closing</div><h1 className="mt-1 text-[22px] font-semibold text-[#1B1726]">{d.property}</h1></>);

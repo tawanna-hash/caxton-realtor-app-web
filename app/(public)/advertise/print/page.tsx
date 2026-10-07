@@ -44,11 +44,11 @@ export default function AdvertisePrintPage() {
 
       {/* Packages grid */}
       <section className="mb-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {PACKAGES.map((pkg) => (
             <article
               key={pkg.id}
-              className={`relative flex flex-col border rounded-md p-5 ${
+              className={`relative flex flex-col border rounded-md p-4 ${
                 pkg.premium
                   ? 'border-[#42277C] bg-[#FEF8CC]/30'
                   : pkg.popular
@@ -79,7 +79,7 @@ export default function AdvertisePrintPage() {
 
               {/* Size + price table */}
               <div className="mb-4">
-                <p className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1.5">
+                <p className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-2">
                   Sizes &amp; rates (per month)
                 </p>
                 <ul className="text-sm text-gray-800 space-y-1">
@@ -100,7 +100,7 @@ export default function AdvertisePrintPage() {
               </div>
 
               {/* Features */}
-              <ul className="text-sm text-gray-700 space-y-1 mb-5 flex-1">
+              <ul className="text-sm text-gray-700 space-y-1 mb-4 flex-1">
                 {pkg.features.map((f) => (
                   <li key={f} className="flex gap-2">
                     <span aria-hidden className="text-brand-700 font-bold">·</span>
@@ -111,7 +111,7 @@ export default function AdvertisePrintPage() {
 
               <Link
                 href={`/advertise/inquire?channel=print&package=${encodeURIComponent(pkg.id)}`}
-                className="inline-flex items-center justify-center px-4 py-2.5 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-brand-800 transition"
+                className="inline-flex items-center justify-center px-4 py-3 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-brand-800 transition"
               >
                 Request quote
               </Link>
@@ -130,7 +130,7 @@ export default function AdvertisePrintPage() {
             {/* Mobile cards */}
             <ul className="divide-y divide-gray-100 md:hidden">
               {PRINT_DEADLINES.map((d) => (
-                <li key={d.month} className="px-4 py-2.5">
+                <li key={d.month} className="px-4 py-3">
                   <div className="font-medium">{d.month}</div>
                   <div className="mt-1 grid grid-cols-2 gap-2 text-xs">
                     <div>
@@ -176,7 +176,7 @@ export default function AdvertisePrintPage() {
         </p>
         <Link
           href="/advertise/inquire?channel=print"
-          className="inline-flex items-center justify-center px-5 py-2.5 border border-brand-700 text-brand-700 text-sm font-medium rounded-md hover:bg-brand-700 hover:text-white transition"
+          className="inline-flex items-center justify-center px-4 py-3 border border-brand-700 text-brand-700 text-sm font-medium rounded-md hover:bg-brand-700 hover:text-white transition"
         >
           Start a print inquiry
         </Link>

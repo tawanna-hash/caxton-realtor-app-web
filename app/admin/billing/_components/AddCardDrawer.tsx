@@ -117,7 +117,7 @@ export function AddCardDrawer({
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-2xl">
-        <div className="flex items-start justify-between border-b border-gray-200 px-5 py-3">
+        <div className="flex items-start justify-between border-b border-gray-200 px-4 py-3">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Card on file</div>
             <h2 className="text-lg text-gray-900">{hasExistingCard ? 'Update card on file' : 'Add card on file'}</h2>
@@ -128,7 +128,7 @@ export function AddCardDrawer({
           </button>
         </div>
 
-        <div className="space-y-3 px-5 py-4">
+        <div className="space-y-3 px-4 py-4">
           {hasExistingCard && (
             <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
               Replacing current card: {currentCard?.cardType ?? 'Card'} ••••{currentCard?.cardLast4 ?? '????'}

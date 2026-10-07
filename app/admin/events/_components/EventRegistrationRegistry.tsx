@@ -142,7 +142,7 @@ export default function EventRegistrationRegistry({
   }
 
   return (
-    <section className="mb-8 rounded-md border border-gray-200 bg-white p-5">
+    <section className="mb-8 rounded-md border border-gray-200 bg-white p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-base font-semibold text-gray-950">Attendee Registry</h2>
@@ -158,12 +158,12 @@ export default function EventRegistrationRegistry({
 
       {!loading && rows.length > 0 && (
         <>
-          <div className="mt-5 divide-y divide-gray-100 rounded-md border border-gray-200 md:hidden">
+          <div className="mt-4 divide-y divide-gray-100 rounded-md border border-gray-200 md:hidden">
             {rows.map((r) => (
               <RegistrationCard key={r.id} registration={r} />
             ))}
           </div>
-          <div className="mt-5 hidden overflow-x-auto md:block">
+          <div className="mt-4 hidden overflow-x-auto md:block">
             <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-wider text-gray-500">
@@ -191,9 +191,9 @@ export default function EventRegistrationRegistry({
               </tbody>
             </table>
           </div>
-          <div className="mt-5 flex flex-col gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:items-end">
+          <div className="mt-4 flex flex-col gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:items-end">
             <label className="flex-1">
-              <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-gray-500">Partner email</span>
+              <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-gray-500">Partner email</span>
               <input
                 type="email"
                 value={recipient}

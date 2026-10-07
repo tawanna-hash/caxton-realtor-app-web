@@ -723,7 +723,7 @@ export function RecurringScheduleDrawer({
       {activeTab === "email" && (
         <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
           <div className="grid min-h-[610px] xl:grid-cols-[0.95fr_1.2fr]">
-            <div className="border-b border-gray-200 bg-white p-5 xl:border-b-0 xl:border-r">
+            <div className="border-b border-gray-200 bg-white p-4 xl:border-b-0 xl:border-r">
               <div className="space-y-3">
                 <Field label="From">
                   <select
@@ -799,9 +799,9 @@ export function RecurringScheduleDrawer({
               </p>
             </div>
 
-            <div className="overflow-auto bg-white p-5 sm:p-8">
+            <div className="overflow-auto bg-white p-4 sm:p-8">
               <div className="mx-auto max-w-[520px] border border-gray-200 bg-white text-gray-800 shadow-sm">
-                <div className="px-8 pb-3 pt-7 text-center">
+                <div className="px-8 pb-3 pt-6 text-center">
                   <Image
                     src="/brand/caxton-logo.jpg"
                     alt="Caxton Publications"
@@ -810,7 +810,7 @@ export function RecurringScheduleDrawer({
                     className="mx-auto h-20 w-auto object-contain"
                   />
                 </div>
-                <div className="mx-8 bg-[#F6F3FB] px-6 py-7 text-center">
+                <div className="mx-8 bg-[#F6F3FB] px-6 py-6 text-center">
                   <h3 className="mx-auto max-w-sm text-xl font-semibold leading-7 text-gray-900">
                     Set up recurring invoice to Caxton Publications Inc. by{" "}
                     {firstChargeDate}
@@ -823,12 +823,12 @@ export function RecurringScheduleDrawer({
                   </div>
                   <button
                     type="button"
-                    className="mt-5 rounded-md bg-[#301D5D] px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
+                    className="mt-4 rounded-md bg-[#301D5D] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
                   >
                     Set up recurring invoice
                   </button>
                 </div>
-                <div className="space-y-5 px-10 py-7">
+                <div className="space-y-4 px-8 py-6">
                   <div>
                     <div className="text-sm font-semibold text-gray-900">
                       {emailSubject}
@@ -837,7 +837,7 @@ export function RecurringScheduleDrawer({
                       {emailBody}
                     </div>
                   </div>
-                  <div className="border-t border-gray-200 pt-5">
+                  <div className="border-t border-gray-200 pt-4">
                     <h4 className="text-center text-sm font-semibold text-gray-900">
                       Here Are the Details of Your Recurring Invoice
                     </h4>
@@ -866,7 +866,7 @@ export function RecurringScheduleDrawer({
                     <div className="mt-6 text-center">
                       <button
                         type="button"
-                        className="rounded-md bg-[#301D5D] px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
+                        className="rounded-md bg-[#301D5D] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#42277C]"
                       >
                         Set up recurring invoice
                       </button>
@@ -895,7 +895,7 @@ export function RecurringScheduleDrawer({
       )}
 
       {activeTab === "payor" && (
-        <div className="mx-auto grid max-w-3xl gap-4 rounded-lg border border-gray-200 bg-gray-100 p-5 shadow-sm sm:grid-cols-[1.4fr_0.8fr]">
+        <div className="mx-auto grid max-w-3xl gap-4 rounded-lg border border-gray-200 bg-gray-100 p-4 shadow-sm sm:grid-cols-[1.4fr_0.8fr]">
           <div className="rounded-lg bg-white p-6">
             <div className="text-xs font-medium text-gray-500">
               Payment amount
@@ -911,7 +911,7 @@ export function RecurringScheduleDrawer({
                 placeholder="payer@example.com"
               />
             </Field>
-            <div className="mt-5 text-xs font-medium text-gray-500">
+            <div className="mt-4 text-xs font-medium text-gray-500">
               Payment method
             </div>
             <div className="mt-2 grid grid-cols-5 gap-2">
@@ -924,7 +924,7 @@ export function RecurringScheduleDrawer({
                 </div>
               ))}
             </div>
-            <div className="mt-5 rounded-md border border-gray-200 bg-gray-50 px-3 py-3 text-xs text-gray-500">
+            <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-3 text-xs text-gray-500">
               Secure Stripe checkout will collect the selected payment method.
             </div>
           </div>
@@ -959,7 +959,7 @@ export function RecurringScheduleDrawer({
       )}
 
       {activeTab === "pdf" && (
-        <div className="mx-auto max-w-2xl bg-white px-8 py-10 text-[10px] text-gray-800 shadow-sm ring-1 ring-gray-200">
+        <div className="mx-auto max-w-2xl bg-white px-8 py-8 text-[10px] text-gray-800 shadow-sm ring-1 ring-gray-200">
           <header className="flex items-start justify-between border-b border-gray-300 pb-4">
             <Image
               src="/brand/caxton-logo.jpg"
@@ -977,7 +977,7 @@ export function RecurringScheduleDrawer({
               Austin, Texas 78708-1366
             </div>
           </header>
-          <div className="grid grid-cols-2 gap-8 py-5">
+          <div className="grid grid-cols-2 gap-8 py-4">
             <div>
               <span className="text-gray-500">BILL TO</span>
               <br />
@@ -1021,7 +1021,7 @@ export function RecurringScheduleDrawer({
               {statementMemo ? `\n\n${statementMemo}` : ""}
             </div>
           )}
-          <div className="mt-10 text-center text-gray-500">
+          <div className="mt-8 text-center text-gray-500">
             We appreciate your business.
           </div>
         </div>

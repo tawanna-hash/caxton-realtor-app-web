@@ -742,8 +742,8 @@ export default function DesignerClient() {
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link rel="stylesheet" href={GOOGLE_FONTS_URL} />
       <div className="grid min-h-[calc(100vh-64px)] xl:grid-cols-[410px_minmax(0,1fr)]">
-        <aside className="overflow-y-auto border-r border-[#3f2a5f] bg-[#120b22] p-5 text-slate-100 xl:max-h-[calc(100vh-64px)]">
-          <div className="mb-5 flex items-center justify-between gap-3">
+        <aside className="overflow-y-auto border-r border-[#3f2a5f] bg-[#120b22] p-4 text-slate-100 xl:max-h-[calc(100vh-64px)]">
+          <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#c9a7ef]">Platinum Tools</p>
               <h1 className="text-lg font-extrabold tracking-tight">Design Engine Pro</h1>
@@ -1082,10 +1082,10 @@ export default function DesignerClient() {
         </aside>
 
         <section className="flex min-h-[560px] flex-col">
-          <div className="border-b border-slate-200 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+          <div className="border-b border-slate-200 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
             Multi-format workspace preview
           </div>
-          <div className="flex flex-1 items-center justify-center overflow-auto p-5 sm:p-10">
+          <div className="flex flex-1 items-center justify-center overflow-auto p-4 sm:p-8">
             <div
               ref={previewRef}
               onClick={selectArtboardElement}
@@ -1346,7 +1346,7 @@ function SignatureArtboard({
         const source = event.dataTransfer.getData('text/plain') as ArtboardKey;
         if (source) onReorder(source, artboardKey);
       }}
-      className="signature-artboard relative flex min-w-0 cursor-grab items-center justify-center rounded-md border border-slate-300 bg-white/95 p-4 pt-10 shadow-sm active:cursor-grabbing"
+      className="signature-artboard relative flex min-w-0 cursor-grab items-center justify-center rounded-md border border-slate-300 bg-white/95 p-4 pt-8 shadow-sm active:cursor-grabbing"
     >
       <div className="absolute inset-x-2 top-2 flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">
@@ -1483,7 +1483,7 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, head
             <p data-type-role="body" className="mt-3 max-w-[240px] leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
           </div>
         </div>
-        <div className="grid flex-1 grid-cols-3 gap-3 px-5 py-4">
+        <div className="grid flex-1 grid-cols-3 gap-3 px-4 py-4">
           {listings.map((listing, index) => (
             <div key={index} className="min-w-0">
               <FlyerPhoto src={listing.image} className="h-24 w-full" label={`Property ${index + 1}`} />
@@ -1493,7 +1493,7 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, head
             </div>
           ))}
         </div>
-        <div className="px-5 py-2 text-[8px]" style={{ backgroundColor: primary, color: secondary }}>
+        <div className="px-4 py-2 text-[8px]" style={{ backgroundColor: primary, color: secondary }}>
           <div>{fields.footer}</div>
           <div className="mt-1 font-semibold">License holder: {identity.name} · Broker: {identity.company} · {identity.phone} · {identity.email}</div>
         </div>
@@ -1555,13 +1555,13 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, head
         </div>
         <div className="flex h-full flex-col text-white" style={{ backgroundColor: secondary }}>
           <FlyerPhoto src={fields.image} className="h-[35%] w-full" label="Hero property photo" />
-          <div className="flex flex-1 flex-col p-5">
+          <div className="flex flex-1 flex-col p-4">
             <p data-type-role="eyebrow" className="text-[8px] uppercase tracking-[0.14em]" style={{ color: primary }}>{fields.eyebrow}</p>
             <h2 data-type-role="headline" className="mt-1 leading-none" style={{ fontFamily: headlineFont, fontSize: Math.max(22, fontSize - 4), fontWeight }}>{fields.title}</h2>
             <p data-type-role="subheadline" className="mt-1 text-[9px]" style={{ color: primary }}>{fields.meta}</p>
             <p data-type-role="body" className="mt-4 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
             <h3 className="mt-4 text-base">Why Choose Us?</h3>
-            <ul className="mt-2 space-y-1.5 text-[8px] text-slate-200">
+            <ul className="mt-2 space-y-2 text-[8px] text-slate-200">
               {features.map((feature) => <li key={feature}>○ &nbsp;{feature}</li>)}
             </ul>
             <div className="mt-auto whitespace-pre-line border-t border-white/20 pt-3 text-[8px] leading-relaxed">
@@ -1594,10 +1594,10 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, head
     }
     return (
       <div className="grid h-full w-full grid-cols-[56%_44%]" style={{ fontFamily: font }}>
-        <div className="flex flex-col p-5 text-white" style={{ backgroundColor: secondary }}>
+        <div className="flex flex-col p-4 text-white" style={{ backgroundColor: secondary }}>
           <div className="text-[8px] font-bold uppercase tracking-widest" style={{ color: primary }}>{identity.company}</div>
           <h2 data-type-role="headline" className="mt-6 whitespace-pre-line leading-[0.88]" style={{ fontFamily: headlineFont, fontSize: Math.max(38, fontSize + 10), fontWeight }}>{fields.title}</h2>
-          <p data-type-role="body" className="mt-7 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
+          <p data-type-role="body" className="mt-6 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
           <div className="mt-6 space-y-2 border-y border-white/50 py-3 text-[10px] uppercase">
             {fields.features.split('\n').slice(0, 4).map((feature) => <div key={feature}>{feature}</div>)}
           </div>
@@ -1652,7 +1652,7 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, head
       <div className="flex h-full w-full flex-col overflow-hidden rounded-[22px] bg-white" style={{ fontFamily: font, color: secondary }}>
         <FlyerPhoto src={fields.image} className="h-[48%] w-full" label="Hero property photo" />
         <div className="grid min-h-0 flex-1 grid-cols-[62%_38%]">
-          <div className="relative p-5" style={{ backgroundColor: primary }}>
+          <div className="relative p-4" style={{ backgroundColor: primary }}>
             <div className="absolute -top-12 left-5 flex gap-2">
               <FlyerPhoto src={fields.image2} className="h-20 w-28 border-4 border-white shadow" label="Interior 1" />
               <FlyerPhoto src={fields.image3} className="h-20 w-28 border-4 border-white shadow" label="Interior 2" />
@@ -1706,17 +1706,17 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, head
       <div className="flex h-full w-full flex-col overflow-hidden bg-white" style={{ fontFamily: font, color: secondary }}>
         <FlyerPhoto src={fields.image} className="h-[44%] w-full" label="Hero property photo" />
         <div className="grid min-h-0 flex-1 grid-cols-[68%_32%]">
-          <div className="flex flex-col p-5 text-white" style={{ backgroundColor: secondary }}>
+          <div className="flex flex-col p-4 text-white" style={{ backgroundColor: secondary }}>
             <p data-type-role="eyebrow" className="text-[8px] uppercase tracking-widest" style={{ color: primary }}>{fields.eyebrow}</p>
             <h2 data-type-role="headline" className="mt-2 leading-[0.95]" style={{ fontFamily: headlineFont, fontSize: Math.max(35, fontSize + 5), fontWeight }}>{fields.title}</h2>
-            <p data-type-role="body" className="mt-5 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
+            <p data-type-role="body" className="mt-4 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
             <div className="mt-auto text-[8px]">{identity.email} · {identity.phone}</div>
           </div>
           <div className="grid grid-rows-3 gap-1 bg-white p-1">
             {[fields.image2, fields.image3, fields.image4].map((src, index) => <FlyerPhoto key={index} src={src} className="h-full w-full" label={`Detail ${index + 1}`} />)}
           </div>
         </div>
-        <div className="flex items-center justify-between px-5 py-2 text-[8px]">
+        <div className="flex items-center justify-between px-4 py-2 text-[8px]">
           <span>{identity.name} · {identity.company}</span>
           <span>{identity.website}</span>
         </div>
@@ -1726,7 +1726,7 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, head
 
   if (preset === 1) {
     return (
-      <div className="flex h-full w-full flex-col justify-end bg-gradient-to-b from-slate-900/5 via-slate-900/20 to-slate-950/95 p-5 text-white" style={{ fontFamily: font }}>
+      <div className="flex h-full w-full flex-col justify-end bg-gradient-to-b from-slate-900/5 via-slate-900/20 to-slate-950/95 p-4 text-white" style={{ fontFamily: font }}>
         <h2 data-type-role="headline" className="m-0 leading-[1.1] text-white drop-shadow" style={{ fontFamily: headlineFont, fontSize, fontWeight }}>{fields.title}</h2>
         <p data-type-role="subheadline" className="mt-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: primary }}>{fields.meta}</p>
         <p data-type-role="body" className="mt-3 max-w-none leading-relaxed" style={{ color: '#cbd5e1', fontSize: bodyFontSize }}>{fields.body}</p>
@@ -1736,9 +1736,9 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, head
   }
 
   return (
-    <div className="flex h-full w-full flex-col justify-between p-5" style={{ fontFamily: font, color: secondary }}>
+    <div className="flex h-full w-full flex-col justify-between p-4" style={{ fontFamily: font, color: secondary }}>
       <div>
-        <span className="inline-block rounded px-2.5 py-1 text-[10px] font-bold tracking-wider text-white" style={{ backgroundColor: primary }}>INDUSTRY SYMPOSIUM</span>
+        <span className="inline-block rounded px-3 py-1 text-[10px] font-bold tracking-wider text-white" style={{ backgroundColor: primary }}>INDUSTRY SYMPOSIUM</span>
         <h2 data-type-role="headline" className="mt-3 uppercase leading-[1.1] tracking-tight text-slate-900" style={{ fontFamily: headlineFont, fontSize, fontWeight }}>{fields.title}</h2>
         <p data-type-role="subheadline" className="mt-2 text-[11px] font-bold tracking-wide" style={{ color: primary }}>{fields.meta}</p>
         {fields.image && (

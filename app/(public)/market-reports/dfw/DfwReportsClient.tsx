@@ -53,7 +53,7 @@ export default function DfwReportsClient() {
       <h1 className="text-2xl font-semibold text-gray-900">Dallas/Ft. Worth Market Reports (Preview)</h1>
       <p className="mt-1 text-sm text-gray-600">Monthly housing numbers by board, county and zip code.</p>
 
-      <div role="group" aria-label="Board" className="mt-5 flex gap-2">
+      <div role="group" aria-label="Board" className="mt-4 flex gap-2">
         {(['metrotex', 'gfwar'] as DfwBoard[]).map((b) => (
           <button
             key={b}
@@ -62,8 +62,8 @@ export default function DfwReportsClient() {
             aria-pressed={board === b}
             className={
               board === b
-                ? 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
-                : 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
+                ? 'flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
+                : 'flex-shrink-0 whitespace-nowrap px-3 py-2 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
             }
           >
             {DFW_BOARDS[b].area} ({b === 'metrotex' ? 'MetroTex' : 'GFWAR'})
@@ -83,7 +83,7 @@ export default function DfwReportsClient() {
         <p className="mt-6 text-gray-600">No {info.area} reports have been imported yet.</p>
       ) : (
         <>
-          <div className="mt-5 flex flex-wrap items-end gap-3">
+          <div className="mt-4 flex flex-wrap items-end gap-3">
             <label className="text-sm text-gray-700">
               <span className="mb-1 block font-medium">Area</span>
               <select

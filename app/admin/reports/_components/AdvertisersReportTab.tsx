@@ -201,7 +201,7 @@ export default function AdvertisersReportTab() {
         </div>
       ) : null}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         {/* ─────────── Left pane: list + bulk send controls ─────────── */}
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end gap-3">
@@ -269,7 +269,7 @@ export default function AdvertisersReportTab() {
                       key={a.id}
                       onClick={() => handleRowClick(a)}
                       className={[
-                        'flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors',
+                        'flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors',
                         isActive ? 'bg-[#F6F3FB]' : 'hover:bg-[#F6F3FB]/40',
                       ].join(' ')}
                     >
@@ -332,12 +332,12 @@ export default function AdvertisersReportTab() {
 
           {results ? (
             <div className="rounded-md border border-gray-200 overflow-hidden">
-              <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700">
+              <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700">
                 {results.filter((r) => r.sent).length} sent · {results.filter((r) => !r.sent).length} failed
               </div>
               <ul className="divide-y divide-gray-100">
                 {results.map((r) => (
-                  <li key={r.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                  <li key={r.id} className="flex items-center gap-3 px-4 py-3 text-sm">
                     <span className={r.sent ? 'text-[#005A00]' : 'text-[#661102]'}>
                       {r.sent ? '✓' : '✕'}
                     </span>
@@ -360,7 +360,7 @@ export default function AdvertisersReportTab() {
               advertiser={activeAdvertiser}
             />
           ) : (
-            <div className="bg-white border border-gray-200 border-dashed rounded-md p-10 text-center text-sm text-gray-500">
+            <div className="bg-white border border-gray-200 border-dashed rounded-md p-8 text-center text-sm text-gray-500">
               {loading ? 'Loading partners…' : 'Select an advertiser to view their dashboard.'}
             </div>
           )}

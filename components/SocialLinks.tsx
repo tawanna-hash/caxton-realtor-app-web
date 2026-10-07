@@ -135,7 +135,7 @@ export function SocialLinks({ pub, variant = 'feed', heading }: Props) {
       <h2 className="text-xl font-semibold mb-1 tracking-tight">
         {heading ?? meta.name}
       </h2>
-      <p className="text-sm text-white/70 mb-5 font-light">
+      <p className="text-sm text-white/70 mb-4 font-light">
         Stay in the loop wherever you scroll.
       </p>
 

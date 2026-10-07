@@ -9,7 +9,7 @@ export function Footer({ showAustinPartners = false }: { showAustinPartners?: bo
     <footer className="bg-gray-50 border-t border-gray-200 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-28">
         {showAustinPartners && <div className="border-b border-gray-200 pb-8 mb-8">
-          <h2 className="mb-5 text-center text-xs font-medium tracking-[0.2em] text-gray-500">
+          <h2 className="mb-4 text-center text-xs font-medium tracking-[0.2em] text-gray-500">
             THANK YOU TO OUR BRAND [12] PLUS PARTNERS
           </h2>
           <FeaturedPartnersCarousel placement="footer" />

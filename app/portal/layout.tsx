@@ -40,7 +40,7 @@ export default async function PortalLayout({ children }: { children: React.React
           )}
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-10">
+      <main className="mx-auto max-w-5xl px-6 py-8">
         <SwipeBackShell area="portal">{children}</SwipeBackShell>
       </main>
       <footer className="border-t border-gray-200 mt-16">

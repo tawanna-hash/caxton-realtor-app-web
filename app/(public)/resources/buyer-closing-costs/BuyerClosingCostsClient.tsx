@@ -271,7 +271,7 @@ export default function BuyerClosingCostsClient() {
             >
               {fmtUSD(result.cashToClose)}
             </p>
-            <p className="text-xs text-gray-500 mb-5">
+            <p className="text-xs text-gray-500 mb-4">
               Loan {fmtUSD(result.loanAmount)} · DP {fmtUSD(downPayment)}
             </p>
 

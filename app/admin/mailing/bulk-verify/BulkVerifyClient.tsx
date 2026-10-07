@@ -164,11 +164,11 @@ export default function BulkVerifyClient() {
             <tbody>
               {jobs.map((j) => (
                 <tr key={j.id} className="border-t border-gray-100 align-top">
-                  <td className="py-1.5 pr-3 whitespace-nowrap">{new Date(j.created_at).toLocaleString()}</td>
-                  <td className="py-1.5 pr-3">{j.label}</td>
-                  <td className="py-1.5 pr-3 tabular-nums">{j.total.toLocaleString()}</td>
-                  <td className="py-1.5 pr-3">{j.applied_at ? 'Saved' : j.status === 'canceled' ? 'Canceled' : `Processing ${j.percent}%`}</td>
-                  <td className="py-1.5 text-gray-700">
+                  <td className="py-2 pr-3 whitespace-nowrap">{new Date(j.created_at).toLocaleString()}</td>
+                  <td className="py-2 pr-3">{j.label}</td>
+                  <td className="py-2 pr-3 tabular-nums">{j.total.toLocaleString()}</td>
+                  <td className="py-2 pr-3">{j.applied_at ? 'Saved' : j.status === 'canceled' ? 'Canceled' : `Processing ${j.percent}%`}</td>
+                  <td className="py-2 text-gray-700">
                     {j.summary ? ('error' in j.summary ? String((j.summary as Record<string, unknown>).error) :
                       Object.entries(j.summary).map(([k, v]) => `${k}: ${v.toLocaleString()}`).join(', ')) : ''}
                   </td>
