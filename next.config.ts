@@ -79,6 +79,9 @@ const closingTimeCsp = Object.entries({
   .join('; ');
 const closingTimeHost = [{ type: 'host' as const, value: '(www\\.)?itsalmostclosingtime\\.com' }];
 
+// Report-Only policies ignore upgrade-insecure-requests and log a console error for it, so leave it out there.
+const reportOnlyCsp = cspString.replace('; upgrade-insecure-requests', '');
+
 const securityHeaders = [
   // HSTS — pin HTTPS for 2 years, include subdomains.
   // Vercel sets a default, but explicit is better — and we add `preload`.
@@ -107,7 +110,7 @@ const securityHeaders = [
   // Vercel logs are clean for a week.
   {
     key: 'Content-Security-Policy-Report-Only',
-    value: cspString,
+    value: reportOnlyCsp,
   },
 ];
 
@@ -243,7 +246,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           {
             key: 'Content-Security-Policy-Report-Only',
-            value: cspString.replace("frame-ancestors 'none'", "frame-ancestors 'self'"),
+            value: reportOnlyCsp.replace("frame-ancestors 'none'", "frame-ancestors 'self'"),
           },
         ],
       },
