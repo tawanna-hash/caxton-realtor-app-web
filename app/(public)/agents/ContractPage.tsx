@@ -8,7 +8,7 @@ import type { AgentCashLine, AgentDeal, AgentKeyTerm } from '@/lib/agent-command
 import Tip from './Tip';
 
 type Patch = Partial<AgentDeal>;
-type Props = { deal: AgentDeal; onPatch: (patch: Patch) => void; onParties: (key: 'buyerNames' | 'sellerNames' | 'buyer2Name' | 'seller2Name', value: string) => void };
+type Props = { deal: AgentDeal; onPatch: (patch: Patch) => void; onParties: (key: 'buyerNames' | 'sellerNames' | 'buyer2Name' | 'seller2Name', value: string) => void; onOpenCalculator?: (id: 'calc-cash' | 'calc-commission') => void };
 
 const newId = (prefix: string) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
@@ -151,7 +151,7 @@ function cityFromAddress(address: string): string {
   return /\d/.test(city) ? '' : city;
 }
 
-export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Props) {
+export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpenCalculator }: Props) {
   const deal = effective(rawDeal);
   const setForm = (patch: Record<string, string>) => {
     const appPatch: Record<string, string> = {};
@@ -529,6 +529,10 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
 
   return (
     <div className="ds-page" data-testid="contract-page" onKeyDown={(e) => { const t = e.target as HTMLInputElement; if (e.key === 'Enter' && !e.shiftKey && t.tagName === 'INPUT' && t.type !== 'checkbox') { e.preventDefault(); t.blur(); } }}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-500">Enter every section in one place, or open a section below.</p>
+        <button type="button" onClick={() => setQuickId(CONTRACT_MAP_SECTIONS[0].id)}>Quick Entry</button>
+      </div>
       <div aria-label="Contract Sections">
         <div className="space-y-3">
           {CONTRACT_MAP_SECTIONS.map((section) => {
@@ -551,7 +555,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
               </AutoDetails>
               {section.id === 'property' && (
                 <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
-                  <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span><span className="flex items-center gap-3"><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setArrange((v) => !v); setKdPicked(null); }}>{arrange ? 'Done Arranging' : 'Arrange'}</button><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId('key-details'); }}>Quick Entry</button></span></summary>
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span><span className="flex items-center gap-3">{onOpenCalculator && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenCalculator('calc-commission'); }}>Commission Calculator</button>}<button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setArrange((v) => !v); setKdPicked(null); }}>{arrange ? 'Done Arranging' : 'Arrange'}</button><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId('key-details'); }}>Quick Entry</button></span></summary>
                   <div className="border-t border-[#F6F3FB]">
       <section className="overflow-hidden bg-white" aria-label="Contract Terms">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4">
@@ -599,19 +603,28 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
               </Fragment>
             );
           })}
-          <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Estimated Cash To Close">
-        <div className="flex items-center justify-between border-b border-[#E6E5EC] px-[1.125rem] py-4">
-          <p className="text-sm font-semibold text-slate-900">Estimated Cash To Close</p>
-          <button type="button" onClick={() => setQuickId('cash')}>Quick Entry</button>
-        </div>
-        {cashBody}
-      </section>
+          <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Cash To Close">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-[1.125rem] py-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Cash To Close</p>
+                <p className="mt-0.5 text-sm text-slate-500">Work out cash to close in the Cash-To-Close calculator.</p>
+              </div>
+              <span className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-sm text-slate-600">Earnest Money In Escrow
+                  <span className="flex w-32 items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">$
+                    <input value={deal.earnestInEscrow || asNumber(deal.contractDetails.earnestMoney)} onChange={(e) => onPatch({ earnestInEscrow: e.target.value })} inputMode="decimal" aria-label="Earnest money in escrow" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
+                  </span>
+                </label>
+                {onOpenCalculator && <button type="button" onClick={() => onOpenCalculator('calc-cash')}>Open Cash-To-Close Calculator</button>}
+              </span>
+            </div>
+          </section>
         </div>
       </div>
 
       {quickId && (() => {
         const qs = CONTRACT_MAP_SECTIONS.find((x) => x.id === quickId);
-        const title = quickId === 'key-details' ? 'Key Details' : quickId === 'cash' ? 'Estimated Cash To Close' : qs?.title;
+        const title = quickId === 'key-details' ? 'Key Details' : qs?.title;
         if (!title) return null;
         const body = quickId === 'key-details' ? (
           <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -623,13 +636,18 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties }: Prop
               </div>
             ))}
           </div>
-        ) : quickId === 'cash' ? cashBody : qs ? renderSectionBody(qs, false) : null;
+        ) : qs ? renderSectionBody(qs, false) : null;
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-label={`${title} quick entry`} onClick={() => setQuickId(null)}>
             <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between border-b border-[#E6E5EC] px-[1.125rem] py-4">
                 <p className="text-sm font-semibold text-slate-900">{title}</p>
                 <button type="button" aria-label="Close" onClick={() => setQuickId(null)} className="!border-0 !bg-transparent text-slate-500 hover:!text-[#301D5D]"><X className="h-4 w-4" aria-hidden="true" /></button>
+              </div>
+              <div className="flex flex-wrap gap-2 border-b border-[#E6E5EC] px-[1.125rem] py-3" role="tablist" aria-label="Sections">
+                {[...CONTRACT_MAP_SECTIONS.map((x) => ({ id: x.id as string, title: x.title as string })), { id: 'key-details', title: 'Key Details' }].map((tab) => (
+                  <button key={tab.id} type="button" role="tab" aria-selected={quickId === tab.id} onClick={() => setQuickId(tab.id)} className={quickId === tab.id ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#301D5D]' : ''}>{tab.title}</button>
+                ))}
               </div>
               <div className="px-[1.125rem] py-4">{body}</div>
               <div className="flex justify-end border-t border-[#E6E5EC] px-[1.125rem] py-3"><button type="button" onClick={() => setQuickId(null)}>Done</button></div>
