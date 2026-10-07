@@ -18,9 +18,9 @@ export default function Page() {
         ]} />) },
         { title: 'Message Types And Frequency', body: (<p>Deadline reminders, scheduling and closing confirmations, document requests and deal updates. Frequency varies with the number of transactions, usually a few messages per deal per week. Message and data rates may apply.</p>) },
         { title: 'Examples', body: (<Ul items={[
-          'Closing Time: Option Period ends in 3 days (Oct 12). Property: 9904 Whitley Bay Dr. Reply STOP to opt out.',
-          '9904 Whitley Bay Dr: Jane Agent would like to text you updates about this deal. Reply YES to agree. Reply STOP to opt out. Msg and data rates may apply.',
-          '9904 Whitley Bay Dr: Closing is confirmed for Oct 30 at 10:00 AM at Capitol Title. Reply STOP to opt out.',
+          'Closing Time: Option Period ends in 3 days (Oct 12). Property: 123 Main St. Reply STOP to opt out.',
+          '123 Main St: Jane Agent would like to text you updates about this deal. Reply YES to agree. Reply STOP to opt out. Msg and data rates may apply.',
+          '123 Main St: Closing is confirmed for Oct 30 at 10:00 AM at Capitol Title. Reply STOP to opt out.',
         ]} />) },
         { title: 'Stop Or Get Help', body: (<p>Reply STOP at any time to stop all messages from this number. Reply START or YES to resume. Reply HELP for help, or email hello@myrealtyline.com. Carriers are not liable for delayed or undelivered messages.</p>) },
         { title: 'Your Information', body: (<p>We do not sell, trade or transfer your personal information, including your phone number and text consent, to outside parties for marketing. No mobile information is shared with third parties or affiliates for marketing or promotional purposes.</p>) },
