@@ -184,6 +184,21 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
         description: 'Mandatory TREC informational form outlining representation pathways.',
       },
       {
+        id: 'buyer-wire-fraud-alert',
+        label: 'Wire Fraud Alert Or Notice (TXR 2517)',
+        description: 'Wire fraud warning delivered to and acknowledged by the client.',
+      },
+      {
+        id: 'buyer-sales-disclosure-tx',
+        label: 'Sales Disclosure - TX',
+        description: 'Texas sales disclosure for the transaction file.',
+      },
+      {
+        id: 'buyer-affiliated-business',
+        label: 'Affiliated Business Arrangement Disclosure',
+        description: 'Disclosure of any affiliated business relationships.',
+      },
+      {
         id: 'buyer-representation-agreement',
         label: 'Buyer Representation Agreement',
         description: 'Formal contract between the buyer and their brokerage.',
@@ -223,6 +238,11 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
         label: 'Home Warranty Contract',
         description: 'Ordered warranty plan and receipt, when one applies.',
       },
+      {
+        id: 'buyer-walkthrough',
+        label: "Buyer's Walk-Through, Confirmation, And Acceptance",
+        description: 'Signed confirmation of the final walk-through.',
+      },
     ],
   },
   {
@@ -258,6 +278,16 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
         id: 'seller-hoa-estoppel',
         label: 'HOA Estoppel Or Resale Certificate',
         description: 'Payoff and status letter from the association, when the property is in an HOA.',
+      },
+      {
+        id: 'seller-tax-record',
+        label: 'Tax Record',
+        description: 'County tax record for the property.',
+      },
+      {
+        id: 'seller-mls-printout',
+        label: 'MLS Printout (Option/Pending Status)',
+        description: 'MLS record showing the option or pending status.',
       },
       {
         id: 'seller-general-warranty-deed',
@@ -315,6 +345,16 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
         id: 'title-commitment',
         label: 'Title Commitment',
         description: 'Title commitment and insurance policy information from the title company.',
+      },
+      {
+        id: 'title-executed-contract-receipt',
+        label: 'Executed Contract Receipted By Title Co.',
+        description: 'Title company receipt for the executed contract.',
+      },
+      {
+        id: 'title-commission-intake',
+        label: 'Commission Intake Form',
+        description: 'Commission intake paperwork for the brokerage.',
       },
     ],
   },
@@ -405,6 +445,72 @@ function restorePropertyFormOrder(deal: AgentDeal): AgentDeal {
     contractHiddenFields: (deal.contractHiddenFields ?? []).filter((id) => id !== 'p01_f006'),
     contractAddresses: { ...addresses, 'migrated.propertyForm': '1' },
   };
+}
+
+// Readiness Check items that mirror a checklist item on the Documents tab. Ticking one ticks the other.
+const READINESS_CHECK_LINKS: ReadonlyArray<readonly [string, string]> = [
+  ['buyer-iabs', 'pd-iabs'],
+  ['buyer-representation-agreement', 'pd-buyer-rep-agreement'],
+  ['buyer-pre-approval-letter', 'pd-preapproval-pof'],
+  ['delivery-confirmation', 'pd-em-option-receipt'],
+  ['executed-contract', 'pd-residential-contract'],
+  ['seller-disclosure', 'pd-sellers-disclosure-notice'],
+  ['survey', 'pd-existing-survey-t47'],
+  ['valuation-cma-appraisal-bpo', 'pd-cma'],
+  ['lender-closing-disclosure', 'pd-closing-statement'],
+  ['buyer-wire-fraud-alert', 'pd-wire-fraud-alert'],
+  ['buyer-sales-disclosure-tx', 'pd-sales-disclosure-tx'],
+  ['buyer-affiliated-business', 'pd-affiliated-business'],
+  ['buyer-walkthrough', 'pd-walkthrough'],
+  ['seller-tax-record', 'pd-tax-record'],
+  ['seller-mls-printout', 'pd-mls-printout'],
+  ['title-executed-contract-receipt', 'pd-executed-contract-receipt'],
+  ['title-commission-intake', 'pd-commission-intake'],
+];
+const readinessLinksFor = (deal: AgentDeal): ReadonlyArray<readonly [string, string]> => {
+  if (effectiveAgentSide(deal) !== 'listing') return READINESS_CHECK_LINKS;
+  return READINESS_CHECK_LINKS.flatMap(([r, c]) => (r === 'buyer-wire-fraud-alert' ? [[r, 'ld-wire-fraud-alert'] as const] : r === 'buyer-walkthrough' ? [[r, 'ld-final-walkthrough'] as const] : r === 'seller-mls-printout' ? [] : [[r, c] as const]));
+};
+const receivedDoc = (document: AgentDocument, now: string): AgentDocument => ({ ...document, status: document.status === 'reviewed' ? 'reviewed' : 'received', complete: true, updatedAt: now });
+const reopenedDoc = (document: AgentDocument, now: string): AgentDocument => ({ ...document, status: 'requested', complete: false, updatedAt: now });
+
+/** On load: anything done in either place is done in both, so no progress is lost. */
+function reconcileLinkedChecks(deal: AgentDeal): AgentDeal {
+  const checks = { ...deal.documentChecks };
+  const now = new Date().toISOString();
+  let documents = deal.documents;
+  let changed = false;
+  for (const [readinessId, checkId] of readinessLinksFor(deal)) {
+    const document = documents.find((entry) => entry.id === readinessId);
+    if (!document) continue;
+    if (checks[checkId] && !document.complete) { documents = documents.map((entry) => (entry.id === readinessId ? receivedDoc(entry, now) : entry)); changed = true; }
+    else if (document.complete && !checks[checkId]) { checks[checkId] = true; changed = true; }
+  }
+  return changed ? { ...deal, documents, documentChecks: checks } : deal;
+}
+
+/** After an edit: a change made on one side is copied to the linked item on the other. */
+function syncLinkedChecks(previous: AgentDeal | undefined, next: AgentDeal): AgentDeal {
+  if (!previous || (previous.documents === next.documents && previous.documentChecks === next.documentChecks)) return next;
+  const checks = { ...next.documentChecks };
+  const now = new Date().toISOString();
+  let documents = next.documents;
+  let changed = false;
+  for (const [readinessId, checkId] of readinessLinksFor(next)) {
+    const before = previous.documents.find((entry) => entry.id === readinessId);
+    const after = documents.find((entry) => entry.id === readinessId);
+    if (!after) continue;
+    const checkChanged = Boolean(previous.documentChecks[checkId]) !== Boolean(checks[checkId]);
+    const docChanged = Boolean(before?.complete) !== Boolean(after.complete);
+    if (checkChanged && Boolean(checks[checkId]) !== after.complete) {
+      documents = documents.map((entry) => (entry.id === readinessId ? (checks[checkId] ? receivedDoc(entry, now) : reopenedDoc(entry, now)) : entry));
+      changed = true;
+    } else if (docChanged && Boolean(checks[checkId]) !== after.complete) {
+      if (after.complete) checks[checkId] = true; else delete checks[checkId];
+      changed = true;
+    }
+  }
+  return changed ? { ...next, documents, documentChecks: checks } : next;
 }
 
 function mergeReadinessDocuments(deal: AgentDeal): AgentDeal {
@@ -1424,7 +1530,7 @@ export default function ClosingTime({
       deals: legacyDeals,
       notificationPreferences: defaultAgentNotificationPreferences(),
     };
-    const migratedDeals = startingWorkspace.deals.map(mergeReadinessDocuments).map(restoreBrokerSections).map(restorePropertyFormOrder).map((deal) => (deal.title === 'New Transaction' ? { ...deal, title: 'New Contract' } : deal));
+    const migratedDeals = startingWorkspace.deals.map(mergeReadinessDocuments).map(reconcileLinkedChecks).map(restoreBrokerSections).map(restorePropertyFormOrder).map((deal) => (deal.title === 'New Transaction' ? { ...deal, title: 'New Contract' } : deal));
     const readinessChecklistChanged = JSON.stringify(migratedDeals) !== JSON.stringify(startingWorkspace.deals);
     const hydratedWorkspace = { ...startingWorkspace, deals: migratedDeals };
 
@@ -1531,7 +1637,7 @@ export default function ClosingTime({
   const persistDeals = (incoming: AgentDeal[]) => {
     // Contract entries and uploaded-contract data flow into the matching blanks on the deal's other forms.
     const before = new Map(dealsRef.current.map((deal) => [deal.id, deal]));
-    const nextDeals = incoming.map((deal) => (before.get(deal.id) === deal ? deal : syncStoredFromForm(autofillDeal(before.get(deal.id), deal, autofillIndex))));
+    const nextDeals = incoming.map((deal) => (before.get(deal.id) === deal ? deal : syncLinkedChecks(before.get(deal.id), syncStoredFromForm(autofillDeal(before.get(deal.id), deal, autofillIndex)))));
     setDeals(nextDeals);
     if (ready) queueCloudSave({ deals: nextDeals, notificationPreferences });
   };
