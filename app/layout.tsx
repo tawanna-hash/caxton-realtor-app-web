@@ -53,7 +53,6 @@ export const metadata: Metadata = {
     "real estate magazine",
     "REALTOR\u00ae tools",
   ],
-  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "en_US",

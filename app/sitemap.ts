@@ -11,6 +11,7 @@
 // crawl traffic justify it.
 
 import type { MetadataRoute } from 'next';
+import { headers } from 'next/headers';
 
 const SITE_URL = 'https://realtynewsnow.app';
 
@@ -78,8 +79,12 @@ const LEGAL: Entry[] = [
 
 const ALL: Entry[] = [...PRIMARY, ...CONTENT, ...ADVERTISE, ...RESOURCES, ...FUNNEL, ...LEGAL];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
+  const host = ((await headers()).get('host') ?? '').toLowerCase().split(':')[0];
+  if (host === 'itsalmostclosingtime.com' || host === 'www.itsalmostclosingtime.com') {
+    return ['/', '/privacy', '/terms', '/sms', '/disclaimer'].map((path) => ({ url: `https://itsalmostclosingtime.com${path}`, lastModified, changeFrequency: 'monthly' as const, priority: path === '/' ? 1 : 0.4 }));
+  }
   return ALL.map((e) => ({
     url: `${SITE_URL}${e.path}`,
     lastModified,

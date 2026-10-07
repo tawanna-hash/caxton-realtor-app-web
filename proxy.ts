@@ -271,6 +271,11 @@ export async function proxy(req: NextRequest) {
 
   // 1b. Closing Time's own domain: the home page is the Closing Time desk.
   const host = (req.headers.get('host') ?? '').toLowerCase().split(':')[0];
+  // 1a. One canonical host per site: www forwards to the bare domain.
+  if ((host === 'www.itsalmostclosingtime.com' || host === 'www.realtynewsnow.app') && (req.method === 'GET' || req.method === 'HEAD')) {
+    return NextResponse.redirect(`https://${host.slice(4)}${pathname}${search}`, 308);
+  }
+
   if ((host === 'itsalmostclosingtime.com' || host === 'www.itsalmostclosingtime.com') && pathname === '/') {
     const url = req.nextUrl.clone();
     url.pathname = '/closing-time-home';
