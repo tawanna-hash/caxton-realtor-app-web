@@ -229,7 +229,7 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
                       <a className={pill} href={urlOf(s.alias)} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />Open</a>
                       <button type="button" className={pill} onClick={() => setEditing({ id: s.id, config: s.config, hasBanner: s.hasBanner, hasAvatar: s.hasAvatar })}><Pencil className="h-3.5 w-3.5" aria-hidden="true" />Edit</button>
                       <button type="button" role="switch" aria-checked={s.active} aria-label={`${s.config.name} on or off`} onClick={() => void post({ action: 'active', id: s.id, active: !s.active })}
-                        className={`relative h-6 w-11 rounded-full transition ${s.active ? 'bg-[#301D5D]' : 'bg-[#D9D7E0]'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${s.active ? 'left-[22px]' : 'left-0.5'}`} /></button>
+                        className={`ct-switch relative h-6 w-11 rounded-full transition ${s.active ? 'bg-[#301D5D]' : 'bg-[#D9D7E0]'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${s.active ? 'left-[22px]' : 'left-0.5'}`} /></button>
                       <button type="button" aria-label={`Delete ${s.config.name}`} className="p-1 text-[#7A7787] hover:text-[#661102]" onClick={() => { if (window.confirm(`Delete ${s.config.name}? Its booking page stops working and its bookings are removed.`)) void post({ action: 'delete', id: s.id }, 'Scheduler deleted.'); }}><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </li>
@@ -458,7 +458,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
             const h = c.hours[d.key];
             return (
               <div key={d.key} className="flex items-center gap-2">
-                <button type="button" role="switch" aria-checked={h.on} aria-label={d.long} onClick={() => setDay(d.key, { on: !h.on })} className={`relative h-5 w-9 shrink-0 rounded-full transition ${h.on ? 'bg-[#301D5D]' : 'bg-[#D9D7E0]'}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${h.on ? 'left-[18px]' : 'left-0.5'}`} /></button>
+                <button type="button" role="switch" aria-checked={h.on} aria-label={d.long} onClick={() => setDay(d.key, { on: !h.on })} className={`ct-switch relative h-5 w-9 shrink-0 rounded-full transition ${h.on ? 'bg-[#301D5D]' : 'bg-[#D9D7E0]'}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${h.on ? 'left-[18px]' : 'left-0.5'}`} /></button>
                 <span className={`w-10 text-[14px] font-medium ${h.on ? 'text-[#1B1726]' : 'text-[#9A98A6]'}`}>{d.label}</span>
                 <select disabled={!h.on} aria-label={`${d.long} start`} className={`${field} flex-1`} value={h.start} onChange={(e) => setDay(d.key, { start: e.target.value })}>{TIMES.map((t) => <option key={t} value={t}>{timeLabel(t, c.timeFormat)}</option>)}</select>
                 <select disabled={!h.on} aria-label={`${d.long} end`} className={`${field} flex-1`} value={h.end} onChange={(e) => setDay(d.key, { end: e.target.value })}>{[...TIMES.slice(1), '23:59'].map((t) => <option key={t} value={t}>{timeLabel(t, c.timeFormat)}</option>)}</select>
