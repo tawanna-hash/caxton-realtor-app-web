@@ -101,6 +101,8 @@ type Props = {
   onUpdate: <K extends keyof AgentDeal>(key: K, value: AgentDeal[K]) => void;
   onBack: () => void;
   onOpenView: (view: string) => void;
+  /** Readiness Check items in, from the Readiness Check list itself. */
+  readiness?: { done: number; total: number };
   section?: Tab;
   stripOnly?: boolean;
   trecForms?: readonly { formFamily: string; formNumber: string; title: string; total: number; filled: number; selected: boolean }[];
@@ -156,7 +158,7 @@ function textHref(phone: string, name: string, address: string): string {
   return `sms:${digits}?&body=${encodeURIComponent(body)}`;
 }
 
-export default function DealSubpage({ deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
+export default function DealSubpage({ readiness, deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
   const [stagesOpen, setStagesOpen] = useState(false);
   const docFolders = dealFolders(deal);
@@ -714,7 +716,7 @@ export default function DealSubpage({ deal, today, locked, health, statusLabels,
             ];
             const requiredDone = requiredIdList.filter((id) => deal.documentChecks[id]).length;
             const handling = [
-              { key: 'readiness', title: 'Readiness check', detail: `${requiredDone} of ${requiredIdList.length} required documents in`, chip: requiredDone === requiredIdList.length ? 'Complete' : 'In progress', go: 'readiness' },
+              { key: 'readiness', title: 'Readiness check', detail: readiness ? `${readiness.done} of ${readiness.total} readiness items in` : `${requiredDone} of ${requiredIdList.length} required documents in`, chip: (readiness ? readiness.done === readiness.total : requiredDone === requiredIdList.length) ? 'Complete' : 'In progress', go: 'readiness' },
             ];
             const cardHead = (icon: ReactNode, title: string, count: number, tone: string) => (
               <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">

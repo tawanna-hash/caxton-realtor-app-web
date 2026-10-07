@@ -434,6 +434,14 @@ function mergeReadinessDocuments(deal: AgentDeal): AgentDeal {
   return { ...deal, documents: [...readinessDocuments, ...additionalDocuments] };
 }
 
+// Items in on the Readiness Check, for the side this deal is on: received, reviewed or not needed.
+function readinessCounts(deal: AgentDeal): { done: number; total: number } {
+  const rows = readinessGroupsForSide(effectiveAgentSide(deal)).flatMap((group) => group.items)
+    .map((item) => deal.documents.find((document) => document.id === item.id))
+    .filter((document): document is AgentDocument => Boolean(document));
+  return { done: rows.filter((document) => document.complete || document.status === 'not_needed').length, total: rows.length };
+}
+
 function ReadinessChecklist({
   headingTag = 'h3',
   side,
@@ -3039,6 +3047,7 @@ export default function ClosingTime({
               return (
                 <DealSubpage
                   key={deal?.id ?? 'none'}
+                  readiness={deal ? readinessCounts(deal) : undefined}
                   deal={deal}
                   today={today}
                   locked={deal ? isDealLocked(deal) : false}
