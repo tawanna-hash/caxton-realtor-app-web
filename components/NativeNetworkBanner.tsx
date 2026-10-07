@@ -40,7 +40,8 @@ function initialPhase(): Phase {
 }
 
 export default function NativeNetworkBanner() {
-  const [phase, setPhase] = useState<Phase>(initialPhase);
+  // Start 'online' on server and client so hydration always matches; the effect below applies the real state.
+  const [phase, setPhase] = useState<Phase>('online');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -50,6 +51,7 @@ export default function NativeNetworkBanner() {
     // Seed lastOnline from current state so the first event delta is
     // computed correctly even when we boot offline.
     let lastOnline = navigator.onLine ?? true;
+    if (initialPhase() === 'offline') queueMicrotask(() => { if (mounted) setPhase('offline'); });
 
     const setOnline = (online: boolean) => {
       if (!mounted) return;
