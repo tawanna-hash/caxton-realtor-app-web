@@ -203,6 +203,26 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
         label: 'Property Inspection Report',
         description: 'Visual inspection of structure and systems by a licensed Texas inspector.',
       },
+      {
+        id: 'buyer-wdi-report',
+        label: 'Wood-Destroying Insect Report',
+        description: 'Required for VA and FHA loans; confirms no wood-destroying insect damage.',
+      },
+      {
+        id: 'buyer-repair-request-addendum',
+        label: 'Repair Request Or Inspection Addendum',
+        description: 'Repairs requested after the inspection and the signed amendment that follows.',
+      },
+      {
+        id: 'buyer-homeowners-insurance',
+        label: 'Homeowners Insurance Proof',
+        description: 'Binder or declarations page the lender and title company require before closing.',
+      },
+      {
+        id: 'buyer-home-warranty',
+        label: 'Home Warranty Contract',
+        description: 'Ordered warranty plan and receipt, when one applies.',
+      },
     ],
   },
   {
@@ -235,6 +255,11 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
         description: 'Disclosure of rules, fees, and resale certificates for planned communities.',
       },
       {
+        id: 'seller-hoa-estoppel',
+        label: 'HOA Estoppel Or Resale Certificate',
+        description: 'Payoff and status letter from the association, when the property is in an HOA.',
+      },
+      {
         id: 'seller-general-warranty-deed',
         label: 'General Warranty Deed',
         description: 'Legal instrument executed at closing to transfer title securely.',
@@ -264,6 +289,32 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
         id: 'lender-promissory-note',
         label: 'Promissory Note',
         description: "The borrower's binding legal promise to repay the loan.",
+      },
+      {
+        id: 'lender-loan-approval',
+        label: 'Loan Approval Or Clear To Close',
+        description: 'Lender approval letter or clear-to-close notice.',
+      },
+    ],
+  },
+  {
+    id: 'title',
+    label: 'Title And Closing Coordination',
+    items: [
+      {
+        id: 'title-contact-information-sheets',
+        label: 'Contact Information Sheets',
+        description: 'Contact details for every party, sent to the title company and the other side.',
+      },
+      {
+        id: 'title-agent-information-sheet',
+        label: 'Agent Information Sheet For Title',
+        description: 'Your agent and brokerage details for the title company.',
+      },
+      {
+        id: 'title-commitment',
+        label: 'Title Commitment',
+        description: 'Title commitment and insurance policy information from the title company.',
       },
     ],
   },
@@ -306,7 +357,7 @@ function readinessGroupsForSide(side?: string): ReadinessDocumentGroup[] {
   const groups = DOCUMENT_GROUPS.map((group) => ({ ...group, items: group.items.filter((item) => !hidden.has(item.id)) }))
     .map((group) => (sideKey(side) === 'listing' && group.id === 'buyer' ? { ...group, label: 'Buyer And Offer Documentation' } : group));
   if (sideKey(side) !== 'listing') return groups;
-  const order = ['seller', 'buyer', 'lender', 'valuation-audit'];
+  const order = ['seller', 'buyer', 'lender', 'title', 'valuation-audit'];
   return [...groups].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 }
 const isReadinessItemHidden = (id: string, side?: string) => SIDE_HIDDEN_ITEMS[sideKey(side)].has(id);
@@ -410,30 +461,45 @@ function ReadinessChecklist({
   documentUploadBusyId: string | null;
   documentUploadError: string;
 }) {
-  const Heading = headingTag;
   const additionalDocuments = documents.filter((document) => !DOCUMENT_TEMPLATE_IDS.has(document.id));
+  const groups = readinessGroupsForSide(side).map((group) => ({
+    id: group.id,
+    label: group.label,
+    rows: group.items
+      .map((item) => ({ description: item.description as string | undefined, document: documents.find((document) => document.id === item.id) }))
+      .filter((entry): entry is { description: string | undefined; document: AgentDocument } => Boolean(entry.document)),
+  }));
+  if (additionalDocuments.length) groups.push({ id: 'additional', label: 'Additional Documentation', rows: additionalDocuments.map((document) => ({ description: undefined, document })) });
+  const isDone = (document: AgentDocument) => document.complete || document.status === 'not_needed';
+  const totalCount = groups.reduce((sum, group) => sum + group.rows.length, 0);
+  const doneCount = groups.reduce((sum, group) => sum + group.rows.filter(({ document }) => isDone(document)).length, 0);
+  const pct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
+  const [groupId, setGroupId] = useState<string>('');
+  const activeGroup = groups.find((group) => group.id === groupId) ?? groups[0];
+  // Astro status colors: amber requested, green received or reviewed, gray not needed.
+  const dotColor = (status: AgentDocument['status']) => (status === 'received' || status === 'reviewed' ? '#00E200' : status === 'not_needed' ? '#B9B6C4' : '#FFAF3D');
 
   const renderDocument = (document: AgentDocument, description?: string) => {
     const hasFile = Boolean(document.driveFileId);
     const isUploading = documentUploadBusyId === document.id;
+    const done = isDone(document);
     return (
-    <div key={document.id} className="grid min-w-0 gap-3 border-t border-slate-200 px-4 py-4 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_140px] sm:items-center">
-      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${document.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`}>
-        <Check className="h-3.5 w-3.5" aria-hidden="true" />
-      </span>
-      <div className="min-w-0">
-        <p className={`text-sm font-semibold leading-5 ${document.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{document.label}</p>
-        {description ? <p className="mt-1 text-xs leading-5 text-slate-600">{description}</p> : null}
-        <div className="mt-2 flex flex-wrap items-center gap-2">
+      <div key={document.id} className="grid min-w-0 gap-3 border-t border-[#E6E5EC] px-4 py-3 first:border-t-0 hover:bg-[#F6F3FB] sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
+        <span className="hidden h-2.5 w-2.5 shrink-0 rounded-full sm:block" style={{ backgroundColor: dotColor(document.status) }} aria-hidden="true" />
+        <div className="min-w-0">
+          <p className={`text-sm font-semibold leading-5 ${done ? 'text-[#7A7787]' : 'text-[#1B1726]'}`}>{document.label}</p>
+          {description ? <p className="mt-0.5 text-[13px] leading-5 text-[#7A7787]">{description}</p> : null}
           {hasFile ? (
-            <span className="inline-flex items-center gap-2 rounded-md bg-[#E0FBE0] px-2 py-1 text-xs font-bold text-[#005A00]">
-              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-              {document.fileName || 'File Attached'}
+            <span className="mt-1.5 inline-flex max-w-full items-center gap-1.5 truncate rounded-md bg-[#E0FBE0] px-2 py-0.5 text-xs font-medium text-[#005A00]">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">{document.fileName || 'File Attached'}</span>
             </span>
           ) : null}
-          <label className="inline-flex min-h-[32px] cursor-pointer items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-600 hover:border-[#7059A8] hover:text-[#301D5D]">
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:bg-[#EFEAF8]">
             {isUploading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <FileUp className="h-3.5 w-3.5" aria-hidden="true" />}
-            {isUploading ? 'Uploading…' : hasFile ? 'Replace File' : 'Attach File'}
+            {isUploading ? 'Uploading…' : hasFile ? 'Replace' : 'Attach'}
             <input
               type="file"
               className="hidden"
@@ -443,101 +509,88 @@ function ReadinessChecklist({
             />
           </label>
           {hasFile ? (
-            <button
-              type="button"
-              onClick={() => removeDocumentFile(document.id)}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#661102]"
-              aria-label={`Remove attached file from ${document.label}`}
-            >
+            <button type="button" onClick={() => removeDocumentFile(document.id)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#7A7787] hover:!bg-[#EFEAF8] hover:!text-[#661102]" aria-label={`Remove attached file from ${document.label}`}>
               <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           ) : null}
+          <select
+            value={document.status}
+            onChange={(event) => updateDocument(document.id, event.target.value as AgentDocument['status'])}
+            aria-label={`Status for ${document.label}`}
+            className="h-9 rounded-md border border-[#E6E5EC] bg-white px-2 text-[13px] font-medium text-[#4A4757] outline-none focus:border-[#301D5D]"
+          >
+            <option value="requested">Requested</option>
+            <option value="received">Received</option>
+            <option value="reviewed">Reviewed</option>
+            <option value="not_needed">Not Needed</option>
+          </select>
         </div>
       </div>
-      <select
-        value={document.status}
-        onChange={(event) => updateDocument(document.id, event.target.value as AgentDocument['status'])}
-        aria-label={`Status for ${document.label}`}
-        className="min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15"
-      >
-        <option value="requested">Requested</option>
-        <option value="received">Received</option>
-        <option value="reviewed">Reviewed</option>
-        <option value="not_needed">Not Needed</option>
-      </select>
-    </div>
     );
   };
 
-  const { section: collapsible, toggleProps } = useCollapsibles();
   return (
-    <div {...collapsible('readiness', { mobileOpen: true })} className="rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem]">
-      <div className="flex items-center gap-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Readiness Check</p>
-          <Heading className="mt-1 text-xl font-semibold text-slate-950">Deal Readiness Checklist</Heading>
+    <div className="ds-page" data-testid="readiness-check">
+      <div className="rounded-2xl border border-[#E6E5EC] bg-white">
+        <div className="px-[1.125rem] py-4">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7A7787]">Readiness Check</p>
+          <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="text-sm font-semibold text-[#1B1726]">Deal Readiness Checklist</h3>
+            <span className="text-[13px] text-[#4A4757]">{doneCount} Of {totalCount} Items In</span>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Readiness progress">
+            <div className="h-full rounded-full bg-[#301D5D]" style={{ width: `${pct}%` }} />
+          </div>
         </div>
-        <CollapseToggle {...toggleProps('readiness', 'readiness checklist', { mobileOpen: true })} className="ml-auto" />
-      </div>
 
-      <div className="mt-4 space-y-4">
-        {readinessGroupsForSide(side).map((group) => {
-          const groupDocuments = group.items
-            .map((item) => ({ item, document: documents.find((document) => document.id === item.id) }))
-            .filter((entry): entry is { item: (typeof group.items)[number]; document: AgentDocument } => Boolean(entry.document));
-          const completeCount = groupDocuments.filter(({ document }) => document.complete || document.status === 'not_needed').length;
+        <div role="tablist" aria-label="Readiness Groups" className="flex items-end gap-1 overflow-x-auto border-b border-[#E6E5EC] px-[1.125rem]">
+          {groups.map((group) => {
+            const done = group.rows.filter(({ document }) => isDone(document)).length;
+            const selected = activeGroup?.id === group.id;
+            return (
+              <button
+                key={group.id}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                onClick={() => setGroupId(group.id)}
+                className={`!-mb-px !flex-none !whitespace-nowrap !rounded-b-none !rounded-t-lg !border !border-b-0 !px-4 !py-2.5 ${selected ? '!border-[#E6E5EC] !border-t-2 !border-t-[#301D5D] !bg-white !font-semibold !text-[#301D5D]' : '!border-transparent !bg-[#F6F3FB] !font-medium !text-[#4A4757] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]'}`}
+              >
+                {group.label}
+                <span className={`ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${done === group.rows.length && group.rows.length > 0 ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{done}/{group.rows.length}</span>
+              </button>
+            );
+          })}
+        </div>
 
-          return (
-            <section key={group.id} className="overflow-hidden rounded-md border border-slate-200">
-              <div className="flex items-center justify-between gap-3 bg-[#F7F5F1] px-4 py-3">
-                <h4 className="text-sm font-bold text-gray-900">{group.label}</h4>
-                <span className="shrink-0 rounded-md bg-white px-3 py-1 text-xs font-bold text-[#301D5D]">{completeCount} of {groupDocuments.length}</span>
-              </div>
-              <div>{groupDocuments.map(({ item, document }) => renderDocument(document, item.description))}</div>
-            </section>
-          );
-        })}
-
-        {additionalDocuments.length ? (
-          <section className="overflow-hidden rounded-md border border-slate-200">
-            <div className="bg-[#F7F5F1] px-4 py-3">
-              <h4 className="text-sm font-bold text-gray-900">Additional Documentation</h4>
-            </div>
-            <div>{additionalDocuments.map((document) => renderDocument(document))}</div>
-          </section>
-        ) : null}
+        <div role="tabpanel">{activeGroup?.rows.map(({ document, description }) => renderDocument(document, description))}</div>
       </div>
 
       {documentUploadError ? (
-        <p className="mt-4 flex items-center gap-2 rounded-md border border-[#FF2A04] bg-[#FFEAE6] px-3 py-2 text-xs font-semibold text-[#661102]">
+        <p className="mt-3 flex items-center gap-2 rounded-md border border-[#FF2A04] bg-[#FFEAE6] px-3 py-2 text-xs font-semibold text-[#661102]">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           {documentUploadError}
         </p>
       ) : null}
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <input
           value={documentName}
           onChange={(event) => setDocumentName(event.target.value)}
-          className="min-h-[44px] min-w-0 w-full rounded-md border border-slate-300 px-3 text-sm outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15"
-          placeholder="Custom document request"
+          className="h-10 min-w-0 flex-1 rounded-md border border-[#E6E5EC] bg-[#F6F3FB] px-3 text-sm outline-none focus:border-[#301D5D]"
+          placeholder="Custom Document Request"
         />
-        <button
-          type="button"
-          onClick={addDocument}
-          disabled={!documentName.trim()}
-          className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-[#7059A8] bg-white px-4 text-sm font-bold text-[#301D5D] transition hover:bg-[#F3EFFA] disabled:opacity-40"
-        >
+        <button type="button" onClick={addDocument} disabled={!documentName.trim()} className="h-10 rounded-md border border-[#E6E5EC] bg-white px-4 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D] disabled:opacity-40">
           Request
         </button>
       </div>
 
-      <div className="mt-4 border-t border-slate-200 pt-4">
-        <p className="text-sm font-semibold text-slate-800">Operational Review Alerts</p>
+      <div className="mt-3 rounded-2xl border border-[#E6E5EC] bg-white px-[1.125rem] py-4">
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7A7787]">Operational Review Alerts</p>
         {reviewAlerts.length ? (
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-2 space-y-2">
             {reviewAlerts.slice(0, 4).map((alert) => (
-              <li key={alert} className="flex gap-2 text-sm leading-5 text-slate-600">
+              <li key={alert} className="flex gap-2 text-sm leading-5 text-[#4A4757]">
                 <AlertTriangle className="rnn-inline-icon text-[#661102]" aria-hidden="true" />
                 {alert}
               </li>
@@ -3604,25 +3657,20 @@ export default function ClosingTime({
           <div className="mt-6 grid gap-6">
             <div {...collapsible('tasks')} className="rounded-xl border border-[#E6E5EC] bg-white p-[1.125rem]">
               <div className="flex items-center gap-3">
-                <h3 className="text-xl font-semibold text-gray-900">Tasks and Reminders</h3>
+                <h3 className="text-sm font-semibold text-[#1B1726]">Tasks And Reminders</h3>
                 <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
               </div>
               <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
-                <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
-                <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="min-h-[44px] min-w-0 w-full border border-slate-300 px-3 text-sm outline-none focus:border-[#301D5D]" />
-                <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-[44px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
-                <button type="button" onClick={addTask} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
+                <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="h-10 min-w-0 w-full rounded-md border border-[#E6E5EC] bg-[#F6F3FB] px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
+                <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="h-10 min-w-0 w-full rounded-md border border-[#E6E5EC] bg-[#F6F3FB] px-3 text-sm outline-none focus:border-[#301D5D]" />
+                <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="h-10 min-w-0 w-full rounded-md border border-[#E6E5EC] bg-[#F6F3FB] px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
+                <button type="button" onClick={addTask} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#E6E5EC] bg-white px-4 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
               </div>
-              <div className="mt-4 grid min-w-0 gap-2 border-y border-slate-100 py-4 sm:grid-cols-2">
-                <select value={reminderDeadlineId} onChange={(event) => setReminderDeadlineId(event.target.value)} aria-label="Reminder deadline" className="min-h-[42px] min-w-0 w-full border border-slate-300 bg-white px-2 text-sm"><option value="">Custom Reminder Deadline</option>{activeDeadlines.map((deadline) => <option key={deadline.id} value={deadline.id}>{deadline.label}</option>)}</select>
-                <input type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} aria-label="Custom reminder date" className="min-h-[42px] min-w-0 w-full border border-slate-300 px-2 text-sm" />
-                <input value={reminderNote} onChange={(event) => setReminderNote(event.target.value)} aria-label="Custom reminder note" className="min-h-[42px] min-w-0 w-full border border-slate-300 px-3 text-sm" placeholder="Reminder note (optional)" />
-                <button type="button" onClick={addCustomReminder} disabled={!reminderDeadlineId || !reminderDate} className="inline-flex min-h-[42px] items-center justify-center rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-40">Add Reminder</button>
-              </div>
+              
               <div className="mt-4 space-y-2">
                 {!activeDeal.tasks.length && !activeDeal.reminders.length ? <p className="border border-dashed border-slate-300 bg-[#FCFBF9] p-4 text-sm text-slate-600">Use deadline presets (7d, 3d, 1d, due) in the review step or add a custom action here.</p> : <>
-                  {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border border-[#FAD800] bg-[#FEF8CC] p-3"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#645600] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}>{reminder.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#645600]">{formatDate(reminder.reminderDate)}</span></div>)}
-                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border border-slate-200 p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-[#FFEAE6] text-[#661102]' : task.priority === 'high' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-slate-100 text-slate-600'} capitalize`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#661102]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#661102]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
+                  {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 rounded-md border border-[#FAD800] bg-[#FEF8CC] p-3"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#645600] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}>{reminder.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#645600]">{formatDate(reminder.reminderDate)}</span></div>)}
+                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 rounded-md border border-[#E6E5EC] p-3"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-400 bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-bold ${task.priority === 'critical' ? 'bg-[#FFEAE6] text-[#661102]' : task.priority === 'high' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-slate-100 text-slate-600'} capitalize`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="min-h-[34px] border border-slate-300 bg-white px-2 text-xs font-semibold">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}</select>{task.dueDate && <span className={`text-xs font-bold ${task.dueDate < today && !task.complete ? 'text-[#661102]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-slate-400 transition hover:text-[#661102]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
                 </>}
               </div>
             </div>
