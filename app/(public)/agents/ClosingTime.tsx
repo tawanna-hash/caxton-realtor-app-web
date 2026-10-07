@@ -1312,6 +1312,12 @@ export default function ClosingTime({
   const [dealsHealth, setDealsHealth] = useState('all');
   const [dealPageId, setDealPageId] = useState<string | null>(null);
   const [newDealPickerOpen, setNewDealPickerOpen] = useState(false);
+  useEffect(() => {
+    if (!newDealPickerOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setNewDealPickerOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [newDealPickerOpen]);
   const [pickerStep, setPickerStep] = useState<'type' | 'side'>('type');
   // A refresh always lands at the top of the page instead of restoring the old scroll position.
   useEffect(() => {
