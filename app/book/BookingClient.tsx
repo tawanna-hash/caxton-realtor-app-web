@@ -25,7 +25,7 @@ export default function BookingClient({ scheduler }: { scheduler: PublicSchedule
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [done, setDone] = useState<{ token: string; paymentLink: string; meetingUrl: string } | null>(null);
+  const [done, setDone] = useState<{ token: string; meetingUrl: string } | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -60,7 +60,7 @@ export default function BookingClient({ scheduler }: { scheduler: PublicSchedule
       const b = await r.json().catch(() => ({}));
       if (!r.ok || !b.ok) { setError(b.error ?? 'Could not book that time.'); setBusy(false); return; }
       if (b.redirectUrl) { window.location.href = b.redirectUrl; return; }
-      setDone({ token: b.token, paymentLink: b.paymentLink, meetingUrl: b.meetingUrl });
+      setDone({ token: b.token, meetingUrl: b.meetingUrl });
     } catch { setError('Could not book that time.'); }
     setBusy(false);
   };
@@ -93,7 +93,6 @@ export default function BookingClient({ scheduler }: { scheduler: PublicSchedule
             <p className="mt-3">{t.sentTo} {email}.</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <a href={`/api/book/manage/${done.token}/ics`} className="inline-flex min-h-[44px] items-center rounded-lg border border-[#E6E5EC] bg-white px-4 text-[13px] font-medium text-[#1B1726] hover:border-[#301D5D]">{t.addCal}</a>
-              {done.paymentLink && <a href={done.paymentLink} className="inline-flex min-h-[44px] items-center rounded-lg bg-[#301D5D] px-4 text-[13px] font-semibold text-white hover:bg-[#42277C]">{t.pay}{cfg.payment.amount ? ` ${cfg.payment.amount}` : ''}</a>}
             </div>
           </div>
         </div>
@@ -115,7 +114,6 @@ export default function BookingClient({ scheduler }: { scheduler: PublicSchedule
                   className={`min-h-[40px] rounded-full border px-3 text-[13px] font-medium ${l === length ? 'border-[#301D5D] bg-[#F6F3FB] text-[#301D5D]' : 'border-[#E6E5EC] bg-white text-[#1B1726] hover:border-[#301D5D]'}`}>{l} {t.min}</button>
               ))}
             </div>
-            {cfg.payment.on && cfg.payment.amount && <p className="mt-4 text-[13px] font-medium text-[#1B1726]">{cfg.payment.label || 'Fee'}: {cfg.payment.amount}</p>}
             <p className="mt-4 text-[12px] text-[#7A7787]">{t.timesIn} {tzLabel(cfg.timezone)}</p>
           </aside>
 

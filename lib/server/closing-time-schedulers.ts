@@ -3,11 +3,17 @@ import { query } from '@/lib/server/db/neon';
 import { ApiError } from '@/lib/server/error';
 import { ensureAssistSchema, requireDeal } from '@/lib/server/closing-time-assist';
 import { logDealEvent } from '@/lib/server/closing-time-events';
-import { agentOf } from '@/lib/server/closing-time-polls';
 import { CALENDAR_SLUGS } from '@/lib/server/closing-time-connected';
 import { accountFor, proxyCall } from '@/lib/server/composio';
 import { sendEmail } from '@/lib/email';
 import { addDays, defaultConfig, fillTemplate, openSlots, slugify, timeLabel, zoned, type Busy, type SchedulerConfig } from '@/lib/scheduler-shared';
+
+/** Agent display name and notification email (falls back to the account email). */
+export async function agentOf(realtorId: string): Promise<{ name: string; email: string }> {
+  const rows = await query<{ first_name: string | null; last_name: string | null; email: string }>(
+    `SELECT r.first_name, r.last_name, COALESCE(NULLIF((SELECT w.workspace->'notificationPreferences'->>'notificationEmail' FROM agent_command_center_workspaces w WHERE w.realtor_id=r.id),''), r.email) AS email FROM realtors r WHERE r.id=$1 LIMIT 1`, [realtorId]);
+  return { name: [rows[0]?.first_name, rows[0]?.last_name].filter(Boolean).join(' ') || 'Your agent', email: rows[0]?.email ?? '' };
+}
 
 /**
  * Closing Time Schedulers: booking pages per deal. Every deal has one custom URL slug
@@ -53,7 +59,7 @@ const esc = (v: string) => v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const validEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const merge = (c: Partial<SchedulerConfig> | null | undefined): SchedulerConfig => {
   const d = defaultConfig();
-  return { ...d, ...(c ?? {}), hours: { ...d.hours, ...(c?.hours ?? {}) }, payment: { ...d.payment, ...(c?.payment ?? {}) } };
+  return { ...d, ...(c ?? {}), hours: { ...d.hours, ...(c?.hours ?? {}) } };
 };
 
 /* ---------- Deal URL slug ---------- */
@@ -311,7 +317,7 @@ const whenText = (at: Date, cfg: SchedulerConfig) => {
   return `${day}, ${timeLabel(z.time, cfg.timeFormat)} (${cfg.timezone})`;
 };
 
-export async function createBooking(id: string, input: { start: number; length: number; name: string; email: string; answers: Record<string, string>; origin: string }): Promise<{ ok: true; token: string; redirectUrl: string; paymentLink: string; meetingUrl: string } | { ok: false; error: string }> {
+export async function createBooking(id: string, input: { start: number; length: number; name: string; email: string; answers: Record<string, string>; origin: string }): Promise<{ ok: true; token: string; redirectUrl: string; meetingUrl: string } | { ok: false; error: string }> {
   const s = await schedulerById(id);
   if (!s || !s.active) return { ok: false, error: 'This booking page is not available.' };
   const cfg = merge(s.config);
@@ -365,14 +371,12 @@ export async function createBooking(id: string, input: { start: number; length: 
   const when = whenText(start, cfg);
   const ics = Buffer.from(bookingIcsText({ id: bookingId, start, end, title, location: meetingUrl || property, description })).toString('base64');
   const manage = `${input.origin}/book/manage/${token}`;
-  const pay = cfg.payment.on && /^https:\/\//.test(cfg.payment.link) ? cfg.payment.link : '';
   const es = cfg.language === 'es';
   await sendEmail({ to: input.email, cc: guests.length ? guests : undefined, replyTo: agent.email || undefined, subject: `${es ? 'Confirmado' : 'Confirmed'}: ${cfg.name} - ${when}`,
     attachments: [{ filename: 'invite.ics', content: ics, contentType: 'text/calendar' }],
     html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p>${es ? 'Hola' : 'Hello'} ${esc(input.name.split(/\s+/)[0])},</p>`
       + `<p>${es ? 'Su cita está confirmada' : 'You are booked'}: <strong>${esc(cfg.name)}</strong> ${es ? 'con' : 'with'} ${esc(cfg.yourName || agent.name)}.</p><p><strong>${esc(when)}</strong> · ${len} min</p>`
       + (meetingUrl ? `<p><a href="${esc(meetingUrl)}">${esc(meetingUrl)}</a></p>` : property ? `<p>${esc(property)}</p>` : '')
-      + (pay ? `<p><a href="${esc(pay)}" style="display:inline-block;padding:10px 16px;background:#301D5D;color:#ffffff;text-decoration:none;border-radius:8px">${es ? 'Pagar' : 'Pay'}${cfg.payment.amount ? ` ${esc(cfg.payment.amount)}` : ''}</a></p>` : '')
       + `<p style="color:#7A7787;font-size:13px">${es ? 'El archivo adjunto agrega la cita a su calendario.' : 'The attached file adds this to your calendar.'} <a href="${manage}">${es ? 'Cancelar esta cita' : 'Cancel this booking'}</a></p></div>` }).catch(() => undefined);
   if (validEmail(agent.email)) {
     await sendEmail({ to: agent.email, replyTo: input.email, subject: `New booking: ${cfg.name} with ${input.name} - ${when}`,
@@ -380,7 +384,7 @@ export async function createBooking(id: string, input: { start: number; length: 
       html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p><strong>${esc(input.name)}</strong> (${esc(input.email)}) booked <strong>${esc(cfg.name)}</strong>${property ? ` for ${esc(property)}` : ''}.</p><p><strong>${esc(when)}</strong> · ${len} min</p>${answers.map((a) => `<p style="margin:2px 0"><strong>${esc(a.label)}:</strong> ${esc(a.value)}</p>`).join('')}${meetingUrl ? `<p>${esc(meetingUrl)}</p>` : ''}</div>` }).catch(() => undefined);
   }
   await logDealEvent(s.realtor_id, s.deal_id, 'booking', `${input.name} <${input.email}> booked ${cfg.name} for ${when}`);
-  return { ok: true, token, redirectUrl: /^https:\/\//.test(cfg.redirectUrl) ? cfg.redirectUrl : '', paymentLink: pay, meetingUrl };
+  return { ok: true, token, redirectUrl: /^https:\/\//.test(cfg.redirectUrl) ? cfg.redirectUrl : '', meetingUrl };
 }
 
 type BookingFull = { id: string; scheduler_id: string; realtor_id: string; deal_id: string; start_utc: Date | string; end_utc: Date | string; name: string; email: string; status: string; provider: string; event_id: string; calendar_id: string; meeting_url: string; config: SchedulerConfig; slug: string | null };
@@ -399,7 +403,7 @@ export async function publicBooking(token: string) {
   const cfg = merge(b.config);
   return { name: b.name, email: b.email, status: b.status, when: whenText(new Date(b.start_utc), cfg), lengthMin: Math.round((new Date(b.end_utc).getTime() - new Date(b.start_utc).getTime()) / 60_000),
     schedulerName: cfg.name, agentName: cfg.yourName, meetingUrl: b.meeting_url, language: cfg.language, past: new Date(b.start_utc).getTime() < Date.now(),
-    rebook: b.slug ? `/book/${b.slug}${cfg.alias && cfg.urlMode === 'alias' ? `/${cfg.alias}` : ''}` : '', paymentLink: cfg.payment.on ? cfg.payment.link : '', paymentAmount: cfg.payment.amount };
+    rebook: b.slug ? `/book/${b.slug}${cfg.alias && cfg.urlMode === 'alias' ? `/${cfg.alias}` : ''}` : '' };
 }
 
 async function cancelRow(b: BookingFull, by: 'invitee' | 'agent') {

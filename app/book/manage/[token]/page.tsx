@@ -24,7 +24,6 @@ export default async function ManageBooking({ params }: { params: Promise<{ toke
         ) : (
           <div className="mt-5 flex flex-wrap gap-2">
             <a href={`/api/book/manage/${token}/ics`} className="inline-flex min-h-[44px] items-center rounded-lg border border-[#E6E5EC] bg-white px-4 text-[13px] font-medium text-[#1B1726] hover:border-[#301D5D]">{t.addCal}</a>
-            {b.paymentLink && <a href={b.paymentLink} className="inline-flex min-h-[44px] items-center rounded-lg bg-[#301D5D] px-4 text-[13px] font-semibold text-white hover:bg-[#42277C]">{t.pay}{b.paymentAmount ? ` ${b.paymentAmount}` : ''}</a>}
             {!b.past && <CancelButton token={token} label={t.cancel} done={t.cancelled} />}
           </div>
         )}

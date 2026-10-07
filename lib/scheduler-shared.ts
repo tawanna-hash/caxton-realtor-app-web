@@ -52,8 +52,6 @@ export type SchedulerConfig = {
   // 5. Workflow
   reminders: (Reminder & { subject: string; message: string })[];
   followUp: (Reminder & { subject: string; message: string }) | null;
-  // 6. Payments
-  payment: { on: boolean; amount: string; label: string; link: string };
 };
 
 const nineToFive = { on: true, start: '09:00', end: '17:00' };
@@ -66,7 +64,6 @@ export function defaultConfig(yourName = ''): SchedulerConfig {
     subject: '{invitee_name} and {my_name} - {subject}', description: '', color: '', meeting: 'none', meetingLink: '', attendees: '', questions: [],
     welcome: '', redirectUrl: '', language: 'en', bookerLocale: 'auto', timeFormat: '12h', weekStart: 'sunday', hasBanner: false, hasAvatar: false,
     reminders: [], followUp: null,
-    payment: { on: false, amount: '', label: '', link: '' },
   };
 }
 
@@ -177,13 +174,13 @@ export const T = {
   en: {
     welcome: 'Welcome! Please pick a time below.', selectDate: 'Select a date', selectTime: 'Select a time', noTimes: 'No open times on this day.', noDates: 'No open times in this range. Try the next month.',
     duration: 'Duration', back: 'Back', details: 'Enter your details', name: 'Your name', email: 'Email', confirm: 'Confirm Booking', booking: 'Booking',
-    booked: 'You are booked', sentTo: 'A confirmation was sent to', addCal: 'Add To Calendar', pay: 'Pay Now', required: 'Required', timesIn: 'Times shown in',
+    booked: 'You are booked', sentTo: 'A confirmation was sent to', addCal: 'Add To Calendar', required: 'Required', timesIn: 'Times shown in',
     cancel: 'Cancel Booking', cancelled: 'This booking was cancelled.', min: 'min', with: 'with', notLive: 'This booking page is not live yet.', choose: 'Choose a meeting', where: 'Where', guests: 'Guests',
   },
   es: {
     welcome: '¡Bienvenido! Elija una hora a continuación.', selectDate: 'Elija una fecha', selectTime: 'Elija una hora', noTimes: 'No hay horarios disponibles este día.', noDates: 'No hay horarios disponibles. Pruebe el próximo mes.',
     duration: 'Duración', back: 'Atrás', details: 'Ingrese sus datos', name: 'Su nombre', email: 'Correo electrónico', confirm: 'Confirmar Cita', booking: 'Reservando',
-    booked: 'Su cita está confirmada', sentTo: 'Se envió una confirmación a', addCal: 'Agregar Al Calendario', pay: 'Pagar Ahora', required: 'Obligatorio', timesIn: 'Horarios en',
+    booked: 'Su cita está confirmada', sentTo: 'Se envió una confirmación a', addCal: 'Agregar Al Calendario', required: 'Obligatorio', timesIn: 'Horarios en',
     cancel: 'Cancelar Cita', cancelled: 'Esta cita fue cancelada.', min: 'min', with: 'con', notLive: 'Esta página de citas aún no está activa.', choose: 'Elija una reunión', where: 'Dónde', guests: 'Invitados',
   },
 } as const;

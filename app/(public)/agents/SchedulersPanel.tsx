@@ -19,8 +19,8 @@ const label = 'block text-[14px] font-semibold text-[#1B1726]';
 const hint = 'mt-0.5 text-[13px] text-[#7A7787]';
 const pill = 'inline-flex items-center gap-1.5 rounded-full border border-[#E6E5EC] bg-white px-3.5 py-1.5 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D]';
 const primary = 'inline-flex items-center gap-1.5 rounded-full bg-[#301D5D] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#42277C] disabled:opacity-45';
-const STEPS = ['Select Calendars', 'Availability', 'Event Details', 'Appearance And Branding', 'Workflow', 'Payments'];
-const OPTIONAL = new Set([4, 5]);
+const STEPS = ['Select Calendars', 'Availability', 'Event Details', 'Appearance And Branding', 'Workflow'];
+const OPTIONAL = new Set([4]);
 const TIMES = Array.from({ length: 96 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`);
 const qid = () => Math.random().toString(36).slice(2, 10);
 
@@ -69,7 +69,7 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
   };
 
   if (editing && data) {
-    return <Builder key={editing.id ?? 'new'} data={data} dealId={deal.id} host={host} initial={editing} property={deal.propertyAddress ?? ''}
+    return <Builder key={editing.id ?? 'new'} data={data} dealId={deal.id} host={host} initial={editing} property={deal.propertyAddress ?? ''} parties={dealParties(deal)}
       onClose={(saved) => { setEditing(null); if (saved) { setMsg(saved); setTick((t) => t + 1); } }} />;
   }
 
@@ -270,8 +270,24 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
 
 /* ---------- 6-step builder with the live summary on the right ---------- */
 
-function Builder({ data, dealId, host, initial, property, onClose }: {
-  data: Data; dealId: string; host: string; property: string;
+type Party = { email: string; name: string; role: string };
+
+/** Everyone on the deal with an email: clients/contacts first, then service providers. */
+function dealParties(deal: AgentDeal): Party[] {
+  const out: Party[] = []; const seen = new Set<string>();
+  const add = (email: string | undefined, name: string, role: string) => {
+    const e = (email ?? '').trim(); const k = e.toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || seen.has(k)) return; seen.add(k); out.push({ email: e, name: name.trim() || e, role: role.trim() });
+  };
+  for (const c of deal.clientContacts ?? []) add(c.email, c.name, c.role ?? 'Client');
+  for (const p of deal.serviceProviders ?? []) add(p.email, p.name, p.category);
+  return out;
+}
+
+const splitEmails = (v: string) => v.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
+
+function Builder({ data, dealId, host, initial, property, parties, onClose }: {
+  data: Data; dealId: string; host: string; property: string; parties: Party[];
   initial: { id: string | null; config: SchedulerConfig; hasBanner: boolean; hasAvatar: boolean };
   onClose: (savedMessage?: string) => void;
 }) {
@@ -306,7 +322,6 @@ function Builder({ data, dealId, host, initial, property, onClose }: {
     }
     if (i === 2 && c.meeting === 'custom' && !/^https:\/\//.test(c.meetingLink)) return 'Add a meeting link that starts with https://';
     if (i === 3 && c.redirectUrl && !/^https:\/\//.test(c.redirectUrl)) return 'The redirect URL must start with https://';
-    if (i === 5 && c.payment.on && !/^https:\/\//.test(c.payment.link)) return 'Add a payment link that starts with https://';
     return '';
   };
   const next = () => { const e = stepError(step); setError(e); if (!e) setStep((s) => Math.min(5, s + 1)); };
@@ -492,7 +507,49 @@ function Builder({ data, dealId, host, initial, property, onClose }: {
       </div>
       <div>
         <span className={label}>Additional attendees</span>
-        <input className={`${field} mt-2`} value={c.attendees} placeholder="Add email addresses, comma separated" onChange={(e) => set('attendees', e.target.value)} />
+        <p className={hint}>Invite parties on this deal. They get the calendar invite and a copy of the confirmation email.</p>
+        {(() => {
+          const list = splitEmails(c.attendees); const lower = new Set(list.map((x) => x.toLowerCase()));
+          const partyKeys = new Set(parties.map((p) => p.email.toLowerCase()));
+          const extra = list.filter((x) => !partyKeys.has(x.toLowerCase()));
+          const write = (picked: string[], others: string[]) => set('attendees', [...picked, ...others].join(', '));
+          const picked = parties.filter((p) => lower.has(p.email.toLowerCase())).map((p) => p.email);
+          const all = parties.length > 0 && picked.length === parties.length;
+          return (
+            <>
+              {parties.length > 0 ? (
+                <div className="mt-2 rounded-xl border border-[#E6E5EC]">
+                  <div className="flex items-center justify-between border-b border-[#E6E5EC] px-3 py-2">
+                    <span className="text-[13px] text-[#4A4757]">{picked.length} of {parties.length} deal parties selected</span>
+                    <div className="flex gap-1">
+                      <button type="button" className="rounded-full px-3 py-1 text-[13px] font-semibold text-[#301D5D] hover:bg-[#F1ECFA] disabled:opacity-45" disabled={all} onClick={() => write(parties.map((p) => p.email), extra)}>Add All Parties</button>
+                      {picked.length > 0 && <button type="button" className="rounded-full px-3 py-1 text-[13px] font-medium text-[#7A7787] hover:bg-[#F7F6FA]" onClick={() => write([], extra)}>Clear</button>}
+                    </div>
+                  </div>
+                  <ul className="max-h-[240px] divide-y divide-[#F0EFF4] overflow-y-auto">
+                    {parties.map((p) => {
+                      const on = lower.has(p.email.toLowerCase());
+                      return (
+                        <li key={p.email}>
+                          <label className="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-[#FAF9FC]">
+                            <input type="checkbox" className="h-4 w-4 accent-[#301D5D]" checked={on} onChange={() => write(on ? picked.filter((x) => x.toLowerCase() !== p.email.toLowerCase()) : [...picked, p.email], extra)} />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[14px] font-medium text-[#1B1726]">{p.name}{p.role && <span className="ml-2 rounded-full bg-[#F1ECFA] px-2 py-0.5 text-[11px] font-semibold text-[#301D5D]">{p.role}</span>}</span>
+                              <span className="block truncate text-[12px] text-[#7A7787]">{p.email}</span>
+                            </span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : (
+                <p className="mt-2 rounded-lg bg-[#F7F6FA] px-3 py-2 text-[13px] text-[#7A7787]">No deal parties with an email yet. Add emails to clients or service providers on this deal to pick them here.</p>
+              )}
+              <input key={picked.join(',')} className={`${field} mt-2`} defaultValue={extra.join(', ')} placeholder="Other email addresses, comma separated" onBlur={(e) => write(picked, splitEmails(e.target.value))} aria-label="Other attendee emails" />
+            </>
+          );
+        })()}
       </div>
       <div>
         <span className={label}>Custom Questions</span>
@@ -554,24 +611,6 @@ function Builder({ data, dealId, host, initial, property, onClose }: {
         {!c.followUp && <button type="button" className="mt-2 inline-flex items-center gap-1 px-2 py-1 text-[13px] font-medium text-[#1B1726] hover:text-[#301D5D]" onClick={() => set('followUp', { amount: 1, unit: 'hours', subject: '', message: '' })}><Plus className="h-3.5 w-3.5" aria-hidden="true" />Add a follow-up</button>}
       </div>
     </div>,
-
-    // 6. Payments
-    <div key="s6" className="space-y-5">
-      <label className="flex items-center justify-between gap-3">
-        <span><span className={label}>Collect a payment</span><span className={hint}>Show a fee on the booking page and a Pay Now button after booking.</span></span>
-        <button type="button" role="switch" aria-checked={c.payment.on} onClick={() => set('payment', { ...c.payment, on: !c.payment.on })} className={`relative h-6 w-11 shrink-0 rounded-full transition ${c.payment.on ? 'bg-[#301D5D]' : 'bg-[#D9D7E0]'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${c.payment.on ? 'left-[22px]' : 'left-0.5'}`} /></button>
-      </label>
-      {c.payment.on && (
-        <>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block"><span className={label}>Amount</span><input className={`${field} mt-2`} value={c.payment.amount} placeholder="$150" onChange={(e) => set('payment', { ...c.payment, amount: e.target.value })} /></label>
-            <label className="block"><span className={label}>Label</span><input className={`${field} mt-2`} value={c.payment.label} placeholder="Consultation fee" onChange={(e) => set('payment', { ...c.payment, label: e.target.value })} /></label>
-          </div>
-          <label className="block"><span className={label}>Payment link</span><span className={hint}>Your own Stripe, Square or PayPal payment link. Payments go straight to you.</span>
-            <input className={`${field} mt-2`} value={c.payment.link} placeholder="https://buy.stripe.com/..." onChange={(e) => set('payment', { ...c.payment, link: e.target.value })} /></label>
-        </>
-      )}
-    </div>,
   ];
 
   const summaryRows: [string, string][] = [
@@ -607,8 +646,8 @@ function Builder({ data, dealId, host, initial, property, onClose }: {
                     {error && <p role="alert" className="mt-4 text-[13px] font-medium text-[#661102]">{error}</p>}
                     <div className="mt-6 flex items-center justify-between">
                       {i > 0 ? <button type="button" className="inline-flex items-center gap-1 text-[13px] font-medium text-[#4A4757] hover:text-[#1B1726]" onClick={() => { setError(''); setStep(i - 1); }}><ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />Previous Step</button> : <span />}
-                      {i < 5
-                        ? <button type="button" className={primary} onClick={next}>Continue to {['Availability', 'Event Details', 'Appearance', 'workflow', 'payments'][i]}<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></button>
+                      {i < STEPS.length - 1
+                        ? <button type="button" className={primary} onClick={next}>Continue to {['Availability', 'Event Details', 'Appearance', 'workflow'][i]}<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></button>
                         : <button type="button" className={primary} disabled={busy} onClick={() => void save()}>{busy ? 'Saving' : initial.id ? 'Save Scheduler' : 'Create Scheduler'}<Check className="h-3.5 w-3.5" aria-hidden="true" /></button>}
                     </div>
                   </div>
@@ -616,7 +655,7 @@ function Builder({ data, dealId, host, initial, property, onClose }: {
               </section>
             );
           })}
-          {step < 5 && (
+          {step < STEPS.length - 1 && (
             <div className="flex justify-end pt-1">
               <button type="button" className={pill} disabled={busy} onClick={() => void save()}>{busy ? 'Saving' : initial.id ? 'Save Now' : 'Create Now'}</button>
             </div>

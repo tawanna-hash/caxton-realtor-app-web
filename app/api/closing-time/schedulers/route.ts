@@ -3,9 +3,8 @@ import { z } from 'zod';
 import { requireUser } from '@/lib/server/auth/user';
 import { withErrorHandling } from '@/lib/server/error';
 import { requireDeal } from '@/lib/server/closing-time-assist';
-import { calendarsFor, cancelByAgent, deleteCombo, deleteScheduler, listSchedulers, saveCombo, saveScheduler, setActive, setSlug } from '@/lib/server/closing-time-schedulers';
+import { agentOf, calendarsFor, cancelByAgent, deleteCombo, deleteScheduler, listSchedulers, saveCombo, saveScheduler, setActive, setSlug } from '@/lib/server/closing-time-schedulers';
 import { aliasify } from '@/lib/scheduler-shared';
-import { agentOf } from '@/lib/server/closing-time-polls';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,14 +22,12 @@ const config = z.object({
   timezone: z.string().min(1).max(60), windowDays: z.number().int().min(1).max(365), noticeMin: z.number().int().min(0).max(20160),
   bufferBeforeMin: z.number().int().min(0).max(240), bufferAfterMin: z.number().int().min(0).max(240), incrementMin: z.number().int().min(0).max(240),
   subject: z.string().max(300).default(''), description: z.string().max(4000).default(''), color: z.string().max(4).default(''),
-  meeting: z.enum(['none', 'google_meet', 'teams', 'custom']), meetingLink: z.string().max(500).default(''), attendees: z.string().max(1000).default(''),
+  meeting: z.enum(['none', 'google_meet', 'teams', 'custom']), meetingLink: z.string().max(500).default(''), attendees: z.string().max(4000).default(''),
   questions: z.array(z.object({ id: z.string().min(1).max(40), label: z.string().trim().min(1).max(200), type: z.enum(['text', 'textarea', 'phone']), required: z.boolean() })).max(10).default([]),
   welcome: z.string().max(1000).default(''), redirectUrl: z.string().max(500).default(''), language: z.enum(['en', 'es']), bookerLocale: z.enum(['auto', 'en', 'es']),
   timeFormat: z.enum(['12h', '24h']), weekStart: z.enum(['sunday', 'monday']), hasBanner: z.boolean().default(false), hasAvatar: z.boolean().default(false),
   reminders: z.array(z.object(offset)).max(2).default([]), followUp: z.object(offset).nullable().default(null),
-  payment: z.object({ on: z.boolean(), amount: z.string().max(40), label: z.string().max(200), link: z.string().max(500) }),
 }).refine((c) => c.lengths.includes(c.defaultLength), { message: 'The default time must be one of the meeting lengths.', path: ['defaultLength'] })
-  .refine((c) => !c.payment.on || /^https:\/\//.test(c.payment.link), { message: 'Add a payment link that starts with https://', path: ['payment'] })
   .refine((c) => !c.redirectUrl || /^https:\/\//.test(c.redirectUrl), { message: 'The redirect URL must start with https://', path: ['redirectUrl'] })
   .refine((c) => c.meeting !== 'custom' || /^https:\/\//.test(c.meetingLink), { message: 'Add a meeting link that starts with https://', path: ['meetingLink'] });
 
