@@ -491,6 +491,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
                   {!bordered && (
                     <div className="flex items-end">
                       <button type="button" onClick={() => putCustom([...customFields, { id: newId('cf'), section: section.id, label: 'New Field', value: '' }])}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Field</button>
+                    <Tip text="Add a custom field to this section, such as a loan officer or a second lender contact." />
                     </div>
                   )}
                 </div>
@@ -563,9 +564,11 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
                   <span>{section.title}</span>
                   <span className="flex flex-wrap items-center gap-2">
                     {section.fields.length > 0 && <span className="text-xs font-normal text-slate-500">{filled} Of {visibleFields.length} Filled</span>}
+                    {section.fields.length > 0 && <Tip text="Fields in this section that have a value. Blank fields are counted but never block anything." />}
                     {hiddenCount > 0 && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); restoreHidden(section); }}>Restore Fields ({hiddenCount})</button>}
                     <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); const d = e.currentTarget.closest('details'); if (d) d.open = true; putCustom([...customFields, { id: newId('cf'), section: section.id, label: 'New Field', value: '' }]); }}><Plus className="mr-1 inline h-4 w-4" aria-hidden="true" />Add Field</button>
                     <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId(section.id); }}>Quick Entry</button>
+                    <Tip text="Opens every field in this section in one window so you can type through them quickly." />
                   </span>
                 </summary>
                 {renderSectionBody(section, true)}
@@ -634,6 +637,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
                   </span>
                 </label>
                 {onOpenCalculator && <button type="button" onClick={() => onOpenCalculator('calc-cash')}>Open Cash-To-Close Calculator</button>}
+                {onOpenCalculator && <Tip text="Opens the calculator for this deal. Your estimate is saved to the deal's documents automatically." />}
               </span>
             </div>
           </section>

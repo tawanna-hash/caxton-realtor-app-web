@@ -13,6 +13,7 @@ import {
 } from '@/lib/realtor-calc-math';
 import { fmtUSD } from '@/lib/mortgage-math';
 import { NumberField, DateField } from '../_components/CalcInputs';
+import Tip from '../../agents/Tip';
 import ResourceFloater from '../_components/ResourceFloater';
 import { createCalcReportFile, reportTimestamp, type CalcReport } from '../_components/calcPdf';
 
@@ -197,6 +198,7 @@ export default function BuyerClosingCostsClient({ onSaveToDeal, dealLabel }: { o
             >
               {saveState === 'saving' ? 'Saving…' : 'Save Now'}
             </button>
+            <Tip text="Saves a PDF of this estimate to the deal's documents now. It also saves by itself a few seconds after you change a number." />
             <span className="text-[13px] text-[#7A7787]" role="status">
               {saveState === 'saved' ? `Saved to ${dealLabel ?? 'the deal'} documents. Changes save automatically.` : saveState === 'error' ? 'Could not save. Try again in a moment.' : `Saves to ${dealLabel ?? 'the deal'} documents automatically when you change a number.`}
             </span>

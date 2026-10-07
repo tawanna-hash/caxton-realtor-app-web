@@ -18,7 +18,7 @@ export const CLOSING_TIME_OWNER_ADMIN_EMAIL = 'tawanna@myrealtyline.com';
 const same = (a: string | undefined, b: string) => (a ?? '').trim().toLowerCase() === b;
 
 export async function isClosingTimeGated(): Promise<boolean> {
-  if (process.env.VERCEL_ENV !== 'production') return false;
+  if (process.env.NODE_ENV !== 'production') return false;
   const [user, admin] = await Promise.all([getCurrentUser(), getCurrentAdmin()]);
   if (same(user?.email, CLOSING_TIME_OWNER_FRONT_END_EMAIL)) return false;
   if (same(admin?.email, CLOSING_TIME_OWNER_ADMIN_EMAIL)) return false;
