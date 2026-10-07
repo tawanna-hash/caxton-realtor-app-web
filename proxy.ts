@@ -278,7 +278,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // 1b-2. Closing Time legal pages on its own domain.
-  if ((host === 'itsalmostclosingtime.com' || host === 'www.itsalmostclosingtime.com') && ['/privacy', '/terms', '/disclaimer'].includes(pathname)) {
+  if ((host === 'itsalmostclosingtime.com' || host === 'www.itsalmostclosingtime.com') && ['/privacy', '/terms', '/disclaimer', '/sms'].includes(pathname)) {
     const url = req.nextUrl.clone();
     url.pathname = '/closing-time-legal' + pathname;
     return NextResponse.rewrite(url);

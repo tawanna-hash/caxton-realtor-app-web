@@ -13,6 +13,7 @@ export function LegalPage({ title, intro, sections }: { title: string; intro: Re
         <a className="underline" href="/privacy">Privacy Policy</a>
         <a className="underline" href="/terms">Terms Of Service</a>
         <a className="underline" href="/disclaimer">Important Notices</a>
+        <a className="underline" href="/sms">Text Messaging</a>
         <a className="underline" href="/security">Security</a>
       </nav>
       <h1 className="font-serif text-3xl text-[#301D5D]">{title}</h1>
