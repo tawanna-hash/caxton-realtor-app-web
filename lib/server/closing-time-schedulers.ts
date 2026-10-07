@@ -387,10 +387,14 @@ export async function createBooking(id: string, input: { start: number; length: 
       + `<p>${es ? 'Su cita está confirmada' : 'You are booked'}: <strong>${esc(cfg.name)}</strong> ${es ? 'con' : 'with'} ${esc(cfg.yourName || agent.name)}.</p><p><strong>${esc(when)}</strong> · ${len} min</p>`
       + (meetingUrl ? `<p><a href="${esc(meetingUrl)}">${esc(meetingUrl)}</a></p>` : property ? `<p>${esc(property)}</p>` : '')
       + `<p style="color:#7A7787;font-size:13px">${es ? 'El archivo adjunto agrega la cita a su calendario.' : 'The attached file adds this to your calendar.'} <a href="${manage}">${es ? 'Cancelar esta cita' : 'Cancel this booking'}</a></p></div>` }).catch(() => undefined);
+  // The booker is usually a subscriber: use the name and brokerage affiliation on their profile.
+  const sub = await query<{ first_name: string | null; last_name: string | null; brokerage_name: string | null }>(`SELECT first_name, last_name, brokerage_name FROM realtors WHERE LOWER(email)=LOWER($1) LIMIT 1`, [input.email]).catch(() => []);
+  const subName = [sub[0]?.first_name, sub[0]?.last_name].filter(Boolean).join(' ').trim();
+  const who = `${subName || input.name}${sub[0]?.brokerage_name?.trim() ? ` of ${sub[0].brokerage_name.trim()}` : ''}`;
   if (validEmail(agent.email)) {
-    await sendEmail({ to: agent.email, replyTo: input.email, subject: `New booking: ${cfg.name} with ${input.name} - ${when}`,
+    await sendEmail({ to: agent.email, replyTo: input.email, subject: `New booking: Meet With ${who}`,
       attachments: cfg.bookingCalendar === 'closing_time' || !cfg.bookingCalendar ? [{ filename: 'booking.ics', content: ics, contentType: 'text/calendar' }] : undefined,
-      html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p><strong>${esc(input.name)}</strong> (${esc(input.email)}) booked <strong>${esc(cfg.name)}</strong>${property ? ` for ${esc(property)}` : ''}.</p><p><strong>${esc(when)}</strong> · ${len} min</p>${answers.map((a) => `<p style="margin:2px 0"><strong>${esc(a.label)}:</strong> ${esc(a.value)}</p>`).join('')}${meetingUrl ? `<p>${esc(meetingUrl)}</p>` : ''}</div>` }).catch(() => undefined);
+      html: `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;line-height:1.55;max-width:560px"><p><strong>${esc(who)}</strong> (${esc(input.email)}) booked <strong>${esc(cfg.name)}</strong>${property ? ` for ${esc(property)}` : ''}.</p><p><strong>${esc(when)}</strong> · ${len} min</p>${answers.map((a) => `<p style="margin:2px 0"><strong>${esc(a.label)}:</strong> ${esc(a.value)}</p>`).join('')}${meetingUrl ? `<p>${esc(meetingUrl)}</p>` : ''}</div>` }).catch(() => undefined);
   }
   await logDealEvent(s.realtor_id, s.deal_id, 'booking', `${input.name} <${input.email}> booked ${cfg.name} for ${when}`);
   return { ok: true, token, redirectUrl: /^https:\/\//.test(cfg.redirectUrl) ? cfg.redirectUrl : '', meetingUrl };
