@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 const BTN = 'inline-flex items-center gap-1.5 rounded-md border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D] disabled:opacity-50';
 
-export default function TestimonialRequest({ address, emails, agentName }: { address: string; emails: string[]; agentName?: string }) {
+export default function TestimonialRequest({ address, emails, agentName, onSent }: { address: string; emails: string[]; agentName?: string; onSent?: (how: 'link copied' | 'email opened') => void }) {
   const [link, setLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -28,9 +28,9 @@ export default function TestimonialRequest({ address, emails, agentName }: { add
       <p className="mt-1 text-[14px] text-[#4A4757]">This deal closed. Send your client your testimonial link while the experience is fresh. Responses appear in Testimonials Hub for you to approve.</p>
       {failed && <p className="mt-2 text-[13px] text-[#661102]">Your testimonial link could not be loaded. Open Testimonials Hub once, then try again.</p>}
       <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" className={BTN} disabled={!link} onClick={() => { void navigator.clipboard?.writeText(link).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }); }}>{copied ? 'Copied' : 'Copy Link'}</button>
+        <button type="button" className={BTN} disabled={!link} onClick={() => { void navigator.clipboard?.writeText(link).then(() => { onSent?.('link copied'); setCopied(true); setTimeout(() => setCopied(false), 2000); }); }}>{copied ? 'Copied' : 'Copy Link'}</button>
         {emails.length > 0
-          ? <a className={BTN} aria-disabled={!link} href={link ? mailto : undefined}>Email Client</a>
+          ? <a className={BTN} aria-disabled={!link} href={link ? mailto : undefined} onClick={() => onSent?.('email opened')}>Email Client</a>
           : <span className="text-[13px] text-[#7A7787]">Add a client email on this deal to send from here.</span>}
       </div>
     </div>

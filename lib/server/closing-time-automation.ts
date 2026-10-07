@@ -1,4 +1,6 @@
 import { createHash, createHmac, randomBytes, randomUUID } from 'crypto';
+import { lookup } from 'dns/promises';
+import { isIP } from 'net';
 import { query } from '@/lib/server/db/neon';
 import type { AgentCommandCenterWorkspace, AgentDeal } from '@/lib/agent-command-center-workspace';
 
@@ -85,6 +87,24 @@ export async function realtorIdForApiKey(authHeader: string | null): Promise<str
 
 export type WebhookSummary = { id: string; url: string; events: string[]; active: boolean; lastDeliveryAt: string | null; lastStatus: string | null };
 
+function isPrivateIp(ip: string): boolean {
+  const v = ip.toLowerCase();
+  if (v.startsWith('::ffff:')) return isPrivateIp(v.slice(7));
+  if (isIP(v) === 4) {
+    const [a, b] = v.split('.').map(Number);
+    return a === 0 || a === 10 || a === 127 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 192 && b === 0) || (a === 198 && (b === 18 || b === 19)) || a >= 224;
+  }
+  return v === '::' || v === '::1' || v.startsWith('fc') || v.startsWith('fd') || v.startsWith('fe8') || v.startsWith('fe9') || v.startsWith('fea') || v.startsWith('feb') || v.startsWith('ff');
+}
+
+/** Resolves the host and rejects it if any address is private, loopback or link-local. */
+export async function assertPublicHost(hostname: string): Promise<void> {
+  const addrs = await lookup(hostname, { all: true }).catch(() => []);
+  if (!addrs.length) throw new Error('That address could not be found');
+  if (addrs.some((a) => isPrivateIp(a.address))) throw new Error('That address points to a private network and is not allowed');
+}
+
 export function validateWebhookUrl(raw: string): string {
   let u: URL;
   try { u = new URL(raw); } catch { throw new Error('Enter a full web address that starts with https://'); }
@@ -101,6 +121,7 @@ export async function createWebhook(realtorId: string, url: string, events: stri
   const count = await query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM closing_time_webhooks WHERE realtor_id = $1`, [realtorId]);
   if ((count[0]?.n ?? 0) >= 10) throw new Error('Up to 10 webhooks. Delete one first.');
   const clean = validateWebhookUrl(url);
+  await assertPublicHost(new URL(clean).hostname);
   const secret = `whsec_${randomBytes(24).toString('hex')}`;
   const rows = await query<{ id: string }>(
     `INSERT INTO closing_time_webhooks (realtor_id, url, secret, events) VALUES ($1,$2,$3,$4) RETURNING id`,
@@ -171,6 +192,7 @@ async function deliver(hook: { id: string; url: string; secret: string }, event:
   const signature = createHmac('sha256', hook.secret).update(`${ts}.${body}`).digest('hex');
   let status = 'error';
   try {
+    await assertPublicHost(new URL(hook.url).hostname);
     const res = await fetch(hook.url, {
       method: 'POST',
       redirect: 'manual',

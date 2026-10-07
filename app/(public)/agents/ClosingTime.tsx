@@ -3674,6 +3674,12 @@ export default function ClosingTime({
             {activeDeal.closeoutOutcome === 'closed' && (
               <TestimonialRequest
                 address={activeDeal.propertyAddress}
+                onSent={(how) => {
+                  const now = new Date().toISOString();
+                  persistDeals(deals.map((d) => d.id === activeDeal.id
+                    ? { ...d, updatedAt: now, activity: [...d.activity, { id: getId('activity'), message: `Testimonial request ${how} for ${activeDeal.propertyAddress || 'this deal'}`, createdAt: now }].slice(-300) }
+                    : d));
+                }}
                 emails={activeDeal.clientContacts.map((c) => c.email.trim()).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))}
               />
             )}
