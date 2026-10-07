@@ -120,8 +120,6 @@ export default function RootLayout({
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="antialiased font-sans light-theme">
         <script dangerouslySetInnerHTML={{ __html: "try{var n=performance.getEntriesByType('navigation')[0];if(n&&n.type==='reload'&&'scrollRestoration' in history){history.scrollRestoration='manual';}}catch(e){}" }} />
-        {/* TEMPORARY hydration diagnostics: only active with ?hydrationdebug=1. Remove after the cause of React error 418 is found. */}
-        <script dangerouslySetInnerHTML={{ __html: "try{if(location.search.indexOf('hydrationdebug=1')>-1){var sig=function(root){var o=[];var w=document.createTreeWalker(root,1);var n;while((n=w.nextNode())){if(n.tagName==='SCRIPT'||n.tagName==='STYLE'||n.tagName==='NEXT-ROUTE-ANNOUNCER')continue;var t='';for(var i=0;i<n.childNodes.length;i++){if(n.childNodes[i].nodeType===3)t+=n.childNodes[i].textContent.trim()}o.push(n.tagName+'.'+(n.getAttribute('class')||'').slice(0,40)+'|'+t.slice(0,40))}return o};document.addEventListener('DOMContentLoaded',function(){window.__ssrSig=sig(document.body);window.__ssrAt=Date.now()});window.addEventListener('load',function(){setTimeout(function(){var a=window.__ssrSig||[],b=sig(document.body),d=[];for(var i=0;i<Math.max(a.length,b.length)&&d.length<12;i++){if(a[i]!==b[i])d.push(i+': SSR='+a[i]+'  CLIENT='+b[i])}console.log('[hydration-debug] ssr='+a.length+' client='+b.length+' firstDiffs=',JSON.stringify(d))},4000)})}}catch(e){}" }} />
         <PostHogProvider>
           <PushBootstrap />
           {/* Native iOS shell only: dismiss the Capacitor splash screen as
