@@ -139,6 +139,15 @@ function AutoDetails({ className, children }: { className?: string; children: Re
   return <details ref={ref} className={className}>{children}</details>;
 }
 
+// One section is shown at a time, so each card stays open and the header row only holds its buttons.
+function PinnedDetails({ className, children }: { className?: string; children: ReactNode }) {
+  return (
+    <details open className={className} onClick={(e) => { const t = e.target as HTMLElement; if (t.closest('summary') && !t.closest('button')) e.preventDefault(); }}>
+      {children}
+    </details>
+  );
+}
+
 const fieldCls = 'h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#301D5D]';
 
 type ContractSection = (typeof CONTRACT_MAP_SECTIONS)[number];
@@ -221,6 +230,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
   ];
   const [editing, setEditing] = useState<AgentKeyTerm | null>(null);
   const [quickId, setQuickId] = useState<string | null>(null);
+  const [tab, setTab] = useState<string>('key-details');
   const [isNew, setIsNew] = useState(false);
 
   const putTerm = (next: AgentKeyTerm[]) => onPatch({ keyTerms: next, keyTermsCustom: true });
@@ -529,11 +539,15 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
 
   return (
     <div className="ds-page" data-testid="contract-page" onKeyDown={(e) => { const t = e.target as HTMLInputElement; if (e.key === 'Enter' && !e.shiftKey && t.tagName === 'INPUT' && t.type !== 'checkbox') { e.preventDefault(); t.blur(); } }}>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-500">Enter every section in one place, or open a section below.</p>
-        <button type="button" onClick={() => setQuickId(CONTRACT_MAP_SECTIONS[0].id)}>Quick Entry</button>
+      <div role="tablist" aria-label="Contract Sections" className="sticky top-0 z-10 -mx-1 mb-3 flex gap-1 overflow-x-auto border-b border-[#E6E5EC] bg-white px-1 pb-2 pt-1">
+        {[{ id: 'key-details', title: 'Key Details', filled: terms.filter((t) => t.value.trim()).length, total: terms.length }, ...CONTRACT_MAP_SECTIONS.map((x) => { const vis = x.fields.filter((fl) => !hidden.includes(fl.id)); return { id: x.id as string, title: x.title as string, filled: vis.filter((fl) => getVal(fl.id).trim()).length, total: vis.length }; })].map((t) => (
+          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
+            className={`!flex-none !whitespace-nowrap ${tab === t.id ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#301D5D]' : ''}`}>
+            {t.title}<span className="ml-1.5 text-xs font-normal text-slate-500">{t.filled}/{t.total}</span>
+          </button>
+        ))}
       </div>
-      <div aria-label="Contract Sections">
+      <div>
         <div className="space-y-3">
           {CONTRACT_MAP_SECTIONS.map((section) => {
             const visibleFields = section.fields.filter((fl) => !hidden.includes(fl.id));
@@ -541,7 +555,8 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
             const filled = visibleFields.filter((fl) => getVal(fl.id).trim()).length;
             return (
               <Fragment key={section.id}>
-              <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
+              {tab === section.id && (
+              <PinnedDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
                 <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900">
                   <span>{section.title}</span>
                   <span className="flex items-center gap-3">
@@ -552,9 +567,10 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
                   </span>
                 </summary>
                 {renderSectionBody(section, true)}
-              </AutoDetails>
-              {section.id === 'property' && (
-                <AutoDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
+              </PinnedDetails>
+              )}
+              {section.id === 'property' && tab === 'key-details' && (
+                <PinnedDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
                   <summary className="flex cursor-pointer list-none items-center justify-between px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span><span className="flex items-center gap-3">{onOpenCalculator && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenCalculator('calc-commission'); }}>Commission Calculator</button>}<button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setArrange((v) => !v); setKdPicked(null); }}>{arrange ? 'Done Arranging' : 'Arrange'}</button><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId('key-details'); }}>Quick Entry</button></span></summary>
                   <div className="border-t border-[#F6F3FB]">
       <section className="overflow-hidden bg-white" aria-label="Contract Terms">
@@ -598,7 +614,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
       </section>
 
                   </div>
-                </AutoDetails>
+                </PinnedDetails>
               )}
               </Fragment>
             );

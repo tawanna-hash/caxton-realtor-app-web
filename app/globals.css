@@ -1776,3 +1776,9 @@ input::placeholder, textarea::placeholder { color: var(--astro-text-placeholder)
 
 /* Closing Time left rail: own scroll, pinned to the full viewport (no site header above it). */
 #agent-desk .ds-rail { top: 0 !important; height: 100vh !important; height: 100dvh !important; overflow-y: auto !important; overscroll-behavior: contain; align-self: start; }
+
+/* Contract page: field delete buttons appear on hover or focus so the form reads cleanly. */
+#agent-desk [data-testid="contract-page"] button[aria-label="Delete field"], #agent-desk [data-testid="contract-page"] button[aria-label="Remove field"] { opacity: 0; transition: opacity 0.15s; }
+#agent-desk [data-testid="contract-page"] .min-w-0:hover button[aria-label="Delete field"], #agent-desk [data-testid="contract-page"] .min-w-0:focus-within button[aria-label="Delete field"],
+#agent-desk [data-testid="contract-page"] .min-w-0:hover button[aria-label="Remove field"], #agent-desk [data-testid="contract-page"] .min-w-0:focus-within button[aria-label="Remove field"] { opacity: 1; }
+@media (hover: none) { #agent-desk [data-testid="contract-page"] button[aria-label="Delete field"], #agent-desk [data-testid="contract-page"] button[aria-label="Remove field"] { opacity: 1; } }
