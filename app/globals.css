@@ -1702,3 +1702,17 @@ input[type='date']::-webkit-calendar-picker-indicator {
 }
 
 #agent-desk .ds-dealnav-label { color: #7A7787; }
+
+/* Astro layout and components: 4px corners, Astro table treatment, visible focus rings, 44px touch targets.
+   Fonts (Inter, Georgia titles), the purple brand and rounded pills and badges are unchanged. */
+:is(.rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl):not(.rounded-full) { border-radius: 4px !important; }
+:is(button, input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']):not([role='switch']):not([class*='rounded-full']) { border-radius: 4px; }
+#agent-desk .ds-card, #agent-desk .ds-navbtn, #agent-desk .ds-deal, #agent-desk .ds-new { border-radius: 4px; }
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid #5B3FA0; outline-offset: 2px; }
+table:not([role='presentation']) thead th { background: #F6F3FB; color: #1B1726; font-weight: 600; border-bottom: 1px solid #D9CFF0; }
+table:not([role='presentation']) tbody td { border-bottom-color: #E6E5EC; }
+table:not([role='presentation']) tbody tr:hover > td { background: #F6F3FB; }
+@media (pointer: coarse) {
+  button:not([role='switch']):not([class*='rounded-full']), select, [role='button'],
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']) { min-height: 44px; }
+}
