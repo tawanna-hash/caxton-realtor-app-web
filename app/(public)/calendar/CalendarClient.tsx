@@ -1,5 +1,6 @@
 'use client';
 
+import { useKeepScroll } from '@/lib/keep-scroll';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EventsList } from '@/components/events/EventsList';
@@ -18,6 +19,7 @@ function isoDateKey(d: Date): string {
 }
 
 export default function CalendarClient() {
+  useKeepScroll(true);
   const router = useRouter();
   const { pub } = usePublication();
   // Dallas/Ft. Worth is pre-launch. The server only answers

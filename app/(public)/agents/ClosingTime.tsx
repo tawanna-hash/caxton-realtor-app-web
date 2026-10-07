@@ -6,6 +6,7 @@ import ClosingTimeAssist from './ClosingTimeAssist';
 import ClientPortalPanel from './ClientPortalPanel';
 import SchedulersPanel from './SchedulersPanel';
 import { dealPeople } from '@/lib/closing-time-people';
+import { readKeepScroll, useKeepScroll } from '@/lib/keep-scroll';
 import MessagesPanel from './MessagesPanel';
 import IntegrationsPanel from './IntegrationsPanel';
 import AlertSetupContent from './AlertSetupContent';
@@ -1096,6 +1097,7 @@ export default function ClosingTime({
   // A refresh always lands at the top of the page instead of restoring the old scroll position.
   useEffect(() => {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+    if (readKeepScroll()) return; // a scheduling page you were working on keeps its exact spot
     const toTop = () => window.scrollTo(0, 0);
     toTop();
     const timer = window.setTimeout(toTop, 150);
@@ -1196,6 +1198,8 @@ export default function ClosingTime({
   const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
+  // Scheduling pages are working pages: a refresh keeps the exact scroll position there.
+  useKeepScroll(effectiveView === 'my-schedule' || effectiveView === 'd-schedule', ready);
   useEffect(() => {
     DESK_VIEWS.find((v) => v.id === effectiveView)?.keys.forEach((key) => reveal(key));
   }, [effectiveView, reveal]);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { readKeepScroll } from '@/lib/keep-scroll';
 
 /**
  * After a browser refresh, always start at the top of the page. The page is held at the top until the
@@ -14,7 +15,10 @@ export default function ScrollTopOnReload() {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
     let active = true;
     const stop = () => { active = false; };
-    const toTop = () => { if (active && window.scrollY !== 0) window.scrollTo(0, 0); };
+    // Pages you are working on (scheduling, calendar) return to the exact saved spot instead of the top.
+    const keep = readKeepScroll();
+    const targetY = keep ? keep.y : 0;
+    const toTop = () => { if (active && Math.abs(window.scrollY - targetY) > 1) window.scrollTo(0, targetY); };
     const events = ['wheel', 'touchstart', 'keydown', 'mousedown'] as const;
     events.forEach((e) => window.addEventListener(e, stop, { passive: true, once: true }));
     toTop();
