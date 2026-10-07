@@ -71,17 +71,17 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
   };
 
   if (editing && data) {
-    return <Builder key={editing.id ?? 'new'} data={data} dealId={deal.id} host={host} initial={editing} property={deal.propertyAddress ?? ''} parties={dealParties(deal)}
+    return <Builder key={editing.id ?? 'new'} data={data} dealId={deal.id} host={host} initial={editing} property={deal.propertyAddress ?? ''} parties={deal.id === '__personal__' ? [] : dealParties(deal)}
       onClose={(saved) => { setEditing(null); if (saved) { setMsg(saved); setTick((t) => t + 1); } }} />;
   }
 
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-[22px] font-semibold text-[#1B1726]">Schedulers</h2>
-        <p className="mt-1 text-[14px] text-[#4A4757]">Booking pages for this deal. People pick an open time and it lands on your calendar.</p>
+        <h2 className="text-[22px] font-semibold text-[#1B1726]">{deal.id === '__personal__' ? 'My Schedulers' : 'Schedulers'}</h2>
+        <p className="mt-1 text-[14px] text-[#4A4757]">{deal.id === '__personal__' ? 'Your personal booking pages, not tied to any deal. People pick an open time and it lands on your calendar.' : 'Booking pages for this deal. People pick an open time and it lands on your calendar.'}</p>
       </div>
-      <ClosingSchedulePanel dealId={deal.id} />
+      {deal.id !== '__personal__' && <ClosingSchedulePanel dealId={deal.id} />}
       {msg && <p role="status" className="text-[13px] font-medium text-[#005A00]">{msg}</p>}
       {error && <p role="alert" className="text-[13px] font-medium text-[#661102]">{error}</p>}
       {!data && !error && <p className="text-[12px] font-medium text-[#7A7787]">Loading</p>}
@@ -145,7 +145,7 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-[#E6E5EC] bg-white px-4 py-3">
                   <span className="min-w-0">
                     <span className="block truncate text-[14px] text-[#4A4757]">{urlOf('all')}</span>
-                    <span className="block text-[12px] text-[#7A7787]">Combined link, always on. Shows every active scheduler on this deal, including ones you add later.</span>
+                    <span className="block text-[12px] text-[#7A7787]">Combined link, always on. Shows every active scheduler here, including ones you add later.</span>
                   </span>
                   <span className="flex shrink-0 items-center gap-2">
                     {live && <button type="button" aria-label="Copy combined URL" className="text-[#7A7787] hover:text-[#301D5D]" onClick={() => copy(urlOf('all'))}>{copied === urlOf('all') ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}</button>}

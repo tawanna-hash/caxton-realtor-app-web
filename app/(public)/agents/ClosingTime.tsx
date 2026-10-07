@@ -29,6 +29,7 @@ const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'forms', label: 'Forms Library', keys: ['trec-library'] },
   { id: 'tools', label: 'Calculators', keys: [] },
   { id: 'referral', label: 'Referral Network', keys: [] },
+  { id: 'my-schedule', label: 'My Scheduling', keys: [] },
   { id: 'integrations', label: 'Integrations', keys: ['calendar'] },
 ];
 const CALC_VIEWS: { id: string; label: string; keys: string[] }[] = [
@@ -36,6 +37,7 @@ const CALC_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'calc-commission', label: 'Commission Calculator', keys: [] },
   { id: 'calc-cash', label: 'Cash-To-Close', keys: [] },
 ];
+const PERSONAL_DEAL = { id: '__personal__', title: 'Personal', propertyAddress: '', clientContacts: [], serviceProviders: [] } as unknown as AgentDeal;
 const DEALS_VIEW = { id: 'deals', label: 'Deals', keys: [] as string[] };
 const ALERT_SETUP_VIEW = { id: 'alert-setup', label: 'Alert Setup', keys: [] as string[] };
 const CLOSINGS_VIEW = { id: 'closings', label: 'Closings', keys: [] as string[] };
@@ -43,7 +45,7 @@ const CONTACTS_VIEW = { id: 'contacts', label: 'Contacts', keys: [] as string[] 
 const SETTINGS_VIEW = { id: 'coordinator', label: 'Settings', keys: ['assist', 'alerts', 'calendar-link', 'agent-details', 'mls'] };
 const UTILITIES_VIEW = { id: 'utilities', label: 'Utilities', keys: [] as string[] };
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, SETTINGS_VIEW, UTILITIES_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
-const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug };
+const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug, 'my-schedule': CalendarClock };
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -83,6 +85,7 @@ import {
   Smartphone,
   Trash2,
   X,
+  CalendarClock,
 } from 'lucide-react';
 import PushOptInButton from '@/components/PushOptInButton';
 import TrecPdfPagePreview from './TrecPdfPagePreview';
@@ -2965,6 +2968,7 @@ export default function ClosingTime({
             {effectiveView === 'utilities' && <UtilitiesPanel />}
             {effectiveView === 'd-messages' && activeDeal && <div className="ds-page"><MessagesPanel key={activeDeal.id} deal={activeDeal} /></div>}
             {effectiveView === 'd-portal' && activeDeal && <div className="ds-page"><ClientPortalPanel key={activeDeal.id} deal={activeDeal} /></div>}
+            {effectiveView === 'my-schedule' && <div className="ds-page space-y-8"><SchedulersPanel key="personal" deal={PERSONAL_DEAL} onOpenIntegrations={() => setDeskView('integrations')} /></div>}
             {effectiveView === 'd-schedule' && activeDeal && <div className="ds-page space-y-8"><SchedulersPanel key={activeDeal.id} deal={activeDeal} onOpenIntegrations={() => setDeskView('integrations')} /></div>}
             {['d-overview', 'd-documents', 'd-people'].includes(effectiveView) && (() => {
               const deal = activeDeal;

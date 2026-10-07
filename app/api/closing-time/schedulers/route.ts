@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { requireUser } from '@/lib/server/auth/user';
 import { withErrorHandling } from '@/lib/server/error';
 import { requireDeal } from '@/lib/server/closing-time-assist';
-import { agentOf, calendarsFor, cancelByAgent, deleteCombo, deleteScheduler, listSchedulers, saveCombo, saveScheduler, setActive, setSlug } from '@/lib/server/closing-time-schedulers';
+import { PERSONAL_ID, agentOf, calendarsFor, cancelByAgent, deleteCombo, deleteScheduler, listSchedulers, saveCombo, saveScheduler, setActive, setSlug } from '@/lib/server/closing-time-schedulers';
 import { aliasify } from '@/lib/scheduler-shared';
 
 export const runtime = 'nodejs';
@@ -47,7 +47,7 @@ const priv = (body: unknown, status = 200) => NextResponse.json(body, { status, 
 export const GET = withErrorHandling(async (req: Request): Promise<Response> => {
   const user = await requireUser();
   const id = dealId.parse(new URL(req.url).searchParams.get('dealId'));
-  await requireDeal(user.realtorId, id);
+  if (id !== PERSONAL_ID) await requireDeal(user.realtorId, id);
   const [data, cals, agent] = await Promise.all([listSchedulers(user.realtorId, id), calendarsFor(user.realtorId).catch(() => ({ account: null, calendars: [] })), agentOf(user.realtorId)]);
   return priv({ ...data, ...cals, accountEmail: user.email, agentName: agent.name === 'Your agent' ? '' : agent.name });
 });

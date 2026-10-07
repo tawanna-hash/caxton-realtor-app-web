@@ -55,6 +55,14 @@ function ensure(): Promise<void> {
   return ready;
 }
 
+/** Schedulers that belong to the agent rather than to one deal use this reserved deal id. */
+export const PERSONAL_ID = '__personal__';
+async function dealOrPersonal(realtorId: string, dealId: string): Promise<{ propertyAddress: string; title: string }> {
+  if (dealId === PERSONAL_ID) { const a = await agentOf(realtorId); return { propertyAddress: '', title: a.name === 'Your agent' ? '' : a.name }; }
+  const d = await requireDeal(realtorId, dealId);
+  return { propertyAddress: d.propertyAddress ?? '', title: d.title ?? '' };
+}
+
 const esc = (v: string) => v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c));
 const validEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const merge = (c: Partial<SchedulerConfig> | null | undefined): SchedulerConfig => {
@@ -68,8 +76,8 @@ export async function getLink(realtorId: string, dealId: string): Promise<string
   await ensure();
   const rows = await query<{ slug: string }>(`SELECT slug FROM closing_time_scheduler_links WHERE realtor_id=$1 AND deal_id=$2`, [realtorId, dealId]);
   if (rows[0]) return rows[0].slug;
-  const deal = await requireDeal(realtorId, dealId);
-  const base = slugify(deal.propertyAddress || deal.title || '') || `deal${randomBytes(3).toString('hex')}`;
+  const deal = await dealOrPersonal(realtorId, dealId);
+  const base = slugify(deal.propertyAddress || deal.title || '') || `${dealId === PERSONAL_ID ? 'me' : 'deal'}${randomBytes(3).toString('hex')}`;
   for (let i = 0; i < 20; i += 1) {
     const slug = i === 0 && !RESERVED.has(base) ? base : `${base}${i + 1}`;
     const done = await query<{ slug: string }>(`INSERT INTO closing_time_scheduler_links (realtor_id, deal_id, slug) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING RETURNING slug`, [realtorId, dealId, slug]);
@@ -82,7 +90,7 @@ export async function getLink(realtorId: string, dealId: string): Promise<string
 
 export async function setSlug(realtorId: string, dealId: string, raw: string): Promise<string> {
   await ensure();
-  await requireDeal(realtorId, dealId);
+  await dealOrPersonal(realtorId, dealId);
   const slug = slugify(raw);
   if (slug.length < 3) throw new ApiError(400, 'Use at least 3 letters or numbers.');
   if (RESERVED.has(slug)) throw new ApiError(400, 'That URL is reserved. Pick another.');
@@ -172,7 +180,7 @@ async function aliasTaken(realtorId: string, dealId: string, alias: string, exce
 
 export async function saveScheduler(realtorId: string, dealId: string, id: string | null, cfg: SchedulerConfig): Promise<string> {
   await ensure();
-  await requireDeal(realtorId, dealId);
+  await dealOrPersonal(realtorId, dealId);
   const alias = cfg.urlMode === 'root' ? '' : cfg.alias;
   if (cfg.urlMode === 'alias' && !alias) throw new ApiError(400, 'Pick an alias for this scheduler.');
   if (RESERVED.has(alias)) throw new ApiError(400, 'That alias is reserved. Pick another.');
@@ -220,7 +228,7 @@ export async function deleteScheduler(realtorId: string, id: string) {
 
 export async function saveCombo(realtorId: string, dealId: string, input: { id?: string; title: string; alias: string; schedulerIds: string[] }): Promise<void> {
   await ensure();
-  await requireDeal(realtorId, dealId);
+  await dealOrPersonal(realtorId, dealId);
   if (!input.alias || RESERVED.has(input.alias)) throw new ApiError(400, 'Pick an alias for the combined link.');
   if (await aliasTaken(realtorId, dealId, input.alias, input.id ?? null)) throw new ApiError(409, 'That alias is already used on this deal.');
   const mine = await query<{ id: string }>(`SELECT id FROM closing_time_schedulers WHERE realtor_id=$1 AND deal_id=$2 AND id = ANY($3::uuid[])`, [realtorId, dealId, input.schedulerIds]);
@@ -251,7 +259,7 @@ async function schedulerById(id: string): Promise<SchedRow | null> {
 
 async function toPublic(s: SchedRow, slug: string): Promise<PublicScheduler> {
   const agent = await agentOf(s.realtor_id);
-  const deal = await requireDeal(s.realtor_id, s.deal_id).catch(() => null);
+  const deal = await dealOrPersonal(s.realtor_id, s.deal_id).catch(() => null);
   const cfg = merge(s.config);
   // Only booking-page fields leave the server: calendar ids and workflow text stay private.
   const safe: SchedulerConfig = { ...cfg, bookingCalendar: '', bookingCalendarName: '', additionalCalendars: [], attendees: '', reminders: [], followUp: null, description: '', subject: '' };
@@ -329,7 +337,7 @@ export async function createBooking(id: string, input: { start: number; length: 
   if (!open?.[z.date]?.some((x) => x.start === input.start)) return { ok: false, error: 'That time was just taken. Please pick another.' };
   const start = new Date(input.start), end = new Date(input.start + len * 60_000);
   const agent = await agentOf(s.realtor_id);
-  const deal = await requireDeal(s.realtor_id, s.deal_id).catch(() => null);
+  const deal = await dealOrPersonal(s.realtor_id, s.deal_id).catch(() => null);
   const property = deal?.propertyAddress || deal?.title || '';
   const title = fillTemplate(cfg.subject || '{invitee_name} and {my_name} - {subject}', { invitee_name: input.name, invitee_email: input.email, my_name: cfg.yourName || agent.name, subject: cfg.name });
   const answers = cfg.questions.map((q) => ({ label: q.label, value: (input.answers[q.id] ?? '').trim().slice(0, 1000) })).filter((a) => a.value);
