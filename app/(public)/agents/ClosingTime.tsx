@@ -39,6 +39,7 @@ const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'referral', label: 'Referral Network', keys: [] },
   { id: 'my-schedule', label: 'My Scheduling', keys: [] },
   { id: 'integrations', label: 'Integrations', keys: ['calendar'] },
+  { id: 'setup-help', label: 'Set Up Instructions', keys: [] },
 ];
 const CALC_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'calc-net-sheet', label: 'Seller Net Sheet', keys: [] },
@@ -79,7 +80,7 @@ const DOCTOOLS_VIEW = { id: 'doc-tools', label: 'Document Tools', keys: [] as st
 const SECURITY_VIEW = { id: 'security', label: 'Security', keys: [] as string[] };
 const AUTOMATIONS_VIEW = { id: 'automations', label: 'Automations', keys: [] as string[] };
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, SETTINGS_VIEW, UTILITIES_VIEW, DATA_VIEW, TESTIMONIALS_VIEW, AUTOMATIONS_VIEW, SECURITY_VIEW, DOCTOOLS_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
-const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug, 'my-schedule': CalendarClock };
+const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug, 'my-schedule': CalendarClock, 'setup-help': ListChecks };
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -96,6 +97,7 @@ import {
   ChevronDown,
   ChevronLeft,
   BookOpen,
+  ListChecks,
   Settings as SettingsIcon,
   LogOut as LogOutIcon,
   ChevronRight,
@@ -3324,6 +3326,22 @@ export default function ClosingTime({
             {effectiveView === 'testimonials' && <div className="ds-page"><TestimonialHubClient /></div>}
             {effectiveView === 'd-messages' && activeDeal && <div className="ds-page"><MessagesPanel key={activeDeal.id} deal={activeDeal} /></div>}
             {effectiveView === 'd-portal' && activeDeal && <div className="ds-page"><ClientPortalPanel key={activeDeal.id} deal={activeDeal} /></div>}
+            {effectiveView === 'setup-help' && (
+              <div className="ds-page space-y-6">
+                <div>
+                  <h2 className="ds-title">Set Up Instructions</h2>
+                  <p className="mt-1 text-[14px] text-[#4A4757]">Step-by-step guides. The same steps appear under Help on each page.</p>
+                </div>
+                <div className="ds-card">
+                  <p className="text-sm font-semibold text-slate-900">{SCHEDULING_HOWTO.title}</p>
+                  {SCHEDULING_HOWTO.intro && <p className="mt-1 text-[14px] text-[#4A4757]">{SCHEDULING_HOWTO.intro}</p>}
+                  <div className="mt-3 space-y-3 text-[14px] text-[#4A4757]">
+                    {SCHEDULING_HOWTO.steps.map((h, n) => <p key={h.step}><strong className="text-[#1B1726]">{n + 1}. {h.step}.</strong> {h.text}</p>)}
+                  </div>
+                  <button type="button" className="mt-4" onClick={() => { setWorkspacePage(2); setDeskView('my-schedule'); }}>Open My Scheduling</button>
+                </div>
+              </div>
+            )}
             {effectiveView === 'my-schedule' && <div className="ds-page space-y-8"><SchedulersPanel key="personal" deal={PERSONAL_DEAL} onOpenIntegrations={() => setDeskView('integrations')} /></div>}
             {effectiveView === 'd-schedule' && activeDeal && <div className="ds-page space-y-8"><SchedulersPanel key={activeDeal.id} deal={activeDeal} onOpenIntegrations={() => setDeskView('integrations')} /></div>}
             {['d-overview', 'd-documents', 'd-people'].includes(effectiveView) && (() => {
