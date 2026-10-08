@@ -119,7 +119,7 @@ export function dealRisks(deal: AgentDeal, today: string): DealRisk[] {
       id: 'risk-auto-close',
       severity: ac.daysLeft <= 3 ? 'high' : 'medium',
       title: `Deal closes automatically on ${formatCloseDate(ac.date)}`,
-      detail: `After that date the deal becomes read-only. Clear up the file before then${ac.canExtend ? ', or extend the deal from its Snapshot' : ''}.`,
+      detail: `After that date the deal becomes read-only. Clear up the file before then, or extend the deal from its Snapshot.`,
     });
   }
   return risks.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === 'high' ? -1 : 1));

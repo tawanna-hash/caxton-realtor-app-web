@@ -100,6 +100,7 @@ type Props = {
   formatDate: (value: string) => string;
   countdownLabel: string;
   onUpdate: <K extends keyof AgentDeal>(key: K, value: AgentDeal[K]) => void;
+  onExtendDeal?: (dealId: string) => void;
   onBack: () => void;
   onOpenView: (view: string) => void;
   /** Readiness Check items in, from the Readiness Check list itself. */
@@ -159,7 +160,7 @@ function textHref(phone: string, name: string, address: string): string {
   return `sms:${digits}?&body=${encodeURIComponent(body)}`;
 }
 
-export default function DealSubpage({ readiness, deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
+export default function DealSubpage({ readiness, deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onExtendDeal, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
   const [stagesOpen, setStagesOpen] = useState(false);
   // Stages stay closed until opened by hand, then close again on their own after five minutes.
@@ -406,11 +407,11 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
         <p className="text-[14px] font-semibold text-[#301D5D]">This Deal Closes Automatically On {formatCloseDate(autoClose.date)}</p>
         <p className="mt-1 text-[13px] text-[#4A4757]">
           {autoClose.hasClosingDate ? 'Deals close two weeks after the closing date.' : 'No closing date is entered, so this deal closes 180 days after it was opened.'}
-          {' '}After that it becomes read-only. Clear up the file before then{autoClose.canExtend ? ', or extend the deal.' : '.'}
+          {' '}After that it becomes read-only. Clear up the file before then{', or extend the deal.'}
         </p>
       </div>
-      {autoClose.canExtend && !locked && (
-        <button type="button" data-no-auto-open onClick={() => onUpdate('autoCloseExtensionDays', (deal.autoCloseExtensionDays ?? 0) + EXTENSION_DAYS)} className="hover:!bg-[#EFEAF8] hover:!text-[#301D5D]">Extend {EXTENSION_DAYS} Days</button>
+      {!locked && onExtendDeal && (
+        <button type="button" data-no-auto-open onClick={() => onExtendDeal(deal.id)} className="hover:!bg-[#EFEAF8] hover:!text-[#301D5D]">Extend {EXTENSION_DAYS} Days{autoClose.nextExtensionFree ? ' Free' : ' For $5'}</button>
       )}
     </div>
   ) : null;

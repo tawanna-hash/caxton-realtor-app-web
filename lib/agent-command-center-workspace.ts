@@ -163,7 +163,7 @@ export const agentDealSchema = z.object({
   closeoutOutcome: optionalShortText(120), closeoutDate: dateText.default(''), closeoutNote: optionalShortText(2_000),
   auditLocked: z.boolean().default(false),
   isTemplate: z.boolean().default(false),
-  autoCloseExtensionDays: z.number().int().min(0).max(60).default(0),
+  autoCloseExtensionDays: z.number().int().min(0).max(700).default(0),
   ignoredBlankAlerts: z.array(shortText(80)).max(100).default([]),
   buyerRepForm: z.enum(['', '1501', '1507', '1508']).default(''),
   contractForm: z.enum(['20', '30', '9', '25', '24', '23']).default('20'),

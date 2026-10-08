@@ -1,6 +1,6 @@
 import { query } from '@/lib/server/db/neon';
 import { getStripe, isStripeConfigured, getPublishableKey } from '@/lib/stripe';
-import { DEAL_PRICE_CENTS, FREE_DEAL_LIMIT } from '@/lib/closing-time-lifecycle';
+import { DEAL_PRICE_CENTS, EXTENSION_PRICE_CENTS, FREE_DEAL_LIMIT } from '@/lib/closing-time-lifecycle';
 import { logDealEvent } from '@/lib/server/closing-time-events';
 
 /**
@@ -17,6 +17,8 @@ function ensure(): Promise<void> {
     await query(`CREATE TABLE IF NOT EXISTS closing_time_deal_ledger (
       realtor_id UUID NOT NULL, deal_id TEXT NOT NULL, kind TEXT NOT NULL, payment_intent_id TEXT UNIQUE,
       amount_cents INTEGER NOT NULL DEFAULT 0, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY (realtor_id, deal_id))`);
+    await query(`CREATE TABLE IF NOT EXISTS closing_time_extension_ledger (
+      payment_intent_id TEXT PRIMARY KEY, realtor_id UUID NOT NULL, deal_id TEXT NOT NULL, amount_cents INTEGER NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
   })().catch((e) => { ready = null; throw e; });
   return ready;
 }
@@ -75,5 +77,35 @@ export async function confirmDealPayment(realtorId: string, dealId: string, paym
   if (!ok) return false;
   await query(`INSERT INTO closing_time_deal_ledger (realtor_id, deal_id, kind, payment_intent_id, amount_cents) VALUES ($1,$2,'paid',$3,$4) ON CONFLICT DO NOTHING`, [realtorId, dealId, paymentIntentId, DEAL_PRICE_CENTS]);
   await logDealEvent(realtorId, dealId, 'payment', 'Deal opened. $12.00 paid by card.');
+  return true;
+}
+
+/** The first extension on a deal is free. Each one after that costs $5. Owner accounts are exempt. */
+export function extensionNeedsPayment(email: string, extensionsSoFar: number): boolean {
+  return !isBillingExempt(email) && extensionsSoFar >= 1;
+}
+
+export async function createExtensionPayment(realtorId: string, email: string, dealId: string, extensionsSoFar: number) {
+  if (!isStripeConfigured()) throw new Error('Payments are not set up yet.');
+  const publishableKey = getPublishableKey();
+  if (!publishableKey) throw new Error('Payments are not set up yet.');
+  if (!extensionNeedsPayment(email, extensionsSoFar)) throw new Error('This extension does not need a payment.');
+  const intent = await getStripe().paymentIntents.create({
+    amount: EXTENSION_PRICE_CENTS, currency: 'usd', automatic_payment_methods: { enabled: true },
+    description: 'Closing Time deal extension: 14 more days', receipt_email: email,
+    metadata: { product: 'closing_time_extension', realtor_id: realtorId, deal_id: dealId },
+  });
+  return { clientSecret: intent.client_secret, publishableKey, amountCents: EXTENSION_PRICE_CENTS, paymentIntentId: intent.id };
+}
+
+export async function confirmExtensionPayment(realtorId: string, dealId: string, paymentIntentId: string): Promise<boolean> {
+  await ensure();
+  const intent = await getStripe().paymentIntents.retrieve(paymentIntentId);
+  const ok = intent.status === 'succeeded' && intent.amount === EXTENSION_PRICE_CENTS
+    && intent.metadata?.product === 'closing_time_extension' && intent.metadata?.realtor_id === realtorId && intent.metadata?.deal_id === dealId;
+  if (!ok) return false;
+  const inserted = await query(`INSERT INTO closing_time_extension_ledger (payment_intent_id, realtor_id, deal_id, amount_cents) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING payment_intent_id`, [paymentIntentId, realtorId, dealId, EXTENSION_PRICE_CENTS]);
+  if (inserted.length === 0) return false; // already used for an earlier extension
+  await logDealEvent(realtorId, dealId, 'payment', 'Deal extended 14 days. $5.00 paid by card.');
   return true;
 }

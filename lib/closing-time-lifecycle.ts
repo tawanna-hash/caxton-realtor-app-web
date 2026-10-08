@@ -6,7 +6,8 @@ export const AUTO_CLOSE_DAYS_AFTER_CLOSING = 14;
 export const AUTO_CLOSE_DAYS_NO_CLOSING_DATE = 180;
 export const AUTO_CLOSE_WARNING_DAYS = 14;
 export const EXTENSION_DAYS = 14;
-export const MAX_EXTENSIONS = 2;
+export const FREE_EXTENSIONS = 1;
+export const EXTENSION_PRICE_CENTS = 500;
 export const FREE_DEAL_LIMIT = 2;
 export const DEAL_PRICE_CENTS = 1200;
 
@@ -35,7 +36,7 @@ export type AutoCloseState = {
   due: boolean;
   hasClosingDate: boolean;
   extensions: number;
-  canExtend: boolean;
+  nextExtensionFree: boolean;
 };
 
 export function autoCloseState(deal: LifecycleDeal, today: string): AutoCloseState | null {
@@ -48,5 +49,5 @@ export function autoCloseState(deal: LifecycleDeal, today: string): AutoCloseSta
   const date = addDays(base, extensionDays);
   const daysLeft = daysBetween(today, date);
   const extensions = Math.round(extensionDays / EXTENSION_DAYS);
-  return { date, daysLeft, warn: daysLeft <= AUTO_CLOSE_WARNING_DAYS, due: daysLeft < 0, hasClosingDate, extensions, canExtend: extensions < MAX_EXTENSIONS };
+  return { date, daysLeft, warn: daysLeft <= AUTO_CLOSE_WARNING_DAYS, due: daysLeft < 0, hasClosingDate, extensions, nextExtensionFree: extensions < FREE_EXTENSIONS };
 }

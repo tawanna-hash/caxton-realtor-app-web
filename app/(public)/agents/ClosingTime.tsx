@@ -117,7 +117,7 @@ import { effectiveAgentSide } from './purchase-documents';
 import DealSubpage, { TASK_TEMPLATES } from './DealSubpage';
 import DocumentRequestsCard from './DocumentRequestsCard';
 import DealPaymentWindow from './DealPaymentWindow';
-import { autoCloseState } from '@/lib/closing-time-lifecycle';
+import { EXTENSION_DAYS, autoCloseState } from '@/lib/closing-time-lifecycle';
 import { syncStoredFromForm } from './ContractPage';
 import { autofillDeal, buildAutofillIndex } from '@/lib/deal-autofill';
 import { AGENT_DESK_TEMPLATE, templateTaskIdsFor } from '@/lib/agent-desk-template';
@@ -1891,7 +1891,28 @@ export default function ClosingTime({
   const closingSoonCount = liveDeals.filter((deal) => deal.status !== 'completed' && deal.closingDate >= today && deal.closingDate <= addDays(today, 30)).length;
   const overdueTaskCount = liveDeals.flatMap((deal) => deal.tasks).filter((task) => !task.complete && task.dueDate < today).length;
 
-  const [paymentFor, setPaymentFor] = useState<{ dealId: string; finish: () => void } | null>(null);
+  const [paymentFor, setPaymentFor] = useState<{ dealId: string; finish: () => void; kind?: 'deal' | 'extension'; extensions?: number } | null>(null);
+  const extendDeal = (dealId: string) => {
+    const target = dealsRef.current.find((deal) => deal.id === dealId);
+    if (!target) return;
+    const extensions = Math.round((target.autoCloseExtensionDays ?? 0) / EXTENSION_DAYS);
+    const apply = () => {
+      const now = new Date().toISOString();
+      persistDeals(dealsRef.current.map((deal) => deal.id === dealId ? {
+        ...deal, autoCloseExtensionDays: (deal.autoCloseExtensionDays ?? 0) + EXTENSION_DAYS, updatedAt: now,
+        activity: [...deal.activity, { id: getId('activity'), message: `Deal extended ${EXTENSION_DAYS} days.`, createdAt: now }].slice(-300),
+      } : deal));
+      setPaymentFor(null);
+    };
+    fetch('/api/closing-time/billing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'extension_reserve', dealId, extensions }) })
+      .then((res) => res.json())
+      .then((data: { ok?: boolean; paymentRequired?: boolean }) => {
+        if (data.ok) apply();
+        else if (data.paymentRequired) setPaymentFor({ dealId, finish: apply, kind: 'extension', extensions });
+        else window.alert('This deal could not be extended. Please try again.');
+      })
+      .catch(() => window.alert('This deal could not be extended. Please try again.'));
+  };
   const createDeal = (dealType?: AgentDeal['dealType'], agentSide?: AgentDeal['agentSide']) => {
     const base = newDeal(trecFormVersion.id);
     // Pre-tick the required TREC forms: the One to Four Family contract, the Seller's Disclosure Notice and IABS.
@@ -3295,6 +3316,7 @@ export default function ClosingTime({
               return (
                 <DealSubpage
                   key={deal?.id ?? 'none'}
+                  onExtendDeal={extendDeal}
                   readiness={deal ? readinessCounts(deal) : undefined}
                   deal={deal}
                   today={today}
@@ -3321,6 +3343,7 @@ export default function ClosingTime({
                   <DealSubpage
                     key={`${deal.id}-strip`}
                     stripOnly
+                    onExtendDeal={extendDeal}
                     deal={deal}
                     today={today}
                     locked={isDealLocked(deal)}
@@ -3398,6 +3421,7 @@ export default function ClosingTime({
                     timelineFields={renderTimelineFields()}
                     alerts={notificationPreferences}
                     onOpenAlerts={() => { setWorkspacePage(2); setDeskView('coordinator'); }}
+                    onExtendDeal={extendDeal}
                     formatDate={formatDate}
                     countdownLabel={deal ? closingCountdownLabel(deal.closingDate, today) : ''}
                     onUpdate={updateActiveDeal}
@@ -4161,7 +4185,7 @@ export default function ClosingTime({
           </div>
         </div>
       )}
-      {paymentFor && <DealPaymentWindow dealId={paymentFor.dealId} onPaid={paymentFor.finish} onCancel={() => setPaymentFor(null)} />}
+      {paymentFor && <DealPaymentWindow dealId={paymentFor.dealId} kind={paymentFor.kind} extensions={paymentFor.extensions} onPaid={paymentFor.finish} onCancel={() => setPaymentFor(null)} />}
       {newDealPickerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label="Start a new deal" onClick={() => setNewDealPickerOpen(false)}>
           <div className="w-full max-w-md rounded-xl bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
