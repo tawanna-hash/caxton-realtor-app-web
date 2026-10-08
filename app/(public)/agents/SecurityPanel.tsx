@@ -29,6 +29,11 @@ export default function SecurityPanel() {
 
   return (
     <div className="ds-page space-y-6">
+      <div>
+        <p className="ds-eyebrow">Resources</p>
+        <h2 className="ds-title !mt-0">Security</h2>
+        <p className="ds-subtitle">Protect your account and see how your data is handled.</p>
+      </div>
       <section className="rounded-lg border border-[#E6E5EC] bg-white p-5">
         <h2 className="text-[14px] font-semibold text-[#1B1726]">Two-Step Sign-In</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Adds a 6-digit code from an authenticator app such as Google Authenticator, 1Password or Authy to your password sign-in. Once it is on, email links and password reset links no longer sign you in by themselves. You sign in with your password and a code.</p>

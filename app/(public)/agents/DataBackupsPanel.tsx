@@ -64,6 +64,11 @@ export default function DataBackupsPanel() {
 
   return (
     <div className="ds-page space-y-6">
+      <div>
+        <p className="ds-eyebrow">Resources</p>
+        <h2 className="ds-title !mt-0">Data And Backups</h2>
+        <p className="ds-subtitle">Export your data and keep monthly backups.</p>
+      </div>
       <section className="rounded-lg border border-[#E6E5EC] bg-white p-5">
         <h2 className="text-[14px] font-semibold text-[#1B1726]">Export Your Data</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Your deals and contacts belong to you. Download them any time in open formats.</p>

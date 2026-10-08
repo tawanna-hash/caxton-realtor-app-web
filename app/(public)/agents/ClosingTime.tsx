@@ -1450,7 +1450,7 @@ export default function ClosingTime({
     const t = window.setTimeout(() => setTourId('scheduler'), 1200);
     return () => window.clearTimeout(t);
   }, [effectiveView, ready]);
-  const RES_VIEW_ACTIVE = ['utilities', 'referral', 'testimonials', 'data-backups', 'automations', 'security', 'doc-tools'].includes(effectiveView);
+  const RES_VIEW_ACTIVE = ['utilities', 'referral', 'data-backups', 'automations', 'security', 'doc-tools'].includes(effectiveView);
   // Scheduling pages are working pages: a refresh keeps the exact scroll position there.
   useKeepScroll(effectiveView === 'my-schedule' || effectiveView === 'd-schedule', ready);
   useEffect(() => {
@@ -2990,11 +2990,6 @@ export default function ClosingTime({
                       </button>
                     </li>
                     <li>
-                      <button type="button" aria-current={effectiveView === 'testimonials' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('testimonials'); }} className="ds-navbtn">
-                        <span>Testimonials Hub</span>
-                      </button>
-                    </li>
-                    <li>
                       <button type="button" aria-current={effectiveView === 'data-backups' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('data-backups'); }} className="ds-navbtn">
                         <span>Data And Backups</span>
                       </button>
@@ -3391,7 +3386,7 @@ export default function ClosingTime({
             {effectiveView === 'automations' && <AutomationsPanel />}
             {effectiveView === 'security' && <SecurityPanel />}
             {effectiveView === 'doc-tools' && <DocumentToolsPanel />}
-            {effectiveView === 'testimonials' && <div className="ds-page"><TestimonialHubClient /></div>}
+            {effectiveView === 'testimonials' && <div className="ds-page"><TestimonialHubClient eyebrow="Resources" /></div>}
             {effectiveView === 'd-messages' && activeDeal && <div className="ds-page"><MessagesPanel key={activeDeal.id} deal={activeDeal} /></div>}
             {effectiveView === 'd-portal' && activeDeal && <div className="ds-page"><ClientPortalPanel key={activeDeal.id} deal={activeDeal} /></div>}
             {effectiveView === 'setup-help' && (

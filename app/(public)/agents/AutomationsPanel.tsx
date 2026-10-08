@@ -89,6 +89,11 @@ export default function AutomationsPanel() {
 
   return (
     <div className="ds-page space-y-6">
+      <div>
+        <p className="ds-eyebrow">Resources</p>
+        <h2 className="ds-title !mt-0">Automations</h2>
+        <p className="ds-subtitle">Turn on the follow-ups you want Closing Time to handle.</p>
+      </div>
       <SmartAutomations />
       {secret && (
         <div role="alert" className="rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] p-4 text-[14px] text-[#1B1726]">

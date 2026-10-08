@@ -122,6 +122,11 @@ export default function DocumentToolsPanel() {
 
   return (
     <div className="ds-page space-y-6">
+      <div>
+        <p className="ds-eyebrow">Resources</p>
+        <h2 className="ds-title !mt-0">Document Tools</h2>
+        <p className="ds-subtitle">Combine, scan, split and rotate PDFs.</p>
+      </div>
       <section className="rounded-lg border border-[#E6E5EC] bg-white p-5">
         <h2 className="text-[14px] font-semibold text-[#1B1726]">Combine Files And Scan To PDF</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Add PDFs and photos, put them in order, and download one PDF. Phone photos of paper contracts become pages. Files stay on your device. Nothing is uploaded.</p>

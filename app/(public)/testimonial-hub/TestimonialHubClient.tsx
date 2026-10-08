@@ -109,7 +109,7 @@ function statusClass(status: Testimonial['status']): string {
   return 'bg-gray-100 text-gray-600 border-gray-200';
 }
 
-export default function TestimonialHubClient() {
+export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } = {}) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [items, setItems] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
@@ -327,7 +327,7 @@ export default function TestimonialHubClient() {
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-8">
       <header className="flex flex-col gap-4 border-b border-gray-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">Subscriber tools</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">{eyebrow ?? 'Subscriber tools'}</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950">Testimonial Hub</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
             Collect client feedback, organize your library, and publish a shareable proof page.
