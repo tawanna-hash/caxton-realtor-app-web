@@ -985,6 +985,9 @@ function dealHealthLabel(deal: AgentDeal, today: string, closed: boolean): { lab
   return { label: 'On Track', tone: 'bg-[#E0FBE0] text-[#005A00]' };
 }
 
+/** The Template record is the platform brain: default tasks and form choices every new contract copies. It lives apart from any deal and is not shown as one. */
+const SHOW_TEMPLATE_IN_SIDEBAR = false;
+
 type ExtractionState = 'idle' | 'extracting' | 'ready' | 'error';
 type ExtractionDraft = {
   title?: string;
@@ -2946,7 +2949,7 @@ export default function ClosingTime({
               </li>
             </ul>
             <ul className="ds-deals">
-              {templateDeal && (
+              {SHOW_TEMPLATE_IN_SIDEBAR && templateDeal && (
                 <li className="relative">
                   <button
                     type="button"
