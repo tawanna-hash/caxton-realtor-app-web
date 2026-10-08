@@ -10,6 +10,7 @@ import ClientUploadsCard from './ClientUploadsCard';
 import DocumentRequestsCard from './DocumentRequestsCard';
 import { BUYER_REP_FORM_OPTIONS, CONTRACT_FORM_OPTIONS, dealFolders, effectiveAgentSide, requiredIdsFor } from './purchase-documents';
 import Tip from './Tip';
+import { EXTENSION_DAYS, autoCloseState, formatCloseDate } from '@/lib/closing-time-lifecycle';
 
 type SnapId = 'attention' | 'waiting' | 'property' | 'next' | 'preferences' | 'offers' | 'parties' | 'workspace';
 
@@ -398,6 +399,21 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
   const headerPeople = [deal.buyerNames, deal.sellerNames].filter(Boolean).join(' · ');
   const priceText = price ? (price.startsWith('$') ? price : `$${price}`) : '';
   const dueText = (days: number) => (days < 0 ? `${-days} ${-days === 1 ? 'day' : 'days'} overdue` : days === 0 ? 'due today' : days === 1 ? 'due tomorrow' : `due in ${days} days`);
+  const autoClose = deal ? autoCloseState(deal, today) : null;
+  const closeWarning = autoClose && autoClose.warn && !autoClose.due && deal ? (
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#ffaf3d] bg-[#fff3e0] px-4 py-3" data-no-auto-open data-testid="auto-close-warning">
+      <div className="min-w-0 flex-1">
+        <p className="text-[14px] font-semibold text-[#301D5D]">This Deal Closes Automatically On {formatCloseDate(autoClose.date)}</p>
+        <p className="mt-1 text-[13px] text-[#4A4757]">
+          {autoClose.hasClosingDate ? 'Deals close two weeks after the closing date.' : 'No closing date is entered, so this deal closes 180 days after it was opened.'}
+          {' '}After that it becomes read-only. Clear up the file before then{autoClose.canExtend ? ', or extend the deal.' : '.'}
+        </p>
+      </div>
+      {autoClose.canExtend && !locked && (
+        <button type="button" data-no-auto-open onClick={() => onUpdate('autoCloseExtensionDays', (deal.autoCloseExtensionDays ?? 0) + EXTENSION_DAYS)} className="hover:!bg-[#EFEAF8] hover:!text-[#301D5D]">Extend {EXTENSION_DAYS} Days</button>
+      )}
+    </div>
+  ) : null;
   const progressStrip = (
     <>
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
@@ -433,6 +449,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
           ))}
         </ol>
       )}
+      {closeWarning}
     </>
   );
   if (stripOnly) return <div className="ds-page ds-strip" data-testid="deal-strip">{progressStrip}</div>;

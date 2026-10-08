@@ -1,3 +1,4 @@
+import { autoCloseState, formatCloseDate } from './closing-time-lifecycle';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import { calculateTrecDeadlines } from '@/lib/trec-deadlines';
 
@@ -111,6 +112,15 @@ export function dealRisks(deal: AgentDeal, today: string): DealRisk[] {
         detail: `Closing ${when(deal.closingDate)}. Still open: ${open.slice(0, 4).map((x) => x.label).join(', ')}.`,
       });
     }
+  }
+  const ac = autoCloseState(deal, today);
+  if (ac && ac.warn && !ac.due) {
+    risks.push({
+      id: 'risk-auto-close',
+      severity: ac.daysLeft <= 3 ? 'high' : 'medium',
+      title: `Deal closes automatically on ${formatCloseDate(ac.date)}`,
+      detail: `After that date the deal becomes read-only. Clear up the file before then${ac.canExtend ? ', or extend the deal from its Snapshot' : ''}.`,
+    });
   }
   return risks.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === 'high' ? -1 : 1));
 }

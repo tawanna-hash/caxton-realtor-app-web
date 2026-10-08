@@ -116,6 +116,8 @@ const BuyerClosingCostsClient = dynamic(() => import('../resources/buyer-closing
 import { effectiveAgentSide } from './purchase-documents';
 import DealSubpage, { TASK_TEMPLATES } from './DealSubpage';
 import DocumentRequestsCard from './DocumentRequestsCard';
+import DealPaymentWindow from './DealPaymentWindow';
+import { autoCloseState } from '@/lib/closing-time-lifecycle';
 import { syncStoredFromForm } from './ContractPage';
 import { autofillDeal, buildAutofillIndex } from '@/lib/deal-autofill';
 import { AGENT_DESK_TEMPLATE, templateTaskIdsFor } from '@/lib/agent-desk-template';
@@ -937,6 +939,7 @@ function newDeal(trecFormVersionId: string): AgentDeal {
     tasks: [],
     documents: DOCUMENT_TEMPLATES.map(({ id, label }) => ({ id, label, status: 'requested' as const, complete: false, requestedAt: now, updatedAt: now, driveFileId: '', fileName: '', fileUploadedAt: '' })),
     activity: [{ id: getId('activity'), message: 'Deal workspace created', createdAt: now }],
+    autoCloseExtensionDays: 0,
     createdAt: now,
     updatedAt: now,
   };
@@ -1755,6 +1758,17 @@ export default function ClosingTime({
   const liveDeals = deals.filter((deal) => !deal.isTemplate);
   const activeDeals = liveDeals.filter((deal) => !isDealClosedAndComplete(deal));
   const closedDeals = liveDeals.filter((deal) => isDealClosedAndComplete(deal));
+  useEffect(() => {
+    if (!ready) return;
+    const due = dealsRef.current.filter((deal) => autoCloseState(deal, today)?.due);
+    if (due.length === 0) return;
+    const now = new Date().toISOString();
+    persistDeals(dealsRef.current.map((deal) => due.includes(deal) ? {
+      ...deal, status: 'completed' as const, auditLocked: true, closeoutOutcome: 'Closed Automatically', closeoutDate: today, updatedAt: now,
+      activity: [...deal.activity, { id: getId('activity'), message: 'Deal closed automatically. It is now read-only.', createdAt: now }].slice(-300),
+    } : deal));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, deals, today]);
   const templateCreatedRef = useRef(false);
   useEffect(() => {
     if (!ready || templateDeal || templateCreatedRef.current) return;
@@ -1877,6 +1891,7 @@ export default function ClosingTime({
   const closingSoonCount = liveDeals.filter((deal) => deal.status !== 'completed' && deal.closingDate >= today && deal.closingDate <= addDays(today, 30)).length;
   const overdueTaskCount = liveDeals.flatMap((deal) => deal.tasks).filter((task) => !task.complete && task.dueDate < today).length;
 
+  const [paymentFor, setPaymentFor] = useState<{ dealId: string; finish: () => void } | null>(null);
   const createDeal = (dealType?: AgentDeal['dealType'], agentSide?: AgentDeal['agentSide']) => {
     const base = newDeal(trecFormVersion.id);
     // Pre-tick the required TREC forms: the One to Four Family contract, the Seller's Disclosure Notice and IABS.
@@ -1898,10 +1913,22 @@ export default function ClosingTime({
       tasks: [...seededTasks, ...extraTasks],
       selectedFormFamilies: { ...base.selectedFormFamilies, ...(templateDeal?.selectedFormFamilies ?? {}), '20': true, '55': true, IABS: true },
     };
-    persistDeals([deal, ...deals]);
-    setActiveDealId(deal.id);
-    setPendingRemoval(null);
-    trackEvent('closing_time_transaction_created', { deal_type: deal.dealType });
+    const finish = () => {
+      persistDeals([deal, ...dealsRef.current]);
+      setActiveDealId(deal.id);
+      setPendingRemoval(null);
+      setPaymentFor(null);
+      trackEvent('closing_time_transaction_created', { deal_type: deal.dealType });
+    };
+    // The first two deals an account opens are free. From the third on, a payment window opens first.
+    fetch('/api/closing-time/billing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'reserve', dealId: deal.id }) })
+      .then((res) => res.json())
+      .then((data: { ok?: boolean; paymentRequired?: boolean }) => {
+        if (data.ok) finish();
+        else if (data.paymentRequired) setPaymentFor({ dealId: deal.id, finish });
+        else window.alert('This deal could not be opened. Please try again.');
+      })
+      .catch(() => window.alert('This deal could not be opened. Please try again.'));
   };
 
   const updateDealParties = (key: 'buyerNames' | 'sellerNames' | 'buyer2Name' | 'seller2Name', value: string) => {
@@ -4134,6 +4161,7 @@ export default function ClosingTime({
           </div>
         </div>
       )}
+      {paymentFor && <DealPaymentWindow dealId={paymentFor.dealId} onPaid={paymentFor.finish} onCancel={() => setPaymentFor(null)} />}
       {newDealPickerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label="Start a new deal" onClick={() => setNewDealPickerOpen(false)}>
           <div className="w-full max-w-md rounded-xl bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
