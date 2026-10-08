@@ -970,6 +970,21 @@ function dealDeadlines(deal: AgentDeal): TrecDeadline[] {
   return list;
 }
 
+/** Deal health from the closing date, every unchecked key deadline, and readiness as closing nears. */
+function dealHealthLabel(deal: AgentDeal, today: string, closed: boolean): { label: string; tone: string } {
+  if (closed) return { label: 'Closed', tone: 'bg-slate-100 text-slate-600' };
+  const days = daysUntilClosing(deal.closingDate, today);
+  if (days === null) return { label: 'No date', tone: 'bg-slate-100 text-slate-600' };
+  const open = dealDeadlines(deal).filter((d) => d.id !== 'closing-date' && d.date && !deal.documentChecks[`dl:${d.id}`]);
+  const missed = open.some((d) => d.date < today);
+  const soon = open.some((d) => d.date >= today && daysUntilClosing(d.date, today) !== null && (daysUntilClosing(d.date, today) as number) <= 3);
+  const r = readinessCounts(deal);
+  const readinessBehind = days <= 14 && r.total > 0 && r.done < r.total;
+  if (days < 0 || missed) return { label: 'Overdue', tone: 'bg-[#FFEAE6] text-[#661102]' };
+  if (days <= 7 || soon || readinessBehind) return { label: 'Needs Attention', tone: 'bg-[#FEF8CC] text-[#645600]' };
+  return { label: 'On Track', tone: 'bg-[#E0FBE0] text-[#005A00]' };
+}
+
 type ExtractionState = 'idle' | 'extracting' | 'ready' | 'error';
 type ExtractionDraft = {
   title?: string;
@@ -1718,7 +1733,7 @@ export default function ClosingTime({
     if (!activeDeal) return;
     const now = new Date().toISOString();
     const activity: AgentActivity = { id: getId('activity'), message, createdAt: now };
-    const nextDeal: AgentDeal = { ...activeDeal, ...patch, updatedAt: now, activity: [...activeDeal.activity, activity].slice(-300) };
+    const nextDeal: AgentDeal = { ...activeDeal, ...patch, updatedAt: now, activity: [...activeDeal.activity, activity].slice(-2000) };
     persistDeals(deals.map((deal) => deal.id === activeDeal.id ? nextDeal : deal));
   };
 
@@ -1773,7 +1788,7 @@ export default function ClosingTime({
     const now = new Date().toISOString();
     persistDeals(dealsRef.current.map((deal) => due.includes(deal) ? {
       ...deal, status: 'completed' as const, auditLocked: true, closeoutOutcome: 'Closed Automatically', closeoutDate: today, updatedAt: now,
-      activity: [...deal.activity, { id: getId('activity'), message: 'Deal closed automatically. It is now read-only.', createdAt: now }].slice(-300),
+      activity: [...deal.activity, { id: getId('activity'), message: 'Deal closed automatically. It is now read-only.', createdAt: now }].slice(-2000),
     } : deal));
     // Closing sends the whole file to the agent's connected document storage (or recommends connecting one).
     due.forEach((deal) => {
@@ -1783,7 +1798,7 @@ export default function ClosingTime({
           const message = data.result?.message;
           if (!message) return;
           const at = new Date().toISOString();
-          persistDeals(dealsRef.current.map((d) => d.id === deal.id ? { ...d, activity: [...d.activity, { id: getId('activity'), message, createdAt: at }].slice(-300) } : d));
+          persistDeals(dealsRef.current.map((d) => d.id === deal.id ? { ...d, activity: [...d.activity, { id: getId('activity'), message, createdAt: at }].slice(-2000) } : d));
         })
         .catch(() => undefined);
     });
@@ -1920,7 +1935,7 @@ export default function ClosingTime({
       const now = new Date().toISOString();
       persistDeals(dealsRef.current.map((deal) => deal.id === dealId ? {
         ...deal, autoCloseExtensionDays: (deal.autoCloseExtensionDays ?? 0) + EXTENSION_DAYS, updatedAt: now,
-        activity: [...deal.activity, { id: getId('activity'), message: `Deal extended ${EXTENSION_DAYS} days.`, createdAt: now }].slice(-300),
+        activity: [...deal.activity, { id: getId('activity'), message: `Deal extended ${EXTENSION_DAYS} days.`, createdAt: now }].slice(-2000),
       } : deal));
       setPaymentFor(null);
     };
@@ -1988,9 +2003,36 @@ export default function ClosingTime({
   };
   const updateActiveDeal = <Key extends keyof AgentDeal>(key: Key, value: AgentDeal[Key]) => {
     if (!activeDeal) return;
+    const now = new Date().toISOString();
+    const nice = (text: string) => text.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[^A-Za-z0-9]+/g, ' ').trim().replace(/\b\w/g, (c) => c.toUpperCase());
+    const show = (v: unknown) => { const t = String(v ?? '').trim(); return t.length > 80 ? `${t.slice(0, 80)}…` : t; };
+    const before = activeDeal[key] as unknown;
+    const entries: string[] = [];
+    if (key === 'documentChecks' && value && typeof value === 'object') {
+      const prev = (before ?? {}) as Record<string, unknown>;
+      const next = value as Record<string, unknown>;
+      new Set([...Object.keys(prev), ...Object.keys(next)]).forEach((k) => {
+        if (Boolean(prev[k]) !== Boolean(next[k])) entries.push(`${next[k] ? 'Checked off' : 'Unchecked'}: ${nice(k)}`);
+      });
+    } else if (key !== 'activity' && (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') && before !== value) {
+      const label = nice(String(key));
+      const from = show(before); const to = show(value);
+      entries.push(!to ? `Cleared ${label}` : !from ? `Set ${label} to "${to}"` : `Changed ${label} from "${from}" to "${to}"`);
+    }
+    let activity = activeDeal.activity;
+    entries.forEach((message) => {
+      const last = activity[activity.length - 1];
+      const prefix = message.startsWith('Changed ') ? message.split(' from ')[0] : '';
+      if (prefix && last && last.message.startsWith(`${prefix} from `) && Date.now() - new Date(last.createdAt).getTime() < 120000) {
+        // Typing in one field is one entry: keep the original value, show the latest one.
+        activity = [...activity.slice(0, -1), { ...last, message: `${last.message.split(' to "')[0]} to "${message.split(' to "').slice(1).join(' to "')}` }];
+      } else {
+        activity = [...activity, { id: getId('activity'), message, createdAt: now }];
+      }
+    });
     const nextDeals = deals.map((deal) => (
       deal.id === activeDeal.id
-        ? { ...deal, [key]: value, updatedAt: new Date().toISOString() }
+        ? { ...deal, [key]: value, updatedAt: now, activity: activity.slice(-2000) }
         : deal
     ));
     persistDeals(nextDeals);
@@ -2214,7 +2256,7 @@ export default function ClosingTime({
       formFields: { ...activeDeal.formFields, ...extractionDraft.formFields },
       addenda: { ...activeDeal.addenda, ...extractionDraft.addenda },
       updatedAt: new Date().toISOString(),
-      activity: [...activeDeal.activity, { id: getId('activity'), message: 'Applied reviewed contract extraction suggestions', createdAt: new Date().toISOString() }].slice(-300),
+      activity: [...activeDeal.activity, { id: getId('activity'), message: 'Applied reviewed contract extraction suggestions', createdAt: new Date().toISOString() }].slice(-2000),
     };
     const iabs = selectedFormVersions.find((version) => version.formFamily === 'IABS');
     if (iabs) {
@@ -2576,7 +2618,7 @@ export default function ClosingTime({
     if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
     const now = new Date().toISOString();
     const nextDeals = activeDeal ? deals.map((deal) => deal.id === activeDeal.id ? {
-      ...deal, updatedAt: now, activity: [...deal.activity, { id: getId('activity'), message: 'Saved deal progress', createdAt: now }].slice(-300),
+      ...deal, updatedAt: now, activity: [...deal.activity, { id: getId('activity'), message: 'Saved deal progress', createdAt: now }].slice(-2000),
     } : deal) : deals;
     setDeals(nextDeals);
     void saveToCloud({ deals: nextDeals, notificationPreferences });
@@ -3244,12 +3286,8 @@ export default function ClosingTime({
             })()}
             {effectiveView === 'deals' && (() => {
               const healthOf = (deal: (typeof deals)[number]) => {
-                if (isDealClosedAndComplete(deal)) return { key: 'closed', label: 'Closed', tone: 'bg-slate-100 text-slate-600' };
-                const d = daysUntilClosing(deal.closingDate, today);
-                if (d === null) return { key: 'nodate', label: 'No date', tone: 'bg-slate-100 text-slate-600' };
-                if (d < 0) return { key: 'overdue', label: 'Overdue', tone: 'bg-[#FFEAE6] text-[#661102]' };
-                if (d <= 7) return { key: 'attention', label: 'Needs Attention', tone: 'bg-[#FEF8CC] text-[#645600]' };
-                return { key: 'ontrack', label: 'On Track', tone: 'bg-[#E0FBE0] text-[#005A00]' };
+                const h = dealHealthLabel(deal, today, isDealClosedAndComplete(deal));
+                return { key: h.label === 'Needs Attention' ? 'attention' : h.label === 'On Track' ? 'ontrack' : h.label === 'No date' ? 'nodate' : h.label.toLowerCase(), ...h };
               };
               const sinceLabel = (iso?: string) => {
                 if (!iso) return '—';
@@ -3335,11 +3373,7 @@ export default function ClosingTime({
               const deal = deals.find((d) => d.id === dealPageId);
               const closed = deal ? isDealClosedAndComplete(deal) : false;
               const days = deal ? daysUntilClosing(deal.closingDate, today) : null;
-              const health = closed ? { label: 'Closed', tone: 'bg-slate-100 text-slate-600' }
-                : days === null ? { label: 'No date', tone: 'bg-slate-100 text-slate-600' }
-                : days < 0 ? { label: 'Overdue', tone: 'bg-[#FFEAE6] text-[#661102]' }
-                : days <= 7 ? { label: 'Needs Attention', tone: 'bg-[#FEF8CC] text-[#645600]' }
-                : { label: 'On Track', tone: 'bg-[#E0FBE0] text-[#005A00]' };
+              const health = deal ? dealHealthLabel(deal, today, closed) : { label: 'No date', tone: 'bg-slate-100 text-slate-600' };
               const nextDeadline = deal ? dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] : undefined;
               return (
                 <DealSubpage
@@ -3425,11 +3459,7 @@ export default function ClosingTime({
             {effectiveView === 'd-schedule' && activeDeal && <div className="ds-page space-y-8"><SchedulersPanel key={activeDeal.id} deal={activeDeal} onOpenIntegrations={() => setDeskView('integrations')} /></div>}
             {['d-overview', 'd-documents', 'd-people'].includes(effectiveView) && (() => {
               const deal = activeDeal;
-              const health = deal ? (() => {
-                if (isDealClosedAndComplete(deal)) return { label: 'Closed', tone: 'bg-slate-100 text-slate-600' };
-                const d = daysUntilClosing(deal.closingDate, today);
-                return d === null ? { label: 'No date', tone: 'bg-slate-100 text-slate-600' } : d < 0 ? { label: 'Overdue', tone: 'bg-[#FFEAE6] text-[#661102]' } : d <= 7 ? { label: 'Needs Attention', tone: 'bg-[#FEF8CC] text-[#645600]' } : { label: 'On Track', tone: 'bg-[#E0FBE0] text-[#005A00]' };
-              })() : { label: 'No date', tone: 'bg-slate-100 text-slate-600' };
+              const health = deal ? dealHealthLabel(deal, today, isDealClosedAndComplete(deal)) : { label: 'No date', tone: 'bg-slate-100 text-slate-600' };
               const nextDeadline = deal ? dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] : undefined;
               return (
                 <div className="ds-page">
@@ -4086,7 +4116,7 @@ export default function ClosingTime({
                 onSent={(how) => {
                   const now = new Date().toISOString();
                   persistDeals(deals.map((d) => d.id === activeDeal.id
-                    ? { ...d, updatedAt: now, activity: [...d.activity, { id: getId('activity'), message: `Testimonial request ${how} for ${activeDeal.propertyAddress || 'this deal'}`, createdAt: now }].slice(-300) }
+                    ? { ...d, updatedAt: now, activity: [...d.activity, { id: getId('activity'), message: `Testimonial request ${how} for ${activeDeal.propertyAddress || 'this deal'}`, createdAt: now }].slice(-2000) }
                     : d));
                 }}
                 emails={activeDeal.clientContacts.map((c) => c.email.trim()).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))}
