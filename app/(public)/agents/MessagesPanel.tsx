@@ -123,9 +123,8 @@ export default function MessagesPanel({ deal, contact, checklist, requiredCheckl
     } catch { setMsg('Something went wrong.'); return false; } finally { setBusy(false); }
   };
 
-  // One layout for everyone: People Strip With Chat on desktop, inbox on phones and contact pages.
-  const layout = (contact || isPhone ? 'inbox' : 'strip') as MessageLayout;
-  const needsChoice = false;
+  const layout: MessageLayout = contact || isPhone ? 'inbox' : (layoutChoice ?? layoutSaved ?? 'inbox');
+  const needsChoice = !contact && !isPhone && loaded && !layoutSaved && !layoutChoice;
   const spellIgnore = [deal?.propertyAddress ?? '', deal?.title ?? '', ...parties.map((p) => p.name)];
   const clearAll = () => { setBody(''); };
   const addFiles = async (list: FileList | null) => {
@@ -483,7 +482,9 @@ export default function MessagesPanel({ deal, contact, checklist, requiredCheckl
 
   return (
     <div>
-      {body_}
+      {chip}
+      {picker}
+      {!needsChoice && body_}
       {contact && (
         <div className="ds-card">
           <h2 className="border-b border-[#E6E5EC] px-4 py-3 text-[14px] font-semibold text-[#1B1726]">Activity Log</h2>

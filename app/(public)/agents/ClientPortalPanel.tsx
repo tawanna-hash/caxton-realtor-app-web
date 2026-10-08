@@ -87,6 +87,11 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
 
   return (
     <div className="space-y-4">
+      <div>
+        <h2 className="text-[22px] font-semibold text-[#1B1726]">Client Portal</h2>
+        <p className="mt-1 text-[14px] text-[#4A4757]">Each person gets their own private link. No sign-in needed.</p>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={`${card} p-4`}>
           <h3 className="text-[14px] font-semibold text-[#1B1726]">Preview</h3>

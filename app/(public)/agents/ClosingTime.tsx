@@ -60,17 +60,6 @@ const TESTIMONIALS_VIEW = { id: 'testimonials', label: 'Testimonials Hub', keys:
 const DOCTOOLS_VIEW = { id: 'doc-tools', label: 'Document Tools', keys: [] as string[] };
 const SECURITY_VIEW = { id: 'security', label: 'Security', keys: [] as string[] };
 const AUTOMATIONS_VIEW = { id: 'automations', label: 'Automations', keys: [] as string[] };
-const DEAL_TAB_HEADS: Record<string, string> = {
-  'd-overview': 'Readiness, deadlines and what needs attention.',
-  transaction: 'Every contract term and party on this deal.',
-  'd-documents': 'Track every document and form on this deal.',
-  'd-people': 'Clients, vendors and others on this deal.',
-  'd-messages': 'Email and text everyone on this deal.',
-  'd-schedule': 'Booking pages and the title closing request for this deal.',
-  'd-portal': 'Each person gets their own private link. No sign-in needed.',
-  tasks: 'Every task and reminder on this deal.',
-  audit: 'Deal history, closeout and the audit record.',
-};
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, SETTINGS_VIEW, UTILITIES_VIEW, DATA_VIEW, TESTIMONIALS_VIEW, AUTOMATIONS_VIEW, SECURITY_VIEW, DOCTOOLS_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug, 'my-schedule': CalendarClock, 'setup-help': ListChecks };
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -141,7 +130,7 @@ import {
   calendarEventsForDeal,
   type ClosingTimeCalendarEvent,
 } from '@/lib/closing-time-calendar';
-import { useCollapsibles } from './CollapseToggle';
+import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 import { trackEvent } from '@/app/posthog-provider';
 import {
   agentCommandCenterWorkspaceSchema,
@@ -170,7 +159,6 @@ import {
   type TrecTaskStatus,
 } from '@/lib/trec-workflow';
 import Tip from './Tip';
-import { PageHead } from './LayoutStandard';
 
 type RadarItem = {
   id: string;
@@ -692,9 +680,10 @@ function ReadinessChecklist({
     <div className="ds-page min-w-0 max-w-full" data-testid="readiness-check">
       <div className="rounded-2xl border border-[#E6E5EC] bg-white">
         <div className="px-[1.125rem] py-4">
-          <div className="flex flex-wrap items-baseline gap-2">
-            <h3 className="text-[15px] font-semibold text-[#1B1726]">Deal Readiness Checklist</h3>
-            <span className="text-[13px] text-[#6B6878]">{doneCount} of {totalCount}</span>
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B6878]">Document Checklist</p>
+          <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="text-sm font-semibold text-[#1B1726]">Deal Readiness Checklist</h3>
+            <span className="text-[13px] text-[#4A4757]">{doneCount} Of {totalCount} Items In</span>
           </div>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Readiness progress">
             <div className="h-full rounded-full bg-[#301D5D]" style={{ width: `${pct}%` }} />
@@ -715,7 +704,7 @@ function ReadinessChecklist({
                 className="ds-tab !flex-none !whitespace-nowrap"
               >
                 {group.label}
-                <span className={`ml-1.5 text-[13px] font-medium ${done === group.rows.length && group.rows.length > 0 ? 'text-[#005A00]' : 'text-[#6B6878]'}`}>{done}/{group.rows.length}</span>
+                <span className={`ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${done === group.rows.length && group.rows.length > 0 ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{done}/{group.rows.length}</span>
               </button>
             );
           })}
@@ -1275,7 +1264,7 @@ export default function ClosingTime({
   );
   const [activeDealId, setActiveDealId] = useState<string | null>(null);
   const [today, setToday] = useState(chicagoToday);
-  const { reveal } = useCollapsibles();
+  const { section: collapsible, toggleProps, reveal } = useCollapsibles();
   const [ready, setReady] = useState(false);
   const [syncState, setSyncState] = useState<SyncState>('loading');
   const [taskTitle, setTaskTitle] = useState('');
@@ -2619,7 +2608,7 @@ export default function ClosingTime({
     return (
       <section id="agent-deal-tools" className="bg-white">
         <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-8">
-          <div className="border border-slate-200 bg-white p-4 sm:p-6">
+          <div {...collapsible('attention')} className="border border-slate-200 bg-white p-4 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
@@ -2634,6 +2623,7 @@ export default function ClosingTime({
                     ? 'Next Closing Today'
                     : `Next closing · ${nextClosingDays} day${nextClosingDays === 1 ? '' : 's'}`}
               </span>
+              <CollapseToggle {...toggleProps('attention', 'what needs attention')} />
             </div>
             <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
               {radarItems.length === 0 ? (
@@ -3317,9 +3307,9 @@ export default function ClosingTime({
                     </div>
                     <button type="button" onClick={() => { setPickerStep('type'); setNewDealPickerOpen(true); }}><Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />New Contract</button>
                   </div>
-                  <p className="mt-6 text-[15px] font-semibold text-[#1B1726]">In Flight <span className="ml-1 text-[13px] font-medium text-[#6B6878]">{inFlight.length}</span></p>
+                  <p className="mt-6 text-sm font-semibold text-slate-900">In Flight <span className="ds-chip ml-1 bg-[#EFEAF8] text-[#301D5D]">{inFlight.length}</span></p>
                   <ul className="ds-closing-list">{inFlight.length === 0 ? <li className="px-4 py-4 text-sm text-slate-500">No closings in flight.</li> : inFlight.map(row)}</ul>
-                  <p className="mt-6 text-[15px] font-semibold text-[#1B1726]">Closed <span className="ml-1 text-[13px] font-medium text-[#6B6878]">{closedList.length}</span></p>
+                  <p className="mt-6 text-sm font-semibold text-slate-900">Closed</p>
                   <ul className="ds-closing-list">{closedList.length === 0 ? <li className="px-4 py-4 text-sm text-slate-500">No closings completed yet.</li> : closedList.map(row)}</ul>
                 </div>
               );
@@ -3460,10 +3450,6 @@ export default function ClosingTime({
                     onBack={() => setDeskView('deals')}
                     onOpenView={(view) => { setWorkspacePage(2); setDeskView(view); }}
                   />
-                  {(() => {
-                    const head = DEAL_TAB_HEADS[effectiveView];
-                    return head ? <PageHead className="!mb-0 mt-6 border-t border-[#E6E5EC] pt-6" title={DEAL_TABS.find((t) => t.id === effectiveView)?.label ?? ''} subtitle={head} /> : null;
-                  })()}
                 </div>
               );
             })()}
@@ -3627,9 +3613,10 @@ export default function ClosingTime({
               </button>
               {calendarFeed && calendarFeedState !== 'loading' && <Tip text="Use Open In Apple Calendar on the Integrations page to subscribe with the new link." />}
             </div>
-            <div className="ds-card min-w-0 lg:col-span-2">
+            <div {...collapsible('alerts')} className="ds-card min-w-0 lg:col-span-2">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-gray-900">Deadline Alerts</h3>
+                <CollapseToggle {...toggleProps('alerts', 'deadline alerts')} />
               </div>
               <div className="mt-4 space-y-3">
                 <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
@@ -3789,12 +3776,13 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && activeDeals.length > 0 && (
-          <section className="ds-card mt-6">
+          <section {...collapsible('active')} className="ds-card mt-6">
             <div className="flex items-center gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Active Deals</p>
                 <h3 className="mt-1 text-xl font-semibold text-gray-900">{activeDeals.length} Deal{activeDeals.length === 1 ? '' : 's'} In Progress</h3>
               </div>
+              <CollapseToggle {...toggleProps('active', 'active deals')} className="ml-auto" />
             </div>
             {/* Mobile cards */}
             <div className="mt-5 divide-y divide-slate-100 md:hidden">
@@ -3956,12 +3944,13 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && closedDeals.length > 0 && (
-          <section className="ds-card mt-6">
+          <section {...collapsible('closed')} className="ds-card mt-6">
             <div className="flex items-center gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Closed & Audit</p>
                 <h3 className="mt-1 text-xl font-semibold text-gray-900">{closedDeals.length} Closed Deal{closedDeals.length === 1 ? '' : 's'}</h3>
               </div>
+              <CollapseToggle {...toggleProps('closed', 'closed deals')} className="ml-auto" />
             </div>
             {/* Mobile cards */}
             <div className="mt-5 divide-y divide-slate-100 md:hidden">
@@ -4079,10 +4068,13 @@ export default function ClosingTime({
         {workspacePage === 2 && activeDeal && (
           <>
           <div className="mt-6 grid min-w-0 gap-6">
-            <div className="rounded-[4px] border border-[#E6E5EC] bg-white" data-testid="tasks-card">
-              <div className="flex flex-wrap items-baseline gap-2 px-4 py-3">
-                <h3 className="text-[15px] font-semibold text-[#1B1726]">Tasks And Reminders</h3>
-                <span className="text-[13px] text-[#6B6878]">{activeDeal.tasks.filter((t) => t.complete).length + activeDeal.reminders.filter((r) => r.complete).length} of {activeDeal.tasks.length + activeDeal.reminders.length} done</span>
+            <div {...collapsible('tasks')} className="rounded-2xl border border-[#E6E5EC] bg-white">
+              <div className="flex items-center gap-3 px-[1.125rem] py-4">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B6878]">Tasks And Reminders</p>
+                  <h3 className="mt-1 text-sm font-semibold text-[#1B1726]">{activeDeal.tasks.filter((t) => !t.complete).length + activeDeal.reminders.filter((r) => !r.complete).length} Open Of {activeDeal.tasks.length + activeDeal.reminders.length}</h3>
+                </div>
+                <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
               </div>
               <div className="grid min-w-0 grid-cols-2 items-center gap-2 border-y sm:flex sm:flex-wrap sm:gap-3 border-[#E6E5EC] bg-[#F6F3FB] px-[1.125rem] py-3">
                 <input value={taskTitle} onChange={(event) => { setTaskTitle(event.target.value); if (taskError) setTaskError(''); }} aria-label="Task name" aria-invalid={taskError ? true : undefined} aria-describedby={taskError ? 'task-name-error' : undefined} className="col-span-2 h-10 w-full min-w-0 sm:h-9 sm:basis-full sm:min-w-[200px] sm:flex-1 sm:basis-0 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
@@ -4133,13 +4125,16 @@ export default function ClosingTime({
             </div>
 
           </div>
-          <section className="ds-card mt-6" data-testid="audit-card">
+          <section {...collapsible('audit')} className="ds-card mt-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <h3 className="text-[15px] font-semibold text-[#1B1726]">
-                  {isDealLocked(activeDeal) ? `${activeDeal.propertyAddress || activeDeal.title}, Closed & Audit` : 'Deal History, Audit And Closeout'}
-                </h3>
-                <Tip text={TREC_RETENTION_NOTICE} />
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Audit</p>
+                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                    {isDealLocked(activeDeal) ? `${activeDeal.propertyAddress || activeDeal.title}, Closed & Audit` : 'Deal History, Audit and Closeout'}
+                  </h3>
+                </div>
+                <CollapseToggle {...toggleProps('audit', 'audit')} className="ml-auto" />
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => exportAuditPdf(activeDeal)} className="inline-flex min-h-[32px] items-center gap-2 rounded-md border border-[#7059A8] px-3 text-[13px] font-medium text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download PDF</button>
@@ -4160,6 +4155,9 @@ export default function ClosingTime({
                 <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#661102]"><AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />{dealFolderError}</p>
               ) : null}
             </div>
+            <p className="mt-3 text-xs text-slate-500">
+              Under <a href="https://www.trec.texas.gov/how-long-does-license-holder-have-keep-financial-and-real-estate-transactions-file" target="_blank" rel="noreferrer" className="font-semibold text-[#301D5D] underline">TREC Rules 535.2(h) and 535.146</a>, a broker must keep transaction records and trust account logs for four years from the date of closing, contract termination, or the date of a deposit/withdrawal.
+            </p>
             {/* Google Drive integration disabled — panel intentionally not rendered. */}
             {isDealLocked(activeDeal) && (
               <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#42277C]">

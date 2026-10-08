@@ -85,10 +85,10 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
 
   return (
     <div className="space-y-4">
-      {deal.id === '__personal__' && <div>
+      <div>
         <h2 className="text-[22px] font-semibold text-[#1B1726]">{deal.id === '__personal__' ? 'My Schedulers' : 'Schedulers'}</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">{deal.id === '__personal__' ? 'Your personal booking pages, not tied to any deal. People pick an open time and it lands on your calendar.' : 'Booking pages for this deal. People pick an open time and it lands on your calendar.'}</p>
-      </div>}
+      </div>
       {deal.id !== '__personal__' && <ClosingSchedulePanel dealId={deal.id} />}
       {msg && <p role="status" className="text-[13px] font-medium text-[#005A00]">{msg}</p>}
       {error && <p role="alert" className="text-[13px] font-medium text-[#661102]">{error}</p>}
