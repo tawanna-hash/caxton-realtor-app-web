@@ -155,11 +155,11 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
             <p className="mt-4 text-sm leading-6 text-slate-700">Connect your {selected.name} account {BLURBS[selected.group] ?? 'so it can work with your deals'}.</p>
             <p className="mt-3 rounded-md border border-slate-200 p-3 text-sm text-slate-600">{selectedAccount ? `Connected. You can disconnect ${selected.name} at any time.` : `Not connected yet. You will sign in with ${selected.name} in a new window.`}</p>
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" onClick={() => setSelected(null)} className="min-h-[40px] rounded-md border border-slate-300 px-4 text-sm font-bold text-slate-700">Cancel</button>
+              <button type="button" onClick={() => setSelected(null)} className="min-h-[32px] rounded-md border border-[#E6E5EC] px-3 text-[13px] font-medium text-[#1B1726]">Cancel</button>
               {selectedAccount ? (
-                <button type="button" disabled={busy === selectedAccount.id} onClick={() => void disconnect(selectedAccount)} className="min-h-[40px] rounded-md border border-[#661102] px-4 text-sm font-bold text-[#661102] disabled:opacity-50">Disconnect</button>
+                <button type="button" disabled={busy === selectedAccount.id} onClick={() => void disconnect(selectedAccount)} className="min-h-[32px] rounded-md border border-[#661102] px-3 text-[13px] font-medium text-[#661102] disabled:opacity-50">Disconnect</button>
               ) : (
-                <button type="button" disabled={!configured || busy === selected.slug} onClick={() => void connect(selected)} className="min-h-[40px] rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277C] disabled:opacity-45">{busy === selected.slug ? 'Opening…' : `Connect ${selected.name}`}</button>
+                <button type="button" disabled={!configured || busy === selected.slug} onClick={() => void connect(selected)} className="min-h-[32px] rounded-md bg-[#301D5D] px-3 text-[13px] font-medium text-white hover:bg-[#42277C] disabled:opacity-45">{busy === selected.slug ? 'Opening…' : `Connect ${selected.name}`}</button>
               )}
             </div>
           </div>

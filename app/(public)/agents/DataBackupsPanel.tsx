@@ -63,7 +63,7 @@ export default function DataBackupsPanel() {
   }
 
   return (
-    <div className="ds-page space-y-6">
+    <div className="ds-page space-y-4">
       <div>
         <h2 className="text-[22px] font-semibold text-[#1B1726]">Data And Backups</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Export your data and keep monthly backups.</p>

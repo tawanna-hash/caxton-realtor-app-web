@@ -88,7 +88,7 @@ export default function AutomationsPanel() {
   const origin = typeof window === 'undefined' ? '' : window.location.origin;
 
   return (
-    <div className="ds-page space-y-6">
+    <div className="ds-page space-y-4">
       <div>
         <h2 className="text-[22px] font-semibold text-[#1B1726]">Automations</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Turn on the follow-ups you want Closing Time to handle.</p>

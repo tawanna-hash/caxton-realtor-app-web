@@ -1420,7 +1420,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk :is(button, a[class*='min-h-['], a[class*='rounded-lg'][class*='px-'], a[class*='rounded-md'][class*='px-']):not(.ds-navbtn):not(.ds-deal):not(.ds-tab):not(.ds-back):not(.ds-provider-tile):not(.ds-link-row):not([role='tab']):not([aria-current]):not([class*='border-b-2']):not([class*='h-6 w-6']):not([class*='h-7 w-7']):not([class*='h-5 w-5']):not([class*='h-9 w-9']):not(.ds-search *) {
   background-color: #FFFFFF;
   color: var(--d-ink);
-  border: 1px solid #E2E1E9;
+  border: 1px solid #E6E5EC;
   border-radius: 8px;
   min-height: 32px;
   height: auto;
@@ -1804,3 +1804,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 #agent-desk :is(h1, h2, h3, h4).ds-title, #agent-desk .ds-header .ds-title { font-family: inherit; font-size: 1.375rem; line-height: 1.25; font-weight: 600; letter-spacing: 0; color: #1B1726; margin-top: 0; }
 #agent-desk .ds-subtitle { margin-top: 0.25rem; font-size: 0.875rem; color: #4A4757; }
 #agent-desk .ds-eyebrow:has(+ .ds-title):not(.ds-keep) { display: none; }
+
+/* Button corner standard: medium (8px) on every action button, beats the Tailwind rounded-md/4px override. Cards, tiles and pills keep their own shape. */
+#agent-desk button[class*='border']:not([role='switch']):not([class*='rounded-full']):not([class*='flex-col']):not([class*='h-9 w-9']):not([class*='border-b-2']):not([role='tab']):not(.ds-navbtn):not(.ds-tab):not(.ds-deal),
+#agent-desk button.ds-new, #agent-desk a[class*='min-h-[32px]'] { border-radius: 8px !important; }

@@ -742,7 +742,7 @@ function ReadinessChecklist({
           className="h-10 min-w-0 flex-1 rounded-md border border-[#E6E5EC] bg-[#F6F3FB] px-3 text-sm outline-none focus:border-[#301D5D]"
           placeholder="Custom Document Request"
         />
-        <button type="button" onClick={addDocument} disabled={!documentName.trim()} className="h-10 rounded-md border border-[#E6E5EC] bg-white px-4 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D] disabled:opacity-40">
+        <button type="button" onClick={addDocument} disabled={!documentName.trim()} className="min-h-[32px] rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D] disabled:opacity-40">
           Request
         </button>
       </div>
@@ -2685,8 +2685,8 @@ export default function ClosingTime({
                           </p>
                         </div>
                         <div className="flex shrink-0 flex-wrap gap-2">
-                          <button type="button" onClick={applyExtraction} className="inline-flex min-h-[40px] items-center justify-center rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white hover:bg-[#42277C]">Apply to This Deal</button>
-                          <button type="button" onClick={() => { clearContractPreview(); setExtractionDraft(null); setExtractionState('idle'); }} className="inline-flex min-h-[40px] items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-300">Discard</button>
+                          <button type="button" onClick={applyExtraction} className="inline-flex min-h-[32px] items-center justify-center rounded-md bg-[#301D5D] px-3 text-[13px] font-medium text-white hover:bg-[#42277C]">Apply to This Deal</button>
+                          <button type="button" onClick={() => { clearContractPreview(); setExtractionDraft(null); setExtractionState('idle'); }} className="inline-flex min-h-[32px] items-center justify-center rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#1B1726]">Discard</button>
                         </div>
                       </div>
                       <div className="mt-4 grid gap-4 lg:grid-cols-2">
@@ -3391,7 +3391,7 @@ export default function ClosingTime({
             {effectiveView === 'd-messages' && activeDeal && <div className="ds-page"><MessagesPanel key={activeDeal.id} deal={activeDeal} /></div>}
             {effectiveView === 'd-portal' && activeDeal && <div className="ds-page"><ClientPortalPanel key={activeDeal.id} deal={activeDeal} /></div>}
             {effectiveView === 'setup-help' && (
-              <div className="ds-page space-y-6">
+              <div className="ds-page space-y-4">
                 <div>
                   <h2 className="ds-title">Set Up Instructions</h2>
                   <p className="mt-1 text-[14px] text-[#4A4757]">Start a walkthrough and it points at each part of the page in order, or read the written steps. The same guides appear under Help on the matching pages.</p>
@@ -3992,7 +3992,7 @@ export default function ClosingTime({
                 <input value={taskTitle} onChange={(event) => { setTaskTitle(event.target.value); if (taskError) setTaskError(''); }} aria-label="Task name" aria-invalid={taskError ? true : undefined} aria-describedby={taskError ? 'task-name-error' : undefined} className="h-10 min-w-0 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
                 <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="h-10 min-w-0 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm outline-none focus:border-[#301D5D]" />
                 <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="h-10 min-w-0 w-full rounded-md border border-[#E6E5EC] bg-white px-2 text-sm outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
-                <button type="button" onClick={addTask} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#E6E5EC] bg-white px-4 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
+                <button type="button" onClick={addTask} className="inline-flex min-h-[32px] items-center justify-center gap-2 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
               </div>
               {taskError && <p id="task-name-error" role="alert" className="border-b border-[#E6E5EC] bg-[#FFEAE6] px-[1.125rem] py-2 text-[13px] text-[#661102]">{taskError}</p>}
               
@@ -4030,18 +4030,18 @@ export default function ClosingTime({
                 <CollapseToggle {...toggleProps('audit', 'audit')} className="ml-auto" />
               </div>
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => exportAuditPdf(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download PDF</button>
+                <button type="button" onClick={() => exportAuditPdf(activeDeal)} className="inline-flex min-h-[32px] items-center gap-2 rounded-md border border-[#7059A8] px-3 text-[13px] font-medium text-[#301D5D]"><Download className="h-4 w-4" aria-hidden="true" />Download PDF</button>
                 {isDealLocked(activeDeal) && (
-                  <button type="button" onClick={() => exportBackupRecord(activeDeal)} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-bold text-white"><Download className="h-4 w-4" aria-hidden="true" />Download Backup Record</button>
+                  <button type="button" onClick={() => exportBackupRecord(activeDeal)} className="inline-flex min-h-[32px] items-center gap-2 rounded-md bg-[#301D5D] px-3 text-[13px] font-medium text-white"><Download className="h-4 w-4" aria-hidden="true" />Download Backup Record</button>
                 )}
                 {isDealLocked(activeDeal) && (
-                  <button type="button" onClick={() => void exportDealFolder(activeDeal)} disabled={dealFolderBusy} className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#7059A8] px-4 text-sm font-bold text-[#301D5D] disabled:opacity-50">
+                  <button type="button" onClick={() => void exportDealFolder(activeDeal)} disabled={dealFolderBusy} className="inline-flex min-h-[32px] items-center gap-2 rounded-md border border-[#7059A8] px-3 text-[13px] font-medium text-[#301D5D] disabled:opacity-50">
                     {dealFolderBusy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FolderDown className="h-4 w-4" aria-hidden="true" />}
                     {dealFolderBusy ? 'Building Folder\u2026' : 'Download Folder'}
                   </button>
                 )}
                 {!isDealLocked(activeDeal) && (
-                  <button type="button" onClick={lockDealRecord} className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-[#661102] px-4 text-sm font-bold text-white"><Lock className="h-4 w-4" aria-hidden="true" />Lock Record</button>
+                  <button type="button" onClick={lockDealRecord} className="inline-flex min-h-[32px] items-center gap-2 rounded-md bg-[#661102] px-3 text-[13px] font-medium text-white"><Lock className="h-4 w-4" aria-hidden="true" />Lock Record</button>
                 )}
               </div>
               {dealFolderError ? (
