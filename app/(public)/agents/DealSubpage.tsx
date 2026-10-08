@@ -1088,7 +1088,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
             <div className="space-y-6">
               <section>
                 <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-[15px] font-semibold text-[#1B1726]">Deal People</h3>
+                  <div className="flex items-baseline gap-2"><h3 className="text-[15px] font-semibold text-[#1B1726]">Deal People</h3><span className="text-[13px] text-[#6B6878]">{allPeople.length}</span></div>
                   {!locked && <button type="button" className={btnPrimary} onClick={() => setShowPersonForm((v) => !v)}><Plus className="h-4 w-4" aria-hidden="true" /> Add People</button>}
                 </div>
                 {showPersonForm && (
@@ -1124,8 +1124,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
               </section>
 
               <section>
-                <p className="ds-side-title !m-0">Trusted Service Providers</p>
-                <p className="text-sm text-slate-500">Set up the lenders, inspectors, attorneys and others you recommend on this deal.</p>
+                <div className="flex items-center gap-2"><h3 className="text-[15px] font-semibold text-[#1B1726]">Trusted Service Providers</h3><Tip text="Set up the lenders, inspectors, attorneys and others you recommend on this deal." /><span className="text-[13px] text-[#6B6878]">{deal.serviceProviders.length}</span></div>
                 <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {SERVICE_PROVIDER_CATEGORIES.map((category) => {
                     const count = deal.serviceProviders.filter((p) => p.category === category).length;

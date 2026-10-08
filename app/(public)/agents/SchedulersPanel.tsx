@@ -1,5 +1,7 @@
 'use client';
 
+import Tip from './Tip';
+
 import Switch from './Switch';
 import ClosingSchedulePanel from './ClosingSchedulePanel';
 import { messagingPeople } from '@/lib/closing-time-people';
@@ -37,7 +39,6 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
   const [tick, setTick] = useState(0);
   const [editing, setEditing] = useState<{ id: string | null; config: SchedulerConfig; hasBanner: boolean; hasAvatar: boolean } | null>(null);
   const [editSlug, setEditSlug] = useState<string | null>(null);
-  const [help, setHelp] = useState(false);
   const [combo, setCombo] = useState<{ id?: string; title: string; alias: string; ids: string[] } | null>(null);
   const [copied, setCopied] = useState('');
 
@@ -130,8 +131,8 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
               <div className="flex items-start gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EFEAF8] text-[#301D5D]"><Link2 className="h-5 w-5" aria-hidden="true" /></span>
                 <div>
-                  <h3 className="text-[15px] font-semibold text-[#1B1726]">Your custom scheduler URL</h3>
-                  <p className="text-[13px] text-[#4A4757]">All schedulers share this slug. New schedulers can use it directly or add an alias.</p>
+                  <h3 className="text-[15px] font-semibold text-[#1B1726]">Your Custom Scheduler URL</h3>
+                  <Tip text="All schedulers share this slug. New schedulers can use it directly or add an alias." />
                 </div>
               </div>
               {editSlug === null && <button type="button" className={pill} onClick={() => setEditSlug(slug)}><Pencil className="h-3.5 w-3.5" aria-hidden="true" />Edit</button>}
@@ -182,20 +183,12 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
 
           <section className={card}>
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F6F3FB] px-4 py-4">
-              <h3 className="text-[16px] font-semibold text-[#1B1726]">Schedulers</h3>
+              <div className="flex items-center gap-2"><h3 className="text-[15px] font-semibold text-[#1B1726]">Schedulers</h3><Tip text="Schedulers are booking pages. Set your hours and meeting lengths; people pick an open time and get a confirmation with a calendar file. Open times skip your other bookings and anything busy on the calendars you select. One scheduler can use the root URL; the rest get an alias. A combined link shows several schedulers on one page so people choose the meeting type first." /></div>
               <div className="flex flex-wrap gap-2">
-                <button type="button" className={pill} aria-expanded={help} onClick={() => setHelp((h) => !h)}>Help</button>
                 <button type="button" className={pill} disabled={data.schedulers.length < 2} title={data.schedulers.length < 2 ? 'Create at least two schedulers first' : undefined} onClick={() => setCombo({ title: '', alias: '', ids: data.schedulers.map((s) => s.id) })}><Users className="h-3.5 w-3.5" aria-hidden="true" />Build a combined link</button>
                 <button type="button" className={primary} onClick={startNew}><Plus className="h-3.5 w-3.5" aria-hidden="true" />New Scheduler</button>
               </div>
             </div>
-            {help && (
-              <div className="border-b border-[#F6F3FB] bg-[#F6F3FB] px-4 py-4 text-[13px] text-[#4A4757]">
-                <p><strong className="text-[#1B1726]">Schedulers</strong> are booking pages. Set your hours and meeting lengths; people pick an open time and get a confirmation with a calendar file.</p>
-                <p className="mt-1.5">Open times skip your other bookings and anything busy on the calendars you select. One scheduler can use the root URL; the rest get an alias such as <code>/book/{slug}/inspection</code>.</p>
-                <p className="mt-1.5">A <strong className="text-[#1B1726]">combined link</strong> shows several schedulers on one page so people choose the meeting type first.</p>
-              </div>
-            )}
             {combo && (
               <div className="space-y-3 border-b border-[#F6F3FB] px-4 py-4">
                 <div className="grid gap-3 sm:grid-cols-2">
