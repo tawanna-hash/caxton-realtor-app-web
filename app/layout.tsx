@@ -16,7 +16,6 @@ import AutoPrint from "@/components/AutoPrint";
 import ScrollTopOnReload from "@/components/ScrollTopOnReload";
 import AutoOpenSections from "@/components/AutoOpenSections";
 import MarketOnboardingPicker from "@/components/MarketOnboardingPicker";
-import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const SITE_URL = "https://realtynewsnow.app";
@@ -120,9 +119,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="antialiased font-sans light-theme">
-        <Script id="scroll-restore" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: "try{var n=performance.getEntriesByType('navigation')[0];if(n&&n.type==='reload'&&'scrollRestoration' in history){history.scrollRestoration='manual';}}catch(e){}" }} />
-        {/* Trusted Types default policy (only enforced on the Closing Time domain): script URLs must be same-origin or a listed vendor. */}
-        <Script id="trusted-types-default" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: "try{if(window.trustedTypes&&trustedTypes.createPolicy){var ok=['https://js.stripe.com','https://us-assets.i.posthog.com','https://us.i.posthog.com','https://va.vercel-scripts.com'];trustedTypes.createPolicy('default',{createHTML:function(s){return s},createScriptURL:function(u){var o;try{o=new URL(u,location.href).origin}catch(e){o=''}if(o===location.origin||ok.indexOf(o)>-1)return u;throw new TypeError('Blocked script URL')},createScript:function(){throw new TypeError('Blocked inline script')}})}}catch(e){}" }} />
+        <script dangerouslySetInnerHTML={{ __html: "try{var n=performance.getEntriesByType('navigation')[0];if(n&&n.type==='reload'&&'scrollRestoration' in history){history.scrollRestoration='manual';}}catch(e){}" }} />
         <PostHogProvider>
           <PushBootstrap />
           {/* Native iOS shell only: dismiss the Capacitor splash screen as
