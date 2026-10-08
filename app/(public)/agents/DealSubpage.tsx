@@ -264,6 +264,13 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
   }
 
   const clients = [deal.buyerNames, deal.sellerNames].filter(Boolean);
+  const partyLines = (
+    <>
+      {deal.buyerNames && <span className="block"><span className="font-medium text-[#1B1726]">Buyer:</span> {deal.buyerNames}</span>}
+      {deal.sellerNames && <span className="block"><span className="font-medium text-[#1B1726]">Seller:</span> {deal.sellerNames}</span>}
+      {!clients.length && <span className="block">No clients added</span>}
+    </>
+  );
   const people = deal.clientContacts;
   const allPeople = dealPeople(deal);
   const docById = new Map(deal.documents.map((d) => [d.id, d]));
@@ -424,7 +431,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
             <h2 className="ds-title !mt-0">{deal.propertyAddress || deal.title || 'New Contract'}</h2>
             <span className="ds-chip bg-[#EFEAF8] text-[#301D5D] uppercase tracking-wide">{({ purchase: 'Residential', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Residential'}</span>
           </div>
-          {(headerPeople || priceText) && <p className="mt-1 text-[13px] font-medium text-[#4A4757]">{[headerPeople, priceText].filter(Boolean).join(' · ')}</p>}
+          {(headerPeople || priceText) && <p className="mt-1 text-[13px] font-medium text-[#4A4757]">{partyLines}{priceText && <span className="block">{priceText}</span>}</p>}
         </div>
         <div className="text-right">
           <p className={`text-[14px] font-semibold ${isCritical ? textTone : 'text-[#1B1726]'}`}>{stageName} · {Math.min(stageIndex + 1, milestones.length)} of {milestones.length}</p>
@@ -714,7 +721,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
       <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="ds-title">{deal.propertyAddress || deal.title}</h2>
-          <p className="ds-subtitle">{clients.length ? clients.join(' · ') : 'No clients added'}{deal.owner ? ` · ${deal.owner}` : ''}</p>
+          <p className="ds-subtitle">{partyLines}{deal.owner && <span className="block">{deal.owner}</span>}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <select aria-label="Deal type" value={deal.dealType} disabled={locked} onChange={(e) => onUpdate('dealType', e.target.value as AgentDeal['dealType'])} className="ds-select !h-[34px] !min-w-[170px]">
               {DEAL_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
@@ -739,7 +746,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
               <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{DEAL_TYPES.find((t) => t.id === deal.dealType)?.label ?? 'Deal'}</span>
               <span className="ds-chip bg-slate-100 text-slate-600">{statusLabels[deal.workflowStatus] ?? deal.workflowStatus}</span>
             </div>
-            <p className="ds-subtitle">{clients.length ? clients.join(' · ') : 'No clients added'}{deal.owner ? ` · ${deal.owner}` : ''}</p>
+            <p className="ds-subtitle">{partyLines}{deal.owner && <span className="block">{deal.owner}</span>}</p>
           </div>
           <div className="flex items-center gap-2">
             <span className={`ds-chip ${health.tone}`}><StatusSymbol label={health.label} />{health.label}</span>
