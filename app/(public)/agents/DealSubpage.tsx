@@ -714,7 +714,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
   return (
     <div className="ds-page" data-testid="deal-subpage">
       {!section && (<>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-2"><nav aria-label="Breadcrumb"><ol className="flex flex-wrap items-center gap-1 text-[14px] leading-5"><li className="leading-5"><button type="button" className="ds-back !h-auto !min-h-0 !p-0 !text-[14px] leading-5" onClick={onBack}>Deals</button></li><li className="flex items-center gap-1 leading-5"><ChevronRight className="h-3.5 w-3.5 text-[#7A7787]" aria-hidden="true" /><span aria-current="page" className="text-[14px] font-medium leading-5 text-[#1B1726]">{deal.propertyAddress || deal.title || 'Deal'}</span></li></ol></nav><span className={`ds-chip ${health.tone}`}><StatusSymbol label={health.label} />{health.label}</span></div>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-2"><nav aria-label="Breadcrumb"><ol className="flex flex-wrap items-center gap-1 text-[14px] leading-5"><li className="leading-5"><button type="button" className="ds-back !m-0 !h-auto !min-h-0 !p-0 !text-[14px] leading-5" onClick={onBack}>Deals</button></li><li className="flex items-center gap-1 leading-5"><ChevronRight className="h-3.5 w-3.5 text-[#7A7787]" aria-hidden="true" /><span aria-current="page" className="text-[14px] font-medium leading-5 text-[#1B1726]">{deal.propertyAddress || deal.title || 'Deal'}</span></li></ol></nav><span className={`ds-chip ${health.tone}`}><StatusSymbol label={health.label} />{health.label}</span></div>
 
       </>)}
 
