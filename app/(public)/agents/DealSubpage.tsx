@@ -1,6 +1,7 @@
 'use client';
 
 import StatusSymbol from './StatusSymbol';
+import { buildDealFile, downloadDealFilePdf, printDealFile } from './dealFile';
 import { dealPeople } from '@/lib/closing-time-people';
 import { blankFieldAlerts } from '@/lib/blank-field-alerts';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -744,11 +745,13 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
       <div className={section ? '' : 'ds-split'}>
         <div className="min-w-0">
           {!section && (
-          <div className="ds-tabs !mt-0" role="tablist" aria-label="Deal sections">
-            {tabs.map(([id, label]) => (
-              <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className="ds-tab">{label}</button>
-            ))}
-            <button type="button" className="ds-tab" onClick={() => onOpenView('transaction')}>Contract</button>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E6E5EC] pb-3">
+            <p className="text-[15px] font-semibold text-[#1B1726]">Deal File</p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className="hover:!bg-[#EFEAF8] hover:!text-[#301D5D]" onClick={() => void downloadDealFilePdf(buildDealFile(deal, deadlines ?? [], health.label, stageName))}>Download PDF</button>
+              <button type="button" className="hover:!bg-[#EFEAF8] hover:!text-[#301D5D]" onClick={() => printDealFile(buildDealFile(deal, deadlines ?? [], health.label, stageName))}>Print</button>
+              <button type="button" className="hover:!bg-[#EFEAF8] hover:!text-[#301D5D]" onClick={() => onOpenView('transaction')}>Edit Contract</button>
+            </div>
           </div>
           )}
 
@@ -1071,13 +1074,30 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
 
           {tab !== 'documents' && deal && <DocumentRequestsCard headless deal={deal} locked={locked} documentGroups={documentGroups} onUpdate={onUpdate} />}
 
-          {tab === 'history' && (
-            <div className="ds-card ds-list">
-              {[...deal.activity].reverse().slice(0, 50).map((a) => (
-                <div key={a.id} className="ds-list-row"><span className="min-w-0 flex-1">{a.message}</span><span className="text-xs text-slate-500">{formatDate(a.createdAt.slice(0, 10))}</span></div>
-              ))}
-            </div>
-          )}
+          {tab === 'history' && (() => {
+            const file = buildDealFile(deal, deadlines ?? [], health.label, stageName);
+            return (
+              <div className="space-y-4" data-testid="deal-file">
+                {file.sections.map((s) => (
+                  <section key={s.title} className="ds-card !p-0 overflow-hidden">
+                    <p className="border-b border-[#E6E5EC] px-4 py-3 text-[15px] font-semibold text-[#1B1726]">{s.title}</p>
+                    <table className="w-full text-left text-sm">
+                      {s.headers && <thead><tr className="bg-[#F6F3FB]">{s.headers.map((h) => <th key={h} className="px-4 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-[#6B6878]">{h}</th>)}</tr></thead>}
+                      <tbody>
+                        {s.rows.map((r, i) => (
+                          <tr key={i} className="border-t border-[#F6F3FB] align-top">
+                            {r.map((c, j) => (!s.headers && j === 0
+                              ? <th key={j} scope="row" className="w-[30%] bg-[#F6F3FB] px-4 py-2 text-[13px] font-medium text-[#1B1726]">{c}</th>
+                              : <td key={j} className="px-4 py-2 text-[#1B1726]">{c}</td>))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </section>
+                ))}
+              </div>
+            );
+          })()}
         </div>
 
         {!section && (<aside className="ds-rail-right" aria-label="Deal details">
