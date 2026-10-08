@@ -971,10 +971,11 @@ function dealDeadlines(deal: AgentDeal): TrecDeadline[] {
 }
 
 /** Deal health from the closing date, every unchecked key deadline, and readiness as closing nears. */
-function dealHealthLabel(deal: AgentDeal, today: string, closed: boolean): { label: string; tone: string } {
+function dealHealthLabel(deal: AgentDeal, today: string, closed: boolean, extended = false): { label: string; tone: string } {
   if (closed) return { label: 'Closed', tone: 'bg-slate-100 text-slate-600' };
   const days = daysUntilClosing(deal.closingDate, today);
   if (days === null) return { label: 'No date', tone: 'bg-slate-100 text-slate-600' };
+  if (!extended) return days < 0 ? { label: 'Overdue', tone: 'bg-[#FFEAE6] text-[#661102]' } : days <= 7 ? { label: 'Needs Attention', tone: 'bg-[#FEF8CC] text-[#645600]' } : { label: 'On Track', tone: 'bg-[#E0FBE0] text-[#005A00]' };
   const open = dealDeadlines(deal).filter((d) => d.id !== 'closing-date' && d.date && !deal.documentChecks[`dl:${d.id}`]);
   const missed = open.some((d) => d.date < today);
   const soon = open.some((d) => d.date >= today && daysUntilClosing(d.date, today) !== null && (daysUntilClosing(d.date, today) as number) <= 3);
@@ -1807,24 +1808,30 @@ export default function ClosingTime({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, deals, today]);
+  const [platformDefaults, setPlatformDefaults] = useState<null | { contractCustomFields: { id: string; section: string; label: string; value: string }[]; contractFieldOrder: Record<string, string[]>; contractHiddenFields: string[]; contractFieldLabels: Record<string, string>; formFamilies: string[]; taskTemplateIds: { buyer: string[]; listing: string[] } }>(null);
+  const [platformFeatures, setPlatformFeatures] = useState<string[]>([]);
+  useEffect(() => {
+    fetch('/api/closing-time/template-defaults', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) setPlatformDefaults(d); }).catch(() => undefined);
+    fetch('/api/closing-time/features', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d?.enabled) setPlatformFeatures(d.enabled); }).catch(() => undefined);
+  }, []);
   const templateCreatedRef = useRef(false);
   useEffect(() => {
-    if (!ready || templateDeal || templateCreatedRef.current) return;
+    if (!ready || !platformDefaults || templateDeal || templateCreatedRef.current) return;
     templateCreatedRef.current = true;
     const base = newDeal(trecFormVersion.id);
     const template: AgentDeal = {
       ...base,
       title: 'Template',
       isTemplate: true,
-      contractCustomFields: AGENT_DESK_TEMPLATE.contractCustomFields.map((field) => ({ ...field })),
-      contractFieldOrder: Object.fromEntries(Object.entries(AGENT_DESK_TEMPLATE.contractFieldOrder).map(([key, list]) => [key, [...list]])),
-      contractHiddenFields: [...AGENT_DESK_TEMPLATE.contractHiddenFields],
-      contractFieldLabels: { ...AGENT_DESK_TEMPLATE.contractFieldLabels },
-      selectedFormFamilies: { ...base.selectedFormFamilies, '20': true, '55': true, IABS: true },
+      contractCustomFields: platformDefaults.contractCustomFields.map((field) => ({ ...field })) as AgentDeal['contractCustomFields'],
+      contractFieldOrder: Object.fromEntries(Object.entries(platformDefaults.contractFieldOrder).map(([key, list]) => [key, [...list]])) as AgentDeal['contractFieldOrder'],
+      contractHiddenFields: [...platformDefaults.contractHiddenFields],
+      contractFieldLabels: { ...platformDefaults.contractFieldLabels },
+      selectedFormFamilies: { ...base.selectedFormFamilies, ...Object.fromEntries(platformDefaults.formFamilies.map((f) => [f, true])) },
     };
     persistDeals([template, ...deals]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, templateDeal]);
+  }, [ready, templateDeal, platformDefaults]);
   const upcomingClosingDays = activeDeals.flatMap((deal) => {
     const days = daysUntilClosing(deal.closingDate, today);
     return deal.status !== 'completed' && days !== null && days >= 0 ? [days] : [];
@@ -1954,7 +1961,7 @@ export default function ClosingTime({
   const createDeal = (dealType?: AgentDeal['dealType'], agentSide?: AgentDeal['agentSide']) => {
     const base = newDeal(trecFormVersion.id);
     // Pre-tick the required TREC forms: the One to Four Family contract, the Seller's Disclosure Notice and IABS.
-    const seededTasks = templateTaskIdsFor(dealType, agentSide).flatMap((id) => TASK_TEMPLATES.find((t) => t.id === id)?.tasks ?? [])
+    const seededTasks = (platformDefaults ? (dealType === 'listing_sale' || dealType === 'listing_lease' || agentSide === 'listing' ? platformDefaults.taskTemplateIds.listing : platformDefaults.taskTemplateIds.buyer) : templateTaskIdsFor(dealType, agentSide)).flatMap((id) => TASK_TEMPLATES.find((t) => t.id === id)?.tasks ?? [])
       .filter((title, index, all) => all.indexOf(title) === index)
       .map((title) => ({ id: getId('task'), title, dueDate: '', priority: 'normal' as const, status: 'todo' as const, complete: false }));
     const layout = templateDeal ?? AGENT_DESK_TEMPLATE;
@@ -1970,7 +1977,7 @@ export default function ClosingTime({
       contractHiddenFields: [...layout.contractHiddenFields],
       contractFieldLabels: { ...layout.contractFieldLabels },
       tasks: [...seededTasks, ...extraTasks],
-      selectedFormFamilies: { ...base.selectedFormFamilies, ...(templateDeal?.selectedFormFamilies ?? {}), '20': true, '55': true, IABS: true },
+      selectedFormFamilies: { ...base.selectedFormFamilies, ...(templateDeal?.selectedFormFamilies ?? {}), ...Object.fromEntries((platformDefaults?.formFamilies ?? ['20', '55', 'IABS']).map((f) => [f, true])) },
     };
     const finish = () => {
       persistDeals([deal, ...dealsRef.current]);
@@ -3304,7 +3311,7 @@ export default function ClosingTime({
             })()}
             {effectiveView === 'deals' && (() => {
               const healthOf = (deal: (typeof deals)[number]) => {
-                const h = dealHealthLabel(deal, today, isDealClosedAndComplete(deal));
+                const h = dealHealthLabel(deal, today, isDealClosedAndComplete(deal), platformFeatures.includes('health-check-v2'));
                 return { key: h.label === 'Needs Attention' ? 'attention' : h.label === 'On Track' ? 'ontrack' : h.label === 'No date' ? 'nodate' : h.label.toLowerCase(), ...h };
               };
               const sinceLabel = (iso?: string) => {
@@ -3391,7 +3398,7 @@ export default function ClosingTime({
               const deal = deals.find((d) => d.id === dealPageId);
               const closed = deal ? isDealClosedAndComplete(deal) : false;
               const days = deal ? daysUntilClosing(deal.closingDate, today) : null;
-              const health = deal ? dealHealthLabel(deal, today, closed) : { label: 'No date', tone: 'bg-slate-100 text-slate-600' };
+              const health = deal ? dealHealthLabel(deal, today, closed, platformFeatures.includes('health-check-v2')) : { label: 'No date', tone: 'bg-slate-100 text-slate-600' };
               const nextDeadline = deal ? dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] : undefined;
               return (
                 <DealSubpage
@@ -3477,7 +3484,7 @@ export default function ClosingTime({
             {effectiveView === 'd-schedule' && activeDeal && <div className="ds-page space-y-8"><SchedulersPanel key={activeDeal.id} deal={activeDeal} onOpenIntegrations={() => setDeskView('integrations')} /></div>}
             {['d-overview', 'd-documents', 'd-people'].includes(effectiveView) && (() => {
               const deal = activeDeal;
-              const health = deal ? dealHealthLabel(deal, today, isDealClosedAndComplete(deal)) : { label: 'No date', tone: 'bg-slate-100 text-slate-600' };
+              const health = deal ? dealHealthLabel(deal, today, isDealClosedAndComplete(deal), platformFeatures.includes('health-check-v2')) : { label: 'No date', tone: 'bg-slate-100 text-slate-600' };
               const nextDeadline = deal ? dealDeadlines(deal).filter((d) => d.date && d.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] : undefined;
               return (
                 <div className="ds-page">

@@ -6,6 +6,7 @@
 import { query } from '@/lib/server/db/neon';
 import { getEmailProvider } from '@/lib/server/email';
 import { sendSms, toE164 } from '@/lib/server/sms';
+import { AGENT_DESK_TEMPLATE } from '@/lib/agent-desk-template';
 
 export const NOTICE_LEAD_DAYS = 7;
 export const NOTICE_SMS_AUDIENCE = 'closing-time-alerts';
@@ -30,8 +31,27 @@ export function ensurePlatformSchema(): Promise<void> {
       created_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
     await query(`CREATE TABLE IF NOT EXISTS ct_platform_log (
       id BIGSERIAL PRIMARY KEY, actor TEXT, action TEXT NOT NULL, detail JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+    // First platform feature behind a switch: expanded deal health check. Created off; it turns on through a release.
+    await query(`INSERT INTO ct_feature_flags (key, label, description, enabled) VALUES ($1,$2,$3,FALSE) ON CONFLICT (key) DO NOTHING`,
+      ['health-check-v2', 'Deal Health Check v2', 'Health also counts missed key deadlines and incomplete readiness near closing, not only the closing date.']);
   })().catch((e) => { schemaPromise = null; throw e; });
   return schemaPromise;
+}
+
+export const TEMPLATE_DEFAULTS_KEY = 'template.defaults';
+export const BUILT_IN_TEMPLATE_DEFAULTS = {
+  contractCustomFields: AGENT_DESK_TEMPLATE.contractCustomFields.map((f) => ({ ...f })),
+  contractFieldOrder: Object.fromEntries(Object.entries(AGENT_DESK_TEMPLATE.contractFieldOrder).map(([k, v]) => [k, [...v]])),
+  contractHiddenFields: [...AGENT_DESK_TEMPLATE.contractHiddenFields],
+  contractFieldLabels: { ...AGENT_DESK_TEMPLATE.contractFieldLabels } as Record<string, string>,
+  formFamilies: ['20', '55', 'IABS'],
+  taskTemplateIds: { buyer: ['tc-buyer'], listing: ['listing', 'tc-seller'] } as { buyer: string[]; listing: string[] },
+};
+export type TemplateDefaults = typeof BUILT_IN_TEMPLATE_DEFAULTS;
+/** The platform brain: defaults every new account's Template copies. Falls back to the built-in values if none are saved. */
+export async function getTemplateDefaults(): Promise<TemplateDefaults> {
+  const saved = await getSetting<Partial<TemplateDefaults> | null>(TEMPLATE_DEFAULTS_KEY, null);
+  return { ...BUILT_IN_TEMPLATE_DEFAULTS, ...(saved && typeof saved === 'object' ? saved : {}) };
 }
 
 async function log(actor: string, action: string, detail: Record<string, unknown>) {
