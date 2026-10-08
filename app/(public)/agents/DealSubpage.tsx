@@ -451,7 +451,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
         <ol className="mt-3 grid gap-x-8 gap-y-1 sm:grid-cols-2" aria-label="All deal stages">
           {milestones.map((m) => (
             <li key={m.key} aria-current={m.current ? 'step' : undefined} className="flex items-center gap-2 py-1 text-[14px] text-[#1B1726]">
-              <span className={`flex h-3.5 w-3.5 flex-none items-center justify-center rounded-full border-2 ${m.done ? 'border-[#301D5D] bg-[#301D5D]' : m.current ? 'border-[#301D5D] bg-[#EFEAF8]' : 'border-[#D5D2DF]'}`}>{m.done ? <Check className="h-2.5 w-2.5 text-white" strokeWidth={4} aria-hidden="true" /> : null}</span>
+              <span className={`flex h-3.5 w-3.5 flex-none items-center justify-center rounded-full border-2 ${m.done ? 'border-[#301D5D] bg-[#301D5D]' : m.current ? 'border-[#301D5D] bg-[#EFEAF8]' : 'border-[#A9A5B8]'}`}>{m.done ? <Check className="h-2.5 w-2.5 text-white" strokeWidth={4} aria-hidden="true" /> : null}</span>
               <span className={m.current ? 'font-semibold' : ''}>{m.label}</span>
               <span className="ml-auto text-[12px] font-medium text-[#4A4757]">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
             </li>
@@ -722,15 +722,6 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
         <div className="min-w-0">
           <h2 className="ds-title">{deal.propertyAddress || deal.title}</h2>
           <p className="ds-subtitle">{partyLines}{deal.owner && <span className="block">{deal.owner}</span>}</p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <select aria-label="Deal type" value={deal.dealType} disabled={locked} onChange={(e) => onUpdate('dealType', e.target.value as AgentDeal['dealType'])} className="ds-select !h-[34px] !min-w-[170px]">
-              {DEAL_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-            </select>
-            <select aria-label="Deal status" value={deal.workflowStatus} disabled={locked} onChange={(e) => onUpdate('workflowStatus', e.target.value as AgentDeal['workflowStatus'])} className="ds-select !h-[34px] !min-w-[170px]">
-              {statuses.map((s) => <option key={s} value={s}>{statusLabels[s] ?? s}</option>)}
-            </select>
-            <button type="button" className="text-sm font-medium text-[#301D5D] underline-offset-2 hover:underline" onClick={() => onOpenView('transaction')}>View Details</button>
-          </div>
         </div>
         <span className={`ds-chip ${health.tone}`}><StatusSymbol label={health.label} />{health.label}</span>
       </div>
