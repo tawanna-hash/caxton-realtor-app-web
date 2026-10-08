@@ -1840,3 +1840,6 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   #agent-desk .ds-stat > :first-child { min-width: 0; }
   #agent-desk .ds-stat-icon { height: 1.75rem; width: 1.75rem; }
 }
+
+/* One checkbox size everywhere on the desk: 18px square, 4px corners, brand purple. */
+#agent-desk input[type='checkbox']:not(.sr-only) { width: 18px !important; height: 18px !important; min-width: 18px; min-height: 18px; margin: 0; flex: none; border-radius: 4px; accent-color: #301D5D; cursor: pointer; }
