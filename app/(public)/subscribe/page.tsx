@@ -6,6 +6,7 @@ import NewsletterCTA from '@/components/NewsletterCTA';
 import { haptics } from '@/lib/native/haptics';
 import { useDallasPreview } from '@/lib/market-preview';
 import { trackEvent } from '@/app/posthog-provider';
+import { trackGA } from '@/components/SiteGA';
 
 type Market = 'realtyline' | 'newslinesa' | 'houston' | 'dallas';
 type Mode = 'print' | 'email';
@@ -321,6 +322,7 @@ function SubscribeForm({
         return;
       }
 
+      trackGA('generate_lead', { lead_source: 'print_subscription', publication, market });
       setSubmitted(true);
       void haptics.notify('success');
     } catch {

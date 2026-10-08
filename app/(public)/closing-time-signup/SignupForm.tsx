@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { trackGA } from '@/components/SiteGA';
 
 const field = 'mt-1 w-full rounded-md border border-[#E6E5EC] bg-white px-3 py-2.5 text-[16px] text-[#1B1726] focus:border-[#301D5D] focus:outline-none';
 const label = 'text-[11px] font-medium uppercase tracking-[0.12em] text-[#5F5B6E]';
@@ -45,9 +46,10 @@ export default function SignupForm() {
         return;
       }
       if (data.autoSignedIn) {
-        window.location.href = '/agents/closing-time';
+        trackGA('sign_up', { method: 'email' }, () => { window.location.href = '/agents/closing-time'; });
         return;
       }
+      trackGA('sign_up', { method: 'email' });
       setDone(data.message || 'Account created. Please sign in.');
     } catch {
       setError('We could not reach the server. Check your connection and try again.');

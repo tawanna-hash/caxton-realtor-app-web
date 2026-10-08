@@ -12,6 +12,7 @@ import { type PubKey } from '@/lib/pub-meta';
 
 import { useEffect, useState } from 'react';
 import { trackEvent } from '@/app/posthog-provider';
+import { trackGA } from '@/components/SiteGA';
 
 type Publication = PubKey;
 
@@ -94,6 +95,7 @@ export default function NewsletterCTA({
         return;
       }
       setAlready(Boolean(body.already));
+      if (!body.already) trackGA('generate_lead', { lead_source: 'newsletter', publication: resolvedPub, source });
       setSubmitted(true);
       setSubmitting(false);
     } catch {
