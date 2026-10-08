@@ -30,6 +30,12 @@ function partiesOf(deal: AgentDeal): Party[] {
 }
 
 /** Messages on a deal: email and text with each person on it, kept in one thread per person and written to the Audit Trail. */
+/** Same form number, or same name ignoring case and punctuation, counts as the same item. */
+const askKey = (label: string) => {
+  const m = label.match(/^(TREC|TR)\s+([A-Z0-9-]+(?:\s\d[\w-]*)?)\s·/);
+  return m ? `${m[1]} ${m[2]}`.toLowerCase() : label.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+};
+
 export default function MessagesPanel({ deal, contact, checklist, requiredChecklistIds }: { checklist?: readonly { label: string; items: readonly { id: string; label: string }[] }[]; requiredChecklistIds?: ReadonlySet<string>; deal?: AgentDeal; contact?: { name: string; email: string; phone: string; role: string } }) {
   const scope = contact ? 'contact' : (deal?.id ?? '');
   const parties = useMemo<Party[]>(() => (contact ? [{ key: key(contact.name), name: contact.name, role: contact.role || 'Contact', email: contact.email, phone: contact.phone }] : deal ? partiesOf(deal) : []), [deal, contact]);
@@ -208,7 +214,13 @@ export default function MessagesPanel({ deal, contact, checklist, requiredCheckl
               ['Required Documents', askGroups.required.map((label) => ({ label, req: true }))] as const,
               ['Optional Documents', askGroups.optional.map((label) => ({ label, req: false }))] as const,
               ...Object.entries(lib).map(([c, l]) => [`TREC Forms: ${c}`, l.map((label) => ({ label, req: false }))] as const),
-            ] as const).map(([title, list]) => {
+            ] as const).reduce<{ title: string; list: { label: string; req: boolean }[] }[]>((acc, [title, list]) => {
+              // An item appears once: the same form number or the same name in an earlier group hides the later copy.
+              const seen = new Set(acc.flatMap((g) => g.list.map((x) => askKey(x.label))));
+              const fresh = list.filter((x) => { const k = askKey(x.label); if (seen.has(k)) return false; seen.add(k); return true; });
+              acc.push({ title, list: fresh });
+              return acc;
+            }, []).map(({ title, list }) => {
               const shownList = list.filter((l) => !askSearch.trim() || l.label.toLowerCase().includes(askSearch.trim().toLowerCase()));
               return shownList.length > 0 && (
                 <div key={title}>
