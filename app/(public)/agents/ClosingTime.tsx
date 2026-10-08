@@ -2793,6 +2793,11 @@ export default function ClosingTime({
                 );
               })}
               <li>
+                <button type="button" aria-current={effectiveView === 'my-schedule' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('my-schedule'); }} className="ds-navbtn" aria-label="My Scheduling" title="My Scheduling">
+                  <CalendarClock className="ct-navicon" aria-hidden="true" /><span>My Scheduling</span>
+                </button>
+              </li>
+              <li>
                 <button type="button" aria-current={effectiveView === 'contacts' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('contacts'); }} className="ds-navbtn" aria-label="Contacts" title="Contacts">
                   <Users className="ct-navicon" aria-hidden="true" /><span>Contacts</span>
                 </button>
@@ -2869,7 +2874,7 @@ export default function ClosingTime({
             </ul>
             <p className="ds-group-label ds-group-solo">Tools</p>
             <ul className="ds-nav-top">
-              {TOOL_VIEWS.filter((view) => view.id !== 'overview' && view.id !== 'referral').map((view) => {
+              {TOOL_VIEWS.filter((view) => view.id !== 'overview' && view.id !== 'referral' && view.id !== 'my-schedule').map((view) => {
                 const active = view.id === effectiveView;
                 const NavIcon = NAV_ICONS[view.id] ?? FileText;
                 return (
