@@ -16,6 +16,8 @@ export type TourStep = {
   hint?: string;
   /** Click the element when moving on (safe navigation clicks only). */
   clickOnNext?: boolean;
+  /** Move on by itself when the person clicks the highlighted element. */
+  advanceOnClick?: boolean;
 };
 export type Guide = HowTo & { id: string; view: string; tour: TourStep[] };
 
@@ -46,22 +48,22 @@ export const GUIDES: Guide[] = [
       { title: 'Set Up A Scheduler', text: 'This walkthrough points at each part of the page in order. You can click and type on the page at any time, then press Next here. Press Esc to stop.', view: 'my-schedule' },
       { title: 'Connect Your Calendar', text: 'Optional. Connect Google Calendar or Outlook so bookings land on your calendar and busy times are skipped. Without one, bookings use the Closing Time calendar and arrive by email.', find: 'Connected Accounts' },
       { title: 'Set Your Custom URL', text: 'Choose Edit, type your slug and Save. Every scheduler lives under this address.', find: 'Your Custom Scheduler URL' },
-      { title: 'Start A Scheduler', text: 'Choose New Scheduler. Pressing Next opens the builder for you.', find: 'New Scheduler|Create Your First Scheduler', clickOnNext: true },
+      { title: 'Start A Scheduler', text: 'Choose New Scheduler. Pressing Next opens the builder for you.', find: 'New Scheduler|Create Your First Scheduler', advanceOnClick: true, clickOnNext: true },
       { title: 'Pick The Booking Calendar', text: 'Step 1 of 5. Choose the calendar that receives bookings, or the Closing Time Calendar.', find: 'Select Booking Calendar', hint: 'Press New Scheduler first to open the builder.' },
       { title: 'Name It', text: 'The Scheduler Name is the title on the booking page, such as Home Inspection Walkthrough.', find: 'Scheduler Name' },
       { title: 'Choose The Web Address', text: 'Pick Custom Alias and type a short word such as inspection, or Use Root URL for no alias. Only one scheduler can use the root.', find: 'Scheduler URL' },
-      { title: 'Go To Availability', text: 'Choose Continue to move to Step 2.', find: 'Continue to Availability', hint: 'Finish Step 1, then this button appears at the bottom of it.' },
+      { title: 'Go To Availability', text: 'Choose Continue to move to Step 2.', find: 'Continue to Availability', advanceOnClick: true, hint: 'Finish Step 1, then this button appears at the bottom of it.' },
       { title: 'Meeting Length', text: 'Step 2 of 5. Tap the lengths you offer, or add a custom time between 5 and 480 minutes.', find: 'Meeting Length', hint: 'Press Continue on Step 1 to get here.' },
       { title: 'Days And Hours', text: 'Turn on each day you take bookings and set start and end times. Choose your Timezone below it.', find: 'Weekly availability' },
       { title: 'Limits And Buffers', text: 'Set how far ahead people can book, how much notice you need, and the buffer before and after each meeting.', find: 'How far in advance' },
-      { title: 'Go To Event Details', text: 'Choose Continue to move to Step 3.', find: 'Continue to Event Details' },
+      { title: 'Go To Event Details', text: 'Choose Continue to move to Step 3.', find: 'Continue to Event Details', advanceOnClick: true },
       { title: 'Event Details', text: 'Step 3 of 5. The Event Subject is the invite title. You can use {invitee_name}, {invitee_email}, {my_name} and {subject}.', find: 'Event Subject', hint: 'Press Continue on Step 2 to get here.' },
       { title: 'Ask Questions', text: 'Add up to ten questions for the person booking, such as the property address. Check Required to make an answer mandatory.', find: 'Custom Questions' },
-      { title: 'Go To Appearance', text: 'Choose Continue to move to Step 4.', find: 'Continue to Appearance' },
+      { title: 'Go To Appearance', text: 'Choose Continue to move to Step 4.', find: 'Continue to Appearance', advanceOnClick: true },
       { title: 'Welcome Text', text: 'Step 4 of 5. Add a welcome message, an optional redirect page, and language and time format.', find: 'Welcome text', hint: 'Press Continue on Step 3 to get here.' },
-      { title: 'Go To Workflow', text: 'Choose Continue to move to Step 5.', find: 'Continue to workflow' },
+      { title: 'Go To Workflow', text: 'Choose Continue to move to Step 5.', find: 'Continue to workflow', advanceOnClick: true },
       { title: 'Reminders', text: 'Step 5 of 5. Add up to two reminder emails before the meeting and one follow-up after it.', find: 'Automate what happens', hint: 'Press Continue on Step 4 to get here.' },
-      { title: 'Create It', text: 'Choose Create Scheduler. Then make sure the switch beside it shows On, choose Open to try the booking page, and Copy Link to share it.', find: 'Create Scheduler|Save Scheduler' },
+      { title: 'Create It', text: 'Choose Create Scheduler. Then make sure the switch beside it shows On, choose Open to try the booking page, and Copy Link to share it.', find: 'Create Scheduler|Save Scheduler', advanceOnClick: true },
     ],
   },
   {
@@ -175,7 +177,20 @@ export function Walkthrough({ guide, onClose, goView }: { guide: Guide; onClose:
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  useEffect(() => {
+    if (!step.advanceOnClick) return;
+    const onClick = (e: MouseEvent) => {
+      const el = elRef.current;
+      if (el && e.target instanceof Node && el.contains(e.target)) {
+        window.setTimeout(() => setI((n) => Math.min(n + 1, guide.tour.length - 1)), 500);
+      }
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [i, step.advanceOnClick, guide.tour.length]);
+
   const next = () => {
+    if (step.clickOnNext && step.advanceOnClick && elRef.current) { elRef.current.click(); return; }
     if (step.clickOnNext && elRef.current) elRef.current.click();
     if (last) { onClose(); return; }
     window.setTimeout(() => setI((n) => Math.min(n + 1, guide.tour.length - 1)), step.clickOnNext ? 400 : 0);

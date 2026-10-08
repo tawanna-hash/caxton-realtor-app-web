@@ -66,7 +66,12 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
     const c = defaultConfig(data?.agentName ?? '');
     c.bookingCalendar = data?.calendars.find((x) => x.primary)?.id ?? 'closing_time';
     c.bookingCalendarName = data?.calendars.find((x) => x.primary)?.name ?? 'Closing Time Calendar';
-    if (data?.schedulers.length) c.alias = '';
+    // Start with a name and a free alias so the first step never opens blank.
+    c.name = 'My Scheduler';
+    const taken = new Set((data?.schedulers ?? []).map((x) => x.alias));
+    let alias = 'meeting'; let n = 2;
+    while (taken.has(alias)) alias = `meeting-${n++}`;
+    c.alias = alias;
     setEditing({ id: null, config: c, hasBanner: false, hasAvatar: false });
   };
 

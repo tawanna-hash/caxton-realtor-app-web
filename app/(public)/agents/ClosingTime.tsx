@@ -1431,6 +1431,16 @@ export default function ClosingTime({
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
   const helpGuideId = effectiveView === 'my-schedule' ? 'scheduler' : effectiveView === 'coordinator' ? 'alerts' : ['audit', 'transaction', 'readiness', 'd-messages', 'd-portal', 'd-schedule'].includes(effectiveView) ? 'documents' : '';
   const helpGuide: Guide | null = GUIDES.find((g) => g.id === helpGuideId) ?? null;
+  // The scheduler walkthrough starts by itself the first time this browser opens My Scheduling.
+  useEffect(() => {
+    if (effectiveView !== 'my-schedule' || !ready) return;
+    try {
+      if (window.localStorage.getItem('ct-tour-scheduler-seen')) return;
+      window.localStorage.setItem('ct-tour-scheduler-seen', '1');
+    } catch { return; }
+    const t = window.setTimeout(() => setTourId('scheduler'), 1200);
+    return () => window.clearTimeout(t);
+  }, [effectiveView, ready]);
   const RES_VIEW_ACTIVE = ['utilities', 'referral', 'testimonials', 'data-backups', 'automations', 'security', 'doc-tools'].includes(effectiveView);
   // Scheduling pages are working pages: a refresh keeps the exact scroll position there.
   useKeepScroll(effectiveView === 'my-schedule' || effectiveView === 'd-schedule', ready);
