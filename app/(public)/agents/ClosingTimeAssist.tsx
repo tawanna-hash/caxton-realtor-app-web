@@ -218,7 +218,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const sent = data?.followUps.filter((f) => f.status === 'sent').slice(0, 5) ?? [];
 
   return (
-    <div data-section-key="assist" className="min-w-0 scroll-mt-24 lg:col-span-2">
+    <div className="min-w-0 scroll-mt-24 lg:col-span-2">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Deal Coordination</p>
