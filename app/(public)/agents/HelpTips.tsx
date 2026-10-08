@@ -56,12 +56,12 @@ export default function HelpTips({ howTo }: { howTo?: HowTo | null }) {
             </div>
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search tips" aria-label="Search tips" />
             {howTo && (
-              <section className="ct-help-howto" aria-label={`How to: ${howTo.title}`}>
+              <section className="ct-help-howto max-h-[45vh] shrink-0 overflow-y-auto rounded border border-[#E6E5EC] bg-[#F6F3FB] p-3" aria-label={`How to: ${howTo.title}`}>
                 <h3 className="text-[14px] font-semibold text-[#301D5D]">{`How To: ${howTo.title}`}</h3>
                 {howTo.intro && <p className="mt-1 text-[13px] text-[#4A4757]">{howTo.intro}</p>}
-                <ol className="mt-2 list-decimal space-y-2 pl-5 text-[13px] text-[#4A4757]">
-                  {howTo.steps.map((h) => <li key={h.step}><strong className="text-[#1B1726]">{h.step}.</strong> {h.text}</li>)}
-                </ol>
+                <div className="mt-2 space-y-2 text-[13px] text-[#4A4757]">
+                  {howTo.steps.map((h, n) => <p key={h.step}><strong className="text-[#1B1726]">{n + 1}. {h.step}.</strong> {h.text}</p>)}
+                </div>
               </section>
             )}
             <ul>
