@@ -76,6 +76,7 @@ import {
   ChevronLeft,
   BookOpen,
   Settings as SettingsIcon,
+  LogOut as LogOutIcon,
   ChevronRight,
   Circle,
   ClipboardCheck,
@@ -2927,6 +2928,20 @@ export default function ClosingTime({
               <li>
                 <button type="button" aria-current={effectiveView === 'coordinator' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('coordinator'); }} className="ds-navbtn" aria-label="Settings" title="Settings">
                   <SettingsIcon className="ct-navicon" aria-hidden="true" /><span>Settings</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  className="ds-navbtn"
+                  aria-label="Sign Out"
+                  title="Sign Out"
+                  onClick={async () => {
+                    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
+                    window.location.href = '/auth/sign-up';
+                  }}
+                >
+                  <LogOutIcon className="ct-navicon" aria-hidden="true" /><span>Sign Out</span>
                 </button>
               </li>
             </ul>
