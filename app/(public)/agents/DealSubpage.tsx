@@ -162,7 +162,7 @@ function textHref(phone: string, name: string, address: string): string {
 }
 
 export default function DealSubpage({ readiness, deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onExtendDeal, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
-  const [tab, setTab] = useState<Tab>(section ?? 'tasks');
+  const [tab, setTab] = useState<Tab>(section ?? 'history');
   const [stagesOpen, setStagesOpen] = useState(false);
   // Stages stay closed until opened by hand, then close again on their own after five minutes.
   useEffect(() => {
@@ -619,7 +619,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
     };
   };
 
-  const tabs: [Tab, string][] = [['tasks', `Tasks ${deal.tasks.length}`], ['history', 'History']];
+  const tabs: [Tab, string][] = [['history', 'History']];
 
   if ((section as string | undefined) === 'overview') {
     const snapshotTop = renderSnapshotTop();
@@ -1066,28 +1066,6 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
                   })}
                 </div>
               </section>
-            </div>
-          )}
-
-          {tab === 'tasks' && (
-            <div className="space-y-4">
-              <div className="ds-card">
-                <p className="ds-side-title !m-0">Add Task List</p>
-                <p className="text-sm text-slate-500">Load a checklist into this deal. Tasks already on the deal are skipped.</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {TASK_TEMPLATES.map((t) => <button key={t.id} type="button" disabled={locked} className={btn} onClick={() => addTemplate(t.id)}><Plus className="h-4 w-4" aria-hidden="true" />{t.label}</button>)}
-                </div>
-              </div>
-              <div className="ds-card ds-list">
-                {deal.tasks.length === 0 && <p className="text-sm text-slate-500">No tasks yet.</p>}
-                {deal.tasks.map((t) => (
-                  <label key={t.id} className="ds-list-row cursor-pointer">
-                    <input type="checkbox" checked={t.complete} disabled={locked} onChange={(e) => onUpdate('tasks', deal.tasks.map((x) => x.id === t.id ? { ...x, complete: e.target.checked, status: e.target.checked ? 'done' as const : 'todo' as const } : x))} />
-                    <span className={`min-w-0 flex-1 ${t.complete ? 'text-slate-400 line-through' : ''}`}>{t.title}</span>
-                    <span className="text-xs uppercase tracking-wide text-slate-400">{t.dueDate ? formatDate(t.dueDate) : 'No due date'}</span>
-                  </label>
-                ))}
-              </div>
             </div>
           )}
 
