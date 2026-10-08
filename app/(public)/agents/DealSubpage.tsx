@@ -436,7 +436,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-1" data-testid="deal-header">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <h2 className="ds-title !mt-0 min-w-0 truncate">{deal.propertyAddress || deal.title || 'New Contract'}</h2>
+            <h2 className="ds-title !mt-0 min-w-0 sm:truncate">{deal.propertyAddress || deal.title || 'New Contract'}</h2>
             <span className="ds-chip bg-[#EFEAF8] text-[#301D5D] uppercase tracking-wide">{({ purchase: 'Residential', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Residential'}</span>
           </div>
           <p className={`mt-1 text-[13px] font-medium ${isCritical ? textTone : 'text-[#4A4757]'}`}>
@@ -451,6 +451,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
       )}
       <button
         type="button"
+        data-no-auto-open
         onClick={() => setStagesOpen((v) => !v)}
         aria-expanded={stagesOpen}
         aria-label={`${stageName}, step ${Math.min(stageIndex + 1, milestones.length)} of ${milestones.length}. ${stagesOpen ? 'Hide' : 'Show'} stages`}
@@ -1070,7 +1071,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                               </button>
                             ))}
                           </div>
-                          <div id="more-doc-detail-panel" className={`min-w-0 scroll-mt-4 space-y-4 p-4 lg:border-l lg:border-[#E6E5EC] ${docMOpen ? '' : 'max-lg:hidden'}`} data-testid="more-documents-detail"><button type="button" onClick={() => setDocMOpen(false)} className="mb-3 !h-9 !gap-1 !px-2 lg:!hidden"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Documents</button>
+                          <div id="more-doc-detail-panel" className={`min-w-0 scroll-mt-4 space-y-4 p-4 lg:border-l lg:border-[#E6E5EC] ${docMOpen ? '' : 'max-lg:hidden'}`} data-testid="more-documents-detail"><button type="button" onClick={() => setDocMOpen(false)} className="mb-3 !inline-flex !h-9 !flex-row !items-center !gap-1 !px-2 lg:!hidden"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Documents</button>
                             {selected && (<><div><p className={lab}>Selected</p><h4 className="mt-1 text-[15px] font-semibold leading-snug text-[#1B1726]">{selected.title}</h4></div>{selected.detail}</>)}
                           </div>
                         </div>

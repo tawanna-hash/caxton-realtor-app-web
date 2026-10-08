@@ -712,7 +712,7 @@ function ReadinessChecklist({
 
         <div role="tabpanel" className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className={`min-w-0 border-b border-[#E6E5EC] lg:border-b-0 ${mOpen ? 'max-lg:hidden' : ''}`}>{activeGroup?.rows.map(({ document }) => renderRow(document))}</div>
-          <div id="doc-detail-panel" className={`min-w-0 scroll-mt-4 border-[#E6E5EC] p-4 lg:border-l ${mOpen ? '' : 'max-lg:hidden'}`}><button type="button" onClick={() => setMOpen(false)} className="mb-3 !h-9 !gap-1 !px-2 lg:!hidden"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Checklist</button>{renderDetail(selectedRow)}</div>
+          <div id="doc-detail-panel" className={`min-w-0 scroll-mt-4 border-[#E6E5EC] p-4 lg:border-l ${mOpen ? '' : 'max-lg:hidden'}`}><button type="button" onClick={() => setMOpen(false)} className="mb-3 !inline-flex !h-9 !flex-row !items-center !gap-1 !px-2 lg:!hidden"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Checklist</button>{renderDetail(selectedRow)}</div>
         </div>
       </div>
 
@@ -3070,7 +3070,7 @@ export default function ClosingTime({
               ['Schedule', CalendarClock, effectiveView === 'my-schedule', () => { setMobileNavOpen(false); setWorkspacePage(2); setDeskView('my-schedule'); }],
               ['More', Menu, mobileNavOpen, () => setMobileNavOpen((v) => !v)],
             ] as const).map(([label, Icon, on, go]) => (
-              <button key={label} type="button" aria-current={on && label !== 'More' ? 'page' : undefined} aria-expanded={label === 'More' ? mobileNavOpen : undefined} onClick={go} className={on ? 'is-on' : ''}>
+              <button key={label} type="button" data-no-auto-open aria-current={on && label !== 'More' ? 'page' : undefined} aria-expanded={label === 'More' ? mobileNavOpen : undefined} onClick={go} className={on ? 'is-on' : ''}>
                 <Icon className="h-5 w-5" aria-hidden="true" /><span>{label}</span>
               </button>
             ))}
@@ -3116,7 +3116,7 @@ export default function ClosingTime({
                   const activeMore = DEAL_TABS.find((tab) => tab.id === effectiveView && moreIds.includes(tab.id));
                   return (
                     <div className="relative shrink-0">
-                      <button type="button" aria-haspopup="menu" aria-expanded={dealMoreOpen} onClick={() => setDealMoreOpen((v) => !v)} className={`!h-auto !gap-1 !rounded-none !border-0 !border-b-2 !bg-transparent !px-3 !py-2.5 text-[14px] ${activeMore ? '!border-[#301D5D] font-semibold !text-[#301D5D]' : '!border-transparent font-medium !text-[#4A4757] hover:!text-[#301D5D]'}`}>{activeMore ? activeMore.label : 'More'}<ChevronDown className={`h-3.5 w-3.5 transition-transform ${dealMoreOpen ? 'rotate-180' : ''}`} aria-hidden="true" /></button>
+                      <button type="button" data-no-auto-open aria-haspopup="menu" aria-expanded={dealMoreOpen} onClick={() => setDealMoreOpen((v) => !v)} className={`!inline-flex !h-auto !flex-row !items-center !gap-1 !rounded-none !border-0 !border-b-2 !bg-transparent !px-3 !py-2.5 text-[14px] ${activeMore ? '!border-[#301D5D] font-semibold !text-[#301D5D]' : '!border-transparent font-medium !text-[#4A4757] hover:!text-[#301D5D]'}`}>{activeMore ? activeMore.label : 'More'}<ChevronDown className={`h-3.5 w-3.5 transition-transform ${dealMoreOpen ? 'rotate-180' : ''}`} aria-hidden="true" /></button>
                       {dealMoreOpen && (
                         <>
                           <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 !h-auto !cursor-default !rounded-none !border-0 !bg-transparent !p-0 hover:!bg-transparent" onClick={() => setDealMoreOpen(false)} />
@@ -4104,7 +4104,7 @@ export default function ClosingTime({
                             </div>
                           ))}
                         </div>
-                        <div id="task-detail-panel" className={`min-w-0 scroll-mt-4 space-y-4 p-4 lg:border-l lg:border-[#E6E5EC] ${taskMOpen ? '' : 'max-lg:hidden'}`} data-testid="task-detail"><button type="button" onClick={() => setTaskMOpen(false)} className="mb-3 !h-9 !gap-1 !px-2 lg:!hidden"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Tasks</button>
+                        <div id="task-detail-panel" className={`min-w-0 scroll-mt-4 space-y-4 p-4 lg:border-l lg:border-[#E6E5EC] ${taskMOpen ? '' : 'max-lg:hidden'}`} data-testid="task-detail"><button type="button" onClick={() => setTaskMOpen(false)} className="mb-3 !inline-flex !h-9 !flex-row !items-center !gap-1 !px-2 lg:!hidden"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Tasks</button>
                           <div>
                             <p className={lab}>Selected Task</p>
                             <input key={`${selectedTask.id}-${selectedTask.title}`} defaultValue={selectedTask.title} disabled={locked} maxLength={280} aria-label="Task name" onBlur={(event) => { const v = event.target.value.trim(); if (v && v !== selectedTask.title) updateTask(selectedTask.id, { title: v }); }} className="mt-1 h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm font-semibold text-[#1B1726]" />

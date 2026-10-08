@@ -42,7 +42,7 @@ export default function AutoOpenSections() {
       }
     }, { threshold: 0.6 });
     const watch = (root: ParentNode) => {
-      root.querySelectorAll('details:not([open]), button[aria-expanded="false"]').forEach((el) => {
+      root.querySelectorAll('details:not([open]), button[aria-expanded="false"]:not([data-no-auto-open])').forEach((el) => {
         if (!seen.has(el)) io.observe(el);
       });
     };
