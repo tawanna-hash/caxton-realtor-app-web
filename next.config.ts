@@ -70,8 +70,8 @@ const cspString = Object.entries(cspDirectives)
 // Adds Vercel Speed Insights, blob workers (PDF viewer) and blob iframes (uploaded contract preview).
 const closingTimeCsp = Object.entries({
   ...cspDirectives,
-  'script-src': [...cspDirectives['script-src'], 'https://va.vercel-scripts.com'],
-  'connect-src': [...cspDirectives['connect-src'], 'https://va.vercel-scripts.com'],
+  'script-src': [...cspDirectives['script-src'], 'https://va.vercel-scripts.com', 'https://www.googletagmanager.com'],
+  'connect-src': [...cspDirectives['connect-src'], 'https://va.vercel-scripts.com', 'https://www.googletagmanager.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com'],
   'frame-src': [...cspDirectives['frame-src'], 'blob:'],
   'worker-src': ["'self'", 'blob:'],
 })
