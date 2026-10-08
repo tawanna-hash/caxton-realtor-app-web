@@ -551,7 +551,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
           </div>
         );
       })()}
-      <div className="ds-card">
+      <div className="ds-card !bg-[#EFEAF8]">
         <p className="text-sm font-semibold text-slate-900">Key Deadlines</p>
         <Tip text="Enter the signed contract's effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules." />
         {timelineFields}
