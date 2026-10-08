@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
@@ -88,7 +87,6 @@ function providerMatchesCategory(provider: ReferralProvider, category: ReferralC
 
 
 export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string) => void } = {}) {
-  const { section: collapsible, toggleProps } = useCollapsibles();
   return (
     <section>
         <div className="">
@@ -160,7 +158,6 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
 }
 
 export function ReferralNetworkPanel({ providers }: { providers: ReferralProvider[] }) {
-  const { section: collapsible, toggleProps } = useCollapsibles();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [providerRotation, setProviderRotation] = useState(0);
   const selectedCategoryRecord = REFERRAL_CATEGORIES.find((category) => category.id === selectedCategory) ?? REFERRAL_CATEGORIES[0];
@@ -187,13 +184,12 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
   return (
       <section id="referral-network" className="scroll-mt-20">
         <div className="">
-          <div {...collapsible('referral', { mobileOpen: true })} data-section-key={undefined} className="ds-page ds-compact">
+          <div className="ds-page ds-compact">
             <div className="flex items-center gap-3">
               <div className="min-w-0">
                 <h2 className="text-[22px] font-semibold text-[#1B1726]">Referral Network</h2>
                 <p className="mt-1 text-[14px] text-[#4A4757]">Your call list, built for the next deal.</p>
               </div>
-              <CollapseToggle {...toggleProps('referral', 'referral network', { mobileOpen: true })} className="ml-auto" />
             </div>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
               Find local service partners across title, appraisal, remodeling, A/C and heating, roofing, inspections, and lending. Discover who is visible in your market and take the next step with confidence.

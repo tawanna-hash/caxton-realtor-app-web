@@ -547,14 +547,13 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
         const urgent = open.length > 0 && Boolean(urgentDeadline);
         return (
           <div className={urgent ? 'ds-card !border-[#301D5D]' : 'ds-card'} data-testid="blank-field-alerts" data-urgent={urgent ? 'true' : undefined}>
-            <p className={urgent ? 'text-sm font-semibold text-[#301D5D]' : 'text-sm font-semibold text-slate-900'}>{urgent ? 'Urgent: Review Blank Fields' : 'Blank Fields Need Your Attention'}</p>
-            <p className="mt-1 text-sm text-slate-600">{urgent && urgentDeadline ? `${urgentDeadline.label} is ${urgentDeadline.date === today ? 'today' : 'tomorrow'}. Review each item or ignore it if the blanks are intentional.` : open.length > 0 ? 'Review each item or ignore it if the blanks are intentional.' : 'Everything left is ignored.'}</p>
+            <div className="flex flex-wrap items-baseline gap-2"><h3 className={urgent ? 'text-[15px] font-semibold text-[#301D5D]' : 'text-[15px] font-semibold text-[#1B1726]'}>{urgent ? 'Urgent: Review Blank Fields' : 'Blank Fields Need Your Attention'}</h3><Tip text={urgent && urgentDeadline ? `${urgentDeadline.label} is ${urgentDeadline.date === today ? 'today' : 'tomorrow'}. Review each item or ignore it if the blanks are intentional.` : open.length > 0 ? 'Review each item or ignore it if the blanks are intentional.' : 'Everything left is ignored.'} /><span className="text-[13px] text-[#6B6878]">{open.length} open</span></div>
             {open.length > 0 && (
               <>
                 <ul className="mt-3 divide-y divide-[#E6E5EC]">
                   {open.slice(0, 3).map((a) => (
                     <li key={a.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2">
-                    <span className="min-w-0 flex-1 basis-40 text-sm text-slate-900"><span className="block break-words font-medium">{a.label}</span><span className="block text-xs text-slate-500">{a.blank} Of {a.total} Blank</span></span>
+                    <span className="min-w-0 flex-1 basis-40 text-sm text-slate-900"><span className="block break-words font-medium">{a.label}</span><span className="block text-xs text-slate-500">{a.blank} of {a.total} blank</span></span>
                     <span className="flex shrink-0 gap-2">
                       <button type="button" onClick={() => onOpenView(a.view)}>Review</button>
                       <button type="button" onClick={() => onUpdate('ignoredBlankAlerts', [...ignoredIds, a.id])}>Ignore</button>
@@ -568,7 +567,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                     <ul className="divide-y divide-[#E6E5EC]">
                       {open.slice(3).map((a) => (
                         <li key={a.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2">
-                    <span className="min-w-0 flex-1 basis-40 text-sm text-slate-900"><span className="block break-words font-medium">{a.label}</span><span className="block text-xs text-slate-500">{a.blank} Of {a.total} Blank</span></span>
+                    <span className="min-w-0 flex-1 basis-40 text-sm text-slate-900"><span className="block break-words font-medium">{a.label}</span><span className="block text-xs text-slate-500">{a.blank} of {a.total} blank</span></span>
                     <span className="flex shrink-0 gap-2">
                       <button type="button" onClick={() => onOpenView(a.view)}>Review</button>
                       <button type="button" onClick={() => onUpdate('ignoredBlankAlerts', [...ignoredIds, a.id])}>Ignore</button>
@@ -1089,7 +1088,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
             <div className="space-y-6">
               <section>
                 <div className="flex items-center justify-between gap-3">
-                  <div><p className="ds-side-title !m-0">People</p><p className="text-sm text-slate-500">Clients, vendors and others on this deal.</p></div>
+                  <h3 className="text-[15px] font-semibold text-[#1B1726]">Deal People</h3>
                   {!locked && <button type="button" className={btnPrimary} onClick={() => setShowPersonForm((v) => !v)}><Plus className="h-4 w-4" aria-hidden="true" /> Add People</button>}
                 </div>
                 {showPersonForm && (

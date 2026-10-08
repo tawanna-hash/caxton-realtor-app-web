@@ -65,8 +65,8 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
 
   const libraryBody = (
     <>
-        <div className={`${embedded ? 'mt-4' : 'mt-6'} grid gap-3 lg:max-w-md`}>
-          <label className="relative block">
+        <div className={`${embedded ? 'mt-4' : 'mt-6'} flex flex-wrap items-center gap-2`} data-testid="forms-toolbar">
+          <label className="relative block min-w-[200px] flex-1 sm:max-w-sm">
             <span className="sr-only">Search TREC Forms</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
             <input
@@ -77,11 +77,12 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
               className="h-[40px] w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-950 outline-none focus:border-[#301D5D]"
             />
           </label>
-        </div>
-        <div className="ds-tabs overflow-x-auto" role="tablist" aria-label="Filter TREC forms by category">
-          {TREC_FORM_LIBRARY_CATEGORIES.map((option) => (
-            <button key={option} type="button" role="tab" aria-selected={category === option} onClick={() => { setCategory(option); setPage(1); }} className="ds-tab !flex-none !whitespace-nowrap">{option}</button>
-          ))}
+          <label className="block max-sm:w-full">
+            <span className="sr-only">Filter TREC forms by category</span>
+            <select value={category} onChange={(event) => { setCategory(event.target.value as typeof category); setPage(1); }} className="h-[40px] w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-[#1B1726] outline-none focus:border-[#301D5D] sm:w-auto">
+              {TREC_FORM_LIBRARY_CATEGORIES.map((option) => <option key={option} value={option}>{option === 'All Forms' ? 'All Categories' : option}</option>)}
+            </select>
+          </label>
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-3">

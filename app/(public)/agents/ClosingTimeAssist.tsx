@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from 'react';
 import MessageLayoutPicker, { type MessageLayout } from './MessageLayoutPicker';
 import { SecureSignRequests, SecureSignSettings, type SignLayout, type SignRequestRow, type SignSettings } from './SecureSignPanel';
 import SignaturePlacer, { type PlacedField } from './SignaturePlacer';
-import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import Tip from './Tip';
 
@@ -124,7 +123,6 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const [extDays, setExtDays] = useState(3);
   const [newClosing, setNewClosing] = useState('');
   const [notice, setNotice] = useState('');
-  const { section: collapsible, toggleProps } = useCollapsibles();
 
   const load = useCallback(async () => {
     try {
@@ -220,13 +218,12 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const sent = data?.followUps.filter((f) => f.status === 'sent').slice(0, 5) ?? [];
 
   return (
-    <div {...collapsible('assist', { mobileOpen: true })} className="min-w-0 scroll-mt-24 lg:col-span-2">
+    <div className="min-w-0 scroll-mt-24 lg:col-span-2">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Deal Coordination</p>
           <h3 className="text-2xl font-semibold tracking-tight text-gray-900">Settings</h3>
         </div>
-        <CollapseToggle {...toggleProps('assist', 'deal settings', { mobileOpen: true })} />
       </div>
       <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">Risk alerts, follow-up drafts, a client progress link, and a closing checklist for this deal. Nothing is emailed to anyone until you approve that specific draft.</p>
       {error && <p className="mt-3 text-sm font-semibold text-[#661102]" role="alert">{error}</p>}
