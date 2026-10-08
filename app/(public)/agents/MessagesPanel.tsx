@@ -202,42 +202,6 @@ export default function MessagesPanel({ deal, contact, checklist, requiredCheckl
   );
   const lib = TREC_FORM_LIBRARY.reduce<Record<string, string[]>>((m, f) => { (m[f.category] ??= []).push(`${f.formNumber.startsWith('TXR ') ? `TR ${f.formNumber.slice(4)}` : `TREC ${f.formNumber}`} · ${f.title}`); return m; }, {});
   const askCount = asks.length + (askOther.trim() ? 1 : 0);
-  const requestUI = !contact && deal && (
-    <div>
-      <button type="button" className={btn} onClick={() => setAskOpen((v) => !v)} aria-expanded={askOpen}>{askOpen ? 'Hide Requests' : `Request Documents Or Forms${askCount ? ` (${askCount})` : ''}`}</button>
-      {askOpen && (
-        <div className="mt-3 space-y-4 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-4 py-3">
-          <input className={field} placeholder="Search documents and forms" value={askSearch} onChange={(e) => setAskSearch(e.target.value)} />
-          <div className="max-h-72 space-y-4 overflow-auto pr-1">
-            {([
-              ...(checklist ?? []).map((g) => [`Document Checklist: ${g.label}`, g.items.map((i) => ({ label: i.label, req: Boolean(requiredChecklistIds?.has(i.id)) }))] as const),
-              ['Required Documents', askGroups.required.map((label) => ({ label, req: true }))] as const,
-              ['Optional Documents', askGroups.optional.map((label) => ({ label, req: false }))] as const,
-              ...Object.entries(lib).map(([c, l]) => [`TREC Forms: ${c}`, l.map((label) => ({ label, req: false }))] as const),
-            ] as const).reduce<{ title: string; list: { label: string; req: boolean }[] }[]>((acc, [title, list]) => {
-              // An item appears once: the same form number or the same name in an earlier group hides the later copy.
-              const seen = new Set(acc.flatMap((g) => g.list.map((x) => askKey(x.label))));
-              const fresh = list.filter((x) => { const k = askKey(x.label); if (seen.has(k)) return false; seen.add(k); return true; });
-              acc.push({ title, list: fresh });
-              return acc;
-            }, []).map(({ title, list }) => {
-              const shownList = list.filter((l) => !askSearch.trim() || l.label.toLowerCase().includes(askSearch.trim().toLowerCase()));
-              return shownList.length > 0 && (
-                <div key={title}>
-                  <span className={lab}>{title}</span>
-                  <div className="grid gap-1 sm:grid-cols-2">
-                    {shownList.map(({ label: l, req }) => <label key={l} className="flex items-start gap-2 text-[13px] text-[#1B1726]"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={asks.includes(l)} onChange={() => setAsks((a) => a.includes(l) ? a.filter((x) => x !== l) : [...a, l])} /><span className="min-w-0 flex-1">{l}</span>{req ? <span className="ds-chip shrink-0 bg-[#EFEAF8] text-[#301D5D]">Required</span> : null}</label>)}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <label className="block"><span className={lab}>Other (Custom Request)</span><input className={field} placeholder="For example: Signed HOA receipt" maxLength={200} value={askOther} onChange={(e) => setAskOther(e.target.value)} /></label>
-          <Tip text="Each checked item becomes a pending request on this deal. The message lists them and links to the secure upload page. Uploads are tracked in Documents and the Audit Trail." />
-        </div>
-      )}
-    </div>
-  );
   const attachUI = (
     <div>
       <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => void addFiles(e.target.files)} />
@@ -289,7 +253,6 @@ export default function MessagesPanel({ deal, contact, checklist, requiredCheckl
                   </label>
             <label className="block"><span className={lab}>Message</span><textarea className={field} rows={5} value={body} onChange={(e) => setBody(e.target.value)} /></label>
             <SpellHelper text={body} onChange={setBody} ignore={spellIgnore} />
-            {requestUI}
             {attachUI}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Tip text={`Goes to ${party.email}. You are copied and replies go to your email. The subject starts with the property address.`} />
@@ -307,7 +270,6 @@ export default function MessagesPanel({ deal, contact, checklist, requiredCheckl
           <div className="space-y-3">
             <label className="block"><span className={lab}>Text</span><textarea className={field} rows={3} maxLength={900} value={body} onChange={(e) => setBody(e.target.value)} /></label>
             <SpellHelper text={body} onChange={setBody} ignore={spellIgnore} />
-            {requestUI}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Tip text={`Sent to ${party.phone}. The property address and a STOP line are added.`} />
               <span className="flex gap-2"><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !body} onClick={clearAll}>Clear</button><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !targets.length || !body.trim()} onClick={() => void sendText()}>Send Text</button></span>
