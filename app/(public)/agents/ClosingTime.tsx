@@ -610,7 +610,9 @@ function ReadinessChecklist({
   documentUploadBusyId,
   documentUploadError,
   rowExtra,
+  updateNote,
 }: {
+  updateNote?: (documentId: string, note: string) => void;
   rowExtra?: (documentId: string) => ReactNode;
   headingTag?: 'h2' | 'h3';
   side?: string;
@@ -643,52 +645,95 @@ function ReadinessChecklist({
   // Astro status colors: amber requested, green received or reviewed, gray not needed.
   const dotColor = (status: AgentDocument['status']) => (status === 'received' || status === 'reviewed' ? '#00E200' : status === 'not_needed' ? '#B9B6C4' : '#FFAF3D');
 
-  const renderDocument = (document: AgentDocument, description?: string) => {
+  const [selectedId, setSelectedId] = useState<string>('');
+  const selectedRow = activeGroup?.rows.find((row) => row.document.id === selectedId) ?? activeGroup?.rows[0];
+  const statusText = (status: AgentDocument['status']) => (status === 'not_needed' ? 'Not Needed' : status.charAt(0).toUpperCase() + status.slice(1));
+  const when = (iso?: string) => (iso ? new Date(iso).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '');
+
+  const renderRow = (document: AgentDocument) => {
+    const selected = selectedRow?.document.id === document.id;
+    return (
+      <button
+        key={document.id}
+        type="button"
+        onClick={() => setSelectedId(document.id)}
+        aria-current={selected ? 'true' : undefined}
+        className={`!flex !h-auto w-full !items-center !justify-start !gap-3 !rounded-none !border-0 !border-t !border-[#E6E5EC] !px-4 !py-3 text-left first:!border-t-0 ${selected ? '!bg-[#EFEAF8]' : '!bg-white hover:!bg-[#F6F3FB]'}`}
+      >
+        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: dotColor(document.status) }} aria-hidden="true" />
+        <span className="min-w-0 flex-1">
+          <span className={`block truncate text-sm font-semibold leading-5 ${isDone(document) ? 'text-[#6B6878]' : 'text-[#1B1726]'}`}>{document.label}</span>
+          <span className="block text-[12px] font-normal leading-4 text-[#6B6878]">{statusText(document.status)}{document.driveFileId ? ' · File Attached' : ''}</span>
+        </span>
+      </button>
+    );
+  };
+
+  const renderDetail = (entry: { description: string | undefined; document: AgentDocument } | undefined) => {
+    if (!entry) return <p className="text-sm text-[#6B6878]">Select a document to see its details.</p>;
+    const { document, description } = entry;
     const hasFile = Boolean(document.driveFileId);
     const isUploading = documentUploadBusyId === document.id;
-    const done = isDone(document);
+    const lab = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#6B6878]';
     return (
-      <div key={document.id} className="grid min-w-0 gap-3 border-t border-[#E6E5EC] px-4 py-3 first:border-t-0 hover:bg-[#F6F3FB] sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
-        <span className="hidden h-2.5 w-2.5 shrink-0 rounded-full sm:block" style={{ backgroundColor: dotColor(document.status) }} aria-hidden="true" />
-        <div className="min-w-0">
-          <p className={`text-sm font-semibold leading-5 ${done ? 'text-[#6B6878]' : 'text-[#1B1726]'}`}>{document.label}</p>
-          {description ? <p className="mt-0.5 text-[13px] leading-5 text-[#6B6878]">{description}</p> : null}
+      <div className="space-y-4" data-testid="document-detail">
+        <div>
+          <p className={lab}>Selected Document</p>
+          <h4 className="mt-1 text-[15px] font-semibold leading-snug text-[#1B1726]">{document.label}</h4>
+          {description ? <p className="mt-1 text-[13px] leading-5 text-[#4A4757]">{description}</p> : null}
           {rowExtra?.(document.id)}
-          {hasFile ? (
-            <span className="mt-1.5 inline-flex max-w-full items-center gap-1.5 truncate rounded-md bg-[#E0FBE0] px-2 py-0.5 text-xs font-medium text-[#005A00]">
-              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">{document.fileName || 'File Attached'}</span>
-            </span>
-          ) : null}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:bg-[#EFEAF8]">
-            {isUploading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <FileUp className="h-3.5 w-3.5" aria-hidden="true" />}
-            {isUploading ? 'Uploading…' : hasFile ? 'Replace' : 'Attach'}
-            <input
-              type="file"
-              className="hidden"
-              disabled={isUploading}
-              onChange={(event) => { void uploadDocumentFile(document.id, event.target.files?.[0]); event.target.value = ''; }}
-              aria-label={`Attach file for ${document.label}`}
-            />
-          </label>
-          {hasFile ? (
-            <button type="button" onClick={() => removeDocumentFile(document.id)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#6B6878] hover:!bg-[#EFEAF8] hover:!text-[#661102]" aria-label={`Remove attached file from ${document.label}`}>
-              <X className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-          ) : null}
+        <label className="block">
+          <span className={lab}>Status</span>
           <select
             value={document.status}
             onChange={(event) => updateDocument(document.id, event.target.value as AgentDocument['status'])}
             aria-label={`Status for ${document.label}`}
-            className="h-9 rounded-md border border-[#E6E5EC] bg-white px-2 text-[13px] font-medium text-[#4A4757] outline-none focus:border-[#301D5D]"
+            className="mt-1 h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-2 text-[13px] font-medium text-[#4A4757] outline-none focus:border-[#301D5D]"
           >
             <option value="requested">Requested</option>
             <option value="received">Received</option>
             <option value="reviewed">Reviewed</option>
             <option value="not_needed">Not Needed</option>
           </select>
+        </label>
+        <div>
+          <span className={lab}>File</span>
+          {hasFile ? (
+            <span className="mt-1 flex max-w-full items-center gap-1.5 rounded-md bg-[#E0FBE0] px-2 py-1 text-xs font-medium text-[#005A00]">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="min-w-0 flex-1 truncate">{document.fileName || 'File Attached'}</span>
+              <button type="button" onClick={() => removeDocumentFile(document.id)} className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md !bg-transparent hover:!bg-[#EFEAF8] hover:!text-[#661102]" aria-label={`Remove file for ${document.label}`}><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
+            </span>
+          ) : <p className="mt-1 text-[13px] text-[#6B6878]">No file attached.</p>}
+          <label className="mt-2 inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:bg-[#EFEAF8]">
+            {isUploading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <FileUp className="h-3.5 w-3.5" aria-hidden="true" />}
+            {isUploading ? 'Uploading…' : hasFile ? 'Replace File' : 'Attach File'}
+            <input type="file" className="hidden" disabled={isUploading} onChange={(event) => { void uploadDocumentFile(document.id, event.target.files?.[0]); event.target.value = ''; }} aria-label={`Attach file for ${document.label}`} />
+          </label>
+        </div>
+        {updateNote ? (
+          <label className="block">
+            <span className={lab}>Notes</span>
+            <textarea
+              key={`${document.id}-${document.note ?? ''}`}
+              defaultValue={document.note ?? ''}
+              rows={3}
+              maxLength={2000}
+              placeholder="Add a note"
+              aria-label={`Note for ${document.label}`}
+              onBlur={(event) => { if (event.target.value !== (document.note ?? '')) updateNote(document.id, event.target.value); }}
+              className="mt-1 w-full rounded-md border border-[#E6E5EC] bg-white px-3 py-2 text-sm text-[#1B1726] outline-none focus:border-[#301D5D]"
+            />
+          </label>
+        ) : null}
+        <div>
+          <span className={lab}>History</span>
+          <ul className="mt-1 space-y-0.5 text-[13px] text-[#4A4757]">
+            <li>Requested {when(document.requestedAt)}</li>
+            {document.fileUploadedAt ? <li>File uploaded {when(document.fileUploadedAt)}</li> : null}
+            {document.updatedAt !== document.requestedAt ? <li>Last updated {when(document.updatedAt)}</li> : null}
+          </ul>
         </div>
       </div>
     );
@@ -728,7 +773,10 @@ function ReadinessChecklist({
           })}
         </div>
 
-        <div role="tabpanel">{activeGroup?.rows.map(({ document, description }) => renderDocument(document, description))}</div>
+        <div role="tabpanel" className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="min-w-0 border-b border-[#E6E5EC] lg:border-b-0">{activeGroup?.rows.map(({ document }) => renderRow(document))}</div>
+          <div className="min-w-0 border-[#E6E5EC] p-4 lg:border-l">{renderDetail(selectedRow)}</div>
+        </div>
       </div>
 
       {documentUploadError ? (
@@ -2374,6 +2422,12 @@ export default function ClosingTime({
     applyActiveAction(`Updated document request status to ${status.replace('_', ' ')}`, { documents: activeDeal.documents.map((document) => document.id === documentId ? { ...document, status, complete: status === 'received' || status === 'reviewed', updatedAt: now } : document) });
   };
 
+  const updateDocumentNote = (documentId: string, note: string) => {
+    if (!activeDeal) return;
+    const now = new Date().toISOString();
+    applyActiveAction('Updated document note', { documents: activeDeal.documents.map((document) => document.id === documentId ? { ...document, note, updatedAt: now } : document) });
+  };
+
   // Files the Cash-To-Close estimate PDF in the active deal's documents (one entry, replaced on each save).
   const saveCashToCloseToDocuments = async (file: File) => {
     if (!activeDeal) throw new Error('No deal.');
@@ -3499,6 +3553,7 @@ export default function ClosingTime({
                     renderReadiness={deal && effectiveView === 'd-documents' ? (rowExtra) => (
 <ReadinessChecklist
               rowExtra={rowExtra}
+              updateNote={updateDocumentNote}
               side={effectiveAgentSide(deal)}
               documents={deal.documents}
               documentName={documentName}

@@ -119,6 +119,7 @@ export const agentDocumentSchema = z.preprocess((value) => {
   driveFileId: optionalShortText(200),
   fileName: optionalShortText(280),
   fileUploadedAt: z.union([z.literal(''), z.string().datetime()]).default(''),
+  note: z.string().max(2_000).optional(),
 }).strict());
 
 export const agentActivitySchema = z.object({
