@@ -13,6 +13,7 @@ import DocumentRequestsCard from './DocumentRequestsCard';
 import { BUYER_REP_FORM_OPTIONS, CONTRACT_FORM_OPTIONS, dealFolders, effectiveAgentSide, requiredIdsFor } from './purchase-documents';
 import Tip from './Tip';
 import MasterDetail, { DetailFields } from './MasterDetail';
+import SectionNav from './SectionNav';
 import { EXTENSION_DAYS, autoCloseState, formatCloseDate } from '@/lib/closing-time-lifecycle';
 
 type SnapId = 'attention' | 'waiting' | 'property' | 'next' | 'preferences' | 'offers' | 'parties' | 'workspace';
@@ -591,8 +592,8 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
               <p className="text-[15px] font-semibold text-[#1B1726]">Deadline Tracking</p>
               <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{trackedDeadlines.filter((item) => item.done).length} Of {trackedDeadlines.length} Done</span>
             </div>
-            <div className="grid sm:grid-cols-2 sm:gap-x-6">
-            {trackedDeadlines.map((item) => {
+            {(() => {
+              const deadlineRow = (item: (typeof trackedDeadlines)[number]) => {
               const diff = dayDiff(today, item.date);
               const chip = item.done ? { text: 'Done', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
                 : diff < 0 ? { text: `Overdue ${-diff} Day${diff === -1 ? '' : 's'}`, cls: 'bg-[#301D5D] text-white' }
@@ -608,8 +609,19 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                   <span className={`ds-chip ${chip.cls}`}>{chip.text}</span>
                 </div>
               );
-            })}
-            </div>
+              };
+              return (
+                <>
+                  <div className="grid sm:grid-cols-2 sm:gap-x-6">{trackedDeadlines.slice(0, 3).map(deadlineRow)}</div>
+                  {trackedDeadlines.length > 3 && (
+                    <details data-no-auto-open className="group border-t border-[#E6E5EC]">
+                      <summary className="cursor-pointer py-2 text-xs font-medium text-[#301D5D]"><span className="group-open:hidden">Show {trackedDeadlines.length - 3} More</span><span className="hidden group-open:inline">Show Fewer</span></summary>
+                      <div className="grid sm:grid-cols-2 sm:gap-x-6">{trackedDeadlines.slice(3).map(deadlineRow)}</div>
+                    </details>
+                  )}
+                </>
+              );
+            })()}
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#F6F3FB] px-3 py-3 text-xs text-slate-600">
               <span>
                 {alertChannels.length === 0 ? 'Alerts Are Off' : `Alerts By ${alertChannels.join(' And ')}`}
@@ -678,10 +690,16 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
           <button type="button" onClick={() => onOpenView('d-people')}>Add</button>
         </div>
         <div className="mt-3">
-          {clientsList.length === 0 ? <p className="text-xs text-slate-500">No parties added.</p> : clientsList.map(partyRow)}
+          {clientsList.length === 0 ? <p className="text-xs text-slate-500">No parties added.</p> : clientsList.slice(0, 3).map(partyRow)}
         </div>
-        {othersList.length > 0 && <p className="ds-eyebrow mt-3 border-t border-[#F6F3FB] pt-3">External Parties</p>}
-        {othersList.length > 0 && <div className="mt-1">{othersList.map(partyRow)}</div>}
+        {(clientsList.length > 3 || othersList.length > 0) && (
+          <details data-no-auto-open className="group mt-2 border-t border-[#F6F3FB]">
+            <summary className="cursor-pointer py-2 text-xs font-medium text-[#301D5D]"><span className="group-open:hidden">Show {Math.max(0, clientsList.length - 3) + othersList.length} More</span><span className="hidden group-open:inline">Show Fewer</span></summary>
+            {clientsList.slice(3).map(partyRow)}
+            {othersList.length > 0 && <p className="ds-eyebrow mt-3 border-t border-[#F6F3FB] pt-3">External Parties</p>}
+            {othersList.length > 0 && <div className="mt-1">{othersList.map(partyRow)}</div>}
+          </details>
+        )}
       </div>
     );
     return (
@@ -689,7 +707,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
         <div className="mb-4 space-y-4">
           {snapshotTop.pressing}
           <div className="grid items-start gap-4 lg:grid-cols-4">
-            {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'docs'); const r = readiness; const pctDone = r && r.total ? Math.round((r.done / r.total) * 100) : 0; return (
+            {(() => { const p = cardProps('snapshot', ['docs', 'tasks', 'parties', 'property'], 'docs'); const r = readiness; const pctDone = r && r.total ? Math.round((r.done / r.total) * 100) : 0; return (
               <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 lg:col-span-2 ${p.className}`}>
                 <div className="ds-card">
                   <div className="flex items-center justify-between gap-2">
@@ -699,18 +717,30 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                   <p className="mt-1 text-xs text-slate-500">{r ? `${r.done} of ${r.total} items in` : 'No readiness items yet.'}</p>
                   <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={pctDone} aria-valuemin={0} aria-valuemax={100} aria-label="Readiness progress"><div className="h-full rounded-full bg-[#301D5D]" style={{ width: `${pctDone}%` }} /></div>
                   {r ? (
-                    <ul className="mt-4 space-y-2">
-                      {r.groups.map((g) => (
-                        <li key={g.label} className="flex items-center justify-between gap-3 text-xs"><span className="min-w-0 truncate text-slate-900">{g.label}</span><span className={`font-medium ${g.done === g.total && g.total > 0 ? 'text-[#005A00]' : 'text-[#301D5D]'}`}>{g.done}/{g.total}</span></li>
-                      ))}
-                    </ul>
+                    <>
+                      <ul className="mt-4 space-y-2">
+                        {r.groups.slice(0, 3).map((g) => (
+                          <li key={g.label} className="flex items-center justify-between gap-3 text-xs"><span className="min-w-0 truncate text-slate-900">{g.label}</span><span className={`font-medium ${g.done === g.total && g.total > 0 ? 'text-[#005A00]' : 'text-[#301D5D]'}`}>{g.done}/{g.total}</span></li>
+                        ))}
+                      </ul>
+                      {r.groups.length > 3 && (
+                        <details data-no-auto-open className="group mt-2 border-t border-[#F6F3FB]">
+                          <summary className="cursor-pointer py-2 text-xs font-medium text-[#301D5D]"><span className="group-open:hidden">Show {r.groups.length - 3} More</span><span className="hidden group-open:inline">Show Fewer</span></summary>
+                          <ul className="space-y-2">
+                            {r.groups.slice(3).map((g) => (
+                              <li key={g.label} className="flex items-center justify-between gap-3 text-xs"><span className="min-w-0 truncate text-slate-900">{g.label}</span><span className={`font-medium ${g.done === g.total && g.total > 0 ? 'text-[#005A00]' : 'text-[#301D5D]'}`}>{g.done}/{g.total}</span></li>
+                            ))}
+                          </ul>
+                        </details>
+                      )}
+                    </>
                   ) : null}
                 </div>
               </div>
             ); })()}
-            {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'parties'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 lg:col-span-2 ${p.className}`}>{partiesCard}</div>; })()}
-            {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'property'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 lg:col-span-2 ${p.className}`}>{sideBlocks.property}</div>; })()}
-            {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'tasks'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 lg:col-span-2 ${p.className}`}>{tasksCard}</div>; })()}
+            {(() => { const p = cardProps('snapshot', ['docs', 'tasks', 'parties', 'property'], 'parties'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 lg:col-span-2 ${p.className}`}>{partiesCard}</div>; })()}
+            {(() => { const p = cardProps('snapshot', ['docs', 'tasks', 'parties', 'property'], 'property'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 lg:col-span-2 ${p.className}`}>{sideBlocks.property}</div>; })()}
+            {(() => { const p = cardProps('snapshot', ['docs', 'tasks', 'parties', 'property'], 'tasks'); return <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 lg:col-span-2 ${p.className}`}>{tasksCard}</div>; })()}
           </div>
         </div>
       </div>
@@ -910,7 +940,8 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
               );
             };
             return (
-              <div className="flex flex-col gap-4">
+              <SectionNav backLabel="Documents" testId="documents-sections" sections={[
+                { id: 'documents', title: 'Documents', content: (<>
                 {renderReadiness && <div className="min-w-0" style={{ order: -1 }}>{renderReadiness((readinessId) => {
                   const checklistId = readinessLinks?.[readinessId];
                   const doc = checklistId ? allDocs.find((d) => d.id === checklistId) : undefined;
@@ -1064,14 +1095,19 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                     </div>
                   );
                 })()}
-                {deal && <DocumentRequestsCard deal={deal} locked={locked} documentGroups={documentGroups} onUpdate={onUpdate} />}
-                {deal && <ClientUploadsCard dealId={deal.id} version={deal.updatedAt} />}
-              </div>
+                </>) },
+                { id: 'requests', title: 'Client Document Requests', content: <DocumentRequestsCard deal={deal} locked={locked} documentGroups={documentGroups} onUpdate={onUpdate} /> },
+                { id: 'uploads', title: 'Client Uploads', content: <ClientUploadsCard dealId={deal.id} version={deal.updatedAt} /> },
+              ]} />
             );
           })()}
 
           {tab === 'people' && (
-            <div className="space-y-6">
+            <SectionNav
+              testId="people-sections"
+              backLabel="People"
+              sections={[
+                { id: 'people', title: 'People', sub: 'Clients, vendors and others', trailing: String(allPeople.length), content: (
               <section>
                 <div className="flex items-center justify-between gap-3">
                   <div><p className="ds-side-title !m-0">People</p><p className="text-sm text-slate-500">Clients, vendors and others on this deal.</p></div>
@@ -1130,7 +1166,8 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                   />
                 </div>
               </section>
-
+                ) },
+                { id: 'providers', title: 'Trusted Service Providers', sub: 'Who you recommend on this deal', trailing: deal.serviceProviders.length ? String(deal.serviceProviders.length) : undefined, content: (
               <section>
                 <p className="ds-side-title !m-0">Trusted Service Providers</p>
                 <p className="text-sm text-slate-500">Set up the lenders, inspectors, attorneys and others you recommend on this deal.</p>
@@ -1146,7 +1183,9 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                   })}
                 </div>
               </section>
-            </div>
+                ) },
+              ]}
+            />
           )}
 
           {tab !== 'documents' && deal && <DocumentRequestsCard headless deal={deal} locked={locked} documentGroups={documentGroups} onUpdate={onUpdate} />}
@@ -1154,9 +1193,12 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
           {tab === 'history' && (() => {
             const file = buildDealFile(deal, deadlines ?? [], health.label, stageName);
             return (
-              <div className="space-y-4" data-testid="deal-file">
-                {file.sections.map((s) => (
-                  <section key={s.title} className="ds-card !p-0 overflow-hidden">
+              <div data-testid="deal-file">
+                <SectionNav
+                  testId="deal-file-sections"
+                  backLabel="History"
+                  sections={file.sections.map((s) => ({ id: s.title, title: s.title, trailing: s.headers ? String(s.rows.length) : undefined, content: (
+                  <section className="ds-card !p-0 overflow-hidden">
                     <p className="border-b border-[#E6E5EC] px-4 py-3 text-[15px] font-semibold text-[#1B1726]">{s.title}</p>
                     <table className="w-full text-left text-sm">
                       {s.headers && <thead><tr className="bg-[#F6F3FB]">{s.headers.map((h) => <th key={h} className="px-4 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-[#6B6878]">{h}</th>)}</tr></thead>}
@@ -1171,7 +1213,8 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                       </tbody>
                     </table>
                   </section>
-                ))}
+                  ) }))}
+                />
               </div>
             );
           })()}

@@ -1,6 +1,7 @@
 'use client';
 
 import MasterDetail, { DetailFields } from './MasterDetail';
+import SectionNav from './SectionNav';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Download, Upload } from 'lucide-react';
 
@@ -69,6 +70,11 @@ export default function DataBackupsPanel() {
         <h2 className="text-[22px] font-semibold text-[#1B1726]">Data And Backups</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Export your data and keep monthly backups.</p>
       </div>
+      <SectionNav
+        testId="backups-sections"
+        backLabel="Data And Backups"
+        sections={[
+          { id: 'export', title: 'Export Your Data', sub: 'JSON and CSV downloads', content: (
       <section className="ds-card">
         <h2 className="text-[15px] font-semibold text-[#1B1726]">Export Your Data</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Your deals and contacts belong to you. Download them any time in open formats.</p>
@@ -78,7 +84,8 @@ export default function DataBackupsPanel() {
           <a className={BTN} href={`${API}?action=export&format=contacts-csv`}><Download className="h-3.5 w-3.5" aria-hidden="true" />Contacts (CSV)</a>
         </div>
       </section>
-
+          ) },
+          { id: 'backups', title: 'Monthly Backups', sub: 'Saved monthly and before imports', trailing: backups.length ? String(backups.length) : undefined, content: (
       <section className="ds-card">
         <h2 className="text-[15px] font-semibold text-[#1B1726]">Monthly Backups</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">A backup is saved on the first of each month, and before every import. The last 12 are kept. Texas brokers must keep transaction records for four years.</p>
@@ -103,7 +110,8 @@ export default function DataBackupsPanel() {
           />
         </div>
       </section>
-
+          ) },
+          { id: 'import', title: 'Import Deals', sub: 'Upload a CSV from another system', content: (
       <section className="ds-card">
         <h2 className="text-[15px] font-semibold text-[#1B1726]">Import Deals</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Upload a CSV from dotloop, Paperless Pipeline, a spreadsheet or any other system. The first row must be column names. A column named Property Address is required. Buyers, Sellers, Effective Date, Closing Date, Status, Lender and Notes are optional. Deals with an address you already have are skipped.</p>
@@ -134,6 +142,9 @@ export default function DataBackupsPanel() {
         )}
         {msg && <p role="status" className={`mt-3 text-[14px] ${msg.ok ? 'text-[#005A00]' : 'text-[#661102]'}`}>{msg.text}</p>}
       </section>
+          ) },
+        ]}
+      />
     </div>
   );
 }

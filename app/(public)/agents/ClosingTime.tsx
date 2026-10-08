@@ -158,6 +158,7 @@ import {
   type TrecTaskStatus,
 } from '@/lib/trec-workflow';
 import Tip from './Tip';
+import SectionNav from './SectionNav';
 import MasterDetail, { DetailFields } from './MasterDetail';
 
 type RadarItem = {
@@ -1294,8 +1295,6 @@ export default function ClosingTime({
   const [activeTrecPage, setActiveTrecPage] = useState(1);
   const [formsStatusDealId, setFormsStatusDealId] = useState<string | null>(null);
   const [workspacePage, setWorkspacePage] = useState<1 | 2>(2);
-  const [settingsKey, setSettingsKey] = useState('agent-details');
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [deskView, setDeskView] = useState('transaction');
   const [dealsTab, setDealsTab] = useState<'all' | 'active' | 'closed'>('all');
   const [dealsQuery, setDealsQuery] = useState('');
@@ -3586,17 +3585,13 @@ export default function ClosingTime({
             )} /></div>
             <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
-          <section className={'mt-4 grid gap-4'} aria-label="Deal settings, alerts and calendar" data-settings-key={settingsKey} data-settings-open={settingsOpen ? '1' : '0'}>
-            <div className="settings-nav min-w-0 overflow-hidden rounded-[4px] border border-[#E6E5EC] bg-white">
-              {([['agent-details', 'Account', 'Brokerage and agent details'], ['mls', 'MLS Connections', 'Connect your MLS'], ['calendar-link', 'Calendar Link', 'Your private calendar link'], ['alerts', 'Deadline Alerts', 'How you are notified'], ...(activeDeal ? [['assist', 'Deal Settings', 'Alerts, drafts and checklist for this deal']] : [])] as const).map(([key, title, sub]) => (
-                <button key={key} type="button" onClick={() => { setSettingsKey(key); setSettingsOpen(true); window.scrollTo({ top: 0 }); }} aria-current={settingsKey === key ? 'true' : undefined}
-                  className={`!flex !h-auto w-full !flex-col !items-start !justify-start !gap-0 !rounded-none !border-0 !border-b !border-[#E6E5EC] !px-4 !py-3 text-left ${settingsKey === key ? '!bg-[#EFEAF8] shadow-[inset_2px_0_0_#301D5D]' : '!bg-white hover:!bg-[#F6F3FB]'}`}>
-                  <span className="text-sm font-semibold leading-5 text-[#1B1726]">{title}</span>
-                  <span className="text-xs font-normal text-[#6B6878]">{sub}</span>
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={() => setSettingsOpen(false)} className="settings-back !inline-flex !h-9 !items-center !gap-1 !px-2 justify-self-start"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Settings</button>
+          <section className={'mt-4 grid gap-4'} aria-label="Deal settings, alerts and calendar">
+            {effectiveView === 'coordinator' && (
+            <SectionNav
+              testId="settings-sections"
+              backLabel="Settings"
+              sections={[
+                { id: 'agent-details', title: 'Account', sub: 'Brokerage and agent details', content: (
             <div data-section-key="agent-details" className="ds-card min-w-0 lg:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-lg font-semibold text-gray-900">Account: Brokerage And Agent Details</h3>
@@ -3613,7 +3608,9 @@ export default function ClosingTime({
               </div>
               <p className="mt-3 text-xs text-slate-500" role="status">{accountSave === 'saving' ? 'Saving to your account...' : accountSave === 'error' ? 'Could not save to your account. Your entries are kept on this browser. Try again.' : 'Saved to your account.'}</p>
             </div>
-            <MlsConnectionsCard />
+                ) },
+                { id: 'mls', title: 'MLS Connections', sub: 'Connect your MLS', content: <MlsConnectionsCard /> },
+                { id: 'calendar-link', title: 'Calendar Link', sub: 'Your private calendar link', content: (
             <div data-section-key="calendar-link" className="ds-card min-w-0 lg:col-span-2">
               <h3 className="text-lg font-semibold text-gray-900">Calendar Link</h3>
               <p className="mt-3 text-sm leading-6 text-slate-600">Your Apple Calendar subscription uses a private link. Anyone with it can view your deal dates. Reset it if it was shared by mistake. The old link stops working and you will need to subscribe again.</p>
@@ -3622,6 +3619,8 @@ export default function ClosingTime({
               </button>
               {calendarFeed && calendarFeedState !== 'loading' && <Tip text="Use Open In Apple Calendar on the Integrations page to subscribe with the new link." />}
             </div>
+                ) },
+                { id: 'alerts', title: 'Deadline Alerts', sub: 'How you are notified', content: (
             <div {...collapsible('alerts')} className="ds-card min-w-0 lg:col-span-2">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-gray-900">Deadline Alerts</h3>
@@ -3669,8 +3668,9 @@ export default function ClosingTime({
               </div>
               <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active deals. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
             </div>
-            {activeDeal && (
-              <ClosingTimeAssist
+                ) },
+                ...(activeDeal ? [{ id: 'assist', title: 'Deal Settings', sub: 'Alerts, drafts and checklist for this deal', content: (
+<ClosingTimeAssist
                 deal={activeDeal}
                 onMarkReceived={(docId, fileName) => {
                   const now = new Date().toISOString();
@@ -3689,6 +3689,9 @@ export default function ClosingTime({
                   applyActiveAction(`Applied closing checklist (${added.length} tasks)`, { tasks: [...activeDeal.tasks, ...added].slice(0, 200) });
                 }}
               />
+                ) }] : []),
+              ]}
+            />
             )}
             <div id="trec-forms" {...collapsible('trec-library')} className="ds-page min-w-0 scroll-mt-24 lg:col-span-2">
               <div className="flex flex-wrap items-center gap-3">
@@ -3709,7 +3712,8 @@ export default function ClosingTime({
                 ))}
               </div>
               {formsLibraryTab === 'trec' && (
-                <>
+                <SectionNav backLabel="TREC Forms" testId="trec-forms-sections" sections={[
+                  { id: 'trec', title: 'TREC Forms', content: (
                   <TrecFormsLibrary
                     versions={trecFormVersions}
                     embedded
@@ -3732,9 +3736,9 @@ export default function ClosingTime({
                       },
                     }}
                   />
-                  <h4 className="mt-6 text-sm font-semibold text-slate-900">Your Uploaded TREC Forms</h4>
-                  <CustomFormsPanel section="trec" label="TREC form" />
-                </>
+                  ) },
+                  { id: 'uploaded', title: 'Your Uploaded TREC Forms', content: <CustomFormsPanel section="trec" label="TREC form" /> },
+                ]} />
               )}
               {formsLibraryTab === 'brokerage' && <CustomFormsPanel
                 section="brokerage"
@@ -3758,7 +3762,7 @@ export default function ClosingTime({
 
         {workspacePage === 1 && (
           <>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             ['Agent deals', activeDealCount, ClipboardCheck, 'bg-[#F6F3FB] text-[#301D5D]'],
             ['Closing in 30 days', closingSoonCount, CalendarDays, 'bg-[#FEF8CC] text-[#645600]'],
@@ -3767,7 +3771,7 @@ export default function ClosingTime({
           ].map(([label, value, Icon, tone]) => {
             const MetricIcon = Icon as typeof CalendarDays;
             return (
-              <div key={label as string} className="border border-slate-200 bg-white p-4">
+              <div key={label as string} className="ds-card">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-full ${tone as string}`}>
                   <MetricIcon className="h-4 w-4" aria-hidden="true" />
                 </div>

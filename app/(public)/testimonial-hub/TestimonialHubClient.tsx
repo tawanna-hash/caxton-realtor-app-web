@@ -1,6 +1,7 @@
 'use client';
 
 import MasterDetail from '../agents/MasterDetail';
+import SectionNav from '../agents/SectionNav';
 import Switch from '../agents/Switch';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -331,42 +332,7 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
     return <main className="mx-auto max-w-4xl px-6 py-16 text-center text-[#4A4757]">{error || 'Unable to open Testimonial Hub.'}</main>;
   }
 
-  return (
-    <Tag className={embedded ? 'ct-hub space-y-4' : 'mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-8'}>
-      <header className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${embedded ? '' : 'border-b border-[#E6E5EC] pb-6'}`}>
-        <div>
-          {embedded ? null : <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">Subscriber Tools</p>}
-          {embedded ? <h2 className="text-[22px] font-semibold text-[#1B1726]">Testimonials Hub</h2> : <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#1B1726]">Testimonials Hub</h1>}
-          <p className={embedded ? 'mt-1 text-[14px] text-[#4A4757]' : 'mt-2 max-w-2xl text-sm leading-6 text-[#4A4757]'}>
-            Collect client feedback, organize your library, and publish a shareable proof page.
-          </p>
-        </div>
-        <button onClick={startNew} className={BTN}>
-          <Plus size={17} /> Add Testimonial
-        </button>
-      </header>
-
-      {(error || notice) && (
-        <div role="status" className={`mt-4 rounded-md border px-4 py-3 text-sm ${error ? 'border-[#FF2A04]/30 bg-[#FFEAE6] text-[#661102]' : 'border-[#00E200]/30 bg-[#E0FBE0] text-[#005A00]'}`}>
-          {error || notice}
-        </div>
-      )}
-
-      <section aria-label="Testimonial totals" className="mt-6 grid gap-3 sm:grid-cols-3">
-        {([
-          { label: 'Published', value: counts.published, icon: Check },
-          { label: 'Awaiting Review', value: counts.pending, icon: Quote },
-          { label: 'Archived', value: counts.archived, icon: Archive },
-        ] satisfies Array<{ label: string; value: number; icon: LucideIcon }>).map(({ label, value, icon: Icon }) => (
-          <div key={label} className={CARD}>
-            <Icon size={18} className="text-[#301D5D]" />
-            <div className="mt-4 text-2xl font-semibold text-[#1B1726]">{value}</div>
-            <div className="mt-1 text-sm text-[#7A7787]">{label}</div>
-          </div>
-        ))}
-      </section>
-
-      <section className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.6fr)]">
+  const libraryBlock = (
         <div>
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
@@ -421,8 +387,8 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
             />
           )}
         </div>
-
-        <aside className="space-y-4">
+  );
+  const collectBlock = (
           <section className={CARD}>
             <h2 className="text-[15px] font-semibold text-[#1B1726]">Collect Testimonials</h2>
             <p className="mt-2 text-sm leading-6 text-[#7A7787]">Share this link with clients. New responses arrive as pending for review.</p>
@@ -432,7 +398,8 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
               <button onClick={() => void rotateLink()} className={BTN}><RotateCcw size={15} /> Replace</button>
             </div>
           </section>
-
+  );
+  const profileBlock = (
           <section className={CARD}>
             <h2 className="text-[15px] font-semibold text-[#1B1726]">Profile Settings</h2>
             <label className="mt-4 flex items-center justify-between gap-3 text-sm font-medium text-[#1B1726]">
@@ -533,7 +500,8 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
               </a>
             )}
           </section>
-
+  );
+  const embedBlock = (
           <section className={CARD}>
             <h2 className="text-[15px] font-semibold text-[#1B1726]">Embed Anywhere</h2>
             <p className="mt-2 text-sm leading-6 text-[#7A7787]">Paste this single line into your website. Newly published testimonials appear automatically without reloading the page.</p>
@@ -567,8 +535,66 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
             <pre className="mt-4 overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-[#1B1726] p-3 text-xs leading-5 text-white">{embedCode}</pre>
             <button onClick={() => void copy(embedCode, 'Embed code copied.')} className={`${BTN} mt-3 w-full`}><Clipboard size={15} /> Copy Embed Code</button>
           </section>
+  );
+
+  return (
+    <Tag className={embedded ? 'ct-hub space-y-4' : 'mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-8'}>
+      <header className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${embedded ? '' : 'border-b border-[#E6E5EC] pb-6'}`}>
+        <div>
+          {embedded ? null : <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">Subscriber Tools</p>}
+          {embedded ? <h2 className="text-[22px] font-semibold text-[#1B1726]">Testimonials Hub</h2> : <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#1B1726]">Testimonials Hub</h1>}
+          <p className={embedded ? 'mt-1 text-[14px] text-[#4A4757]' : 'mt-2 max-w-2xl text-sm leading-6 text-[#4A4757]'}>
+            Collect client feedback, organize your library, and publish a shareable proof page.
+          </p>
+        </div>
+        <button onClick={startNew} className={BTN}>
+          <Plus size={17} /> Add Testimonial
+        </button>
+      </header>
+
+      {(error || notice) && (
+        <div role="status" className={`mt-4 rounded-md border px-4 py-3 text-sm ${error ? 'border-[#FF2A04]/30 bg-[#FFEAE6] text-[#661102]' : 'border-[#00E200]/30 bg-[#E0FBE0] text-[#005A00]'}`}>
+          {error || notice}
+        </div>
+      )}
+
+      <section aria-label="Testimonial totals" className="mt-6 grid gap-3 sm:grid-cols-3">
+        {([
+          { label: 'Published', value: counts.published, icon: Check },
+          { label: 'Awaiting Review', value: counts.pending, icon: Quote },
+          { label: 'Archived', value: counts.archived, icon: Archive },
+        ] satisfies Array<{ label: string; value: number; icon: LucideIcon }>).map(({ label, value, icon: Icon }) => (
+          <div key={label} className={CARD}>
+            <Icon size={18} className="text-[#301D5D]" />
+            <div className="mt-4 text-2xl font-semibold text-[#1B1726]">{value}</div>
+            <div className="mt-1 text-sm text-[#7A7787]">{label}</div>
+          </div>
+        ))}
+      </section>
+
+      {embedded ? (
+        <div className="mt-6">
+          <SectionNav
+            testId="testimonials-sections"
+            backLabel="Testimonials Hub"
+            sections={[
+              { id: 'library', title: 'Your Library', sub: 'Saved testimonials', trailing: String(items.length), content: libraryBlock },
+              { id: 'collect', title: 'Collect Testimonials', sub: 'Your collection link', content: collectBlock },
+              { id: 'profile', title: 'Profile Settings', sub: 'Your public proof page', content: profileBlock },
+              { id: 'embed', title: 'Embed Anywhere', sub: 'Add testimonials to your website', content: embedBlock },
+            ]}
+          />
+        </div>
+      ) : (
+      <section className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.6fr)]">
+        {libraryBlock}
+        <aside className="space-y-4">
+          {collectBlock}
+          {profileBlock}
+          {embedBlock}
         </aside>
       </section>
+      )}
 
       {showEditor && (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="testimonial-editor-title">

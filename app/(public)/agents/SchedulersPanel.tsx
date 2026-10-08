@@ -1,6 +1,7 @@
 'use client';
 
 import MasterDetail, { DetailFields } from './MasterDetail';
+import SectionNav from './SectionNav';
 import Switch from './Switch';
 import ClosingSchedulePanel from './ClosingSchedulePanel';
 import { messagingPeople } from '@/lib/closing-time-people';
@@ -101,6 +102,12 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
 
       {data && (
         <>
+          <SectionNav
+            testId="scheduling-sections"
+            backLabel="Scheduling"
+            initial="schedulers"
+            sections={[
+              { id: 'accounts', title: 'Connected Accounts', sub: 'Calendars bookings land on', trailing: String(data.account ? 1 : 0), content: (
           <section className={`${card} p-4`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -125,7 +132,8 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
             </div>
             {!data.account && <p className="mt-2 text-[12px] text-[#4A4757]">Without a connected calendar, bookings use your Closing Time calendar and arrive by email with a calendar file.</p>}
           </section>
-
+              ) },
+              { id: 'url', title: 'Your Custom Scheduler URL', sub: 'Shared link for every scheduler', content: (
           <section className={card}>
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#F6F3FB] p-4">
               <div className="flex items-start gap-3">
@@ -180,7 +188,8 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
               )}
             </div>
           </section>
-
+              ) },
+              { id: 'schedulers', title: 'Schedulers', sub: 'Your booking pages', trailing: String(data.schedulers.length), content: (
           <section className={card}>
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F6F3FB] px-4 py-4">
               <h3 className="text-[16px] font-semibold text-[#1B1726]">Schedulers</h3>
@@ -279,8 +288,8 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
               </div>
             )}
           </section>
-
-          {data.bookings.length > 0 && (
+              ) },
+              ...(data.bookings.length > 0 ? [{ id: 'bookings', title: 'Bookings', sub: 'Meetings people booked', trailing: String(data.bookings.length), content: (
             <section className={card}>
               <h3 className="border-b border-[#F6F3FB] px-4 py-4 text-[16px] font-semibold text-[#1B1726]">Bookings</h3>
               <div className="p-4">
@@ -310,7 +319,9 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
                 />
               </div>
             </section>
-          )}
+              ) }] : []),
+            ]}
+          />
         </>
       )}
     </div>

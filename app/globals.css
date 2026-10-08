@@ -1325,7 +1325,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-title { margin: 0.375rem 0 0; font-size: 1.125rem; line-height: 1.15; font-weight: 600; letter-spacing: -0.025em; color: var(--d-ink); }
 #agent-desk .ds-subtitle { margin: 0.375rem 0 0; font-size: 0.875rem; color: var(--d-muted); }
 #agent-desk .ds-pill-lg { border: 1px solid var(--d-line); background: #fff; color: var(--d-purple); border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.8125rem; font-weight: 600; }
-#agent-desk .ds-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+#agent-desk .ds-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
 @media (max-width: 1023px) { #agent-desk .ds-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 #agent-desk .ds-stat { display: flex; justify-content: space-between; gap: 0.75rem; border: 1px solid var(--d-line); border-radius: 4px; padding: 1rem 1.125rem; background: #fff; }
 #agent-desk .ds-stat-label { margin: 0; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--d-muted); }
@@ -1850,26 +1850,3 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 #agent-desk input[type='checkbox']:not(.sr-only):checked { background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23301D5D' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E") center / 14px 14px no-repeat; border-color: #B9B6C4; }
 #agent-desk input[type='checkbox']:not(.sr-only):disabled { opacity: 0.5; cursor: not-allowed; }
 #agent-desk input[type='checkbox']:not(.sr-only):focus-visible { outline: 2px solid #301D5D; outline-offset: 2px; }
-
-
-/* Settings: list on the left, selected section on the right (two screens on phones) */
-.settings-nav { display: none; }
-.settings-back { display: none !important; }
-[data-desk-view='coordinator'] .settings-nav { display: block; }
-[data-desk-view='coordinator'] [data-settings-key] > [data-section-key],
-[data-desk-view='coordinator'] [data-settings-key] > div[data-section-key] { display: none; }
-[data-desk-view='coordinator'] [data-settings-key='agent-details'] > [data-section-key='agent-details'],
-[data-desk-view='coordinator'] [data-settings-key='mls'] > [data-section-key='mls'],
-[data-desk-view='coordinator'] [data-settings-key='calendar-link'] > [data-section-key='calendar-link'],
-[data-desk-view='coordinator'] [data-settings-key='alerts'] > [data-section-key='alerts'],
-[data-desk-view='coordinator'] [data-settings-key='assist'] > [data-section-key='assist'] { display: block; }
-@media (min-width: 1024px) {
-  [data-desk-view='coordinator'] [data-settings-key] { grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
-  [data-desk-view='coordinator'] [data-settings-key] > .settings-nav { grid-column: 1; grid-row: 1; }
-  [data-desk-view='coordinator'] [data-settings-key] > [data-section-key] { grid-column: 2 !important; grid-row: 1; }
-}
-@media (max-width: 1023px) {
-  [data-desk-view='coordinator'] [data-settings-open='0'] > [data-section-key] { display: none !important; }
-  [data-desk-view='coordinator'] [data-settings-open='1'] > .settings-nav { display: none; }
-  [data-desk-view='coordinator'] [data-settings-open='1'] > .settings-back { display: inline-flex !important; }
-}

@@ -1,6 +1,7 @@
 'use client';
 
 import MasterDetail, { DetailFields } from './MasterDetail';
+import SectionNav from './SectionNav';
 import { useCallback, useEffect, useState } from 'react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import Tip from './Tip';
@@ -93,7 +94,12 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
         <p className="mt-1 text-[14px] text-[#4A4757]">Each person gets their own private link. No sign-in needed.</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <SectionNav
+        testId="portal-sections"
+        backLabel="Client Portal"
+        initial="share"
+        sections={[
+          { id: 'preview', title: 'Preview', sub: 'Open the portal as your client', content: (
         <section className={`${card} p-4`}>
           <h3 className="text-[14px] font-semibold text-[#1B1726]">Preview</h3>
           <div className="mt-3 space-y-2">
@@ -111,7 +117,8 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
             <div className="rounded-lg bg-[#F6F3FB] p-3"><div className="text-[24px] font-semibold text-[#1B1726]">{view ? view.forms.length : '-'}</div><div className="text-[12px] font-medium text-[#4A4757]">Forms To View</div></div>
           </div>
         </section>
-
+          ) },
+          { id: 'share', title: <>Share With {names}</>, sub: 'Personal links for each person', trailing: String(people.length), content: (
         <section className={`${card} p-4`}>
           <h3 className="text-[14px] font-semibold text-[#1B1726]">Share With {names}</h3>
           <p className="mt-2 text-[14px] text-[#4A4757]">Copy a personal link for each person and send it however you like: email, text or WhatsApp. Anyone with a link sees the deal, so send each link only to that person. Resetting or turning off a link stops it from working.</p>
@@ -146,8 +153,8 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
           )}
           {error && <p role="alert" className="mt-3 text-[12px] font-medium text-[#661102]">{error}</p>}
         </section>
-      </div>
-
+          ) },
+          { id: 'see', title: <>What {names} See</>, sub: 'Progress, deadlines and forms', trailing: view ? `${done}/${view.steps.length}` : undefined, content: (
       <section className={card}>
         <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-4">
           <h3 className="text-[14px] font-semibold text-[#1B1726]">What {names} See</h3>
@@ -180,6 +187,9 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
           </div>
         )}
       </section>
+          ) },
+        ]}
+      />
     </div>
   );
 }

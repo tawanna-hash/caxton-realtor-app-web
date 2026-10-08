@@ -1,6 +1,7 @@
 'use client';
 
 import MasterDetail from './MasterDetail';
+import SectionNav from './SectionNav';
 import { useCallback, useEffect, useState } from 'react';
 
 type Key = { id: string; name: string; prefix: string; createdAt: string; lastUsedAt: string | null };
@@ -105,7 +106,6 @@ export default function AutomationsPanel() {
         <h2 className="text-[22px] font-semibold text-[#1B1726]">Automations</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Turn on the follow-ups you want Closing Time to handle.</p>
       </div>
-      <SmartAutomations />
       {secret && (
         <div role="alert" className="rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] p-4 text-[14px] text-[#1B1726]">
           <p className="font-semibold">{secret.label}</p>
@@ -116,6 +116,12 @@ export default function AutomationsPanel() {
         </div>
       )}
 
+      <SectionNav
+        testId="automations-sections"
+        backLabel="Automations"
+        sections={[
+          { id: 'smart', title: 'Smart Automations', sub: 'Follow-ups Closing Time handles', content: <SmartAutomations /> },
+          { id: 'keys', title: 'API Keys', sub: 'Read your deals from other apps', trailing: keys.length ? String(keys.length) : undefined, content: (
       <section className="ds-card">
         <h2 className="text-[15px] font-semibold text-[#1B1726]">API Keys</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Read your deals from Zapier, Make, n8n or a spreadsheet. Send the key as a Bearer token to <code className="text-[13px]">{origin}/api/closing-time/v1/deals</code>. Add <code className="text-[13px]">?status=active</code> or <code className="text-[13px]">?updated_since=2026-10-01T00:00:00Z</code> to narrow the list.</p>
@@ -133,7 +139,8 @@ export default function AutomationsPanel() {
           ))}
         </ul>
       </section>
-
+          ) },
+          { id: 'webhooks', title: 'Webhooks', sub: 'Send changes to a web address', trailing: hooks.length ? String(hooks.length) : undefined, content: (
       <section className="ds-card">
         <h2 className="text-[15px] font-semibold text-[#1B1726]">Webhooks</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Send a message to a web address when something changes. Every message is signed. The signature is an HMAC SHA-256 of the timestamp, a period, and the body, sent in the X-ClosingTime-Signature header. The address must start with https://.</p>
@@ -161,6 +168,9 @@ export default function AutomationsPanel() {
         <p className="mt-3 text-[13px] text-[#6B6878]">Messages carry the deal address, names, dates, status and client contacts. Documents and private notes are never sent.</p>
         {msg && <p role="status" className={`mt-2 text-[14px] ${msg.ok ? 'text-[#005A00]' : 'text-[#661102]'}`}>{msg.text}</p>}
       </section>
+          ) },
+        ]}
+      />
     </div>
   );
 }
