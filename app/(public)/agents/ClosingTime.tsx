@@ -788,18 +788,6 @@ function ReadinessChecklist({
           {documentUploadError}
         </p>
       ) : null}
-
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <input
-          value={documentName}
-          onChange={(event) => setDocumentName(event.target.value)}
-          className="h-10 min-w-0 flex-1 rounded-md border border-[#E6E5EC] bg-[#F6F3FB] px-3 text-sm outline-none focus:border-[#301D5D]"
-          placeholder="Custom Document Request"
-        />
-        <button type="button" onClick={addDocument} disabled={!documentName.trim()} className="min-h-[32px] rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D] disabled:opacity-40">
-          Request
-        </button>
-      </div>
     </div>
   );
 }
