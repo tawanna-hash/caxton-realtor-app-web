@@ -3070,7 +3070,7 @@ export default function ClosingTime({
           <div data-desk-view={effectiveView} className="ds-main min-w-0">
             <header className="ds-header">
               <div className="min-w-0">
-                <p className="ds-eyebrow">{new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
+                <p className="ds-eyebrow ds-keep">{new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
                 <h2 className="ds-title">It&apos;s Almost Closing Time!</h2>
                 <p className="ds-subtitle">{ready ? syncMessage : 'Loading your secure workspace.'}</p>
               </div>

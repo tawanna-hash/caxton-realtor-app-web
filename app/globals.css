@@ -1799,3 +1799,8 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   body:has(.ct-help-btn) button[aria-label="Back to top"] { width: 36px !important; height: 36px !important; bottom: 64px; right: 8px; opacity: 0.85; }
   body:has(.ct-help-btn) button[aria-label="Back to top"] svg { width: 16px; height: 16px; }
 }
+
+/* Page header standard (matches My Scheduling): sans 22px/600 title, 14px subtitle, no eyebrow above the title. */
+#agent-desk :is(h1, h2, h3, h4).ds-title, #agent-desk .ds-header .ds-title { font-family: inherit; font-size: 1.375rem; line-height: 1.25; font-weight: 600; letter-spacing: 0; color: #1B1726; margin-top: 0; }
+#agent-desk .ds-subtitle { margin-top: 0.25rem; font-size: 0.875rem; color: #4A4757; }
+#agent-desk .ds-eyebrow:has(+ .ds-title):not(.ds-keep) { display: none; }
