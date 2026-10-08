@@ -70,7 +70,7 @@ export function buildDealFile(deal: AgentDeal, deadlines: readonly DeadlineLike[
   if (deal.reminders.length) sections.push({ title: 'Reminders', headers: ['Reminder', 'Date', 'Note'], rows: deal.reminders.map((r) => [r.label, day(r.reminderDate), dash(r.note)]) });
 
   sections.push({ title: 'Audit Trail', headers: ['When', 'Event'], rows: deal.activity.length ? [...deal.activity].reverse().map((a) => [stamp(a.createdAt), a.message]) : [['No activity recorded', '']] });
-  sections.push({ title: 'Not Included', rows: [['Messages, scheduling and client portal activity', 'These are stored separately and are not part of this file yet.']] });
+  sections.push({ title: 'Not Included', rows: [['Messaging, scheduling and client portal activity', 'These are stored separately and are not part of this file yet.']] });
   return { title: dash(deal.propertyAddress || deal.title), subtitle: `Deal File · Generated ${new Date().toLocaleString('en-US')}`, sections };
 }
 

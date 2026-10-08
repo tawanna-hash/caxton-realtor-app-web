@@ -53,8 +53,8 @@ function EmailRepliesSetting({ dealId, mail }: { dealId: string; mail: string })
   return (
     <div className="border border-slate-200 px-3 py-2">
       <label className="flex items-start gap-2">
-        <Switch className="mt-0.5" on={m.readReplies} disabled={busy} label="Show email replies in Messages" onChange={(next) => void act({ action: 'mailbox_read', on: next })} />
-        <span>Show email replies from my {mail} in Messages. The app looks only for replies from people on your deals to emails sent from here, or mail that names the property. Nothing else is read or stored.</span>
+        <Switch className="mt-0.5" on={m.readReplies} disabled={busy} label="Show email replies in Messaging" onChange={(next) => void act({ action: 'mailbox_read', on: next })} />
+        <span>Show email replies from my {mail} in Messaging. The app looks only for replies from people on your deals to emails sent from here, or mail that names the property. Nothing else is read or stored.</span>
       </label>
       {m.readReplies && (
         <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-6 text-xs text-slate-500">
@@ -82,8 +82,8 @@ function MessageLayoutSetting({ dealId }: { dealId: string }) {
   };
   return (
     <section aria-label="Messages layout" className="ds-card">
-      <h4 className="mb-1 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Messages Layout</h4>
-      <Tip text="Choose how the Messages tab looks. You can also change it from the Messages tab." />
+      <h4 className="mb-1 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Messaging Layout</h4>
+      <Tip text="Choose how the Messaging tab looks. You can also change it from the Messaging tab." />
       <MessageLayoutPicker value={value} onPick={(v) => void pick(v)} disabled={busy} />
     </section>
   );

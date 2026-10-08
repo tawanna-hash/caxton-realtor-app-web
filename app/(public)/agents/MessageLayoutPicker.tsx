@@ -10,7 +10,7 @@ export const MESSAGE_LAYOUTS: { id: MessageLayout; name: string; text: string }[
   { id: 'threads', name: 'Thread List And Panel', text: 'A list of threads by subject. Open one in a side panel to read and reply.' },
 ];
 
-/** Choose how Messages looks. Used the first time Messages opens, from Messages, and in Settings. */
+/** Choose how Messaging looks. Used the first time Messages opens, from Messages, and in Settings. */
 export default function MessageLayoutPicker({ value, onPick, disabled }: { value: MessageLayout | null; onPick: (v: MessageLayout) => void; disabled?: boolean }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">

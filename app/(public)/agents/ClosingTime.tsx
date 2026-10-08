@@ -28,7 +28,7 @@ const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'd-documents', label: 'Documents', keys: [] },
   { id: 'd-people', label: 'People', keys: [] },
   { id: 'd-portal', label: 'Client Portal', keys: [] },
-  { id: 'd-messages', label: 'Messages', keys: [] },
+  { id: 'd-messages', label: 'Messaging', keys: [] },
   { id: 'd-schedule', label: 'Scheduling', keys: [] },
   { id: 'transaction', label: 'Contract', keys: ['current', 'trec-forms'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },

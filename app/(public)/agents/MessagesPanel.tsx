@@ -357,7 +357,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
   );
   const picker = (changing || needsChoice) && (
     <div className="ds-card mb-4 px-4 py-4">
-      <h2 className="text-[14px] font-semibold text-[#1B1726]">{needsChoice ? 'Choose How Messages Looks' : 'Messages Layout'}</h2>
+      <h2 className="text-[14px] font-semibold text-[#1B1726]">{needsChoice ? 'Choose How Messaging Looks' : 'Messaging Layout'}</h2>
       
       <MessageLayoutPicker value={layoutChoice ?? layoutSaved} onPick={(v) => void saveLayout(v)} disabled={busy} />
     </div>

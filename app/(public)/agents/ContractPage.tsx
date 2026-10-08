@@ -576,45 +576,29 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
               )}
               {section.id === 'property' && tab === 'key-details' && (
                 <PinnedDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
-                  <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span><span className="flex flex-wrap items-center gap-2">{onOpenCalculator && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenCalculator('calc-commission'); }}>Commission Calculator</button>}<button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId('key-details'); }}>Quick Entry</button></span></summary>
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span><span className="flex flex-wrap items-center gap-2"><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsNew(true); setEditing({ id: newId('term'), term: '', ref: '', value: '', note: '' }); }}>Add Term</button>{onOpenCalculator && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenCalculator('calc-commission'); }}>Commission Calculator</button>}<button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId('key-details'); }}>Quick Entry</button></span></summary>
                   <div className="border-t border-[#F6F3FB]">
-      <section className="overflow-hidden bg-white" aria-label="Contract Terms">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4">
+      <section className="bg-white p-4" aria-label="Contract Terms">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {kdItems.map((key) => {
             const t = terms.find((x) => x.id === key);
-            if (!t) {
-              return arrange ? (
-                <div key={key} onClick={() => kdClick(key)} title="Click to place here" className={`hidden min-h-[76px] cursor-pointer border-b border-r border-[#E6E5EC] sm:block ${kdPicked ? 'bg-[#F6F3FB] outline-dashed outline-1 -outline-offset-4 outline-[#B9ADD6] hover:bg-[#F6F3FB]' : ''}`} />
-              ) : (
-                <div key={key} className="hidden min-h-[76px] border-b border-r border-[#E6E5EC] sm:block" aria-hidden="true" />
-              );
-            }
+            if (!t) return null;
+            const empty = !t.value?.trim();
             return (
               <button
                 key={t.id}
                 type="button"
-                onClick={() => { if (arrange) { kdClick(t.id); return; } setIsNew(false); setEditing(t); }}
-                className={`!block !h-auto !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white !px-[1.125rem] !py-4 text-left hover:!bg-[#F6F3FB] ${kdPicked === t.id ? '!bg-[#F6F3FB] outline outline-2 -outline-offset-2 outline-[#301D5D]' : ''}`}
+                onClick={() => { setIsNew(false); setEditing(t); }}
+                aria-label={`${t.term}: ${empty ? 'Not set' : t.value}. Edit`}
+                className="!flex !h-auto min-h-[88px] !flex-col !items-stretch !justify-start !gap-1 !rounded !border !border-[#E6E5EC] !bg-white !px-4 !py-3 text-left hover:!bg-[#F6F3FB]"
               >
-                <span className="flex items-baseline justify-between gap-2">
-                  <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">{t.term}</span>
-                  {t.ref && <span className="text-[11px] text-slate-400">{t.ref}</span>}
-                </span>
-                <span className="mt-1 block min-h-[20px] break-words text-sm font-medium text-slate-900">{t.value}</span>
-                <span className="mt-0.5 block min-h-[16px] break-words text-sm font-medium text-slate-500">{t.note}</span>
+                <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#6B6878]">{t.term}</span>
+                <span className={`block break-words text-[15px] font-semibold leading-snug ${empty ? 'text-[#6B6878]' : 'text-[#1B1726]'}`}>{empty ? 'Not Set' : t.value}</span>
+                {t.note ? <span className="block break-words text-[13px] font-normal text-[#4A4757]">{t.note}</span> : null}
+                {t.ref ? <span className="mt-auto pt-1 text-[12px] font-normal text-[#6B6878]">{t.ref}</span> : null}
               </button>
             );
           })}
-          <button
-            type="button"
-            onClick={() => { setIsNew(true); setEditing({ id: newId('term'), term: '', ref: '', value: '', note: '' }); }}
-            className="!flex !h-auto min-h-[76px] !items-center !justify-center !gap-1 !rounded-none !border-0 !border-b !border-r !border-[#E6E5EC] !bg-white !px-[1.125rem] !py-4 text-sm text-slate-500 hover:!bg-[#F6F3FB]"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" /> Add Term
-          </button>
-          {Array.from({ length: (4 - ((kdItems.length + 1) % 4)) % 4 + (arrange && kdPicked ? 4 : 0) }, (_, i) => (
-            <div key={`f${i}`} onClick={() => { if (arrange && kdPicked) { const next = placeKeys(kdItems, kdPicked, `end:${i + 1}`); if (next) kdSave(next); setKdPicked(null); } }} title={arrange && kdPicked ? 'Click to place here' : undefined} className={`hidden min-h-[76px] border-b border-r border-[#E6E5EC] lg:block ${arrange && kdPicked ? 'cursor-pointer bg-[#F6F3FB] outline-dashed outline-1 -outline-offset-4 outline-[#B9ADD6] hover:bg-[#F6F3FB]' : 'bg-[#F6F3FB]'}`} aria-hidden="true" />
-          ))}
         </div>
       </section>
 
