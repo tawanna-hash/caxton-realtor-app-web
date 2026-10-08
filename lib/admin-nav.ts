@@ -110,6 +110,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Office Dashboard', href: '/agents/closing-time/office', description: 'Brokerage-wide deals, risks and CSV export' },
       { label: 'Brokerages & SSO', href: '/admin/brokerages', description: 'Offices, members and single sign-on' },
       { label: 'Agent Center', href: '/admin/agent-center', description: 'Agent tools and official TREC form versions' },
+      { label: 'Closing Time Platform', href: '/admin/platform', description: 'System settings, feature switches and releases' },
     ],
   },
   {
