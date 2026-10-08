@@ -1833,3 +1833,10 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 #agent-desk .ds-embed div[class*='fixed'][class*='pointer-events-none'] { left: 0 !important; right: 0 !important; width: auto !important; max-width: none !important; padding: 0 !important; justify-content: flex-end !important; }
 #agent-desk .ds-embed header > div:has(> button) { justify-content: flex-end; }
 #agent-desk .ds-embed p[class*='max-w-3xl'], #agent-desk .ds-embed p[class*='max-w-2xl'] { max-width: none !important; }
+
+/* Mobile: stat tiles keep their icon inside the card; long labels wrap instead of pushing it out. */
+@media (max-width: 639px) {
+  #agent-desk .ds-stat { padding: 0.875rem; gap: 0.5rem; }
+  #agent-desk .ds-stat > :first-child { min-width: 0; }
+  #agent-desk .ds-stat-icon { height: 1.75rem; width: 1.75rem; }
+}
