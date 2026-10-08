@@ -1843,3 +1843,10 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 
 /* One checkbox size everywhere on the desk: 18px square, 4px corners, brand purple. */
 #agent-desk input[type='checkbox']:not(.sr-only) { width: 18px !important; height: 18px !important; min-width: 18px; min-height: 18px; margin: 0; flex: none; border-radius: 4px; accent-color: #301D5D; cursor: pointer; }
+
+/* Checkboxes: plain white box, no hover color; a purple check mark appears only when checked. */
+#agent-desk input[type='checkbox']:not(.sr-only) { -webkit-appearance: none; appearance: none; background: #fff; border: 1px solid #B9B6C4; display: inline-grid; place-content: center; transition: none; }
+#agent-desk input[type='checkbox']:not(.sr-only):hover { background: #fff; border-color: #B9B6C4; }
+#agent-desk input[type='checkbox']:not(.sr-only):checked { background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23301D5D' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E") center / 14px 14px no-repeat; border-color: #B9B6C4; }
+#agent-desk input[type='checkbox']:not(.sr-only):disabled { opacity: 0.5; cursor: not-allowed; }
+#agent-desk input[type='checkbox']:not(.sr-only):focus-visible { outline: 2px solid #301D5D; outline-offset: 2px; }
