@@ -1,6 +1,7 @@
 'use client';
 
 import ContractPage from './ContractPage';
+import Switch from './Switch';
 import Link from 'next/link';
 import ClosingTimeAssist from './ClosingTimeAssist';
 import ClientPortalPanel from './ClientPortalPanel';
@@ -60,14 +61,6 @@ const DOCTOOLS_VIEW = { id: 'doc-tools', label: 'Document Tools', keys: [] as st
 const SECURITY_VIEW = { id: 'security', label: 'Security', keys: [] as string[] };
 const AUTOMATIONS_VIEW = { id: 'automations', label: 'Automations', keys: [] as string[] };
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, SETTINGS_VIEW, UTILITIES_VIEW, DATA_VIEW, TESTIMONIALS_VIEW, AUTOMATIONS_VIEW, SECURITY_VIEW, DOCTOOLS_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
-function Switch({ on, onChange, label, disabled }: { on: boolean; onChange: (next: boolean) => void; label: string; disabled?: boolean }) {
-  return (
-    <button type="button" role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={() => onChange(!on)} className={`ct-switch relative h-5 w-9 shrink-0 rounded-full transition disabled:opacity-50 ${on ? 'bg-[#301D5D]' : 'bg-[#E6E5EC]'}`}>
-      <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${on ? 'left-[18px]' : 'left-0.5'}`} />
-    </button>
-  );
-}
-
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug, 'my-schedule': CalendarClock, 'setup-help': ListChecks };
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {

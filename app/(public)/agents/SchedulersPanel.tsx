@@ -1,5 +1,6 @@
 'use client';
 
+import Switch from './Switch';
 import ClosingSchedulePanel from './ClosingSchedulePanel';
 import { messagingPeople } from '@/lib/closing-time-people';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -578,7 +579,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
             <li key={q.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-[#E6E5EC] p-2">
               <input className={`${field} min-w-[180px] flex-1`} value={q.label} placeholder="Question" onChange={(e) => set('questions', c.questions.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
               <select className={`${field} w-auto`} value={q.type} onChange={(e) => set('questions', c.questions.map((x, j) => (j === i ? { ...x, type: e.target.value as typeof q.type } : x)))}><option value="text">Short answer</option><option value="textarea">Long answer</option><option value="phone">Phone</option></select>
-              <label className="flex items-center gap-2 text-[13px] text-[#1B1726]"><input type="checkbox" checked={q.required} onChange={(e) => set('questions', c.questions.map((x, j) => (j === i ? { ...x, required: e.target.checked } : x)))} />Required</label>
+              <label className="flex items-center gap-2 text-[13px] text-[#1B1726]"><Switch on={q.required} label="Required" onChange={(next) => set('questions', c.questions.map((x, j) => (j === i ? { ...x, required: next } : x)))} />Required</label>
               <button type="button" aria-label="Remove question" className="p-1 text-[#4A4757] hover:text-[#661102]" onClick={() => set('questions', c.questions.filter((_, j) => j !== i))}><X className="h-4 w-4" /></button>
             </li>
           ))}

@@ -1,5 +1,6 @@
 'use client';
 
+import Switch from './Switch';
 import { useState } from 'react';
 import Tip from './Tip';
 
@@ -18,7 +19,7 @@ export function SecureSignSettings({ settings, post, busy }: { settings: SignSet
   const [open, setOpen] = useState(false);
   const num = (k: 'expireDays' | 'remindEvery' | 'maxReminders') => (e: React.ChangeEvent<HTMLInputElement>) => setS({ ...s, [k]: Number(e.target.value) });
   const check = (k: 'draw' | 'type' | 'upload' | 'attach' | 'emailRequester', text: string) => (
-    <label className="flex items-center gap-2"><input type="checkbox" checked={s[k]} onChange={(e) => setS({ ...s, [k]: e.target.checked })} /> {text}</label>
+    <label className="flex items-center gap-2"><Switch on={s[k]} label={text} onChange={(next) => setS({ ...s, [k]: next })} /> {text}</label>
   );
   return (
     <div className="mt-3 border border-slate-200 p-3 text-sm">

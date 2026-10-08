@@ -1,5 +1,6 @@
 'use client';
 
+import Switch from './Switch';
 import { useCallback, useEffect, useState } from 'react';
 import MessageLayoutPicker, { type MessageLayout } from './MessageLayoutPicker';
 import { SecureSignRequests, SecureSignSettings, type SignLayout, type SignRequestRow, type SignSettings } from './SecureSignPanel';
@@ -52,7 +53,7 @@ function EmailRepliesSetting({ dealId, mail }: { dealId: string; mail: string })
   return (
     <div className="border border-slate-200 px-3 py-2">
       <label className="flex items-start gap-2">
-        <input type="checkbox" className="mt-1" checked={m.readReplies} disabled={busy} onChange={(e) => void act({ action: 'mailbox_read', on: e.target.checked })} />
+        <Switch className="mt-0.5" on={m.readReplies} disabled={busy} label="Show email replies in Messages" onChange={(next) => void act({ action: 'mailbox_read', on: next })} />
         <span>Show email replies from my {mail} in Messages. The app looks only for replies from people on your deals to emails sent from here, or mail that names the property. Nothing else is read or stored.</span>
       </label>
       {m.readReplies && (
@@ -104,7 +105,7 @@ function HoverTipsSetting() {
     <section aria-label="Hover tips" className="rounded-md border border-gray-200 bg-white p-4">
       <h4 className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Hover Tips</h4>
       <label className="flex items-center gap-2 text-[13px] font-medium text-[#1B1726]">
-        <input type="checkbox" className="h-4 w-4 accent-[#301D5D]" checked={on} onChange={(e) => toggle(e.target.checked)} />
+        <Switch on={on} label="Show hover tips" onChange={(next) => toggle(next)} />
         <span>Show explanations when I hover over a field</span>
       </label>
     </section>
@@ -345,7 +346,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                 )}
                 {data.connected.mail && (
                   <label className="flex items-start gap-2 border border-slate-200 px-3 py-2">
-                    <input type="checkbox" className="mt-1" checked={data.connected.sendFromConnected} disabled={busy} onChange={(e) => void post({ action: 'send_from_connected', on: e.target.checked })} />
+                    <Switch className="mt-0.5" on={data.connected.sendFromConnected} disabled={busy} label="Send approved follow-ups from my own address" onChange={(next) => void post({ action: 'send_from_connected', on: next })} />
                     <span>Send approved follow-ups from my own {data.connected.mail} address. If it fails, the message goes out through Realty News Now with you copied.</span>
                   </label>
                 )}
@@ -361,11 +362,11 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
           <section aria-label="Automation" className="rounded-md border border-gray-200 bg-white p-4">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Automation</h4>
             <label className="mt-3 flex items-start gap-2 text-sm text-slate-700">
-              <input type="checkbox" className="mt-1" checked={data.autoSignature} disabled={busy} onChange={(e) => void post({ action: 'auto_signature', on: e.target.checked })} />
+              <Switch className="mt-0.5" on={data.autoSignature} disabled={busy} label="Automatic signature reminders" onChange={(next) => void post({ action: 'auto_signature', on: next })} />
               <span>Automatically remind people to sign tracked documents: gentle at 2 and 4 days, firmer at 6 days or when closing is within 3 days. You are copied. After 3 reminders you get an email to follow up yourself. Off by default.</span>
             </label>
             <label className="mt-2 flex items-start gap-2 text-sm text-slate-700">
-              <input type="checkbox" className="mt-1" checked={data.autoIntro} disabled={busy} onChange={(e) => void post({ action: 'auto_intro', on: e.target.checked })} />
+              <Switch className="mt-0.5" on={data.autoIntro} disabled={busy} label="Automatic introductions" onChange={(next) => void post({ action: 'auto_intro', on: next })} />
               <span>Automatically send the standard introduction to each lender, title, and co-op agent contact once a deal has an effective date. You are copied. Nothing about price or terms is ever sent automatically. Off by default, applies to all your deals.</span>
             </label>
             <a className={`${btn} mt-3`} href={`/api/closing-time/assist/export?dealId=${encodeURIComponent(deal.id)}`}>Export File History (CSV)</a>

@@ -1,5 +1,6 @@
 'use client';
 
+import Switch from './Switch';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TREC_FORM_LIBRARY } from '@/lib/trec-forms-library';
 import Tip from './Tip';
@@ -238,7 +239,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
       <p className="mb-3 mt-0.5 break-words text-[12px] font-medium text-[#4A4757]">To: {targets.length === 0 ? 'Select a contact above' : targets.map((p) => `${p.name}${mode === 'email' ? (p.email ? ` (${p.email})` : ' (no email)') : (p.phone ? ` (${p.phone})` : ' (no phone)')}`).join(', ')}</p>
       {mailbox && mailbox.connected && !mailbox.readReplies && (
         <label className="mb-4 flex items-start gap-2 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-3 py-2 text-[12px] font-medium text-[#4A4757]">
-          <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={false} disabled={busy} onChange={() => void post({ action: 'mailbox_read', on: true })} />
+          <Switch on={false} disabled={busy} label="Show email replies" onChange={() => void post({ action: 'mailbox_read', on: true })} />
           <span>Show email replies from {mailbox.connected}. Only replies to emails sent from here, or mail naming the property, from people on your deals. Once on, this is saved in Settings.</span>
         </label>
       )}
