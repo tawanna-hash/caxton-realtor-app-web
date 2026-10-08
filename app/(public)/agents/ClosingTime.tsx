@@ -69,7 +69,6 @@ import {
   Calculator,
   Handshake,
   LayoutDashboard,
-  Menu,
   Plug,
   type LucideIcon,
   Camera,
@@ -581,7 +580,6 @@ function ReadinessChecklist({
   const dotColor = (status: AgentDocument['status']) => (status === 'received' || status === 'reviewed' ? '#00E200' : status === 'not_needed' ? '#B9B6C4' : '#FFAF3D');
 
   const [selectedId, setSelectedId] = useState<string>('');
-  const [mOpen, setMOpen] = useState(false);
   const selectedRow = activeGroup?.rows.find((row) => row.document.id === selectedId) ?? activeGroup?.rows[0];
   const statusText = (status: AgentDocument['status']) => (status === 'not_needed' ? 'Not Needed' : status.charAt(0).toUpperCase() + status.slice(1));
   const when = (iso?: string) => (iso ? new Date(iso).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '');
@@ -592,13 +590,13 @@ function ReadinessChecklist({
       <button
         key={document.id}
         type="button"
-        onClick={() => { setSelectedId(document.id); setMOpen(true); window.requestAnimationFrame(() => window.document.getElementById('doc-detail-panel')?.scrollIntoView({ block: 'start' })); }}
+        onClick={() => setSelectedId(document.id)}
         aria-current={selected ? 'true' : undefined}
         className={`!flex !h-auto w-full !items-center !justify-start !gap-3 !rounded-none !border-0 !border-t !border-[#E6E5EC] !px-4 !py-3 text-left first:!border-t-0 ${selected ? '!bg-[#EFEAF8]' : '!bg-white hover:!bg-[#F6F3FB]'}`}
       >
         <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: dotColor(document.status) }} aria-hidden="true" />
         <span className="min-w-0 flex-1">
-          <span className={`block text-sm font-semibold leading-5 lg:truncate ${isDone(document) ? 'text-[#6B6878]' : 'text-[#1B1726]'}`}>{document.label}</span>
+          <span className={`block truncate text-sm font-semibold leading-5 ${isDone(document) ? 'text-[#6B6878]' : 'text-[#1B1726]'}`}>{document.label}</span>
           <span className="block text-[12px] font-normal leading-4 text-[#6B6878]">{statusText(document.status)}{document.driveFileId ? ' · File Attached' : ''}</span>
         </span>
         {requiredIds?.has(document.id) ? <span className="ds-chip shrink-0 bg-[#EFEAF8] text-[#301D5D]">Required</span> : null}
@@ -643,11 +641,11 @@ function ReadinessChecklist({
               <button type="button" onClick={() => removeDocumentFile(document.id)} className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md !bg-transparent hover:!bg-[#EFEAF8] hover:!text-[#661102]" aria-label={`Remove file for ${document.label}`}><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
             </span>
           ) : <p className="mt-1 text-[13px] text-[#6B6878]">No file attached.</p>}
-          <div className="max-lg:sticky max-lg:bottom-[72px] max-lg:z-10 max-lg:-mx-4 max-lg:mt-3 max-lg:border-t max-lg:border-[#E6E5EC] max-lg:bg-white max-lg:px-4 max-lg:py-2"><label className="mt-2 inline-flex h-10 max-lg:mt-0 max-lg:w-full max-lg:justify-center lg:h-9 cursor-pointer items-center gap-1.5 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:bg-[#EFEAF8]">
+          <label className="mt-2 inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:bg-[#EFEAF8]">
             {isUploading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <FileUp className="h-3.5 w-3.5" aria-hidden="true" />}
             {isUploading ? 'Uploading…' : hasFile ? 'Replace File' : 'Attach File'}
             <input type="file" className="hidden" disabled={isUploading} onChange={(event) => { void uploadDocumentFile(document.id, event.target.files?.[0]); event.target.value = ''; }} aria-label={`Attach file for ${document.label}`} />
-          </label></div>
+          </label>
         </div>
         {updateNote ? (
           <label className="block">
@@ -711,8 +709,8 @@ function ReadinessChecklist({
         </div>
 
         <div role="tabpanel" className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className={`min-w-0 border-b border-[#E6E5EC] lg:border-b-0 ${mOpen ? 'max-lg:hidden' : ''}`}>{activeGroup?.rows.map(({ document }) => renderRow(document))}</div>
-          <div id="doc-detail-panel" className={`min-w-0 scroll-mt-4 border-[#E6E5EC] p-4 lg:border-l ${mOpen ? '' : 'max-lg:hidden'}`}><button type="button" onClick={() => setMOpen(false)} className="mb-3 !inline-flex !h-9 !flex-row !items-center !gap-1 !px-2 lg:!hidden"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Checklist</button>{renderDetail(selectedRow)}</div>
+          <div className="min-w-0 border-b border-[#E6E5EC] lg:border-b-0">{activeGroup?.rows.map(({ document }) => renderRow(document))}</div>
+          <div className="min-w-0 border-[#E6E5EC] p-4 lg:border-l">{renderDetail(selectedRow)}</div>
         </div>
       </div>
 
@@ -2299,9 +2297,6 @@ export default function ClosingTime({
   };
 
   const [selectedTaskId, setSelectedTaskId] = useState('');
-  const [dealMoreOpen, setDealMoreOpen] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [taskMOpen, setTaskMOpen] = useState(false);
   const updateTask = (taskId: string, patch: Partial<AgentTask>) => {
     if (!activeDeal) return;
     const nextTasks = activeDeal.tasks.map((task) => task.id === taskId ? { ...task, ...patch } : task);
@@ -2879,9 +2874,8 @@ export default function ClosingTime({
     <main id="agent-desk" className="min-h-screen bg-white">
       <h1 className="sr-only">Closing Time Agent Desk</h1>
       <div className="w-full">
-        <div className="grid grid-cols-[minmax(0,1fr)] items-start sm:grid-cols-[200px_minmax(0,1fr)] lg:grid-cols-[232px_minmax(0,1fr)]">
-          {mobileNavOpen && <button type="button" aria-label="Close menu" className="ds-mnav-backdrop" onClick={() => setMobileNavOpen(false)} />}
-          <aside aria-label="Deals" className={`sticky top-16 flex min-w-0 flex-col lg:top-24 ds-rail${mobileNavOpen ? ' ds-rail-open' : ''}`} onClickCapture={(event) => { const el = (event.target as HTMLElement).closest('button'); if (el && !el.hasAttribute('aria-expanded')) setMobileNavOpen(false); }}>
+        <div className="grid grid-cols-[64px_minmax(0,1fr)] items-start sm:grid-cols-[200px_minmax(0,1fr)] lg:grid-cols-[232px_minmax(0,1fr)]">
+          <aside aria-label="Deals" className="sticky top-16 flex min-w-0 flex-col lg:top-24 ds-rail">
             <div className="ds-brand">
               <span className="ds-brand-mark" aria-hidden="true"><ClipboardCheck className="h-4 w-4" /></span>
               <span className="ds-brand-name">Agent Desk</span>
@@ -3062,19 +3056,6 @@ export default function ClosingTime({
               <a className="underline" href="/disclaimer">Notices</a>
             </div>
           </aside>
-          <nav aria-label="Main" className="ds-mnav" data-testid="mobile-nav">
-            {([
-              ['Today', LayoutDashboard, effectiveView === 'overview', () => { setMobileNavOpen(false); setWorkspacePage(1); }],
-              ['Deals', ListTodo, effectiveView === 'deals' || effectiveView === 'deal-page' || DEAL_TABS.some((t) => t.id === effectiveView), () => { setMobileNavOpen(false); setWorkspacePage(2); setDeskView('deals'); }],
-              ['Contacts', Users, effectiveView === 'contacts', () => { setMobileNavOpen(false); setWorkspacePage(2); setDeskView('contacts'); }],
-              ['Schedule', CalendarClock, effectiveView === 'my-schedule', () => { setMobileNavOpen(false); setWorkspacePage(2); setDeskView('my-schedule'); }],
-              ['More', Menu, mobileNavOpen, () => setMobileNavOpen((v) => !v)],
-            ] as const).map(([label, Icon, on, go]) => (
-              <button key={label} type="button" data-no-auto-open aria-current={on && label !== 'More' ? 'page' : undefined} aria-expanded={label === 'More' ? mobileNavOpen : undefined} onClick={go} className={on ? 'is-on' : ''}>
-                <Icon className="h-5 w-5" aria-hidden="true" /><span>{label}</span>
-              </button>
-            ))}
-          </nav>
           <div className="ds-mainwrap min-w-0">
             <HelpTips howTo={helpGuide} onTour={helpGuide ? () => setTourId(helpGuide.id) : undefined} />
             {tourId && GUIDES.find((g) => g.id === tourId) && <Walkthrough key={tourId} guide={GUIDES.find((g) => g.id === tourId) as Guide} onClose={() => setTourId(null)} goView={(v) => { setWorkspacePage(2); setDeskView(v); }} />}
@@ -3105,31 +3086,15 @@ export default function ClosingTime({
               );
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
-              <nav aria-label="Deal sections" className="mb-4 flex items-end gap-1 border-b border-[#E6E5EC]" data-testid="deal-tabs">
-                <div className="flex min-w-0 flex-1 items-end gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none]">
-                  {['d-overview', 'transaction', 'd-documents', 'd-people', 'd-messages', 'd-schedule'].map((id) => DEAL_TABS.find((tab) => tab.id === id)).filter((tab): tab is (typeof DEAL_TABS)[number] => Boolean(tab)).map((tab) => (
-                    <button key={tab.id} type="button" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => { setDealMoreOpen(false); setDeskView(tab.id); }} className={`!h-auto shrink-0 !rounded-none !border-0 !border-b-2 !bg-transparent !px-3 !py-2.5 text-[14px] ${tab.id === effectiveView ? '!border-[#301D5D] font-semibold !text-[#301D5D]' : '!border-transparent font-medium !text-[#4A4757] hover:!text-[#301D5D]'}`}>{tab.label}</button>
-                  ))}
-                </div>
-                {(() => {
-                  const moreIds = ['d-portal', 'tasks', 'audit'];
-                  const activeMore = DEAL_TABS.find((tab) => tab.id === effectiveView && moreIds.includes(tab.id));
-                  return (
-                    <div className="relative shrink-0">
-                      <button type="button" data-no-auto-open aria-haspopup="menu" aria-expanded={dealMoreOpen} onClick={() => setDealMoreOpen((v) => !v)} className={`!inline-flex !h-auto !flex-row !items-center !gap-1 !rounded-none !border-0 !border-b-2 !bg-transparent !px-3 !py-2.5 text-[14px] ${activeMore ? '!border-[#301D5D] font-semibold !text-[#301D5D]' : '!border-transparent font-medium !text-[#4A4757] hover:!text-[#301D5D]'}`}>{activeMore ? activeMore.label : 'More'}<ChevronDown className={`h-3.5 w-3.5 transition-transform ${dealMoreOpen ? 'rotate-180' : ''}`} aria-hidden="true" /></button>
-                      {dealMoreOpen && (
-                        <>
-                          <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 !h-auto !cursor-default !rounded-none !border-0 !bg-transparent !p-0 hover:!bg-transparent" onClick={() => setDealMoreOpen(false)} />
-                          <div role="menu" className="absolute right-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-md border border-[#E6E5EC] bg-white py-1">
-                            {moreIds.map((id) => DEAL_TABS.find((tab) => tab.id === id)).filter((tab): tab is (typeof DEAL_TABS)[number] => Boolean(tab)).map((tab) => (
-                              <button key={tab.id} type="button" role="menuitem" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => { setDealMoreOpen(false); setDeskView(tab.id); }} className={`!flex !h-10 w-full !justify-start !rounded-none !border-0 !px-4 text-left text-[14px] ${tab.id === effectiveView ? '!bg-[#EFEAF8] font-semibold !text-[#301D5D]' : '!bg-white !text-[#1B1726] hover:!bg-[#F6F3FB]'}`}>{tab.label}</button>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  );
-                })()}
+              <nav aria-label="Deal sections" className="ds-dealnav mb-4">
+                {([['Deal', ['d-overview', 'transaction']], ['Work', ['d-documents', 'd-people', 'd-messages', 'd-schedule', 'd-portal', 'tasks', 'audit']]] as const).map(([group, ids]) => (
+                  <div key={group} className="ds-dealnav-group" role="group" aria-label={group}>
+                    <span className="ds-dealnav-label">{group}</span>
+                    {(ids as readonly string[]).map((id) => DEAL_TABS.find((tab) => tab.id === id)).filter((tab): tab is (typeof DEAL_TABS)[number] => Boolean(tab)).map((tab) => (
+                      <button key={tab.id} type="button" className="ds-tab" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)}>{tab.label}</button>
+                    ))}
+                  </div>
+                ))}
               </nav>
             )}
               </div>
@@ -3140,12 +3105,6 @@ export default function ClosingTime({
               <div className="mb-4">
                 <h2 className="text-[22px] font-semibold text-[#1B1726]">Today</h2>
                 <p className="mt-1 text-[14px] text-[#4A4757]">{new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}{nextClosingDays === null ? '' : nextClosingDays === 0 ? ' · Next Closing Is Today' : ` · ${nextClosingDays} Day${nextClosingDays === 1 ? '' : 's'} To Next Closing`}</p>
-              </div>
-            )}
-            {effectiveView === 'coordinator' && (
-              <div className="mb-4">
-                <h2 className="text-[22px] font-semibold text-[#1B1726]">Settings</h2>
-                <p className="mt-1 text-[14px] text-[#4A4757]">Your agent details, deadline alerts, calendar link and MLS access.</p>
               </div>
             )}
             <header className="ds-header">
@@ -3681,7 +3640,7 @@ export default function ClosingTime({
                 }}
               />
             )}
-            <div id="trec-forms" data-section-key="trec-library" className="ds-page min-w-0 scroll-mt-24 lg:col-span-2">
+            <div id="trec-forms" {...collapsible('trec-library')} className="ds-page min-w-0 scroll-mt-24 lg:col-span-2">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-0">
                   <p className="ds-eyebrow">Tools</p>
@@ -3690,6 +3649,7 @@ export default function ClosingTime({
                 </div>
                 <div className="ml-auto flex shrink-0 items-center gap-2">
                   {formsLibraryTab === 'trec' && <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#301D5D] hover:text-white sm:inline-flex">TREC Quick Link</a>}
+                  <CollapseToggle {...toggleProps('trec-library', 'forms library')} />
                 </div>
               </div>
               <div role="tablist" aria-label="Forms library pages" className="ds-tabs">
@@ -4076,11 +4036,11 @@ export default function ClosingTime({
                 </div>
                 <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
               </div>
-              <div className="grid min-w-0 grid-cols-2 items-center gap-2 border-y sm:flex sm:flex-wrap sm:gap-3 border-[#E6E5EC] bg-[#F6F3FB] px-[1.125rem] py-3">
-                <input value={taskTitle} onChange={(event) => { setTaskTitle(event.target.value); if (taskError) setTaskError(''); }} aria-label="Task name" aria-invalid={taskError ? true : undefined} aria-describedby={taskError ? 'task-name-error' : undefined} className="col-span-2 h-10 w-full min-w-0 sm:h-9 sm:basis-full sm:min-w-[200px] sm:flex-1 sm:basis-0 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
-                <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="h-10 min-w-0 !w-full sm:h-9 sm:!w-[150px] sm:flex-none rounded-md border border-[#E6E5EC] bg-white px-3 text-sm outline-none focus:border-[#301D5D]" />
-                <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="h-10 min-w-0 !w-full sm:h-9 sm:!w-[120px] sm:flex-none rounded-md border border-[#E6E5EC] bg-white px-2 text-[13px] font-medium outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
-                <button type="button" onClick={addTask} className="col-span-2 inline-flex h-10 shrink-0 sm:h-9 items-center justify-center gap-2 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]"><Plus className="rnn-inline-icon" aria-hidden="true" />Add Task</button>
+              <div className="flex min-w-0 flex-wrap items-center gap-3 border-y border-[#E6E5EC] bg-[#F6F3FB] px-[1.125rem] py-3">
+                <input value={taskTitle} onChange={(event) => { setTaskTitle(event.target.value); if (taskError) setTaskError(''); }} aria-label="Task name" aria-invalid={taskError ? true : undefined} aria-describedby={taskError ? 'task-name-error' : undefined} className="h-9 w-full min-w-0 basis-full sm:min-w-[200px] sm:flex-1 sm:basis-0 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
+                <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="h-9 min-w-0 !w-auto flex-1 sm:!w-[150px] sm:flex-none rounded-md border border-[#E6E5EC] bg-white px-3 text-sm outline-none focus:border-[#301D5D]" />
+                <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="h-9 min-w-0 !w-auto flex-1 sm:!w-[120px] sm:flex-none rounded-md border border-[#E6E5EC] bg-white px-2 text-[13px] font-medium outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
+                <button type="button" onClick={addTask} className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
               </div>
               {taskError && <p id="task-name-error" role="alert" className="border-b border-[#E6E5EC] bg-[#FFEAE6] px-[1.125rem] py-2 text-[13px] text-[#661102]">{taskError}</p>}
               
@@ -4093,18 +4053,18 @@ export default function ClosingTime({
                     const lab = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#6B6878]';
                     return (
                       <div className="grid min-w-0 border-t border-[#E6E5EC] lg:grid-cols-[minmax(0,1fr)_340px]">
-                        <div className={`min-w-0 border-b border-[#E6E5EC] lg:max-h-[640px] lg:overflow-y-auto lg:border-b-0 ${taskMOpen ? 'max-lg:hidden' : ''}`}>
+                        <div className="min-w-0 max-h-[640px] overflow-y-auto border-b border-[#E6E5EC] lg:border-b-0">
                           {activeDeal.tasks.map((task) => (
-                            <div key={task.id} role="button" tabIndex={0} aria-current={selectedTask.id === task.id ? 'true' : undefined} onClick={() => { setSelectedTaskId(task.id); setTaskMOpen(true); window.requestAnimationFrame(() => document.getElementById('task-detail-panel')?.scrollIntoView({ block: 'start' })); }} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelectedTaskId(task.id); setTaskMOpen(true); } }} className={`flex cursor-pointer items-center gap-3 border-t border-[#E6E5EC] px-[1.125rem] py-3 first:border-t-0 ${selectedTask.id === task.id ? 'bg-[#EFEAF8]' : 'hover:bg-[#F6F3FB]'}`}>
+                            <div key={task.id} role="button" tabIndex={0} aria-current={selectedTask.id === task.id ? 'true' : undefined} onClick={() => setSelectedTaskId(task.id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelectedTaskId(task.id); } }} className={`flex cursor-pointer items-center gap-3 border-t border-[#E6E5EC] px-[1.125rem] py-3 first:border-t-0 ${selectedTask.id === task.id ? 'bg-[#EFEAF8]' : 'hover:bg-[#F6F3FB]'}`}>
                               <button type="button" onClick={(event) => { event.stopPropagation(); updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' }); }} className={`flex !h-[18px] !w-[18px] !min-h-0 !min-w-0 shrink-0 items-center justify-center !rounded-[4px] border !p-0 border-[#B9B6C4] bg-white hover:!border-[#B9B6C4] hover:!bg-white ${task.complete ? '!text-[#301D5D]' : '!text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />}</button>
                               <span className="min-w-0 flex-1">
-                                <span className={`block lg:truncate text-sm font-semibold ${task.complete ? 'text-[#6B6878] line-through' : 'text-[#1B1726]'}`}>{taskTitleCase(task.title)}</span>
+                                <span className={`block truncate text-sm font-semibold ${task.complete ? 'text-[#6B6878] line-through' : 'text-[#1B1726]'}`}>{taskTitleCase(task.title)}</span>
                                 <span className="block text-[12px] text-[#6B6878]">{task.dueDate ? formatDate(task.dueDate) : 'No Due Date'}{task.priority !== 'normal' ? ` · ${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}` : ''}{task.note ? ' · Note' : ''}</span>
                               </span>
                             </div>
                           ))}
                         </div>
-                        <div id="task-detail-panel" className={`min-w-0 scroll-mt-4 space-y-4 p-4 lg:border-l lg:border-[#E6E5EC] ${taskMOpen ? '' : 'max-lg:hidden'}`} data-testid="task-detail"><button type="button" onClick={() => setTaskMOpen(false)} className="mb-3 !inline-flex !h-9 !flex-row !items-center !gap-1 !px-2 lg:!hidden"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Tasks</button>
+                        <div className="min-w-0 space-y-4 p-4 lg:border-l lg:border-[#E6E5EC]" data-testid="task-detail">
                           <div>
                             <p className={lab}>Selected Task</p>
                             <input key={`${selectedTask.id}-${selectedTask.title}`} defaultValue={selectedTask.title} disabled={locked} maxLength={280} aria-label="Task name" onBlur={(event) => { const v = event.target.value.trim(); if (v && v !== selectedTask.title) updateTask(selectedTask.id, { title: v }); }} className="mt-1 h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm font-semibold text-[#1B1726]" />

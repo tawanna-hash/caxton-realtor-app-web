@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Search, X } from 'lucide-react';
+import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 
 type Account = { id: string; appSlug: string; appName: string; healthy: boolean };
 type Catalog = { slug: string; name: string; group: string; logo?: string };
@@ -96,16 +97,18 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
     return out;
   }, [accounts, catalog, connectedOnly, query]);
 
+  const { section: collapsible, toggleProps } = useCollapsibles();
   const selectedAccount = selected ? accounts.find((a) => a.appSlug === selected.slug) : undefined;
 
   return (
-    <section aria-label="Integrations" className="ds-page">
+    <section aria-label="Integrations" {...collapsible('integrations', { mobileOpen: true })} data-section-key={undefined} className="ds-page">
       <div className="flex items-center gap-3">
         <div>
           <p className="ds-eyebrow">Tools</p>
           <h2 className="ds-title">Integrations</h2>
           <p className="ds-subtitle">Connect the tools you already use.</p>
         </div>
+        <CollapseToggle {...toggleProps('integrations', 'integrations', { mobileOpen: true })} className="ml-auto" />
       </div>
       <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">Each connection is yours alone. You sign in with the provider, and you can disconnect at any time.</p>
 

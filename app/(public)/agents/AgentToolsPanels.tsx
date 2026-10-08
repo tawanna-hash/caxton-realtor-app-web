@@ -92,7 +92,7 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
   return (
     <section>
         <div className="">
-        <div className="ds-page ds-compact">
+        <div {...collapsible('calculators', { mobileOpen: true })} data-section-key={undefined} className="ds-page ds-compact">
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="ds-eyebrow">Tools</p>
@@ -105,6 +105,7 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             )}
+            <CollapseToggle {...toggleProps('calculators', 'calculators', { mobileOpen: true })} />
           </div>
           <div className="mt-6 flex flex-col gap-3 sm:mt-8">
             {QUICK_TOOLS.map((tool) => {
