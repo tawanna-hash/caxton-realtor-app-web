@@ -177,6 +177,8 @@ export default function DealSubpage({ readiness, renderReadiness, readinessLinks
   }, [stagesOpen]);
   const docFolders = dealFolders(deal);
   const requiredIdList = requiredIdsFor(docFolders);
+  const [docSec, setDocSec] = useState('required');
+  const [docSel, setDocSel] = useState('');
   const [arrangePage, setArrangePage] = useState<string | null>(null);
   const [pickedCard, setPickedCard] = useState<{ page: string; key: string } | null>(null);
   const cardKeys = (page: string, defaults: string[]) => {
@@ -943,25 +945,8 @@ export default function DealSubpage({ readiness, renderReadiness, readinessLinks
                     </div>
                   );
                 }, new Set(Object.entries(readinessLinks ?? {}).filter(([, cid]) => { const d = allDocs.find((x) => x.id === cid); return Boolean(d && (d.kind === 'required' || isAdded(d.id))); }).map(([rid]) => rid)))}</div>}
-                {(() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'required'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
-                    <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Required Documents</span>
-                    <span className="text-xs font-medium text-slate-500">{submittedCount} of {totalRequired}</span>
-                  </div>}>
-                  {requiredShown.map(requiredRow)}
-                  {brokerageDocs.map((form) => (
-                    <div key={form.id} className="ds-list-row">
-                      <input type="checkbox" aria-label={`Mark ${form.title} submitted`} checked={Boolean(checks[`bfs:${form.id}`])} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...checks, [`bfs:${form.id}`]: e.target.checked })} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm text-slate-900">{form.title}</span>
-                        <span className="block text-xs text-slate-500">Brokerage Form</span>
-                      </span>
-                      {statusChip(Boolean(checks[`bfs:${form.id}`]))}
-                      <a href={form.fillable ? `/agents/closing-time?form=${encodeURIComponent(`custom-${form.id}`)}#trec-form-workspace` : form.url} target={form.fillable ? undefined : '_blank'} rel="noreferrer" className="ds-row-btn">Open</a>
-                      {!locked && <button type="button" aria-label={`Remove ${form.title} from this deal`} className="text-xs text-slate-500 underline underline-offset-2 hover:text-slate-900" onClick={() => { const next = { ...checks }; delete next[`bf:${form.id}`]; delete next[`bfs:${form.id}`]; onUpdate('documentChecks', next); }}>Remove</button>}
-                    </div>
-                  ))}
-                </AutoSection></div>); })()}
                 {(() => {
+                  const lab = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#6B6878]';
                   const linked = [
                     ...Array.from(new Set(Object.values(DOC_DEADLINE_IDS))).map((id) => {
                       const match = (deadlines ?? []).find((item) => item.id === id);
@@ -969,64 +954,123 @@ export default function DealSubpage({ readiness, renderReadiness, readinessLinks
                     }),
                     deal.closingDate ? { id: 'closing-date', label: 'Closing Date', date: deal.closingDate, docs: ['pd-walkthrough', 'pd-closing-statement'] } : null,
                   ].filter((item): item is { id: string; label: string; date: string; docs: string[] } => Boolean(item)).sort((l, r) => l.date.localeCompare(r.date));
-                  if (linked.length === 0) return null;
-                  const doneCount = linked.filter((item) => checks[`dl:${item.id}`]).length;
-                  return (
-                    (() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'deadlines'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
-                        <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Deadline Completion</span>
-                        <span className="text-xs font-medium text-slate-500">{doneCount} Of {linked.length} Done</span>
-                      </div>}>
-                      {linked.map((item) => {
+                  const checkField = (label: string, checked: boolean, onChange: (v: boolean) => void) => (
+                    <label className="flex items-center gap-2 text-sm font-medium text-[#1B1726]"><input type="checkbox" checked={checked} disabled={locked} onChange={(e) => onChange(e.target.checked)} />{label}</label>
+                  );
+                  type Item = { id: string; title: string; sub: string; done: boolean; detail: ReactNode };
+                  const formBlock = (family: string | undefined) => {
+                    const form = formInfo(family);
+                    if (!form) return null;
+                    return (
+                      <div>
+                        <span className={lab}>Form</span>
+                        <div className="mt-1 flex flex-wrap items-center gap-2"><span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{formStatus(form)}</span><TrecFormActions family={form.formFamily} disabled={locked} onOpen={(f) => onOpenTrecForm?.(f)} onUpload={(f, mode) => onUploadTrecForm?.(f, mode)} /></div>
+                      </div>
+                    );
+                  };
+                  const sections: { id: string; label: string; items: Item[]; empty: string }[] = [
+                    {
+                      id: 'required', label: 'Required', empty: 'No other required documents.',
+                      items: [
+                        ...requiredShown.map((doc): Item => {
+                          const addedOptional = doc.kind !== 'required';
+                          const due = !checks[doc.id] ? dueFor(doc.id) : null;
+                          return {
+                            id: `r:${doc.id}`, title: doc.label, done: Boolean(checks[doc.id]),
+                            sub: [checks[doc.id] ? 'Submitted' : 'Not Submitted', due ? `${due.label} ${formatDate(due.date)}` : '', addedOptional ? 'Added From Optional' : ''].filter(Boolean).join(' · '),
+                            detail: (<>
+                              {checkField('Submitted', Boolean(checks[doc.id]), (v) => onUpdate('documentChecks', { ...checks, [doc.id]: v }))}
+                              {due && <div><span className={lab}>Due</span><p className="mt-1 text-sm text-[#4A4757]">{`${due.label} ${formatDate(due.date)}`}</p></div>}
+                              {formBlock(doc.formFamily)}
+                              {addedOptional && !locked && <button type="button" onClick={() => { const next = { ...checks }; delete next[`add:${doc.id}`]; delete next[doc.id]; onUpdate('documentChecks', next); }}>Move Back To Optional</button>}
+                            </>),
+                          };
+                        }),
+                        ...brokerageDocs.map((form): Item => ({
+                          id: `b:${form.id}`, title: form.title, done: Boolean(checks[`bfs:${form.id}`]),
+                          sub: `Brokerage Form · ${checks[`bfs:${form.id}`] ? 'Submitted' : 'Not Submitted'}`,
+                          detail: (<>
+                            {checkField('Submitted', Boolean(checks[`bfs:${form.id}`]), (v) => onUpdate('documentChecks', { ...checks, [`bfs:${form.id}`]: v }))}
+                            <div className="flex flex-wrap gap-2">
+                              <a href={form.fillable ? `/agents/closing-time?form=${encodeURIComponent(`custom-${form.id}`)}#trec-form-workspace` : form.url} target={form.fillable ? undefined : '_blank'} rel="noreferrer" className="ds-row-btn">Open</a>
+                              {!locked && <button type="button" onClick={() => { const next = { ...checks }; delete next[`bf:${form.id}`]; delete next[`bfs:${form.id}`]; onUpdate('documentChecks', next); }}>Remove From Deal</button>}
+                            </div>
+                          </>),
+                        })),
+                      ],
+                    },
+                    ...(linked.length ? [{
+                      id: 'deadlines', label: 'Deadlines', empty: '',
+                      items: linked.map((item): Item => {
                         const done = Boolean(checks[`dl:${item.id}`]);
                         const diff = dayDiff(today, item.date);
-                        const chip = done ? { text: 'Done', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
-                          : diff < 0 ? { text: `Overdue ${-diff} Day${diff === -1 ? '' : 's'}`, cls: 'bg-[#301D5D] text-white' }
-                          : diff === 0 ? { text: 'Due Today', cls: 'bg-[#EFEAF8] text-[#301D5D]' }
-                          : { text: `Due In ${diff} Day${diff === 1 ? '' : 's'}`, cls: diff <= 3 ? 'bg-[#EFEAF8] text-[#301D5D]' : 'bg-slate-100 text-slate-600' };
+                        const status = done ? 'Done' : diff < 0 ? `Overdue ${-diff} Day${diff === -1 ? '' : 's'}` : diff === 0 ? 'Due Today' : `Due In ${diff} Day${diff === 1 ? '' : 's'}`;
                         const docLabels = allDocs.filter((doc) => item.docs.includes(doc.id) && (doc.kind === 'required' || isAdded(doc.id))).map((doc) => doc.label);
-                        return (
-                          <div key={item.id} className="ds-list-row">
-                            <input type="checkbox" aria-label={`Mark ${item.label} done`} checked={done} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...checks, [`dl:${item.id}`]: e.target.checked })} />
-                            <span className="min-w-0 flex-1">
-                              <span className={`block truncate text-sm ${done ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{item.label} · {formatDate(item.date)}</span>
-                              {docLabels.length > 0 && <span className="block truncate text-xs text-slate-500">{docLabels.join(' · ')}</span>}
-                            </span>
-                            <span className={`ds-chip ${chip.cls}`}>{chip.text}</span>
+                        return {
+                          id: `d:${item.id}`, title: item.label, done, sub: `${formatDate(item.date)} · ${status}`,
+                          detail: (<>
+                            {checkField('Done', done, (v) => onUpdate('documentChecks', { ...checks, [`dl:${item.id}`]: v }))}
+                            <div><span className={lab}>Date</span><p className="mt-1 text-sm text-[#4A4757]">{`${formatDate(item.date)} · ${status}`}</p></div>
+                            {docLabels.length > 0 && <div><span className={lab}>Related Documents</span><ul className="mt-1 space-y-0.5 text-sm text-[#4A4757]">{docLabels.map((l) => <li key={l}>{l}</li>)}</ul></div>}
+                          </>),
+                        };
+                      }),
+                    }] : []),
+                    ...(trecForms ? [{
+                      id: 'forms', label: 'Additional', empty: 'No additional documents added. Add forms this deal needs from the Forms Library.',
+                      items: dealForms.map((form): Item => ({
+                        id: `f:${form.formFamily}`, title: `${form.formNumber} · ${form.title}`, done: false, sub: formStatus(form),
+                        detail: (<>
+                          {formBlock(form.formFamily)}
+                          <button type="button" onClick={() => onOpenTrecForm?.(form.formFamily)}>Open Form</button>
+                        </>),
+                      })),
+                    }] : []),
+                    {
+                      id: 'optional', label: 'Optional', empty: 'Every optional document has been added.',
+                      items: optionalDocs.map((doc): Item => ({
+                        id: `o:${doc.id}`, title: doc.label, done: false, sub: doc.kind === 'reference' ? 'Reference' : 'Optional',
+                        detail: (<>
+                          <p className="text-sm text-[#4A4757]">Add this document to the required list for this deal.</p>
+                          <button type="button" disabled={locked || requiredIds.has(doc.id)} onClick={() => onUpdate('documentChecks', { ...checks, [`add:${doc.id}`]: true })}>Add To Required</button>
+                        </>),
+                      })),
+                    },
+                  ];
+                  const section = sections.find((x) => x.id === docSec) ?? sections[0];
+                  const selected = section.items.find((x) => x.id === docSel) ?? section.items[0];
+                  return (
+                    <div className="ds-card overflow-hidden !p-0" data-testid="more-documents">
+                      <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
+                        <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />More Documents</span>
+                        <span className="text-xs font-medium text-slate-500">{submittedCount} of {totalRequired} Submitted</span>
+                      </div>
+                      <div className="flex gap-1 overflow-x-auto border-b border-[#E6E5EC] px-2" role="tablist">
+                        {sections.map((x) => (
+                          <button key={x.id} type="button" role="tab" aria-selected={section.id === x.id} onClick={() => setDocSec(x.id)} className={`!h-auto !rounded-none !border-0 !border-b-2 !bg-transparent !px-3 !py-2.5 text-sm whitespace-nowrap ${section.id === x.id ? '!border-[#301D5D] font-semibold !text-[#301D5D]' : '!border-transparent !text-[#4A4757]'}`}>{x.label}<span className="ml-1.5 text-xs text-[#6B6878]">{x.items.length}</span></button>
+                        ))}
+                      </div>
+                      {section.items.length === 0 ? <p className="px-4 py-4 text-sm text-[#6B6878]">{section.empty}</p> : (
+                        <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_340px]">
+                          <div className="min-w-0 border-b border-[#E6E5EC] lg:border-b-0">
+                            {section.items.map((item) => (
+                              <button key={item.id} type="button" onClick={() => setDocSel(item.id)} aria-current={selected?.id === item.id ? 'true' : undefined} className={`!flex !h-auto w-full !items-center !justify-start !gap-3 !rounded-none !border-0 !border-t !border-[#E6E5EC] !px-4 !py-3 text-left first:!border-t-0 ${selected?.id === item.id ? '!bg-[#EFEAF8]' : '!bg-white hover:!bg-[#F6F3FB]'}`}>
+                                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.done ? '#00e200' : '#ffaf3d' }} aria-hidden="true" />
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-sm font-semibold text-[#1B1726]">{item.title}</span>
+                                  <span className="block truncate text-[12px] font-normal text-[#6B6878]">{item.sub}</span>
+                                </span>
+                              </button>
+                            ))}
                           </div>
-                        );
-                      })}
-                    </AutoSection></div>); })()
+                          <div className="min-w-0 space-y-4 p-4 lg:border-l lg:border-[#E6E5EC]" data-testid="more-documents-detail">
+                            {selected && (<><div><p className={lab}>Selected</p><h4 className="mt-1 text-[15px] font-semibold leading-snug text-[#1B1726]">{selected.title}</h4></div>{selected.detail}</>)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   );
                 })()}
-                {trecForms && (
-                  (() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'forms'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
-                      <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Additional Documents</span>
-                      <span className="text-xs font-medium text-slate-500">{dealForms.length}</span>
-                    </div>}>
-                    {dealForms.length === 0 ? (
-                      <p className="px-4 py-4 text-xs text-slate-500">No additional documents added. Add forms this deal needs from the Forms Library.</p>
-                    ) : dealForms.map((form) => (
-                      <div key={form.formFamily} className="ds-list-row">
-                        <button type="button" onClick={() => onOpenTrecForm?.(form.formFamily)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-slate-900 hover:text-[#301D5D]">{form.formNumber} · {form.title}</button>
-                        <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{formStatus(form)}</span>
-                        <TrecFormActions family={form.formFamily} disabled={locked} onOpen={(family) => onOpenTrecForm?.(family)} onUpload={(family, mode) => onUploadTrecForm?.(family, mode)} />
-                      </div>
-                    ))}
-                  </AutoSection></div>); })()
-                )}
-                {(() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'optional'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
-                    <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Optional Documents</span>
-                    <span className="text-xs font-medium text-slate-500">{optionalDocs.length}</span>
-                  </div>}>
-                  {optionalDocs.length === 0 && <p className="px-4 py-4 text-xs text-slate-500">Every optional document has been added.</p>}
-                  {optionalDocs.map((doc) => (
-                    <label key={doc.id} className="ds-list-row cursor-pointer">
-                      <input type="checkbox" aria-label={`Add ${doc.label} to required documents`} checked={false} disabled={locked || requiredIds.has(doc.id)} onChange={() => onUpdate('documentChecks', { ...checks, [`add:${doc.id}`]: true })} />
-                      <span className="min-w-0 flex-1 text-sm text-slate-800">{doc.label}</span>
-                      <span className="text-xs text-slate-400">{doc.kind === 'reference' ? 'Reference' : 'Optional'}</span>
-                    </label>
-                  ))}
-                </AutoSection></div>); })()}
                 {deal && <DocumentRequestsCard deal={deal} locked={locked} documentGroups={documentGroups} onUpdate={onUpdate} />}
                 {deal && <ClientUploadsCard dealId={deal.id} version={deal.updatedAt} />}
               </div>
