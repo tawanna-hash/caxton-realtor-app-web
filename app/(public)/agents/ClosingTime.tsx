@@ -103,6 +103,7 @@ import {
   Trash2,
   X,
   CalendarClock,
+  MessageSquareQuote,
 } from 'lucide-react';
 import PushOptInButton from '@/components/PushOptInButton';
 import TrecPdfPagePreview from './TrecPdfPagePreview';
@@ -2966,6 +2967,11 @@ export default function ClosingTime({
                   </li>
                 );
               })}
+              <li>
+                <button type="button" aria-current={effectiveView === 'testimonials' ? 'page' : undefined} onClick={() => { setWorkspacePage(2); setDeskView('testimonials'); }} className="ds-navbtn" aria-label="Testimonials Hub" title="Testimonials Hub">
+                  <MessageSquareQuote className="ct-navicon" aria-hidden="true" /><span>Testimonials Hub</span>
+                </button>
+              </li>
               <li>
                 <button type="button" aria-expanded={resourcesOpen || RES_VIEW_ACTIVE} onClick={() => setResourcesOpen((open) => !open)} className="ds-navbtn" aria-label="Resources" title="Resources">
                   <BookOpen className="ct-navicon" aria-hidden="true" /><span>Resources</span>
