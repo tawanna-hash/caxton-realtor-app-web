@@ -1429,7 +1429,7 @@ export default function ClosingTime({
   const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
-  const helpGuideId = effectiveView === 'my-schedule' ? 'scheduler' : effectiveView === 'coordinator' ? 'alerts' : ['audit', 'transaction', 'readiness', 'd-messages', 'd-portal', 'd-schedule'].includes(effectiveView) ? 'documents' : '';
+  const helpGuideId = effectiveView === 'my-schedule' ? 'scheduler' : effectiveView === 'coordinator' ? 'alerts' : effectiveView === 'd-documents' ? 'documents' : '';
   const helpGuide: Guide | null = GUIDES.find((g) => g.id === helpGuideId) ?? null;
   // The scheduler walkthrough starts by itself the first time this browser opens My Scheduling.
   useEffect(() => {

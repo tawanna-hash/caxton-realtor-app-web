@@ -68,11 +68,11 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'documents',
-    view: 'transaction',
+    view: 'd-documents',
     title: 'How To Request And Track A Missing Document',
     intro: 'Ask a client for a document, follow it until it arrives, and see how Closing Time warns you when something is still missing.',
     steps: [
-      { step: "Open The Deal", text: "Choose Deals and open the deal. The Client Document Requests card appears on the deal tabs, such as Contract and Readiness Check, below the main content." },
+      { step: "Open The Deal", text: "Choose Deals and open the deal, then open its Documents tab. The Client Document Requests card is on that tab." },
       { step: "Add The Client First", text: "Open the People tab and make sure the client is listed with an email address. If nobody is on the deal, the request stops with the message: Add the client on the People tab first." },
       { step: "Choose Request Document", text: "On the Client Document Requests card, choose Request Document. The card shows how many requests are still open." },
       { step: "Pick The Document", text: "Under Document, choose from the list. If the document is not listed, choose Other and type what you need under What Do You Need." },
@@ -85,8 +85,8 @@ export const GUIDES: Guide[] = [
       { step: "Where The Warnings Show", text: "Flags appear in the deal, and in the morning email Closing Time: Your Deals Today when daily emails are on. A separate card, Blank Fields Need Your Attention, lists forms that still have empty fields." },
     ],
     tour: [
-      { title: 'Request A Document', text: 'This walkthrough shows where to ask a client for a document and track it. Open a deal first. Press Esc to stop at any time.', view: 'transaction' },
-      { title: 'Client Document Requests', text: 'This card lists every document you have asked for and how many are still open.', find: 'Client Document Requests', hint: 'Open a deal from Deals first. The card shows on the deal tabs.' },
+      { title: 'Request A Document', text: 'This walkthrough shows where to ask a client for a document and track it. Open a deal first. Press Esc to stop at any time.', view: 'd-documents' },
+      { title: 'Client Document Requests', text: 'This card lists every document you have asked for and how many are still open.', find: 'Client Document Requests', hint: 'Open a deal from Deals, then its Documents tab.' },
       { title: 'Start A Request', text: 'Choose Request Document. Pressing Next opens the form for you.', find: 'Request Document', clickOnNext: true },
       { title: 'Pick The Document', text: 'Choose a document from the list, or Other and type what you need.', find: 'Document$' },
       { title: 'Choose Who Gets It', text: 'Send to one person, or to everyone on the deal as separate requests. The client must be on the People tab with an email.', find: 'Send To$' },
