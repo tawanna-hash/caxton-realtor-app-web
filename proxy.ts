@@ -264,7 +264,7 @@ function handlePubPermalink(req: NextRequest): NextResponse | null {
 const CLOSING_TIME_PATHS = [
   '/login', '/auth', '/agents', '/privacy', '/terms', '/disclaimer', '/sms', '/security', '/developers',
   '/sign', '/deal-portal', '/book', '/api', '/portal', '/unsubscribe', '/account-delete', '/profile',
-  '/closing-time-home', '/closing-time-legal', '/e', '/r', '/c', '/product-tour',
+  '/dashboard', '/subscribe', '/closing-time-home', '/closing-time-legal', '/e', '/r', '/c', '/product-tour',
 ];
 function isClosingTimePath(pathname: string): boolean {
   if (pathname === '/') return true;
