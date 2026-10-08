@@ -797,25 +797,6 @@ function ReadinessChecklist({
           Request
         </button>
       </div>
-
-      <div className="mt-3 rounded-2xl border border-[#E6E5EC] bg-white px-[1.125rem] py-4">
-        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B6878]">Operational Review Alerts</p>
-        {reviewAlerts.length ? (
-          <ul className="mt-2 space-y-2">
-            {reviewAlerts.slice(0, 4).map((alert) => (
-              <li key={alert} className="flex min-w-0 gap-2 break-words text-sm leading-5 text-[#4A4757]">
-                <AlertTriangle className="rnn-inline-icon text-[#661102]" aria-hidden="true" />
-                {alert}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-2 flex items-center gap-2 text-sm text-[#005A00]">
-            <CheckCircle2 className="rnn-inline-icon" aria-hidden="true" />
-            No worksheet alerts for your active deals.
-          </p>
-        )}
-      </div>
     </div>
   );
 }
