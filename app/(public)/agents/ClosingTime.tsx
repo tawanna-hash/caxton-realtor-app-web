@@ -3089,11 +3089,26 @@ export default function ClosingTime({
               <div className="ds-toolbar">
             {effectiveView !== 'overview' && effectiveView !== 'deal-page' && (() => {
               const toDeals = DEAL_TABS.some((t) => t.id === effectiveView);
+              const here = DEAL_TABS.find((t) => t.id === effectiveView)?.label ?? DESK_VIEWS.find((v) => v.id === effectiveView)?.label ?? (effectiveView === 'alert-setup' ? 'Alert Setup' : 'Page');
+              const dealName = activeDeal?.propertyAddress || activeDeal?.title || 'Deal';
+              const crumbs: { label: string; go?: () => void }[] = toDeals
+                ? [{ label: 'Deals', go: () => { setWorkspacePage(2); setDeskView('deals'); } }, { label: dealName, go: effectiveView === 'd-overview' ? undefined : () => setDeskView('d-overview') }, ...(effectiveView === 'd-overview' ? [] : [{ label: here }])]
+                : effectiveView.startsWith('calc-')
+                  ? [{ label: 'Calculators', go: () => setDeskView('tools') }, { label: here }]
+                  : effectiveView === 'alert-setup'
+                    ? [{ label: 'Settings', go: () => setDeskView('coordinator') }, { label: 'Alert Setup' }]
+                    : [{ label: 'Today', go: () => setWorkspacePage(1) }, { label: here }];
               return (
-                <button type="button" className="ds-back mb-3" aria-label={toDeals ? 'Back to Deals' : effectiveView.startsWith('calc-') ? 'Back to Calculators' : effectiveView === 'alert-setup' ? 'Back to Settings' : 'Back to Today'}
-                  onClick={() => { if (toDeals) { setWorkspacePage(2); setDeskView('deals'); } else if (effectiveView.startsWith('calc-')) { setDeskView('tools'); } else if (effectiveView === 'alert-setup') { setDeskView('coordinator'); } else { setWorkspacePage(1); } }}>
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" /> {toDeals ? 'Deals' : effectiveView.startsWith('calc-') ? 'Calculators' : effectiveView === 'alert-setup' ? 'Settings' : 'Today'}
-                </button>
+                <nav aria-label="Breadcrumb" className="mb-3">
+                  <ol className="flex flex-wrap items-center gap-1 text-[13px]">
+                    {crumbs.map((c, i) => (
+                      <li key={`${c.label}-${i}`} className="flex items-center gap-1">
+                        {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-[#7A7787]" aria-hidden="true" />}
+                        {c.go ? <button type="button" className="ds-back" onClick={c.go}>{c.label}</button> : <span aria-current="page" className="font-medium text-[#1B1726]">{c.label}</span>}
+                      </li>
+                    ))}
+                  </ol>
+                </nav>
               );
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
