@@ -1733,7 +1733,7 @@ export default function ClosingTime({
     if (!activeDeal) return;
     const now = new Date().toISOString();
     const activity: AgentActivity = { id: getId('activity'), message, createdAt: now };
-    const nextDeal: AgentDeal = { ...activeDeal, ...patch, updatedAt: now, activity: [...activeDeal.activity, activity].slice(-2000) };
+    const nextDeal: AgentDeal = { ...activeDeal, ...patch, updatedAt: now, activity: [...activeDeal.activity, activity] };
     persistDeals(deals.map((deal) => deal.id === activeDeal.id ? nextDeal : deal));
   };
 
@@ -1788,7 +1788,7 @@ export default function ClosingTime({
     const now = new Date().toISOString();
     persistDeals(dealsRef.current.map((deal) => due.includes(deal) ? {
       ...deal, status: 'completed' as const, auditLocked: true, closeoutOutcome: 'Closed Automatically', closeoutDate: today, updatedAt: now,
-      activity: [...deal.activity, { id: getId('activity'), message: 'Deal closed automatically. It is now read-only.', createdAt: now }].slice(-2000),
+      activity: [...deal.activity, { id: getId('activity'), message: 'Deal closed automatically. It is now read-only.', createdAt: now }],
     } : deal));
     // Closing sends the whole file to the agent's connected document storage (or recommends connecting one).
     due.forEach((deal) => {
@@ -1798,7 +1798,7 @@ export default function ClosingTime({
           const message = data.result?.message;
           if (!message) return;
           const at = new Date().toISOString();
-          persistDeals(dealsRef.current.map((d) => d.id === deal.id ? { ...d, activity: [...d.activity, { id: getId('activity'), message, createdAt: at }].slice(-2000) } : d));
+          persistDeals(dealsRef.current.map((d) => d.id === deal.id ? { ...d, activity: [...d.activity, { id: getId('activity'), message, createdAt: at }] } : d));
         })
         .catch(() => undefined);
     });
@@ -1935,7 +1935,7 @@ export default function ClosingTime({
       const now = new Date().toISOString();
       persistDeals(dealsRef.current.map((deal) => deal.id === dealId ? {
         ...deal, autoCloseExtensionDays: (deal.autoCloseExtensionDays ?? 0) + EXTENSION_DAYS, updatedAt: now,
-        activity: [...deal.activity, { id: getId('activity'), message: `Deal extended ${EXTENSION_DAYS} days.`, createdAt: now }].slice(-2000),
+        activity: [...deal.activity, { id: getId('activity'), message: `Deal extended ${EXTENSION_DAYS} days.`, createdAt: now }],
       } : deal));
       setPaymentFor(null);
     };
@@ -2032,7 +2032,7 @@ export default function ClosingTime({
     });
     const nextDeals = deals.map((deal) => (
       deal.id === activeDeal.id
-        ? { ...deal, [key]: value, updatedAt: now, activity: activity.slice(-2000) }
+        ? { ...deal, [key]: value, updatedAt: now, activity: activity }
         : deal
     ));
     persistDeals(nextDeals);
@@ -2256,7 +2256,7 @@ export default function ClosingTime({
       formFields: { ...activeDeal.formFields, ...extractionDraft.formFields },
       addenda: { ...activeDeal.addenda, ...extractionDraft.addenda },
       updatedAt: new Date().toISOString(),
-      activity: [...activeDeal.activity, { id: getId('activity'), message: 'Applied reviewed contract extraction suggestions', createdAt: new Date().toISOString() }].slice(-2000),
+      activity: [...activeDeal.activity, { id: getId('activity'), message: 'Applied reviewed contract extraction suggestions', createdAt: new Date().toISOString() }],
     };
     const iabs = selectedFormVersions.find((version) => version.formFamily === 'IABS');
     if (iabs) {
@@ -2618,7 +2618,7 @@ export default function ClosingTime({
     if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
     const now = new Date().toISOString();
     const nextDeals = activeDeal ? deals.map((deal) => deal.id === activeDeal.id ? {
-      ...deal, updatedAt: now, activity: [...deal.activity, { id: getId('activity'), message: 'Saved deal progress', createdAt: now }].slice(-2000),
+      ...deal, updatedAt: now, activity: [...deal.activity, { id: getId('activity'), message: 'Saved deal progress', createdAt: now }],
     } : deal) : deals;
     setDeals(nextDeals);
     void saveToCloud({ deals: nextDeals, notificationPreferences });
@@ -4116,7 +4116,7 @@ export default function ClosingTime({
                 onSent={(how) => {
                   const now = new Date().toISOString();
                   persistDeals(deals.map((d) => d.id === activeDeal.id
-                    ? { ...d, updatedAt: now, activity: [...d.activity, { id: getId('activity'), message: `Testimonial request ${how} for ${activeDeal.propertyAddress || 'this deal'}`, createdAt: now }].slice(-2000) }
+                    ? { ...d, updatedAt: now, activity: [...d.activity, { id: getId('activity'), message: `Testimonial request ${how} for ${activeDeal.propertyAddress || 'this deal'}`, createdAt: now }] }
                     : d));
                 }}
                 emails={activeDeal.clientContacts.map((c) => c.email.trim()).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))}

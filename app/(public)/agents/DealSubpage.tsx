@@ -443,21 +443,18 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
           {criticalDeadlines.slice(0, 2).map((d) => `${d.label} ${dueText(d.days)}`).join(' · ')}{criticalDeadlines.length > 2 ? ` · ${criticalDeadlines.length - 2} more` : ''}
         </p>
       )}
-      <div className="mt-3 flex gap-[3px]" role="progressbar" aria-label="Deal progress" aria-valuemin={0} aria-valuemax={milestones.length} aria-valuenow={Math.min(stageIndex, milestones.length)} aria-valuetext={`${stageName}, step ${Math.min(stageIndex + 1, milestones.length)} of ${milestones.length}`}>
-        {milestones.map((m) => <span key={m.key} title={m.label} className={`h-2 flex-1 rounded-[3px] ${m.done ? 'bg-[#301D5D]' : m.current ? (isCritical ? barTone : 'bg-[#7059A8]') : 'bg-[#E6E5EC]'}`} />)}
-      </div>
-      <button type="button" data-no-auto-open aria-expanded={stagesOpen} onClick={() => setStagesOpen((v) => !v)} className="mt-2 !border-0 !bg-transparent !px-0 !py-0 text-[13px] font-medium text-[#4A4757] underline underline-offset-2 hover:!bg-transparent hover:!text-[#301D5D]">{stagesOpen ? 'Hide Stages' : 'Show All Stages'}</button>
-      {stagesOpen && (
-        <ol className="mt-3 grid gap-x-8 gap-y-1 sm:grid-cols-2" aria-label="All deal stages">
-          {milestones.map((m) => (
-            <li key={m.key} aria-current={m.current ? 'step' : undefined} className="flex items-center gap-2 py-1 text-[14px] text-[#1B1726]">
-              <span className={`flex h-3.5 w-3.5 flex-none items-center justify-center rounded-full border-2 ${m.done ? 'border-[#301D5D] bg-[#301D5D]' : m.current ? 'border-[#301D5D] bg-[#EFEAF8]' : 'border-[#A9A5B8]'}`}>{m.done ? <Check className="h-2.5 w-2.5 text-white" strokeWidth={4} aria-hidden="true" /> : null}</span>
-              <span className={m.current ? 'font-semibold' : ''}>{m.label}</span>
-              <span className="ml-auto text-[12px] font-medium text-[#4A4757]">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
+      <div className="mt-4 overflow-x-auto pb-1">
+        <ol className="flex min-w-[720px]" aria-label="Deal stages">
+          {milestones.map((m, i) => (
+            <li key={m.key} aria-current={m.current ? 'step' : undefined} className="relative flex-1 px-1 text-center">
+              {i < milestones.length - 1 && <span aria-hidden="true" className={`absolute left-1/2 top-[9px] h-[2px] w-full ${m.done ? 'bg-[#301D5D]' : 'bg-[#E6E5EC]'}`} />}
+              <span className={`relative z-[1] mx-auto mb-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${m.done ? 'border-[#301D5D] bg-[#301D5D]' : m.current ? 'border-[#301D5D] bg-[#EFEAF8]' : 'border-[#A9A5B8] bg-white'}`}>{m.done ? <Check className="h-3 w-3 text-white" strokeWidth={4} aria-hidden="true" /> : null}</span>
+              <span className={`block text-[12px] leading-snug ${m.current ? 'font-semibold text-[#1B1726]' : 'text-[#4A4757]'}`}>{m.label}</span>
+              <span className="block min-h-[16px] text-[11px] text-[#6B6878]">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
             </li>
           ))}
         </ol>
-      )}
+      </div>
       {closeWarning}
     </>
   );

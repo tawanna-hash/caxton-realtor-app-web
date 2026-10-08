@@ -89,7 +89,7 @@ export default function DocumentRequestsCard({ deal, locked, documentGroups, onU
     }
     if (!marks.length && !doneEvents.length) return;
     pendingChecks.current = checks;
-    if (add.length) onUpdate('activity', [...d.activity, ...add].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).slice(-2000));
+    if (add.length) onUpdate('activity', [...d.activity, ...add].sort((a, b) => a.createdAt.localeCompare(b.createdAt)));
     else onUpdate('documentChecks', { ...d.documentChecks, ...checks });
     if (doneEvents.length) void fetch('/api/closing-time/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'events_audited', ids: doneEvents }) });
     for (const m of marks) void fetch('/api/closing-time/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'request_logged', ...m }) });
