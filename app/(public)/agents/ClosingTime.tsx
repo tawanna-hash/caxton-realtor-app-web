@@ -3100,11 +3100,11 @@ export default function ClosingTime({
                     : [{ label: 'Today', go: () => setWorkspacePage(1) }, { label: here }];
               return (
                 <nav aria-label="Breadcrumb" className="mb-3">
-                  <ol className="flex flex-wrap items-center gap-1 text-[13px]">
+                  <ol className="flex flex-wrap items-center gap-1 text-[14px] leading-5">
                     {crumbs.map((c, i) => (
-                      <li key={`${c.label}-${i}`} className="flex items-center gap-1">
+                      <li key={`${c.label}-${i}`} className="flex items-center gap-1 leading-5">
                         {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-[#7A7787]" aria-hidden="true" />}
-                        {c.go ? <button type="button" className="ds-back" onClick={c.go}>{c.label}</button> : <span aria-current="page" className="font-medium text-[#1B1726]">{c.label}</span>}
+                        {c.go ? <button type="button" className="ds-back !h-auto !min-h-0 !p-0 !text-[14px] leading-5" onClick={c.go}>{c.label}</button> : <span aria-current="page" className="text-[14px] font-medium leading-5 text-[#1B1726]">{c.label}</span>}
                       </li>
                     ))}
                   </ol>
