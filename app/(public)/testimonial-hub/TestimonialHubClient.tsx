@@ -1,5 +1,6 @@
 'use client';
 
+import MasterDetail from '../agents/MasterDetail';
 import Switch from '../agents/Switch';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -382,9 +383,16 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
               <button onClick={startNew} className={`${BTN} mt-4`}>Add Your First Testimonial</button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {items.map((item) => (
-                <article key={item.id} className={CARD}>
+            <MasterDetail
+              testId="testimonials-list"
+              backLabel="Testimonials"
+              empty={null}
+              items={items.map((item) => ({ id: String(item.id), title: item.client_name, sub: item.quote, trailing: item.status }))}
+              renderDetail={(id) => {
+                const item = items.find((x) => String(x.id) === id);
+                if (!item) return null;
+                return (
+                <div className="space-y-3">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
                       {item.format === 'video' ? <Video size={17} className="text-[#301D5D]" /> : item.format === 'audio' ? <AudioLines size={17} className="text-[#301D5D]" /> : <FileText size={17} className="text-[#301D5D]" />}
@@ -407,9 +415,10 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
                   <div className="mt-4 flex flex-wrap gap-2">
                     {item.tags.map((tag) => <span key={tag} className="rounded bg-[#F6F3FB] px-2 py-1 text-xs text-[#7A7787]">#{tag}</span>)}
                   </div>
-                </article>
-              ))}
-            </div>
+                </div>
+                );
+              }}
+            />
           )}
         </div>
 

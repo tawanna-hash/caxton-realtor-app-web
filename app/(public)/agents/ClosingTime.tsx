@@ -3460,21 +3460,26 @@ export default function ClosingTime({
                   <h2 className="ds-title">Set Up Instructions</h2>
                   <p className="mt-1 text-[14px] text-[#4A4757]">Start a walkthrough and it points at each part of the page in order, or read the written steps. The same guides appear under Help on the matching pages.</p>
                 </div>
-                {GUIDES.map((g) => (
-                  <div key={g.id} className="ds-card">
-                    <p className="text-sm font-semibold text-slate-900">{g.title}</p>
-                    {g.intro && <p className="mt-1 text-[14px] text-[#4A4757]">{g.intro}</p>}
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button type="button" onClick={() => setTourId(g.id)}>Start Walkthrough</button>
-                    </div>
-                    <details data-no-auto-open className="mt-3 border-t border-[#E6E5EC] pt-2">
-                      <summary className="cursor-pointer text-xs font-medium text-[#301D5D]">Show Written Steps</summary>
-                      <div className="mt-2 space-y-3 text-[14px] text-[#4A4757]">
-                        {g.steps.map((h, n) => <p key={h.step}><strong className="text-[#1B1726]">{n + 1}. {h.step}.</strong> {h.text}</p>)}
-                      </div>
-                    </details>
-                  </div>
-                ))}
+                <MasterDetail
+                  testId="guides-list"
+                  backLabel="Instructions"
+                  empty={null}
+                  items={GUIDES.map((g) => ({ id: g.id, title: g.title, sub: g.intro || undefined }))}
+                  renderDetail={(id) => {
+                    const g = GUIDES.find((x) => x.id === id);
+                    if (!g) return null;
+                    return (
+                      <>
+                        <h3 className="text-[15px] font-semibold text-[#1B1726]">{g.title}</h3>
+                        {g.intro && <p className="text-[14px] text-[#4A4757]">{g.intro}</p>}
+                        <button type="button" onClick={() => setTourId(g.id)}>Start Walkthrough</button>
+                        <div className="space-y-3 border-t border-[#E6E5EC] pt-3 text-[14px] text-[#4A4757]">
+                          {g.steps.map((h, n) => <p key={h.step}><strong className="text-[#1B1726]">{n + 1}. {h.step}.</strong> {h.text}</p>)}
+                        </div>
+                      </>
+                    );
+                  }}
+                />
               </div>
             )}
             {effectiveView === 'my-schedule' && <div className="ds-page space-y-8"><SchedulersPanel key="personal" deal={PERSONAL_DEAL} onOpenIntegrations={() => setDeskView('integrations')} /></div>}

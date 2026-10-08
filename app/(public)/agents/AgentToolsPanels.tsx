@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import MasterDetail from './MasterDetail';
 import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -107,52 +108,55 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
             )}
             <CollapseToggle {...toggleProps('calculators', 'calculators', { mobileOpen: true })} />
           </div>
+          {onOpenTool ? (
+            <div className="mt-6">
+              <MasterDetail
+                testId="calculators-list"
+                backLabel="Calculators"
+                empty={null}
+                items={QUICK_TOOLS.filter((t) => DESK_TOOL_VIEWS[t.href]).map((t) => ({ id: t.href, title: t.title, sub: t.eyebrow }))}
+                renderDetail={(id) => {
+                  const tool = QUICK_TOOLS.find((t) => t.href === id);
+                  if (!tool) return null;
+                  const Icon = tool.icon;
+                  return (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tool.iconTone}`}><Icon className="h-5 w-5" aria-hidden="true" /></div>
+                        <h3 className="text-[15px] font-semibold text-[#1B1726]">{tool.title}</h3>
+                      </div>
+                      <p className="text-sm leading-6 text-[#4A4757]">{tool.description}</p>
+                      <button type="button" onClick={() => { trackEvent('agent_command_center_tool_opened', { tool: tool.title }); onOpenTool(DESK_TOOL_VIEWS[tool.href]); }}>Open Tool</button>
+                    </>
+                  );
+                }}
+              />
+            </div>
+          ) : (
           <div className="mt-6 flex flex-col gap-3 sm:mt-8">
-            {QUICK_TOOLS.map((tool) => {
-              const Icon = tool.icon;
-              const deskView = DESK_TOOL_VIEWS[tool.href];
-              if (onOpenTool && deskView) {
+              {QUICK_TOOLS.map((tool) => {
+                const Icon = tool.icon;
                 return (
-                  <button
+                  <Link
                     key={tool.href}
-                    type="button"
-                    onClick={() => { trackEvent('agent_command_center_tool_opened', { tool: tool.title }); onOpenTool(deskView); }}
-                    className={`ds-tool-row group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition hover:bg-[#F6F3FB] sm:p-4 ${tool.tone}`}
+                    href={tool.href}
+                    onClick={() => trackEvent('agent_command_center_tool_opened', { tool: tool.title })}
+                    className={`group rounded-xl border p-4 transition hover:bg-[#F6F3FB] md:min-h-[200px] ${tool.tone}`}
                   >
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tool.iconTone}`}>
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${tool.iconTone}`}>
                       <Icon className="h-5 w-5" aria-hidden="true" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.16em] opacity-60">{tool.eyebrow}</p>
-                      <h3 className="mt-1 text-sm font-semibold tracking-[-0.01em]">{tool.title}</h3>
-                      <p className="mt-1 text-xs leading-5 opacity-75">{tool.description}</p>
-                    </div>
-                    <span className="inline-flex shrink-0 items-center gap-1 text-sm font-bold">
-                      Open Tool <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60 sm:mt-6">{tool.eyebrow}</p>
+                    <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em]">{tool.title}</h3>
+                    <p className="mt-3 text-sm leading-6 opacity-75">{tool.description}</p>
+                    <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold">
+                      Open Tool <ArrowRight className="h-4 w-4 " aria-hidden="true" />
                     </span>
-                  </button>
+                  </Link>
                 );
-              }
-              return (
-                <Link
-                  key={tool.href}
-                  href={tool.href}
-                  onClick={() => trackEvent('agent_command_center_tool_opened', { tool: tool.title })}
-                  className={`group rounded-xl border p-4 transition hover:bg-[#F6F3FB] md:min-h-[200px] ${tool.tone}`}
-                >
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${tool.iconTone}`}>
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60 sm:mt-6">{tool.eyebrow}</p>
-                  <h3 className="mt-2 text-xl font-semibold tracking-[-0.025em]">{tool.title}</h3>
-                  <p className="mt-3 text-sm leading-6 opacity-75">{tool.description}</p>
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold">
-                    Open Tool <ArrowRight className="h-4 w-4 " aria-hidden="true" />
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
+              })}
+            </div>
+          )}
         </div>
         </div>
       </section>
