@@ -1,5 +1,6 @@
 'use client';
 
+import MasterDetail from './MasterDetail';
 import { useState } from 'react';
 import { Phone } from 'lucide-react';
 
@@ -101,15 +102,24 @@ export default function UtilitiesPanel() {
         ))}
       </div>
       <p className="text-sm font-semibold text-slate-900">{market.area}</p>
-      <div className="grid gap-3 md:grid-cols-2">
-        {market.categories.map((category) => (
-          <div key={category.title} className="ds-card !p-0 self-start">
-            <p className="border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">{category.title}</p>
-            {category.note ? <p className="border-b border-[#F6F3FB] bg-[#F6F3FB] px-4 py-3 text-xs leading-5 text-slate-600">{category.note}</p> : null}
-            <ul>{category.providers.map((provider) => <ProviderRow key={provider.name} provider={provider} />)}</ul>
-          </div>
-        ))}
-      </div>
+      <MasterDetail
+        key={market.id}
+        testId="utilities-list"
+        backLabel="Utilities"
+        empty={null}
+        items={market.categories.map((c) => ({ id: c.title, title: c.title, sub: `${c.providers.length} ${c.providers.length === 1 ? 'provider' : 'providers'}` }))}
+        renderDetail={(id) => {
+          const category = market.categories.find((c) => c.title === id);
+          if (!category) return null;
+          return (
+            <>
+              <h3 className="text-[15px] font-semibold text-[#1B1726]">{category.title}</h3>
+              {category.note ? <p className="rounded-md bg-[#F6F3FB] px-3 py-2 text-xs leading-5 text-slate-600">{category.note}</p> : null}
+              <ul className="-mx-4">{category.providers.map((provider) => <ProviderRow key={provider.name} provider={provider} />)}</ul>
+            </>
+          );
+        }}
+      />
     </div>
   );
 }

@@ -242,24 +242,29 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
               </div>
 
               {visibleProviders.length > 0 ? (
-                <div className="mt-6 grid gap-3">
-                  {visibleProviders.map((provider) => (
-                    <Link
-                      href={`/partners/${provider.slug}`}
-                      key={provider.id}
-                      className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:bg-[#F6F3FB]"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFEAF8] text-[#301D5D]">
-                          <Building2 className="h-5 w-5" aria-hidden="true" />
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-1 group-hover:text-[#301D5D]" aria-hidden="true" />
-                      </div>
-                      <p className="mt-4 text-sm font-semibold text-slate-950">{provider.name}</p>
-                      <p className="mt-1 text-xs font-medium text-[#42277C]">{provider.industry || 'Local Service Partner'}</p>
-                      {provider.tagline && <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-600">{provider.tagline}</p>}
-                    </Link>
-                  ))}
+                <div className="mt-6">
+                  <MasterDetail
+                    key={selectedCategory}
+                    testId="referral-list"
+                    backLabel="Partners"
+                    empty={null}
+                    items={visibleProviders.map((provider) => ({ id: String(provider.id), title: provider.name, sub: provider.industry || 'Local Service Partner' }))}
+                    renderDetail={(id) => {
+                      const provider = visibleProviders.find((p) => String(p.id) === id);
+                      if (!provider) return null;
+                      return (
+                        <>
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFEAF8] text-[#301D5D]"><Building2 className="h-5 w-5" aria-hidden="true" /></div>
+                            <h3 className="min-w-0 break-words text-[15px] font-semibold text-[#1B1726]">{provider.name}</h3>
+                          </div>
+                          <p className="text-xs font-medium text-[#42277C]">{provider.industry || 'Local Service Partner'}</p>
+                          {provider.tagline && <p className="text-sm leading-6 text-slate-600">{provider.tagline}</p>}
+                          <Link href={`/partners/${provider.slug}`} className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#1B1726] hover:bg-[#EFEAF8] hover:text-[#301D5D]">View Partner <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+                        </>
+                      );
+                    }}
+                  />
                 </div>
               ) : (
                 <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-6">

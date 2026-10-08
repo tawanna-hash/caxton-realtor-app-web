@@ -1,5 +1,6 @@
 'use client';
 
+import MasterDetail from './MasterDetail';
 import { useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Download, Trash2 } from 'lucide-react';
 
@@ -126,7 +127,16 @@ export default function DocumentToolsPanel() {
         <h2 className="text-[22px] font-semibold text-[#1B1726]">Document Tools</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Combine, scan, split and rotate PDFs.</p>
       </div>
-      <section className="ds-card">
+      <MasterDetail
+        testId="doc-tools-list"
+        backLabel="Document Tools"
+        empty={null}
+        items={[
+          { id: 'combine', title: 'Combine Files And Scan To PDF', sub: 'Put PDFs and photos in order' },
+          { id: 'split', title: 'Split, Remove And Rotate Pages', sub: 'Choose pages from one PDF' },
+        ]}
+        renderDetail={(id) => id === 'combine' ? (
+          <div>
         <h2 className="text-[15px] font-semibold text-[#1B1726]">Combine Files And Scan To PDF</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Add PDFs and photos, put them in order, and download one PDF. Phone photos of paper contracts become pages. Files stay on your device. Nothing is uploaded.</p>
         <input ref={addRef} type="file" multiple accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png" className="hidden" onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
@@ -146,9 +156,9 @@ export default function DocumentToolsPanel() {
             </li>
           ))}
         </ul>
-      </section>
-
-      <section className="ds-card">
+          </div>
+        ) : (
+          <div>
         <h2 className="text-[15px] font-semibold text-[#1B1726]">Split, Remove And Rotate Pages</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Choose a PDF, then enter pages such as 1-3, 5, 8-. Leave pages empty to rotate every page.</p>
         <input ref={oneRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => { void pickSingle(e.target.files?.[0]); e.target.value = ''; }} />
@@ -168,7 +178,9 @@ export default function DocumentToolsPanel() {
             </div>
           </div>
         )}
-      </section>
+          </div>
+        )}
+      />
       {msg && <p role="status" className={`text-[14px] ${msg.ok ? 'text-[#005A00]' : 'text-[#661102]'}`}>{msg.text}</p>}
     </div>
   );

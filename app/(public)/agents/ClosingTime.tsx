@@ -1294,6 +1294,8 @@ export default function ClosingTime({
   const [activeTrecPage, setActiveTrecPage] = useState(1);
   const [formsStatusDealId, setFormsStatusDealId] = useState<string | null>(null);
   const [workspacePage, setWorkspacePage] = useState<1 | 2>(2);
+  const [settingsKey, setSettingsKey] = useState('agent-details');
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [deskView, setDeskView] = useState('transaction');
   const [dealsTab, setDealsTab] = useState<'all' | 'active' | 'closed'>('all');
   const [dealsQuery, setDealsQuery] = useState('');
@@ -3584,7 +3586,17 @@ export default function ClosingTime({
             )} /></div>
             <div data-section-key="referral" className="min-w-0"><ReferralNetworkPanel providers={providers} /></div>
         {workspacePage === 2 && (
-          <section className={'mt-4 grid gap-4'} aria-label="Deal settings, alerts and calendar">
+          <section className={'mt-4 grid gap-4'} aria-label="Deal settings, alerts and calendar" data-settings-key={settingsKey} data-settings-open={settingsOpen ? '1' : '0'}>
+            <div className="settings-nav min-w-0 overflow-hidden rounded-[4px] border border-[#E6E5EC] bg-white">
+              {([['agent-details', 'Account', 'Brokerage and agent details'], ['mls', 'MLS Connections', 'Connect your MLS'], ['calendar-link', 'Calendar Link', 'Your private calendar link'], ['alerts', 'Deadline Alerts', 'How you are notified'], ...(activeDeal ? [['assist', 'Deal Settings', 'Alerts, drafts and checklist for this deal']] : [])] as const).map(([key, title, sub]) => (
+                <button key={key} type="button" onClick={() => { setSettingsKey(key); setSettingsOpen(true); window.scrollTo({ top: 0 }); }} aria-current={settingsKey === key ? 'true' : undefined}
+                  className={`!flex !h-auto w-full !flex-col !items-start !justify-start !gap-0 !rounded-none !border-0 !border-b !border-[#E6E5EC] !px-4 !py-3 text-left ${settingsKey === key ? '!bg-[#EFEAF8] shadow-[inset_2px_0_0_#301D5D]' : '!bg-white hover:!bg-[#F6F3FB]'}`}>
+                  <span className="text-sm font-semibold leading-5 text-[#1B1726]">{title}</span>
+                  <span className="text-xs font-normal text-[#6B6878]">{sub}</span>
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={() => setSettingsOpen(false)} className="settings-back !inline-flex !h-9 !items-center !gap-1 !px-2 justify-self-start"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Settings</button>
             <div data-section-key="agent-details" className="ds-card min-w-0 lg:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-lg font-semibold text-gray-900">Account: Brokerage And Agent Details</h3>
