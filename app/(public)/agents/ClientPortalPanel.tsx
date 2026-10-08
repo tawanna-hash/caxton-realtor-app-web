@@ -1,5 +1,6 @@
 'use client';
 
+import MasterDetail, { DetailFields } from './MasterDetail';
 import { useCallback, useEffect, useState } from 'react';
 import type { AgentDeal } from '@/lib/agent-command-center-workspace';
 import Tip from './Tip';
@@ -116,29 +117,32 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
           <p className="mt-2 text-[14px] text-[#4A4757]">Copy a personal link for each person and send it however you like: email, text or WhatsApp. Anyone with a link sees the deal, so send each link only to that person. Resetting or turning off a link stops it from working.</p>
           {links === undefined && !error && <p className="mt-3 text-[12px] font-medium text-[#4A4757]">Loading</p>}
           {links !== undefined && (
-            <ul className="mt-3 rounded-lg border border-[#E6E5EC] px-3">
-              {people.map((p) => {
-                const l = linkFor(p);
-                return (
-                  <li key={p.key} className="border-b border-[#E6E5EC] py-3 last:border-0">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="text-[14px] font-medium text-[#1B1726]">{p.name}</div>
-                        <div className="truncate text-[12px] font-medium text-[#4A4757]">{p.email || 'No email'}</div>
-                      </div>
+            <div className="mt-3">
+              <MasterDetail
+                testId="portal-people"
+                backLabel="People"
+                empty="No clients on this deal yet."
+                items={people.map((p) => ({ id: p.key, title: p.name, sub: p.email || 'No email', trailing: linkFor(p) ? 'Link On' : 'No Link' }))}
+                renderDetail={(id) => {
+                  const p = people.find((x) => x.key === id);
+                  if (!p) return null;
+                  const l = linkFor(p);
+                  return (
+                    <>
+                      <h4 className="text-[15px] font-semibold text-[#1B1726]">{p.name}</h4>
+                      <DetailFields rows={[['Email', p.email || 'No email']]} />
                       <div className="flex flex-wrap gap-2">
                         {!l && <button type="button" disabled={busy === p.key} className={btn} onClick={() => void act(p, {})}>Create Link</button>}
                         {l && <button type="button" className={btn} onClick={() => { void navigator.clipboard.writeText(urlOf(l)); setCopied(p.key); setTimeout(() => setCopied(''), 1500); }}>{copied === p.key ? 'Copied' : 'Copy Link'}</button>}
                         {l && <button type="button" disabled={busy === p.key} className={btn} onClick={() => { if (window.confirm(`Reset ${firstName(p.name)}'s link? The old link will stop working.`)) void act(p, { reset: true }); }}>Reset</button>}
                         {l && <button type="button" disabled={busy === p.key} className={btn} onClick={() => { if (window.confirm(`Turn off ${firstName(p.name)}'s link?`)) void act(p, { disable: true }); }}>Turn Off</button>}
                       </div>
-                    </div>
-                    {l && <input readOnly value={urlOf(l)} aria-label={`${p.name} link`} onFocus={(e) => e.currentTarget.select()} className="mt-2 w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[12px] font-medium text-[#4A4757]" />}
-                  </li>
-                );
-              })}
-              {people.length === 0 && <li className="py-3 text-[14px] text-[#4A4757]">No clients on this deal yet.</li>}
-            </ul>
+                      {l && <input readOnly value={urlOf(l)} aria-label={`${p.name} link`} onFocus={(e) => e.currentTarget.select()} className="w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[12px] font-medium text-[#4A4757]" />}
+                    </>
+                  );
+                }}
+              />
+            </div>
           )}
           {error && <p role="alert" className="mt-3 text-[12px] font-medium text-[#661102]">{error}</p>}
         </section>

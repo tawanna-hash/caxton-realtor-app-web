@@ -1,5 +1,6 @@
 'use client';
 
+import MasterDetail from './MasterDetail';
 import { useCallback, useEffect, useState } from 'react';
 
 type Key = { id: string; name: string; prefix: string; createdAt: string; lastUsedAt: string | null };
@@ -35,20 +36,31 @@ function SmartAutomations() {
     <section aria-label="Smart Automations" className="ds-card">
       <h2 className="text-[15px] font-semibold text-[#1B1726]">Smart Automations</h2>
       <p className="mt-1 text-[14px] text-[#4A4757]">Turn on the ones you want. Each email goes only to people you added on the deal, copies you, and never includes price or terms. Everything is logged on the deal.</p>
-      <ul className="mt-3 divide-y divide-[#E6E5EC]">
-        {defs.map((d) => (
-          <li key={d.key} className="flex items-start justify-between gap-4 py-3">
-            <div>
-              <p className="text-[14px] font-semibold text-[#1B1726]">{d.title}</p>
-              <p className="mt-0.5 text-[14px] text-[#4A4757]">{d.detail}</p>
-            </div>
-            <button type="button" role="switch" aria-checked={!!state[d.key]} aria-label={`${d.title} on or off`} disabled={busy === d.key} onClick={() => void toggle(d.key, !state[d.key])}
-              className={`ct-switch relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition disabled:opacity-50 ${state[d.key] ? 'bg-[#301D5D]' : 'bg-[#E6E5EC]'}`}>
-              <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${state[d.key] ? 'left-[18px]' : 'left-0.5'}`} />
-            </button>
-          </li>
-        ))}
-      </ul>
+      <div className="mt-3">
+        <MasterDetail
+          testId="automations-list"
+          backLabel="Automations"
+          empty={null}
+          items={defs.map((d) => ({ id: d.key, title: d.title, trailing: state[d.key] ? 'On' : 'Off' }))}
+          renderDetail={(id) => {
+            const d = defs.find((x) => x.key === id);
+            if (!d) return null;
+            return (
+              <>
+                <h3 className="text-[15px] font-semibold text-[#1B1726]">{d.title}</h3>
+                <p className="text-[14px] text-[#4A4757]">{d.detail}</p>
+                <div className="flex items-center gap-3">
+                  <button type="button" role="switch" aria-checked={!!state[d.key]} aria-label={`${d.title} on or off`} disabled={busy === d.key} onClick={() => void toggle(d.key, !state[d.key])}
+                    className={`ct-switch relative h-5 w-9 shrink-0 rounded-full transition disabled:opacity-50 ${state[d.key] ? 'bg-[#301D5D]' : 'bg-[#E6E5EC]'}`}>
+                    <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${state[d.key] ? 'left-[18px]' : 'left-0.5'}`} />
+                  </button>
+                  <span className="text-sm text-[#1B1726]">{state[d.key] ? 'On' : 'Off'}</span>
+                </div>
+              </>
+            );
+          }}
+        />
+      </div>
       {err && <p role="status" className="mt-2 text-[14px] text-[#661102]">{err}</p>}
     </section>
   );

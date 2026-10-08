@@ -1,5 +1,6 @@
 'use client';
 
+import MasterDetail, { DetailFields } from './MasterDetail';
 import Switch from './Switch';
 import ClosingSchedulePanel from './ClosingSchedulePanel';
 import { messagingPeople } from '@/lib/closing-time-people';
@@ -225,28 +226,40 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
                 <button type="button" className={`${primary} mt-4 px-6 py-3 text-[14px]`} onClick={startNew}><Plus className="h-4 w-4" aria-hidden="true" />Create your first scheduler</button>
               </div>
             ) : (
-              <ul>
-                {data.schedulers.map((s) => (
-                  <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F6F3FB] px-4 py-4 last:border-0">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[15px] font-semibold text-[#1B1726]">{s.config.name}</span>
-                        <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${s.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#F6F3FB] text-[#4A4757]'}`}>{s.active ? 'On' : 'Off'}</span>
-                      </div>
-                      <div className="text-[13px] text-[#4A4757]">{s.config.lengths.map((l) => `${l} min`).join(' / ')} · {s.config.bookingCalendarName || 'Closing Time Calendar'} · {s.upcoming} upcoming</div>
-                      <div className="mt-0.5 truncate text-[13px] text-[#4A4757]">{urlOf(s.alias)}</div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button type="button" className={pill} onClick={() => copy(urlOf(s.alias))}>{copied === urlOf(s.alias) ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}{copied === urlOf(s.alias) ? 'Copied' : 'Copy Link'}</button>
-                      <a className={pill} href={urlOf(s.alias)} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />Open</a>
-                      <button type="button" className={pill} onClick={() => setEditing({ id: s.id, config: s.config, hasBanner: s.hasBanner, hasAvatar: s.hasAvatar })}><Pencil className="h-3.5 w-3.5" aria-hidden="true" />Edit</button>
-                      <button type="button" role="switch" aria-checked={s.active} aria-label={`${s.config.name} on or off`} onClick={() => void post({ action: 'active', id: s.id, active: !s.active })}
-                        className={`ct-switch relative h-6 w-11 rounded-full transition ${s.active ? 'bg-[#301D5D]' : 'bg-[#E6E5EC]'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${s.active ? 'left-[22px]' : 'left-0.5'}`} /></button>
-                      <button type="button" aria-label={`Delete ${s.config.name}`} className="p-1 text-[#4A4757] hover:text-[#661102]" onClick={() => { if (window.confirm(`Delete ${s.config.name}? Its booking page stops working and its bookings are removed.`)) void post({ action: 'delete', id: s.id }, 'Scheduler deleted.'); }}><Trash2 className="h-4 w-4" /></button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <div className="p-4">
+                <MasterDetail
+                  testId="schedulers-list"
+                  backLabel="Schedulers"
+                  empty={null}
+                  items={data.schedulers.map((s) => ({ id: s.id, title: s.config.name, sub: `${s.config.lengths.map((l) => `${l} min`).join(' / ')} · ${s.upcoming} upcoming`, trailing: s.active ? 'On' : 'Off' }))}
+                  renderDetail={(id) => {
+                    const s = data.schedulers.find((x) => x.id === id);
+                    if (!s) return null;
+                    return (
+                      <>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="text-[15px] font-semibold text-[#1B1726]">{s.config.name}</h4>
+                          <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${s.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#F6F3FB] text-[#4A4757]'}`}>{s.active ? 'On' : 'Off'}</span>
+                        </div>
+                        <DetailFields rows={[
+                          ['Meeting Length', s.config.lengths.map((l) => `${l} min`).join(' / ')],
+                          ['Calendar', s.config.bookingCalendarName || 'Closing Time Calendar'],
+                          ['Upcoming', String(s.upcoming)],
+                          ['Booking Link', urlOf(s.alias)],
+                        ]} />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button type="button" className={pill} onClick={() => copy(urlOf(s.alias))}>{copied === urlOf(s.alias) ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}{copied === urlOf(s.alias) ? 'Copied' : 'Copy Link'}</button>
+                          <a className={pill} href={urlOf(s.alias)} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />Open</a>
+                          <button type="button" className={pill} onClick={() => setEditing({ id: s.id, config: s.config, hasBanner: s.hasBanner, hasAvatar: s.hasAvatar })}><Pencil className="h-3.5 w-3.5" aria-hidden="true" />Edit</button>
+                          <button type="button" role="switch" aria-checked={s.active} aria-label={`${s.config.name} on or off`} onClick={() => void post({ action: 'active', id: s.id, active: !s.active })}
+                            className={`ct-switch relative h-6 w-11 rounded-full transition ${s.active ? 'bg-[#301D5D]' : 'bg-[#E6E5EC]'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${s.active ? 'left-[22px]' : 'left-0.5'}`} /></button>
+                          <button type="button" aria-label={`Delete ${s.config.name}`} className="p-1 text-[#4A4757] hover:text-[#661102]" onClick={() => { if (window.confirm(`Delete ${s.config.name}? Its booking page stops working and its bookings are removed.`)) void post({ action: 'delete', id: s.id }, 'Scheduler deleted.'); }}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>
+                        </div>
+                      </>
+                    );
+                  }}
+                />
+              </div>
             )}
             {data.combos.length > 0 && (
               <div className="border-t border-[#E6E5EC] px-4 py-4">
@@ -270,23 +283,32 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
           {data.bookings.length > 0 && (
             <section className={card}>
               <h3 className="border-b border-[#F6F3FB] px-4 py-4 text-[16px] font-semibold text-[#1B1726]">Bookings</h3>
-              <ul>
-                {data.bookings.map((b) => {
-                  const past = b.past;
-                  const when = new Date(b.start).toLocaleString('en-US', { timeZone: b.timezone, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: b.timeFormat === '12h' });
-                  return (
-                    <li key={b.id} className={`flex flex-wrap items-start justify-between gap-3 border-b border-[#F6F3FB] px-4 py-3 last:border-0 ${b.status !== 'booked' || past ? 'opacity-60' : ''}`}>
-                      <div className="min-w-0">
-                        <div className="text-[14px] font-semibold text-[#1B1726]">{b.name} · {b.schedulerName}</div>
-                        <div className="text-[13px] text-[#4A4757]">{when} ({b.timezone}){b.status !== 'booked' ? ' · Cancelled' : past ? ' · Done' : ''}</div>
-                        <div className="text-[12px] text-[#4A4757]">{b.email}{b.meetingUrl ? ` · ${b.meetingUrl}` : ''}</div>
-                        {b.answers.map((a) => <div key={a.label} className="text-[12px] text-[#4A4757]"><strong>{a.label}:</strong> {a.value}</div>)}
-                      </div>
-                      {b.status === 'booked' && !past && <button type="button" className={pill} onClick={() => { if (window.confirm(`Cancel ${b.name}'s booking? They will be emailed.`)) void post({ action: 'cancel_booking', id: b.id }, 'Booking cancelled.'); }}>Cancel</button>}
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="p-4">
+                <MasterDetail
+                  testId="bookings-list"
+                  backLabel="Bookings"
+                  empty={null}
+                  items={data.bookings.map((b) => ({ id: b.id, title: `${b.name} · ${b.schedulerName}`, sub: `${new Date(b.start).toLocaleString('en-US', { timeZone: b.timezone, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: b.timeFormat === '12h' })}${b.status !== 'booked' ? ' · Cancelled' : b.past ? ' · Done' : ''}` }))}
+                  renderDetail={(id) => {
+                    const b = data.bookings.find((x) => x.id === id);
+                    if (!b) return null;
+                    const when = new Date(b.start).toLocaleString('en-US', { timeZone: b.timezone, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: b.timeFormat === '12h' });
+                    return (
+                      <>
+                        <h4 className="text-[15px] font-semibold text-[#1B1726]">{b.name}</h4>
+                        <DetailFields rows={[
+                          ['Scheduler', b.schedulerName],
+                          ['When', `${when} (${b.timezone})${b.status !== 'booked' ? ' · Cancelled' : b.past ? ' · Done' : ''}`],
+                          ['Email', b.email],
+                          ['Meeting Link', b.meetingUrl || ''],
+                          ...b.answers.map((a): [string, string] => [a.label, a.value]),
+                        ]} />
+                        {b.status === 'booked' && !b.past && <button type="button" className={pill} onClick={() => { if (window.confirm(`Cancel ${b.name}'s booking? They will be emailed.`)) void post({ action: 'cancel_booking', id: b.id }, 'Booking cancelled.'); }}>Cancel</button>}
+                      </>
+                    );
+                  }}
+                />
+              </div>
             </section>
           )}
         </>

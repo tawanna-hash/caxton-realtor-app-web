@@ -1,5 +1,6 @@
 'use client';
 
+import MasterDetail, { DetailFields } from './MasterDetail';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Download, Upload } from 'lucide-react';
 
@@ -82,15 +83,25 @@ export default function DataBackupsPanel() {
         <h2 className="text-[15px] font-semibold text-[#1B1726]">Monthly Backups</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">A backup is saved on the first of each month, and before every import. The last 12 are kept. Texas brokers must keep transaction records for four years.</p>
         <div className="mt-3"><button type="button" className={BTN} disabled={busy} onClick={() => void backupNow()}>Back Up Now</button></div>
-        <ul className="mt-3 divide-y divide-[#E6E5EC]">
-          {backups.length === 0 && <li className="py-2 text-[14px] text-[#6B6878]">No backups yet.</li>}
-          {backups.map((b) => (
-            <li key={b.id} className="flex items-center justify-between gap-3 py-2 text-[14px] text-[#1B1726]">
-              <span>{new Date(b.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} <span className="text-[#6B6878]">· {KIND[b.kind] ?? b.kind} · {b.dealCount} deals</span></span>
-              <a className={BTN} href={`${API}?action=download-backup&id=${b.id}`}><Download className="h-3.5 w-3.5" aria-hidden="true" />Download</a>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-3">
+          <MasterDetail
+            testId="backups-list"
+            backLabel="Backups"
+            empty="No backups yet."
+            items={backups.map((b) => ({ id: b.id, title: new Date(b.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }), sub: `${KIND[b.kind] ?? b.kind} · ${b.dealCount} deals` }))}
+            renderDetail={(id) => {
+              const b = backups.find((x) => x.id === id);
+              if (!b) return null;
+              return (
+                <>
+                  <h3 className="text-[15px] font-semibold text-[#1B1726]">{new Date(b.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</h3>
+                  <DetailFields rows={[['Type', KIND[b.kind] ?? b.kind], ['Deals', String(b.dealCount)]]} />
+                  <a className={BTN} href={`${API}?action=download-backup&id=${b.id}`}><Download className="h-3.5 w-3.5" aria-hidden="true" />Download</a>
+                </>
+              );
+            }}
+          />
+        </div>
       </section>
 
       <section className="ds-card">
