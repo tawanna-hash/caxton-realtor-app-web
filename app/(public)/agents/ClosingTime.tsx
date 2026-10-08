@@ -3142,6 +3142,12 @@ export default function ClosingTime({
                 <p className="mt-1 text-[14px] text-[#4A4757]">{new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}{nextClosingDays === null ? '' : nextClosingDays === 0 ? ' · Next Closing Is Today' : ` · ${nextClosingDays} Day${nextClosingDays === 1 ? '' : 's'} To Next Closing`}</p>
               </div>
             )}
+            {effectiveView === 'coordinator' && (
+              <div className="mb-4">
+                <h2 className="text-[22px] font-semibold text-[#1B1726]">Settings</h2>
+                <p className="mt-1 text-[14px] text-[#4A4757]">Your agent details, deadline alerts, calendar link and MLS access.</p>
+              </div>
+            )}
             <header className="ds-header">
               <div className="min-w-0">
                 <p className="ds-eyebrow ds-keep">{new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
@@ -3675,7 +3681,7 @@ export default function ClosingTime({
                 }}
               />
             )}
-            <div id="trec-forms" {...collapsible('trec-library')} className="ds-page min-w-0 scroll-mt-24 lg:col-span-2">
+            <div id="trec-forms" className="ds-page min-w-0 scroll-mt-24 lg:col-span-2">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-0">
                   <p className="ds-eyebrow">Tools</p>
@@ -3684,7 +3690,6 @@ export default function ClosingTime({
                 </div>
                 <div className="ml-auto flex shrink-0 items-center gap-2">
                   {formsLibraryTab === 'trec' && <a href="https://www.trec.texas.gov/agency-information/contracts" target="_blank" rel="noreferrer" className="hidden min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition hover:bg-[#301D5D] hover:text-white sm:inline-flex">TREC Quick Link</a>}
-                  <CollapseToggle {...toggleProps('trec-library', 'forms library')} />
                 </div>
               </div>
               <div role="tablist" aria-label="Forms library pages" className="ds-tabs">
