@@ -62,7 +62,7 @@ export const GUIDES: Guide[] = [
       { title: 'Go To Appearance', text: 'Choose Continue to move to Step 4.', find: 'Continue to Appearance', advanceOnClick: true },
       { title: 'Welcome Text', text: 'Step 4 of 5. Add a welcome message, an optional redirect page, and language and time format.', find: 'Welcome text', hint: 'Press Continue on Step 3 to get here.' },
       { title: 'Go To Workflow', text: 'Choose Continue to move to Step 5.', find: 'Continue to workflow', advanceOnClick: true },
-      { title: 'Reminders', text: 'Step 5 of 5. Add up to two reminder emails before the meeting and one follow-up after it.', find: 'Automate what happens', hint: 'Press Continue on Step 4 to get here.' },
+      { title: 'Reminders', text: 'Step 5 of 5. Add up to two reminder emails before the meeting and one follow-up after it.', find: 'Reminder emails', hint: 'Press Continue on Step 4 to get here.' },
       { title: 'Create It', text: 'Choose Create Scheduler. Then make sure the switch beside it shows On, choose Open to try the booking page, and Copy Link to share it.', find: 'Create Scheduler|Save Scheduler', advanceOnClick: true },
     ],
   },
