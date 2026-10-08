@@ -103,6 +103,7 @@ export const agentTaskSchema = z.preprocess((value) => {
   priority: z.enum(TREC_TASK_PRIORITIES).default('normal'),
   status: z.enum(TREC_TASK_STATUSES).default('todo'),
   complete: z.boolean().default(false),
+  note: z.string().max(2_000).optional(),
 }).strict());
 
 export const agentDocumentSchema = z.preprocess((value) => {
