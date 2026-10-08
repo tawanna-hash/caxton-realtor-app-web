@@ -2297,6 +2297,7 @@ export default function ClosingTime({
   };
 
   const [selectedTaskId, setSelectedTaskId] = useState('');
+  const [dealMoreOpen, setDealMoreOpen] = useState(false);
   const updateTask = (taskId: string, patch: Partial<AgentTask>) => {
     if (!activeDeal) return;
     const nextTasks = activeDeal.tasks.map((task) => task.id === taskId ? { ...task, ...patch } : task);
@@ -3086,15 +3087,31 @@ export default function ClosingTime({
               );
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
-              <nav aria-label="Deal sections" className="ds-dealnav mb-4">
-                {([['Deal', ['d-overview', 'transaction']], ['Work', ['d-documents', 'd-people', 'd-messages', 'd-schedule', 'd-portal', 'tasks', 'audit']]] as const).map(([group, ids]) => (
-                  <div key={group} className="ds-dealnav-group" role="group" aria-label={group}>
-                    <span className="ds-dealnav-label">{group}</span>
-                    {(ids as readonly string[]).map((id) => DEAL_TABS.find((tab) => tab.id === id)).filter((tab): tab is (typeof DEAL_TABS)[number] => Boolean(tab)).map((tab) => (
-                      <button key={tab.id} type="button" className="ds-tab" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => setDeskView(tab.id)}>{tab.label}</button>
-                    ))}
-                  </div>
-                ))}
+              <nav aria-label="Deal sections" className="mb-4 flex items-end gap-1 border-b border-[#E6E5EC]" data-testid="deal-tabs">
+                <div className="flex min-w-0 flex-1 items-end gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none]">
+                  {['d-overview', 'transaction', 'd-documents', 'd-people', 'd-messages', 'd-schedule'].map((id) => DEAL_TABS.find((tab) => tab.id === id)).filter((tab): tab is (typeof DEAL_TABS)[number] => Boolean(tab)).map((tab) => (
+                    <button key={tab.id} type="button" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => { setDealMoreOpen(false); setDeskView(tab.id); }} className={`!h-auto shrink-0 !rounded-none !border-0 !border-b-2 !bg-transparent !px-3 !py-2.5 text-[14px] ${tab.id === effectiveView ? '!border-[#301D5D] font-semibold !text-[#301D5D]' : '!border-transparent font-medium !text-[#4A4757] hover:!text-[#301D5D]'}`}>{tab.label}</button>
+                  ))}
+                </div>
+                {(() => {
+                  const moreIds = ['d-portal', 'tasks', 'audit'];
+                  const activeMore = DEAL_TABS.find((tab) => tab.id === effectiveView && moreIds.includes(tab.id));
+                  return (
+                    <div className="relative shrink-0">
+                      <button type="button" aria-haspopup="menu" aria-expanded={dealMoreOpen} onClick={() => setDealMoreOpen((v) => !v)} className={`!h-auto !gap-1 !rounded-none !border-0 !border-b-2 !bg-transparent !px-3 !py-2.5 text-[14px] ${activeMore ? '!border-[#301D5D] font-semibold !text-[#301D5D]' : '!border-transparent font-medium !text-[#4A4757] hover:!text-[#301D5D]'}`}>{activeMore ? activeMore.label : 'More'}<ChevronDown className={`h-3.5 w-3.5 transition-transform ${dealMoreOpen ? 'rotate-180' : ''}`} aria-hidden="true" /></button>
+                      {dealMoreOpen && (
+                        <>
+                          <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 !h-auto !cursor-default !rounded-none !border-0 !bg-transparent !p-0 hover:!bg-transparent" onClick={() => setDealMoreOpen(false)} />
+                          <div role="menu" className="absolute right-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-md border border-[#E6E5EC] bg-white py-1">
+                            {moreIds.map((id) => DEAL_TABS.find((tab) => tab.id === id)).filter((tab): tab is (typeof DEAL_TABS)[number] => Boolean(tab)).map((tab) => (
+                              <button key={tab.id} type="button" role="menuitem" aria-current={tab.id === effectiveView ? 'page' : undefined} onClick={() => { setDealMoreOpen(false); setDeskView(tab.id); }} className={`!flex !h-10 w-full !justify-start !rounded-none !border-0 !px-4 text-left text-[14px] ${tab.id === effectiveView ? '!bg-[#EFEAF8] font-semibold !text-[#301D5D]' : '!bg-white !text-[#1B1726] hover:!bg-[#F6F3FB]'}`}>{tab.label}</button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
               </nav>
             )}
               </div>

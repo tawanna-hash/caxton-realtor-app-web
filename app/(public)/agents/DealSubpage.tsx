@@ -429,38 +429,52 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
       )}
     </div>
   ) : null;
+  const pct = Math.round((Math.min(stageIndex, milestones.length) / milestones.length) * 100);
   const progressStrip = (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 className="ds-title !mt-0">{deal.propertyAddress || deal.title || 'New Contract'}</h2>
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-1" data-testid="deal-header">
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h2 className="ds-title !mt-0 min-w-0 truncate">{deal.propertyAddress || deal.title || 'New Contract'}</h2>
             <span className="ds-chip bg-[#EFEAF8] text-[#301D5D] uppercase tracking-wide">{({ purchase: 'Residential', listing_sale: 'Listing For Sale', listing_lease: 'Listing For Lease', lease: 'Lease' } as Record<string, string>)[deal.dealType] ?? 'Residential'}</span>
           </div>
-          {(headerPeople || priceText) && <p className="mt-1 text-[13px] font-medium text-[#4A4757]">{partyLines}{priceText && <span className="block">{priceText}</span>}</p>}
-        </div>
-        <div className="text-right">
-          <p className={`text-[14px] font-semibold ${isCritical ? textTone : 'text-[#1B1726]'}`}>{stageName} · {Math.min(stageIndex + 1, milestones.length)} of {milestones.length}</p>
-          <p className={`text-[13px] font-medium ${isCritical ? textTone : 'text-[#4A4757]'}`}>{deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing Date Not Set'}</p>
+          <p className={`mt-1 text-[13px] font-medium ${isCritical ? textTone : 'text-[#4A4757]'}`}>
+            {[headerPeople, priceText, deal.closingDate ? `Closing ${formatDate(deal.closingDate)} · ${countdownLabel}` : 'Closing Date Not Set'].filter(Boolean).join(' · ')}
+          </p>
         </div>
       </div>
       {isCritical && (
-        <p className={`mt-2 text-[13px] font-semibold ${textTone}`} role="alert">
+        <p className={`mt-1 text-[13px] font-semibold ${textTone}`} role="alert">
           {criticalDeadlines.slice(0, 2).map((d) => `${d.label} ${dueText(d.days)}`).join(' · ')}{criticalDeadlines.length > 2 ? ` · ${criticalDeadlines.length - 2} more` : ''}
         </p>
       )}
-      <div className="mt-4 pb-1 sm:overflow-x-auto">
-        <ol className="flex sm:min-w-[720px]" aria-label="Deal stages">
+      <button
+        type="button"
+        onClick={() => setStagesOpen((v) => !v)}
+        aria-expanded={stagesOpen}
+        aria-label={`${stageName}, step ${Math.min(stageIndex + 1, milestones.length)} of ${milestones.length}. ${stagesOpen ? 'Hide' : 'Show'} stages`}
+        className="mt-3 !flex !h-auto w-full !flex-col !items-stretch !gap-1.5 !rounded-none !border-0 !bg-transparent !p-0 text-left hover:!bg-transparent"
+      >
+        <span className="flex items-center justify-between gap-3 text-[12px] font-medium text-[#4A4757]">
+          <span><span className="font-semibold text-[#1B1726]">{stageName}</span> · Step {Math.min(stageIndex + 1, milestones.length)} of {milestones.length}</span>
+          <span className="flex items-center gap-1 text-[#6B6878]">{stagesOpen ? 'Hide Stages' : 'Show Stages'}<ChevronRight className={`h-3.5 w-3.5 transition-transform ${stagesOpen ? 'rotate-90' : ''}`} aria-hidden="true" /></span>
+        </span>
+        <span className="block h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" aria-hidden="true"><span className="block h-full rounded-full bg-[#301D5D]" style={{ width: `${Math.max(pct, 4)}%` }} /></span>
+      </button>
+      {stagesOpen && (
+      <div className="mt-4 overflow-x-auto pb-1">
+        <ol className="flex min-w-[560px] sm:min-w-[720px]" aria-label="Deal stages">
           {milestones.map((m, i) => (
             <li key={m.key} aria-current={m.current ? 'step' : undefined} className="relative flex-1 px-1 text-center">
               {i < milestones.length - 1 && <span aria-hidden="true" className={`absolute left-1/2 top-[9px] h-[2px] w-full ${m.done ? 'bg-[#301D5D]' : 'bg-[#E6E5EC]'}`} />}
               <span className={`relative z-[1] mx-auto mb-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${m.done ? 'border-[#301D5D] bg-[#301D5D]' : m.current ? 'border-[#301D5D] bg-[#EFEAF8]' : 'border-[#A9A5B8] bg-white'}`}>{m.done ? <Check className="h-3 w-3 text-white" strokeWidth={4} aria-hidden="true" /> : null}</span>
-              <span className={`hidden text-[12px] leading-snug sm:block ${m.current ? 'font-semibold text-[#1B1726]' : 'text-[#4A4757]'}`}>{m.label}</span>
-              <span className="hidden min-h-[16px] text-[11px] text-[#6B6878] sm:block">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
+              <span className={`block text-[11px] leading-snug sm:text-[12px] ${m.current ? 'font-semibold text-[#1B1726]' : 'text-[#4A4757]'}`}>{m.label}</span>
+              <span className="block min-h-[16px] text-[11px] text-[#6B6878]">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
             </li>
           ))}
         </ol>
       </div>
+      )}
       {closeWarning}
     </>
   );
