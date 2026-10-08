@@ -542,11 +542,11 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
 
   return (
     <div className="ds-page" data-testid="contract-page" onKeyDown={(e) => { const t = e.target as HTMLInputElement; if (e.key === 'Enter' && !e.shiftKey && t.tagName === 'INPUT' && t.type !== 'checkbox') { e.preventDefault(); t.blur(); } }}>
-      <div role="tablist" aria-label="Contract Sections" className="sticky top-0 z-10 mb-3 flex items-end gap-1 overflow-x-auto border-b border-[#E6E5EC] bg-white pt-1">
+      <div role="tablist" aria-label="Contract Sections" className="ds-tabs sticky top-0 z-10 !mt-0 mb-3 overflow-x-auto bg-white">
         {[{ id: 'key-details', title: 'Key Details', filled: terms.filter((t) => t.value.trim()).length, total: terms.length }, ...CONTRACT_MAP_SECTIONS.map((x) => { const vis = x.fields.filter((fl) => !hidden.includes(fl.id)); return { id: x.id as string, title: x.title as string, filled: vis.filter((fl) => getVal(fl.id).trim()).length, total: vis.length }; })].map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-            className={`!-mb-px !flex-none !whitespace-nowrap !rounded-b-none !rounded-t-lg !border !border-b-0 !px-4 !py-2.5 ${tab === t.id ? '!border-[#E6E5EC] !border-t-2 !border-t-[#301D5D] !bg-white !font-semibold !text-[#301D5D]' : '!border-transparent !bg-[#F6F3FB] !font-medium !text-[#4A4757] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]'}`}>
-            {t.title}<span className={`ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${t.filled === t.total && t.total > 0 ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{t.filled}/{t.total}</span>
+            className="ds-tab !flex-none !whitespace-nowrap">
+            {t.title}<span className="ds-tab-count" style={t.filled === t.total && t.total > 0 ? { color: '#005A00' } : undefined}>{t.filled}/{t.total}</span>
           </button>
         ))}
       </div>
@@ -666,9 +666,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
                 <p className="text-sm font-semibold text-slate-900">{title}</p>
                 <button type="button" aria-label="Close" onClick={() => setQuickId(null)} className="!border-0 !bg-transparent text-slate-500 hover:!text-[#301D5D]"><X className="h-4 w-4" aria-hidden="true" /></button>
               </div>
-              <div className="flex flex-wrap gap-2 border-b border-[#E6E5EC] px-[1.125rem] py-3" role="tablist" aria-label="Sections">
+              <div className="ds-tabs !m-0 overflow-x-auto px-[1.125rem]" role="tablist" aria-label="Sections">
                 {[...CONTRACT_MAP_SECTIONS.map((x) => ({ id: x.id as string, title: x.title as string })), { id: 'key-details', title: 'Key Details' }].map((tab) => (
-                  <button key={tab.id} type="button" role="tab" aria-selected={quickId === tab.id} onClick={() => setQuickId(tab.id)} className={quickId === tab.id ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#301D5D]' : ''}>{tab.title}</button>
+                  <button key={tab.id} type="button" role="tab" aria-selected={quickId === tab.id} onClick={() => setQuickId(tab.id)} className="ds-tab !flex-none !whitespace-nowrap">{tab.title}</button>
                 ))}
               </div>
               <div className="px-[1.125rem] py-4">{body}</div>

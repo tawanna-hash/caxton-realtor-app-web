@@ -705,7 +705,7 @@ function ReadinessChecklist({
           </div>
         </div>
 
-        <div role="tablist" aria-label="Readiness Groups" className="flex items-end gap-1 overflow-x-auto border-b border-[#E6E5EC] px-[1.125rem]">
+        <div role="tablist" aria-label="Readiness Groups" className="ds-tabs !mt-0 overflow-x-auto px-[1.125rem]">
           {groups.map((group) => {
             const done = group.rows.filter(({ document }) => isDone(document)).length;
             const selected = activeGroup?.id === group.id;
@@ -716,10 +716,10 @@ function ReadinessChecklist({
                 role="tab"
                 aria-selected={selected}
                 onClick={() => setGroupId(group.id)}
-                className={`!-mb-px !flex-none !whitespace-nowrap !rounded-b-none !rounded-t-lg !border !border-b-0 !px-4 !py-2.5 ${selected ? '!border-[#E6E5EC] !border-t-2 !border-t-[#301D5D] !bg-white !font-semibold !text-[#301D5D]' : '!border-transparent !bg-[#F6F3FB] !font-medium !text-[#4A4757] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]'}`}
+                className="ds-tab !flex-none !whitespace-nowrap"
               >
                 {group.label}
-                <span className={`ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${done === group.rows.length && group.rows.length > 0 ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{done}/{group.rows.length}</span>
+                <span className="ds-tab-count" style={done === group.rows.length && group.rows.length > 0 ? { color: '#005A00' } : undefined}>{done}/{group.rows.length}</span>
               </button>
             );
           })}
@@ -3068,6 +3068,12 @@ export default function ClosingTime({
               </div>
             )}
           <div data-desk-view={effectiveView} className="ds-main min-w-0">
+            {effectiveView === 'overview' && (
+              <div className="mb-4">
+                <h2 className="text-[22px] font-semibold text-[#1B1726]">Today</h2>
+                <p className="mt-1 text-[14px] text-[#4A4757]">{new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}{nextClosingDays === null ? '' : nextClosingDays === 0 ? ' · Next Closing Is Today' : ` · ${nextClosingDays} Day${nextClosingDays === 1 ? '' : 's'} To Next Closing`}</p>
+              </div>
+            )}
             <header className="ds-header">
               <div className="min-w-0">
                 <p className="ds-eyebrow ds-keep">{new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
@@ -3142,8 +3148,8 @@ export default function ClosingTime({
                   <h2 className="ds-title">Contacts</h2>
                   <p className="ds-subtitle">Everyone you work with: your clients and the professionals on your deals.</p>
                   <div className="ds-tabs" role="tablist" aria-label="Contact groups">
-                    <button type="button" role="tab" aria-selected={contactsTab === 'clients'} className="ds-tab" onClick={() => setContactsTab('clients')}>Clients ({clients.length})</button>
-                    <button type="button" role="tab" aria-selected={contactsTab === 'external'} className="ds-tab" onClick={() => setContactsTab('external')}>External Contacts ({external.length})</button>
+                    <button type="button" role="tab" aria-selected={contactsTab === 'clients'} className="ds-tab" onClick={() => setContactsTab('clients')}>Clients <span className="ds-tab-count">{clients.length}</span></button>
+                    <button type="button" role="tab" aria-selected={contactsTab === 'external'} className="ds-tab" onClick={() => setContactsTab('external')}>External Contacts <span className="ds-tab-count">{external.length}</span></button>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="inline-flex gap-1" role="group" aria-label="Contact status">
@@ -3272,7 +3278,7 @@ export default function ClosingTime({
                     </button>
                   </div>
                   <div className="ds-tabs" role="tablist" aria-label="Deal filter">
-                    {([['all', 'All deals', liveDeals.length], ['active', 'Active', activeDeals.length], ['closed', 'Closed', closedDeals.length]] as const).map(([id, label, count]) => (
+                    {([['all', 'All Deals', liveDeals.length], ['active', 'Active', activeDeals.length], ['closed', 'Closed', closedDeals.length]] as const).map(([id, label, count]) => (
                       <button key={id} type="button" role="tab" aria-selected={dealsTab === id} aria-current={dealsTab === id ? 'page' : undefined} onClick={() => setDealsTab(id)} className="ds-tab">{label} <span className="ds-tab-count">{count}</span></button>
                     ))}
                   </div>
@@ -3604,10 +3610,10 @@ export default function ClosingTime({
                   <CollapseToggle {...toggleProps('trec-library', 'forms library')} />
                 </div>
               </div>
-              <div role="tablist" aria-label="Forms library pages" className="mt-4 flex gap-4 border-b border-[#E6E5EC]">
+              <div role="tablist" aria-label="Forms library pages" className="ds-tabs">
                 {([['trec', 'TREC Forms'], ['brokerage', 'Brokerage Forms']] as const).map(([id, label]) => (
                   <button key={id} type="button" role="tab" aria-selected={formsLibraryTab === id} onClick={() => setFormsLibraryTab(id)}
-                    className={`-mb-px border-b-2 px-0.5 pb-2 text-sm font-semibold ${formsLibraryTab === id ? 'border-[#301D5D] text-[#301D5D]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}>{label}</button>
+                    className="ds-tab">{label}</button>
                 ))}
               </div>
               {formsLibraryTab === 'trec' && (

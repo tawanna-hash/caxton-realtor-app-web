@@ -57,7 +57,7 @@ export function SecureSignRequests({ requests, post, busy }: { requests: SignReq
   return (
     <div className="mt-3">
       <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Secure Sign Requests</p>
-      <div className="mt-1 flex flex-wrap gap-2" role="tablist">{FILTERS.map(([k, t]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`${btn} ${tab === k ? 'border-[#301D5D] bg-[#F6F3FB]' : ''}`} onClick={() => setTab(k)}>{t} {count(k)}</button>)}</div>
+      <div className="ds-tabs !mt-1" role="tablist">{FILTERS.map(([k, t]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className="ds-tab" onClick={() => setTab(k)}>{t} <span className="ds-tab-count">{count(k)}</span></button>)}</div>
       {shown.length === 0 ? <p className="mt-2 text-sm text-slate-500">Nothing here.</p> : (
         <ul className="mt-2 divide-y divide-slate-100 border border-slate-200 text-sm">{shown.map((r) => (
           <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
