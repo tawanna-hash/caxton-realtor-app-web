@@ -188,12 +188,12 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
     items: [
       {
         id: 'buyer-iabs',
-        label: 'Information About Brokerage Services (IABS)',
+        label: 'TREC IABS 1-2 · Information About Brokerage Services (IABS)',
         description: 'Mandatory TREC informational form outlining representation pathways.',
       },
       {
         id: 'buyer-wire-fraud-alert',
-        label: 'Wire Fraud Alert Or Notice (TXR 2517)',
+        label: 'TR 2517 · Wire Fraud Alert Or Notice',
         description: 'Wire fraud warning delivered to and acknowledged by the client.',
       },
       {
@@ -208,7 +208,7 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
       },
       {
         id: 'buyer-representation-agreement',
-        label: 'Buyer Representation Agreement',
+        label: 'TR 1501 · Buyer Representation Agreement',
         description: 'Formal contract between the buyer and their brokerage.',
       },
       {
@@ -223,7 +223,7 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
       },
       {
         id: 'buyer-property-inspection-report',
-        label: 'Property Inspection Report',
+        label: 'TREC REI 7-6 · Property Inspection Report',
         description: 'Visual inspection of structure and systems by a licensed Texas inspector.',
       },
       {
@@ -248,7 +248,7 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
       },
       {
         id: 'buyer-walkthrough',
-        label: "Buyer's Walk-Through, Confirmation, And Acceptance",
+        label: 'TR 1925 · Buyer\'s Walk-Through, Confirmation, And Acceptance',
         description: 'Signed confirmation of the final walk-through.',
       },
     ],
@@ -259,17 +259,17 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
     items: [
       {
         id: 'seller-listing-agreement',
-        label: 'Listing Agreement',
+        label: 'TR 1101 · Listing Agreement',
         description: 'Formal contract between the seller and the listing brokerage.',
       },
       {
         id: 'executed-contract',
-        label: 'TREC One To Four Family Residential Contract',
+        label: 'TREC 20-19 · One To Four Family Residential Contract',
         description: 'The standard promulgated purchase agreement.',
       },
       {
         id: 'seller-disclosure',
-        label: "Seller's Disclosure Notice",
+        label: 'TREC 55-1 · Seller\'s Disclosure Notice',
         description: 'Legally required property condition disclosure.',
       },
       {
@@ -304,12 +304,12 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
       },
       {
         id: 'listing-consumer-protection-notice',
-        label: "Consumer Protection Notice Displayed",
+        label: 'TREC CN 1-5 · Consumer Protection Notice Displayed',
         description: "Notice displayed in the office, on the website and on social profiles (listing deals only).",
       },
       {
         id: 'listing-t47',
-        label: "T-47 Residential Real Property Affidavit",
+        label: 'TR 1907 · T-47 Residential Real Property Affidavit',
         description: "Notarized affidavit; not needed with a new survey (listing deals only).",
       },
       {
