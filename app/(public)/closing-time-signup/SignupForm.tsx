@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { trackGA } from '@/components/SiteGA';
 
-const field = 'mt-1 w-full rounded-md border border-[#E6E5EC] bg-white px-3 py-2.5 text-[16px] text-[#1B1726] focus:border-[#301D5D] focus:outline-none';
-const label = 'text-[11px] font-medium uppercase tracking-[0.12em] text-[#5F5B6E]';
+const fieldStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', height: 46, padding: '0 14px', fontFamily: 'inherit', fontSize: 16, color: '#1C1038', background: '#FFFFFF', border: '1px solid #B9C0C9', borderRadius: 3 };
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: 14, fontWeight: 600, color: '#1C1038', marginBottom: 6 };
 
 const STATES: Array<[string, string]> = [['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['DC','District of Columbia'],['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming']];
 
@@ -77,82 +77,87 @@ export default function SignupForm() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-[#1B1726]">
-      <header className="border-b border-[#E6E5EC]">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <a href="/" className="font-serif text-xl text-[#301D5D]">It&rsquo;s Almost Closing Time!</a>
-          <a href="/login?next=%2Fagents%2Fclosing-time" className="rounded-md border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]">Log In</a>
+    <div style={{ fontFamily: "'Inter', system-ui, sans-serif", color: '#1C1038', background: '#F5F6F8', width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <style>{`
+        .ct-su input:focus, .ct-su select:focus { outline: 2px solid #5B3FA8; outline-offset: 1px; }
+        .ct-su a { color: #301D5D; } .ct-su a:hover { color: #1C1038; }
+        @media (max-width: 760px) { .ct-su-section { padding-left: 20px !important; padding-right: 20px !important; } .ct-su-card { padding: 28px 20px !important; } }
+      `}</style>
+      <nav aria-label="Main" style={{ background: '#FFFFFF', borderBottom: '1px solid #DDE1E6' }}>
+        <div className="ct-su-section" style={{ maxWidth: 1200, margin: '0 auto', padding: '12px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
+          <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#1C1038', textDecoration: 'none' }}>
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#5B3FA8" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><circle cx="16" cy="16" r="13" /><path d="M16 8v8l5.5 3.5" /></svg>
+            <span style={{ fontWeight: 700, fontSize: 20 }}>Closing Time</span>
+          </a>
+          <a href="/login?next=%2Fagents%2Fclosing-time" style={{ color: '#1C1038', textDecoration: 'none', fontWeight: 500, fontSize: 15, padding: '11px 14px' }}>Log In</a>
         </div>
-      </header>
-      <main className="mx-auto max-w-xl px-6 py-12">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#7059A8]">Your First Two Deals Are Free</p>
-        <h1 className="mt-2 text-[28px] font-semibold text-[#301D5D]">Create Your Account</h1>
-        <p className="mt-2 text-[14px] leading-relaxed text-[#4A4757]">No credit card needed to start.</p>
-        <p className="mt-2 text-[12px] leading-relaxed text-[#7A7787]">Two free deals in total, for the life of your account. After that, add a card and $12 is charged when you open a deal; it covers that deal from start to finish. Deals close automatically two weeks after the closing date to protect your file for TREC's 4-year record-keeping rule. If no closing date is entered, the deal closes 180 days after it is opened. You are warned before a deal closes. The first extension is free, then $5 for each extension after that. Opening an archived file after a deal has closed carries a $250 fee.</p>
+      </nav>
 
-        {done ? (
-          <div role="status" className="mt-6 rounded-xl border border-[#E6E5EC] bg-[#F6F3FB] p-5 text-[14px] text-[#4A4757]">
-            <p>{done}</p>
-            <a href="/login?next=%2Fagents%2Fclosing-time" className="mt-3 inline-block text-[#301D5D] underline">Go to sign in</a>
-          </div>
-        ) : (
-          <form onSubmit={submit} className="mt-6" noValidate>
-            <label className="block">
-              <span className={label}>Full Name</span>
-              <input className={field} value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" required />
-            </label>
-            <label className="mt-4 block">
-              <span className={label}>Brokerage</span>
-              <input className={field} value={brokerage} onChange={(e) => setBrokerage(e.target.value)} autoComplete="organization" required />
-            </label>
-            <label className="mt-4 block">
-              <span className={label}>Email</span>
-              <input className={field} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" inputMode="email" required />
-            </label>
-            <label className="mt-4 block">
-              <span className={label}>Mobile</span>
-              <input className={field} type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} autoComplete="tel" inputMode="tel" required />
-              <span className="mt-2 block text-[12px] leading-relaxed text-[#7A7787]">By providing your phone number and clicking Start Free for REALTORS®, you consent to receive automated text messages (such as alerts and promotional updates) from Closing Time at the number provided. Consent is not a condition of any purchase. Message and data rates may apply. Message frequency varies. You can opt out at any time by replying STOP, or reply HELP for assistance. See our <a className="text-[#301D5D] underline" href="/sms" target="_blank" rel="noopener">Text Messaging Terms</a>.</span>
-            </label>
-            <label className="mt-4 block">
-              <span className={label}>Street Address</span>
-              <input className={field} value={address} onChange={(e) => setAddress(e.target.value)} autoComplete="street-address" required />
-            </label>
-            <div className="mt-4 grid grid-cols-6 gap-3">
-              <label className="col-span-6 block sm:col-span-3">
-                <span className={label}>City</span>
-                <input className={field} value={city} onChange={(e) => setCity(e.target.value)} autoComplete="address-level2" required />
-              </label>
-              <label className="col-span-3 block sm:col-span-2">
-                <span className={label}>State</span>
-                <select className={field} value={stateCode} onChange={(e) => setStateCode(e.target.value)} autoComplete="address-level1" required>
-                  {STATES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
-                </select>
-              </label>
-              <label className="col-span-3 block sm:col-span-1">
-                <span className={label}>Zip Code</span>
-                <input className={field} value={zip} onChange={(e) => setZip(e.target.value)} inputMode="numeric" autoComplete="postal-code" pattern="[0-9]{5}(-[0-9]{4})?" required />
-              </label>
+      <main className="ct-su-section ct-su" style={{ flex: 1, width: '100%', maxWidth: 620, margin: '0 auto', padding: '56px 40px 80px', boxSizing: 'border-box' }}>
+        <div className="ct-su-card" style={{ background: '#FFFFFF', border: '1px solid #DDE1E6', borderRadius: 4, padding: 40 }}>
+          <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#5B3FA8' }}>Your First Two Deals Are Free</p>
+          <h1 style={{ margin: 0, fontWeight: 700, fontSize: 32, lineHeight: 1.2, letterSpacing: '-0.015em' }}>Create Your Account</h1>
+          <p style={{ margin: '10px 0 28px', fontSize: 16, lineHeight: 1.6, color: '#4A5563' }}>No credit card needed to start.</p>
+          {done ? (
+            <div role="status" style={{ fontSize: 16, lineHeight: 1.6, color: '#4A5563' }}>
+              <p style={{ margin: 0 }}>{done}</p>
+              <a href="/login?next=%2Fagents%2Fclosing-time" style={{ display: 'inline-block', marginTop: 12, fontWeight: 600 }}>Go to Log In</a>
             </div>
-            <label className="mt-4 block">
-              <span className={label}>Password</span>
-              <div className="relative">
-                <input className={field + ' pr-16'} type={show ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" minLength={8} required />
-                <button type="button" onClick={() => setShow((v) => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[12px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D] rounded-md" style={{ marginTop: '2px' }}>{show ? 'Hide' : 'Show'}</button>
+          ) : (
+            <form onSubmit={submit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div>
+                <label htmlFor="name" style={labelStyle}>Full Name</label>
+                <input id="name" name="name" type="text" autoComplete="name" required style={fieldStyle} value={fullName} onChange={(e) => setFullName(e.target.value)} />
               </div>
-              <span className="mt-1 block text-[12px] text-[#7A7787]">At least 8 characters.</span>
-            </label>
-            {error && <p role="alert" className="mt-4 text-[13px] text-[#ff2a04]" style={{ color: '#661102' }}>{error}</p>}
-            <button type="submit" disabled={busy} className="mt-5 w-full rounded-md border border-[#E6E5EC] bg-white px-4 py-2.5 text-[14px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D] disabled:opacity-60">
-              {busy ? 'Creating Account…' : 'Start Free for REALTORS®'}
-            </button>
-            <p className="mt-3 text-[12px] leading-relaxed text-[#7A7787]">By creating an account, you agree to our <a className="text-[#301D5D] underline" href="/terms" target="_blank" rel="noopener">Terms Of Service</a> and <a className="text-[#301D5D] underline" href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
-            <p className="mt-4 text-center text-[13px] text-[#4A4757]">Already have an account? <a className="text-[#301D5D] underline" href="/login?next=%2Fagents%2Fclosing-time">Log In</a></p>
-          </form>
-        )}
+              <div>
+                <label htmlFor="brokerage" style={labelStyle}>Brokerage</label>
+                <input id="brokerage" name="brokerage" type="text" autoComplete="organization" required style={fieldStyle} value={brokerage} onChange={(e) => setBrokerage(e.target.value)} />
+              </div>
+              <div>
+                <label htmlFor="email" style={labelStyle}>Email</label>
+                <input id="email" name="email" type="email" autoComplete="email" required style={fieldStyle} value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+              <div>
+                <label htmlFor="mobile" style={labelStyle}>Mobile</label>
+                <input id="mobile" name="mobile" type="tel" autoComplete="tel" required style={fieldStyle} value={mobile} onChange={(e) => setMobile(e.target.value)} />
+                <p style={{ margin: '8px 0 0', fontSize: 12, lineHeight: 1.55, color: '#4A5563' }}>By providing your phone number and clicking Start Free for REALTORS®, you consent to receive automated text messages (such as alerts and promotional updates) from Closing Time at the number provided. Consent is not a condition of any purchase. Message and data rates may apply. Message frequency varies. You can opt out at any time by replying STOP, or reply HELP for assistance. See our <a href="/sms" target="_blank" rel="noopener">Text Messaging Terms</a>.</p>
+              </div>
+              <div>
+                <label htmlFor="address" style={labelStyle}>Street Address</label>
+                <input id="address" name="address" type="text" autoComplete="street-address" required style={fieldStyle} value={address} onChange={(e) => setAddress(e.target.value)} />
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
+                <div style={{ flex: '2 1 200px', minWidth: 0 }}>
+                  <label htmlFor="city" style={labelStyle}>City</label>
+                  <input id="city" name="city" type="text" autoComplete="address-level2" required style={fieldStyle} value={city} onChange={(e) => setCity(e.target.value)} />
+                </div>
+                <div style={{ flex: '1 1 140px', minWidth: 0 }}>
+                  <label htmlFor="state" style={labelStyle}>State</label>
+                  <select id="state" name="state" autoComplete="address-level1" required style={fieldStyle} value={stateCode} onChange={(e) => setStateCode(e.target.value)}>
+                    {STATES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+                  </select>
+                </div>
+                <div style={{ flex: '1 1 110px', minWidth: 0 }}>
+                  <label htmlFor="zip" style={labelStyle}>Zip Code</label>
+                  <input id="zip" name="zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]{5}(-[0-9]{4})?" required style={fieldStyle} value={zip} onChange={(e) => setZip(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="password" style={labelStyle}>Password</label>
+                <input id="password" name="password" type="password" autoComplete="new-password" minLength={8} required aria-describedby="password-hint" style={fieldStyle} value={password} onChange={(e) => setPassword(e.target.value)} />
+                <p id="password-hint" style={{ margin: '8px 0 0', fontSize: 13, color: '#6B7280' }}>At least 8 characters.</p>
+              </div>
+              {error && <p role="alert" style={{ margin: 0, fontSize: 14, fontWeight: 500, color: '#661102' }}>{error}</p>}
+              <button type="submit" disabled={busy} style={{ marginTop: 6, height: 50, fontFamily: 'inherit', fontSize: 16, fontWeight: 600, color: '#FFFFFF', background: '#301D5D', border: 0, borderRadius: 3, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>{busy ? 'Creating Account…' : 'Start Free for REALTORS®'}</button>
+              <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: '#6B7280', textAlign: 'center' }}>By creating an account, you agree to our <a href="/terms" target="_blank" rel="noopener">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+            </form>
+          )}
+        </div>
+        <p style={{ margin: '20px 0 0', fontSize: 15, textAlign: 'center', color: '#4A5563' }}>Already have an account? <a href="/login?next=%2Fagents%2Fclosing-time" style={{ fontWeight: 600 }}>Log In</a></p>
       </main>
-      <footer className="border-t border-[#E6E5EC]">
-        <div className="mx-auto flex max-w-5xl flex-col gap-1 px-6 py-5 text-[12px] text-[#7A7787] sm:flex-row sm:justify-between">
+
+      <footer style={{ background: '#FFFFFF', borderTop: '1px solid #DDE1E6' }}>
+        <div className="ct-su-section" style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 40px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, fontSize: '8pt', color: '#4A5563' }}>
           <span>© 2026 Closing Time. All Rights Reserved</span>
           <span>Not affiliated with the Texas Real Estate Commission or Texas REALTORS®.</span>
         </div>
