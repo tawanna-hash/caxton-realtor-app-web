@@ -161,6 +161,12 @@ function textHref(phone: string, name: string, address: string): string {
 export default function DealSubpage({ readiness, deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'tasks');
   const [stagesOpen, setStagesOpen] = useState(false);
+  // Stages stay closed until opened by hand, then close again on their own after five minutes.
+  useEffect(() => {
+    if (!stagesOpen) return;
+    const t = window.setTimeout(() => setStagesOpen(false), 5 * 60 * 1000);
+    return () => window.clearTimeout(t);
+  }, [stagesOpen]);
   const docFolders = dealFolders(deal);
   const requiredIdList = requiredIdsFor(docFolders);
   const [arrangePage, setArrangePage] = useState<string | null>(null);
@@ -415,7 +421,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
       <div className="mt-3 flex gap-[3px]" role="progressbar" aria-label="Deal progress" aria-valuemin={0} aria-valuemax={milestones.length} aria-valuenow={Math.min(stageIndex, milestones.length)} aria-valuetext={`${stageName}, step ${Math.min(stageIndex + 1, milestones.length)} of ${milestones.length}`}>
         {milestones.map((m) => <span key={m.key} title={m.label} className={`h-2 flex-1 rounded-[3px] ${m.done ? 'bg-[#301D5D]' : m.current ? (isCritical ? barTone : 'bg-[#7059A8]') : 'bg-[#E6E5EC]'}`} />)}
       </div>
-      <button type="button" aria-expanded={stagesOpen} onClick={() => setStagesOpen((v) => !v)} className="mt-2 !border-0 !bg-transparent !px-0 !py-0 text-[13px] font-medium text-[#4A4757] underline underline-offset-2 hover:!bg-transparent hover:!text-[#301D5D]">{stagesOpen ? 'Hide Stages' : 'Show All Stages'}</button>
+      <button type="button" data-no-auto-open aria-expanded={stagesOpen} onClick={() => setStagesOpen((v) => !v)} className="mt-2 !border-0 !bg-transparent !px-0 !py-0 text-[13px] font-medium text-[#4A4757] underline underline-offset-2 hover:!bg-transparent hover:!text-[#301D5D]">{stagesOpen ? 'Hide Stages' : 'Show All Stages'}</button>
       {stagesOpen && (
         <ol className="mt-3 grid gap-x-8 gap-y-1 sm:grid-cols-2" aria-label="All deal stages">
           {milestones.map((m) => (
@@ -512,7 +518,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
                   ))}
                 </ul>
                 {open.length > 3 && (
-                  <details className="group border-t border-[#E6E5EC]">
+                  <details data-no-auto-open className="group border-t border-[#E6E5EC]">
                     <summary className="cursor-pointer py-2 text-xs font-medium text-[#301D5D]"><span className="group-open:hidden">Show {open.length - 3} More</span><span className="hidden group-open:inline">Show Fewer</span></summary>
                     <ul className="divide-y divide-[#E6E5EC]">
                       {open.slice(3).map((a) => (

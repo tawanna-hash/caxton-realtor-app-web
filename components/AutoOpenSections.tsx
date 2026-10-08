@@ -7,7 +7,7 @@ const SKIP = 'header, nav, aside, footer, [role="menu"], [role="listbox"], [role
 /**
  * Opens collapsed sections (details blocks and accordion toggles) the first time they scroll into view,
  * on every page. Each section is opened once; if you close it again afterwards it stays closed.
- * Menus, dropdowns, dialogs and navigation toggles are left alone.
+ * Menus, dropdowns, dialogs and navigation toggles are left alone, as is anything marked data-no-auto-open.
  */
 export default function AutoOpenSections() {
   useEffect(() => {
@@ -19,7 +19,8 @@ export default function AutoOpenSections() {
       !el.hasAttribute('aria-haspopup') &&
       el.getAttribute('role') !== 'combobox' &&
       !el.disabled &&
-      !el.closest(SKIP);
+      !el.closest(SKIP) &&
+      !el.closest('[data-no-auto-open]');
     const io = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
@@ -28,7 +29,7 @@ export default function AutoOpenSections() {
         if (seen.has(el)) continue;
         seen.add(el);
         if (el instanceof HTMLDetailsElement) {
-          if (!el.open && !el.closest(SKIP)) el.open = true;
+          if (!el.open && !el.closest(SKIP) && !el.closest('[data-no-auto-open]')) el.open = true;
         } else if (isToggle(el)) {
           (el as HTMLButtonElement).click();
           // A click that lands before the page has hydrated does nothing: look again and retry a few times.
