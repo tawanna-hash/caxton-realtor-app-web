@@ -519,7 +519,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
     const intro = <>{error && <p className="text-sm font-semibold text-[#661102]" role="alert">{error}</p>}<p className="text-sm leading-6 text-gray-600">Risk alerts, follow-up drafts, a client progress link, and a closing checklist for this deal. Nothing is emailed to anyone until you approve that specific draft.</p></>;
     return (
       <>
-        {renderNav(parts ? partList.map(([k, t]) => ({ id: `assist-${k}`, title: t, group: 'Deal Settings', content: <div className="grid gap-4">{intro}{parts[k]}</div> })) : [])}
+        {renderNav(parts ? partList.map(([k, t]) => ({ id: `assist-${k}`, title: t, content: <div className="grid gap-4">{intro}{parts[k]}</div> })) : [])}
         {data && placer && <SignaturePlacer data={placer} signers={(data.parties ?? []).filter((p) => p.email && sigTo.includes(p.id)).map((p) => p.name || p.email)} fields={sigFields} onChange={setSigFields} onClose={() => setPlacer(null)} />}
       </>
     );
