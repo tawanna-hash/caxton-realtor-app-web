@@ -108,6 +108,8 @@ type Props = {
   /** Readiness Check items in, from the Readiness Check list itself. */
   readiness?: { done: number; total: number; groups: { label: string; done: number; total: number }[] };
   /** Readiness groups (Buyer, Seller, Lender and so on) shown inside Documents. rowExtra adds form actions to rows that mirror a checklist document. */
+  onUploadOptionalFile?: (documentId: string, label: string, file: File | undefined) => void;
+  uploadBusyId?: string | null;
   renderReadiness?: (rowExtra: (readinessDocId: string) => ReactNode, requiredIds: Set<string>) => ReactNode;
   /** Readiness item id to the Documents checklist item it mirrors. */
   readinessLinks?: Record<string, string>;
@@ -166,7 +168,7 @@ function textHref(phone: string, name: string, address: string): string {
   return `sms:${digits}?&body=${encodeURIComponent(body)}`;
 }
 
-export default function DealSubpage({ readiness, renderReadiness, readinessLinks, deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onExtendDeal, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
+export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readiness, renderReadiness, readinessLinks, deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onExtendDeal, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'history');
   const [stagesOpen, setStagesOpen] = useState(false);
   // Stages stay closed until opened by hand, then close again on their own after five minutes.
@@ -1031,8 +1033,16 @@ export default function DealSubpage({ readiness, renderReadiness, readinessLinks
                       items: optionalDocs.map((doc): Item => ({
                         id: `o:${doc.id}`, title: doc.label, done: false, sub: doc.kind === 'reference' ? 'Reference' : 'Optional',
                         detail: (<>
-                          <p className="text-sm text-[#4A4757]">Add this document to the required list for this deal.</p>
-                          <button type="button" disabled={locked || requiredIds.has(doc.id)} onClick={() => onUpdate('documentChecks', { ...checks, [`add:${doc.id}`]: true })}>Add To Required</button>
+                          {(() => { const existing = deal.documents.find((d) => d.id === doc.id); const busy = uploadBusyId === doc.id; return (<>
+                            <div>
+                              <span className={lab}>File</span>
+                              {existing?.driveFileId ? <p className="mt-1 truncate text-sm text-[#005A00]">{existing.fileName || 'File Attached'}</p> : <p className="mt-1 text-[13px] text-[#6B6878]">No file attached.</p>}
+                            </div>
+                            <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:bg-[#EFEAF8]">
+                              {busy ? 'Uploading…' : existing?.driveFileId ? 'Replace File' : 'Upload File'}
+                              <input type="file" className="hidden" disabled={locked || busy} aria-label={`Upload file for ${doc.label}`} onChange={(e) => { onUploadOptionalFile?.(doc.id, doc.label, e.target.files?.[0]); e.target.value = ''; }} />
+                            </label>
+                          </>); })()}
                         </>),
                       })),
                     },

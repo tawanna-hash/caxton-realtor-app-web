@@ -2423,7 +2423,7 @@ export default function ClosingTime({
   const [documentUploadBusyId, setDocumentUploadBusyId] = useState<string | null>(null);
   const [documentUploadError, setDocumentUploadError] = useState<string>('');
 
-  const uploadDocumentFile = async (documentId: string, file: File | undefined) => {
+  const uploadDocumentFile = async (documentId: string, file: File | undefined, newLabel?: string) => {
     if (!file || !activeDeal) return;
     setDocumentUploadError('');
     setDocumentUploadBusyId(documentId);
@@ -2450,8 +2450,9 @@ export default function ClosingTime({
       if (!driveFileId) throw new Error('Upload failed.');
       const document = activeDeal.documents.find((entry) => entry.id === documentId);
       const now = new Date().toISOString();
-      applyActiveAction(`Attached file to document: ${document?.label ?? 'document'}`, {
-        documents: activeDeal.documents.map((entry) => entry.id === documentId
+      const base: AgentDocument[] = document || !newLabel ? activeDeal.documents : [...activeDeal.documents, { id: documentId, label: newLabel, status: 'requested', complete: false, requestedAt: now, updatedAt: now, driveFileId: '', fileName: '', fileUploadedAt: '' }];
+      applyActiveAction(`Attached file to document: ${document?.label ?? newLabel ?? 'document'}`, {
+        documents: base.map((entry) => entry.id === documentId
           ? {
               ...entry,
               driveFileId,
@@ -3523,6 +3524,8 @@ export default function ClosingTime({
                     key={`${deal?.id ?? 'none'}-${effectiveView}`}
                     readiness={deal ? readinessCounts(deal) : undefined}
                     readinessLinks={deal ? Object.fromEntries(readinessLinksFor(deal)) : undefined}
+                    onUploadOptionalFile={(docId, label, file) => { void uploadDocumentFile(docId, file, label); }}
+                    uploadBusyId={documentUploadBusyId}
                     renderReadiness={deal && effectiveView === 'd-documents' ? (rowExtra, requiredIds) => (
 <ReadinessChecklist
               rowExtra={rowExtra}

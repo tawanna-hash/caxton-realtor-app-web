@@ -25,7 +25,6 @@ const ALL_PURCHASE_FOLDERS: PurchaseFolder[] = [
   {
     id: 'resources', label: 'Transaction & Document Resources',
     docs: [
-      d('pd-required-docs-checklist', 'Required Transaction Documents Checklist', 'reference'),
       d('pd-form-index', 'Form Index & Description (TXR)', 'reference'),
     ],
   },
