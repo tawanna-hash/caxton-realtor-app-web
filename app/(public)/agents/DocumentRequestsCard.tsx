@@ -42,6 +42,7 @@ export default function DocumentRequestsCard({ deal, locked, documentGroups, onU
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [tick, setTick] = useState(0);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   const people = clientsOf(deal);
   const latest = useRef(deal);
@@ -115,6 +116,26 @@ export default function DocumentRequestsCard({ deal, locked, documentGroups, onU
     } catch { setMessage('Something went wrong.'); return null; } finally { setBusy(false); }
   }, []);
 
+  // Agent attaches the file on the client's behalf: stored with the deal's documents, request marked received.
+  const uploadFor = async (r: Req, file: File | undefined) => {
+    if (!file || locked) return;
+    setUploadingId(r.id); setMessage('');
+    try {
+      const documentId = `req-${r.id}`;
+      const form = new FormData();
+      form.set('file', file); form.set('dealId', deal.id); form.set('documentId', documentId);
+      const res = await fetch('/api/agent-command-center/documents/upload', { method: 'POST', body: form });
+      const data = (await res.json().catch(() => null)) as { driveFileId?: string; fileName?: string; fileUploadedAt?: string } | null;
+      if (!res.ok || !data?.driveFileId) { setMessage('Could not upload this file. Try again in a moment.'); return; }
+      const now = new Date().toISOString();
+      const entry = { id: documentId, label: r.label, status: 'received' as const, complete: true, requestedAt: r.createdAt, updatedAt: now, driveFileId: data.driveFileId, fileName: data.fileName ?? file.name, fileUploadedAt: data.fileUploadedAt ?? now };
+      const rest = latest.current.documents.filter((d) => d.id !== documentId);
+      onUpdate('documents', [...rest, entry]);
+      if (r.status === 'pending' || r.status === 'uploaded') await post({ action: 'request_received', id: r.id });
+      setMessage(`Attached ${file.name} to ${r.label}.`);
+    } catch { setMessage('Could not upload this file. Try again in a moment.'); } finally { setUploadingId(null); }
+  };
+
   const send = async () => {
     const label = preset === 'Other' ? custom.trim() : preset;
     if (!label) { setMessage('Enter what you need.'); return; }
@@ -178,6 +199,9 @@ export default function DocumentRequestsCard({ deal, locked, documentGroups, onU
             </span>
             {!locked && (
               <span className="flex shrink-0 gap-2">
+                {(() => { const attached = deal.documents.find((d) => d.id === `req-${r.id}`); const up = uploadingId === r.id; return (
+                  <label className={`${btn} cursor-pointer`}>{up ? 'Uploading…' : attached?.driveFileId ? 'Replace File' : 'Upload File'}<input type="file" className="hidden" disabled={busy || up} aria-label={`Upload file for ${r.label}`} onChange={(e) => { void uploadFor(r, e.target.files?.[0]); e.target.value = ''; }} /></label>
+                ); })()}
                 {r.status === 'uploaded' && <button type="button" disabled={busy} className={btn} onClick={() => void post({ action: 'request_received', id: r.id })}>Mark Received</button>}
                 {(r.status === 'pending' || r.status === 'uploaded') && <button type="button" disabled={busy} className={btn} onClick={() => { if (window.confirm('Cancel this request?')) void post({ action: 'request_cancel', id: r.id }); }}>Cancel</button>}
               </span>
