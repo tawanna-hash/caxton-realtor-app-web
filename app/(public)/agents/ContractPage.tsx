@@ -1,5 +1,6 @@
 'use client';
 
+import StatusSymbol from './StatusSymbol';
 import { parseLegalDescription } from '@/lib/legal-description';
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
@@ -503,7 +504,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
         <div className="flex items-center justify-between gap-4 border-b border-[#F6F3FB] px-[1.125rem] py-3">
           <div>
             <p className="text-sm font-medium text-slate-900">Earnest Money In Escrow</p>
-            <Tip text="Shown to the client as the deposit held in escrow" />
+            <Tip critical text="Shown to the client as the deposit held in escrow" />
           </div>
           <label className="flex w-36 items-center gap-1 rounded-md border border-[#E6E5EC] px-2 text-sm text-slate-500 focus-within:border-[#301D5D]">$
             <input value={deal.earnestInEscrow || asNumber(deal.contractDetails.earnestMoney)} onChange={(e) => onPatch({ earnestInEscrow: e.target.value })} inputMode="decimal" aria-label="Earnest money in escrow" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
@@ -512,7 +513,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
         <div className="px-[1.125rem] py-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-900">Estimated Cash To Close</p>
-            <Tip text="Shown on the client's closing page" />
+            <Tip critical text="Shown on the client's closing page" />
           </div>
           <ul className="mt-2 divide-y divide-[#F6F3FB]">
             {lines.map((line) => (
@@ -546,7 +547,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
         {[{ id: 'key-details', title: 'Key Details', filled: terms.filter((t) => t.value.trim()).length, total: terms.length }, ...CONTRACT_MAP_SECTIONS.map((x) => { const vis = x.fields.filter((fl) => !hidden.includes(fl.id)); return { id: x.id as string, title: x.title as string, filled: vis.filter((fl) => getVal(fl.id).trim()).length, total: vis.length }; })].map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
             className="ds-tab !flex-none !whitespace-nowrap">
-            {t.title}<span className={`ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${t.filled === t.total && t.total > 0 ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{t.filled}/{t.total}</span>
+            {t.title}<span className={`ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${t.filled === t.total && t.total > 0 ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{t.filled === t.total && t.total > 0 && <StatusSymbol label="On track" />}{t.filled}/{t.total}</span>
           </button>
         ))}
       </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import StatusSymbol from './StatusSymbol';
 import MasterDetail, { DetailFields } from './MasterDetail';
 import SectionNav from './SectionNav';
 import Switch from './Switch';
@@ -158,7 +159,7 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
                   <span className="min-w-0 truncate text-[14px] text-[#4A4757]">{urlOf('')}</span>
                   <span className="flex shrink-0 items-center gap-2">
                     {live && <button type="button" aria-label="Copy URL" className="text-[#4A4757] hover:text-[#301D5D]" onClick={() => copy(urlOf(''))}>{copied === urlOf('') ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}</button>}
-                    <span className={`rounded-md px-2 py-0.5 text-[12px] font-semibold ${live ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#FEF8CC] text-[#645600]'}`}>{live ? 'Live' : 'Not live'}</span>
+                    <span className={`rounded-md px-2 py-0.5 text-[12px] font-semibold ${live ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#FEF8CC] text-[#645600]'}`}><StatusSymbol label={live ? 'On track' : 'Needs attention'} />{live ? 'Live' : 'Not live'}</span>
                   </span>
                 </div>
               )}
@@ -170,7 +171,7 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
                   </span>
                   <span className="flex shrink-0 items-center gap-2">
                     {live && <button type="button" aria-label="Copy combined URL" className="text-[#4A4757] hover:text-[#301D5D]" onClick={() => copy(urlOf('all'))}>{copied === urlOf('all') ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}</button>}
-                    <span className={`rounded-md px-2 py-0.5 text-[12px] font-semibold ${live ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#FEF8CC] text-[#645600]'}`}>{live ? 'Live' : 'Not live'}</span>
+                    <span className={`rounded-md px-2 py-0.5 text-[12px] font-semibold ${live ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#FEF8CC] text-[#645600]'}`}><StatusSymbol label={live ? 'On track' : 'Needs attention'} />{live ? 'Live' : 'Not live'}</span>
                   </span>
                 </div>
               )}
@@ -195,10 +196,11 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
               <h3 className="text-[16px] font-semibold text-[#1B1726]">Schedulers</h3>
               <div className="flex flex-wrap gap-2">
                 <button type="button" className={pill} aria-expanded={help} onClick={() => setHelp((h) => !h)}>Help</button>
-                <button type="button" className={pill} disabled={data.schedulers.length < 2} title={data.schedulers.length < 2 ? 'Create at least two schedulers first' : undefined} onClick={() => setCombo({ title: '', alias: '', ids: data.schedulers.map((s) => s.id) })}><Users className="h-3.5 w-3.5" aria-hidden="true" />Build a combined link</button>
+                <button type="button" className={pill} disabled={data.schedulers.length < 2} onClick={() => setCombo({ title: '', alias: '', ids: data.schedulers.map((s) => s.id) })}><Users className="h-3.5 w-3.5" aria-hidden="true" />Build a combined link</button>
                 <button type="button" className={primary} onClick={startNew}><Plus className="h-3.5 w-3.5" aria-hidden="true" />New Scheduler</button>
               </div>
             </div>
+            {data.schedulers.length < 2 && <p className="px-4 pb-3 text-[13px] text-[#4A4757]">Build a combined link needs at least two schedulers. Create another scheduler first.</p>}
             {help && (
               <div className="border-b border-[#F6F3FB] bg-[#F6F3FB] px-4 py-4 text-[13px] text-[#4A4757]">
                 <p><strong className="text-[#1B1726]">Schedulers</strong> are booking pages. Set your hours and meeting lengths; people pick an open time and get a confirmation with a calendar file.</p>
@@ -248,7 +250,7 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
                       <>
                         <div className="flex flex-wrap items-center gap-2">
                           <h4 className="text-[15px] font-semibold text-[#1B1726]">{s.config.name}</h4>
-                          <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${s.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#F6F3FB] text-[#4A4757]'}`}>{s.active ? 'On' : 'Off'}</span>
+                          <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${s.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#F6F3FB] text-[#4A4757]'}`}><StatusSymbol label={s.active ? 'On track' : 'Off'} />{s.active ? 'On' : 'Off'}</span>
                         </div>
                         <DetailFields rows={[
                           ['Meeting Length', s.config.lengths.map((l) => `${l} min`).join(' / ')],

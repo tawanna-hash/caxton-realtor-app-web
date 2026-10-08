@@ -578,8 +578,7 @@ function ReadinessChecklist({
   const pct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
   const [groupId, setGroupId] = useState<string>('');
   const activeGroup = groups.find((group) => group.id === groupId) ?? groups[0];
-  // Astro status colors: amber requested, green received or reviewed, gray not needed.
-  const dotColor = (status: AgentDocument['status']) => (status === 'received' || status === 'reviewed' ? '#00E200' : status === 'not_needed' ? '#B9B6C4' : '#FFAF3D');
+  // Astro status symbols: yellow square requested, green circle received or reviewed, gray circle not needed.
 
   const [selectedId, setSelectedId] = useState<string>('');
   const selectedRow = activeGroup?.rows.find((row) => row.document.id === selectedId) ?? activeGroup?.rows[0];
@@ -596,9 +595,9 @@ function ReadinessChecklist({
         aria-current={selected ? 'true' : undefined}
         className={`!flex !h-auto w-full !items-center !justify-start !gap-3 !rounded-none !border-0 !border-t !border-[#E6E5EC] !px-4 !py-3 text-left first:!border-t-0 ${selected ? '!bg-[#EFEAF8]' : '!bg-white hover:!bg-[#F6F3FB]'}`}
       >
-        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: dotColor(document.status) }} aria-hidden="true" />
+        <StatusSymbol label={document.status === 'received' || document.status === 'reviewed' ? 'On track' : document.status === 'not_needed' ? 'Off' : 'Needs attention'} />
         <span className="min-w-0 flex-1">
-          <span className={`block truncate text-sm font-semibold leading-5 ${isDone(document) ? 'text-[#6B6878]' : 'text-[#1B1726]'}`}>{document.label}</span>
+          <span className={`block break-words text-sm font-semibold leading-5 ${isDone(document) ? 'text-[#6B6878]' : 'text-[#1B1726]'}`}>{document.label}</span>
           <span className="block text-[12px] font-normal leading-4 text-[#6B6878]">{statusText(document.status)}{document.driveFileId ? ' · File Attached' : ''}</span>
         </span>
         {requiredIds?.has(document.id) ? <span className="ds-chip shrink-0 bg-[#EFEAF8] text-[#301D5D]">Required</span> : null}
@@ -704,7 +703,7 @@ function ReadinessChecklist({
                 className="ds-tab !flex-none !whitespace-nowrap"
               >
                 {group.label}
-                <span className={`ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${done === group.rows.length && group.rows.length > 0 ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{done}/{group.rows.length}</span>
+                <span className={`ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${done === group.rows.length && group.rows.length > 0 ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{done === group.rows.length && group.rows.length > 0 && <StatusSymbol label="On track" />}{done}/{group.rows.length}</span>
               </button>
             );
           })}
@@ -2661,7 +2660,7 @@ export default function ClosingTime({
       </label>
       <div className="ds-card flex min-w-0 flex-col gap-3">
         <p className="text-[13px] font-medium text-[#1B1726]">Earnest Money Deposit</p>
-        <Tip text="TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies." />
+        <Tip critical text="TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies." />
         <input
           type="date"
           readOnly
@@ -2933,8 +2932,8 @@ export default function ClosingTime({
                   >
                     <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#7059A8]" aria-hidden="true" />
                     <span className="min-w-0">
-                      <span className="block truncate text-sm">Template</span>
-                      <span className="block truncate text-xs ds-sub">Edits Apply To New Contracts</span>
+                      <span className="block break-words text-sm">Template</span>
+                      <span className="block break-words text-xs ds-sub">Edits Apply To New Contracts</span>
                     </span>
                   </button>
                 </li>
@@ -2943,7 +2942,7 @@ export default function ClosingTime({
               {[...activeDeals, ...closedDeals].map((deal) => {
                 const days = daysUntilClosing(deal.closingDate, today);
                 const closed = isDealClosedAndComplete(deal);
-                const tone = closed ? 'bg-slate-300' : days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#FF2A04] ring-1 ring-[#661102]' : days <= 7 ? 'bg-[#FAD800] ring-1 ring-[#645600]' : 'bg-[#00E200] ring-1 ring-[#005A00]';
+                const symbol = closed || days === null ? 'Off' : days < 0 ? 'Overdue' : days <= 7 ? 'Needs attention' : 'On track';
                 const selected = deal.id === activeDealId && workspacePage === 2 && DEAL_TABS.some((t) => t.id === effectiveView);
                 return (
                   <li key={deal.id} className="group/deal relative">
@@ -2955,10 +2954,10 @@ export default function ClosingTime({
                       aria-label={deal.propertyAddress || deal.title}
                       title={deal.propertyAddress || deal.title}
                     >
-                      <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${tone}`} aria-hidden="true" />
+                      <span className="mt-1.5 shrink-0"><StatusSymbol label={symbol} /></span>
                       <span className="min-w-0">
-                        <span className="block truncate text-sm">{deal.propertyAddress || deal.title}</span>
-                        <span className="block truncate text-xs ds-sub">{closed ? 'Closed' : days === null ? 'Closing Date Not Set' : closingCountdownLabel(deal.closingDate, today)}</span>
+                        <span className="block break-words text-sm">{deal.propertyAddress || deal.title}</span>
+                        <span className="block break-words text-xs ds-sub">{closed ? 'Closed' : days === null ? 'Closing Date Not Set' : closingCountdownLabel(deal.closingDate, today)}</span>
                       </span>
                     </button>
                     {!isDealLocked(deal) && (
@@ -3208,7 +3207,7 @@ export default function ClosingTime({
                           <>
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="text-[15px] font-semibold text-[#1B1726]">{c.name}</h3>
-                              {contactsTab === 'clients' && <span className={`ds-chip ${c.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{c.active ? 'Active Client' : 'Past Client'}</span>}
+                              {contactsTab === 'clients' && <span className={`ds-chip ${c.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}><StatusSymbol label={c.active ? 'On track' : 'Off'} />{c.active ? 'Active Client' : 'Past Client'}</span>}
                             </div>
                             <DetailFields rows={[
                               [contactsTab === 'clients' ? 'Stage' : 'Role', contactsTab === 'clients' ? (c.active ? 'Active Client' : 'Past Client') : (c.role || '')],
@@ -3237,7 +3236,7 @@ export default function ClosingTime({
               const openDeal = (deal: (typeof deals)[number]) => { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setDeskView('deal-page'); };
               const row = (deal: (typeof deals)[number]) => {
                 const days = daysUntilClosing(deal.closingDate, today);
-                const dot = days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#FF2A04] ring-1 ring-[#661102]' : days <= 7 ? 'bg-[#FAD800] ring-1 ring-[#645600]' : 'bg-[#00E200] ring-1 ring-[#005A00]';
+                const dotLabel = days === null ? 'Off' : days < 0 ? 'Overdue' : days <= 7 ? 'Needs attention' : 'On track';
                 const stageIdx = Math.max(0, stageList.indexOf(deal.workflowStatus as (typeof stageList)[number]));
                 const pct = Math.round(((stageIdx + 1) / stageList.length) * 100);
                 const openTasks = deal.tasks.filter((t) => !t.complete).length;
@@ -3245,7 +3244,7 @@ export default function ClosingTime({
                 return (
                   <li key={deal.id}>
                     <button type="button" onClick={() => openDeal(deal)} className="ds-closing-row">
-                      <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${dot}`} aria-hidden="true" />
+                      <span className="mt-1 shrink-0"><StatusSymbol label={dotLabel} /></span>
                       <span className="min-w-0 flex-1 text-left">
                         <span className="flex flex-wrap items-center gap-2">
                           <span className="truncate text-sm font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
@@ -3646,7 +3645,7 @@ export default function ClosingTime({
                     Send Deadline Alerts By Text
                   </label>
                   <input id="closing-time-sms-phone" aria-label="Mobile Number" type="tel" defaultValue={notificationPreferences.smsPhone} placeholder="Mobile Number" className="block w-full max-w-sm rounded-md border border-[#E6E5EC] px-3 py-2 text-sm font-normal text-slate-800" />
-                  <Tip text="Each text includes the property address. Message and data rates may apply. Reply STOP to opt out." />
+                  <Tip critical text="Each text includes the property address. Message and data rates may apply. Reply STOP to opt out." />
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
@@ -3817,9 +3816,9 @@ export default function ClosingTime({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <span className="block truncate font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
+                        <span className="block break-words font-semibold text-slate-900">{deal.propertyAddress || deal.title}</span>
                         {(deal.buyerNames || deal.sellerNames) && (
-                          <span className="mt-0.5 block truncate text-xs text-slate-500">{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(' · ')}</span>
+                          <span className="mt-0.5 block break-words text-xs text-slate-500">{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(' · ')}</span>
                         )}
                       </div>
                       <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
@@ -3981,12 +3980,12 @@ export default function ClosingTime({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <span className="flex items-center gap-2 truncate font-semibold text-slate-900">
+                        <span className="flex items-center gap-2 break-words font-semibold text-slate-900">
                           <Lock className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-                          <span className="truncate">{deal.propertyAddress || deal.title}</span>
+                          <span className="break-words">{deal.propertyAddress || deal.title}</span>
                         </span>
                         {(deal.buyerNames || deal.sellerNames) && (
-                          <span className="mt-0.5 block truncate text-xs text-slate-500">{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(' · ')}</span>
+                          <span className="mt-0.5 block break-words text-xs text-slate-500">{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(' · ')}</span>
                         )}
                       </div>
                       <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
@@ -4111,7 +4110,7 @@ export default function ClosingTime({
                             <div key={task.id} role="button" tabIndex={0} aria-current={selectedTask.id === task.id ? 'true' : undefined} onClick={() => setSelectedTaskId(task.id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelectedTaskId(task.id); } }} className={`flex cursor-pointer items-center gap-3 border-t border-[#E6E5EC] px-[1.125rem] py-3 first:border-t-0 ${selectedTask.id === task.id ? 'bg-[#EFEAF8]' : 'hover:bg-[#F6F3FB]'}`}>
                               <button type="button" onClick={(event) => { event.stopPropagation(); updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' }); }} className={`flex !h-[18px] !w-[18px] !min-h-0 !min-w-0 shrink-0 items-center justify-center !rounded-[4px] border !p-0 border-[#B9B6C4] bg-white hover:!border-[#B9B6C4] hover:!bg-white ${task.complete ? '!text-[#301D5D]' : '!text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />}</button>
                               <span className="min-w-0 flex-1">
-                                <span className={`block truncate text-sm font-semibold ${task.complete ? 'text-[#6B6878] line-through' : 'text-[#1B1726]'}`}>{taskTitleCase(task.title)}</span>
+                                <span className={`block break-words text-sm font-semibold ${task.complete ? 'text-[#6B6878] line-through' : 'text-[#1B1726]'}`}>{taskTitleCase(task.title)}</span>
                                 <span className="block text-[12px] text-[#6B6878]">{task.dueDate ? formatDate(task.dueDate) : 'No Due Date'}{task.priority !== 'normal' ? ` · ${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}` : ''}{task.note ? ' · Note' : ''}</span>
                               </span>
                             </div>

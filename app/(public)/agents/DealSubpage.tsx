@@ -584,7 +584,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
       })()}
       <div className="ds-card !bg-[#EFEAF8]">
         <p className="text-[15px] font-semibold text-[#1B1726]">Key Deadlines</p>
-        <Tip text="Enter the signed contract's effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules." />
+        <Tip critical text="Enter the signed contract's effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules." />
         {timelineFields}
         {trackedDeadlines.length > 0 && (
           <div className="mt-4 border-t border-[#E6E5EC] pt-3">
@@ -603,7 +603,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                 <div key={item.id} className="ds-list-row">
                   <input type="checkbox" aria-label={`Mark ${item.label} done`} checked={item.done} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...deal.documentChecks, [`dl:${item.id}`]: e.target.checked })} />
                   <span className="min-w-0 flex-1">
-                    <span className={`block truncate text-sm ${item.done ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{item.label}</span>
+                    <span className={`block break-words text-sm ${item.done ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{item.label}</span>
                     <span className="block text-xs text-slate-500">{formatDate(item.date)}</span>
                   </span>
                   <span className={`ds-chip ${chip.cls}`}>{chip.text}</span>
@@ -823,7 +823,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                     {cardHead(<AlertCircle className="h-4 w-4 text-[#645600]" aria-hidden="true" />, 'Needs Your Attention', attentionRows.length, 'bg-[#FEF8CC] text-[#645600]')}
                     {attentionRows.length === 0 ? <p className="px-4 py-4 text-xs text-slate-500">Nothing needs you right now.</p> : attentionRows.map((item) => (
                       <div key={item.key} className="border-b border-[#F6F3FB] px-4 py-3">
-                        <p className={`text-[11px] font-medium ${item.tone === 'red' ? 'text-[#661102]' : 'text-[#645600]'}`}>{item.eyebrow}</p>
+                        <p className={`text-[11px] font-medium ${item.tone === 'red' ? 'text-[#661102]' : 'text-[#645600]'}`}><StatusSymbol label={item.tone === 'red' ? 'Overdue' : 'Needs attention'} />{item.eyebrow}</p>
                         <p className="mt-0.5 text-sm font-semibold text-slate-900">{item.title}</p>
                         <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
                         <button type="button" className="mt-2" onClick={() => onOpenView(item.go)}>Open</button>
@@ -929,7 +929,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                 <div key={doc.id} className="ds-list-row">
                   <input type="checkbox" aria-label={`Mark ${doc.label} submitted`} checked={Boolean(checks[doc.id])} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...checks, [doc.id]: e.target.checked })} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm text-slate-900">{doc.label}</span>
+                    <span className="block break-words text-sm text-slate-900">{doc.label}</span>
                     {(addedOptional || (!checks[doc.id] && dueFor(doc.id))) && <span className="block text-xs text-slate-500">{[addedOptional ? 'Added From Optional' : '', !checks[doc.id] && dueFor(doc.id) ? `${dueFor(doc.id)!.label} ${formatDate(dueFor(doc.id)!.date)}` : ''].filter(Boolean).join(' · ')}</span>}
                   </span>
                   {form && <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{formStatus(form)}</span>}
@@ -1078,10 +1078,10 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                           <div className="min-w-0 border-b border-[#E6E5EC] lg:border-b-0">
                             {section.items.map((item) => (
                               <button key={item.id} type="button" onClick={() => setDocSel(item.id)} aria-current={selected?.id === item.id ? 'true' : undefined} className={`!flex !h-auto w-full !items-center !justify-start !gap-3 !rounded-none !border-0 !border-t !border-[#E6E5EC] !px-4 !py-3 text-left first:!border-t-0 ${selected?.id === item.id ? '!bg-[#EFEAF8]' : '!bg-white hover:!bg-[#F6F3FB]'}`}>
-                                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.done ? '#00e200' : '#ffaf3d' }} aria-hidden="true" />
+                                <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" className="shrink-0">{item.done ? <circle cx="6" cy="6" r="5" fill="#00e200" /> : <rect x="1.5" y="1.5" width="9" height="9" fill="#fad800" />}</svg>
                                 <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-sm font-semibold text-[#1B1726]">{item.title}</span>
-                                  <span className="block truncate text-[12px] font-normal text-[#6B6878]">{item.sub}</span>
+                                  <span className="block break-words text-sm font-semibold text-[#1B1726]">{item.title}</span>
+                                  <span className="block break-words text-[12px] font-normal text-[#6B6878]">{item.sub}</span>
                                 </span>
                                 {section.id === 'required' ? <span className="ds-chip shrink-0 bg-[#EFEAF8] text-[#301D5D]">Required</span> : null}
                               </button>
