@@ -107,6 +107,10 @@ type Props = {
   onOpenView: (view: string) => void;
   /** Readiness Check items in, from the Readiness Check list itself. */
   readiness?: { done: number; total: number; groups: { label: string; done: number; total: number }[] };
+  /** Readiness groups (Buyer, Seller, Lender and so on) shown inside Documents. rowExtra adds form actions to rows that mirror a checklist document. */
+  renderReadiness?: (rowExtra: (readinessDocId: string) => ReactNode) => ReactNode;
+  /** Readiness item id to the Documents checklist item it mirrors. */
+  readinessLinks?: Record<string, string>;
   section?: Tab;
   stripOnly?: boolean;
   trecForms?: readonly { formFamily: string; formNumber: string; title: string; total: number; filled: number; selected: boolean }[];
@@ -162,7 +166,7 @@ function textHref(phone: string, name: string, address: string): string {
   return `sms:${digits}?&body=${encodeURIComponent(body)}`;
 }
 
-export default function DealSubpage({ readiness, deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onExtendDeal, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
+export default function DealSubpage({ readiness, renderReadiness, readinessLinks, deal, today, locked, health, statusLabels, statuses, documentGroups, nextDeadline, deadlines, timelineFields, alerts, onOpenAlerts, formatDate, countdownLabel, onUpdate, onExtendDeal, onBack, onOpenView, section, stripOnly, trecForms, onOpenTrecForm, onUploadTrecForm, onToggleTrecForm }: Props) {
   const [tab, setTab] = useState<Tab>(section ?? 'history');
   const [stagesOpen, setStagesOpen] = useState(false);
   // Stages stay closed until opened by hand, then close again on their own after five minutes.
@@ -370,7 +374,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
 <>
           <h3 className="ds-side-title">Workspace</h3>
           <div className="ds-card ds-list">
-            {([['transaction', 'Contract'], ['readiness', 'Readiness Check'], ['audit', 'Audit Trail']] as const).map(([view, label]) => (
+            {([['transaction', 'Contract'], ['audit', 'Audit Trail']] as const).map(([view, label]) => (
               <button key={view} type="button" onClick={() => onOpenView(view)} className="ds-list-row ds-link-row"><span className="min-w-0 flex-1 text-left">{label}</span><ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></button>
             ))}
           </div>
@@ -685,7 +689,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
                 <div className="ds-card">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-[15px] font-semibold text-[#1B1726]">Readiness</p>
-                    <button type="button" onClick={() => onOpenView('readiness')}>Open Readiness Check</button>
+                    <button type="button" onClick={() => onOpenView('d-documents')}>Open Documents</button>
                   </div>
                   <p className="mt-1 text-xs text-slate-500">{r ? `${r.done} of ${r.total} items in` : 'No readiness items yet.'}</p>
                   <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EFEAF8]" role="progressbar" aria-valuenow={pctDone} aria-valuemin={0} aria-valuemax={100} aria-label="Readiness progress"><div className="h-full rounded-full bg-[#301D5D]" style={{ width: `${pctDone}%` }} /></div>
@@ -765,7 +769,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
             ];
             const requiredDone = requiredIdList.filter((id) => deal.documentChecks[id]).length;
             const handling = [
-              { key: 'readiness', title: 'Readiness check', detail: readiness ? `${readiness.done} of ${readiness.total} readiness items in` : `${requiredDone} of ${requiredIdList.length} required documents in`, chip: (readiness ? readiness.done === readiness.total : requiredDone === requiredIdList.length) ? 'Complete' : 'In progress', go: 'readiness' },
+              { key: 'readiness', title: 'Document readiness', detail: readiness ? `${readiness.done} of ${readiness.total} readiness items in` : `${requiredDone} of ${requiredIdList.length} required documents in`, chip: (readiness ? readiness.done === readiness.total : requiredDone === requiredIdList.length) ? 'Complete' : 'In progress', go: 'd-documents' },
             ];
             const cardHead = (icon: ReactNode, title: string, count: number, tone: string) => (
               <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
@@ -855,7 +859,10 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
             const allDocs = docFolders.flatMap((folder) => folder.docs);
             const isAdded = (id: string) => Boolean(checks[`add:${id}`]);
             const requiredDocs = allDocs.filter((doc) => doc.kind === 'required' || isAdded(doc.id));
-            const optionalDocs = allDocs.filter((doc) => doc.kind !== 'required' && !isAdded(doc.id));
+            const optionalDocs = allDocs.filter((doc) => doc.kind !== 'required' && !isAdded(doc.id) && !(renderReadiness && Object.values(readinessLinks ?? {}).includes(doc.id)));
+            // Documents that also appear in the readiness groups are tracked there, so they are not listed twice.
+            const mirrored = new Set(renderReadiness ? Object.values(readinessLinks ?? {}) : []);
+            const requiredShown = requiredDocs.filter((doc) => !mirrored.has(doc.id));
             const requiredIds = new Set(requiredDocs.map((doc) => doc.id));
             const brokerageDocs = brokerageForms.filter((form) => checks[`bf:${form.id}`]);
             const totalRequired = requiredDocs.length + brokerageDocs.length;
@@ -921,11 +928,26 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
                     </div>
                   )}
                 </div>
+                {renderReadiness && <div className="min-w-0" style={{ order: -1 }}>{renderReadiness((readinessId) => {
+                  const checklistId = readinessLinks?.[readinessId];
+                  const doc = checklistId ? allDocs.find((d) => d.id === checklistId) : undefined;
+                  if (!doc) return null;
+                  const form = formInfo(doc.formFamily);
+                  const due = !checks[doc.id] ? dueFor(doc.id) : null;
+                  if (!form && !due) return null;
+                  return (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                      {form && <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{formStatus(form)}</span>}
+                      {form && <TrecFormActions family={form.formFamily} disabled={locked} onOpen={(family) => onOpenTrecForm?.(family)} onUpload={(family, mode) => onUploadTrecForm?.(family, mode)} />}
+                      {due && <span className="text-xs text-slate-500">{`${due.label} ${formatDate(due.date)}`}</span>}
+                    </div>
+                  );
+                })}</div>}
                 {(() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'required'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                     <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Required Documents</span>
                     <span className="text-xs font-medium text-slate-500">{submittedCount} of {totalRequired}</span>
                   </div>}>
-                  {requiredDocs.map(requiredRow)}
+                  {requiredShown.map(requiredRow)}
                   {brokerageDocs.map((form) => (
                     <div key={form.id} className="ds-list-row">
                       <input type="checkbox" aria-label={`Mark ${form.title} submitted`} checked={Boolean(checks[`bfs:${form.id}`])} disabled={locked} onChange={(e) => onUpdate('documentChecks', { ...checks, [`bfs:${form.id}`]: e.target.checked })} />

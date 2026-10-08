@@ -32,7 +32,6 @@ const DEAL_TABS: { id: string; label: string; keys: string[] }[] = [
   { id: 'd-schedule', label: 'Scheduling', keys: [] },
   { id: 'transaction', label: 'Contract', keys: ['current', 'trec-forms'] },
   { id: 'tasks', label: 'Tasks and Reminders', keys: ['tasks'] },
-  { id: 'readiness', label: 'Readiness Check', keys: ['readiness'] },
   { id: 'audit', label: 'Audit Trail', keys: ['audit'] },
 ];
 const TOOL_VIEWS: { id: string; label: string; keys: string[] }[] = [
@@ -63,7 +62,7 @@ const SECURITY_VIEW = { id: 'security', label: 'Security', keys: [] as string[] 
 const AUTOMATIONS_VIEW = { id: 'automations', label: 'Automations', keys: [] as string[] };
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, SETTINGS_VIEW, UTILITIES_VIEW, DATA_VIEW, TESTIMONIALS_VIEW, AUTOMATIONS_VIEW, SECURITY_VIEW, DOCTOOLS_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug, 'my-schedule': CalendarClock, 'setup-help': ListChecks };
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   AlertTriangle,
   Bell,
@@ -610,7 +609,9 @@ function ReadinessChecklist({
   removeDocumentFile,
   documentUploadBusyId,
   documentUploadError,
+  rowExtra,
 }: {
+  rowExtra?: (documentId: string) => ReactNode;
   headingTag?: 'h2' | 'h3';
   side?: string;
   documents: AgentDocument[];
@@ -652,6 +653,7 @@ function ReadinessChecklist({
         <div className="min-w-0">
           <p className={`text-sm font-semibold leading-5 ${done ? 'text-[#6B6878]' : 'text-[#1B1726]'}`}>{document.label}</p>
           {description ? <p className="mt-0.5 text-[13px] leading-5 text-[#6B6878]">{description}</p> : null}
+          {rowExtra?.(document.id)}
           {hasFile ? (
             <span className="mt-1.5 inline-flex max-w-full items-center gap-1.5 truncate rounded-md bg-[#E0FBE0] px-2 py-0.5 text-xs font-medium text-[#005A00]">
               <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -693,10 +695,10 @@ function ReadinessChecklist({
   };
 
   return (
-    <div className="ds-page min-w-0 max-w-full" data-testid="readiness-check" data-section-key="readiness">
+    <div className="ds-page min-w-0 max-w-full" data-testid="readiness-check">
       <div className="rounded-2xl border border-[#E6E5EC] bg-white">
         <div className="px-[1.125rem] py-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B6878]">Readiness Check</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B6878]">Document Checklist</p>
           <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
             <h3 className="text-sm font-semibold text-[#1B1726]">Deal Readiness Checklist</h3>
             <span className="text-[13px] text-[#4A4757]">{doneCount} Of {totalCount} Items In</span>
@@ -1456,7 +1458,7 @@ export default function ClosingTime({
   const [savedContacts, setSavedContacts] = useState<{ email: string; name: string; deal_id: string; property: string; closed_date: string }[]>([]);
   const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
-  const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
+  const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView === 'readiness' ? 'd-documents' : deskView;
   useEffect(() => {
     if (effectiveView !== 'contacts') return;
     void fetch('/api/closing-time/contacts', { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d?.contacts) setSavedContacts(d.contacts); }).catch(() => undefined);
@@ -3125,7 +3127,7 @@ export default function ClosingTime({
             })()}
             {DEAL_TABS.some((t) => t.id === effectiveView) && (
               <nav aria-label="Deal sections" className="ds-dealnav mb-4">
-                {([['Deal', ['d-overview', 'transaction']], ['Work', ['d-documents', 'd-people', 'd-messages', 'd-schedule', 'd-portal', 'tasks', 'readiness', 'audit']]] as const).map(([group, ids]) => (
+                {([['Deal', ['d-overview', 'transaction']], ['Work', ['d-documents', 'd-people', 'd-messages', 'd-schedule', 'd-portal', 'tasks', 'audit']]] as const).map(([group, ids]) => (
                   <div key={group} className="ds-dealnav-group" role="group" aria-label={group}>
                     <span className="ds-dealnav-label">{group}</span>
                     {(ids as readonly string[]).map((id) => DEAL_TABS.find((tab) => tab.id === id)).filter((tab): tab is (typeof DEAL_TABS)[number] => Boolean(tab)).map((tab) => (
@@ -3450,7 +3452,7 @@ export default function ClosingTime({
                 </div>
               );
             })()}
-            {activeDeal && ['audit', 'transaction', 'readiness', 'd-messages', 'd-portal', 'd-schedule'].includes(effectiveView) && <DocumentRequestsCard headless key={`sync-${activeDeal.id}`} deal={activeDeal} locked={isDealLocked(activeDeal)} documentGroups={DOCUMENT_GROUPS} onUpdate={updateActiveDeal} />}
+            {activeDeal && ['audit', 'transaction', 'd-messages', 'd-portal', 'd-schedule'].includes(effectiveView) && <DocumentRequestsCard headless key={`sync-${activeDeal.id}`} deal={activeDeal} locked={isDealLocked(activeDeal)} documentGroups={DOCUMENT_GROUPS} onUpdate={updateActiveDeal} />}
             {effectiveView === 'utilities' && <UtilitiesPanel />}
             {effectiveView === 'data-backups' && <DataBackupsPanel />}
             {effectiveView === 'automations' && <AutomationsPanel />}
@@ -3493,6 +3495,23 @@ export default function ClosingTime({
                   <DealSubpage
                     key={`${deal?.id ?? 'none'}-${effectiveView}`}
                     readiness={deal ? readinessCounts(deal) : undefined}
+                    readinessLinks={deal ? Object.fromEntries(readinessLinksFor(deal)) : undefined}
+                    renderReadiness={deal && effectiveView === 'd-documents' ? (rowExtra) => (
+<ReadinessChecklist
+              rowExtra={rowExtra}
+              side={effectiveAgentSide(deal)}
+              documents={deal.documents}
+              documentName={documentName}
+              setDocumentName={setDocumentName}
+              addDocument={addDocument}
+              updateDocument={updateDocument}
+              reviewAlerts={reviewAlerts}
+              uploadDocumentFile={uploadDocumentFile}
+              removeDocumentFile={removeDocumentFile}
+              documentUploadBusyId={documentUploadBusyId}
+              documentUploadError={documentUploadError}
+            />
+                    ) : undefined}
                     section={effectiveView === 'd-documents' ? 'documents' : effectiveView === 'd-people' ? 'people' : 'overview'}
                     deal={deal ?? undefined}
                     today={today}
@@ -4069,19 +4088,6 @@ export default function ClosingTime({
               </div>
             </div>
 
-            <ReadinessChecklist
-              side={effectiveAgentSide(activeDeal)}
-              documents={activeDeal.documents}
-              documentName={documentName}
-              setDocumentName={setDocumentName}
-              addDocument={addDocument}
-              updateDocument={updateDocument}
-              reviewAlerts={reviewAlerts}
-              uploadDocumentFile={uploadDocumentFile}
-              removeDocumentFile={removeDocumentFile}
-              documentUploadBusyId={documentUploadBusyId}
-              documentUploadError={documentUploadError}
-            />
           </div>
           <section {...collapsible('audit')} className="ds-card mt-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
