@@ -69,7 +69,7 @@ export default function DataBackupsPanel() {
         <h2 className="ds-title !mt-0">Data And Backups</h2>
         <p className="ds-subtitle">Export your data and keep monthly backups.</p>
       </div>
-      <section className="rounded-lg border border-[#E6E5EC] bg-white p-5">
+      <section className="ds-card">
         <h2 className="text-[14px] font-semibold text-[#1B1726]">Export Your Data</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Your deals and contacts belong to you. Download them any time in open formats.</p>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -79,7 +79,7 @@ export default function DataBackupsPanel() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-[#E6E5EC] bg-white p-5">
+      <section className="ds-card">
         <h2 className="text-[14px] font-semibold text-[#1B1726]">Monthly Backups</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">A backup is saved on the first of each month, and before every import. The last 12 are kept. Texas brokers must keep transaction records for four years.</p>
         <div className="mt-3"><button type="button" className={BTN} disabled={busy} onClick={() => void backupNow()}>Back Up Now</button></div>
@@ -94,7 +94,7 @@ export default function DataBackupsPanel() {
         </ul>
       </section>
 
-      <section className="rounded-lg border border-[#E6E5EC] bg-white p-5">
+      <section className="ds-card">
         <h2 className="text-[14px] font-semibold text-[#1B1726]">Import Deals</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Upload a CSV from dotloop, Paperless Pipeline, a spreadsheet or any other system. The first row must be column names. A column named Property Address is required. Buyers, Sellers, Effective Date, Closing Date, Status, Lender and Notes are optional. Deals with an address you already have are skipped.</p>
         <div className="mt-3">

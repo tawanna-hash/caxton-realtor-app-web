@@ -135,7 +135,7 @@ export default function AlertSetupContent() {
 
       <div className="mt-8 space-y-4">
         {sections.map((section) => (
-          <section key={section.id} id={section.id} className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
+          <section key={section.id} id={section.id} className="ds-card scroll-mt-24">
             <div className="flex items-start gap-3">
               {section.icon}
               <div>
@@ -159,7 +159,7 @@ export default function AlertSetupContent() {
           </section>
         ))}
 
-        <section id="troubleshooting" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
+        <section id="troubleshooting" className="ds-card scroll-mt-24">
           <div className="flex items-start gap-3">
             <Wrench className={iconClass} aria-hidden="true" />
             <div>

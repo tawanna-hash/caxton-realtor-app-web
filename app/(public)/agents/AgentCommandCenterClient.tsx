@@ -97,7 +97,7 @@ export default function AgentCommandCenterClient({
             </div>
           </div>
 
-          <aside className="rounded-xl border border-[#E6E5EC] bg-white p-4">
+          <aside className="ds-card">
             <p className="ds-eyebrow">Today&apos;s agent desk</p>
             <div className="mt-4 space-y-4">
               {[

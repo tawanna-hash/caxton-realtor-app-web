@@ -76,7 +76,7 @@ export default function CustomFormsPanel({ section, label, dealContext }: { sect
       {loaded && forms.length === 0 && <p className="mt-2 text-sm text-slate-500">Nothing here yet. Upload a form to add it.</p>}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         {forms.map((form) => (
-          <article key={form.id} className="flex min-w-0 flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4">
+          <article key={form.id} className="ds-card flex min-w-0 flex-col justify-between gap-4">
             <div className="flex min-w-0 items-start gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFEAF8] text-[#301D5D]"><FileText className="h-5 w-5" aria-hidden="true" /></span>
               <div className="min-w-0">

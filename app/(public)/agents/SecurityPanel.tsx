@@ -34,7 +34,7 @@ export default function SecurityPanel() {
         <h2 className="ds-title !mt-0">Security</h2>
         <p className="ds-subtitle">Protect your account and see how your data is handled.</p>
       </div>
-      <section className="rounded-lg border border-[#E6E5EC] bg-white p-5">
+      <section className="ds-card">
         <h2 className="text-[14px] font-semibold text-[#1B1726]">Two-Step Sign-In</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Adds a 6-digit code from an authenticator app such as Google Authenticator, 1Password or Authy to your password sign-in. Once it is on, email links and password reset links no longer sign you in by themselves. You sign in with your password and a code.</p>
         {enabled === null && <p className="mt-3 text-[14px] text-[#7A7787]">Checking.</p>}
@@ -81,7 +81,7 @@ export default function SecurityPanel() {
         {msg && <p role="status" className="mt-3 text-[14px] text-[#661102]">{msg}</p>}
       </section>
 
-      <section className="rounded-lg border border-[#E6E5EC] bg-white p-5">
+      <section className="ds-card">
         <h2 className="text-[14px] font-semibold text-[#1B1726]">Security Practices</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">See what is in place today and what is not yet claimed on the <a className="underline text-[#301D5D]" href="/security">Security page</a>.</p>
       </section>
