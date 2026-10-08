@@ -8,7 +8,7 @@ import SchedulersPanel from './SchedulersPanel';
 import { dealPeople } from '@/lib/closing-time-people';
 import { readKeepScroll, useKeepScroll } from '@/lib/keep-scroll';
 import MessagesPanel from './MessagesPanel';
-import HelpTips from './HelpTips';
+import HelpTips, { type HowTo } from './HelpTips';
 import IntegrationsPanel from './IntegrationsPanel';
 import AlertSetupContent from './AlertSetupContent';
 import UtilitiesPanel from './UtilitiesPanel';
@@ -45,6 +45,23 @@ const CALC_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'calc-commission', label: 'Commission Calculator', keys: [] },
   { id: 'calc-cash', label: 'Cash-To-Close', keys: [] },
 ];
+const SCHEDULING_HOWTO: HowTo = {
+  title: 'My Scheduling',
+  intro: 'A scheduler is a booking page. People pick an open time and it lands on your calendar. Your schedulers here are not tied to any deal.',
+  steps: [
+    { step: 'Connect Your Calendar', text: 'Open Integrations and connect Google Calendar or Outlook. Without one, bookings use your Closing Time calendar and arrive by email with a calendar file.' },
+    { step: 'Set Your Custom URL', text: 'Under Your Custom Scheduler URL, choose Edit, enter your slug and Save. All of your schedulers share it.' },
+    { step: 'Create A Scheduler', text: 'Choose New Scheduler. Name it, then work through five steps: Select Calendars, Availability, Event Details, Appearance And Branding, and Workflow.' },
+    { step: 'Select Calendars', text: 'Pick the calendar that receives bookings. Optionally check up to six other calendars so busy times are skipped.' },
+    { step: 'Set Availability', text: 'Choose the meeting lengths, the days and hours you are open, and any buffer before and after each meeting.' },
+    { step: 'Add Event Details', text: 'Add a description, an online meeting link, extra attendees and up to ten questions for the person booking.' },
+    { step: 'Brand The Page', text: 'Add a welcome message, an optional redirect page after booking, and language and time format settings.' },
+    { step: 'Automate Reminders', text: 'Under Workflow, send up to two reminder emails before a meeting and one follow-up after it.' },
+    { step: 'Share The Link', text: 'In the Schedulers list, choose Copy Link or Open. Use the On and Off switch to pause a booking page without deleting it.' },
+    { step: 'Offer Several Meeting Types', text: 'Create a combined link to show several schedulers on one page so people choose the meeting type first.' },
+    { step: 'Manage Bookings', text: 'The Bookings list shows each person, time and answers. Cancel an upcoming booking and the person is emailed.' },
+  ],
+};
 const PERSONAL_DEAL = { id: '__personal__', title: 'Personal', propertyAddress: '', clientContacts: [], serviceProviders: [] } as unknown as AgentDeal;
 const DEALS_VIEW = { id: 'deals', label: 'Deals', keys: [] as string[] };
 const ALERT_SETUP_VIEW = { id: 'alert-setup', label: 'Alert Setup', keys: [] as string[] };
@@ -2957,7 +2974,7 @@ export default function ClosingTime({
             </div>
           </aside>
           <div className="ds-mainwrap min-w-0">
-            <HelpTips />
+            <HelpTips howTo={effectiveView === 'my-schedule' ? SCHEDULING_HOWTO : null} />
             {((effectiveView !== 'overview' && effectiveView !== 'deal-page') || DEAL_TABS.some((t) => t.id === effectiveView)) && (
               <div className="ds-toolbar">
             {effectiveView !== 'overview' && effectiveView !== 'deal-page' && (() => {

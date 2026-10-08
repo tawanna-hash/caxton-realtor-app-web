@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 type Entry = { label: string; text: string };
+export type HowTo = { title: string; intro?: string; steps: { step: string; text: string }[] };
 
 /** Reads every Tip currently on the page (each renders its text in a hidden span next to its field). */
 function collect(): Entry[] {
@@ -26,7 +27,7 @@ function collect(): Entry[] {
   return out;
 }
 
-export default function HelpTips() {
+export default function HelpTips({ howTo }: { howTo?: HowTo | null }) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Entry[]>([]);
   const [q, setQ] = useState('');
@@ -54,6 +55,15 @@ export default function HelpTips() {
               <button type="button" aria-label="Close help" onClick={() => setOpen(false)}>Close</button>
             </div>
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search tips" aria-label="Search tips" />
+            {howTo && (
+              <section className="ct-help-howto" aria-label={`How to: ${howTo.title}`}>
+                <h3 className="text-[14px] font-semibold text-[#301D5D]">{`How To: ${howTo.title}`}</h3>
+                {howTo.intro && <p className="mt-1 text-[13px] text-[#4A4757]">{howTo.intro}</p>}
+                <ol className="mt-2 list-decimal space-y-2 pl-5 text-[13px] text-[#4A4757]">
+                  {howTo.steps.map((h) => <li key={h.step}><strong className="text-[#1B1726]">{h.step}.</strong> {h.text}</li>)}
+                </ol>
+              </section>
+            )}
             <ul>
               {shown.map((i, n) => (
                 <li key={n}><strong>{i.label}</strong><span>{i.text}</span></li>
