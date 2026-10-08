@@ -110,7 +110,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
                       ['Effective', formatEffectiveDate(form.effectiveDate)],
                       ['Fields', total > 0 ? (filled > 0 ? `Fillable · ${filled} of ${total}` : `Fillable · ${total} fields`) : 'Notice · Nothing to Fill'],
                     ]} />
-                    <label className="flex items-center gap-2 text-sm text-[#1B1726]" title={dealContext.hasDeal ? 'Use on the current deal' : 'Create a Deal First'}>
+                    <label className="flex items-center gap-2 text-sm text-[#1B1726]">
                       <input
                         type="checkbox"
                         aria-label={`Use ${form.formNumber} on the current deal`}
@@ -118,7 +118,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
                         disabled={!dealContext.hasDeal || dealContext.locked}
                         onChange={(event) => dealContext.onToggle(form.formFamily, event.target.checked)}
                       />
-                      Use On The Current Deal
+                      Use On The Current Deal{!dealContext.hasDeal && <span className="ml-1 text-xs text-[#4A4757]">(create a deal first)</span>}
                     </label>
                     <div className="flex flex-wrap gap-2">
                       <TrecFormActions

@@ -50,8 +50,8 @@ export default function MasterDetail({ items, empty, renderDetail, backLabel, te
               >
                 {item.dot && <span className={`h-2 w-2 shrink-0 rounded-full ${item.dot}`} aria-hidden="true" />}
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold leading-5 text-[#1B1726] lg:truncate">{item.title}</span>
-                  {item.sub && <span className="block text-xs font-normal text-[#6B6878] lg:truncate">{item.sub}</span>}
+                  <span className="block text-sm font-semibold leading-5 text-[#1B1726] lg:break-words">{item.title}</span>
+                  {item.sub && <span className="block text-xs font-normal text-[#6B6878] lg:break-words">{item.sub}</span>}
                 </span>
                 {item.trailing && <span className="shrink-0 text-xs font-medium text-[#4A4757]">{item.trailing}</span>}
               </button>

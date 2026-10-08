@@ -20,7 +20,7 @@ export default function SignaturePlacer({ data, signers, fields, onChange, onClo
           <select className="min-h-[36px] rounded-md border border-slate-300 px-2" value={who} onChange={(e) => setWho(Number(e.target.value))}>{signers.map((s, i) => <option key={s + i} value={i}>{s}</option>)}</select></label>
         <label className="flex items-center gap-1">Field
           <select className="min-h-[36px] rounded-md border border-slate-300 px-2" value={type} onChange={(e) => setType(e.target.value as 'signature' | 'date')}><option value="signature">Signature</option><option value="date">Date</option></select></label>
-        <Tip text="Click the page to place it. Click a placed field to remove it." />
+        <Tip critical text="Click the page to place it. Click a placed field to remove it." />
         <button type="button" className="ml-auto min-h-[36px] rounded-md bg-[#301D5D] px-4 font-bold text-white" onClick={onClose}>Done</button>
       </div>
       {missing.length > 0 && <p className="bg-[#FEF8CC] px-3 py-2 text-xs text-[#645600]">Still needs a signature field: {missing.join(', ')}</p>}

@@ -211,7 +211,7 @@ export default function MessagesPanel({ deal, contact, checklist, requiredCheckl
           {files.map((f) => <div key={f.filename} className="flex items-center justify-between gap-3 rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] text-[#1B1726]"><span className="break-all">{f.filename} <span className="text-[12px] font-medium text-[#4A4757]">{Math.round(f.size / 1024)} KB</span></span><button type="button" className="text-[12px] font-medium text-[#4A4757] underline underline-offset-2 hover:!bg-transparent hover:!text-[#301D5D]" onClick={() => setFiles((l) => l.filter((x) => x.filename !== f.filename))}>Remove</button></div>)}
         </div>
       )}
-      <Tip text="Up to 5 files, 3 MB in total." />
+      <Tip critical text="Up to 5 files, 3 MB in total." />
     </div>
   );
   const composerInner = !party ? null : (
@@ -241,9 +241,9 @@ export default function MessagesPanel({ deal, contact, checklist, requiredCheckl
                         return <button key={p.key} type="button" onClick={() => setCc((c) => on ? c.filter((x) => x.toLowerCase() !== p.email.toLowerCase()) : [...c, p.email])} className={`!rounded-full !border !px-2 !py-0.5 !text-[11px] !leading-4 font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#4A4757]">{p.role}</span></button>;
                       })}
                       {cc.filter((c) => !parties.some((p) => p.email.toLowerCase() === c.toLowerCase())).map((c) => <button key={c} type="button" onClick={() => setCc((l) => l.filter((x) => x !== c))} className="!rounded-full !border !border-[#301D5D] !bg-[#EFEAF8] !px-3 !py-1 text-[12px] font-medium !text-[#1B1726] hover:!bg-[#EFEAF8]" title="Remove">{c} ×</button>)}
-                      <input className="min-w-[180px] flex-1 rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] text-[#1B1726]" placeholder="Add another email" value={ccInput} onChange={(e) => setCcInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const v = ccInput.trim(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && !cc.includes(v)) { setCc((l) => [...l, v]); setCcInput(''); } } }} />
+                      <input className="min-w-[180px] flex-1 rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] text-[#1B1726]" placeholder="Add another email" aria-label="Add another email to copy" value={ccInput} onChange={(e) => setCcInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const v = ccInput.trim(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && !cc.includes(v)) { setCc((l) => [...l, v]); setCcInput(''); } } }} />
                     </div>
-                    <Tip text="You are always copied. Press Enter to add an email." />
+                    <Tip critical text="You are always copied. Press Enter to add an email." />
                   </div>
                   <label className="block"><span className={lab}>Subject</span>
                     <div className="flex flex-col overflow-hidden rounded-lg border border-[#E6E5EC] bg-white sm:flex-row sm:items-center">
@@ -255,7 +255,7 @@ export default function MessagesPanel({ deal, contact, checklist, requiredCheckl
             <SpellHelper text={body} onChange={setBody} ignore={spellIgnore} />
             {attachUI}
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Tip text={`Goes to ${party.email}. You are copied and replies go to your email. The subject starts with the property address.`} />
+              <Tip critical text={`Goes to ${party.email}. You are copied and replies go to your email. The subject starts with the property address.`} />
               <span className="flex gap-2"><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !body} onClick={clearAll}>Clear</button>
               <button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !targets.length || !subject.trim() || !body.trim()} onClick={() => void sendEmail()}>Send Email</button></span>
             </div>
@@ -271,7 +271,7 @@ export default function MessagesPanel({ deal, contact, checklist, requiredCheckl
             <label className="block"><span className={lab}>Text</span><textarea className={field} rows={3} maxLength={900} value={body} onChange={(e) => setBody(e.target.value)} /></label>
             <SpellHelper text={body} onChange={setBody} ignore={spellIgnore} />
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Tip text={`Sent to ${party.phone}. The property address and a STOP line are added.`} />
+              <Tip critical text={`Sent to ${party.phone}. The property address and a STOP line are added.`} />
               <span className="flex gap-2"><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !body} onClick={clearAll}>Clear</button><button type="button" className={`${btn} !px-2 !py-0.5 !text-[11px] whitespace-nowrap`} disabled={busy || !targets.length || !body.trim()} onClick={() => void sendText()}>Send Text</button></span>
             </div>
           </div>
@@ -351,7 +351,7 @@ export default function MessagesPanel({ deal, contact, checklist, requiredCheckl
                 return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-full !border !px-2 !py-0.5 !text-[11px] !leading-4 font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#4A4757]">{p.role}</span></button>;
               })}
             </div>
-            <Tip text="Each person gets their own copy. Texts go only to people who agreed to texts." />
+            <Tip critical text="Each person gets their own copy. Texts go only to people who agreed to texts." />
           </div>
   );
   let body_: React.ReactNode;

@@ -183,7 +183,7 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
                 <ul className="mt-2 text-[14px] font-medium text-[#1B1726]">{view.forms.map((f) => <li key={f.family} className="py-0.5">{f.label}</li>)}</ul>
               </div>
             )}
-            <Tip text="Clients can also upload documents. Never shown: your notes, activity or internal checklists." />
+            <Tip critical text="Clients can also upload documents. Never shown: your notes, activity or internal checklists." />
           </div>
         )}
       </section>
