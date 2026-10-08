@@ -1,5 +1,6 @@
 'use client';
 
+import StatusSymbol from './StatusSymbol';
 import ContractPage from './ContractPage';
 import Switch from './Switch';
 import Link from 'next/link';
@@ -3318,7 +3319,7 @@ export default function ClosingTime({
                                   <span className="text-xs text-slate-500">{total ? `${done}/${total}` : '—'}</span>
                                 </div>
                               </td>
-                              <td data-label="Health"><span className={`ds-chip ${health.tone}`}>{health.label}</span></td>
+                              <td data-label="Health"><span className={`ds-chip ${health.tone}`}><StatusSymbol label={health.label} />{health.label}</span></td>
                               <td data-label="Closing" className="whitespace-nowrap">{deal.closingDate ? formatDate(deal.closingDate) : '—'}</td>
                               <td data-label="Last Activity" className="whitespace-nowrap pr-4">{sinceLabel(deal.activity[deal.activity.length - 1]?.createdAt)}</td>
                             </tr>

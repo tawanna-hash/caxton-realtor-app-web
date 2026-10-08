@@ -1,5 +1,6 @@
 'use client';
 
+import StatusSymbol from './StatusSymbol';
 import { dealPeople } from '@/lib/closing-time-people';
 import { blankFieldAlerts } from '@/lib/blank-field-alerts';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -724,7 +725,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
             <button type="button" className="text-sm font-medium text-[#301D5D] underline-offset-2 hover:underline" onClick={() => onOpenView('transaction')}>View Details</button>
           </div>
         </div>
-        <span className={`ds-chip ${health.tone}`}>{health.label}</span>
+        <span className={`ds-chip ${health.tone}`}><StatusSymbol label={health.label} />{health.label}</span>
       </div>
 
       </>)}
@@ -741,7 +742,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
             <p className="ds-subtitle">{clients.length ? clients.join(' · ') : 'No clients added'}{deal.owner ? ` · ${deal.owner}` : ''}</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`ds-chip ${health.tone}`}>{health.label}</span>
+            <span className={`ds-chip ${health.tone}`}><StatusSymbol label={health.label} />{health.label}</span>
             <select aria-label="Deal status" value={deal.workflowStatus} disabled={locked} onChange={(e) => onUpdate('workflowStatus', e.target.value as AgentDeal['workflowStatus'])} className="ds-select !h-[34px] !min-w-[170px]">
               {statuses.map((st) => <option key={st} value={st}>{statusLabels[st] ?? st}</option>)}
             </select>
