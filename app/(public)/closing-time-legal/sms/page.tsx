@@ -11,7 +11,7 @@ export default function Page() {
       title="Text Messaging Terms"
       intro={<p>Closing Time sends text messages about real estate transactions. This page explains who receives them, how consent works and how to stop them. See also our <a className="underline text-[#301D5D]" href="/privacy">Privacy Policy</a> and <a className="underline text-[#301D5D]" href="/terms">Terms Of Service</a>.</p>}
       sections={[
-        { title: 'Program', body: (<p>Closing Time Transaction Alerts. Closing Time is operated by Caxton Publications, Inc. Messages are sent for a licensed real estate agent who uses Closing Time to manage a transaction.</p>) },
+        { title: 'Program', body: (<p>Closing Time Transaction Alerts. Messages are sent for a licensed real estate agent who uses Closing Time to manage a transaction.</p>) },
         { title: 'Who Gets Texts And How They Agree', body: (<Ul items={[
           <><strong>Agents:</strong> an agent turns on deadline alerts in Closing Time in the Deadline Alerts section, enters a mobile number and checks the box labeled Send Deadline Alerts By Text. Agreeing to text alerts is optional and not required to use Closing Time.</>,
           <><strong>People on a deal (clients, lenders, title companies):</strong> the agent can ask a person on the deal to agree to text updates. The person receives one text asking them to reply YES. No other text is sent to that person until they reply YES.</>,

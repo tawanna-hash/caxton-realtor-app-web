@@ -407,7 +407,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
         <p className="text-[14px] font-semibold text-[#301D5D]">This Deal Closes Automatically On {formatCloseDate(autoClose.date)}</p>
         <p className="mt-1 text-[13px] text-[#4A4757]">
           {autoClose.hasClosingDate ? 'Deals close two weeks after the closing date.' : 'No closing date is entered, so this deal closes 180 days after it was opened.'}
-          {' '}After that it becomes read-only. Clear up the file before then{', or extend the deal.'}
+          {' '}After that it becomes read-only and the whole file is saved to your document storage. If you have none connected, connect a free Google Drive or OneDrive account in Integrations first. Clear up the file before then{', or extend the deal.'}
         </p>
       </div>
       {!locked && onExtendDeal && (

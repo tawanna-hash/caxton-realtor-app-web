@@ -26,7 +26,7 @@ export default function Page() {
         { title: 'Automated And Extracted Content', body: (<p>Features that read documents or suggest dates and wording can make mistakes. Review every result before you use it.</p>) },
         { title: 'Signatures And Identity', body: (<p>We record signing events but do not confirm who a signer is or that they have authority to sign. Confirm that each document may be signed electronically and that signers agree to do so.</p>) },
         { title: 'Your Records', body: (<p>You are responsible for keeping the records that Texas law and your broker require. Export your data regularly from Resources, Data And Backups.</p>) },
-        { title: 'Acknowledgment And Release', body: (<Caps>BY USING CLOSING TIME, YOU AGREE THAT YOU ARE SOLELY RESPONSIBLE FOR YOUR TRANSACTIONS AND DEADLINES, AND YOU RELEASE CAXTON PUBLICATIONS, INC. AND ITS OWNERS, OFFICERS, EMPLOYEES AND CONTRACTORS FROM CLAIMS FOR LOSSES THAT ARISE FROM YOUR USE OF THE SERVICE, INCLUDING LOSSES CAUSED BY THEIR OWN NEGLIGENCE, AS DESCRIBED IN THE TERMS OF SERVICE. THIS DOES NOT COVER GROSS NEGLIGENCE OR INTENTIONAL MISCONDUCT.</Caps>) },
+        { title: 'Acknowledgment And Release', body: (<Caps>BY USING CLOSING TIME, YOU AGREE THAT YOU ARE SOLELY RESPONSIBLE FOR YOUR TRANSACTIONS AND DEADLINES, AND YOU RELEASE CLOSING TIME AND ITS OWNERS, OFFICERS, EMPLOYEES AND CONTRACTORS FROM CLAIMS FOR LOSSES THAT ARISE FROM YOUR USE OF THE SERVICE, INCLUDING LOSSES CAUSED BY THEIR OWN NEGLIGENCE, AS DESCRIBED IN THE TERMS OF SERVICE. THIS DOES NOT COVER GROSS NEGLIGENCE OR INTENTIONAL MISCONDUCT.</Caps>) },
       ]}
     />
   );

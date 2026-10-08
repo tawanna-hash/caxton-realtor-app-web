@@ -1767,6 +1767,18 @@ export default function ClosingTime({
       ...deal, status: 'completed' as const, auditLocked: true, closeoutOutcome: 'Closed Automatically', closeoutDate: today, updatedAt: now,
       activity: [...deal.activity, { id: getId('activity'), message: 'Deal closed automatically. It is now read-only.', createdAt: now }].slice(-300),
     } : deal));
+    // Closing sends the whole file to the agent's connected document storage (or recommends connecting one).
+    due.forEach((deal) => {
+      fetch('/api/closing-time/assist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'archive_deal', dealId: deal.id }) })
+        .then((res) => res.json())
+        .then((data: { result?: { message?: string } }) => {
+          const message = data.result?.message;
+          if (!message) return;
+          const at = new Date().toISOString();
+          persistDeals(dealsRef.current.map((d) => d.id === deal.id ? { ...d, activity: [...d.activity, { id: getId('activity'), message, createdAt: at }].slice(-300) } : d));
+        })
+        .catch(() => undefined);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, deals, today]);
   const templateCreatedRef = useRef(false);

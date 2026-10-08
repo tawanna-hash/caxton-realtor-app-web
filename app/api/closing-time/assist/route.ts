@@ -7,7 +7,7 @@ import {
   FOLLOWUP_KINDS, PARTY_ROLES, addParty, approveFollowUp, dismissFollowUp, draftFollowUp, editFollowUp,
   getOrCreatePortalToken, setPortalLink, createDocRequest, markDocRequestEmailed, setDocRequestStatus, markDocRequestLogged, listDocRequests, listPortalLinks, listAssist, removeParty, removePortal, requireDeal, saveChecklist, saveExtensionDraft, markUploadReviewed, setAutoIntro, setAutoSignature, addSignatureRequest, closeSignature,
 } from '@/lib/server/closing-time-assist';
-import { connectedState, saveUploadToStorage, setSendFromConnected, syncCalendar } from '@/lib/server/closing-time-connected';
+import { archiveDeal, connectedState, saveUploadToStorage, setSendFromConnected, syncCalendar } from '@/lib/server/closing-time-connected';
 import { cancelSignRequest, deleteSignLayout, saveSignLayout, saveSignSettings } from '@/lib/server/closing-time-esign';
 import { BUILTIN, SIGN_PROVIDERS, refreshEnvelope, sendForSignature, signingState } from '@/lib/server/closing-time-signing';
 import { query } from '@/lib/server/db/neon';
@@ -41,6 +41,7 @@ const action = z.discriminatedUnion('action', [
   z.object({ action: z.literal('track_signature'), dealId, partyId: z.string().uuid(), document: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal('signature_signed'), id: z.string().uuid() }),
   z.object({ action: z.literal('calendar_sync'), dealId }),
+  z.object({ action: z.literal('archive_deal'), dealId }),
   z.object({ action: z.literal('send_from_connected'), on: z.boolean() }),
   z.object({ action: z.literal('save_upload'), dealId, id: z.string().uuid(), storage: z.enum(['google_drive', 'dropbox', 'microsoft_onedrive']) }),
   z.object({ action: z.literal('send_signature'), dealId, provider: z.enum([...SIGN_PROVIDERS, BUILTIN]), placement: z.enum(['page', 'inline']).optional(), expireDays: z.number().int().min(1).max(365).optional(), remindEvery: z.number().int().min(0).max(60).optional(), maxReminders: z.number().int().min(0).max(10).optional(), fields: z.array(z.object({ signer: z.number().int().min(0).max(5), type: z.enum(['signature', 'date']), page: z.number().int().min(0).max(400), x: z.number(), y: z.number(), w: z.number(), h: z.number(), id: z.string().max(60).optional() })).max(80).optional(), uploadId: z.string().uuid().optional(), fileName: z.string().max(200).optional(), fileB64: z.string().max(4_400_000).optional(), subject: z.string().max(200).optional(), signers: z.array(z.object({ name: z.string().trim().min(1).max(120), email: z.string().trim().email().max(320) })).min(1).max(6) }),
@@ -73,6 +74,10 @@ export const POST = withErrorHandling(async (req: Request): Promise<Response> =>
     case 'calendar_sync': {
       try { return priv({ ok: true, result: await syncCalendar(user.realtorId, input.dealId) }); }
       catch (e) { return priv({ error: e instanceof Error ? e.message : 'Calendar sync failed.' }, 400); }
+    }
+    case 'archive_deal': {
+      try { return priv({ ok: true, result: await archiveDeal(user.realtorId, input.dealId) }); }
+      catch (e) { return priv({ error: e instanceof Error ? e.message : 'The file could not be saved.' }, 400); }
     }
     case 'send_from_connected': await setSendFromConnected(user.realtorId, input.on); return priv({ ok: true });
     case 'send_signature': {
