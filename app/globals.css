@@ -1829,3 +1829,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 #agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) span { font-size: 13px !important; text-transform: none !important; letter-spacing: 0 !important; margin: 0 !important; font-weight: 500; }
 #agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) svg { width: 14px; height: 14px; }
 #agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a):hover { background: #EFEAF8 !important; color: #301D5D !important; border-color: #E6E5EC !important; }
+/* Calculators: actions flush right, Save Now row right-aligned, no narrow paragraph wrap */
+#agent-desk .ds-embed div[class*='fixed'][class*='pointer-events-none'] { left: 0 !important; right: 0 !important; width: auto !important; max-width: none !important; padding: 0 !important; justify-content: flex-end !important; }
+#agent-desk .ds-embed header > div:has(> button) { justify-content: flex-end; }
+#agent-desk .ds-embed p[class*='max-w-3xl'], #agent-desk .ds-embed p[class*='max-w-2xl'] { max-width: none !important; }
