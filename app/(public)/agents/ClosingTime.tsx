@@ -69,6 +69,7 @@ import {
   Calculator,
   Handshake,
   LayoutDashboard,
+  Menu,
   Plug,
   type LucideIcon,
   Camera,
@@ -2298,6 +2299,7 @@ export default function ClosingTime({
 
   const [selectedTaskId, setSelectedTaskId] = useState('');
   const [dealMoreOpen, setDealMoreOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const updateTask = (taskId: string, patch: Partial<AgentTask>) => {
     if (!activeDeal) return;
     const nextTasks = activeDeal.tasks.map((task) => task.id === taskId ? { ...task, ...patch } : task);
@@ -2875,8 +2877,9 @@ export default function ClosingTime({
     <main id="agent-desk" className="min-h-screen bg-white">
       <h1 className="sr-only">Closing Time Agent Desk</h1>
       <div className="w-full">
-        <div className="grid grid-cols-[64px_minmax(0,1fr)] items-start sm:grid-cols-[200px_minmax(0,1fr)] lg:grid-cols-[232px_minmax(0,1fr)]">
-          <aside aria-label="Deals" className="sticky top-16 flex min-w-0 flex-col lg:top-24 ds-rail">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start sm:grid-cols-[200px_minmax(0,1fr)] lg:grid-cols-[232px_minmax(0,1fr)]">
+          {mobileNavOpen && <button type="button" aria-label="Close menu" className="ds-mnav-backdrop" onClick={() => setMobileNavOpen(false)} />}
+          <aside aria-label="Deals" className={`sticky top-16 flex min-w-0 flex-col lg:top-24 ds-rail${mobileNavOpen ? ' ds-rail-open' : ''}`} onClickCapture={(event) => { const el = (event.target as HTMLElement).closest('button'); if (el && !el.hasAttribute('aria-expanded')) setMobileNavOpen(false); }}>
             <div className="ds-brand">
               <span className="ds-brand-mark" aria-hidden="true"><ClipboardCheck className="h-4 w-4" /></span>
               <span className="ds-brand-name">Agent Desk</span>
@@ -3057,6 +3060,19 @@ export default function ClosingTime({
               <a className="underline" href="/disclaimer">Notices</a>
             </div>
           </aside>
+          <nav aria-label="Main" className="ds-mnav" data-testid="mobile-nav">
+            {([
+              ['Today', LayoutDashboard, effectiveView === 'overview', () => { setMobileNavOpen(false); setWorkspacePage(1); }],
+              ['Deals', ListTodo, effectiveView === 'deals' || effectiveView === 'deal-page' || DEAL_TABS.some((t) => t.id === effectiveView), () => { setMobileNavOpen(false); setWorkspacePage(2); setDeskView('deals'); }],
+              ['Contacts', Users, effectiveView === 'contacts', () => { setMobileNavOpen(false); setWorkspacePage(2); setDeskView('contacts'); }],
+              ['Schedule', CalendarClock, effectiveView === 'my-schedule', () => { setMobileNavOpen(false); setWorkspacePage(2); setDeskView('my-schedule'); }],
+              ['More', Menu, mobileNavOpen, () => setMobileNavOpen((v) => !v)],
+            ] as const).map(([label, Icon, on, go]) => (
+              <button key={label} type="button" aria-current={on && label !== 'More' ? 'page' : undefined} aria-expanded={label === 'More' ? mobileNavOpen : undefined} onClick={go} className={on ? 'is-on' : ''}>
+                <Icon className="h-5 w-5" aria-hidden="true" /><span>{label}</span>
+              </button>
+            ))}
+          </nav>
           <div className="ds-mainwrap min-w-0">
             <HelpTips howTo={helpGuide} onTour={helpGuide ? () => setTourId(helpGuide.id) : undefined} />
             {tourId && GUIDES.find((g) => g.id === tourId) && <Walkthrough key={tourId} guide={GUIDES.find((g) => g.id === tourId) as Guide} onClose={() => setTourId(null)} goView={(v) => { setWorkspacePage(2); setDeskView(v); }} />}
