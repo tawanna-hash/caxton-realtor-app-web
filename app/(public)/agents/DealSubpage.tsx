@@ -108,7 +108,7 @@ type Props = {
   /** Readiness Check items in, from the Readiness Check list itself. */
   readiness?: { done: number; total: number; groups: { label: string; done: number; total: number }[] };
   /** Readiness groups (Buyer, Seller, Lender and so on) shown inside Documents. rowExtra adds form actions to rows that mirror a checklist document. */
-  renderReadiness?: (rowExtra: (readinessDocId: string) => ReactNode) => ReactNode;
+  renderReadiness?: (rowExtra: (readinessDocId: string) => ReactNode, requiredIds: Set<string>) => ReactNode;
   /** Readiness item id to the Documents checklist item it mirrors. */
   readinessLinks?: Record<string, string>;
   section?: Tab;
@@ -942,7 +942,7 @@ export default function DealSubpage({ readiness, renderReadiness, readinessLinks
                       {due && <span className="text-xs text-slate-500">{`${due.label} ${formatDate(due.date)}`}</span>}
                     </div>
                   );
-                })}</div>}
+                }, new Set(Object.entries(readinessLinks ?? {}).filter(([, cid]) => { const d = allDocs.find((x) => x.id === cid); return Boolean(d && (d.kind === 'required' || isAdded(d.id))); }).map(([rid]) => rid)))}</div>}
                 {(() => { const p = cardProps('documents', ['required', 'deadlines', 'forms', 'optional'], 'required'); return (<div style={p.style} onClickCapture={p.onClickCapture} className={p.className}><AutoSection className="ds-card ds-list" header={<div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
                     <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Required Documents</span>
                     <span className="text-xs font-medium text-slate-500">{submittedCount} of {totalRequired}</span>

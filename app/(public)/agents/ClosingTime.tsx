@@ -611,7 +611,9 @@ function ReadinessChecklist({
   documentUploadError,
   rowExtra,
   updateNote,
+  requiredIds,
 }: {
+  requiredIds?: Set<string>;
   updateNote?: (documentId: string, note: string) => void;
   rowExtra?: (documentId: string) => ReactNode;
   headingTag?: 'h2' | 'h3';
@@ -665,6 +667,7 @@ function ReadinessChecklist({
           <span className={`block truncate text-sm font-semibold leading-5 ${isDone(document) ? 'text-[#6B6878]' : 'text-[#1B1726]'}`}>{document.label}</span>
           <span className="block text-[12px] font-normal leading-4 text-[#6B6878]">{statusText(document.status)}{document.driveFileId ? ' · File Attached' : ''}</span>
         </span>
+        {requiredIds?.has(document.id) ? <span className="ds-chip shrink-0 bg-[#EFEAF8] text-[#301D5D]">Required</span> : null}
       </button>
     );
   };
@@ -679,7 +682,7 @@ function ReadinessChecklist({
       <div className="space-y-4" data-testid="document-detail">
         <div>
           <p className={lab}>Selected Document</p>
-          <h4 className="mt-1 text-[15px] font-semibold leading-snug text-[#1B1726]">{document.label}</h4>
+          <div className="mt-1 flex flex-wrap items-center gap-2"><h4 className="text-[15px] font-semibold leading-snug text-[#1B1726]">{document.label}</h4>{requiredIds?.has(document.id) ? <span className="ds-chip shrink-0 bg-[#EFEAF8] text-[#301D5D]">Required</span> : null}</div>
           {description ? <p className="mt-1 text-[13px] leading-5 text-[#4A4757]">{description}</p> : null}
           {rowExtra?.(document.id)}
         </div>
@@ -3532,9 +3535,10 @@ export default function ClosingTime({
                     key={`${deal?.id ?? 'none'}-${effectiveView}`}
                     readiness={deal ? readinessCounts(deal) : undefined}
                     readinessLinks={deal ? Object.fromEntries(readinessLinksFor(deal)) : undefined}
-                    renderReadiness={deal && effectiveView === 'd-documents' ? (rowExtra) => (
+                    renderReadiness={deal && effectiveView === 'd-documents' ? (rowExtra, requiredIds) => (
 <ReadinessChecklist
               rowExtra={rowExtra}
+              requiredIds={requiredIds}
               updateNote={updateDocumentNote}
               side={effectiveAgentSide(deal)}
               documents={deal.documents}
