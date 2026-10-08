@@ -7,6 +7,7 @@ import {
   getAgentCommandCenterWorkspace,
   saveAgentCommandCenterWorkspace,
 } from '@/lib/server/agent-command-center-workspaces';
+import { getAutomations, notifyDateMoves } from '@/lib/server/closing-time-automations';
 import { diffDeals, dispatchDealEvents, hasActiveWebhooks } from '@/lib/server/closing-time-automation';
 
 export const runtime = 'nodejs';
@@ -39,7 +40,8 @@ export const GET = withErrorHandling(async (): Promise<Response> => {
 export const PUT = withErrorHandling(async (req: Request): Promise<Response> => {
   const user = await requireUser();
   const input = saveSchema.parse(await req.json());
-  const wantsEvents = await hasActiveWebhooks(user.realtorId).catch(() => false);
+  const wantsDateMoves = (await getAutomations(user.realtorId).catch(() => null))?.deadlineMoves ?? false;
+  const wantsEvents = wantsDateMoves || (await hasActiveWebhooks(user.realtorId).catch(() => false));
   const before = wantsEvents ? (await getAgentCommandCenterWorkspace(user.realtorId))?.workspace ?? null : null;
   const result = await saveAgentCommandCenterWorkspace(
     user.realtorId,
@@ -59,6 +61,7 @@ export const PUT = withErrorHandling(async (req: Request): Promise<Response> => 
   if (wantsEvents) {
     const events = diffDeals(before, result.record.workspace);
     after(() => dispatchDealEvents(user.realtorId, events).catch(() => undefined));
+    if (wantsDateMoves) after(() => notifyDateMoves(user.realtorId, before, result.record.workspace).catch(() => undefined));
   }
 
   return privateResponse({

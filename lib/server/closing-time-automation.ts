@@ -4,7 +4,7 @@ import { isIP } from 'net';
 import { query } from '@/lib/server/db/neon';
 import type { AgentCommandCenterWorkspace, AgentDeal } from '@/lib/agent-command-center-workspace';
 
-export const WEBHOOK_EVENTS = ['deal.created', 'deal.status_changed', 'deal.closing_date_changed', 'deal.deleted'] as const;
+export const WEBHOOK_EVENTS = ['deal.created', 'deal.status_changed', 'deal.closing_date_changed', 'deal.closing_soon', 'deal.deleted'] as const;
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
 
 let schemaPromise: Promise<void> | null = null;

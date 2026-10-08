@@ -64,6 +64,7 @@ export function ensureAssistSchema(): Promise<void> {
       realtor_id UUID PRIMARY KEY REFERENCES realtors(id) ON DELETE CASCADE, auto_intro BOOLEAN NOT NULL DEFAULT FALSE,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
     await query(`ALTER TABLE closing_time_settings ADD COLUMN IF NOT EXISTS auto_signature BOOLEAN NOT NULL DEFAULT FALSE`);
+    await query(`ALTER TABLE closing_time_settings ADD COLUMN IF NOT EXISTS automations JSONB NOT NULL DEFAULT '{}'::jsonb`);
     await query(`CREATE TABLE IF NOT EXISTS closing_time_signatures (
       id UUID PRIMARY KEY, realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE,
       deal_id TEXT NOT NULL, to_name TEXT NOT NULL DEFAULT '', to_email TEXT NOT NULL, document TEXT NOT NULL,
@@ -401,7 +402,7 @@ export async function runDailySummaries(today: string): Promise<{ sent: number; 
   await ensureAssistSchema();
   const out = { sent: 0, errors: [] as string[] };
   const rows = await query<{ realtor_id: string; email: string | null; first_name: string | null; workspace: unknown }>(
-    `SELECT w.realtor_id, w.workspace, COALESCE(NULLIF(w.workspace->'notificationPreferences'->>'notificationEmail',''), r.email) AS email, r.first_name FROM agent_command_center_workspaces w JOIN realtors r ON r.id=w.realtor_id`);
+    `SELECT w.realtor_id, w.workspace, COALESCE(NULLIF(w.workspace->'notificationPreferences'->>'notificationEmail',''), r.email) AS email, r.first_name FROM agent_command_center_workspaces w JOIN realtors r ON r.id=w.realtor_id LEFT JOIN closing_time_settings cs ON cs.realtor_id=w.realtor_id WHERE COALESCE(cs.automations->>'dailyDigest','true') <> 'false'`);
   const site = CLOSING_TIME_ORIGIN;
   for (const row of rows) {
     const parsed = agentCommandCenterWorkspaceSchema.safeParse(row.workspace);

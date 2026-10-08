@@ -5,6 +5,7 @@ import {
 } from '@/lib/server/agent-deadline-notifications';
 import { syncAllMailboxes } from '@/lib/server/closing-time-mailbox';
 import { runSignReminders } from '@/lib/server/closing-time-esign';
+import { runDocChase, runWeeklyUpdates, runClosingCountdown, runPostClose } from '@/lib/server/closing-time-automations';
 import { runAutoIntros, runDailySummaries, runSignatureReminders } from '@/lib/server/closing-time-assist';
 
 export const runtime = 'nodejs';
@@ -43,6 +44,10 @@ export async function GET(req: Request) {
     out.signatureReminders = await runSignatureReminders().catch((e) => ({ sent: 0, escalated: 0, errors: [String(e)] }));
     out.signReminders = await runSignReminders(new URL(req.url).origin).catch((e) => ({ sent: 0, errors: [String(e)] }));
     out.autoIntros = await runAutoIntros().catch((e) => ({ sent: 0, errors: [String(e)] }));
+    out.docChase = await runDocChase(date).catch((e) => ({ sent: 0, errors: [String(e)] }));
+    out.weeklyUpdates = await runWeeklyUpdates(date).catch((e) => ({ sent: 0, errors: [String(e)] }));
+    out.closingCountdown = await runClosingCountdown(date).catch((e) => ({ errors: [String(e)] }));
+    out.postClose = await runPostClose(date).catch((e) => ({ sent: 0, errors: [String(e)] }));
   }
   // Email replies from people on deals, for agents who turned on reading replies from their own mailbox.
   out.mailboxReplies = await syncAllMailboxes().catch((e) => ({ checked: 0, stored: 0, errors: [String(e)] }));

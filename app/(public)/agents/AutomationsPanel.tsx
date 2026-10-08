@@ -9,9 +9,50 @@ const BTN = 'inline-flex items-center gap-1.5 rounded-md border border-[#E6E5EC]
 const INPUT = 'w-full rounded-md border border-[#E6E5EC] bg-white px-3 py-1.5 text-[14px] text-[#1B1726]';
 const EVENT_LABEL: Record<string, string> = {
   'deal.created': 'Deal Created', 'deal.status_changed': 'Deal Status Changed',
-  'deal.closing_date_changed': 'Closing Date Changed', 'deal.deleted': 'Deal Deleted',
+  'deal.closing_date_changed': 'Closing Date Changed', 'deal.closing_soon': 'Closing In 3 Days', 'deal.deleted': 'Deal Deleted',
 };
 const API = '/api/closing-time/automation';
+
+type AutoDef = { key: string; title: string; detail: string };
+function SmartAutomations() {
+  const [defs, setDefs] = useState<AutoDef[]>([]);
+  const [state, setState] = useState<Record<string, boolean>>({});
+  const [busy, setBusy] = useState('');
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    void fetch('/api/closing-time/automation-settings', { credentials: 'same-origin' }).then((r) => r.ok ? r.json() : null).then((d) => { if (d) { setDefs(d.defs); setState(d.state); } });
+  }, []);
+  async function toggle(key: string, on: boolean) {
+    setBusy(key); setErr('');
+    try {
+      const res = await fetch('/api/closing-time/automation-settings', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, on }) });
+      if (!res.ok) throw new Error('Could not save. Try again.');
+      setState((await res.json()).state);
+    } catch (e) { setErr(e instanceof Error ? e.message : 'Could not save.'); } finally { setBusy(''); }
+  }
+  if (!defs.length) return null;
+  return (
+    <section aria-label="Smart Automations" className="rounded-lg border border-[#E6E5EC] bg-white p-5">
+      <h2 className="text-[14px] font-semibold text-[#1B1726]">Smart Automations</h2>
+      <p className="mt-1 text-[14px] text-[#4A4757]">Turn on the ones you want. Each email goes only to people you added on the deal, copies you, and never includes price or terms. Everything is logged on the deal.</p>
+      <ul className="mt-3 divide-y divide-[#E6E5EC]">
+        {defs.map((d) => (
+          <li key={d.key} className="flex items-start justify-between gap-4 py-3">
+            <div>
+              <p className="text-[14px] font-semibold text-[#1B1726]">{d.title}</p>
+              <p className="mt-0.5 text-[14px] text-[#4A4757]">{d.detail}</p>
+            </div>
+            <button type="button" role="switch" aria-checked={!!state[d.key]} aria-label={d.title} disabled={busy === d.key} onClick={() => void toggle(d.key, !state[d.key])}
+              className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full border transition disabled:opacity-50 ${state[d.key] ? 'border-[#301D5D] !bg-[#301D5D]' : 'border-[#E6E5EC] !bg-[#EFEAF8]'}`}>
+              <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${state[d.key] ? 'left-[22px]' : 'left-0.5'}`} />
+            </button>
+          </li>
+        ))}
+      </ul>
+      {err && <p role="status" className="mt-2 text-[14px] text-[#661102]">{err}</p>}
+    </section>
+  );
+}
 
 export default function AutomationsPanel() {
   const [keys, setKeys] = useState<Key[]>([]);
@@ -48,6 +89,7 @@ export default function AutomationsPanel() {
 
   return (
     <div className="ds-page space-y-6">
+      <SmartAutomations />
       {secret && (
         <div role="alert" className="rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] p-4 text-[14px] text-[#1B1726]">
           <p className="font-semibold">{secret.label}</p>
