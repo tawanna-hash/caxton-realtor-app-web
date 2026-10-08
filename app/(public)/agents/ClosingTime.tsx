@@ -1429,9 +1429,14 @@ export default function ClosingTime({
   const [messagingContact, setMessagingContact] = useState<{ name: string; email: string; phone: string; role: string } | null>(null);
   const [contactsFilter, setContactsFilter] = useState<'all' | 'active' | 'past'>('all');
   const [contactsQuery, setContactsQuery] = useState('');
+  const [savedContacts, setSavedContacts] = useState<{ email: string; name: string; deal_id: string; property: string; closed_date: string }[]>([]);
   const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
+  useEffect(() => {
+    if (effectiveView !== 'contacts') return;
+    void fetch('/api/closing-time/contacts', { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d?.contacts) setSavedContacts(d.contacts); }).catch(() => undefined);
+  }, [effectiveView]);
   const helpGuideId = effectiveView === 'my-schedule' ? 'scheduler' : effectiveView === 'coordinator' ? 'alerts' : effectiveView === 'd-documents' ? 'documents' : '';
   const helpGuide: Guide | null = GUIDES.find((g) => g.id === helpGuideId) ?? null;
   // The scheduler walkthrough starts by itself the first time this browser opens My Scheduling.
@@ -3082,7 +3087,7 @@ export default function ClosingTime({
               <div className="ds-stat"><div><p className="ds-stat-label">Closed</p><p className="ds-stat-num">{closedDeals.length}</p><p className="ds-stat-sub">Completed Files</p></div><span className="ds-stat-icon ds-i-amber"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span></div>
             </div>
             {effectiveView === 'contacts' && (() => {
-              type ContactRow = { key: string; name: string; email: string; phone: string; role: string; dealIds: string[]; active: boolean; last: string; client: boolean };
+              type ContactRow = { key: string; name: string; email: string; phone: string; role: string; dealIds: string[]; active: boolean; last: string; client: boolean; property?: string; anniversary?: string };
               const map = new Map<string, ContactRow>();
               const clientRole = /buyer|seller|client|tenant|landlord|owner/i;
               const add = (deal: (typeof deals)[number], name: string, email: string, phone: string, role: string, forceClient: boolean) => {
@@ -3105,6 +3110,7 @@ export default function ClosingTime({
               liveDeals.forEach((deal) => {
                 dealPeople(deal).filter((p) => p.kind === 'client').forEach((p) => add(deal, p.name, p.email, p.phone, p.role, p.kind === 'client' && /buyer|seller/i.test(p.role)));
               });
+              savedContacts.forEach((sc) => { const k = sc.email.toLowerCase(); const ex = map.get(k); if (ex) { ex.anniversary = sc.closed_date; return; } map.set(k, { key: k, name: sc.name, email: sc.email, phone: '', role: 'Client', dealIds: [], active: false, last: sc.closed_date, client: true, property: sc.property, anniversary: sc.closed_date }); });
               const all = Array.from(map.values());
               const clients = all.filter((c) => c.client);
               const external = all.filter((c) => !c.client);
@@ -3160,7 +3166,7 @@ export default function ClosingTime({
                                 : <span className="capitalize">{c.role || '—'}</span>}</td>
                               <td data-label="Email">{c.email || '—'}</td>
                               <td data-label="Phone">{c.phone || '—'}</td>
-                              <td data-label="Deal" className="max-w-[220px] truncate">{first ? (first.propertyAddress || first.title) : '—'}{c.dealIds.length > 1 ? ` +${c.dealIds.length - 1}` : ''}</td>
+                              <td data-label="Deal" className="max-w-[220px] truncate">{first ? (first.propertyAddress || first.title) : (c.property || '—')}{c.dealIds.length > 1 ? ` +${c.dealIds.length - 1}` : ''}</td>
                               <td data-label="Last Touch" className="whitespace-nowrap">{touch(c.last)}</td>
                               <td data-label="" className="pr-4"><button type="button" className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-1 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white" onClick={(e) => { e.stopPropagation(); setMessagingContact({ name: c.name, email: c.email, phone: c.phone, role: c.role || (c.client ? 'Client' : 'Contact') }); }}>Message</button></td>
                             </tr>

@@ -6,6 +6,7 @@ import { sendEmail } from '@/lib/email';
 import { query } from '@/lib/server/db/neon';
 import { ensureAssistSchema, setPortalLink } from '@/lib/server/closing-time-assist';
 import { logDealEvent } from '@/lib/server/closing-time-events';
+import { getOrCreateTestimonialProfile } from '@/lib/server/testimonials-store';
 import { dispatchDealEvents } from '@/lib/server/closing-time-automation';
 
 /**
@@ -17,7 +18,7 @@ import { dispatchDealEvents } from '@/lib/server/closing-time-automation';
 
 export const AUTOMATION_DEFS = [
   { key: 'docChase', title: 'Chase Missing Documents', defaultOn: false,
-    detail: 'When a requested document is still missing after 3 days, email that person a reminder with their private upload link. Repeats every 3 days, up to 3 reminders, then tells you to follow up yourself.' },
+    detail: 'Emails a reminder with the person\'s private upload link every day until the requested document is uploaded, cancelled or the deal closes. Reminders get firmer within 7 days of closing.' },
   { key: 'weeklyUpdate', title: 'Weekly Client Update', defaultOn: false,
     detail: 'Every Monday morning, email each client on an active deal what is next on the calendar and which requested documents are still outstanding.' },
   { key: 'deadlineMoves', title: 'Deadline Moves', defaultOn: false,
@@ -25,7 +26,7 @@ export const AUTOMATION_DEFS = [
   { key: 'closingDay', title: 'Closing-Day Checklist', defaultOn: false,
     detail: 'Three days before closing, email the client and the title company a closing-day checklist: final walkthrough, utilities, funds and keys.' },
   { key: 'postClose', title: 'Post-Close Follow-Up', defaultOn: false,
-    detail: 'The day after a deal closes, email the client a thank-you and a request for a referral or review.' },
+    detail: 'The day after a deal closes, email the client a thank-you with your testimonial link. The client is saved to Contacts, and each year on the closing anniversary they get a short anniversary note.' },
   { key: 'dailyDigest', title: 'Daily Summary Email', defaultOn: true,
     detail: 'At 6 PM Central, one email listing the risks, next dates and follow-up drafts waiting on every active deal.' },
   { key: 'zapierEvents', title: 'Zapier Closing-Soon Trigger', defaultOn: false,
@@ -45,6 +46,10 @@ function ensureSchema(): Promise<void> {
     await query(`CREATE TABLE IF NOT EXISTS closing_time_automation_log (
       realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE, deal_id TEXT NOT NULL, kind TEXT NOT NULL, ref TEXT NOT NULL,
       sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY (realtor_id, deal_id, kind, ref))`);
+    await query(`CREATE TABLE IF NOT EXISTS closing_time_contacts (
+      realtor_id UUID NOT NULL REFERENCES realtors(id) ON DELETE CASCADE, email TEXT NOT NULL, name TEXT NOT NULL DEFAULT '', deal_id TEXT NOT NULL,
+      property TEXT NOT NULL DEFAULT '', closed_date DATE NOT NULL, last_anniversary_year INTEGER NOT NULL DEFAULT 0, stopped BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY (realtor_id, email, deal_id))`);
   })().catch((e) => { ready = null; throw e; });
   return ready;
 }
@@ -121,9 +126,9 @@ const nextDates = (deal: AgentDeal, today: string, n: number) => dealTimeline(de
 
 // ---- runners (called from the daily cron) ----
 
-/** 2. Chase missing documents. */
-export async function runDocChase(today: string): Promise<{ sent: number; escalated: number; errors: string[] }> {
-  const out = { sent: 0, escalated: 0, errors: [] as string[] };
+/** 2. Chase missing documents: one reminder a day until the request is no longer pending. */
+export async function runDocChase(today: string): Promise<{ sent: number; errors: string[] }> {
+  const out = { sent: 0, errors: [] as string[] };
   for (const a of await agents('docChase')) {
     for (const deal of a.deals) {
       if (deal.status === 'completed') continue;
@@ -134,21 +139,15 @@ export async function runDocChase(today: string): Promise<{ sent: number; escala
         const log = await query<{ n: number; last: Date | string | null }>(`SELECT COUNT(*)::int AS n, MAX(sent_at) AS last FROM closing_time_automation_log WHERE realtor_id=$1 AND deal_id=$2 AND kind='docchase' AND ref LIKE $3`, [a.realtorId, deal.id, `${r.id}:%`]);
         const sentSoFar = log[0]?.n ?? 0;
         const base = new Date(log[0]?.last ?? r.created_at).getTime();
-        if (Date.now() - base < 3 * DAY - 3_600_000) continue;
+        if (Date.now() - base < DAY - 3_600_000) continue;
         const person = people.find((p) => p.name.trim().toLowerCase() === r.person_name.trim().toLowerCase());
-        if (sentSoFar >= 3) {
-          const esc2 = await sendOnce(a, deal, 'docchase-escalate', r.id, { id: '', role: '', name: a.name, email: a.email }, `Still missing: ${r.label}`,
-            `${r.person_name || 'The person you asked'} has not uploaded "${r.label}" after 3 automatic reminders. Please follow up yourself.\n\n${signOff({ ...a, name: 'Closing Time' })}`, `Missing document escalation emailed to you: ${r.label}`, out.errors);
-          if (esc2) out.escalated += 1;
-          continue;
-        }
         if (!person) continue;
         const token = await setPortalLink(a.realtorId, deal.id, r.person_name, {});
         const link = `${CLOSING_TIME_ORIGIN}/deal-portal/${token}`;
         const closing = deal.closingDate ? daysBetween(today, deal.closingDate) : null;
         const urgent = closing !== null && closing <= 7;
-        const body = `Hello ${first(person.name)},\n\nA friendly reminder that I still need "${r.label}" for ${propertyOf(deal)}.${urgent ? ' Closing is close, so please send it today if you can.' : ''}\n\nYou can upload it here: ${link}\n\n${signOff(a)}`;
-        if (await sendOnce(a, deal, 'docchase', `${r.id}:${sentSoFar + 1}`, person, `Reminder: ${r.label}`, body, `Document reminder emailed: ${r.label}`, out.errors)) out.sent += 1;
+        const body = `Hello ${first(person.name)},\n\nA reminder that I still need "${r.label}" for ${propertyOf(deal)}.${urgent ? ' Closing is close, so please send it today if you can.' : ''}\n\nYou can upload it here: ${link}\n\n${signOff(a)}`;
+        if (await sendOnce(a, deal, 'docchase', `${r.id}:${sentSoFar + 1}`, person, `Reminder ${sentSoFar + 1}: ${r.label}`, body, `Daily document reminder emailed: ${r.label}`, out.errors)) out.sent += 1;
       }
     }
   }
@@ -212,22 +211,58 @@ export async function runClosingCountdown(today: string): Promise<{ checklist: n
   return out;
 }
 
-/** 6. Post-close follow-up. */
-export async function runPostClose(today: string): Promise<{ sent: number; errors: string[] }> {
-  const out = { sent: 0, errors: [] as string[] };
+/** 6. Post-close follow-up with a testimonial link, and saving the client to Contacts. */
+export async function runPostClose(today: string): Promise<{ sent: number; saved: number; errors: string[] }> {
+  const out = { sent: 0, saved: 0, errors: [] as string[] };
   for (const a of await agents('postClose')) {
+    let testimonialLink = '';
+    try { testimonialLink = `https://realtynewsnow.app/testimonial/submit/${(await getOrCreateTestimonialProfile(a.realtorId)).collection_token}`; } catch { /* sent without the link */ }
     for (const deal of a.deals) {
       if (deal.status !== 'completed' || !deal.closeoutDate) continue;
       if (/terminat|cancel|fell|withdr|expired/i.test(deal.closeoutOutcome || '')) continue;
+      const clients = await partiesFor(a.realtorId, deal.id, ['client']);
+      for (const c of clients) {
+        const saved = await query<{ email: string }>(`INSERT INTO closing_time_contacts (realtor_id, email, name, deal_id, property, closed_date) VALUES ($1,LOWER($2),$3,$4,$5,$6::date) ON CONFLICT DO NOTHING RETURNING email`,
+          [a.realtorId, c.email, c.name, deal.id, propertyOf(deal), deal.closeoutDate]);
+        if (saved[0]) out.saved += 1;
+      }
       const since = daysBetween(deal.closeoutDate, today);
       if (since < 1 || since > 7) continue;
-      for (const c of await partiesFor(a.realtorId, deal.id, ['client'])) {
-        const body = `Hello ${first(c.name)},\n\nCongratulations on closing on ${propertyOf(deal)}. It was a pleasure working with you.\n\nIf you had a good experience, I would be grateful for a short review, or an introduction to a friend or family member who is buying or selling. Reply to this email and I will gladly help with anything you need after the move.\n\n${signOff(a)}`;
-        if (await sendOnce(a, deal, 'postclose', c.id, c, 'Thank You', body, 'Post-close thank-you emailed', out.errors)) out.sent += 1;
+      for (const c of clients) {
+        const body = `Hello ${first(c.name)},\n\nCongratulations on closing on ${propertyOf(deal)}. It was a pleasure working with you.\n\nIf you had a good experience, would you share a few words about it? You can write or record it here in about a minute:\n${testimonialLink || '(reply to this email and I will send the link)'}\n\nAnd if a friend or family member is buying or selling, I would be glad to help them too. Reply to this email with anything you need after the move.\n\n${signOff(a)}`;
+        if (await sendOnce(a, deal, 'postclose', c.id, c, 'Thank You', body, 'Post-close thank-you with testimonial link emailed', out.errors)) out.sent += 1;
       }
     }
   }
   return out;
+}
+
+/** Yearly anniversary note to saved clients, on the closing anniversary. */
+export async function runAnniversaries(today: string): Promise<{ sent: number; errors: string[] }> {
+  const out = { sent: 0, errors: [] as string[] };
+  const year = Number(today.slice(0, 4));
+  for (const a of await agents('postClose')) {
+    const rows = await query<{ email: string; name: string; deal_id: string; property: string; closed_date: string }>(
+      `SELECT email, name, deal_id, property, to_char(closed_date,'YYYY-MM-DD') AS closed_date FROM closing_time_contacts
+       WHERE realtor_id=$1 AND stopped=FALSE AND to_char(closed_date,'MM-DD')=$2 AND EXTRACT(YEAR FROM closed_date)::int < $3 AND last_anniversary_year < $3`, [a.realtorId, today.slice(5), year]);
+    for (const r of rows) {
+      const years = year - Number(r.closed_date.slice(0, 4));
+      const pseudo = { id: r.deal_id, propertyAddress: r.property } as AgentDeal;
+      const to: Party = { id: r.email, role: 'client', name: r.name, email: r.email };
+      const body = `Hello ${first(r.name)},\n\nHappy ${years === 1 ? 'one-year' : `${years}-year`} anniversary in your home at ${r.property}. I hope it has been everything you hoped for.\n\nIf you ever have questions about your home's value, a project, or a move, I am glad to help. And if you know someone thinking of buying or selling, I would be grateful for the introduction.\n\n${signOff(a)}`;
+      if (await sendOnce(a, pseudo, 'anniversary', `${r.email}:${year}`, to, `Happy ${years === 1 ? 'One-Year' : `${years}-Year`} Anniversary`, body, `Anniversary note emailed`, out.errors)) {
+        out.sent += 1;
+        await query(`UPDATE closing_time_contacts SET last_anniversary_year=$4 WHERE realtor_id=$1 AND email=$2 AND deal_id=$3`, [a.realtorId, r.email, r.deal_id, year]);
+      }
+    }
+  }
+  return out;
+}
+
+export async function listSavedContacts(realtorId: string) {
+  await ensureSchema();
+  return query<{ email: string; name: string; deal_id: string; property: string; closed_date: string }>(
+    `SELECT email, name, deal_id, property, to_char(closed_date,'YYYY-MM-DD') AS closed_date FROM closing_time_contacts WHERE realtor_id=$1 ORDER BY closed_date DESC`, [realtorId]);
 }
 
 /** 4. Closing date changed: tell everyone on the deal. Called after a workspace save. */
