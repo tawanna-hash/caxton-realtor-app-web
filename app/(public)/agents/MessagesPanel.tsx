@@ -216,7 +216,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             })}
           </div>
           <label className="block"><span className={lab}>Other (Custom Request)</span><input className={field} placeholder="For example: Signed HOA receipt" maxLength={200} value={askOther} onChange={(e) => setAskOther(e.target.value)} /></label>
-          <Tip critical text="Each checked item becomes a pending request on this deal. The message lists them and links to the secure upload page. Uploads are tracked in Documents and the Audit Trail." />
+          <Tip text="Each checked item becomes a pending request on this deal. The message lists them and links to the secure upload page. Uploads are tracked in Documents and the Audit Trail." />
         </div>
       )}
     </div>
@@ -230,7 +230,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
           {files.map((f) => <div key={f.filename} className="flex items-center justify-between gap-3 rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] text-[#1B1726]"><span className="break-all">{f.filename} <span className="text-[12px] font-medium text-[#4A4757]">{Math.round(f.size / 1024)} KB</span></span><button type="button" className="text-[12px] font-medium text-[#4A4757] underline underline-offset-2 hover:!bg-transparent hover:!text-[#301D5D]" onClick={() => setFiles((l) => l.filter((x) => x.filename !== f.filename))}>Remove</button></div>)}
         </div>
       )}
-      <Tip critical text="Up to 5 files, 3 MB in total." />
+      <Tip text="Up to 5 files, 3 MB in total." />
     </div>
   );
   const composerInner = !party ? null : (
@@ -372,7 +372,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
                 return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-full !border !px-2 !py-0.5 !text-[11px] !leading-4 font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#4A4757]">{p.role}</span></button>;
               })}
             </div>
-            <Tip critical text="Each person gets their own copy. Texts go only to people who agreed to texts." />
+            <Tip text="Each person gets their own copy. Texts go only to people who agreed to texts." />
           </div>
   );
   let body_: React.ReactNode;

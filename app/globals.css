@@ -1822,3 +1822,10 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 
 /* Card corner standard: every card, table frame and panel uses 4px, including those with arbitrary Tailwind radii. */
 #agent-desk :is([class*='rounded-['], .ds-table-wrap, .ds-closing-list, .ds-detail, .ds-embed [class*='rounded'][class*='border']):not([class*='rounded-full']):not(button):not(input):not(select):not(textarea):not(.ds-stat-icon) { border-radius: 4px !important; }
+
+/* Calculator actions: same standard buttons as the rest of the desk */
+#agent-desk .ds-embed div[class*='pointer-events-auto'] { background: transparent !important; border: 0 !important; padding: 0 !important; gap: 8px !important; border-radius: 0 !important; }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) { flex-direction: row !important; min-width: 0 !important; min-height: 32px !important; height: 32px; padding: 0 12px !important; gap: 6px; border-radius: 8px !important; background: #fff !important; border: 1px solid var(--d-line) !important; font-size: 13px; font-weight: 500; }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) span { font-size: 13px !important; text-transform: none !important; letter-spacing: 0 !important; margin: 0 !important; font-weight: 500; }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) svg { width: 14px; height: 14px; }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a):hover { background: #EFEAF8 !important; color: #301D5D !important; border-color: #E6E5EC !important; }

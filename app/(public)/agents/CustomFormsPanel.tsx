@@ -67,7 +67,7 @@ export default function CustomFormsPanel({ section, label, dealContext }: { sect
       >
         <Upload className="h-6 w-6 text-[#7059A8]" aria-hidden="true" />
         <p className="text-sm font-medium text-slate-900">{uploading ? 'Uploading…' : `Drop ${label.toLowerCase()} PDFs here`}</p>
-        <Tip critical text="PDF only, up to 15 MB each" />
+        <Tip text="PDF only, up to 15 MB each" />
         <button type="button" disabled={uploading} onClick={() => inputRef.current?.click()}>Upload PDF</button>
         <input ref={inputRef} type="file" accept="application/pdf,.pdf" multiple className="hidden" onChange={(e) => { void upload(e.target.files); e.target.value = ''; }} />
       </div>
@@ -90,7 +90,7 @@ export default function CustomFormsPanel({ section, label, dealContext }: { sect
                 Use On Current Deal
               </label>
             )}
-            {!form.fillable && <Tip critical text="This PDF has no fillable fields, so it can be opened and downloaded but not filled in." />}
+            {!form.fillable && <Tip text="This PDF has no fillable fields, so it can be opened and downloaded but not filled in." />}
             <div className="flex flex-wrap gap-2">
               {form.fillable && (
                 <a href={`/agents/closing-time?form=${encodeURIComponent(`custom-${form.id}`)}#trec-form-workspace`} className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#301D5D] px-3 text-sm font-bold text-white"><PencilLine className="h-4 w-4" aria-hidden="true" />Open &amp; Fill</a>

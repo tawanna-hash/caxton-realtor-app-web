@@ -2643,7 +2643,7 @@ export default function ClosingTime({
       </label>
       <div className="ds-card flex min-w-0 flex-col gap-3">
         <p className="text-[13px] font-medium text-[#1B1726]">Earnest Money Deposit</p>
-        <Tip critical text="TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies." />
+        <Tip text="TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies." />
         <input
           type="date"
           readOnly
@@ -3559,7 +3559,7 @@ export default function ClosingTime({
                     Send Deadline Alerts By Text
                   </label>
                   <input id="closing-time-sms-phone" aria-label="Mobile Number" type="tel" defaultValue={notificationPreferences.smsPhone} placeholder="Mobile Number" className="block w-full max-w-sm rounded-md border border-[#E6E5EC] px-3 py-2 text-sm font-normal text-slate-800" />
-                  <Tip critical text="Each text includes the property address. Message and data rates may apply. Reply STOP to opt out." />
+                  <Tip text="Each text includes the property address. Message and data rates may apply. Reply STOP to opt out." />
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">

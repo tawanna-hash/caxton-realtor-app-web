@@ -415,7 +415,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
                 )}
                 <label className="block"><span className="text-xs font-semibold text-slate-600">Email subject (optional)</span>
                   <input className={input} value={sigSubject} maxLength={200} onChange={(e) => setSigSubject(e.target.value)} /></label>
-                <Tip critical text="Nothing is sent until you press the button." />
+                <Tip text="Nothing is sent until you press the button." />
                 <button type="button" disabled={busy} className={btnPrimary} onClick={() => void sendSignature()}>Send For Signature</button>
               </div>
             )}
@@ -494,7 +494,7 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             {showChecklist && (
               <div className="mt-3">
                 <textarea className="min-h-[170px] w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs" value={checklistText} onChange={(e) => setChecklistText(e.target.value)} aria-label="Checklist template" />
-                <Tip critical text="One step per line: title | days | effective or closing. Use a negative number for days before closing." />
+                <Tip text="One step per line: title | days | effective or closing. Use a negative number for days before closing." />
                 <button type="button" disabled={busy} className={`${btnPrimary} mt-2`} onClick={async () => { const steps = textToSteps(checklistText); if (steps.length) { await post({ action: 'save_checklist', steps }); setShowChecklist(false); } }}>Save Template</button>
               </div>
             )}
