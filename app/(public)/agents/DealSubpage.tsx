@@ -12,6 +12,7 @@ import ClientUploadsCard from './ClientUploadsCard';
 import DocumentRequestsCard from './DocumentRequestsCard';
 import { BUYER_REP_FORM_OPTIONS, CONTRACT_FORM_OPTIONS, dealFolders, effectiveAgentSide, requiredIdsFor } from './purchase-documents';
 import Tip from './Tip';
+import MasterDetail, { DetailFields } from './MasterDetail';
 import { EXTENSION_DAYS, autoCloseState, formatCloseDate } from '@/lib/closing-time-lifecycle';
 
 type SnapId = 'attention' | 'waiting' | 'property' | 'next' | 'preferences' | 'offers' | 'parties' | 'workspace';
@@ -1099,12 +1100,34 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                     <div className="sm:col-span-2 flex justify-end gap-2"><button type="button" className={btn} onClick={() => setShowPersonForm(false)}>Cancel</button><button type="submit" className={btnPrimary}>Save</button></div>
                   </form>
                 )}
-                <div className="ds-card ds-list mt-3">
-                  {allPeople.length === 0 && <p className="px-4 py-3 text-sm text-slate-500">No people added yet.</p>}
-                  {allPeople.map((p) => {
-                    const manual = people.find((c) => c.name.trim().toLowerCase() === p.name.trim().toLowerCase());
-                    return <PartyLine key={`${p.role}-${p.name}`} p={p} textHref={textHref(p.phone, p.name, deal.propertyAddress || deal.title)} onRemove={manual && !locked ? () => onUpdate('clientContacts', people.filter((c) => c.id !== manual.id)) : undefined} />;
-                  })}
+                <div className="mt-3">
+                  <MasterDetail
+                    testId="people-list"
+                    backLabel="People"
+                    empty="No people added yet."
+                    items={allPeople.map((p) => ({ id: `${p.role}-${p.name}`, title: p.name, sub: [p.role, p.company && p.company !== p.name ? p.company : ''].filter(Boolean).join(' · ') || undefined }))}
+                    renderDetail={(id) => {
+                      const p = allPeople.find((x) => `${x.role}-${x.name}` === id);
+                      if (!p) return null;
+                      const manual = people.find((c) => c.name.trim().toLowerCase() === p.name.trim().toLowerCase());
+                      const link = 'inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#1B1726] hover:bg-[#EFEAF8] hover:text-[#301D5D]';
+                      return (
+                        <>
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EFEAF8] text-xs font-semibold text-[#301D5D]" aria-hidden="true">{initials(p.name)}</span>
+                            <h3 className="min-w-0 break-words text-[15px] font-semibold text-[#1B1726]">{p.name}</h3>
+                          </div>
+                          <DetailFields rows={[['Role', p.role], ['Company', p.company && p.company !== p.name ? p.company : ''], ['Email', p.email], ['Phone', p.phone]]} />
+                          <div className="flex flex-wrap gap-2">
+                            {p.email && <a href={`mailto:${p.email}`} className={link}><Mail className="h-4 w-4" aria-hidden="true" />Email</a>}
+                            {p.phone && <a href={textHref(p.phone, p.name, deal.propertyAddress || deal.title)} className={link}><MessageSquare className="h-4 w-4" aria-hidden="true" />Text</a>}
+                            {p.phone && <a href={`tel:${p.phone.replace(/[^+\d]/g, '')}`} className={link}><Phone className="h-4 w-4" aria-hidden="true" />Call</a>}
+                            {manual && !locked && <button type="button" className="!border-[#E6E5EC] hover:!bg-[#FFEAE6] hover:!text-[#661102]" onClick={() => onUpdate('clientContacts', people.filter((c) => c.id !== manual.id))}><Trash2 className="mr-1 inline h-4 w-4" aria-hidden="true" />Remove</button>}
+                          </div>
+                        </>
+                      );
+                    }}
+                  />
                 </div>
               </section>
 

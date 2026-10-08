@@ -158,6 +158,7 @@ import {
   type TrecTaskStatus,
 } from '@/lib/trec-workflow';
 import Tip from './Tip';
+import MasterDetail, { DetailFields } from './MasterDetail';
 
 type RadarItem = {
   id: string;
@@ -3192,29 +3193,37 @@ export default function ClosingTime({
                     </div>
                     <input value={contactsQuery} onChange={(e) => setContactsQuery(e.target.value)} placeholder={`Search ${contactsTab === 'clients' ? 'clients' : 'external contacts'}`} aria-label="Search contacts" className="h-8 min-w-[220px] flex-1 rounded-lg border border-[#E6E5EC] bg-white px-3 text-sm" />
                   </div>
-                  <div className="ds-table-wrap ds-cards mt-3">
-                    <table className="w-full text-left text-sm">
-                      <thead><tr><th className="px-4 py-2">Name</th><th>{contactsTab === 'clients' ? 'Stage' : 'Role'}</th><th>Email</th><th>Phone</th><th>Deal</th><th>Last Touch</th><th className="pr-4"><span className="sr-only">Message</span></th></tr></thead>
-                      <tbody>
-                        {list.length === 0 && <tr><td colSpan={7} className="px-4 py-6 text-sm text-slate-500">No contacts found.</td></tr>}
-                        {list.map((c) => {
-                          const first = deals.find((d) => d.id === c.dealIds[0]);
-                          return (
-                            <tr key={c.key} tabIndex={0} onClick={() => { if (first) { setActiveDealId(first.id); setDealPageId(first.id); setDealPageTab('preferences'); setDeskView('deal-page'); } }}>
-                              <td data-label="Name" className="px-4 py-3 font-medium text-slate-900">{c.name}</td>
-                              <td data-label={contactsTab === 'clients' ? 'Stage' : 'Role'}>{contactsTab === 'clients'
-                                ? <span className={`ds-chip ${c.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{c.active ? 'Active Client' : 'Past Client'}</span>
-                                : <span className="capitalize">{c.role || '—'}</span>}</td>
-                              <td data-label="Email">{c.email || '—'}</td>
-                              <td data-label="Phone">{c.phone || '—'}</td>
-                              <td data-label="Deal" className="max-w-[220px] truncate">{first ? (first.propertyAddress || first.title) : (c.property || '—')}{c.dealIds.length > 1 ? ` +${c.dealIds.length - 1}` : ''}</td>
-                              <td data-label="Last Touch" className="whitespace-nowrap">{touch(c.last)}</td>
-                              <td data-label="" className="pr-4"><button type="button" className="rounded-lg border border-[#E6E5EC] bg-white px-3 py-1 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D] hover:bg-[#301D5D] hover:text-white" onClick={(e) => { e.stopPropagation(); setMessagingContact({ name: c.name, email: c.email, phone: c.phone, role: c.role || (c.client ? 'Client' : 'Contact') }); }}>Message</button></td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                  <div className="mt-3">
+                    <MasterDetail
+                      testId="contacts-list"
+                      backLabel="Contacts"
+                      empty="No contacts found."
+                      items={list.map((c) => ({ id: c.key, title: c.name, sub: c.email || c.phone || undefined, trailing: contactsTab === 'clients' ? (c.active ? 'Active' : 'Past') : (c.role || undefined) }))}
+                      renderDetail={(id) => {
+                        const c = list.find((x) => x.key === id);
+                        if (!c) return null;
+                        const first = deals.find((d) => d.id === c.dealIds[0]);
+                        return (
+                          <>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="text-[15px] font-semibold text-[#1B1726]">{c.name}</h3>
+                              {contactsTab === 'clients' && <span className={`ds-chip ${c.active ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{c.active ? 'Active Client' : 'Past Client'}</span>}
+                            </div>
+                            <DetailFields rows={[
+                              [contactsTab === 'clients' ? 'Stage' : 'Role', contactsTab === 'clients' ? (c.active ? 'Active Client' : 'Past Client') : (c.role || '')],
+                              ['Email', c.email],
+                              ['Phone', c.phone],
+                              ['Deal', first ? `${first.propertyAddress || first.title}${c.dealIds.length > 1 ? ` +${c.dealIds.length - 1}` : ''}` : (c.property || '')],
+                              ['Last Touch', touch(c.last)],
+                            ]} />
+                            <div className="flex flex-wrap gap-2">
+                              <button type="button" onClick={() => setMessagingContact({ name: c.name, email: c.email, phone: c.phone, role: c.role || (c.client ? 'Client' : 'Contact') })}>Message</button>
+                              {first && <button type="button" onClick={() => { setActiveDealId(first.id); setDealPageId(first.id); setDealPageTab('preferences'); setDeskView('deal-page'); }}>Open Deal</button>}
+                            </div>
+                          </>
+                        );
+                      }}
+                    />
                   </div>
                 </div>
               );
@@ -3266,10 +3275,38 @@ export default function ClosingTime({
                     </div>
                     <button type="button" onClick={() => { setPickerStep('type'); setNewDealPickerOpen(true); }}><Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />New Contract</button>
                   </div>
-                  <p className="mt-6 text-sm font-semibold text-slate-900">In Flight <span className="ds-chip ml-1 bg-[#EFEAF8] text-[#301D5D]">{inFlight.length}</span></p>
-                  <ul className="ds-closing-list">{inFlight.length === 0 ? <li className="px-4 py-4 text-sm text-slate-500">No closings in flight.</li> : inFlight.map(row)}</ul>
-                  <p className="mt-6 text-sm font-semibold text-slate-900">Closed</p>
-                  <ul className="ds-closing-list">{closedList.length === 0 ? <li className="px-4 py-4 text-sm text-slate-500">No closings completed yet.</li> : closedList.map(row)}</ul>
+                  <div className="mt-6">
+                    <MasterDetail
+                      testId="closings-list"
+                      backLabel="Closings"
+                      empty="No closings yet."
+                      items={[...inFlight.map((d) => ({ d, g: 'In Flight' })), ...closedList.map((d) => ({ d, g: 'Closed' }))].map(({ d, g }) => {
+                        const days = daysUntilClosing(d.closingDate, today);
+                        const price = d.contractDetails?.salesPrice?.trim();
+                        return { id: d.id, group: g, title: d.propertyAddress || d.title, sub: TREC_DEAL_WORKFLOW_STATUS_LABELS[d.workflowStatus], trailing: price ? (price.startsWith('$') ? price : `$${price}`) : undefined, dot: days === null ? 'bg-slate-300' : days < 0 ? 'bg-[#FF2A04]' : days <= 7 ? 'bg-[#FAD800]' : 'bg-[#00E200]' };
+                      })}
+                      renderDetail={(id) => {
+                        const deal = liveDeals.find((d) => d.id === id);
+                        if (!deal) return null;
+                        const stageIdx = Math.max(0, stageList.indexOf(deal.workflowStatus as (typeof stageList)[number]));
+                        const openTasks = deal.tasks.filter((t) => !t.complete).length;
+                        const price = deal.contractDetails?.salesPrice?.trim();
+                        return (
+                          <>
+                            <h3 className="text-[15px] font-semibold text-[#1B1726]">{deal.propertyAddress || deal.title}</h3>
+                            <DetailFields rows={[
+                              ['Side', deal.dealType === 'purchase' && deal.agentSide === 'listing' ? 'Sell side' : (typeLabel[deal.dealType] ?? 'Deal')],
+                              ['Stage', `${TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]} (${stageIdx + 1} of ${stageList.length})`],
+                              ['Closing', deal.closingDate ? formatDate(deal.closingDate) : 'Not set'],
+                              ['Price', price ? (price.startsWith('$') ? price : `$${price}`) : ''],
+                              ['Open Tasks', String(openTasks)],
+                            ]} />
+                            <button type="button" onClick={() => openDeal(deal)}>Open Deal</button>
+                          </>
+                        );
+                      }}
+                    />
+                  </div>
                 </div>
               );
             })()}
@@ -3322,38 +3359,34 @@ export default function ClosingTime({
                       <option value="closed">Closed</option>
                     </select>
                   </div>
-                  <div className="ds-table-wrap ds-cards">
-                    <table className="w-full min-w-[860px] text-left text-sm">
-                      <thead>
-                        <tr>
-                          <th className="py-3 pl-4">Deal</th><th>Clients</th><th>Stage</th><th>Progress</th><th>Health</th><th>Closing</th><th className="pr-4">Last Activity</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-slate-500">{deals.length === 0 ? 'No deals yet. Select New deal to start one.' : 'No deals match.'}</td></tr>}
-                        {rows.map((deal) => {
-                          const health = healthOf(deal);
-                          const done = deal.tasks.filter((t) => t.complete).length;
-                          const total = deal.tasks.length;
-                          return (
-                            <tr key={deal.id} tabIndex={0} onClick={() => { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setDeskView('deal-page'); }} onKeyDown={(e) => { if (e.key === 'Enter') { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setDeskView('deal-page'); } }} className="cursor-pointer">
-                              <td data-label="Deal" className="py-3 pl-4 font-medium text-slate-900">{deal.propertyAddress || deal.title}</td>
-                              <td data-label="Clients">{[deal.buyerNames, deal.sellerNames].filter(Boolean).join(', ') || '—'}</td>
-                              <td data-label="Stage"><span className="ds-chip ds-chip-purple">{TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]}</span></td>
-                              <td data-label="Progress">
-                                <div className="flex items-center gap-2">
-                                  <span className="ds-bar" aria-hidden="true"><span style={{ width: total ? `${Math.round((done / total) * 100)}%` : '0%' }} /></span>
-                                  <span className="text-xs text-slate-500">{total ? `${done}/${total}` : '—'}</span>
-                                </div>
-                              </td>
-                              <td data-label="Health"><span className={`ds-chip ${health.tone}`}><StatusSymbol label={health.label} />{health.label}</span></td>
-                              <td data-label="Closing" className="whitespace-nowrap">{deal.closingDate ? formatDate(deal.closingDate) : '—'}</td>
-                              <td data-label="Last Activity" className="whitespace-nowrap pr-4">{sinceLabel(deal.activity[deal.activity.length - 1]?.createdAt)}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                  <div className="mt-3">
+                    <MasterDetail
+                      testId="deals-list"
+                      backLabel="Deals"
+                      empty={deals.length === 0 ? 'No deals yet. Select New Deal to start one.' : 'No deals match.'}
+                      items={rows.map((deal) => ({ id: deal.id, title: deal.propertyAddress || deal.title, sub: [deal.buyerNames, deal.sellerNames].filter(Boolean).join(', ') || undefined, trailing: healthOf(deal).label }))}
+                      renderDetail={(id) => {
+                        const deal = rows.find((d) => d.id === id);
+                        if (!deal) return null;
+                        const health = healthOf(deal);
+                        const done = deal.tasks.filter((t) => t.complete).length;
+                        const total = deal.tasks.length;
+                        return (
+                          <>
+                            <h3 className="text-[15px] font-semibold text-[#1B1726]">{deal.propertyAddress || deal.title}</h3>
+                            <DetailFields rows={[
+                              ['Clients', [deal.buyerNames, deal.sellerNames].filter(Boolean).join(', ')],
+                              ['Stage', TREC_DEAL_WORKFLOW_STATUS_LABELS[deal.workflowStatus]],
+                              ['Progress', total ? `${done} of ${total} tasks done` : ''],
+                              ['Health', health.label],
+                              ['Closing', deal.closingDate ? formatDate(deal.closingDate) : ''],
+                              ['Last Activity', sinceLabel(deal.activity[deal.activity.length - 1]?.createdAt)],
+                            ]} />
+                            <button type="button" onClick={() => { setActiveDealId(deal.id); setDealPageId(deal.id); setDealPageTab('preferences'); setDeskView('deal-page'); }}>Open Deal</button>
+                          </>
+                        );
+                      }}
+                    />
                   </div>
                 </div>
               );
@@ -4151,7 +4184,24 @@ export default function ClosingTime({
                 emails={activeDeal.clientContacts.map((c) => c.email.trim()).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))}
               />
             )}
-            <ul className="mt-4 max-h-52 space-y-2 overflow-auto">{[...activeDeal.activity].reverse().map((item) => <li key={item.id} className="border-l-2 border-[#FAD800] bg-[#FCFBF9] px-3 py-2 text-sm text-slate-700"><span className="font-bold text-slate-900">{formatTimestamp(item.createdAt)}</span> · {item.message}</li>)}</ul>
+            <div className="mt-4">
+              <MasterDetail
+                testId="audit-history"
+                backLabel="History"
+                empty="No history yet."
+                items={[...activeDeal.activity].reverse().map((item) => ({ id: item.id, title: item.message, sub: formatTimestamp(item.createdAt) }))}
+                renderDetail={(id) => {
+                  const item = activeDeal.activity.find((x) => x.id === id);
+                  if (!item) return null;
+                  return (
+                    <>
+                      <h3 className="text-[15px] font-semibold text-[#1B1726]">History Entry</h3>
+                      <DetailFields rows={[['When', formatTimestamp(item.createdAt)], ['What Happened', item.message], ['Deal', activeDeal.propertyAddress || activeDeal.title]]} />
+                    </>
+                  );
+                }}
+              />
+            </div>
           </section>
           </>
         )}
