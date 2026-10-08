@@ -1854,3 +1854,4 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 /* Deal items in the left rail: show the full address and countdown (Astro 4.1.2) */
 #agent-desk button.ds-deal { height: auto !important; min-height: 36px; overflow: visible; }
 #agent-desk button.ds-deal > span:not(:first-child) { white-space: normal; }
+#agent-desk .ds-deals { flex: 0 0 auto; }

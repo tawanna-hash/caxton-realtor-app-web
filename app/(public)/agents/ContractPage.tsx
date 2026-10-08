@@ -3,7 +3,7 @@
 import StatusSymbol from './StatusSymbol';
 import { parseLegalDescription } from '@/lib/legal-description';
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Plus, Trash2, X } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2, X } from 'lucide-react';
 import { CONTRACT_MAP_SECTIONS } from '@/lib/trec-20-19-contract-map';
 import type { AgentCashLine, AgentDeal, AgentKeyTerm } from '@/lib/agent-command-center-workspace';
 import Tip from './Tip';
@@ -232,6 +232,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
   const [editing, setEditing] = useState<AgentKeyTerm | null>(null);
   const [quickId, setQuickId] = useState<string | null>(null);
   const [tab, setTab] = useState<string>('key-details');
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [isNew, setIsNew] = useState(false);
 
   const putTerm = (next: AgentKeyTerm[]) => onPatch({ keyTerms: next, keyTermsCustom: true });
@@ -543,14 +544,18 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
 
   return (
     <div className="ds-page" data-testid="contract-page" onKeyDown={(e) => { const t = e.target as HTMLInputElement; if (e.key === 'Enter' && !e.shiftKey && t.tagName === 'INPUT' && t.type !== 'checkbox') { e.preventDefault(); t.blur(); } }}>
-      <div role="tablist" aria-label="Contract Sections" className="ds-tabs sticky top-0 z-10 !mt-0 mb-3 overflow-x-auto bg-white">
-        {[{ id: 'key-details', title: 'Key Details', filled: terms.filter((t) => t.value.trim()).length, total: terms.length }, ...CONTRACT_MAP_SECTIONS.map((x) => { const vis = x.fields.filter((fl) => !hidden.includes(fl.id)); return { id: x.id as string, title: x.title as string, filled: vis.filter((fl) => getVal(fl.id).trim()).length, total: vis.length }; })].map((t) => (
-          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-            className="ds-tab !flex-none !whitespace-nowrap">
-            {t.title}<span className={`ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${t.filled === t.total && t.total > 0 ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{t.filled === t.total && t.total > 0 && <StatusSymbol label="On track" />}{t.filled}/{t.total}</span>
+      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <nav aria-label="Contract Sections" className={`min-w-0 overflow-hidden rounded-[4px] border border-[#E6E5EC] bg-white lg:sticky lg:top-0 ${mobileOpen ? 'max-lg:hidden' : ''}`}>
+        {[{ id: 'key-details', title: 'Key Details', filled: terms.filter((t) => t.value.trim()).length, total: terms.length }, ...CONTRACT_MAP_SECTIONS.map((x) => { const vis = x.fields.filter((fl) => !hidden.includes(fl.id)); return { id: x.id as string, title: x.title as string, filled: vis.filter((fl) => getVal(fl.id).trim()).length, total: vis.length }; }), { id: 'cash', title: 'Cash To Close', filled: 0, total: 0 }].map((t) => (
+          <button key={t.id} type="button" aria-current={tab === t.id ? 'true' : undefined} onClick={() => { setTab(t.id); setMobileOpen(true); window.scrollTo({ top: 0 }); }}
+            className={`!flex !h-auto w-full !items-center !justify-start !gap-3 !rounded-none !border-0 !border-b !border-[#E6E5EC] !px-4 !py-3 text-left ${tab === t.id ? '!bg-[#EFEAF8] shadow-[inset_2px_0_0_#301D5D]' : '!bg-white hover:!bg-[#F6F3FB]'}`}>
+            <span className="min-w-0 flex-1 text-sm font-semibold leading-5 text-[#1B1726]">{t.title}</span>
+            {t.total > 0 && <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${t.filled === t.total && t.total > 0 ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{t.filled === t.total && t.total > 0 && <StatusSymbol label="On track" />}{t.filled}/{t.total}</span>}
           </button>
         ))}
-      </div>
+      </nav>
+      <div className={`min-w-0 ${mobileOpen ? '' : 'max-lg:hidden'}`}>
+        <button type="button" onClick={() => setMobileOpen(false)} className="mb-3 !inline-flex !h-9 !flex-row !items-center !gap-1 !px-2 lg:!hidden"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Contract</button>
       <div>
         <div className="space-y-3">
           {CONTRACT_MAP_SECTIONS.map((section) => {
@@ -609,6 +614,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
               </Fragment>
             );
           })}
+          {tab === 'cash' && (
           <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Cash To Close">
             <div className="flex flex-wrap items-center justify-between gap-3 px-[1.125rem] py-4">
               <div>
@@ -626,7 +632,10 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
               </span>
             </div>
           </section>
+          )}
         </div>
+      </div>
+      </div>
       </div>
 
       {quickId && (() => {
