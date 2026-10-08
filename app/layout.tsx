@@ -16,6 +16,7 @@ import AutoPrint from "@/components/AutoPrint";
 import ScrollTopOnReload from "@/components/ScrollTopOnReload";
 import AutoOpenSections from "@/components/AutoOpenSections";
 import MarketOnboardingPicker from "@/components/MarketOnboardingPicker";
+import ClosingTimeGA from "@/components/ClosingTimeGA";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const SITE_URL = "https://realtynewsnow.app";
@@ -160,6 +161,8 @@ export default function RootLayout({
             CLS, INP, FCP, TTFB) and surfaces them in the Vercel dashboard.
             Loaded after the app tree so it never blocks initial render. */}
         <SpeedInsights />
+        {/* Google tag for itsalmostclosingtime.com only (host checked in the component). */}
+        <ClosingTimeGA />
       </body>
     </html>
   );

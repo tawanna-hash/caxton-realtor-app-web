@@ -1,7 +1,6 @@
 import AppShell from '@/components/AppShell';
 import { PublicationProvider } from '@/lib/publication-provider';
 import { getServerPub } from '@/lib/publication';
-import ClosingTimeGA from '@/components/ClosingTimeGA';
 import { headers } from 'next/headers';
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -12,7 +11,6 @@ export default async function PublicLayout({ children }: { children: React.React
     <PublicationProvider initialPub={initialPub}>
       <AppShell variant="public" initialPub={initialPub} chromeless={chromeless}>
         {children}
-        {chromeless && <ClosingTimeGA />}
       </AppShell>
     </PublicationProvider>
   );
