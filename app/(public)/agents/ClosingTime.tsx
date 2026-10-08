@@ -8,7 +8,8 @@ import SchedulersPanel from './SchedulersPanel';
 import { dealPeople } from '@/lib/closing-time-people';
 import { readKeepScroll, useKeepScroll } from '@/lib/keep-scroll';
 import MessagesPanel from './MessagesPanel';
-import HelpTips, { type HowTo } from './HelpTips';
+import HelpTips from './HelpTips';
+import { GUIDES, Walkthrough, type Guide } from './SetupGuides';
 import IntegrationsPanel from './IntegrationsPanel';
 import AlertSetupContent from './AlertSetupContent';
 import UtilitiesPanel from './UtilitiesPanel';
@@ -46,27 +47,6 @@ const CALC_VIEWS: { id: string; label: string; keys: string[] }[] = [
   { id: 'calc-commission', label: 'Commission Calculator', keys: [] },
   { id: 'calc-cash', label: 'Cash-To-Close', keys: [] },
 ];
-const SCHEDULING_HOWTO: HowTo = {
-  title: 'How To Set Up A Scheduler',
-  intro: 'Follow these steps in order. The whole setup takes about five minutes.',
-  steps: [
-    { step: "Before You Start", text: "A scheduler is a booking page. People pick an open time and it lands on your calendar. To book onto your own calendar and skip your busy times, open Integrations and connect Google Calendar or Outlook first. You can skip this and use the Closing Time Calendar, which emails you each booking with a calendar file." },
-    { step: "Set Your Custom URL", text: "On My Scheduling, find Your Custom Scheduler URL and choose Edit. Type your slug, for example your name, then choose Save. Every scheduler you make lives under this address, as in itsalmostclosingtime.com/book/your-slug." },
-    { step: "Start A Scheduler", text: "Under Schedulers, choose New Scheduler. On a first visit the button reads Create Your First Scheduler. A five-step builder opens with a live preview on the right. Choose Continue at the bottom of each step to move on, and Back to return to the previous one." },
-    { step: "Step 1, Select Calendars: Calendar And Name", text: "Choose Select Booking Calendar: pick your connected calendar, or Closing Time Calendar. Type a Scheduler Name such as Home Inspection Walkthrough. This is the title on the booking page. Optionally type Your Name, which is shown to people booking. Leave it blank to hide your name." },
-    { step: "Step 1, Select Calendars: Web Address", text: "Under Scheduler URL, choose Custom Alias and type a short word such as inspection. The page becomes /book/your-slug/inspection. Or choose Use Root URL for no alias. Only one scheduler can use the root. If you want to block busy times on other calendars, check up to six under Additional Calendars. Then choose Continue." },
-    { step: "Step 2, Availability: Meeting Length", text: "Tap one or more lengths such as 15 Min, 30 Min or 60 Min. To add another, type minutes between 5 and 480 into Add Custom Time and choose Add. If you pick more than one, choose which loads first under Default Time When Scheduler Page Is First Loaded." },
-    { step: "Step 2, Availability: Days And Hours", text: "Under Weekly Availability, turn on each day you take bookings with its switch. Set a start and end time for each day. Days that are off cannot be booked. Choose your Timezone." },
-    { step: "Step 2, Availability: Limits", text: "Set How Far In Advance Can Someone Book With You, and How Much Notice You Need Before A Meeting Starts. Set Buffer Before Event and Buffer After Event to leave travel or prep time. Set Start Time Increments to control how often start times appear, such as every 30 minutes. Then choose Continue." },
-    { step: "Step 3, Event Details", text: "Event Subject is the title on the calendar invite. You can use the variables {invitee_name}, {invitee_email}, {my_name} and {subject}. Add an Event Description with an agenda or notes. Pick a Booked Event Color (Google Calendar only). Under Create Online Meeting, choose None, Google Meet, Microsoft Teams, or Meeting Link and paste a Zoom or phone bridge link." },
-    { step: "Step 3, Event Details: Questions", text: "Under Additional Attendees, invite others by email. Under Custom Questions, choose Add Question to ask the person booking something, such as the property address. Check Required to make an answer mandatory. You can add up to ten. Then choose Continue." },
-    { step: "Step 4, Appearance And Branding", text: "Type Welcome Text shown at the top of the booking page. Optionally enter a Redirect URL to send people to your own thank-you page after booking. Set Language, Booker's Locale, Time Format and First Day Of Week. Optionally upload a banner image and an avatar image. Then choose Continue." },
-    { step: "Step 5, Workflow", text: "Add up to two reminder emails before the meeting, choosing how long before and writing the subject and message. Add one follow-up email after the meeting ends the same way. Reminders that would already be in the past for a last-minute booking are skipped. Then choose Create Scheduler (or Save Scheduler when editing)." },
-    { step: "Turn It On And Test It", text: "Back in the Schedulers list, check that the switch beside your scheduler shows On. A scheduler that is Off or missing means your URL does not lead to a booking page. Choose Open to view the live page, pick a time as a visitor would and confirm the event lands on your calendar." },
-    { step: "Share The Link", text: "Choose Copy Link and paste it into emails, texts or your signature. To show several schedulers on one page, create a Combined Link, give it a title and alias, and pick at least two schedulers. People then choose the meeting type first." },
-    { step: "Change Or Cancel Later", text: "Choose Edit on a scheduler to change any step. Use the switch to pause it without deleting it. The delete icon removes it and its bookings. The Bookings list shows each person, time and answers. Cancel an upcoming booking and the person is emailed." },
-  ],
-};
 const PERSONAL_DEAL = { id: '__personal__', title: 'Personal', propertyAddress: '', clientContacts: [], serviceProviders: [] } as unknown as AgentDeal;
 const DEALS_VIEW = { id: 'deals', label: 'Deals', keys: [] as string[] };
 const ALERT_SETUP_VIEW = { id: 'alert-setup', label: 'Alert Setup', keys: [] as string[] };
@@ -1319,6 +1299,7 @@ export default function ClosingTime({
   const [extractionError, setExtractionError] = useState('');
   const [isContractDropActive, setIsContractDropActive] = useState(false);
   const [isUploadMenuOpen, setIsUploadMenuOpen] = useState(false);
+  const [tourId, setTourId] = useState<string | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const [contractPreviewUrl, setContractPreviewUrl] = useState('');
@@ -1448,6 +1429,8 @@ export default function ClosingTime({
   const [formsLibraryTab, setFormsLibraryTab] = useState<'trec' | 'brokerage'>('trec');
   const [dealPageTab, setDealPageTab] = useState<'preferences' | 'offers' | 'paperwork' | 'tasks' | 'history'>('preferences');
   const effectiveView = workspacePage === 1 ? 'overview' : deskView === 'overview' ? 'transaction' : deskView;
+  const helpGuideId = effectiveView === 'my-schedule' ? 'scheduler' : effectiveView === 'coordinator' ? 'alerts' : ['audit', 'transaction', 'readiness', 'd-messages', 'd-portal', 'd-schedule'].includes(effectiveView) ? 'documents' : '';
+  const helpGuide: Guide | null = GUIDES.find((g) => g.id === helpGuideId) ?? null;
   const RES_VIEW_ACTIVE = ['utilities', 'referral', 'testimonials', 'data-backups', 'automations', 'security', 'doc-tools'].includes(effectiveView);
   // Scheduling pages are working pages: a refresh keeps the exact scroll position there.
   useKeepScroll(effectiveView === 'my-schedule' || effectiveView === 'd-schedule', ready);
@@ -2980,7 +2963,8 @@ export default function ClosingTime({
             </div>
           </aside>
           <div className="ds-mainwrap min-w-0">
-            <HelpTips howTo={effectiveView === 'my-schedule' ? SCHEDULING_HOWTO : null} />
+            <HelpTips howTo={helpGuide} onTour={helpGuide ? () => setTourId(helpGuide.id) : undefined} />
+            {tourId && GUIDES.find((g) => g.id === tourId) && <Walkthrough key={tourId} guide={GUIDES.find((g) => g.id === tourId) as Guide} onClose={() => setTourId(null)} goView={(v) => { setWorkspacePage(2); setDeskView(v); }} />}
             {((effectiveView !== 'overview' && effectiveView !== 'deal-page') || DEAL_TABS.some((t) => t.id === effectiveView)) && (
               <div className="ds-toolbar">
             {effectiveView !== 'overview' && effectiveView !== 'deal-page' && (() => {
@@ -3330,16 +3314,23 @@ export default function ClosingTime({
               <div className="ds-page space-y-6">
                 <div>
                   <h2 className="ds-title">Set Up Instructions</h2>
-                  <p className="mt-1 text-[14px] text-[#4A4757]">Step-by-step guides. The same steps appear under Help on each page.</p>
+                  <p className="mt-1 text-[14px] text-[#4A4757]">Start a walkthrough and it points at each part of the page in order, or read the written steps. The same guides appear under Help on the matching pages.</p>
                 </div>
-                <div className="ds-card">
-                  <p className="text-sm font-semibold text-slate-900">{SCHEDULING_HOWTO.title}</p>
-                  {SCHEDULING_HOWTO.intro && <p className="mt-1 text-[14px] text-[#4A4757]">{SCHEDULING_HOWTO.intro}</p>}
-                  <div className="mt-3 space-y-3 text-[14px] text-[#4A4757]">
-                    {SCHEDULING_HOWTO.steps.map((h, n) => <p key={h.step}><strong className="text-[#1B1726]">{n + 1}. {h.step}.</strong> {h.text}</p>)}
+                {GUIDES.map((g) => (
+                  <div key={g.id} className="ds-card">
+                    <p className="text-sm font-semibold text-slate-900">{g.title}</p>
+                    {g.intro && <p className="mt-1 text-[14px] text-[#4A4757]">{g.intro}</p>}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button type="button" onClick={() => setTourId(g.id)}>Start Walkthrough</button>
+                    </div>
+                    <details data-no-auto-open className="mt-3 border-t border-[#E6E5EC] pt-2">
+                      <summary className="cursor-pointer text-xs font-medium text-[#301D5D]">Show Written Steps</summary>
+                      <div className="mt-2 space-y-3 text-[14px] text-[#4A4757]">
+                        {g.steps.map((h, n) => <p key={h.step}><strong className="text-[#1B1726]">{n + 1}. {h.step}.</strong> {h.text}</p>)}
+                      </div>
+                    </details>
                   </div>
-                  <button type="button" className="mt-4" onClick={() => { setWorkspacePage(2); setDeskView('my-schedule'); }}>Open My Scheduling</button>
-                </div>
+                ))}
               </div>
             )}
             {effectiveView === 'my-schedule' && <div className="ds-page space-y-8"><SchedulersPanel key="personal" deal={PERSONAL_DEAL} onOpenIntegrations={() => setDeskView('integrations')} /></div>}

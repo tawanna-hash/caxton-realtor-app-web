@@ -27,7 +27,7 @@ function collect(): Entry[] {
   return out;
 }
 
-export default function HelpTips({ howTo }: { howTo?: HowTo | null }) {
+export default function HelpTips({ howTo, onTour }: { howTo?: HowTo | null; onTour?: () => void }) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Entry[]>([]);
   const [q, setQ] = useState('');
@@ -57,7 +57,10 @@ export default function HelpTips({ howTo }: { howTo?: HowTo | null }) {
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search tips" aria-label="Search tips" />
             {howTo && (
               <section className="ct-help-howto max-h-[60vh] shrink-0 overflow-y-auto rounded border border-[#E6E5EC] bg-[#F6F3FB] p-3" aria-label={howTo.title}>
-                <h3 className="text-[14px] font-semibold text-[#301D5D]">{howTo.title}</h3>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-[14px] font-semibold text-[#301D5D]">{howTo.title}</h3>
+                  {onTour && <button type="button" className="!min-h-0 rounded-md border border-[#E6E5EC] bg-white px-3 py-1.5 text-[13px] font-medium text-[#1B1726] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]" onClick={() => { setOpen(false); onTour(); }}>Start Walkthrough</button>}
+                </div>
                 {howTo.intro && <p className="mt-1 text-[13px] text-[#4A4757]">{howTo.intro}</p>}
                 <div className="mt-2 space-y-2 text-[13px] text-[#4A4757]">
                   {howTo.steps.map((h, n) => <p key={h.step}><strong className="text-[#1B1726]">{n + 1}. {h.step}.</strong> {h.text}</p>)}
