@@ -199,9 +199,6 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
       } : undefined,
     };
   };
-  const arrangeButton = (page: string) => (
-    <button type="button" onClick={() => { setArrangePage(arrangePage === page ? null : page); setPickedCard(null); }}>{arrangePage === page ? 'Done Arranging' : 'Arrange'}</button>
-  );
   const [waitingOnSigner, setWaitingOnSigner] = useState(0);
   const [brokerageForms, setBrokerageForms] = useState<{ id: string; title: string; url: string; filename: string; fillable?: boolean }[]>([]);
   const signDealId = deal?.id;
@@ -682,7 +679,6 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
       <div className="ds-page" data-testid="deal-snapshot">
         <div className="mb-4 space-y-4">
           {snapshotTop.pressing}
-          <div className="flex justify-end">{arrangeButton('snapshot')}</div>
           <div className="grid items-start gap-4 lg:grid-cols-4">
             {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'docs'); const r = readiness; const pctDone = r && r.total ? Math.round((r.done / r.total) * 100) : 0; return (
               <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 lg:col-span-2 ${p.className}`}>
@@ -907,7 +903,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
                   <div>
                     <p className="ds-side-title !m-0">{dealTypeLabel} Documents</p>
                   </div>
-                  <span className="flex items-center gap-3"><span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{submittedCount} of {totalRequired} submitted</span>{arrangeButton('documents')}</span>
+                  <span className="flex items-center gap-3"><span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{submittedCount} of {totalRequired} submitted</span></span>
                   {(
                     <div className="grid w-full gap-3 border-t border-[#F6F3FB] pt-3 sm:grid-cols-2 lg:grid-cols-4">
                       <label className="block min-w-0"><span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Contract Form</span>
