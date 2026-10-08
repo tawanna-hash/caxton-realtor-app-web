@@ -41,7 +41,7 @@ export default function PlatformAdminClient() {
       <h1 className="text-[22px] font-semibold text-[#1B1726]">Closing Time Platform</h1>
       <p className="mt-1 text-sm text-[#4A4757]">System settings, feature switches and the release queue. New features stay switched off until a maintenance notice has been out for {data?.noticeLeadDays ?? 7} days.</p>
       <div className="mt-5 flex gap-6 border-b border-[#E6E5EC]" role="tablist">
-        {TABS.map((t) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={`-mb-px border-b-2 pb-2 text-sm font-medium ${tab === t ? 'border-[#301D5D] text-[#301D5D]' : 'border-transparent text-[#4A4757]'}`}>{t}</button>)}
+        {TABS.map((t) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={`-mb-px !rounded-none !border-0 !border-b-2 !bg-transparent !px-0 pb-2 text-sm font-medium hover:!bg-transparent ${tab === t ? '!border-[#301D5D] !text-[#301D5D]' : '!border-transparent !text-[#4A4757]'}`}>{t}</button>)}
       </div>
       {msg && <p className="mt-3 text-sm text-[#4A4757]" role="status">{msg}</p>}
       {!data ? <p className="mt-6 text-sm text-[#4A4757]">Loading…</p> : (
