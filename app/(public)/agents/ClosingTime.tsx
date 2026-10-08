@@ -3681,7 +3681,7 @@ export default function ClosingTime({
                 }}
               />
             )}
-            <div id="trec-forms" className="ds-page min-w-0 scroll-mt-24 lg:col-span-2">
+            <div id="trec-forms" data-section-key="trec-library" className="ds-page min-w-0 scroll-mt-24 lg:col-span-2">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-0">
                   <p className="ds-eyebrow">Tools</p>
