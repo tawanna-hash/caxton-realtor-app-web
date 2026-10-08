@@ -499,17 +499,35 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
             <p className={urgent ? 'text-sm font-semibold text-[#301D5D]' : 'text-sm font-semibold text-slate-900'}>{urgent ? 'Urgent: Review Blank Fields' : 'Blank Fields Need Your Attention'}</p>
             <p className="mt-1 text-sm text-slate-600">{urgent && urgentDeadline ? `${urgentDeadline.label} is ${urgentDeadline.date === today ? 'today' : 'tomorrow'}. Review each item or ignore it if the blanks are intentional.` : open.length > 0 ? 'Review each item or ignore it if the blanks are intentional.' : 'Everything left is ignored.'}</p>
             {open.length > 0 && (
-              <ul className="mt-3 divide-y divide-[#E6E5EC]">
-                {open.map((a) => (
-                  <li key={a.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2">
+              <>
+                <ul className="mt-3 divide-y divide-[#E6E5EC]">
+                  {open.slice(0, 3).map((a) => (
+                    <li key={a.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2">
                     <span className="min-w-0 flex-1 basis-40 text-sm text-slate-900"><span className="block break-words font-medium">{a.label}</span><span className="block text-xs text-slate-500">{a.blank} Of {a.total} Blank</span></span>
                     <span className="flex shrink-0 gap-2">
                       <button type="button" onClick={() => onOpenView(a.view)}>Review</button>
                       <button type="button" onClick={() => onUpdate('ignoredBlankAlerts', [...ignoredIds, a.id])}>Ignore</button>
                     </span>
                   </li>
-                ))}
-              </ul>
+                  ))}
+                </ul>
+                {open.length > 3 && (
+                  <details className="group border-t border-[#E6E5EC]">
+                    <summary className="cursor-pointer py-2 text-xs font-medium text-[#301D5D]"><span className="group-open:hidden">Show {open.length - 3} More</span><span className="hidden group-open:inline">Show Fewer</span></summary>
+                    <ul className="divide-y divide-[#E6E5EC]">
+                      {open.slice(3).map((a) => (
+                        <li key={a.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2">
+                    <span className="min-w-0 flex-1 basis-40 text-sm text-slate-900"><span className="block break-words font-medium">{a.label}</span><span className="block text-xs text-slate-500">{a.blank} Of {a.total} Blank</span></span>
+                    <span className="flex shrink-0 gap-2">
+                      <button type="button" onClick={() => onOpenView(a.view)}>Review</button>
+                      <button type="button" onClick={() => onUpdate('ignoredBlankAlerts', [...ignoredIds, a.id])}>Ignore</button>
+                    </span>
+                  </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </>
             )}
             {ignored.length > 0 && (
               <details className="mt-3 border-t border-[#E6E5EC] pt-2">
