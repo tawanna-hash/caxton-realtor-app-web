@@ -60,6 +60,14 @@ const DOCTOOLS_VIEW = { id: 'doc-tools', label: 'Document Tools', keys: [] as st
 const SECURITY_VIEW = { id: 'security', label: 'Security', keys: [] as string[] };
 const AUTOMATIONS_VIEW = { id: 'automations', label: 'Automations', keys: [] as string[] };
 const DESK_VIEWS = [...DEAL_TABS, ...TOOL_VIEWS, ...CALC_VIEWS, SETTINGS_VIEW, UTILITIES_VIEW, DATA_VIEW, TESTIMONIALS_VIEW, AUTOMATIONS_VIEW, SECURITY_VIEW, DOCTOOLS_VIEW, DEALS_VIEW, ALERT_SETUP_VIEW, CLOSINGS_VIEW, CONTACTS_VIEW];
+function Switch({ on, onChange, label, disabled }: { on: boolean; onChange: (next: boolean) => void; label: string; disabled?: boolean }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={() => onChange(!on)} className={`ct-switch relative h-5 w-9 shrink-0 rounded-full transition disabled:opacity-50 ${on ? 'bg-[#301D5D]' : 'bg-[#E6E5EC]'}`}>
+      <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${on ? 'left-[18px]' : 'left-0.5'}`} />
+    </button>
+  );
+}
+
 const NAV_ICONS: Record<string, LucideIcon> = { overview: LayoutDashboard, alerts: Bell, forms: FileText, tools: Calculator, referral: Handshake, integrations: Plug, 'my-schedule': CalendarClock, 'setup-help': ListChecks };
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -3530,7 +3538,7 @@ export default function ClosingTime({
               </div>
               <div className="mt-4 space-y-3">
                 <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
-                  <input type="checkbox" checked={notificationPreferences.emailEnabled} onChange={(event) => updateNotificationPreferences({ emailEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" />
+                  <Switch on={notificationPreferences.emailEnabled} label="Send Deadline Alerts By Email" onChange={(next) => updateNotificationPreferences({ emailEnabled: next })} />
                   <Mail className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" /> Send Deadline Alerts By Email
                 </label>
                 <label className="block text-xs font-semibold text-slate-600">
@@ -3539,14 +3547,14 @@ export default function ClosingTime({
                 </label>
                 <div className="space-y-2">
                   <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
-                    <input type="checkbox" checked={notificationPreferences.smsEnabled} onChange={async (event) => {
-                      if (!event.target.checked) { updateNotificationPreferences({ smsEnabled: false }); return; }
+                    <Switch on={notificationPreferences.smsEnabled} label="Send Deadline Alerts By Text" onChange={async (next) => {
+                      if (!next) { updateNotificationPreferences({ smsEnabled: false }); return; }
                       const phone = (document.getElementById('closing-time-sms-phone') as HTMLInputElement | null)?.value.trim() ?? '';
                       const res = await fetch('/api/agent-command-center/sms-consent', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
-                      if (!res.ok) { event.target.checked = false; window.alert(res.status === 403 ? 'Text alerts are not available on this account yet.' : 'Enter your 10-digit US mobile number first.'); return; }
+                      if (!res.ok) { window.alert(res.status === 403 ? 'Text alerts are not available on this account yet.' : 'Enter your 10-digit US mobile number first.'); return; }
                       const data = (await res.json()) as { phone: string };
                       updateNotificationPreferences({ smsEnabled: true, smsPhone: data.phone });
-                    }} className="h-4 w-4 accent-[#301D5D]" />
+                    }} />
                     Send Deadline Alerts By Text
                   </label>
                   <input id="closing-time-sms-phone" type="tel" defaultValue={notificationPreferences.smsPhone} placeholder="Mobile Number" className="block w-full max-w-sm rounded-md border border-[#E6E5EC] px-3 py-2 text-sm font-normal text-slate-800" />
@@ -3554,7 +3562,7 @@ export default function ClosingTime({
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
-                    <input type="checkbox" checked={notificationPreferences.pushEnabled} onChange={(event) => updateNotificationPreferences({ pushEnabled: event.target.checked })} className="h-4 w-4 accent-[#301D5D]" />
+                    <Switch on={notificationPreferences.pushEnabled} label="Send Browser Push Alerts" onChange={(next) => updateNotificationPreferences({ pushEnabled: next })} />
                     <Smartphone className="rnn-inline-icon text-[#7059A8]" aria-hidden="true" /> Send Browser Push Alerts
                   </label>
                   <PushOptInButton realtorId={realtorId} label="Connect This Device" className="inline-flex min-h-[36px] items-center rounded-md border border-[#7059A8] bg-white px-3 text-xs font-bold text-[#301D5D] transition hover:bg-[#F6F3FB]" />
@@ -3562,7 +3570,7 @@ export default function ClosingTime({
                 <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 sm:flex sm:flex-wrap sm:gap-4">
                   {([[7, '7 Days Before'], [3, '3 Days Before'], [1, '1 Day Before'], [0, 'Due Today']] as const).map(([offset, label]) => (
                     <label key={offset} className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600">
-                      <input type="checkbox" checked={notificationPreferences.reminderOffsets.includes(offset)} disabled={notificationPreferences.reminderOffsets.length === 1 && notificationPreferences.reminderOffsets[0] === offset} onChange={() => toggleReminderOffset(offset)} className="h-3.5 w-3.5 accent-[#301D5D]" />
+                      <Switch on={notificationPreferences.reminderOffsets.includes(offset)} label={label} disabled={notificationPreferences.reminderOffsets.length === 1 && notificationPreferences.reminderOffsets[0] === offset} onChange={() => toggleReminderOffset(offset)} />
                       {label}
                     </label>
                   ))}
