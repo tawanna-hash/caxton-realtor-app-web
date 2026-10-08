@@ -1850,3 +1850,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 #agent-desk input[type='checkbox']:not(.sr-only):checked { background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23301D5D' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E") center / 14px 14px no-repeat; border-color: #B9B6C4; }
 #agent-desk input[type='checkbox']:not(.sr-only):disabled { opacity: 0.5; cursor: not-allowed; }
 #agent-desk input[type='checkbox']:not(.sr-only):focus-visible { outline: 2px solid #301D5D; outline-offset: 2px; }
+
+/* Deal items in the left rail: show the full address and countdown (Astro 4.1.2) */
+#agent-desk button.ds-deal { height: auto !important; min-height: 36px; overflow: visible; }
+#agent-desk button.ds-deal > span:not(:first-child) { white-space: normal; }
