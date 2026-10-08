@@ -181,6 +181,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
   const requiredIdList = requiredIdsFor(docFolders);
   const [docSec, setDocSec] = useState('required');
   const [docSel, setDocSel] = useState('');
+  const [docMOpen, setDocMOpen] = useState(false);
   const [arrangePage, setArrangePage] = useState<string | null>(null);
   const [pickedCard, setPickedCard] = useState<{ page: string; key: string } | null>(null);
   const cardKeys = (page: string, defaults: string[]) => {
@@ -1057,9 +1058,9 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                       )}
                       {section.items.length === 0 ? <p className="px-4 py-4 text-sm text-[#6B6878]">{section.empty}</p> : (
                         <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_340px]">
-                          <div className="min-w-0 border-b border-[#E6E5EC] lg:border-b-0">
+                          <div className={`min-w-0 border-b border-[#E6E5EC] lg:border-b-0 ${docMOpen ? 'max-lg:hidden' : ''}`}>
                             {section.items.map((item) => (
-                              <button key={item.id} type="button" onClick={() => setDocSel(item.id)} aria-current={selected?.id === item.id ? 'true' : undefined} className={`!flex !h-auto w-full !items-center !justify-start !gap-3 !rounded-none !border-0 !border-t !border-[#E6E5EC] !px-4 !py-3 text-left first:!border-t-0 ${selected?.id === item.id ? '!bg-[#EFEAF8]' : '!bg-white hover:!bg-[#F6F3FB]'}`}>
+                              <button key={item.id} type="button" onClick={() => { setDocSel(item.id); setDocMOpen(true); window.requestAnimationFrame(() => document.getElementById('more-doc-detail-panel')?.scrollIntoView({ block: 'start' })); }} aria-current={selected?.id === item.id ? 'true' : undefined} className={`!flex !h-auto w-full !items-center !justify-start !gap-3 !rounded-none !border-0 !border-t !border-[#E6E5EC] !px-4 !py-3 text-left first:!border-t-0 ${selected?.id === item.id ? '!bg-[#EFEAF8]' : '!bg-white hover:!bg-[#F6F3FB]'}`}>
                                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.done ? '#00e200' : '#ffaf3d' }} aria-hidden="true" />
                                 <span className="min-w-0 flex-1">
                                   <span className="block truncate text-sm font-semibold text-[#1B1726]">{item.title}</span>
@@ -1069,7 +1070,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                               </button>
                             ))}
                           </div>
-                          <div className="min-w-0 space-y-4 p-4 lg:border-l lg:border-[#E6E5EC]" data-testid="more-documents-detail">
+                          <div id="more-doc-detail-panel" className={`min-w-0 scroll-mt-4 space-y-4 p-4 lg:border-l lg:border-[#E6E5EC] ${docMOpen ? '' : 'max-lg:hidden'}`} data-testid="more-documents-detail"><button type="button" onClick={() => setDocMOpen(false)} className="mb-3 !h-9 !gap-1 !px-2 lg:!hidden"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Documents</button>
                             {selected && (<><div><p className={lab}>Selected</p><h4 className="mt-1 text-[15px] font-semibold leading-snug text-[#1B1726]">{selected.title}</h4></div>{selected.detail}</>)}
                           </div>
                         </div>

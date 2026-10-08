@@ -581,6 +581,7 @@ function ReadinessChecklist({
   const dotColor = (status: AgentDocument['status']) => (status === 'received' || status === 'reviewed' ? '#00E200' : status === 'not_needed' ? '#B9B6C4' : '#FFAF3D');
 
   const [selectedId, setSelectedId] = useState<string>('');
+  const [mOpen, setMOpen] = useState(false);
   const selectedRow = activeGroup?.rows.find((row) => row.document.id === selectedId) ?? activeGroup?.rows[0];
   const statusText = (status: AgentDocument['status']) => (status === 'not_needed' ? 'Not Needed' : status.charAt(0).toUpperCase() + status.slice(1));
   const when = (iso?: string) => (iso ? new Date(iso).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '');
@@ -591,7 +592,7 @@ function ReadinessChecklist({
       <button
         key={document.id}
         type="button"
-        onClick={() => setSelectedId(document.id)}
+        onClick={() => { setSelectedId(document.id); setMOpen(true); window.requestAnimationFrame(() => window.document.getElementById('doc-detail-panel')?.scrollIntoView({ block: 'start' })); }}
         aria-current={selected ? 'true' : undefined}
         className={`!flex !h-auto w-full !items-center !justify-start !gap-3 !rounded-none !border-0 !border-t !border-[#E6E5EC] !px-4 !py-3 text-left first:!border-t-0 ${selected ? '!bg-[#EFEAF8]' : '!bg-white hover:!bg-[#F6F3FB]'}`}
       >
@@ -642,11 +643,11 @@ function ReadinessChecklist({
               <button type="button" onClick={() => removeDocumentFile(document.id)} className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md !bg-transparent hover:!bg-[#EFEAF8] hover:!text-[#661102]" aria-label={`Remove file for ${document.label}`}><X className="h-3.5 w-3.5" aria-hidden="true" /></button>
             </span>
           ) : <p className="mt-1 text-[13px] text-[#6B6878]">No file attached.</p>}
-          <label className="mt-2 inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:bg-[#EFEAF8]">
+          <div className="max-lg:sticky max-lg:bottom-[72px] max-lg:z-10 max-lg:-mx-4 max-lg:mt-3 max-lg:border-t max-lg:border-[#E6E5EC] max-lg:bg-white max-lg:px-4 max-lg:py-2"><label className="mt-2 inline-flex h-10 max-lg:mt-0 max-lg:w-full max-lg:justify-center lg:h-9 cursor-pointer items-center gap-1.5 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:bg-[#EFEAF8]">
             {isUploading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <FileUp className="h-3.5 w-3.5" aria-hidden="true" />}
             {isUploading ? 'Uploading…' : hasFile ? 'Replace File' : 'Attach File'}
             <input type="file" className="hidden" disabled={isUploading} onChange={(event) => { void uploadDocumentFile(document.id, event.target.files?.[0]); event.target.value = ''; }} aria-label={`Attach file for ${document.label}`} />
-          </label>
+          </label></div>
         </div>
         {updateNote ? (
           <label className="block">
@@ -710,8 +711,8 @@ function ReadinessChecklist({
         </div>
 
         <div role="tabpanel" className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="min-w-0 border-b border-[#E6E5EC] lg:border-b-0">{activeGroup?.rows.map(({ document }) => renderRow(document))}</div>
-          <div className="min-w-0 border-[#E6E5EC] p-4 lg:border-l">{renderDetail(selectedRow)}</div>
+          <div className={`min-w-0 border-b border-[#E6E5EC] lg:border-b-0 ${mOpen ? 'max-lg:hidden' : ''}`}>{activeGroup?.rows.map(({ document }) => renderRow(document))}</div>
+          <div id="doc-detail-panel" className={`min-w-0 scroll-mt-4 border-[#E6E5EC] p-4 lg:border-l ${mOpen ? '' : 'max-lg:hidden'}`}><button type="button" onClick={() => setMOpen(false)} className="mb-3 !h-9 !gap-1 !px-2 lg:!hidden"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Checklist</button>{renderDetail(selectedRow)}</div>
         </div>
       </div>
 
@@ -2300,6 +2301,7 @@ export default function ClosingTime({
   const [selectedTaskId, setSelectedTaskId] = useState('');
   const [dealMoreOpen, setDealMoreOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [taskMOpen, setTaskMOpen] = useState(false);
   const updateTask = (taskId: string, patch: Partial<AgentTask>) => {
     if (!activeDeal) return;
     const nextTasks = activeDeal.tasks.map((task) => task.id === taskId ? { ...task, ...patch } : task);
@@ -4069,11 +4071,11 @@ export default function ClosingTime({
                 </div>
                 <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
               </div>
-              <div className="flex min-w-0 flex-wrap items-center gap-3 border-y border-[#E6E5EC] bg-[#F6F3FB] px-[1.125rem] py-3">
-                <input value={taskTitle} onChange={(event) => { setTaskTitle(event.target.value); if (taskError) setTaskError(''); }} aria-label="Task name" aria-invalid={taskError ? true : undefined} aria-describedby={taskError ? 'task-name-error' : undefined} className="h-9 w-full min-w-0 basis-full sm:min-w-[200px] sm:flex-1 sm:basis-0 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
-                <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="h-9 min-w-0 !w-auto flex-1 sm:!w-[150px] sm:flex-none rounded-md border border-[#E6E5EC] bg-white px-3 text-sm outline-none focus:border-[#301D5D]" />
-                <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="h-9 min-w-0 !w-auto flex-1 sm:!w-[120px] sm:flex-none rounded-md border border-[#E6E5EC] bg-white px-2 text-[13px] font-medium outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
-                <button type="button" onClick={addTask} className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]"><Plus className="rnn-inline-icon" aria-hidden="true" />Add</button>
+              <div className="grid min-w-0 grid-cols-2 items-center gap-2 border-y sm:flex sm:flex-wrap sm:gap-3 border-[#E6E5EC] bg-[#F6F3FB] px-[1.125rem] py-3">
+                <input value={taskTitle} onChange={(event) => { setTaskTitle(event.target.value); if (taskError) setTaskError(''); }} aria-label="Task name" aria-invalid={taskError ? true : undefined} aria-describedby={taskError ? 'task-name-error' : undefined} className="col-span-2 h-10 w-full min-w-0 sm:h-9 sm:basis-full sm:min-w-[200px] sm:flex-1 sm:basis-0 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
+                <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="h-10 min-w-0 !w-full sm:h-9 sm:!w-[150px] sm:flex-none rounded-md border border-[#E6E5EC] bg-white px-3 text-sm outline-none focus:border-[#301D5D]" />
+                <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="h-10 min-w-0 !w-full sm:h-9 sm:!w-[120px] sm:flex-none rounded-md border border-[#E6E5EC] bg-white px-2 text-[13px] font-medium outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
+                <button type="button" onClick={addTask} className="col-span-2 inline-flex h-10 shrink-0 sm:h-9 items-center justify-center gap-2 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]"><Plus className="rnn-inline-icon" aria-hidden="true" />Add Task</button>
               </div>
               {taskError && <p id="task-name-error" role="alert" className="border-b border-[#E6E5EC] bg-[#FFEAE6] px-[1.125rem] py-2 text-[13px] text-[#661102]">{taskError}</p>}
               
@@ -4086,9 +4088,9 @@ export default function ClosingTime({
                     const lab = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#6B6878]';
                     return (
                       <div className="grid min-w-0 border-t border-[#E6E5EC] lg:grid-cols-[minmax(0,1fr)_340px]">
-                        <div className="min-w-0 max-h-[640px] overflow-y-auto border-b border-[#E6E5EC] lg:border-b-0">
+                        <div className={`min-w-0 border-b border-[#E6E5EC] lg:max-h-[640px] lg:overflow-y-auto lg:border-b-0 ${taskMOpen ? 'max-lg:hidden' : ''}`}>
                           {activeDeal.tasks.map((task) => (
-                            <div key={task.id} role="button" tabIndex={0} aria-current={selectedTask.id === task.id ? 'true' : undefined} onClick={() => setSelectedTaskId(task.id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelectedTaskId(task.id); } }} className={`flex cursor-pointer items-center gap-3 border-t border-[#E6E5EC] px-[1.125rem] py-3 first:border-t-0 ${selectedTask.id === task.id ? 'bg-[#EFEAF8]' : 'hover:bg-[#F6F3FB]'}`}>
+                            <div key={task.id} role="button" tabIndex={0} aria-current={selectedTask.id === task.id ? 'true' : undefined} onClick={() => { setSelectedTaskId(task.id); setTaskMOpen(true); window.requestAnimationFrame(() => document.getElementById('task-detail-panel')?.scrollIntoView({ block: 'start' })); }} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelectedTaskId(task.id); setTaskMOpen(true); } }} className={`flex cursor-pointer items-center gap-3 border-t border-[#E6E5EC] px-[1.125rem] py-3 first:border-t-0 ${selectedTask.id === task.id ? 'bg-[#EFEAF8]' : 'hover:bg-[#F6F3FB]'}`}>
                               <button type="button" onClick={(event) => { event.stopPropagation(); updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' }); }} className={`flex !h-[18px] !w-[18px] !min-h-0 !min-w-0 shrink-0 items-center justify-center !rounded-[4px] border !p-0 border-[#B9B6C4] bg-white hover:!border-[#B9B6C4] hover:!bg-white ${task.complete ? '!text-[#301D5D]' : '!text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />}</button>
                               <span className="min-w-0 flex-1">
                                 <span className={`block truncate text-sm font-semibold ${task.complete ? 'text-[#6B6878] line-through' : 'text-[#1B1726]'}`}>{taskTitleCase(task.title)}</span>
@@ -4097,7 +4099,7 @@ export default function ClosingTime({
                             </div>
                           ))}
                         </div>
-                        <div className="min-w-0 space-y-4 p-4 lg:border-l lg:border-[#E6E5EC]" data-testid="task-detail">
+                        <div id="task-detail-panel" className={`min-w-0 scroll-mt-4 space-y-4 p-4 lg:border-l lg:border-[#E6E5EC] ${taskMOpen ? '' : 'max-lg:hidden'}`} data-testid="task-detail"><button type="button" onClick={() => setTaskMOpen(false)} className="mb-3 !h-9 !gap-1 !px-2 lg:!hidden"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Back To Tasks</button>
                           <div>
                             <p className={lab}>Selected Task</p>
                             <input key={`${selectedTask.id}-${selectedTask.title}`} defaultValue={selectedTask.title} disabled={locked} maxLength={280} aria-label="Task name" onBlur={(event) => { const v = event.target.value.trim(); if (v && v !== selectedTask.title) updateTask(selectedTask.id, { title: v }); }} className="mt-1 h-9 w-full rounded-md border border-[#E6E5EC] bg-white px-3 text-sm font-semibold text-[#1B1726]" />
