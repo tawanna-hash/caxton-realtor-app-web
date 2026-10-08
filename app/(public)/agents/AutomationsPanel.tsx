@@ -112,10 +112,10 @@ export default function AutomationsPanel() {
           <button type="button" className={BTN} disabled={busy || !keyName.trim()} onClick={async () => { const r = await post({ action: 'create-key', name: keyName.trim() }); if (r) { setSecret({ label: `API key for ${keyName.trim()}`, value: r.key }); setKeyName(''); } }}>Create Key</button>
         </div>
         <ul className="mt-3 divide-y divide-[#E6E5EC]">
-          {keys.length === 0 && <li className="py-2 text-[14px] text-[#7A7787]">No keys yet.</li>}
+          {keys.length === 0 && <li className="py-2 text-[14px] text-[#6B6878]">No keys yet.</li>}
           {keys.map((k) => (
             <li key={k.id} className="flex items-center justify-between gap-3 py-2 text-[14px] text-[#1B1726]">
-              <span>{k.name} <span className="text-[#7A7787]">· {k.prefix}… · {k.lastUsedAt ? `Last used ${new Date(k.lastUsedAt).toLocaleDateString()}` : 'Never used'}</span></span>
+              <span>{k.name} <span className="text-[#6B6878]">· {k.prefix}… · {k.lastUsedAt ? `Last used ${new Date(k.lastUsedAt).toLocaleDateString()}` : 'Never used'}</span></span>
               <button type="button" className={BTN} disabled={busy} onClick={() => void post({ action: 'revoke-key', id: k.id })}>Revoke</button>
             </li>
           ))}
@@ -138,15 +138,15 @@ export default function AutomationsPanel() {
           <button type="button" className={BTN} disabled={busy || !hookUrl.trim() || hookEvents.length === 0} onClick={async () => { const r = await post({ action: 'create-webhook', url: hookUrl.trim(), events: hookEvents }); if (r) { setSecret({ label: 'Signing secret for this webhook', value: r.secret }); setHookUrl(''); } }}>Add Webhook</button>
         </div>
         <ul className="mt-3 divide-y divide-[#E6E5EC]">
-          {hooks.length === 0 && <li className="py-2 text-[14px] text-[#7A7787]">No webhooks yet.</li>}
+          {hooks.length === 0 && <li className="py-2 text-[14px] text-[#6B6878]">No webhooks yet.</li>}
           {hooks.map((h) => (
             <li key={h.id} className="flex items-center justify-between gap-3 py-2 text-[14px] text-[#1B1726]">
-              <span className="min-w-0 break-all">{h.url}<span className="block text-[13px] text-[#7A7787]">{h.events.map((e) => EVENT_LABEL[e] ?? e).join(', ')} · {h.lastDeliveryAt ? `Last sent ${new Date(h.lastDeliveryAt).toLocaleString()} (${h.lastStatus})` : 'Not sent yet'}</span></span>
+              <span className="min-w-0 break-all">{h.url}<span className="block text-[13px] text-[#6B6878]">{h.events.map((e) => EVENT_LABEL[e] ?? e).join(', ')} · {h.lastDeliveryAt ? `Last sent ${new Date(h.lastDeliveryAt).toLocaleString()} (${h.lastStatus})` : 'Not sent yet'}</span></span>
               <button type="button" className={BTN} disabled={busy} onClick={() => void post({ action: 'delete-webhook', id: h.id })}>Delete</button>
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-[13px] text-[#7A7787]">Messages carry the deal address, names, dates, status and client contacts. Documents and private notes are never sent.</p>
+        <p className="mt-3 text-[13px] text-[#6B6878]">Messages carry the deal address, names, dates, status and client contacts. Documents and private notes are never sent.</p>
         {msg && <p role="status" className={`mt-2 text-[14px] ${msg.ok ? 'text-[#005A00]' : 'text-[#661102]'}`}>{msg.text}</p>}
       </section>
     </div>

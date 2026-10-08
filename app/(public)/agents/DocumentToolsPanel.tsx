@@ -154,7 +154,7 @@ export default function DocumentToolsPanel() {
         <input ref={oneRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => { void pickSingle(e.target.files?.[0]); e.target.value = ''; }} />
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button type="button" className={BTN} disabled={busy} onClick={() => oneRef.current?.click()}>Choose PDF</button>
-          {single && <span className="text-[13px] text-[#7A7787]">{single.name} · {pageCount} pages</span>}
+          {single && <span className="text-[13px] text-[#6B6878]">{single.name} · {pageCount} pages</span>}
         </div>
         {single && (
           <div className="mt-3 space-y-2">

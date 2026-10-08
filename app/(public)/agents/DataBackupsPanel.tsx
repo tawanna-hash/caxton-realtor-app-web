@@ -83,10 +83,10 @@ export default function DataBackupsPanel() {
         <p className="mt-1 text-[14px] text-[#4A4757]">A backup is saved on the first of each month, and before every import. The last 12 are kept. Texas brokers must keep transaction records for four years.</p>
         <div className="mt-3"><button type="button" className={BTN} disabled={busy} onClick={() => void backupNow()}>Back Up Now</button></div>
         <ul className="mt-3 divide-y divide-[#E6E5EC]">
-          {backups.length === 0 && <li className="py-2 text-[14px] text-[#7A7787]">No backups yet.</li>}
+          {backups.length === 0 && <li className="py-2 text-[14px] text-[#6B6878]">No backups yet.</li>}
           {backups.map((b) => (
             <li key={b.id} className="flex items-center justify-between gap-3 py-2 text-[14px] text-[#1B1726]">
-              <span>{new Date(b.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} <span className="text-[#7A7787]">· {KIND[b.kind] ?? b.kind} · {b.dealCount} deals</span></span>
+              <span>{new Date(b.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} <span className="text-[#6B6878]">· {KIND[b.kind] ?? b.kind} · {b.dealCount} deals</span></span>
               <a className={BTN} href={`${API}?action=download-backup&id=${b.id}`}><Download className="h-3.5 w-3.5" aria-hidden="true" />Download</a>
             </li>
           ))}
@@ -99,16 +99,16 @@ export default function DataBackupsPanel() {
         <div className="mt-3">
           <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
           <button type="button" className={BTN} disabled={busy} onClick={() => fileRef.current?.click()}><Upload className="h-3.5 w-3.5" aria-hidden="true" />Choose CSV File</button>
-          {fileName && <span className="ml-3 text-[13px] text-[#7A7787]">{fileName}</span>}
+          {fileName && <span className="ml-3 text-[13px] text-[#6B6878]">{fileName}</span>}
         </div>
         {preview && (
           <div className="mt-4 space-y-2 text-[14px] text-[#1B1726]">
             <p>{preview.valid} of {preview.total} rows are ready to import.{preview.skipped.length > 0 && ` ${preview.skipped.length} skipped.`}</p>
-            <p className="text-[13px] text-[#7A7787]">Matched Columns: {Object.entries(preview.mapped).map(([k, v]) => `${k} = ${v}`).join(', ') || 'none'}</p>
+            <p className="text-[13px] text-[#6B6878]">Matched Columns: {Object.entries(preview.mapped).map(([k, v]) => `${k} = ${v}`).join(', ') || 'none'}</p>
             {preview.sample.length > 0 && (
               <div className="overflow-x-auto rounded-md border border-[#E6E5EC]">
                 <table className="min-w-full text-left text-[13px]">
-                  <thead className="bg-[#F6F3FB] text-[11px] font-medium uppercase tracking-wide text-[#7A7787]">
+                  <thead className="bg-[#F6F3FB] text-[11px] font-medium uppercase tracking-wide text-[#6B6878]">
                     <tr><th className="px-3 py-2">Address</th><th className="px-3 py-2">Buyers</th><th className="px-3 py-2">Sellers</th><th className="px-3 py-2">Effective</th><th className="px-3 py-2">Closing</th><th className="px-3 py-2">Status</th></tr>
                   </thead>
                   <tbody className="divide-y divide-[#E6E5EC]">

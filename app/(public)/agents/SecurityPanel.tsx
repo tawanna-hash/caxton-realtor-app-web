@@ -36,7 +36,7 @@ export default function SecurityPanel() {
       <section className="ds-card">
         <h2 className="text-[15px] font-semibold text-[#1B1726]">Two-Step Sign-In</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Adds a 6-digit code from an authenticator app such as Google Authenticator, 1Password or Authy to your password sign-in. Once it is on, email links and password reset links no longer sign you in by themselves. You sign in with your password and a code.</p>
-        {enabled === null && <p className="mt-3 text-[14px] text-[#7A7787]">Checking.</p>}
+        {enabled === null && <p className="mt-3 text-[14px] text-[#6B6878]">Checking.</p>}
 
         {enabled === false && !setup && !recovery && (
           <div className="mt-3"><button type="button" className={BTN} disabled={busy} onClick={async () => { const d = await post({ action: 'setup' }); if (d) setSetup({ secret: d.secret, qr: d.qr }); }}>Turn On</button></div>
@@ -47,7 +47,7 @@ export default function SecurityPanel() {
             <p>1. Scan this code with your authenticator app.</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={setup.qr} alt="Authenticator QR code" width={180} height={180} className="rounded-md border border-[#E6E5EC]" />
-            <p className="text-[13px] text-[#7A7787]">Cannot scan? Enter this key instead: <code className="break-all">{setup.secret}</code></p>
+            <p className="text-[13px] text-[#6B6878]">Cannot scan? Enter this key instead: <code className="break-all">{setup.secret}</code></p>
             <p>2. Enter the 6-digit code it shows.</p>
             <div className="flex gap-2">
               <input className={INPUT} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="123456" value={code} onChange={(e) => setCode(e.target.value)} />

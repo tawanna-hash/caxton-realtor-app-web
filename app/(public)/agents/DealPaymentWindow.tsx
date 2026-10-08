@@ -63,18 +63,18 @@ export default function DealPaymentWindow({ dealId, onPaid, onCancel, kind = 'de
             <h2 className="text-[16px] font-semibold text-[#301D5D]">{kind === 'deal' ? 'Open This Deal' : 'Extend This Deal'}</h2>
             <p className="mt-1 text-[13px] text-[#4A4757]">{kind === 'deal' ? 'Your two free deals are used. $12 covers this deal from start to finish.' : 'Your free extension is used. $5 keeps this deal open 14 more days.'}</p>
           </div>
-          <button type="button" aria-label="Close" onClick={onCancel} className="!border-0 !bg-transparent !p-1 text-[#7A7787] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]"><X className="h-4 w-4" /></button>
+          <button type="button" aria-label="Close" onClick={onCancel} className="!border-0 !bg-transparent !p-1 text-[#6B6878] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]"><X className="h-4 w-4" /></button>
         </div>
         <div className="mt-4">
           {error && <p className="text-[13px] text-[#661102]" role="alert">{error}</p>}
-          {!error && !intent && <p className="text-[13px] text-[#7A7787]">Loading payment form</p>}
+          {!error && !intent && <p className="text-[13px] text-[#6B6878]">Loading payment form</p>}
           {intent && stripePromise && (
             <Elements stripe={stripePromise} options={{ clientSecret: intent.clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#301D5D', fontFamily: 'Inter, sans-serif', borderRadius: '8px' } } }}>
               <PayForm dealId={dealId} paymentIntentId={intent.paymentIntentId} onPaid={onPaid} kind={kind} />
             </Elements>
           )}
         </div>
-        <p className="mt-4 text-[12px] leading-relaxed text-[#7A7787]">{kind === 'deal' ? 'Two free deals in total, for the life of your account. ' : 'The first extension on a deal is free. Each one after that is $5. '}Deals close automatically two weeks after the closing date, or 180 days after opening if no closing date is entered. No refunds.</p>
+        <p className="mt-4 text-[12px] leading-relaxed text-[#6B6878]">{kind === 'deal' ? 'Two free deals in total, for the life of your account. ' : 'The first extension on a deal is free. Each one after that is $5. '}Deals close automatically two weeks after the closing date, or 180 days after opening if no closing date is entered. No refunds.</p>
       </div>
     </div>
   );

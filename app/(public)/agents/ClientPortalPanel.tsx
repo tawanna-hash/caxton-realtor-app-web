@@ -157,7 +157,7 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
               {view.steps.map((s, i) => (
                 <li key={s.label} className="relative pb-5 pl-8 last:pb-0">
                   {i < view.steps.length - 1 && <span className="absolute bottom-0 left-[7px] top-5 w-[2px] bg-[#E6E5EC]" aria-hidden="true" />}
-                  <span className="absolute left-0 top-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 text-[9px] text-white" style={{ borderColor: s.state === 'upcoming' ? '#E6E5EC' : '#301D5D', background: s.state === 'done' ? '#301D5D' : '#fff' }} aria-hidden="true">{s.state === 'done' ? '✓' : ''}</span>
+                  <span className="absolute left-0 top-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 text-[11px] text-white" style={{ borderColor: s.state === 'upcoming' ? '#E6E5EC' : '#301D5D', background: s.state === 'done' ? '#301D5D' : '#fff' }} aria-hidden="true">{s.state === 'done' ? '✓' : ''}</span>
                   <div className="flex items-baseline justify-between gap-3">
                     <span className={`text-[14px] ${s.state === 'upcoming' ? 'font-medium text-[#4A4757]' : 'font-semibold text-[#1B1726]'}`}>{s.label}</span>
                     {s.date && <span className="text-[12px] font-medium text-[#4A4757]">{s.state === 'done' ? 'Done' : 'Expected'} {fmt(s.date)}</span>}

@@ -213,7 +213,7 @@ export function Walkthrough({ guide, onClose, goView }: { guide: Guide; onClose:
       )}
       {!rect && <div aria-hidden="true" style={{ position: 'fixed', inset: 0, background: 'rgba(27,23,38,0.45)' }} />}
       <div role="dialog" aria-label={`${guide.title}: step ${i + 1} of ${guide.tour.length}`} style={{ position: 'fixed', pointerEvents: 'auto', ...cardStyle }} className="rounded-lg border border-[#E6E5EC] bg-white p-4 shadow-lg">
-        <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]">Step {i + 1} Of {guide.tour.length}</p>
+        <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#6B6878]">Step {i + 1} Of {guide.tour.length}</p>
         <div className="mt-1 h-1 rounded-full bg-[#E6E5EC]" aria-hidden="true"><div className="h-1 rounded-full bg-[#301D5D]" style={{ width: `${((i + 1) / guide.tour.length) * 100}%` }} /></div>
         <p className="mt-3 text-[14px] font-semibold text-[#301D5D]">{step.title}</p>
         <p className="mt-1 text-[14px] leading-6 text-[#4A4757]">{step.text}</p>

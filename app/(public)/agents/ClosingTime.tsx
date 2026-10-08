@@ -649,8 +649,8 @@ function ReadinessChecklist({
       <div key={document.id} className="grid min-w-0 gap-3 border-t border-[#E6E5EC] px-4 py-3 first:border-t-0 hover:bg-[#F6F3FB] sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
         <span className="hidden h-2.5 w-2.5 shrink-0 rounded-full sm:block" style={{ backgroundColor: dotColor(document.status) }} aria-hidden="true" />
         <div className="min-w-0">
-          <p className={`text-sm font-semibold leading-5 ${done ? 'text-[#7A7787]' : 'text-[#1B1726]'}`}>{document.label}</p>
-          {description ? <p className="mt-0.5 text-[13px] leading-5 text-[#7A7787]">{description}</p> : null}
+          <p className={`text-sm font-semibold leading-5 ${done ? 'text-[#6B6878]' : 'text-[#1B1726]'}`}>{document.label}</p>
+          {description ? <p className="mt-0.5 text-[13px] leading-5 text-[#6B6878]">{description}</p> : null}
           {hasFile ? (
             <span className="mt-1.5 inline-flex max-w-full items-center gap-1.5 truncate rounded-md bg-[#E0FBE0] px-2 py-0.5 text-xs font-medium text-[#005A00]">
               <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -671,7 +671,7 @@ function ReadinessChecklist({
             />
           </label>
           {hasFile ? (
-            <button type="button" onClick={() => removeDocumentFile(document.id)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#7A7787] hover:!bg-[#EFEAF8] hover:!text-[#661102]" aria-label={`Remove attached file from ${document.label}`}>
+            <button type="button" onClick={() => removeDocumentFile(document.id)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#6B6878] hover:!bg-[#EFEAF8] hover:!text-[#661102]" aria-label={`Remove attached file from ${document.label}`}>
               <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           ) : null}
@@ -695,7 +695,7 @@ function ReadinessChecklist({
     <div className="ds-page min-w-0 max-w-full" data-testid="readiness-check" data-section-key="readiness">
       <div className="rounded-2xl border border-[#E6E5EC] bg-white">
         <div className="px-[1.125rem] py-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7A7787]">Readiness Check</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B6878]">Readiness Check</p>
           <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
             <h3 className="text-sm font-semibold text-[#1B1726]">Deal Readiness Checklist</h3>
             <span className="text-[13px] text-[#4A4757]">{doneCount} Of {totalCount} Items In</span>
@@ -748,7 +748,7 @@ function ReadinessChecklist({
       </div>
 
       <div className="mt-3 rounded-2xl border border-[#E6E5EC] bg-white px-[1.125rem] py-4">
-        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7A7787]">Operational Review Alerts</p>
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B6878]">Operational Review Alerts</p>
         {reviewAlerts.length ? (
           <ul className="mt-2 space-y-2">
             {reviewAlerts.slice(0, 4).map((alert) => (
@@ -2631,45 +2631,45 @@ export default function ClosingTime({
 
   const renderTimelineFields = () => (activeDeal ? (
     <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <label className="ds-card flex min-w-0 flex-col">
-        <span className="block text-sm font-bold text-slate-900">Signed Contract / Effective Date</span>
+      <label className="ds-card flex min-w-0 flex-col gap-3">
+        <span className="block text-[13px] font-medium text-[#1B1726]">Signed Contract / Effective Date</span>
         <input
           type="date"
           value={activeDeal.effectiveDate}
           onChange={(event) => updateActiveDeal('effectiveDate', event.target.value)}
-          className="mt-4"
+          className="mt-auto"
         />
       </label>
-      <div className="ds-card flex min-w-0 flex-col">
-        <p className="text-sm font-bold text-slate-900">Earnest Money Deposit</p>
+      <div className="ds-card flex min-w-0 flex-col gap-3">
+        <p className="text-[13px] font-medium text-[#1B1726]">Earnest Money Deposit</p>
         <Tip text="TREC rule: due by the end of the third calendar day after the effective date; weekend and legal-holiday rollover applies." />
         <input
           type="date"
           readOnly
           value={activeDeadlines.find((deadline) => deadline.id === 'earnest-money-delivery')?.date ?? ''}
-          className="mt-4 bg-slate-50 text-slate-700"
+          className="mt-auto bg-slate-50 text-slate-700"
           aria-label="Calculated earnest money deposit deadline"
         />
       </div>
       {CALCULATED_TIMELINE_FIELDS.map(({ key, deadlineId, label, rule }) => (
-        <label key={key} className="ds-card flex min-w-0 flex-col">
-          <span className="block text-sm font-bold text-slate-900">{label}</span>
+        <label key={key} className="ds-card flex min-w-0 flex-col gap-3">
+          <span className="block text-[13px] font-medium text-[#1B1726]">{label}</span>
           <input
             type="date"
             value={activeDeadlines.find((deadline) => deadline.id === deadlineId)?.date ?? ''}
             disabled={!activeDeal.effectiveDate}
             onChange={(event) => updateCalculatedDeadline(key, event.target.value)}
-            className="mt-4 disabled:cursor-not-allowed disabled:bg-slate-50"
+            className="mt-auto disabled:cursor-not-allowed disabled:bg-slate-50"
           />
         </label>
       ))}
-      <label className="ds-card flex min-w-0 flex-col">
-        <span className="block text-sm font-bold text-slate-900">Closing Date</span>
+      <label className="ds-card flex min-w-0 flex-col gap-3">
+        <span className="block text-[13px] font-medium text-[#1B1726]">Closing Date</span>
         <input
           type="date"
           value={activeDeal.closingDate}
           onChange={(event) => updateActiveDeal('closingDate', event.target.value)}
-          className="mt-4"
+          className="mt-auto"
         />
       </label>
     </div>
@@ -3033,7 +3033,7 @@ export default function ClosingTime({
                 </button>
               </li>
             </ul>
-          <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1 px-2 pb-2 text-[11px] text-[#7A7787]">
+          <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1 px-2 pb-2 text-[11px] text-[#6B6878]">
               <a className="underline" href="/privacy">Privacy</a>
               <a className="underline" href="/terms">Terms</a>
               <a className="underline" href="/disclaimer">Notices</a>
@@ -3068,6 +3068,7 @@ export default function ClosingTime({
               </div>
             )}
           <div data-desk-view={effectiveView} className="ds-main min-w-0">
+            <h1 className="sr-only">Closing Time</h1>
             {effectiveView === 'overview' && (
               <div className="mb-4">
                 <h2 className="text-[22px] font-semibold text-[#1B1726]">Today</h2>
@@ -3989,7 +3990,7 @@ export default function ClosingTime({
             <div {...collapsible('tasks')} className="rounded-2xl border border-[#E6E5EC] bg-white">
               <div className="flex items-center gap-3 px-[1.125rem] py-4">
                 <div>
-                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7A7787]">Tasks And Reminders</p>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B6878]">Tasks And Reminders</p>
                   <h3 className="mt-1 text-sm font-semibold text-[#1B1726]">{activeDeal.tasks.filter((t) => !t.complete).length + activeDeal.reminders.filter((r) => !r.complete).length} Open Of {activeDeal.tasks.length + activeDeal.reminders.length}</h3>
                 </div>
                 <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
@@ -4003,9 +4004,9 @@ export default function ClosingTime({
               {taskError && <p id="task-name-error" role="alert" className="border-b border-[#E6E5EC] bg-[#FFEAE6] px-[1.125rem] py-2 text-[13px] text-[#661102]">{taskError}</p>}
               
               <div>
-                {!activeDeal.tasks.length && !activeDeal.reminders.length ? <p className="px-[1.125rem] py-6 text-sm text-[#7A7787]">Use deadline presets (7d, 3d, 1d, due) in the review step or add a custom action here.</p> : <>
-                  {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border-t border-[#E6E5EC] bg-[#FEF8CC]/50 px-[1.125rem] py-3 first:border-t-0"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#645600] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}>{reminder.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-[#7A7787] line-through' : 'text-[#1B1726]'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#645600]">{formatDate(reminder.reminderDate)}</span></div>)}
-                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border-t border-[#E6E5EC] px-[1.125rem] py-3 first:border-t-0 hover:bg-[#F6F3FB]"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#B9B6C4] bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-[#7A7787] line-through' : 'text-[#1B1726]'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-medium ${task.priority === 'critical' ? 'bg-[#FFEAE6] text-[#661102]' : task.priority === 'high' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-[#EFEAF8] text-[#301D5D]'} capitalize`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="h-9 rounded-md border border-[#E6E5EC] bg-white px-2 text-[13px] font-medium text-[#4A4757]">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}</select>{task.dueDate && <span className={`text-xs font-medium ${task.dueDate < today && !task.complete ? 'text-[#661102]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#7A7787] hover:!bg-[#EFEAF8] hover:!text-[#661102]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
+                {!activeDeal.tasks.length && !activeDeal.reminders.length ? <p className="px-[1.125rem] py-6 text-sm text-[#6B6878]">Use deadline presets (7d, 3d, 1d, due) in the review step or add a custom action here.</p> : <>
+                  {activeDeal.reminders.map((reminder) => <div key={reminder.id} className="flex flex-wrap items-center gap-3 border-t border-[#E6E5EC] bg-[#FEF8CC]/50 px-[1.125rem] py-3 first:border-t-0"><button type="button" onClick={() => updateReminder(reminder.id, { complete: !reminder.complete })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${reminder.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#645600] bg-white text-transparent'}`} aria-label={`Mark ${reminder.label} reminder ${reminder.complete ? 'incomplete' : 'complete'}`}>{reminder.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${reminder.complete ? 'text-[#6B6878] line-through' : 'text-[#1B1726]'}`}>{reminder.label}{reminder.note ? <span className="block text-xs font-normal text-slate-600">{reminder.note}</span> : null}</span><span className="text-xs font-bold text-[#645600]">{formatDate(reminder.reminderDate)}</span></div>)}
+                  {activeDeal.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center gap-3 border-t border-[#E6E5EC] px-[1.125rem] py-3 first:border-t-0 hover:bg-[#F6F3FB]"><button type="button" onClick={() => updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' })} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${task.complete ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#B9B6C4] bg-white text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-4 w-4" aria-hidden="true" />}</button><span className={`min-w-0 flex-1 text-sm font-semibold ${task.complete ? 'text-[#6B6878] line-through' : 'text-[#1B1726]'}`}>{task.title}</span><span className={`rounded-md px-2 py-1 text-xs font-medium ${task.priority === 'critical' ? 'bg-[#FFEAE6] text-[#661102]' : task.priority === 'high' ? 'bg-[#FEF8CC] text-[#645600]' : 'bg-[#EFEAF8] text-[#301D5D]'} capitalize`}>{task.priority}</span><select value={task.status} onChange={(event) => { const status = event.target.value as TrecTaskStatus; updateTask(task.id, { status, complete: status === 'done' || status === 'skipped' }); }} aria-label={`Status for ${task.title}`} className="h-9 rounded-md border border-[#E6E5EC] bg-white px-2 text-[13px] font-medium text-[#4A4757]">{TREC_TASK_STATUSES.map((status) => <option key={status} value={status}>{status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}</select>{task.dueDate && <span className={`text-xs font-medium ${task.dueDate < today && !task.complete ? 'text-[#661102]' : 'text-slate-500'}`}>{formatDate(task.dueDate)}</span>}{!isDealLocked(activeDeal) && <button type="button" onClick={() => removeTask(task.id)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#6B6878] hover:!bg-[#EFEAF8] hover:!text-[#661102]" aria-label={`Remove ${task.title}`}><Trash2 className="h-4 w-4" aria-hidden="true" /></button>}</div>)}
                 </>}
               </div>
             </div>

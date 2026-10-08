@@ -17,7 +17,7 @@ type Combo = { id: string; alias: string; title: string; schedulerIds: string[] 
 type Data = { slug: string; schedulers: Sched[]; combos: Combo[]; bookings: Booking[]; account: { provider: string; name: string } | null; calendars: { id: string; name: string; primary?: boolean }[]; accountEmail: string; agentName: string };
 
 const card = 'rounded-2xl border border-[#E6E5EC] bg-white';
-const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[14px] text-[#1B1726] focus:border-[#301D5D] focus:outline-none disabled:bg-[#F6F3FB] disabled:text-[#7A7787]';
+const field = 'w-full rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[14px] text-[#1B1726] focus:border-[#301D5D] focus:outline-none disabled:bg-[#F6F3FB] disabled:text-[#6B6878]';
 const label = 'block text-[14px] font-semibold text-[#1B1726]';
 const hint = 'mt-0.5 text-[13px] text-[#4A4757]';
 const pill = 'inline-flex items-center gap-2 min-h-[32px] rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#1B1726] transition hover:border-[#301D5D]';
@@ -383,7 +383,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
         <p className={hint}>Check availability on up to 6 other calendars, optional.</p>
         <div className="relative mt-2">
           <button type="button" disabled={!data.calendars.length} onClick={() => setCalOpen((o) => !o)} className={`${field} flex items-center justify-between text-left`} aria-expanded={calOpen}>
-            <span className={c.additionalCalendars.length ? 'text-[#1B1726]' : 'text-[#7A7787]'}>{c.additionalCalendars.length ? c.additionalCalendars.map((a) => a.name).join(', ') : data.calendars.length ? 'Select Calendar' : 'No connected calendars'}</span>
+            <span className={c.additionalCalendars.length ? 'text-[#1B1726]' : 'text-[#6B6878]'}>{c.additionalCalendars.length ? c.additionalCalendars.map((a) => a.name).join(', ') : data.calendars.length ? 'Select Calendar' : 'No connected calendars'}</span>
             <ChevronDown className="h-4 w-4 shrink-0 text-[#4A4757]" aria-hidden="true" />
           </button>
           {calOpen && (
@@ -465,7 +465,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
             return (
               <div key={d.key} className="flex items-center gap-2">
                 <button type="button" role="switch" aria-checked={h.on} aria-label={d.long} onClick={() => setDay(d.key, { on: !h.on })} className={`ct-switch relative h-5 w-9 shrink-0 rounded-full transition ${h.on ? 'bg-[#301D5D]' : 'bg-[#E6E5EC]'}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${h.on ? 'left-[18px]' : 'left-0.5'}`} /></button>
-                <span className={`w-10 text-[14px] font-medium ${h.on ? 'text-[#1B1726]' : 'text-[#7A7787]'}`}>{d.label}</span>
+                <span className={`w-10 text-[14px] font-medium ${h.on ? 'text-[#1B1726]' : 'text-[#6B6878]'}`}>{d.label}</span>
                 <select disabled={!h.on} aria-label={`${d.long} start`} className={`${field} flex-1`} value={h.start} onChange={(e) => setDay(d.key, { start: e.target.value })}>{TIMES.map((t) => <option key={t} value={t}>{timeLabel(t, c.timeFormat)}</option>)}</select>
                 <select disabled={!h.on} aria-label={`${d.long} end`} className={`${field} flex-1`} value={h.end} onChange={(e) => setDay(d.key, { end: e.target.value })}>{[...TIMES.slice(1), '23:59'].map((t) => <option key={t} value={t}>{timeLabel(t, c.timeFormat)}</option>)}</select>
               </div>
@@ -658,7 +658,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
                 <button type="button" data-no-auto-open className={`flex w-full items-center gap-3 px-4 ${open ? 'border-b border-[#F6F3FB] py-4' : 'py-3'} text-left hover:!bg-[#EFEAF8] hover:!text-[#301D5D]`} aria-expanded={open} onClick={() => { if (i < step || !stepError(step)) { setError(''); setStep(i); } else setError(stepError(step)); }}>
                   <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold ${open ? 'bg-[#301D5D] text-white' : 'bg-[#F6F3FB] text-[#4A4757]'}`}>{i + 1}</span>
                   <span className={`flex-1 ${open ? 'text-[16px] font-semibold' : 'text-[14px] font-semibold'} text-[#1B1726]`}>{title}{OPTIONAL.has(i) && <span className="ml-1 font-normal text-[#4A4757]"> (optional)</span>}</span>
-                  {!open && <ChevronRight className="h-4 w-4 text-[#7A7787]" aria-hidden="true" />}
+                  {!open && <ChevronRight className="h-4 w-4 text-[#6B6878]" aria-hidden="true" />}
                 </button>
                 {open && (
                   <div className="p-4">

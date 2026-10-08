@@ -30,7 +30,7 @@ export default function SignaturePlacer({ data, signers, fields, onChange, onClo
           overlay={(page) => fields.map((f, i) => f.page === page ? (
             <button key={i} type="button" onClick={(e) => { e.stopPropagation(); onChange(fields.filter((_, j) => j !== i)); }} aria-label={`Remove ${f.type} for ${signers[f.signer]}`}
               style={{ left: `${f.x * 100}%`, top: `${f.y * 100}%`, width: `${f.w * 100}%`, height: `${f.h * 100}%`, borderColor: COLORS[f.signer % 6], color: COLORS[f.signer % 6] }}
-              className="absolute flex items-center justify-center overflow-hidden border-2 bg-white/70 text-[10px] font-bold">{f.type === 'date' ? 'Date' : 'Sign'}: {signers[f.signer]}</button>) : null)} />
+              className="absolute flex items-center justify-center overflow-hidden border-2 bg-white/70 text-[11px] font-bold">{f.type === 'date' ? 'Date' : 'Sign'}: {signers[f.signer]}</button>) : null)} />
       </div>
     </div>
   );

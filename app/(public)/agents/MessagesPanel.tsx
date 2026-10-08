@@ -168,7 +168,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
       <div className="text-[12px] font-medium text-[#4A4757]">{i.out ? (STATUS[i.status] ?? i.status) : 'Received'}{i.error ? `: ${i.error.slice(0, 120)}` : ''}</div>
     </div>
   );
-  const pillBase = 'inline-flex max-w-full items-center gap-2 rounded-full border px-2 py-0.5 text-[10px] leading-4 font-medium';
+  const pillBase = 'inline-flex max-w-full items-center gap-2 rounded-full border px-2 py-0.5 text-[11px] leading-4 font-medium';
   const namePill = (name: string, role: string, on = false) => (
     <span className={`${pillBase} ${on ? 'border-[#301D5D] bg-[#EFEAF8] text-[#1B1726]' : 'border-[#E6E5EC] bg-white text-[#1B1726]'}`}><span className="break-words">{name}</span>{role ? <span className="text-[8px] font-medium uppercase tracking-[0.06em] text-[#4A4757]">{role}</span> : null}</span>
   );
@@ -257,7 +257,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
                     <div className="flex flex-wrap items-center gap-2">
                       {parties.filter((p) => p.email && p.key !== party.key).map((p) => {
                         const on = cc.some((c) => c.toLowerCase() === p.email.toLowerCase());
-                        return <button key={p.key} type="button" onClick={() => setCc((c) => on ? c.filter((x) => x.toLowerCase() !== p.email.toLowerCase()) : [...c, p.email])} className={`!rounded-full !border !px-2 !py-0.5 !text-[10px] !leading-4 font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#4A4757]">{p.role}</span></button>;
+                        return <button key={p.key} type="button" onClick={() => setCc((c) => on ? c.filter((x) => x.toLowerCase() !== p.email.toLowerCase()) : [...c, p.email])} className={`!rounded-full !border !px-2 !py-0.5 !text-[11px] !leading-4 font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#4A4757]">{p.role}</span></button>;
                       })}
                       {cc.filter((c) => !parties.some((p) => p.email.toLowerCase() === c.toLowerCase())).map((c) => <button key={c} type="button" onClick={() => setCc((l) => l.filter((x) => x !== c))} className="!rounded-full !border !border-[#301D5D] !bg-[#EFEAF8] !px-3 !py-1 text-[12px] font-medium !text-[#1B1726] hover:!bg-[#EFEAF8]" title="Remove">{c} ×</button>)}
                       <input className="min-w-[180px] flex-1 rounded-lg border border-[#E6E5EC] bg-white px-3 py-2 text-[13px] text-[#1B1726]" placeholder="Add another email" value={ccInput} onChange={(e) => setCcInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const v = ccInput.trim(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && !cc.includes(v)) { setCc((l) => [...l, v]); setCcInput(''); } } }} />
@@ -369,7 +369,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
             <div className="flex flex-wrap gap-2">
               {parties.map((p) => {
                 const on = recipKeys.includes(p.key);
-                return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-full !border !px-2 !py-0.5 !text-[10px] !leading-4 font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#4A4757]">{p.role}</span></button>;
+                return <button key={p.key} type="button" onClick={() => { setSel(p.key); setRecips((r) => { const base = r; return base.includes(p.key) ? base.filter((x) => x !== p.key) : [...base, p.key]; }); }} className={`!rounded-full !border !px-2 !py-0.5 !text-[11px] !leading-4 font-medium hover:!bg-[#EFEAF8] hover:!text-[#1B1726] ${on ? '!border-[#301D5D] !bg-[#EFEAF8] !text-[#1B1726]' : '!border-[#E6E5EC] !bg-white !text-[#4A4757]'}`}>{p.name} <span className="text-[8px] uppercase tracking-[0.06em] text-[#4A4757]">{p.role}</span></button>;
               })}
             </div>
             <Tip text="Each person gets their own copy. Texts go only to people who agreed to texts." />

@@ -31,7 +31,7 @@ export default function TestimonialRequest({ address, emails, agentName, onSent 
         <button type="button" className={BTN} disabled={!link} onClick={() => { void navigator.clipboard?.writeText(link).then(() => { onSent?.('link copied'); setCopied(true); setTimeout(() => setCopied(false), 2000); }); }}>{copied ? 'Copied' : 'Copy Link'}</button>
         {emails.length > 0
           ? <a className={BTN} aria-disabled={!link} href={link ? mailto : undefined} onClick={() => onSent?.('email opened')}>Email Client</a>
-          : <span className="text-[13px] text-[#7A7787]">Add a client email on this deal to send from here.</span>}
+          : <span className="text-[13px] text-[#6B6878]">Add a client email on this deal to send from here.</span>}
       </div>
     </div>
   );
