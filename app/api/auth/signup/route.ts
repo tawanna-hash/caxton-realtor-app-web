@@ -125,6 +125,7 @@ export const POST = withErrorHandling(async (req: Request) => {
       nmlsNumber,
       title: input.title ?? null,
       mobile: input.mobile ?? null,
+      brokerage: input.brokerage ?? null,
       mailingAddress: input.mailingAddress ?? null,
       mailingAddress2: input.mailingAddress2 ?? null,
       city: input.city ?? null,

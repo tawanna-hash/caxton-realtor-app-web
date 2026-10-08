@@ -20,6 +20,7 @@ export const signupSchema = z.object({
 
   title: z.string().max(100).optional(),
   mobile: z.string().max(30).optional(),
+  brokerage: z.string().max(150).optional(),
 
   mailingAddress: z.string().max(200).optional(),
   mailingAddress2: z.string().max(200).optional(),

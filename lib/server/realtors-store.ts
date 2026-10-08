@@ -128,6 +128,7 @@ export interface SignupRow {
   igHandle: string | null;
   liHandle: string | null;
   passwordHash: string | null;
+  brokerage?: string | null;
 }
 
 /**
@@ -240,6 +241,16 @@ export async function insertRealtor(
       'contact',
       `UPDATE realtors SET title = $2, mobile = $3 WHERE id = $1`,
       [realtorId, row.title, row.mobile],
+    );
+  }
+
+  // Brokerage.
+  if (row.brokerage) {
+    await tryOptionalUpdate(
+      client,
+      'brokerage',
+      `UPDATE realtors SET brokerage_name = $2 WHERE id = $1`,
+      [realtorId, row.brokerage],
     );
   }
 
