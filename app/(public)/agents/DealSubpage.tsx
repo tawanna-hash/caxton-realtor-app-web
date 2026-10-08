@@ -1102,7 +1102,6 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
 
         {!section && (<aside className="ds-rail-right" aria-label="Deal details">
           {sideBlocks.parties}
-          {sideBlocks.workspace}
         </aside>)}
       </div>
 
