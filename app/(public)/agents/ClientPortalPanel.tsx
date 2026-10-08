@@ -89,7 +89,7 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
     <div className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={`${card} p-4`}>
-          <h3 className="text-[15px] font-semibold text-[#1B1726]">Preview</h3>
+          <h3 className="text-[14px] font-semibold text-[#1B1726]">Preview</h3>
           <div className="mt-3 space-y-2">
             {people.map((p) => {
               const l = linkFor(p);
@@ -107,8 +107,8 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
         </section>
 
         <section className={`${card} p-4`}>
-          <h3 className="text-[15px] font-semibold text-[#1B1726]">Share With {names}</h3>
-          <Tip text="Copy a personal link for each person and send it however you like: email, text or WhatsApp. Anyone with a link sees the deal, so send each link only to that person. Resetting or turning off a link stops it from working." />
+          <h3 className="text-[14px] font-semibold text-[#1B1726]">Share With {names}</h3>
+          <p className="mt-2 text-[14px] text-[#4A4757]">Copy a personal link for each person and send it however you like: email, text or WhatsApp. Anyone with a link sees the deal, so send each link only to that person. Resetting or turning off a link stops it from working.</p>
           {links === undefined && !error && <p className="mt-3 text-[12px] font-medium text-[#4A4757]">Loading</p>}
           {links !== undefined && (
             <ul className="mt-3 rounded-lg border border-[#E6E5EC] px-3">
@@ -141,7 +141,7 @@ export default function ClientPortalPanel({ deal }: { deal: AgentDeal }) {
 
       <section className={card}>
         <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-4">
-          <h3 className="text-[15px] font-semibold text-[#1B1726]">What {names} See</h3>
+          <h3 className="text-[14px] font-semibold text-[#1B1726]">What {names} See</h3>
           {view && <span className="text-[12px] font-medium text-[#4A4757]">{done}/{view.steps.length}</span>}
         </div>
         {!previewToken && <p className="p-4 text-[14px] text-[#4A4757]">Create a link to see exactly what clients see.</p>}
