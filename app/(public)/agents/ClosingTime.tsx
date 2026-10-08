@@ -3587,10 +3587,8 @@ export default function ClosingTime({
         {workspacePage === 2 && (
           <section className={'mt-4 grid gap-4'} aria-label="Deal settings, alerts and calendar">
             {effectiveView === 'coordinator' && (
-            <SectionNav
-              testId="settings-sections"
-              backLabel="Settings"
-              sections={[
+            (() => {
+              const settingsSections = [
                 { id: 'agent-details', title: 'Account', sub: 'Brokerage and agent details', content: (
             <div data-section-key="agent-details" className="ds-card min-w-0 lg:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -3669,7 +3667,8 @@ export default function ClosingTime({
               <p className="mt-3 text-xs leading-5 text-slate-500">Alerts are opt-in for active deals. Browser push requires permission on each device. <Link href="/agents/closing-time/alert-setup" className="font-semibold text-[#301D5D] underline underline-offset-2">Alert Setup Guide</Link></p>
             </div>
                 ) },
-                ...(activeDeal ? [{ id: 'assist', title: 'Deal Settings', sub: 'Alerts, drafts and checklist for this deal', content: (
+              ];
+              return activeDeal ? (
 <ClosingTimeAssist
                 deal={activeDeal}
                 onMarkReceived={(docId, fileName) => {
@@ -3688,10 +3687,10 @@ export default function ClosingTime({
                   if (!added.length) return;
                   applyActiveAction(`Applied closing checklist (${added.length} tasks)`, { tasks: [...activeDeal.tasks, ...added].slice(0, 200) });
                 }}
+                renderNav={(dealSections) => <SectionNav testId="settings-sections" backLabel="Settings" sections={[...settingsSections, ...dealSections]} />}
               />
-                ) }] : []),
-              ]}
-            />
+              ) : <SectionNav testId="settings-sections" backLabel="Settings" sections={settingsSections} />;
+            })()
             )}
             <div id="trec-forms" {...collapsible('trec-library')} className="ds-page min-w-0 scroll-mt-24 lg:col-span-2">
               <div className="flex flex-wrap items-center gap-3">

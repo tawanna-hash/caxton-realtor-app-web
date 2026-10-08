@@ -1,7 +1,8 @@
 'use client';
 
 import Switch from './Switch';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import type { NavSection } from './SectionNav';
 import MessageLayoutPicker, { type MessageLayout } from './MessageLayoutPicker';
 import { SecureSignRequests, SecureSignSettings, type SignLayout, type SignRequestRow, type SignSettings } from './SecureSignPanel';
 import SignaturePlacer, { type PlacedField } from './SignaturePlacer';
@@ -112,7 +113,7 @@ function HoverTipsSetting() {
   );
 }
 
-export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceived }: { deal: AgentDeal; onApplyChecklist: (steps: Step[]) => void; onMarkReceived: (docId: string, fileName: string) => void }) {
+export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceived, renderNav }: { deal: AgentDeal; onApplyChecklist: (steps: Step[]) => void; onMarkReceived: (docId: string, fileName: string) => void; renderNav?: (sections: NavSection[]) => ReactNode }) {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -219,19 +220,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
   const drafts = data?.followUps.filter((f) => f.status === 'draft') ?? [];
   const sent = data?.followUps.filter((f) => f.status === 'sent').slice(0, 5) ?? [];
 
-  return (
-    <div {...collapsible('assist', { mobileOpen: true })} className="min-w-0 scroll-mt-24 lg:col-span-2">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Deal Coordination</p>
-          <h3 className="text-2xl font-semibold tracking-tight text-gray-900">Settings</h3>
-        </div>
-        <CollapseToggle {...toggleProps('assist', 'deal settings', { mobileOpen: true })} />
-      </div>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">Risk alerts, follow-up drafts, a client progress link, and a closing checklist for this deal. Nothing is emailed to anyone until you approve that specific draft.</p>
-      {error && <p className="mt-3 text-sm font-semibold text-[#661102]" role="alert">{error}</p>}
-      {!data ? <p className="mt-4 text-sm text-slate-500">{error ? '' : 'Loading.'}</p> : (
-        <div className="mt-4 grid items-stretch gap-4 lg:grid-cols-2">
+  const parts = data ? {
+    risks: (
           <section aria-label="Risks" className="ds-card">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Risk Alerts</h4>
             <label className="mt-2 flex items-center gap-2 text-xs text-slate-600">Extension Length
@@ -254,7 +244,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
               </ul>
             )}
           </section>
-
+    ),
+    amendment: (
           <section aria-label="Amendment" className="ds-card">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Amendment (TREC 39-11)</h4>
             <p className="mt-2 text-sm text-slate-600">Pre-fills the official amendment with this property and one change. Signatures and the acceptance date stay blank. Review it, add any option fee or terms yourself, and send it for signatures. Check the new date against the contract.</p>
@@ -263,7 +254,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
               <a className={`${btn} ${newClosing ? '' : 'pointer-events-none opacity-45'}`} href={`/api/closing-time/assist/amendment?dealId=${encodeURIComponent(deal.id)}&type=closing&newDate=${newClosing}`}>Closing Date Amendment (PDF)</a>
             </div>
           </section>
-
+    ),
+    contacts: (
           <section aria-label="Deal contacts" className="ds-card">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Deal Contacts</h4>
             <ul className="mt-2 grid gap-2">
@@ -285,7 +277,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
               <button type="submit" disabled={busy} className={btnPrimary}>Add</button>
             </form>
           </section>
-
+    ),
+    followups: (
           <section aria-label="Follow-ups" className="ds-card lg:col-span-2">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Follow-Up Drafts</h4>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -331,7 +324,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             )}
             {sent.length > 0 && <p className="mt-3 text-xs text-slate-500">Recently sent: {sent.map((f) => f.subject).join(' · ')}</p>}
           </section>
-
+    ),
+    tools: (
           <section aria-label="Connected tools" className="ds-card">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Connected Tools</h4>
             {!data.connected || (!data.connected.calendar && !data.connected.mail && data.connected.storage.length === 0) ? (
@@ -355,10 +349,14 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
               </div>
             )}
           </section>
-
-          {placer && <SignaturePlacer data={placer} signers={(data.parties ?? []).filter((p) => p.email && sigTo.includes(p.id)).map((p) => p.name || p.email)} fields={sigFields} onChange={setSigFields} onClose={() => setPlacer(null)} />}
+    ),
+    layout: (
           <MessageLayoutSetting dealId={deal.id} />
+    ),
+    tips: (
           <HoverTipsSetting />
+    ),
+    automation: (
           <section aria-label="Automation" className="ds-card">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Automation</h4>
             <label className="mt-3 flex items-start gap-2 text-sm text-slate-700">
@@ -371,7 +369,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             </label>
             <a className={`${btn} mt-3`} href={`/api/closing-time/assist/export?dealId=${encodeURIComponent(deal.id)}`}>Export File History (CSV)</a>
           </section>
-
+    ),
+    signature: (
           <section aria-label="Send for signature" className="ds-card lg:col-span-2">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Send For Signature</h4>
             {!data.signing || data.signing.providers.length === 0 ? (
@@ -433,7 +432,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
             {data.signing?.settings && <SecureSignSettings key={JSON.stringify(data.signing.settings)} settings={data.signing.settings} post={post} busy={busy} />}
             {data.signing && <SecureSignRequests requests={data.signing.requests} post={post} busy={busy} />}
           </section>
-
+    ),
+    uploads: (
           <section aria-label="Client uploads" className="ds-card lg:col-span-2">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Client Uploads</h4>
             {data.uploads.filter((u) => !u.archived).length === 0 ? <p className="mt-2 text-sm text-slate-500">Files your client uploads through the progress link appear here. You get an email each time.</p> : (
@@ -469,7 +469,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
               </details>
             )}
           </section>
-
+    ),
+    tracking: (
           <section aria-label="Signature tracking" className="ds-card lg:col-span-2">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Signatures Being Tracked</h4>
             {data.signatures.length === 0 ? <p className="mt-2 text-sm text-slate-500">Type a document name above and press Track Signature next to the person who owes it.</p> : (
@@ -483,7 +484,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
               </ul>
             )}
           </section>
-
+    ),
+    checklist: (
           <section aria-label="Checklist" className="ds-card">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Closing Checklist</h4>
             <p className="mt-2 text-sm text-slate-600">{data.checklist.length} steps{data.customChecklist ? ' (your template)' : ' (starter template)'}. Applying adds each step as a dated task. It needs the effective or closing date.</p>
@@ -499,7 +501,8 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
               </div>
             )}
           </section>
-
+    ),
+    history: (
           <section aria-label="File history" className="ds-card">
             <h4 className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">File History</h4>
             <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto text-sm text-slate-600">
@@ -509,6 +512,46 @@ export default function ClosingTimeAssist({ deal, onApplyChecklist, onMarkReceiv
               {deal.activity.length === 0 && <li className="text-slate-500">No activity yet.</li>}
             </ul>
           </section>
+    ),
+  } : null;
+  const partList: [keyof NonNullable<typeof parts>, string][] = [['risks', 'Risk Alerts'], ['amendment', 'Amendment (TREC 39-11)'], ['contacts', 'Deal Contacts'], ['followups', 'Follow-Up Drafts'], ['tools', 'Connected Tools'], ['layout', 'Messaging Layout'], ['tips', 'Hover Tips'], ['automation', 'Automation'], ['signature', 'Send For Signature'], ['uploads', 'Client Uploads'], ['tracking', 'Signatures Being Tracked'], ['checklist', 'Closing Checklist'], ['history', 'File History']];
+  if (renderNav) {
+    const intro = <>{error && <p className="text-sm font-semibold text-[#661102]" role="alert">{error}</p>}<p className="text-sm leading-6 text-gray-600">Risk alerts, follow-up drafts, a client progress link, and a closing checklist for this deal. Nothing is emailed to anyone until you approve that specific draft.</p></>;
+    return (
+      <>
+        {renderNav(parts ? partList.map(([k, t]) => ({ id: `assist-${k}`, title: t, group: 'Deal Settings', content: <div className="grid gap-4">{intro}{parts[k]}</div> })) : [])}
+        {data && placer && <SignaturePlacer data={placer} signers={(data.parties ?? []).filter((p) => p.email && sigTo.includes(p.id)).map((p) => p.name || p.email)} fields={sigFields} onChange={setSigFields} onClose={() => setPlacer(null)} />}
+      </>
+    );
+  }
+
+  return (
+    <div {...collapsible('assist', { mobileOpen: true })} className="min-w-0 scroll-mt-24 lg:col-span-2">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Deal Coordination</p>
+          <h3 className="text-2xl font-semibold tracking-tight text-gray-900">Settings</h3>
+        </div>
+        <CollapseToggle {...toggleProps('assist', 'deal settings', { mobileOpen: true })} />
+      </div>
+      <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">Risk alerts, follow-up drafts, a client progress link, and a closing checklist for this deal. Nothing is emailed to anyone until you approve that specific draft.</p>
+      {error && <p className="mt-3 text-sm font-semibold text-[#661102]" role="alert">{error}</p>}
+      {!data ? <p className="mt-4 text-sm text-slate-500">{error ? '' : 'Loading.'}</p> : (
+        <div className="mt-4 grid items-stretch gap-4 lg:grid-cols-2">
+          {placer && <SignaturePlacer data={placer} signers={(data.parties ?? []).filter((p) => p.email && sigTo.includes(p.id)).map((p) => p.name || p.email)} fields={sigFields} onChange={setSigFields} onClose={() => setPlacer(null)} />}
+          {parts?.risks}
+          {parts?.amendment}
+          {parts?.contacts}
+          {parts?.followups}
+          {parts?.tools}
+          {parts?.layout}
+          {parts?.tips}
+          {parts?.automation}
+          {parts?.signature}
+          {parts?.uploads}
+          {parts?.tracking}
+          {parts?.checklist}
+          {parts?.history}
         </div>
       )}
     </div>
