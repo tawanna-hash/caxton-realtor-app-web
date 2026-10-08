@@ -2619,7 +2619,7 @@ export default function ClosingTime({
     return (
       <section id="agent-deal-tools" className="bg-white">
         <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-8">
-          <div className="border border-slate-200 bg-white p-4 sm:p-6">
+          <div data-section-key="attention" className="border border-slate-200 bg-white p-4 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
@@ -3627,9 +3627,9 @@ export default function ClosingTime({
               </button>
               {calendarFeed && calendarFeedState !== 'loading' && <Tip text="Use Open In Apple Calendar on the Integrations page to subscribe with the new link." />}
             </div>
-            <div className="ds-card min-w-0 lg:col-span-2">
+            <div data-section-key="alerts" className="ds-card min-w-0 lg:col-span-2">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-gray-900">Deadline Alerts</h3>
+                <h3 className="text-[15px] font-semibold text-[#1B1726]">Deadline Alerts</h3>
               </div>
               <div className="mt-4 space-y-3">
                 <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-800">
@@ -3694,7 +3694,7 @@ export default function ClosingTime({
                 }}
               />
             )}
-            <div id="trec-forms" className="ds-page min-w-0 scroll-mt-24 lg:col-span-2">
+            <div data-section-key="trec-library" id="trec-forms" className="ds-page min-w-0 scroll-mt-24 lg:col-span-2">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-0">
                   <p className="ds-eyebrow">Tools</p>
@@ -3789,11 +3789,10 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && activeDeals.length > 0 && (
-          <section className="ds-card mt-6">
+          <section data-section-key="active" className="ds-card mt-6">
             <div className="flex items-center gap-3">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Active Deals</p>
-                <h3 className="mt-1 text-xl font-semibold text-gray-900">{activeDeals.length} Deal{activeDeals.length === 1 ? '' : 's'} In Progress</h3>
+                <h3 className="text-[15px] font-semibold text-[#1B1726]">Active Deals <span className="ml-1 text-[13px] font-medium text-[#6B6878]">{activeDeals.length}</span></h3>
               </div>
             </div>
             {/* Mobile cards */}
@@ -3956,11 +3955,10 @@ export default function ClosingTime({
         )}
 
         {workspacePage === 2 && closedDeals.length > 0 && (
-          <section className="ds-card mt-6">
+          <section data-section-key="closed" className="ds-card mt-6">
             <div className="flex items-center gap-3">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Closed & Audit</p>
-                <h3 className="mt-1 text-xl font-semibold text-gray-900">{closedDeals.length} Closed Deal{closedDeals.length === 1 ? '' : 's'}</h3>
+                <h3 className="text-[15px] font-semibold text-[#1B1726]">Closed And Audit <span className="ml-1 text-[13px] font-medium text-[#6B6878]">{closedDeals.length}</span></h3>
               </div>
             </div>
             {/* Mobile cards */}
@@ -4079,7 +4077,7 @@ export default function ClosingTime({
         {workspacePage === 2 && activeDeal && (
           <>
           <div className="mt-6 grid min-w-0 gap-6">
-            <div className="rounded-[4px] border border-[#E6E5EC] bg-white" data-testid="tasks-card">
+            <div data-section-key="tasks" className="rounded-[4px] border border-[#E6E5EC] bg-white" data-testid="tasks-card">
               <div className="flex flex-wrap items-baseline gap-2 px-4 py-3">
                 <h3 className="text-[15px] font-semibold text-[#1B1726]">Tasks And Reminders</h3>
                 <span className="text-[13px] text-[#6B6878]">{activeDeal.tasks.filter((t) => t.complete).length + activeDeal.reminders.filter((r) => r.complete).length} of {activeDeal.tasks.length + activeDeal.reminders.length} done</span>
@@ -4133,7 +4131,7 @@ export default function ClosingTime({
             </div>
 
           </div>
-          <section className="ds-card mt-6" data-testid="audit-card">
+          <section data-section-key="audit" className="ds-card mt-6" data-testid="audit-card">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <h3 className="text-[15px] font-semibold text-[#1B1726]">
