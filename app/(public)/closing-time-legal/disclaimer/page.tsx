@@ -1,7 +1,7 @@
 import { LegalPage, Ul, Caps } from '../_legal';
 
 export const metadata = {
-  title: 'Important Notices | Closing Time',
+  title: { absolute: 'Important Notices | Closing Time' },
   description: 'What Closing Time does and does not do, and what you remain responsible for.',
 };
 

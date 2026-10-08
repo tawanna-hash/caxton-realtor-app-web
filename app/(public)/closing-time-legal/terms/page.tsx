@@ -1,7 +1,7 @@
 import { LegalPage, Ul, Caps, LEGAL_COMPANY } from '../_legal';
 
 export const metadata = {
-  title: 'Terms Of Service | Closing Time',
+  title: { absolute: 'Terms Of Service | Closing Time' },
   description: 'The agreement for using Closing Time, including limits of liability and a release.',
 };
 

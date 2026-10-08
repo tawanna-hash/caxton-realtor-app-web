@@ -261,6 +261,16 @@ function handlePubPermalink(req: NextRequest): NextResponse | null {
 // Entry point
 // ============================================================================
 
+const CLOSING_TIME_PATHS = [
+  '/login', '/auth', '/agents', '/privacy', '/terms', '/disclaimer', '/sms', '/security', '/developers',
+  '/sign', '/deal-portal', '/book', '/api', '/portal', '/unsubscribe', '/account-delete', '/profile',
+  '/closing-time-home', '/closing-time-legal', '/e', '/r', '/c', '/product-tour',
+];
+function isClosingTimePath(pathname: string): boolean {
+  if (pathname === '/') return true;
+  return CLOSING_TIME_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
+}
+
 export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
@@ -274,6 +284,11 @@ export async function proxy(req: NextRequest) {
   // 1a. One canonical host per site: www forwards to the bare domain.
   if ((host === 'www.itsalmostclosingtime.com' || host === 'www.realtynewsnow.app') && (req.method === 'GET' || req.method === 'HEAD')) {
     return NextResponse.redirect(`https://${host.slice(4)}${pathname}${search}`, 308);
+  }
+
+  // Closing Time's domain serves only Closing Time. Realty News Now pages go back to realtynewsnow.app.
+  if (host === 'itsalmostclosingtime.com' && (req.method === 'GET' || req.method === 'HEAD') && !isClosingTimePath(pathname)) {
+    return NextResponse.redirect(`https://realtynewsnow.app${pathname}${search}`, 307);
   }
 
   if ((host === 'itsalmostclosingtime.com' || host === 'www.itsalmostclosingtime.com') && pathname === '/') {

@@ -34,7 +34,10 @@ export default function ComingSoon() {
           <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-[#4A4757]">
             Closing Time is a deal workspace for Texas real estate agents. It tracks contract deadlines, organizes forms and documents, collects signatures, schedules closings and keeps clients, lenders and title companies on the same page.
           </p>
-          <p className="mt-4 text-[14px] text-[#4A4757]">Closing Time is in private testing. To ask for access, email <a className="text-[#301D5D] underline" href="mailto:tawanna@itsalmostclosingtime.com">tawanna@itsalmostclosingtime.com</a>.</p>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <a href="/auth/sign-up" className="rounded-md border border-[#E6E5EC] bg-white px-4 py-2 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]">Create A Free Account</a>
+            <span className="text-[14px] text-[#4A4757]">Your first two active deals are free. No card needed to start.</span>
+          </div>
         </section>
 
         <section className="border-t border-[#E6E5EC] bg-[#F6F3FB]">

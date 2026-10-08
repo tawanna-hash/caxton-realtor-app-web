@@ -1,7 +1,7 @@
 import { LegalPage, Ul } from '../_legal';
 
 export const metadata = {
-  title: 'Text Messaging Terms | Closing Time',
+  title: { absolute: 'Text Messaging Terms | Closing Time' },
   description: 'How Closing Time text messages work, how people agree to them, and how to stop them.',
 };
 

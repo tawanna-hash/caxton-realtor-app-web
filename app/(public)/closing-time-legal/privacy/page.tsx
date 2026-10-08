@@ -1,7 +1,7 @@
 import { LegalPage, Ul, LEGAL_COMPANY, LEGAL_EMAIL } from '../_legal';
 
 export const metadata = {
-  title: 'Privacy Policy | Closing Time',
+  title: { absolute: 'Privacy Policy | Closing Time' },
   description: 'What Closing Time collects, why, who sees it, and the choices you have.',
 };
 
