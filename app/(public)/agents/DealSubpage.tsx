@@ -1037,18 +1037,13 @@ export default function DealSubpage({ readiness, renderReadiness, readinessLinks
                       })),
                     },
                   ];
-                  const section = sections.find((x) => x.id === docSec) ?? sections[0];
+                  const section = sections.find((x) => x.id === 'optional') ?? sections[0];
                   const selected = section.items.find((x) => x.id === docSel) ?? section.items[0];
                   return (
                     <div className="ds-card overflow-hidden !p-0" data-testid="more-documents">
                       <div className="flex items-center justify-between gap-2 border-b border-[#E6E5EC] px-4 py-3 text-sm font-semibold text-slate-900">
-                        <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />More Documents</span>
-                        <span className="text-xs font-medium text-slate-500">{submittedCount} of {totalRequired} Submitted</span>
-                      </div>
-                      <div className="flex gap-1 overflow-x-auto border-b border-[#E6E5EC] px-2" role="tablist">
-                        {sections.map((x) => (
-                          <button key={x.id} type="button" role="tab" aria-selected={section.id === x.id} onClick={() => setDocSec(x.id)} className={`!h-auto !rounded-none !border-0 !border-b-2 !bg-transparent !px-3 !py-2.5 text-sm whitespace-nowrap ${section.id === x.id ? '!border-[#301D5D] font-semibold !text-[#301D5D]' : '!border-transparent !text-[#4A4757]'}`}>{x.label}<span className="ml-1.5 text-xs text-[#6B6878]">{x.items.length}</span></button>
-                        ))}
+                        <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#7059A8]" aria-hidden="true" />Optional Documents</span>
+                        <span className="text-xs font-medium text-slate-500">{section.items.length}</span>
                       </div>
                       {section.items.length === 0 ? <p className="px-4 py-4 text-sm text-[#6B6878]">{section.empty}</p> : (
                         <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_340px]">
