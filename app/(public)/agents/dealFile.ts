@@ -66,7 +66,7 @@ export function buildDealFile(deal: AgentDeal, deadlines: readonly DeadlineLike[
   const fam = Object.entries(deal.selectedFormFamilies).filter(([, v]) => v).map(([k]) => k);
   if (fam.length) sections.push({ title: 'Forms Selected', rows: [['Form Families', fam.join(', ')]] });
 
-  sections.push({ title: 'Tasks', headers: ['Task', 'Due', 'Priority', 'Status'], rows: deal.tasks.length ? deal.tasks.map((t) => [t.title, day(t.dueDate), nice(t.priority), t.complete ? 'Done' : nice(t.status)]) : [['No tasks', '', '', '']] });
+  sections.push({ title: 'Tasks', headers: ['Task', 'Due', 'Priority', 'Status'], rows: deal.tasks.length ? deal.tasks.map((t) => [t.title.replace(/(^|[\s/(\-])([a-z])/g, (_m, a: string, b: string) => a + b.toUpperCase()), day(t.dueDate), nice(t.priority), t.complete ? 'Done' : nice(t.status)]) : [['No tasks', '', '', '']] });
   if (deal.reminders.length) sections.push({ title: 'Reminders', headers: ['Reminder', 'Date', 'Note'], rows: deal.reminders.map((r) => [r.label, day(r.reminderDate), dash(r.note)]) });
 
   sections.push({ title: 'Audit Trail', headers: ['When', 'Event'], rows: deal.activity.length ? [...deal.activity].reverse().map((a) => [stamp(a.createdAt), a.message]) : [['No activity recorded', '']] });
