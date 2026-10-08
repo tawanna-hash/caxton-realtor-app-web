@@ -44,8 +44,6 @@ export function buildDealFile(deal: AgentDeal, deadlines: readonly DeadlineLike[
   if (custom.length) sections.push({ title: 'Custom Contract Fields', rows: custom.map((f) => [`${f.label} (${nice(f.section)})`, f.value]) });
   const addr = Object.entries(deal.contractAddresses).filter(([, v]) => v.trim());
   if (addr.length) sections.push({ title: 'Contract Addresses', rows: addr.map(([k, v]) => [nice(k), v]) });
-  const forms = Object.entries(deal.formFields ?? {}).filter(([, v]) => String(v).trim());
-  if (forms.length) sections.push({ title: 'Form Fields Entered', headers: ['Field', 'Value'], rows: forms.map(([k, v]) => [nice(k), String(v).slice(0, 300)]) });
 
   if (deal.cashLines.length) sections.push({ title: 'Cash To Close', headers: ['Line', 'Amount', 'Note'], rows: deal.cashLines.map((c) => [c.label, `${c.sign}${money(c.amount)}`, dash(c.note)]) });
 
