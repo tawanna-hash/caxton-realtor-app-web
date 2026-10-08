@@ -444,6 +444,8 @@ function restorePropertyFormOrder(deal: AgentDeal): AgentDeal {
 // Readiness items no longer mirror a Documents checklist item (duplicate tracking removed).
 const READINESS_CHECK_LINKS: ReadonlyArray<readonly [string, string]> = [];
 const readinessLinksFor = (_deal: AgentDeal): ReadonlyArray<readonly [string, string]> => READINESS_CHECK_LINKS;
+// Readiness items that must be on file for the deal; they carry the Required chip.
+const REQUIRED_READINESS_IDS = new Set<string>(['buyer-wire-fraud-alert', 'delivery-confirmation', 'seller-disclosure', 'survey', 'valuation-cma-appraisal-bpo', 'lender-closing-disclosure', 'buyer-sales-disclosure-tx', 'buyer-affiliated-business', 'buyer-walkthrough', 'seller-tax-record', 'seller-mls-printout', 'title-executed-contract-receipt', 'title-commission-intake', 'listing-mls-active', 'listing-consumer-protection-notice', 'listing-t47', 'listing-commission-disbursement']);
 // Readiness items removed from the checklist; saved entries for them stay in the deal but are not shown.
 const REMOVED_READINESS_IDS = new Set<string>(['buyer-iabs', 'buyer-representation-agreement', 'buyer-pre-approval-letter', 'executed-contract', 'seller-hoa-subdivision-information', 'seller-hoa-estoppel', 'seller-listing-agreement']);
 const receivedDoc = (document: AgentDocument, now: string): AgentDocument => ({ ...document, status: document.status === 'reviewed' ? 'reviewed' : 'received', complete: true, updatedAt: now });
@@ -3456,10 +3458,10 @@ export default function ClosingTime({
                     readinessLinks={deal ? Object.fromEntries(readinessLinksFor(deal)) : undefined}
                     onUploadOptionalFile={(docId, label, file) => { void uploadDocumentFile(docId, file, label); }}
                     uploadBusyId={documentUploadBusyId}
-                    renderReadiness={deal && effectiveView === 'd-documents' ? (rowExtra, requiredIds) => (
+                    renderReadiness={deal && effectiveView === 'd-documents' ? (rowExtra) => (
 <ReadinessChecklist
               rowExtra={rowExtra}
-              requiredIds={requiredIds}
+              requiredIds={REQUIRED_READINESS_IDS}
               updateNote={updateDocumentNote}
               side={effectiveAgentSide(deal)}
               documents={deal.documents}

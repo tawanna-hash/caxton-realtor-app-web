@@ -1051,6 +1051,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                                   <span className="block truncate text-sm font-semibold text-[#1B1726]">{item.title}</span>
                                   <span className="block truncate text-[12px] font-normal text-[#6B6878]">{item.sub}</span>
                                 </span>
+                                {section.id === 'required' ? <span className="ds-chip shrink-0 bg-[#EFEAF8] text-[#301D5D]">Required</span> : null}
                               </button>
                             ))}
                           </div>
