@@ -546,7 +546,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
         {[{ id: 'key-details', title: 'Key Details', filled: terms.filter((t) => t.value.trim()).length, total: terms.length }, ...CONTRACT_MAP_SECTIONS.map((x) => { const vis = x.fields.filter((fl) => !hidden.includes(fl.id)); return { id: x.id as string, title: x.title as string, filled: vis.filter((fl) => getVal(fl.id).trim()).length, total: vis.length }; })].map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
             className="ds-tab !flex-none !whitespace-nowrap">
-            {t.title}<span className="ds-tab-count" style={t.filled === t.total && t.total > 0 ? { color: '#005A00' } : undefined}>{t.filled}/{t.total}</span>
+            {t.title}<span className={`ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${t.filled === t.total && t.total > 0 ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{t.filled}/{t.total}</span>
           </button>
         ))}
       </div>

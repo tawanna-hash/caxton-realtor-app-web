@@ -719,7 +719,7 @@ function ReadinessChecklist({
                 className="ds-tab !flex-none !whitespace-nowrap"
               >
                 {group.label}
-                <span className="ds-tab-count" style={done === group.rows.length && group.rows.length > 0 ? { color: '#005A00' } : undefined}>{done}/{group.rows.length}</span>
+                <span className={`ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${done === group.rows.length && group.rows.length > 0 ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-[#EFEAF8] text-[#301D5D]'}`}>{done}/{group.rows.length}</span>
               </button>
             );
           })}
