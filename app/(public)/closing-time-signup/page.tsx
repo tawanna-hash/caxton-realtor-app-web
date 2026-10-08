@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: { absolute: "Create A Free Account | It's Almost Closing Time!" },
-  description: 'Create your free Closing Time account. Your first two active deals are free.',
+  description: 'Create your free Closing Time account. Your first two deals are free.',
   alternates: { canonical: 'https://itsalmostclosingtime.com/auth/sign-up' },
 };
 

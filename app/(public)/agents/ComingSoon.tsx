@@ -36,7 +36,7 @@ export default function ComingSoon() {
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <a href="/auth/sign-up" className="rounded-md border border-[#E6E5EC] bg-white px-4 py-2 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D]">Create A Free Account</a>
-            <span className="text-[14px] text-[#4A4757]">Your first two active deals are free. No card needed to start.</span>
+            <span className="text-[14px] text-[#4A4757]">Your first two deals are free, then $12 per deal. Deals close automatically two weeks after the closing date. No card needed to start.</span>
           </div>
         </section>
 

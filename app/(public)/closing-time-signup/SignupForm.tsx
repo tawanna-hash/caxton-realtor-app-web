@@ -68,7 +68,8 @@ export default function SignupForm() {
       </header>
       <main className="mx-auto max-w-md px-6 py-12">
         <h1 className="font-serif text-3xl text-[#301D5D]">Create A Free Account</h1>
-        <p className="mt-2 text-[14px] leading-relaxed text-[#4A4757]">Your first two active deals are free. No card needed to start.</p>
+        <p className="mt-2 text-[14px] leading-relaxed text-[#4A4757]">Your first two deals are free. No card needed to start.</p>
+        <p className="mt-2 text-[12px] leading-relaxed text-[#7A7787]">Two free deals in total, for the life of your account. After that, add a card and $12 is charged when you open a deal; it covers that deal from start to finish. Deals close automatically two weeks after the closing date to protect the file, according to TREC rules.</p>
 
         {done ? (
           <div role="status" className="mt-6 rounded-xl border border-[#E6E5EC] bg-[#F6F3FB] p-5 text-[14px] text-[#4A4757]">
