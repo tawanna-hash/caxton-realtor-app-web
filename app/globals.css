@@ -1445,10 +1445,12 @@ input[type='date']::-webkit-calendar-picker-indicator {
 /* Calculators embedded in the Agent Desk: follow the desk's type and spacing */
 #agent-desk .ds-embed main { max-width: none; margin: 0; padding: 0 0 2rem; }
 /* Print / share / download bar: a plain toolbar at the end of the calculator, not a floating pill */
-#agent-desk .ds-embed div[class*='fixed'][class*='pointer-events-none'] { position: static !important; transform: none !important; left: auto !important; bottom: auto !important; display: flex; justify-content: flex-end; margin-top: 1.5rem; pointer-events: auto; }
+#agent-desk .ds-embed { position: relative; }
+#agent-desk .ds-embed div[class*='fixed'][class*='pointer-events-none'] { position: absolute !important; transform: none !important; left: auto !important; right: 0 !important; top: 0 !important; bottom: auto !important; display: flex; justify-content: flex-end; margin: 0; z-index: 5; pointer-events: auto; }
+@media (max-width: 900px) { #agent-desk .ds-embed { padding-top: 64px; } }
 #agent-desk .ds-embed div[class*='pointer-events-auto'] { background: #fff; backdrop-filter: none; border: 1px solid var(--d-line); border-radius: 10px; box-shadow: none; gap: 0.375rem; padding: 0.375rem; }
 #agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) { color: var(--d-ink) !important; background: #fff; border: 1px solid var(--d-line); border-radius: 8px; }
-#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a):hover { background: var(--d-purple); color: #fff !important; border-color: var(--d-purple); }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a):hover { background: #EFEAF8; color: var(--d-purple) !important; border-color: #EFEAF8; }
 #agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a)[aria-label='Back'] { display: none; }
 @media print {
   #agent-desk .ds-rail, #agent-desk .ds-header, #agent-desk .ds-back, #agent-desk .ds-toolbar { display: none !important; }
