@@ -198,6 +198,8 @@ const nextConfig: NextConfig = {
       // Legacy /auth/* pages replaced by the /dashboard modal auth pattern.
       // Everything routes through the dashboard, which drives the Auth.js flow.
       { source: '/auth/sign-in', destination: '/dashboard?auth=login', permanent: false },
+      { source: '/auth/sign-up', has: closingTimeHost, destination: '/closing-time-signup', permanent: false },
+      { source: '/auth/signup', has: closingTimeHost, destination: '/closing-time-signup', permanent: false },
       { source: '/auth/sign-up', destination: '/dashboard?auth=signup', permanent: false },
       { source: '/auth/signup', destination: '/dashboard?auth=signup', permanent: false },
       { source: '/auth/forgot-password', destination: '/dashboard?auth=forgot', permanent: false },
