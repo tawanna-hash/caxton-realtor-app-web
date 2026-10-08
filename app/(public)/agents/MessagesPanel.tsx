@@ -30,7 +30,7 @@ function partiesOf(deal: AgentDeal): Party[] {
 }
 
 /** Messages on a deal: email and text with each person on it, kept in one thread per person and written to the Audit Trail. */
-export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; contact?: { name: string; email: string; phone: string; role: string } }) {
+export default function MessagesPanel({ deal, contact, checklist, requiredChecklistIds }: { checklist?: readonly { label: string; items: readonly { id: string; label: string }[] }[]; requiredChecklistIds?: ReadonlySet<string>; deal?: AgentDeal; contact?: { name: string; email: string; phone: string; role: string } }) {
   const scope = contact ? 'contact' : (deal?.id ?? '');
   const parties = useMemo<Party[]>(() => (contact ? [{ key: key(contact.name), name: contact.name, role: contact.role || 'Contact', email: contact.email, phone: contact.phone }] : deal ? partiesOf(deal) : []), [deal, contact]);
   const [sel, setSel] = useState<string>(parties[0]?.key ?? '');
@@ -194,7 +194,7 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
       {list.map((i) => bubble(i))}
     </div>
   );
-  const lib = TREC_FORM_LIBRARY.reduce<Record<string, string[]>>((m, f) => { (m[f.category] ??= []).push(`${f.formNumber} ${f.title}`); return m; }, {});
+  const lib = TREC_FORM_LIBRARY.reduce<Record<string, string[]>>((m, f) => { (m[f.category] ??= []).push(`${f.formNumber.startsWith('TXR ') ? `TR ${f.formNumber.slice(4)}` : `TREC ${f.formNumber}`} · ${f.title}`); return m; }, {});
   const askCount = asks.length + (askOther.trim() ? 1 : 0);
   const requestUI = !contact && deal && (
     <div>
@@ -203,13 +203,18 @@ export default function MessagesPanel({ deal, contact }: { deal?: AgentDeal; con
         <div className="mt-3 space-y-4 rounded-lg border border-[#E6E5EC] bg-[#F6F3FB] px-4 py-3">
           <input className={field} placeholder="Search documents and forms" value={askSearch} onChange={(e) => setAskSearch(e.target.value)} />
           <div className="max-h-72 space-y-4 overflow-auto pr-1">
-            {([['Required Documents', askGroups.required], ['Optional Documents', askGroups.optional], ...Object.entries(lib).map(([c, l]) => [`TREC Forms: ${c}`, l] as const)] as const).map(([title, list]) => {
-              const shownList = list.filter((l) => !askSearch.trim() || l.toLowerCase().includes(askSearch.trim().toLowerCase()));
+            {([
+              ...(checklist ?? []).map((g) => [`Document Checklist: ${g.label}`, g.items.map((i) => ({ label: i.label, req: Boolean(requiredChecklistIds?.has(i.id)) }))] as const),
+              ['Required Documents', askGroups.required.map((label) => ({ label, req: true }))] as const,
+              ['Optional Documents', askGroups.optional.map((label) => ({ label, req: false }))] as const,
+              ...Object.entries(lib).map(([c, l]) => [`TREC Forms: ${c}`, l.map((label) => ({ label, req: false }))] as const),
+            ] as const).map(([title, list]) => {
+              const shownList = list.filter((l) => !askSearch.trim() || l.label.toLowerCase().includes(askSearch.trim().toLowerCase()));
               return shownList.length > 0 && (
                 <div key={title}>
                   <span className={lab}>{title}</span>
                   <div className="grid gap-1 sm:grid-cols-2">
-                    {shownList.map((l) => <label key={l} className="flex items-start gap-2 text-[13px] text-[#1B1726]"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={asks.includes(l)} onChange={() => setAsks((a) => a.includes(l) ? a.filter((x) => x !== l) : [...a, l])} /><span>{l}</span></label>)}
+                    {shownList.map(({ label: l, req }) => <label key={l} className="flex items-start gap-2 text-[13px] text-[#1B1726]"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#301D5D]" checked={asks.includes(l)} onChange={() => setAsks((a) => a.includes(l) ? a.filter((x) => x !== l) : [...a, l])} /><span className="min-w-0 flex-1">{l}</span>{req ? <span className="ds-chip shrink-0 bg-[#EFEAF8] text-[#301D5D]">Required</span> : null}</label>)}
                   </div>
                 </div>
               );

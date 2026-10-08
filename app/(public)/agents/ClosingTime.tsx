@@ -3419,7 +3419,7 @@ export default function ClosingTime({
             {effectiveView === 'security' && <SecurityPanel />}
             {effectiveView === 'doc-tools' && <DocumentToolsPanel />}
             {effectiveView === 'testimonials' && <div className="ds-page"><TestimonialHubClient eyebrow="Resources" /></div>}
-            {effectiveView === 'd-messages' && activeDeal && <div className="ds-page"><MessagesPanel key={activeDeal.id} deal={activeDeal} /></div>}
+            {effectiveView === 'd-messages' && activeDeal && <div className="ds-page"><MessagesPanel key={activeDeal.id} deal={activeDeal} checklist={readinessGroupsForSide(effectiveAgentSide(activeDeal))} requiredChecklistIds={REQUIRED_READINESS_IDS} /></div>}
             {effectiveView === 'd-portal' && activeDeal && <div className="ds-page"><ClientPortalPanel key={activeDeal.id} deal={activeDeal} /></div>}
             {effectiveView === 'setup-help' && (
               <div className="ds-page space-y-4">
