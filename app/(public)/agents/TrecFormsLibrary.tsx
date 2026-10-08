@@ -1,5 +1,6 @@
 'use client';
 
+import MasterDetail, { DetailFields } from './MasterDetail';
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Download, FileText, PencilLine, Search } from 'lucide-react';
 import {
@@ -90,43 +91,56 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
         </div>
 
         {dealContext ? (
-          <div className="ds-card ds-list mt-4 max-h-[560px] overflow-y-auto overscroll-contain">
-            {pagedForms.map((form) => {
-              const total = activeByFamily.get(form.formFamily)?.fields.length ?? 0;
-              const filled = dealContext.filled[form.formFamily] ?? 0;
-              return (
-                <div key={form.formFamily} className="ds-list-row">
-                  <input
-                    type="checkbox"
-                    aria-label={`Use ${form.formNumber} on the current deal`}
-                    title={dealContext.hasDeal ? 'Use on the current deal' : 'Create a Deal First'}
-                    checked={Boolean(dealContext.selected[form.formFamily])}
-                    disabled={!dealContext.hasDeal || dealContext.locked}
-                    onChange={(event) => dealContext.onToggle(form.formFamily, event.target.checked)}
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-slate-900">{form.formNumber} · {form.title}</span>
-                    <span className="block text-xs text-slate-500">{form.category} · Effective {formatEffectiveDate(form.effectiveDate)}</span>
-                  </span>
-                  <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{total > 0 ? (filled > 0 ? `Fillable · ${filled} of ${total}` : `Fillable · ${total} fields`) : 'Notice · Nothing to Fill'}</span>
-                  <TrecFormActions
-                    family={form.formFamily}
-                    disabled={!dealContext.hasDeal || dealContext.locked}
-                    onOpen={dealContext.onOpen}
-                    onUpload={dealContext.onUpload}
-                    extra={(
-                      <a
-                        href={`/api/agent-command-center/form-pdf?src=${encodeURIComponent(form.pdfUrl)}&name=${encodeURIComponent(`TREC-${form.formNumber.replace(/\s+/g, '-')}`)}&download=1`}
-                        download
-                        className="ds-row-btn"
-                      >
-                        <Download className="h-3.5 w-3.5" aria-hidden="true" />Download
-                      </a>
-                    )}
-                  />
-                </div>
-              );
-            })}
+          <div className="mt-4">
+            <MasterDetail
+              testId="forms-list"
+              backLabel="Forms"
+              empty={null}
+              items={pagedForms.map((form) => ({ id: form.formFamily, title: `${form.formNumber} · ${form.title}`, sub: `${form.category} · Effective ${formatEffectiveDate(form.effectiveDate)}`, trailing: dealContext.selected[form.formFamily] ? 'On Deal' : undefined }))}
+              renderDetail={(id) => {
+                const form = pagedForms.find((f) => f.formFamily === id);
+                if (!form) return null;
+                const total = activeByFamily.get(form.formFamily)?.fields.length ?? 0;
+                const filled = dealContext.filled[form.formFamily] ?? 0;
+                return (
+                  <>
+                    <h3 className="text-[15px] font-semibold text-[#1B1726]">{form.formNumber} · {form.title}</h3>
+                    <DetailFields rows={[
+                      ['Category', form.category],
+                      ['Effective', formatEffectiveDate(form.effectiveDate)],
+                      ['Fields', total > 0 ? (filled > 0 ? `Fillable · ${filled} of ${total}` : `Fillable · ${total} fields`) : 'Notice · Nothing to Fill'],
+                    ]} />
+                    <label className="flex items-center gap-2 text-sm text-[#1B1726]" title={dealContext.hasDeal ? 'Use on the current deal' : 'Create a Deal First'}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Use ${form.formNumber} on the current deal`}
+                        checked={Boolean(dealContext.selected[form.formFamily])}
+                        disabled={!dealContext.hasDeal || dealContext.locked}
+                        onChange={(event) => dealContext.onToggle(form.formFamily, event.target.checked)}
+                      />
+                      Use On The Current Deal
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      <TrecFormActions
+                        family={form.formFamily}
+                        disabled={!dealContext.hasDeal || dealContext.locked}
+                        onOpen={dealContext.onOpen}
+                        onUpload={dealContext.onUpload}
+                        extra={(
+                          <a
+                            href={`/api/agent-command-center/form-pdf?src=${encodeURIComponent(form.pdfUrl)}&name=${encodeURIComponent(`TREC-${form.formNumber.replace(/\s+/g, '-')}`)}&download=1`}
+                            download
+                            className="ds-row-btn"
+                          >
+                            <Download className="h-3.5 w-3.5" aria-hidden="true" />Download
+                          </a>
+                        )}
+                      />
+                    </div>
+                  </>
+                );
+              }}
+            />
           </div>
         ) : (
         <div className={`mt-4 grid gap-3 md:grid-cols-2 ${embedded ? 'max-h-[340px] overflow-y-auto overscroll-contain pr-1' : ''}`}>

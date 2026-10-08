@@ -28,6 +28,7 @@ export default function MasterDetail({ items, empty, renderDetail, backLabel, te
   const [selected, setSelected] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   if (items.length === 0) {
+    if (empty === null) return null;
     return <div className="rounded-[4px] border border-[#E6E5EC] bg-white px-4 py-6 text-sm text-[#6B6878]" data-testid={testId}>{empty}</div>;
   }
   const currentId = items.some((i) => i.id === selected) ? selected : items[0].id;

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Search, X } from 'lucide-react';
+import MasterDetail from './MasterDetail';
 import CollapseToggle, { useCollapsibles } from './CollapseToggle';
 
 type Account = { id: string; appSlug: string; appName: string; healthy: boolean };
@@ -38,7 +39,6 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
   const [connectedOnly, setConnectedOnly] = useState(false);
   const [busy, setBusy] = useState('');
   const [message, setMessage] = useState('');
-  const [selected, setSelected] = useState<Catalog | null>(null);
 
   const refresh = useCallback(async () => {
     const res = await fetch('/api/agent-integrations', { credentials: 'include', cache: 'no-store' });
@@ -71,7 +71,6 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
       const { url } = await post({ action: 'connect', app: item.slug });
       if (url) window.open(url, '_blank', 'noopener');
       setMessage('Finish signing in in the new window, then come back here.');
-      setSelected(null);
     } catch (err) { setMessage(err instanceof Error ? err.message : 'Could not connect.'); }
     setBusy('');
   };
@@ -79,7 +78,7 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
   const disconnect = async (account: Account) => {
     if (!window.confirm(`Disconnect ${account.appName || 'this app'}?`)) return;
     setBusy(account.id); setMessage('');
-    try { await post({ action: 'disconnect', accountId: account.id }); await refresh(); setSelected(null); }
+    try { await post({ action: 'disconnect', accountId: account.id }); await refresh(); }
     catch (err) { setMessage(err instanceof Error ? err.message : 'Could not disconnect.'); }
     setBusy('');
   };
@@ -98,7 +97,6 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
   }, [accounts, catalog, connectedOnly, query]);
 
   const { section: collapsible, toggleProps } = useCollapsibles();
-  const selectedAccount = selected ? accounts.find((a) => a.appSlug === selected.slug) : undefined;
 
   return (
     <section aria-label="Integrations" {...collapsible('integrations', { mobileOpen: true })} data-section-key={undefined} className="ds-page">
@@ -123,48 +121,32 @@ export default function IntegrationsPanel({ calendarTile }: { calendarTile?: Rea
         <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={connectedOnly} onChange={(e) => setConnectedOnly(e.target.checked)} /> Show Connected Only</label>
       </div>
 
-      {loaded && groups.length === 0 && <p className="mt-4 text-sm text-slate-500">No integrations match.</p>}
-      {groups.map((g) => (
-        <div key={g.group} className="mt-6">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{g.group}</h3>
-          <ul className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {g.items.map((item) => {
-              const connected = accounts.some((a) => a.appSlug === item.slug);
-              return (
-                <li key={item.slug}>
-                  <button type="button" onClick={() => setSelected(item)} className="flex min-h-[56px] w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 text-left hover:bg-[#F6F3FB]">
-                    <Logo item={item} size={28} />
-                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950">{item.name}</span>
-                    {connected && <span className="shrink-0 rounded-full bg-[#E0FBE0] px-2 py-0.5 text-xs font-semibold text-[#005A00]">Connected</span>}
-                  </button>
-                </li>
-              );
-            })}
-            {g.group === 'Calendar and Scheduling' ? calendarTile : null}
-          </ul>
-        </div>
-      ))}
-
-      {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-label={selected.name} onClick={() => setSelected(null)}>
-          <div className="w-full max-w-md rounded-xl bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3"><Logo item={selected} size={36} /><h3 className="truncate text-lg font-semibold text-gray-900">{selected.name}</h3></div>
-              <button type="button" onClick={() => setSelected(null)} aria-label="Close" className="flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><X className="h-5 w-5" aria-hidden="true" /></button>
-            </div>
-            <p className="mt-4 text-sm leading-6 text-slate-700">Connect your {selected.name} account {BLURBS[selected.group] ?? 'so it can work with your deals'}.</p>
-            <p className="mt-3 rounded-md border border-slate-200 p-3 text-sm text-slate-600">{selectedAccount ? `Connected. You can disconnect ${selected.name} at any time.` : `Not connected yet. You will sign in with ${selected.name} in a new window.`}</p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button type="button" onClick={() => setSelected(null)} className="min-h-[32px] rounded-md border border-[#E6E5EC] px-3 text-[13px] font-medium text-[#1B1726]">Cancel</button>
-              {selectedAccount ? (
-                <button type="button" disabled={busy === selectedAccount.id} onClick={() => void disconnect(selectedAccount)} className="min-h-[32px] rounded-md border border-[#661102] px-3 text-[13px] font-medium text-[#661102] disabled:opacity-50">Disconnect</button>
-              ) : (
-                <button type="button" disabled={!configured || busy === selected.slug} onClick={() => void connect(selected)} className="min-h-[32px] rounded-md bg-[#301D5D] px-3 text-[13px] font-medium text-white hover:bg-[#42277C] disabled:opacity-45">{busy === selected.slug ? 'Opening…' : `Connect ${selected.name}`}</button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="mt-4">
+        <MasterDetail
+          testId="integrations-list"
+          backLabel="Integrations"
+          empty={loaded ? 'No integrations match.' : null}
+          items={groups.flatMap((g) => g.items.map((item) => ({ id: item.slug, group: g.group, title: item.name, trailing: accounts.some((a) => a.appSlug === item.slug) ? 'Connected' : undefined })))}
+          renderDetail={(id) => {
+            const item = catalog.find((c) => c.slug === id);
+            if (!item) return null;
+            const account = accounts.find((a) => a.appSlug === item.slug);
+            return (
+              <>
+                <div className="flex min-w-0 items-center gap-3"><Logo item={item} size={36} /><h3 className="min-w-0 break-words text-[15px] font-semibold text-[#1B1726]">{item.name}</h3></div>
+                <p className="text-sm leading-6 text-slate-700">Connect your {item.name} account {BLURBS[item.group] ?? 'so it can work with your deals'}.</p>
+                <p className="rounded-md border border-slate-200 p-3 text-sm text-slate-600">{account ? `Connected. You can disconnect ${item.name} at any time.` : `Not connected yet. You will sign in with ${item.name} in a new window.`}</p>
+                {account ? (
+                  <button type="button" disabled={busy === account.id} onClick={() => void disconnect(account)} className="!border-[#661102] !text-[#661102] disabled:opacity-50">Disconnect</button>
+                ) : (
+                  <button type="button" disabled={!configured || busy === item.slug} onClick={() => void connect(item)} className="disabled:opacity-45">{busy === item.slug ? 'Opening…' : `Connect ${item.name}`}</button>
+                )}
+              </>
+            );
+          }}
+        />
+      </div>
+      {calendarTile ? <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><li>{calendarTile}</li></ul> : null}
     </section>
   );
 }
