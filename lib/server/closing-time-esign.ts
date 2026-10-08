@@ -209,6 +209,7 @@ export async function getSignPdf(token: string): Promise<{ bytes: Buffer; name: 
   const f = await byToken(token);
   if (!f) return null;
   const done = f.req.status === 'completed' && f.req.signed_b64;
+  if (!f.req.signed_b64 && !f.req.original_b64) return null; // the file was archived to the agent's storage when the deal closed
   return { bytes: Buffer.from(done ? f.req.signed_b64! : f.req.original_b64, 'base64'), name: `${f.req.document}${done ? ' - signed' : ''}.pdf` };
 }
 

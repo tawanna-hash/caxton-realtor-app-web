@@ -7,12 +7,13 @@ import {
   FOLLOWUP_KINDS, PARTY_ROLES, addParty, approveFollowUp, dismissFollowUp, draftFollowUp, editFollowUp,
   getOrCreatePortalToken, setPortalLink, createDocRequest, markDocRequestEmailed, setDocRequestStatus, markDocRequestLogged, listDocRequests, listPortalLinks, listAssist, removeParty, removePortal, requireDeal, saveChecklist, saveExtensionDraft, markUploadReviewed, setAutoIntro, setAutoSignature, addSignatureRequest, closeSignature,
 } from '@/lib/server/closing-time-assist';
-import { archiveDeal, connectedState, saveUploadToStorage, setSendFromConnected, syncCalendar } from '@/lib/server/closing-time-connected';
+import { connectedState, saveUploadToStorage, setSendFromConnected, syncCalendar } from '@/lib/server/closing-time-connected';
 import { cancelSignRequest, deleteSignLayout, saveSignLayout, saveSignSettings } from '@/lib/server/closing-time-esign';
 import { BUILTIN, SIGN_PROVIDERS, refreshEnvelope, sendForSignature, signingState } from '@/lib/server/closing-time-signing';
 import { query } from '@/lib/server/db/neon';
 import { sendEmail } from '@/lib/email';
 import { logDealEvent, markEventsAudited } from '@/lib/server/closing-time-events';
+import { archiveDeal } from '@/lib/server/closing-time-archive';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
