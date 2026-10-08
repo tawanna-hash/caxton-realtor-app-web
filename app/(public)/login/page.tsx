@@ -58,7 +58,11 @@ function LoginInner() {
         if (j?.details?.twoFactorRequired) setNeedCode(true);
         throw new Error(j.error || j.message || `Sign-in failed (${r.status})`);
       }
-      router.push(next);
+      // On itsalmostclosingtime.com, land on the Agent Desk. Realty News Now pages such as /dashboard
+      // would be sent to realtynewsnow.app by the domain split.
+      const onCt = /(^|\.)itsalmostclosingtime\.com$/i.test(window.location.hostname);
+      const dest = onCt && !/^\/(agents\/closing-time|book|deal-portal|closing-time)(\/|\?|$)/.test(rawNext ?? '') ? '/agents/closing-time' : next;
+      router.push(dest);
       router.refresh();
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Sign-in failed');
