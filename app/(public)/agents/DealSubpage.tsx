@@ -482,7 +482,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
         <>
       <div className="ds-card">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-slate-900">Required Documents</p>
+          <p className="text-[15px] font-semibold text-[#1B1726]">Required Documents</p>
           <button type="button" onClick={() => onOpenView('d-documents')}>View All</button>
         </div>
         <div className="mt-3 grid grid-cols-3 gap-3">
@@ -570,13 +570,13 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
         );
       })()}
       <div className="ds-card !bg-[#EFEAF8]">
-        <p className="text-sm font-semibold text-slate-900">Key Deadlines</p>
+        <p className="text-[15px] font-semibold text-[#1B1726]">Key Deadlines</p>
         <Tip text="Enter the signed contract's effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules." />
         {timelineFields}
         {trackedDeadlines.length > 0 && (
           <div className="mt-4 border-t border-[#E6E5EC] pt-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-slate-900">Deadline Tracking</p>
+              <p className="text-[15px] font-semibold text-[#1B1726]">Deadline Tracking</p>
               <span className="ds-chip bg-[#EFEAF8] text-[#301D5D]">{trackedDeadlines.filter((item) => item.done).length} Of {trackedDeadlines.length} Done</span>
             </div>
             <div className="grid sm:grid-cols-2 sm:gap-x-6">
@@ -639,7 +639,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
     const tasksCard = (
       <div className="ds-card">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-slate-900">Tasks &amp; Reminders</p>
+          <p className="text-[15px] font-semibold text-[#1B1726]">Tasks &amp; Reminders</p>
           <button type="button" onClick={() => onOpenView('tasks')}>View All</button>
         </div>
         <div className="mt-3 grid grid-cols-3 gap-3">
@@ -662,7 +662,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
     const partiesCard = (
       <div className="ds-card self-start">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-slate-900">Parties</p>
+          <p className="text-[15px] font-semibold text-[#1B1726]">Parties</p>
           <button type="button" onClick={() => onOpenView('d-people')}>Add</button>
         </div>
         <div className="mt-3">
@@ -674,15 +674,15 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
     );
     return (
       <div className="ds-page" data-testid="deal-snapshot">
-        <div className="mb-3 space-y-3">
+        <div className="mb-4 space-y-4">
           {snapshotTop.pressing}
           <div className="flex justify-end">{arrangeButton('snapshot')}</div>
-          <div className="grid items-start gap-3 lg:grid-cols-4">
+          <div className="grid items-start gap-4 lg:grid-cols-4">
             {(() => { const p = cardProps('snapshot', ['docs', 'parties', 'property', 'tasks'], 'docs'); const r = readiness; const pctDone = r && r.total ? Math.round((r.done / r.total) * 100) : 0; return (
               <div style={p.style} onClickCapture={p.onClickCapture} className={`min-w-0 lg:col-span-2 ${p.className}`}>
                 <div className="ds-card">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-slate-900">Readiness</p>
+                    <p className="text-[15px] font-semibold text-[#1B1726]">Readiness</p>
                     <button type="button" onClick={() => onOpenView('readiness')}>Open Readiness Check</button>
                   </div>
                   <p className="mt-1 text-xs text-slate-500">{r ? `${r.done} of ${r.total} items in` : 'No readiness items yet.'}</p>
@@ -840,7 +840,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
                   </div>
                   <div className="ds-card !p-0 self-start">
                     <div className="flex items-center justify-between border-b border-[#E6E5EC] px-4 py-3">
-                      <p className="text-sm font-semibold text-slate-900">Parties</p>
+                      <p className="text-[15px] font-semibold text-[#1B1726]">Parties</p>
                       <button type="button" onClick={() => onOpenView('d-people')}><Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />Add</button>
                     </div>
                     <p className="ds-eyebrow px-4 pt-3">Your Side</p>

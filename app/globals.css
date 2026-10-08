@@ -1371,7 +1371,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 /* Tool child pages (Forms Library, Calculators, Referral Network, Integrations):
    plain page header + outlined cards, no outer card. */
 #agent-desk .ds-page { background: transparent; border: 0; border-radius: 0; padding: 0; box-shadow: none; }
-#agent-desk .ds-page > div:first-child { margin-bottom: 1.25rem; }
+#agent-desk .ds-page > div:first-child { margin-bottom: 1rem; }
 #agent-desk .ds-page :is(a, button) { transition: background-color 0.15s, border-color 0.15s; }
 #agent-desk .ds-page article, #agent-desk .ds-page li > button { box-shadow: none; }
 
@@ -1808,3 +1808,12 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 /* Button corner standard: medium (8px) on every action button, beats the Tailwind rounded-md/4px override. Cards, tiles and pills keep their own shape. */
 #agent-desk button[class*='border']:not([role='switch']):not([class*='rounded-full']):not([class*='flex-col']):not([class*='h-9 w-9']):not([class*='border-b-2']):not([role='tab']):not(.ds-navbtn):not(.ds-tab):not(.ds-deal),
 #agent-desk button.ds-new, #agent-desk a[class*='min-h-[32px]'] { border-radius: 8px !important; }
+
+#agent-desk .ds-compact .ds-subtitle, #agent-desk .ds-header .ds-subtitle { margin-top: 0.25rem; }
+
+/* Calculators inside the desk: same page header, lead text and labels as every other page. */
+#agent-desk .ds-embed p[class*='uppercase'][class*='tracking-[0.2em]'] { display: none; }
+#agent-desk .ds-embed :is(h1, h2.font-serif) { font-size: 1.375rem; line-height: 1.25; font-weight: 600; letter-spacing: 0; margin-top: 0; }
+#agent-desk .ds-embed header { margin-bottom: 1.25rem; }
+#agent-desk .ds-embed header p[class*='font-light'] { font-size: 0.875rem; font-weight: 400; line-height: 1.5; color: #4A4757; max-width: 48rem; margin-top: 0.25rem; }
+#agent-desk .ds-embed label > span[class*='font-medium'] { font-size: 0.8125rem; font-weight: 500; color: #4A4757; text-transform: capitalize; }
