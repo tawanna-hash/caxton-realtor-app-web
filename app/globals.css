@@ -1817,3 +1817,6 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 #agent-desk .ds-embed header { margin-bottom: 1.25rem; }
 #agent-desk .ds-embed header p[class*='font-light'] { font-size: 0.875rem; font-weight: 400; line-height: 1.5; color: #4A4757; max-width: 48rem; margin-top: 0.25rem; }
 #agent-desk .ds-embed label > span[class*='font-medium'] { font-size: 0.8125rem; font-weight: 500; color: #4A4757; text-transform: capitalize; }
+
+/* Card corner standard: every card, table frame and panel uses 4px, including those with arbitrary Tailwind radii. */
+#agent-desk :is([class*='rounded-['], .ds-table-wrap, .ds-closing-list, .ds-detail, .ds-embed [class*='rounded'][class*='border']):not([class*='rounded-full']):not(button):not(input):not(select):not(textarea):not(.ds-stat-icon) { border-radius: 4px !important; }
