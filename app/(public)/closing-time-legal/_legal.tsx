@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export const LEGAL_UPDATED = 'October 7, 2026';
 export const LEGAL_COMPANY = 'Closing Time';
-export const LEGAL_EMAIL = 'tawanna@itsalmostclosingtime.com';
+export const LEGAL_EMAIL = 'support@itsalmostclosingtime.com';
 
 export type Section = { title: string; body: ReactNode };
 

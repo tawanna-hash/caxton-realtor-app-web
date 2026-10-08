@@ -22,7 +22,7 @@ export default function Page() {
           '123 Main St: Jane Agent would like to text you updates about this deal. Reply YES to agree. Reply STOP to opt out. Msg and data rates may apply.',
           '123 Main St: Closing is confirmed for Oct 30 at 10:00 AM at Capitol Title. Reply STOP to opt out.',
         ]} />) },
-        { title: 'Stop Or Get Help', body: (<p>Reply STOP at any time to stop all messages from this number. Reply START or YES to resume. Reply HELP for help, or email tawanna@itsalmostclosingtime.com. Carriers are not liable for delayed or undelivered messages.</p>) },
+        { title: 'Stop Or Get Help', body: (<p>Reply STOP at any time to stop all messages from this number. Reply START or YES to resume. Reply HELP for help, or email support@itsalmostclosingtime.com. Carriers are not liable for delayed or undelivered messages.</p>) },
         { title: 'Your Information', body: (<p>We do not sell, trade or transfer your personal information, including your phone number and text consent, to outside parties for marketing. No mobile information is shared with third parties or affiliates for marketing or promotional purposes.</p>) },
       ]}
     />
