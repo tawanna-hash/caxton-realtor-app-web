@@ -572,7 +572,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
       })()}
       <div className="ds-card !bg-[#EFEAF8]">
         <p className="text-[15px] font-semibold text-[#1B1726]">Key Deadlines</p>
-        <Tip text="Enter the signed contract's effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules." />
+        <Tip critical text="Enter the signed contract's effective date first. Deadline dates calculate from it using the contract terms and TREC timing rules." />
         {timelineFields}
         {trackedDeadlines.length > 0 && (
           <div className="mt-4 border-t border-[#E6E5EC] pt-3">

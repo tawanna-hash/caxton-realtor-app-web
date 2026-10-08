@@ -22,7 +22,7 @@ function floater(): HTMLDivElement {
  * Explanation shown on hover. Nothing is drawn. The tip attaches to the field right before it
  * (or right after it, or its container when it stands alone), so only that field reacts.
  */
-export default function Tip({ text }: { text: string }) {
+export default function Tip({ text, critical = false }: { text: string; critical?: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const me = ref.current;
@@ -48,5 +48,5 @@ export default function Tip({ text }: { text: string }) {
     host.addEventListener('mousedown', hide);
     return () => { hide(); host.classList.remove('tip-host'); host.removeEventListener('mouseenter', show); host.removeEventListener('mouseleave', hide); host.removeEventListener('mousedown', hide); };
   }, [text]);
-  return <span ref={ref} className="sr-only">{text}</span>;
+  return <span ref={ref} className={critical ? 'mt-1 block text-xs leading-snug text-[#4A4757]' : 'sr-only'}>{text}</span>;
 }
