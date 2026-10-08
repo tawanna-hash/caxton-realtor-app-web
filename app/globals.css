@@ -1850,7 +1850,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 @media (max-width: 639px) {
   #agent-desk .ds-rail { display: none !important; }
   #agent-desk .ds-rail.ds-rail-open { display: flex !important; position: fixed !important; left: 0; top: 0 !important; bottom: 0; width: min(300px, 86vw); height: 100dvh !important; z-index: 70; border-right: 1px solid #E6E5EC; padding-bottom: 80px; }
-  #agent-desk .ds-mnav-backdrop { position: fixed; inset: 0; z-index: 65; background: rgba(27, 23, 38, 0.32); border: 0 !important; border-radius: 0 !important; padding: 0 !important; height: auto !important; width: auto !important; }
+  #agent-desk .ds-mnav-backdrop { position: fixed; inset: 0; z-index: 65; background: rgba(27, 23, 38, 0.32) !important; border: 0 !important; border-radius: 0 !important; padding: 0 !important; height: auto !important; width: auto !important; }
   #agent-desk .ds-mnav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 75; background: #fff; border-top: 1px solid #E6E5EC; padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); }
   #agent-desk .ds-mnav button { display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 2px; height: 52px !important; min-height: 52px; padding: 0 !important; border: 0 !important; border-radius: 6px !important; background: transparent !important; color: #6B6878 !important; font-size: 11px; font-weight: 500; }
   #agent-desk .ds-mnav button.is-on { color: #301D5D !important; font-weight: 600; background: #EFEAF8 !important; }

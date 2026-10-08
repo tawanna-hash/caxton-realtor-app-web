@@ -1064,8 +1064,8 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                               <button key={item.id} type="button" onClick={() => { setDocSel(item.id); setDocMOpen(true); window.requestAnimationFrame(() => document.getElementById('more-doc-detail-panel')?.scrollIntoView({ block: 'start' })); }} aria-current={selected?.id === item.id ? 'true' : undefined} className={`!flex !h-auto w-full !items-center !justify-start !gap-3 !rounded-none !border-0 !border-t !border-[#E6E5EC] !px-4 !py-3 text-left first:!border-t-0 ${selected?.id === item.id ? '!bg-[#EFEAF8]' : '!bg-white hover:!bg-[#F6F3FB]'}`}>
                                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.done ? '#00e200' : '#ffaf3d' }} aria-hidden="true" />
                                 <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-sm font-semibold text-[#1B1726]">{item.title}</span>
-                                  <span className="block truncate text-[12px] font-normal text-[#6B6878]">{item.sub}</span>
+                                  <span className="block lg:truncate text-sm font-semibold text-[#1B1726]">{item.title}</span>
+                                  <span className="block lg:truncate text-[12px] font-normal text-[#6B6878]">{item.sub}</span>
                                 </span>
                                 {section.id === 'required' ? <span className="ds-chip shrink-0 bg-[#EFEAF8] text-[#301D5D]">Required</span> : null}
                               </button>

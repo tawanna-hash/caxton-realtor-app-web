@@ -598,7 +598,7 @@ function ReadinessChecklist({
       >
         <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: dotColor(document.status) }} aria-hidden="true" />
         <span className="min-w-0 flex-1">
-          <span className={`block truncate text-sm font-semibold leading-5 ${isDone(document) ? 'text-[#6B6878]' : 'text-[#1B1726]'}`}>{document.label}</span>
+          <span className={`block text-sm font-semibold leading-5 lg:truncate ${isDone(document) ? 'text-[#6B6878]' : 'text-[#1B1726]'}`}>{document.label}</span>
           <span className="block text-[12px] font-normal leading-4 text-[#6B6878]">{statusText(document.status)}{document.driveFileId ? ' · File Attached' : ''}</span>
         </span>
         {requiredIds?.has(document.id) ? <span className="ds-chip shrink-0 bg-[#EFEAF8] text-[#301D5D]">Required</span> : null}
@@ -4098,7 +4098,7 @@ export default function ClosingTime({
                             <div key={task.id} role="button" tabIndex={0} aria-current={selectedTask.id === task.id ? 'true' : undefined} onClick={() => { setSelectedTaskId(task.id); setTaskMOpen(true); window.requestAnimationFrame(() => document.getElementById('task-detail-panel')?.scrollIntoView({ block: 'start' })); }} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelectedTaskId(task.id); setTaskMOpen(true); } }} className={`flex cursor-pointer items-center gap-3 border-t border-[#E6E5EC] px-[1.125rem] py-3 first:border-t-0 ${selectedTask.id === task.id ? 'bg-[#EFEAF8]' : 'hover:bg-[#F6F3FB]'}`}>
                               <button type="button" onClick={(event) => { event.stopPropagation(); updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done', complete: task.status !== 'done' }); }} className={`flex !h-[18px] !w-[18px] !min-h-0 !min-w-0 shrink-0 items-center justify-center !rounded-[4px] border !p-0 border-[#B9B6C4] bg-white hover:!border-[#B9B6C4] hover:!bg-white ${task.complete ? '!text-[#301D5D]' : '!text-transparent'}`} aria-label={`Mark ${task.title} ${task.complete ? 'incomplete' : 'complete'}`}>{task.complete && <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />}</button>
                               <span className="min-w-0 flex-1">
-                                <span className={`block truncate text-sm font-semibold ${task.complete ? 'text-[#6B6878] line-through' : 'text-[#1B1726]'}`}>{taskTitleCase(task.title)}</span>
+                                <span className={`block lg:truncate text-sm font-semibold ${task.complete ? 'text-[#6B6878] line-through' : 'text-[#1B1726]'}`}>{taskTitleCase(task.title)}</span>
                                 <span className="block text-[12px] text-[#6B6878]">{task.dueDate ? formatDate(task.dueDate) : 'No Due Date'}{task.priority !== 'normal' ? ` · ${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}` : ''}{task.note ? ' · Note' : ''}</span>
                               </span>
                             </div>
