@@ -42,9 +42,9 @@ function SmartAutomations() {
               <p className="text-[14px] font-semibold text-[#1B1726]">{d.title}</p>
               <p className="mt-0.5 text-[14px] text-[#4A4757]">{d.detail}</p>
             </div>
-            <button type="button" role="switch" aria-checked={!!state[d.key]} aria-label={d.title} disabled={busy === d.key} onClick={() => void toggle(d.key, !state[d.key])}
-              className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full border transition disabled:opacity-50 ${state[d.key] ? 'border-[#301D5D] !bg-[#301D5D]' : 'border-[#E6E5EC] !bg-[#EFEAF8]'}`}>
-              <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${state[d.key] ? 'left-[22px]' : 'left-0.5'}`} />
+            <button type="button" role="switch" aria-checked={!!state[d.key]} aria-label={`${d.title} on or off`} disabled={busy === d.key} onClick={() => void toggle(d.key, !state[d.key])}
+              className={`ct-switch relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition disabled:opacity-50 ${state[d.key] ? 'bg-[#301D5D]' : 'bg-[#E6E5EC]'}`}>
+              <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${state[d.key] ? 'left-[18px]' : 'left-0.5'}`} />
             </button>
           </li>
         ))}
