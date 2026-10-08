@@ -1,4 +1,4 @@
-import { LegalPage, Ul, Caps, LEGAL_COMPANY } from '../_legal';
+import { LegalPage, Ul, Caps, LEGAL_COMPANY, LEGAL_EMAIL } from '../_legal';
 
 export const metadata = {
   title: { absolute: 'Terms Of Service | Closing Time' },
@@ -27,6 +27,7 @@ export default function Page() {
         { title: 'Messages', body: (<p>You are responsible for the content and recipients of messages you send through Closing Time. We may limit or block messages that violate this section, carrier rules or the law. See the Privacy Policy for how text messages work.</p>) },
         { title: 'Third-Party Services', body: (<p>Closing Time connects to services we do not control, such as email, calendar, storage and text delivery. We are not responsible for their availability or actions.</p>) },
         { title: 'Fees', body: (<p>Some features are free. Paid plans, when offered, are described when you sign up, and prices may change with 30 days\u2019 notice. You can cancel at any time, and cancellation takes effect at the end of the paid period unless the plan says otherwise.</p>) },
+        { title: 'Closed Deals And Archive Requests', body: (<p>Every deal closes automatically two weeks after its closing date, or 180 days after it is opened if no closing date is entered. When a deal closes, the file is saved to your connected document storage when you have one, and a copy is kept by Closing Time for four years. If you ask us to open that archived copy and send you the file and audit report, a $250 fee applies, due before we send it. Email {LEGAL_EMAIL} to make a request.</p>) },
         { title: 'Our Rights', body: (<p>We own Closing Time, its design and software. We give you a limited, non-exclusive, non-transferable right to use it under these terms. If you send us feedback, we may use it without obligation.</p>) },
         { title: 'Early Access', body: (<p>Features may change, break or be removed, especially during testing. Do not rely on any single feature as your only record or reminder.</p>) },
         { title: 'No Warranty', body: (<Caps>CLOSING TIME IS PROVIDED &ldquo;AS IS&rdquo; AND &ldquo;AS AVAILABLE.&rdquo; WE MAKE NO PROMISE THAT IT WILL BE ERROR-FREE, UNINTERRUPTED OR SECURE, THAT DEADLINES, DATES, ALERTS OR FORMS WILL BE CORRECT OR COMPLETE, OR THAT MESSAGES WILL BE DELIVERED. TO THE FULLEST EXTENT THE LAW ALLOWS, WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. NOTHING IN CLOSING TIME IS LEGAL, TAX OR FINANCIAL ADVICE.</Caps>) },
