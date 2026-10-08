@@ -654,7 +654,7 @@ function Builder({ data, dealId, host, initial, property, parties, onClose }: {
             const open = i === step;
             return (
               <section key={title} className={card}>
-                <button type="button" className={`flex w-full items-center gap-3 px-4 ${open ? 'border-b border-[#F6F3FB] py-4' : 'py-3'} text-left hover:!bg-[#EFEAF8] hover:!text-[#301D5D]`} aria-expanded={open} onClick={() => { if (i < step || !stepError(step)) { setError(''); setStep(i); } else setError(stepError(step)); }}>
+                <button type="button" data-no-auto-open className={`flex w-full items-center gap-3 px-4 ${open ? 'border-b border-[#F6F3FB] py-4' : 'py-3'} text-left hover:!bg-[#EFEAF8] hover:!text-[#301D5D]`} aria-expanded={open} onClick={() => { if (i < step || !stepError(step)) { setError(''); setStep(i); } else setError(stepError(step)); }}>
                   <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold ${open ? 'bg-[#301D5D] text-white' : 'bg-[#F6F3FB] text-[#4A4757]'}`}>{i + 1}</span>
                   <span className={`flex-1 ${open ? 'text-[16px] font-semibold' : 'text-[14px] font-semibold'} text-[#1B1726]`}>{title}{OPTIONAL.has(i) && <span className="ml-1 font-normal text-[#4A4757]"> (optional)</span>}</span>
                   {!open && <ChevronRight className="h-4 w-4 text-[#7A7787]" aria-hidden="true" />}
