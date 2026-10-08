@@ -25,11 +25,13 @@ const primary = 'inline-flex min-h-[32px] items-center gap-2 rounded-md bg-[#301
 const STEPS = ['Select Calendars', 'Availability', 'Event Details', 'Appearance And Branding', 'Workflow'];
 const OPTIONAL = new Set([4]);
 const TIMES = Array.from({ length: 96 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`);
+// Last loaded data per deal, so revisiting the page paints instantly and refreshes quietly.
+const schedulerCache = new Map<string, Data>();
 const qid = () => Math.random().toString(36).slice(2, 10);
 
 /** Booking schedulers for one deal, laid out like a scheduler dashboard: accounts, custom URL, schedulers and a 6-step builder. */
 export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: AgentDeal; onOpenIntegrations?: () => void }) {
-  const [data, setData] = useState<Data | null>(null);
+  const [data, setData] = useState<Data | null>(() => schedulerCache.get(deal.id) ?? null);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
   const [tick, setTick] = useState(0);
@@ -42,7 +44,7 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
   useEffect(() => {
     let live = true;
     fetch(`/api/closing-time/schedulers?dealId=${encodeURIComponent(deal.id)}`, { cache: 'no-store' })
-      .then(async (r) => { const b = await r.json(); if (!live) return; if (!r.ok) setError(b.error ?? 'Not available yet. Wait for the deal to finish saving.'); else { setData(b); setError(''); } })
+      .then(async (r) => { const b = await r.json(); if (!live) return; if (!r.ok) setError(b.error ?? 'Not available yet. Wait for the deal to finish saving.'); else { schedulerCache.set(deal.id, b); setData(b); setError(''); } })
       .catch(() => { if (live) setError('Could not load schedulers.'); });
     return () => { live = false; };
   }, [deal.id, tick]);
@@ -90,7 +92,11 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
       {deal.id !== '__personal__' && <ClosingSchedulePanel dealId={deal.id} />}
       {msg && <p role="status" className="text-[13px] font-medium text-[#005A00]">{msg}</p>}
       {error && <p role="alert" className="text-[13px] font-medium text-[#661102]">{error}</p>}
-      {!data && !error && <p className="text-[12px] font-medium text-[#4A4757]">Loading</p>}
+      {!data && !error && (
+        <div className="space-y-4" role="status" aria-busy="true" aria-label="Loading schedulers">
+          {[88, 150, 220].map((h) => <div key={h} className={`${card} animate-pulse bg-[#F6F3FB]`} style={{ height: h }} />)}
+        </div>
+      )}
 
       {data && (
         <>

@@ -444,14 +444,14 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
           {criticalDeadlines.slice(0, 2).map((d) => `${d.label} ${dueText(d.days)}`).join(' · ')}{criticalDeadlines.length > 2 ? ` · ${criticalDeadlines.length - 2} more` : ''}
         </p>
       )}
-      <div className="mt-4 overflow-x-auto pb-1">
-        <ol className="flex min-w-[720px]" aria-label="Deal stages">
+      <div className="mt-4 pb-1 sm:overflow-x-auto">
+        <ol className="flex sm:min-w-[720px]" aria-label="Deal stages">
           {milestones.map((m, i) => (
             <li key={m.key} aria-current={m.current ? 'step' : undefined} className="relative flex-1 px-1 text-center">
               {i < milestones.length - 1 && <span aria-hidden="true" className={`absolute left-1/2 top-[9px] h-[2px] w-full ${m.done ? 'bg-[#301D5D]' : 'bg-[#E6E5EC]'}`} />}
               <span className={`relative z-[1] mx-auto mb-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${m.done ? 'border-[#301D5D] bg-[#301D5D]' : m.current ? 'border-[#301D5D] bg-[#EFEAF8]' : 'border-[#A9A5B8] bg-white'}`}>{m.done ? <Check className="h-3 w-3 text-white" strokeWidth={4} aria-hidden="true" /> : null}</span>
-              <span className={`block text-[12px] leading-snug ${m.current ? 'font-semibold text-[#1B1726]' : 'text-[#4A4757]'}`}>{m.label}</span>
-              <span className="block min-h-[16px] text-[11px] text-[#6B6878]">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
+              <span className={`hidden text-[12px] leading-snug sm:block ${m.current ? 'font-semibold text-[#1B1726]' : 'text-[#4A4757]'}`}>{m.label}</span>
+              <span className="hidden min-h-[16px] text-[11px] text-[#6B6878] sm:block">{m.current ? 'Now' : m.date ? shortDate(m.date) : ''}</span>
             </li>
           ))}
         </ol>
@@ -715,7 +715,7 @@ export default function DealSubpage({ readiness, deal, today, locked, health, st
   return (
     <div className="ds-page" data-testid="deal-subpage">
       {!section && (<>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-2"><nav aria-label="Breadcrumb"><ol className="flex flex-wrap items-center gap-1 text-[14px] leading-5"><li className="leading-5"><button type="button" className="ds-back !m-0 !h-auto !min-h-0 !p-0 !text-[14px] leading-5" onClick={onBack}>Deals</button></li><li className="flex items-center gap-1 leading-5"><ChevronRight className="h-3.5 w-3.5 text-[#7A7787]" aria-hidden="true" /><span aria-current="page" className="text-[14px] font-medium leading-5 text-[#1B1726]">{deal.propertyAddress || deal.title || 'Deal'}</span></li></ol></nav><span className={`ds-chip ${health.tone}`}><StatusSymbol label={health.label} />{health.label}</span></div>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-2"><nav aria-label="Breadcrumb" className="min-w-0 max-w-full"><ol className="flex flex-nowrap items-center gap-1 text-[14px] leading-5"><li className="leading-5"><button type="button" className="ds-back !m-0 !h-auto !min-h-0 !p-0 !text-[14px] leading-5" onClick={onBack}>Deals</button></li><li className="flex min-w-0 items-center gap-1 leading-5"><ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#7A7787]" aria-hidden="true" /><span aria-current="page" className="truncate text-[14px] font-medium leading-5 text-[#1B1726]">{deal.propertyAddress || deal.title || 'Deal'}</span></li></ol></nav><span className={`ds-chip ${health.tone}`}><StatusSymbol label={health.label} />{health.label}</span></div>
 
       </>)}
 
