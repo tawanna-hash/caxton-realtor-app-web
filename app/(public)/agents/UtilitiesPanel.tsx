@@ -92,9 +92,8 @@ export default function UtilitiesPanel() {
   return (
     <div className="ds-page space-y-4" data-testid="utilities-panel">
       <div>
-        <p className="ds-eyebrow">Resources</p>
-        <h2 className="ds-title !mt-0">Utilities</h2>
-        <p className="ds-subtitle">Who to call to set up service, by market.</p>
+        <h2 className="text-[22px] font-semibold text-[#1B1726]">Utilities</h2>
+        <p className="mt-1 text-[14px] text-[#4A4757]">Who to call to set up service, by market.</p>
       </div>
       <div className="ds-tabs !mt-0" role="tablist" aria-label="Markets">
         {MARKETS.map((m) => (

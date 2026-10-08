@@ -123,12 +123,11 @@ export default function DocumentToolsPanel() {
   return (
     <div className="ds-page space-y-6">
       <div>
-        <p className="ds-eyebrow">Resources</p>
-        <h2 className="ds-title !mt-0">Document Tools</h2>
-        <p className="ds-subtitle">Combine, scan, split and rotate PDFs.</p>
+        <h2 className="text-[22px] font-semibold text-[#1B1726]">Document Tools</h2>
+        <p className="mt-1 text-[14px] text-[#4A4757]">Combine, scan, split and rotate PDFs.</p>
       </div>
       <section className="ds-card">
-        <h2 className="text-[14px] font-semibold text-[#1B1726]">Combine Files And Scan To PDF</h2>
+        <h2 className="text-[15px] font-semibold text-[#1B1726]">Combine Files And Scan To PDF</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Add PDFs and photos, put them in order, and download one PDF. Phone photos of paper contracts become pages. Files stay on your device. Nothing is uploaded.</p>
         <input ref={addRef} type="file" multiple accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png" className="hidden" onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
         <div className="mt-3 flex flex-wrap gap-2">
@@ -150,7 +149,7 @@ export default function DocumentToolsPanel() {
       </section>
 
       <section className="ds-card">
-        <h2 className="text-[14px] font-semibold text-[#1B1726]">Split, Remove And Rotate Pages</h2>
+        <h2 className="text-[15px] font-semibold text-[#1B1726]">Split, Remove And Rotate Pages</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Choose a PDF, then enter pages such as 1-3, 5, 8-. Leave pages empty to rotate every page.</p>
         <input ref={oneRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => { void pickSingle(e.target.files?.[0]); e.target.value = ''; }} />
         <div className="mt-3 flex flex-wrap items-center gap-2">

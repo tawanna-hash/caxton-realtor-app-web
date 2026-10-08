@@ -331,12 +331,12 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
   }
 
   return (
-    <Tag className={embedded ? 'ct-hub space-y-6' : 'mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-8'}>
-      <header className="flex flex-col gap-4 border-b border-[#E6E5EC] pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <Tag className={embedded ? 'ct-hub space-y-4' : 'mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-8'}>
+      <header className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${embedded ? '' : 'border-b border-[#E6E5EC] pb-6'}`}>
         <div>
-          {embedded ? <p className="ds-eyebrow">{eyebrow}</p> : <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">Subscriber Tools</p>}
-          {embedded ? <h2 className="ds-title !mt-0">Testimonials Hub</h2> : <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#1B1726]">Testimonials Hub</h1>}
-          <p className={embedded ? 'ds-subtitle' : 'mt-2 max-w-2xl text-sm leading-6 text-[#4A4757]'}>
+          {embedded ? null : <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">Subscriber Tools</p>}
+          {embedded ? <h2 className="text-[22px] font-semibold text-[#1B1726]">Testimonials Hub</h2> : <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#1B1726]">Testimonials Hub</h1>}
+          <p className={embedded ? 'mt-1 text-[14px] text-[#4A4757]' : 'mt-2 max-w-2xl text-sm leading-6 text-[#4A4757]'}>
             Collect client feedback, organize your library, and publish a shareable proof page.
           </p>
         </div>
@@ -369,7 +369,7 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
         <div>
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-[14px] font-semibold text-[#1B1726]">Your Library</h2>
+              <h2 className="text-[15px] font-semibold text-[#1B1726]">Your Library</h2>
               <p className="mt-1 text-sm text-[#7A7787]">{items.length} saved testimonial{items.length === 1 ? '' : 's'}</p>
             </div>
           </div>
@@ -415,7 +415,7 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
 
         <aside className="space-y-4">
           <section className={CARD}>
-            <h2 className="text-[14px] font-semibold text-[#1B1726]">Collect Testimonials</h2>
+            <h2 className="text-[15px] font-semibold text-[#1B1726]">Collect Testimonials</h2>
             <p className="mt-2 text-sm leading-6 text-[#7A7787]">Share this link with clients. New responses arrive as pending for review.</p>
             <div className="mt-4 break-all rounded-md bg-[#F6F3FB] p-3 text-xs leading-5 text-[#4A4757]">{collectionUrl}</div>
             <div className="mt-3 grid grid-cols-2 gap-2">
@@ -425,7 +425,7 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
           </section>
 
           <section className={CARD}>
-            <h2 className="text-[14px] font-semibold text-[#1B1726]">Profile Settings</h2>
+            <h2 className="text-[15px] font-semibold text-[#1B1726]">Profile Settings</h2>
             <label className="mt-4 flex items-center justify-between gap-3 text-sm font-medium text-[#1B1726]">
               Published
               <Switch on={profile.is_published} label="Published" onChange={(next) => setProfile({ ...profile, is_published: next })} />
@@ -526,7 +526,7 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
           </section>
 
           <section className={CARD}>
-            <h2 className="text-[14px] font-semibold text-[#1B1726]">Embed Anywhere</h2>
+            <h2 className="text-[15px] font-semibold text-[#1B1726]">Embed Anywhere</h2>
             <p className="mt-2 text-sm leading-6 text-[#7A7787]">Paste this single line into your website. Newly published testimonials appear automatically without reloading the page.</p>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className={LABEL}>

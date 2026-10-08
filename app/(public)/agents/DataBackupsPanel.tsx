@@ -65,12 +65,11 @@ export default function DataBackupsPanel() {
   return (
     <div className="ds-page space-y-6">
       <div>
-        <p className="ds-eyebrow">Resources</p>
-        <h2 className="ds-title !mt-0">Data And Backups</h2>
-        <p className="ds-subtitle">Export your data and keep monthly backups.</p>
+        <h2 className="text-[22px] font-semibold text-[#1B1726]">Data And Backups</h2>
+        <p className="mt-1 text-[14px] text-[#4A4757]">Export your data and keep monthly backups.</p>
       </div>
       <section className="ds-card">
-        <h2 className="text-[14px] font-semibold text-[#1B1726]">Export Your Data</h2>
+        <h2 className="text-[15px] font-semibold text-[#1B1726]">Export Your Data</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Your deals and contacts belong to you. Download them any time in open formats.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <a className={BTN} href={`${API}?action=export&format=json`}><Download className="h-3.5 w-3.5" aria-hidden="true" />Everything (JSON)</a>
@@ -80,7 +79,7 @@ export default function DataBackupsPanel() {
       </section>
 
       <section className="ds-card">
-        <h2 className="text-[14px] font-semibold text-[#1B1726]">Monthly Backups</h2>
+        <h2 className="text-[15px] font-semibold text-[#1B1726]">Monthly Backups</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">A backup is saved on the first of each month, and before every import. The last 12 are kept. Texas brokers must keep transaction records for four years.</p>
         <div className="mt-3"><button type="button" className={BTN} disabled={busy} onClick={() => void backupNow()}>Back Up Now</button></div>
         <ul className="mt-3 divide-y divide-[#E6E5EC]">
@@ -95,7 +94,7 @@ export default function DataBackupsPanel() {
       </section>
 
       <section className="ds-card">
-        <h2 className="text-[14px] font-semibold text-[#1B1726]">Import Deals</h2>
+        <h2 className="text-[15px] font-semibold text-[#1B1726]">Import Deals</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Upload a CSV from dotloop, Paperless Pipeline, a spreadsheet or any other system. The first row must be column names. A column named Property Address is required. Buyers, Sellers, Effective Date, Closing Date, Status, Lender and Notes are optional. Deals with an address you already have are skipped.</p>
         <div className="mt-3">
           <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />

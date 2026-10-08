@@ -33,7 +33,7 @@ function SmartAutomations() {
   if (!defs.length) return null;
   return (
     <section aria-label="Smart Automations" className="ds-card">
-      <h2 className="text-[14px] font-semibold text-[#1B1726]">Smart Automations</h2>
+      <h2 className="text-[15px] font-semibold text-[#1B1726]">Smart Automations</h2>
       <p className="mt-1 text-[14px] text-[#4A4757]">Turn on the ones you want. Each email goes only to people you added on the deal, copies you, and never includes price or terms. Everything is logged on the deal.</p>
       <ul className="mt-3 divide-y divide-[#E6E5EC]">
         {defs.map((d) => (
@@ -90,9 +90,8 @@ export default function AutomationsPanel() {
   return (
     <div className="ds-page space-y-6">
       <div>
-        <p className="ds-eyebrow">Resources</p>
-        <h2 className="ds-title !mt-0">Automations</h2>
-        <p className="ds-subtitle">Turn on the follow-ups you want Closing Time to handle.</p>
+        <h2 className="text-[22px] font-semibold text-[#1B1726]">Automations</h2>
+        <p className="mt-1 text-[14px] text-[#4A4757]">Turn on the follow-ups you want Closing Time to handle.</p>
       </div>
       <SmartAutomations />
       {secret && (
@@ -106,7 +105,7 @@ export default function AutomationsPanel() {
       )}
 
       <section className="ds-card">
-        <h2 className="text-[14px] font-semibold text-[#1B1726]">API Keys</h2>
+        <h2 className="text-[15px] font-semibold text-[#1B1726]">API Keys</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Read your deals from Zapier, Make, n8n or a spreadsheet. Send the key as a Bearer token to <code className="text-[13px]">{origin}/api/closing-time/v1/deals</code>. Add <code className="text-[13px]">?status=active</code> or <code className="text-[13px]">?updated_since=2026-10-01T00:00:00Z</code> to narrow the list.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <input className={`${INPUT} max-w-xs`} placeholder="Key Name, For Example Zapier" value={keyName} onChange={(e) => setKeyName(e.target.value)} />
@@ -124,7 +123,7 @@ export default function AutomationsPanel() {
       </section>
 
       <section className="ds-card">
-        <h2 className="text-[14px] font-semibold text-[#1B1726]">Webhooks</h2>
+        <h2 className="text-[15px] font-semibold text-[#1B1726]">Webhooks</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">Send a message to a web address when something changes. Every message is signed. The signature is an HMAC SHA-256 of the timestamp, a period, and the body, sent in the X-ClosingTime-Signature header. The address must start with https://.</p>
         <div className="mt-3 space-y-2">
           <input className={INPUT} placeholder="https://hooks.zapier.com/..." value={hookUrl} onChange={(e) => setHookUrl(e.target.value)} />

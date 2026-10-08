@@ -191,9 +191,8 @@ export function ReferralNetworkPanel({ providers }: { providers: ReferralProvide
           <div {...collapsible('referral', { mobileOpen: true })} data-section-key={undefined} className="ds-page ds-compact">
             <div className="flex items-center gap-3">
               <div className="min-w-0">
-                <p className="ds-eyebrow">Resources</p>
-                <h2 className="ds-title">Referral Network</h2>
-                <p className="ds-subtitle">Your call list, built for the next deal.</p>
+                <h2 className="text-[22px] font-semibold text-[#1B1726]">Referral Network</h2>
+                <p className="mt-1 text-[14px] text-[#4A4757]">Your call list, built for the next deal.</p>
               </div>
               <CollapseToggle {...toggleProps('referral', 'referral network', { mobileOpen: true })} className="ml-auto" />
             </div>
