@@ -187,13 +187,8 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
     label: 'Buyer Documentation',
     items: [
       {
-        id: 'buyer-iabs',
-        label: 'TREC IABS 1-2 · Information About Brokerage Services (IABS)',
-        description: 'Mandatory TREC informational form outlining representation pathways.',
-      },
-      {
         id: 'buyer-wire-fraud-alert',
-        label: 'TR 2517 · Wire Fraud Alert Or Notice',
+        label: 'TR 2517 · Wire Fraud Warning',
         description: 'Wire fraud warning delivered to and acknowledged by the client.',
       },
       {
@@ -205,16 +200,6 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
         id: 'buyer-affiliated-business',
         label: 'Affiliated Business Arrangement Disclosure',
         description: 'Disclosure of any affiliated business relationships.',
-      },
-      {
-        id: 'buyer-representation-agreement',
-        label: 'TR 1501 · Buyer Representation Agreement',
-        description: 'Formal contract between the buyer and their brokerage.',
-      },
-      {
-        id: 'buyer-pre-approval-letter',
-        label: 'Pre-Approval Letter',
-        description: 'Initial verification from a lender showing purchasing power.',
       },
       {
         id: 'delivery-confirmation',
@@ -248,7 +233,7 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
       },
       {
         id: 'buyer-walkthrough',
-        label: 'TR 1925 · Buyer\'s Walk-Through, Confirmation, And Acceptance',
+        label: 'TR 1925 · Buyer\'s Walk-Through, Confirmation, and Acceptance Form',
         description: 'Signed confirmation of the final walk-through.',
       },
     ],
@@ -258,16 +243,6 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
     label: 'Seller Documentation',
     items: [
       {
-        id: 'seller-listing-agreement',
-        label: 'TR 1101 · Listing Agreement',
-        description: 'Formal contract between the seller and the listing brokerage.',
-      },
-      {
-        id: 'executed-contract',
-        label: 'TREC 20-19 · One To Four Family Residential Contract',
-        description: 'The standard promulgated purchase agreement.',
-      },
-      {
         id: 'seller-disclosure',
         label: 'TREC 55-1 · Seller\'s Disclosure Notice',
         description: 'Legally required property condition disclosure.',
@@ -276,16 +251,6 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
         id: 'survey',
         label: 'Property Survey & T-47 Residential Real Property Affidavit',
         description: 'Document showing property boundaries along with a notarized declaration of any changes.',
-      },
-      {
-        id: 'seller-hoa-subdivision-information',
-        label: 'HOA Subdivision Information & Addendum',
-        description: 'Disclosure of rules, fees, and resale certificates for planned communities.',
-      },
-      {
-        id: 'seller-hoa-estoppel',
-        label: 'HOA Estoppel Or Resale Certificate',
-        description: 'Payoff and status letter from the association, when the property is in an HOA.',
       },
       {
         id: 'seller-tax-record',
@@ -304,7 +269,7 @@ const DOCUMENT_GROUPS: readonly ReadinessDocumentGroup[] = [
       },
       {
         id: 'listing-consumer-protection-notice',
-        label: 'TREC CN 1-5 · Consumer Protection Notice Displayed',
+        label: 'TREC CN 1-5 · Consumer Protection Notice',
         description: "Notice displayed in the office, on the website and on social profiles (listing deals only).",
       },
       {
@@ -476,46 +441,11 @@ function restorePropertyFormOrder(deal: AgentDeal): AgentDeal {
 }
 
 // Readiness Check items that mirror a checklist item on the Documents tab. Ticking one ticks the other.
-const READINESS_CHECK_LINKS: ReadonlyArray<readonly [string, string]> = [
-  ['buyer-iabs', 'pd-iabs'],
-  ['buyer-representation-agreement', 'pd-buyer-rep-agreement'],
-  ['buyer-pre-approval-letter', 'pd-preapproval-pof'],
-  ['delivery-confirmation', 'pd-em-option-receipt'],
-  ['executed-contract', 'pd-residential-contract'],
-  ['seller-disclosure', 'pd-sellers-disclosure-notice'],
-  ['survey', 'pd-existing-survey-t47'],
-  ['valuation-cma-appraisal-bpo', 'pd-cma'],
-  ['lender-closing-disclosure', 'pd-closing-statement'],
-  ['buyer-wire-fraud-alert', 'pd-wire-fraud-alert'],
-  ['buyer-sales-disclosure-tx', 'pd-sales-disclosure-tx'],
-  ['buyer-affiliated-business', 'pd-affiliated-business'],
-  ['buyer-walkthrough', 'pd-walkthrough'],
-  ['seller-tax-record', 'pd-tax-record'],
-  ['seller-mls-printout', 'pd-mls-printout'],
-  ['title-executed-contract-receipt', 'pd-executed-contract-receipt'],
-  ['title-commission-intake', 'pd-commission-intake'],
-];
-const LISTING_CHECK_IDS: Readonly<Record<string, string>> = {
-  'buyer-wire-fraud-alert': 'ld-wire-fraud-alert',
-  'buyer-walkthrough': 'ld-final-walkthrough',
-  'seller-mls-printout': 'ld-mls-pending',
-  'delivery-confirmation': 'ld-em-receipt',
-  survey: 'ld-survey',
-};
-const LISTING_ONLY_LINKS: ReadonlyArray<readonly [string, string]> = [
-  ['seller-listing-agreement', 'ld-listing-agreement'],
-  ['listing-mls-active', 'ld-mls-active'],
-  ['listing-consumer-protection-notice', 'ld-consumer-protection-notice'],
-  ['listing-t47', 'ld-t47'],
-  ['listing-commission-disbursement', 'ld-commission-disbursement'],
-];
-// Buyer-only readiness items have no listing-side checklist item.
-const BUYER_ONLY_READINESS = new Set(['buyer-representation-agreement', 'buyer-pre-approval-letter']);
-const readinessLinksFor = (deal: AgentDeal): ReadonlyArray<readonly [string, string]> => {
-  if (effectiveAgentSide(deal) !== 'listing') return READINESS_CHECK_LINKS;
-  const shared = READINESS_CHECK_LINKS.filter(([r]) => !BUYER_ONLY_READINESS.has(r)).map(([r, c]) => [r, LISTING_CHECK_IDS[r] ?? c] as const);
-  return [...shared, ...LISTING_ONLY_LINKS];
-};
+// Readiness items no longer mirror a Documents checklist item (duplicate tracking removed).
+const READINESS_CHECK_LINKS: ReadonlyArray<readonly [string, string]> = [];
+const readinessLinksFor = (_deal: AgentDeal): ReadonlyArray<readonly [string, string]> => READINESS_CHECK_LINKS;
+// Readiness items removed from the checklist; saved entries for them stay in the deal but are not shown.
+const REMOVED_READINESS_IDS = new Set<string>(['buyer-iabs', 'buyer-representation-agreement', 'buyer-pre-approval-letter', 'executed-contract', 'seller-hoa-subdivision-information', 'seller-hoa-estoppel', 'seller-listing-agreement']);
 const receivedDoc = (document: AgentDocument, now: string): AgentDocument => ({ ...document, status: document.status === 'reviewed' ? 'reviewed' : 'received', complete: true, updatedAt: now });
 const reopenedDoc = (document: AgentDocument, now: string): AgentDocument => ({ ...document, status: 'requested', complete: false, updatedAt: now });
 
@@ -581,7 +511,7 @@ function mergeReadinessDocuments(deal: AgentDeal): AgentDeal {
           fileUploadedAt: '',
         };
   });
-  const additionalDocuments = deal.documents.filter((document) => !DOCUMENT_TEMPLATE_IDS.has(document.id));
+  const additionalDocuments = deal.documents.filter((document) => !DOCUMENT_TEMPLATE_IDS.has(document.id) && !REMOVED_READINESS_IDS.has(document.id));
   return { ...deal, documents: [...readinessDocuments, ...additionalDocuments] };
 }
 
@@ -629,7 +559,7 @@ function ReadinessChecklist({
   documentUploadBusyId: string | null;
   documentUploadError: string;
 }) {
-  const additionalDocuments = documents.filter((document) => !DOCUMENT_TEMPLATE_IDS.has(document.id));
+  const additionalDocuments = documents.filter((document) => !DOCUMENT_TEMPLATE_IDS.has(document.id) && !REMOVED_READINESS_IDS.has(document.id));
   const groups = readinessGroupsForSide(side).map((group) => ({
     id: group.id,
     label: group.label,
