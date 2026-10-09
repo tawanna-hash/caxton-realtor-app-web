@@ -4088,7 +4088,7 @@ export default function ClosingTime({
                 </div>
                 <CollapseToggle {...toggleProps('tasks', 'tasks and reminders')} className="ml-auto" />
               </div>
-              <div className="flex min-w-0 flex-wrap items-center gap-3 border-y border-[#E6E5EC] bg-[#F6F3FB] px-[1.125rem] py-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-3 border-y border-[#E6E5EC] bg-white px-[1.125rem] py-3">
                 <input value={taskTitle} onChange={(event) => { setTaskTitle(event.target.value); if (taskError) setTaskError(''); }} aria-label="Task name" aria-invalid={taskError ? true : undefined} aria-describedby={taskError ? 'task-name-error' : undefined} className="h-9 w-full min-w-0 basis-full sm:min-w-[200px] sm:flex-1 sm:basis-0 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] outline-none focus:border-[#301D5D]" placeholder="Add a deal task" />
                 <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} aria-label="Task due date" className="h-9 min-w-0 !w-auto flex-1 sm:!w-[150px] sm:flex-none rounded-md border border-[#E6E5EC] bg-white px-3 text-sm outline-none focus:border-[#301D5D]" />
                 <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="h-9 min-w-0 !w-auto flex-1 sm:!w-[120px] sm:flex-none rounded-md border border-[#E6E5EC] bg-white px-2 text-[13px] font-medium outline-none focus:border-[#301D5D]">{TREC_TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>)}</select>
