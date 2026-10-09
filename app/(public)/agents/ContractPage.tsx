@@ -422,15 +422,13 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
   const renderSectionBody = (section: ContractSection, bordered: boolean) => {
     const leads = leadsFor(section);
     const items = orderedItems(section);
-    return (
-                <div data-grid={section.id} className={`grid gap-x-5 gap-y-5 ${bordered ? 'border-t border-[#F6F3FB] px-[1.125rem] py-5' : ''} sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4`}>
-                  {leads && leads.map(([label, value, set]) => (
-                    <div key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-3 2xl:col-span-4' : 'lg:col-span-1 2xl:col-span-2'}`}>
-                      <span className="block pb-1">{labelInput(`lead:${label}`, label)}</span>
-                      <input value={value ?? ''} onChange={(e) => set(e.target.value)} aria-label={labelOf(`lead:${label}`, label)} className={fieldCls} />
-                    </div>
-                  ))}
-                  {items.map((item) => {
+    // Buyer and Seller: each person's name, phone and email sit together on one row.
+    const groups = leads && leads.length === 2 && (section.id === 'buyer' || section.id === 'seller')
+      ? leads.map((lead, i) => ({ lead, items: items.filter((it) => it.kind === 'map' && it.fl.label.startsWith(`${section.id === 'buyer' ? 'Buyer' : 'Seller'} ${i + 1} `)) }))
+      : null;
+    const grouped = new Set((groups ?? []).flatMap((g) => g.items.map((it) => it.key)));
+    const rest = items.filter((it) => !grouped.has(it.key));
+    const renderItem = (item: FieldItem) => {
                     const key = item.key;
                     const isPicked = picked?.section === section.id && picked.key === key;
                     const cellAttrs = { onClick: cellClick(section, key), title: picked ? 'Click to place here' : 'Click to pick up and move' };
@@ -486,7 +484,24 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
                         </span>
                       </div>
                     );
-                  })}
+    };
+    return (
+                <div data-grid={section.id} className={`grid gap-x-5 gap-y-5 ${bordered ? 'border-t border-[#F6F3FB] px-[1.125rem] py-5' : ''} sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4`}>
+                  {groups ? groups.map((g) => (
+                    <div key={g.lead[0]} className="col-span-full grid gap-x-5 gap-y-5 sm:grid-cols-3">
+                      <div className="block min-w-0">
+                        <span className="block pb-1">{labelInput(`lead:${g.lead[0]}`, g.lead[0])}</span>
+                        <input value={g.lead[1] ?? ''} onChange={(e) => g.lead[2](e.target.value)} aria-label={labelOf(`lead:${g.lead[0]}`, g.lead[0])} className={fieldCls} />
+                      </div>
+                      {g.items.map(renderItem)}
+                    </div>
+                  )) : (leads && leads.map(([label, value, set]) => (
+                    <div key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-3 2xl:col-span-4' : 'lg:col-span-1 2xl:col-span-2'}`}>
+                      <span className="block pb-1">{labelInput(`lead:${label}`, label)}</span>
+                      <input value={value ?? ''} onChange={(e) => set(e.target.value)} aria-label={labelOf(`lead:${label}`, label)} className={fieldCls} />
+                    </div>
+                  )))}
+                  {rest.map(renderItem)}
                   {picked?.section === section.id && Array.from({ length: ((4 - (items.length % 4)) % 4) + 4 }).map((_, i) => (
                     <div key={`end-${i}`} onClick={() => { placeAt(section, picked.key, `end:${i}`); setPicked(null); }} title="Click to place here" className="hidden min-h-[4.5rem] cursor-pointer rounded-md border border-dashed border-[#B9ADD6] hover:bg-[#F6F3FB] lg:block" />
                   ))}
