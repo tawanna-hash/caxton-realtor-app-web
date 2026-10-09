@@ -423,9 +423,9 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
     const leads = leadsFor(section);
     const items = orderedItems(section);
     return (
-                <div data-grid={section.id} className={`grid gap-x-5 gap-y-5 ${bordered ? 'border-t border-[#F6F3FB] px-[1.125rem] py-5' : ''} sm:grid-cols-2 lg:grid-cols-4`}>
+                <div data-grid={section.id} className={`grid gap-x-5 gap-y-5 ${bordered ? 'border-t border-[#F6F3FB] px-[1.125rem] py-5' : ''} sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4`}>
                   {leads && leads.map(([label, value, set]) => (
-                    <div key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-4' : ''}`}>
+                    <div key={label} className={`block min-w-0 sm:col-span-2 ${leads.length === 1 ? 'lg:col-span-3 2xl:col-span-4' : 'lg:col-span-1 2xl:col-span-2'}`}>
                       <span className="block pb-1">{labelInput(`lead:${label}`, label)}</span>
                       <input value={value ?? ''} onChange={(e) => set(e.target.value)} aria-label={labelOf(`lead:${label}`, label)} className={fieldCls} />
                     </div>
@@ -475,7 +475,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
                       );
                     }
                     return (
-                      <div key={key} {...cellAttrs} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : fl.span === 4 ? 'sm:col-span-2 lg:col-span-4' : fl.span === 3 ? 'sm:col-span-2 lg:col-span-3' : ''} ${placed}${pickCls}`}>
+                      <div key={key} {...cellAttrs} className={`min-w-0 ${fl.span === 2 ? 'lg:col-span-2' : fl.span === 4 ? 'sm:col-span-2 lg:col-span-3 2xl:col-span-4' : fl.span === 3 ? 'sm:col-span-2 lg:col-span-3' : ''} ${placed}${pickCls}`}>
                         <div className="flex items-center justify-between gap-3 pb-1">
                           {labelInput(fl.id, fl.label)}
                           <span className="flex items-center gap-3">{xBtn('Delete field', () => hideField(section, fl.id))}</span>
