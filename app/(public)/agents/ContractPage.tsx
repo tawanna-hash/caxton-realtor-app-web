@@ -582,7 +582,7 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
               )}
               {section.id === 'property' && tab === 'key-details' && (
                 <PinnedDetails className="group overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
-                  <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span><span className="flex flex-wrap items-center gap-2"><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsNew(true); setEditing({ id: newId('term'), term: '', ref: '', value: '', note: '' }); }}>Add Term</button>{onOpenCalculator && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenCalculator('calc-commission'); }}>Commission Calculator</button>}<button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId('key-details'); }}>Quick Entry</button></span></summary>
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-[1.125rem] py-4 text-sm font-semibold text-slate-900"><span>Key Details</span><span className="flex flex-wrap items-center gap-2"><span className="text-xs font-normal text-slate-500">{terms.filter((t) => t.value.trim()).length} Of {terms.length} Filled</span><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsNew(true); setEditing({ id: newId('term'), term: '', ref: '', value: '', note: '' }); }}>Add Term</button>{onOpenCalculator && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenCalculator('calc-commission'); }}>Commission Calculator</button>}<button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickId('key-details'); }}>Quick Entry</button></span></summary>
                   <div className="border-t border-[#F6F3FB]">
       <section className="bg-white p-4" aria-label="Contract Terms">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -616,20 +616,18 @@ export default function ContractPage({ deal: rawDeal, onPatch, onParties, onOpen
           })}
           {tab === 'cash' && (
           <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white" aria-label="Cash To Close">
-            <div className="flex flex-wrap items-center justify-between gap-3 px-[1.125rem] py-4">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">Cash To Close</p>
-                <p className="mt-0.5 text-sm text-slate-500">Work out cash to close in the Cash-To-Close calculator.</p>
-              </div>
-              <span className="flex items-center gap-3">
-                <label className="flex items-center gap-2 text-sm text-slate-600">Earnest Money In Escrow
-                  <span className="flex w-32 items-center gap-1 rounded-md border border-[#E6E5EC] bg-white px-2 focus-within:border-[#301D5D]">$
-                    <input value={deal.earnestInEscrow || asNumber(deal.contractDetails.earnestMoney)} onChange={(e) => onPatch({ earnestInEscrow: e.target.value })} inputMode="decimal" aria-label="Earnest money in escrow" className="h-9 min-w-0 flex-1 bg-transparent text-right text-sm text-slate-900 outline-none" />
-                  </span>
+            <div className="flex flex-wrap items-center justify-between gap-2 px-[1.125rem] py-4 text-sm font-semibold text-slate-900">
+              <span>Cash To Close</span>
+              {onOpenCalculator && <span className="flex flex-wrap items-center gap-2"><button type="button" onClick={() => onOpenCalculator('calc-cash')}>Open Cash-To-Close Calculator</button><Tip text="Opens the calculator for this deal. Your estimate is saved to the deal's documents automatically." /></span>}
+            </div>
+            <div className="border-t border-[#F6F3FB] px-[1.125rem] py-5">
+              <p className="pb-4 text-sm text-slate-500">Work out cash to close in the Cash-To-Close calculator.</p>
+              <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
+                <label className="block min-w-0">
+                  <span className="block pb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Earnest Money In Escrow</span>
+                  <input value={deal.earnestInEscrow || asNumber(deal.contractDetails.earnestMoney)} onChange={(e) => onPatch({ earnestInEscrow: e.target.value })} inputMode="decimal" placeholder="$" aria-label="Earnest money in escrow" className={fieldCls} />
                 </label>
-                {onOpenCalculator && <button type="button" onClick={() => onOpenCalculator('calc-cash')}>Open Cash-To-Close Calculator</button>}
-                {onOpenCalculator && <Tip text="Opens the calculator for this deal. Your estimate is saved to the deal's documents automatically." />}
-              </span>
+              </div>
             </div>
           </section>
           )}
