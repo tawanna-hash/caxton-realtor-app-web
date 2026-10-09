@@ -1111,7 +1111,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
               <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
                 <div className="flex flex-wrap items-center justify-between gap-2 px-[1.125rem] py-4">
                   <div><h3 className="text-sm font-semibold text-slate-900">People</h3><p className="text-sm text-slate-500">Clients, vendors and others on this deal.</p></div>
-                  {!locked && <button type="button" onClick={() => setShowPersonForm((v) => !v)}><Plus className="h-4 w-4" aria-hidden="true" /> Add People</button>}
+                  {!locked && <button type="button" className="!inline-flex !flex-row !items-center !gap-1" onClick={() => setShowPersonForm((v) => !v)}><Plus className="h-4 w-4" aria-hidden="true" /> Add People</button>}
                 </div>
                 <div className="border-t border-[#F6F3FB] px-[1.125rem] pb-[1.125rem] pt-3">
                 {showPersonForm && (
