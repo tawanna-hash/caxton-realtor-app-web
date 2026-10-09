@@ -1108,11 +1108,12 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
               backLabel="People"
               sections={[
                 { id: 'people', title: 'People', sub: 'Clients, vendors and others', trailing: String(allPeople.length), content: (
-              <section>
-                <div className="flex items-center justify-between gap-3">
-                  <div><p className="ds-side-title !m-0">People</p><p className="text-sm text-slate-500">Clients, vendors and others on this deal.</p></div>
-                  {!locked && <button type="button" className={btnPrimary} onClick={() => setShowPersonForm((v) => !v)}><Plus className="h-4 w-4" aria-hidden="true" /> Add People</button>}
+              <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-[1.125rem] py-4">
+                  <div><h3 className="text-sm font-semibold text-slate-900">People</h3><p className="text-sm text-slate-500">Clients, vendors and others on this deal.</p></div>
+                  {!locked && <button type="button" onClick={() => setShowPersonForm((v) => !v)}><Plus className="h-4 w-4" aria-hidden="true" /> Add People</button>}
                 </div>
+                <div className="border-t border-[#F6F3FB] px-[1.125rem] pb-[1.125rem] pt-3">
                 {showPersonForm && (
                   <form noValidate className="ds-card mt-3 grid gap-3 sm:grid-cols-2" onSubmit={(e) => {
                     e.preventDefault();
@@ -1165,13 +1166,15 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                     }}
                   />
                 </div>
+                </div>
               </section>
                 ) },
                 { id: 'providers', title: 'Trusted Service Providers', sub: 'Who you recommend on this deal', trailing: deal.serviceProviders.length ? String(deal.serviceProviders.length) : undefined, content: (
-              <section>
-                <p className="ds-side-title !m-0">Trusted Service Providers</p>
-                <p className="text-sm text-slate-500">Set up the lenders, inspectors, attorneys and others you recommend on this deal.</p>
-                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              <section className="overflow-hidden rounded-2xl border border-[#E6E5EC] bg-white">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-[1.125rem] py-4"><div><h3 className="text-sm font-semibold text-slate-900">Trusted Service Providers</h3>
+                <p className="text-sm text-slate-500">Set up the lenders, inspectors, attorneys and others you recommend on this deal.</p></div></div>
+                <div className="border-t border-[#F6F3FB] px-[1.125rem] pb-[1.125rem] pt-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {SERVICE_PROVIDER_CATEGORIES.map((category) => {
                     const count = deal.serviceProviders.filter((p) => p.category === category).length;
                     return (
@@ -1181,6 +1184,7 @@ export default function DealSubpage({ onUploadOptionalFile, uploadBusyId, readin
                       </button>
                     );
                   })}
+                </div>
                 </div>
               </section>
                 ) },

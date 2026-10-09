@@ -32,7 +32,7 @@ export default function SectionNav({ sections, backLabel, testId, initial }: {
   let lastGroup: string | undefined;
   return (
     <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)]" data-testid={testId}>
-      <nav aria-label={backLabel} className={`min-w-0 overflow-hidden rounded-[4px] border border-[#E6E5EC] bg-white ${mobileOpen ? 'max-lg:hidden' : ''}`}>
+      <nav aria-label={backLabel} className={`min-w-0 overflow-hidden rounded-[4px] border border-[#E6E5EC] bg-white lg:sticky lg:top-0 ${mobileOpen ? 'max-lg:hidden' : ''}`}>
         {sections.map((s) => {
           const head = s.group && s.group !== lastGroup ? s.group : null;
           lastGroup = s.group;
@@ -45,11 +45,8 @@ export default function SectionNav({ sections, backLabel, testId, initial }: {
             aria-current={currentId === s.id ? 'true' : undefined}
             className={`!flex !h-auto w-full !items-center !justify-start !gap-3 !rounded-none !border-0 !border-b !border-[#E6E5EC] !px-4 !py-3 text-left ${currentId === s.id ? '!bg-[#EFEAF8] shadow-[inset_2px_0_0_#301D5D]' : '!bg-white hover:!bg-[#F6F3FB]'}`}
           >
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold leading-5 text-[#1B1726]">{s.title}</span>
-              {s.sub && <span className="block text-xs font-normal text-[#6B6878]">{s.sub}</span>}
-            </span>
-            {s.trailing && <span className="shrink-0 text-xs font-medium text-[#4A4757]">{s.trailing}</span>}
+            <span className="min-w-0 flex-1 text-sm font-semibold leading-5 text-[#1B1726]">{s.title}</span>
+            {s.trailing && <span className="shrink-0 rounded-full bg-[#EFEAF8] px-1.5 py-0.5 text-[11px] font-medium text-[#301D5D]">{s.trailing}</span>}
           </button>
           </div>
           );
