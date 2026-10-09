@@ -92,7 +92,6 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
         <h2 className="text-[22px] font-semibold text-[#1B1726]">{deal.id === '__personal__' ? 'My Schedulers' : 'Schedulers'}</h2>
         <p className="mt-1 text-[14px] text-[#4A4757]">{deal.id === '__personal__' ? 'Your personal booking pages, not tied to any deal. People pick an open time and it lands on your calendar.' : 'Booking pages for this deal. People pick an open time and it lands on your calendar.'}</p>
       </div>
-      {deal.id !== '__personal__' && <ClosingSchedulePanel dealId={deal.id} />}
       {msg && <p role="status" className="text-[13px] font-medium text-[#005A00]">{msg}</p>}
       {error && <p role="alert" className="text-[13px] font-medium text-[#661102]">{error}</p>}
       {!data && !error && (
@@ -108,6 +107,7 @@ export default function SchedulersPanel({ deal, onOpenIntegrations }: { deal: Ag
             backLabel="Scheduling"
             initial="schedulers"
             sections={[
+              ...(deal.id !== '__personal__' ? [{ id: 'closing', title: 'Schedule The Closing', content: <ClosingSchedulePanel dealId={deal.id} /> }] : []),
               { id: 'accounts', title: 'Connected Accounts', sub: 'Calendars bookings land on', trailing: String(data.account ? 1 : 0), content: (
           <section className={`${card} p-4`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
