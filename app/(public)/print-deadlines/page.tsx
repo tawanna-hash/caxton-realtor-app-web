@@ -16,7 +16,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { PRINT_DEADLINES_BY_PUB, type DeadlinesPub } from '@/lib/media-kit';
+import {
+  PRINT_DEADLINES_BY_YEAR,
+  PRINT_DEADLINE_YEARS,
+  type DeadlinesPub,
+} from '@/lib/media-kit';
 
 type ColKey = 'deadline' | 'mail' | 'eReplicaRelease';
 
@@ -44,6 +48,7 @@ function readActivePub(): DeadlinesPub {
 export default function PrintDeadlinesPage() {
   const [pub, setPub] = useState<DeadlinesPub>('realtyline');
   const [col, setCol] = useState<ColKey>('deadline');
+  const [year, setYear] = useState<number>(PRINT_DEADLINE_YEARS[0]);
 
   useEffect(() => {
     // Defer the initial hydration read to a microtask so we don't
@@ -63,7 +68,7 @@ export default function PrintDeadlinesPage() {
     };
   }, []);
 
-  const data = PRINT_DEADLINES_BY_PUB[pub];
+  const data = PRINT_DEADLINES_BY_YEAR[year][pub];
   const emptyState = data.rows.length === 0;
 
   const activeColumn = useMemo(
@@ -87,6 +92,27 @@ export default function PrintDeadlinesPage() {
             e-blast go live on the Digital Release date.
           </p>
         </header>
+
+        {PRINT_DEADLINE_YEARS.length > 1 && (
+          <div role="tablist" aria-label="Year" className="flex gap-2 mb-4">
+            {PRINT_DEADLINE_YEARS.map((y) => (
+              <button
+                key={y}
+                role="tab"
+                aria-selected={y === year}
+                onClick={() => setYear(y)}
+                className={
+                  'px-4 py-2 rounded-md text-sm font-medium transition ' +
+                  (y === year
+                    ? 'bg-brand-700 text-white'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200')
+                }
+              >
+                {y}
+              </button>
+            ))}
+          </div>
+        )}
 
         {emptyState ? (
           <section className="border border-gray-200 rounded-md p-6 bg-gray-50">

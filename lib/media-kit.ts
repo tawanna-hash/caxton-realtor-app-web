@@ -756,6 +756,42 @@ export const PRINT_DEADLINES_BY_PUB: Record<DeadlinesPub, PubDeadlines> = {
   },
 };
 
+// ── Print Deadlines (2027, proposed) ───────────────────────────────────────
+//
+// Each publication has its OWN 2027 array so RealtyLine and Newsline
+// can diverge without touching one another.  Both start with the same
+// dates, matching how 2026 worked.  Edit REALTYLINE_2027 for Austin and
+// NEWSLINE_2027 for San Antonio.
+const REALTYLINE_2027: PrintDeadline[] = [
+  { month: 'January',   deadline: 'January 6',    mail: 'January 21',    eReplicaRelease: 'January 15'   },
+  { month: 'February',  deadline: 'February 5',   mail: 'February 22',   eReplicaRelease: 'February 19'  },
+  { month: 'March',     deadline: 'March 5',      mail: 'March 22',      eReplicaRelease: 'March 19'     },
+  { month: 'April',     deadline: 'April 7',      mail: 'April 22',      eReplicaRelease: 'April 16'     },
+  { month: 'May',       deadline: 'May 5',        mail: 'May 21',        eReplicaRelease: 'May 14'       },
+  { month: 'June',      deadline: 'June 9',       mail: 'June 22',       eReplicaRelease: 'June 18'      },
+  { month: 'July',      deadline: 'July 7',       mail: 'July 22',       eReplicaRelease: 'July 16'      },
+  { month: 'August',    deadline: 'August 5',     mail: 'August 23',     eReplicaRelease: 'August 20'    },
+  { month: 'September', deadline: 'September 8',  mail: 'September 22',  eReplicaRelease: 'September 17' },
+  { month: 'October',   deadline: 'October 6',    mail: 'October 22',    eReplicaRelease: 'October 15'   },
+  { month: 'November',  deadline: 'November 5',   mail: 'November 22',   eReplicaRelease: 'November 19'  },
+  { month: 'December',  deadline: 'December 8',   mail: 'December 21',   eReplicaRelease: 'December 17'  },
+];
+
+const NEWSLINE_2027: PrintDeadline[] = REALTYLINE_2027.map((r) => ({ ...r }));
+
+/** All published schedules, keyed by year then publication. */
+export const PRINT_DEADLINES_BY_YEAR: Record<number, Record<DeadlinesPub, PubDeadlines>> = {
+  2026: PRINT_DEADLINES_BY_PUB,
+  2027: {
+    realtyline: { pub: 'realtyline', name: 'RealtyLine', year: 2027, rows: REALTYLINE_2027 },
+    newsline: { pub: 'newsline', name: 'Newsline San Antonio', year: 2027, rows: NEWSLINE_2027 },
+  },
+};
+
+export const PRINT_DEADLINE_YEARS: number[] = Object.keys(PRINT_DEADLINES_BY_YEAR)
+  .map(Number)
+  .sort((a, b) => a - b);
+
 // Legacy alias for existing callers that still expect a bare 2026
 // RealtyLine list (app/(public)/advertise/print/page.tsx, admin
 // media-kit reference, availability calendar).  Do not remove
