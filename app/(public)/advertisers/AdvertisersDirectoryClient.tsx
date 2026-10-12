@@ -1,6 +1,7 @@
 'use client';
 
-import { isPubKey, type PubKey } from '@/lib/pub-meta';
+import { type PubKey } from '@/lib/pub-meta';
+import { readClientPub } from '@/lib/publication';
 
 // app/(public)/advertisers/AdvertisersDirectoryClient.tsx
 //
@@ -51,13 +52,9 @@ type Props = {
   themes: Record<SitePub, { accent: string; label: string }>;
 };
 
+// Cookie-first read (matches the header/nav); falls back to localStorage.
 function readSavedPub(): SitePub {
-  if (typeof window === 'undefined') return 'realtyline';
-  try {
-    const v = window.localStorage.getItem('caxton_pub');
-    if (isPubKey(v)) return v;
-  } catch {}
-  return 'realtyline';
+  return readClientPub() as SitePub;
 }
 
 function subscribePub(callback: () => void): () => void {
