@@ -8,7 +8,8 @@
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 import TrackPageView from '@/components/analytics/TrackPageView';
-import { PACKAGES, PRINT_DEADLINES } from '@/lib/media-kit';
+import PrintDeadlinesTable from '@/components/ads/PrintDeadlinesTable';
+import { PACKAGES } from '@/lib/media-kit';
 
 export const metadata = {
   title: 'Print Advertising — RealtyLine & Newsline San Antonio',
@@ -121,52 +122,7 @@ export default function AdvertisePrintPage() {
       </section>
 
       {/* Print deadlines — calendar-aware buyers know when to commit */}
-      {PRINT_DEADLINES.length > 0 && (
-        <section className="mb-14">
-          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-            2026 print deadlines
-          </p>
-          <div className="border border-gray-200 rounded-md overflow-hidden">
-            {/* Mobile cards */}
-            <ul className="divide-y divide-gray-100 md:hidden">
-              {PRINT_DEADLINES.map((d) => (
-                <li key={d.month} className="px-4 py-3">
-                  <div className="font-medium">{d.month}</div>
-                  <div className="mt-1 grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <div className="text-gray-400">Materials deadline</div>
-                      <div className="text-gray-700">{d.deadline}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-400">Mails on</div>
-                      <div className="text-gray-700">{d.mail}</div>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            {/* Desktop table */}
-            <table className="hidden w-full text-sm md:table">
-              <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-600">
-                <tr>
-                  <th className="px-4 py-2 font-medium">Issue</th>
-                  <th className="px-4 py-2 font-medium">Materials deadline</th>
-                  <th className="px-4 py-2 font-medium">Mails on</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {PRINT_DEADLINES.map((d) => (
-                  <tr key={d.month}>
-                    <td className="px-4 py-2 font-medium">{d.month}</td>
-                    <td className="px-4 py-2 text-gray-700">{d.deadline}</td>
-                    <td className="px-4 py-2 text-gray-700">{d.mail}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      <PrintDeadlinesTable />
 
       {/* CTA */}
       <section className="border-t border-gray-200 pt-8">

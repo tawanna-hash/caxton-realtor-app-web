@@ -11,7 +11,7 @@ import {
   type AdChannel,
 } from '@/lib/ad-channels';
 import type { BookedWindow } from '@/lib/server/availability-store';
-import { PRINT_DEADLINES } from '@/lib/media-kit';
+import { getPrintDeadlines } from '@/lib/media-kit';
 import { AD_OPS_CONTROL, AD_OPS_SECONDARY, AdOpsMetrics } from '../../_components/AdOpsUi';
 
 type ChannelTab = 'all' | AdChannel;
@@ -236,9 +236,9 @@ export default function AvailabilityCalendar() {
   // viewing print or all.
   const printDeadline = useMemo(() => {
     if (activeChannel !== 'all' && activeChannel !== 'print') return null;
-    const monthName = new Date(mStartIso).toLocaleDateString('en-US', { month: 'long' });
-    return PRINT_DEADLINES.find((d) => d.month === monthName) ?? null;
-  }, [activeChannel, mStartIso]);
+    const monthName = new Date(year, month0, 1).toLocaleDateString('en-US', { month: 'long' });
+    return getPrintDeadlines(year).find((d) => d.month === monthName) ?? null;
+  }, [activeChannel, year, month0]);
 
   // ── render ─────────────────────────────────────────────────────────────
 
