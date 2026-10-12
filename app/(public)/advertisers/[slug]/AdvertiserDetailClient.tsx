@@ -399,11 +399,11 @@ export default function AdvertiserDetailClient({
                           )}
                         </dl>
                         {assignedLocations.length > 0 && (
-                          <div className="mt-3 flex flex-wrap gap-x-2 gap-y-2">
+                          <div className="mt-2 flex flex-wrap gap-1">
                             {assignedLocations.map((loc) => (
                               <span
                                 key={loc.id}
-                                className="text-[10px] uppercase tracking-[0.1em] px-2.5 py-1 rounded-md bg-gray-100 text-gray-600"
+                                className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-md bg-gray-100 text-gray-600"
                               >
                                 {toTitleCaseName(loc.label || loc.city || 'Office')}
                               </span>
