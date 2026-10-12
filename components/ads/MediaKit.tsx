@@ -14,7 +14,8 @@ import {
   PACKAGES,
   EBLASTS,
   PRINT_AD_SPECS,
-  PRINT_DEADLINES,
+  PRINT_DEADLINE_YEARS,
+  getPrintDeadlines,
   RATE_MATRIX,
   FREQ_LABELS,
   FREQ_TERMS,
@@ -515,9 +516,30 @@ function EblastCard({ blast, pub }: { blast: EBlast; pub: MediaKitPub }) {
 }
 
 function DeadlinesSection() {
+  const [year, setYear] = useState<number>(PRINT_DEADLINE_YEARS[0]);
   return (
     <section id="print-deadlines" className="scroll-mt-6 rounded-md bg-white ring-1 ring-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900">2026 Print Deadlines</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-gray-900">{year} Print Deadlines</h2>
+        {PRINT_DEADLINE_YEARS.length > 1 && (
+          <div role="tablist" aria-label="Year" className="flex gap-2">
+            {PRINT_DEADLINE_YEARS.map((y) => (
+              <button
+                key={y}
+                role="tab"
+                aria-selected={y === year}
+                onClick={() => setYear(y)}
+                className={
+                  'px-3 py-1 rounded-md text-xs font-medium transition ' +
+                  (y === year ? 'bg-brand-700 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200')
+                }
+              >
+                {y}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <p className="text-sm text-gray-700 mt-1">Camera-ready artwork due by the deadline; issues mail on the listed date.</p>
       <div className="mt-4 overflow-x-auto">
         <table className="min-w-full text-sm">
@@ -529,7 +551,7 @@ function DeadlinesSection() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {PRINT_DEADLINES.map((d) => (
+            {getPrintDeadlines(year).map((d) => (
               <tr key={d.month}>
                 <td className="px-3 py-2 font-medium text-gray-900">{d.month}</td>
                 <td className="px-3 py-2 text-gray-900">{d.deadline}</td>

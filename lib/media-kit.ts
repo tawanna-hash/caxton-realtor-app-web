@@ -930,3 +930,12 @@ export const POLICY_NOTES: PolicyNote[] = [
     body: 'All cancellations must be made in writing within 30 days of the stated advertising deadline. If not timely canceled, ad space will continue to be reserved, ad copy will pick up from the previous month, and the advertiser is responsible for payment at the open rate until a final written cancellation is received or a new agreement is executed.',
   },
 ];
+
+/**
+ * Print deadlines for a given year (RealtyLine schedule, which the media
+ * kit, print advertising page, and availability calendar all display).
+ * Returns [] for years with no published schedule.
+ */
+export function getPrintDeadlines(year: number): PrintDeadline[] {
+  return PRINT_DEADLINES_BY_YEAR[year]?.realtyline.rows ?? [];
+}
