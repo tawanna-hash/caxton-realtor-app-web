@@ -128,6 +128,8 @@ export default function AdvertiserDetailClient({
     const t = (title || '').toLowerCase();
     // Matches 'President', 'Co-President', 'Co President', 'Vice President-ish' NO.
     // Require the whole word 'president' but ignore common non-owner variants.
+    // Chief Executive Officers lead the list alongside presidents.
+    if (/chief executive officer|\bceo\b/.test(t)) return 0;
     if (!/\bpresident\b/.test(t)) return 1;
     if (/vice[- ]?president|vp\b|avp\b/.test(t)) return 1;
     return 0;
