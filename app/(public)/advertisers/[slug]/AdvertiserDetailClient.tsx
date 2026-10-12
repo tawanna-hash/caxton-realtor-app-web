@@ -8,6 +8,9 @@
 // pulled from builder_inventory by name.
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { PUB_CHANGE_EVENT, readClientPub } from '@/lib/publication';
+import { PUB_ID_TO_PUBLICATION } from '@/lib/publications';
 import { useEffect, useState } from 'react';
 import type {
   Advertiser,
@@ -99,6 +102,22 @@ export default function AdvertiserDetailClient({
   theme,
   backHref,
 }: Props) {
+  const router = useRouter();
+
+  // Switching publications (Austin <-> San Antonio) while viewing a partner
+  // that belongs to the other market used to leave the old partner on screen.
+  // Send the visitor to the partner directory for the newly selected market.
+  useEffect(() => {
+    const onPubChange = () => {
+      const selected = PUB_ID_TO_PUBLICATION[readClientPub() as keyof typeof PUB_ID_TO_PUBLICATION];
+      if (selected && a.publication && selected !== a.publication) {
+        router.replace('/partners');
+      }
+    };
+    window.addEventListener(PUB_CHANGE_EVENT, onPubChange);
+    return () => window.removeEventListener(PUB_CHANGE_EVENT, onPubChange);
+  }, [a.publication, router]);
+
   const website = normalizeUrl(a.website);
   const fb = normalizeUrl(a.facebook_url);
   const ig = normalizeUrl(a.instagram_url);
@@ -380,11 +399,11 @@ export default function AdvertiserDetailClient({
                           )}
                         </dl>
                         {assignedLocations.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1">
+                          <div className="mt-3 flex flex-wrap gap-x-2 gap-y-2">
                             {assignedLocations.map((loc) => (
                               <span
                                 key={loc.id}
-                                className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-md bg-gray-100 text-gray-600"
+                                className="text-[10px] uppercase tracking-[0.1em] px-2.5 py-1 rounded-md bg-gray-100 text-gray-600"
                               >
                                 {toTitleCaseName(loc.label || loc.city || 'Office')}
                               </span>
