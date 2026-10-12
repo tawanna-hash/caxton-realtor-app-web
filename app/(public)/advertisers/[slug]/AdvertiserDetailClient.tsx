@@ -139,6 +139,13 @@ export default function AdvertiserDetailClient({
     return (x.name || '').localeCompare(y.name || '', undefined, { sensitivity: 'base' });
   });
 
+  // Board of Directors members are stored as staff rows with section = 'board'
+  // and keep admin-defined order (Chair first) instead of alphabetical.
+  const teamStaff = sortedStaff.filter((m) => (m.section ?? 'team') !== 'board');
+  const boardStaff = [...staff]
+    .filter((m) => m.section === 'board')
+    .sort((x, y) => (x.sort_order ?? 0) - (y.sort_order ?? 0));
+
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
@@ -177,7 +184,8 @@ export default function AdvertiserDetailClient({
           hasArticles={featureArticles.length > 0}
           hasEvents={taggedEvents.length > 0}
           hasLocations={sortedLocations.length > 0 || (!!address && locations.length === 0)}
-          hasStaff={sortedStaff.length > 0}
+          hasStaff={teamStaff.length > 0}
+          hasBoard={boardStaff.length > 0}
           hasPromotions={promotions.length > 0}
           hasMoveInReady={listings.length > 0}
           communityMapHref={
@@ -308,81 +316,86 @@ export default function AdvertiserDetailClient({
           </section>
         )}
 
-        {sortedStaff.length > 0 && (
-          <section id="team" className="mb-10 scroll-mt-4">
-            <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
-              Team
-            </h2>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {sortedStaff.map((s) => {
-                const assignedLocations = locations.filter((l) => s.location_ids.includes(l.id));
-                return (
-                  <li key={s.id} className="flex gap-4 rounded-md border border-gray-200 bg-white p-4">
-                    {s.photo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={s.photo_url}
-                        alt={s.name}
-                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover object-top flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xl sm:text-2xl font-semibold flex-shrink-0">
-                        {s.name
-                          .split(' ')
-                          .map((p) => p[0])
-                          .filter(Boolean)
-                          .slice(0, 2)
-                          .join('')
-                          .toUpperCase()}
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div
-                        className="text-base font-semibold text-gray-900 truncate"
-                      >
-                        {toTitleCaseName(s.name)}
-                      </div>
-                      {s.title && <div className="text-xs text-gray-600 mb-1">{toTitleCaseRole(s.title)}</div>}
-                      <dl className="space-y-0.5 text-sm text-gray-700">
-                        {s.email && (
-                          <div className="truncate">
-                            <dt className="sr-only">Email</dt>
-                            <dd>
-                              <a href={`mailto:${s.email}`} className="hover:text-gray-900">
-                                {s.email}
-                              </a>
-                            </dd>
-                          </div>
-                        )}
-                        {s.phone && (
-                          <div>
-                            <dt className="sr-only">Phone</dt>
-                            <dd>
-                              <a href={`tel:${s.phone}`} className="hover:text-gray-900">
-                                {s.phone}
-                              </a>
-                            </dd>
-                          </div>
-                        )}
-                      </dl>
-                      {assignedLocations.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {assignedLocations.map((loc) => (
-                            <span
-                              key={loc.id}
-                              className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-md bg-gray-100 text-gray-600"
-                            >
-                              {toTitleCaseName(loc.label || loc.city || 'Office')}
-                            </span>
-                          ))}
+        {([
+          { id: 'team', heading: 'Team', list: teamStaff },
+          { id: 'board-of-directors', heading: 'Board of Directors', list: boardStaff },
+        ] as const).map(({ id, heading, list }) =>
+          list.length > 0 ? (
+            <section key={id} id={id} className="mb-10 scroll-mt-4">
+              <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
+                {heading}
+              </h2>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {list.map((s) => {
+                  const assignedLocations = locations.filter((l) => s.location_ids.includes(l.id));
+                  return (
+                    <li key={s.id} className="flex gap-4 rounded-md border border-gray-200 bg-white p-4">
+                      {s.photo_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={s.photo_url}
+                          alt={s.name}
+                          className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover object-top flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xl sm:text-2xl font-semibold flex-shrink-0">
+                          {s.name
+                            .split(' ')
+                            .map((p) => p[0])
+                            .filter(Boolean)
+                            .slice(0, 2)
+                            .join('')
+                            .toUpperCase()}
                         </div>
                       )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
+                      <div className="min-w-0 flex-1">
+                        <div
+                          className="text-base font-semibold text-gray-900 truncate"
+                        >
+                          {toTitleCaseName(s.name)}
+                        </div>
+                        {s.title && <div className="text-xs text-gray-600 mb-1">{toTitleCaseRole(s.title)}</div>}
+                        <dl className="space-y-0.5 text-sm text-gray-700">
+                          {s.email && (
+                            <div className="truncate">
+                              <dt className="sr-only">Email</dt>
+                              <dd>
+                                <a href={`mailto:${s.email}`} className="hover:text-gray-900">
+                                  {s.email}
+                                </a>
+                              </dd>
+                            </div>
+                          )}
+                          {s.phone && (
+                            <div>
+                              <dt className="sr-only">Phone</dt>
+                              <dd>
+                                <a href={`tel:${s.phone}`} className="hover:text-gray-900">
+                                  {s.phone}
+                                </a>
+                              </dd>
+                            </div>
+                          )}
+                        </dl>
+                        {assignedLocations.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {assignedLocations.map((loc) => (
+                              <span
+                                key={loc.id}
+                                className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-md bg-gray-100 text-gray-600"
+                              >
+                                {toTitleCaseName(loc.label || loc.city || 'Office')}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : null,
         )}
 
         {communityMap && (
@@ -581,6 +594,7 @@ function SectionPills({
   hasEvents,
   hasLocations,
   hasStaff,
+  hasBoard = false,
   hasPromotions,
   hasMoveInReady,
   communityMapHref,
@@ -593,6 +607,7 @@ function SectionPills({
   hasEvents: boolean;
   hasLocations: boolean;
   hasStaff: boolean;
+  hasBoard?: boolean;
   hasPromotions: boolean;
   hasMoveInReady: boolean;
   communityMapHref: string | null;
@@ -605,6 +620,7 @@ function SectionPills({
   if (hasArticles) pills.push({ id: 'feature-articles', label: 'Articles' });
   if (hasLocations) pills.push({ id: 'locations', label: 'Locations' });
   if (hasStaff) pills.push({ id: 'team', label: 'Team' });
+  if (hasBoard) pills.push({ id: 'board-of-directors', label: 'Board of Directors' });
   if (communityMapHref) {
     pills.push({ id: 'community-map', label: 'Community Map', href: communityMapHref });
   }
@@ -811,7 +827,19 @@ function TaggedEventCard({ event, accent }: { event: CalendarEvent; accent: stri
   );
 }
 
+const ARTICLES_PER_PAGE = 2;
+
 function FeatureArticlesSection({ articles }: { articles: FeatureArticle[] }) {
+  const [page, setPage] = useState(0);
+  const pageCount = Math.max(1, Math.ceil(articles.length / ARTICLES_PER_PAGE));
+  const current = Math.min(page, pageCount - 1);
+  const visible = articles.slice(
+    current * ARTICLES_PER_PAGE,
+    current * ARTICLES_PER_PAGE + ARTICLES_PER_PAGE,
+  );
+  const arrowClass =
+    'inline-flex items-center justify-center h-9 w-9 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors';
+
   return (
     <section id="feature-articles" className="border-t border-gray-200 pt-8 mb-8 scroll-mt-4">
       <h2
@@ -822,12 +850,41 @@ function FeatureArticlesSection({ articles }: { articles: FeatureArticle[] }) {
       </h2>
 
       <ul className="space-y-4">
-        {articles.map((article) => (
+        {visible.map((article) => (
           <li key={article.id}>
             <FeatureArticleCard article={article} />
           </li>
         ))}
       </ul>
+
+      {pageCount > 1 && (
+        <nav
+          className="mt-5 flex items-center justify-center gap-4"
+          aria-label="Feature articles pagination"
+        >
+          <button
+            type="button"
+            className={arrowClass}
+            onClick={() => setPage(Math.max(0, current - 1))}
+            disabled={current === 0}
+            aria-label="Previous articles"
+          >
+            <span aria-hidden="true">&larr;</span>
+          </button>
+          <span className="text-xs text-gray-500 tabular-nums" aria-live="polite">
+            {current + 1} / {pageCount}
+          </span>
+          <button
+            type="button"
+            className={arrowClass}
+            onClick={() => setPage(Math.min(pageCount - 1, current + 1))}
+            disabled={current >= pageCount - 1}
+            aria-label="Next articles"
+          >
+            <span aria-hidden="true">&rarr;</span>
+          </button>
+        </nav>
+      )}
     </section>
   );
 }

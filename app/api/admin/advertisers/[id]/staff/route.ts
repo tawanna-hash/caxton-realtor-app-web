@@ -105,10 +105,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
 
     const rows = (await sql`
       INSERT INTO advertiser_staff (
-        advertiser_id, name, title, email, phone, photo_url, sort_order
+        advertiser_id, name, title, email, phone, photo_url, sort_order, section
       ) VALUES (
         ${idNum}, ${name}, ${str('title')}, ${str('email')}, ${str('phone')},
-        ${str('photo_url')}, ${sortOrder}
+        ${str('photo_url')}, ${sortOrder}, ${body.section === 'board' ? 'board' : 'team'}
       )
       RETURNING *
     `) as unknown as StaffRow[];

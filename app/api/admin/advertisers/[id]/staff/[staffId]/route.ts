@@ -75,6 +75,10 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
       await sql`UPDATE advertiser_staff SET sort_order = ${Number(body.sort_order)} WHERE id = ${staffId}::uuid`;
     }
 
+    if ('section' in body && (body.section === 'board' || body.section === 'team')) {
+      await sql`UPDATE advertiser_staff SET section = ${body.section} WHERE id = ${staffId}::uuid`;
+    }
+
     // Replace location assignments wholesale when provided
     if ('location_ids' in body) {
       const requested: string[] = Array.isArray(body.location_ids)

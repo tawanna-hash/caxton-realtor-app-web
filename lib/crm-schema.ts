@@ -1373,6 +1373,8 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
     )
   `);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertiser_staff_advertiser ON advertiser_staff(advertiser_id)`);
+  // Public-page section: 'team' (default) or 'board' (Board of Directors).
+  await step(() => sql`ALTER TABLE advertiser_staff ADD COLUMN IF NOT EXISTS section text NOT NULL DEFAULT 'team'`);
 
   // Many-to-many join: a staff member can belong to multiple locations.
   await step(() => sql`

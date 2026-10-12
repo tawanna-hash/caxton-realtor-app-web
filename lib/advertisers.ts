@@ -168,6 +168,8 @@ export interface AdvertiserStaff {
   phone: string | null;
   photo_url: string | null;
   sort_order: number;
+  /** Public-page section: 'team' (default) or 'board' (Board of Directors). */
+  section?: 'team' | 'board';
   /** IDs of locations this staff member is assigned to (many-to-many). */
   location_ids: string[];
   created_at: string;
