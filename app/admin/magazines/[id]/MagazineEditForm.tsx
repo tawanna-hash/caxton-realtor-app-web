@@ -45,6 +45,9 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
   );
 
   const [busy, setBusy] = useState<string | null>(null);
+  const [reuploadStatus, setReuploadStatus] = useState<string | null>(null);
+  const [reuploadNote, setReuploadNote] = useState<string | null>(null);
+  const [replaceCover, setReplaceCover] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // "Saved" banner that auto-clears after 4s. We set visible=true
@@ -177,6 +180,103 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
     } catch (err: unknown) {
       setError(errMessage(err));
     } finally {
+      setBusy(null);
+    }
+  }
+
+  // Reupload the full issue document in place. Same magazine id, so every
+  // hotspot / link (magazine_hotspots keyed by magazine_id + page_idx) is
+  // left untouched. Replaces the PDF, page images and searchable text.
+  async function handleReuploadDocument(file: File) {
+    setError(null);
+    setReuploadNote(null);
+    setBusy('reupload');
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfjs: any = await import('pdfjs-dist/legacy/build/pdf.mjs' as any);
+      const v: string = (await import('pdfjs-dist/package.json')).version;
+      const cdn = `https://unpkg.com/pdfjs-dist@${v}`;
+      pdfjs.GlobalWorkerOptions.workerSrc = `${cdn}/build/pdf.worker.min.mjs`;
+
+      setReuploadStatus('Uploading PDF…');
+      const pdfBlob = await upload(`magazine-pdfs/${id}/${file.name}`, file, {
+        access: 'public',
+        handleUploadUrl: '/api/admin/magazines/upload-token',
+        multipart: true,
+      });
+
+      const buf = await file.arrayBuffer();
+      const doc = await pdfjs.getDocument({
+        data: buf,
+        wasmUrl: `${cdn}/wasm/`,
+        cMapUrl: `${cdn}/cmaps/`,
+        cMapPacked: true,
+        standardFontDataUrl: `${cdn}/standard_fonts/`,
+      }).promise;
+
+      const newUrls: string[] = [];
+      const texts: string[] = [];
+      const scale = 150 / 72;
+      for (let i = 1; i <= doc.numPages; i++) {
+        setReuploadStatus(`Processing page ${i} of ${doc.numPages}…`);
+        const page = await doc.getPage(i);
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Canvas 2D context unavailable');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        const img: Blob = await new Promise((resolve, reject) => {
+          canvas.toBlob(
+            (b) => (b ? resolve(b) : reject(new Error('canvas.toBlob returned null'))),
+            'image/jpeg',
+            0.92,
+          );
+        });
+        canvas.width = 0;
+        canvas.height = 0;
+        const name = `page-${String(i).padStart(3, '0')}.jpg`;
+        const blob = await upload(`magazine-pages/${id}/${name}`, img, {
+          access: 'public',
+          handleUploadUrl: '/api/admin/magazines/upload-token',
+        });
+        newUrls.push(blob.url);
+
+        const tc = await page.getTextContent();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const text = (tc.items as any[])
+          .map((it) => (typeof it.str === 'string' ? it.str : ''))
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        texts.push(text);
+      }
+
+      setReuploadStatus('Saving…');
+      const body: Record<string, unknown> = {
+        reader_url: pdfBlob.url,
+        page_urls: newUrls,
+        page_count: newUrls.length,
+        page_texts: texts,
+      };
+      if (replaceCover && newUrls[0]) body.cover_url = newUrls[0];
+      await patch(body);
+
+      const oldCount = pageUrls.length;
+      setReaderUrl(pdfBlob.url);
+      setPageUrls(newUrls);
+      setHasTexts(true);
+      if (replaceCover && newUrls[0]) setCoverUrl(newUrls[0]);
+      setReuploadNote(
+        newUrls.length === oldCount
+          ? `Document replaced. All ${newUrls.length} pages and their links were kept.`
+          : `Document replaced (${oldCount} → ${newUrls.length} pages). Links stay on their original page numbers; review them in the hotspot editor.`,
+      );
+    } catch (err: unknown) {
+      setError(errMessage(err));
+    } finally {
+      setReuploadStatus(null);
       setBusy(null);
     }
   }
@@ -347,6 +447,46 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
               {busy === 'cover' && <p className="text-xs text-[#301D5D] mt-1">Uploading…</p>}
             </div>
           </div>
+        </div>
+
+        {/* Reupload document (in place, keeps all links) */}
+        <div className="bg-white border border-gray-200 rounded-md p-6 mb-6">
+          <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-1">Reupload Document</h2>
+          <p className="text-sm text-gray-600 mb-3">
+            Replace this issue&apos;s PDF, page images and searchable text. The issue stays the same, so all
+            hotspots and links are kept in place.
+          </p>
+          <label
+            className={`inline-block text-sm bg-[#301D5D] hover:bg-[#42277C] text-white px-3 py-2 rounded-md font-medium ${
+              busy !== null ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+            }`}
+          >
+            {busy === 'reupload' ? 'Reuploading…' : 'Choose new PDF'}
+            <input
+              type="file"
+              accept="application/pdf"
+              disabled={busy !== null}
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = '';
+                if (!f) return;
+                if (!confirm('Replace the current document with this PDF? Existing links will be kept.')) return;
+                handleReuploadDocument(f);
+              }}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-700 mt-3">
+            <input
+              type="checkbox"
+              checked={replaceCover}
+              onChange={(e) => setReplaceCover(e.target.checked)}
+              disabled={busy !== null}
+            />
+            Also replace the cover image with page 1
+          </label>
+          {reuploadStatus && <p className="text-xs text-[#301D5D] mt-2">{reuploadStatus}</p>}
+          {reuploadNote && <p className="text-xs text-[#005A00] mt-2">{reuploadNote}</p>}
         </div>
 
         {/* PDF */}
