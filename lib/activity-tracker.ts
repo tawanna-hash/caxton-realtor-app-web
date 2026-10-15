@@ -15,6 +15,7 @@
 // per page load, max 5 form submits per page load.
 
 import posthog from 'posthog-js';
+import { isAutomatedBrowser, isDomReconcileError } from '@/lib/is-automated-browser';
 
 let installed = false;
 
@@ -150,7 +151,14 @@ function onError(message: string, source?: string, lineno?: number, colno?: numb
   // Guard against the 'undefined'/'null'/empty alert spam pattern. We still
   // ship to PostHog (telemetry dashboard) but skip the inbox alert so
   // Tawanna's mailbox doesn't drown in non-actionable noise.
-  const skipEmailAlert = !hasMeaningfulMessage(message) || isStreamingSwapRace(message, errorObj);
+  // DOM reconcile errors (removeChild/insertBefore NotFoundError) come from
+  // something outside React moving nodes (extensions, translators, bots) and
+  // automated browsers are never real readers: telemetry only for both.
+  const skipEmailAlert =
+    !hasMeaningfulMessage(message) ||
+    isStreamingSwapRace(message, errorObj) ||
+    isDomReconcileError(message) ||
+    isAutomatedBrowser();
 
   // Cross-origin script errors are masked by the browser: no source,
   // no lineno, no errorObj, and either the classic 'Script error.'
@@ -189,6 +197,7 @@ function onError(message: string, source?: string, lineno?: number, colno?: numb
     $exception_stack: errorObj instanceof Error ? errorObj.stack : undefined,
     masked_by_browser: isMasked,
     skipped_email_alert: skipEmailAlert,
+    automated_browser: isAutomatedBrowser(),
     page_url: typeof window !== 'undefined' ? window.location.href : undefined,
     user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
   });

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { isAutomatedBrowser } from '@/lib/is-automated-browser';
 
 const SKIP = 'header, nav, aside, footer, [role="menu"], [role="listbox"], [role="dialog"], [role="tablist"], .ds-rail';
 
@@ -11,6 +12,8 @@ const SKIP = 'header, nav, aside, footer, [role="menu"], [role="listbox"], [role
  */
 export default function AutoOpenSections() {
   useEffect(() => {
+    // Bots/monitors scroll fast and click every toggle, racing React's DOM updates.
+    if (isAutomatedBrowser()) return;
     const seen = new WeakSet<Element>();
     const tries = new WeakMap<Element, number>();
     const isToggle = (el: Element) =>
@@ -31,7 +34,8 @@ export default function AutoOpenSections() {
         if (el instanceof HTMLDetailsElement) {
           if (!el.open && !el.closest(SKIP) && !el.closest('[data-no-auto-open]')) el.open = true;
         } else if (isToggle(el)) {
-          (el as HTMLButtonElement).click();
+          // Click on the next frame, and only if React hasn't detached the node meanwhile.
+          window.requestAnimationFrame(() => { if (el.isConnected) (el as HTMLButtonElement).click(); });
           // A click that lands before the page has hydrated does nothing: look again and retry a few times.
           window.setTimeout(() => {
             const n = (tries.get(el) ?? 0) + 1;
