@@ -60,6 +60,8 @@ export interface AgreementNotificationParams {
   lines?: AgreementNotificationLine[];
   totalCents?: number | null;
   renewalOfferDeadline?: string;
+  /** When false, the 72-hour rate-window banner is omitted. Defaults to true. */
+  includeRenewalWindow?: boolean;
 }
 
 export function agreementNotificationEmail(params: AgreementNotificationParams): string {
@@ -152,7 +154,7 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
     ? `<tr><td align="center" style="padding:24px 40px"><a href="${params.signingLink}" style="display:inline-block;background:${brand.brandColor};color:#fff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:4px;letter-spacing:.5px">${isRenewal ? (isReviewStage ? 'Review Your Renewal' : 'Review &amp; Sign Renewal Agreement') : (isReviewStage ? 'Review Insertion Order' : 'Review &amp; Sign Insertion Order')}</a></td></tr>`
     : '';
 
-  const renewalBanner = isRenewal
+  const renewalBanner = isRenewal && params.includeRenewalWindow !== false
     ? `<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#FFF3E0;border:2px solid #7059A8;border-radius:6px"><tr><td style="padding:16px 20px"><p style="margin:0 0 6px 0;font-family:Arial,sans-serif;font-size:12px;font-weight:800;color:#301D5D;text-transform:uppercase;letter-spacing:.8px">72-Hour Renewal Rate</p><p style="margin:0 0 8px 0;font-family:Arial,sans-serif;font-size:14px;color:#301D5D;line-height:1.6"><strong>${isReviewStage ? 'Review and approve' : 'Review and sign'} this renewal within the next 72 hours to keep the rate shown.</strong> After the window expires, this offer will close, signing will be disabled, and the renewal will need to be reissued at the applicable higher rate.</p>${params.renewalOfferDeadline ? `<p style="margin:0;font-family:Arial,sans-serif;font-size:13px;color:#301D5D;line-height:1.5"><strong>Complete by:</strong> ${escapeHtml(params.renewalOfferDeadline)}</p>` : ''}<p style="margin:8px 0 0;font-family:Arial,sans-serif;font-size:13px;color:#301D5D;line-height:1.5">Acting promptly helps maintain uninterrupted market visibility and reserves your planned advertising placement.</p></td></tr></table></td></tr>`
     : '';
 

@@ -199,6 +199,9 @@ export function AgreementDrawer({
   // string → backend falls back to the standard boilerplate.
   const [customMessage, setCustomMessage] = useState<string>("");
   const [showCustomMessage, setShowCustomMessage] = useState<boolean>(false);
+  // Renewals only: include the 72-hour renewal-rate window in the email.
+  const [includeRenewalWindow, setIncludeRenewalWindow] = useState<boolean>(true);
+  const isRenewalAgreement = Boolean(renewedFrom) || existing?.is_renewal === true;
 
   // Rate-lock enforcement: a renewal drafted after the prior agreement's
   // exp_date no longer automatically carries over the old locked rate.
@@ -766,6 +769,7 @@ export function AgreementDrawer({
 
   const buildSendBody = (): Record<string, unknown> => {
     const out: Record<string, unknown> = { stage: sendStage };
+    if (isRenewalAgreement) out.includeRenewalWindow = includeRenewalWindow;
     if (customMessage.trim().length > 0) {
       out.customMessage = customMessage.trim();
     }
@@ -1948,6 +1952,25 @@ export function AgreementDrawer({
       {amendedMsg && (
         <div className="sticky bottom-[72px] -mx-6 px-6 py-2 bg-[#FEF8CC] border-t border-[#FAD800]/30 text-xs text-[#645600]">
           {amendedMsg}
+        </div>
+      )}
+
+      {!isUploaded && isRenewalAgreement && (
+        <div className="-mx-6 px-6 py-3 bg-[#FFF3E0] border-t border-gray-200">
+          <label className="flex items-start gap-2 text-sm text-[#301D5D] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={includeRenewalWindow}
+              onChange={(e) => setIncludeRenewalWindow(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-[#42277C]"
+            />
+            <span>
+              <span className="font-medium">Include 72-hour renewal rate window in email</span>
+              <span className="block text-xs text-gray-600">
+                When unchecked, the 72-hour banner and deadline are left out, the offer will not expire, and the 24-hour reminder is not sent.
+              </span>
+            </span>
+          </label>
         </div>
       )}
 

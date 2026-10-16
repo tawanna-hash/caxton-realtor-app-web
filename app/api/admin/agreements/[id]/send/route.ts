@@ -69,7 +69,9 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     //   stage='agreement' -> status sent          (final IO, legal terms + sign)
     const stage = body.stage === 'proposal' ? 'proposal' : 'agreement';
     const isProposalStage = stage === 'proposal';
-    const renewalDeadline = ag.is_renewal ? renewalOfferDeadline() : null;
+    // Admin can turn off the 72-hour rate window per send (checkbox in the drawer).
+    const includeRenewalWindow = body.includeRenewalWindow !== false;
+    const renewalDeadline = ag.is_renewal && includeRenewalWindow ? renewalOfferDeadline() : null;
     const customMessage =
       typeof body.customMessage === 'string' && body.customMessage.trim().length > 0
         ? body.customMessage.trim()
@@ -126,6 +128,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       adRateUnit: ag.type === 'eblast' ? 'send' : 'issue',
       status: isProposalStage ? 'proposal_sent' : 'sent',
       isRenewal: ag.is_renewal === true,
+      includeRenewalWindow,
       message: customMessage ?? defaultMessage,
       notes: repNote ?? undefined,
       signingLink,
@@ -190,6 +193,17 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
           SET status = ${newStatus},
               sent_to_email = ${recipient},
               renewal_offer_expires_at = ${renewalDeadline.toISOString()},
+              renewal_offer_reminder_sent_at = NULL,
+              updated_at = NOW()
+          WHERE id = ${id}
+        `;
+      } else if (ag.is_renewal) {
+        // Window disabled: clear any prior deadline so signing is never locked out.
+        await sql`
+          UPDATE agreements
+          SET status = ${newStatus},
+              sent_to_email = ${recipient},
+              renewal_offer_expires_at = NULL,
               renewal_offer_reminder_sent_at = NULL,
               updated_at = NOW()
           WHERE id = ${id}
