@@ -72,15 +72,19 @@ function AdminLoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <PageTitle size="md">Realty News Now Admin</PageTitle>
-          <p className="text-sm text-gray-500 mt-1">Sign in to continue</p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-[#F6F5FB]">
+      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-0 rounded-3xl bg-white border border-[#ECE8F5] shadow-sm p-3">
+       <div className="flex items-center justify-center px-6 py-10">
+        <div className="w-full max-w-sm">
+        <div className="mb-6">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/rnn-logo.jpg" alt="" width={48} height={48} className="h-12 w-12 rounded-xl mb-4" />
+          <PageTitle size="md">Login</PageTitle>
+          <p className="text-sm text-gray-500 mt-1">Sign in to Realty News Now Admin</p>
         </div>
-        <form onSubmit={handleSubmit} className="bg-white border border-gray-200 p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Email</label>
+            <label className="block text-sm text-gray-700 mb-1.5">Email</label>
             <input
               type="email"
               required
@@ -94,7 +98,7 @@ function AdminLoginForm() {
               inputMode="email"
               aria-invalid={emailError ? true : undefined}
               aria-describedby={emailError ? 'admin-email-error' : undefined}
-              className={`w-full border px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none ${
+              className={`w-full border rounded-xl bg-[#F4F3F8] px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none ${
                 emailError
                   ? 'border-[#FF2A04] focus:border-[#FF2A04]'
                   : 'border-gray-300 focus:border-brand-700'
@@ -107,7 +111,7 @@ function AdminLoginForm() {
             )}
           </div>
           <div>
-            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Password</label>
+            <label className="block text-sm text-gray-700 mb-1.5">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -115,7 +119,7 @@ function AdminLoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                className="w-full border border-gray-300 px-4 py-3 pr-16 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700"
+                className="w-full border border-gray-300 rounded-xl bg-[#F4F3F8] px-4 py-3 pr-16 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700"
               />
               <button
                 type="button"
@@ -132,7 +136,7 @@ function AdminLoginForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-brand-700 text-white py-3 text-sm font-medium tracking-wide hover:bg-brand-800 disabled:opacity-60 transition-colors rounded-md"
+            className="w-full bg-brand-700 text-white py-3 text-sm font-medium tracking-wide hover:bg-brand-800 disabled:opacity-60 transition-colors rounded-xl"
           >
             {submitting ? 'Signing in...' : 'Sign In'}
           </button>
@@ -142,6 +146,12 @@ function AdminLoginForm() {
             </Link>
           </div>
         </form>
+        </div>
+       </div>
+       <div className="hidden md:flex flex-col justify-center rounded-2xl bg-brand-700 text-white p-10 min-h-[420px]">
+        <p className="text-3xl font-bold leading-tight">Real estate news,<br />ads and partners in one place.</p>
+        <p className="mt-4 text-sm text-white/70">Realty News Now, RealtyLine and Newsline admin.</p>
+       </div>
       </div>
     </div>
   );
