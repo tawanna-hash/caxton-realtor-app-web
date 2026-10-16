@@ -91,6 +91,22 @@ export default function AgreementsClient({
   const [renewalSeed, setRenewalSeed] = useState<AgreementWithAdvertiser | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Deep link from the CRM partner panel: /admin/agreements?renew=<agreementId>
+  // opens the renewal drawer seeded from that agreement, then clears the param.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const renewId = url.searchParams.get('renew');
+    if (!renewId) return;
+    const seed = initialAgreements.find((a) => a.id === renewId);
+    url.searchParams.delete('renew');
+    window.history.replaceState(null, '', url.pathname + url.search);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (seed) setRenewalSeed(seed);
+    else setError('Could not find that agreement to renew.');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Recently-signed banner: shows agreements whose signed_at is within the
   // last 24h, dismissable per-browser via localStorage. Server triggers an
   // admin email via lib/server/agreement-signed-notify when /api/sign POST

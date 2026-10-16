@@ -1834,6 +1834,19 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
 
   return (
     <Section title="Current contract (Billing)">
+      {hasAgreement ? (
+        <div className="mb-3 flex items-center justify-between gap-3 rounded-md border border-[#301D5D]/20 bg-[#F6F3FB] px-3 py-2">
+          <span className="text-xs text-gray-700">
+            Expires {fmtDate(row.current_exp_date)}. Start a renewal from this agreement.
+          </span>
+          <a
+            href={`/admin/agreements?renew=${row.current_agreement_id}`}
+            className="shrink-0 rounded-md bg-[#301D5D] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#3d2675]"
+          >
+            Renew
+          </a>
+        </div>
+      ) : null}
       {!hasAgreement && !hasAnyBilling ? (
         <p className="text-xs text-gray-500 italic">
           No agreement linked yet. Create or sign one from{' '}
