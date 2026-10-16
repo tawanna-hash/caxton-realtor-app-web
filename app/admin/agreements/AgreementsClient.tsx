@@ -453,6 +453,7 @@ export default function AgreementsClient({
         <AgreementList
           rows={pageRows}
           onOpen={(r) => setEditAg(r)}
+          onRenew={(r) => setRenewalSeed(r)}
           onEmail={async (r) => {
             try {
               const res = await fetch(`/api/admin/agreements/${r.id}/send`, { method: 'POST' });

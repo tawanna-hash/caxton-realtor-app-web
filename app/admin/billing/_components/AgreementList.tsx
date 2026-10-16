@@ -65,10 +65,11 @@ function groupRows(rows: AgreementWithAdvertiser[]): Bucket[] {
   return ordered;
 }
 
-function AgreementRowLayout({ row: r, onOpen, onEmail }: {
+function AgreementRowLayout({ row: r, onOpen, onEmail, onRenew }: {
   row: AgreementWithAdvertiser;
   onOpen: () => void;
   onEmail?: () => void;
+  onRenew?: () => void;
 }) {
   const typeLabel = AG_TYPES.find((t) => t.value === r.type)?.label ?? r.type ?? '—';
   const sizeFreq = `${r.ad_size ?? ''} ${r.frequency ? `· ${r.frequency}` : ''}`.trim();
@@ -84,6 +85,18 @@ function AgreementRowLayout({ row: r, onOpen, onEmail }: {
   const actionsCell = (
     <div className="flex items-center gap-1 flex-wrap">
       <StatusPill value={r.status} options={AG_STATUS} />
+      <button
+        title="Edit agreement"
+        onClick={onOpen}
+        className="px-2 py-1 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+      >Edit</button>
+      {onRenew && (
+        <button
+          title="Start a renewal from this agreement"
+          onClick={onRenew}
+          className="px-2 py-1 text-xs font-medium rounded-md border border-[#301D5D] bg-[#301D5D] text-white hover:bg-[#42277C]"
+        >Renew</button>
+      )}
       <button
         title="Send signing link email"
         onClick={onEmail}
@@ -112,12 +125,12 @@ function AgreementRowLayout({ row: r, onOpen, onEmail }: {
         <button
           onClick={onOpen}
           title={r.amount_cents == null ? 'No contract amount set yet — open the agreement to add one.' : undefined}
-          className={`col-span-2 text-left text-sm ${r.amount_cents == null ? 'text-[#645600]' : 'text-gray-900'}`}
+          className={`col-span-1 text-left text-sm ${r.amount_cents == null ? 'text-[#645600]' : 'text-gray-900'}`}
         >
           {r.amount_cents == null ? 'Not set' : formatCents(r.amount_cents)}
         </button>
         <button onClick={onOpen} className="col-span-1 text-left text-sm text-gray-700">{formatCents(r.invoiced_cents)}</button>
-        <div className="col-span-2">{actionsCell}</div>
+        <div className="col-span-3">{actionsCell}</div>
       </div>
 
       {/* Mobile card */}
@@ -140,11 +153,12 @@ function AgreementRowLayout({ row: r, onOpen, onEmail }: {
 }
 
 export function AgreementList({
-  rows, onOpen, onEmail,
+  rows, onOpen, onEmail, onRenew,
 }: {
   rows: AgreementWithAdvertiser[];
   onOpen: (r: AgreementWithAdvertiser) => void;
   onEmail?: (r: AgreementWithAdvertiser) => void;
+  onRenew?: (r: AgreementWithAdvertiser) => void;
 }) {
   if (rows.length === 0) {
     return <div className="rounded border border-gray-200 bg-white px-6 py-12 text-center"><div className="text-sm font-medium text-gray-900">No agreements yet</div><p className="mt-1 text-xs text-gray-500">Create an agreement or adjust the current filters.</p></div>;
@@ -158,9 +172,9 @@ export function AgreementList({
         <div className="col-span-3">Partner</div>
         <div className="col-span-2">Type &middot; Size</div>
         <div className="col-span-2">Term</div>
-        <div className="col-span-2">Amount</div>
+        <div className="col-span-1">Amount</div>
         <div className="col-span-1">Invoiced</div>
-        <div className="col-span-2">Status &middot; Actions</div>
+        <div className="col-span-3">Status &middot; Actions</div>
       </div>
 
       {buckets.map((b) => (
@@ -180,6 +194,7 @@ export function AgreementList({
                 row={r}
                 onOpen={() => onOpen(r)}
                 onEmail={onEmail ? () => onEmail(r) : undefined}
+                onRenew={onRenew ? () => onRenew(r) : undefined}
               />
             ))}
           </div>
