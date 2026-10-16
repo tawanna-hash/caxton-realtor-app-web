@@ -661,7 +661,6 @@ textarea::placeholder {
 [data-admin-ui='true'] input[placeholder*='earch' i] {
   border-radius: 9999px;
   background-color: #ffffff;
-  padding-left: 1rem;
 }
 
 /* ---- Pass 2: whole-admin consistency ---------------------------------- */
@@ -753,6 +752,25 @@ textarea::placeholder {
 /* Row hover tint is lavender everywhere, including mailing and content shells. */
 [data-admin-ui='true'] :is(.mailing-admin-page, .content-admin-shell) tbody tr:hover {
   background-color: var(--rnn-purple-50);
+}
+
+/* Field spacing: comfortable inner padding and label gap. Layered as
+   components so any explicit Tailwind px-*, pl-*, py-* on a field (for
+   example a search icon inset) still wins. */
+@layer components {
+  [data-admin-ui='true'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']), select, textarea) {
+    padding-inline: 0.75rem;
+  }
+  [data-admin-ui='true'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']), select) {
+    min-height: 2.5rem;
+  }
+  [data-admin-ui='true'] textarea {
+    padding-block: 0.5rem;
+  }
+  [data-admin-ui='true'] label:has(+ :is(input, select, textarea)),
+  [data-admin-ui='true'] label.block {
+    margin-bottom: 0.375rem;
+  }
 }
 
 /* Operational admin pages share a compact desktop density so filters, table
