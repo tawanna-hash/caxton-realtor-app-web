@@ -233,7 +233,7 @@ export default function OrdersTable() {
     <div>
       {/* Channel tabs with counts */}
       <div className="border-b border-gray-200 mb-4">
-        <nav className="-mb-px flex gap-6 flex-wrap" aria-label="Channel tabs">
+        <nav className="-mb-px flex gap-3 flex-wrap" aria-label="Channel tabs">
           {CHANNEL_TABS.map((c) => {
             const active = activeChannel === c;
             const label = c === 'all' ? 'All channels' : AD_CHANNEL_LABEL[c];
@@ -243,7 +243,7 @@ export default function OrdersTable() {
                 key={c}
                 type="button"
                 onClick={() => setUrl({ channel: c === 'all' ? null : c })}
-                className={`py-3 border-b-2 text-sm font-medium transition ${
+                className={`px-4 py-3 border-b-2 text-sm font-medium transition ${
                   active
                     ? 'border-[#301D5D] text-[#42277C]'
                     : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300'
@@ -251,7 +251,7 @@ export default function OrdersTable() {
                 aria-current={active ? 'page' : undefined}
               >
                 {label}
-                <span className="ml-2 inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
+                <span className="ml-2.5 inline-block px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
                   {count}
                 </span>
               </button>

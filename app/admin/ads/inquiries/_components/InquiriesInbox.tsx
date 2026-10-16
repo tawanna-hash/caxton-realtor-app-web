@@ -210,7 +210,7 @@ export default function InquiriesInbox() {
     <div>
       {/* Channel tabs with unread (new) counts. */}
       <div className="mb-4 border-b border-gray-200">
-        <nav className="-mb-px flex flex-wrap gap-4" aria-label="Channel tabs">
+        <nav className="-mb-px flex flex-wrap gap-3" aria-label="Channel tabs">
           {CHANNEL_TABS.map((c) => {
             const active = activeChannel === c;
             const label = c === 'all' ? 'All channels' : AD_CHANNEL_LABEL[c];
@@ -220,7 +220,7 @@ export default function InquiriesInbox() {
                 key={c}
                 type="button"
                 onClick={() => setUrl({ channel: c === 'all' ? null : c, id: null })}
-                className={`h-9 border-b-2 text-sm font-medium transition ${
+                className={`h-10 px-4 border-b-2 text-sm font-medium transition ${
                   active
                     ? 'border-[#301D5D] text-[#42277C]'
                     : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300'

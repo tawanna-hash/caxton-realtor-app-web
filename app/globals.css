@@ -814,6 +814,12 @@ textarea::placeholder {
 [data-admin-ui='true'] [class*='grid-cols-12'][class~='py-3'] { padding-block: 0.4rem; }
 [data-admin-ui='true'] [class*='grid-cols-12'][class~='py-2'] { padding-block: 0.3rem; }
 
+/* Channel / status tab rows and filter pills: breathing room. */
+[data-admin-ui='true'] nav[aria-label='Channel tabs'] { gap: 0.75rem; }
+[data-admin-ui='true'] nav[aria-label='Channel tabs'] > button { padding-inline: 1rem; }
+[data-admin-ui='true'] :is(div)[class~='flex-wrap'] > button[class~='rounded-full'][class~='border'] { padding: 0.5rem 0.875rem; }
+[data-admin-ui='true'] div[class~='flex-wrap']:has(> button[class~='rounded-full'][class~='border']) { gap: 0.5rem; }
+
 /* Operational admin pages share a compact desktop density so filters, table
    rows, pagination, and drawer actions remain visible within common laptop
    viewports. Tailwind v4 utilities derive spacing from this inherited token,
