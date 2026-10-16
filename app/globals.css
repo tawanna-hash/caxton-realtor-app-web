@@ -489,7 +489,7 @@ textarea::placeholder {
 [data-admin-ui='true'] button,
 [data-admin-ui='true'] a[role='button'],
 [data-admin-ui='true'] a.inline-flex[class*='h-'] {
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
 }
 
 /* Purple is the consistent primary treatment for solid admin actions and
@@ -577,6 +577,91 @@ textarea::placeholder {
 [data-admin-ui='true'] :is(button, a[role='button'], a.inline-flex[class*='h-']):focus-visible {
   outline: 2px solid var(--rnn-orange-600);
   outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Admin UI kit skin (October 2026)
+   --------------------------------------------------------------------------
+   Soft lavender canvas, white rounded cards with a hairline border and light
+   shadow, airy tables, pill search fields, and Lato type, while keeping the
+   Realty News Now brand purple (--rnn-purple-*) as the only primary hue.
+   Presentation only, scoped to the admin shell, so public pages, signing
+   flows, print layouts, and data behavior are unchanged.
+   ========================================================================== */
+[data-admin-shell='true'] {
+  font-family: var(--font-lato), var(--font-sans);
+  --admin-line: #ECE8F5;
+  --admin-field: #F4F3F8;
+}
+
+/* Page wrappers that hard-code a white canvas let the lavender show through. */
+[data-admin-ui='true'] :is(.min-h-screen, .min-h-full)[class~='bg-white'],
+[data-admin-ui='true'] :is(.min-h-screen, .min-h-full)[class~='bg-gray-50'] {
+  background-color: transparent;
+}
+
+/* Page titles: bold brand purple sans, as in the kit's section headers. */
+[data-admin-ui='true'] h1,
+[data-admin-ui='true'] h1.font-serif {
+  font-family: var(--font-lato), var(--font-sans);
+  font-weight: 700;
+  color: var(--rnn-purple-700);
+  letter-spacing: -0.01em;
+}
+
+/* Cards and panels. */
+[data-admin-ui='true'] :is(div, section, article, form)[class~='bg-white'][class~='border']:is(
+  [class~='rounded-lg'], [class~='rounded-xl'], [class~='rounded-md'], [class~='rounded-2xl']
+) {
+  border-color: var(--admin-line);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgb(48 29 93 / 0.06), 0 1px 2px rgb(48 29 93 / 0.04);
+}
+
+/* Tables: airy rows, regular-weight header text, hairline dividers. */
+[data-admin-ui='true'] table thead,
+[data-admin-ui='true'] table thead tr,
+[data-admin-ui='true'] table thead th {
+  background-color: #ffffff;
+}
+[data-admin-ui='true'] table thead th {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  color: #1B1726;
+  border-bottom: 1px solid var(--admin-line);
+}
+[data-admin-ui='true'] table tbody tr {
+  border-color: #F1EEF8;
+}
+[data-admin-ui='true'] table tbody td {
+  border-color: #F1EEF8;
+}
+[data-admin-ui='true'] table tbody tr:hover {
+  background-color: var(--rnn-purple-50);
+}
+
+/* Form fields: soft filled, rounded; search fields are pills. */
+[data-admin-ui='true'] input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']),
+[data-admin-ui='true'] textarea,
+[data-admin-ui='true'] select {
+  border-radius: 0.75rem;
+  border-color: #E3DDF0;
+  background-color: var(--admin-field);
+}
+[data-admin-ui='true'] input:not([type='checkbox']):not([type='radio']):focus,
+[data-admin-ui='true'] textarea:focus,
+[data-admin-ui='true'] select:focus {
+  background-color: #ffffff;
+  border-color: var(--rnn-purple-500);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(48 29 93 / 0.12);
+}
+[data-admin-ui='true'] input[type='search'],
+[data-admin-ui='true'] input[placeholder*='earch' i] {
+  border-radius: 9999px;
+  background-color: #ffffff;
+  padding-left: 1rem;
 }
 
 /* Operational admin pages share a compact desktop density so filters, table

@@ -324,9 +324,9 @@ export default function AppShell({
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`min-h-screen ${isAdmin ? 'bg-[#F6F5FB]' : 'bg-white'}`} data-admin-shell={isAdmin ? 'true' : undefined}>
       {/* ======== TOP BAR ======== */}
-      {!chromeless && <header className={`sticky top-0 z-40 ${isAdmin ? 'bg-brand-700 text-white' : 'bg-white text-gray-900 border-b border-gray-200'}`}>
+      {!chromeless && <header className={`sticky top-0 z-40 ${isAdmin ? 'bg-white text-gray-900 border-b border-[#ECE8F5] lg:bg-[#F6F5FB] lg:border-b-0' : 'bg-white text-gray-900 border-b border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           {/* Left: hamburger */}
           <button
@@ -334,7 +334,7 @@ export default function AppShell({
             aria-label="Open menu"
             className={`p-2 rounded-md transition lg:hidden ${
               isAdmin
-                ? 'text-white/70 hover:text-white hover:bg-white/10'
+                ? 'text-brand-700 hover:bg-brand-50'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-200'
             }`}
           >
@@ -352,10 +352,10 @@ export default function AppShell({
           <div className="flex items-center gap-2">
             {isAdmin ? (
               <>
-                <Link href="/admin" className="text-sm sm:text-base font-semibold tracking-tight">
+                <Link href="/admin" className="text-sm sm:text-base font-semibold tracking-tight text-brand-700">
                   Realty News Now Admin
                 </Link>
-                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/10 text-white/60">
+                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-brand-100 text-brand-700">
                   Internal
                 </span>
               </>
@@ -430,7 +430,7 @@ export default function AppShell({
                   router.push(target);
                 }}
                 aria-label="Return to app"
-                className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs uppercase tracking-[0.1em] font-medium text-white/80 hover:text-white hover:bg-white/10 transition"
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs uppercase tracking-[0.1em] font-medium text-brand-700 bg-white border border-brand-200 hover:bg-brand-50 transition"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M3 12l6-6M3 12l6 6M3 12h18" />
