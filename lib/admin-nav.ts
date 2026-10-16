@@ -82,15 +82,31 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
+    label: 'Print Issue',
+    links: [
+      { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions' },
+      { label: 'Monthly Articles', href: '/admin/articles', description: 'WordPress feeds, manual articles & advertiser features' },
+    ],
+  },
+  {
+    label: 'Website',
+    links: [
+      { label: 'Trending',  href: '/admin/content/trending', description: 'Rotating feed ticker CTAs' },
+      { label: 'Monthly Articles', href: '/admin/articles', description: 'WordPress feeds, manual articles & advertiser features' },
+      { label: 'Event Images', href: '/admin/event-images', description: 'Event photo gallery' },
+    ],
+  },
+  {
+    label: 'Calendar Events',
+    links: [
+      { label: 'All Events', href: '/admin/events', description: 'Calendar publications' },
+      { label: 'Gmail Events', href: '/admin/events/gmail', description: 'Scanned advertiser & association event mail' },
+    ],
+  },
+  {
     label: 'Content',
     links: [
-      { label: 'Trending',  href: '/admin/content/trending', description: 'Rotating feed ticker CTAs', section: 'Editorial' },
-      { label: 'Monthly Articles', href: '/admin/articles', description: 'WordPress feeds, manual articles & advertiser features', section: 'Editorial' },
-      { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions', section: 'Editorial' },
       { label: 'Testimonials', href: '/admin/testimonials', description: 'Review and publish subscriber testimonials', section: 'Editorial' },
-      { label: 'Calendar Events', href: '/admin/events', description: 'Calendar publications', section: 'Events' },
-      { label: 'Gmail Events', href: '/admin/events/gmail', description: 'Scanned advertiser & association event mail', section: 'Events' },
-      { label: 'Event Images', href: '/admin/event-images', description: 'Event photo gallery', section: 'Events' },
       { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes', section: 'Listings' },
       { label: 'Promotions', href: '/admin/inventory/promotions', description: 'Builder offers & rate buydowns', section: 'Listings' },
       { label: 'Partner Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility', section: 'Listings' },
