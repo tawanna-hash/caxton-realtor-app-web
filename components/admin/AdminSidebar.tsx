@@ -167,6 +167,9 @@ export default function AdminSidebar() {
                   isActive ? 'bg-brand-100 text-brand-700' : 'text-gray-700 hover:text-brand-700 hover:bg-brand-50'
                 }`}
               >
+                {isActive && (
+                  <span aria-hidden="true" className="absolute -left-2 top-0 h-full w-1 rounded-r-full bg-brand-700" />
+                )}
                 <Icon size={18} className="shrink-0" />
                 <span className="flex-1 text-left font-medium">{group.label}</span>
                 <GroupBadge group={group} />
@@ -176,7 +179,7 @@ export default function AdminSidebar() {
                 />
               </button>
               {isOpen && (
-                <div className="ml-6 mb-2 border-l border-[#ECE8F5] pl-3 space-y-1">
+                <div className="ml-6 mb-2 pl-3 space-y-1">
                   {group.links.map((link) => {
                     const linkActive = pathname === link.href || pathname.startsWith(link.href + '/');
                     return (

@@ -842,6 +842,17 @@ textarea::placeholder {
   border-radius: var(--admin-pill-radius);
 }
 
+/* Mint kit details: dashed dividers between stat-strip cells. */
+[data-admin-ui='true'] section[class*='divide-x'] > * + * {
+  border-left: 1px dashed var(--admin-line);
+}
+/* Sub-navigation segmented toggles (Day / Week / Month style). */
+[data-admin-ui='true'] [role='tablist'][class*='rounded'] {
+  background-color: var(--admin-field);
+  border-radius: 9999px;
+  padding: 0.125rem;
+}
+
 /* Operational admin pages share a compact desktop density so filters, table
    rows, pagination, and drawer actions remain visible within common laptop
    viewports. Tailwind v4 utilities derive spacing from this inherited token,
