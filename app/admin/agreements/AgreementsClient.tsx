@@ -56,16 +56,16 @@ function SummaryMetric({
 }) {
   const content = (
     <>
-      <div className="text-lg font-semibold leading-tight text-gray-900">{value}</div>
-      <div className="mt-0.5 text-xs text-gray-600">{label}</div>
+      <div className="text-sm text-gray-800">{label}</div>
+      <div className="mt-1 text-2xl font-bold leading-tight text-brand-700">{value}</div>
     </>
   );
   return onClick ? (
-    <button type="button" onClick={onClick} className="min-w-0 px-3 py-1 text-left hover:bg-[#F6F3FB]">
+    <button type="button" onClick={onClick} className="min-w-0 px-4 py-2 text-left hover:bg-[#F6F3FB]">
       {content}
     </button>
   ) : (
-    <div className="min-w-0 px-3 py-1">{content}</div>
+    <div className="min-w-0 px-4 py-2">{content}</div>
   );
 }
 

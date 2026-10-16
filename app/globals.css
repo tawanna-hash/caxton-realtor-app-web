@@ -853,6 +853,39 @@ textarea::placeholder {
   padding: 0.125rem;
 }
 
+/* Lavender period chip (Mint "This Month" control): date-range and period
+   selects. Apply with className "admin-period-chip" or data-period="true". */
+[data-admin-ui='true'] select.admin-period-chip,
+[data-admin-ui='true'] select[data-period='true'],
+[data-admin-ui='true'] select[name='range'] {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #EFEAF8;
+  color: var(--rnn-purple-700);
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  padding-inline: 1rem 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23301D5D' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  cursor: pointer;
+}
+[data-admin-ui='true'] select.admin-period-chip:hover,
+[data-admin-ui='true'] select[data-period='true']:hover,
+[data-admin-ui='true'] select[name='range']:hover { background-color: #E4DCF4; }
+[data-admin-ui='true'] select.admin-period-chip:focus,
+[data-admin-ui='true'] select[data-period='true']:focus { background-color: #ffffff; border-color: var(--rnn-purple-500); }
+
+/* Calendar event time badges and the "Today" control, Mint style. */
+[data-admin-ui='true'] button[class*='Today' i],
+[data-admin-ui='true'] button[aria-label='Today'] {
+  background-color: #EFEAF8;
+  color: var(--rnn-purple-700);
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
 /* Operational admin pages share a compact desktop density so filters, table
    rows, pagination, and drawer actions remain visible within common laptop
    viewports. Tailwind v4 utilities derive spacing from this inherited token,
