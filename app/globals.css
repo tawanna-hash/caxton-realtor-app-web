@@ -603,7 +603,7 @@ textarea::placeholder {
 /* Page titles: bold brand purple sans, as in the kit's section headers. */
 [data-admin-ui='true'] h1,
 [data-admin-ui='true'] h1.font-serif {
-  font-family: var(--font-lato), var(--font-sans);
+  font-family: Lato, var(--font-sans) !important;
   font-weight: 700;
   color: var(--rnn-purple-700);
   letter-spacing: -0.01em;
@@ -662,6 +662,72 @@ textarea::placeholder {
   border-radius: 9999px;
   background-color: #ffffff;
   padding-left: 1rem;
+}
+
+/* ---- Pass 2: whole-admin consistency ---------------------------------- */
+[data-admin-ui='true'] {
+  background-color: #F6F5FB;
+  font-family: Lato, var(--font-sans);
+}
+[data-admin-ui='true'] :is(h2, h3, h4) {
+  font-family: Lato, var(--font-sans);
+  color: var(--rnn-purple-700);
+}
+[data-admin-ui='true'] :is(h2, h3).font-serif {
+  font-family: Lato, var(--font-sans) !important;
+  font-weight: 700;
+}
+
+/* Any white bordered box becomes a kit card (not pills, chips, or swatches). */
+[data-admin-ui='true'] :is(div, section, article, form, details)[class~='bg-white'][class~='border']:not([class*='rounded-full']):not([class*='w-px']) {
+  border-color: var(--admin-line);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgb(48 29 93 / 0.06), 0 1px 2px rgb(48 29 93 / 0.04);
+}
+
+/* Stat strips (divided metric rows) become one card. */
+[data-admin-ui='true'] section[class*='divide-x'],
+[data-admin-ui='true'] .content-admin-summary {
+  background-color: #ffffff;
+  border: 1px solid var(--admin-line);
+  border-radius: 1rem;
+  padding-block: 0.75rem;
+  box-shadow: 0 1px 3px rgb(48 29 93 / 0.06), 0 1px 2px rgb(48 29 93 / 0.04);
+}
+[data-admin-ui='true'] section[class*='divide-x'] > * {
+  border-color: var(--admin-line);
+}
+
+/* Tables that sit in a scroll wrapper get the same card treatment. */
+[data-admin-ui='true'] :is(div, section):has(> table) {
+  background-color: #ffffff;
+  border: 1px solid var(--admin-line);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgb(48 29 93 / 0.06), 0 1px 2px rgb(48 29 93 / 0.04);
+}
+[data-admin-ui='true'] table thead th:first-child { border-top-left-radius: 1rem; }
+[data-admin-ui='true'] table thead th:last-child { border-top-right-radius: 1rem; }
+[data-admin-ui='true'] table thead th {
+  font-size: 0.8125rem;
+  padding-block: 0.875rem;
+}
+[data-admin-ui='true'] table tbody td { padding-block: 0.75rem; }
+
+/* Tabs: purple underline, regular weight inactive text. */
+[data-admin-ui='true'] button[class*='border-b-2'][class*='border-[#301D5D]'] {
+  color: var(--rnn-purple-700);
+  font-weight: 600;
+}
+
+/* Outlined admin buttons and links use the kit's soft border. */
+[data-admin-ui='true'] :is(a, button)[class~='bg-white'][class~='border'][class~='rounded'] {
+  border-color: #E3DDF0;
+  border-radius: 0.75rem;
+}
+
+/* Modals and side drawers: rounded surface with soft shadow. */
+[data-admin-ui='true'] [role='dialog'] > :is(div, section) {
+  border-radius: 1rem;
 }
 
 /* Operational admin pages share a compact desktop density so filters, table
