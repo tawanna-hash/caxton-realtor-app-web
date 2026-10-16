@@ -730,6 +730,31 @@ textarea::placeholder {
   border-radius: 1rem;
 }
 
+/* ---- Pass 3: sweep gaps found in the admin audit ----------------------- */
+/* Tinted (gray-50) bordered panels: same radius and hairline as cards. */
+[data-admin-ui='true'] :is(div, section, article, details)[class~='bg-gray-50'][class~='border']:not([class*='rounded-full']) {
+  border-color: var(--admin-line);
+  border-radius: 0.875rem;
+}
+
+/* Buttons and button-links with the legacy small radius use the kit radius.
+   Segmented controls (rounded-l-*, rounded-r-*) and pills are untouched. */
+[data-admin-ui='true'] :is(button, a)[class~='rounded'],
+[data-admin-ui='true'] :is(button, a)[class~='rounded-md'],
+[data-admin-ui='true'] :is(button, a)[class~='rounded-lg'] {
+  border-radius: 0.75rem;
+}
+
+/* Keyboard focus follows brand purple across admin (was per-page orange). */
+[data-admin-shell='true'] :focus-visible {
+  outline-color: var(--rnn-purple-500);
+}
+
+/* Row hover tint is lavender everywhere, including mailing and content shells. */
+[data-admin-ui='true'] :is(.mailing-admin-page, .content-admin-shell) tbody tr:hover {
+  background-color: var(--rnn-purple-50);
+}
+
 /* Operational admin pages share a compact desktop density so filters, table
    rows, pagination, and drawer actions remain visible within common laptop
    viewports. Tailwind v4 utilities derive spacing from this inherited token,
