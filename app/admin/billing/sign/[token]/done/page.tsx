@@ -50,7 +50,7 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
           </div>
 
           <a
-            href={`/api/sign/${token}/pdf`}
+            href={`/api/ad-sign/${token}/pdf`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block w-full py-3 rounded-md text-white font-medium text-sm hover:opacity-90 transition-opacity"

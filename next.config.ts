@@ -141,6 +141,7 @@ const nextConfig: NextConfig = {
   // Ensure bundled Georgia .ttf fonts ship with the agreement-pdf serverless function.
   outputFileTracingIncludes: {
     '/api/sign/**': ['./lib/pdf/fonts/**'],
+    '/api/ad-sign/**': ['./lib/pdf/fonts/**'],
     '/api/admin/agreements/**': ['./lib/pdf/fonts/**'],
     '/api/agreements/**': ['./lib/pdf/fonts/**'],
     // Pull in sharp's native libvips binaries for the GIF generator.

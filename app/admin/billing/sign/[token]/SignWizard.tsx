@@ -861,7 +861,7 @@ export default function SignWizard({
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/sign/${token}`, {
+      const res = await fetch(`/api/ad-sign/${token}`, {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(buildPatchPayload()),
@@ -993,7 +993,7 @@ export default function SignWizard({
       }
 
       // 3. Persist signature + patches.
-      const res = await fetch(`/api/sign/${token}`, {
+      const res = await fetch(`/api/ad-sign/${token}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -1049,7 +1049,7 @@ export default function SignWizard({
         const baseCents = strToCents(totalMonthly.toFixed(2)) ?? 0;
         patches.total_monthly_rate_cents = Math.round(baseCents * numMarkets);
       }
-      const patchRes = await fetch(`/api/sign/${token}`, {
+      const patchRes = await fetch(`/api/ad-sign/${token}`, {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(patches),
