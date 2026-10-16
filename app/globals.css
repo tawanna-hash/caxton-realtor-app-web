@@ -778,6 +778,42 @@ textarea::placeholder {
   }
 }
 
+/* ---- Compact density for pages and child pages ------------------------- */
+/* Page gutters and section rhythm. */
+[data-admin-ui='true'] .content-admin-shell,
+[data-admin-ui='true'] .mailing-admin-page {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+[data-admin-ui='true'] .content-admin-shell > :first-child:is(header, div) { margin-bottom: 0.75rem; }
+[data-admin-ui='true'] .space-y-8 > :not(:last-child) { margin-bottom: 1rem; }
+[data-admin-ui='true'] .space-y-6 > :not(:last-child) { margin-bottom: 0.75rem; }
+[data-admin-ui='true'] .space-y-5 > :not(:last-child) { margin-bottom: 0.625rem; }
+[data-admin-ui='true'] .space-y-4 > :not(:last-child) { margin-bottom: 0.5rem; }
+[data-admin-ui='true'] .space-y-3 > :not(:last-child) { margin-bottom: 0.375rem; }
+[data-admin-ui='true'] .gap-8 { gap: 1rem; }
+[data-admin-ui='true'] .gap-6 { gap: 0.75rem; }
+[data-admin-ui='true'] .gap-5 { gap: 0.625rem; }
+[data-admin-ui='true'] .gap-4 { gap: 0.5rem; }
+[data-admin-ui='true'] .py-8 { padding-block: 1rem; }
+[data-admin-ui='true'] .py-6 { padding-block: 0.75rem; }
+[data-admin-ui='true'] .mb-8 { margin-bottom: 1rem; }
+[data-admin-ui='true'] .mb-6 { margin-bottom: 0.75rem; }
+[data-admin-ui='true'] .mb-4 { margin-bottom: 0.5rem; }
+[data-admin-ui='true'] .mt-8 { margin-top: 1rem; }
+[data-admin-ui='true'] .mt-6 { margin-top: 0.75rem; }
+/* Card interiors. */
+[data-admin-ui='true'] :is(div, section, article, form)[class~='bg-white'][class~='border'][class~='p-6'] { padding: 1rem; }
+[data-admin-ui='true'] :is(div, section, article, form)[class~='bg-white'][class~='border'][class~='p-5'] { padding: 0.875rem; }
+[data-admin-ui='true'] :is(div, section, article, form)[class~='bg-white'][class~='border'][class~='p-4'] { padding: 0.75rem; }
+/* Table rows: compact, including list rows built from grids. */
+[data-admin-ui='true'] table tbody td,
+[data-admin-ui='true'] .content-admin-shell table tbody td { padding-block: 0.3rem; }
+[data-admin-ui='true'] table thead th,
+[data-admin-ui='true'] .content-admin-shell table thead th { padding-block: 0.4rem; }
+[data-admin-ui='true'] [class*='grid-cols-12'][class~='py-3'] { padding-block: 0.4rem; }
+[data-admin-ui='true'] [class*='grid-cols-12'][class~='py-2'] { padding-block: 0.3rem; }
+
 /* Operational admin pages share a compact desktop density so filters, table
    rows, pagination, and drawer actions remain visible within common laptop
    viewports. Tailwind v4 utilities derive spacing from this inherited token,
