@@ -121,9 +121,37 @@ function initTimingChecked(
 
 function initTimingYears(
   existing?: AgreementWithAdvertiser | null,
+  isRenewalSeed = false,
 ): Record<string, string> {
   const tm = existing?.ad_timing_months;
-  return Object.fromEntries(MONTHS_LIST.map((m) => [m.k, tm?.[m.k] ?? ""]));
+  // A renewal repeats the same months, but in the following term: shift every
+  // year forward by whole years until the earliest month starts after the
+  // prior agreement's expiration (minimum one year).
+  let shift = 0;
+  if (isRenewalSeed && tm) {
+    shift = 1;
+    const exp = existing?.exp_date
+      ? new Date(`${existing.exp_date}T00:00:00`)
+      : null;
+    if (exp && !Number.isNaN(exp.getTime())) {
+      const expIdx = exp.getFullYear() * 12 + exp.getMonth();
+      let earliest = Infinity;
+      MONTHS_LIST.forEach((m, i) => {
+        const y = parseInt(tm[m.k] ?? "", 10);
+        if (!Number.isNaN(y)) earliest = Math.min(earliest, y * 12 + i);
+      });
+      if (Number.isFinite(earliest)) {
+        while (earliest + shift * 12 <= expIdx) shift += 1;
+      }
+    }
+  }
+  return Object.fromEntries(
+    MONTHS_LIST.map((m) => {
+      const y = tm?.[m.k] ?? "";
+      const n = parseInt(y, 10);
+      return [m.k, shift && !Number.isNaN(n) ? String(n + shift) : y];
+    }),
+  );
 }
 
 export function AgreementDrawer({
@@ -290,7 +318,7 @@ export function AgreementDrawer({
     pos_premium_active: false,
     page_position: seed?.page_position ?? "",
     ad_timing_months: initTimingChecked(seed),
-    ad_timing_years: initTimingYears(seed),
+    ad_timing_years: initTimingYears(seed, !existing && !!renewedFrom),
     bill_to: seed?.bill_to ?? "Partner",
     billing_email: seed?.billing_email ?? seed?.advertiser_email ?? "",
     billing_contact_name: seed?.billing_contact_name ?? "",
@@ -921,7 +949,13 @@ export function AgreementDrawer({
       const res = await fetch(`/api/admin/agreements/${existing.id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as {
+          error?: string;
+          detail?: string;
+        } | null;
+        throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+      }
       await onSaved();
     } catch (e) {
       onError(e instanceof Error ? e.message : "delete failed");

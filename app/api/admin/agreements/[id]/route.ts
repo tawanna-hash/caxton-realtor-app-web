@@ -365,6 +365,9 @@ export const DELETE = withAdminTracking(async function DELETE(_req: NextRequest,
   try {
     await ensureSchema();
     const sql = getSql();
+    // Renewal drafts reference their source agreement (renewed_from_id has no
+    // ON DELETE rule), which makes the delete fail with a 500. Detach them first.
+    await sql`UPDATE agreements SET renewed_from_id = NULL WHERE renewed_from_id = ${id}`;
     const rows = (await sql`
       DELETE FROM agreements
        WHERE id = ${id}
