@@ -340,6 +340,7 @@ export default function AvailabilityCalendar() {
           <button
             type="button"
             onClick={goToday}
+            aria-label="Today"
             className={`${AD_OPS_SECONDARY} ml-1`}
           >
             Today

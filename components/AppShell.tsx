@@ -17,6 +17,7 @@
 //
 // Replaces: SiteHeader.tsx, HamburgerMenu.tsx, admin layout inline nav.
 
+import AdminGlobalSearch from '@/components/admin/AdminGlobalSearch';
 import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -358,6 +359,9 @@ export default function AppShell({
                 <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-brand-100 text-brand-700">
                   Internal
                 </span>
+                <div className="hidden md:block ml-4 w-72 lg:w-96">
+                  <AdminGlobalSearch />
+                </div>
               </>
             ) : (() => {
               // Always render the switcher. Fall back to the RealtyLine
