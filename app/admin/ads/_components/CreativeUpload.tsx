@@ -13,7 +13,7 @@
 
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { upload } from '@vercel/blob/client';
 import { adminApi } from '@/lib/admin-api';
 import type { AdCreative } from './types';
@@ -48,23 +48,43 @@ export function CreativeUpload({ advertiserName, clickUrl, altText, onUploaded, 
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string>('');
 
-  async function handlePick(e: React.ChangeEvent<HTMLInputElement>) {
+  // A file picked before the partner name / click URL are filled in is held
+  // here and uploaded automatically as soon as both are valid, so the user
+  // does not have to re-pick it.
+  const pendingRef = useRef<File | null>(null);
+
+  function inputsReady(): string | null {
+    if (!advertiserName.trim()) return 'Partner name is required before uploading';
+    if (!clickUrl.trim()) return 'Click URL is required before uploading';
+    try {
+      new URL(clickUrl.trim());
+    } catch {
+      return 'Click URL must be a valid URL (include https://)';
+    }
+    return null;
+  }
+
+
+  function handlePick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const problem = inputsReady();
+    if (problem) {
+      pendingRef.current = file;
+      setError(`${problem}. Your file is saved and will upload as soon as it is filled in.`);
+      return;
+    }
+    void uploadFile(file);
+  }
 
+  async function uploadFile(file: File) {
     setError(null);
     setBusy(true);
     setProgress('Reading file...');
 
     try {
-      // Validate inputs first — better to fail fast than after a Blob upload.
-      if (!advertiserName.trim()) throw new Error('Partner name is required before uploading');
-      if (!clickUrl.trim()) throw new Error('Click URL is required before uploading');
-      try {
-        new URL(clickUrl);
-      } catch {
-        throw new Error('Click URL must be a valid URL (include https://)');
-      }
+      const problem = inputsReady();
+      if (problem) throw new Error(problem);
 
       setProgress('Reading image dimensions...');
       const { width, height } = await readImageDimensions(file);
@@ -88,6 +108,7 @@ export function CreativeUpload({ advertiserName, clickUrl, altText, onUploaded, 
       })) as { creative: AdCreative };
 
       setProgress('');
+      pendingRef.current = null;
       onUploaded(result.creative);
       if (inputRef.current) inputRef.current.value = '';
     } catch (err) {
@@ -98,6 +119,15 @@ export function CreativeUpload({ advertiserName, clickUrl, altText, onUploaded, 
       setBusy(false);
     }
   }
+
+  useEffect(() => {
+    const f = pendingRef.current;
+    if (f && !busy && inputsReady() === null) {
+      pendingRef.current = null;
+      void uploadFile(f);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [advertiserName, clickUrl]);
 
   return (
     <div className="space-y-2">

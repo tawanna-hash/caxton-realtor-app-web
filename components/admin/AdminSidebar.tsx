@@ -111,7 +111,7 @@ export default function AdminSidebar() {
       className={`hidden lg:flex lg:flex-col shrink-0 sticky top-0 h-screen border-r border-[#ECE8F5] bg-white text-gray-700 transition-[width] duration-150 ${collapsed ? 'w-[4.5rem]' : 'w-64'}`}
       aria-label="Admin navigation"
     >
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+      <div className="flex items-center justify-between px-4 pt-5 pb-3">
         {!collapsed && (
           <Link href="/admin" className="flex items-center gap-3 min-w-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -145,7 +145,7 @@ export default function AdminSidebar() {
                 key={group.label}
                 href={group.links[0].href}
                 title={group.label}
-                className={`relative flex items-center justify-center mx-2 my-0.5 h-9 rounded-xl transition ${
+                className={`relative flex items-center justify-center mx-2 my-1 h-10 rounded-xl transition ${
                   isActive ? 'bg-brand-100 text-brand-700' : 'text-gray-500 hover:text-brand-700 hover:bg-brand-50'
                 }`}
               >
@@ -163,7 +163,7 @@ export default function AdminSidebar() {
                 type="button"
                 onClick={() => toggleGroup(group.label)}
                 aria-expanded={isOpen}
-                className={`relative w-full flex items-center gap-2.5 my-0.5 px-3 py-2 rounded-xl text-sm transition ${
+                className={`relative w-full flex items-center gap-3 my-1 px-3 py-2.5 rounded-xl text-[15px] transition ${
                   isActive ? 'bg-brand-100 text-brand-700' : 'text-gray-700 hover:text-brand-700 hover:bg-brand-50'
                 }`}
               >
@@ -176,14 +176,14 @@ export default function AdminSidebar() {
                 />
               </button>
               {isOpen && (
-                <div className="ml-6 mb-1 border-l border-[#ECE8F5] pl-3 space-y-0.5">
+                <div className="ml-6 mb-2 border-l border-[#ECE8F5] pl-3 space-y-1">
                   {group.links.map((link) => {
                     const linkActive = pathname === link.href || pathname.startsWith(link.href + '/');
                     return (
                       <Link
                         key={link.href}
                         href={link.href}
-                        className={`flex items-center gap-2 py-1.5 px-3 rounded-lg text-[13px] leading-tight transition ${
+                        className={`flex items-center gap-2 py-2 px-3 rounded-lg text-[14px] leading-tight transition ${
                           linkActive
                             ? 'text-brand-700 font-semibold bg-brand-50'
                             : 'text-gray-500 hover:text-brand-700 hover:bg-brand-50'

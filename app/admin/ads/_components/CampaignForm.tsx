@@ -235,7 +235,15 @@ export function CampaignForm({ initial }: Props) {
             </button>
             <button
               type="button"
-              onClick={() => setCreativeMode('upload')}
+              onClick={() => {
+                setCreativeMode('upload');
+                // Start from the currently selected creative's click URL / alt text.
+                const cur = creatives.find((c) => c.id === creativeId);
+                if (cur) {
+                  setClickUrl((v) => v || cur.click_url || '');
+                  setAltText((v) => v || cur.alt_text || '');
+                }
+              }}
               className={`px-3 py-1 rounded-md ${creativeMode === 'upload' ? 'bg-[#301D5D] text-white' : 'bg-gray-100 text-gray-800'}`}
             >
               Upload new
