@@ -768,7 +768,11 @@ export default function SignWizard({
 
   // Auto-fill rate lookup (derive inline, no useEffect)
   let effectiveAdRate = adRate;
-  if (adSize && frequency && !rateUserEdited) {
+  // Keep the rate the admin saved on the agreement; only fall back to the rate
+  // card when none was saved or the advertiser changes size/frequency.
+  const sizeOrFreqChanged =
+    adSize !== (ag.ad_size ?? '') || frequency !== (ag.frequency ?? '');
+  if (adSize && frequency && !rateUserEdited && (ag.ad_rate_cents == null || sizeOrFreqChanged)) {
     const lookup = lookupRate(frequency, adSize);
     if (lookup) effectiveAdRate = lookup.rate.toString();
   }
