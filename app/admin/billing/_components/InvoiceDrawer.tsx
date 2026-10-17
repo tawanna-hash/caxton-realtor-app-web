@@ -247,8 +247,20 @@ export function InvoiceDrawer({
   }, [agreements, addedCard]);
 
   const matchingAgreements = useMemo(
-    () => effectiveAgreements.filter((a) => !form.advertiser_id || a.advertiser_id === form.advertiser_id),
-    [effectiveAgreements, form.advertiser_id],
+    () => {
+      // Only current agreements: hide expired, cancelled/closed, and any whose
+      // end date has passed. An already-linked agreement stays visible so
+      // existing invoices keep displaying their link.
+      const today = new Date().toISOString().slice(0, 10);
+      return effectiveAgreements.filter((a) => {
+        if (form.advertiser_id && a.advertiser_id !== form.advertiser_id) return false;
+        if (a.id === form.agreement_id) return true;
+        if (a.status === 'expired' || a.status === 'cancelled') return false;
+        if (a.end_date && String(a.end_date).slice(0, 10) < today) return false;
+        return true;
+      });
+    },
+    [effectiveAgreements, form.advertiser_id, form.agreement_id],
   );
 
   // Card on file: agreements are the source of truth for the saved off-session
