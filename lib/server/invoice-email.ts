@@ -38,7 +38,7 @@ import { senderAddressForPublication } from '@/lib/invoice-sender-routing';
 type Sql = ReturnType<typeof getSql>;
 
 /** Public app origin used for portal links and email image assets. */
-export const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://app.myrealtyline.com';
+export const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://realtynewsnow.app';
 
 export type InvoiceEmailStatus = 'sent' | 'skipped' | 'failed' | 'no_advertiser' | 'no_email';
 
