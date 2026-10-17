@@ -118,5 +118,15 @@
     "name": "San Antonio - Brand [6] - Quarter-Page",
     "from_cents": 57500,
     "to_cents": 69500
+  },
+  {
+    "name": "Austin - Brand [12 Plus] - Full Page Only",
+    "from_cents": 168000,
+    "to_cents": 188000
+  },
+  {
+    "name": "San Antonio - Brand [12 Plus] - Full Page Only",
+    "from_cents": 168000,
+    "to_cents": 188000
   }
 ]

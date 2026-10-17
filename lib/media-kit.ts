@@ -635,7 +635,7 @@ export const PACKAGES: Package[] = [
       'Logo & Link — Weekly Emails',
     ],
     sizes: [
-      { size: 'Full Page', dim: '10 × 11 in', price: 1680 },
+      { size: 'Full Page', dim: '10 × 11 in', price: 1880 },
     ],
   },
 ];
@@ -812,7 +812,7 @@ export const FREQ_TERMS:  [string, string, string, string] = [
   'No Agreement', '3-Month', '6-Month', '12-Month',
 ];
 
-// Brand[12 Plus] is a separate premium tier — Full Page only at $1,680/mo
+// Brand[12 Plus] is a separate premium tier — Full Page only at $1,880/mo
 // ── Audience stats (RealtyLine) ────────────────────────────────────────────
 
 export interface AudienceStat {
