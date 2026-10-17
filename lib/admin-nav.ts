@@ -40,6 +40,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     label: 'Sales',
     links: [
       { label: 'Partners',     href: '/admin/crm',           description: 'Accounts, contacts, share links' },
+      { label: 'Partner Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility' },
       { label: 'Referral Network', href: '/admin/referral-network', description: 'Provider applications and approvals' },
       { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
       { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
@@ -104,14 +105,18 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
+    label: 'Builders',
+    links: [
+      { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
+      { label: 'Promotions', href: '/admin/inventory/promotions', description: 'Builder offers & rate buydowns' },
+      { label: 'Scraper Hub', href: '/admin/content/scrapers', description: 'Run & monitor all scrapers' },
+    ],
+  },
+  {
     label: 'Content',
     links: [
       { label: 'Testimonials', href: '/admin/testimonials', description: 'Review and publish subscriber testimonials', section: 'Editorial' },
-      { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes', section: 'Listings' },
-      { label: 'Promotions', href: '/admin/inventory/promotions', description: 'Builder offers & rate buydowns', section: 'Listings' },
-      { label: 'Partner Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility', section: 'Listings' },
       { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries', section: 'Listings' },
-      { label: 'Scraper Hub', href: '/admin/content/scrapers', description: 'Run & monitor all scrapers', section: 'Tools' },
       { label: 'FastEmail Realtor Review', href: '/admin/content/fastemail-realtors', description: 'Review contacts scanned from FastEmail flyers', section: 'Tools' },
       { label: 'Notifications', href: '/admin/notifications', description: 'Web push to subscribers', section: 'Tools' },
     ],
