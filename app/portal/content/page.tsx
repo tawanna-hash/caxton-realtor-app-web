@@ -17,7 +17,7 @@ export default async function PortalContentHub() {
   const c = await getPartnerContentCounts(user.advertiser_id, user.name, user.publication);
 
   const cards: { href: string; title: string; blurb: string; stat: string; auto: boolean }[] = [
-    { href: '/portal/content/issues', title: 'Monthly issues', blurb: 'Every issue, with the pages where you appear.', stat: `${c.issues} issues`, auto: true },
+    { href: '/portal/content/issues', title: 'Monthly issues', blurb: 'Issues you appear in, with your page numbers.', stat: `${c.issues} issue${c.issues === 1 ? '' : 's'}`, auto: true },
     { href: '/portal/content/events', title: 'Event images', blurb: 'Photos tagged to you, organized by month.', stat: `${c.eventPhotos} photos in ${c.eventMonths} folders`, auto: true },
     { href: '/portal/content/articles', title: 'Featured articles', blurb: 'Articles published about you.', stat: `${c.articles} articles`, auto: true },
     { href: '/portal/content/logos', title: 'Logo files', blurb: 'Your approved logos. Upload and manage.', stat: `${c.logos} sets`, auto: false },
