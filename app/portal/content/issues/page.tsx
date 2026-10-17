@@ -28,10 +28,10 @@ export default async function PortalIssuesPage() {
           {issues.map((i) => (
             <a key={i.id} href={`/magazine/${i.id}`} target="_blank" rel="noopener noreferrer"
               className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm transition hover:shadow-md hover:border-[#301D5D]/40">
-              <div className="aspect-[3/4] bg-gray-100">
+              <div className="aspect-[3/4] bg-gray-50 flex items-center justify-center border-b border-gray-100">
                 {i.coverUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={i.coverUrl} alt={i.label} className="h-full w-full object-cover" loading="lazy" />
+                  <img src={i.coverUrl} alt={i.label} className="h-full w-full object-contain object-center" loading="lazy" />
                 )}
               </div>
               <div className="p-3">

@@ -145,84 +145,55 @@ export default async function PortalOrders() {
           No invoices yet. When we issue an invoice it appears here.
         </section>
       ) : (
-        <section className="overflow-hidden rounded-md border border-gray-200 bg-white">
-          <table className="hidden md:table w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Invoice</th>
-                <th className="px-4 py-3 font-medium">Issued</th>
-                <th className="px-4 py-3 font-medium">Due</th>
-                <th className="px-4 py-3 font-medium text-right">Total</th>
-                <th className="px-4 py-3 font-medium text-right">Balance</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium text-right"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {withBalance.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-900">
-                    <div className="font-medium">{r.number ?? 'Invoice'}</div>
-                    {r.description && <div className="text-xs text-gray-500 truncate max-w-[16rem]">{r.description}</div>}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700">{fmtDate(r.issued_at)}</td>
-                  <td className="px-4 py-3 text-gray-700">{fmtDate(r.due_date)}</td>
-                  <td className="px-4 py-3 text-right text-gray-900">{fmtUsd2(r.total_cents)}</td>
-                  <td className="px-4 py-3 text-right text-gray-900 font-medium">{fmtUsd2(r.balance)}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-medium capitalize ${INVOICE_TONE[r.shown] ?? STATUS_TONE.draft}`}>{r.shown === 'paid' && r.paid_at ? `Paid ${fmtDate(r.paid_at)}` : r.shown}</span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link href={`/portal/invoices/${r.id}`} className="text-[#42277C] font-medium hover:underline">{r.balance > 0 ? 'Pay now' : 'View'}</Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <ul className="md:hidden divide-y divide-gray-100">
-            {withBalance.map((r) => (
-              <li key={r.id} className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-gray-900 font-medium">{r.number ?? 'Invoice'}</div>
-                    <div className="text-xs text-gray-600 mt-1">Issued {fmtDate(r.issued_at)} - Due {fmtDate(r.due_date)}</div>
-                  </div>
-                  <span className={`shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${INVOICE_TONE[r.shown] ?? STATUS_TONE.draft}`}>{r.shown}</span>
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {withBalance.map((r) => (
+            <Link
+              key={r.id}
+              href={`/portal/invoices/${r.id}`}
+              className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-[#301D5D]/40 hover:shadow-md"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-serif text-lg text-gray-900">{r.number ?? 'Invoice'}</div>
+                  {r.description && <div className="text-xs text-gray-500 truncate">{r.description}</div>}
                 </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="text-gray-900 font-semibold">{fmtUsd2(r.balance > 0 ? r.balance : r.total_cents)}</div>
-                  <Link href={`/portal/invoices/${r.id}`} className="text-sm text-[#42277C] font-medium hover:underline">{r.balance > 0 ? 'Pay now' : 'View'}</Link>
-                </div>
-              </li>
-            ))}
-          </ul>
+                <span className={`shrink-0 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${INVOICE_TONE[r.shown] ?? STATUS_TONE.draft}`}>
+                  {r.shown}
+                </span>
+              </div>
+              <div className="mt-4 text-2xl font-serif text-gray-900">{fmtUsd2(r.balance > 0 ? r.balance : r.total_cents)}</div>
+              <div className="text-xs text-gray-500">{r.balance > 0 ? 'Balance due' : r.paid_at ? `Paid ${fmtDate(r.paid_at)}` : 'Paid'}</div>
+              <div className="mt-4 flex items-center justify-between text-xs text-gray-600">
+                <span>Issued {fmtDate(r.issued_at)} - Due {fmtDate(r.due_date)}</span>
+                <span className="text-sm font-medium text-[#301D5D]">{r.balance > 0 ? 'Pay now' : 'View'}</span>
+              </div>
+            </Link>
+          ))}
         </section>
       )}
 
       {rows.length > 0 && (
         <section className="space-y-3">
           <h2 className="font-serif text-xl text-gray-900">Agreements</h2>
-          <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
-            <ul className="divide-y divide-gray-100">
-              {rows.map((r) => {
-                const tone = STATUS_TONE[r.status] || STATUS_TONE.draft;
-                return (
-                  <li key={r.id} className="p-4 flex items-center justify-between gap-3 text-sm">
-                    <div className="min-w-0">
-                      <div className="text-gray-900 font-medium truncate">{r.ad_size || r.type || 'Custom placement'}</div>
-                      <div className="text-xs text-gray-600 mt-0.5">{fmtRange(r.start_date, r.end_date)} - {fmtUsd(r.amount_cents)}</div>
-                    </div>
-                    <div className="shrink-0 flex items-center gap-3">
-                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${tone}`}>{r.status}</span>
-                      {r.signed_document && (
-                        <Link href={r.signed_document} target="_blank" rel="noopener noreferrer" className="text-[#42277C] hover:underline">View PDF</Link>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {rows.map((r) => {
+              const tone = STATUS_TONE[r.status] || STATUS_TONE.draft;
+              return (
+                <div key={r.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm text-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-gray-900 font-medium">{r.ad_size || r.type || 'Custom placement'}</div>
+                    <span className={`shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${tone}`}>{r.status}</span>
+                  </div>
+                  <div className="text-xs text-gray-600 mt-2">{fmtRange(r.start_date, r.end_date)}</div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-gray-900 font-semibold">{fmtUsd(r.amount_cents)}</span>
+                    {r.signed_document && (
+                      <Link href={r.signed_document} target="_blank" rel="noopener noreferrer" className="text-[#301D5D] font-medium hover:underline">View PDF</Link>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}

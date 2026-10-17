@@ -99,16 +99,16 @@ function Section({ cfg, items, onCreated, onUpdated, onDeleted }: {
           Nothing here yet.
         </div>
       ) : (
-        <ul className="divide-y divide-gray-100">
+        <ul className="grid gap-4 sm:grid-cols-2">
           {items.map((item) =>
             editingId === item.id ? (
-              <li key={item.id} className="py-4">
+              <li key={item.id} className="sm:col-span-2">
                 <ItemForm cfg={cfg}
                   initial={{ title: item.title, url: item.url ?? '', notes: item.notes ?? '', fields: item.fields ?? {}, files: item.files ?? [] }}
                   onSave={(d) => save(d, item.id)} onCancel={() => setEditingId(null)} />
               </li>
             ) : (
-              <li key={item.id} className="py-3 flex items-start justify-between gap-4">
+              <li key={item.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm flex items-start justify-between gap-4">
                 <div className="min-w-0 text-sm">
                   <div className="font-medium text-gray-900">{item.title}</div>
                   {item.url && (

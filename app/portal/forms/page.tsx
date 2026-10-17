@@ -59,12 +59,12 @@ export default async function PortalFormsPage() {
             Nothing pending — you&apos;re all caught up.
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             {pending.map((a) => (
               <Link
                 key={a.id}
                 href={`/portal/forms/${a.id}`}
-                className="block rounded-md border border-gray-200 bg-white p-4 hover:border-gray-400"
+                className="block rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-[#301D5D]/40 hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -87,9 +87,9 @@ export default async function PortalFormsPage() {
           <h2 className="font-serif text-xl text-gray-900 mb-3">
             Submitted ({done.length})
           </h2>
-          <div className="space-y-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             {done.map((a) => (
-              <div key={a.id} className="rounded-md border border-gray-200 bg-white p-4 opacity-80">
+              <div key={a.id} className="rounded-xl border border-gray-200 bg-white p-5 opacity-80">
                 <div className="flex items-start justify-between gap-4">
                   <div className="font-medium text-gray-900">{a.form_title}</div>
                   <div className="text-xs text-gray-500">

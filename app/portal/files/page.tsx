@@ -37,71 +37,26 @@ export default async function PortalFilesPage() {
           No files yet. Your account manager will upload here.
         </div>
       ) : (
-        <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
-          {/* Mobile cards */}
-          <ul className="divide-y divide-gray-100 md:hidden">
-            {files.map((f) => (
-              <li key={f.id} className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-medium text-gray-900 truncate">{f.title}</div>
-                    {f.description && <div className="text-xs text-gray-500 truncate">{f.description}</div>}
-                  </div>
-                  <a
-                    href={f.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shrink-0 whitespace-nowrap text-sm text-[#42277C] hover:underline"
-                  >
-                    Download
-                  </a>
-                </div>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <div className="text-gray-400">Category</div>
-                    <div className="text-gray-600">{f.category}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-400">Added</div>
-                    <div className="text-gray-600">{new Date(f.created_at).toLocaleDateString()}</div>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-          {/* Desktop table */}
-          <table className="hidden w-full text-sm md:table">
-            <thead className="bg-gray-50 text-gray-600 text-left">
-              <tr>
-                <th className="px-4 py-3 font-medium">Title</th>
-                <th className="px-4 py-3 font-medium">Category</th>
-                <th className="px-4 py-3 font-medium">Added</th>
-                <th className="px-4 py-3 font-medium text-right">Open</th>
-              </tr>
-            </thead>
-            <tbody>
-              {files.map((f) => (
-                <tr key={f.id} className="border-t border-gray-100">
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900">{f.title}</div>
-                    {f.description && <div className="text-xs text-gray-500">{f.description}</div>}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{f.category}</td>
-                  <td className="px-4 py-3 text-gray-600">{new Date(f.created_at).toLocaleDateString()}</td>
-                  <td className="px-4 py-3 text-right">
-                    <a
-                      href={f.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#42277C] hover:underline"
-                    >
-                      Download
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {files.map((f) => (
+            <a
+              key={f.id}
+              href={f.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-[#301D5D]/40 hover:shadow-md"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <h2 className="font-medium text-gray-900 break-words">{f.title}</h2>
+                <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 capitalize">{f.category}</span>
+              </div>
+              {f.description && <p className="mt-1 text-sm text-gray-600 line-clamp-2">{f.description}</p>}
+              <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
+                <span>Added {new Date(f.created_at).toLocaleDateString()}</span>
+                <span className="text-sm font-medium text-[#301D5D]">Download</span>
+              </div>
+            </a>
+          ))}
         </div>
       )}
     </div>
