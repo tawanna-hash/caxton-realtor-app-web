@@ -25,6 +25,7 @@ import {
   SalesReceiptDrawer,
 } from '@/app/admin/ar/PaymentActionDrawers';
 import PageTitle from '@/components/ui/PageTitle';
+import { ScheduledInvoicesPanel } from './ScheduledInvoicesPanel';
 import { toISODateString } from '@/app/admin/billing/_components/helpers';
 import { isNative } from '@/lib/native/runtime';
 
@@ -46,7 +47,7 @@ export type SalesTransactionsClientProps = {
 
 type DateFilter = 'all' | '30-days' | '3-months' | '12-months';
 type TypeFilter = 'all' | 'invoice' | 'receipt';
-type StatusFilter = 'all' | 'draft' | 'open' | 'overdue' | 'paid' | 'void';
+type StatusFilter = 'all' | 'scheduled' | 'draft' | 'open' | 'overdue' | 'paid' | 'void';
 type ErrorFilter = 'all' | 'missing-email' | 'past-due';
 type BatchAction = 'send' | 'remind' | 'print' | 'void' | 'delete';
 type SortKey = 'date' | 'billing_date' | 'payment_received' | 'type' | 'number' | 'client' | 'amount' | 'status';
@@ -665,7 +666,7 @@ export function SalesTransactionsClient({
       .filter((invoice) => {
         if (type !== 'all' && transactionType(invoice) !== type) return false;
         if (!inDateRange(invoice, dateFilter, stableReferenceDate)) return false;
-        if (status === 'draft' && invoice.status !== 'draft') return false;
+        if ((status === 'draft' || status === 'scheduled') && invoice.status !== 'draft') return false;
         if (status === 'open' && !['sent', 'overdue'].includes(invoice.status)) return false;
         if (status === 'overdue' && !invoice.is_overdue) return false;
         if (status === 'paid' && invoice.status !== 'paid') return false;
@@ -1089,6 +1090,7 @@ export function SalesTransactionsClient({
               <span className="block text-xs text-gray-500">Status</span>
               <select className={`${CONTROL} w-full min-w-0 sm:min-w-36`} value={status} onChange={(event) => updateFilter(() => setStatus(event.target.value as StatusFilter))}>
                 <option value="all">All statuses</option>
+                <option value="scheduled">Scheduled</option>
                 <option value="draft">Draft</option>
                 <option value="open">Open</option>
                 <option value="overdue">Overdue</option>
@@ -1150,6 +1152,7 @@ export function SalesTransactionsClient({
         {!invoiceWorkspace && <div className="flex flex-wrap items-center gap-1 text-xs">
           <select aria-label="Status filter" className="rounded border-0 bg-transparent px-1 py-2 text-gray-600 outline-none hover:text-gray-900" value={status} onChange={(event) => updateFilter(() => setStatus(event.target.value as StatusFilter))}>
             <option value="all">All statuses</option>
+            <option value="scheduled">Scheduled</option>
             <option value="draft">Draft</option>
             <option value="open">Open</option>
             <option value="overdue">Overdue</option>
@@ -1165,6 +1168,13 @@ export function SalesTransactionsClient({
         </div>}
       </section>
 
+      {invoiceWorkspace && status === 'scheduled' ? (
+        <ScheduledInvoicesPanel
+          drafts={filteredRows}
+          onEditDraft={(invoice) => setEditingInvoice(invoice)}
+          onSendDraft={(invoice) => setEmailDraft({ invoice, reminder: false })}
+        />
+      ) : (
       <section className="relative rounded border border-gray-200 bg-white shadow-sm">
         <div className="divide-y divide-gray-200 md:hidden">
           {pageRows.map((invoice) => (
@@ -1313,6 +1323,7 @@ export function SalesTransactionsClient({
           </div>
         </div>
       </section>
+      )}
 
       {creatingInvoice && <InvoiceDrawer advertisers={advertisers} agreements={agreements} seed={invoiceSeed ?? undefined} onClose={() => setCreatingInvoice(false)} onSaved={saved} onError={fail} />}
       {editingInvoice && <InvoiceDrawer existing={editingInvoice} advertisers={advertisers} agreements={agreements} onClose={() => setEditingInvoice(null)} onSaved={saved} onError={fail} />}
