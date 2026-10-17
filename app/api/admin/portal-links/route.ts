@@ -82,7 +82,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     const sql = getSql();
 
     const adv = (await sql`
-      SELECT id, name, portal_email, email FROM advertisers WHERE id = ${advertiserId}
+      SELECT id, name, portal_email, contact_email AS email FROM advertisers WHERE id = ${advertiserId}
     `) as unknown as { id: number; name: string; portal_email: string | null; email: string | null }[];
     if (adv.length === 0) {
       return NextResponse.json({ error: 'partner not found' }, { status: 404 });
