@@ -50,11 +50,34 @@ export function ScheduledInvoicesPanel({ drafts, onEditDraft, onSendDraft }: {
     [drafts],
   );
 
+  const upcomingTotal = upcoming.reduce((n, s) => n + (s.amount_cents ?? 0) + (s.tax_cents ?? 0), 0);
+  const draftTotal = sortedDrafts.reduce((n, inv) => n + inv.total_cents, 0);
+
   const th = 'px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500';
   const td = 'px-4 py-3 text-sm text-gray-800';
 
   return (
     <div className="space-y-6">
+      <section className="flex flex-wrap items-end justify-between gap-4 rounded border border-gray-200 bg-white px-4 py-4 shadow-sm">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Scheduled total</div>
+          <div className="text-3xl font-semibold text-gray-900">{formatCents(upcomingTotal + draftTotal)}</div>
+          <div className="text-xs text-gray-500">{upcoming.length + sortedDrafts.length} invoice{upcoming.length + sortedDrafts.length === 1 ? '' : 's'} not yet sent</div>
+        </div>
+        <div className="flex gap-8 text-sm">
+          <div>
+            <div className="text-xs text-gray-500">To be created</div>
+            <div className="font-semibold text-gray-900">{formatCents(upcomingTotal)}</div>
+            <div className="text-xs text-gray-500">{upcoming.length} schedule{upcoming.length === 1 ? '' : 's'}</div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">Drafts</div>
+            <div className="font-semibold text-gray-900">{formatCents(draftTotal)}</div>
+            <div className="text-xs text-gray-500">{sortedDrafts.length} draft{sortedDrafts.length === 1 ? '' : 's'}</div>
+          </div>
+        </div>
+      </section>
+
       <section className="rounded border border-gray-200 bg-white shadow-sm">
         <div className="border-b border-gray-200 px-4 py-3">
           <h2 className="text-base font-semibold text-gray-900">Scheduled to be created</h2>
@@ -106,6 +129,13 @@ export function ScheduledInvoicesPanel({ drafts, onEditDraft, onSendDraft }: {
                   );
                 })}
               </tbody>
+              <tfoot>
+                <tr className="border-t border-gray-300 bg-gray-50">
+                  <td className={`${td} font-semibold`} colSpan={4}>Subtotal</td>
+                  <td className={`${td} text-right font-semibold`}>{formatCents(upcomingTotal)}</td>
+                  <td colSpan={2}></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         )}
@@ -147,6 +177,13 @@ export function ScheduledInvoicesPanel({ drafts, onEditDraft, onSendDraft }: {
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr className="border-t border-gray-300 bg-gray-50">
+                  <td className={`${td} font-semibold`} colSpan={3}>Subtotal</td>
+                  <td className={`${td} text-right font-semibold`}>{formatCents(draftTotal)}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         )}
