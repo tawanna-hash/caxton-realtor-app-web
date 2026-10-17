@@ -5,9 +5,6 @@ import { z } from 'zod';
 // Shared types/config for partner-managed portal content.
 
 export const RESOURCE_KINDS = [
-  'issue_link',
-  'event_folder',
-  'featured_article',
   'logo_file',
   'location',
   'staff',
@@ -47,49 +44,13 @@ export interface KindConfig {
   accept: string;
 }
 
+export const KIND_SLUGS: Record<string, ResourceKind> = {
+  logos: 'logo_file',
+  locations: 'location',
+  staff: 'staff',
+};
+
 export const KIND_CONFIG: KindConfig[] = [
-  {
-    kind: 'issue_link',
-    heading: 'Monthly issue links',
-    blurb: 'Links to each month\'s issue so your team and clients can find it quickly.',
-    addLabel: 'Add issue link',
-    titleLabel: 'Issue',
-    titlePlaceholder: 'October 2026',
-    showUrl: true,
-    urlLabel: 'Issue link',
-    showNotes: false,
-    extra: [],
-    dropLabel: 'Drop an issue PDF here (optional)',
-    accept: '.pdf,image/*',
-  },
-  {
-    kind: 'event_folder',
-    heading: 'Event image folders',
-    blurb: 'Photos from your events, organized by folder.',
-    addLabel: 'Add event folder',
-    titleLabel: 'Folder name',
-    titlePlaceholder: 'Grand opening - Oct 2026',
-    showUrl: true,
-    urlLabel: 'Shared folder link (Drive, Dropbox)',
-    showNotes: true,
-    extra: [],
-    dropLabel: 'Drop event images here',
-    accept: 'image/*,.zip',
-  },
-  {
-    kind: 'featured_article',
-    heading: 'Featured articles',
-    blurb: 'Articles you want featured, with a link or an uploaded draft.',
-    addLabel: 'Add featured article',
-    titleLabel: 'Article title',
-    titlePlaceholder: 'Why Austin buyers are returning',
-    showUrl: true,
-    urlLabel: 'Article link',
-    showNotes: true,
-    extra: [],
-    dropLabel: 'Drop an article draft or images here',
-    accept: '.pdf,.doc,.docx,.txt,image/*',
-  },
   {
     kind: 'logo_file',
     heading: 'Partner logo files',
