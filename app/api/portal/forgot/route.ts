@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     const recent = (await sql`
       SELECT COUNT(*)::int AS n FROM portal_magic_links
        WHERE advertiser_id = ${row.id} AND created_by = ${PORTAL_RESET_MARKER}
-         AND created_at > NOW() - INTERVAL '1 hour'
+         AND sent_at > NOW() - INTERVAL '1 hour'
     `) as unknown as { n: number }[];
     if ((recent[0]?.n ?? 0) >= MAX_PER_HOUR) return generic;
 
