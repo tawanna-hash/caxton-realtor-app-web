@@ -36,6 +36,36 @@ interface BalanceRow {
   issued_at: string | Date;
 }
 
+/** Neon returns timestamp columns as Date objects; the client expects strings. */
+function toIso(value: unknown): string | null {
+  if (value === null || value === undefined || value === '') return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  return String(value);
+}
+
+/** Line items come in two shapes: {qty, unit_cents} (app) and
+ *  {quantity, rate_cents, amount_cents} (imported/legacy). Normalize both. */
+function normalizeLineItems(raw: unknown): InvoiceRow['line_items'] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((li) => {
+    const item = (li ?? {}) as Record<string, unknown>;
+    const qty = Number(item.qty ?? item.quantity ?? 1) || 1;
+    const amount = Number(item.amount_cents ?? 0);
+    const unit = Number(item.unit_cents ?? item.rate_cents ?? (amount ? Math.round(amount / qty) : 0)) || 0;
+    return { description: String(item.description ?? ''), qty, unit_cents: unit };
+  });
+}
+
+function normalizeInvoice(row: InvoiceRow): InvoiceRow {
+  return {
+    ...row,
+    issued_at: toIso(row.issued_at),
+    due_date: toIso(row.due_date),
+    paid_at: toIso(row.paid_at),
+    line_items: normalizeLineItems(row.line_items),
+  };
+}
+
 export default async function InvoicePayPage({
   params,
   searchParams,
@@ -58,7 +88,7 @@ export default async function InvoicePayPage({
   `) as unknown as InvoiceRow[];
 
   if (rows.length === 0) redirect('/portal?notfound=invoice');
-  const invoice = rows[0];
+  const invoice = normalizeInvoice(rows[0]);
   if (invoice.advertiser_id !== portalUser!.advertiser_id) {
     redirect('/portal/error?code=forbidden');
   }
