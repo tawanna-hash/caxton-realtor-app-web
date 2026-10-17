@@ -217,8 +217,8 @@ export function invoiceEmailText({
     '',
     'This link is valid for 24 hours and may only be used once.',
     '',
-    'Sincerely,',
-    'Caxton Publications Inc.',
+    'Have a great day!',
+    '~ Tawanna',
   ].join('\n');
 }
 
@@ -238,7 +238,7 @@ export function invoiceEmailHtml({
     : `<p style="font-size:15px;line-height:1.6">Dear ${escapeEmailHtml(name)},</p>`;
   const closing = customMessage
     ? ''
-    : '<p style="font-size:14px;line-height:1.6">Sincerely,<br><strong>Caxton Publications Inc.</strong></p>';
+    : '<p style="font-size:14px;line-height:1.6">Have a great day!<br><strong>~ Tawanna</strong></p>';
   return `
   <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#202124;background:#fff">
     <div style="text-align:center;padding:12px 0 24px">
