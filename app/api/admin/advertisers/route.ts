@@ -6,6 +6,7 @@
 //
 // Auth: must hit /admin/auth/me with valid admin cookie.
 
+import { stripPortalSecrets } from '@/lib/server/advertiser-public';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import {
@@ -75,7 +76,7 @@ export async function GET() {
       FROM advertisers a
       ORDER BY a.name ASC
     `) as unknown as AdvertiserWithStats[];
-    return NextResponse.json({ advertisers: rows });
+    return NextResponse.json({ advertisers: rows.map(stripPortalSecrets) });
   } catch (err) {
     console.error('[admin/advertisers GET]', errMessage(err));
     return NextResponse.json({ error: 'list failed', detail: errMessage(err) }, { status: 500 });
@@ -155,7 +156,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       console.warn('[admin/advertisers POST] mailing upsert failed:', err);
     }
 
-    return NextResponse.json({ advertiser: inserted[0] }, { status: 201 });
+    return NextResponse.json({ advertiser: stripPortalSecrets(inserted[0]) }, { status: 201 });
   } catch (err) {
     console.error('[admin/advertisers POST]', errMessage(err));
     return NextResponse.json({ error: 'create failed', detail: errMessage(err) }, { status: 500 });

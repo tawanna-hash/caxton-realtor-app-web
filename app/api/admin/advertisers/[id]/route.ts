@@ -4,6 +4,7 @@
 //   PATCH  — update name / contact_email / requires_email_gate / publication
 //   DELETE — remove (hotspots' advertiser_id will be set NULL via FK)
 
+import { stripPortalSecrets } from '@/lib/server/advertiser-public';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { slugify, CRM_PATCHABLE_FIELDS, type Advertiser } from '@/lib/advertisers';
@@ -79,7 +80,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     if (rows.length === 0) {
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
-    return NextResponse.json({ advertiser: rows[0] });
+    return NextResponse.json({ advertiser: stripPortalSecrets(rows[0]) });
   } catch (err) {
     console.error('[admin/advertisers GET id]', errMessage(err));
     return NextResponse.json({ error: 'get failed', detail: errMessage(err) }, { status: 500 });
@@ -399,7 +400,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       }
     }
 
-    return NextResponse.json({ advertiser: rows[0], updated_fields: updates });
+    return NextResponse.json({ advertiser: stripPortalSecrets(rows[0]), updated_fields: updates });
   } catch (err) {
     console.error('[admin/advertisers PATCH]', errMessage(err));
     return NextResponse.json({ error: 'update failed', detail: errMessage(err) }, { status: 500 });
