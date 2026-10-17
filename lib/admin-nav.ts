@@ -11,6 +11,9 @@ type AdminNavLink = {
   description?: string;
   /** Optional desktop-menu tab. Mobile keeps rendering one flat list. */
   section?: 'Editorial' | 'Events' | 'Listings' | 'Tools';
+  /** href of a parent link in the same group. The desktop sidebar nests this
+   *  link under its parent; every other surface keeps a flat list. */
+  parent?: string;
 };
 
 export type AdminNavGroup = {
@@ -40,7 +43,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     label: 'Sales',
     links: [
       { label: 'Partners',     href: '/admin/crm',           description: 'Accounts, contacts, share links' },
-      { label: 'Partner Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility' },
+      { label: 'Partner Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility', parent: '/admin/crm' },
       { label: 'Referral Network', href: '/admin/referral-network', description: 'Provider applications and approvals' },
       { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
       { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
