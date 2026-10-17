@@ -2162,3 +2162,25 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 #agent-desk button.ds-deal { height: auto !important; min-height: 36px; overflow: visible; }
 #agent-desk button.ds-deal > span:not(:first-child) { white-space: normal; }
 #agent-desk .ds-deals { flex: 0 0 auto; }
+
+/* ---- Partner portal: Mint UI kit shell -------------------------------
+   Lato throughout, purple bold headings (replaces the serif titles), softer
+   corners, and pill buttons. Scoped to the portal layout. */
+[data-portal-shell='true'] {
+  font-family: var(--font-lato), 'Lato', system-ui, sans-serif;
+  color: #3b3552;
+}
+[data-portal-shell='true'] .font-serif,
+[data-portal-shell='true'] h1,
+[data-portal-shell='true'] h2 {
+  font-family: var(--font-lato), 'Lato', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #301D5D;
+}
+[data-portal-shell='true'] .rounded-md { border-radius: 0.75rem; }
+[data-portal-shell='true'] :is(button, a)[class*='bg-[#301D5D]']:not([class*='rounded-xl']):not([class*='rounded-2xl']),
+[data-portal-shell='true'] button[class*='border-gray-300'][class*='rounded-md'] {
+  border-radius: var(--admin-pill-radius);
+}
+[data-portal-shell='true'] :is(span, a)[class*='rounded-full'] { border-radius: var(--admin-pill-radius); }

@@ -7,63 +7,46 @@
 // active link can be highlighted and a mobile drop-down sheet renders
 // below the md: breakpoint.
 
-import Link from 'next/link';
+import { Lato } from 'next/font/google';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
-import PortalNav from '@/components/PortalNav';
+import PortalSidebar from '@/components/PortalSidebar';
 import SwipeBackShell from '@/components/SwipeBackShell';
 
 export const dynamic = 'force-dynamic';
+
+const lato = Lato({ subsets: ['latin'], weight: ['400', '700'], display: 'swap', variable: '--font-lato' });
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentPortalUser();
   const isNewsline = /san.?antonio|newsline/i.test(user?.publication ?? '');
 
   return (
-    <div className="min-h-screen bg-white">
+    <div data-portal-shell="true" className={`${lato.variable} min-h-screen bg-[#F6F5FB]`}>
       {user?.preview && (
         <div className="bg-[#301D5D] text-white text-sm">
-          <div className="mx-auto max-w-5xl px-6 py-2 flex items-center justify-between gap-4">
+          <div className="px-6 py-2 flex items-center justify-between gap-4">
             <span>Admin preview of {user.name}&apos;s portal. Read-only: nothing you do here is saved or paid.</span>
             <form action="/portal/logout" method="post">
-              <button className="rounded-md border border-white/40 px-3 py-1 text-xs font-medium hover:bg-white/10">Exit preview</button>
+              <button className="rounded-full border border-white/40 px-3 py-1 text-xs font-medium hover:bg-white/10">Exit preview</button>
             </form>
           </div>
         </div>
       )}
-      <header className="relative border-b border-gray-200 bg-white">
-        <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between gap-4">
-          <Link href="/portal" className="flex items-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={isNewsline ? '/brand/newsline-logo.png' : '/brand/realtyline-logo.png'}
-              alt={isNewsline ? 'Newsline San Antonio' : 'RealtyLine'}
-              className={isNewsline ? 'h-8 w-auto' : 'h-9 w-auto'}
-            />
-          </Link>
-          {user && (
-            <div className="flex items-center gap-4">
-              <PortalNav />
-              <div className="text-right">
-                <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                {user.company && user.company.trim().toLowerCase() !== user.name.trim().toLowerCase() && (
-                  <div className="text-xs text-gray-500">{user.company}</div>
-                )}
-              </div>
-              <form action="/portal/logout" method="post">
-                <button className="text-sm text-gray-500 hover:text-gray-900">Sign out</button>
-              </form>
-            </div>
-          )}
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <SwipeBackShell area="portal">{children}</SwipeBackShell>
-      </main>
-      <footer className="border-t border-gray-200 mt-16">
-        <div className="mx-auto max-w-5xl px-6 py-6 text-xs text-gray-500">
-          Session-only access. Closing your browser signs you out.
-        </div>
-      </footer>
+      <div className="md:flex md:min-h-screen">
+        <PortalSidebar
+          logoSrc={isNewsline ? '/brand/newsline-logo.png' : '/brand/realtyline-logo.png'}
+          logoAlt={isNewsline ? 'Newsline San Antonio' : 'RealtyLine'}
+          name={user?.name ?? null}
+          email={user?.email ?? null}
+          signedIn={Boolean(user)}
+        />
+        <main className="min-w-0 flex-1 p-4 md:p-8">
+          <div className="min-h-[calc(100vh-4rem)] w-full rounded-3xl border border-[#ECE8F5] bg-white p-6 shadow-sm md:p-10">
+            <SwipeBackShell area="portal">{children}</SwipeBackShell>
+            <p className="mt-16 text-xs text-gray-500">Session-only access. Closing your browser signs you out.</p>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
