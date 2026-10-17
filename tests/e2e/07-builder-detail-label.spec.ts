@@ -13,6 +13,13 @@ test('builder from the BUILDERS list reads the same on its detail page', async (
 }) => {
   await page.goto('/builders');
 
+  // First visit shows a "Choose your publication" gate that blocks the page.
+  const gate = page.getByRole('dialog', { name: 'Choose your publication' });
+  if (await gate.isVisible().catch(() => false)) {
+    await gate.getByRole('button', { name: /RealtyLine Austin/i }).click();
+    await expect(gate).toBeHidden();
+  }
+
   const buildersSection = page.locator('section').filter({
     has: page.getByRole('heading', { level: 2, name: 'Builders', exact: true }),
   });

@@ -1,33 +1,36 @@
 // tests/e2e/04-sign-in-page.spec.ts
 //
-// Smoke #4 — realtor sign-in page renders, submits, surfaces a validation
-// error for missing fields. Stops short of real auth (which would need a
-// seeded test user).
+// Smoke #4 — realtor sign-in. /sign-in (and legacy /auth/sign-in) redirect to
+// the /dashboard auth modal, which renders email + password inputs and submits
+// without crashing. Stops short of real auth (needs a seeded test user).
 
 import { test, expect } from '@playwright/test';
 
-test('sign-in page renders email + password inputs', async ({ page }) => {
-  await page.goto('/sign-in');
+const SIGN_IN_PATHS = ['/sign-in', '/auth/sign-in', '/dashboard?auth=login'];
 
-  const email = page.getByLabel(/email/i).first();
-  const password = page.getByLabel(/password/i).first();
+for (const path of SIGN_IN_PATHS) {
+  test(`${path} lands on the sign-in modal with email + password inputs`, async ({ page }) => {
+    await page.goto(path);
+    await expect(page).toHaveURL(/\/dashboard\?auth=login/);
+    await expect(page.getByPlaceholder('you@example.com')).toBeVisible();
+    await expect(page.getByPlaceholder('Enter your password')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^sign in$/i })).toBeVisible();
+  });
+}
 
-  await expect(email).toBeVisible();
-  await expect(password).toBeVisible();
+test('/sign-up lands on the sign-up modal', async ({ page }) => {
+  await page.goto('/sign-up');
+  await expect(page).toHaveURL(/\/dashboard\?auth=signup/);
 });
 
-test('sign-in with garbage credentials shows an error message', async ({ page }) => {
+test('sign-in with garbage credentials does not crash and stays on the sign-in modal', async ({ page }) => {
   await page.goto('/sign-in');
+  await page.getByPlaceholder('you@example.com').fill('definitely-not-a-real@example.com');
+  await page.getByPlaceholder('Enter your password').fill('wrong-password-123');
+  await page.getByRole('button', { name: /^sign in$/i }).click();
 
-  await page.getByLabel(/email/i).first().fill('definitely-not-a-real@example.com');
-  await page.getByLabel(/password/i).first().fill('wrong-password-123');
-
-  // Click the visible submit button. Copy varies — match any "sign in" CTA.
-  const submit = page.getByRole('button', { name: /sign in|log in|continue/i }).first();
-  await submit.click();
-
-  // We should either get a visible error toast or stay on /sign-in.
-  // Both prove the form submitted without a crash.
+  // Invalid credentials must not sign the user in: the form stays visible.
   await page.waitForTimeout(2000);
-  expect(page.url()).toContain('sign-in');
+  await expect(page.getByPlaceholder('Enter your password')).toBeVisible();
+  expect(page.url()).toContain('/dashboard');
 });
