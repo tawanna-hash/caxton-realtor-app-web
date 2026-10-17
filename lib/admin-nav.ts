@@ -36,9 +36,17 @@ export type AdminNavGroup = {
  *  - "Mailing List HUB" holds audience lists and subscriber tools.
  *  - "Content" holds editorial surfaces (articles, magazines, events,
  *    giveaways, inventory, social, MLS report cards).
- *  - "Insights" holds dashboards and reporting.
+ *  - "Admin Dashboard" is its own top-level item, always first.
+ *  - "Insights" holds reporting and analytics.
  */
 export const ADMIN_NAV: AdminNavGroup[] = [
+  {
+    // Pinned first on every surface (desktop sidebar, top bar, mobile drawer).
+    label: 'Admin Dashboard',
+    links: [
+      { label: 'Admin Dashboard', href: '/admin/dashboard', description: 'Publishing, revenue, and operational priorities' },
+    ],
+  },
   {
     label: 'Sales',
     links: [
@@ -150,7 +158,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     //   • Site Analytics     — PostHog traffic & user behavior
     // Labels are explicit so admins can tell them apart at a glance.
     links: [
-      { label: 'Admin Dashboard', href: '/admin/dashboard', description: 'Publishing, revenue, and operational priorities' },
       { label: 'Live Activity',      href: '/admin/activity',  description: 'Real-time public app events (last 7d)' },
       { label: 'Engagement Metrics', href: '/admin/metrics',   description: 'In-app click events & surface engagement' },
       { label: 'Client Reports',     href: '/admin/reports',   description: 'Shareable article, event & advertiser recaps' },

@@ -27,6 +27,7 @@ import {
   BookOpen,
   Globe,
   Building2,
+  LayoutDashboard,
   ChevronsLeft,
   ChevronsRight,
   ChevronDown,
@@ -36,15 +37,18 @@ import { ADMIN_NAV, isAdminGroupActive as isGroupActive, type AdminNavGroup } fr
 // child pages). Other nav surfaces keep the order defined in lib/admin-nav.ts.
 const byLabel = (a: { label: string }, b: { label: string }) =>
   a.label.localeCompare(b.label, 'en', { sensitivity: 'base' });
+// Admin Dashboard is pinned first; every other group stays alphabetical.
+const PINNED_FIRST = 'Admin Dashboard';
 const ADMIN_GROUPS: AdminNavGroup[] = ADMIN_NAV
   .map((g) => ({ ...g, links: [...g.links].sort(byLabel) }))
-  .sort(byLabel);
+  .sort((a, b) => (a.label === PINNED_FIRST ? -1 : b.label === PINNED_FIRST ? 1 : byLabel(a, b)));
 
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
 import PendingGmailBadge from '@/components/PendingGmailBadge';
 
 const GROUP_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  'Admin Dashboard': LayoutDashboard,
   Sales: Users,
   'Get Paid': DollarSign,
   'Mailing List HUB': Mail,
@@ -172,6 +176,27 @@ export default function AdminSidebar() {
                   <GroupBadge group={group} />
                 </span>
               </Link>
+            );
+          }
+
+          if (group.links.length === 1) {
+            // One-page group (Admin Dashboard): a direct link, no dropdown.
+            return (
+              <div key={group.label} className="px-2">
+                <Link
+                  href={group.links[0].href}
+                  className={`relative w-full flex items-center gap-3 my-1 px-3 py-2.5 rounded-xl text-[15px] transition ${
+                    isActive ? 'bg-brand-100 text-brand-700' : 'text-gray-700 hover:text-brand-700 hover:bg-brand-50'
+                  }`}
+                >
+                  {isActive && (
+                    <span aria-hidden="true" className="absolute -left-2 top-0 h-full w-1 rounded-r-full bg-brand-700" />
+                  )}
+                  <Icon size={18} className="shrink-0" />
+                  <span className="flex-1 text-left font-medium">{group.label}</span>
+                  <GroupBadge group={group} />
+                </Link>
+              </div>
             );
           }
 
