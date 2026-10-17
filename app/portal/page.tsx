@@ -23,9 +23,10 @@ export default async function PortalHome() {
     sql`SELECT COUNT(*)::int AS n FROM portal_files WHERE advertiser_id = ${user.advertiser_id} AND visibility = 'visible'`,
     sql`SELECT COUNT(*)::int AS n FROM portal_form_assignments WHERE advertiser_id = ${user.advertiser_id} AND submitted_at IS NULL`,
     sql`
-      SELECT COUNT(*)::int AS n, COALESCE(SUM(total_cents), 0)::int AS total_cents
-      FROM invoices
-      WHERE advertiser_id = ${user.advertiser_id} AND status IN ('issued', 'partial')
+      SELECT COUNT(*)::int AS n,
+             COALESCE(SUM(i.total_cents - COALESCE((SELECT SUM(p.amount_cents) FROM invoice_payments p WHERE p.invoice_id = i.id), 0)), 0)::int AS total_cents
+      FROM invoices i
+      WHERE i.advertiser_id = ${user.advertiser_id} AND i.status IN ('sent', 'overdue')
     `,
     sql`SELECT COUNT(*)::int AS n FROM agreements WHERE advertiser_id = ${user.advertiser_id} AND status = 'active'`,
   ])) as unknown as [
@@ -55,7 +56,7 @@ export default async function PortalHome() {
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card label="Files" value={files[0]?.n ?? 0} href="/portal/files" />
         <Card label="Forms to complete" value={open} href="/portal/forms" tone={open > 0 ? 'attention' : 'neutral'} />
-        <Card label="Open invoices" value={invoices[0]?.n ?? 0} sub={fmtUsd(invoices[0]?.total_cents ?? 0)} />
+        <Card label="Open invoices" value={invoices[0]?.n ?? 0} sub={fmtUsd(invoices[0]?.total_cents ?? 0)} href="/portal/orders" />
         <Card label="Active agreements" value={agreements[0]?.n ?? 0} />
       </section>
 

@@ -22,16 +22,13 @@ export default async function PortalLayout({ children }: { children: React.React
     <div className="min-h-screen bg-white">
       <header className="relative border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between gap-4">
-          <Link href="/portal" className="flex flex-col items-start gap-1">
+          <Link href="/portal" className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={isNewsline ? '/brand/newsline-logo.png' : '/brand/realtyline-logo.png'}
               alt={isNewsline ? 'Newsline San Antonio' : 'RealtyLine'}
               className={isNewsline ? 'h-8 w-auto' : 'h-9 w-auto'}
             />
-            <span className="text-sm text-gray-600">
-              {user ? `${user.name} - Portal` : 'Partner Portal'}
-            </span>
           </Link>
           {user && (
             <div className="flex items-center gap-4">

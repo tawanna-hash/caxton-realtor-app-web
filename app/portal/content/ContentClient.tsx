@@ -18,11 +18,11 @@ function fmtSize(n: number): string {
   return `${Math.max(1, Math.round(n / 1024))} KB`;
 }
 
-export default function ContentClient({ initialItems }: { initialItems: PortalResource[] }) {
+export default function ContentClient({ initialItems, kinds }: { initialItems: PortalResource[]; kinds: string[] }) {
   const [items, setItems] = useState(initialItems);
   return (
     <div className="space-y-8">
-      {KIND_CONFIG.map((cfg) => (
+      {KIND_CONFIG.filter((c) => kinds.includes(c.kind)).map((cfg) => (
         <Section
           key={cfg.kind}
           cfg={cfg}
