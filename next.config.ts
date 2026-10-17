@@ -199,6 +199,13 @@ const nextConfig: NextConfig = {
       { source: '/agents/deal-desk/:path*', destination: '/agents/closing-time/:path*', permanent: true },
       // Legacy /auth/* pages replaced by the /dashboard modal auth pattern.
       // Everything routes through the dashboard, which drives the Auth.js flow.
+      // Short aliases (old bookmarks, tests, marketing links) land on the same modal.
+      { source: '/sign-in', destination: '/dashboard?auth=login', permanent: false },
+      { source: '/signin', destination: '/dashboard?auth=login', permanent: false },
+      { source: '/sign-up', has: closingTimeHost, destination: '/closing-time-signup', permanent: false },
+      { source: '/sign-up', destination: '/dashboard?auth=signup', permanent: false },
+      { source: '/signup', has: closingTimeHost, destination: '/closing-time-signup', permanent: false },
+      { source: '/signup', destination: '/dashboard?auth=signup', permanent: false },
       { source: '/auth/sign-in', destination: '/dashboard?auth=login', permanent: false },
       { source: '/auth/sign-up', has: closingTimeHost, destination: '/closing-time-signup', permanent: false },
       { source: '/auth/signup', has: closingTimeHost, destination: '/closing-time-signup', permanent: false },
