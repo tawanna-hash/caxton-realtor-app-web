@@ -66,3 +66,13 @@ export function MintCard({ title, action, children, className = '' }: { title?: 
     </section>
   );
 }
+
+/** Section intro inside the white panel: title, subtitle, hairline (Mint "Overview" block). */
+export function PageIntro({ title, children }: { title: string; children?: ReactNode }) {
+  return (
+    <header className="mb-2 border-b border-[#ECE8F5] pb-5">
+      <h2 className="!text-2xl !font-normal !text-gray-800">{title}</h2>
+      {children && <p className="mt-1 text-sm text-gray-500">{children}</p>}
+    </header>
+  );
+}

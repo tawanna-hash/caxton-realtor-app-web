@@ -5,7 +5,7 @@ import { notFound, redirect } from 'next/navigation';
 import { ensureSchema } from '@/lib/db';
 import { listRecords } from '@/lib/server/portal-records';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
-import PageTitle from '@/components/ui/PageTitle';
+import { PageIntro } from '@/components/portal/Mint';
 import ContentClient from '../ContentClient';
 import { KIND_SLUGS, KIND_CONFIG } from '@/lib/portal-resources';
 
@@ -24,10 +24,10 @@ export default async function PortalContentKindPage({ params }: { params: Promis
 
   return (
     <div className="space-y-6">
-      <header>
+      <div>
         <Link href="/portal/content" className="text-sm text-[#42277C] hover:underline">&larr; My Content</Link>
-        <PageTitle size="md">{cfg.heading}</PageTitle>
-      </header>
+        <PageIntro title={cfg.heading} />
+      </div>
       <ContentClient initialItems={items} kinds={[kind]} />
     </div>
   );

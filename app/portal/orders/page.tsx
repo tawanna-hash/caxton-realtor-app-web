@@ -9,7 +9,7 @@ import { redirect } from 'next/navigation';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 
-import PageTitle from '@/components/ui/PageTitle';
+import { PageIntro } from '@/components/portal/Mint';
 import { AlertCircle, Receipt } from 'lucide-react';
 import { StatTile } from '@/components/portal/Mint';
 export const dynamic = 'force-dynamic';
@@ -122,13 +122,9 @@ export default async function PortalOrders() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Orders and invoices</div>
-        <PageTitle size="md">My orders</PageTitle>
-        <p className="text-gray-600 mt-1 text-sm">
+      <PageIntro title="My orders">
           Your invoices for {user.company || user.name}, newest first. Pay any open invoice online.
-        </p>
-      </header>
+        </PageIntro>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatTile label="Balance due" value={fmtUsd2(openTotal)} sub={`${open.length} open invoice${open.length === 1 ? '' : 's'}`} icon={<Receipt className="h-4 w-4" />} tone="purple" />

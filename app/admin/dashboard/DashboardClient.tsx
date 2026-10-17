@@ -47,7 +47,7 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
   return (
     <div
       className={
-        'rounded-lg border bg-white p-4 shadow-sm ring-1 ' +
+        'rounded-2xl border border-[#ECE8F5] bg-white p-5 ' +
         accent.ring +
         (isLive ? '' : ' opacity-60')
       }
@@ -72,7 +72,7 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
       </div>
 
       <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-4xl font-bold tabular-nums text-gray-900">
+        <span className="text-4xl font-bold tabular-nums text-[#6D3FD6]">
           {fmtNumber(snapshot.advertiserCount)}
         </span>
         <span className="text-sm text-gray-500">partners</span>
@@ -123,7 +123,7 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
       </dl>
 
       {snapshot.currentIssue && (
-        <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
+        <div className="mt-4 rounded-xl border border-[#ECE8F5] bg-[#F6F5FB] px-3 py-2 text-xs text-gray-700">
           <span className="font-medium text-gray-900">Current issue:</span>{' '}
           {snapshot.currentIssue.label}
         </div>
@@ -134,19 +134,19 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
           <>
             <Link
               href={crmHref}
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
+              className="inline-flex items-center rounded-full border border-[#ECE8F5] bg-white px-4 py-2 text-xs font-semibold text-[#6D3FD6] hover:bg-[#F6F5FB]"
             >
               Open CRM
             </Link>
             <Link
               href={`/admin/ads/campaigns?market=${snapshot.market}`}
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
+              className="inline-flex items-center rounded-full border border-[#ECE8F5] bg-white px-4 py-2 text-xs font-semibold text-[#6D3FD6] hover:bg-[#F6F5FB]"
             >
               Campaigns
             </Link>
             <Link
               href={`/admin/magazines?publication=${snapshot.market}`}
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
+              className="inline-flex items-center rounded-full border border-[#ECE8F5] bg-white px-4 py-2 text-xs font-semibold text-[#6D3FD6] hover:bg-[#F6F5FB]"
             >
               Issues
             </Link>
@@ -159,86 +159,97 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
   );
 }
 
+function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="px-6 py-5 first:pl-8 sm:border-l sm:border-dashed sm:border-[#E3DEF1] sm:first:border-l-0">
+      <div className="text-sm text-gray-700">{label}</div>
+      <div className="mt-2 text-3xl font-bold tabular-nums text-[#6D3FD6]">{value}</div>
+      {sub && <div className="mt-1 text-xs text-gray-500">{sub}</div>}
+    </div>
+  );
+}
+
 export default function DashboardClient({ data }: { data: DashboardData }) {
+  const live = data.markets.filter((m) => m.status === 'live');
+  const sum = (f: (m: MarketSnapshot) => number) => live.reduce((n, m) => n + f(m), 0);
+
   return (
     <div className="space-y-6">
-      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-[#42277C]" aria-hidden="true" />
-            <h2 className="text-sm font-semibold text-gray-950">Date Radar</h2>
-            <span className="ml-auto text-xs text-gray-500">Next 14 days</span>
-          </div>
-          {data.radar.length > 0 ? (
-            <ul className="mt-4 divide-y divide-gray-100">
-              {data.radar.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    href={item.href}
-                    className="flex items-center gap-3 py-3 transition hover:text-[#42277C]"
-                  >
-                    <span
-                      className={
-                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-[10px] font-semibold uppercase ' +
-                        (item.tone === 'warning'
-                          ? 'bg-[#FEF8CC] text-[#645600]'
-                          : 'bg-gray-100 text-gray-700')
-                      }
-                    >
-                      {new Date(`${item.date}T12:00:00`).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-gray-900">
-                        {item.title}
-                      </span>
-                      <span className="block truncate text-xs text-gray-500">{item.detail}</span>
-                    </span>
-                    <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-4 rounded-md bg-gray-50 px-3 py-4 text-sm leading-5 text-gray-600">
-              No upcoming invoice due dates or campaign end dates need attention.
-            </p>
-          )}
+      {/* KPI strip (Mint "Analytics") */}
+      <section className="grid grid-cols-2 rounded-2xl border border-[#ECE8F5] bg-white lg:grid-cols-4">
+        <Kpi label="Partners" value={fmtNumber(sum((m) => m.advertiserCount))} sub={`${fmtNumber(sum((m) => m.activeCount))} active`} />
+        <Kpi label="Revenue MTD" value={fmtMoneyFromCents(sum((m) => m.revenueMtdCents))} sub={`${live.length} live markets`} />
+        <Kpi label="Live campaigns" value={fmtNumber(sum((m) => m.activeCampaigns))} sub={`${fmtNumber(sum((m) => m.opens30d))} opens in 30 days`} />
+        <Kpi label="Prospects" value={fmtNumber(sum((m) => m.prospectCount))} sub={`${fmtNumber(sum((m) => m.bounceCount))} bounces`} />
       </section>
 
-      {/* Attention strip */}
-      {data.attention.length > 0 && (
-        <div className="rounded-md border border-[#FAD800]/50 bg-[#FEF8CC] px-4 py-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#645600]">
-            <span className="font-semibold">Attention:</span>
-            {data.attention.map((item, i) => (
-              <Link
-                key={i}
-                href={item.href}
-                className="inline-flex items-center gap-1 rounded-md border border-[#FAD800]/50 bg-white px-3 py-1 text-xs font-medium hover:bg-[#FEF8CC]"
-              >
-                {item.label}
-              </Link>
+      <div className="grid gap-6 xl:grid-cols-3">
+        <div className="space-y-4 xl:col-span-2">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="text-lg text-gray-800">Market Snapshot</h2>
+            <span className="text-xs text-gray-500">Live operational totals by publication</span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {data.markets.map((snapshot) => (
+              <MarketCard key={snapshot.market} snapshot={snapshot} />
             ))}
           </div>
         </div>
-      )}
 
-      {/* Market cards */}
-      <div className="flex items-baseline justify-between gap-4">
-        <h2 className="text-base font-semibold text-gray-950">Market Snapshot</h2>
-        <span className="text-xs text-gray-500">Live operational totals by publication</span>
-      </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {data.markets.map((snapshot) => (
-          <MarketCard key={snapshot.market} snapshot={snapshot} />
-        ))}
+        <div className="space-y-6">
+          <section className="rounded-2xl border border-[#ECE8F5] bg-white p-6">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#E4DBFA] text-[#5B3FC4]">
+                <CalendarDays className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <h2 className="text-lg text-gray-800">Date Radar</h2>
+              <span className="ml-auto text-xs text-gray-500">Next 14 days</span>
+            </div>
+            {data.radar.length > 0 ? (
+              <ul className="mt-4 space-y-1">
+                {data.radar.map((item) => (
+                  <li key={item.id}>
+                    <Link href={item.href} className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-[#F6F5FB]">
+                      <span
+                        className={
+                          'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-[10px] font-semibold uppercase ' +
+                          (item.tone === 'warning' ? 'bg-[#FFE0DD] text-[#D9342B]' : 'bg-[#E4DBFA] text-[#5B3FC4]')
+                        }
+                      >
+                        {new Date(`${item.date}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium text-gray-800">{item.title}</span>
+                        <span className="block truncate text-xs text-gray-500">{item.detail}</span>
+                      </span>
+                      <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4 rounded-xl bg-[#F6F5FB] px-3 py-4 text-sm leading-5 text-gray-600">
+                No upcoming invoice due dates or campaign end dates need attention.
+              </p>
+            )}
+          </section>
+
+          {data.attention.length > 0 && (
+            <section className="rounded-2xl border border-[#ECE8F5] bg-white p-6">
+              <h2 className="mb-3 text-lg text-gray-800">Needs attention</h2>
+              <div className="flex flex-wrap gap-2">
+                {data.attention.map((item, i) => (
+                  <Link key={i} href={item.href} className="inline-flex items-center rounded-full border border-[#FFE0DD] bg-[#FFF5F4] px-4 py-1.5 text-xs font-medium text-[#D9342B] hover:bg-[#FFE0DD]">
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
       </div>
 
-      <p className="text-[11px] text-gray-400">
-        Snapshot generated {new Date(data.generatedAt).toLocaleString()}
-      </p>
+      <p className="text-[11px] text-gray-400">Snapshot generated {new Date(data.generatedAt).toLocaleString()}</p>
     </div>
   );
 }
