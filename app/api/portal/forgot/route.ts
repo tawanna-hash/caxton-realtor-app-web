@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
 const PORTAL_RESET_MARKER = 'portal-reset';
 const RESET_TTL_MS = 60 * 60 * 1000;
 const MAX_PER_HOUR = 3;
-const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://realtynewsnow.app';
+const APP_BASE_URL = 'https://realtynewsnow.app';
 
 const schema = z.object({ email: z.string().trim().toLowerCase().email().max(320) });
 
@@ -69,10 +69,13 @@ export async function POST(req: NextRequest) {
     const sender = senderAddressForPublication(row.publication);
     const from = EMAIL_SENDERS[sender];
     const apiKey = getResendApiKeyForFrom(from);
-    if (!apiKey) return generic;
+    if (!apiKey) {
+      console.error('[portal/forgot] no Resend API key for sender', sender);
+      return generic;
+    }
     const url = `${APP_BASE_URL}/portal/reset?token=${encodeURIComponent(raw)}`;
     const brand = sender === 'tawanna@newslinesa.com' ? 'Newsline San Antonio' : 'RealtyLine';
-    await new Resend(apiKey).emails.send({
+    const sent = await new Resend(apiKey).emails.send({
       from,
       to: email,
       subject: `Reset your ${brand} portal password`,
@@ -95,6 +98,7 @@ export async function POST(req: NextRequest) {
         <p style="font-size:12px;color:#888">If you didn't ask for this, you can ignore this email; your password has not changed.</p>
       </div>`,
     });
+    if (sent.error) console.error('[portal/forgot] Resend error', sent.error.message);
   } catch (err) {
     console.error('[portal/forgot]', err instanceof Error ? err.message : err);
   }
