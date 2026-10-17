@@ -31,7 +31,15 @@ import {
   ChevronsRight,
   ChevronDown,
 } from 'lucide-react';
-import { ADMIN_NAV as ADMIN_GROUPS, isAdminGroupActive as isGroupActive, type AdminNavGroup } from '@/lib/admin-nav';
+import { ADMIN_NAV, isAdminGroupActive as isGroupActive, type AdminNavGroup } from '@/lib/admin-nav';
+// Sidebar order is alphabetical at every level (sections, pages, and nested
+// child pages). Other nav surfaces keep the order defined in lib/admin-nav.ts.
+const byLabel = (a: { label: string }, b: { label: string }) =>
+  a.label.localeCompare(b.label, 'en', { sensitivity: 'base' });
+const ADMIN_GROUPS: AdminNavGroup[] = ADMIN_NAV
+  .map((g) => ({ ...g, links: [...g.links].sort(byLabel) }))
+  .sort(byLabel);
+
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
 import PendingGmailBadge from '@/components/PendingGmailBadge';
