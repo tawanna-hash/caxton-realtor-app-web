@@ -19,10 +19,10 @@ export default async function PortalIssuesPage() {
       <header>
         <Link href="/portal/content" className="text-sm text-[#42277C] hover:underline">&larr; My Content</Link>
         <PageTitle size="md">Monthly issues</PageTitle>
-        <p className="text-gray-600 mt-1">New issues appear here automatically. Issues with your ad show the page numbers.</p>
+        <p className="text-gray-600 mt-1">Issues you appear in show up here automatically, with your page numbers.</p>
       </header>
       {issues.length === 0 ? (
-        <div className="rounded-md border border-dashed border-gray-300 p-8 text-center text-gray-500">No issues published yet.</div>
+        <div className="rounded-md border border-dashed border-gray-300 p-8 text-center text-gray-500">You are not in any issues yet. Issues appear here once your ad or listing is published.</div>
       ) : (
         <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {issues.map((i) => (

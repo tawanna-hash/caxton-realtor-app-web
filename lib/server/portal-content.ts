@@ -2,8 +2,8 @@
 //
 // Auto-populated partner content. Nothing here is entered by the partner:
 // it is pulled from what the team already maintains.
-//   - Issues:   every published issue of the partner's publication, plus the
-//               pages where the partner has a published hotspot/ad.
+//   - Issues:   only issues where the partner appears (a published hotspot
+//               tagged to them), with the page numbers.
 //   - Events:   event photos tagged to the partner (or titled with its name).
 //   - Articles: published feature articles tagged to the partner.
 
@@ -33,6 +33,7 @@ export async function getPartnerIssues(advertiserId: number, publication: string
       SELECT id, year, month, issue_label, cover_url, page_count
         FROM magazines
        WHERE publication = ${pub} AND page_count > 0
+         AND id IN (SELECT magazine_id FROM magazine_hotspots WHERE advertiser_id = ${advertiserId} AND is_published = true)
        ORDER BY sort_date DESC
        LIMIT 120
     `,
@@ -68,7 +69,7 @@ export async function getPartnerContentCounts(advertiserId: number, name: string
   const sql = getSql();
   const pub = publicationFor(publication);
   const [issues, res] = (await Promise.all([
-    sql`SELECT COUNT(*)::int AS n FROM magazines WHERE publication = ${pub} AND page_count > 0`,
+    sql`SELECT COUNT(DISTINCT m.id)::int AS n FROM magazines m JOIN magazine_hotspots h ON h.magazine_id = m.id WHERE m.publication = ${pub} AND m.page_count > 0 AND h.advertiser_id = ${advertiserId} AND h.is_published = true`,
     sql`SELECT
           (SELECT COUNT(*)::int FROM portal_resources WHERE advertiser_id = ${advertiserId} AND kind = 'logo_file') + (SELECT CASE WHEN COALESCE(avatar_url, '') <> '' THEN 1 ELSE 0 END FROM advertisers WHERE id = ${advertiserId}) AS logos,
           (SELECT COUNT(*)::int FROM advertiser_locations WHERE advertiser_id = ${advertiserId}) AS locations,
