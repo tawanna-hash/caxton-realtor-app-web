@@ -9,7 +9,7 @@ import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import AccountClient from './AccountClient';
 import AccountSecurity from './AccountSecurity';
 
-import PageTitle from '@/components/ui/PageTitle';
+import { PageIntro } from '@/components/portal/Mint';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -47,11 +47,7 @@ export default async function PortalAccountPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Portal</div>
-        <PageTitle size="md">Account</PageTitle>
-        <p className="text-gray-600 mt-1">Keep your contact info current. Changes are saved automatically.</p>
-      </header>
+      <PageIntro title="Account">Keep your contact info current. Changes are saved automatically.</PageIntro>
       <AccountClient initial={initial} />
       <AccountSecurity loginEmail={initial.portal_email ?? ''} hasPassword={initial.has_password} />
     </div>

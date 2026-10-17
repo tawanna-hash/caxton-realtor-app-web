@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import { getPartnerEventMonths } from '@/lib/server/portal-content';
 import { ensureSchema } from '@/lib/db';
-import PageTitle from '@/components/ui/PageTitle';
+import { PageIntro } from '@/components/portal/Mint';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -16,11 +16,10 @@ export default async function PortalEventImagesPage() {
 
   return (
     <div className="space-y-6">
-      <header>
+      <div>
         <Link href="/portal/content" className="text-sm text-[#42277C] hover:underline">&larr; My Content</Link>
-        <PageTitle size="md">Event images</PageTitle>
-        <p className="text-gray-600 mt-1">Photos tagged to you appear here automatically, organized in monthly folders. Click a photo to open the full size.</p>
-      </header>
+        <PageIntro title="Event images">Photos tagged to you appear here automatically, organized in monthly folders. Click a photo to open the full size.</PageIntro>
+      </div>
       {months.length === 0 ? (
         <div className="rounded-md border border-dashed border-gray-300 p-8 text-center text-gray-500">No event photos tagged to you yet.</div>
       ) : (

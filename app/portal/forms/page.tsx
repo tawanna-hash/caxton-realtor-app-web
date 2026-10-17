@@ -7,7 +7,8 @@ import { redirect } from 'next/navigation';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 
-import PageTitle from '@/components/ui/PageTitle';
+import { PageIntro, IconSquare } from '@/components/portal/Mint';
+import { ClipboardList } from 'lucide-react';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -44,11 +45,7 @@ export default async function PortalFormsPage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Portal</div>
-        <PageTitle size="md">Forms</PageTitle>
-        <p className="text-gray-600 mt-1">Short forms your account manager has asked you to complete.</p>
-      </header>
+      <PageIntro title="Forms">Short forms your account manager has asked you to complete.</PageIntro>
 
       <section>
         <h2 className="font-serif text-xl text-gray-900 mb-3">
@@ -67,7 +64,8 @@ export default async function PortalFormsPage() {
                 className="block rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-[#301D5D]/40 hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div>
+                  <IconSquare tone="green"><ClipboardList className="h-4 w-4" /></IconSquare>
+                  <div className="min-w-0 flex-1">
                     <div className="font-medium text-gray-900">{a.form_title}</div>
                     {a.form_description && <div className="text-sm text-gray-600 mt-1">{a.form_description}</div>}
                   </div>

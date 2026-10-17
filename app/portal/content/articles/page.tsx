@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import { getPartnerArticles } from '@/lib/server/portal-content';
 import { ensureSchema } from '@/lib/db';
-import PageTitle from '@/components/ui/PageTitle';
+import { PageIntro } from '@/components/portal/Mint';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -21,11 +21,10 @@ export default async function PortalArticlesPage() {
 
   return (
     <div className="space-y-6">
-      <header>
+      <div>
         <Link href="/portal/content" className="text-sm text-[#42277C] hover:underline">&larr; My Content</Link>
-        <PageTitle size="md">Featured articles</PageTitle>
-        <p className="text-gray-600 mt-1">Articles tagged to you appear here automatically once published.</p>
-      </header>
+        <PageIntro title="Featured articles">Articles tagged to you appear here automatically once published.</PageIntro>
+      </div>
       {articles.length === 0 ? (
         <div className="rounded-md border border-dashed border-gray-300 p-8 text-center text-gray-500">No featured articles yet.</div>
       ) : (

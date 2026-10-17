@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import { getPartnerIssues } from '@/lib/server/portal-content';
 import { ensureSchema } from '@/lib/db';
-import PageTitle from '@/components/ui/PageTitle';
+import { PageIntro } from '@/components/portal/Mint';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -16,11 +16,10 @@ export default async function PortalIssuesPage() {
 
   return (
     <div className="space-y-6">
-      <header>
+      <div>
         <Link href="/portal/content" className="text-sm text-[#42277C] hover:underline">&larr; My Content</Link>
-        <PageTitle size="md">Monthly issues</PageTitle>
-        <p className="text-gray-600 mt-1">Issues you appear in show up here automatically, with your page numbers.</p>
-      </header>
+        <PageIntro title="Monthly issues">Issues you appear in show up here automatically, with your page numbers.</PageIntro>
+      </div>
       {issues.length === 0 ? (
         <div className="rounded-md border border-dashed border-gray-300 p-8 text-center text-gray-500">You are not in any issues yet. Issues appear here once your ad or listing is published.</div>
       ) : (
