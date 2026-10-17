@@ -45,6 +45,43 @@ type Seed = {
   agreement_id: string | null;
 };
 
+/**
+ * Price box that keeps exactly what the admin types and only reformats to two
+ * decimals when focus leaves. The value is committed to the schedule on every
+ * keystroke, so the total updates live and the override is saved with the
+ * schedule and used for every invoice it generates.
+ */
+function MoneyInput({
+  cents,
+  onCommit,
+  className,
+}: {
+  cents: number;
+  onCommit: (cents: number) => void;
+  className?: string;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      aria-label="Unit price"
+      className={className}
+      value={draft ?? (cents / 100).toFixed(2)}
+      onFocus={(e) => e.currentTarget.select()}
+      onChange={(e) => {
+        const raw = e.target.value.replace(/[^0-9.]/g, "");
+        const parts = raw.split(".");
+        const cleaned = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : raw;
+        setDraft(cleaned);
+        const n = Number(cleaned);
+        onCommit(Number.isFinite(n) ? Math.round(n * 100) : 0);
+      }}
+      onBlur={() => setDraft(null)}
+    />
+  );
+}
+
 export function RecurringScheduleDrawer({
   existing,
   advertisers,
@@ -613,17 +650,10 @@ export function RecurringScheduleDrawer({
                     })
                   }
                 />
-                <input
-                  type="number"
-                  min={0}
-                  step={0.01}
+                <MoneyInput
                   className={`${INPUT} col-span-3`}
-                  value={(li.unit_cents / 100).toFixed(2)}
-                  onChange={(e) =>
-                    updateLine(i, {
-                      unit_cents: Math.round(Number(e.target.value) * 100) || 0,
-                    })
-                  }
+                  cents={li.unit_cents}
+                  onCommit={(unit_cents) => updateLine(i, { unit_cents })}
                 />
                 <button
                   type="button"
