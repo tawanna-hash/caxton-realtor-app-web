@@ -11,6 +11,8 @@ import { anchorForSegment, countAudienceSources, countBySegment, SEGMENTS } from
 import { countPublicationList } from '@/lib/server/mailing/publication-counts';
 
 import PageTitle from '@/components/ui/PageTitle';
+import { ChevronRight, Mail, Users } from 'lucide-react';
+import { IconSquare, MintCard, type MintTone } from '@/components/portal/Mint';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
 export const dynamic = 'force-dynamic';
 
@@ -144,275 +146,151 @@ export default async function MailingHubPage() {
     },
   ];
 
+  const lists: Array<{ label: string; href: string; count: number }> = [
+    { label: 'RealtyLine (Austin)', href: '/admin/mailing/publication/realtyline', count: realtylineCount },
+    { label: 'Newsline (San Antonio)', href: '/admin/mailing/publication/newsline', count: newslineCount },
+    { label: 'RealtyLine Houston', href: '/admin/mailing/publication/realtyline-houston', count: houstonCount },
+    { label: 'RealtyLine Dallas/Ft. Worth', href: '/admin/mailing/publication/realtyline-dallas', count: dallasCount },
+  ];
+
+  const kpis: Array<{ label: string; value: number; sub: string }> = [
+    { label: 'Segments total', value: counts.total, sub: 'all mailing segments' },
+    { label: 'RealtyLine ATX Print', value: counts['realtyline-atx-print'], sub: 'partners + REALTORS' },
+    { label: 'Newsline SA Print', value: counts['newsline-sa-print'], sub: 'partners + non-partners + manual' },
+    { label: 'ABOR Members', value: sources.aborMembers, sub: 'UnlockMLS holding' },
+    { label: 'SABOR Members', value: sources.saborMembers, sub: 'RAMCO holding' },
+    { label: 'App Subscribers', value: sources.appSubscribers, sub: 'email signups' },
+  ];
+
+  const austinSegments = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'abor');
+  const sanAntonioSegments = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'sabor');
+  const dfwSegments = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'dfw');
+  const houstonSegments = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'houston');
+
+  const TONES: MintTone[] = ['purple', 'green', 'red', 'blue'];
+
+  const segmentCard = (title: string, note: string, segs: typeof SEGMENTS) => (
+    <MintCard title={title} action={<span className="text-xs text-gray-500">{note}</span>}>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {segs.map((s, i) => (
+          <Link
+            key={s.slug}
+            href={`/admin/mailing/${s.slug}`}
+            className="group flex items-start gap-3 rounded-2xl border border-[#ECE8F5] bg-white p-4 transition hover:shadow-md"
+          >
+            <IconSquare tone={TONES[i % TONES.length]} size="lg">
+              <Users className="h-5 w-5" aria-hidden />
+            </IconSquare>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="truncate text-sm font-medium text-gray-800">{s.label}</span>
+                <span className="text-xl font-bold tabular-nums text-[#6D3FD6]">{counts[s.segment].toLocaleString()}</span>
+              </div>
+              <p className="mt-1 text-xs leading-5 text-gray-500">{s.caption}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </MintCard>
+  );
+
+  const audienceList = (title: string, tiles: AudienceTile[]) => (
+    <div>
+      <div className="mb-1 text-xs font-medium uppercase tracking-wider text-gray-500">{title}</div>
+      <ul>
+        {tiles.map((t) => (
+          <li key={t.label + t.href}>
+            <Link href={t.href} className="flex items-center gap-3 rounded-xl p-2 hover:bg-[#F6F5FB]">
+              <IconSquare tone="purple"><Mail className="h-4 w-4" aria-hidden /></IconSquare>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm text-gray-800">{t.label}</div>
+                <div className="truncate text-xs text-gray-500">{t.caption}</div>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
   return (
-    <div className="mailing-admin-page">
+    <div className="mailing-admin-page space-y-6">
       <MailingBreadcrumb trail={[{ label: 'Mailing' }]} />
-      {/* Header */}
       <div>
-        <p className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
-          Audience
-        </p>
+        <p className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Audience</p>
         <PageTitle size="md">Mailing List HUB</PageTitle>
-        <p className="mt-2 text-sm text-gray-600 max-w-2xl">
-          Every audience source in one place — segments, board mirrors, app
-          signups, and manual entries. Active partners and their staff sync
-          into the Partners segment automatically.
+        <p className="mt-2 max-w-2xl text-sm text-gray-600">
+          Every audience source in one place: segments, board mirrors, app signups, and manual entries. Active partners and their staff sync into the Partners segment automatically.
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <span className="text-xs uppercase tracking-[0.15em] text-gray-500 font-medium">
-            Open email list
-          </span>
-          <Link
-            href="/admin/mailing/publication/realtyline"
-            className="group/dl inline-flex items-center gap-2 px-3 py-2 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
-          >
-            <span>RealtyLine (Austin)</span>
-            <span
-              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-700/10 text-brand-700 group-hover/dl:bg-white/20 group-hover/dl:text-white"
-              title={`${realtylineCount.toLocaleString()} unique deliverable emails`}
-            >
-              {realtylineCount.toLocaleString()}
-            </span>
-          </Link>
-          <Link
-            href="/admin/mailing/publication/newsline"
-            className="group/dl inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[#42277C] text-[#42277C] text-xs font-semibold hover:bg-[#42277C] hover:text-white transition"
-          >
-            <span>Newsline (San Antonio)</span>
-            <span
-              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#42277C]/10 text-[#42277C] group-hover/dl:bg-white/20 group-hover/dl:text-white"
-              title={`${newslineCount.toLocaleString()} unique deliverable emails`}
-            >
-              {newslineCount.toLocaleString()}
-            </span>
-          </Link>
-          <Link
-            href="/admin/mailing/publication/realtyline-houston"
-            className="group/dl inline-flex items-center gap-2 px-3 py-2 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
-          >
-            <span>RealtyLine Houston</span>
-            <span
-              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-700/10 text-brand-700 group-hover/dl:bg-white/20 group-hover/dl:text-white"
-              title={`${houstonCount.toLocaleString()} unique deliverable emails`}
-            >
-              {houstonCount.toLocaleString()}
-            </span>
-          </Link>
-          <Link
-            href="/admin/mailing/publication/realtyline-dallas"
-            className="group/dl inline-flex items-center gap-2 px-3 py-2 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
-          >
-            <span>RealtyLine Dallas/Ft. Worth</span>
-            <span
-              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-700/10 text-brand-700 group-hover/dl:bg-white/20 group-hover/dl:text-white"
-              title={`${dallasCount.toLocaleString()} unique deliverable emails`}
-            >
-              {dallasCount.toLocaleString()}
-            </span>
-          </Link>
-          <span className="text-xs text-gray-500">
-            Merges segments + board mirrors + app subscribers + email signups, deduped by email. CSV download lives inside.
-          </span>
-        </div>
-        <div className="mt-3 text-xs text-gray-500">
-          Deleting a contact in Mailing or Holding now permanently tombstones the email so future ABOR/SABOR syncs skip it.{' '}
-          <Link href="/admin/mailing/tags" className="font-semibold text-brand-700 hover:underline">
-            Manage tags →
-          </Link>
-          {' · '}
-          <Link href="/admin/mailing/bulk-verify" className="font-semibold text-brand-700 hover:underline">
-            Bulk email verify →
-          </Link>
-          {' · '}
-          <Link href="/admin/mailing/suppressions" className="font-semibold text-brand-700 hover:underline">
-            View suppression list →
-          </Link>
-        </div>
       </div>
 
       {/* KPI strip */}
-      <div className="mailing-summary-strip grid grid-cols-2 lg:grid-cols-6">
-        <KpiCard label="Segments total"      value={counts.total}                       sub="all mailing segments" />
-        <KpiCard label="RealtyLine ATX Print" value={counts['realtyline-atx-print']}    sub="partners + REALTORS" accent="#301D5D" />
-        <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="partners + non-partners + manual" accent="#42277C" />
-        <KpiCard label="ABOR Members"        value={sources.aborMembers}                sub="UnlockMLS holding"   accent="#4A4757" />
-        <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#301D5D" />
-        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="email signups"  accent="#301D5D" />
-      </div>
-
-      {/* Segment tiles — split by publication */}
-      {(() => {
-        // RealtyLine Austin = ABoR-anchored segments (ATX advertisers,
-        // ATX non-advertisers, and the Texas-wide REALTORS list which is
-        // Austin-centric). Newsline San Antonio = SABOR-anchored segments
-        // (manual Newsline contacts, SA advertisers, SA non-advertisers).
-        const austinSegments  = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'abor');
-        const sanAntonioSegments = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'sabor');
-        const dfwSegments = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'dfw');
-        const houstonSegments = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'houston');
-
-        const renderTile = (s: typeof SEGMENTS[number]) => {
-          const c = counts[s.segment];
-          return (
-            <Link
-              key={s.slug}
-              href={`/admin/mailing/${s.slug}`}
-              className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-[#B9ADD6] hover:bg-[#F6F3FB]/30"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded text-xs font-semibold"
-                  style={{ backgroundColor: `${s.accent}15`, color: s.accent }}
-                >
-                  {s.label.charAt(0)}
-                </div>
-                <span
-                  className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                  style={{ backgroundColor: `${s.accent}15`, color: s.accent }}
-                >
-                  {c.toLocaleString()}
-                </span>
-              </div>
-              <div className="text-sm font-semibold text-gray-900">{s.label}</div>
-              <p className="mt-1 text-xs leading-5 text-gray-600">{s.caption}</p>
-              <div className="mt-2 text-xs font-medium text-[#42277C]">
-                Open list
-              </div>
-            </Link>
-          );
-        };
-
-        return (
-          <div className="space-y-4">
-            <div>
-              <div className="mb-2 flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Austin</h2>
-                <span className="text-xs uppercase tracking-[0.15em] text-gray-500">ABoR-anchored segments</span>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {austinSegments.map(renderTile)}
-              </div>
-            </div>
-            <div>
-              <div className="mb-2 flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-gray-900">Newsline San Antonio</h2>
-                <span className="text-xs uppercase tracking-[0.15em] text-gray-500">SABOR-anchored segments</span>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {sanAntonioSegments.map(renderTile)}
-              </div>
-            </div>
-            <div>
-              <div className="mb-2 flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-gray-900">Dallas / Ft. Worth</h2>
-                <span className="text-xs uppercase tracking-[0.15em] text-gray-500">MetroTex directory lists</span>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {dfwSegments.map(renderTile)}
-              </div>
-            </div>
-            <div>
-              <div className="mb-2 flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Houston</h2>
-                <span className="text-xs uppercase tracking-[0.15em] text-gray-500">Greater Houston counties</span>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {houstonSegments.map(renderTile)}
-              </div>
-            </div>
+      <section className="grid grid-cols-2 rounded-2xl border border-[#ECE8F5] bg-white lg:grid-cols-6">
+        {kpis.map((k) => (
+          <div key={k.label} className="border-[#E3DEF1] px-5 py-5 lg:border-l lg:border-dashed lg:first:border-l-0">
+            <div className="text-sm text-gray-700">{k.label}</div>
+            <div className="mt-2 text-3xl font-bold tabular-nums text-[#6D3FD6]">{k.value.toLocaleString()}</div>
+            <div className="mt-1 text-xs text-gray-500">{k.sub}</div>
           </div>
-        );
-      })()}
+        ))}
+      </section>
 
-      {/* Audience pages — split by publication so each section above has
-          its own board mirror + app signups + manual-subscribe entry. */}
-      {(() => {
-        const renderAudienceTile = (t: AudienceTile) => (
-          <Link
-            key={t.href}
-            href={t.href}
-            className="group block rounded border border-gray-200 bg-white p-3 transition hover:border-[#B9ADD6] hover:bg-[#F6F3FB]/30"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded text-xs font-semibold"
-                style={{ backgroundColor: `${t.accent}15`, color: t.accent }}
-              >
-                {t.initial}
-              </div>
-            </div>
-            <div className="text-sm font-semibold text-gray-900">{t.label}</div>
-            <p className="mt-1 text-xs leading-5 text-gray-600">{t.caption}</p>
-            <div className="mt-2 text-xs font-medium text-[#42277C]">
-              Open page
-            </div>
-          </Link>
-        );
-        return (
-          <div className="space-y-4">
-            <div>
-              <div className="mb-2 flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Austin Audience Pages</h2>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {austinAudienceTiles.map(renderAudienceTile)}
-              </div>
-            </div>
-            <div>
-              <div className="mb-2 flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-gray-900">Newsline San Antonio Audience Pages</h2>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {sanAntonioAudienceTiles.map(renderAudienceTile)}
-              </div>
-            </div>
-            <div>
-              <div className="mb-2 flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Houston Audience Pages</h2>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {houstonAudienceTiles.map(renderAudienceTile)}
-              </div>
-            </div>
-            <div>
-              <div className="mb-2 flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-gray-900">RealtyLine Dallas/Ft. Worth Audience Pages</h2>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {dallasAudienceTiles.map(renderAudienceTile)}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      <div className="grid gap-6 xl:grid-cols-3">
+        <div className="space-y-6 xl:col-span-2">
+          {segmentCard('RealtyLine Austin', 'ABoR-anchored segments', austinSegments)}
+          {segmentCard('Newsline San Antonio', 'SABOR-anchored segments', sanAntonioSegments)}
+          {segmentCard('Dallas / Ft. Worth', 'MetroTex directory lists', dfwSegments)}
+          {segmentCard('RealtyLine Houston', 'Greater Houston counties', houstonSegments)}
+        </div>
 
-      {/* Footer hint */}
-      <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 px-6 py-6 text-center">
-        <h3 className="font-serif text-lg text-gray-900 mb-1">
-          Import and Export from Every Segment
-        </h3>
-        <p className="text-sm text-gray-600 max-w-xl mx-auto">
-          Each segment page supports CSV / TSV / JSON import and export with
-          auto-mapped column headers and sortable columns.
-        </p>
-      </div>
-    </div>
-  );
-}
+        <div className="space-y-6">
+          <MintCard title="Open email list">
+            <p className="mb-3 text-xs text-gray-500">
+              Merges segments, board mirrors, app subscribers and email signups, deduped by email. CSV download lives inside.
+            </p>
+            <ul className="space-y-2">
+              {lists.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    title={`${l.count.toLocaleString()} unique deliverable emails`}
+                    className="flex items-center justify-between gap-3 rounded-full border border-[#ECE8F5] px-4 py-2.5 text-sm font-medium text-[#301D5D] hover:bg-[#F6F5FB]"
+                  >
+                    <span>{l.label}</span>
+                    <span className="rounded-full bg-[#EEE9FA] px-2.5 py-0.5 text-xs font-bold text-[#6D3FD6]">{l.count.toLocaleString()}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </MintCard>
 
-function KpiCard({
-  label, value, sub, accent,
-}: { label: string; value: number; sub: string; accent?: string }) {
-  return (
-    <div className="rounded-md border border-gray-200 bg-white p-4">
-      <div
-        className="h-7 w-7 rounded-md mb-3"
-        style={{ backgroundColor: accent ? `${accent}15` : '#F6F3FB' }}
-      />
-      <div className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
-      <div className="mt-1">
-        <div className="text-xs font-semibold text-gray-900">{label}</div>
-        <div className="text-[11px] text-gray-500">{sub}</div>
+          <MintCard title="Audience pages">
+            <div className="space-y-4">
+              {audienceList('RealtyLine Austin', austinAudienceTiles)}
+              {audienceList('Newsline San Antonio', sanAntonioAudienceTiles)}
+              {audienceList('RealtyLine Houston', houstonAudienceTiles)}
+              {audienceList('RealtyLine Dallas/Ft. Worth', dallasAudienceTiles)}
+            </div>
+          </MintCard>
+
+          <MintCard title="Tools">
+            <div className="flex flex-wrap gap-2">
+              {[
+                ['Manage tags', '/admin/mailing/tags'],
+                ['Bulk email verify', '/admin/mailing/bulk-verify'],
+                ['Suppression list', '/admin/mailing/suppressions'],
+              ].map(([label, href]) => (
+                <Link key={href} href={href} className="inline-flex rounded-full border border-[#ECE8F5] px-4 py-1.5 text-xs font-semibold text-[#6D3FD6] hover:bg-[#F6F5FB]">
+                  {label}
+                </Link>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-gray-500">
+              Deleting a contact in Mailing or Holding permanently tombstones the email so future ABOR/SABOR syncs skip it. Each segment page supports CSV, TSV and JSON import and export.
+            </p>
+          </MintCard>
+        </div>
       </div>
     </div>
   );
