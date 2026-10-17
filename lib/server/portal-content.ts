@@ -69,20 +69,22 @@ export async function getPartnerContentCounts(advertiserId: number, name: string
   const pub = publicationFor(publication);
   const [issues, res] = (await Promise.all([
     sql`SELECT COUNT(*)::int AS n FROM magazines WHERE publication = ${pub} AND page_count > 0`,
-    sql`SELECT kind, COUNT(*)::int AS n FROM portal_resources WHERE advertiser_id = ${advertiserId} GROUP BY kind`,
-  ])) as unknown as [{ n: number }[], { kind: string; n: number }[]];
+    sql`SELECT
+          (SELECT COUNT(*)::int FROM portal_resources WHERE advertiser_id = ${advertiserId} AND kind = 'logo_file') + (SELECT CASE WHEN COALESCE(avatar_url, '') <> '' THEN 1 ELSE 0 END FROM advertisers WHERE id = ${advertiserId}) AS logos,
+          (SELECT COUNT(*)::int FROM advertiser_locations WHERE advertiser_id = ${advertiserId}) AS locations,
+          (SELECT COUNT(*)::int FROM advertiser_staff WHERE advertiser_id = ${advertiserId}) AS staff`,
+  ])) as unknown as [{ n: number }[], { logos: number; locations: number; staff: number }[]];
   const [months, articles] = await Promise.all([
     getPartnerEventMonths(advertiserId, name),
     getPartnerArticles(advertiserId),
   ]);
-  const by = Object.fromEntries(res.map((r) => [r.kind, r.n]));
   return {
     issues: issues[0]?.n ?? 0,
     eventPhotos: months.reduce((n, m) => n + m.photos.length, 0),
     eventMonths: months.length,
     articles: articles.length,
-    logos: by.logo_file ?? 0,
-    locations: by.location ?? 0,
-    staff: by.staff ?? 0,
+    logos: res[0]?.logos ?? 0,
+    locations: res[0]?.locations ?? 0,
+    staff: res[0]?.staff ?? 0,
   };
 }
