@@ -21,7 +21,7 @@ export async function ensureProductsServicesCatalog() {
   const countRows = await sql`SELECT count(*)::int AS count FROM products_services` as unknown as Array<{ count: number }>;
   const rows = seedRows as SeedRow[];
 
-  // One-time 21% rate increase (rounded to $5). Only touches rows still at the
+  // One-time 21% print rate increase (rounded to $5). Only touches rows still at the
   // old list price, so any price an admin edited by hand is left alone. Safe to
   // run repeatedly: once a row is repriced it no longer matches from_cents.
   await sql`
