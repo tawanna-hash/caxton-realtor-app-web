@@ -873,6 +873,27 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
     )
   `);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_files_advertiser ON portal_files(advertiser_id)`);
+
+  // Partner-managed portal content (issue links, event image folders,
+  // featured articles, logo files, locations, staff).
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS portal_resources (
+      id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+      advertiser_id integer     NOT NULL REFERENCES advertisers(id) ON DELETE CASCADE,
+      kind          text        NOT NULL,
+      title         text        NOT NULL,
+      url           text,
+      notes         text,
+      fields        jsonb       NOT NULL DEFAULT '{}'::jsonb,
+      files         jsonb       NOT NULL DEFAULT '[]'::jsonb,
+      created_at    timestamptz NOT NULL DEFAULT NOW(),
+      updated_at    timestamptz NOT NULL DEFAULT NOW()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_resources_adv_kind ON portal_resources(advertiser_id, kind)`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS portal_password_hash text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS portal_failed_logins integer NOT NULL DEFAULT 0`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS portal_locked_until timestamptz`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_files_agreement  ON portal_files(agreement_id) WHERE agreement_id IS NOT NULL`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_files_invoice    ON portal_files(invoice_id) WHERE invoice_id IS NOT NULL`);
 

@@ -10,6 +10,8 @@ import {
 } from '@/lib/footer-templates';
 
 type AccountFields = {
+  billing_email: string | null;
+  address_2: string | null;
   company: string | null;
   phone: string | null;
   office_phone: string | null;
@@ -21,14 +23,19 @@ type AccountFields = {
 };
 
 const FIELD_LABELS: Array<[keyof AccountFields, string]> = [
+  ['billing_email', 'Billing email (invoices are sent here)'],
   ['company', 'Company'],
   ['phone', 'Mobile phone'],
   ['office_phone', 'Office phone'],
   ['website', 'Website'],
-  ['address', 'Street address'],
+];
+
+const ADDRESS_LABELS: Array<[keyof AccountFields, string]> = [
+  ['address', 'Address'],
+  ['address_2', 'Suite, Apt, Building'],
   ['city', 'City'],
   ['state', 'State'],
-  ['zip', 'ZIP'],
+  ['zip', 'Zip code'],
 ];
 
 interface InitialProps extends AccountFields {
@@ -44,6 +51,8 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
     phone: initial.phone ?? '',
     office_phone: initial.office_phone ?? '',
     website: initial.website ?? '',
+    billing_email: initial.billing_email ?? '',
+    address_2: initial.address_2 ?? '',
     address: initial.address ?? '',
     city: initial.city ?? '',
     state: initial.state ?? '',
@@ -89,6 +98,27 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
     setTimeout(() => setFooterSaved(false), 1500);
   }
 
+  function renderField(key: keyof AccountFields, label: string) {
+    return (
+      <label key={key} className="block">
+        <div className="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
+          <span>{label}</span>
+          {savedKey === key && <span className="text-xs text-[#005A00]">Saved</span>}
+        </div>
+        <input
+          value={values[key]}
+          onChange={(e) => setValues((v) => ({ ...v, [key]: e.target.value }))}
+          onBlur={(e) => {
+            if (e.target.value !== (initial[key] ?? '')) {
+              saveField(key, e.target.value);
+            }
+          }}
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+        />
+      </label>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-md border border-gray-200 bg-white p-6 space-y-4">
@@ -103,24 +133,11 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
           </div>
         </div>
 
-        {FIELD_LABELS.map(([key, label]) => (
-          <label key={key} className="block">
-            <div className="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
-              <span>{label}</span>
-              {savedKey === key && <span className="text-xs text-[#005A00]">Saved</span>}
-            </div>
-            <input
-              value={values[key]}
-              onChange={(e) => setValues((v) => ({ ...v, [key]: e.target.value }))}
-              onBlur={(e) => {
-                if (e.target.value !== (initial[key] ?? '')) {
-                  saveField(key, e.target.value);
-                }
-              }}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            />
-          </label>
-        ))}
+        {FIELD_LABELS.map(([key, label]) => renderField(key, label))}
+
+        <div className="grid gap-3 md:grid-cols-[2fr_1.2fr_1.2fr_0.6fr_0.8fr]">
+          {ADDRESS_LABELS.map(([key, label]) => renderField(key, label))}
+        </div>
 
         {saveError && (
           <div className="rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 text-[#661102] px-3 py-2 text-sm">

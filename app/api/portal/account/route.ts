@@ -19,6 +19,7 @@ const nullableString = z.string().max(500).nullable().optional();
 
 const portalAccountPatchSchema = z.object({
   company: nullableString,
+  billing_email: z.string().trim().email('Enter a valid email').max(320).nullable().optional(),
   phone: nullableString,
   office_phone: nullableString,
   website: nullableString,
@@ -46,6 +47,7 @@ export const PATCH = withErrorHandling(async (req: NextRequest) => {
   const norm = (v: string | null | undefined): string | null =>
     typeof v === 'string' ? v : null;
 
+  if ('billing_email' in body) { await sql`UPDATE advertisers SET billing_email = ${norm(body.billing_email)} WHERE id = ${user.advertiser_id}`; updated.push('billing_email'); }
   if ('company' in body)      { await sql`UPDATE advertisers SET company = ${norm(body.company)} WHERE id = ${user.advertiser_id}`;      updated.push('company'); }
   if ('phone' in body)        { await sql`UPDATE advertisers SET phone = ${norm(body.phone)} WHERE id = ${user.advertiser_id}`;        updated.push('phone'); }
   if ('office_phone' in body) { await sql`UPDATE advertisers SET office_phone = ${norm(body.office_phone)} WHERE id = ${user.advertiser_id}`; updated.push('office_phone'); }

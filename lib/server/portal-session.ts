@@ -19,6 +19,7 @@ export interface PortalSessionUser {
   name: string;
   email: string | null;
   company: string | null;
+  publication: string | null;
   session_expires_at: string;
 }
 
@@ -34,11 +35,11 @@ export async function getCurrentPortalUser(): Promise<PortalSessionUser | null> 
       l.id, l.advertiser_id, l.purpose, l.link_expires_at,
       l.consumed_at, l.session_expires_at, l.sent_to_email, l.sent_at,
       l.created_by, l.revoked_at, l.revoked_reason,
-      a.name, a.portal_email AS email, a.company
+      a.name, a.portal_email AS email, a.company, a.publication
     FROM portal_magic_links l
     JOIN advertisers a ON a.id = l.advertiser_id
     WHERE l.id = ${linkId}
-  `) as unknown as (PortalMagicLink & { name: string; email: string | null; company: string | null })[];
+  `) as unknown as (PortalMagicLink & { name: string; email: string | null; company: string | null; publication: string | null })[];
   if (rows.length === 0) return null;
   const row = rows[0];
   if (!isSessionActive(row)) return null;
@@ -49,6 +50,7 @@ export async function getCurrentPortalUser(): Promise<PortalSessionUser | null> 
     name: row.name,
     email: row.email,
     company: row.company,
+    publication: row.publication,
     session_expires_at: row.session_expires_at as string,
   };
 }

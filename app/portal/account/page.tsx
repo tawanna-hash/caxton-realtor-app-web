@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import AccountClient from './AccountClient';
+import AccountSecurity from './AccountSecurity';
 
 import PageTitle from '@/components/ui/PageTitle';
 export const dynamic = 'force-dynamic';
@@ -20,7 +21,8 @@ export default async function PortalAccountPage() {
   const sql = getSql();
   const rows = (await sql`
     SELECT id, name, company, phone, office_phone, website,
-           address, city, state, zip, portal_email, contact_email AS email,
+           address, address_2, city, state, zip, portal_email, contact_email AS email,
+           billing_email, (portal_password_hash IS NOT NULL) AS has_password,
            footer_template
     FROM advertisers WHERE id = ${user.advertiser_id}
   `) as unknown as {
@@ -31,6 +33,9 @@ export default async function PortalAccountPage() {
     office_phone: string | null;
     website: string | null;
     address: string | null;
+    address_2: string | null;
+    billing_email: string | null;
+    has_password: boolean;
     city: string | null;
     state: string | null;
     zip: string | null;
@@ -48,6 +53,7 @@ export default async function PortalAccountPage() {
         <p className="text-gray-600 mt-1">Keep your contact info current. Changes are saved automatically.</p>
       </header>
       <AccountClient initial={initial} />
+      <AccountSecurity loginEmail={initial.portal_email ?? ''} hasPassword={initial.has_password} />
     </div>
   );
 }
