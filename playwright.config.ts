@@ -38,6 +38,11 @@ export default defineConfig({
       // Mirrors the iOS app's WebView so smoke tests catch iPhone-only regressions.
       use: { ...devices['iPhone 14'] },
     },
+    {
+      name: 'mobile-chrome',
+      // Mirrors the Android app's WebView (Chromium) on a Pixel-class phone.
+      use: { ...devices['Pixel 7'] },
+    },
   ],
   webServer: process.env.PLAYWRIGHT_NO_SERVER
     ? undefined
