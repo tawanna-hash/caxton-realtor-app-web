@@ -73,7 +73,7 @@ function Section({ cfg, items, onCreated, onUpdated, onDeleted }: {
 
   async function remove(id: string) {
     if (!window.confirm('Delete this item?')) return;
-    const res = await fetch(`/api/portal/resources/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/portal/resources/${id}?kind=${cfg.kind}`, { method: 'DELETE' });
     if (res.ok) onDeleted(id);
   }
 
@@ -136,9 +136,9 @@ function Section({ cfg, items, onCreated, onUpdated, onDeleted }: {
                     </ul>
                   )}
                 </div>
-                <div className="shrink-0 flex gap-3 text-sm">
-                  <button type="button" onClick={() => { setEditingId(item.id); setAdding(false); }} className="text-[#42277C] hover:underline">Edit</button>
-                  <button type="button" onClick={() => remove(item.id)} className="text-[#661102] hover:underline">Delete</button>
+                <div className="shrink-0 flex flex-col sm:flex-row gap-2 text-sm">
+                  <button type="button" onClick={() => { setEditingId(item.id); setAdding(false); }} className="rounded-md border border-gray-300 px-3 py-1 text-sm text-[#301D5D] hover:bg-gray-50">Edit</button>
+                  <button type="button" onClick={() => remove(item.id)} className="rounded-md border border-[#FF2A04]/30 px-3 py-1 text-sm text-[#661102] hover:bg-[#FFEAE6]">Delete</button>
                 </div>
               </li>
             ),

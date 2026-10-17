@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { getSql, ensureSchema } from '@/lib/db';
+import { ensureSchema } from '@/lib/db';
+import { listRecords } from '@/lib/server/portal-records';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import PageTitle from '@/components/ui/PageTitle';
 import ContentClient from '../ContentClient';
-import { KIND_SLUGS, KIND_CONFIG, type PortalResource } from '@/lib/portal-resources';
+import { KIND_SLUGS, KIND_CONFIG } from '@/lib/portal-resources';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -18,16 +19,7 @@ export default async function PortalContentKindPage({ params }: { params: Promis
   const user = await getCurrentPortalUser();
   if (!user) redirect('/portal/error?code=auth');
   await ensureSchema();
-  const sql = getSql();
-  const rows = (await sql`
-    SELECT id, kind, title, url, notes, fields, files, updated_at
-      FROM portal_resources WHERE advertiser_id = ${user.advertiser_id} AND kind = ${kind}
-     ORDER BY created_at DESC
-  `) as unknown as (Omit<PortalResource, 'updated_at'> & { updated_at: string | Date })[];
-  const items: PortalResource[] = rows.map((r) => ({
-    ...r,
-    updated_at: r.updated_at instanceof Date ? r.updated_at.toISOString() : String(r.updated_at),
-  }));
+  const items = await listRecords(user.advertiser_id, kind);
   const cfg = KIND_CONFIG.find((c) => c.kind === kind)!;
 
   return (
