@@ -43,6 +43,17 @@ interface AccountSummary {
   totalAmountDueCents: number;
 }
 
+/** Single-line address: "street, suite, city, ST 12345". Fixes run-together
+ *  suite text ("Blvd.Suite 200") and a missing state before the zip. */
+function formatBillToAddress(raw: string): string {
+  let a = raw.replace(/\s*[\r\n]+\s*/g, ', ').replace(/\s+/g, ' ').trim();
+  a = a.replace(/([a-z.])(?=(Suite|Ste\.?|Apt\.?|Unit|Bldg\.?|Building|Floor|Fl\.?)\b)/g, '$1, ');
+  a = a.replace(/,\s*,/g, ',');
+  a = a.replace(/,\s*([A-Za-z .'-]+?)\s+(\d{5}(?:-\d{4})?)$/, (m, city, zip) =>
+    /\b[A-Z]{2}$/.test(city.trim()) ? `, ${city.trim().replace(/\s+([A-Z]{2})$/, ', $1')} ${zip}` : `, ${city.trim()}, TX ${zip}`);
+  return a;
+}
+
 function fmtUsd(cents: number): string {
   return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -163,112 +174,6 @@ export default function InvoicePayClient({
         </div>
       )}
 
-      <div className="flex justify-end print:hidden">
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          Print / Save PDF
-        </button>
-      </div>
-
-      <article className="mx-auto bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:w-full print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-8">
-        <header className="grid grid-cols-[1fr_auto] gap-8 border-b border-neutral-300 pb-4">
-          <div className="flex items-start gap-4">
-            <Image
-              src="/brand/caxton-logo.jpg"
-              alt="Caxton Publications Inc."
-              width={160}
-              height={180}
-              className="h-auto w-28 object-contain"
-              priority
-            />
-          </div>
-          <div className="text-right">
-            <h1 className="text-2xl font-normal tracking-wide text-neutral-900">INVOICE</h1>
-            <div className="mt-1 font-semibold">Caxton Publications, Inc.</div>
-            <div>PO Box 81366</div>
-            <div>Austin, Texas 78708-1366</div>
-            <div>United States</div>
-            <div className="mt-2">www.myrealtyline.com</div>
-          </div>
-        </header>
-
-        <section className="grid grid-cols-2 gap-8 py-4">
-          <div>
-            <div className="mb-1 text-[10px] uppercase tracking-wider text-neutral-500">Bill to</div>
-            <div className="font-semibold">{invoice.bill_to_name ?? 'Customer'}</div>
-            {invoice.bill_to_address && <div className="mt-1 whitespace-pre-line">{invoice.bill_to_address}</div>}
-            {invoice.bill_to_email && <div>{invoice.bill_to_email}</div>}
-          </div>
-          <dl className="ml-auto grid grid-cols-[auto_auto] gap-x-3 text-right">
-            <dt className="font-semibold">Invoice Number:</dt><dd>{invoice.number}</dd>
-            <dt className="font-semibold">Invoice Date:</dt><dd>{fmtDate(invoice.issued_at)}</dd>
-            <dt className="font-semibold">Payment Due:</dt><dd>{fmtDate(invoice.due_date)}</dd>
-            <dt className="mt-2 bg-neutral-100 px-2 py-2 font-semibold">Amount Due (USD):</dt>
-            <dd className="mt-2 bg-neutral-100 px-2 py-2 font-semibold">{alreadyPaid ? '$0.00' : fmtUsd(invoice.total_cents)}</dd>
-          </dl>
-        </section>
-
-        <section className="mb-5">
-          <div className="border-b border-neutral-300 pb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-600">Account summary</div>
-          <div className="grid grid-cols-[90px_1fr_auto] gap-x-3 border-b border-neutral-200 py-2">
-            <div>{fmtDate(invoice.issued_at)}</div>
-            <div>Balance Forward</div>
-            <div className="text-right">{fmtUsd(accountSummary.balanceForwardCents)}</div>
-            <div />
-            <div>Payments and credits</div>
-            <div className="text-right">{accountSummary.paymentsCreditsCents > 0 ? `-${fmtUsd(accountSummary.paymentsCreditsCents)}` : fmtUsd(0)}</div>
-            <div />
-            <div>New charges</div>
-            <div className="text-right">{fmtUsd(accountSummary.newChargesCents)}</div>
-            <div />
-            <div className="font-semibold">Total Amount Due</div>
-            <div className="text-right font-semibold">{fmtUsd(accountSummary.totalAmountDueCents)}</div>
-          </div>
-        </section>
-
-        <section>
-          <div className="grid grid-cols-[1fr_70px_85px_90px] bg-neutral-900 px-3 py-2 font-semibold text-white">
-            <div>Services</div><div className="text-center">Quantity</div><div className="text-right">Rate</div><div className="text-right">Amount</div>
-          </div>
-          {invoice.line_items?.length ? invoice.line_items.map((li, i) => (
-            <div key={i} className="grid grid-cols-[1fr_70px_85px_90px] border-b border-neutral-200 px-3 py-3">
-              <div>{li.description}</div>
-              <div className="text-center">{li.qty}</div>
-              <div className="text-right">{fmtUsd(li.unit_cents)}</div>
-              <div className="text-right">{fmtUsd(li.unit_cents * li.qty)}</div>
-            </div>
-          )) : (
-            <div className="border-b border-neutral-200 px-3 py-4 text-center italic text-neutral-500">No itemized services.</div>
-          )}
-        </section>
-
-        <section className="ml-auto mt-3 w-64">
-          <div className="flex justify-between border-b border-neutral-200 py-1"><span>Total:</span><span>{fmtUsd(invoice.amount_cents)}</span></div>
-          {invoice.tax_cents > 0 && <div className="flex justify-between border-b border-neutral-200 py-1"><span>Tax:</span><span>{fmtUsd(invoice.tax_cents)}</span></div>}
-          <div className="flex justify-between py-2 font-semibold"><span>Amount Due (USD):</span><span>{alreadyPaid ? '$0.00' : fmtUsd(invoice.total_cents)}</span></div>
-        </section>
-
-        {invoice.memo && <section className="mt-3 border-t border-neutral-200 pt-3"><div className="font-semibold">Notes</div><div className="mt-1 whitespace-pre-line">{invoice.memo}</div></section>}
-
-        <section className="mt-4 border-t border-neutral-300 pt-4">
-          <h2 className="mb-3 font-semibold">Notes / Terms</h2>
-          <div className="space-y-3 text-[9px] leading-[1.45]">
-            <p>CAXTON PUBLICATIONS INC<br />RealtyLine Austin, Newsline San Antonio and Realty News Now App are dba&apos;s under Caxton Publications, Inc. The Services line item specifies the dab name to indicate where your ad is being placed and billed. Please note that placement in one company does not automatically include placement in the other. Each insertion is billed separately accordingly.</p>
-            {INVOICE_TERMS.map((term) => (
-              <div key={term.title}>
-                <div className="font-semibold">{term.title}</div>
-                <p>{term.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <footer className="mt-8 text-center text-[9px] text-neutral-500">We appreciate your business.</footer>
-      </article>
-
       {alreadyPaid ? (
         <div className="rounded-lg border border-[#00E200]/30 bg-[#E0FBE0] px-4 py-4 text-center text-[#005A00] print:hidden">
           <div className="text-lg font-semibold">Thank you — this invoice is paid.</div>
@@ -350,6 +255,112 @@ export default function InvoicePayClient({
           )}
         </div>
       )}
+
+      <div className="flex justify-end print:hidden">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Print / Save PDF
+        </button>
+      </div>
+
+      <article className="mx-auto bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:w-full print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-8">
+        <header className="grid grid-cols-[1fr_auto] gap-8 border-b border-neutral-300 pb-4">
+          <div className="flex items-start gap-4">
+            <Image
+              src="/brand/caxton-logo.jpg"
+              alt="Caxton Publications Inc."
+              width={160}
+              height={180}
+              className="h-auto w-28 object-contain"
+              priority
+            />
+          </div>
+          <div className="text-right">
+            <h1 className="text-2xl font-normal tracking-wide text-neutral-900">INVOICE</h1>
+            <div className="mt-1 font-semibold">Caxton Publications, Inc.</div>
+            <div>PO Box 81366</div>
+            <div>Austin, Texas 78708-1366</div>
+            <div>United States</div>
+            <div className="mt-2">www.myrealtyline.com</div>
+          </div>
+        </header>
+
+        <section className="grid grid-cols-2 gap-8 py-4">
+          <div>
+            <div className="mb-1 text-[10px] uppercase tracking-wider text-neutral-500">Bill to</div>
+            <div className="font-semibold">{invoice.bill_to_name ?? 'Customer'}</div>
+            {invoice.bill_to_address && <div className="mt-1">{formatBillToAddress(invoice.bill_to_address)}</div>}
+            {invoice.bill_to_email && <div>{invoice.bill_to_email}</div>}
+          </div>
+          <dl className="ml-auto grid grid-cols-[auto_auto] gap-x-3 text-right">
+            <dt className="font-semibold">Invoice Number:</dt><dd>{invoice.number}</dd>
+            <dt className="font-semibold">Invoice Date:</dt><dd>{fmtDate(invoice.issued_at)}</dd>
+            <dt className="font-semibold">Payment Due:</dt><dd>{fmtDate(invoice.due_date)}</dd>
+            <dt className="mt-2 bg-neutral-100 px-2 py-2 font-semibold">Amount Due (USD):</dt>
+            <dd className="mt-2 bg-neutral-100 px-2 py-2 font-semibold">{alreadyPaid ? '$0.00' : fmtUsd(invoice.total_cents)}</dd>
+          </dl>
+        </section>
+
+        <section className="mb-5">
+          <div className="border-b border-neutral-300 pb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-600">Account summary</div>
+          <div className="grid grid-cols-[90px_1fr_auto] gap-x-3 border-b border-neutral-200 py-2">
+            <div>{fmtDate(invoice.issued_at)}</div>
+            <div>Balance Forward</div>
+            <div className="text-right">{fmtUsd(accountSummary.balanceForwardCents)}</div>
+            <div />
+            <div>Payments and credits</div>
+            <div className="text-right">{accountSummary.paymentsCreditsCents > 0 ? `-${fmtUsd(accountSummary.paymentsCreditsCents)}` : fmtUsd(0)}</div>
+            <div />
+            <div>New charges</div>
+            <div className="text-right">{fmtUsd(accountSummary.newChargesCents)}</div>
+            <div />
+            <div className="font-semibold">Total Amount Due</div>
+            <div className="text-right font-semibold">{fmtUsd(accountSummary.totalAmountDueCents)}</div>
+          </div>
+        </section>
+
+        <section>
+          <div className="grid grid-cols-[1fr_70px_85px_90px] bg-neutral-900 px-3 py-2 font-semibold text-white">
+            <div>Services</div><div className="text-center">Quantity</div><div className="text-right">Rate</div><div className="text-right">Amount</div>
+          </div>
+          {invoice.line_items?.length ? invoice.line_items.map((li, i) => (
+            <div key={i} className="grid grid-cols-[1fr_70px_85px_90px] border-b border-neutral-200 px-3 py-3">
+              <div>{li.description}</div>
+              <div className="text-center">{li.qty}</div>
+              <div className="text-right">{fmtUsd(li.unit_cents)}</div>
+              <div className="text-right">{fmtUsd(li.unit_cents * li.qty)}</div>
+            </div>
+          )) : (
+            <div className="border-b border-neutral-200 px-3 py-4 text-center italic text-neutral-500">No itemized services.</div>
+          )}
+        </section>
+
+        <section className="ml-auto mt-3 w-64">
+          <div className="flex justify-between border-b border-neutral-200 py-1"><span>Total:</span><span>{fmtUsd(invoice.amount_cents)}</span></div>
+          {invoice.tax_cents > 0 && <div className="flex justify-between border-b border-neutral-200 py-1"><span>Tax:</span><span>{fmtUsd(invoice.tax_cents)}</span></div>}
+          <div className="flex justify-between py-2 font-semibold"><span>Amount Due (USD):</span><span>{alreadyPaid ? '$0.00' : fmtUsd(invoice.total_cents)}</span></div>
+        </section>
+
+        {invoice.memo && <section className="mt-3 border-t border-neutral-200 pt-3"><div className="font-semibold">Notes</div><div className="mt-1 whitespace-pre-line">{invoice.memo}</div></section>}
+
+        <section className="mt-4 border-t border-neutral-300 pt-4">
+          <h2 className="mb-3 font-semibold">Notes / Terms</h2>
+          <div className="space-y-3 text-[9px] leading-[1.45]">
+            <p>CAXTON PUBLICATIONS INC<br />RealtyLine Austin, Newsline San Antonio and Realty News Now App are dba&apos;s under Caxton Publications, Inc. The Services line item specifies the dab name to indicate where your ad is being placed and billed. Please note that placement in one company does not automatically include placement in the other. Each insertion is billed separately accordingly.</p>
+            {INVOICE_TERMS.map((term) => (
+              <div key={term.title}>
+                <div className="font-semibold">{term.title}</div>
+                <p>{term.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <footer className="mt-8 text-center text-[9px] text-neutral-500">We appreciate your business.</footer>
+      </article>
     </div>
   );
 }
