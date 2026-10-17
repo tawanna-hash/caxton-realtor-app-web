@@ -36,7 +36,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
   if (!to && ts.advertiser_id) {
     const sql = getSql();
     const rows = (await sql`
-      SELECT email FROM advertisers WHERE id = ${ts.advertiser_id} LIMIT 1
+      SELECT contact_email AS email FROM advertisers WHERE id = ${ts.advertiser_id} LIMIT 1
     `) as unknown as Array<{ email: string | null }>;
     to = rows[0]?.email ?? '';
   }
