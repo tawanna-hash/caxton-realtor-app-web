@@ -192,7 +192,8 @@ const nextConfig: NextConfig = {
       { source: '/subscriptions', destination: '/newsletter', permanent: false },
       { source: '/contact', destination: '/about', permanent: false },
       { source: '/five-points', destination: '/communities', permanent: false },
-      { source: '/advertisers/:path*', destination: '/partners/:path*', permanent: true },
+      { source: '/advertisers', destination: '/partners', permanent: true },
+      { source: '/advertisers/:path+', destination: '/partners/:path+', permanent: true },
       // Agent Deal Desk renamed to ClosingTime (Sep 2026). Redirect old links/bookmarks.
       { source: '/agents/deal-desk', destination: '/agents/closing-time', permanent: true },
       { source: '/agents/deal-desk/:path*', destination: '/agents/closing-time/:path*', permanent: true },
