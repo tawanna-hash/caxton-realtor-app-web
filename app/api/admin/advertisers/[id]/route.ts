@@ -118,6 +118,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
     const updates: string[] = [];
+    let previousBillingEmail: string | null = null;
     const setClauses: { col: string; val: unknown }[] = [];
 
     // Company Name is the canonical partner identity throughout admin. Some
@@ -232,7 +233,12 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'tags':                await sql`UPDATE advertisers SET tags = ${val}::jsonb                WHERE id = ${idNum}`; break;
         case 'billing_contact_name':  await sql`UPDATE advertisers SET billing_contact_name = ${val}     WHERE id = ${idNum}`; break;
         case 'billing_contact_phone': await sql`UPDATE advertisers SET billing_contact_phone = ${val}    WHERE id = ${idNum}`; break;
-        case 'billing_email':         await sql`UPDATE advertisers SET billing_email = ${val}            WHERE id = ${idNum}`; break;
+        case 'billing_email': {
+          const prior = (await sql`SELECT billing_email FROM advertisers WHERE id = ${idNum}`) as unknown as { billing_email: string | null }[];
+          previousBillingEmail = prior[0]?.billing_email ?? null;
+          await sql`UPDATE advertisers SET billing_email = ${val}            WHERE id = ${idNum}`;
+          break;
+        }
         case 'payment_mode':          await sql`UPDATE advertisers SET payment_mode = ${val}             WHERE id = ${idNum}`; break;
         case 'stripe_customer_id':    await sql`UPDATE advertisers SET stripe_customer_id = ${val}       WHERE id = ${idNum}`; break;
         case 'card_last4':            await sql`UPDATE advertisers SET card_last4 = ${val}                WHERE id = ${idNum}`; break;
@@ -347,6 +353,31 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       await upsertAdvertiserMailingByAdvertiserId(idNum);
     } catch (err) {
       console.warn('[admin/advertisers PATCH] mailing upsert failed:', err);
+    }
+
+    // Carry a changed billing email onto this partner's active recurring
+    // schedules (they snapshot bill_to_email when created). Schedules with a
+    // deliberate, different override are left alone.
+    if (updates.includes('billing_email')) {
+      try {
+        const next = (rows[0] as { billing_email?: string | null } | undefined)?.billing_email?.trim() || null;
+        if (next) {
+          await sql`
+            UPDATE recurring_invoice_schedules s
+               SET bill_to_email = ${next}
+              FROM advertisers a
+             WHERE s.advertiser_id = ${idNum} AND a.id = s.advertiser_id
+               AND s.status = 'active'
+               AND (
+                 COALESCE(btrim(s.bill_to_email), '') = ''
+                 OR lower(s.bill_to_email) = lower(COALESCE(a.contact_email, ''))
+                 OR lower(s.bill_to_email) = lower(COALESCE(${previousBillingEmail}, ''))
+               )
+          `;
+        }
+      } catch (err) {
+        console.warn('[admin/advertisers PATCH] schedule email sync failed:', err);
+      }
     }
 
     // Mirror identity edits back onto the current agreement so the
