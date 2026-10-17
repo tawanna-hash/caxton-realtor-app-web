@@ -1051,6 +1051,29 @@ function EditDrawer({
     }
   };
 
+  const openPortalPreview = async () => {
+    // Open the tab synchronously so the browser does not block the popup.
+    const tab = window.open('about:blank', '_blank');
+    try {
+      const res = await fetch('/api/admin/portal-preview', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ advertiser_id: row.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        tab?.close();
+        setLinkResult({ error: data?.error ?? `HTTP ${res.status}` });
+        return;
+      }
+      if (tab) tab.location.href = data.url ?? '/portal';
+      else window.location.href = data.url ?? '/portal';
+    } catch (err) {
+      tab?.close();
+      setLinkResult({ error: err instanceof Error ? err.message : 'preview failed' });
+    }
+  };
+
   const sendPortalLink = async (
     purpose: 'login' | 'sign_agreement' | 'pay_invoice' | 'form' = 'login',
   ) => {
@@ -1558,6 +1581,21 @@ function EditDrawer({
                   className="shrink-0 rounded-md bg-gray-900 text-white px-3 py-2 text-sm hover:bg-gray-800 disabled:opacity-50"
                 >
                   {sendingLink ? 'Sending…' : 'Send portal link'}
+                </button>
+              </div>
+              <div className="flex items-start justify-between gap-3 border-t border-gray-200 pt-3">
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Preview portal</div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    Opens this partner&apos;s portal in a new tab, read-only for 1 hour. No email is sent.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={openPortalPreview}
+                  className="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 hover:bg-gray-50"
+                >
+                  Open portal as partner
                 </button>
               </div>
               {linkResult?.error && (

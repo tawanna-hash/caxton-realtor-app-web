@@ -17,6 +17,10 @@ import crypto from 'node:crypto';
 
 // ── Constants ───────────────────────────────────────────────────────
 export const PORTAL_SESSION_COOKIE = 'caxton_portal_sid';
+/** Present only while an admin is previewing a partner portal (read-only). */
+export const PORTAL_PREVIEW_COOKIE = 'caxton_portal_preview';
+export const PORTAL_PREVIEW_CREATED_BY = 'admin-preview';
+export const PORTAL_PREVIEW_TTL_MS = 1000 * 60 * 60; // 1h
 export const PORTAL_LINK_TTL_MS = 1000 * 60 * 60 * 24;  // 24h to click
 export const PORTAL_SESSION_TTL_MS = 1000 * 60 * 60 * 4; // 4h after consume
 

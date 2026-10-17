@@ -20,6 +20,8 @@ export interface PortalSessionUser {
   email: string | null;
   company: string | null;
   publication: string | null;
+  /** True when an admin is previewing this portal (read-only). */
+  preview: boolean;
   session_expires_at: string;
 }
 
@@ -51,6 +53,7 @@ export async function getCurrentPortalUser(): Promise<PortalSessionUser | null> 
     email: row.email,
     company: row.company,
     publication: row.publication,
+    preview: (row.created_by ?? '').startsWith('admin-preview'),
     session_expires_at: row.session_expires_at as string,
   };
 }
