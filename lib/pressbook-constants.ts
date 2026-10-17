@@ -1,10 +1,10 @@
 // lib/pressbook-constants.ts
 // Verbatim Pressbook CRM constants ported to TypeScript.
 export const AD_RATE_TABLE: Record<string, Record<string, number>> = {
-  '1x':  { 'Full-page': 1440, '1/2 page': 1150, '1/4 page': 880 },
-  '3x':  { 'Full-page': 1205, '1/2 page': 915,  '1/4 page': 645 },
-  '6x':  { 'Full-page': 1140, '1/2 page': 845,  '1/4 page': 575 },
-  '12x': { 'Full-page': 1050, '1/2 page': 755,  '1/4 page': 485 },
+  '1x':  { 'Full-page': 1740, '1/2 page': 1390, '1/4 page': 1065 },
+  '3x':  { 'Full-page': 1460, '1/2 page': 1105,  '1/4 page': 780 },
+  '6x':  { 'Full-page': 1380, '1/2 page': 1020,  '1/4 page': 695 },
+  '12x': { 'Full-page': 1270, '1/2 page': 915,  '1/4 page': 585 },
 };
 
 export const MONTHS_LIST: { k: string; l: string }[] = [

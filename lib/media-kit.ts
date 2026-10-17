@@ -342,10 +342,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Featured Builder Strip',
     zone: 'feed',
     tier: 'premium',
-    weeklySingle: 350,
-    weeklyBoth: 525,
-    monthlySingle: 1400,
-    monthlyBoth: 2100,
+    weeklySingle: 425,
+    weeklyBoth: 635,
+    monthlySingle: 1695,
+    monthlyBoth: 2540,
     sizes: '1200×200 desktop · 600×160 mobile',
     notes: 'Top of /builders + /inventory. Logo + tagline + CTA.',
   },
@@ -354,10 +354,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Giveaway Prize Sponsor',
     zone: 'feed',
     tier: 'premium',
-    weeklySingle: 350,
-    weeklyBoth: 525,
-    monthlySingle: 1400,
-    monthlyBoth: 2100,
+    weeklySingle: 425,
+    weeklyBoth: 635,
+    monthlySingle: 1695,
+    monthlyBoth: 2540,
     sizes: '1080×600 feed card · native entry page',
     notes: 'Per giveaway, typically 2–4 weeks. Sponsor pays prize + visibility.',
   },
@@ -367,10 +367,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Article Top Leaderboard',
     zone: 'article',
     tier: 'premium',
-    weeklySingle: 300,
-    weeklyBoth: 450,
-    monthlySingle: 1200,
-    monthlyBoth: 1800,
+    weeklySingle: 365,
+    weeklyBoth: 545,
+    monthlySingle: 1450,
+    monthlyBoth: 2180,
     sizes: '728×90 desktop · 320×50 mobile · 300×250 fallback',
     notes: '100% of article opens, above-the-fold.',
   },
@@ -379,10 +379,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Article Interstitial',
     zone: 'article',
     tier: 'premium',
-    weeklySingle: 300,
-    weeklyBoth: 450,
-    monthlySingle: 1200,
-    monthlyBoth: 1800,
+    weeklySingle: 365,
+    weeklyBoth: 545,
+    monthlySingle: 1450,
+    monthlyBoth: 2180,
     sizes: '1080×1920 mobile fullscreen · 970×250 desktop',
     notes: 'Every 4th article tap; never on first session. High friction — reserved.',
   },
@@ -391,10 +391,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Article Sidebar (Desktop)',
     zone: 'article',
     tier: 'premium',
-    weeklySingle: 275,
-    weeklyBoth: 425,
-    monthlySingle: 1100,
-    monthlyBoth: 1700,
+    weeklySingle: 335,
+    weeklyBoth: 515,
+    monthlySingle: 1330,
+    monthlyBoth: 2055,
     sizes: '300×600 desktop · 300×250 stacked',
     notes: 'Desktop only (≥1024px). Long-dwell placement.',
   },
@@ -403,10 +403,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Calendar Event Sponsor',
     zone: 'calendar',
     tier: 'premium',
-    weeklySingle: 275,
-    weeklyBoth: 425,
-    monthlySingle: 1100,
-    monthlyBoth: 1700,
+    weeklySingle: 335,
+    weeklyBoth: 515,
+    monthlySingle: 1330,
+    monthlyBoth: 2055,
     sizes: 'Native event card (gold border)',
     notes: 'Pinned to top of calendar list. “Presented by” tag. 1–2 per pub per week.',
   },
@@ -415,10 +415,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Account Page Splash',
     zone: 'account',
     tier: 'premium',
-    weeklySingle: 250,
-    weeklyBoth: 400,
-    monthlySingle: 1000,
-    monthlyBoth: 1600,
+    weeklySingle: 305,
+    weeklyBoth: 485,
+    monthlySingle: 1210,
+    monthlyBoth: 1935,
     sizes: '1080×400 banner · 970×250 desktop · 320×250 mobile',
     notes: 'Top of /account + /profile, every visit. Rotates per session.',
   },
@@ -428,8 +428,8 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'e-Blast Top Banner',
     zone: 'newsletter',
     tier: 'premium',
-    weeklySingle: 250,
-    weeklyBoth: 400,
+    weeklySingle: 305,
+    weeklyBoth: 485,
     monthlySingle: null,
     monthlyBoth: null,
     pricingUnit: 'per send',
@@ -441,10 +441,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Splash / Welcome',
     zone: 'app',
     tier: 'premium',
-    weeklySingle: 400,
-    weeklyBoth: 600,
-    monthlySingle: 1600,
-    monthlyBoth: 2400,
+    weeklySingle: 485,
+    weeklyBoth: 725,
+    monthlySingle: 1935,
+    monthlyBoth: 2905,
     sizes: '1080×1920 mobile fullscreen',
     notes: 'App-open moment, first session of the day. Never twice in 12h.',
   },
@@ -453,8 +453,8 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Push Notification Sponsor',
     zone: 'app',
     tier: 'premium',
-    weeklySingle: 500,
-    weeklyBoth: 750,
+    weeklySingle: 605,
+    weeklyBoth: 910,
     monthlySingle: null,
     monthlyBoth: null,
     pricingUnit: 'per push',
@@ -468,10 +468,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Feed Top Banner',
     zone: 'feed',
     tier: 'standard',
-    weeklySingle: 150,
-    weeklyBoth: 225,
-    monthlySingle: 600,
-    monthlyBoth: 900,
+    weeklySingle: 180,
+    weeklyBoth: 270,
+    monthlySingle: 725,
+    monthlyBoth: 1090,
     sizes: '728×90 desktop · 320×50 mobile',
     notes: 'Top of feed, both pubs.',
   },
@@ -480,10 +480,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Feed Inline Card',
     zone: 'feed',
     tier: 'standard',
-    weeklySingle: 125,
-    weeklyBoth: 200,
-    monthlySingle: 500,
-    monthlyBoth: 800,
+    weeklySingle: 150,
+    weeklyBoth: 240,
+    monthlySingle: 605,
+    monthlyBoth: 970,
     sizes: '1080×600 native',
     notes: 'Every 6th feed card. Marked SPONSORED.',
   },
@@ -493,10 +493,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Feed Sticky Bottom',
     zone: 'feed',
     tier: 'standard',
-    weeklySingle: 125,
-    weeklyBoth: 200,
-    monthlySingle: 500,
-    monthlyBoth: 800,
+    weeklySingle: 150,
+    weeklyBoth: 240,
+    monthlySingle: 605,
+    monthlyBoth: 970,
     sizes: '320×50 mobile · 320×100 mobile large',
     notes: 'Persistent at bottom while scrolling feed. Dismissable.',
   },
@@ -505,10 +505,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Article Mid-Inline',
     zone: 'article',
     tier: 'standard',
-    weeklySingle: 150,
-    weeklyBoth: 225,
-    monthlySingle: 600,
-    monthlyBoth: 900,
+    weeklySingle: 180,
+    weeklyBoth: 270,
+    monthlySingle: 725,
+    monthlyBoth: 1090,
     sizes: '300×250 · 320×100 mobile large',
     notes: 'Inserted at 40% scroll depth on articles >600 words.',
   },
@@ -517,10 +517,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Article Bottom',
     zone: 'article',
     tier: 'standard',
-    weeklySingle: 125,
-    weeklyBoth: 200,
-    monthlySingle: 500,
-    monthlyBoth: 800,
+    weeklySingle: 150,
+    weeklyBoth: 240,
+    monthlySingle: 605,
+    monthlyBoth: 970,
     sizes: '300×250 · 728×90 desktop',
     notes: '100% of article completions.',
   },
@@ -530,10 +530,10 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     name: 'Calendar Top Banner',
     zone: 'calendar',
     tier: 'standard',
-    weeklySingle: 125,
-    weeklyBoth: 200,
-    monthlySingle: 500,
-    monthlyBoth: 800,
+    weeklySingle: 150,
+    weeklyBoth: 240,
+    monthlySingle: 605,
+    monthlyBoth: 970,
     sizes: '728×90 desktop · 320×50 mobile',
     notes: 'Top of calendar tab, both pubs.',
   },
@@ -549,9 +549,9 @@ export const PACKAGES: Package[] = [
     popular: false,
     features: ['Ad Creative in Print & Digital Editions'],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1440 },
-      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price: 1150 },
-      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  880 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1740 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price: 1390 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  1065 },
     ],
   },
   {
@@ -566,9 +566,9 @@ export const PACKAGES: Package[] = [
       'Unlimited Calendar of Events Entries Online',
     ],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1205 },
-      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  915 },
-      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  645 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1460 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  1105 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  780 },
     ],
   },
   {
@@ -588,9 +588,9 @@ export const PACKAGES: Package[] = [
       'Builder/Developer Inventory in Weekly e-Blast',
     ],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1140 },
-      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  845 },
-      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  575 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1380 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  1020 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  695 },
     ],
   },
   {
@@ -610,9 +610,9 @@ export const PACKAGES: Package[] = [
       'Builder/Developer Inventory in Weekly e-Blast',
     ],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1050 },
-      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  755 },
-      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  485 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1270 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  915 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  585 },
     ],
   },
   {
@@ -635,7 +635,7 @@ export const PACKAGES: Package[] = [
       'Logo & Link — Weekly Emails',
     ],
     sizes: [
-      { size: 'Full Page', dim: '10 × 11 in', price: 1680 },
+      { size: 'Full Page', dim: '10 × 11 in', price: 2035 },
     ],
   },
 ];
@@ -643,32 +643,32 @@ export const PACKAGES: Package[] = [
 // ── e-Blasts ────────────────────────────────────────────────────────────────
 
 // e-Blast pricing model (mixed flat + CPM):
-//   - Austin (RealtyLine, 39K): flat $1,100 / $1,425 packages. Each package
+//   - Austin (RealtyLine, 39K): flat $1,330 / $1,755 packages. Each package
 //     = 2 sends. Pkg 2 adds event-day coverage. Both packages offered.
 //   - Newsline San Antonio (14K): single CPM-priced package, no event
-//     coverage. $0.05/sub x 2 sends = $1,400. Pkg 1 only.
-//   - Houston (50K) + Dallas/FTW (27K): $0.05/sub x 1 send per package.
+//     coverage. flat $595 package (2 sends). Pkg 1 only.
+//   - Houston (50K) + Dallas/FTW (27K): ~$0.0605/sub x 1 send per package.
 //     Pkg 1 only - no event-coverage SKU.
 //
-//   Austin pkg 1 (2 sends):       $1,100  (flat)
-//   Austin pkg 2 (2 sends + ev):  $1,425  (flat)
-//   Newsline pkg 1 (2 sends):     14,000 x $0.05 x 2 = $1,400
-//   Houston pkg 1 (1 send):       50,000 x $0.05 = $2,500
-//   Dallas/FTW pkg 1 (1 send):    27,000 x $0.05 = $1,350
+//   Austin pkg 1 (2 sends):       $1,330  (flat)
+//   Austin pkg 2 (2 sends + ev):  $1,755  (flat)
+//   Newsline pkg 1 (2 sends):     $595  (flat; 2026 rate +21%)
+//   Houston pkg 1 (1 send):       $3,025  (50,000 x ~$0.0605)
+//   Dallas/FTW pkg 1 (1 send):    $1,635  (27,000 x ~$0.0605)
 export const EBLASTS: EBlast[] = [
   {
     name: 'e-Blast Package No. 1',
     // Default price falls back to the Austin (RealtyLine) rate. Non-pub-aware
     // callers see the Austin number until they use eblastPriceForPub().
     // 2026 rates from the printed media kit.
-    price: 1099,
+    price: 1330,
     sends: 2,
     priceByPub: {
-      'realtyline':         1099,  // Austin (44K+ subs)
-      'newsline':            492,  // SA     (20K+ subs)
-      'both':               1432,  // Austin + Newsline bundle (10% off)
-      'realtyline-houston': 2500,  // Houston (50K x $0.05 x 1) — launching soon
-      'realtyline-dallas':  1350,  // Dallas  (27K x $0.05 x 1) — launching soon
+      'realtyline':         1330,  // Austin (44K+ subs)
+      'newsline':            595,  // SA     (20K+ subs)
+      'both':               1735,  // Austin + Newsline bundle (10% off)
+      'realtyline-houston': 3025,  // Houston (50K x ~$0.0605 x 1) — launching soon
+      'realtyline-dallas':  1635,  // Dallas  (27K x ~$0.0605 x 1) — launching soon
     },
     sendsByPub: {
       'realtyline-houston': 1,
@@ -696,12 +696,12 @@ export const EBLASTS: EBlast[] = [
     name: 'e-Blast Package No. 2',
     // Pkg 2 (event-coverage) is sold on Austin, Newsline SA, and the
     // Austin + Newsline bundle. Houston + Dallas/FTW sell Pkg 1 only.
-    price: 1449,
+    price: 1755,
     sends: 2,
     priceByPub: {
-      'realtyline': 1449,  // Austin
-      'newsline':    842,  // Newsline SA
-      'both':       2062,  // Bundle (10% off)
+      'realtyline': 1755,  // Austin
+      'newsline':    1020,  // Newsline SA
+      'both':       2495,  // Bundle (10% off)
     },
     availablePubs: ['realtyline', 'newsline', 'both'],
     features: [
@@ -802,9 +802,9 @@ export const PRINT_DEADLINES: PrintDeadline[] = REALTYLINE_2026;
 
 export const RATE_MATRIX: Record<string, [number, number, number, number]> = {
   // [1x, 3x, 6x, 12x] per month
-  'Full Page':    [1440, 1205, 1140, 1050],
-  'Half-Page':    [1150,  915,  845,  755],
-  'Quarter-Page': [ 880,  645,  575,  485],
+  'Full Page':    [1740, 1460, 1380, 1270],
+  'Half-Page':    [1390, 1105, 1020, 915],
+  'Quarter-Page': [1065, 780, 695, 585],
 };
 
 export const FREQ_LABELS: [string, string, string, string] = ['1x', '3x', '6x', '12x'];
@@ -812,7 +812,7 @@ export const FREQ_TERMS:  [string, string, string, string] = [
   'No Agreement', '3-Month', '6-Month', '12-Month',
 ];
 
-// Brand[12 Plus] is a separate premium tier — Full Page only at $1,680/mo
+// Brand[12 Plus] is a separate premium tier — Full Page only at $2,035/mo
 // ── Audience stats (RealtyLine) ────────────────────────────────────────────
 
 export interface AudienceStat {

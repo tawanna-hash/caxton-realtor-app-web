@@ -15,19 +15,19 @@ import { APP_AD_SLOTS, EBLASTS } from '@/lib/media-kit';
 export const metadata = {
   title: 'App & Web Placements \u2014 Realty News Now',
   description:
-    'Buy ad placements directly on Realty News Now. 16 digital ad formats from $125/week, pick your market and dates, no sales call required \u2014 go live in as few as 2 business days.',
+    'Buy ad placements directly on Realty News Now. 16 digital ad formats from $150/week, pick your market and dates, no sales call required \u2014 go live in as few as 2 business days.',
 };
 
-// Lowest weekly price across the catalog \u2014 used as the "From $125" pill.
+// Lowest weekly price across the catalog \u2014 used as the "From $150" pill.
 function lowestWeekly(): number {
   const prices = APP_AD_SLOTS.map((s) => s.weeklySingle).filter((n) => n > 0);
-  return prices.length > 0 ? Math.min(...prices) : 125;
+  return prices.length > 0 ? Math.min(...prices) : 150;
 }
 
-// Highest weekly price (single-market) \u2014 used in "$125\u2013$X" copy on the card.
+// Highest weekly price (single-market) \u2014 used in "$150\u2013$X" copy on the card.
 function highestWeekly(): number {
   const prices = APP_AD_SLOTS.map((s) => s.weeklySingle).filter((n) => n > 0);
-  return prices.length > 0 ? Math.max(...prices) : 500;
+  return prices.length > 0 ? Math.max(...prices) : 605;
 }
 
 export default function SelfServicePortalPage() {
