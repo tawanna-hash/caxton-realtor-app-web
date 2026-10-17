@@ -595,7 +595,7 @@ export function RecurringScheduleDrawer({
                 checked={autoSend}
                 onChange={(e) => setAutoSend(e.target.checked)}
               />
-              Automatically mark generated invoices as &ldquo;sent&rdquo; (email delivery is not yet automated)
+              Email generated invoices automatically when they are created (unchecked, they stay as drafts for review)
             </label>
             <div className="grid gap-2 rounded-lg border border-gray-200 p-3 sm:grid-cols-2">
               <label className="flex items-center gap-2 text-sm text-gray-700">
