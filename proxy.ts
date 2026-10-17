@@ -314,6 +314,19 @@ export async function proxy(req: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // 1c-2. Booking management, closing scheduling, and the deal portal live in the
+  //       separate Closing Time app on closingtimetexas.com.
+  if (
+    (host === 'realtynewsnow.app' || host === 'www.realtynewsnow.app') &&
+    (req.method === 'GET' || req.method === 'HEAD') &&
+    (pathname.startsWith('/book/manage/') ||
+      pathname.startsWith('/book/closing/choose/') ||
+      pathname.startsWith('/book/closing/title/') ||
+      pathname.startsWith('/deal-portal/'))
+  ) {
+    return NextResponse.redirect(`https://closingtimetexas.com${pathname}${search}`, 307);
+  }
+
   // 1c. Closing Time lives on its own domain; the old address forwards there.
   if ((host === 'realtynewsnow.app' || host === 'www.realtynewsnow.app') && req.method === 'GET' && (pathname === '/agents/closing-time' || pathname.startsWith('/agents/closing-time/') || pathname.startsWith('/book/') || pathname.startsWith('/deal-portal/'))) {
     return NextResponse.redirect(`https://itsalmostclosingtime.com${pathname}${search}`, 307);
