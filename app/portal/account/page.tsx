@@ -20,7 +20,7 @@ export default async function PortalAccountPage() {
   const sql = getSql();
   const rows = (await sql`
     SELECT id, name, company, phone, office_phone, website,
-           address, city, state, zip, portal_email, email,
+           address, city, state, zip, portal_email, contact_email AS email,
            footer_template
     FROM advertisers WHERE id = ${user.advertiser_id}
   `) as unknown as {
