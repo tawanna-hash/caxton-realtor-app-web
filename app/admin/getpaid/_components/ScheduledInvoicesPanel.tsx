@@ -42,7 +42,7 @@ export function ScheduledInvoicesPanel({ drafts, onEditDraft, onSendDraft }: {
   const upcoming = useMemo(() => {
     return (schedules ?? [])
       .filter((s) => s.status === 'active' && (!s.max_occurrences || s.occurrences_generated < s.max_occurrences))
-      .filter((s) => !s.end_date || new Date(s.next_run_at) <= new Date(s.end_date))
+      .filter((s) => !s.end_date || new Date(s.next_run_at) <= new Date(`${String(s.end_date).slice(0, 10)}T23:59:59Z`))
       .sort((a, b) => new Date(a.next_run_at).getTime() - new Date(b.next_run_at).getTime());
   }, [schedules]);
 
@@ -251,7 +251,7 @@ export function ScheduledInvoicesPanel({ drafts, onEditDraft, onSendDraft }: {
                       <div className="text-xs text-gray-500">{everyLabel(s.frequency, s.interval_count)}</div>
                     </td>
                     <td className={td}>
-                      {s.end_date ? `End date ${fmtDay(`${s.end_date}T12:00:00Z`)}` : `After ${s.max_occurrences} invoices (${s.occurrences_generated} sent)`}
+                      {s.end_date ? `End date ${fmtDay(`${String(s.end_date).slice(0, 10)}T12:00:00Z`)}` : `After ${s.max_occurrences} invoices (${s.occurrences_generated} sent)`}
                     </td>
                     <td className={`${td} text-right`}>{remaining}</td>
                     <td className={`${td} text-right font-medium`}>{formatCents(amount)}</td>

@@ -112,7 +112,7 @@ export function isScheduleExhausted(
     return true;
   }
   if (schedule.end_date) {
-    const end = new Date(schedule.end_date + 'T23:59:59Z');
+    const end = new Date(String(schedule.end_date).slice(0, 10) + 'T23:59:59Z');
     const next = new Date(schedule.next_run_at);
     if (next > end) return true;
   }
