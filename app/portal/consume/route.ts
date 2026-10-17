@@ -16,6 +16,7 @@ import {
   hashMagicLinkToken,
   isLinkConsumable,
   PORTAL_SESSION_COOKIE,
+  PORTAL_PREVIEW_COOKIE,
   PORTAL_SESSION_TTL_MS,
 } from '@/lib/portal';
 
@@ -71,6 +72,7 @@ export async function GET(req: NextRequest) {
 
     // Build redirect with cookie. No Max-Age = browser-close kills it.
     const res = NextResponse.redirect(new URL(destination, req.url));
+    res.cookies.delete(PORTAL_PREVIEW_COOKIE);
     res.cookies.set({
       name: PORTAL_SESSION_COOKIE,
       value: row.id,

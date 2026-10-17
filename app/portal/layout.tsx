@@ -20,6 +20,16 @@ export default async function PortalLayout({ children }: { children: React.React
 
   return (
     <div className="min-h-screen bg-white">
+      {user?.preview && (
+        <div className="bg-[#301D5D] text-white text-sm">
+          <div className="mx-auto max-w-5xl px-6 py-2 flex items-center justify-between gap-4">
+            <span>Admin preview of {user.name}&apos;s portal. Read-only: nothing you do here is saved or paid.</span>
+            <form action="/portal/logout" method="post">
+              <button className="rounded-md border border-white/40 px-3 py-1 text-xs font-medium hover:bg-white/10">Exit preview</button>
+            </form>
+          </div>
+        </div>
+      )}
       <header className="relative border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between gap-4">
           <Link href="/portal" className="flex items-center">

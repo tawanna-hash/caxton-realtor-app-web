@@ -279,6 +279,16 @@ export async function proxy(req: NextRequest) {
   const csrf = handleCsrf(req);
   if (csrf) return csrf;
 
+  // 1-preview. Admin preview of a partner portal is strictly read-only:
+  //    block every mutating portal API call while the preview cookie is set.
+  if (
+    pathname.startsWith('/api/portal/') &&
+    !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
+    req.cookies.get('caxton_portal_preview')
+  ) {
+    return NextResponse.json({ error: 'Preview mode is read-only.' }, { status: 403 });
+  }
+
   // 1b. Closing Time's own domain: the home page is the Closing Time desk.
   const host = (req.headers.get('host') ?? '').toLowerCase().split(':')[0];
   // 1a. One canonical host per site: www forwards to the bare domain.

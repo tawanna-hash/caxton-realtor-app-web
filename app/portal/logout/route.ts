@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getSql } from '@/lib/db';
-import { PORTAL_SESSION_COOKIE } from '@/lib/portal';
+import { PORTAL_PREVIEW_COOKIE, PORTAL_SESSION_COOKIE } from '@/lib/portal';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,16 +29,21 @@ async function endSession(): Promise<void> {
   }
 }
 
-export async function POST(req: NextRequest) {
+async function finish(req: NextRequest): Promise<NextResponse> {
+  const jar = await cookies();
+  const wasPreview = Boolean(jar.get(PORTAL_PREVIEW_COOKIE));
   await endSession();
-  const res = NextResponse.redirect(new URL('/portal/error?code=loggedout', req.url));
+  // An admin leaving a preview goes back to the CRM, not the partner sign-out page.
+  const res = NextResponse.redirect(new URL(wasPreview ? '/admin/crm' : '/portal/error?code=loggedout', req.url), 303);
   res.cookies.delete(PORTAL_SESSION_COOKIE);
+  res.cookies.delete(PORTAL_PREVIEW_COOKIE);
   return res;
 }
 
+export async function POST(req: NextRequest) {
+  return finish(req);
+}
+
 export async function GET(req: NextRequest) {
-  await endSession();
-  const res = NextResponse.redirect(new URL('/portal/error?code=loggedout', req.url));
-  res.cookies.delete(PORTAL_SESSION_COOKIE);
-  return res;
+  return finish(req);
 }
