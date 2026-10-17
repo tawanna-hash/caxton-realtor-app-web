@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     const tokenHash = hashMagicLinkToken(token);
 
     const rows = (await sql`
-      SELECT id, advertiser_id, link_expires_at, consumed_at, revoked_at, purpose, entity_id
+      SELECT id, advertiser_id, link_expires_at, consumed_at, revoked_at, purpose, entity_id, created_by
       FROM portal_magic_links
       WHERE token_hash = ${tokenHash}
     `) as unknown as {
@@ -44,9 +44,12 @@ export async function GET(req: NextRequest) {
       revoked_at: string | null;
       purpose: string;
       entity_id: string | null;
+      created_by: string | null;
     }[];
     if (rows.length === 0) return redirectToError(req, 'invalid');
     const row = rows[0];
+    // Password-reset links only work on /portal/reset.
+    if (row.created_by === 'portal-reset') return redirectToError(req, 'invalid');
     if (!isLinkConsumable(row)) return redirectToError(req, 'expired');
 
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? null;

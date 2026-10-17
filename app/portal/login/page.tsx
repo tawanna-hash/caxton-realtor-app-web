@@ -10,8 +10,8 @@ export default function PortalLoginPage() {
     <div className="max-w-md mx-auto rounded-md border border-gray-200 bg-white p-8">
       <PageTitle size="md">Partner sign in</PageTitle>
       <p className="text-gray-600 text-sm mb-6">
-        Use the email and password from your Account page. No password yet? Use the link in your
-        latest email, then set a password under Account.
+        Use the email and password from your Account page. Forgot it, or never set one? Choose
+        &ldquo;Forgot your password?&rdquo; and we will email you a link to set a new one.
       </p>
       <LoginForm />
     </div>
