@@ -16,6 +16,7 @@ const ITEMS: { label: string; href: string }[] = [
   { label: 'Overview', href: '/portal' },
   { label: 'Orders', href: '/portal/orders' },
   { label: 'Files', href: '/portal/files' },
+  { label: 'My Content', href: '/portal/content' },
   { label: 'Forms', href: '/portal/forms' },
   { label: 'Account', href: '/portal/account' },
 ];
