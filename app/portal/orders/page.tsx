@@ -116,7 +116,6 @@ export default async function PortalOrders() {
   const open = withBalance.filter((r) => r.balance > 0);
   const openTotal = open.reduce((n, r) => n + r.balance, 0);
   const overdueTotal = open.filter((r) => r.shown === 'overdue').reduce((n, r) => n + r.balance, 0);
-  const paidTotal = withBalance.filter((r) => r.status === 'paid').reduce((n, r) => n + r.total_cents, 0);
   const fmtUsd2 = (c: number) => `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
@@ -129,7 +128,7 @@ export default async function PortalOrders() {
         </p>
       </header>
 
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="rounded-md border border-gray-200 bg-white p-4">
           <div className="text-xs uppercase tracking-wider text-gray-500">Balance due</div>
           <div className="font-serif text-3xl text-gray-900 mt-1">{fmtUsd2(openTotal)}</div>
@@ -138,10 +137,6 @@ export default async function PortalOrders() {
         <div className={`rounded-md border p-4 ${overdueTotal > 0 ? 'border-[#FF2A04]/30 bg-[#FFEAE6]' : 'border-gray-200 bg-white'}`}>
           <div className="text-xs uppercase tracking-wider text-gray-500">Past due</div>
           <div className="font-serif text-3xl text-gray-900 mt-1">{fmtUsd2(overdueTotal)}</div>
-        </div>
-        <div className="rounded-md border border-gray-200 bg-white p-4">
-          <div className="text-xs uppercase tracking-wider text-gray-500">Paid to date</div>
-          <div className="font-serif text-3xl text-gray-900 mt-1">{fmtUsd2(paidTotal)}</div>
         </div>
       </section>
 
