@@ -24,7 +24,7 @@ const PORTAL_FROM_EMAIL = verifiedEmailFrom(
   process.env.PORTAL_FROM_EMAIL,
   'Realty News Now',
 );
-const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://app.myrealtyline.com';
+const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://realtynewsnow.app';
 
 export async function GET(req: NextRequest) {
   const admin = await getCurrentAdmin();
