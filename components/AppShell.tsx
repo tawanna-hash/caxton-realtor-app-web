@@ -497,7 +497,14 @@ export default function AppShell({
         >
           {isAdmin && <AdminQuickLinks />}
           <SwipeBackShell area={isAdmin ? 'admin' : 'public'}>
-            {children}
+            {isAdmin && !pathname?.includes('/hotspots') ? (
+              /* Mint kit: page content sits in one rounded white panel on the lavender canvas. */
+              <div className="mx-3 mb-6 rounded-3xl border border-[#ECE8F5] bg-white shadow-sm sm:mx-5 lg:mx-6">
+                {children}
+              </div>
+            ) : (
+              children
+            )}
           </SwipeBackShell>
         </main>
       </div>
