@@ -2,12 +2,6 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  FOOTER_TEMPLATE_IDS,
-  FOOTER_TEMPLATE_META,
-  coerceFooterTemplateId,
-  type FooterTemplateId,
-} from '@/lib/footer-templates';
 
 type AccountFields = {
   billing_email: string | null;
@@ -58,10 +52,6 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
     state: initial.state ?? '',
     zip: initial.zip ?? '',
   });
-  const [footerTemplate, setFooterTemplate] = useState<FooterTemplateId>(
-    coerceFooterTemplateId(initial.footer_template),
-  );
-  const [footerSaved, setFooterSaved] = useState(false);
   const [savedKey, setSavedKey] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -79,23 +69,6 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
     }
     setSavedKey(key);
     setTimeout(() => setSavedKey((k) => (k === key ? null : k)), 1500);
-  }
-
-  async function saveFooterTemplate(next: FooterTemplateId) {
-    setSaveError(null);
-    setFooterTemplate(next);
-    const res = await fetch('/api/portal/account', {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ footer_template: next }),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setSaveError(data?.error ?? 'save failed');
-      return;
-    }
-    setFooterSaved(true);
-    setTimeout(() => setFooterSaved(false), 1500);
   }
 
   function renderField(key: keyof AccountFields, label: string) {
@@ -144,43 +117,6 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
             {saveError}
           </div>
         )}
-      </div>
-
-      {/* Default footer template */}
-      <div className="rounded-md border border-gray-200 bg-white p-6">
-        <div className="flex items-start justify-between mb-1">
-          <h2
-            className="font-serif text-lg text-gray-900"
-          >
-            Default Footer Template
-          </h2>
-          {footerSaved && <span className="text-xs text-[#005A00]">Saved</span>}
-        </div>
-        <p className="text-sm text-gray-600 mb-4">
-          Picked automatically when you download any tool from the Resources
-          section. You can still override per download.
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {FOOTER_TEMPLATE_IDS.map((id) => {
-            const meta = FOOTER_TEMPLATE_META[id];
-            const selected = footerTemplate === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => saveFooterTemplate(id)}
-                className={`text-left rounded-md border p-3 transition ${
-                  selected
-                    ? 'border-brand-700 ring-2 ring-brand-700/20 bg-white'
-                    : 'border-gray-200 hover:border-gray-300 bg-white'
-                }`}
-              >
-                <div className="text-sm font-medium text-gray-900">{meta.label}</div>
-                <div className="text-xs text-gray-500 mt-0.5 leading-snug">{meta.blurb}</div>
-              </button>
-            );
-          })}
-        </div>
       </div>
     </div>
   );
