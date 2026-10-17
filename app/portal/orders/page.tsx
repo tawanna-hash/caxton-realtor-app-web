@@ -10,6 +10,8 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 
 import PageTitle from '@/components/ui/PageTitle';
+import { AlertCircle, Receipt } from 'lucide-react';
+import { StatTile } from '@/components/portal/Mint';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -129,15 +131,8 @@ export default async function PortalOrders() {
       </header>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-md border border-gray-200 bg-white p-4">
-          <div className="text-xs uppercase tracking-wider text-gray-500">Balance due</div>
-          <div className="font-serif text-3xl text-gray-900 mt-1">{fmtUsd2(openTotal)}</div>
-          <div className="text-sm text-gray-600 mt-1">{open.length} open invoice{open.length === 1 ? '' : 's'}</div>
-        </div>
-        <div className={`rounded-md border p-4 ${overdueTotal > 0 ? 'border-[#FF2A04]/30 bg-[#FFEAE6]' : 'border-gray-200 bg-white'}`}>
-          <div className="text-xs uppercase tracking-wider text-gray-500">Past due</div>
-          <div className="font-serif text-3xl text-gray-900 mt-1">{fmtUsd2(overdueTotal)}</div>
-        </div>
+        <StatTile label="Balance due" value={fmtUsd2(openTotal)} sub={`${open.length} open invoice${open.length === 1 ? '' : 's'}`} icon={<Receipt className="h-4 w-4" />} tone="purple" />
+        <StatTile label="Past due" value={fmtUsd2(overdueTotal)} icon={<AlertCircle className="h-4 w-4" />} tone={overdueTotal > 0 ? 'red' : 'green'} />
       </section>
 
       {withBalance.length === 0 ? (

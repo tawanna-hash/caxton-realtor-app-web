@@ -10,6 +10,7 @@
 import { Lato } from 'next/font/google';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import PortalSidebar from '@/components/PortalSidebar';
+import PortalTopBar from '@/components/PortalTopBar';
 import SwipeBackShell from '@/components/SwipeBackShell';
 
 export const dynamic = 'force-dynamic';
@@ -41,7 +42,8 @@ export default async function PortalLayout({ children }: { children: React.React
           signedIn={Boolean(user)}
         />
         <main className="min-w-0 flex-1 p-4 md:p-8">
-          <div className="min-h-[calc(100vh-4rem)] w-full rounded-3xl border border-[#ECE8F5] bg-white p-6 shadow-sm md:p-10">
+          <PortalTopBar signedIn={Boolean(user)} />
+          <div className="min-h-[calc(100vh-8rem)] w-full rounded-3xl border border-[#ECE8F5] bg-white p-6 shadow-sm md:p-10">
             <SwipeBackShell area="portal">{children}</SwipeBackShell>
             <p className="mt-16 text-xs text-gray-500">Session-only access. Closing your browser signs you out.</p>
           </div>

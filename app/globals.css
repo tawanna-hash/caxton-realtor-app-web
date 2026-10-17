@@ -2184,3 +2184,24 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   border-radius: var(--admin-pill-radius);
 }
 [data-portal-shell='true'] :is(span, a)[class*='rounded-full'] { border-radius: var(--admin-pill-radius); }
+
+/* Portal-wide Mint card + field treatment so every page matches the kit */
+[data-portal-shell='true'] .rounded-md.border,
+[data-portal-shell='true'] .rounded-lg.border,
+[data-portal-shell='true'] .rounded.border {
+  border-radius: 1rem;
+  border-color: #ECE8F5;
+}
+[data-portal-shell='true'] .bg-gray-50 { background-color: #F6F5FB; }
+[data-portal-shell='true'] .border-gray-200 { border-color: #ECE8F5; }
+[data-portal-shell='true'] :is(input:not([type='checkbox']):not([type='radio']):not([type='file']), select, textarea) {
+  border-radius: 0.75rem;
+  border-color: #E3DEF1;
+}
+[data-portal-shell='true'] :is(input, select, textarea):focus {
+  outline: none;
+  border-color: #6D3FD6;
+  box-shadow: 0 0 0 3px rgba(109, 63, 214, 0.12);
+}
+[data-portal-shell='true'] .text-xs.uppercase { letter-spacing: 0.08em; }
+[data-portal-shell='true'] a.text-\[\#42277C\] { color: #6D3FD6; }
