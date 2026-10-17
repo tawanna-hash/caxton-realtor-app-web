@@ -200,6 +200,20 @@ async function generateWithClient(
   }
 
   const publication = await resolvePublicationForAdvertiser(client, schedule.advertiser_id);
+
+  // The schedule's bill-to email is an optional override. When it is blank,
+  // fall back to the partner's current billing email, then contact email, so
+  // billing-email updates are never missed. Mutating the claimed schedule
+  // object also carries the resolved address into the auto-send email.
+  if (!schedule.bill_to_email?.trim()) {
+    const emails = await client.query<{ billing_email: string | null; contact_email: string | null }>(
+      'SELECT billing_email, contact_email FROM advertisers WHERE id = $1',
+      [schedule.advertiser_id],
+    );
+    const row = emails.rows[0];
+    schedule.bill_to_email = row?.billing_email?.trim() || row?.contact_email?.trim() || null;
+  }
+
   const year = new Date(schedule.next_run_at).getUTCFullYear();
   const series = `recurring_invoice:${publication}:${year}`;
   await seedRecurringNumberSeries(client, series, publication, year);
