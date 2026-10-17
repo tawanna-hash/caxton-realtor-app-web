@@ -2205,3 +2205,11 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 }
 [data-portal-shell='true'] .text-xs.uppercase { letter-spacing: 0.08em; }
 [data-portal-shell='true'] a.text-\[\#42277C\] { color: #6D3FD6; }
+
+/* Admin: every compact button/link action uses the single pill radius. Row-style
+   buttons (full width, left aligned, block) keep their softer corners. */
+[data-admin-ui='true'] button[class*='px-']:not([class*='w-full']):not([class*='text-left']):not([class~='block']):not([class*='rounded-full-none']),
+[data-admin-ui='true'] a[class*='px-'][class*='border']:is([class~='inline-flex'], [class~='inline-block']),
+[data-admin-ui='true'] a[class*='px-'][class*='bg-']:is([class~='inline-flex'], [class~='inline-block']) {
+  border-radius: var(--admin-pill-radius);
+}
