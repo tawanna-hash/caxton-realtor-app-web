@@ -90,6 +90,7 @@ export async function POST(req: NextRequest) {
         "If you didn't ask for this, you can ignore this email; your password has not changed.",
       ].join('\n'),
       html: `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#222">
+        <p style="margin:0 0 24px"><img src="${APP_BASE_URL}${sender === 'tawanna@newslinesa.com' ? '/brand/newsline-logo.png' : '/brand/realtyline-logo.png'}" alt="${esc(brand)}" height="40" style="display:block;height:40px;width:auto"></p>
         <h2 style="margin:0 0 12px;color:#301D5D">Reset your portal password</h2>
         <p style="font-size:15px;line-height:1.5">Hi ${esc(row.name)},</p>
         <p style="font-size:15px;line-height:1.5">Use the button below to choose a new password for your ${esc(brand)} partner portal. The link is valid for 1 hour and can be used once.</p>
