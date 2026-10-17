@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { formatCents } from '@/lib/invoices';
-import type { RecurringScheduleWithAdvertiser } from '@/lib/recurring-invoices';
+import { computeNextRun, isScheduleExhausted, type RecurringScheduleWithAdvertiser } from '@/lib/recurring-invoices';
 
 function fmtDay(value: string | Date | null | undefined): string {
   if (!value) return '-';
@@ -25,6 +25,7 @@ export function ScheduledInvoicesPanel({ drafts, onEditDraft, onSendDraft }: {
 }) {
   const [schedules, setSchedules] = useState<RecurringScheduleWithAdvertiser[] | null>(null);
   const [error, setError] = useState('');
+  const [now] = useState(() => Date.now());
 
   useEffect(() => {
     let live = true;
@@ -49,6 +50,29 @@ export function ScheduledInvoicesPanel({ drafts, onEditDraft, onSendDraft }: {
     () => [...drafts].sort((a, b) => String(a.issued_at ?? a.created_at).localeCompare(String(b.issued_at ?? b.created_at))),
     [drafts],
   );
+
+  // Active schedules that stop on their own (end date or invoice limit), with
+  // the remaining invoices projected forward from the next run.
+  const ending = useMemo(() => {
+    const rows = [];
+    for (const s of schedules ?? []) {
+      if (s.status !== 'active' || (!s.end_date && s.max_occurrences == null)) continue;
+      let occ = s.occurrences_generated;
+      let next = new Date(s.next_run_at);
+      let remaining = 0;
+      let last: Date | null = null;
+      while (remaining < 600 && !isScheduleExhausted({ end_date: s.end_date, max_occurrences: s.max_occurrences, occurrences_generated: occ, next_run_at: next.toISOString() })) {
+        remaining += 1;
+        last = next;
+        occ += 1;
+        next = computeNextRun(next, s.frequency, s.interval_count);
+      }
+      rows.push({ s, remaining, last, amount: remaining * ((s.amount_cents ?? 0) + (s.tax_cents ?? 0)) });
+    }
+    return rows.sort((a, b) => (a.last?.getTime() ?? 0) - (b.last?.getTime() ?? 0));
+  }, [schedules]);
+  const endingTotal = ending.reduce((n, r) => n + r.amount, 0);
+  const soon = now + 60 * 86_400_000;
 
   const upcomingTotal = upcoming.reduce((n, s) => n + (s.amount_cents ?? 0) + (s.tax_cents ?? 0), 0);
   const draftTotal = sortedDrafts.reduce((n, inv) => n + inv.total_cents, 0);
@@ -181,6 +205,66 @@ export function ScheduledInvoicesPanel({ drafts, onEditDraft, onSendDraft }: {
                 <tr className="border-t border-gray-300 bg-gray-50">
                   <td className={`${td} font-semibold`} colSpan={3}>Subtotal</td>
                   <td className={`${td} text-right font-semibold`}>{formatCents(draftTotal)}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded border border-gray-200 bg-white shadow-sm">
+        <div className="border-b border-gray-200 px-4 py-3">
+          <h2 className="text-base font-semibold text-gray-900">Recurring invoices that end</h2>
+          <p className="text-xs text-gray-500">Active schedules with an end date or invoice limit, soonest ending first. Edit a schedule to extend or renew it.</p>
+        </div>
+        {schedules === null && !error ? (
+          <div className="p-8 text-center text-sm text-gray-500">Loading...</div>
+        ) : ending.length === 0 ? (
+          <div className="p-8 text-center text-sm text-gray-500">No recurring schedules have an end set.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className={th}>Final invoice</th>
+                  <th className={th}>Client</th>
+                  <th className={th}>Schedule</th>
+                  <th className={th}>Ends because</th>
+                  <th className={`${th} text-right`}>Invoices left</th>
+                  <th className={`${th} text-right`}>Left to bill</th>
+                  <th className={th}></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {ending.map(({ s, remaining, last, amount }) => (
+                  <tr key={s.id} className="hover:bg-gray-50">
+                    <td className={td}>
+                      <div>{last ? fmtDay(last) : '-'}</div>
+                      {last && last.getTime() <= soon && (
+                        <span className="mt-1 inline-flex rounded-full border border-[#FF2A04]/30 bg-[#FFEAE6] px-2 py-0.5 text-[11px] font-medium text-[#661102]">Ending soon</span>
+                      )}
+                    </td>
+                    <td className={td}><div className="font-medium">{s.advertiser_name ?? 'Unknown client'}</div></td>
+                    <td className={td}>
+                      <div>{s.name}</div>
+                      <div className="text-xs text-gray-500">{everyLabel(s.frequency, s.interval_count)}</div>
+                    </td>
+                    <td className={td}>
+                      {s.end_date ? `End date ${fmtDay(`${s.end_date}T12:00:00Z`)}` : `After ${s.max_occurrences} invoices (${s.occurrences_generated} sent)`}
+                    </td>
+                    <td className={`${td} text-right`}>{remaining}</td>
+                    <td className={`${td} text-right font-medium`}>{formatCents(amount)}</td>
+                    <td className={`${td} text-right`}>
+                      <Link href="/admin/getpaid/reoccuringpayments" className="font-medium text-[#301D5D] hover:underline">Edit schedule</Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-gray-300 bg-gray-50">
+                  <td className={`${td} font-semibold`} colSpan={5}>Subtotal</td>
+                  <td className={`${td} text-right font-semibold`}>{formatCents(endingTotal)}</td>
                   <td></td>
                 </tr>
               </tfoot>
