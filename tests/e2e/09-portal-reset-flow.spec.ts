@@ -15,6 +15,7 @@ test('emailed reset link sets a new password, works once, and signs in', async (
   test.skip(!token || !PASSWORD, 'no reset token for this project');
 
   await page.goto(`/portal/reset?token=${encodeURIComponent(token)}`);
+  await page.waitForLoadState('networkidle');
   await expect(page.getByRole('heading', { name: /choose a new password/i })).toBeVisible();
   await expect(page.locator('div.fixed img[alt]').first()).toBeVisible();
   await page.getByLabel('New password', { exact: true }).fill(PASSWORD);
@@ -24,6 +25,7 @@ test('emailed reset link sets a new password, works once, and signs in', async (
 
   // Same link again must fail.
   await page.goto(`/portal/reset?token=${encodeURIComponent(token)}`);
+  await page.waitForLoadState('networkidle');
   await page.getByLabel('New password', { exact: true }).fill(PASSWORD);
   await page.getByLabel('Confirm new password', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: /set new password/i }).click();
@@ -31,6 +33,7 @@ test('emailed reset link sets a new password, works once, and signs in', async (
 
   // And the new password signs in.
   await page.goto('/portal/login');
+  await page.waitForLoadState('networkidle');
   await page.getByLabel('Email', { exact: true }).fill(EMAIL);
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: /^sign in$/i }).click();
